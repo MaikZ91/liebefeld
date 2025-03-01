@@ -32,7 +32,11 @@ interface GitHubEvent {
   link: string;
 }
 
-const EventCalendar = () => {
+interface EventCalendarProps {
+  defaultView?: "calendar" | "list";
+}
+
+const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   // State variables
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<Event[]>(() => {
@@ -43,7 +47,7 @@ const EventCalendar = () => {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState<string | null>(null);
-  const [view, setView] = useState<"calendar" | "list">("calendar");
+  const [view, setView] = useState<"calendar" | "list">(defaultView);
   
   // Save events to localStorage whenever they change
   useEffect(() => {
@@ -338,7 +342,7 @@ const EventCalendar = () => {
           </div>
         </div>
         
-        {/* View toggle - FIX: Wrap TabsList in Tabs component */}
+        {/* View toggle */}
         <div className="flex justify-center">
           <Tabs defaultValue={view} onValueChange={(value) => setView(value as "calendar" | "list")}>
             <TabsList className="dark-tabs">
@@ -382,7 +386,7 @@ const EventCalendar = () => {
                             "calendar-day hover-scale relative flex flex-col items-center justify-center",
                             isSelected ? "bg-primary text-primary-foreground" : "",
                             !isCurrentMonth ? "text-gray-600" : "text-gray-200",
-                            isCurrentDay ? "ring-2 ring-primary ring-offset-2 ring-offset-[#1A1F2C]" : ""
+                            isCurrentDay ? "ring-2 ring-primary ring-offset-2 ring-offset-[#131722]" : ""
                           )}
                         >
                           {format(day, 'd')}
@@ -455,10 +459,10 @@ const EventCalendar = () => {
                       const date = parseISO(dateStr);
                       return (
                         <div key={dateStr} className="mb-6">
-                          <h4 className="text-lg font-medium mb-3 text-white sticky top-0 bg-[#1A1F2C]/80 backdrop-blur-sm py-2 z-10">
+                          <h4 className="text-lg font-medium mb-3 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
                             {format(date, 'EEEE, d. MMMM', { locale: de })}
                           </h4>
-                          <div className="space-y-2">
+                          <div className="space-y-3">
                             {eventsByDate[dateStr].map(event => (
                               <EventCard 
                                 key={event.id} 

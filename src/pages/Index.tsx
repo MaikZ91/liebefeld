@@ -10,7 +10,7 @@ const Index = () => {
   }, []);
   
   return (
-    <div className="min-h-screen flex flex-col bg-[#1A1F2C] text-gray-200">
+    <div className="min-h-screen flex flex-col bg-[#131722] text-gray-200">
       <CalendarNavbar />
       <main className="flex-grow">
         <div className="relative overflow-hidden mb-6">
@@ -22,7 +22,7 @@ const Index = () => {
             </p>
           </div>
         </div>
-        <EventCalendar />
+        <EventCalendar defaultView="list" />
       </main>
     </div>
   );
