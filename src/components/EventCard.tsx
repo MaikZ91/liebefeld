@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { type Event } from './EventCalendar';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart } from 'lucide-react';
