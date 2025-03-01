@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Plus, RefreshCw, Music, PartyPopper, Image, Dumbbell, Map, CalendarIcon, List } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, RefreshCw, Music, PartyPopper, Image, Dumbbell, Map, CalendarIcon, List, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import EventDetails from './EventDetails';
@@ -21,6 +21,7 @@ export interface Event {
   location: string;
   organizer: string;
   category: string;
+  likes?: number;
 }
 
 // URL zur JSON-Datei mit Events
@@ -146,7 +147,8 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           time: "19:00", // Default-Zeit für Events ohne Zeitangabe
           location: location,
           organizer: "Liebefeld Community Bielefeld",
-          category: category
+          category: category,
+          likes: 0
         } as Event;
       });
       
@@ -194,6 +196,17 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     }
   };
 
+  // Handle like functionality
+  const handleLikeEvent = (eventId: string) => {
+    setEvents(prevEvents => 
+      prevEvents.map(event => 
+        event.id === eventId 
+          ? { ...event, likes: (event.likes || 0) + 1 } 
+          : event
+      )
+    );
+  };
+
   // Calendar navigation functions
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
@@ -211,15 +224,26 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       })
     : [];
   
-  // Get all events for the current month
-  const currentMonthEvents = events.filter(event => {
-    const eventDate = parseISO(event.date);
-    return isSameMonth(eventDate, currentDate);
-  }).sort((a, b) => {
-    const dateA = parseISO(a.date);
-    const dateB = parseISO(b.date);
-    return dateA.getTime() - dateB.getTime();
-  });
+  // Get all events for the current month and sort by likes
+  const currentMonthEvents = events
+    .filter(event => {
+      const eventDate = parseISO(event.date);
+      return isSameMonth(eventDate, currentDate);
+    })
+    .sort((a, b) => {
+      // First sort by likes (descending)
+      const likesA = a.likes || 0;
+      const likesB = b.likes || 0;
+      
+      if (likesA !== likesB) {
+        return likesB - likesA;
+      }
+      
+      // Then by date (ascending)
+      const dateA = parseISO(a.date);
+      const dateB = parseISO(b.date);
+      return dateA.getTime() - dateB.getTime();
+    });
   
   // Group events by date for the list view
   const eventsByDate = currentMonthEvents.reduce((acc, event) => {
@@ -241,7 +265,8 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   const handleAddEvent = (newEvent: Omit<Event, 'id'>) => {
     const eventWithId = {
       ...newEvent,
-      id: Math.random().toString(36).substring(2, 9)
+      id: Math.random().toString(36).substring(2, 9),
+      likes: 0
     };
     
     setEvents([...events, eventWithId as Event]);
@@ -429,6 +454,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                               key={event.id} 
                               event={event}
                               onClick={() => setSelectedEvent(event)}
+                              onLike={handleLikeEvent}
                             />
                           ))}
                         </div>
@@ -449,20 +475,26 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
             
             <TabsContent value="list">
               <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
-                <h3 className="text-xl font-medium mb-6 text-white text-center">
-                  Alle Events im {format(currentDate, 'MMMM', { locale: de })}
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-medium text-white">
+                    Alle Events im {format(currentDate, 'MMMM', { locale: de })}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-red-500" />
+                    <span className="text-sm text-gray-300">Top Events oben</span>
+                  </div>
+                </div>
                 
                 <div className="overflow-y-auto max-h-[600px] pr-2 scrollbar-thin">
                   {Object.keys(eventsByDate).length > 0 ? (
                     Object.keys(eventsByDate).sort().map(dateStr => {
                       const date = parseISO(dateStr);
                       return (
-                        <div key={dateStr} className="mb-6">
-                          <h4 className="text-lg font-medium mb-3 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
+                        <div key={dateStr} className="mb-4">
+                          <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
                             {format(date, 'EEEE, d. MMMM', { locale: de })}
                           </h4>
-                          <div className="space-y-3">
+                          <div className="space-y-1">
                             {eventsByDate[dateStr].map(event => (
                               <EventCard 
                                 key={event.id} 
@@ -472,6 +504,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                                   setSelectedDate(date);
                                   setSelectedEvent(event);
                                 }}
+                                onLike={handleLikeEvent}
                               />
                             ))}
                           </div>
@@ -511,7 +544,8 @@ const bielefeldEvents: Event[] = [
     time: '20:00',
     location: 'Forum Bielefeld, Niederwall 23',
     organizer: 'Bielefeld Musik e.V.',
-    category: 'Konzert'
+    category: 'Konzert',
+    likes: 5
   },
   {
     id: '2',
@@ -521,7 +555,8 @@ const bielefeldEvents: Event[] = [
     time: '14:00',
     location: 'Kunsthalle Bielefeld, Artur-Ladebeck-Straße 5',
     organizer: 'Kunstverein Bielefeld',
-    category: 'Ausstellung'
+    category: 'Ausstellung',
+    likes: 3
   },
   {
     id: '3',
@@ -531,7 +566,8 @@ const bielefeldEvents: Event[] = [
     time: '10:00',
     location: 'Start: Jahnplatz',
     organizer: 'Sportbund Bielefeld',
-    category: 'Sport'
+    category: 'Sport',
+    likes: 8
   },
   {
     id: '4',
@@ -541,7 +577,8 @@ const bielefeldEvents: Event[] = [
     time: '23:00',
     location: 'Club Freitag, Niederstraße 9',
     organizer: 'Club Freitag',
-    category: 'Party'
+    category: 'Party',
+    likes: 12
   },
   {
     id: '5',
@@ -551,7 +588,8 @@ const bielefeldEvents: Event[] = [
     time: '15:00',
     location: 'Stadtteilzentrum Liebefeld, Hauptstraße 55',
     organizer: 'Grünes Bielefeld e.V.',
-    category: 'Workshop'
+    category: 'Workshop',
+    likes: 2
   },
   {
     id: '6',
@@ -561,7 +599,8 @@ const bielefeldEvents: Event[] = [
     time: '19:30',
     location: 'Stadttheater Bielefeld, Brunnenstraße 3-9',
     organizer: 'Stadttheater Bielefeld',
-    category: 'Kultur'
+    category: 'Kultur',
+    likes: 6
   }
 ];
 
