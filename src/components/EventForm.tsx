@@ -14,6 +14,7 @@ import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft, Camera, Uploa
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { createWorker } from 'tesseract.js';
 
 interface EventFormProps {
   selectedDate: Date;
@@ -30,6 +31,150 @@ const eventCategories = [
   'Sonstiges'
 ];
 
+// Helper function to extract date from text
+const extractDate = (text: string): Date | null => {
+  // Common German date formats with regex
+  const datePatterns = [
+    /(\d{1,2})\.(\d{1,2})\.(\d{4})/g, // DD.MM.YYYY
+    /(\d{1,2})\.(\d{1,2})\.(\d{2})/g, // DD.MM.YY
+    /(\d{1,2})\s(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)\s(\d{4})/gi, // DD Month YYYY
+    /(\d{1,2})\s(Jan|Feb|Mär|Apr|Mai|Jun|Jul|Aug|Sep|Okt|Nov|Dez)\s(\d{4})/gi, // DD Mon YYYY
+  ];
+  
+  for (const pattern of datePatterns) {
+    const matches = [...text.matchAll(pattern)];
+    if (matches.length > 0) {
+      const match = matches[0];
+      // Handle the first format (DD.MM.YYYY)
+      if (match[0].includes('.')) {
+        const day = parseInt(match[1]);
+        const month = parseInt(match[2]) - 1; // Months are 0-indexed in JavaScript
+        const year = match[3].length === 2 ? 2000 + parseInt(match[3]) : parseInt(match[3]);
+        return new Date(year, month, day);
+      } else {
+        // Handle the month name format
+        const day = parseInt(match[1]);
+        const monthName = match[2].toLowerCase();
+        const year = parseInt(match[3]);
+        
+        const monthMap: Record<string, number> = {
+          'januar': 0, 'jan': 0,
+          'februar': 1, 'feb': 1,
+          'märz': 2, 'mär': 2,
+          'april': 3, 'apr': 3,
+          'mai': 4,
+          'juni': 5, 'jun': 5,
+          'juli': 6, 'jul': 6,
+          'august': 7, 'aug': 7,
+          'september': 8, 'sep': 8,
+          'oktober': 9, 'okt': 9,
+          'november': 10, 'nov': 10,
+          'dezember': 11, 'dez': 11
+        };
+        
+        const month = monthMap[monthName];
+        return new Date(year, month, day);
+      }
+    }
+  }
+  
+  return null;
+};
+
+// Helper function to extract time from text
+const extractTime = (text: string): string | null => {
+  // Look for time patterns like 19:00, 19.00, 7pm, etc.
+  const timePattern = /(\d{1,2})[:\.](\d{2})(?:\s*(?:Uhr|h))?/g;
+  const matches = [...text.matchAll(timePattern)];
+  
+  if (matches.length > 0) {
+    const match = matches[0];
+    const hours = match[1].padStart(2, '0');
+    const minutes = match[2];
+    return `${hours}:${minutes}`;
+  }
+  
+  return null;
+};
+
+// Helper to detect event category
+const detectCategory = (text: string): string => {
+  const lowerText = text.toLowerCase();
+  
+  for (const category of eventCategories) {
+    if (lowerText.includes(category.toLowerCase())) {
+      return category;
+    }
+  }
+  
+  // Keywords that might indicate a category
+  if (lowerText.includes('musik') || lowerText.includes('band') || lowerText.includes('live')) {
+    return 'Konzert';
+  } else if (lowerText.includes('ausstellung') || lowerText.includes('galerie') || lowerText.includes('kunst')) {
+    return 'Ausstellung';
+  } else if (lowerText.includes('sport') || lowerText.includes('spiel') || lowerText.includes('turnier')) {
+    return 'Sport';
+  } else if (lowerText.includes('party') || lowerText.includes('feier') || lowerText.includes('dj')) {
+    return 'Party';
+  } else if (lowerText.includes('workshop') || lowerText.includes('seminar') || lowerText.includes('kurs')) {
+    return 'Workshop';
+  } else if (lowerText.includes('theater') || lowerText.includes('film') || lowerText.includes('lesung')) {
+    return 'Kultur';
+  }
+  
+  return 'Sonstiges';
+};
+
+// Helper to extract location
+const extractLocation = (text: string): string => {
+  // Common location indicators in German
+  const locationIndicators = [
+    'ort:', 'location:', 'veranstaltungsort:', 'venue:', 'adresse:', 'address:',
+    'in der', 'im', 'at the', 'bei', 'at'
+  ];
+  
+  const lines = text.split('\n');
+  
+  // First try to find lines that explicitly mention locations
+  for (const line of lines) {
+    const lowerLine = line.toLowerCase();
+    for (const indicator of locationIndicators) {
+      if (lowerLine.includes(indicator)) {
+        // Return the part after the indicator, or the whole line if it's a preposition
+        if (['in der', 'im', 'at the', 'bei', 'at'].includes(indicator)) {
+          return line.trim();
+        } else {
+          const parts = line.split(new RegExp(indicator, 'i'));
+          if (parts.length > 1) {
+            return parts[1].trim();
+          }
+        }
+      }
+    }
+  }
+  
+  // If no explicit location found, look for Bielefeld venues
+  const bielefelderVenues = [
+    'Forum', 'Ringlokschuppen', 'Lokschuppen', 'Stadthalle', 'Jazzclub', 
+    'Falkendom', 'Movie', 'Stereo', 'Bunker Ulmenwall', 'Nr.z.P.', 
+    'Forum Bielefeld', 'Stadtpark', 'City Park', 'Kesselbrink'
+  ];
+  
+  for (const venue of bielefelderVenues) {
+    if (text.includes(venue)) {
+      // Try to get the containing line for more context
+      for (const line of lines) {
+        if (line.includes(venue)) {
+          return line.trim();
+        }
+      }
+      return venue;
+    }
+  }
+  
+  return '';
+};
+
 const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
   const [date, setDate] = useState<Date>(selectedDate);
   const [title, setTitle] = useState('');
@@ -40,6 +185,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
   const [category, setCategory] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [recognitionProgress, setRecognitionProgress] = useState(0);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -82,36 +228,80 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
   const extractEventDataFromImage = async (base64Image: string) => {
     try {
       setIsAnalyzing(true);
+      setRecognitionProgress(0);
       
-      // Here we would normally call an API to analyze the image
-      // For demonstration purposes, we'll simulate a response after a delay
+      toast({
+        title: "OCR Analyse gestartet",
+        description: "Das Bild wird analysiert. Dies kann einen Moment dauern.",
+      });
       
-      // In a real implementation, you would call a service like Google Cloud Vision API
-      // or another OCR/AI service that can extract text and understand event data
+      const worker = await createWorker('deu');
       
-      console.log("Analyzing image...");
+      worker.setParameters({
+        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÄÖÜäöüß0123456789.,;:!?@#$%&*()-+=/\\\'"`~<>{}[]|_^°€ ',
+      });
       
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      worker.setProgressHandler((progress) => {
+        setRecognitionProgress(progress.progress * 100);
+      });
       
-      // Simulate extracted data (in real implementation, this would come from API)
-      const simulatedResponse = {
-        title: "Demo Konzert",
-        description: "Ein tolles Konzert im Bielefeld City Park",
-        date: new Date(),
-        time: "20:00",
-        location: "City Park, Bielefeld",
-        organizer: "Bielefeld Kultur",
-        category: "Konzert"
-      };
+      const result = await worker.recognize(base64Image);
+      console.log("OCR Result:", result.data);
+      
+      const extractedText = result.data.text;
+      
+      // Process the extracted text
+      const lines = extractedText.split('\n').filter(line => line.trim() !== '');
+      
+      // Extract title (usually one of the first few lines with more than 3 words)
+      let extractedTitle = '';
+      for (const line of lines.slice(0, 5)) {
+        const words = line.trim().split(/\s+/);
+        if (words.length > 2 && line.length > 10) {
+          extractedTitle = line.trim();
+          break;
+        }
+      }
+      
+      // Extract date
+      const extractedDate = extractDate(extractedText);
+      
+      // Extract time
+      const extractedTime = extractTime(extractedText) || '19:00';
+      
+      // Create description from the full text
+      const extractedDescription = extractedText.slice(0, 500);
+      
+      // Detect category
+      const detectedCategory = detectCategory(extractedText);
+      
+      // Extract location
+      const extractedLocation = extractLocation(extractedText);
+      
+      // Extract organizer (this is more speculative)
+      let extractedOrganizer = '';
+      const organizerIndicators = ['veranstalter:', 'präsentiert von:', 'presented by:', 'organizer:'];
+      for (const line of lines) {
+        const lowerLine = line.toLowerCase();
+        for (const indicator of organizerIndicators) {
+          if (lowerLine.includes(indicator)) {
+            extractedOrganizer = line.replace(new RegExp(indicator, 'i'), '').trim();
+            break;
+          }
+        }
+        if (extractedOrganizer) break;
+      }
       
       // Set the extracted data to form fields
-      setTitle(simulatedResponse.title);
-      setDescription(simulatedResponse.description);
-      setDate(simulatedResponse.date);
-      setTime(simulatedResponse.time);
-      setLocation(simulatedResponse.location);
-      setOrganizer(simulatedResponse.organizer);
-      setCategory(simulatedResponse.category);
+      if (extractedTitle) setTitle(extractedTitle);
+      if (extractedDate) setDate(extractedDate);
+      setTime(extractedTime);
+      if (extractedDescription) setDescription(extractedDescription);
+      if (extractedLocation) setLocation(extractedLocation);
+      if (extractedOrganizer) setOrganizer(extractedOrganizer);
+      setCategory(detectedCategory);
+      
+      await worker.terminate();
       
       toast({
         title: "Bild analysiert",
@@ -127,6 +317,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
       });
     } finally {
       setIsAnalyzing(false);
+      setRecognitionProgress(0);
     }
   };
   
@@ -203,9 +394,19 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
             </div>
             
             {isAnalyzing && (
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-2 w-full">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                <span className="text-sm text-muted-foreground">Analysiere Bild...</span>
+                <div className="w-full max-w-md bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                  <div 
+                    className="bg-blue-600 h-2.5 rounded-full" 
+                    style={{ width: `${recognitionProgress}%` }}
+                  ></div>
+                </div>
+                <span className="text-sm text-muted-foreground">
+                  {recognitionProgress < 100 
+                    ? `Analysiere Bild... ${Math.round(recognitionProgress)}%`
+                    : 'Extrahiere Eventdaten...'}
+                </span>
               </div>
             )}
             
