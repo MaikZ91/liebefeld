@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Plus, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, RefreshCw, Music, PartyPopper, Image, Dumbbell, Map } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import EventDetails from './EventDetails';
@@ -22,62 +23,6 @@ export interface Event {
   category: string;
 }
 
-// JSON-Beispiel, falls die externe Quelle nicht verfügbar ist
-const SAMPLE_EVENTS = [
-  {
-    "id": "event1",
-    "title": "Coding Meetup",
-    "description": "Gemeinsames Programmieren und Austausch über aktuelle Technologien",
-    "start_date": "2024-05-15T18:30:00+02:00",
-    "location": {
-      "name": "Founders Foundation",
-      "city": "Bielefeld",
-      "street": "Obernstraße 50"
-    },
-    "organizer": "Code for Bielefeld",
-    "category": "Workshop"
-  },
-  {
-    "id": "event2",
-    "title": "Offener Stammtisch",
-    "description": "Lockeres Treffen zum Austausch über lokale Themen",
-    "start_date": "2024-05-20T19:00:00+02:00",
-    "location": {
-      "name": "Café Lieblings",
-      "city": "Bielefeld",
-      "street": "Arndtstraße 7"
-    },
-    "organizer": "Bielefeld Community",
-    "category": "Networking"
-  },
-  {
-    "id": "event3",
-    "title": "Urban Gardening Workshop",
-    "description": "Praktische Tipps zum Gärtnern in der Stadt",
-    "start_date": "2024-05-25T10:00:00+02:00",
-    "location": {
-      "name": "Transition Town Bielefeld",
-      "city": "Bielefeld",
-      "street": "Metzer Straße 20"
-    },
-    "organizer": "Nachhaltig in Bielefeld",
-    "category": "Workshop"
-  },
-  {
-    "id": "event4",
-    "title": "Radtour durch Bielefeld",
-    "description": "Gemeinsame Radtour durch die schönsten Ecken der Stadt",
-    "start_date": "2024-05-30T14:00:00+02:00",
-    "location": {
-      "name": "Kesselbrink",
-      "city": "Bielefeld",
-      "street": ""
-    },
-    "organizer": "ADFC Bielefeld",
-    "category": "Sport"
-  }
-];
-
 // URL zur JSON-Datei mit Events
 const EXTERNAL_EVENTS_URL = "https://raw.githubusercontent.com/MaikZ91/productiontools/master/events.json";
 
@@ -92,11 +37,12 @@ const EventCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<Event[]>(() => {
     const savedEvents = localStorage.getItem('communityEvents');
-    return savedEvents ? JSON.parse(savedEvents) : sampleEvents;
+    return savedEvents ? JSON.parse(savedEvents) : bielefeldEvents;
   });
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [filter, setFilter] = useState<string | null>(null);
   
   // Save events to localStorage whenever they change
   useEffect(() => {
@@ -131,7 +77,7 @@ const EventCalendar = () => {
       console.error(`Fehler beim Laden von ${EXTERNAL_EVENTS_URL}:`, error);
       // Verwende Beispieldaten
       console.log("Verwende lokale Beispieldaten, da keine externe Quelle verfügbar ist.");
-      setEvents(sampleEvents);
+      setEvents(bielefeldEvents);
       
       toast({
         title: "Fehler beim Laden der Events",
@@ -154,6 +100,7 @@ const EventCalendar = () => {
         // Extrahiere Veranstaltungsort aus dem Event-Titel (falls vorhanden)
         let title = githubEvent.event;
         let location = "Bielefeld";
+        let category = determineEventCategory(githubEvent.event.toLowerCase());
         
         // Überprüfe, ob es eine Standortangabe in Klammern gibt
         const locationMatch = githubEvent.event.match(/\(@([^)]+)\)/);
@@ -191,10 +138,10 @@ const EventCalendar = () => {
           title: title,
           description: `Mehr Informationen unter: ${githubEvent.link}`,
           date: eventDate.toISOString().split('T')[0],
-          time: "00:00", // Keine Zeitangabe in den Daten
+          time: "19:00", // Default-Zeit für Events ohne Zeitangabe
           location: location,
-          organizer: "Bielefeld Community",
-          category: "Meeting" // Standard-Kategorie
+          organizer: "Liebefeld Community Bielefeld",
+          category: category
         } as Event;
       });
       
@@ -209,13 +156,36 @@ const EventCalendar = () => {
       });
     } catch (error) {
       console.error("Fehler bei der Verarbeitung der GitHub-Events:", error);
-      setEvents(sampleEvents);
+      setEvents(bielefeldEvents);
       
       toast({
         title: "Fehler bei der Verarbeitung der Events",
         description: "Es werden lokale Beispieldaten angezeigt.",
         variant: "destructive"
       });
+    }
+  };
+
+  // Bestimme Kategorie basierend auf Schlüsselwörtern im Titel
+  const determineEventCategory = (title: string): string => {
+    if (title.includes("konzert") || title.includes("festival") || title.includes("musik") || 
+        title.includes("band") || title.includes("jazz") || title.includes("chor")) {
+      return "Konzert";
+    } else if (title.includes("party") || title.includes("feier") || title.includes("disco") || 
+               title.includes("club") || title.includes("tanz")) {
+      return "Party";
+    } else if (title.includes("ausstellung") || title.includes("galerie") || title.includes("kunst") || 
+               title.includes("museum") || title.includes("vernissage")) {
+      return "Ausstellung";
+    } else if (title.includes("sport") || title.includes("fußball") || title.includes("lauf") || 
+               title.includes("turnier") || title.includes("fitness")) {
+      return "Sport";
+    } else if (title.includes("workshop") || title.includes("kurs")) {
+      return "Workshop";
+    } else if (title.includes("theater") || title.includes("film") || title.includes("kino")) {
+      return "Kultur";
+    } else {
+      return "Sonstiges";
     }
   };
 
@@ -228,9 +198,12 @@ const EventCalendar = () => {
   const monthEnd = endOfMonth(currentDate);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
   
-  // Filter events for the selected date
-  const selectedDateEvents = selectedDate 
-    ? events.filter(event => isSameDay(parseISO(event.date), selectedDate))
+  // Filter events for the selected date and category filter
+  const filteredEvents = selectedDate 
+    ? events.filter(event => {
+        const sameDay = isSameDay(parseISO(event.date), selectedDate);
+        return filter ? (sameDay && event.category === filter) : sameDay;
+      })
     : [];
   
   // Handler for selecting a date
@@ -258,13 +231,36 @@ const EventCalendar = () => {
     return events.some(event => isSameDay(parseISO(event.date), day));
   };
 
+  // Get event count for a specific day
+  const getEventCount = (day: Date) => {
+    return events.filter(event => isSameDay(parseISO(event.date), day)).length;
+  };
+
+  // Toggle category filter
+  const toggleFilter = (category: string) => {
+    setFilter(current => current === category ? null : category);
+  };
+
+  // Get all unique categories from events
+  const categories = Array.from(new Set(events.map(event => event.category)));
+
+  // Category icons mapping
+  const categoryIcons = {
+    "Konzert": <Music className="h-4 w-4" />,
+    "Party": <PartyPopper className="h-4 w-4" />,
+    "Ausstellung": <Image className="h-4 w-4" />,
+    "Sport": <Dumbbell className="h-4 w-4" />,
+    "Workshop": <Plus className="h-4 w-4" />,
+    "Kultur": <Image className="h-4 w-4" />,
+    "Sonstiges": <Map className="h-4 w-4" />
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl animate-fade-in">
       <div className="flex flex-col space-y-6">
         {/* Calendar header with month navigation */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl md:text-4xl font-bold">Community Kalender</h1>
-          <div className="flex items-center space-x-2">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex items-center justify-between md:justify-start">
             <Button variant="outline" size="icon" onClick={prevMonth} className="rounded-full hover:scale-105 transition-transform">
               <ChevronLeft className="h-5 w-5" />
             </Button>
@@ -275,6 +271,22 @@ const EventCalendar = () => {
               <ChevronRight className="h-5 w-5" />
             </Button>
           </div>
+          
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
+            {categories.map(category => (
+              <Button
+                key={category}
+                variant={filter === category ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleFilter(category)}
+                className="rounded-full whitespace-nowrap"
+              >
+                {category in categoryIcons ? categoryIcons[category as keyof typeof categoryIcons] : null}
+                {category}
+              </Button>
+            ))}
+          </div>
+          
           <div className="flex gap-2">
             <Button 
               onClick={fetchExternalEvents}
@@ -283,7 +295,7 @@ const EventCalendar = () => {
               disabled={isLoading}
             >
               <RefreshCw className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
-              <span className="hidden md:inline">Events aktualisieren</span>
+              <span className="hidden md:inline">Aktualisieren</span>
             </Button>
             <Dialog>
               <DialogTrigger asChild>
@@ -321,20 +333,34 @@ const EventCalendar = () => {
                 const isCurrentMonth = isSameMonth(day, currentDate);
                 const dayHasEvents = hasEvents(day);
                 const isCurrentDay = isToday(day);
+                const eventCount = getEventCount(day);
                 
                 return (
                   <button
                     key={i}
                     onClick={() => handleDateClick(day)}
                     className={cn(
-                      "calendar-day hover-scale",
-                      isSelected ? "active" : "",
+                      "calendar-day hover-scale relative flex flex-col items-center justify-center",
+                      isSelected ? "bg-primary text-primary-foreground" : "",
                       !isCurrentMonth ? "text-muted-foreground/40" : "",
-                      dayHasEvents ? "has-event" : "",
                       isCurrentDay ? "ring-2 ring-primary ring-offset-2" : ""
                     )}
                   >
                     {format(day, 'd')}
+                    {dayHasEvents && (
+                      <div className="absolute bottom-1 flex space-x-0.5">
+                        {eventCount > 3 ? (
+                          <span className="text-[10px] font-semibold text-primary">{eventCount}</span>
+                        ) : (
+                          Array(eventCount).fill(0).map((_, i) => (
+                            <div 
+                              key={i} 
+                              className="w-1 h-1 rounded-full bg-primary"
+                            />
+                          ))
+                        )}
+                      </div>
+                    )}
                   </button>
                 );
               })}
@@ -353,9 +379,9 @@ const EventCalendar = () => {
             
             <div className="flex-grow overflow-auto">
               {selectedDate ? (
-                selectedDateEvents.length > 0 ? (
+                filteredEvents.length > 0 ? (
                   <div className="space-y-4">
-                    {selectedDateEvents.map(event => (
+                    {filteredEvents.map(event => (
                       <EventCard 
                         key={event.id} 
                         event={event}
@@ -365,7 +391,7 @@ const EventCalendar = () => {
                   </div>
                 ) : (
                   <div className="flex h-full items-center justify-center text-muted-foreground">
-                    Keine Events an diesem Tag
+                    Keine Events an diesem Tag {filter ? `in der Kategorie "${filter}"` : ''}
                   </div>
                 )
               ) : (
@@ -390,36 +416,66 @@ const EventCalendar = () => {
 };
 
 // Sample data for initial display
-const sampleEvents: Event[] = [
+const bielefeldEvents: Event[] = [
   {
     id: '1',
-    title: 'Stammtisch',
-    description: 'Monatliches Treffen der Community zum Austausch und Networking.',
+    title: 'Indie Rock Konzert: Liebefeld Band',
+    description: 'Live-Musik mit lokalen Bands aus Bielefeld. Ein Abend voller Indie-Rock und guter Stimmung.',
     date: new Date().toISOString().split('T')[0],
-    time: '19:00',
-    location: 'Café Zentral, Hauptstraße 1',
-    organizer: 'Community Team',
-    category: 'Networking'
+    time: '20:00',
+    location: 'Forum Bielefeld, Niederwall 23',
+    organizer: 'Bielefeld Musik e.V.',
+    category: 'Konzert'
   },
   {
     id: '2',
-    title: 'Workshop: React Basics',
-    description: 'Einführung in React für Anfänger. Grundlagen und erste Schritte.',
+    title: 'Kunstausstellung: Stadt im Wandel',
+    description: 'Fotografien und Gemälde zum Wandel von Bielefeld in den letzten Jahrzehnten.',
     date: new Date().toISOString().split('T')[0],
     time: '14:00',
-    location: 'Tech Hub, Innovationspark',
-    organizer: 'Coding Club',
-    category: 'Workshop'
+    location: 'Kunsthalle Bielefeld, Artur-Ladebeck-Straße 5',
+    organizer: 'Kunstverein Bielefeld',
+    category: 'Ausstellung'
   },
   {
     id: '3',
-    title: 'Yoga im Park',
-    description: 'Gemeinsames Yoga für alle Levels. Bitte Matte mitbringen.',
+    title: 'Stadtlauf Bielefeld',
+    description: 'Jährlicher Stadtlauf durch die Innenstadt. Für Läufer aller Altersklassen.',
     date: new Date(new Date().setDate(new Date().getDate() + 2)).toISOString().split('T')[0],
-    time: '08:30',
-    location: 'Stadtpark, Brunnen',
-    organizer: 'Wellness Gruppe',
+    time: '10:00',
+    location: 'Start: Jahnplatz',
+    organizer: 'Sportbund Bielefeld',
     category: 'Sport'
+  },
+  {
+    id: '4',
+    title: 'Weekend Party im Club Freitag',
+    description: 'Die beste Party am Wochenende mit DJ Max und Special Guests.',
+    date: new Date(new Date().setDate(new Date().getDate() + 3)).toISOString().split('T')[0],
+    time: '23:00',
+    location: 'Club Freitag, Niederstraße 9',
+    organizer: 'Club Freitag',
+    category: 'Party'
+  },
+  {
+    id: '5',
+    title: 'Workshop: Urban Gardening',
+    description: 'Lerne, wie du auch mit wenig Platz in der Stadt Gemüse und Kräuter anbauen kannst.',
+    date: new Date(new Date().setDate(new Date().getDate() + 5)).toISOString().split('T')[0],
+    time: '15:00',
+    location: 'Stadtteilzentrum Liebefeld, Hauptstraße 55',
+    organizer: 'Grünes Bielefeld e.V.',
+    category: 'Workshop'
+  },
+  {
+    id: '6',
+    title: 'Theater: Romeo und Julia',
+    description: 'Moderne Inszenierung des Shakespeare-Klassikers vom Stadttheater Bielefeld.',
+    date: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0],
+    time: '19:30',
+    location: 'Stadttheater Bielefeld, Brunnenstraße 3-9',
+    organizer: 'Stadttheater Bielefeld',
+    category: 'Kultur'
   }
 ];
 

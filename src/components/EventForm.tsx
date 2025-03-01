@@ -20,13 +20,12 @@ interface EventFormProps {
 }
 
 const eventCategories = [
-  'Networking',
-  'Workshop',
-  'Sport',
-  'Kultur',
-  'Meeting',
+  'Konzert',
   'Party',
-  'Vortrag',
+  'Ausstellung',
+  'Sport',
+  'Workshop',
+  'Kultur',
   'Sonstiges'
 ];
 
@@ -34,7 +33,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
   const [date, setDate] = useState<Date>(selectedDate);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [time, setTime] = useState('');
+  const [time, setTime] = useState('19:00');
   const [location, setLocation] = useState('');
   const [organizer, setOrganizer] = useState('');
   const [category, setCategory] = useState('');
@@ -72,7 +71,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
       <DialogHeader>
         <DialogTitle className="text-2xl">Event erstellen</DialogTitle>
         <DialogDescription>
-          Füge ein neues Event zum Community Kalender hinzu.
+          Füge ein neues Event zum Liebefeld Community Kalender hinzu.
         </DialogDescription>
       </DialogHeader>
       
@@ -161,7 +160,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
             id="location"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder="Veranstaltungsort"
+            placeholder="Veranstaltungsort in Bielefeld"
             className="rounded-lg"
           />
         </div>
