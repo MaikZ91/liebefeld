@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -226,8 +225,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
         tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÄÖÜäöüß0123456789.,;:!?@#$%&*()-+=/\\\'"`~<>{}[]|_^°€ ',
       });
       
-      // Fix: Use the proper progress tracking method for tesseract.js v5
-      worker.setProgressHandler((progress) => {
+      worker.on('progress', (progress) => {
         console.log('OCR Progress:', progress);
         if (progress.status === 'recognizing text') {
           setRecognitionProgress(progress.progress * 100);
