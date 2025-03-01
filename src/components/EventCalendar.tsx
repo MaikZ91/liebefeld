@@ -75,11 +75,11 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
         } else {
           console.log("Today's ref not found");
         }
-      }, 800); // Increased delay to ensure the view has rendered completely
+      }, 1000); // Increased delay to ensure the view has rendered completely
       
       return () => clearTimeout(timer);
     }
-  }, [view, events.length]);
+  }, [view, events]);
 
   // Fetch global likes from the API
   const fetchGlobalLikes = async () => {
@@ -184,12 +184,22 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   // Generate sample events including today (March 1st)
   const generateSampleEvents = () => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
     
-    return bielefeldEvents.map(event => ({
-      ...event,
-      likes: globalLikes[event.id] || event.likes || 0
-    }));
+    return bielefeldEvents.map(event => {
+      // Make sure sample events include today's date
+      if (event.id === '1' || event.id === '2') {
+        const newEvent = {
+          ...event,
+          date: today.toISOString().split('T')[0], // Today's date
+          likes: globalLikes[event.id] || event.likes || 0
+        };
+        return newEvent;
+      }
+      return {
+        ...event,
+        likes: globalLikes[event.id] || event.likes || 0
+      };
+    });
   };
   
   // Process GitHub events
@@ -217,15 +227,21 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
         let eventDate;
         try {
           // Extract the date part (e.g., "04.04") from "Fri, 04.04"
-          const datePart = githubEvent.date.split(', ')[1];
-          if (!datePart) {
+          const dateParts = githubEvent.date.split(', ');
+          if (dateParts.length < 2) {
             throw new Error(`Invalid date format: ${githubEvent.date}`);
           }
           
+          const datePart = dateParts[1];
+          
           // Split into day and month
-          const dateParts = datePart.split('.');
-          const day = parseInt(dateParts[0], 10);
-          const month = parseInt(dateParts[1], 10) - 1; // JavaScript months are 0-indexed
+          const dayMonth = datePart.split('.');
+          if (dayMonth.length < 2) {
+            throw new Error(`Invalid date format: ${datePart}`);
+          }
+          
+          const day = parseInt(dayMonth[0], 10);
+          const month = parseInt(dayMonth[1], 10) - 1; // JavaScript months are 0-indexed
           
           // Create date with current year
           // Important: set to noon to avoid timezone issues
@@ -345,7 +361,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
       return dateA.getTime() - dateB.getTime();
     });
   
-  // Group events by date for the list view
+  // Group events by date for the list view and sort by date
   const eventsByDate = events.reduce((acc, event) => {
     const dateStr = event.date;
     if (!acc[dateStr]) {
@@ -421,7 +437,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     "Sonstiges": <Map className="h-4 w-4" />
   };
 
-  // Function to scroll to today's events
+  // Function to scroll to today's events - we'll keep this for manual trigger if needed
   const scrollToToday = () => {
     if (todayRef.current) {
       todayRef.current.scrollIntoView({ 
