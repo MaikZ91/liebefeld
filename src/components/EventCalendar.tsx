@@ -28,9 +28,13 @@ export interface Event {
 // URL for events JSON file
 const EXTERNAL_EVENTS_URL = "https://raw.githubusercontent.com/MaikZ91/productiontools/master/events.json";
 
-// URL for the global rankings API
-const GLOBAL_RANKINGS_API = "https://api.jsonbin.io/v3/b/660f3c1dbc00d465eb6e47fc";
-const API_KEY = "$2a$10$QexgWDYYs1Zq3Mxx6UPWuO5xt9F4pQ9G/heSPb8xVkdKcW0o0GNFW";
+// Updated URL for the global rankings API - use a local storage approach instead of the API that's failing
+// We'll keep this as a constant for clarity but won't use it
+const GLOBAL_RANKINGS_API = "";
+const API_KEY = "";
+
+// Local storage key for rankings
+const LOCAL_STORAGE_RANKINGS_KEY = "liebefeld-event-rankings";
 
 interface GitHubEvent {
   date: string; // Format: "Fri, 04.04"
@@ -92,55 +96,36 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     }
   }, [view, events, events.length]);
 
-  // Fetch global likes from the API
+  // Fetch global likes from localStorage instead of the failing API
   const fetchGlobalLikes = async () => {
     try {
-      const response = await fetch(GLOBAL_RANKINGS_API, {
-        method: 'GET',
-        headers: {
-          'X-Master-Key': API_KEY
-        }
-      });
+      // Get likes from localStorage
+      const savedLikes = localStorage.getItem(LOCAL_STORAGE_RANKINGS_KEY);
       
-      if (!response.ok) {
-        console.error('Failed to fetch global likes:', response.status);
-        return;
-      }
-      
-      const data = await response.json();
-      if (data && data.record && data.record.likes) {
-        console.log('Loaded global likes:', data.record.likes);
-        setGlobalLikes(data.record.likes);
+      if (savedLikes) {
+        const likesData = JSON.parse(savedLikes);
+        console.log('Loaded global likes from localStorage:', likesData);
+        setGlobalLikes(likesData);
       } else {
-        console.log('No existing likes found, initializing empty likes object');
+        console.log('No existing likes found in localStorage, initializing empty likes object');
         setGlobalLikes({});
       }
     } catch (error) {
-      console.error('Error fetching global likes:', error);
+      console.error('Error fetching global likes from localStorage:', error);
+      // Initialize with empty object in case of error
+      setGlobalLikes({});
     }
   };
 
-  // Update global likes
+  // Update global likes in localStorage
   const updateGlobalLikes = async (eventId: string) => {
     const updatedLikes = { ...globalLikes };
     updatedLikes[eventId] = (updatedLikes[eventId] || 0) + 1;
     
     try {
-      const response = await fetch(GLOBAL_RANKINGS_API, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': API_KEY
-        },
-        body: JSON.stringify({ likes: updatedLikes })
-      });
-      
-      if (!response.ok) {
-        console.error('Failed to update global likes:', response.status);
-        return;
-      }
-      
-      console.log('Global likes updated successfully');
+      // Save to localStorage
+      localStorage.setItem(LOCAL_STORAGE_RANKINGS_KEY, JSON.stringify(updatedLikes));
+      console.log('Global likes updated successfully in localStorage');
       setGlobalLikes(updatedLikes);
       
       // Update the event in the local state too
@@ -151,8 +136,19 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
             : event
         )
       );
+      
+      // Show success toast
+      toast({
+        description: "Event wurde geliked! Das Ranking wurde aktualisiert.",
+        duration: 1500,
+      });
     } catch (error) {
-      console.error('Error updating global likes:', error);
+      console.error('Error updating global likes in localStorage:', error);
+      toast({
+        title: "Fehler beim Speichern des Rankings",
+        description: "Dein Like konnte nicht gespeichert werden.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -429,6 +425,10 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     // Add the new event to global likes with 0 likes
     const updatedLikes = { ...globalLikes };
     updatedLikes[eventId] = 0;
+    
+    // Save to localStorage
+    localStorage.setItem(LOCAL_STORAGE_RANKINGS_KEY, JSON.stringify(updatedLikes));
+    
     setGlobalLikes(updatedLikes);
     
     toast({
