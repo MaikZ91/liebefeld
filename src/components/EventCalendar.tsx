@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -168,10 +169,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
       console.error(`Fehler beim Laden von ${EXTERNAL_EVENTS_URL}:`, error);
       // Use sample data
       console.log("Verwende lokale Beispieldaten, da keine externe Quelle verfügbar ist.");
-      const sampleEvents = bielefeldEvents.map(event => ({
-        ...event,
-        likes: globalLikes[event.id] || event.likes || 0
-      }));
+      const sampleEvents = generateSampleEvents();
       setEvents(sampleEvents);
       
       toast({
@@ -182,6 +180,17 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     }
     
     setIsLoading(false);
+  };
+  
+  // Generate sample events including today (March 1st)
+  const generateSampleEvents = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return bielefeldEvents.map(event => ({
+      ...event,
+      likes: globalLikes[event.id] || event.likes || 0
+    }));
   };
   
   // Process GitHub events
@@ -219,18 +228,20 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
           const day = parseInt(dateParts[0], 10);
           const month = parseInt(dateParts[1], 10) - 1; // JavaScript months are 0-indexed
           
-          // Create date with current year, explicitly setting time to noon to avoid timezone issues
+          // Create date with current year
+          // Important: set to noon to avoid timezone issues
           eventDate = new Date(currentYear, month, day, 12, 0, 0);
           
           // If the date is in the past, add a year (only for first half of the year)
-          if (eventDate < new Date() && month < 6) {
+          const now = new Date();
+          if (eventDate < now && month < 6) {
             eventDate.setFullYear(currentYear + 1);
           }
           
           console.log(`Parsed date for "${title}": ${eventDate.toDateString()} (original: ${githubEvent.date})`);
         } catch (err) {
           console.warn(`Konnte Datum nicht parsen: ${githubEvent.date}`, err);
-          // Fallback to today's date
+          // Fallback to today's date at noon
           eventDate = new Date();
           eventDate.setHours(12, 0, 0, 0);
         }
@@ -256,13 +267,9 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
       // Set the transformed events
       setEvents(transformedEvents);
       
-      // Removed toast notification about loaded events
     } catch (error) {
       console.error("Fehler bei der Verarbeitung der GitHub-Events:", error);
-      const sampleEvents = bielefeldEvents.map(event => ({
-        ...event,
-        likes: globalLikes[event.id] || event.likes || 0
-      }));
+      const sampleEvents = generateSampleEvents();
       setEvents(sampleEvents);
       
       toast({
@@ -340,7 +347,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     });
   
   // Group events by date for the list view
-  const eventsByDate = currentMonthEvents.reduce((acc, event) => {
+  const eventsByDate = events.reduce((acc, event) => {
     const dateStr = event.date;
     if (!acc[dateStr]) {
       acc[dateStr] = [];
@@ -352,7 +359,10 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   // Checks if a date is today
   const isDateToday = (dateStr: string) => {
     const today = new Date();
-    return isSameDay(parseISO(dateStr), today);
+    today.setHours(0, 0, 0, 0);
+    const eventDate = parseISO(dateStr);
+    eventDate.setHours(0, 0, 0, 0);
+    return isSameDay(eventDate, today);
   };
   
   // Handler for selecting a date
@@ -410,6 +420,16 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     "Workshop": <Plus className="h-4 w-4" />,
     "Kultur": <Image className="h-4 w-4" />,
     "Sonstiges": <Map className="h-4 w-4" />
+  };
+
+  // Function to scroll to today's events
+  const scrollToToday = () => {
+    if (todayRef.current) {
+      todayRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    }
   };
 
   return (
@@ -506,12 +526,8 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                     <Button 
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        if (todayRef.current) {
-                          todayRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }
-                      }}
-                      className="flex items-center gap-1 text-sm"
+                      onClick={scrollToToday}
+                      className="flex items-center gap-1 text-sm hover:bg-gray-700/30"
                     >
                       <ScrollText className="h-4 w-4" />
                       <span>Zum heutigen Tag</span>
@@ -676,7 +692,7 @@ const bielefeldEvents: Event[] = [
     id: '1',
     title: 'Indie Rock Konzert: Liebefeld Band',
     description: 'Live-Musik mit lokalen Bands aus Bielefeld. Ein Abend voller Indie-Rock und guter Stimmung.',
-    date: new Date().toISOString().split('T')[0],
+    date: new Date().toISOString().split('T')[0], // Today's date
     time: '20:00',
     location: 'Forum Bielefeld, Niederwall 23',
     organizer: 'Bielefeld Musik e.V.',
@@ -687,7 +703,7 @@ const bielefeldEvents: Event[] = [
     id: '2',
     title: 'Kunstausstellung: Stadt im Wandel',
     description: 'Fotografien und Gemälde zum Wandel von Bielefeld in den letzten Jahrzehnten.',
-    date: new Date().toISOString().split('T')[0],
+    date: new Date().toISOString().split('T')[0], // Today's date
     time: '14:00',
     location: 'Kunsthalle Bielefeld, Artur-Ladebeck-Straße 5',
     organizer: 'Kunstverein Bielefeld',
