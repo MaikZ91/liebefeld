@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import EventDetails from './EventDetails';
@@ -23,6 +23,25 @@ export interface Event {
   category: string;
 }
 
+// URL zur JSON-Datei mit Events
+const EXTERNAL_EVENTS_URL = "https://raw.githubusercontent.com/codeforbielefeld/teuto-events/main/events.json";
+
+interface ExternalEvent {
+  id: string;
+  title: string;
+  description: string;
+  start_date: string; // Format: "2024-05-28T19:00:00+02:00"
+  end_date?: string;
+  location?: {
+    name?: string;
+    city?: string;
+    street?: string;
+  };
+  url?: string;
+  organizer?: string;
+  category?: string;
+}
+
 const EventCalendar = () => {
   // State variables
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -32,11 +51,77 @@ const EventCalendar = () => {
   });
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Save events to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('communityEvents', JSON.stringify(events));
   }, [events]);
+
+  // Lade externe Events beim Start
+  useEffect(() => {
+    fetchExternalEvents();
+  }, []);
+
+  // Funktion zum Laden externer Events
+  const fetchExternalEvents = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(EXTERNAL_EVENTS_URL);
+      if (!response.ok) {
+        throw new Error('Fehler beim Laden der Events');
+      }
+      const externalData: ExternalEvent[] = await response.json();
+      
+      // Transformiere externe Events in das interne Format
+      const transformedEvents = externalData.map((extEvent) => {
+        // Parsen des Datums und der Zeit
+        const startDate = new Date(extEvent.start_date);
+        
+        return {
+          id: extEvent.id || Math.random().toString(36).substring(2, 9),
+          title: extEvent.title,
+          description: extEvent.description || 'Keine Beschreibung verfügbar',
+          date: startDate.toISOString().split('T')[0],
+          time: format(startDate, 'HH:mm'),
+          location: extEvent.location?.name 
+            ? `${extEvent.location.name}${extEvent.location.street ? ', ' + extEvent.location.street : ''}${extEvent.location.city ? ', ' + extEvent.location.city : ''}`
+            : 'Unbekannter Ort',
+          organizer: extEvent.organizer || 'Unbekannter Veranstalter',
+          category: extEvent.category || 'Meeting'
+        } as Event;
+      });
+      
+      // Kombiniere mit bestehenden lokalen Events
+      const savedEvents = localStorage.getItem('communityEvents');
+      const localEvents = savedEvents ? JSON.parse(savedEvents) : sampleEvents;
+      
+      // Entferne Duplikate (basierend auf ID)
+      const mergedEvents = [...localEvents];
+      
+      transformedEvents.forEach(newEvent => {
+        const exists = mergedEvents.some(event => event.id === newEvent.id);
+        if (!exists) {
+          mergedEvents.push(newEvent);
+        }
+      });
+      
+      setEvents(mergedEvents);
+      toast({
+        title: "Events aktualisiert",
+        description: `${transformedEvents.length} externe Events wurden geladen.`,
+      });
+    } catch (error) {
+      console.error('Fehler beim Laden der Events:', error);
+      toast({
+        title: "Fehler",
+        description: "Events konnten nicht geladen werden. Bitte versuche es später erneut.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Calendar navigation functions
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
@@ -94,20 +179,31 @@ const EventCalendar = () => {
               <ChevronRight className="h-5 w-5" />
             </Button>
           </div>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all">
-                <Plus className="h-5 w-5" />
-                <span className="hidden md:inline">Event erstellen</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="glass-effect max-w-md sm:max-w-lg">
-              <EventForm 
-                selectedDate={selectedDate ? selectedDate : new Date()} 
-                onAddEvent={handleAddEvent} 
-              />
-            </DialogContent>
-          </Dialog>
+          <div className="flex gap-2">
+            <Button 
+              onClick={fetchExternalEvents}
+              className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all"
+              variant="outline"
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
+              <span className="hidden md:inline">Events aktualisieren</span>
+            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all">
+                  <Plus className="h-5 w-5" />
+                  <span className="hidden md:inline">Event erstellen</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="glass-effect max-w-md sm:max-w-lg">
+                <EventForm 
+                  selectedDate={selectedDate ? selectedDate : new Date()} 
+                  onAddEvent={handleAddEvent} 
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
         
         {/* Main calendar grid */}
