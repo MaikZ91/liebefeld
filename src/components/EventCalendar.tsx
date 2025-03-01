@@ -61,25 +61,32 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     fetchGlobalLikes();
   }, []);
 
-  // Improved scroll to today effect - scrolls to today's date after events are loaded
+  // Improved scroll to today effect - scrolls to today's date in both calendar and list views
   useEffect(() => {
-    if (view === 'list' && events.length > 0) {
-      // Wait for events to be rendered before scrolling
-      const timer = setTimeout(() => {
-        if (todayRef.current) {
-          console.log("Automatically scrolling to today's date");
-          todayRef.current.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start' 
-          });
-        } else {
-          console.log("Today's ref not found");
-        }
-      }, 1000); // Increased delay to ensure the view has rendered completely
-      
-      return () => clearTimeout(timer);
+    if (events.length > 0) {
+      // For list view - wait for events to be rendered before scrolling
+      if (view === 'list') {
+        const timer = setTimeout(() => {
+          if (todayRef.current) {
+            console.log("Automatically scrolling to today's date in list view");
+            todayRef.current.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'start' 
+            });
+          } else {
+            console.log("Today's ref not found in list view");
+          }
+        }, 1500); // Increased delay to ensure the view has rendered completely
+        
+        return () => clearTimeout(timer);
+      } 
+      // For calendar view - automatically select today's date
+      else if (view === 'calendar') {
+        console.log("Setting selected date to today in calendar view");
+        setSelectedDate(new Date());
+      }
     }
-  }, [view, events]);
+  }, [view, events, events.length]);
 
   // Fetch global likes from the API
   const fetchGlobalLikes = async () => {
@@ -181,7 +188,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     setIsLoading(false);
   };
   
-  // Generate sample events including today (March 1st)
+  // Generate sample events including today
   const generateSampleEvents = () => {
     const today = new Date();
     
@@ -371,6 +378,24 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     return acc;
   }, {} as Record<string, Event[]>);
   
+  // Function to find today in calendar and scroll/highlight it
+  const scrollToTodayInCalendar = () => {
+    // Find today's date in the calendar
+    const today = new Date();
+    
+    // If current month is not the same as today's month, navigate to today's month
+    if (!isSameMonth(today, currentDate)) {
+      setCurrentDate(today);
+    }
+    
+    // Select today's date to show today's events
+    setSelectedDate(today);
+    
+    // Dispatch a custom event to indicate we want to highlight today
+    const event = new CustomEvent('highlight-today');
+    window.dispatchEvent(event);
+  };
+
   // Checks if a date is today
   const isDateToday = (dateStr: string) => {
     const today = new Date();
@@ -491,6 +516,14 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
             >
               <RefreshCw className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
               <span className="hidden md:inline">Aktualisieren</span>
+            </Button>
+            <Button
+              onClick={scrollToTodayInCalendar}
+              className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all dark-button"
+              variant="outline"
+            >
+              <CalendarIcon className="h-5 w-5" />
+              <span className="hidden md:inline">Heute</span>
             </Button>
             <Dialog>
               <DialogTrigger asChild>
