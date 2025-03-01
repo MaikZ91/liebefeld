@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -81,6 +80,7 @@ const SAMPLE_EVENTS = [
 
 // URL zur JSON-Datei mit Events - mit Fallback auf eine alternative Quelle
 const EXTERNAL_EVENTS_URLS = [
+  "https://raw.githubusercontent.com/MaikZ91/productiontools/master/events.json",
   "https://raw.githubusercontent.com/codeforbielefeld/teuto-events/main/events.json",
   "https://raw.githubusercontent.com/codeforbielefeld/events/main/events.json"
 ];
@@ -130,6 +130,7 @@ const EventCalendar = () => {
     // Versuche die Events von einer der URLs zu laden
     for (const url of EXTERNAL_EVENTS_URLS) {
       try {
+        console.log(`Attempting to fetch events from: ${url}`);
         const response = await fetch(url);
         if (!response.ok) {
           console.log(`Fehler beim Laden von ${url}: ${response.status}`);
@@ -137,6 +138,7 @@ const EventCalendar = () => {
         }
         
         const externalData: ExternalEvent[] = await response.json();
+        console.log(`Successfully loaded ${externalData.length} events from ${url}`);
         processExternalEvents(externalData);
         success = true;
         break; // Erfolgreich geladen, breche die Schleife ab
