@@ -23,8 +23,67 @@ export interface Event {
   category: string;
 }
 
-// URL zur JSON-Datei mit Events
-const EXTERNAL_EVENTS_URL = "https://raw.githubusercontent.com/codeforbielefeld/teuto-events/main/events.json";
+// JSON-Beispiel, falls die externe Quelle nicht verfügbar ist
+const SAMPLE_EVENTS = [
+  {
+    "id": "event1",
+    "title": "Coding Meetup",
+    "description": "Gemeinsames Programmieren und Austausch über aktuelle Technologien",
+    "start_date": "2024-05-15T18:30:00+02:00",
+    "location": {
+      "name": "Founders Foundation",
+      "city": "Bielefeld",
+      "street": "Obernstraße 50"
+    },
+    "organizer": "Code for Bielefeld",
+    "category": "Workshop"
+  },
+  {
+    "id": "event2",
+    "title": "Offener Stammtisch",
+    "description": "Lockeres Treffen zum Austausch über lokale Themen",
+    "start_date": "2024-05-20T19:00:00+02:00",
+    "location": {
+      "name": "Café Lieblings",
+      "city": "Bielefeld",
+      "street": "Arndtstraße 7"
+    },
+    "organizer": "Bielefeld Community",
+    "category": "Networking"
+  },
+  {
+    "id": "event3",
+    "title": "Urban Gardening Workshop",
+    "description": "Praktische Tipps zum Gärtnern in der Stadt",
+    "start_date": "2024-05-25T10:00:00+02:00",
+    "location": {
+      "name": "Transition Town Bielefeld",
+      "city": "Bielefeld",
+      "street": "Metzer Straße 20"
+    },
+    "organizer": "Nachhaltig in Bielefeld",
+    "category": "Workshop"
+  },
+  {
+    "id": "event4",
+    "title": "Radtour durch Bielefeld",
+    "description": "Gemeinsame Radtour durch die schönsten Ecken der Stadt",
+    "start_date": "2024-05-30T14:00:00+02:00",
+    "location": {
+      "name": "Kesselbrink",
+      "city": "Bielefeld",
+      "street": ""
+    },
+    "organizer": "ADFC Bielefeld",
+    "category": "Sport"
+  }
+];
+
+// URL zur JSON-Datei mit Events - mit Fallback auf eine alternative Quelle
+const EXTERNAL_EVENTS_URLS = [
+  "https://raw.githubusercontent.com/codeforbielefeld/teuto-events/main/events.json",
+  "https://raw.githubusercontent.com/codeforbielefeld/events/main/events.json"
+];
 
 interface ExternalEvent {
   id: string;
@@ -66,61 +125,76 @@ const EventCalendar = () => {
   // Funktion zum Laden externer Events
   const fetchExternalEvents = async () => {
     setIsLoading(true);
-    try {
-      const response = await fetch(EXTERNAL_EVENTS_URL);
-      if (!response.ok) {
-        throw new Error('Fehler beim Laden der Events');
-      }
-      const externalData: ExternalEvent[] = await response.json();
-      
-      // Transformiere externe Events in das interne Format
-      const transformedEvents = externalData.map((extEvent) => {
-        // Parsen des Datums und der Zeit
-        const startDate = new Date(extEvent.start_date);
-        
-        return {
-          id: extEvent.id || Math.random().toString(36).substring(2, 9),
-          title: extEvent.title,
-          description: extEvent.description || 'Keine Beschreibung verfügbar',
-          date: startDate.toISOString().split('T')[0],
-          time: format(startDate, 'HH:mm'),
-          location: extEvent.location?.name 
-            ? `${extEvent.location.name}${extEvent.location.street ? ', ' + extEvent.location.street : ''}${extEvent.location.city ? ', ' + extEvent.location.city : ''}`
-            : 'Unbekannter Ort',
-          organizer: extEvent.organizer || 'Unbekannter Veranstalter',
-          category: extEvent.category || 'Meeting'
-        } as Event;
-      });
-      
-      // Kombiniere mit bestehenden lokalen Events
-      const savedEvents = localStorage.getItem('communityEvents');
-      const localEvents = savedEvents ? JSON.parse(savedEvents) : sampleEvents;
-      
-      // Entferne Duplikate (basierend auf ID)
-      const mergedEvents = [...localEvents];
-      
-      transformedEvents.forEach(newEvent => {
-        const exists = mergedEvents.some(event => event.id === newEvent.id);
-        if (!exists) {
-          mergedEvents.push(newEvent);
+    let success = false;
+    
+    // Versuche die Events von einer der URLs zu laden
+    for (const url of EXTERNAL_EVENTS_URLS) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          console.log(`Fehler beim Laden von ${url}: ${response.status}`);
+          continue; // Versuche die nächste URL
         }
-      });
-      
-      setEvents(mergedEvents);
-      toast({
-        title: "Events aktualisiert",
-        description: `${transformedEvents.length} externe Events wurden geladen.`,
-      });
-    } catch (error) {
-      console.error('Fehler beim Laden der Events:', error);
-      toast({
-        title: "Fehler",
-        description: "Events konnten nicht geladen werden. Bitte versuche es später erneut.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
+        
+        const externalData: ExternalEvent[] = await response.json();
+        processExternalEvents(externalData);
+        success = true;
+        break; // Erfolgreich geladen, breche die Schleife ab
+      } catch (error) {
+        console.error(`Fehler beim Laden von ${url}:`, error);
+        // Versuche die nächste URL
+      }
     }
+    
+    // Wenn keine externe Quelle erfolgreich war, verwende die Beispieldaten
+    if (!success) {
+      console.log("Verwende lokale Beispieldaten, da keine externe Quelle verfügbar ist.");
+      processExternalEvents(SAMPLE_EVENTS);
+    }
+    
+    setIsLoading(false);
+  };
+  
+  // Verarbeite die externen Events
+  const processExternalEvents = (externalData: ExternalEvent[]) => {
+    // Transformiere externe Events in das interne Format
+    const transformedEvents = externalData.map((extEvent) => {
+      // Parsen des Datums und der Zeit
+      const startDate = new Date(extEvent.start_date);
+      
+      return {
+        id: extEvent.id || Math.random().toString(36).substring(2, 9),
+        title: extEvent.title,
+        description: extEvent.description || 'Keine Beschreibung verfügbar',
+        date: startDate.toISOString().split('T')[0],
+        time: format(startDate, 'HH:mm'),
+        location: extEvent.location?.name 
+          ? `${extEvent.location.name}${extEvent.location.street ? ', ' + extEvent.location.street : ''}${extEvent.location.city ? ', ' + extEvent.location.city : ''}`
+          : 'Unbekannter Ort',
+        organizer: extEvent.organizer || 'Unbekannter Veranstalter',
+        category: extEvent.category || 'Meeting'
+      } as Event;
+    });
+    
+    // Kombiniere mit bestehenden lokalen Events
+    const savedEvents = localStorage.getItem('communityEvents');
+    const localEvents = savedEvents ? JSON.parse(savedEvents) : sampleEvents;
+    
+    // Entferne Duplikate (basierend auf ID)
+    const mergedEvents = [...localEvents];
+    
+    transformedEvents.forEach(newEvent => {
+      const exists = mergedEvents.some(event => event.id === newEvent.id);
+      if (!exists) {
+        mergedEvents.push(newEvent);
+      }
+    });
+    
+    setEvents(mergedEvents);
+    toast({
+      title: "Events aktualisiert",
+      description: `${transformedEvents.length} Events wurden geladen.`,
+    });
   };
 
   // Calendar navigation functions
