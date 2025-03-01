@@ -244,10 +244,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
       // Set the transformed events
       setEvents(transformedEvents);
       
-      toast({
-        title: "Events aktualisiert",
-        description: `${transformedEvents.length} Events wurden geladen.`,
-      });
+      // Removed toast notification about loaded events
     } catch (error) {
       console.error("Fehler bei der Verarbeitung der GitHub-Events:", error);
       const sampleEvents = bielefeldEvents.map(event => ({
