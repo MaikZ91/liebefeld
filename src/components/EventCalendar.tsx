@@ -24,8 +24,12 @@ export interface Event {
   likes?: number;
 }
 
-// URL zur JSON-Datei mit Events
+// URL for events JSON file
 const EXTERNAL_EVENTS_URL = "https://raw.githubusercontent.com/MaikZ91/productiontools/master/events.json";
+
+// URL for the global rankings API
+const GLOBAL_RANKINGS_API = "https://api.jsonbin.io/v3/b/660f3c1dbc00d465eb6e47fc";
+const API_KEY = "$2a$10$QexgWDYYs1Zq3Mxx6UPWuO5xt9F4pQ9G/heSPb8xVkdKcW0o0GNFW";
 
 interface GitHubEvent {
   date: string; // Format: "Fri, 04.04"
@@ -37,30 +41,24 @@ interface EventCalendarProps {
   defaultView?: "calendar" | "list";
 }
 
-const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
+const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   // State variables
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [events, setEvents] = useState<Event[]>(() => {
-    const savedEvents = localStorage.getItem('communityEvents');
-    return savedEvents ? JSON.parse(savedEvents) : bielefeldEvents;
-  });
+  const [events, setEvents] = useState<Event[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState<string | null>(null);
   const [view, setView] = useState<"calendar" | "list">(defaultView);
+  const [globalLikes, setGlobalLikes] = useState<Record<string, number>>({});
   
   // Reference to the current day element in the list view
   const todayRef = useRef<HTMLDivElement>(null);
 
-  // Save events to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('communityEvents', JSON.stringify(events));
-  }, [events]);
-
-  // Lade externe Events beim Start
+  // Load events and global likes on component mount
   useEffect(() => {
     fetchExternalEvents();
+    fetchGlobalLikes();
   }, []);
 
   // Automatically scroll to today when view changes or component mounts
@@ -75,7 +73,71 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     }
   }, [view]);
 
-  // Funktion zum Laden externer Events
+  // Fetch global likes from the API
+  const fetchGlobalLikes = async () => {
+    try {
+      const response = await fetch(GLOBAL_RANKINGS_API, {
+        method: 'GET',
+        headers: {
+          'X-Master-Key': API_KEY
+        }
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to fetch global likes:', response.status);
+        return;
+      }
+      
+      const data = await response.json();
+      if (data && data.record && data.record.likes) {
+        console.log('Loaded global likes:', data.record.likes);
+        setGlobalLikes(data.record.likes);
+      } else {
+        console.log('No existing likes found, initializing empty likes object');
+        setGlobalLikes({});
+      }
+    } catch (error) {
+      console.error('Error fetching global likes:', error);
+    }
+  };
+
+  // Update global likes
+  const updateGlobalLikes = async (eventId: string) => {
+    const updatedLikes = { ...globalLikes };
+    updatedLikes[eventId] = (updatedLikes[eventId] || 0) + 1;
+    
+    try {
+      const response = await fetch(GLOBAL_RANKINGS_API, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': API_KEY
+        },
+        body: JSON.stringify({ likes: updatedLikes })
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to update global likes:', response.status);
+        return;
+      }
+      
+      console.log('Global likes updated successfully');
+      setGlobalLikes(updatedLikes);
+      
+      // Update the event in the local state too
+      setEvents(prevEvents => 
+        prevEvents.map(event => 
+          event.id === eventId 
+            ? { ...event, likes: updatedLikes[eventId] } 
+            : event
+        )
+      );
+    } catch (error) {
+      console.error('Error updating global likes:', error);
+    }
+  };
+
+  // Load external events
   const fetchExternalEvents = async () => {
     setIsLoading(true);
     
@@ -91,14 +153,18 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       const githubEvents: GitHubEvent[] = await response.json();
       console.log(`Successfully loaded ${githubEvents.length} events from ${EXTERNAL_EVENTS_URL}`);
       
-      // Transformiere die GitHub-Events in das interne Format
+      // Transform GitHub events to our format
       processGitHubEvents(githubEvents);
       
     } catch (error) {
       console.error(`Fehler beim Laden von ${EXTERNAL_EVENTS_URL}:`, error);
-      // Verwende Beispieldaten
+      // Use sample data
       console.log("Verwende lokale Beispieldaten, da keine externe Quelle verfügbar ist.");
-      setEvents(bielefeldEvents);
+      const sampleEvents = bielefeldEvents.map(event => ({
+        ...event,
+        likes: globalLikes[event.id] || event.likes || 0
+      }));
+      setEvents(sampleEvents);
       
       toast({
         title: "Fehler beim Laden der Events",
@@ -110,66 +176,67 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     setIsLoading(false);
   };
   
-  // Verarbeite die GitHub-Events
+  // Process GitHub events
   const processGitHubEvents = (githubEvents: GitHubEvent[]) => {
     try {
-      // Aktuelles Jahr für die Datumskonvertierung
+      // Current year for date conversion
       const currentYear = new Date().getFullYear();
       
-      // Transformiere GitHub-Events in das interne Format
+      // Transform GitHub events to our format
       const transformedEvents = githubEvents.map((githubEvent, index) => {
-        // Extrahiere Veranstaltungsort aus dem Event-Titel (falls vorhanden)
+        // Extract location from event title (if available)
         let title = githubEvent.event;
         let location = "Bielefeld";
         let category = determineEventCategory(githubEvent.event.toLowerCase());
         
-        // Überprüfe, ob es eine Standortangabe in Klammern gibt
+        // Check if there's a location in parentheses
         const locationMatch = githubEvent.event.match(/\(@([^)]+)\)/);
         if (locationMatch) {
-          // Entferne die Standortangabe aus dem Titel
+          // Remove the location from the title
           title = githubEvent.event.replace(/\s*\(@[^)]+\)/, '');
           location = locationMatch[1];
         }
         
-        // Parse das Datum (Format: "Fri, 04.04")
+        // Parse the date (Format: "Fri, 04.04")
         let eventDate;
         try {
-          // Versuche "dd.MM" Format zu parsen und füge aktuelles Jahr hinzu
+          // Try to parse "dd.MM" format and add current year
           const dateParts = githubEvent.date.split(', ')[1].split('.');
           const day = parseInt(dateParts[0], 10);
-          const month = parseInt(dateParts[1], 10) - 1; // JavaScript-Monate sind 0-indexed
+          const month = parseInt(dateParts[1], 10) - 1; // JavaScript months are 0-indexed
           
-          // Erstelle Datum mit aktuellem Jahr
+          // Create date with current year
           eventDate = new Date(currentYear, month, day);
           
-          // Wenn das Datum in der Vergangenheit liegt, füge ein Jahr hinzu
-          // (für Events, die im nächsten Jahr stattfinden)
-          if (eventDate < new Date() && month < 6) { // Nur für erste Jahreshälfte
+          // If the date is in the past, add a year
+          if (eventDate < new Date() && month < 6) { // Only for first half of the year
             eventDate.setFullYear(currentYear + 1);
           }
         } catch (err) {
           console.warn(`Konnte Datum nicht parsen: ${githubEvent.date}`, err);
-          // Fallback auf heutiges Datum
+          // Fallback to today's date
           eventDate = new Date();
         }
         
-        // Erstelle das Event-Objekt
+        const eventId = `github-${index}`;
+        
+        // Create the event object
         return {
-          id: `github-${index}`,
+          id: eventId,
           title: title,
           description: `Mehr Informationen unter: ${githubEvent.link}`,
           date: eventDate.toISOString().split('T')[0],
-          time: "19:00", // Default-Zeit für Events ohne Zeitangabe
+          time: "19:00", // Default time for events without time
           location: location,
           organizer: "Liebefeld Community Bielefeld",
           category: category,
-          likes: 0
+          likes: globalLikes[eventId] || 0
         } as Event;
       });
       
       console.log(`Transformed ${transformedEvents.length} events successfully`);
       
-      // Setze die transformierten Events
+      // Set the transformed events
       setEvents(transformedEvents);
       
       toast({
@@ -178,7 +245,11 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       });
     } catch (error) {
       console.error("Fehler bei der Verarbeitung der GitHub-Events:", error);
-      setEvents(bielefeldEvents);
+      const sampleEvents = bielefeldEvents.map(event => ({
+        ...event,
+        likes: globalLikes[event.id] || event.likes || 0
+      }));
+      setEvents(sampleEvents);
       
       toast({
         title: "Fehler bei der Verarbeitung der Events",
@@ -188,7 +259,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     }
   };
 
-  // Bestimme Kategorie basierend auf Schlüsselwörtern im Titel
+  // Determine category based on keywords in title
   const determineEventCategory = (title: string): string => {
     if (title.includes("konzert") || title.includes("festival") || title.includes("musik") || 
         title.includes("band") || title.includes("jazz") || title.includes("chor")) {
@@ -211,15 +282,9 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     }
   };
 
-  // Handle like functionality
+  // Handle like functionality with global rankings
   const handleLikeEvent = (eventId: string) => {
-    setEvents(prevEvents => 
-      prevEvents.map(event => 
-        event.id === eventId 
-          ? { ...event, likes: (event.likes || 0) + 1 } 
-          : event
-      )
-    );
+    updateGlobalLikes(eventId);
   };
 
   // Calendar navigation functions
@@ -284,13 +349,20 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   
   // Handler for adding a new event
   const handleAddEvent = (newEvent: Omit<Event, 'id'>) => {
+    const eventId = Math.random().toString(36).substring(2, 9);
     const eventWithId = {
       ...newEvent,
-      id: Math.random().toString(36).substring(2, 9),
+      id: eventId,
       likes: 0
     };
     
     setEvents([...events, eventWithId as Event]);
+    
+    // Add the new event to global likes with 0 likes
+    const updatedLikes = { ...globalLikes };
+    updatedLikes[eventId] = 0;
+    setGlobalLikes(updatedLikes);
+    
     toast({
       title: "Event erstellt",
       description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`,
