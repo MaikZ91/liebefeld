@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -68,7 +67,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
       // Wait for events to be rendered before scrolling
       const timer = setTimeout(() => {
         if (todayRef.current) {
-          console.log("Scrolling to today's date");
+          console.log("Automatically scrolling to today's date");
           todayRef.current.scrollIntoView({ 
             behavior: 'smooth', 
             block: 'start' 
@@ -520,20 +519,6 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                     <span className="text-sm text-gray-300">Top Events oben</span>
                   </div>
                 </div>
-
-                {Object.keys(eventsByDate).length > 0 && (
-                  <div className="flex items-center text-white my-2 justify-end gap-2">
-                    <Button 
-                      variant="ghost"
-                      size="sm"
-                      onClick={scrollToToday}
-                      className="flex items-center gap-1 text-sm hover:bg-gray-700/30"
-                    >
-                      <ScrollText className="h-4 w-4" />
-                      <span>Zum heutigen Tag</span>
-                    </Button>
-                  </div>
-                )}
                 
                 <div className="overflow-y-auto max-h-[600px] pr-2 custom-scrollbar">
                   {Object.keys(eventsByDate).length > 0 ? (
