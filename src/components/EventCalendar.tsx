@@ -205,22 +205,31 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
         // Parse the date (Format: "Fri, 04.04")
         let eventDate;
         try {
-          // Try to parse "dd.MM" format and add current year
-          const dateParts = githubEvent.date.split(', ')[1].split('.');
+          // Extract the date part (e.g., "04.04") from "Fri, 04.04"
+          const datePart = githubEvent.date.split(', ')[1];
+          if (!datePart) {
+            throw new Error(`Invalid date format: ${githubEvent.date}`);
+          }
+          
+          // Split into day and month
+          const dateParts = datePart.split('.');
           const day = parseInt(dateParts[0], 10);
           const month = parseInt(dateParts[1], 10) - 1; // JavaScript months are 0-indexed
           
-          // Create date with current year
-          eventDate = new Date(currentYear, month, day);
+          // Create date with current year, explicitly setting time to noon to avoid timezone issues
+          eventDate = new Date(currentYear, month, day, 12, 0, 0);
           
-          // If the date is in the past, add a year
-          if (eventDate < new Date() && month < 6) { // Only for first half of the year
+          // If the date is in the past, add a year (only for first half of the year)
+          if (eventDate < new Date() && month < 6) {
             eventDate.setFullYear(currentYear + 1);
           }
+          
+          console.log(`Parsed date for "${title}": ${eventDate.toDateString()} (original: ${githubEvent.date})`);
         } catch (err) {
           console.warn(`Konnte Datum nicht parsen: ${githubEvent.date}`, err);
           // Fallback to today's date
           eventDate = new Date();
+          eventDate.setHours(12, 0, 0, 0);
         }
         
         const eventId = `github-${index}`;
@@ -230,7 +239,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
           id: eventId,
           title: title,
           description: `Mehr Informationen unter: ${githubEvent.link}`,
-          date: eventDate.toISOString().split('T')[0],
+          date: eventDate.toISOString().split('T')[0], // Use ISO format: YYYY-MM-DD
           time: "19:00", // Default time for events without time
           location: location,
           organizer: "Liebefeld Community Bielefeld",
