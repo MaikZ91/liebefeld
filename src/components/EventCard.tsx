@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { type Event } from './EventCalendar';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart } from 'lucide-react';
@@ -47,11 +46,8 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onLike) {
+      console.log(`Like clicked for event: ${event.id}, current likes: ${event.likes}`);
       onLike(event.id);
-      toast({
-        description: "Event wurde geliked! Das Ranking wurde aktualisiert.",
-        duration: 1500,
-      });
     }
   };
 

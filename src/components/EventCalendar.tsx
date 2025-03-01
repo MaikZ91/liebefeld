@@ -109,26 +109,41 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
       } else {
         console.log('No existing likes found in localStorage, initializing empty likes object');
         setGlobalLikes({});
+        // Initialize empty storage
+        localStorage.setItem(LOCAL_STORAGE_RANKINGS_KEY, JSON.stringify({}));
       }
     } catch (error) {
       console.error('Error fetching global likes from localStorage:', error);
       // Initialize with empty object in case of error
       setGlobalLikes({});
+      // Initialize empty storage on error
+      localStorage.setItem(LOCAL_STORAGE_RANKINGS_KEY, JSON.stringify({}));
     }
   };
 
-  // Update global likes in localStorage
+  // Update global likes in localStorage with improved error handling
   const updateGlobalLikes = async (eventId: string) => {
-    const updatedLikes = { ...globalLikes };
-    updatedLikes[eventId] = (updatedLikes[eventId] || 0) + 1;
-    
     try {
+      // First get the most recent likes data
+      const savedLikes = localStorage.getItem(LOCAL_STORAGE_RANKINGS_KEY);
+      let currentLikes = {};
+      
+      if (savedLikes) {
+        currentLikes = JSON.parse(savedLikes);
+      }
+      
+      // Update likes for this event
+      const updatedLikes = { ...currentLikes };
+      updatedLikes[eventId] = (updatedLikes[eventId] || 0) + 1;
+      
       // Save to localStorage
       localStorage.setItem(LOCAL_STORAGE_RANKINGS_KEY, JSON.stringify(updatedLikes));
-      console.log('Global likes updated successfully in localStorage');
+      console.log('Global likes updated successfully in localStorage:', updatedLikes);
+      
+      // Update state
       setGlobalLikes(updatedLikes);
       
-      // Update the event in the local state too
+      // Update the events in state to reflect the new like count
       setEvents(prevEvents => 
         prevEvents.map(event => 
           event.id === eventId 
@@ -142,6 +157,16 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
         description: "Event wurde geliked! Das Ranking wurde aktualisiert.",
         duration: 1500,
       });
+      
+      // Force a re-render of the list
+      const sortedEvents = [...events].sort((a, b) => {
+        const likesA = (updatedLikes[a.id] || 0);
+        const likesB = (updatedLikes[b.id] || 0);
+        return likesB - likesA;
+      });
+      
+      console.log("Reordering events by likes count", sortedEvents);
+      
     } catch (error) {
       console.error('Error updating global likes in localStorage:', error);
       toast({
@@ -190,6 +215,17 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   
   // Generate sample events including today
   const generateSampleEvents = () => {
+    // Get current likes from localStorage
+    let currentLikes = {};
+    try {
+      const savedLikes = localStorage.getItem(LOCAL_STORAGE_RANKINGS_KEY);
+      if (savedLikes) {
+        currentLikes = JSON.parse(savedLikes);
+      }
+    } catch (e) {
+      console.error("Error loading likes for sample events:", e);
+    }
+    
     const today = new Date();
     
     return bielefeldEvents.map(event => {
@@ -198,13 +234,13 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
         const newEvent = {
           ...event,
           date: today.toISOString().split('T')[0], // Today's date
-          likes: globalLikes[event.id] || event.likes || 0
+          likes: currentLikes[event.id] || event.likes || 0
         };
         return newEvent;
       }
       return {
         ...event,
-        likes: globalLikes[event.id] || event.likes || 0
+        likes: currentLikes[event.id] || event.likes || 0
       };
     });
   };
@@ -212,10 +248,21 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   // Process GitHub events
   const processGitHubEvents = (githubEvents: GitHubEvent[]) => {
     try {
+      // Get current likes from localStorage
+      let currentLikes = {};
+      try {
+        const savedLikes = localStorage.getItem(LOCAL_STORAGE_RANKINGS_KEY);
+        if (savedLikes) {
+          currentLikes = JSON.parse(savedLikes);
+        }
+      } catch (e) {
+        console.error("Error loading likes for GitHub events:", e);
+      }
+      
       // Current year for date conversion
       const currentYear = new Date().getFullYear();
       
-      // Transform GitHub events to our format
+      // Transform GitHub events to our format with proper likes values
       const transformedEvents = githubEvents.map((githubEvent, index) => {
         // Extract location from event title (if available)
         let title = githubEvent.event;
@@ -280,7 +327,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
           location: location,
           organizer: "Liebefeld Community Bielefeld",
           category: category,
-          likes: globalLikes[eventId] || 0
+          likes: currentLikes[eventId] || 0  // Use likes from localStorage
         } as Event;
       });
       
@@ -327,6 +374,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
 
   // Handle like functionality with global rankings
   const handleLikeEvent = (eventId: string) => {
+    console.log(`Liking event with ID: ${eventId}`);
     updateGlobalLikes(eventId);
   };
 
@@ -422,14 +470,28 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     
     setEvents([...events, eventWithId as Event]);
     
-    // Add the new event to global likes with 0 likes
-    const updatedLikes = { ...globalLikes };
-    updatedLikes[eventId] = 0;
-    
-    // Save to localStorage
-    localStorage.setItem(LOCAL_STORAGE_RANKINGS_KEY, JSON.stringify(updatedLikes));
-    
-    setGlobalLikes(updatedLikes);
+    // Update localStorage with the new event (0 likes)
+    try {
+      // First get the most recent likes data
+      const savedLikes = localStorage.getItem(LOCAL_STORAGE_RANKINGS_KEY);
+      let currentLikes = {};
+      
+      if (savedLikes) {
+        currentLikes = JSON.parse(savedLikes);
+      }
+      
+      // Add the new event to global likes with 0 likes
+      const updatedLikes = { ...currentLikes };
+      updatedLikes[eventId] = 0;
+      
+      // Save to localStorage
+      localStorage.setItem(LOCAL_STORAGE_RANKINGS_KEY, JSON.stringify(updatedLikes));
+      console.log('Added new event to rankings with 0 likes:', updatedLikes);
+      
+      setGlobalLikes(updatedLikes);
+    } catch (error) {
+      console.error('Error adding new event to rankings:', error);
+    }
     
     toast({
       title: "Event erstellt",
