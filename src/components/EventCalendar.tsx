@@ -78,11 +78,9 @@ const SAMPLE_EVENTS = [
   }
 ];
 
-// URL zur JSON-Datei mit Events - mit Fallback auf eine alternative Quelle
+// URL zur JSON-Datei mit Events
 const EXTERNAL_EVENTS_URLS = [
-  "https://raw.githubusercontent.com/MaikZ91/productiontools/master/events.json",
-  "https://raw.githubusercontent.com/codeforbielefeld/teuto-events/main/events.json",
-  "https://raw.githubusercontent.com/codeforbielefeld/events/main/events.json"
+  "https://raw.githubusercontent.com/MaikZ91/productiontools/master/events.json"
 ];
 
 interface ExternalEvent {
