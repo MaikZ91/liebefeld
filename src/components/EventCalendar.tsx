@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, RefreshCw, Music, PartyPopper, Image, Dumbbell, Map, CalendarIcon, List, Heart } from 'lucide-react';
@@ -50,6 +51,9 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   const [filter, setFilter] = useState<string | null>(null);
   const [view, setView] = useState<"calendar" | "list">(defaultView);
   
+  // Reference to the current day element in the list view
+  const todayRef = useRef<HTMLDivElement>(null);
+
   // Save events to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('communityEvents', JSON.stringify(events));
@@ -59,6 +63,18 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   useEffect(() => {
     fetchExternalEvents();
   }, []);
+
+  // Automatically scroll to today when view changes or component mounts
+  useEffect(() => {
+    if (view === 'list' && todayRef.current) {
+      setTimeout(() => {
+        todayRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }, 300); // Small delay to ensure the view has rendered
+    }
+  }, [view]);
 
   // Funktion zum Laden externer Events
   const fetchExternalEvents = async () => {
@@ -254,6 +270,12 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     acc[dateStr].push(event);
     return acc;
   }, {} as Record<string, Event[]>);
+  
+  // Checks if a date is today
+  const isDateToday = (dateStr: string) => {
+    const today = new Date();
+    return isSameDay(parseISO(dateStr), today);
+  };
   
   // Handler for selecting a date
   const handleDateClick = (day: Date) => {
@@ -489,10 +511,20 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                   {Object.keys(eventsByDate).length > 0 ? (
                     Object.keys(eventsByDate).sort().map(dateStr => {
                       const date = parseISO(dateStr);
+                      const isTodaysDate = isDateToday(dateStr);
+                      
                       return (
-                        <div key={dateStr} className="mb-4">
-                          <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
+                        <div 
+                          key={dateStr} 
+                          className="mb-4"
+                          ref={isTodaysDate ? todayRef : null}
+                        >
+                          <h4 className={cn(
+                            "text-sm font-medium mb-2 sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md",
+                            isTodaysDate ? "text-primary font-bold" : "text-white"
+                          )}>
                             {format(date, 'EEEE, d. MMMM', { locale: de })}
+                            {isTodaysDate && " (Heute)"}
                           </h4>
                           <div className="space-y-1">
                             {eventsByDate[dateStr].map(event => (
