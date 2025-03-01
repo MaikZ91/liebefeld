@@ -45,15 +45,15 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     return (
       <div 
         className={cn(
-          "dark-glass-card rounded-lg p-3 cursor-pointer hover-scale mb-2",
+          "dark-glass-card rounded-lg p-3 cursor-pointer hover-scale mb-3 mx-1 w-[calc(100%-8px)]",
           className
         )}
         onClick={onClick}
       >
-        <div className="flex justify-between items-center">
-          <h4 className="font-medium text-sm text-white truncate mr-2">{event.title}</h4>
+        <div className="flex justify-between items-center gap-2">
+          <h4 className="font-medium text-sm text-white break-words line-clamp-2 text-left">{event.title}</h4>
           <Badge className={cn(
-            "flex items-center gap-1 text-xs font-medium",
+            "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
             event.category in categoryColors 
               ? categoryColors[event.category] 
               : "bg-gray-800/60 text-gray-200"
@@ -62,14 +62,14 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
           </Badge>
         </div>
         
-        <div className="flex items-center justify-between mt-1.5 text-xs text-gray-300">
+        <div className="flex items-center justify-between mt-2 text-xs text-gray-300">
           <div className="flex items-center">
-            <Clock className="w-3 h-3 mr-1" />
+            <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
             <span>{event.time} Uhr</span>
           </div>
           
-          <div className="flex items-center">
-            <MapPin className="w-3 h-3 mr-1" />
+          <div className="flex items-center overflow-hidden">
+            <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
             <span className="truncate max-w-[140px]">{event.location}</span>
           </div>
         </div>
@@ -80,15 +80,15 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
   return (
     <div 
       className={cn(
-        "dark-glass-card rounded-xl p-4 cursor-pointer hover-scale",
+        "dark-glass-card rounded-xl p-4 cursor-pointer hover-scale w-full",
         className
       )}
       onClick={onClick}
     >
-      <div className="flex justify-between items-start mb-2">
-        <h4 className="font-medium text-lg text-white">{event.title}</h4>
+      <div className="flex justify-between items-start mb-2 gap-2">
+        <h4 className="font-medium text-lg text-white break-words">{event.title}</h4>
         <Badge className={cn(
-          "flex items-center gap-1 text-xs font-medium",
+          "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
           event.category in categoryColors 
             ? categoryColors[event.category] 
             : "bg-gray-800/60 text-gray-200"
@@ -100,13 +100,13 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
       
       <div className="space-y-2 text-sm text-gray-300">
         <div className="flex items-center">
-          <Clock className="w-4 h-4 mr-2" />
+          <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
           <span>{event.time} Uhr</span>
         </div>
         
-        <div className="flex items-center">
-          <MapPin className="w-4 h-4 mr-2" />
-          <span className="truncate">{event.location}</span>
+        <div className="flex items-center overflow-hidden">
+          <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+          <span className="break-words">{event.location}</span>
         </div>
       </div>
     </div>
