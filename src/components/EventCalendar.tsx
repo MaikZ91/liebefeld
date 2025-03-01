@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday } from 'date-fns';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -79,24 +79,12 @@ const SAMPLE_EVENTS = [
 ];
 
 // URL zur JSON-Datei mit Events
-const EXTERNAL_EVENTS_URLS = [
-  "https://raw.githubusercontent.com/MaikZ91/productiontools/master/events.json"
-];
+const EXTERNAL_EVENTS_URL = "https://raw.githubusercontent.com/MaikZ91/productiontools/master/events.json";
 
-interface ExternalEvent {
-  id: string;
-  title: string;
-  description: string;
-  start_date: string; // Format: "2024-05-28T19:00:00+02:00"
-  end_date?: string;
-  location?: {
-    name?: string;
-    city?: string;
-    street?: string;
-  };
-  url?: string;
-  organizer?: string;
-  category?: string;
+interface GitHubEvent {
+  date: string; // Format: "Fri, 04.04"
+  event: string;
+  link: string;
 }
 
 const EventCalendar = () => {
@@ -123,78 +111,112 @@ const EventCalendar = () => {
   // Funktion zum Laden externer Events
   const fetchExternalEvents = async () => {
     setIsLoading(true);
-    let success = false;
     
-    // Versuche die Events von einer der URLs zu laden
-    for (const url of EXTERNAL_EVENTS_URLS) {
-      try {
-        console.log(`Attempting to fetch events from: ${url}`);
-        const response = await fetch(url);
-        if (!response.ok) {
-          console.log(`Fehler beim Laden von ${url}: ${response.status}`);
-          continue; // Versuche die nächste URL
-        }
-        
-        const externalData: ExternalEvent[] = await response.json();
-        console.log(`Successfully loaded ${externalData.length} events from ${url}`);
-        processExternalEvents(externalData);
-        success = true;
-        break; // Erfolgreich geladen, breche die Schleife ab
-      } catch (error) {
-        console.error(`Fehler beim Laden von ${url}:`, error);
-        // Versuche die nächste URL
+    try {
+      console.log(`Attempting to fetch events from: ${EXTERNAL_EVENTS_URL}`);
+      const response = await fetch(EXTERNAL_EVENTS_URL);
+      
+      if (!response.ok) {
+        console.log(`Fehler beim Laden von ${EXTERNAL_EVENTS_URL}: ${response.status}`);
+        throw new Error(`HTTP error! Status: ${response.status}`);
       }
-    }
-    
-    // Wenn keine externe Quelle erfolgreich war, verwende die Beispieldaten
-    if (!success) {
+      
+      const githubEvents: GitHubEvent[] = await response.json();
+      console.log(`Successfully loaded ${githubEvents.length} events from ${EXTERNAL_EVENTS_URL}`);
+      
+      // Transformiere die GitHub-Events in das interne Format
+      processGitHubEvents(githubEvents);
+      
+    } catch (error) {
+      console.error(`Fehler beim Laden von ${EXTERNAL_EVENTS_URL}:`, error);
+      // Verwende Beispieldaten
       console.log("Verwende lokale Beispieldaten, da keine externe Quelle verfügbar ist.");
-      processExternalEvents(SAMPLE_EVENTS);
+      setEvents(sampleEvents);
+      
+      toast({
+        title: "Fehler beim Laden der Events",
+        description: "Es werden lokale Beispieldaten angezeigt.",
+        variant: "destructive"
+      });
     }
     
     setIsLoading(false);
   };
   
-  // Verarbeite die externen Events
-  const processExternalEvents = (externalData: ExternalEvent[]) => {
-    // Transformiere externe Events in das interne Format
-    const transformedEvents = externalData.map((extEvent) => {
-      // Parsen des Datums und der Zeit
-      const startDate = new Date(extEvent.start_date);
+  // Verarbeite die GitHub-Events
+  const processGitHubEvents = (githubEvents: GitHubEvent[]) => {
+    try {
+      // Aktuelles Jahr für die Datumskonvertierung
+      const currentYear = new Date().getFullYear();
       
-      return {
-        id: extEvent.id || Math.random().toString(36).substring(2, 9),
-        title: extEvent.title,
-        description: extEvent.description || 'Keine Beschreibung verfügbar',
-        date: startDate.toISOString().split('T')[0],
-        time: format(startDate, 'HH:mm'),
-        location: extEvent.location?.name 
-          ? `${extEvent.location.name}${extEvent.location.street ? ', ' + extEvent.location.street : ''}${extEvent.location.city ? ', ' + extEvent.location.city : ''}`
-          : 'Unbekannter Ort',
-        organizer: extEvent.organizer || 'Unbekannter Veranstalter',
-        category: extEvent.category || 'Meeting'
-      } as Event;
-    });
-    
-    // Kombiniere mit bestehenden lokalen Events
-    const savedEvents = localStorage.getItem('communityEvents');
-    const localEvents = savedEvents ? JSON.parse(savedEvents) : sampleEvents;
-    
-    // Entferne Duplikate (basierend auf ID)
-    const mergedEvents = [...localEvents];
-    
-    transformedEvents.forEach(newEvent => {
-      const exists = mergedEvents.some(event => event.id === newEvent.id);
-      if (!exists) {
-        mergedEvents.push(newEvent);
-      }
-    });
-    
-    setEvents(mergedEvents);
-    toast({
-      title: "Events aktualisiert",
-      description: `${transformedEvents.length} Events wurden geladen.`,
-    });
+      // Transformiere GitHub-Events in das interne Format
+      const transformedEvents = githubEvents.map((githubEvent, index) => {
+        // Extrahiere Veranstaltungsort aus dem Event-Titel (falls vorhanden)
+        let title = githubEvent.event;
+        let location = "Bielefeld";
+        
+        // Überprüfe, ob es eine Standortangabe in Klammern gibt
+        const locationMatch = githubEvent.event.match(/\(@([^)]+)\)/);
+        if (locationMatch) {
+          // Entferne die Standortangabe aus dem Titel
+          title = githubEvent.event.replace(/\s*\(@[^)]+\)/, '');
+          location = locationMatch[1];
+        }
+        
+        // Parse das Datum (Format: "Fri, 04.04")
+        let eventDate;
+        try {
+          // Versuche "dd.MM" Format zu parsen und füge aktuelles Jahr hinzu
+          const dateParts = githubEvent.date.split(', ')[1].split('.');
+          const day = parseInt(dateParts[0], 10);
+          const month = parseInt(dateParts[1], 10) - 1; // JavaScript-Monate sind 0-indexed
+          
+          // Erstelle Datum mit aktuellem Jahr
+          eventDate = new Date(currentYear, month, day);
+          
+          // Wenn das Datum in der Vergangenheit liegt, füge ein Jahr hinzu
+          // (für Events, die im nächsten Jahr stattfinden)
+          if (eventDate < new Date() && month < 6) { // Nur für erste Jahreshälfte
+            eventDate.setFullYear(currentYear + 1);
+          }
+        } catch (err) {
+          console.warn(`Konnte Datum nicht parsen: ${githubEvent.date}`, err);
+          // Fallback auf heutiges Datum
+          eventDate = new Date();
+        }
+        
+        // Erstelle das Event-Objekt
+        return {
+          id: `github-${index}`,
+          title: title,
+          description: `Mehr Informationen unter: ${githubEvent.link}`,
+          date: eventDate.toISOString().split('T')[0],
+          time: "00:00", // Keine Zeitangabe in den Daten
+          location: location,
+          organizer: "Bielefeld Community",
+          category: "Meeting" // Standard-Kategorie
+        } as Event;
+      });
+      
+      console.log(`Transformed ${transformedEvents.length} events successfully`);
+      
+      // Setze die transformierten Events
+      setEvents(transformedEvents);
+      
+      toast({
+        title: "Events aktualisiert",
+        description: `${transformedEvents.length} Events wurden geladen.`,
+      });
+    } catch (error) {
+      console.error("Fehler bei der Verarbeitung der GitHub-Events:", error);
+      setEvents(sampleEvents);
+      
+      toast({
+        title: "Fehler bei der Verarbeitung der Events",
+        description: "Es werden lokale Beispieldaten angezeigt.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Calendar navigation functions
