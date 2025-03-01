@@ -61,17 +61,22 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     fetchGlobalLikes();
   }, []);
 
-  // Automatically scroll to today when view changes or component mounts
+  // Improved scroll to today effect - this should run whenever the view changes to list or after events are loaded
   useEffect(() => {
-    if (view === 'list' && todayRef.current) {
+    if (view === 'list' && events.length > 0) {
       setTimeout(() => {
-        todayRef.current?.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
-        });
-      }, 300); // Small delay to ensure the view has rendered
+        if (todayRef.current) {
+          console.log("Scrolling to today's date");
+          todayRef.current.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+        } else {
+          console.log("Today's ref not found");
+        }
+      }, 500); // Increased delay to ensure the view has rendered completely
     }
-  }, [view]);
+  }, [view, events.length]);
 
   // Fetch global likes from the API
   const fetchGlobalLikes = async () => {
@@ -460,7 +465,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
           </div>
         </div>
         
-        {/* View toggle - SWAPPED ORDER TO SHOW LIST FIRST */}
+        {/* View toggle - List first */}
         <div className="flex justify-center">
           <Tabs defaultValue={view} onValueChange={(value) => setView(value as "calendar" | "list")}>
             <TabsList className="dark-tabs">
@@ -474,7 +479,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
               </TabsTrigger>
             </TabsList>
             
-            {/* Main calendar and list views - SWAPPED ORDER TO SHOW LIST FIRST */}
+            {/* Main calendar and list views - List first */}
             <TabsContent value="list">
               <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
                 <div className="flex items-center justify-between mb-4">
@@ -498,6 +503,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                           key={dateStr} 
                           className="mb-4"
                           ref={isTodaysDate ? todayRef : null}
+                          id={isTodaysDate ? "today-events" : undefined}
                         >
                           <h4 className={cn(
                             "text-sm font-medium mb-2 sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md",
