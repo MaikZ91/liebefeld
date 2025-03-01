@@ -24,7 +24,8 @@ const Index = () => {
         </div>
         <EventCalendar defaultView="list" />
       </main>
-      <style jsx global>{`
+      <style>
+        {`
         .custom-scrollbar {
           scrollbar-width: thin;
           scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
@@ -39,7 +40,8 @@ const Index = () => {
           background-color: rgba(255, 255, 255, 0.2);
           border-radius: 20px;
         }
-      `}</style>
+        `}
+      </style>
     </div>
   );
 };
