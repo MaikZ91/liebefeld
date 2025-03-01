@@ -9,18 +9,19 @@ interface EventCardProps {
   event: Event;
   onClick?: () => void;
   className?: string;
+  compact?: boolean;
 }
 
 const categoryColors: Record<string, string> = {
-  'Konzert': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-  'Party': 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300',
-  'Ausstellung': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
-  'Sport': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-  'Workshop': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-  'Kultur': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300',
-  'Sonstiges': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-  'Networking': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-  'Meeting': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+  'Konzert': 'bg-blue-900/60 text-blue-100 dark:bg-blue-900/60 dark:text-blue-100',
+  'Party': 'bg-pink-900/60 text-pink-100 dark:bg-pink-900/60 dark:text-pink-100',
+  'Ausstellung': 'bg-purple-900/60 text-purple-100 dark:bg-purple-900/60 dark:text-purple-100',
+  'Sport': 'bg-green-900/60 text-green-100 dark:bg-green-900/60 dark:text-green-100',
+  'Workshop': 'bg-yellow-900/60 text-yellow-100 dark:bg-yellow-900/60 dark:text-yellow-100',
+  'Kultur': 'bg-indigo-900/60 text-indigo-100 dark:bg-indigo-900/60 dark:text-indigo-100',
+  'Sonstiges': 'bg-gray-800/60 text-gray-200 dark:bg-gray-800/60 dark:text-gray-200',
+  'Networking': 'bg-blue-900/60 text-blue-100 dark:bg-blue-900/60 dark:text-blue-100',
+  'Meeting': 'bg-gray-800/60 text-gray-200 dark:bg-gray-800/60 dark:text-gray-200',
 };
 
 const categoryIcons: Record<string, React.ReactNode> = {
@@ -35,33 +36,69 @@ const categoryIcons: Record<string, React.ReactNode> = {
   'Meeting': <Users className="w-4 h-4" />,
 };
 
-const EventCard: React.FC<EventCardProps> = ({ event, onClick, className }) => {
+const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compact = false }) => {
   const icon = event.category in categoryIcons 
     ? categoryIcons[event.category] 
     : <Calendar className="w-4 h-4" />;
 
+  if (compact) {
+    return (
+      <div 
+        className={cn(
+          "dark-glass-card rounded-lg p-3 cursor-pointer hover-scale mb-2",
+          className
+        )}
+        onClick={onClick}
+      >
+        <div className="flex justify-between items-center">
+          <h4 className="font-medium text-sm text-white truncate mr-2">{event.title}</h4>
+          <Badge className={cn(
+            "flex items-center gap-1 text-xs font-medium",
+            event.category in categoryColors 
+              ? categoryColors[event.category] 
+              : "bg-gray-800/60 text-gray-200"
+          )}>
+            {icon}
+          </Badge>
+        </div>
+        
+        <div className="flex items-center justify-between mt-1.5 text-xs text-gray-300">
+          <div className="flex items-center">
+            <Clock className="w-3 h-3 mr-1" />
+            <span>{event.time} Uhr</span>
+          </div>
+          
+          <div className="flex items-center">
+            <MapPin className="w-3 h-3 mr-1" />
+            <span className="truncate max-w-[140px]">{event.location}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div 
       className={cn(
-        "glass-card rounded-xl p-4 cursor-pointer hover-scale",
+        "dark-glass-card rounded-xl p-4 cursor-pointer hover-scale",
         className
       )}
       onClick={onClick}
     >
       <div className="flex justify-between items-start mb-2">
-        <h4 className="font-medium text-lg">{event.title}</h4>
+        <h4 className="font-medium text-lg text-white">{event.title}</h4>
         <Badge className={cn(
           "flex items-center gap-1 text-xs font-medium",
           event.category in categoryColors 
             ? categoryColors[event.category] 
-            : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+            : "bg-gray-800/60 text-gray-200"
         )}>
           {icon}
           {event.category}
         </Badge>
       </div>
       
-      <div className="space-y-2 text-sm text-muted-foreground">
+      <div className="space-y-2 text-sm text-gray-300">
         <div className="flex items-center">
           <Clock className="w-4 h-4 mr-2" />
           <span>{event.time} Uhr</span>

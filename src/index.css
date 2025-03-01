@@ -94,9 +94,10 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    background-color: #1A1F2C;
     background-image: 
-      radial-gradient(circle at 100% 100%, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
-      radial-gradient(circle at 0% 0%, rgba(139, 92, 246, 0.05) 0%, transparent 30%);
+      radial-gradient(circle at 100% 100%, rgba(93, 79, 240, 0.1) 0%, transparent 40%),
+      radial-gradient(circle at 0% 0%, rgba(139, 92, 246, 0.1) 0%, transparent 30%);
     background-attachment: fixed;
   }
   
@@ -108,8 +109,20 @@
     @apply bg-white/80 dark:bg-black/80 backdrop-blur-md border border-white/20 dark:border-black/20 shadow-lg;
   }
   
+  .dark-glass-effect {
+    @apply bg-black/40 backdrop-blur-md border border-purple-500/20 shadow-lg;
+  }
+  
   .glass-card {
     @apply bg-white/70 dark:bg-black/70 backdrop-blur-md shadow-sm border border-white/30 dark:border-white/10 transition-all duration-300;
+  }
+  
+  .dark-glass-card {
+    @apply bg-[#222]/70 backdrop-blur-md shadow-md border border-purple-500/20 transition-all duration-300;
+  }
+  
+  .dark-glass-card:hover {
+    @apply bg-[#222]/80 shadow-md;
   }
   
   .glass-card:hover {
@@ -133,6 +146,14 @@
     @apply absolute bottom-1 w-1 h-1 rounded-full bg-primary;
   }
 
+  .dark-button {
+    @apply bg-[#2A2F3C] text-gray-200 border-purple-900/30 hover:bg-[#32384A] hover:text-white;
+  }
+  
+  .dark-tabs {
+    @apply bg-[#222]/70 border border-purple-500/20;
+  }
+
   /* Custom scrollbar */
   .scrollbar-none {
     -ms-overflow-style: none;
@@ -140,6 +161,24 @@
   }
   .scrollbar-none::-webkit-scrollbar {
     display: none;
+  }
+  
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139, 92, 246, 0.3) transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(139, 92, 246, 0.3);
+    border-radius: 3px;
   }
 
   /* Category badge colors */
