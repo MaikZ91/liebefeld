@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -389,21 +388,78 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           </div>
         </div>
         
-        {/* View toggle */}
+        {/* View toggle - SWAPPED ORDER TO SHOW LIST FIRST */}
         <div className="flex justify-center">
           <Tabs defaultValue={view} onValueChange={(value) => setView(value as "calendar" | "list")}>
             <TabsList className="dark-tabs">
-              <TabsTrigger value="calendar" className={view === "calendar" ? "text-white" : "text-gray-400"}>
-                <CalendarIcon className="w-4 h-4 mr-2" />
-                Kalender
-              </TabsTrigger>
               <TabsTrigger value="list" className={view === "list" ? "text-white" : "text-gray-400"}>
                 <List className="w-4 h-4 mr-2" />
                 Liste
               </TabsTrigger>
+              <TabsTrigger value="calendar" className={view === "calendar" ? "text-white" : "text-gray-400"}>
+                <CalendarIcon className="w-4 h-4 mr-2" />
+                Kalender
+              </TabsTrigger>
             </TabsList>
             
-            {/* Main calendar and list views */}
+            {/* Main calendar and list views - SWAPPED ORDER TO SHOW LIST FIRST */}
+            <TabsContent value="list">
+              <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-medium text-white">
+                    Alle Events im {format(currentDate, 'MMMM', { locale: de })}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-red-500" />
+                    <span className="text-sm text-gray-300">Top Events oben</span>
+                  </div>
+                </div>
+                
+                <div className="overflow-y-auto max-h-[600px] pr-2 scrollbar-thin">
+                  {Object.keys(eventsByDate).length > 0 ? (
+                    Object.keys(eventsByDate).sort().map(dateStr => {
+                      const date = parseISO(dateStr);
+                      const isTodaysDate = isDateToday(dateStr);
+                      
+                      return (
+                        <div 
+                          key={dateStr} 
+                          className="mb-4"
+                          ref={isTodaysDate ? todayRef : null}
+                        >
+                          <h4 className={cn(
+                            "text-sm font-medium mb-2 sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md",
+                            isTodaysDate ? "text-primary font-bold" : "text-white"
+                          )}>
+                            {format(date, 'EEEE, d. MMMM', { locale: de })}
+                            {isTodaysDate && " (Heute)"}
+                          </h4>
+                          <div className="space-y-1">
+                            {eventsByDate[dateStr].map(event => (
+                              <EventCard 
+                                key={event.id} 
+                                event={event}
+                                compact={true}
+                                onClick={() => {
+                                  setSelectedDate(date);
+                                  setSelectedEvent(event);
+                                }}
+                                onLike={handleLikeEvent}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="flex items-center justify-center h-40 text-gray-400">
+                      Keine Events in diesem Monat {filter ? `in der Kategorie "${filter}"` : ''}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+            
             <TabsContent value="calendar">
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="w-full md:w-3/5 dark-glass-card rounded-2xl p-6">
@@ -491,63 +547,6 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                       </div>
                     )}
                   </div>
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="list">
-              <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-medium text-white">
-                    Alle Events im {format(currentDate, 'MMMM', { locale: de })}
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <Heart className="h-4 w-4 text-red-500" />
-                    <span className="text-sm text-gray-300">Top Events oben</span>
-                  </div>
-                </div>
-                
-                <div className="overflow-y-auto max-h-[600px] pr-2 scrollbar-thin">
-                  {Object.keys(eventsByDate).length > 0 ? (
-                    Object.keys(eventsByDate).sort().map(dateStr => {
-                      const date = parseISO(dateStr);
-                      const isTodaysDate = isDateToday(dateStr);
-                      
-                      return (
-                        <div 
-                          key={dateStr} 
-                          className="mb-4"
-                          ref={isTodaysDate ? todayRef : null}
-                        >
-                          <h4 className={cn(
-                            "text-sm font-medium mb-2 sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md",
-                            isTodaysDate ? "text-primary font-bold" : "text-white"
-                          )}>
-                            {format(date, 'EEEE, d. MMMM', { locale: de })}
-                            {isTodaysDate && " (Heute)"}
-                          </h4>
-                          <div className="space-y-1">
-                            {eventsByDate[dateStr].map(event => (
-                              <EventCard 
-                                key={event.id} 
-                                event={event}
-                                compact={true}
-                                onClick={() => {
-                                  setSelectedDate(date);
-                                  setSelectedEvent(event);
-                                }}
-                                onLike={handleLikeEvent}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="flex items-center justify-center h-40 text-gray-400">
-                      Keine Events in diesem Monat {filter ? `in der Kategorie "${filter}"` : ''}
-                    </div>
-                  )}
                 </div>
               </div>
             </TabsContent>
