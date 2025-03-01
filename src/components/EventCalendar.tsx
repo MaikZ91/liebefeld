@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Plus, RefreshCw, Music, PartyPopper, Image, Dumbbell, Map, CalendarIcon, List, Heart, ScrollText } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, RefreshCw, Music, PartyPopper, Image, Dumbbell, Map, CalendarIcon, List, Heart, ScrollText, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import EventDetails from './EventDetails';
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import EventForm from './EventForm';
 import { toast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { downloadElementAsPng } from '../utils/imageUtils';
 
 // Type definitions
 export interface Event {
@@ -54,6 +55,9 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   
   // Reference to the current day element in the list view
   const todayRef = useRef<HTMLDivElement>(null);
+  
+  // Add ref for calendar container
+  const calendarContainerRef = useRef<HTMLDivElement>(null);
 
   // Load events and global likes on component mount
   useEffect(() => {
@@ -472,6 +476,54 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     }
   };
 
+  // New function to download calendar as PNG
+  const downloadCalendarAsPng = async () => {
+    // Get the current date for the filename
+    const dateStr = format(currentDate, 'yyyy-MM-dd');
+    const filename = `Kalender-Liebefeld-${dateStr}`;
+    
+    // Check if we have a container to capture
+    if (!calendarContainerRef.current) {
+      console.error("Calendar container not found");
+      toast({
+        title: "Fehler beim Download",
+        description: "Das Kalenderelement konnte nicht gefunden werden.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Set a temporary ID for capturing
+    calendarContainerRef.current.id = "calendar-capture";
+    
+    // Show a loading toast
+    toast({
+      title: "Download wird vorbereitet...",
+      description: "Bitte warten Sie, während der Kalender als Bild vorbereitet wird.",
+    });
+    
+    try {
+      // Perform the download
+      const success = await downloadElementAsPng("calendar-capture", filename);
+      
+      if (success) {
+        toast({
+          title: "Download erfolgreich",
+          description: `Der Kalender wurde als "${filename}.png" heruntergeladen.`,
+        });
+      } else {
+        throw new Error("Download failed");
+      }
+    } catch (error) {
+      console.error("Error during calendar download:", error);
+      toast({
+        title: "Fehler beim Download",
+        description: "Es gab ein Problem beim Erstellen des Bildes. Bitte versuchen Sie es erneut.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl animate-fade-in">
       <div className="flex flex-col space-y-6">
@@ -524,6 +576,14 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
             >
               <CalendarIcon className="h-5 w-5" />
               <span className="hidden md:inline">Heute</span>
+            </Button>
+            <Button
+              onClick={downloadCalendarAsPng}
+              className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all dark-button"
+              variant="outline"
+            >
+              <Download className="h-5 w-5" />
+              <span className="hidden md:inline">Als PNG</span>
             </Button>
             <Dialog>
               <DialogTrigger asChild>
@@ -616,7 +676,10 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
             </TabsContent>
             
             <TabsContent value="calendar">
-              <div className="flex flex-col md:flex-row gap-6">
+              <div 
+                ref={calendarContainerRef} 
+                className="flex flex-col md:flex-row gap-6"
+              >
                 <div className="w-full md:w-3/5 dark-glass-card rounded-2xl p-6">
                   {/* Day names header */}
                   <div className="grid grid-cols-7 mb-4">
