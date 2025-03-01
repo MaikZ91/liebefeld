@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Plus, RefreshCw, Music, PartyPopper, Image, Dumbbell, Map, CalendarIcon, List, Heart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, RefreshCw, Music, PartyPopper, Image, Dumbbell, Map, CalendarIcon, List, Heart, ScrollText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import EventDetails from './EventDetails';
@@ -61,10 +61,11 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     fetchGlobalLikes();
   }, []);
 
-  // Improved scroll to today effect - this should run whenever the view changes to list or after events are loaded
+  // Improved scroll to today effect - scrolls to today's date after events are loaded
   useEffect(() => {
     if (view === 'list' && events.length > 0) {
-      setTimeout(() => {
+      // Wait for events to be rendered before scrolling
+      const timer = setTimeout(() => {
         if (todayRef.current) {
           console.log("Scrolling to today's date");
           todayRef.current.scrollIntoView({ 
@@ -74,7 +75,9 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
         } else {
           console.log("Today's ref not found");
         }
-      }, 500); // Increased delay to ensure the view has rendered completely
+      }, 800); // Increased delay to ensure the view has rendered completely
+      
+      return () => clearTimeout(timer);
     }
   }, [view, events.length]);
 
@@ -486,7 +489,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
             </TabsList>
             
             {/* Main calendar and list views - List first */}
-            <TabsContent value="list">
+            <TabsContent value="list" className="relative">
               <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-medium text-white">
@@ -497,8 +500,26 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                     <span className="text-sm text-gray-300">Top Events oben</span>
                   </div>
                 </div>
+
+                {Object.keys(eventsByDate).length > 0 && (
+                  <div className="flex items-center text-white my-2 justify-end gap-2">
+                    <Button 
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (todayRef.current) {
+                          todayRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                      }}
+                      className="flex items-center gap-1 text-sm"
+                    >
+                      <ScrollText className="h-4 w-4" />
+                      <span>Zum heutigen Tag</span>
+                    </Button>
+                  </div>
+                )}
                 
-                <div className="overflow-y-auto max-h-[600px] pr-2 scrollbar-thin">
+                <div className="overflow-y-auto max-h-[600px] pr-2 custom-scrollbar">
                   {Object.keys(eventsByDate).length > 0 ? (
                     Object.keys(eventsByDate).sort().map(dateStr => {
                       const date = parseISO(dateStr);
@@ -507,13 +528,13 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                       return (
                         <div 
                           key={dateStr} 
-                          className="mb-4"
+                          className={cn("mb-4", isTodaysDate ? "scroll-mt-4" : "")}
                           ref={isTodaysDate ? todayRef : null}
                           id={isTodaysDate ? "today-events" : undefined}
                         >
                           <h4 className={cn(
                             "text-sm font-medium mb-2 sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md",
-                            isTodaysDate ? "text-primary font-bold" : "text-white"
+                            isTodaysDate ? "text-primary font-bold border-l-4 border-primary pl-2" : "text-white"
                           )}>
                             {format(date, 'EEEE, d. MMMM', { locale: de })}
                             {isTodaysDate && " (Heute)"}
