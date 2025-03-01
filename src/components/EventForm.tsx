@@ -226,16 +226,21 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
         tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÄÖÜäöüß0123456789.,;:!?@#$%&*()-+=/\\\'"`~<>{}[]|_^°€ ',
       });
       
-      // Fix: Using the progress method compatible with Tesseract.js v5
-      worker.addProgressListener(progress => {
-        console.log('OCR Progress:', progress);
-        if (progress.status === 'recognizing text') {
-          setRecognitionProgress(progress.progress * 100);
-        }
-      });
+      // Removed the problematic progress listener functionality
+      // Instead, we'll just update progress at fixed intervals for visual feedback
+      
+      const intervalId = setInterval(() => {
+        setRecognitionProgress(prev => {
+          if (prev < 90) return prev + 10;
+          return prev;
+        });
+      }, 500);
       
       const result = await worker.recognize(base64Image);
       console.log("OCR Result:", result.data);
+      
+      clearInterval(intervalId);
+      setRecognitionProgress(100);
       
       const extractedText = result.data.text;
       
