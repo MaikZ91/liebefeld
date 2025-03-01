@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -31,28 +30,24 @@ const eventCategories = [
   'Sonstiges'
 ];
 
-// Helper function to extract date from text
 const extractDate = (text: string): Date | null => {
-  // Common German date formats with regex
   const datePatterns = [
-    /(\d{1,2})\.(\d{1,2})\.(\d{4})/g, // DD.MM.YYYY
-    /(\d{1,2})\.(\d{1,2})\.(\d{2})/g, // DD.MM.YY
-    /(\d{1,2})\s(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)\s(\d{4})/gi, // DD Month YYYY
-    /(\d{1,2})\s(Jan|Feb|Mär|Apr|Mai|Jun|Jul|Aug|Sep|Okt|Nov|Dez)\s(\d{4})/gi, // DD Mon YYYY
+    /(\d{1,2})\.(\d{1,2})\.(\d{4})/g,
+    /(\d{1,2})\.(\d{1,2})\.(\d{2})/g,
+    /(\d{1,2})\s(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)\s(\d{4})/gi,
+    /(\d{1,2})\s(Jan|Feb|Mär|Apr|Mai|Jun|Jul|Aug|Sep|Okt|Nov|Dez)\s(\d{4})/gi,
   ];
   
   for (const pattern of datePatterns) {
     const matches = [...text.matchAll(pattern)];
     if (matches.length > 0) {
       const match = matches[0];
-      // Handle the first format (DD.MM.YYYY)
       if (match[0].includes('.')) {
         const day = parseInt(match[1]);
-        const month = parseInt(match[2]) - 1; // Months are 0-indexed in JavaScript
+        const month = parseInt(match[2]) - 1;
         const year = match[3].length === 2 ? 2000 + parseInt(match[3]) : parseInt(match[3]);
         return new Date(year, month, day);
       } else {
-        // Handle the month name format
         const day = parseInt(match[1]);
         const monthName = match[2].toLowerCase();
         const year = parseInt(match[3]);
@@ -81,9 +76,7 @@ const extractDate = (text: string): Date | null => {
   return null;
 };
 
-// Helper function to extract time from text
 const extractTime = (text: string): string | null => {
-  // Look for time patterns like 19:00, 19.00, 7pm, etc.
   const timePattern = /(\d{1,2})[:\.](\d{2})(?:\s*(?:Uhr|h))?/g;
   const matches = [...text.matchAll(timePattern)];
   
@@ -97,7 +90,6 @@ const extractTime = (text: string): string | null => {
   return null;
 };
 
-// Helper to detect event category
 const detectCategory = (text: string): string => {
   const lowerText = text.toLowerCase();
   
@@ -107,7 +99,6 @@ const detectCategory = (text: string): string => {
     }
   }
   
-  // Keywords that might indicate a category
   if (lowerText.includes('musik') || lowerText.includes('band') || lowerText.includes('live')) {
     return 'Konzert';
   } else if (lowerText.includes('ausstellung') || lowerText.includes('galerie') || lowerText.includes('kunst')) {
@@ -125,9 +116,7 @@ const detectCategory = (text: string): string => {
   return 'Sonstiges';
 };
 
-// Helper to extract location
 const extractLocation = (text: string): string => {
-  // Common location indicators in German
   const locationIndicators = [
     'ort:', 'location:', 'veranstaltungsort:', 'venue:', 'adresse:', 'address:',
     'in der', 'im', 'at the', 'bei', 'at'
@@ -135,12 +124,10 @@ const extractLocation = (text: string): string => {
   
   const lines = text.split('\n');
   
-  // First try to find lines that explicitly mention locations
   for (const line of lines) {
     const lowerLine = line.toLowerCase();
     for (const indicator of locationIndicators) {
       if (lowerLine.includes(indicator)) {
-        // Return the part after the indicator, or the whole line if it's a preposition
         if (['in der', 'im', 'at the', 'bei', 'at'].includes(indicator)) {
           return line.trim();
         } else {
@@ -153,7 +140,6 @@ const extractLocation = (text: string): string => {
     }
   }
   
-  // If no explicit location found, look for Bielefeld venues
   const bielefelderVenues = [
     'Forum', 'Ringlokschuppen', 'Lokschuppen', 'Stadthalle', 'Jazzclub', 
     'Falkendom', 'Movie', 'Stereo', 'Bunker Ulmenwall', 'Nr.z.P.', 
@@ -162,7 +148,6 @@ const extractLocation = (text: string): string => {
   
   for (const venue of bielefelderVenues) {
     if (text.includes(venue)) {
-      // Try to get the containing line for more context
       for (const line of lines) {
         if (line.includes(venue)) {
           return line.trim();
@@ -194,7 +179,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
     e.preventDefault();
     
     if (!title || !date || !time) {
-      return; // Prevent submission if required fields are missing
+      return;
     }
     
     const newEvent: Omit<Event, 'id'> = {
@@ -209,7 +194,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
     
     onAddEvent(newEvent);
     
-    // Reset form (though dialog will close anyway)
     setTitle('');
     setDescription('');
     setTime('');
@@ -241,8 +225,11 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
         tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÄÖÜäöüß0123456789.,;:!?@#$%&*()-+=/\\\'"`~<>{}[]|_^°€ ',
       });
       
-      worker.setProgressHandler((progress) => {
-        setRecognitionProgress(progress.progress * 100);
+      worker.on('progress', (progress) => {
+        console.log('OCR Progress:', progress);
+        if (progress.status === 'recognizing text') {
+          setRecognitionProgress(progress.progress * 100);
+        }
       });
       
       const result = await worker.recognize(base64Image);
@@ -250,10 +237,8 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
       
       const extractedText = result.data.text;
       
-      // Process the extracted text
       const lines = extractedText.split('\n').filter(line => line.trim() !== '');
       
-      // Extract title (usually one of the first few lines with more than 3 words)
       let extractedTitle = '';
       for (const line of lines.slice(0, 5)) {
         const words = line.trim().split(/\s+/);
@@ -263,22 +248,16 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
         }
       }
       
-      // Extract date
       const extractedDate = extractDate(extractedText);
       
-      // Extract time
       const extractedTime = extractTime(extractedText) || '19:00';
       
-      // Create description from the full text
       const extractedDescription = extractedText.slice(0, 500);
       
-      // Detect category
       const detectedCategory = detectCategory(extractedText);
       
-      // Extract location
       const extractedLocation = extractLocation(extractedText);
       
-      // Extract organizer (this is more speculative)
       let extractedOrganizer = '';
       const organizerIndicators = ['veranstalter:', 'präsentiert von:', 'presented by:', 'organizer:'];
       for (const line of lines) {
@@ -292,7 +271,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
         if (extractedOrganizer) break;
       }
       
-      // Set the extracted data to form fields
       if (extractedTitle) setTitle(extractedTitle);
       if (extractedDate) setDate(extractedDate);
       setTime(extractedTime);
@@ -325,7 +303,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Check if file is an image
     if (!file.type.match('image.*')) {
       toast({
         variant: "destructive",
@@ -335,7 +312,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
       return;
     }
     
-    // Create preview
     const reader = new FileReader();
     reader.onload = (event) => {
       if (event.target?.result) {
@@ -356,7 +332,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
       </DialogHeader>
       
       <div className="grid gap-4 py-4">
-        {/* Image upload section */}
         <div className="grid gap-2">
           <Label className="mb-1">Plakat hochladen (Optional)</Label>
           <div className="flex flex-col items-center gap-4">
