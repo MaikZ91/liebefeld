@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -339,148 +338,152 @@ const EventCalendar = () => {
           </div>
         </div>
         
-        {/* View toggle */}
+        {/* View toggle - FIX: Wrap TabsList in Tabs component */}
         <div className="flex justify-center">
-          <TabsList className="dark-tabs">
-            <TabsTrigger value="calendar" onClick={() => setView("calendar")} className={view === "calendar" ? "text-white" : "text-gray-400"}>
-              <CalendarIcon className="w-4 h-4 mr-2" />
-              Kalender
-            </TabsTrigger>
-            <TabsTrigger value="list" onClick={() => setView("list")} className={view === "list" ? "text-white" : "text-gray-400"}>
-              <List className="w-4 h-4 mr-2" />
-              Liste
-            </TabsTrigger>
-          </TabsList>
-        </div>
-        
-        {/* Main calendar and list views */}
-        {view === "calendar" ? (
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="w-full md:w-3/5 dark-glass-card rounded-2xl p-6">
-              {/* Day names header */}
-              <div className="grid grid-cols-7 mb-4">
-                {['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'].map((day) => (
-                  <div key={day} className="text-center font-medium text-gray-400">
-                    {day}
-                  </div>
-                ))}
-              </div>
-              
-              {/* Calendar days */}
-              <div className="grid grid-cols-7 gap-2">
-                {daysInMonth.map((day, i) => {
-                  const isSelected = selectedDate && isSameDay(day, selectedDate);
-                  const isCurrentMonth = isSameMonth(day, currentDate);
-                  const dayHasEvents = hasEvents(day);
-                  const isCurrentDay = isToday(day);
-                  const eventCount = getEventCount(day);
-                  
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => handleDateClick(day)}
-                      className={cn(
-                        "calendar-day hover-scale relative flex flex-col items-center justify-center",
-                        isSelected ? "bg-primary text-primary-foreground" : "",
-                        !isCurrentMonth ? "text-gray-600" : "text-gray-200",
-                        isCurrentDay ? "ring-2 ring-primary ring-offset-2 ring-offset-[#1A1F2C]" : ""
-                      )}
-                    >
-                      {format(day, 'd')}
-                      {dayHasEvents && (
-                        <div className="absolute bottom-1 flex space-x-0.5">
-                          {eventCount > 3 ? (
-                            <span className="text-[10px] font-semibold text-primary">{eventCount}</span>
-                          ) : (
-                            Array(eventCount).fill(0).map((_, i) => (
-                              <div 
-                                key={i} 
-                                className="w-1 h-1 rounded-full bg-primary"
-                              />
-                            ))
-                          )}
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+          <Tabs defaultValue={view} onValueChange={(value) => setView(value as "calendar" | "list")}>
+            <TabsList className="dark-tabs">
+              <TabsTrigger value="calendar" className={view === "calendar" ? "text-white" : "text-gray-400"}>
+                <CalendarIcon className="w-4 h-4 mr-2" />
+                Kalender
+              </TabsTrigger>
+              <TabsTrigger value="list" className={view === "list" ? "text-white" : "text-gray-400"}>
+                <List className="w-4 h-4 mr-2" />
+                Liste
+              </TabsTrigger>
+            </TabsList>
             
-            {/* Event list for selected date */}
-            <div className="w-full md:w-2/5 dark-glass-card rounded-2xl p-6 overflow-hidden flex flex-col">
-              <h3 className="text-xl font-medium mb-4 text-white">
-                {selectedDate ? (
-                  format(selectedDate, 'EEEE, d. MMMM', { locale: de })
-                ) : (
-                  "Wähle ein Datum aus"
-                )}
-              </h3>
-              
-              <div className="flex-grow overflow-auto scrollbar-thin">
-                {selectedDate ? (
-                  filteredEvents.length > 0 ? (
-                    <div className="space-y-4">
-                      {filteredEvents.map(event => (
-                        <EventCard 
-                          key={event.id} 
-                          event={event}
-                          onClick={() => setSelectedEvent(event)}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-gray-400">
-                      Keine Events an diesem Tag {filter ? `in der Kategorie "${filter}"` : ''}
-                    </div>
-                  )
-                ) : (
-                  <div className="flex h-full items-center justify-center text-gray-400">
-                    Wähle ein Datum, um Events anzuzeigen
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
-            <h3 className="text-xl font-medium mb-6 text-white text-center">
-              Alle Events im {format(currentDate, 'MMMM', { locale: de })}
-            </h3>
-            
-            <div className="overflow-y-auto max-h-[600px] pr-2 scrollbar-thin">
-              {Object.keys(eventsByDate).length > 0 ? (
-                Object.keys(eventsByDate).sort().map(dateStr => {
-                  const date = parseISO(dateStr);
-                  return (
-                    <div key={dateStr} className="mb-6">
-                      <h4 className="text-lg font-medium mb-3 text-white sticky top-0 bg-[#1A1F2C]/80 backdrop-blur-sm py-2 z-10">
-                        {format(date, 'EEEE, d. MMMM', { locale: de })}
-                      </h4>
-                      <div className="space-y-2">
-                        {eventsByDate[dateStr].map(event => (
-                          <EventCard 
-                            key={event.id} 
-                            event={event}
-                            compact={true}
-                            onClick={() => {
-                              setSelectedDate(date);
-                              setSelectedEvent(event);
-                            }}
-                          />
-                        ))}
+            {/* Main calendar and list views */}
+            <TabsContent value="calendar">
+              <div className="flex flex-col md:flex-row gap-6">
+                <div className="w-full md:w-3/5 dark-glass-card rounded-2xl p-6">
+                  {/* Day names header */}
+                  <div className="grid grid-cols-7 mb-4">
+                    {['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'].map((day) => (
+                      <div key={day} className="text-center font-medium text-gray-400">
+                        {day}
                       </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="flex items-center justify-center h-40 text-gray-400">
-                  Keine Events in diesem Monat {filter ? `in der Kategorie "${filter}"` : ''}
+                    ))}
+                  </div>
+                  
+                  {/* Calendar days */}
+                  <div className="grid grid-cols-7 gap-2">
+                    {daysInMonth.map((day, i) => {
+                      const isSelected = selectedDate && isSameDay(day, selectedDate);
+                      const isCurrentMonth = isSameMonth(day, currentDate);
+                      const dayHasEvents = hasEvents(day);
+                      const isCurrentDay = isToday(day);
+                      const eventCount = getEventCount(day);
+                      
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => handleDateClick(day)}
+                          className={cn(
+                            "calendar-day hover-scale relative flex flex-col items-center justify-center",
+                            isSelected ? "bg-primary text-primary-foreground" : "",
+                            !isCurrentMonth ? "text-gray-600" : "text-gray-200",
+                            isCurrentDay ? "ring-2 ring-primary ring-offset-2 ring-offset-[#1A1F2C]" : ""
+                          )}
+                        >
+                          {format(day, 'd')}
+                          {dayHasEvents && (
+                            <div className="absolute bottom-1 flex space-x-0.5">
+                              {eventCount > 3 ? (
+                                <span className="text-[10px] font-semibold text-primary">{eventCount}</span>
+                              ) : (
+                                Array(eventCount).fill(0).map((_, i) => (
+                                  <div 
+                                    key={i} 
+                                    className="w-1 h-1 rounded-full bg-primary"
+                                  />
+                                ))
+                              )}
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              )}
-            </div>
-          </div>
-        )}
+                
+                {/* Event list for selected date */}
+                <div className="w-full md:w-2/5 dark-glass-card rounded-2xl p-6 overflow-hidden flex flex-col">
+                  <h3 className="text-xl font-medium mb-4 text-white">
+                    {selectedDate ? (
+                      format(selectedDate, 'EEEE, d. MMMM', { locale: de })
+                    ) : (
+                      "Wähle ein Datum aus"
+                    )}
+                  </h3>
+                  
+                  <div className="flex-grow overflow-auto scrollbar-thin">
+                    {selectedDate ? (
+                      filteredEvents.length > 0 ? (
+                        <div className="space-y-4">
+                          {filteredEvents.map(event => (
+                            <EventCard 
+                              key={event.id} 
+                              event={event}
+                              onClick={() => setSelectedEvent(event)}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-gray-400">
+                          Keine Events an diesem Tag {filter ? `in der Kategorie "${filter}"` : ''}
+                        </div>
+                      )
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-gray-400">
+                        Wähle ein Datum, um Events anzuzeigen
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="list">
+              <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
+                <h3 className="text-xl font-medium mb-6 text-white text-center">
+                  Alle Events im {format(currentDate, 'MMMM', { locale: de })}
+                </h3>
+                
+                <div className="overflow-y-auto max-h-[600px] pr-2 scrollbar-thin">
+                  {Object.keys(eventsByDate).length > 0 ? (
+                    Object.keys(eventsByDate).sort().map(dateStr => {
+                      const date = parseISO(dateStr);
+                      return (
+                        <div key={dateStr} className="mb-6">
+                          <h4 className="text-lg font-medium mb-3 text-white sticky top-0 bg-[#1A1F2C]/80 backdrop-blur-sm py-2 z-10">
+                            {format(date, 'EEEE, d. MMMM', { locale: de })}
+                          </h4>
+                          <div className="space-y-2">
+                            {eventsByDate[dateStr].map(event => (
+                              <EventCard 
+                                key={event.id} 
+                                event={event}
+                                compact={true}
+                                onClick={() => {
+                                  setSelectedDate(date);
+                                  setSelectedEvent(event);
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="flex items-center justify-center h-40 text-gray-400">
+                      Keine Events in diesem Monat {filter ? `in der Kategorie "${filter}"` : ''}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
         
         {/* Event details modal */}
         {selectedEvent && (
