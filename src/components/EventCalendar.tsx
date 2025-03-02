@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -415,41 +414,41 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
               </Button>
             ))}
           </div>
-          
-          <div className="flex gap-2">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all">
-                  <Plus className="h-5 w-5" />
-                  <span className="hidden md:inline">Event erstellen</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="dark-glass-effect max-w-md sm:max-w-lg">
-                <EventForm 
-                  selectedDate={selectedDate ? selectedDate : new Date()} 
-                  onAddEvent={handleAddEvent} 
-                />
-              </DialogContent>
-            </Dialog>
-          </div>
         </div>
         
-        {/* View toggle - LIST FIRST, THEN CALENDAR */}
-        <div className="flex justify-center">
-          <Tabs defaultValue={view} onValueChange={(value) => setView(value as "calendar" | "list")}>
-            <TabsList className="dark-tabs">
-              <TabsTrigger value="list" className={view === "list" ? "text-white" : "text-gray-400"}>
-                <List className="w-4 h-4 mr-2" />
-                Liste
-              </TabsTrigger>
-              <TabsTrigger value="calendar" className={view === "calendar" ? "text-white" : "text-gray-400"}>
-                <CalendarIcon className="w-4 h-4 mr-2" />
-                Kalender
-              </TabsTrigger>
-            </TabsList>
+        {/* View toggle with Add Event button moved beside it */}
+        <div className="flex justify-center items-center">
+          <Tabs defaultValue={view} onValueChange={(value) => setView(value as "calendar" | "list")} className="flex flex-col items-center">
+            <div className="flex items-center gap-3">
+              <TabsList className="dark-tabs">
+                <TabsTrigger value="list" className={view === "list" ? "text-white" : "text-gray-400"}>
+                  <List className="w-4 h-4 mr-2" />
+                  Liste
+                </TabsTrigger>
+                <TabsTrigger value="calendar" className={view === "calendar" ? "text-white" : "text-gray-400"}>
+                  <CalendarIcon className="w-4 h-4 mr-2" />
+                  Kalender
+                </TabsTrigger>
+              </TabsList>
+              
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all">
+                    <Plus className="h-5 w-5" />
+                    <span className="hidden md:inline">Event erstellen</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="dark-glass-effect max-w-md sm:max-w-lg">
+                  <EventForm 
+                    selectedDate={selectedDate ? selectedDate : new Date()} 
+                    onAddEvent={handleAddEvent} 
+                  />
+                </DialogContent>
+              </Dialog>
+            </div>
             
             {/* Main calendar and list views */}
-            <TabsContent value="list">
+            <TabsContent value="list" className="w-full">
               <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-medium text-white">
@@ -496,7 +495,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
               </div>
             </TabsContent>
             
-            <TabsContent value="calendar">
+            <TabsContent value="calendar" className="w-full">
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="w-full md:w-3/5 dark-glass-card rounded-2xl p-6">
                   {/* Day names header */}
