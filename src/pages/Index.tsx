@@ -13,11 +13,11 @@ const Index = () => {
     <div className="min-h-screen flex flex-col bg-[#FFF5EB] dark:bg-[#2E1E12] text-orange-900 dark:text-orange-100">
       <CalendarNavbar />
       <main className="flex-grow">
-        {/* Video Banner Section with Black Background */}
-        <div className="relative w-full h-[50vh] overflow-hidden bg-black">
+        {/* Video Banner Section */}
+        <div className="relative w-full h-[50vh] overflow-hidden">
           {/* Video background */}
           <video 
-            className="absolute inset-0 w-full h-full object-cover opacity-70"
+            className="absolute inset-0 w-full h-full object-cover"
             autoPlay
             muted
             loop
@@ -35,6 +35,17 @@ const Index = () => {
             <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center font-serif">Entdecke den Puls der Stadt</h1>
             <p className="text-xl md:text-2xl text-center max-w-2xl">
               Konzerte, Parties, Ausstellungen und mehr in Liebefeld
+            </p>
+          </div>
+        </div>
+
+        {/* Community Calendar Title Section */}
+        <div className="relative overflow-hidden mb-6 bg-black">
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-red-500/20 z-0"></div>
+          <div className="container mx-auto px-4 py-12 relative z-10">
+            <h1 className="text-4xl md:text-5xl font-bold text-center mb-2 text-orange-500 dark:text-orange-400">Liebefeld Community Kalender</h1>
+            <p className="text-lg md:text-xl text-center text-orange-400 dark:text-orange-300 max-w-2xl mx-auto">
+              Entdecke Konzerte, Parties, Ausstellungen und Sportveranstaltungen in Bielefeld
             </p>
           </div>
         </div>

@@ -15,15 +15,15 @@ interface EventCardProps {
 }
 
 const categoryColors: Record<string, string> = {
-  'Konzert': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
-  'Party': 'bg-red-600/70 text-red-50 dark:bg-red-600/70 dark:text-red-50',
-  'Ausstellung': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
-  'Sport': 'bg-red-600/70 text-red-50 dark:bg-red-600/70 dark:text-red-50',
-  'Workshop': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
-  'Kultur': 'bg-red-600/70 text-red-50 dark:bg-red-600/70 dark:text-red-50',
-  'Sonstiges': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
-  'Networking': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
-  'Meeting': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
+  'Konzert': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
+  'Party': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
+  'Ausstellung': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
+  'Sport': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
+  'Workshop': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
+  'Kultur': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
+  'Sonstiges': 'bg-orange-400/70 text-orange-50 dark:bg-orange-400/70 dark:text-orange-50',
+  'Networking': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
+  'Meeting': 'bg-orange-400/70 text-orange-50 dark:bg-orange-400/70 dark:text-orange-50',
 };
 
 const categoryIcons: Record<string, React.ReactNode> = {
@@ -65,7 +65,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     return (
       <div 
         className={cn(
-          "red-glass-card rounded-lg p-2 cursor-pointer hover-scale mb-2 mx-1 w-[calc(100%-8px)]",
+          "dark-glass-card rounded-lg p-2 cursor-pointer hover-scale mb-2 mx-1 w-[calc(100%-8px)]",
           className
         )}
         onClick={onClick}
@@ -130,7 +130,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
   return (
     <div 
       className={cn(
-        "red-glass-card rounded-xl p-4 cursor-pointer hover-scale w-full",
+        "dark-glass-card rounded-xl p-4 cursor-pointer hover-scale w-full",
         className
       )}
       onClick={onClick}
