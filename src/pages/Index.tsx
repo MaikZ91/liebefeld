@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -46,7 +45,7 @@ const Index = () => {
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4">
             <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center font-serif">Entdecke den Puls der Stadt</h1>
             <p className="text-xl md:text-2xl text-center max-w-2xl mb-6">
-              Konzerte, Parties, Ausstellungen und mehr in Liebefeld
+              Verbinde dich mit Events und Menschen aus deiner Stadt Liebefeld
             </p>
             
             {/* WhatsApp Community Button */}
