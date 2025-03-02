@@ -373,17 +373,17 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           </div>
         </div>
         
-        {/* View toggle */}
+        {/* View toggle - SWAPPED ORDER OF CALENDAR AND LIST BUTTONS */}
         <div className="flex justify-center">
           <Tabs defaultValue={view} onValueChange={(value) => setView(value as "calendar" | "list")}>
             <TabsList className="dark-tabs">
-              <TabsTrigger value="list" className={view === "list" ? "text-white" : "text-gray-400"}>
-                <List className="w-4 h-4 mr-2" />
-                Liste
-              </TabsTrigger>
               <TabsTrigger value="calendar" className={view === "calendar" ? "text-white" : "text-gray-400"}>
                 <CalendarIcon className="w-4 h-4 mr-2" />
                 Kalender
+              </TabsTrigger>
+              <TabsTrigger value="list" className={view === "list" ? "text-white" : "text-gray-400"}>
+                <List className="w-4 h-4 mr-2" />
+                Liste
               </TabsTrigger>
             </TabsList>
             
