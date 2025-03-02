@@ -71,10 +71,10 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
         )}
         onClick={onClick}
       >
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center flex-1 min-w-0 gap-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start flex-1 min-w-0 gap-2">
             <Badge className={cn(
-              "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
+              "mt-0.5 flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
               event.category in categoryColors 
                 ? categoryColors[event.category] 
                 : "bg-gray-800/60 text-gray-200"
@@ -82,30 +82,32 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               {icon}
             </Badge>
             
-            {event.link ? (
-              <h4 
-                className="font-medium text-sm text-white truncate max-w-[250px] sm:max-w-[350px] hover:underline cursor-pointer flex items-center gap-1"
-                onClick={handleLinkClick}
-              >
-                {event.title}
-                <ExternalLink className="w-3 h-3 inline-flex flex-shrink-0" />
-              </h4>
-            ) : (
-              <h4 className="font-medium text-sm text-white truncate max-w-[250px] sm:max-w-[350px]">
-                {event.title}
-              </h4>
-            )}
+            <div className="flex-1 min-w-0">
+              {event.link ? (
+                <h4 
+                  className="font-medium text-sm text-white line-clamp-2 hover:underline cursor-pointer flex items-center gap-1"
+                  onClick={handleLinkClick}
+                >
+                  {event.title}
+                  <ExternalLink className="w-3 h-3 inline-flex flex-shrink-0" />
+                </h4>
+              ) : (
+                <h4 className="font-medium text-sm text-white line-clamp-2">
+                  {event.title}
+                </h4>
+              )}
+            </div>
           </div>
           
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-xs text-gray-300">
-              <div className="hidden sm:flex items-center">
+          <div className="flex items-start gap-3 flex-shrink-0">
+            <div className="flex flex-col items-end text-xs text-gray-300">
+              <div className="flex items-center">
                 <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
                 <span>{event.time}</span>
               </div>
-              <div className="flex items-center overflow-hidden">
+              <div className="flex items-center">
                 <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
-                <span className="truncate max-w-[120px]">{event.location}</span>
+                <span className="truncate max-w-[150px]">{event.location}</span>
               </div>
             </div>
             
