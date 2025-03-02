@@ -153,8 +153,8 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
         </div>
       </div>
       
-      {/* CSS for the animation */}
-      <style jsx>{`
+      {/* CSS for the animation - Fixed the style tag by removing jsx attribute */}
+      <style>{`
         @keyframes tickerMove {
           0% {
             transform: translateX(0);
