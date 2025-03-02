@@ -325,13 +325,13 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         {/* Calendar header with month navigation */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center justify-between md:justify-start">
-            <Button variant="outline" size="icon" onClick={prevMonth} className="rounded-full hover:scale-105 transition-transform dark-button">
+            <Button variant="outline" size="icon" onClick={prevMonth} className="rounded-full hover:scale-105 transition-transform red-button">
               <ChevronLeft className="h-5 w-5" />
             </Button>
             <h2 className="text-xl md:text-2xl font-medium w-48 text-center text-white">
               {format(currentDate, 'MMMM yyyy', { locale: de })}
             </h2>
-            <Button variant="outline" size="icon" onClick={nextMonth} className="rounded-full hover:scale-105 transition-transform dark-button">
+            <Button variant="outline" size="icon" onClick={nextMonth} className="rounded-full hover:scale-105 transition-transform red-button">
               <ChevronRight className="h-5 w-5" />
             </Button>
           </div>
@@ -345,7 +345,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                 onClick={() => toggleFilter(category)}
                 className={cn(
                   "rounded-full whitespace-nowrap",
-                  filter !== category && "dark-button"
+                  filter !== category && "red-button"
                 )}
               >
                 {category in categoryIcons ? categoryIcons[category as keyof typeof categoryIcons] : null}
@@ -357,7 +357,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           <div className="flex gap-2">
             <Button 
               onClick={() => fetchExternalEvents(false)}
-              className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all dark-button"
+              className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all red-button"
               variant="outline"
               disabled={isLoading}
             >
@@ -366,12 +366,12 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
             </Button>
             <Dialog>
               <DialogTrigger asChild>
-                <Button className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all">
+                <Button className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all bg-red-600 hover:bg-red-700">
                   <Plus className="h-5 w-5" />
                   <span className="hidden md:inline">Event erstellen</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="dark-glass-effect max-w-md sm:max-w-lg">
+              <DialogContent className="red-glass-effect max-w-md sm:max-w-lg">
                 <EventForm 
                   selectedDate={selectedDate ? selectedDate : new Date()} 
                   onAddEvent={handleAddEvent} 
@@ -384,7 +384,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         {/* View toggle - LIST FIRST, THEN CALENDAR */}
         <div className="flex justify-center">
           <Tabs defaultValue={view} onValueChange={(value) => setView(value as "calendar" | "list")}>
-            <TabsList className="dark-tabs">
+            <TabsList className="red-tabs">
               <TabsTrigger value="list" className={view === "list" ? "text-white" : "text-gray-400"}>
                 <List className="w-4 h-4 mr-2" />
                 Liste
@@ -397,7 +397,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
             
             {/* Main calendar and list views */}
             <TabsContent value="list">
-              <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
+              <div className="red-glass-card rounded-2xl p-6 overflow-hidden">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-medium text-white">
                     Alle Events im {format(currentDate, 'MMMM', { locale: de })}
@@ -445,7 +445,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
             
             <TabsContent value="calendar">
               <div className="flex flex-col md:flex-row gap-6">
-                <div className="w-full md:w-3/5 dark-glass-card rounded-2xl p-6">
+                <div className="w-full md:w-3/5 red-glass-card rounded-2xl p-6">
                   {/* Day names header */}
                   <div className="grid grid-cols-7 mb-4">
                     {['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'].map((day) => (
@@ -470,21 +470,21 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                           onClick={() => handleDateClick(day)}
                           className={cn(
                             "calendar-day hover-scale relative flex flex-col items-center justify-center",
-                            isSelected ? "bg-primary text-primary-foreground" : "",
+                            isSelected ? "bg-red-600 text-white" : "",
                             !isCurrentMonth ? "text-gray-600" : "text-gray-200",
-                            isCurrentDay ? "ring-2 ring-primary ring-offset-2 ring-offset-[#131722]" : ""
+                            isCurrentDay ? "ring-2 ring-red-600 ring-offset-2 ring-offset-[#131722]" : ""
                           )}
                         >
                           {format(day, 'd')}
                           {dayHasEvents && (
                             <div className="absolute bottom-1 flex space-x-0.5">
                               {eventCount > 3 ? (
-                                <span className="text-[10px] font-semibold text-primary">{eventCount}</span>
+                                <span className="text-[10px] font-semibold text-red-600">{eventCount}</span>
                               ) : (
                                 Array(eventCount).fill(0).map((_, i) => (
                                   <div 
                                     key={i} 
-                                    className="w-1 h-1 rounded-full bg-primary"
+                                    className="w-1 h-1 rounded-full bg-red-600"
                                   />
                                 ))
                               )}
@@ -497,7 +497,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                 </div>
                 
                 {/* Event list for selected date */}
-                <div className="w-full md:w-2/5 dark-glass-card rounded-2xl p-6 overflow-hidden flex flex-col">
+                <div className="w-full md:w-2/5 red-glass-card rounded-2xl p-6 overflow-hidden flex flex-col">
                   <h3 className="text-xl font-medium mb-4 text-white">
                     {selectedDate ? (
                       format(selectedDate, 'EEEE, d. MMMM', { locale: de })
