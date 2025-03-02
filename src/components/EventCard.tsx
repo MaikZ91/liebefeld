@@ -58,7 +58,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
   const handleLinkClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (event.link) {
-      window.open(event.link, '_blank');
+      window.open(event.link, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -73,16 +73,20 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
       >
         <div className="flex justify-between items-start gap-1">
           <div className="flex-1 min-w-0">
-            <h4 
-              className={cn(
-                "font-medium text-sm text-white break-words line-clamp-1 text-left",
-                event.link && "hover:underline flex items-center gap-1"
-              )}
-              onClick={event.link ? handleLinkClick : undefined}
-            >
-              {event.title}
-              {event.link && <ExternalLink className="w-3 h-3 inline-flex flex-shrink-0" />}
-            </h4>
+            {event.link ? (
+              <h4 
+                className="font-medium text-sm text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1"
+                onClick={handleLinkClick}
+              >
+                {event.title}
+                <ExternalLink className="w-3 h-3 inline-flex flex-shrink-0" />
+              </h4>
+            ) : (
+              <h4 className="font-medium text-sm text-white break-words line-clamp-1 text-left">
+                {event.title}
+              </h4>
+            )}
+            
             <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-gray-300">
               <div className="flex items-center">
                 <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
@@ -133,16 +137,20 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
       onClick={onClick}
     >
       <div className="flex justify-between items-start mb-2 gap-2">
-        <h4 
-          className={cn(
-            "font-medium text-lg text-white break-words",
-            event.link && "hover:underline flex items-center gap-1"
-          )}
-          onClick={event.link ? handleLinkClick : undefined}
-        >
-          {event.title}
-          {event.link && <ExternalLink className="w-4 h-4 inline-flex flex-shrink-0" />}
-        </h4>
+        {event.link ? (
+          <h4 
+            className="font-medium text-lg text-white break-words hover:underline cursor-pointer flex items-center gap-1"
+            onClick={handleLinkClick}
+          >
+            {event.title}
+            <ExternalLink className="w-4 h-4 inline-flex flex-shrink-0" />
+          </h4>
+        ) : (
+          <h4 className="font-medium text-lg text-white break-words">
+            {event.title}
+          </h4>
+        )}
+        
         <div className="flex flex-col items-end gap-2">
           <Badge className={cn(
             "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
