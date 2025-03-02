@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Plus, Music, PartyPopper, Image, Dumbbell, Map, CalendarIcon, List, Heart, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Music, PartyPopper, Image, Dumbbell, Map, CalendarIcon, List, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import EventDetails from './EventDetails';
@@ -482,16 +481,6 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           </div>
           
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => fetchSupabaseEvents()}
-              className="rounded-full whitespace-nowrap bg-black text-red-500 border-red-500 hover:bg-black/90 hover:text-red-500 mr-2"
-            >
-              <RefreshCw className="h-4 w-4 mr-1" />
-              Aktualisieren
-            </Button>
-            
             <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
               {categories.map(category => (
                 <Button
