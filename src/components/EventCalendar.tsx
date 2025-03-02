@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -400,7 +399,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
             
             {/* Main calendar and list views */}
             <TabsContent value="list">
-              <div className="dark-glass-card rounded-2xl p-6 overflow-hidden event-list-view">
+              <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-medium text-white">
                     Alle Events im {format(currentDate, 'MMMM', { locale: de })}
@@ -416,11 +415,11 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                     Object.keys(eventsByDate).sort().map(dateStr => {
                       const date = parseISO(dateStr);
                       return (
-                        <div key={dateStr} className="mb-6 px-2">
-                          <h4 className="text-sm font-medium mb-3 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md px-2">
+                        <div key={dateStr} className="mb-4 px-2">
+                          <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
                             {format(date, 'EEEE, d. MMMM', { locale: de })}
                           </h4>
-                          <div className="space-y-3">
+                          <div className="space-y-1">
                             {eventsByDate[dateStr].map(event => (
                               <EventCard 
                                 key={event.id} 
@@ -445,7 +444,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                 </div>
               </div>
             </TabsContent>
-          
+            
             <TabsContent value="calendar">
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="w-full md:w-3/5 dark-glass-card rounded-2xl p-6">
@@ -538,15 +537,15 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
             </TabsContent>
           </Tabs>
         </div>
+        
+        {/* Event details modal */}
+        {selectedEvent && (
+          <EventDetails 
+            event={selectedEvent} 
+            onClose={() => setSelectedEvent(null)} 
+          />
+        )}
       </div>
-      
-      {/* Event details modal */}
-      {selectedEvent && (
-        <EventDetails 
-          event={selectedEvent} 
-          onClose={() => setSelectedEvent(null)} 
-        />
-      )}
     </div>
   );
 };
