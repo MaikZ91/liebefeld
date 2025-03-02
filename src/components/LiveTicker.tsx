@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { Calendar, RefreshCw, ArrowRight } from 'lucide-react';
 import { format, parseISO, isAfter, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
@@ -55,43 +54,40 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
 
   // Set up the animation
   useEffect(() => {
-    // Only start animation if we have events and a ticker ref
+    // If no ticker or no events, don't animate
     if (!tickerRef.current || weeklyEvents.length === 0) return;
     
-    // Animation parameters
-    const speed = 0.5; // pixels per frame - reduced for smoother movement
+    const tickerElement = tickerRef.current;
+    const speed = 1; // Speed in pixels per frame
     
-    // Animation function
     const animate = () => {
-      if (!tickerRef.current || !isScrolling) return;
+      if (!tickerElement || !isScrolling) return;
       
-      // Get the width of the ticker content
-      const tickerWidth = tickerRef.current.scrollWidth;
-      const visibleWidth = tickerRef.current.offsetWidth;
+      // Move the ticker
+      positionRef.current += speed;
       
-      // If the ticker content is shorter than the visible area, don't animate
-      if (tickerWidth <= visibleWidth) return;
+      // Get the width of the first set of items (we duplicate content in render)
+      const firstItemsWidth = tickerElement.scrollWidth / 2;
       
-      // Increment the position
-      positionRef.current = (positionRef.current + speed) % (tickerWidth / 2);
+      // Reset position when we've scrolled the width of the first set
+      if (positionRef.current >= firstItemsWidth) {
+        positionRef.current = 0;
+      }
       
       // Apply the transform
-      tickerRef.current.style.transform = `translateX(-${positionRef.current}px)`;
+      tickerElement.style.transform = `translateX(-${positionRef.current}px)`;
       
-      // Request the next frame
+      // Continue animation
       requestRef.current = requestAnimationFrame(animate);
     };
     
-    // Reset position to start fresh
+    // Start with position 0
     positionRef.current = 0;
-    if (tickerRef.current) {
-      tickerRef.current.style.transform = 'translateX(0)';
-    }
+    tickerElement.style.transform = 'translateX(0)';
     
     // Start animation
     requestRef.current = requestAnimationFrame(animate);
     
-    // Cleanup function to cancel animation when component unmounts or deps change
     return () => {
       if (requestRef.current) {
         cancelAnimationFrame(requestRef.current);
@@ -131,10 +127,11 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
       <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black to-transparent z-[5]"></div>
       
       {/* Scrolling content */}
-      <div className="ml-[120px] mr-2"> {/* Add margin to make space for the header */}
+      <div className="ml-[120px] mr-2 overflow-hidden"> {/* Add overflow-hidden to hide scrollbars */}
         <div 
           ref={tickerRef} 
           className="whitespace-nowrap inline-block"
+          style={{ willChange: 'transform' }} // Performance optimization
         >
           {/* We duplicate the items to create an infinite scroll effect */}
           {[...eventsToShow, ...eventsToShow].map((event, index) => (

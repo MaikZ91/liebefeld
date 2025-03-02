@@ -102,7 +102,7 @@ const Index = () => {
           </div>
         </div>
         
-        {/* Live Ticker for new events - added debug class to identify it */}
+        {/* Live Ticker for new events - make sure it's always shown if there are events */}
         {events.length > 0 && (
           <LiveTicker events={events} />
         )}
