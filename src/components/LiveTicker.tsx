@@ -58,19 +58,20 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
     let animationId: number;
     let position = 0;
     const speed = 1; // pixels per frame
-    const tickerWidth = tickerRef.current.scrollWidth;
-    const containerWidth = tickerRef.current.parentElement?.clientWidth || 0;
     
     const animate = () => {
       if (!tickerRef.current || !isScrolling) return;
       
-      position = (position + speed) % tickerWidth;
+      const tickerWidth = tickerRef.current.scrollWidth;
+      const containerWidth = tickerRef.current.parentElement?.clientWidth || 0;
+      
+      position = (position + speed) % (tickerWidth / 2);
       tickerRef.current.style.transform = `translateX(-${position}px)`;
       
-      // Reset position when we've scrolled past the first item
-      if (position > tickerWidth - containerWidth) {
-        // Instead of resetting abruptly, we'll append a copy to create a seamless loop
-        // This is handled by the JSX with the doubled content
+      // When we reach the end of the first set of items, jump back to the beginning
+      if (position >= tickerWidth / 2) {
+        position = 0;
+        tickerRef.current.style.transform = `translateX(0px)`;
       }
       
       animationId = requestAnimationFrame(animate);
@@ -106,7 +107,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
       {/* Ticker header */}
       <div className="absolute left-0 top-0 bottom-0 flex items-center z-10 bg-red-600 px-3 py-2">
         <Calendar className="w-4 h-4 mr-1" />
-        <span className="font-bold text-sm whitespace-nowrap">Diese Woche</span>
+        <span className="font-bold text-sm whitespace-nowrap">Neue Events</span>
         <ArrowRight className="w-4 h-4 ml-1" />
       </div>
       
