@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { Calendar, RefreshCw, ArrowRight } from 'lucide-react';
 import { format, parseISO, isAfter, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
@@ -13,8 +14,6 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
   const [weeklyEvents, setWeeklyEvents] = useState<Event[]>([]);
   const [isScrolling, setIsScrolling] = useState(true);
   const tickerRef = useRef<HTMLDivElement>(null);
-  const requestRef = useRef<number | null>(null);
-  const positionRef = useRef<number>(0);
 
   // Get events for the current week
   useEffect(() => {
@@ -52,46 +51,35 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
     console.log(`Week range: ${format(weekStart, 'dd.MM.')} - ${format(weekEnd, 'dd.MM.')}`);
   }, [events]);
 
-  // Set up the animation
+  // Set up the animation using CSS animation instead of JS
   useEffect(() => {
-    // If no ticker or no events, don't animate
     if (!tickerRef.current || weeklyEvents.length === 0) return;
     
-    const tickerElement = tickerRef.current;
-    const speed = 1; // Speed in pixels per frame
+    const ticker = tickerRef.current;
     
-    const animate = () => {
-      if (!tickerElement || !isScrolling) return;
-      
-      // Move the ticker
-      positionRef.current += speed;
-      
-      // Get the width of the first set of items (we duplicate content in render)
-      const firstItemsWidth = tickerElement.scrollWidth / 2;
-      
-      // Reset position when we've scrolled the width of the first set
-      if (positionRef.current >= firstItemsWidth) {
-        positionRef.current = 0;
-      }
-      
-      // Apply the transform
-      tickerElement.style.transform = `translateX(-${positionRef.current}px)`;
-      
-      // Continue animation
-      requestRef.current = requestAnimationFrame(animate);
-    };
+    // Measure ticker content width to set animation distance
+    const contentWidth = ticker.scrollWidth;
+    const containerWidth = ticker.parentElement?.clientWidth || 300;
     
-    // Start with position 0
-    positionRef.current = 0;
-    tickerElement.style.transform = 'translateX(0)';
-    
-    // Start animation
-    requestRef.current = requestAnimationFrame(animate);
+    // Only animate if content is wider than container
+    if (contentWidth > containerWidth && isScrolling) {
+      // Create keyframe animation dynamically based on content width
+      const animationDuration = contentWidth / 50; // Speed factor - higher divisor = faster
+      
+      // Apply animation styles
+      ticker.style.animationDuration = `${animationDuration}s`;
+      ticker.style.animationTimingFunction = 'linear';
+      ticker.style.animationIterationCount = 'infinite';
+      ticker.style.animationName = 'tickerMove';
+      ticker.style.animationPlayState = 'running';
+    } else {
+      // Stop animation if paused or content fits
+      ticker.style.animationPlayState = 'paused';
+    }
     
     return () => {
-      if (requestRef.current) {
-        cancelAnimationFrame(requestRef.current);
-        requestRef.current = null;
+      if (ticker) {
+        ticker.style.animationName = 'none';
       }
     };
   }, [weeklyEvents, isScrolling]);
@@ -111,7 +99,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
 
   return (
     <div 
-      className="bg-black text-white overflow-hidden py-2 relative animate-fade-in"
+      className="bg-black text-white overflow-hidden py-2 relative"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -127,11 +115,14 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
       <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black to-transparent z-[5]"></div>
       
       {/* Scrolling content */}
-      <div className="ml-[120px] mr-2 overflow-hidden"> {/* Add overflow-hidden to hide scrollbars */}
+      <div className="ml-[120px] mr-2 overflow-hidden">
         <div 
           ref={tickerRef} 
-          className="whitespace-nowrap inline-block"
-          style={{ willChange: 'transform' }} // Performance optimization
+          className="whitespace-nowrap inline-block animate-tickerMove"
+          style={{
+            transform: 'translateX(0)',
+            animationName: 'tickerMove'
+          }}
         >
           {/* We duplicate the items to create an infinite scroll effect */}
           {[...eventsToShow, ...eventsToShow].map((event, index) => (
@@ -161,6 +152,18 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
           ))}
         </div>
       </div>
+      
+      {/* CSS for the animation */}
+      <style jsx>{`
+        @keyframes tickerMove {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+      `}</style>
     </div>
   );
 };
