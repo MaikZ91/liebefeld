@@ -1,12 +1,23 @@
 
-import React, { useEffect } from 'react';
-import EventCalendar from '@/components/EventCalendar';
+import React, { useEffect, useState } from 'react';
+import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
+import LiveTicker from '@/components/LiveTicker';
 
 const Index = () => {
   // Add smooth scroll-in animation effect on page load
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+  
+  // Get stored events for the live ticker
+  const [events, setEvents] = useState<Event[]>([]);
+  
+  useEffect(() => {
+    const savedEvents = localStorage.getItem('communityEvents');
+    if (savedEvents) {
+      setEvents(JSON.parse(savedEvents));
+    }
   }, []);
   
   return (
@@ -38,6 +49,9 @@ const Index = () => {
             </p>
           </div>
         </div>
+        
+        {/* Live Ticker for new events */}
+        <LiveTicker events={events} />
 
         {/* Updated the background color to a soft gray for better text contrast */}
         <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-6 rounded-t-lg shadow-inner">
