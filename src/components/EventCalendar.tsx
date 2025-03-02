@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -370,13 +371,23 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         {/* Calendar header with month navigation */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center justify-between md:justify-start">
-            <Button variant="outline" size="icon" onClick={prevMonth} className="rounded-full hover:scale-105 transition-transform dark-button">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={prevMonth} 
+              className="rounded-full hover:scale-105 transition-transform bg-red-500 text-black border-red-600"
+            >
               <ChevronLeft className="h-5 w-5" />
             </Button>
-            <h2 className="text-xl md:text-2xl font-medium w-48 text-center text-white">
+            <h2 className="text-xl md:text-2xl font-medium w-48 text-center text-black">
               {format(currentDate, 'MMMM yyyy', { locale: de })}
             </h2>
-            <Button variant="outline" size="icon" onClick={nextMonth} className="rounded-full hover:scale-105 transition-transform dark-button">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={nextMonth} 
+              className="rounded-full hover:scale-105 transition-transform bg-red-500 text-black border-red-600"
+            >
               <ChevronRight className="h-5 w-5" />
             </Button>
           </div>
@@ -390,9 +401,13 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                 onClick={() => toggleFilter(category)}
                 className={cn(
                   "rounded-full whitespace-nowrap",
-                  filter === category 
-                    ? "bg-black text-red-500 border-red-500 hover:bg-black/90 hover:text-red-500" 
-                    : "bg-black text-red-500 border-red-500 hover:bg-black/90 hover:text-red-500 dark-button"
+                  (category === "Konzert" || category === "Party" || category === "Sonstiges") ?
+                    (filter === category 
+                      ? "bg-black text-red-500 border-red-500 hover:bg-black/90 hover:text-red-500" 
+                      : "bg-black text-red-500 border-red-500 hover:bg-black/90 hover:text-red-500")
+                    : (filter === category 
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                      : "bg-black/70 text-white border-gray-700 hover:bg-black/60 hover:text-white dark-button")
                 )}
               >
                 {category in categoryIcons ? categoryIcons[category as keyof typeof categoryIcons] : null}
