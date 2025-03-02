@@ -50,7 +50,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState<string | null>(null);
   const [view, setView] = useState<"calendar" | "list">(defaultView);
-  const [isInitialLoad, setIsInitialLoad] = useState(isInitialLoad);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   // Save events to localStorage whenever they change
   useEffect(() => {
