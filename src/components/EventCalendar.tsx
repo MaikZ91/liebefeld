@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Plus, RefreshCw, Music, PartyPopper, Image, Dumbbell, Map, CalendarIcon, List, Heart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Music, PartyPopper, Image, Dumbbell, Map, CalendarIcon, List, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import EventDetails from './EventDetails';
@@ -403,15 +402,6 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           </div>
           
           <div className="flex gap-2">
-            <Button 
-              onClick={() => fetchExternalEvents(false)}
-              className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all dark-button"
-              variant="outline"
-              disabled={isLoading}
-            >
-              <RefreshCw className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
-              <span className="hidden md:inline">Aktualisieren</span>
-            </Button>
             <Dialog>
               <DialogTrigger asChild>
                 <Button className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all">
