@@ -75,14 +75,24 @@ const EventCalendar: React.FC<EventCalendarProps> = ({ defaultView = "calendar" 
       const localEvents = getLocalEvents();
       const mergedEvents = [...data, ...localEvents];
       
-      setEvents(mergedEvents);
+      // Apply existing rankings to the events
+      const eventsWithRankings = mergedEvents.map(event => ({
+        ...event,
+        likes: rankings[event.id] || 0
+      }));
+      
+      setEvents(eventsWithRankings);
     } catch (err) {
       console.error("Error fetching events:", err);
       setError("Failed to load events. Please try again later.");
       
       // Fallback to local events if external fetch fails
       const localEvents = getLocalEvents();
-      setEvents(localEvents);
+      const eventsWithRankings = localEvents.map(event => ({
+        ...event,
+        likes: rankings[event.id] || 0
+      }));
+      setEvents(eventsWithRankings);
     } finally {
       setLoading(false);
     }
@@ -93,7 +103,16 @@ const EventCalendar: React.FC<EventCalendarProps> = ({ defaultView = "calendar" 
     try {
       const storedRankings = localStorage.getItem(LOCAL_STORAGE_RANKINGS_KEY);
       if (storedRankings) {
-        setRankings(JSON.parse(storedRankings));
+        const parsedRankings = JSON.parse(storedRankings);
+        setRankings(parsedRankings);
+        
+        // Update events with rankings
+        setEvents(prevEvents => 
+          prevEvents.map(event => ({
+            ...event,
+            likes: parsedRankings[event.id] || 0
+          }))
+        );
       }
     } catch (error) {
       console.error("Error loading rankings from localStorage:", error);
@@ -174,8 +193,8 @@ const EventCalendar: React.FC<EventCalendarProps> = ({ defaultView = "calendar" 
   };
 
   useEffect(() => {
-    fetchEvents();
     loadRankings();
+    fetchEvents();
   }, []);
 
   const handlePrevMonth = () => {
@@ -212,6 +231,15 @@ const EventCalendar: React.FC<EventCalendarProps> = ({ defaultView = "calendar" 
     }
   };
 
+  // Sort events by likes
+  const sortEventsByLikes = (events: Event[]) => {
+    return [...events].sort((a, b) => {
+      const likesA = a.likes || 0;
+      const likesB = b.likes || 0;
+      return likesB - likesA; // Sort by likes in descending order
+    });
+  };
+
   // Generate days for the current month's calendar
   const renderCalendarDays = () => {
     const monthStart = startOfMonth(currentDate);
@@ -220,7 +248,7 @@ const EventCalendar: React.FC<EventCalendarProps> = ({ defaultView = "calendar" 
 
     return days.map(day => {
       // Get events for this day
-      const dayEvents = events.filter(event => {
+      let dayEvents = events.filter(event => {
         try {
           const eventDate = parseISO(event.date);
           return isSameDay(eventDate, day);
@@ -229,6 +257,9 @@ const EventCalendar: React.FC<EventCalendarProps> = ({ defaultView = "calendar" 
           return false;
         }
       });
+
+      // Sort events by likes
+      dayEvents = sortEventsByLikes(dayEvents);
 
       const isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
       const isCurrentMonth = isSameMonth(day, currentDate);
@@ -288,7 +319,7 @@ const EventCalendar: React.FC<EventCalendarProps> = ({ defaultView = "calendar" 
   const getEventsForSelectedDate = () => {
     if (!selectedDate) return [];
     
-    return events.filter(event => {
+    const filteredEvents = events.filter(event => {
       try {
         const eventDate = parseISO(event.date);
         return isSameDay(eventDate, selectedDate);
@@ -297,28 +328,37 @@ const EventCalendar: React.FC<EventCalendarProps> = ({ defaultView = "calendar" 
         return false;
       }
     });
+    
+    // Sort events by likes
+    return sortEventsByLikes(filteredEvents);
   };
 
   // Get the top rated events
   const getTopRatedEvents = (limit = 5) => {
-    return [...events]
-      .filter(event => rankings[event.id] && rankings[event.id] > 0)
-      .sort((a, b) => (rankings[b.id] || 0) - (rankings[a.id] || 0))
-      .slice(0, limit);
+    return sortEventsByLikes(
+      events.filter(event => (event.likes || 0) > 0)
+    ).slice(0, limit);
   };
 
   // Sort events by date
   const getSortedEvents = () => {
-    return [...events].sort((a, b) => {
+    // First sort by date
+    const dateFirstSort = [...events].sort((a, b) => {
       try {
         const dateA = parseISO(a.date);
         const dateB = parseISO(b.date);
+        // If dates are equal, sort by likes
+        if (dateA.getTime() === dateB.getTime()) {
+          return (b.likes || 0) - (a.likes || 0);
+        }
         return dateA.getTime() - dateB.getTime();
       } catch (error) {
         console.error("Error sorting events by date:", error);
         return 0;
       }
     });
+    
+    return dateFirstSort;
   };
 
   // Render the calendar view
@@ -366,9 +406,9 @@ const EventCalendar: React.FC<EventCalendarProps> = ({ defaultView = "calendar" 
                   <EventCard 
                     key={event.id} 
                     event={event} 
-                    onEventClick={() => handleEventClick(event)}
-                    onLikeClick={() => updateEventRanking(event.id)}
-                    likes={rankings[event.id] || 0}
+                    onClick={() => handleEventClick(event)}
+                    onLike={() => updateEventRanking(event.id)}
+                    likes={event.likes || 0}
                   />
                 ))
               ) : (
@@ -409,9 +449,9 @@ const EventCalendar: React.FC<EventCalendarProps> = ({ defaultView = "calendar" 
                   <EventCard 
                     key={event.id} 
                     event={event} 
-                    onEventClick={() => handleEventClick(event)}
-                    onLikeClick={() => updateEventRanking(event.id)}
-                    likes={rankings[event.id] || 0}
+                    onClick={() => handleEventClick(event)}
+                    onLike={() => updateEventRanking(event.id)}
+                    likes={event.likes || 0}
                   />
                 ))}
               </div>
@@ -426,9 +466,9 @@ const EventCalendar: React.FC<EventCalendarProps> = ({ defaultView = "calendar" 
                   <EventCard 
                     key={event.id} 
                     event={event} 
-                    onEventClick={() => handleEventClick(event)}
-                    onLikeClick={() => updateEventRanking(event.id)}
-                    likes={rankings[event.id] || 0}
+                    onClick={() => handleEventClick(event)}
+                    onLike={() => updateEventRanking(event.id)}
+                    likes={event.likes || 0}
                   />
                 ))
               ) : (
@@ -488,9 +528,9 @@ const EventCalendar: React.FC<EventCalendarProps> = ({ defaultView = "calendar" 
             <EventDetails 
               event={selectedEvent} 
               onClose={() => setSelectedEvent(null)} 
-              onLike={() => updateEventRanking(selectedEvent.id)}
-              likes={rankings[selectedEvent.id] || 0}
               categoryIcon={getCategoryIcon(selectedEvent.category)}
+              likes={selectedEvent.likes || 0}
+              onLikeClick={() => updateEventRanking(selectedEvent.id)}
             />
           </DialogContent>
         </Dialog>
@@ -499,7 +539,10 @@ const EventCalendar: React.FC<EventCalendarProps> = ({ defaultView = "calendar" 
       {/* Event Form Dialog */}
       <Dialog open={showEventForm} onOpenChange={setShowEventForm}>
         <DialogContent className="sm:max-w-lg">
-          <EventForm onSave={saveEvent} onCancel={() => setShowEventForm(false)} />
+          <EventForm 
+            onSubmit={saveEvent} 
+            onCancel={() => setShowEventForm(false)} 
+          />
         </DialogContent>
       </Dialog>
     </div>

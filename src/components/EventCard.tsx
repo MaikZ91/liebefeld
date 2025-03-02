@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { type Event } from './EventCalendar';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink } from 'lucide-react';
@@ -12,6 +13,7 @@ interface EventCardProps {
   className?: string;
   compact?: boolean;
   onLike?: (id: string) => void;
+  likes?: number;
 }
 
 const categoryColors: Record<string, string> = {
@@ -38,7 +40,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
   'Meeting': <Users className="w-4 h-4" />,
 };
 
-const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compact = false, onLike }) => {
+const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compact = false, onLike, likes }) => {
   const icon = event.category in categoryIcons 
     ? categoryIcons[event.category] 
     : <Calendar className="w-4 h-4" />;
@@ -46,7 +48,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onLike) {
-      console.log(`Like clicked for event: ${event.id}, current likes: ${event.likes}`);
+      console.log(`Like clicked for event: ${event.id}, current likes: ${likes}`);
       onLike(event.id);
     }
   };
@@ -157,10 +159,10 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               className="h-7 w-7 rounded-full mr-1"
               onClick={handleLike}
             >
-              <Heart className={cn("w-4 h-4", event.likes && event.likes > 0 ? "fill-red-500 text-red-500" : "text-gray-400")} />
+              <Heart className={cn("w-4 h-4", likes && likes > 0 ? "fill-red-500 text-red-500" : "text-gray-400")} />
             </Button>
-            {event.likes && event.likes > 0 && (
-              <span className="text-sm text-gray-300">{event.likes}</span>
+            {likes && likes > 0 && (
+              <span className="text-sm text-gray-300">{likes}</span>
             )}
           </div>
         </div>
