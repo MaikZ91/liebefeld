@@ -14,6 +14,8 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
   const [weeklyEvents, setWeeklyEvents] = useState<Event[]>([]);
   const [isScrolling, setIsScrolling] = useState(true);
   const tickerRef = useRef<HTMLDivElement>(null);
+  const animationRef = useRef<number>();
+  const positionRef = useRef<number>(0);
 
   // Get events for the current week
   useEffect(() => {
@@ -55,8 +57,6 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
   useEffect(() => {
     if (!tickerRef.current || weeklyEvents.length === 0) return;
     
-    let animationId: number;
-    let position = 0;
     const speed = 1; // pixels per frame
     
     const animate = () => {
@@ -65,22 +65,37 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
       const tickerWidth = tickerRef.current.scrollWidth;
       const containerWidth = tickerRef.current.parentElement?.clientWidth || 0;
       
-      position = (position + speed);
-      tickerRef.current.style.transform = `translateX(-${position}px)`;
+      positionRef.current += speed;
       
-      // When we reach the end of the first set of items, reset position to create infinite scroll effect
-      if (position >= tickerWidth / 2) {
-        position = 0;
-        tickerRef.current.style.transform = `translateX(0px)`;
+      if (positionRef.current >= tickerWidth / 2) {
+        positionRef.current = 0;
       }
       
-      animationId = requestAnimationFrame(animate);
+      if (tickerRef.current) {
+        tickerRef.current.style.transform = `translateX(-${positionRef.current}px)`;
+      }
+      
+      animationRef.current = requestAnimationFrame(animate);
     };
     
-    animationId = requestAnimationFrame(animate);
+    // Clear any existing animation before starting a new one
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+    }
     
+    // Reset position when component updates
+    positionRef.current = 0;
+    if (tickerRef.current) {
+      tickerRef.current.style.transform = `translateX(0px)`;
+    }
+    
+    animationRef.current = requestAnimationFrame(animate);
+    
+    // Cleanup function
     return () => {
-      cancelAnimationFrame(animationId);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
     };
   }, [weeklyEvents, isScrolling]);
 
