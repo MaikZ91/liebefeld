@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -223,6 +222,8 @@ const EventCalendar: React.FC<EventCalendarProps> = ({ defaultView = "calendar" 
 
   const handleDownloadCalendar = () => {
     if (calendarRef.current) {
+      // Fix TS2345: Argument of type 'HTMLDivElement' is not assignable to parameter of type 'string'
+      // Pass the element directly instead of trying to convert it to a string
       downloadElementAsPng(calendarRef.current, 'liebefeld-calendar.png');
       toast({
         title: "Calendar Downloaded",
@@ -527,8 +528,7 @@ const EventCalendar: React.FC<EventCalendarProps> = ({ defaultView = "calendar" 
           <DialogContent className="sm:max-w-lg">
             <EventDetails 
               event={selectedEvent} 
-              onClose={() => setSelectedEvent(null)} 
-              categoryIcon={getCategoryIcon(selectedEvent.category)}
+              onClose={() => setSelectedEvent(null)}
               likes={selectedEvent.likes || 0}
               onLikeClick={() => updateEventRanking(selectedEvent.id)}
             />
@@ -540,8 +540,8 @@ const EventCalendar: React.FC<EventCalendarProps> = ({ defaultView = "calendar" 
       <Dialog open={showEventForm} onOpenChange={setShowEventForm}>
         <DialogContent className="sm:max-w-lg">
           <EventForm 
-            onSubmit={saveEvent} 
-            onCancel={() => setShowEventForm(false)} 
+            selectedDate={selectedDate || new Date()}
+            onAddEvent={saveEvent}
           />
         </DialogContent>
       </Dialog>

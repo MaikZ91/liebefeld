@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -19,6 +18,7 @@ import { createWorker } from 'tesseract.js';
 interface EventFormProps {
   selectedDate: Date;
   onAddEvent: (event: Omit<Event, 'id'>) => void;
+  onCancel?: () => void;
 }
 
 const eventCategories = [
@@ -161,7 +161,7 @@ const extractLocation = (text: string): string => {
   return '';
 };
 
-const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
+const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCancel }) => {
   const [date, setDate] = useState<Date>(selectedDate);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -183,7 +183,8 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
       return;
     }
     
-    const newEvent: Omit<Event, 'id'> = {
+    const newEvent: Event = {
+      id: `event-${Date.now()}`,
       title,
       description,
       date: date.toISOString().split('T')[0],
@@ -202,6 +203,10 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
     setOrganizer('');
     setCategory('');
     setImagePreview(null);
+    
+    if (onCancel) {
+      onCancel();
+    }
   };
   
   const handleImageCapture = () => {
@@ -225,9 +230,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
       worker.setParameters({
         tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÄÖÜäöüß0123456789.,;:!?@#$%&*()-+=/\\\'"`~<>{}[]|_^°€ ',
       });
-      
-      // Removed the problematic progress listener functionality
-      // Instead, we'll just update progress at fixed intervals for visual feedback
       
       const intervalId = setInterval(() => {
         setRecognitionProgress(prev => {
@@ -527,6 +529,11 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
       </div>
       
       <DialogFooter>
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel} className="mr-2">
+            Abbrechen
+          </Button>
+        )}
         <Button type="submit" className="rounded-full w-full sm:w-auto">
           Event erstellen
         </Button>
