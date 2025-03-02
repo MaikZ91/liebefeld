@@ -189,6 +189,11 @@
   .event-list-day {
     @apply sticky top-0 bg-[#131722]/90 backdrop-blur-md py-2 z-10 border-b border-purple-500/20 mb-2;
   }
+  
+  /* Event card improvements */
+  .event-list-view {
+    @apply max-w-4xl mx-auto;
+  }
 
   /* Category badge colors */
   .badge-concert {
