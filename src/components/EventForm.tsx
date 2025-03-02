@@ -9,15 +9,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type Event } from './EventCalendar';
-import { DialogTitle, DialogDescription, DialogHeader, DialogFooter } from '@/components/ui/dialog';
-import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft } from 'lucide-react';
+import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft, X } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { supabase } from "@/integrations/supabase/client";
 
 interface EventFormProps {
   selectedDate: Date;
   onAddEvent: (event: Omit<Event, 'id'>) => void;
+  onCancel?: () => void;
 }
 
 const eventCategories = [
@@ -30,7 +29,7 @@ const eventCategories = [
   'Sonstiges'
 ];
 
-const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
+const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCancel }) => {
   const [date, setDate] = useState<Date>(selectedDate);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -61,7 +60,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
     
     onAddEvent(newEvent);
     
-    // Reset form (though dialog will close anyway)
+    // Reset form
     setTitle('');
     setDescription('');
     setTime('');
@@ -73,12 +72,24 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
   
   return (
     <form onSubmit={handleSubmit}>
-      <DialogHeader>
-        <DialogTitle className="text-2xl">Event erstellen</DialogTitle>
-        <DialogDescription>
-          Füge ein neues Event zum Liebefeld Community Kalender hinzu.
-        </DialogDescription>
-      </DialogHeader>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-semibold">Event erstellen</h2>
+        {onCancel && (
+          <Button 
+            type="button" 
+            variant="ghost" 
+            size="icon" 
+            onClick={onCancel}
+            className="rounded-full"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+      
+      <p className="text-muted-foreground mb-6">
+        Füge ein neues Event zum Liebefeld Community Kalender hinzu.
+      </p>
       
       <div className="grid gap-4 py-4">
         <div className="grid gap-2">
@@ -203,15 +214,25 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
         </div>
       </div>
       
-      <DialogFooter>
+      <div className="flex justify-end gap-2 mt-4">
+        {onCancel && (
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onCancel}
+            className="rounded-full"
+          >
+            Abbrechen
+          </Button>
+        )}
         <Button 
           type="submit" 
-          className="rounded-full w-full sm:w-auto"
+          className="rounded-full"
           disabled={isSubmitting}
         >
           {isSubmitting ? "Wird erstellt..." : "Event erstellen"}
         </Button>
-      </DialogFooter>
+      </div>
     </form>
   );
 };

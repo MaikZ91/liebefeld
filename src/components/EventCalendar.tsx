@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import EventDetails from './EventDetails';
 import EventCard from './EventCard';
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import EventForm from './EventForm';
 import { toast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -49,6 +48,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   const [filter, setFilter] = useState<string | null>(null);
   const [view, setView] = useState<"calendar" | "list">(defaultView);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [showEventForm, setShowEventForm] = useState(false);
   
   // Separate state for event likes that persists across refreshes
   const [eventLikes, setEventLikes] = useState<Record<string, number>>(() => {
@@ -404,6 +404,9 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           title: "Event erstellt",
           description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`,
         });
+        
+        // Formular nach erfolgreichem Hinzufügen ausblenden
+        setShowEventForm(false);
       }
     } catch (error) {
       console.error('Error adding event:', error);
@@ -421,6 +424,9 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       };
       
       setEvents([...events, eventWithId as Event]);
+      
+      // Formular nach erfolgreichem Hinzufügen ausblenden
+      setShowEventForm(false);
     }
   };
 
@@ -508,8 +514,8 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         </div>
         
         {/* View toggle with Add Event button moved beside it */}
-        <div className="flex justify-center items-center">
-          <Tabs defaultValue={view} onValueChange={(value) => setView(value as "calendar" | "list")} className="flex flex-col items-center">
+        <div className="flex justify-center items-center flex-col">
+          <Tabs defaultValue={view} onValueChange={(value) => setView(value as "calendar" | "list")} className="flex flex-col items-center w-full">
             <div className="flex items-center gap-3">
               <TabsList className="dark-tabs">
                 <TabsTrigger value="list" className={view === "list" ? "text-white" : "text-gray-400"}>
@@ -522,21 +528,25 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                 </TabsTrigger>
               </TabsList>
               
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all">
-                    <Plus className="h-5 w-5" />
-                    <span className="hidden md:inline">Event erstellen</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="dark-glass-effect max-w-md sm:max-w-lg">
-                  <EventForm 
-                    selectedDate={selectedDate ? selectedDate : new Date()} 
-                    onAddEvent={handleAddEvent} 
-                  />
-                </DialogContent>
-              </Dialog>
+              <Button 
+                className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all"
+                onClick={() => setShowEventForm(!showEventForm)}
+              >
+                <Plus className="h-5 w-5" />
+                <span className="hidden md:inline">Event {showEventForm ? "schließen" : "erstellen"}</span>
+              </Button>
             </div>
+
+            {/* Neues Event-Formular zwischen Menü und Kalender */}
+            {showEventForm && (
+              <div className="w-full mt-4 mb-4 dark-glass-card rounded-2xl p-6 animate-fade-down animate-duration-300">
+                <EventForm 
+                  selectedDate={selectedDate ? selectedDate : new Date()} 
+                  onAddEvent={handleAddEvent}
+                  onCancel={() => setShowEventForm(false)}
+                />
+              </div>
+            )}
             
             {/* Main calendar and list views */}
             <TabsContent value="list" className="w-full">
