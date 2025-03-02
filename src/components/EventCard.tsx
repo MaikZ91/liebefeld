@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { type Event } from './EventCalendar';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink } from 'lucide-react';
@@ -81,19 +82,21 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               {icon}
             </Badge>
             
-            {event.link ? (
-              <h4 
-                className="font-medium text-sm text-white truncate max-w-[150px] sm:max-w-[200px] hover:underline cursor-pointer flex items-center gap-1"
-                onClick={handleLinkClick}
-              >
-                {event.title}
-                <ExternalLink className="w-3 h-3 inline-flex flex-shrink-0" />
-              </h4>
-            ) : (
-              <h4 className="font-medium text-sm text-white truncate max-w-[150px] sm:max-w-[200px]">
-                {event.title}
-              </h4>
-            )}
+            <div className="overflow-hidden">
+              {event.link ? (
+                <h4 
+                  className="font-medium text-sm text-white truncate hover:underline cursor-pointer flex items-center gap-1"
+                  onClick={handleLinkClick}
+                >
+                  <span className="truncate">{event.title}</span>
+                  <ExternalLink className="w-3 h-3 inline-flex flex-shrink-0" />
+                </h4>
+              ) : (
+                <h4 className="font-medium text-sm text-white truncate">
+                  {event.title}
+                </h4>
+              )}
+            </div>
           </div>
           
           <div className="flex items-center gap-3">
