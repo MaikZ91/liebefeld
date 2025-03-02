@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { type Event } from './EventCalendar';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink } from 'lucide-react';
@@ -16,15 +15,15 @@ interface EventCardProps {
 }
 
 const categoryColors: Record<string, string> = {
-  'Konzert': 'bg-blue-900/60 text-blue-100 dark:bg-blue-900/60 dark:text-blue-100',
-  'Party': 'bg-pink-900/60 text-pink-100 dark:bg-pink-900/60 dark:text-pink-100',
-  'Ausstellung': 'bg-purple-900/60 text-purple-100 dark:bg-purple-900/60 dark:text-purple-100',
-  'Sport': 'bg-green-900/60 text-green-100 dark:bg-green-900/60 dark:text-green-100',
-  'Workshop': 'bg-yellow-900/60 text-yellow-100 dark:bg-yellow-900/60 dark:text-yellow-100',
-  'Kultur': 'bg-indigo-900/60 text-indigo-100 dark:bg-indigo-900/60 dark:text-indigo-100',
-  'Sonstiges': 'bg-gray-800/60 text-gray-200 dark:bg-gray-800/60 dark:text-gray-200',
-  'Networking': 'bg-blue-900/60 text-blue-100 dark:bg-blue-900/60 dark:text-blue-100',
-  'Meeting': 'bg-gray-800/60 text-gray-200 dark:bg-gray-800/60 dark:text-gray-200',
+  'Konzert': 'bg-orange-900/60 text-orange-100 dark:bg-orange-900/60 dark:text-orange-100',
+  'Party': 'bg-red-900/60 text-red-100 dark:bg-red-900/60 dark:text-red-100',
+  'Ausstellung': 'bg-orange-900/60 text-orange-100 dark:bg-orange-900/60 dark:text-orange-100',
+  'Sport': 'bg-red-900/60 text-red-100 dark:bg-red-900/60 dark:text-red-100',
+  'Workshop': 'bg-orange-900/60 text-orange-100 dark:bg-orange-900/60 dark:text-orange-100',
+  'Kultur': 'bg-red-900/60 text-red-100 dark:bg-red-900/60 dark:text-red-100',
+  'Sonstiges': 'bg-orange-800/60 text-orange-200 dark:bg-orange-800/60 dark:text-orange-200',
+  'Networking': 'bg-orange-900/60 text-orange-100 dark:bg-orange-900/60 dark:text-orange-100',
+  'Meeting': 'bg-orange-800/60 text-orange-200 dark:bg-orange-800/60 dark:text-orange-200',
 };
 
 const categoryIcons: Record<string, React.ReactNode> = {
@@ -75,14 +74,14 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
           <div className="flex-1 min-w-0">
             {event.link ? (
               <h4 
-                className="font-medium text-sm text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1"
+                className="font-medium text-sm text-white break-words line-clamp-2 text-left hover:underline cursor-pointer flex items-center gap-1"
                 onClick={handleLinkClick}
               >
                 {event.title}
                 <ExternalLink className="w-3 h-3 inline-flex flex-shrink-0" />
               </h4>
             ) : (
-              <h4 className="font-medium text-sm text-white break-words line-clamp-1 text-left">
+              <h4 className="font-medium text-sm text-white break-words line-clamp-2 text-left">
                 {event.title}
               </h4>
             )}
@@ -92,9 +91,9 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
                 <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
                 <span>{event.time}</span>
               </div>
-              <div className="flex items-center overflow-hidden">
+              <div className="flex items-center max-w-[150px] overflow-hidden">
                 <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
-                <span className="truncate max-w-[80px]">{event.location}</span>
+                <span className="truncate">{event.location}</span>
               </div>
             </div>
           </div>
