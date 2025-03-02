@@ -1,3 +1,4 @@
+<lov-code>
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -50,17 +51,12 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [showEventForm, setShowEventForm] = useState(false);
   
-  // Separate state for event likes that persists across refreshes
+  // Use this state only for initial loading to avoid flickering
   const [eventLikes, setEventLikes] = useState<Record<string, number>>(() => {
     const savedLikes = localStorage.getItem('eventLikes');
     return savedLikes ? JSON.parse(savedLikes) : {};
   });
   
-  // Save likes to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('eventLikes', JSON.stringify(eventLikes));
-  }, [eventLikes]);
-
   // Lade Events aus Supabase und externe Events beim Start
   useEffect(() => {
     fetchSupabaseEvents();
@@ -72,18 +68,36 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   const fetchSupabaseEvents = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      // Fetch all events including GitHub-sourced events
+      const { data: eventsData, error: eventsError } = await supabase
         .from('community_events')
         .select('*');
       
-      if (error) {
-        throw error;
+      if (eventsError) {
+        throw eventsError;
       }
       
-      if (data) {
-        console.log('Loaded events from Supabase:', data);
+      // Fetch GitHub event likes from separate table
+      const { data: githubLikesData, error: githubLikesError } = await supabase
+        .from('github_event_likes')
+        .select('*');
+      
+      if (githubLikesError) {
+        console.error('Error loading GitHub likes:', githubLikesError);
+      }
+      
+      // Create a map of GitHub event likes
+      const githubLikesMap: Record<string, number> = {};
+      if (githubLikesData) {
+        githubLikesData.forEach(like => {
+          githubLikesMap[like.event_id] = like.likes;
+        });
+      }
+      
+      if (eventsData) {
+        console.log('Loaded events from Supabase:', eventsData);
         // Konvertiere Supabase UUIDs zu Strings und kombiniere mit existierenden Events
-        const supabaseEvents = data.map(event => ({
+        const supabaseEvents = eventsData.map(event => ({
           ...event,
           id: event.id.toString()
         }));
@@ -95,6 +109,20 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           );
           return [...filteredEvents, ...supabaseEvents];
         });
+        
+        // Update local storage with GitHub likes for a smooth experience
+        if (githubLikesData && githubLikesData.length > 0) {
+          setEventLikes(prev => ({
+            ...prev,
+            ...githubLikesMap
+          }));
+          
+          // Also update localStorage for immediate use
+          localStorage.setItem('eventLikes', JSON.stringify({
+            ...eventLikes,
+            ...githubLikesMap
+          }));
+        }
       }
     } catch (error) {
       console.error('Error loading events from Supabase:', error);
@@ -150,10 +178,27 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   };
   
   // Verarbeite die GitHub-Events
-  const processGitHubEvents = (githubEvents: GitHubEvent[], isInitialLoad = false) => {
+  const processGitHubEvents = async (githubEvents: GitHubEvent[], isInitialLoad = false) => {
     try {
       // Aktuelles Jahr für die Datumskonvertierung
       const currentYear = new Date().getFullYear();
+      
+      // Fetch GitHub event likes from database
+      const { data: githubLikesData, error: githubLikesError } = await supabase
+        .from('github_event_likes')
+        .select('*');
+      
+      if (githubLikesError) {
+        console.error('Error loading GitHub likes:', githubLikesError);
+      }
+      
+      // Create a map of GitHub event likes
+      const githubLikesMap: Record<string, number> = {};
+      if (githubLikesData) {
+        githubLikesData.forEach(like => {
+          githubLikesMap[like.event_id] = like.likes;
+        });
+      }
       
       // Transformiere GitHub-Events in das interne Format
       const transformedEvents = githubEvents.map((githubEvent, index) => {
@@ -197,6 +242,9 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         
         const eventId = `github-${index}`;
         
+        // Get likes from database or fallback to stored values
+        const likesCount = githubLikesMap[eventId] !== undefined ? githubLikesMap[eventId] : (eventLikes[eventId] || 0);
+        
         // Erstelle das Event-Objekt und FIXED: Format the date correctly
         return {
           id: eventId,
@@ -207,23 +255,29 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           location: location,
           organizer: "Liebefeld Community Bielefeld",
           category: category,
-          likes: eventLikes[eventId] || 0, // Use stored likes if available
+          likes: likesCount,
           link: githubEvent.link
         } as Event;
       });
       
       console.log(`Transformed ${transformedEvents.length} events successfully`);
       
+      // Update local map with database values
+      const newLikesMap: Record<string, number> = {...eventLikes};
+      transformedEvents.forEach(event => {
+        if (githubLikesMap[event.id] !== undefined) {
+          newLikesMap[event.id] = githubLikesMap[event.id];
+        }
+      });
+      
+      setEventLikes(newLikesMap);
+      localStorage.setItem('eventLikes', JSON.stringify(newLikesMap));
+      
       // Merge with user-created events (non-GitHub events)
       setEvents(prevEvents => {
         // Filter out GitHub events and keep user-created events
         const userEvents = prevEvents.filter(event => !event.id.startsWith('github-'));
-        // Apply likes from storage to user events
-        const updatedUserEvents = userEvents.map(event => ({
-          ...event,
-          likes: eventLikes[event.id] !== undefined ? eventLikes[event.id] : (event.likes || 0)
-        }));
-        return [...updatedUserEvents, ...transformedEvents];
+        return [...userEvents, ...transformedEvents];
       });
       
       // Only show toast when not initial load
@@ -238,12 +292,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       setEvents(prevEvents => {
         // Keep only events that are not from the example data
         const userEvents = prevEvents.filter(event => !bielefeldEvents.some(bEvent => bEvent.id === event.id));
-        // Apply likes from storage
-        const updatedUserEvents = userEvents.map(event => ({
-          ...event,
-          likes: eventLikes[event.id] !== undefined ? eventLikes[event.id] : (event.likes || 0)
-        }));
-        return [...updatedUserEvents, ...bielefeldEvents];
+        return [...userEvents, ...bielefeldEvents];
       });
       
       if (!isInitialLoad) {
@@ -281,27 +330,68 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
 
   // Handle like functionality
   const handleLikeEvent = async (eventId: string) => {
-    // Update the likes in our separate state
-    setEventLikes(prev => {
-      const currentLikes = prev[eventId] || 0;
-      return {
-        ...prev,
-        [eventId]: currentLikes + 1
-      };
-    });
-    
-    // Also update the likes in the events array for immediate UI update
-    setEvents(prevEvents => 
-      prevEvents.map(event => 
-        event.id === eventId 
-          ? { ...event, likes: (event.likes || 0) + 1 } 
-          : event
-      )
-    );
-    
-    // If this is a Supabase event (not a github-* event), update the likes in Supabase
-    if (!eventId.startsWith('github-')) {
-      try {
+    try {
+      // Update the likes in our separate state for immediate UI update
+      setEventLikes(prev => {
+        const currentLikes = prev[eventId] || 0;
+        const updatedLikes = {
+          ...prev,
+          [eventId]: currentLikes + 1
+        };
+        
+        // Update localStorage too
+        localStorage.setItem('eventLikes', JSON.stringify(updatedLikes));
+        return updatedLikes;
+      });
+      
+      // Also update the likes in the events array for immediate UI update
+      setEvents(prevEvents => 
+        prevEvents.map(event => 
+          event.id === eventId 
+            ? { ...event, likes: (event.likes || 0) + 1 } 
+            : event
+        )
+      );
+      
+      // If this is a GitHub event, update likes in github_event_likes table
+      if (eventId.startsWith('github-')) {
+        const currentLikesValue = eventLikes[eventId] || 0;
+        const newLikesValue = currentLikesValue + 1;
+        
+        // Check if the record already exists
+        const { data: existingLike, error: checkError } = await supabase
+          .from('github_event_likes')
+          .select('*')
+          .eq('event_id', eventId)
+          .single();
+        
+        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means no rows returned
+          console.error('Error checking if GitHub like exists:', checkError);
+        }
+        
+        if (existingLike) {
+          // Update existing record
+          const { error: updateError } = await supabase
+            .from('github_event_likes')
+            .update({ likes: newLikesValue })
+            .eq('event_id', eventId);
+            
+          if (updateError) {
+            console.error('Error updating GitHub event likes:', updateError);
+          }
+        } else {
+          // Insert new record
+          const { error: insertError } = await supabase
+            .from('github_event_likes')
+            .insert({ event_id: eventId, likes: newLikesValue });
+            
+          if (insertError) {
+            console.error('Error inserting GitHub event likes:', insertError);
+          }
+        }
+      } 
+      // If this is a Supabase event (not a github-* event), update the likes in Supabase
+      else if (!eventId.startsWith('github-')) {
         // Find the current event to get the updated likes count
         const currentEvent = events.find(event => event.id === eventId);
         if (currentEvent) {
@@ -316,9 +406,9 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
             console.error('Error updating likes in Supabase:', error);
           }
         }
-      } catch (error) {
-        console.error('Error updating likes:', error);
       }
+    } catch (error) {
+      console.error('Error updating likes:', error);
     }
   };
 
@@ -722,25 +812,4 @@ const bielefeldEvents: Event[] = [
   {
     id: '5',
     title: 'Workshop: Urban Gardening',
-    description: 'Lerne, wie du auch mit wenig Platz in der Stadt Gemüse und Kräuter anbauen kannst.',
-    date: new Date(new Date().setDate(new Date().getDate() + 5)).toISOString().split('T')[0],
-    time: '15:00',
-    location: 'Stadtteilzentrum Liebefeld, Hauptstraße 55',
-    organizer: 'Grünes Bielefeld e.V.',
-    category: 'Workshop',
-    likes: 2
-  },
-  {
-    id: '6',
-    title: 'Theater: Romeo und Julia',
-    description: 'Moderne Inszenierung des Shakespeare-Klassikers vom Stadttheater Bielefeld.',
-    date: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0],
-    time: '19:30',
-    location: 'Stadttheater Bielefeld, Brunnenstraße 3-9',
-    organizer: 'Stadttheater Bielefeld',
-    category: 'Kultur',
-    likes: 6
-  }
-];
-
-export default EventCalendar;
+    description: 'Lerne, wie du auch
