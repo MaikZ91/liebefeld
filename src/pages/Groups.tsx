@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarNavbar } from "@/components/CalendarNavbar";
+import CalendarNavbar from "@/components/CalendarNavbar";
 import { Send, UserPlus, Check, Users } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
