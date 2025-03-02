@@ -17,7 +17,7 @@ const CalendarNavbar: React.FC = () => {
     <header className="w-full bg-transparent py-4">
       <div className="container mx-auto px-4 flex justify-between items-center">
         <Link to="/" className="flex items-center">
-          <h1 className="font-serif text-2xl font-bold tracking-tight">Community Kalender</h1>
+          <h1 className="font-serif text-2xl font-bold tracking-tight">THE TRIBE.BI</h1>
         </Link>
         
         <nav className="hidden md:block">
