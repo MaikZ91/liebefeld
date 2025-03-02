@@ -22,7 +22,6 @@ export interface Event {
   organizer: string;
   category: string;
   likes?: number;
-  link?: string;
 }
 
 // URL zur JSON-Datei mit Events
@@ -549,8 +548,7 @@ const bielefeldEvents: Event[] = [
     location: 'Forum Bielefeld, Niederwall 23',
     organizer: 'Bielefeld Musik e.V.',
     category: 'Konzert',
-    likes: 5,
-    link: 'https://example.com/events/indie-rock'
+    likes: 5
   },
   {
     id: '2',
@@ -561,8 +559,7 @@ const bielefeldEvents: Event[] = [
     location: 'Kunsthalle Bielefeld, Artur-Ladebeck-Straße 5',
     organizer: 'Kunstverein Bielefeld',
     category: 'Ausstellung',
-    likes: 3,
-    link: 'https://example.com/events/ausstellung'
+    likes: 3
   },
   {
     id: '3',
@@ -573,8 +570,7 @@ const bielefeldEvents: Event[] = [
     location: 'Start: Jahnplatz',
     organizer: 'Sportbund Bielefeld',
     category: 'Sport',
-    likes: 8,
-    link: 'https://example.com/events/stadtlauf'
+    likes: 8
   },
   {
     id: '4',
@@ -585,8 +581,7 @@ const bielefeldEvents: Event[] = [
     location: 'Club Freitag, Niederstraße 9',
     organizer: 'Club Freitag',
     category: 'Party',
-    likes: 12,
-    link: 'https://example.com/events/party'
+    likes: 12
   },
   {
     id: '5',
@@ -597,8 +592,7 @@ const bielefeldEvents: Event[] = [
     location: 'Stadtteilzentrum Liebefeld, Hauptstraße 55',
     organizer: 'Grünes Bielefeld e.V.',
     category: 'Workshop',
-    likes: 2,
-    link: 'https://example.com/events/workshop'
+    likes: 2
   },
   {
     id: '6',
@@ -609,8 +603,7 @@ const bielefeldEvents: Event[] = [
     location: 'Stadttheater Bielefeld, Brunnenstraße 3-9',
     organizer: 'Stadttheater Bielefeld',
     category: 'Kultur',
-    likes: 6,
-    link: 'https://example.com/events/theater'
+    likes: 6
   }
 ];
 
