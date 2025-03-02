@@ -54,6 +54,30 @@ export type Database = {
         }
         Relationships: []
       }
+      github_event_likes: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          id: number
+          likes: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          id?: number
+          likes?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          id?: number
+          likes?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

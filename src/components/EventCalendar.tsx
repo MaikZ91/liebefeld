@@ -1,4 +1,4 @@
-<lov-code>
+
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -812,4 +812,14 @@ const bielefeldEvents: Event[] = [
   {
     id: '5',
     title: 'Workshop: Urban Gardening',
-    description: 'Lerne, wie du auch
+    description: 'Lerne, wie du auch mit wenig Platz Gemüse und Kräuter anbauen kannst.',
+    date: new Date(new Date().setDate(new Date().getDate() + 5)).toISOString().split('T')[0],
+    time: '16:00',
+    location: 'Umweltzentrum, August-Bebel-Straße 16',
+    organizer: 'Grüne Stadt Bielefeld',
+    category: 'Workshop',
+    likes: 4
+  }
+];
+
+export default EventCalendar;
