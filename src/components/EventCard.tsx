@@ -5,7 +5,6 @@ import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, La
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/use-toast';
 
 interface EventCardProps {
   event: Event;
@@ -48,10 +47,6 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     e.stopPropagation();
     if (onLike) {
       onLike(event.id);
-      toast({
-        description: "Event wurde geliked!",
-        duration: 1500,
-      });
     }
   };
 
