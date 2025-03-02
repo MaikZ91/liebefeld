@@ -49,7 +49,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     if (onLike) {
       onLike(event.id);
       toast({
-        description: "Event wurde geliked! Das Ranking wurde aktualisiert.",
+        description: "Event wurde geliked!",
         duration: 1500,
       });
     }

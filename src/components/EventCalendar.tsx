@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, RefreshCw, Music, PartyPopper, Image, Dumbbell, Map, CalendarIcon, List, Heart } from 'lucide-react';
@@ -24,12 +24,8 @@ export interface Event {
   likes?: number;
 }
 
-// URL for events JSON file
+// URL zur JSON-Datei mit Events
 const EXTERNAL_EVENTS_URL = "https://raw.githubusercontent.com/MaikZ91/productiontools/master/events.json";
-
-// URL for the global rankings API
-const GLOBAL_RANKINGS_API = "https://api.jsonbin.io/v3/b/660f3c1dbc00d465eb6e47fc";
-const API_KEY = "$2a$10$QexgWDYYs1Zq3Mxx6UPWuO5xt9F4pQ9G/heSPb8xVkdKcW0o0GNFW";
 
 interface GitHubEvent {
   date: string; // Format: "Fri, 04.04"
@@ -41,103 +37,30 @@ interface EventCalendarProps {
   defaultView?: "calendar" | "list";
 }
 
-const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
+const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   // State variables
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<Event[]>(() => {
+    const savedEvents = localStorage.getItem('communityEvents');
+    return savedEvents ? JSON.parse(savedEvents) : bielefeldEvents;
+  });
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState<string | null>(null);
   const [view, setView] = useState<"calendar" | "list">(defaultView);
-  const [globalLikes, setGlobalLikes] = useState<Record<string, number>>({});
   
-  // Reference to the current day element in the list view
-  const todayRef = useRef<HTMLDivElement>(null);
+  // Save events to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('communityEvents', JSON.stringify(events));
+  }, [events]);
 
-  // Load events and global likes on component mount
+  // Lade externe Events beim Start
   useEffect(() => {
     fetchExternalEvents();
-    fetchGlobalLikes();
   }, []);
 
-  // Automatically scroll to today when view changes or component mounts
-  useEffect(() => {
-    if (view === 'list' && todayRef.current) {
-      setTimeout(() => {
-        todayRef.current?.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
-        });
-      }, 300); // Small delay to ensure the view has rendered
-    }
-  }, [view]);
-
-  // Fetch global likes from the API
-  const fetchGlobalLikes = async () => {
-    try {
-      const response = await fetch(GLOBAL_RANKINGS_API, {
-        method: 'GET',
-        headers: {
-          'X-Master-Key': API_KEY
-        }
-      });
-      
-      if (!response.ok) {
-        console.error('Failed to fetch global likes:', response.status);
-        return;
-      }
-      
-      const data = await response.json();
-      if (data && data.record && data.record.likes) {
-        console.log('Loaded global likes:', data.record.likes);
-        setGlobalLikes(data.record.likes);
-      } else {
-        console.log('No existing likes found, initializing empty likes object');
-        setGlobalLikes({});
-      }
-    } catch (error) {
-      console.error('Error fetching global likes:', error);
-    }
-  };
-
-  // Update global likes
-  const updateGlobalLikes = async (eventId: string) => {
-    const updatedLikes = { ...globalLikes };
-    updatedLikes[eventId] = (updatedLikes[eventId] || 0) + 1;
-    
-    try {
-      const response = await fetch(GLOBAL_RANKINGS_API, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': API_KEY
-        },
-        body: JSON.stringify({ likes: updatedLikes })
-      });
-      
-      if (!response.ok) {
-        console.error('Failed to update global likes:', response.status);
-        return;
-      }
-      
-      console.log('Global likes updated successfully');
-      setGlobalLikes(updatedLikes);
-      
-      // Update the event in the local state too
-      setEvents(prevEvents => 
-        prevEvents.map(event => 
-          event.id === eventId 
-            ? { ...event, likes: updatedLikes[eventId] } 
-            : event
-        )
-      );
-    } catch (error) {
-      console.error('Error updating global likes:', error);
-    }
-  };
-
-  // Load external events
+  // Funktion zum Laden externer Events
   const fetchExternalEvents = async () => {
     setIsLoading(true);
     
@@ -153,18 +76,14 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
       const githubEvents: GitHubEvent[] = await response.json();
       console.log(`Successfully loaded ${githubEvents.length} events from ${EXTERNAL_EVENTS_URL}`);
       
-      // Transform GitHub events to our format
+      // Transformiere die GitHub-Events in das interne Format
       processGitHubEvents(githubEvents);
       
     } catch (error) {
       console.error(`Fehler beim Laden von ${EXTERNAL_EVENTS_URL}:`, error);
-      // Use sample data
+      // Verwende Beispieldaten
       console.log("Verwende lokale Beispieldaten, da keine externe Quelle verfügbar ist.");
-      const sampleEvents = bielefeldEvents.map(event => ({
-        ...event,
-        likes: globalLikes[event.id] || event.likes || 0
-      }));
-      setEvents(sampleEvents);
+      setEvents(bielefeldEvents);
       
       toast({
         title: "Fehler beim Laden der Events",
@@ -176,67 +95,66 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     setIsLoading(false);
   };
   
-  // Process GitHub events
+  // Verarbeite die GitHub-Events
   const processGitHubEvents = (githubEvents: GitHubEvent[]) => {
     try {
-      // Current year for date conversion
+      // Aktuelles Jahr für die Datumskonvertierung
       const currentYear = new Date().getFullYear();
       
-      // Transform GitHub events to our format
+      // Transformiere GitHub-Events in das interne Format
       const transformedEvents = githubEvents.map((githubEvent, index) => {
-        // Extract location from event title (if available)
+        // Extrahiere Veranstaltungsort aus dem Event-Titel (falls vorhanden)
         let title = githubEvent.event;
         let location = "Bielefeld";
         let category = determineEventCategory(githubEvent.event.toLowerCase());
         
-        // Check if there's a location in parentheses
+        // Überprüfe, ob es eine Standortangabe in Klammern gibt
         const locationMatch = githubEvent.event.match(/\(@([^)]+)\)/);
         if (locationMatch) {
-          // Remove the location from the title
+          // Entferne die Standortangabe aus dem Titel
           title = githubEvent.event.replace(/\s*\(@[^)]+\)/, '');
           location = locationMatch[1];
         }
         
-        // Parse the date (Format: "Fri, 04.04")
+        // Parse das Datum (Format: "Fri, 04.04")
         let eventDate;
         try {
-          // Try to parse "dd.MM" format and add current year
+          // Versuche "dd.MM" Format zu parsen und füge aktuelles Jahr hinzu
           const dateParts = githubEvent.date.split(', ')[1].split('.');
           const day = parseInt(dateParts[0], 10);
-          const month = parseInt(dateParts[1], 10) - 1; // JavaScript months are 0-indexed
+          const month = parseInt(dateParts[1], 10) - 1; // JavaScript-Monate sind 0-indexed
           
-          // Create date with current year
+          // Erstelle Datum mit aktuellem Jahr
           eventDate = new Date(currentYear, month, day);
           
-          // If the date is in the past, add a year
-          if (eventDate < new Date() && month < 6) { // Only for first half of the year
+          // Wenn das Datum in der Vergangenheit liegt, füge ein Jahr hinzu
+          // (für Events, die im nächsten Jahr stattfinden)
+          if (eventDate < new Date() && month < 6) { // Nur für erste Jahreshälfte
             eventDate.setFullYear(currentYear + 1);
           }
         } catch (err) {
           console.warn(`Konnte Datum nicht parsen: ${githubEvent.date}`, err);
-          // Fallback to today's date
+          // Fallback auf heutiges Datum
           eventDate = new Date();
         }
         
-        const eventId = `github-${index}`;
-        
-        // Create the event object
+        // Erstelle das Event-Objekt
         return {
-          id: eventId,
+          id: `github-${index}`,
           title: title,
           description: `Mehr Informationen unter: ${githubEvent.link}`,
           date: eventDate.toISOString().split('T')[0],
-          time: "19:00", // Default time for events without time
+          time: "19:00", // Default-Zeit für Events ohne Zeitangabe
           location: location,
           organizer: "Liebefeld Community Bielefeld",
           category: category,
-          likes: globalLikes[eventId] || 0
+          likes: 0
         } as Event;
       });
       
       console.log(`Transformed ${transformedEvents.length} events successfully`);
       
-      // Set the transformed events
+      // Setze die transformierten Events
       setEvents(transformedEvents);
       
       toast({
@@ -245,11 +163,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
       });
     } catch (error) {
       console.error("Fehler bei der Verarbeitung der GitHub-Events:", error);
-      const sampleEvents = bielefeldEvents.map(event => ({
-        ...event,
-        likes: globalLikes[event.id] || event.likes || 0
-      }));
-      setEvents(sampleEvents);
+      setEvents(bielefeldEvents);
       
       toast({
         title: "Fehler bei der Verarbeitung der Events",
@@ -259,7 +173,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     }
   };
 
-  // Determine category based on keywords in title
+  // Bestimme Kategorie basierend auf Schlüsselwörtern im Titel
   const determineEventCategory = (title: string): string => {
     if (title.includes("konzert") || title.includes("festival") || title.includes("musik") || 
         title.includes("band") || title.includes("jazz") || title.includes("chor")) {
@@ -282,9 +196,15 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     }
   };
 
-  // Handle like functionality with global rankings
+  // Handle like functionality
   const handleLikeEvent = (eventId: string) => {
-    updateGlobalLikes(eventId);
+    setEvents(prevEvents => 
+      prevEvents.map(event => 
+        event.id === eventId 
+          ? { ...event, likes: (event.likes || 0) + 1 } 
+          : event
+      )
+    );
   };
 
   // Calendar navigation functions
@@ -335,12 +255,6 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     return acc;
   }, {} as Record<string, Event[]>);
   
-  // Checks if a date is today
-  const isDateToday = (dateStr: string) => {
-    const today = new Date();
-    return isSameDay(parseISO(dateStr), today);
-  };
-  
   // Handler for selecting a date
   const handleDateClick = (day: Date) => {
     setSelectedDate(day);
@@ -349,20 +263,13 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   
   // Handler for adding a new event
   const handleAddEvent = (newEvent: Omit<Event, 'id'>) => {
-    const eventId = Math.random().toString(36).substring(2, 9);
     const eventWithId = {
       ...newEvent,
-      id: eventId,
+      id: Math.random().toString(36).substring(2, 9),
       likes: 0
     };
     
     setEvents([...events, eventWithId as Event]);
-    
-    // Add the new event to global likes with 0 likes
-    const updatedLikes = { ...globalLikes };
-    updatedLikes[eventId] = 0;
-    setGlobalLikes(updatedLikes);
-    
     toast({
       title: "Event erstellt",
       description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`,
@@ -460,78 +367,21 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
           </div>
         </div>
         
-        {/* View toggle - SWAPPED ORDER TO SHOW LIST FIRST */}
+        {/* View toggle */}
         <div className="flex justify-center">
           <Tabs defaultValue={view} onValueChange={(value) => setView(value as "calendar" | "list")}>
             <TabsList className="dark-tabs">
-              <TabsTrigger value="list" className={view === "list" ? "text-white" : "text-gray-400"}>
-                <List className="w-4 h-4 mr-2" />
-                Liste
-              </TabsTrigger>
               <TabsTrigger value="calendar" className={view === "calendar" ? "text-white" : "text-gray-400"}>
                 <CalendarIcon className="w-4 h-4 mr-2" />
                 Kalender
               </TabsTrigger>
+              <TabsTrigger value="list" className={view === "list" ? "text-white" : "text-gray-400"}>
+                <List className="w-4 h-4 mr-2" />
+                Liste
+              </TabsTrigger>
             </TabsList>
             
-            {/* Main calendar and list views - SWAPPED ORDER TO SHOW LIST FIRST */}
-            <TabsContent value="list">
-              <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-medium text-white">
-                    Alle Events im {format(currentDate, 'MMMM', { locale: de })}
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <Heart className="h-4 w-4 text-red-500" />
-                    <span className="text-sm text-gray-300">Top Events oben</span>
-                  </div>
-                </div>
-                
-                <div className="overflow-y-auto max-h-[600px] pr-2 scrollbar-thin">
-                  {Object.keys(eventsByDate).length > 0 ? (
-                    Object.keys(eventsByDate).sort().map(dateStr => {
-                      const date = parseISO(dateStr);
-                      const isTodaysDate = isDateToday(dateStr);
-                      
-                      return (
-                        <div 
-                          key={dateStr} 
-                          className="mb-4"
-                          ref={isTodaysDate ? todayRef : null}
-                        >
-                          <h4 className={cn(
-                            "text-sm font-medium mb-2 sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md",
-                            isTodaysDate ? "text-primary font-bold" : "text-white"
-                          )}>
-                            {format(date, 'EEEE, d. MMMM', { locale: de })}
-                            {isTodaysDate && " (Heute)"}
-                          </h4>
-                          <div className="space-y-1">
-                            {eventsByDate[dateStr].map(event => (
-                              <EventCard 
-                                key={event.id} 
-                                event={event}
-                                compact={true}
-                                onClick={() => {
-                                  setSelectedDate(date);
-                                  setSelectedEvent(event);
-                                }}
-                                onLike={handleLikeEvent}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="flex items-center justify-center h-40 text-gray-400">
-                      Keine Events in diesem Monat {filter ? `in der Kategorie "${filter}"` : ''}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </TabsContent>
-            
+            {/* Main calendar and list views */}
             <TabsContent value="calendar">
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="w-full md:w-3/5 dark-glass-card rounded-2xl p-6">
@@ -619,6 +469,53 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                       </div>
                     )}
                   </div>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="list">
+              <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-medium text-white">
+                    Alle Events im {format(currentDate, 'MMMM', { locale: de })}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-red-500" />
+                    <span className="text-sm text-gray-300">Top Events oben</span>
+                  </div>
+                </div>
+                
+                <div className="overflow-y-auto max-h-[600px] pr-2 scrollbar-thin">
+                  {Object.keys(eventsByDate).length > 0 ? (
+                    Object.keys(eventsByDate).sort().map(dateStr => {
+                      const date = parseISO(dateStr);
+                      return (
+                        <div key={dateStr} className="mb-4">
+                          <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
+                            {format(date, 'EEEE, d. MMMM', { locale: de })}
+                          </h4>
+                          <div className="space-y-1">
+                            {eventsByDate[dateStr].map(event => (
+                              <EventCard 
+                                key={event.id} 
+                                event={event}
+                                compact={true}
+                                onClick={() => {
+                                  setSelectedDate(date);
+                                  setSelectedEvent(event);
+                                }}
+                                onLike={handleLikeEvent}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="flex items-center justify-center h-40 text-gray-400">
+                      Keine Events in diesem Monat {filter ? `in der Kategorie "${filter}"` : ''}
+                    </div>
+                  )}
                 </div>
               </div>
             </TabsContent>
