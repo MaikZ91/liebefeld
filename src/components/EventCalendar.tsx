@@ -414,7 +414,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                       const date = parseISO(dateStr);
                       return (
                         <div key={dateStr} className="mb-4 px-2">
-                          <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md px-2">
+                          <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
                             {format(date, 'EEEE, d. MMMM', { locale: de })}
                           </h4>
                           <div className="space-y-1">
