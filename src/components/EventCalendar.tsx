@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Plus, Music, PartyPopper, Image, Dumbbell, Map, CalendarIcon, List, Heart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Music, PartyPopper, Image, Dumbbell, Map, CalendarIcon, List, Heart, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import EventDetails from './EventDetails';
@@ -10,6 +11,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import EventForm from './EventForm';
 import { toast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
 
 // Type definitions
 export interface Event {
@@ -41,10 +43,7 @@ interface EventCalendarProps {
 const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   // State variables
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [events, setEvents] = useState<Event[]>(() => {
-    const savedEvents = localStorage.getItem('communityEvents');
-    return savedEvents ? JSON.parse(savedEvents) : bielefeldEvents;
-  });
+  const [events, setEvents] = useState<Event[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -58,21 +57,57 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     return savedLikes ? JSON.parse(savedLikes) : {};
   });
   
-  // Save events to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('communityEvents', JSON.stringify(events));
-  }, [events]);
-  
   // Save likes to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('eventLikes', JSON.stringify(eventLikes));
   }, [eventLikes]);
 
-  // Lade externe Events beim Start
+  // Lade Events aus Supabase und externe Events beim Start
   useEffect(() => {
+    fetchSupabaseEvents();
     fetchExternalEvents(true);
     setIsInitialLoad(false);
   }, []);
+
+  // Funktion zum Laden der Events aus Supabase
+  const fetchSupabaseEvents = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('community_events')
+        .select('*');
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data) {
+        console.log('Loaded events from Supabase:', data);
+        // Konvertiere Supabase UUIDs zu Strings und kombiniere mit existierenden Events
+        const supabaseEvents = data.map(event => ({
+          ...event,
+          id: event.id.toString()
+        }));
+        
+        setEvents(prevEvents => {
+          // Entferne Duplikate (Events mit gleicher ID)
+          const filteredEvents = prevEvents.filter(
+            event => !supabaseEvents.some(supaEvent => supaEvent.id === event.id)
+          );
+          return [...filteredEvents, ...supabaseEvents];
+        });
+      }
+    } catch (error) {
+      console.error('Error loading events from Supabase:', error);
+      toast({
+        title: "Fehler beim Laden der Events",
+        description: "Die Events konnten nicht aus der Datenbank geladen werden.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Funktion zum Laden externer Events
   const fetchExternalEvents = async (isInitialLoad = false) => {
@@ -246,7 +281,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   };
 
   // Handle like functionality
-  const handleLikeEvent = (eventId: string) => {
+  const handleLikeEvent = async (eventId: string) => {
     // Update the likes in our separate state
     setEventLikes(prev => {
       const currentLikes = prev[eventId] || 0;
@@ -264,6 +299,28 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           : event
       )
     );
+    
+    // If this is a Supabase event (not a github-* event), update the likes in Supabase
+    if (!eventId.startsWith('github-')) {
+      try {
+        // Find the current event to get the updated likes count
+        const currentEvent = events.find(event => event.id === eventId);
+        if (currentEvent) {
+          const updatedLikes = (currentEvent.likes || 0) + 1;
+          
+          const { error } = await supabase
+            .from('community_events')
+            .update({ likes: updatedLikes })
+            .eq('id', eventId);
+            
+          if (error) {
+            console.error('Error updating likes in Supabase:', error);
+          }
+        }
+      } catch (error) {
+        console.error('Error updating likes:', error);
+      }
+    }
   };
 
   // Calendar navigation functions
@@ -321,18 +378,51 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   };
   
   // Handler for adding a new event
-  const handleAddEvent = (newEvent: Omit<Event, 'id'>) => {
-    const eventWithId = {
-      ...newEvent,
-      id: Math.random().toString(36).substring(2, 9),
-      likes: 0,
-    };
-    
-    setEvents([...events, eventWithId as Event]);
-    toast({
-      title: "Event erstellt",
-      description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`,
-    });
+  const handleAddEvent = async (newEvent: Omit<Event, 'id'>) => {
+    try {
+      // Speichere das Event in Supabase
+      const { data, error } = await supabase
+        .from('community_events')
+        .insert([newEvent])
+        .select();
+        
+      if (error) {
+        console.error('Error saving event to Supabase:', error);
+        throw error;
+      }
+      
+      if (data && data[0]) {
+        // Event erfolgreich gespeichert, füge es zur lokalen Liste hinzu
+        const eventWithId = {
+          ...data[0],
+          id: data[0].id.toString(),
+          likes: 0
+        };
+        
+        setEvents(prevEvents => [...prevEvents, eventWithId]);
+        
+        toast({
+          title: "Event erstellt",
+          description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`,
+        });
+      }
+    } catch (error) {
+      console.error('Error adding event:', error);
+      toast({
+        title: "Fehler beim Erstellen des Events",
+        description: "Das Event konnte nicht gespeichert werden. Bitte versuche es später erneut.",
+        variant: "destructive"
+      });
+      
+      // Fallback: Lokales Event hinzufügen, falls Supabase-Speicherung fehlschlägt
+      const eventWithId = {
+        ...newEvent,
+        id: Math.random().toString(36).substring(2, 9),
+        likes: 0,
+      };
+      
+      setEvents([...events, eventWithId as Event]);
+    }
   };
 
   // Check if a day has events
@@ -391,28 +481,40 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
             </Button>
           </div>
           
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
-            {categories.map(category => (
-              <Button
-                key={category}
-                variant={filter === category ? "default" : "outline"}
-                size="sm"
-                onClick={() => toggleFilter(category)}
-                className={cn(
-                  "rounded-full whitespace-nowrap",
-                  (category === "Konzert" || category === "Party" || category === "Sonstiges") ?
-                    (filter === category 
-                      ? "bg-black text-red-500 border-red-500 hover:bg-black/90 hover:text-red-500" 
-                      : "bg-black text-red-500 border-red-500 hover:bg-black/90 hover:text-red-500")
-                    : (filter === category 
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90" 
-                      : "bg-black/70 text-white border-gray-700 hover:bg-black/60 hover:text-white dark-button")
-                )}
-              >
-                {category in categoryIcons ? categoryIcons[category as keyof typeof categoryIcons] : null}
-                {category}
-              </Button>
-            ))}
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => fetchSupabaseEvents()}
+              className="rounded-full whitespace-nowrap bg-black text-red-500 border-red-500 hover:bg-black/90 hover:text-red-500 mr-2"
+            >
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Aktualisieren
+            </Button>
+            
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
+              {categories.map(category => (
+                <Button
+                  key={category}
+                  variant={filter === category ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => toggleFilter(category)}
+                  className={cn(
+                    "rounded-full whitespace-nowrap",
+                    (category === "Konzert" || category === "Party" || category === "Sonstiges") ?
+                      (filter === category 
+                        ? "bg-black text-red-500 border-red-500 hover:bg-black/90 hover:text-red-500" 
+                        : "bg-black text-red-500 border-red-500 hover:bg-black/90 hover:text-red-500")
+                      : (filter === category 
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                        : "bg-black/70 text-white border-gray-700 hover:bg-black/60 hover:text-white dark-button")
+                  )}
+                >
+                  {category in categoryIcons ? categoryIcons[category as keyof typeof categoryIcons] : null}
+                  {category}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
         

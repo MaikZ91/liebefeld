@@ -13,6 +13,7 @@ import { DialogTitle, DialogDescription, DialogHeader, DialogFooter } from '@/co
 import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { supabase } from "@/integrations/supabase/client";
 
 interface EventFormProps {
   selectedDate: Date;
@@ -37,13 +38,16 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
   const [location, setLocation] = useState('');
   const [organizer, setOrganizer] = useState('');
   const [category, setCategory] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!title || !date || !time) {
       return; // Prevent submission if required fields are missing
     }
+    
+    setIsSubmitting(true);
     
     const newEvent: Omit<Event, 'id'> = {
       title,
@@ -64,6 +68,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
     setLocation('');
     setOrganizer('');
     setCategory('');
+    setIsSubmitting(false);
   };
   
   return (
@@ -199,8 +204,12 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent }) => {
       </div>
       
       <DialogFooter>
-        <Button type="submit" className="rounded-full w-full sm:w-auto">
-          Event erstellen
+        <Button 
+          type="submit" 
+          className="rounded-full w-full sm:w-auto"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Wird erstellt..." : "Event erstellen"}
         </Button>
       </DialogFooter>
     </form>
