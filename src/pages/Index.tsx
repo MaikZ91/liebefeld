@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -102,10 +101,8 @@ const Index = () => {
           </div>
         </div>
         
-        {/* Live Ticker for new events */}
-        {events.length > 0 && (
-          <LiveTicker events={events} />
-        )}
+        {/* Live Ticker for all events */}
+        <LiveTicker events={events} />
 
         {/* Updated the background color to a soft gray for better text contrast */}
         <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-6 rounded-t-lg shadow-inner">

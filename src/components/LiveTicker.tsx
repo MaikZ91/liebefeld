@@ -10,48 +10,32 @@ interface LiveTickerProps {
 }
 
 const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
-  const [weeklyEvents, setWeeklyEvents] = useState<Event[]>([]);
+  const [tickerEvents, setTickerEvents] = useState<Event[]>([]);
   const [isPaused, setIsPaused] = useState(false);
   const tickerRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Get events for the current week
+  // Process all events for the ticker (both GitHub and user-added)
   useEffect(() => {
-    const now = new Date();
-    const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // 1 = Monday
-    const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+    if (events.length === 0) return;
     
-    // Filter events within current week and sort by date
-    const eventsThisWeek = events
-      .filter(event => {
-        try {
-          const eventDate = parseISO(event.date);
-          return isWithinInterval(eventDate, { start: weekStart, end: weekEnd });
-        } catch (error) {
-          console.error(`Error parsing date: ${event.date}`, error);
-          return false;
-        }
-      })
-      .sort((a, b) => {
-        try {
-          return parseISO(a.date).getTime() - parseISO(b.date).getTime();
-        } catch (error) {
-          console.error(`Error sorting dates: ${a.date}, ${b.date}`, error);
-          return 0;
-        }
-      })
-      .slice(0, 10); // Limit to 10 events
+    // Sort all events by date (most recent first)
+    const sortedEvents = [...events].sort((a, b) => {
+      try {
+        return parseISO(b.date).getTime() - parseISO(a.date).getTime();
+      } catch (error) {
+        console.error(`Error sorting dates: ${a.date}, ${b.date}`, error);
+        return 0;
+      }
+    });
     
-    setWeeklyEvents(eventsThisWeek);
+    // Limit to 20 events for better performance
+    const limitedEvents = sortedEvents.slice(0, 20);
     
-    console.log(`LiveTicker: Found ${eventsThisWeek.length} events this week out of ${events.length} total events`);
-    console.log(`Week range: ${format(weekStart, 'dd.MM.')} - ${format(weekEnd, 'dd.MM.')}`);
+    setTickerEvents(limitedEvents);
+    console.log(`LiveTicker: Displaying ${limitedEvents.length} events (from ${events.length} total)`);
   }, [events]);
 
-  // Make sure we always render the ticker if there are events, even if none are this week
-  const eventsToShow = weeklyEvents.length > 0 ? weeklyEvents : events.slice(0, 10);
-
-  // Don't render if no events at all
+  // Don't render if no events
   if (events.length === 0) {
     console.log('LiveTicker: No events to display');
     return null;
@@ -62,12 +46,11 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
       className="bg-black text-white overflow-hidden py-2 relative"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      ref={containerRef}
     >
       {/* Header */}
       <div className="absolute left-0 top-0 bottom-0 flex items-center z-10 bg-red-600 px-3 py-2">
         <Calendar className="w-4 h-4 mr-1" />
-        <span className="font-bold text-sm whitespace-nowrap">Neue Events</span>
+        <span className="font-bold text-sm whitespace-nowrap">Events</span>
         <ArrowRight className="w-4 h-4 ml-1" />
       </div>
       
@@ -79,9 +62,9 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
       <div className="ml-[120px] mr-2 overflow-hidden">
         <div 
           ref={tickerRef}
-          className={`whitespace-nowrap inline-block ${isPaused ? 'pause-animation' : 'animate-ticker'}`}
+          className={`whitespace-nowrap inline-block ${isPaused ? 'ticker-paused' : 'ticker-scroll'}`}
         >
-          {[...eventsToShow, ...eventsToShow].map((event, index) => (
+          {[...tickerEvents, ...tickerEvents].map((event, index) => (
             <div 
               key={`${event.id}-${index}`} 
               className="inline-block mx-4"
@@ -107,7 +90,6 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
         </div>
       </div>
       
-      {/* Define the animation in a style tag */}
       <style>
         {`
           @keyframes ticker {
@@ -119,11 +101,12 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
             }
           }
           
-          .animate-ticker {
+          .ticker-scroll {
             animation: ticker 30s linear infinite;
           }
           
-          .pause-animation {
+          .ticker-paused {
+            animation: ticker 30s linear infinite;
             animation-play-state: paused;
           }
         `}
