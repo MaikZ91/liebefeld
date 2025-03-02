@@ -22,7 +22,6 @@ export interface Event {
   organizer: string;
   category: string;
   likes?: number;
-  link?: string;
 }
 
 // URL zur JSON-Datei mit Events
@@ -50,7 +49,6 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState<string | null>(null);
   const [view, setView] = useState<"calendar" | "list">(defaultView);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   // Save events to localStorage whenever they change
   useEffect(() => {
@@ -59,12 +57,11 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
 
   // Lade externe Events beim Start
   useEffect(() => {
-    fetchExternalEvents(true);
-    setIsInitialLoad(false);
+    fetchExternalEvents();
   }, []);
 
   // Funktion zum Laden externer Events
-  const fetchExternalEvents = async (isInitialLoad = false) => {
+  const fetchExternalEvents = async () => {
     setIsLoading(true);
     
     try {
@@ -80,7 +77,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       console.log(`Successfully loaded ${githubEvents.length} events from ${EXTERNAL_EVENTS_URL}`);
       
       // Transformiere die GitHub-Events in das interne Format
-      processGitHubEvents(githubEvents, isInitialLoad);
+      processGitHubEvents(githubEvents);
       
     } catch (error) {
       console.error(`Fehler beim Laden von ${EXTERNAL_EVENTS_URL}:`, error);
@@ -88,20 +85,18 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       console.log("Verwende lokale Beispieldaten, da keine externe Quelle verfügbar ist.");
       setEvents(bielefeldEvents);
       
-      if (!isInitialLoad) {
-        toast({
-          title: "Fehler beim Laden der Events",
-          description: "Es werden lokale Beispieldaten angezeigt.",
-          variant: "destructive"
-        });
-      }
+      toast({
+        title: "Fehler beim Laden der Events",
+        description: "Es werden lokale Beispieldaten angezeigt.",
+        variant: "destructive"
+      });
     }
     
     setIsLoading(false);
   };
   
   // Verarbeite die GitHub-Events
-  const processGitHubEvents = (githubEvents: GitHubEvent[], isInitialLoad = false) => {
+  const processGitHubEvents = (githubEvents: GitHubEvent[]) => {
     try {
       // Aktuelles Jahr für die Datumskonvertierung
       const currentYear = new Date().getFullYear();
@@ -124,40 +119,36 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         // Parse das Datum (Format: "Fri, 04.04")
         let eventDate;
         try {
-          // Extract the day of week and date part
-          const dateParts = githubEvent.date.split(', ');
-          const dayOfWeek = dateParts[0]; // e.g., "Fri"
-          const dateNumbers = dateParts[1].split('.'); // e.g., ["04", "04"]
+          // Versuche "dd.MM" Format zu parsen und füge aktuelles Jahr hinzu
+          const dateParts = githubEvent.date.split(', ')[1].split('.');
+          const day = parseInt(dateParts[0], 10);
+          const month = parseInt(dateParts[1], 10) - 1; // JavaScript-Monate sind 0-indexed
           
-          // Parse day and month numbers
-          const day = parseInt(dateNumbers[0], 10);
-          const month = parseInt(dateNumbers[1], 10) - 1; // JavaScript months are 0-indexed
+          // Erstelle Datum mit aktuellem Jahr
+          eventDate = new Date(currentYear, month, day);
           
-          // Create date with current year - FIXED: Use UTC to avoid timezone issues
-          eventDate = new Date(Date.UTC(currentYear, month, day));
-          
-          // If the date is in the past, add a year (for events happening next year)
-          if (eventDate < new Date() && month < 6) { // Only for first half of the year
+          // Wenn das Datum in der Vergangenheit liegt, füge ein Jahr hinzu
+          // (für Events, die im nächsten Jahr stattfinden)
+          if (eventDate < new Date() && month < 6) { // Nur für erste Jahreshälfte
             eventDate.setFullYear(currentYear + 1);
           }
         } catch (err) {
           console.warn(`Konnte Datum nicht parsen: ${githubEvent.date}`, err);
-          // Fallback to today's date
+          // Fallback auf heutiges Datum
           eventDate = new Date();
         }
         
-        // Erstelle das Event-Objekt und FIXED: Format the date correctly
+        // Erstelle das Event-Objekt
         return {
           id: `github-${index}`,
           title: title,
           description: `Mehr Informationen unter: ${githubEvent.link}`,
-          date: format(eventDate, 'yyyy-MM-dd'), // Properly format as YYYY-MM-DD
+          date: eventDate.toISOString().split('T')[0],
           time: "19:00", // Default-Zeit für Events ohne Zeitangabe
           location: location,
           organizer: "Liebefeld Community Bielefeld",
           category: category,
-          likes: 0,
-          link: githubEvent.link
+          likes: 0
         } as Event;
       });
       
@@ -166,24 +157,19 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       // Setze die transformierten Events
       setEvents(transformedEvents);
       
-      // Only show toast when not initial load
-      if (!isInitialLoad) {
-        toast({
-          title: "Events aktualisiert",
-          description: `${transformedEvents.length} Events wurden geladen.`,
-        });
-      }
+      toast({
+        title: "Events aktualisiert",
+        description: `${transformedEvents.length} Events wurden geladen.`,
+      });
     } catch (error) {
       console.error("Fehler bei der Verarbeitung der GitHub-Events:", error);
       setEvents(bielefeldEvents);
       
-      if (!isInitialLoad) {
-        toast({
-          title: "Fehler bei der Verarbeitung der Events",
-          description: "Es werden lokale Beispieldaten angezeigt.",
-          variant: "destructive"
-        });
-      }
+      toast({
+        title: "Fehler bei der Verarbeitung der Events",
+        description: "Es werden lokale Beispieldaten angezeigt.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -280,7 +266,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     const eventWithId = {
       ...newEvent,
       id: Math.random().toString(36).substring(2, 9),
-      likes: 0,
+      likes: 0
     };
     
     setEvents([...events, eventWithId as Event]);
@@ -356,7 +342,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           
           <div className="flex gap-2">
             <Button 
-              onClick={() => fetchExternalEvents(false)}
+              onClick={fetchExternalEvents}
               className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all dark-button"
               variant="outline"
               disabled={isLoading}
@@ -381,70 +367,21 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           </div>
         </div>
         
-        {/* View toggle - Centered LIST and CALENDAR buttons */}
+        {/* View toggle */}
         <div className="flex justify-center">
-          <Tabs defaultValue={view} onValueChange={(value) => setView(value as "calendar" | "list")} className="w-full max-w-md mx-auto">
-            <div className="flex justify-center mb-4">
-              <TabsList className="dark-tabs">
-                <TabsTrigger value="list" className={view === "list" ? "text-white" : "text-gray-400"}>
-                  <List className="w-4 h-4 mr-2" />
-                  Liste
-                </TabsTrigger>
-                <TabsTrigger value="calendar" className={view === "calendar" ? "text-white" : "text-gray-400"}>
-                  <CalendarIcon className="w-4 h-4 mr-2" />
-                  Kalender
-                </TabsTrigger>
-              </TabsList>
-            </div>
+          <Tabs defaultValue={view} onValueChange={(value) => setView(value as "calendar" | "list")}>
+            <TabsList className="dark-tabs">
+              <TabsTrigger value="list" className={view === "list" ? "text-white" : "text-gray-400"}>
+                <List className="w-4 h-4 mr-2" />
+                Liste
+              </TabsTrigger>
+              <TabsTrigger value="calendar" className={view === "calendar" ? "text-white" : "text-gray-400"}>
+                <CalendarIcon className="w-4 h-4 mr-2" />
+                Kalender
+              </TabsTrigger>
+            </TabsList>
             
             {/* Main calendar and list views */}
-            <TabsContent value="list">
-              <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-medium text-white">
-                    Alle Events im {format(currentDate, 'MMMM', { locale: de })}
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <Heart className="h-4 w-4 text-red-500" />
-                    <span className="text-sm text-gray-300">Top Events oben</span>
-                  </div>
-                </div>
-                
-                <div className="overflow-y-auto max-h-[600px] pr-2 scrollbar-thin">
-                  {Object.keys(eventsByDate).length > 0 ? (
-                    Object.keys(eventsByDate).sort().map(dateStr => {
-                      const date = parseISO(dateStr);
-                      return (
-                        <div key={dateStr} className="mb-4 px-2">
-                          <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
-                            {format(date, 'EEEE, d. MMMM', { locale: de })}
-                          </h4>
-                          <div className="space-y-1">
-                            {eventsByDate[dateStr].map(event => (
-                              <EventCard 
-                                key={event.id} 
-                                event={event}
-                                compact={true}
-                                onClick={() => {
-                                  setSelectedDate(date);
-                                  setSelectedEvent(event);
-                                }}
-                                onLike={handleLikeEvent}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="flex items-center justify-center h-40 text-gray-400">
-                      Keine Events in diesem Monat {filter ? `in der Kategorie "${filter}"` : ''}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </TabsContent>
-            
             <TabsContent value="calendar">
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="w-full md:w-3/5 dark-glass-card rounded-2xl p-6">
@@ -532,6 +469,53 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                       </div>
                     )}
                   </div>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="list">
+              <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-medium text-white">
+                    Alle Events im {format(currentDate, 'MMMM', { locale: de })}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-red-500" />
+                    <span className="text-sm text-gray-300">Top Events oben</span>
+                  </div>
+                </div>
+                
+                <div className="overflow-y-auto max-h-[600px] pr-2 scrollbar-thin">
+                  {Object.keys(eventsByDate).length > 0 ? (
+                    Object.keys(eventsByDate).sort().map(dateStr => {
+                      const date = parseISO(dateStr);
+                      return (
+                        <div key={dateStr} className="mb-4">
+                          <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
+                            {format(date, 'EEEE, d. MMMM', { locale: de })}
+                          </h4>
+                          <div className="space-y-1">
+                            {eventsByDate[dateStr].map(event => (
+                              <EventCard 
+                                key={event.id} 
+                                event={event}
+                                compact={true}
+                                onClick={() => {
+                                  setSelectedDate(date);
+                                  setSelectedEvent(event);
+                                }}
+                                onLike={handleLikeEvent}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="flex items-center justify-center h-40 text-gray-400">
+                      Keine Events in diesem Monat {filter ? `in der Kategorie "${filter}"` : ''}
+                    </div>
+                  )}
                 </div>
               </div>
             </TabsContent>

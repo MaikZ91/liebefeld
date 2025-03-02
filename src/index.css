@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -184,25 +183,11 @@
 
   /* Event list styling */
   .event-list-container {
-    @apply pb-4 px-0;
+    @apply pb-4 px-2;
   }
 
   .event-list-day {
     @apply sticky top-0 bg-[#131722]/90 backdrop-blur-md py-2 z-10 border-b border-purple-500/20 mb-2;
-  }
-
-  /* Event list view adjustments */
-  .event-list-view {
-    @apply w-full max-w-full;
-  }
-
-  .event-list-view .scrollbar-thin {
-    @apply pr-0;
-  }
-  
-  /* Make sure event cards use full width */
-  .event-list-view .dark-glass-card {
-    @apply w-full mx-0;
   }
 
   /* Category badge colors */

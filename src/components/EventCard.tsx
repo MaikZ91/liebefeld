@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { type Event } from './EventCalendar';
-import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink } from 'lucide-react';
+import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -55,61 +55,39 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     }
   };
 
-  const handleLinkClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (event.link) {
-      window.open(event.link, '_blank', 'noopener,noreferrer');
-    }
-  };
-
   if (compact) {
     return (
       <div 
         className={cn(
-          "dark-glass-card rounded-lg p-3 cursor-pointer hover-scale mb-2 w-full",
+          "dark-glass-card rounded-lg p-2 cursor-pointer hover-scale mb-2 mx-1 w-[calc(100%-8px)]",
           className
         )}
         onClick={onClick}
       >
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-start flex-1 min-w-0 gap-2">
+        <div className="flex justify-between items-start gap-1">
+          <div className="flex-1 min-w-0">
+            <h4 className="font-medium text-sm text-white break-words line-clamp-1 text-left">{event.title}</h4>
+            <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-gray-300">
+              <div className="flex items-center">
+                <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
+                <span>{event.time}</span>
+              </div>
+              <div className="flex items-center overflow-hidden">
+                <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
+                <span className="truncate max-w-[80px]">{event.location}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex flex-col items-end gap-1">
             <Badge className={cn(
-              "mt-0.5 flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
+              "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
               event.category in categoryColors 
                 ? categoryColors[event.category] 
                 : "bg-gray-800/60 text-gray-200"
             )}>
               {icon}
             </Badge>
-            
-            <div className="flex-1 min-w-0">
-              {event.link ? (
-                <h4 
-                  className="font-medium text-sm text-white line-clamp-2 hover:underline cursor-pointer flex items-center gap-1"
-                  onClick={handleLinkClick}
-                >
-                  {event.title}
-                  <ExternalLink className="w-3 h-3 inline-flex flex-shrink-0" />
-                </h4>
-              ) : (
-                <h4 className="font-medium text-sm text-white line-clamp-2">
-                  {event.title}
-                </h4>
-              )}
-            </div>
-          </div>
-          
-          <div className="flex items-start gap-3 flex-shrink-0">
-            <div className="flex flex-col items-end text-xs text-gray-300">
-              <div className="flex items-center">
-                <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
-                <span>{event.time}</span>
-              </div>
-              <div className="flex items-center">
-                <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
-                <span className="truncate max-w-[150px]">{event.location}</span>
-              </div>
-            </div>
             
             <div className="flex items-center">
               <Button 
@@ -139,20 +117,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
       onClick={onClick}
     >
       <div className="flex justify-between items-start mb-2 gap-2">
-        {event.link ? (
-          <h4 
-            className="font-medium text-lg text-white break-words hover:underline cursor-pointer flex items-center gap-1"
-            onClick={handleLinkClick}
-          >
-            {event.title}
-            <ExternalLink className="w-4 h-4 inline-flex flex-shrink-0" />
-          </h4>
-        ) : (
-          <h4 className="font-medium text-lg text-white break-words">
-            {event.title}
-          </h4>
-        )}
-        
+        <h4 className="font-medium text-lg text-white break-words">{event.title}</h4>
         <div className="flex flex-col items-end gap-2">
           <Badge className={cn(
             "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
