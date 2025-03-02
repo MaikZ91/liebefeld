@@ -128,11 +128,8 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           const day = parseInt(dateNumbers[0], 10);
           const month = parseInt(dateNumbers[1], 10) - 1; // JavaScript months are 0-indexed
           
-          // Create date with current year
-          eventDate = new Date(currentYear, month, day);
-          
-          // FIX: We DO NOT need to adjust the date here - the date from the string is already correct
-          // The issue was that we were interpreting the date incorrectly
+          // Create date with current year - FIXED: Use UTC to avoid timezone issues
+          eventDate = new Date(Date.UTC(currentYear, month, day));
           
           // If the date is in the past, add a year (for events happening next year)
           if (eventDate < new Date() && month < 6) { // Only for first half of the year
@@ -144,12 +141,12 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           eventDate = new Date();
         }
         
-        // Erstelle das Event-Objekt
+        // Erstelle das Event-Objekt und FIXED: Format the date correctly
         return {
           id: `github-${index}`,
           title: title,
           description: `Mehr Informationen unter: ${githubEvent.link}`,
-          date: eventDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+          date: format(eventDate, 'yyyy-MM-dd'), // Properly format as YYYY-MM-DD
           time: "19:00", // Default-Zeit für Events ohne Zeitangabe
           location: location,
           organizer: "Liebefeld Community Bielefeld",
@@ -373,21 +370,68 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           </div>
         </div>
         
-        {/* View toggle - SWAPPED ORDER OF CALENDAR AND LIST BUTTONS */}
+        {/* View toggle - LIST FIRST, THEN CALENDAR */}
         <div className="flex justify-center">
           <Tabs defaultValue={view} onValueChange={(value) => setView(value as "calendar" | "list")}>
             <TabsList className="dark-tabs">
-              <TabsTrigger value="calendar" className={view === "calendar" ? "text-white" : "text-gray-400"}>
-                <CalendarIcon className="w-4 h-4 mr-2" />
-                Kalender
-              </TabsTrigger>
               <TabsTrigger value="list" className={view === "list" ? "text-white" : "text-gray-400"}>
                 <List className="w-4 h-4 mr-2" />
                 Liste
               </TabsTrigger>
+              <TabsTrigger value="calendar" className={view === "calendar" ? "text-white" : "text-gray-400"}>
+                <CalendarIcon className="w-4 h-4 mr-2" />
+                Kalender
+              </TabsTrigger>
             </TabsList>
             
             {/* Main calendar and list views */}
+            <TabsContent value="list">
+              <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-medium text-white">
+                    Alle Events im {format(currentDate, 'MMMM', { locale: de })}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-red-500" />
+                    <span className="text-sm text-gray-300">Top Events oben</span>
+                  </div>
+                </div>
+                
+                <div className="overflow-y-auto max-h-[600px] pr-2 scrollbar-thin">
+                  {Object.keys(eventsByDate).length > 0 ? (
+                    Object.keys(eventsByDate).sort().map(dateStr => {
+                      const date = parseISO(dateStr);
+                      return (
+                        <div key={dateStr} className="mb-4">
+                          <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
+                            {format(date, 'EEEE, d. MMMM', { locale: de })}
+                          </h4>
+                          <div className="space-y-1">
+                            {eventsByDate[dateStr].map(event => (
+                              <EventCard 
+                                key={event.id} 
+                                event={event}
+                                compact={true}
+                                onClick={() => {
+                                  setSelectedDate(date);
+                                  setSelectedEvent(event);
+                                }}
+                                onLike={handleLikeEvent}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="flex items-center justify-center h-40 text-gray-400">
+                      Keine Events in diesem Monat {filter ? `in der Kategorie "${filter}"` : ''}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+            
             <TabsContent value="calendar">
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="w-full md:w-3/5 dark-glass-card rounded-2xl p-6">
@@ -475,53 +519,6 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                       </div>
                     )}
                   </div>
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="list">
-              <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-medium text-white">
-                    Alle Events im {format(currentDate, 'MMMM', { locale: de })}
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <Heart className="h-4 w-4 text-red-500" />
-                    <span className="text-sm text-gray-300">Top Events oben</span>
-                  </div>
-                </div>
-                
-                <div className="overflow-y-auto max-h-[600px] pr-2 scrollbar-thin">
-                  {Object.keys(eventsByDate).length > 0 ? (
-                    Object.keys(eventsByDate).sort().map(dateStr => {
-                      const date = parseISO(dateStr);
-                      return (
-                        <div key={dateStr} className="mb-4">
-                          <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
-                            {format(date, 'EEEE, d. MMMM', { locale: de })}
-                          </h4>
-                          <div className="space-y-1">
-                            {eventsByDate[dateStr].map(event => (
-                              <EventCard 
-                                key={event.id} 
-                                event={event}
-                                compact={true}
-                                onClick={() => {
-                                  setSelectedDate(date);
-                                  setSelectedEvent(event);
-                                }}
-                                onLike={handleLikeEvent}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="flex items-center justify-center h-40 text-gray-400">
-                      Keine Events in diesem Monat {filter ? `in der Kategorie "${filter}"` : ''}
-                    </div>
-                  )}
                 </div>
               </div>
             </TabsContent>
