@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { type Event } from './EventCalendar';
-import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink } from 'lucide-react';
+import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,6 @@ interface EventCardProps {
   className?: string;
   compact?: boolean;
   onLike?: (id: string) => void;
-  likes?: number;
 }
 
 const categoryColors: Record<string, string> = {
@@ -40,7 +39,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
   'Meeting': <Users className="w-4 h-4" />,
 };
 
-const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compact = false, onLike, likes }) => {
+const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compact = false, onLike }) => {
   const icon = event.category in categoryIcons 
     ? categoryIcons[event.category] 
     : <Calendar className="w-4 h-4" />;
@@ -48,20 +47,10 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onLike) {
-      console.log(`Like clicked for event: ${event.id}, current likes: ${likes}`);
       onLike(event.id);
-    }
-  };
-
-  const handleEventLinkClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (event.url) {
-      window.open(event.url, '_blank');
-    } else {
       toast({
-        title: "Kein Link verfügbar",
-        description: "Für dieses Event ist kein Link hinterlegt.",
-        variant: "destructive"
+        description: "Event wurde geliked! Das Ranking wurde aktualisiert.",
+        duration: 1500,
       });
     }
   };
@@ -77,13 +66,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
       >
         <div className="flex justify-between items-start gap-1">
           <div className="flex-1 min-w-0">
-            <h4 
-              className="font-medium text-sm text-white break-words line-clamp-1 text-left flex items-center gap-1 hover:underline"
-              onClick={handleEventLinkClick}
-            >
-              {event.title}
-              {event.url && <ExternalLink className="w-3 h-3 inline-flex" />}
-            </h4>
+            <h4 className="font-medium text-sm text-white break-words line-clamp-1 text-left">{event.title}</h4>
             <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-gray-300">
               <div className="flex items-center">
                 <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
@@ -134,13 +117,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
       onClick={onClick}
     >
       <div className="flex justify-between items-start mb-2 gap-2">
-        <h4 
-          className="font-medium text-lg text-white break-words flex items-center gap-1 hover:underline"
-          onClick={handleEventLinkClick}
-        >
-          {event.title}
-          {event.url && <ExternalLink className="w-4 h-4 inline-flex" />}
-        </h4>
+        <h4 className="font-medium text-lg text-white break-words">{event.title}</h4>
         <div className="flex flex-col items-end gap-2">
           <Badge className={cn(
             "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
@@ -159,10 +136,10 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               className="h-7 w-7 rounded-full mr-1"
               onClick={handleLike}
             >
-              <Heart className={cn("w-4 h-4", likes && likes > 0 ? "fill-red-500 text-red-500" : "text-gray-400")} />
+              <Heart className={cn("w-4 h-4", event.likes && event.likes > 0 ? "fill-red-500 text-red-500" : "text-gray-400")} />
             </Button>
-            {likes && likes > 0 && (
-              <span className="text-sm text-gray-300">{likes}</span>
+            {event.likes && event.likes > 0 && (
+              <span className="text-sm text-gray-300">{event.likes}</span>
             )}
           </div>
         </div>
