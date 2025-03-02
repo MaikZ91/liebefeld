@@ -44,6 +44,9 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
       .slice(0, 10); // Limit to 10 events for better performance
     
     setNewEvents(recent);
+    
+    // Debug info
+    console.log(`LiveTicker: Found ${recent.length} recent events out of ${events.length} total events`);
   }, [events]);
 
   // Smooth scrolling animation for the ticker
@@ -82,8 +85,14 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
   const handleMouseEnter = () => setIsScrolling(false);
   const handleMouseLeave = () => setIsScrolling(true);
 
-  if (newEvents.length === 0) {
-    return null; // Don't render if no new events
+  // Make sure we always render the ticker if there are events, even if none are "new"
+  // This ensures the ticker is always visible
+  const eventsToShow = newEvents.length > 0 ? newEvents : events.slice(0, 10);
+
+  // Don't render if no events at all
+  if (events.length === 0) {
+    console.log('LiveTicker: No events to display');
+    return null;
   }
 
   return (
@@ -110,7 +119,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
           className="whitespace-nowrap inline-block"
         >
           {/* We duplicate the items to create an infinite scroll effect */}
-          {[...newEvents, ...newEvents].map((event, index) => (
+          {[...eventsToShow, ...eventsToShow].map((event, index) => (
             <div 
               key={`${event.id}-${index}`} 
               className="inline-block mx-4"
@@ -130,7 +139,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
                   })()}:
                 </span>
                 <span className="text-white mr-1">{event.title}</span>
-                <span className="text-gray-400 text-sm">({event.location})</span>
+                <span className="text-gray-400 text-sm">({event.location || 'Keine Ortsangabe'})</span>
               </span>
               <span className="mx-3 text-red-500">•</span>
             </div>

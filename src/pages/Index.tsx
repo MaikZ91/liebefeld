@@ -4,6 +4,7 @@ import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
   // Add smooth scroll-in animation effect on page load
@@ -15,11 +16,45 @@ const Index = () => {
   const [events, setEvents] = useState<Event[]>([]);
   
   useEffect(() => {
-    const savedEvents = localStorage.getItem('communityEvents');
-    if (savedEvents) {
-      setEvents(JSON.parse(savedEvents));
-    }
+    // First try to get events from Supabase
+    const fetchEvents = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('community_events')
+          .select('*')
+          .order('date', { ascending: false });
+        
+        if (error) {
+          console.error('Error fetching events from Supabase:', error);
+          throw error;
+        }
+        
+        if (data && data.length > 0) {
+          console.log('Loaded events from Supabase:', data);
+          setEvents(data as Event[]);
+        } else {
+          // Fallback to local storage if no events in Supabase
+          const savedEvents = localStorage.getItem('communityEvents');
+          if (savedEvents) {
+            console.log('Loading events from localStorage as fallback');
+            setEvents(JSON.parse(savedEvents));
+          }
+        }
+      } catch (err) {
+        console.error('Error in event fetching:', err);
+        // Fallback to local storage
+        const savedEvents = localStorage.getItem('communityEvents');
+        if (savedEvents) {
+          console.log('Loading events from localStorage due to error');
+          setEvents(JSON.parse(savedEvents));
+        }
+      }
+    };
+    
+    fetchEvents();
   }, []);
+  
+  console.log(`Index: Rendering with ${events.length} events for ticker`);
   
   return (
     <div className="min-h-screen flex flex-col bg-[#FFF5EB] dark:bg-[#2E1E12] text-orange-900 dark:text-orange-100">
@@ -67,8 +102,10 @@ const Index = () => {
           </div>
         </div>
         
-        {/* Live Ticker for new events */}
-        <LiveTicker events={events} />
+        {/* Live Ticker for new events - added debug class to identify it */}
+        {events.length > 0 && (
+          <LiveTicker events={events} />
+        )}
 
         {/* Updated the background color to a soft gray for better text contrast */}
         <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-6 rounded-t-lg shadow-inner">
