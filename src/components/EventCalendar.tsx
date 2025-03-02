@@ -397,14 +397,14 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
             
             {/* Main calendar and list views */}
             <TabsContent value="list">
-              <div className="bg-[#FF9B60]/90 dark:bg-[#3A2010]/90 backdrop-blur-md rounded-2xl p-6 overflow-hidden border border-orange-300/50 dark:border-orange-500/30 shadow-lg">
+              <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-medium text-orange-900 dark:text-white">
+                  <h3 className="text-xl font-medium text-white">
                     Alle Events im {format(currentDate, 'MMMM', { locale: de })}
                   </h3>
                   <div className="flex items-center gap-2">
                     <Heart className="h-4 w-4 text-red-500" />
-                    <span className="text-sm text-orange-800 dark:text-gray-300">Top Events oben</span>
+                    <span className="text-sm text-gray-300">Top Events oben</span>
                   </div>
                 </div>
                 
@@ -414,7 +414,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                       const date = parseISO(dateStr);
                       return (
                         <div key={dateStr} className="mb-4">
-                          <h4 className="text-sm font-medium mb-2 text-orange-900 dark:text-white sticky top-0 bg-[#FF9B60]/95 dark:bg-[#3A2010]/95 backdrop-blur-sm py-2 z-10 rounded-md">
+                          <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
                             {format(date, 'EEEE, d. MMMM', { locale: de })}
                           </h4>
                           <div className="space-y-1">
@@ -435,7 +435,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                       );
                     })
                   ) : (
-                    <div className="flex items-center justify-center h-40 text-orange-800 dark:text-gray-400">
+                    <div className="flex items-center justify-center h-40 text-gray-400">
                       Keine Events in diesem Monat {filter ? `in der Kategorie "${filter}"` : ''}
                     </div>
                   )}
@@ -445,7 +445,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
             
             <TabsContent value="calendar">
               <div className="flex flex-col md:flex-row gap-6">
-                <div className="w-full md:w-3/5 bg-[#FF9B60]/90 dark:bg-[#3A2010]/90 backdrop-blur-md rounded-2xl p-6 border border-orange-300/50 dark:border-orange-500/30 shadow-lg">
+                <div className="w-full md:w-3/5 dark-glass-card rounded-2xl p-6">
                   {/* Day names header */}
                   <div className="grid grid-cols-7 mb-4">
                     {['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'].map((day) => (
@@ -497,8 +497,8 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                 </div>
                 
                 {/* Event list for selected date */}
-                <div className="w-full md:w-2/5 bg-[#FF9B60]/90 dark:bg-[#3A2010]/90 backdrop-blur-md rounded-2xl p-6 overflow-hidden flex flex-col border border-orange-300/50 dark:border-orange-500/30 shadow-lg">
-                  <h3 className="text-xl font-medium mb-4 text-orange-900 dark:text-white">
+                <div className="w-full md:w-2/5 dark-glass-card rounded-2xl p-6 overflow-hidden flex flex-col">
+                  <h3 className="text-xl font-medium mb-4 text-white">
                     {selectedDate ? (
                       format(selectedDate, 'EEEE, d. MMMM', { locale: de })
                     ) : (
@@ -520,12 +520,12 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                           ))}
                         </div>
                       ) : (
-                        <div className="flex h-full items-center justify-center text-orange-800 dark:text-gray-400">
+                        <div className="flex h-full items-center justify-center text-gray-400">
                           Keine Events an diesem Tag {filter ? `in der Kategorie "${filter}"` : ''}
                         </div>
                       )
                     ) : (
-                      <div className="flex h-full items-center justify-center text-orange-800 dark:text-gray-400">
+                      <div className="flex h-full items-center justify-center text-gray-400">
                         Wähle ein Datum, um Events anzuzeigen
                       </div>
                     )}

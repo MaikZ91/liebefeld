@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { type Event } from './EventCalendar';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink } from 'lucide-react';
@@ -66,7 +65,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     return (
       <div 
         className={cn(
-          "bg-orange-200/80 dark:bg-[#4A2E1A]/80 backdrop-blur-sm border border-orange-300/50 dark:border-orange-500/20 rounded-lg p-2 cursor-pointer hover-scale mb-2 mx-1 w-[calc(100%-8px)]",
+          "dark-glass-card rounded-lg p-2 cursor-pointer hover-scale mb-2 mx-1 w-[calc(100%-8px)]",
           className
         )}
         onClick={onClick}
@@ -131,7 +130,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
   return (
     <div 
       className={cn(
-        "bg-orange-200/80 dark:bg-[#4A2E1A]/80 backdrop-blur-sm border border-orange-300/50 dark:border-orange-500/20 rounded-xl p-4 cursor-pointer hover-scale w-full",
+        "dark-glass-card rounded-xl p-4 cursor-pointer hover-scale w-full",
         className
       )}
       onClick={onClick}

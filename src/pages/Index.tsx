@@ -10,7 +10,7 @@ const Index = () => {
   }, []);
   
   return (
-    <div className="min-h-screen flex flex-col bg-[#FEC6A1] dark:bg-[#2E1E12] text-orange-900 dark:text-orange-100">
+    <div className="min-h-screen flex flex-col bg-[#FFF5EB] dark:bg-[#2E1E12] text-orange-900 dark:text-orange-100">
       <CalendarNavbar />
       <main className="flex-grow">
         <div className="relative overflow-hidden mb-6">
