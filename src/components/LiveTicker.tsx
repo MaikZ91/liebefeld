@@ -23,13 +23,23 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
     // Sort events by date (newest first)
     const recent = events
       .filter(event => {
-        // Use the event's date for filtering
-        const eventDate = parseISO(event.date);
-        return isAfter(eventDate, threeDaysAgo);
+        try {
+          // Use the event's date for filtering
+          const eventDate = parseISO(event.date);
+          return isAfter(eventDate, threeDaysAgo);
+        } catch (error) {
+          console.error(`Error parsing date: ${event.date}`, error);
+          return false;
+        }
       })
       .sort((a, b) => {
-        // Sort by date descending (newest first)
-        return parseISO(b.date).getTime() - parseISO(a.date).getTime();
+        try {
+          // Sort by date descending (newest first)
+          return parseISO(b.date).getTime() - parseISO(a.date).getTime();
+        } catch (error) {
+          console.error(`Error sorting dates: ${a.date}, ${b.date}`, error);
+          return 0;
+        }
       })
       .slice(0, 10); // Limit to 10 events for better performance
     
@@ -107,7 +117,17 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
             >
               <span className="inline-flex items-center">
                 <span className="text-red-500 font-semibold mr-1">
-                  {format(parseISO(event.date), 'dd.MM', { locale: de })}:
+                  {(() => {
+                    try {
+                      // Try to parse the ISO date
+                      const date = parseISO(event.date);
+                      return format(date, 'dd.MM', { locale: de });
+                    } catch (error) {
+                      console.error(`Failed to format date: ${event.date}`, error);
+                      // Fallback format if parsing fails
+                      return 'Datum?';
+                    }
+                  })()}:
                 </span>
                 <span className="text-white mr-1">{event.title}</span>
                 <span className="text-gray-400 text-sm">({event.location})</span>
