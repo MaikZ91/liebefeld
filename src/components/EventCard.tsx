@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { type Event } from './EventCalendar';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink } from 'lucide-react';
@@ -71,35 +70,8 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
         )}
         onClick={onClick}
       >
-        <div className="flex justify-between items-start gap-1">
-          <div className="flex-1 min-w-0">
-            {event.link ? (
-              <h4 
-                className="font-medium text-sm text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1"
-                onClick={handleLinkClick}
-              >
-                {event.title}
-                <ExternalLink className="w-3 h-3 inline-flex flex-shrink-0" />
-              </h4>
-            ) : (
-              <h4 className="font-medium text-sm text-white break-words line-clamp-1 text-left">
-                {event.title}
-              </h4>
-            )}
-            
-            <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-gray-300">
-              <div className="flex items-center">
-                <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
-                <span>{event.time}</span>
-              </div>
-              <div className="flex items-center overflow-hidden">
-                <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
-                <span className="truncate max-w-[80px]">{event.location}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex flex-col items-end gap-1">
+        <div className="flex items-center justify-between gap-1">
+          <div className="flex items-center flex-1 min-w-0 gap-2">
             <Badge className={cn(
               "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
               event.category in categoryColors 
@@ -108,6 +80,33 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
             )}>
               {icon}
             </Badge>
+            
+            {event.link ? (
+              <h4 
+                className="font-medium text-sm text-white truncate max-w-[150px] sm:max-w-[200px] hover:underline cursor-pointer flex items-center gap-1"
+                onClick={handleLinkClick}
+              >
+                {event.title}
+                <ExternalLink className="w-3 h-3 inline-flex flex-shrink-0" />
+              </h4>
+            ) : (
+              <h4 className="font-medium text-sm text-white truncate max-w-[150px] sm:max-w-[200px]">
+                {event.title}
+              </h4>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-xs text-gray-300">
+              <div className="hidden sm:flex items-center">
+                <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
+                <span>{event.time}</span>
+              </div>
+              <div className="flex items-center overflow-hidden">
+                <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
+                <span className="truncate max-w-[80px]">{event.location}</span>
+              </div>
+            </div>
             
             <div className="flex items-center">
               <Button 
