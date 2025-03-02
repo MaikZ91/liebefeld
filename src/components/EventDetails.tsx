@@ -5,7 +5,7 @@ import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, MapPin, User, Tag, X, Heart } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Tag, X, Heart, Music, Dumbbell } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -47,8 +47,8 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, likes, onLi
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case "music": return <Music className="w-4 h-4" />;
-      case "party": return <PartyPopper className="w-4 h-4" />;
-      case "art": return <Image className="w-4 h-4" />;
+      case "party": return <Calendar className="w-4 h-4" />; // Replaced PartyPopper with Calendar
+      case "art": return <Calendar className="w-4 h-4" />; // Replaced Image with Calendar
       case "sport": return <Dumbbell className="w-4 h-4" />;
       default: return <Calendar className="w-4 h-4" />;
     }
