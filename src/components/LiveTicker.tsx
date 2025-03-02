@@ -65,10 +65,10 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
       const tickerWidth = tickerRef.current.scrollWidth;
       const containerWidth = tickerRef.current.parentElement?.clientWidth || 0;
       
-      position = (position + speed) % (tickerWidth / 2);
+      position = (position + speed);
       tickerRef.current.style.transform = `translateX(-${position}px)`;
       
-      // When we reach the end of the first set of items, jump back to the beginning
+      // When we reach the end of the first set of items, reset position to create infinite scroll effect
       if (position >= tickerWidth / 2) {
         position = 0;
         tickerRef.current.style.transform = `translateX(0px)`;
