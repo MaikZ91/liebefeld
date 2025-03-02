@@ -22,6 +22,7 @@ export interface Event {
   organizer: string;
   category: string;
   likes?: number;
+  link?: string;
 }
 
 // URL zur JSON-Datei mit Events
@@ -151,7 +152,8 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           location: location,
           organizer: "Liebefeld Community Bielefeld",
           category: category,
-          likes: 0
+          likes: 0,
+          link: githubEvent.link
         } as Event;
       });
       
@@ -269,7 +271,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     const eventWithId = {
       ...newEvent,
       id: Math.random().toString(36).substring(2, 9),
-      likes: 0
+      likes: 0,
     };
     
     setEvents([...events, eventWithId as Event]);
