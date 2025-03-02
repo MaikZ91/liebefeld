@@ -188,7 +188,7 @@
   }
 
   .event-list-day {
-    @apply sticky top-0 bg-[#FFF5EB]/90 dark:bg-[#FF8C42]/90 backdrop-blur-md py-2 z-10 border-b border-orange-500/20 mb-2;
+    @apply sticky top-0 bg-[#F1F0FB]/90 dark:bg-[#3A2A1E]/90 backdrop-blur-md py-2 z-10 border-b border-orange-500/20 mb-2 text-orange-800 dark:text-orange-200;
   }
 
   /* Category badge colors */

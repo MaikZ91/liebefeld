@@ -22,7 +22,11 @@ const Index = () => {
             </p>
           </div>
         </div>
-        <EventCalendar defaultView="list" />
+
+        {/* Updated the background color to a soft gray for better text contrast */}
+        <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-6 rounded-t-lg shadow-inner">
+          <EventCalendar defaultView="list" />
+        </div>
       </main>
     </div>
   );
