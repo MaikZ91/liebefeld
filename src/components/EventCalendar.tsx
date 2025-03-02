@@ -50,6 +50,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState<string | null>(null);
   const [view, setView] = useState<"calendar" | "list">(defaultView);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   // Save events to localStorage whenever they change
   useEffect(() => {
@@ -58,11 +59,12 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
 
   // Lade externe Events beim Start
   useEffect(() => {
-    fetchExternalEvents();
+    fetchExternalEvents(true);
+    setIsInitialLoad(false);
   }, []);
 
   // Funktion zum Laden externer Events
-  const fetchExternalEvents = async () => {
+  const fetchExternalEvents = async (isInitialLoad = false) => {
     setIsLoading(true);
     
     try {
@@ -78,7 +80,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       console.log(`Successfully loaded ${githubEvents.length} events from ${EXTERNAL_EVENTS_URL}`);
       
       // Transformiere die GitHub-Events in das interne Format
-      processGitHubEvents(githubEvents);
+      processGitHubEvents(githubEvents, isInitialLoad);
       
     } catch (error) {
       console.error(`Fehler beim Laden von ${EXTERNAL_EVENTS_URL}:`, error);
@@ -86,18 +88,20 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       console.log("Verwende lokale Beispieldaten, da keine externe Quelle verfügbar ist.");
       setEvents(bielefeldEvents);
       
-      toast({
-        title: "Fehler beim Laden der Events",
-        description: "Es werden lokale Beispieldaten angezeigt.",
-        variant: "destructive"
-      });
+      if (!isInitialLoad) {
+        toast({
+          title: "Fehler beim Laden der Events",
+          description: "Es werden lokale Beispieldaten angezeigt.",
+          variant: "destructive"
+        });
+      }
     }
     
     setIsLoading(false);
   };
   
   // Verarbeite die GitHub-Events
-  const processGitHubEvents = (githubEvents: GitHubEvent[]) => {
+  const processGitHubEvents = (githubEvents: GitHubEvent[], isInitialLoad = false) => {
     try {
       // Aktuelles Jahr für die Datumskonvertierung
       const currentYear = new Date().getFullYear();
@@ -162,19 +166,24 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       // Setze die transformierten Events
       setEvents(transformedEvents);
       
-      toast({
-        title: "Events aktualisiert",
-        description: `${transformedEvents.length} Events wurden geladen.`,
-      });
+      // Only show toast when not initial load
+      if (!isInitialLoad) {
+        toast({
+          title: "Events aktualisiert",
+          description: `${transformedEvents.length} Events wurden geladen.`,
+        });
+      }
     } catch (error) {
       console.error("Fehler bei der Verarbeitung der GitHub-Events:", error);
       setEvents(bielefeldEvents);
       
-      toast({
-        title: "Fehler bei der Verarbeitung der Events",
-        description: "Es werden lokale Beispieldaten angezeigt.",
-        variant: "destructive"
-      });
+      if (!isInitialLoad) {
+        toast({
+          title: "Fehler bei der Verarbeitung der Events",
+          description: "Es werden lokale Beispieldaten angezeigt.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -347,7 +356,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           
           <div className="flex gap-2">
             <Button 
-              onClick={fetchExternalEvents}
+              onClick={() => fetchExternalEvents(false)}
               className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all dark-button"
               variant="outline"
               disabled={isLoading}
