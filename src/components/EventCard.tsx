@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { type Event } from './EventCalendar';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink } from 'lucide-react';
@@ -16,15 +15,15 @@ interface EventCardProps {
 }
 
 const categoryColors: Record<string, string> = {
-  'Konzert': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
-  'Party': 'bg-red-600/70 text-red-50 dark:bg-red-600/70 dark:text-red-50',
-  'Ausstellung': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
-  'Sport': 'bg-red-600/70 text-red-50 dark:bg-red-600/70 dark:text-red-50',
-  'Workshop': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
-  'Kultur': 'bg-red-600/70 text-red-50 dark:bg-red-600/70 dark:text-red-50',
-  'Sonstiges': 'bg-red-400/70 text-red-50 dark:bg-red-400/70 dark:text-red-50',
-  'Networking': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
-  'Meeting': 'bg-red-400/70 text-red-50 dark:bg-red-400/70 dark:text-red-50',
+  'Konzert': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
+  'Party': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
+  'Ausstellung': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
+  'Sport': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
+  'Workshop': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
+  'Kultur': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
+  'Sonstiges': 'bg-orange-400/70 text-orange-50 dark:bg-orange-400/70 dark:text-orange-50',
+  'Networking': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
+  'Meeting': 'bg-orange-400/70 text-orange-50 dark:bg-orange-400/70 dark:text-orange-50',
 };
 
 const categoryIcons: Record<string, React.ReactNode> = {
@@ -66,7 +65,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     return (
       <div 
         className={cn(
-          "bg-red-600/90 rounded-lg p-2 cursor-pointer hover-scale mb-2 mx-1 w-[calc(100%-8px)] border border-red-500/30 backdrop-blur-md shadow-md transition-all duration-300",
+          "dark-glass-card rounded-lg p-2 cursor-pointer hover-scale mb-2 mx-1 w-[calc(100%-8px)]",
           className
         )}
         onClick={onClick}
@@ -104,7 +103,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
               event.category in categoryColors 
                 ? categoryColors[event.category] 
-                : "bg-red-400/70 text-red-50"
+                : "bg-orange-400/70 text-orange-50"
             )}>
               {icon}
             </Badge>
@@ -116,7 +115,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
                 className="h-6 w-6 rounded-full" 
                 onClick={handleLike}
               >
-                <Heart className={cn("w-4 h-4", event.likes && event.likes > 0 ? "fill-red-300 text-red-300" : "text-white")} />
+                <Heart className={cn("w-4 h-4", event.likes && event.likes > 0 ? "fill-red-500 text-red-500" : "text-white")} />
               </Button>
               {event.likes && event.likes > 0 && (
                 <span className="text-xs text-white">{event.likes}</span>
@@ -131,7 +130,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
   return (
     <div 
       className={cn(
-        "bg-red-600/90 rounded-xl p-4 cursor-pointer hover-scale w-full border border-red-500/30 backdrop-blur-md shadow-md transition-all duration-300 hover:bg-red-600/95",
+        "dark-glass-card rounded-xl p-4 cursor-pointer hover-scale w-full",
         className
       )}
       onClick={onClick}
@@ -156,7 +155,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
             "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
             event.category in categoryColors 
               ? categoryColors[event.category] 
-              : "bg-red-400/70 text-red-50"
+              : "bg-orange-400/70 text-orange-50"
           )}>
             {icon}
             {event.category}
@@ -169,7 +168,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               className="h-7 w-7 rounded-full mr-1"
               onClick={handleLike}
             >
-              <Heart className={cn("w-4 h-4", event.likes && event.likes > 0 ? "fill-red-300 text-red-300" : "text-white")} />
+              <Heart className={cn("w-4 h-4", event.likes && event.likes > 0 ? "fill-red-500 text-red-500" : "text-white")} />
             </Button>
             {event.likes && event.likes > 0 && (
               <span className="text-sm text-white">{event.likes}</span>

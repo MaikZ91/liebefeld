@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -109,7 +110,7 @@
   }
   
   .dark-glass-effect {
-    @apply bg-black/50 backdrop-blur-md border border-red-500/20 shadow-lg;
+    @apply bg-black/50 backdrop-blur-md border border-orange-500/20 shadow-lg;
   }
   
   .glass-card {
@@ -117,11 +118,11 @@
   }
   
   .dark-glass-card {
-    @apply bg-red-600/90 backdrop-blur-md shadow-md border border-red-400/40 transition-all duration-300;
+    @apply bg-[#FF8C42]/90 backdrop-blur-md shadow-md border border-orange-400/40 transition-all duration-300;
   }
   
   .dark-glass-card:hover {
-    @apply bg-red-600/95 shadow-md;
+    @apply bg-[#FF8C42]/95 shadow-md;
   }
   
   .glass-card:hover {
@@ -146,11 +147,11 @@
   }
 
   .dark-button {
-    @apply bg-red-600 text-red-50 border-red-400/30 hover:bg-red-500 hover:text-white;
+    @apply bg-[#FF7A38] text-orange-50 border-orange-400/30 hover:bg-[#FF9053] hover:text-white;
   }
   
   .dark-tabs {
-    @apply bg-red-600/90 border border-red-400/30;
+    @apply bg-[#FF8C42]/90 border border-orange-400/30;
   }
 
   /* Custom scrollbar */
@@ -192,13 +193,13 @@
 
   /* Category badge colors */
   .badge-concert {
-    @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300;
+    @apply bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300;
   }
   .badge-party {
     @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300;
   }
   .badge-exhibition {
-    @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300;
+    @apply bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300;
   }
   .badge-sport {
     @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300;
