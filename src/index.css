@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -183,7 +184,7 @@
 
   /* Event list styling */
   .event-list-container {
-    @apply pb-4 px-2;
+    @apply pb-4 px-0;
   }
 
   .event-list-day {
@@ -192,7 +193,7 @@
   
   /* Event card improvements */
   .event-list-view {
-    @apply max-w-4xl mx-auto;
+    @apply max-w-5xl mx-auto px-0;
   }
 
   /* Category badge colors */

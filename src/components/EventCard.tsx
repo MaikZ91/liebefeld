@@ -66,7 +66,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     return (
       <div 
         className={cn(
-          "dark-glass-card rounded-lg p-3 cursor-pointer hover-scale mb-3 mx-1 w-full",
+          "dark-glass-card rounded-lg p-3 cursor-pointer hover-scale mb-3 w-full",
           className
         )}
         onClick={onClick}
@@ -84,14 +84,14 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
             
             {event.link ? (
               <h4 
-                className="font-medium text-sm text-white truncate max-w-[180px] sm:max-w-[240px] hover:underline cursor-pointer flex items-center gap-1"
+                className="font-medium text-sm text-white truncate max-w-[280px] sm:max-w-[340px] hover:underline cursor-pointer flex items-center gap-1"
                 onClick={handleLinkClick}
               >
                 {event.title}
                 <ExternalLink className="w-3 h-3 inline-flex flex-shrink-0" />
               </h4>
             ) : (
-              <h4 className="font-medium text-sm text-white truncate max-w-[180px] sm:max-w-[240px]">
+              <h4 className="font-medium text-sm text-white truncate max-w-[280px] sm:max-w-[340px]">
                 {event.title}
               </h4>
             )}
@@ -105,7 +105,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               </div>
               <div className="flex items-center overflow-hidden">
                 <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
-                <span className="truncate max-w-[100px]">{event.location}</span>
+                <span className="truncate max-w-[140px]">{event.location}</span>
               </div>
             </div>
             
