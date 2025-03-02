@@ -84,14 +84,14 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
             
             {event.link ? (
               <h4 
-                className="font-medium text-sm text-white truncate max-w-[200px] sm:max-w-[250px] hover:underline cursor-pointer flex items-center gap-1"
+                className="font-medium text-sm text-white truncate max-w-[250px] sm:max-w-[350px] hover:underline cursor-pointer flex items-center gap-1"
                 onClick={handleLinkClick}
               >
                 {event.title}
                 <ExternalLink className="w-3 h-3 inline-flex flex-shrink-0" />
               </h4>
             ) : (
-              <h4 className="font-medium text-sm text-white truncate max-w-[200px] sm:max-w-[250px]">
+              <h4 className="font-medium text-sm text-white truncate max-w-[250px] sm:max-w-[350px]">
                 {event.title}
               </h4>
             )}
@@ -105,7 +105,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               </div>
               <div className="flex items-center overflow-hidden">
                 <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
-                <span className="truncate max-w-[100px]">{event.location}</span>
+                <span className="truncate max-w-[120px]">{event.location}</span>
               </div>
             </div>
             
