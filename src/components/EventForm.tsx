@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -17,7 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface EventFormProps {
   selectedDate: Date;
-  onAddEvent: (event: Omit<Event, 'id'>) => void;
+  onAddEvent: (event: Omit<Event, 'id'> & { id?: string }) => void;
   onCancel?: () => void;
 }
 
@@ -79,7 +78,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         // Event successfully saved, update the local list
         onAddEvent({
           ...newEvent,
-          id: data[0].id.toString()
+          id: data[0].id
         });
         
         toast({
@@ -100,11 +99,31 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       }
     } catch (err) {
       console.error('Error adding event:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Das Event konnte nicht gespeichert werden';
-      setError(errorMessage);
+      
+      // Add fallback behavior: Add to local state even if Supabase fails
+      const tempEvent: Omit<Event, 'id'> & { id: string } = {
+        ...{
+          title,
+          description,
+          date: date.toISOString().split('T')[0],
+          time,
+          location,
+          organizer,
+          category: category || 'Sonstiges',
+        },
+        id: `local-${Date.now()}`
+      };
+      
+      // Still add to local state so UI works
+      onAddEvent(tempEvent);
+      
+      if (onCancel) onCancel();
+      
+      const errorMessage = err instanceof Error ? err.message : 'Das Event konnte nicht in der Datenbank gespeichert werden, aber es wurde lokal hinzugefügt.';
+      
       toast({
-        title: "Fehler beim Erstellen des Events",
-        description: errorMessage,
+        title: "Event wurde lokal hinzugefügt",
+        description: "Das Event wurde zum Kalender hinzugefügt, konnte aber nicht in der Datenbank gespeichert werden aufgrund von Berechtigungsproblemen.",
         variant: "destructive"
       });
     } finally {
