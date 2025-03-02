@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { type Event } from './EventCalendar';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink } from 'lucide-react';
@@ -65,12 +66,12 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     return (
       <div 
         className={cn(
-          "dark-glass-card rounded-lg p-2 cursor-pointer hover-scale mb-2 mx-1 w-[calc(100%-8px)]",
+          "dark-glass-card rounded-lg p-3 cursor-pointer hover-scale mb-2 w-full",
           className
         )}
         onClick={onClick}
       >
-        <div className="flex items-center justify-between gap-1">
+        <div className="flex items-center justify-between gap-2">
           <div className="flex items-center flex-1 min-w-0 gap-2">
             <Badge className={cn(
               "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
@@ -83,14 +84,14 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
             
             {event.link ? (
               <h4 
-                className="font-medium text-sm text-white truncate max-w-[150px] sm:max-w-[200px] hover:underline cursor-pointer flex items-center gap-1"
+                className="font-medium text-sm text-white truncate max-w-[200px] sm:max-w-[250px] hover:underline cursor-pointer flex items-center gap-1"
                 onClick={handleLinkClick}
               >
                 {event.title}
                 <ExternalLink className="w-3 h-3 inline-flex flex-shrink-0" />
               </h4>
             ) : (
-              <h4 className="font-medium text-sm text-white truncate max-w-[150px] sm:max-w-[200px]">
+              <h4 className="font-medium text-sm text-white truncate max-w-[200px] sm:max-w-[250px]">
                 {event.title}
               </h4>
             )}
@@ -104,7 +105,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               </div>
               <div className="flex items-center overflow-hidden">
                 <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
-                <span className="truncate max-w-[80px]">{event.location}</span>
+                <span className="truncate max-w-[100px]">{event.location}</span>
               </div>
             </div>
             
