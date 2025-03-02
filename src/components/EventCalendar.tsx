@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -390,7 +391,9 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                 onClick={() => toggleFilter(category)}
                 className={cn(
                   "rounded-full whitespace-nowrap",
-                  filter !== category && "dark-button"
+                  filter === category 
+                    ? "bg-black text-red-500 border-red-500 hover:bg-black/90 hover:text-red-500" 
+                    : "bg-black text-red-500 border-red-500 hover:bg-black/90 hover:text-red-500 dark-button"
                 )}
               >
                 {category in categoryIcons ? categoryIcons[category as keyof typeof categoryIcons] : null}
