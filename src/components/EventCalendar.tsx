@@ -52,10 +52,21 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   const [view, setView] = useState<"calendar" | "list">(defaultView);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   
+  // Separate state for event likes that persists across refreshes
+  const [eventLikes, setEventLikes] = useState<Record<string, number>>(() => {
+    const savedLikes = localStorage.getItem('eventLikes');
+    return savedLikes ? JSON.parse(savedLikes) : {};
+  });
+  
   // Save events to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('communityEvents', JSON.stringify(events));
   }, [events]);
+  
+  // Save likes to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('eventLikes', JSON.stringify(eventLikes));
+  }, [eventLikes]);
 
   // Lade externe Events beim Start
   useEffect(() => {
@@ -86,7 +97,11 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       console.error(`Fehler beim Laden von ${EXTERNAL_EVENTS_URL}:`, error);
       // Verwende Beispieldaten
       console.log("Verwende lokale Beispieldaten, da keine externe Quelle verfügbar ist.");
-      setEvents(bielefeldEvents);
+      setEvents(prevEvents => {
+        // Keep only events that are not from the example data
+        const userEvents = prevEvents.filter(event => !bielefeldEvents.some(bEvent => bEvent.id === event.id));
+        return [...userEvents, ...bielefeldEvents];
+      });
       
       if (!isInitialLoad) {
         toast({
@@ -146,9 +161,11 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           eventDate = new Date();
         }
         
+        const eventId = `github-${index}`;
+        
         // Erstelle das Event-Objekt und FIXED: Format the date correctly
         return {
-          id: `github-${index}`,
+          id: eventId,
           title: title,
           description: `Mehr Informationen unter: ${githubEvent.link}`,
           date: format(eventDate, 'yyyy-MM-dd'), // Properly format as YYYY-MM-DD
@@ -156,15 +173,24 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           location: location,
           organizer: "Liebefeld Community Bielefeld",
           category: category,
-          likes: 0,
+          likes: eventLikes[eventId] || 0, // Use stored likes if available
           link: githubEvent.link
         } as Event;
       });
       
       console.log(`Transformed ${transformedEvents.length} events successfully`);
       
-      // Setze die transformierten Events
-      setEvents(transformedEvents);
+      // Merge with user-created events (non-GitHub events)
+      setEvents(prevEvents => {
+        // Filter out GitHub events and keep user-created events
+        const userEvents = prevEvents.filter(event => !event.id.startsWith('github-'));
+        // Apply likes from storage to user events
+        const updatedUserEvents = userEvents.map(event => ({
+          ...event,
+          likes: eventLikes[event.id] !== undefined ? eventLikes[event.id] : (event.likes || 0)
+        }));
+        return [...updatedUserEvents, ...transformedEvents];
+      });
       
       // Only show toast when not initial load
       if (!isInitialLoad) {
@@ -175,11 +201,20 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       }
     } catch (error) {
       console.error("Fehler bei der Verarbeitung der GitHub-Events:", error);
-      setEvents(bielefeldEvents);
+      setEvents(prevEvents => {
+        // Keep only events that are not from the example data
+        const userEvents = prevEvents.filter(event => !bielefeldEvents.some(bEvent => bEvent.id === event.id));
+        // Apply likes from storage
+        const updatedUserEvents = userEvents.map(event => ({
+          ...event,
+          likes: eventLikes[event.id] !== undefined ? eventLikes[event.id] : (event.likes || 0)
+        }));
+        return [...updatedUserEvents, ...bielefeldEvents];
+      });
       
       if (!isInitialLoad) {
         toast({
-          title: "Fehler bei der Verarbeitung der Events",
+          title: "Fehler beim Laden der Events",
           description: "Es werden lokale Beispieldaten angezeigt.",
           variant: "destructive"
         });
@@ -212,6 +247,16 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
 
   // Handle like functionality
   const handleLikeEvent = (eventId: string) => {
+    // Update the likes in our separate state
+    setEventLikes(prev => {
+      const currentLikes = prev[eventId] || 0;
+      return {
+        ...prev,
+        [eventId]: currentLikes + 1
+      };
+    });
+    
+    // Also update the likes in the events array for immediate UI update
     setEvents(prevEvents => 
       prevEvents.map(event => 
         event.id === eventId 
