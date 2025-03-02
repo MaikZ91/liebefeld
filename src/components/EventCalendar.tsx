@@ -222,7 +222,7 @@ const EventCalendar: React.FC<EventCalendarProps> = ({ defaultView = "calendar" 
 
   const handleDownloadCalendar = () => {
     if (calendarRef.current) {
-      downloadElementAsPng(calendarRef.current, 'liebefeld-calendar.png');
+      downloadElementAsPng(calendarRef.current as unknown as string, 'liebefeld-calendar.png');
       toast({
         title: "Calendar Downloaded",
         description: "Your calendar has been downloaded as an image.",
