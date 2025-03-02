@@ -66,12 +66,12 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     return (
       <div 
         className={cn(
-          "dark-glass-card rounded-lg p-3 cursor-pointer hover-scale mb-2 w-full",
+          "dark-glass-card rounded-lg p-2 cursor-pointer hover-scale mb-2 mx-1 w-[calc(100%-8px)]",
           className
         )}
         onClick={onClick}
       >
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-1">
           <div className="flex items-center flex-1 min-w-0 gap-2">
             <Badge className={cn(
               "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
@@ -82,19 +82,21 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               {icon}
             </Badge>
             
-            {event.link ? (
-              <h4 
-                className="font-medium text-sm text-white truncate max-w-[200px] sm:max-w-[300px] hover:underline cursor-pointer flex items-center gap-1"
-                onClick={handleLinkClick}
-              >
-                {event.title}
-                <ExternalLink className="w-3 h-3 inline-flex flex-shrink-0" />
-              </h4>
-            ) : (
-              <h4 className="font-medium text-sm text-white truncate max-w-[200px] sm:max-w-[300px]">
-                {event.title}
-              </h4>
-            )}
+            <div className="overflow-hidden">
+              {event.link ? (
+                <h4 
+                  className="font-medium text-sm text-white truncate hover:underline cursor-pointer flex items-center gap-1"
+                  onClick={handleLinkClick}
+                >
+                  <span className="truncate">{event.title}</span>
+                  <ExternalLink className="w-3 h-3 inline-flex flex-shrink-0" />
+                </h4>
+              ) : (
+                <h4 className="font-medium text-sm text-white truncate">
+                  {event.title}
+                </h4>
+              )}
+            </div>
           </div>
           
           <div className="flex items-center gap-3">
@@ -105,7 +107,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               </div>
               <div className="flex items-center overflow-hidden">
                 <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
-                <span className="truncate max-w-[100px]">{event.location}</span>
+                <span className="truncate max-w-[80px]">{event.location}</span>
               </div>
             </div>
             

@@ -381,21 +381,19 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           </div>
         </div>
         
-        {/* View toggle - Centered LIST and CALENDAR buttons */}
+        {/* View toggle - LIST FIRST, THEN CALENDAR */}
         <div className="flex justify-center">
-          <Tabs defaultValue={view} onValueChange={(value) => setView(value as "calendar" | "list")} className="w-full max-w-md mx-auto">
-            <div className="flex justify-center mb-4">
-              <TabsList className="dark-tabs">
-                <TabsTrigger value="list" className={view === "list" ? "text-white" : "text-gray-400"}>
-                  <List className="w-4 h-4 mr-2" />
-                  Liste
-                </TabsTrigger>
-                <TabsTrigger value="calendar" className={view === "calendar" ? "text-white" : "text-gray-400"}>
-                  <CalendarIcon className="w-4 h-4 mr-2" />
-                  Kalender
-                </TabsTrigger>
-              </TabsList>
-            </div>
+          <Tabs defaultValue={view} onValueChange={(value) => setView(value as "calendar" | "list")}>
+            <TabsList className="dark-tabs">
+              <TabsTrigger value="list" className={view === "list" ? "text-white" : "text-gray-400"}>
+                <List className="w-4 h-4 mr-2" />
+                Liste
+              </TabsTrigger>
+              <TabsTrigger value="calendar" className={view === "calendar" ? "text-white" : "text-gray-400"}>
+                <CalendarIcon className="w-4 h-4 mr-2" />
+                Kalender
+              </TabsTrigger>
+            </TabsList>
             
             {/* Main calendar and list views */}
             <TabsContent value="list">
@@ -416,7 +414,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                       const date = parseISO(dateStr);
                       return (
                         <div key={dateStr} className="mb-4 px-2">
-                          <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
+                          <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md px-2">
                             {format(date, 'EEEE, d. MMMM', { locale: de })}
                           </h4>
                           <div className="space-y-1">

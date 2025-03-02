@@ -15,9 +15,9 @@ const Index = () => {
       <main className="flex-grow">
         <div className="relative overflow-hidden mb-6">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-900/30 to-indigo-900/30 z-0"></div>
-          <div className="container mx-auto px-2 sm:px-4 py-12 relative z-10">
+          <div className="container mx-auto px-4 py-12 relative z-10">
             <h1 className="text-4xl md:text-5xl font-bold text-center mb-2 text-white">Liebefeld Community Kalender</h1>
-            <p className="text-lg md:text-xl text-center text-gray-300 max-w-3xl mx-auto">
+            <p className="text-lg md:text-xl text-center text-gray-300 max-w-2xl mx-auto">
               Entdecke Konzerte, Parties, Ausstellungen und Sportveranstaltungen in Bielefeld
             </p>
           </div>

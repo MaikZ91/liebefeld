@@ -183,31 +183,11 @@
 
   /* Event list styling */
   .event-list-container {
-    @apply pb-4 px-0;
+    @apply pb-4 px-2;
   }
 
   .event-list-day {
     @apply sticky top-0 bg-[#131722]/90 backdrop-blur-md py-2 z-10 border-b border-purple-500/20 mb-2;
-  }
-  
-  /* Event list view adjustments for better width usage */
-  .event-list-view {
-    @apply max-w-full mx-auto;
-  }
-  
-  .event-list-view .scrollbar-thin {
-    @apply px-0;
-  }
-  
-  .event-list-view h4.text-sm {
-    @apply px-1;
-  }
-  
-  /* Make calendar container use more horizontal space */
-  @media (min-width: 768px) {
-    .container.mx-auto {
-      max-width: 95%;
-    }
   }
 
   /* Category badge colors */
