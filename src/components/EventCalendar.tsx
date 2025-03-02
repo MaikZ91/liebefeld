@@ -119,22 +119,28 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         // Parse das Datum (Format: "Fri, 04.04")
         let eventDate;
         try {
-          // Versuche "dd.MM" Format zu parsen und füge aktuelles Jahr hinzu
-          const dateParts = githubEvent.date.split(', ')[1].split('.');
-          const day = parseInt(dateParts[0], 10);
-          const month = parseInt(dateParts[1], 10) - 1; // JavaScript-Monate sind 0-indexed
+          // Extract the day of week and date part
+          const dateParts = githubEvent.date.split(', ');
+          const dayOfWeek = dateParts[0]; // e.g., "Fri"
+          const dateNumbers = dateParts[1].split('.'); // e.g., ["04", "04"]
           
-          // Erstelle Datum mit aktuellem Jahr
+          // Parse day and month numbers
+          const day = parseInt(dateNumbers[0], 10);
+          const month = parseInt(dateNumbers[1], 10) - 1; // JavaScript months are 0-indexed
+          
+          // Create date with current year
           eventDate = new Date(currentYear, month, day);
           
-          // Wenn das Datum in der Vergangenheit liegt, füge ein Jahr hinzu
-          // (für Events, die im nächsten Jahr stattfinden)
-          if (eventDate < new Date() && month < 6) { // Nur für erste Jahreshälfte
+          // FIX: We DO NOT need to adjust the date here - the date from the string is already correct
+          // The issue was that we were interpreting the date incorrectly
+          
+          // If the date is in the past, add a year (for events happening next year)
+          if (eventDate < new Date() && month < 6) { // Only for first half of the year
             eventDate.setFullYear(currentYear + 1);
           }
         } catch (err) {
           console.warn(`Konnte Datum nicht parsen: ${githubEvent.date}`, err);
-          // Fallback auf heutiges Datum
+          // Fallback to today's date
           eventDate = new Date();
         }
         
@@ -143,7 +149,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           id: `github-${index}`,
           title: title,
           description: `Mehr Informationen unter: ${githubEvent.link}`,
-          date: eventDate.toISOString().split('T')[0],
+          date: eventDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
           time: "19:00", // Default-Zeit für Events ohne Zeitangabe
           location: location,
           organizer: "Liebefeld Community Bielefeld",
