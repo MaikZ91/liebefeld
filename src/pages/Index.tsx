@@ -14,7 +14,7 @@ const Index = () => {
       <CalendarNavbar />
       <main className="flex-grow">
         <div className="relative overflow-hidden mb-6">
-          <div className="absolute inset-0 bg-gradient-to-r from-orange-500/30 to-red-500/30 z-0"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-500/40 to-red-500/40 z-0"></div>
           <div className="container mx-auto px-4 py-12 relative z-10">
             <h1 className="text-4xl md:text-5xl font-bold text-center mb-2 text-orange-900 dark:text-white">Liebefeld Community Kalender</h1>
             <p className="text-lg md:text-xl text-center text-orange-800 dark:text-orange-200 max-w-2xl mx-auto">

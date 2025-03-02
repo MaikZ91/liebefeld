@@ -15,15 +15,15 @@ interface EventCardProps {
 }
 
 const categoryColors: Record<string, string> = {
-  'Konzert': 'bg-orange-900/60 text-orange-100 dark:bg-orange-900/60 dark:text-orange-100',
-  'Party': 'bg-red-900/60 text-red-100 dark:bg-red-900/60 dark:text-red-100',
-  'Ausstellung': 'bg-orange-900/60 text-orange-100 dark:bg-orange-900/60 dark:text-orange-100',
-  'Sport': 'bg-red-900/60 text-red-100 dark:bg-red-900/60 dark:text-red-100',
-  'Workshop': 'bg-orange-900/60 text-orange-100 dark:bg-orange-900/60 dark:text-orange-100',
-  'Kultur': 'bg-red-900/60 text-red-100 dark:bg-red-900/60 dark:text-red-100',
-  'Sonstiges': 'bg-orange-800/60 text-orange-200 dark:bg-orange-800/60 dark:text-orange-200',
-  'Networking': 'bg-orange-900/60 text-orange-100 dark:bg-orange-900/60 dark:text-orange-100',
-  'Meeting': 'bg-orange-800/60 text-orange-200 dark:bg-orange-800/60 dark:text-orange-200',
+  'Konzert': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
+  'Party': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
+  'Ausstellung': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
+  'Sport': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
+  'Workshop': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
+  'Kultur': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
+  'Sonstiges': 'bg-orange-400/70 text-orange-50 dark:bg-orange-400/70 dark:text-orange-50',
+  'Networking': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
+  'Meeting': 'bg-orange-400/70 text-orange-50 dark:bg-orange-400/70 dark:text-orange-50',
 };
 
 const categoryIcons: Record<string, React.ReactNode> = {
@@ -86,7 +86,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               </h4>
             )}
             
-            <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-gray-300">
+            <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-white">
               <div className="flex items-center">
                 <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
                 <span>{event.time}</span>
@@ -103,7 +103,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
               event.category in categoryColors 
                 ? categoryColors[event.category] 
-                : "bg-gray-800/60 text-gray-200"
+                : "bg-orange-400/70 text-orange-50"
             )}>
               {icon}
             </Badge>
@@ -115,10 +115,10 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
                 className="h-6 w-6 rounded-full" 
                 onClick={handleLike}
               >
-                <Heart className={cn("w-4 h-4", event.likes && event.likes > 0 ? "fill-red-500 text-red-500" : "text-gray-400")} />
+                <Heart className={cn("w-4 h-4", event.likes && event.likes > 0 ? "fill-red-500 text-red-500" : "text-white")} />
               </Button>
               {event.likes && event.likes > 0 && (
-                <span className="text-xs text-gray-300">{event.likes}</span>
+                <span className="text-xs text-white">{event.likes}</span>
               )}
             </div>
           </div>
@@ -155,7 +155,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
             "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
             event.category in categoryColors 
               ? categoryColors[event.category] 
-              : "bg-gray-800/60 text-gray-200"
+              : "bg-orange-400/70 text-orange-50"
           )}>
             {icon}
             {event.category}
@@ -168,16 +168,16 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               className="h-7 w-7 rounded-full mr-1"
               onClick={handleLike}
             >
-              <Heart className={cn("w-4 h-4", event.likes && event.likes > 0 ? "fill-red-500 text-red-500" : "text-gray-400")} />
+              <Heart className={cn("w-4 h-4", event.likes && event.likes > 0 ? "fill-red-500 text-red-500" : "text-white")} />
             </Button>
             {event.likes && event.likes > 0 && (
-              <span className="text-sm text-gray-300">{event.likes}</span>
+              <span className="text-sm text-white">{event.likes}</span>
             )}
           </div>
         </div>
       </div>
       
-      <div className="space-y-2 text-sm text-gray-300">
+      <div className="space-y-2 text-sm text-white">
         <div className="flex items-center">
           <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
           <span>{event.time} Uhr</span>
