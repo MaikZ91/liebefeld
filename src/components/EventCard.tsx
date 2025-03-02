@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { type Event } from './EventCalendar';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink } from 'lucide-react';
@@ -15,13 +16,13 @@ interface EventCardProps {
 }
 
 const categoryColors: Record<string, string> = {
-  'Konzert': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
-  'Party': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
+  'Konzert': 'bg-black text-red-500 dark:bg-black dark:text-red-500',
+  'Party': 'bg-black text-red-500 dark:bg-black dark:text-red-500',
   'Ausstellung': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
   'Sport': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
   'Workshop': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
   'Kultur': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
-  'Sonstiges': 'bg-orange-400/70 text-orange-50 dark:bg-orange-400/70 dark:text-orange-50',
+  'Sonstiges': 'bg-black text-red-500 dark:bg-black dark:text-red-500',
   'Networking': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
   'Meeting': 'bg-orange-400/70 text-orange-50 dark:bg-orange-400/70 dark:text-orange-50',
 };
