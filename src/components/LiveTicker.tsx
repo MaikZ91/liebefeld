@@ -14,7 +14,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
   const [weeklyEvents, setWeeklyEvents] = useState<Event[]>([]);
   const [isScrolling, setIsScrolling] = useState(true);
   const tickerRef = useRef<HTMLDivElement>(null);
-  const animationRef = useRef<number>();
+  const requestRef = useRef<number | null>(null);
   const positionRef = useRef<number>(0);
 
   // Get events for the current week
@@ -53,48 +53,49 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
     console.log(`Week range: ${format(weekStart, 'dd.MM.')} - ${format(weekEnd, 'dd.MM.')}`);
   }, [events]);
 
-  // Smooth scrolling animation for the ticker
+  // Set up the animation
   useEffect(() => {
+    // Only start animation if we have events and a ticker ref
     if (!tickerRef.current || weeklyEvents.length === 0) return;
     
-    const speed = 1; // pixels per frame
+    // Animation parameters
+    const speed = 0.5; // pixels per frame - reduced for smoother movement
     
+    // Animation function
     const animate = () => {
       if (!tickerRef.current || !isScrolling) return;
       
+      // Get the width of the ticker content
       const tickerWidth = tickerRef.current.scrollWidth;
-      const containerWidth = tickerRef.current.parentElement?.clientWidth || 0;
+      const visibleWidth = tickerRef.current.offsetWidth;
       
-      positionRef.current += speed;
+      // If the ticker content is shorter than the visible area, don't animate
+      if (tickerWidth <= visibleWidth) return;
       
-      if (positionRef.current >= tickerWidth / 2) {
-        positionRef.current = 0;
-      }
+      // Increment the position
+      positionRef.current = (positionRef.current + speed) % (tickerWidth / 2);
       
-      if (tickerRef.current) {
-        tickerRef.current.style.transform = `translateX(-${positionRef.current}px)`;
-      }
+      // Apply the transform
+      tickerRef.current.style.transform = `translateX(-${positionRef.current}px)`;
       
-      animationRef.current = requestAnimationFrame(animate);
+      // Request the next frame
+      requestRef.current = requestAnimationFrame(animate);
     };
     
-    // Clear any existing animation before starting a new one
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-    }
-    
-    // Reset position when component updates
+    // Reset position to start fresh
     positionRef.current = 0;
     if (tickerRef.current) {
-      tickerRef.current.style.transform = `translateX(0px)`;
+      tickerRef.current.style.transform = 'translateX(0)';
     }
     
-    animationRef.current = requestAnimationFrame(animate);
+    // Start animation
+    requestRef.current = requestAnimationFrame(animate);
     
-    // Cleanup function
+    // Cleanup function to cancel animation when component unmounts or deps change
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
+      if (requestRef.current) {
+        cancelAnimationFrame(requestRef.current);
+        requestRef.current = null;
       }
     };
   }, [weeklyEvents, isScrolling]);
@@ -104,7 +105,6 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
   const handleMouseLeave = () => setIsScrolling(true);
 
   // Make sure we always render the ticker if there are events, even if none are this week
-  // This ensures the ticker is always visible
   const eventsToShow = weeklyEvents.length > 0 ? weeklyEvents : events.slice(0, 10);
 
   // Don't render if no events at all
