@@ -61,7 +61,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     return (
       <div 
         className={cn(
-          "bg-[#F97316]/80 backdrop-blur-md rounded-lg p-2 cursor-pointer hover-scale mb-2 mx-1 w-[calc(100%-8px)] border border-orange-500/30 shadow-md",
+          "dark-glass-card rounded-lg p-2 cursor-pointer hover-scale mb-2 mx-1 w-[calc(100%-8px)]",
           className
         )}
         onClick={onClick}
@@ -126,7 +126,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
   return (
     <div 
       className={cn(
-        "bg-[#F97316]/80 backdrop-blur-md rounded-xl p-4 cursor-pointer hover-scale w-full border border-orange-500/30 shadow-md",
+        "dark-glass-card rounded-xl p-4 cursor-pointer hover-scale w-full",
         className
       )}
       onClick={onClick}
