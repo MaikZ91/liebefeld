@@ -13,6 +13,33 @@ const Index = () => {
     <div className="min-h-screen flex flex-col bg-[#FFF5EB] dark:bg-[#2E1E12] text-orange-900 dark:text-orange-100">
       <CalendarNavbar />
       <main className="flex-grow">
+        {/* Video Banner Section */}
+        <div className="relative w-full h-[50vh] overflow-hidden">
+          {/* Video background */}
+          <video 
+            className="absolute inset-0 w-full h-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+          >
+            <source src="https://cdn.gpteng.co/file/g-demo-assets/city-life.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          
+          {/* Overlay with red gradient */}
+          <div className="absolute inset-0 bg-gradient-to-r from-red-900/70 to-black/70"></div>
+          
+          {/* Content */}
+          <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4">
+            <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center font-serif">Entdecke den Puls der Stadt</h1>
+            <p className="text-xl md:text-2xl text-center max-w-2xl">
+              Konzerte, Parties, Ausstellungen und mehr in Liebefeld
+            </p>
+          </div>
+        </div>
+
+        {/* Community Calendar Title Section */}
         <div className="relative overflow-hidden mb-6 bg-black">
           <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-red-500/20 z-0"></div>
           <div className="container mx-auto px-4 py-12 relative z-10">
