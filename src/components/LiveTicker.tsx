@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { Calendar, RefreshCw, ArrowRight } from 'lucide-react';
-import { format, parseISO, isAfter, subDays } from 'date-fns';
+import { format, parseISO, isAfter, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { type Event } from './EventCalendar';
@@ -11,22 +11,23 @@ interface LiveTickerProps {
 }
 
 const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
-  const [newEvents, setNewEvents] = useState<Event[]>([]);
+  const [weeklyEvents, setWeeklyEvents] = useState<Event[]>([]);
   const [isScrolling, setIsScrolling] = useState(true);
   const tickerRef = useRef<HTMLDivElement>(null);
 
-  // Get recent events (added in the last 3 days)
+  // Get events for the current week
   useEffect(() => {
-    // Consider events from the last 3 days as "new"
-    const threeDaysAgo = subDays(new Date(), 3);
+    // Get start and end of current week (Monday to Sunday)
+    const today = new Date();
+    const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // 1 = Monday
+    const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
     
-    // Sort events by date (newest first)
-    const recent = events
+    // Filter events within current week and sort by date
+    const eventsThisWeek = events
       .filter(event => {
         try {
-          // Use the event's date for filtering
           const eventDate = parseISO(event.date);
-          return isAfter(eventDate, threeDaysAgo);
+          return isWithinInterval(eventDate, { start: weekStart, end: weekEnd });
         } catch (error) {
           console.error(`Error parsing date: ${event.date}`, error);
           return false;
@@ -34,8 +35,8 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
       })
       .sort((a, b) => {
         try {
-          // Sort by date descending (newest first)
-          return parseISO(b.date).getTime() - parseISO(a.date).getTime();
+          // Sort by date ascending (earliest first)
+          return parseISO(a.date).getTime() - parseISO(b.date).getTime();
         } catch (error) {
           console.error(`Error sorting dates: ${a.date}, ${b.date}`, error);
           return 0;
@@ -43,15 +44,16 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
       })
       .slice(0, 10); // Limit to 10 events for better performance
     
-    setNewEvents(recent);
+    setWeeklyEvents(eventsThisWeek);
     
     // Debug info
-    console.log(`LiveTicker: Found ${recent.length} recent events out of ${events.length} total events`);
+    console.log(`LiveTicker: Found ${eventsThisWeek.length} events this week out of ${events.length} total events`);
+    console.log(`Week range: ${format(weekStart, 'dd.MM.')} - ${format(weekEnd, 'dd.MM.')}`);
   }, [events]);
 
   // Smooth scrolling animation for the ticker
   useEffect(() => {
-    if (!tickerRef.current || newEvents.length === 0) return;
+    if (!tickerRef.current || weeklyEvents.length === 0) return;
     
     let animationId: number;
     let position = 0;
@@ -79,15 +81,15 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
     return () => {
       cancelAnimationFrame(animationId);
     };
-  }, [newEvents, isScrolling]);
+  }, [weeklyEvents, isScrolling]);
 
   // Pause scrolling when hovering
   const handleMouseEnter = () => setIsScrolling(false);
   const handleMouseLeave = () => setIsScrolling(true);
 
-  // Make sure we always render the ticker if there are events, even if none are "new"
+  // Make sure we always render the ticker if there are events, even if none are this week
   // This ensures the ticker is always visible
-  const eventsToShow = newEvents.length > 0 ? newEvents : events.slice(0, 10);
+  const eventsToShow = weeklyEvents.length > 0 ? weeklyEvents : events.slice(0, 10);
 
   // Don't render if no events at all
   if (events.length === 0) {
@@ -104,7 +106,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
       {/* Ticker header */}
       <div className="absolute left-0 top-0 bottom-0 flex items-center z-10 bg-red-600 px-3 py-2">
         <Calendar className="w-4 h-4 mr-1" />
-        <span className="font-bold text-sm whitespace-nowrap">Neue Events</span>
+        <span className="font-bold text-sm whitespace-nowrap">Diese Woche</span>
         <ArrowRight className="w-4 h-4 ml-1" />
       </div>
       
