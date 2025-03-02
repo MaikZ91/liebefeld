@@ -454,10 +454,6 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                   <h3 className="text-xl font-medium text-white">
                     Alle Events im {format(currentDate, 'MMMM', { locale: de })}
                   </h3>
-                  <div className="flex items-center gap-2">
-                    <Heart className="h-4 w-4 text-red-500" />
-                    <span className="text-sm text-gray-300">Top Events oben</span>
-                  </div>
                 </div>
                 
                 <div className="overflow-y-auto max-h-[600px] pr-2 scrollbar-thin">
