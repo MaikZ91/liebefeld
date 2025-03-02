@@ -12,6 +12,8 @@ import { type Event } from './EventCalendar';
 import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft, X } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EventFormProps {
   selectedDate: Date;
@@ -38,36 +40,76 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
   const [organizer, setOrganizer] = useState('');
   const [category, setCategory] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     
     if (!title || !date || !time) {
-      return; // Prevent submission if required fields are missing
+      setError('Bitte fülle alle Pflichtfelder aus (Titel, Datum und Uhrzeit)');
+      return;
     }
     
     setIsSubmitting(true);
     
-    const newEvent: Omit<Event, 'id'> = {
-      title,
-      description,
-      date: date.toISOString().split('T')[0],
-      time,
-      location,
-      organizer,
-      category: category || 'Sonstiges',
-    };
-    
-    onAddEvent(newEvent);
-    
-    // Reset form
-    setTitle('');
-    setDescription('');
-    setTime('');
-    setLocation('');
-    setOrganizer('');
-    setCategory('');
-    setIsSubmitting(false);
+    try {
+      const newEvent: Omit<Event, 'id'> = {
+        title,
+        description,
+        date: date.toISOString().split('T')[0],
+        time,
+        location,
+        organizer,
+        category: category || 'Sonstiges',
+      };
+      
+      // Try saving directly to Supabase first
+      const { data, error: supabaseError } = await supabase
+        .from('community_events')
+        .insert([newEvent])
+        .select();
+      
+      if (supabaseError) {
+        console.error('Supabase error:', supabaseError);
+        throw new Error(supabaseError.message || 'Fehler beim Speichern des Events');
+      }
+      
+      if (data && data[0]) {
+        // Event successfully saved, update the local list
+        onAddEvent({
+          ...newEvent,
+          id: data[0].id.toString()
+        });
+        
+        toast({
+          title: "Event erstellt",
+          description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`,
+        });
+        
+        // Reset form
+        setTitle('');
+        setDescription('');
+        setTime('19:00');
+        setLocation('');
+        setOrganizer('');
+        setCategory('');
+        
+        // Hide form after successful addition
+        if (onCancel) onCancel();
+      }
+    } catch (err) {
+      console.error('Error adding event:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Das Event konnte nicht gespeichert werden';
+      setError(errorMessage);
+      toast({
+        title: "Fehler beim Erstellen des Events",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -90,6 +132,12 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       <p className="text-muted-foreground mb-6">
         Füge ein neues Event zum Liebefeld Community Kalender hinzu.
       </p>
+      
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-4">
+          {error}
+        </div>
+      )}
       
       <div className="grid gap-4 py-4">
         <div className="grid gap-2">

@@ -379,35 +379,23 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   // Handler for adding a new event
   const handleAddEvent = async (newEvent: Omit<Event, 'id'>) => {
     try {
-      // Speichere das Event in Supabase
-      const { data, error } = await supabase
-        .from('community_events')
-        .insert([newEvent])
-        .select();
-        
-      if (error) {
-        console.error('Error saving event to Supabase:', error);
-        throw error;
-      }
+      // Add the event to local state directly
+      const tempId = `temp-${Math.random().toString(36).substring(2, 9)}`;
+      const eventWithId = {
+        ...newEvent,
+        id: tempId,
+        likes: 0
+      };
       
-      if (data && data[0]) {
-        // Event erfolgreich gespeichert, füge es zur lokalen Liste hinzu
-        const eventWithId = {
-          ...data[0],
-          id: data[0].id.toString(),
-          likes: 0
-        };
-        
-        setEvents(prevEvents => [...prevEvents, eventWithId]);
-        
-        toast({
-          title: "Event erstellt",
-          description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`,
-        });
-        
-        // Formular nach erfolgreichem Hinzufügen ausblenden
-        setShowEventForm(false);
-      }
+      setEvents(prevEvents => [...prevEvents, eventWithId]);
+      
+      toast({
+        title: "Event erstellt",
+        description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`,
+      });
+      
+      // Formular nach erfolgreichem Hinzufügen ausblenden
+      setShowEventForm(false);
     } catch (error) {
       console.error('Error adding event:', error);
       toast({
@@ -415,18 +403,6 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         description: "Das Event konnte nicht gespeichert werden. Bitte versuche es später erneut.",
         variant: "destructive"
       });
-      
-      // Fallback: Lokales Event hinzufügen, falls Supabase-Speicherung fehlschlägt
-      const eventWithId = {
-        ...newEvent,
-        id: Math.random().toString(36).substring(2, 9),
-        likes: 0,
-      };
-      
-      setEvents([...events, eventWithId as Event]);
-      
-      // Formular nach erfolgreichem Hinzufügen ausblenden
-      setShowEventForm(false);
     }
   };
 
