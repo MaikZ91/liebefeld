@@ -598,6 +598,25 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
+              {/* Favorites button positioned at the beginning of the filter list */}
+              <Button 
+                className={cn(
+                  "flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all",
+                  showFavorites ? "bg-red-500 text-white hover:bg-red-600" : "bg-black text-red-500 border-red-500 hover:bg-black/90 hover:text-red-500"
+                )}
+                onClick={toggleFavorites}
+              >
+                <Heart className={cn("h-4 w-4", showFavorites ? "fill-white" : "")} />
+                <span className="hidden sm:inline">
+                  {showFavorites ? "Alle" : "Favoriten"}
+                </span>
+                {!showFavorites && favoriteEvents.length > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
+                    {favoriteEvents.length}
+                  </span>
+                )}
+              </Button>
+              
               {categories.map(category => (
                 <Button
                   key={category}
@@ -642,25 +661,6 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                   Kalender
                 </TabsTrigger>
               </TabsList>
-              
-              {/* Favorites button */}
-              <Button 
-                className={cn(
-                  "flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all",
-                  showFavorites ? "bg-red-500 text-white hover:bg-red-600" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                )}
-                onClick={toggleFavorites}
-              >
-                <Heart className={cn("h-5 w-5", showFavorites ? "fill-white" : "")} />
-                <span className="hidden md:inline">
-                  {showFavorites ? "Alle anzeigen" : "Favoriten"}
-                </span>
-                {!showFavorites && favoriteEvents.length > 0 && (
-                  <span className="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
-                    {favoriteEvents.length}
-                  </span>
-                )}
-              </Button>
               
               <Button 
                 className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all"
