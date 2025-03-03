@@ -549,6 +549,9 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         description: "Zeige wieder alle Veranstaltungen an.",
       });
     }
+    
+    // Important: We don't change the view state here anymore
+    // This allows users to stay in their current view (list or calendar)
   };
 
   // Get all unique categories from events
@@ -622,7 +625,12 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         
         {/* View toggle with Add Event button moved beside it */}
         <div className="flex justify-center items-center flex-col">
-          <Tabs defaultValue={view} onValueChange={(value) => setView(value as "calendar" | "list")} className="flex flex-col items-center w-full">
+          <Tabs 
+            defaultValue={view} 
+            value={view} // Explicitly set the current value
+            onValueChange={(value) => setView(value as "calendar" | "list")} 
+            className="flex flex-col items-center w-full"
+          >
             <div className="flex items-center gap-3">
               <TabsList className="dark-tabs">
                 <TabsTrigger value="list" className={view === "list" ? "text-white" : "text-gray-400"}>
