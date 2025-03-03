@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -50,6 +49,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   const [view, setView] = useState<"calendar" | "list">(defaultView);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [showEventForm, setShowEventForm] = useState(false);
+  const [showFavorites, setShowFavorites] = useState(false);
   
   // Use this state only for initial loading to avoid flickering
   const [eventLikes, setEventLikes] = useState<Record<string, number>>(() => {
@@ -428,10 +428,31 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         return filter ? (sameDay && event.category === filter) : sameDay;
       })
     : [];
+
+  // Get user's favorite events (events with likes)
+  const favoriteEvents = events.filter(event => {
+    // For GitHub events
+    if (event.id.startsWith('github-')) {
+      return eventLikes[event.id] && eventLikes[event.id] > 0;
+    }
+    // For regular events
+    return event.likes && event.likes > 0;
+  });
   
   // Get all events for the current month and sort by likes
   const currentMonthEvents = events
     .filter(event => {
+      // If viewing favorites, only show favorites regardless of month
+      if (showFavorites) {
+        // For GitHub events
+        if (event.id.startsWith('github-')) {
+          return eventLikes[event.id] && eventLikes[event.id] > 0;
+        }
+        // For regular events
+        return event.likes && event.likes > 0;
+      }
+      
+      // Otherwise filter by current month
       const eventDate = parseISO(event.date);
       return isSameMonth(eventDate, currentDate);
     })
@@ -511,6 +532,25 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     setFilter(current => current === category ? null : category);
   };
 
+  // Toggle favorites view
+  const toggleFavorites = () => {
+    setShowFavorites(prev => !prev);
+    
+    // Reset date selection when toggling favorites
+    if (!showFavorites) {
+      setSelectedDate(null);
+      toast({
+        title: "Favoriten",
+        description: `${favoriteEvents.length} Lieblingsveranstaltungen werden angezeigt.`,
+      });
+    } else {
+      toast({
+        title: "Alle Events",
+        description: "Zeige wieder alle Veranstaltungen an.",
+      });
+    }
+  };
+
   // Get all unique categories from events
   const categories = Array.from(new Set(events.map(event => event.category)));
 
@@ -540,13 +580,14 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
               <ChevronLeft className="h-5 w-5" />
             </Button>
             <h2 className="text-xl md:text-2xl font-medium w-48 text-center text-black">
-              {format(currentDate, 'MMMM yyyy', { locale: de })}
+              {showFavorites ? "Meine Favoriten" : format(currentDate, 'MMMM yyyy', { locale: de })}
             </h2>
             <Button 
               variant="outline" 
               size="icon" 
               onClick={nextMonth} 
               className="rounded-full hover:scale-105 transition-transform bg-red-500 text-black border-red-600"
+              disabled={showFavorites}
             >
               <ChevronRight className="h-5 w-5" />
             </Button>
@@ -594,6 +635,25 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                 </TabsTrigger>
               </TabsList>
               
+              {/* Favorites button */}
+              <Button 
+                className={cn(
+                  "flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all",
+                  showFavorites ? "bg-red-500 text-white hover:bg-red-600" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                )}
+                onClick={toggleFavorites}
+              >
+                <Heart className={cn("h-5 w-5", showFavorites ? "fill-white" : "")} />
+                <span className="hidden md:inline">
+                  {showFavorites ? "Alle anzeigen" : "Favoriten"}
+                </span>
+                {!showFavorites && favoriteEvents.length > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
+                    {favoriteEvents.length}
+                  </span>
+                )}
+              </Button>
+              
               <Button 
                 className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all"
                 onClick={() => setShowEventForm(!showEventForm)}
@@ -619,7 +679,9 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
               <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-medium text-white">
-                    Alle Events im {format(currentDate, 'MMMM', { locale: de })}
+                    {showFavorites 
+                      ? "Meine Favoriten" 
+                      : `Alle Events im ${format(currentDate, 'MMMM', { locale: de })}`}
                   </h3>
                 </div>
                 
@@ -651,7 +713,9 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                     })
                   ) : (
                     <div className="flex items-center justify-center h-40 text-gray-400">
-                      Keine Events in diesem Monat {filter ? `in der Kategorie "${filter}"` : ''}
+                      {showFavorites 
+                        ? "Du hast noch keine Favoriten" 
+                        : `Keine Events in diesem Monat ${filter ? `in der Kategorie "${filter}"` : ''}`}
                     </div>
                   )}
                 </div>
@@ -661,71 +725,97 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
             <TabsContent value="calendar" className="w-full">
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="w-full md:w-3/5 dark-glass-card rounded-2xl p-6">
-                  {/* Day names header */}
-                  <div className="grid grid-cols-7 mb-4">
-                    {['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'].map((day) => (
-                      <div key={day} className="text-center font-medium text-gray-400">
-                        {day}
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Calendar days */}
-                  <div className="grid grid-cols-7 gap-2">
-                    {daysInMonth.map((day, i) => {
-                      const isSelected = selectedDate && isSameDay(day, selectedDate);
-                      const isCurrentMonth = isSameMonth(day, currentDate);
-                      const dayHasEvents = hasEvents(day);
-                      const isCurrentDay = isToday(day);
-                      const eventCount = getEventCount(day);
-                      
-                      return (
-                        <button
-                          key={i}
-                          onClick={() => handleDateClick(day)}
-                          className={cn(
-                            "calendar-day hover-scale relative flex flex-col items-center justify-center",
-                            isSelected ? "bg-primary text-primary-foreground" : "",
-                            !isCurrentMonth ? "text-gray-600" : "text-gray-200",
-                            isCurrentDay ? "ring-2 ring-primary ring-offset-2 ring-offset-[#131722]" : ""
-                          )}
+                  {showFavorites ? (
+                    <div className="flex flex-col items-center justify-center h-[300px] text-gray-400">
+                      <Heart className="w-12 h-12 mb-4 text-red-500" />
+                      <h3 className="text-xl font-medium text-white mb-2">Deine Favoriten</h3>
+                      <p className="text-center mb-4">
+                        {favoriteEvents.length 
+                          ? `Du hast ${favoriteEvents.length} Favoriten` 
+                          : "Du hast noch keine Favoriten"}
+                      </p>
+                      {favoriteEvents.length > 0 && (
+                        <Button
+                          variant="outline"
+                          onClick={() => setView("list")}
+                          className="text-white border-white hover:bg-white/10"
                         >
-                          {format(day, 'd')}
-                          {dayHasEvents && (
-                            <div className="absolute bottom-1 flex space-x-0.5">
-                              {eventCount > 3 ? (
-                                <span className="text-[10px] font-semibold text-primary">{eventCount}</span>
-                              ) : (
-                                Array(eventCount).fill(0).map((_, i) => (
-                                  <div 
-                                    key={i} 
-                                    className="w-1 h-1 rounded-full bg-primary"
-                                  />
-                                ))
+                          <List className="w-4 h-4 mr-2" />
+                          Als Liste anzeigen
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      {/* Day names header */}
+                      <div className="grid grid-cols-7 mb-4">
+                        {['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'].map((day) => (
+                          <div key={day} className="text-center font-medium text-gray-400">
+                            {day}
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Calendar days */}
+                      <div className="grid grid-cols-7 gap-2">
+                        {daysInMonth.map((day, i) => {
+                          const isSelected = selectedDate && isSameDay(day, selectedDate);
+                          const isCurrentMonth = isSameMonth(day, currentDate);
+                          const dayHasEvents = hasEvents(day);
+                          const isCurrentDay = isToday(day);
+                          const eventCount = getEventCount(day);
+                          
+                          return (
+                            <button
+                              key={i}
+                              onClick={() => handleDateClick(day)}
+                              className={cn(
+                                "calendar-day hover-scale relative flex flex-col items-center justify-center",
+                                isSelected ? "bg-primary text-primary-foreground" : "",
+                                !isCurrentMonth ? "text-gray-600" : "text-gray-200",
+                                isCurrentDay ? "ring-2 ring-primary ring-offset-2 ring-offset-[#131722]" : ""
                               )}
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
+                            >
+                              {format(day, 'd')}
+                              {dayHasEvents && (
+                                <div className="absolute bottom-1 flex space-x-0.5">
+                                  {eventCount > 3 ? (
+                                    <span className="text-[10px] font-semibold text-primary">{eventCount}</span>
+                                  ) : (
+                                    Array(eventCount).fill(0).map((_, i) => (
+                                      <div 
+                                        key={i} 
+                                        className="w-1 h-1 rounded-full bg-primary"
+                                      />
+                                    ))
+                                  )}
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
                 </div>
                 
                 {/* Event list for selected date */}
                 <div className="w-full md:w-2/5 dark-glass-card rounded-2xl p-6 overflow-hidden flex flex-col">
                   <h3 className="text-xl font-medium mb-4 text-white">
-                    {selectedDate ? (
-                      format(selectedDate, 'EEEE, d. MMMM', { locale: de })
-                    ) : (
-                      "Wähle ein Datum aus"
-                    )}
+                    {showFavorites 
+                      ? "Meine Favoriten" 
+                      : (selectedDate 
+                          ? format(selectedDate, 'EEEE, d. MMMM', { locale: de })
+                          : "Wähle ein Datum aus"
+                        )
+                    }
                   </h3>
                   
                   <div className="flex-grow overflow-auto scrollbar-thin">
-                    {selectedDate ? (
-                      filteredEvents.length > 0 ? (
+                    {showFavorites ? (
+                      favoriteEvents.length > 0 ? (
                         <div className="space-y-4">
-                          {filteredEvents.map(event => (
+                          {favoriteEvents.map(event => (
                             <EventCard 
                               key={event.id} 
                               event={event}
@@ -736,13 +826,32 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                         </div>
                       ) : (
                         <div className="flex h-full items-center justify-center text-gray-400">
-                          Keine Events an diesem Tag {filter ? `in der Kategorie "${filter}"` : ''}
+                          Du hast noch keine Favoriten
                         </div>
                       )
                     ) : (
-                      <div className="flex h-full items-center justify-center text-gray-400">
-                        Wähle ein Datum, um Events anzuzeigen
-                      </div>
+                      selectedDate ? (
+                        filteredEvents.length > 0 ? (
+                          <div className="space-y-4">
+                            {filteredEvents.map(event => (
+                              <EventCard 
+                                key={event.id} 
+                                event={event}
+                                onClick={() => setSelectedEvent(event)}
+                                onLike={handleLikeEvent}
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-gray-400">
+                            Keine Events an diesem Tag {filter ? `in der Kategorie "${filter}"` : ''}
+                          </div>
+                        )
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-gray-400">
+                          Wähle ein Datum, um Events anzuzeigen
+                        </div>
+                      )
                     )}
                   </div>
                 </div>
