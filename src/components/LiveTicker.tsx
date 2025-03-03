@@ -43,7 +43,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
 
   return (
     <div 
-      className="bg-black text-white overflow-hidden py-2 relative mb-0" /* Removed bottom margin */
+      className="bg-black text-white overflow-hidden py-2 relative mb-0"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
