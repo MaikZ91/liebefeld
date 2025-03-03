@@ -1,10 +1,8 @@
-
 import React, { useEffect, useState } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
 import { Button } from '@/components/ui/button';
-import { HeartPulse } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
@@ -80,14 +78,7 @@ const Index = () => {
           
           {/* Content */}
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4">
-            <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center font-serif flex items-center justify-center gap-3">
-              Entdecke den 
-              <span className="relative">
-                Puls
-                <HeartPulse className="w-10 h-10 text-red-500 absolute -top-1 -right-12 animate-pulse-soft" />
-              </span> 
-              der Stadt
-            </h1>
+            <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center font-serif">Entdecke den Puls der Stadt</h1>
             <p className="text-xl md:text-2xl text-center max-w-2xl mb-6">
               Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
             </p>
@@ -113,8 +104,8 @@ const Index = () => {
         {/* Live Ticker for all events */}
         <LiveTicker events={events} />
 
-        {/* Updated the background color and reduced margin-top to reduce space */}
-        <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-6 rounded-t-lg shadow-inner mt-0">
+        {/* Updated the background color to a soft gray for better text contrast */}
+        <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-6 rounded-t-lg shadow-inner">
           <EventCalendar defaultView="list" />
         </div>
       </main>
