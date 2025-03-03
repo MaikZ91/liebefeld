@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { Calendar, ArrowRight } from 'lucide-react';
-import { format, parseISO, isAfter, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { type Event } from './EventCalendar';
 
@@ -43,7 +43,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
 
   return (
     <div 
-      className="bg-black text-white overflow-hidden py-2 relative"
+      className="bg-black text-white overflow-hidden py-2 relative mb-0" /* Removed bottom margin */
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
