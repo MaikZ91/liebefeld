@@ -126,11 +126,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       }
     } catch (error) {
       console.error('Error loading events from Supabase:', error);
-      toast({
-        title: "Fehler beim Laden der Events",
-        description: "Die Events konnten nicht aus der Datenbank geladen werden.",
-        variant: "destructive"
-      });
+      // Removed toast notification
     } finally {
       setIsLoading(false);
     }
@@ -165,13 +161,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         return [...userEvents, ...bielefeldEvents];
       });
       
-      if (!isInitialLoad) {
-        toast({
-          title: "Fehler beim Laden der Events",
-          description: "Es werden lokale Beispieldaten angezeigt.",
-          variant: "destructive"
-        });
-      }
+      // Removed toast notification
     }
     
     setIsLoading(false);
@@ -280,13 +270,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         return [...userEvents, ...transformedEvents];
       });
       
-      // Only show toast when not initial load
-      if (!isInitialLoad) {
-        toast({
-          title: "Events aktualisiert",
-          description: `${transformedEvents.length} Events wurden geladen.`,
-        });
-      }
+      // Removed toast notification
     } catch (error) {
       console.error("Fehler bei der Verarbeitung der GitHub-Events:", error);
       setEvents(prevEvents => {
@@ -295,13 +279,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         return [...userEvents, ...bielefeldEvents];
       });
       
-      if (!isInitialLoad) {
-        toast({
-          title: "Fehler beim Laden der Events",
-          description: "Es werden lokale Beispieldaten angezeigt.",
-          variant: "destructive"
-        });
-      }
+      // Removed toast notification
     }
   };
 
@@ -500,20 +478,13 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       
       setEvents(prevEvents => [...prevEvents, eventWithId]);
       
-      toast({
-        title: "Event erstellt",
-        description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`,
-      });
+      // Removed toast notification
       
       // Formular nach erfolgreichem Hinzufügen ausblenden
       setShowEventForm(false);
     } catch (error) {
       console.error('Error adding event:', error);
-      toast({
-        title: "Fehler beim Erstellen des Events",
-        description: "Das Event konnte nicht gespeichert werden. Bitte versuche es später erneut.",
-        variant: "destructive"
-      });
+      // Removed toast notification
     }
   };
 
@@ -539,15 +510,9 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     // Reset date selection when toggling favorites
     if (!showFavorites) {
       setSelectedDate(null);
-      toast({
-        title: "Favoriten",
-        description: `${favoriteEvents.length} Lieblingsveranstaltungen werden angezeigt.`,
-      });
+      // Removed toast notification
     } else {
-      toast({
-        title: "Alle Events",
-        description: "Zeige wieder alle Veranstaltungen an.",
-      });
+      // Removed toast notification
     }
     
     // Important: We don't change the view state here anymore
