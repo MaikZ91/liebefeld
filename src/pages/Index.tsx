@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -80,10 +79,11 @@ const Index = () => {
           
           {/* Content */}
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4">
-            <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center font-serif flex items-center justify-center">
+            <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center font-serif">
               Entdecke den 
-              <span className="flex items-center mx-2">
-                <span className="animate-pulse text-red-500">❤</span> Puls
+              <span className="inline-flex items-center mx-2 relative">
+                Puls
+                <span className="absolute -right-7 animate-pulse text-red-500">❤</span>
               </span> 
               der Stadt
             </h1>
