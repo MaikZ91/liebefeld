@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { format, parseISO, isWithinInterval, startOfWeekend, endOfWeekend, addDays, isToday, isTomorrow, isThisWeek, isThisWeekend, isNextWeek, isNextWeekend } from 'date-fns';
+import { format, parseISO, isWithinInterval, startOfWeek, endOfWeek, addDays, isToday, isTomorrow, isThisWeek, isWeekend } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { MessageCircle, Send, Calendar, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -204,19 +204,26 @@ const generateResponse = (query: string, events: Event[]): string => {
     // Check if asking about this weekend or next weekend
     const isNextWeekendQuery = normalizedQuery.includes('nächstes') || normalizedQuery.includes('nächste') || normalizedQuery.includes('kommende');
     
-    const startOfCurrentWeekend = startOfWeekend(today);
-    const endOfCurrentWeekend = endOfWeekend(today);
+    // Get current week's weekend dates
+    const thisWeekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday
+    const thisWeekendStart = addDays(thisWeekStart, 5); // Saturday
+    const thisWeekendEnd = addDays(thisWeekStart, 6); // Sunday
     
-    const startOfNextWeekend = startOfWeekend(addDays(today, 7));
-    const endOfNextWeekend = endOfWeekend(addDays(today, 7));
+    // Get next week's weekend dates
+    const nextWeekStart = addDays(thisWeekStart, 7);
+    const nextWeekendStart = addDays(nextWeekStart, 5); // Next Saturday
+    const nextWeekendEnd = addDays(nextWeekStart, 6); // Next Sunday
     
-    const weekendStart = isNextWeekendQuery ? startOfNextWeekend : startOfCurrentWeekend;
-    const weekendEnd = isNextWeekendQuery ? endOfNextWeekend : endOfCurrentWeekend;
+    const weekendStart = isNextWeekendQuery ? nextWeekendStart : thisWeekendStart;
+    const weekendEnd = isNextWeekendQuery ? nextWeekendEnd : thisWeekendEnd;
     
     const weekendEvents = events.filter(event => {
       try {
         const eventDate = parseISO(event.date);
-        return isWithinInterval(eventDate, { start: weekendStart, end: weekendEnd });
+        return isWithinInterval(eventDate, { 
+          start: weekendStart, 
+          end: addDays(weekendEnd, 1) // Add 1 day to include the entire Sunday
+        });
       } catch (error) {
         console.error(`Error parsing date for event: ${event.title}`, error);
         return false;
@@ -232,7 +239,7 @@ const generateResponse = (query: string, events: Event[]): string => {
     const thisWeekEvents = events.filter(event => {
       try {
         const eventDate = parseISO(event.date);
-        return isThisWeek(eventDate);
+        return isThisWeek(eventDate, { weekStartsOn: 1 });
       } catch (error) {
         console.error(`Error parsing date for event: ${event.title}`, error);
         return false;
@@ -243,10 +250,13 @@ const generateResponse = (query: string, events: Event[]): string => {
   
   // Check for next week events
   if (normalizedQuery.includes('nächste woche') || normalizedQuery.includes('next week')) {
+    const nextWeekStart = addDays(startOfWeek(today, { weekStartsOn: 1 }), 7);
+    const nextWeekEnd = addDays(nextWeekStart, 6);
+    
     const nextWeekEvents = events.filter(event => {
       try {
         const eventDate = parseISO(event.date);
-        return isNextWeek(eventDate);
+        return isWithinInterval(eventDate, { start: nextWeekStart, end: nextWeekEnd });
       } catch (error) {
         console.error(`Error parsing date for event: ${event.title}`, error);
         return false;
