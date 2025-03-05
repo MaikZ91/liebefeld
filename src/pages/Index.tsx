@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -81,14 +82,14 @@ const Index = () => {
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4">
             <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center font-serif">
               Entdecke den 
-              <span className="inline-flex items-center mx-2 relative">
+              <span className="mx-2">
                 Puls
-                <span className="absolute -right-7 animate-pulse text-red-500">❤</span>
               </span> 
               der Stadt
             </h1>
             <p className="text-xl md:text-2xl text-center max-w-2xl mb-6">
               Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
+              <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
             </p>
             
             {/* WhatsApp Community Button */}
