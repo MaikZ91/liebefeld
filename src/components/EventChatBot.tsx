@@ -38,6 +38,15 @@ const EventChatBot: React.FC<ChatBotProps> = ({ events }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Debug log to verify events are being passed correctly
+  useEffect(() => {
+    console.log(`EventChatBot received ${events.length} events`);
+    if (events.length > 0) {
+      // Log a few events as a sample to verify data structure
+      console.log("Sample events:", events.slice(0, 3));
+    }
+  }, [events]);
+
   const handleSend = () => {
     if (!input.trim()) return;
 
@@ -154,6 +163,9 @@ const EventChatBot: React.FC<ChatBotProps> = ({ events }) => {
 const generateResponse = (query: string, events: Event[]): string => {
   const normalizedQuery = query.toLowerCase();
   const today = new Date();
+  
+  // Debug log to verify event count in generateResponse
+  console.log(`Generating response with ${events.length} events for query: "${query}"`);
   
   // Helper function to format events
   const formatEvents = (filteredEvents: Event[]): string => {

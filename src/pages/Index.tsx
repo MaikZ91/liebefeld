@@ -117,7 +117,7 @@ const Index = () => {
           <EventCalendar defaultView="list" />
         </div>
         
-        {/* Event Chat Bot */}
+        {/* Event Chat Bot - Pass events directly from state */}
         <EventChatBot events={events} />
       </main>
     </div>
