@@ -1,7 +1,9 @@
+
 import React, { useEffect, useState } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
+import EventChatBot from '@/components/EventChatBot';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -78,7 +80,13 @@ const Index = () => {
           
           {/* Content */}
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4">
-            <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center font-serif">Entdecke den Puls der Stadt</h1>
+            <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center font-serif flex items-center justify-center">
+              Entdecke den 
+              <span className="flex items-center mx-2">
+                <span className="animate-pulse text-red-500">❤</span> Puls
+              </span> 
+              der Stadt
+            </h1>
             <p className="text-xl md:text-2xl text-center max-w-2xl mb-6">
               Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
             </p>
@@ -105,9 +113,12 @@ const Index = () => {
         <LiveTicker events={events} />
 
         {/* Updated the background color to a soft gray for better text contrast */}
-        <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-6 rounded-t-lg shadow-inner">
+        <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-6 rounded-t-lg shadow-inner mt-0">
           <EventCalendar defaultView="list" />
         </div>
+        
+        {/* Event Chat Bot */}
+        <EventChatBot events={events} />
       </main>
     </div>
   );
