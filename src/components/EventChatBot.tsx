@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { type Event } from './EventCalendar';
 import { useEventContext } from '@/contexts/EventContext';
 import { generateResponse, getWelcomeMessage } from '@/utils/chatUtils';
+import { format } from 'date-fns';
 
 const EventChatBot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);

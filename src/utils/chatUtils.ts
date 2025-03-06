@@ -1,4 +1,3 @@
-
 import { format, parseISO, isWithinInterval, startOfWeek, endOfWeek, addDays, 
   isToday, isTomorrow, isThisWeek, isWeekend, isAfter, isBefore, 
   addWeeks, addMonths, getMonth, getYear } from 'date-fns';
@@ -27,7 +26,7 @@ export const createResponseHeader = (title: string) => {
 };
 
 // Functions to identify common query patterns
-export const isListAllEventsQuery = (query: string): boolean => {
+const isListAllEventsQuery = (query: string): boolean => {
   const patterns = [
     'alle', 'verfügbar', 'liste', 'zeig mir alle', 'was geht', 'gibts', 'gibt es',
     'übersicht', 'welche events', 'alles', 'zeige alle', 'anzeigen', 'show all'
@@ -35,27 +34,7 @@ export const isListAllEventsQuery = (query: string): boolean => {
   return patterns.some(pattern => query.includes(pattern));
 };
 
-export const isTimeSpecificQuery = (query: string): { isTimeQuery: boolean; timeFrame: string } => {
-  const timePatterns = [
-    { pattern: ['heute', 'today', 'jetzt', 'now'], timeFrame: 'today' },
-    { pattern: ['morgen', 'tomorrow'], timeFrame: 'tomorrow' },
-    { pattern: ['wochenende', 'weekend', 'samstag', 'sonntag', 'saturday', 'sunday'], timeFrame: 'weekend' },
-    { pattern: ['diese woche', 'this week', 'aktuelle woche', 'current week'], timeFrame: 'thisWeek' },
-    { pattern: ['nächste woche', 'next week', 'kommende woche'], timeFrame: 'nextWeek' },
-    { pattern: ['nächsten monat', 'next month', 'im kommenden monat'], timeFrame: 'nextMonth' },
-    { pattern: ['nächstes wochenende', 'next weekend', 'kommendes wochenende'], timeFrame: 'nextWeekend' }
-  ];
-
-  for (const { pattern, timeFrame } of timePatterns) {
-    if (pattern.some(p => query.includes(p))) {
-      return { isTimeQuery: true, timeFrame };
-    }
-  }
-
-  return { isTimeQuery: false, timeFrame: '' };
-};
-
-export const isCategoryQuery = (query: string): { isCategoryQuery: boolean; category: string } => {
+const isCategoryQuery = (query: string): { isCategoryQuery: boolean; category: string } => {
   const categoryPatterns = [
     { pattern: ['konzert', 'music', 'band', 'festival', 'musik'], category: 'Konzert' },
     { pattern: ['party', 'feier', 'feiern', 'fete', 'disco'], category: 'Party' },
@@ -74,7 +53,7 @@ export const isCategoryQuery = (query: string): { isCategoryQuery: boolean; cate
   return { isCategoryQuery: false, category: '' };
 };
 
-export const isLocationQuery = (query: string): { isLocationQuery: boolean; location: string } => {
+const isLocationQuery = (query: string): { isLocationQuery: boolean; location: string } => {
   const locationPatterns = [
     { pattern: ['in der nähe', 'nearby', 'um die ecke', 'in meiner nähe'], location: 'nearby' },
     { pattern: ['zentrum', 'innenstadt', 'city center', 'downtown'], location: 'center' },
@@ -90,7 +69,7 @@ export const isLocationQuery = (query: string): { isLocationQuery: boolean; loca
   return { isLocationQuery: false, location: '' };
 };
 
-export const isPriceQuery = (query: string): { isPriceQuery: boolean; priceRange: string } => {
+const isPriceQuery = (query: string): { isPriceQuery: boolean; priceRange: string } => {
   const pricePatterns = [
     { pattern: ['kostenlos', 'free', 'gratis', 'umsonst'], priceRange: 'free' },
     { pattern: ['günstig', 'cheap', 'preiswert', 'budget'], priceRange: 'cheap' },
@@ -104,6 +83,26 @@ export const isPriceQuery = (query: string): { isPriceQuery: boolean; priceRange
   }
 
   return { isPriceQuery: false, priceRange: '' };
+};
+
+const isTimeSpecificQuery = (query: string): { isTimeQuery: boolean; timeFrame: string } => {
+  const timePatterns = [
+    { pattern: ['heute', 'today', 'jetzt', 'now'], timeFrame: 'today' },
+    { pattern: ['morgen', 'tomorrow'], timeFrame: 'tomorrow' },
+    { pattern: ['wochenende', 'weekend', 'samstag', 'sonntag', 'saturday', 'sunday'], timeFrame: 'weekend' },
+    { pattern: ['diese woche', 'this week', 'aktuelle woche', 'current week'], timeFrame: 'thisWeek' },
+    { pattern: ['nächste woche', 'next week', 'kommende woche'], timeFrame: 'nextWeek' },
+    { pattern: ['nächsten monat', 'next month', 'im kommenden monat'], timeFrame: 'nextMonth' },
+    { pattern: ['nächstes wochenende', 'next weekend', 'kommendes wochenende'], timeFrame: 'nextWeekend' }
+  ];
+
+  for (const { pattern, timeFrame } of timePatterns) {
+    if (pattern.some(p => query.includes(p))) {
+      return { isTimeQuery: true, timeFrame };
+    }
+  }
+
+  return { isTimeQuery: false, timeFrame: '' };
 };
 
 // Process time-specific queries
@@ -323,7 +322,7 @@ export const generateResponse = (query: string, events: Event[]): string => {
     <p class="font-bold">Ich verstehe deine Frage leider nicht ganz.</p>
     <p>Du kannst mich zum Beispiel fragen:</p>
     <ul class="list-disc pl-5 space-y-1">
-      <li>Was geht heute?</li>
+      <li>Was geht heute los?</li>
       <li>Was ist am Wochenende los?</li>
       <li>Welche Events gibt es nächste Woche?</li>
       <li>Gibt es Konzerte diese Woche?</li>
