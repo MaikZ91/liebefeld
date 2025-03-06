@@ -1,6 +1,7 @@
+
 import { Event, GitHubEvent } from '../types/eventTypes';
 import { parseAndNormalizeDate, debugDate } from './dateUtils';
-import { format, isSameDay, isSameMonth, startOfDay } from 'date-fns';
+import { format, isSameDay, isSameMonth, startOfDay, isAfter, isBefore, differenceInDays } from 'date-fns';
 
 // Determine event category based on keywords in title
 export const determineEventCategory = (title: string): string => {
@@ -81,6 +82,8 @@ export const getMonthOrFavoriteEvents = (
   showFavorites: boolean, 
   eventLikes: Record<string, number>
 ): Event[] => {
+  const today = startOfDay(new Date());
+  
   return events
     .filter(event => {
       try {
@@ -107,22 +110,33 @@ export const getMonthOrFavoriteEvents = (
       }
     })
     .sort((a, b) => {
-      // First sort by likes (descending)
-      const likesA = a.likes || 0;
-      const likesB = b.likes || 0;
-      
-      if (likesA !== likesB) {
-        return likesB - likesA;
-      }
-      
-      // Then by date (ascending)
       try {
         const dateA = parseAndNormalizeDate(a.date);
         const dateB = parseAndNormalizeDate(b.date);
-        return dateA.getTime() - dateB.getTime();
+        
+        // First group: today and future events (sorted by proximity to today)
+        // Second group: past events (sorted by most recent first)
+        const isABeforeToday = isBefore(dateA, today);
+        const isBBeforeToday = isBefore(dateB, today);
+        
+        if (isABeforeToday && !isBBeforeToday) {
+          return 1; // B comes first (it's not in the past)
+        } else if (!isABeforeToday && isBBeforeToday) {
+          return -1; // A comes first (it's not in the past)
+        } else if (!isABeforeToday && !isBBeforeToday) {
+          // Both are today or future, sort by proximity to today
+          return differenceInDays(dateA, today) - differenceInDays(dateB, today);
+        } else {
+          // Both are past, sort by most recent first
+          return dateB.getTime() - dateA.getTime();
+        }
       } catch (error) {
         console.error(`Error sorting events by date:`, error);
-        return 0;
+        
+        // If there's a likes difference, fall back to that
+        const likesA = a.likes || 0;
+        const likesB = b.likes || 0;
+        return likesB - likesA;
       }
     });
 };

@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
@@ -24,23 +24,6 @@ const EventList: React.FC<EventListProps> = ({
   
   // Group events by date
   const eventsByDate = groupEventsByDate(events);
-  
-  useEffect(() => {
-    // Scroll to today's section when component mounts or when events/favorites change
-    if (todayRef.current && listRef.current && !showFavorites) {
-      // Use a longer delay to ensure the component is fully rendered
-      // and make the scrolling smoother
-      const timer = setTimeout(() => {
-        todayRef.current?.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start' 
-        });
-        console.log('Scrolling to today');
-      }, 300);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [showFavorites, events.length]);
   
   return (
     <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
