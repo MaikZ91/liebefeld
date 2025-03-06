@@ -30,25 +30,46 @@ const EventList: React.FC<EventListProps> = ({
     if (todayRef.current && listRef.current) {
       console.log('EventList: Attempting to scroll to today');
       
-      // Force layout calculation
-      listRef.current.getBoundingClientRect();
-      
-      // First immediate scroll to today's section
-      if (todayRef.current) {
-        // Use direct DOM method for immediate positioning
-        listRef.current.scrollTop = todayRef.current.offsetTop - 20;
-        
-        console.log('EventList: Initial scroll to position', todayRef.current.offsetTop);
-        
-        // Then smooth scroll for better UX after a small delay
-        setTimeout(() => {
-          todayRef.current?.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start'
-          });
-          console.log('EventList: Smooth scroll applied');
-        }, 150);
-      }
+      // Wait for render to complete
+      setTimeout(() => {
+        if (todayRef.current && listRef.current) {
+          // Calculate the target scroll position (with offset to position the date header nicely)
+          const targetScrollTop = todayRef.current.offsetTop - 40;
+          
+          // Get current scroll position
+          const currentScrollTop = listRef.current.scrollTop;
+          
+          // Scroll with slow animation using custom easing
+          const duration = 800; // Longer duration for slower scroll
+          const startTime = performance.now();
+          
+          const animateScroll = (currentTime: number) => {
+            const elapsedTime = currentTime - startTime;
+            
+            if (elapsedTime < duration) {
+              // Easing function (ease-out) for smooth deceleration
+              const progress = 1 - Math.pow(1 - elapsedTime / duration, 2);
+              
+              // Calculate intermediate scroll position
+              const scrollValue = currentScrollTop + (targetScrollTop - currentScrollTop) * progress;
+              
+              // Update scroll position
+              listRef.current!.scrollTop = scrollValue;
+              
+              // Continue animation
+              requestAnimationFrame(animateScroll);
+            } else {
+              // Ensure we land exactly at the target
+              listRef.current!.scrollTop = targetScrollTop;
+              console.log('EventList: Smooth scroll completed');
+            }
+          };
+          
+          // Start the animation
+          requestAnimationFrame(animateScroll);
+          console.log('EventList: Starting gentle scroll animation');
+        }
+      }, 300); // Wait a bit longer before starting to ensure rendering is complete
     } else {
       console.log('EventList: Today ref or list ref not found', { 
         todayRef: !!todayRef.current, 
@@ -75,7 +96,7 @@ const EventList: React.FC<EventListProps> = ({
               <div 
                 key={dateStr} 
                 ref={isCurrentDay ? todayRef : null}
-                className={`mb-4 ${isCurrentDay ? 'scroll-mt-4' : ''}`}
+                className={`mb-4 ${isCurrentDay ? 'scroll-mt-8' : ''}`}
                 id={isCurrentDay ? "today-section" : undefined}
               >
                 <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
