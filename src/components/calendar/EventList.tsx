@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
@@ -21,14 +21,15 @@ const EventList: React.FC<EventListProps> = ({
 }) => {
   const listRef = useRef<HTMLDivElement>(null);
   const todayRef = useRef<HTMLDivElement>(null);
+  const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
   
   // Group events by date
   const eventsByDate = groupEventsByDate(events);
   
-  // Scroll to today's section when component loads
+  // Scroll to today's section ONLY on component first load
   useEffect(() => {
-    if (todayRef.current && listRef.current) {
-      console.log('EventList: Attempting to scroll to today');
+    if (todayRef.current && listRef.current && !hasScrolledToToday) {
+      console.log('EventList: Attempting to scroll to today (first load only)');
       
       // Wait for render to complete
       setTimeout(() => {
@@ -63,6 +64,7 @@ const EventList: React.FC<EventListProps> = ({
               // Ensure we land exactly at the target
               listRef.current!.scrollTop = targetScrollTop;
               console.log('EventList: Smooth scroll completed');
+              setHasScrolledToToday(true);
             }
           };
           
@@ -72,12 +74,13 @@ const EventList: React.FC<EventListProps> = ({
         }
       }, 300); // Wait a bit longer before starting to ensure rendering is complete
     } else {
-      console.log('EventList: Today ref or list ref not found', { 
+      console.log('EventList: Today ref or list ref not found or already scrolled', { 
         todayRef: !!todayRef.current, 
-        listRef: !!listRef.current 
+        listRef: !!listRef.current,
+        hasScrolledToToday
       });
     }
-  }, [eventsByDate]); // Re-run when events grouping changes
+  }, []); // Empty dependency array ensures this only runs once on mount
   
   return (
     <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
