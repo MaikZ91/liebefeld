@@ -133,8 +133,6 @@ export const groupEventsByDate = (events: Event[]): Record<string, Event[]> => {
   }, {} as Record<string, Event[]>);
 };
 
-import { format, isSameMonth } from 'date-fns';
-
 // Transform GitHub events to our format
 export const transformGitHubEvents = (
   githubEvents: GitHubEvent[], 
@@ -180,8 +178,6 @@ export const transformGitHubEvents = (
     }
     
     const eventId = `github-${index}`;
-    
-    // Get likes count
     const likesCount = eventLikes[eventId] || 0;
     
     // Create and return the event object
