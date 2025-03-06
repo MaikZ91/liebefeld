@@ -34,7 +34,8 @@ const EventList: React.FC<EventListProps> = ({
       setTimeout(() => {
         if (todayRef.current && listRef.current) {
           // Calculate the target scroll position (with offset to position the date header nicely)
-          const targetScrollTop = todayRef.current.offsetTop - 40;
+          // Increased offset to 80px to leave more space above the first event
+          const targetScrollTop = todayRef.current.offsetTop - 80;
           
           // Get current scroll position
           const currentScrollTop = listRef.current.scrollTop;
@@ -96,7 +97,7 @@ const EventList: React.FC<EventListProps> = ({
               <div 
                 key={dateStr} 
                 ref={isCurrentDay ? todayRef : null}
-                className={`mb-4 ${isCurrentDay ? 'scroll-mt-8' : ''}`}
+                className={`mb-4 ${isCurrentDay ? 'scroll-mt-12' : ''}`}
                 id={isCurrentDay ? "today-section" : undefined}
               >
                 <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
