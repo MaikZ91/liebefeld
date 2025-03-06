@@ -85,7 +85,7 @@ const EventChatBot: React.FC = () => {
         <Popover>
           <PopoverTrigger asChild>
             <Button 
-              className="fixed left-4 bottom-4 rounded-full w-14 h-14 shadow-lg bg-gradient-to-tr from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 flex items-center justify-center animate-pulse-soft ring-4 ring-red-300 dark:ring-red-900/40 z-50"
+              className="fixed left-4 bottom-16 rounded-full w-14 h-14 shadow-lg bg-gradient-to-tr from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 flex items-center justify-center animate-pulse-soft ring-4 ring-red-300 dark:ring-red-900/40 z-50"
               aria-label="Event Chat"
             >
               <MessageCircle className="h-7 w-7" />
