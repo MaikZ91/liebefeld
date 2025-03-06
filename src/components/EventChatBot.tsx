@@ -8,6 +8,7 @@ import { type Event } from './EventCalendar';
 import { useEventContext } from '@/contexts/EventContext';
 import { generateResponse, getWelcomeMessage } from '@/utils/chatUtils';
 import { format } from 'date-fns';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const EventChatBot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,7 +23,6 @@ const EventChatBot: React.FC = () => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [showHint, setShowHint] = useState(false);
   
   const { events } = useEventContext();
 
@@ -43,15 +43,6 @@ const EventChatBot: React.FC = () => {
       console.log("Sample events from context:", events.slice(0, 3));
     }
   }, [events]);
-
-  // Show chat hint after a delay to draw attention
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowHint(true);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -81,21 +72,26 @@ const EventChatBot: React.FC = () => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <div className="fixed right-4 bottom-4 flex flex-col items-end">
-          {showHint && !isOpen && (
-            <div className="mb-2 bg-red-500/90 text-white py-1 px-3 rounded-lg shadow-md animate-bounce-slow text-xs">
-              <span className="font-medium">Frag mich über Events 👋</span>
-            </div>
-          )}
-          <Button 
-            className="rounded-full w-14 h-14 shadow-lg bg-gradient-to-tr from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 flex items-center justify-center animate-pulse-soft ring-4 ring-red-300 dark:ring-red-900/40"
-            aria-label="Event Chat"
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DialogTrigger asChild>
+              <Button 
+                className="fixed right-4 bottom-4 rounded-full w-14 h-14 shadow-lg bg-gradient-to-tr from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 flex items-center justify-center animate-pulse-soft ring-4 ring-red-300 dark:ring-red-900/40"
+                aria-label="Event Chat"
+              >
+                <MessageCircle className="h-7 w-7" />
+              </Button>
+            </DialogTrigger>
+          </TooltipTrigger>
+          <TooltipContent 
+            side="top" 
+            className="bg-red-500/90 text-white border-0 shadow-md animate-bounce-slow text-xs"
           >
-            <MessageCircle className="h-7 w-7" />
-          </Button>
-        </div>
-      </DialogTrigger>
+            <span className="font-medium">Frag mich über Events 👋</span>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <DialogContent className="sm:max-w-[425px] h-[600px] flex flex-col p-0 gap-0 rounded-xl bg-[#1A1D2D] text-white border-gray-800 shadow-2xl animate-scale-in">
         <div className="flex items-center justify-between p-4 border-b border-gray-800 bg-gradient-to-r from-red-700 to-red-600 rounded-t-xl">
           <div className="flex items-center">
