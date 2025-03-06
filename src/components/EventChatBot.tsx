@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Send, Calendar, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -82,7 +83,7 @@ const EventChatBot: React.FC = () => {
         <div className="flex items-center justify-between p-4 border-b border-gray-800 bg-[#131722] rounded-t-xl">
           <div className="flex items-center">
             <Calendar className="mr-2 h-5 w-5 text-red-500" />
-            <h3 className="font-semibold">Liebefeld Event-Assistent</h3>
+            <h3 className="font-semibold">❤️ LiebefeldBot</h3>
           </div>
           <Button
             variant="ghost"
