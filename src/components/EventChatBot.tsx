@@ -116,8 +116,8 @@ const EventChatBot: React.FC = () => {
             </div>
           ))}
           {isTyping && (
-            <div className="flex justify-start">
-              <div className="bg-gray-800 rounded-lg px-4 py-2 max-w-[80%]">
+            <div className="flex justify-start mt-2">
+              <div className="bg-gray-800/80 rounded-lg px-3 py-1.5 max-w-[80%]">
                 <div className="flex space-x-1">
                   <div className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0ms' }}></div>
                   <div className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '150ms' }}></div>
