@@ -15,7 +15,7 @@ import EventList from './calendar/EventList';
 import EventPanel from './calendar/EventPanel';
 import FavoritesView from './calendar/FavoritesView';
 import EventForm from './EventForm';
-import { EventProvider, useEventContext } from '@/contexts/EventContext';
+import { useEventContext } from '@/contexts/EventContext';
 
 interface EventCalendarProps {
   defaultView?: "calendar" | "list";
@@ -32,7 +32,7 @@ const categoryIcons = {
   "Sonstiges": <Map className="h-4 w-4" />
 };
 
-const EventCalendarInner = ({ defaultView = "list" }: EventCalendarProps) => {
+const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   // Get shared state from context
   const { 
     events, 
@@ -236,13 +236,6 @@ const EventCalendarInner = ({ defaultView = "list" }: EventCalendarProps) => {
     </div>
   );
 };
-
-// This component wrapper ensures proper context nesting
-const EventCalendar = (props: EventCalendarProps) => (
-  <EventProvider>
-    <EventCalendarInner {...props} />
-  </EventProvider>
-);
 
 export default EventCalendar;
 export type { Event };

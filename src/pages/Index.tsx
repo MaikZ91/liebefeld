@@ -6,6 +6,7 @@ import LiveTicker from '@/components/LiveTicker';
 import EventChatBot from '@/components/EventChatBot';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { EventProvider } from '@/contexts/EventContext';
 
 const Index = () => {
   // Add smooth scroll-in animation effect on page load
@@ -116,7 +117,9 @@ const Index = () => {
 
         {/* Updated the background color to a soft gray for better text contrast */}
         <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-6 rounded-t-lg shadow-inner mt-0">
-          <EventCalendar defaultView="list" />
+          <EventProvider>
+            <EventCalendar defaultView="list" />
+          </EventProvider>
         </div>
         
         {/* Event Chat Bot - Pass events directly from state */}
