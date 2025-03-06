@@ -30,24 +30,27 @@ const CalendarDays: React.FC<CalendarDaysProps> = ({
       const container = containerRef.current;
       const todayElement = todayRef.current;
       
-      // Delayed scrolling for reliable positioning
+      // Scroll immediately for faster response
+      const containerRect = container.getBoundingClientRect();
+      const todayRect = todayElement.getBoundingClientRect();
+      
+      // Calculate the position to center today's date
+      const scrollLeft = todayElement.offsetLeft - containerRect.width / 2 + todayRect.width / 2;
+      
+      // Immediate scroll first for better user experience
+      container.scrollLeft = Math.max(0, scrollLeft);
+      
+      // Then smooth scroll for polish
       setTimeout(() => {
-        const containerRect = container.getBoundingClientRect();
-        const todayRect = todayElement.getBoundingClientRect();
-        
-        // Calculate the position to center today's date
-        const scrollLeft = todayElement.offsetLeft - containerRect.width / 2 + todayRect.width / 2;
-        
-        // Smooth scroll to the current day
         container.scrollTo({
           left: Math.max(0, scrollLeft),
           behavior: 'smooth'
         });
         
         console.log('Scrolled calendar to today');
-      }, 200);
+      }, 100);
     }
-  }, [daysInMonth]);
+  }, []);
   
   return (
     <>

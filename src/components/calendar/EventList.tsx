@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
@@ -24,6 +24,20 @@ const EventList: React.FC<EventListProps> = ({
   
   // Group events by date
   const eventsByDate = groupEventsByDate(events);
+  
+  // Scroll to today's section when component mounts
+  useEffect(() => {
+    if (todayRef.current && listRef.current) {
+      // Immediate scroll first for faster response
+      const todayElement = todayRef.current;
+      todayElement.scrollIntoView();
+      
+      // Then smooth scroll for better UX
+      setTimeout(() => {
+        todayElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, []);
   
   return (
     <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
