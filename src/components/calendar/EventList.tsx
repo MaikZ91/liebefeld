@@ -26,11 +26,17 @@ const EventList: React.FC<EventListProps> = ({
   const eventsByDate = groupEventsByDate(events);
   
   useEffect(() => {
-    // Scroll to today's section when component mounts
+    // Scroll to today's section when component mounts or when events/favorites change
     if (todayRef.current && listRef.current && !showFavorites) {
-      todayRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Use a small delay to ensure the component is fully rendered
+      const timer = setTimeout(() => {
+        todayRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
+        console.log('Scrolling to today');
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }
-  }, [showFavorites]);
+  }, [showFavorites, events.length]);
   
   return (
     <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
@@ -50,7 +56,7 @@ const EventList: React.FC<EventListProps> = ({
               <div 
                 key={dateStr} 
                 ref={isCurrentDay ? todayRef : null}
-                className="mb-4"
+                className={`mb-4 ${isCurrentDay ? 'scroll-mt-4' : ''}`}
               >
                 <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
                   {format(date, 'EEEE, d. MMMM', { locale: de })}
