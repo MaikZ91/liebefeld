@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays, startOfDay } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -43,7 +42,13 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   // State variables
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<Event[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date()); // Initialize with today's date
+  
+  // Initialize with today's date and make sure it's normalized to start of day
+  const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
+    const today = new Date();
+    return startOfDay(today);
+  });
+  
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState<string | null>(null);
@@ -58,14 +63,15 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     return savedLikes ? JSON.parse(savedLikes) : {};
   });
 
-  // Lade Events aus Supabase und externe Events beim Start
+  // Load events on component mount
   useEffect(() => {
+    console.log(`Initial render with selectedDate: ${selectedDate?.toISOString()}`);
     fetchSupabaseEvents();
     fetchExternalEvents(true);
     setIsInitialLoad(false);
   }, []);
 
-  // Funktion zum Laden der Events aus Supabase
+  // Function zum Laden der Events aus Supabase
   const fetchSupabaseEvents = async () => {
     setIsLoading(true);
     try {
@@ -404,16 +410,27 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   const filteredEvents = selectedDate 
     ? events.filter(event => {
         try {
+          if (!event.date) {
+            console.warn(`Event with id ${event.id} and title ${event.title} has no date`);
+            return false;
+          }
+          
+          // Ensure we're working with valid dates
+          const parsedEventDate = parseISO(event.date);
+          if (isNaN(parsedEventDate.getTime())) {
+            console.warn(`Event with id ${event.id} has invalid date: ${event.date}`);
+            return false;
+          }
+          
           // Normalize both dates to the start of day to avoid time-related comparison issues
-          const eventDate = startOfDay(parseISO(event.date));
+          const eventDate = startOfDay(parsedEventDate);
           const selectedDateStart = startOfDay(selectedDate);
           
-          // Debug logging to help diagnose the issue
+          // Check if the dates are the same day
           const sameDay = isSameDay(eventDate, selectedDateStart);
           
-          console.log(`Event date comparison:`, {
+          console.log(`Event date comparison for ${event.title}:`, {
             eventId: event.id,
-            eventTitle: event.title,
             eventDate: event.date,
             parsedEventDate: eventDate.toISOString(),
             selectedDate: selectedDateStart.toISOString(),
@@ -431,7 +448,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
 
   // Log filtered events for debugging
   console.log(`Found ${filteredEvents.length} events for selected date: ${selectedDate?.toISOString()}`);
-
+  
   // Get user's favorite events (events with likes)
   const favoriteEvents = events.filter(event => {
     // For GitHub events
@@ -445,19 +462,28 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   // Get all events for the current month and sort by likes
   const currentMonthEvents = events
     .filter(event => {
-      // If viewing favorites, only show favorites regardless of month
-      if (showFavorites) {
-        // For GitHub events
-        if (event.id.startsWith('github-')) {
-          return eventLikes[event.id] && eventLikes[event.id] > 0;
+      try {
+        // If viewing favorites, only show favorites regardless of month
+        if (showFavorites) {
+          // For GitHub events
+          if (event.id.startsWith('github-')) {
+            return eventLikes[event.id] && eventLikes[event.id] > 0;
+          }
+          // For regular events
+          return event.likes && event.likes > 0;
         }
-        // For regular events
-        return event.likes && event.likes > 0;
+        
+        // Check if the event date is valid
+        if (!event.date) return false;
+        const eventDate = parseISO(event.date);
+        if (isNaN(eventDate.getTime())) return false;
+        
+        // Otherwise filter by current month
+        return isSameMonth(eventDate, currentDate);
+      } catch (error) {
+        console.error(`Error in currentMonthEvents filter for event ${event.title}:`, error);
+        return false;
       }
-      
-      // Otherwise filter by current month
-      const eventDate = parseISO(event.date);
-      return isSameMonth(eventDate, currentDate);
     })
     .sort((a, b) => {
       // First sort by likes (descending)
@@ -469,18 +495,31 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       }
       
       // Then by date (ascending)
-      const dateA = parseISO(a.date);
-      const dateB = parseISO(b.date);
-      return dateA.getTime() - dateB.getTime();
+      try {
+        const dateA = parseISO(a.date);
+        const dateB = parseISO(b.date);
+        if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
+          // If either date is invalid, just compare strings
+          return a.date.localeCompare(b.date);
+        }
+        return dateA.getTime() - dateB.getTime();
+      } catch (error) {
+        console.error(`Error sorting events by date: ${error}`);
+        return 0;
+      }
     });
   
   // Group events by date for the list view
   const eventsByDate = currentMonthEvents.reduce((acc, event) => {
-    const dateStr = event.date;
-    if (!acc[dateStr]) {
-      acc[dateStr] = [];
+    try {
+      const dateStr = event.date;
+      if (!acc[dateStr]) {
+        acc[dateStr] = [];
+      }
+      acc[dateStr].push(event);
+    } catch (error) {
+      console.error(`Error grouping events by date: ${error}`);
     }
-    acc[dateStr].push(event);
     return acc;
   }, {} as Record<string, Event[]>);
   
@@ -520,7 +559,9 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   const hasEvents = (day: Date) => {
     return events.some(event => {
       try {
+        if (!event.date) return false;
         const eventDate = parseISO(event.date);
+        if (isNaN(eventDate.getTime())) return false;
         return isSameDay(eventDate, day);
       } catch (error) {
         console.error(`Error in hasEvents for day ${day.toISOString()}:`, error);
@@ -533,7 +574,9 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   const getEventCount = (day: Date) => {
     return events.filter(event => {
       try {
+        if (!event.date) return false;
         const eventDate = parseISO(event.date);
+        if (isNaN(eventDate.getTime())) return false;
         return isSameDay(eventDate, day);
       } catch (error) {
         console.error(`Error in getEventCount for day ${day.toISOString()}:`, error);
