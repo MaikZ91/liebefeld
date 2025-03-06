@@ -1,4 +1,3 @@
-
 import { Event, GitHubEvent } from '../types/eventTypes';
 import { parseAndNormalizeDate, debugDate } from './dateUtils';
 import { format, isSameDay, isSameMonth, startOfDay, isAfter, isBefore, differenceInDays } from 'date-fns';
@@ -143,7 +142,7 @@ export const getMonthOrFavoriteEvents = (
 
 // Group events by date for list view
 export const groupEventsByDate = (events: Event[]): Record<string, Event[]> => {
-  return events.reduce((acc, event) => {
+  const groupedEvents = events.reduce((acc, event) => {
     try {
       const dateStr = event.date;
       if (!acc[dateStr]) {
@@ -155,6 +154,17 @@ export const groupEventsByDate = (events: Event[]): Record<string, Event[]> => {
     }
     return acc;
   }, {} as Record<string, Event[]>);
+  
+  // Sort events within each date group by likes (higher likes first)
+  Object.keys(groupedEvents).forEach(dateStr => {
+    groupedEvents[dateStr].sort((a, b) => {
+      const likesA = a.likes || 0;
+      const likesB = b.likes || 0;
+      return likesB - likesA; // Sort by likes in descending order
+    });
+  });
+  
+  return groupedEvents;
 };
 
 // Transform GitHub events to our format

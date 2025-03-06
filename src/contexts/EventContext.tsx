@@ -29,7 +29,6 @@ interface EventContextProps {
 const EventContext = createContext<EventContextProps | undefined>(undefined);
 
 export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // State variables
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(() => startOfDay(new Date()));
@@ -38,34 +37,27 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [showFavorites, setShowFavorites] = useState(false);
   const [eventLikes, setEventLikes] = useState<Record<string, number>>({});
 
-  // Function to refresh events
   const refreshEvents = async () => {
     setIsLoading(true);
     try {
       console.log('Refreshing events...');
       
-      // Load events from Supabase
       const supabaseEvents = await fetchSupabaseEvents();
       console.log(`Loaded ${supabaseEvents.length} events from Supabase`);
       
-      // Load GitHub likes
       const githubLikes = await fetchGitHubLikes();
       
-      // Update local storage with GitHub likes
       setEventLikes(prev => {
         const updatedLikes = { ...prev, ...githubLikes };
         localStorage.setItem('eventLikes', JSON.stringify(updatedLikes));
         return updatedLikes;
       });
       
-      // Load external events
       const externalEvents = await fetchExternalEvents(eventLikes);
       console.log(`Loaded ${externalEvents.length} external events`);
       
-      // Combine events, ensuring no duplicates
       const combinedEvents = [...supabaseEvents];
       
-      // Add external events that don't exist in Supabase
       externalEvents.forEach(extEvent => {
         if (!combinedEvents.some(event => event.id === extEvent.id)) {
           combinedEvents.push(extEvent);
@@ -74,7 +66,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       console.log(`Combined ${combinedEvents.length} total events`);
       
-      // If no events were loaded, use example data
       if (combinedEvents.length === 0) {
         console.log('No events found, using example data');
         setEvents(bielefeldEvents);
@@ -83,25 +74,20 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }
     } catch (error) {
       console.error('Error loading events:', error);
-      // Use example data if everything fails
       setEvents(bielefeldEvents);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle like functionality
   const handleLikeEvent = async (eventId: string) => {
     try {
-      // Find the current event
       const currentEvent = events.find(event => event.id === eventId);
       if (!currentEvent) return;
       
-      // Calculate new likes value
       const currentLikes = currentEvent.likes || 0;
       const newLikesValue = currentLikes + 1;
       
-      // Update likes in our state
       setEventLikes(prev => {
         const updatedLikes = {
           ...prev,
@@ -111,23 +97,20 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return updatedLikes;
       });
       
-      // Update events array
-      setEvents(prevEvents => 
-        prevEvents.map(event => 
-          event.id === eventId 
-            ? { ...event, likes: newLikesValue } 
-            : event
-        )
+      const updatedEvents = events.map(event => 
+        event.id === eventId 
+          ? { ...event, likes: newLikesValue } 
+          : event
       );
       
-      // Update likes in Supabase
+      setEvents(updatedEvents);
+      
       await updateEventLikes(eventId, newLikesValue);
     } catch (error) {
       console.error('Error updating likes:', error);
     }
   };
 
-  // Load events on component mount
   useEffect(() => {
     console.log('EventProvider: Loading events...');
     refreshEvents();
