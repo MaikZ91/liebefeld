@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, parseISO, startOfDay } from 'date-fns';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Music, PartyPopper, Image, Dumbbell, Map, CalendarIcon, List, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,9 +16,6 @@ import FavoritesView from './calendar/FavoritesView';
 import EventForm from './EventForm';
 import { EventProvider, useEventContext } from '@/contexts/EventContext';
 
-// URL zur JSON-Datei mit Events
-const EXTERNAL_EVENTS_URL = "https://raw.githubusercontent.com/MaikZ91/productiontools/master/events.json";
-
 interface EventCalendarProps {
   defaultView?: "calendar" | "list";
 }
@@ -35,11 +31,10 @@ const categoryIcons = {
   "Sonstiges": <Map className="h-4 w-4" />
 };
 
-const EventCalendarContent = ({ defaultView = "calendar" }: EventCalendarProps) => {
+const EventCalendarInner = ({ defaultView = "calendar" }: EventCalendarProps) => {
   // Get shared state from context
   const { 
     events, 
-    setEvents, 
     selectedDate, 
     setSelectedDate, 
     selectedEvent, 
@@ -70,44 +65,10 @@ const EventCalendarContent = ({ defaultView = "calendar" }: EventCalendarProps) 
     ? getEventsForDay(events, selectedDate, filter)
     : [];
     
-  // Log filtered events for debugging
-  console.log(`Found ${filteredEvents.length} events for selected date: ${selectedDate?.toISOString()}`);
-  
   // Get user's favorite events (events with likes)
   const favoriteEvents = events.filter(event => 
     (event.likes && event.likes > 0)
   );
-  
-  // Get all events for the current month
-  const currentMonthEvents = events.filter(event => {
-    try {
-      // If viewing favorites, only show favorites regardless of month
-      if (showFavorites) {
-        return event.likes && event.likes > 0;
-      }
-      
-      // Check if the event date is valid
-      if (!event.date) return false;
-      const eventDate = parseISO(event.date);
-      return format(eventDate, 'MM yyyy') === format(currentDate, 'MM yyyy');
-    } catch (error) {
-      console.error(`Error filtering events for month:`, error);
-      return false;
-    }
-  }).sort((a, b) => {
-    // First by date (ascending)
-    try {
-      const dateA = parseISO(a.date);
-      const dateB = parseISO(b.date);
-      return dateA.getTime() - dateB.getTime();
-    } catch (error) {
-      console.error(`Error sorting events by date:`, error);
-      return 0;
-    }
-  });
-  
-  // Get all unique categories from events
-  const categories = Array.from(new Set(events.map(event => event.category)));
 
   // Handle selecting a date
   const handleDateClick = (day: Date) => {
@@ -171,7 +132,7 @@ const EventCalendarContent = ({ defaultView = "calendar" }: EventCalendarProps) 
           favoriteEvents={favoriteEvents.length}
           filter={filter}
           toggleFilter={toggleFilter}
-          categories={categories}
+          categories={Array.from(new Set(events.map(event => event.category)))}
           categoryIcons={categoryIcons}
         />
         
@@ -269,10 +230,10 @@ const EventCalendarContent = ({ defaultView = "calendar" }: EventCalendarProps) 
   );
 };
 
-// Wrapper component that provides the EventContext
+// Ensure the EventProvider wraps the component that uses the context
 const EventCalendar = (props: EventCalendarProps) => (
   <EventProvider>
-    <EventCalendarContent {...props} />
+    <EventCalendarInner {...props} />
   </EventProvider>
 );
 

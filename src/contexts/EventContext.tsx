@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { startOfDay } from 'date-fns';
 import { Event } from '../types/eventTypes';
@@ -37,10 +36,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [filter, setFilter] = useState<string | null>(null);
   const [showFavorites, setShowFavorites] = useState(false);
-  const [eventLikes, setEventLikes] = useState<Record<string, number>>(() => {
-    const savedLikes = localStorage.getItem('eventLikes');
-    return savedLikes ? JSON.parse(savedLikes) : {};
-  });
+  const [eventLikes, setEventLikes] = useState<Record<string, number>>({});
 
   // Function to refresh events
   const refreshEvents = async () => {
@@ -94,11 +90,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
-  // Load events on component mount
-  useEffect(() => {
-    refreshEvents();
-  }, []);
-
   // Handle like functionality
   const handleLikeEvent = async (eventId: string) => {
     try {
@@ -136,6 +127,12 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
+  // Load events on component mount
+  useEffect(() => {
+    console.log('EventProvider: Loading events...');
+    refreshEvents();
+  }, []);
+
   const value = {
     events,
     setEvents,
@@ -156,7 +153,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   return <EventContext.Provider value={value}>{children}</EventContext.Provider>;
 };
 
-export const useEventContext = (): EventContextProps => {
+export const useEventContext = () => {
   const context = useContext(EventContext);
   if (context === undefined) {
     throw new Error('useEventContext must be used within an EventProvider');
