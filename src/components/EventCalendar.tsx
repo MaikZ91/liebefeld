@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Event } from '@/types/eventTypes';
-import { getEventsForDay } from '@/utils/eventUtils';
+import { getEventsForDay, getMonthOrFavoriteEvents } from '@/utils/eventUtils';
 import { normalizeDate } from '@/utils/dateUtils';
 import CalendarHeader from './calendar/CalendarHeader';
 import CalendarDays from './calendar/CalendarDays';
@@ -43,7 +44,8 @@ const EventCalendarInner = ({ defaultView = "calendar" }: EventCalendarProps) =>
     setFilter,
     handleLikeEvent,
     showFavorites,
-    setShowFavorites
+    setShowFavorites,
+    eventLikes
   } = useEventContext();
 
   // Local state
@@ -59,6 +61,9 @@ const EventCalendarInner = ({ defaultView = "calendar" }: EventCalendarProps) =>
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  
+  // Get events for the current month or favorites
+  const monthEvents = getMonthOrFavoriteEvents(events, currentDate, showFavorites, eventLikes);
   
   // Filter events for the selected date and category filter
   const filteredEvents = selectedDate 
@@ -95,7 +100,10 @@ const EventCalendarInner = ({ defaultView = "calendar" }: EventCalendarProps) =>
         likes: 0
       };
       
-      setEvents(prevEvents => [...prevEvents, eventWithId]);
+      // We don't have direct access to setEvents from context here
+      // Instead, we'll refresh events via the context
+      const { refreshEvents } = useEventContext();
+      refreshEvents();
       
       // Hide form after successful submission
       setShowEventForm(false);
@@ -179,7 +187,7 @@ const EventCalendarInner = ({ defaultView = "calendar" }: EventCalendarProps) =>
             {/* Main calendar and list views */}
             <TabsContent value="list" className="w-full">
               <EventList 
-                events={currentMonthEvents}
+                events={monthEvents}
                 showFavorites={showFavorites}
                 onSelectEvent={(event, date) => {
                   setSelectedDate(date);
