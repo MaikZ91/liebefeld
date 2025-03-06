@@ -25,19 +25,37 @@ const EventList: React.FC<EventListProps> = ({
   // Group events by date
   const eventsByDate = groupEventsByDate(events);
   
-  // Scroll to today's section when component mounts
+  // Scroll to today's section when component loads
   useEffect(() => {
     if (todayRef.current && listRef.current) {
-      // Immediate scroll first for faster response
-      const todayElement = todayRef.current;
-      todayElement.scrollIntoView();
+      console.log('EventList: Attempting to scroll to today');
       
-      // Then smooth scroll for better UX
-      setTimeout(() => {
-        todayElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
+      // Force layout calculation
+      listRef.current.getBoundingClientRect();
+      
+      // First immediate scroll to today's section
+      if (todayRef.current) {
+        // Use direct DOM method for immediate positioning
+        listRef.current.scrollTop = todayRef.current.offsetTop - 20;
+        
+        console.log('EventList: Initial scroll to position', todayRef.current.offsetTop);
+        
+        // Then smooth scroll for better UX after a small delay
+        setTimeout(() => {
+          todayRef.current?.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start'
+          });
+          console.log('EventList: Smooth scroll applied');
+        }, 150);
+      }
+    } else {
+      console.log('EventList: Today ref or list ref not found', { 
+        todayRef: !!todayRef.current, 
+        listRef: !!listRef.current 
+      });
     }
-  }, []);
+  }, [eventsByDate]); // Re-run when events grouping changes
   
   return (
     <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
@@ -58,6 +76,7 @@ const EventList: React.FC<EventListProps> = ({
                 key={dateStr} 
                 ref={isCurrentDay ? todayRef : null}
                 className={`mb-4 ${isCurrentDay ? 'scroll-mt-4' : ''}`}
+                id={isCurrentDay ? "today-section" : undefined}
               >
                 <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
                   {format(date, 'EEEE, d. MMMM', { locale: de })}

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -32,7 +31,7 @@ const categoryIcons = {
   "Sonstiges": <Map className="h-4 w-4" />
 };
 
-const EventCalendarInner = ({ defaultView = "calendar" }: EventCalendarProps) => {
+const EventCalendarInner = ({ defaultView = "list" }: EventCalendarProps) => {
   // Get shared state from context
   const { 
     events, 
