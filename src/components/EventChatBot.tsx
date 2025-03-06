@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { format, parseISO, isWithinInterval, startOfWeek, endOfWeek, addDays, isToday, isTomorrow, isThisWeek, isWeekend } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -9,7 +8,6 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { type Event } from './EventCalendar';
 import { useEventContext } from '@/contexts/EventContext';
 
-// Remove the interface that accepted events as props
 const EventChatBot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -24,7 +22,6 @@ const EventChatBot: React.FC = () => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // Get events from EventContext instead of props
   const { events } = useEventContext();
 
   interface Message {
@@ -34,16 +31,13 @@ const EventChatBot: React.FC = () => {
     timestamp: Date;
   }
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Debug log to verify events are being received from context
   useEffect(() => {
     console.log(`EventChatBot received ${events.length} events from context`);
     if (events.length > 0) {
-      // Log a few events as a sample to verify data structure
       console.log("Sample events from context:", events.slice(0, 3));
     }
   }, [events]);
@@ -51,7 +45,6 @@ const EventChatBot: React.FC = () => {
   const handleSend = () => {
     if (!input.trim()) return;
 
-    // Add user message
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       text: input,
@@ -63,7 +56,6 @@ const EventChatBot: React.FC = () => {
     setInput('');
     setIsTyping(true);
 
-    // Process the query and respond
     setTimeout(() => {
       const botResponse = generateResponse(input, events);
       setMessages(prev => [...prev, {
@@ -73,7 +65,7 @@ const EventChatBot: React.FC = () => {
         timestamp: new Date()
       }]);
       setIsTyping(false);
-    }, 700); // Simulate thinking time
+    }, 700);
   };
 
   return (
@@ -160,38 +152,36 @@ const EventChatBot: React.FC = () => {
   );
 };
 
-// Function to generate responses based on user queries
 const generateResponse = (query: string, events: Event[]): string => {
   const normalizedQuery = query.toLowerCase();
   const today = new Date();
   
-  // Debug log to verify event count in generateResponse
   console.log(`Generating response with ${events.length} events for query: "${query}"`);
   
-  // Helper function to format events
   const formatEvents = (filteredEvents: Event[]): string => {
     if (filteredEvents.length === 0) {
       return "Leider sind keine Veranstaltungen für diesen Zeitraum geplant.";
     }
 
-    return filteredEvents
-      .slice(0, 5) // Limit to 5 events to avoid too long responses
-      .map((event, index) => {
-        const date = parseISO(event.date);
-        const formattedDate = format(date, 'dd.MM. (EEEE)', { locale: de });
-        
-        // Create a more readable format with emojis and better spacing
-        return `📅 **${event.title}**\n   📍 ${event.location || 'k.A.'}\n   🕒 ${formattedDate}, ${event.time} Uhr\n   ${event.category ? `🏷️ ${event.category}` : ''}\n`;
+    const sortedEvents = [...filteredEvents].sort((a, b) => a.title.localeCompare(b.title));
+
+    return sortedEvents
+      .map(event => {
+        return `• [${event.title}](${event.link || '#'})`;
       })
-      .join("\n") + (filteredEvents.length > 5 ? `\n\n...und ${filteredEvents.length - 5} weitere Events.` : "");
+      .join("\n");
   };
 
-  // Response header function to create consistent styling
+  if (normalizedQuery.includes('alle') || normalizedQuery.includes('verfügbar') || 
+      normalizedQuery.includes('liste') || normalizedQuery.includes('zeig mir alle') ||
+      normalizedQuery === 'was geht?' || normalizedQuery === 'was geht') {
+    return `**Alle verfügbaren Events:**\n\n${formatEvents(events)}`;
+  }
+
   const createResponseHeader = (title: string) => {
     return `🔍 **${title}**\n\n`;
   };
 
-  // Check for today's events
   if (normalizedQuery.includes('heute') || normalizedQuery.includes('today')) {
     const todayEvents = events.filter(event => {
       try {
@@ -205,7 +195,6 @@ const generateResponse = (query: string, events: Event[]): string => {
     return `${createResponseHeader(`Events heute (${format(today, 'dd.MM.', { locale: de })}):`)}${formatEvents(todayEvents)}`;
   }
   
-  // Check for tomorrow's events
   if (normalizedQuery.includes('morgen') || normalizedQuery.includes('tomorrow')) {
     const tomorrowEvents = events.filter(event => {
       try {
@@ -219,20 +208,16 @@ const generateResponse = (query: string, events: Event[]): string => {
     return `${createResponseHeader(`Events morgen (${format(addDays(today, 1), 'dd.MM.', { locale: de })}):`)}${formatEvents(tomorrowEvents)}`;
   }
   
-  // Check for weekend events
   if (normalizedQuery.includes('wochenende') || normalizedQuery.includes('weekend')) {
-    // Check if asking about this weekend or next weekend
     const isNextWeekendQuery = normalizedQuery.includes('nächstes') || normalizedQuery.includes('nächste') || normalizedQuery.includes('kommende');
     
-    // Get current week's weekend dates
-    const thisWeekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday
-    const thisWeekendStart = addDays(thisWeekStart, 5); // Saturday
-    const thisWeekendEnd = addDays(thisWeekStart, 6); // Sunday
+    const thisWeekStart = startOfWeek(today, { weekStartsOn: 1 });
+    const thisWeekendStart = addDays(thisWeekStart, 5);
+    const thisWeekendEnd = addDays(thisWeekStart, 6);
     
-    // Get next week's weekend dates
     const nextWeekStart = addDays(thisWeekStart, 7);
-    const nextWeekendStart = addDays(nextWeekStart, 5); // Next Saturday
-    const nextWeekendEnd = addDays(nextWeekStart, 6); // Next Sunday
+    const nextWeekendStart = addDays(nextWeekStart, 5);
+    const nextWeekendEnd = addDays(nextWeekStart, 6);
     
     const weekendStart = isNextWeekendQuery ? nextWeekendStart : thisWeekendStart;
     const weekendEnd = isNextWeekendQuery ? nextWeekendEnd : thisWeekendEnd;
@@ -242,7 +227,7 @@ const generateResponse = (query: string, events: Event[]): string => {
         const eventDate = parseISO(event.date);
         return isWithinInterval(eventDate, { 
           start: weekendStart, 
-          end: addDays(weekendEnd, 1) // Add 1 day to include the entire Sunday
+          end: addDays(weekendEnd, 1)
         });
       } catch (error) {
         console.error(`Error parsing date for event: ${event.title}`, error);
@@ -254,7 +239,6 @@ const generateResponse = (query: string, events: Event[]): string => {
     return `${createResponseHeader(`Events am ${weekendLabel} Wochenende (${format(weekendStart, 'dd.MM.', { locale: de })} - ${format(weekendEnd, 'dd.MM.', { locale: de })}):`)}${formatEvents(weekendEvents)}`;
   }
   
-  // Check for this week events
   if (normalizedQuery.includes('diese woche') || normalizedQuery.includes('this week')) {
     const thisWeekEvents = events.filter(event => {
       try {
@@ -268,7 +252,6 @@ const generateResponse = (query: string, events: Event[]): string => {
     return `${createResponseHeader("Events diese Woche:")}${formatEvents(thisWeekEvents)}`;
   }
   
-  // Check for next week events
   if (normalizedQuery.includes('nächste woche') || normalizedQuery.includes('next week')) {
     const nextWeekStart = addDays(startOfWeek(today, { weekStartsOn: 1 }), 7);
     const nextWeekEnd = addDays(nextWeekStart, 6);
@@ -285,7 +268,6 @@ const generateResponse = (query: string, events: Event[]): string => {
     return `${createResponseHeader("Events nächste Woche:")}${formatEvents(nextWeekEvents)}`;
   }
   
-  // Check for events by category
   const categories = ['konzert', 'party', 'ausstellung', 'sport', 'workshop', 'kultur'];
   for (const category of categories) {
     if (normalizedQuery.includes(category)) {
@@ -297,7 +279,6 @@ const generateResponse = (query: string, events: Event[]): string => {
     }
   }
 
-  // Search for events by title keywords
   const searchTerms = normalizedQuery.split(' ').filter(term => term.length > 3);
   if (searchTerms.length > 0) {
     const matchingEvents = events.filter(event => {
@@ -310,7 +291,6 @@ const generateResponse = (query: string, events: Event[]): string => {
     }
   }
   
-  // Default response for unrecognized queries
   return "❓ **Ich verstehe deine Frage leider nicht ganz.**\n\nDu kannst mich zum Beispiel fragen:\n- \"Was geht heute?\"\n- \"Was ist am Wochenende los?\"\n- \"Welche Events gibt es nächste Woche?\"\n- \"Gibt es Konzerte diese Woche?\"";
 };
 
