@@ -62,6 +62,7 @@ export const fetchSupabaseEvents = async (): Promise<Event[]> => {
 // Fetch GitHub event likes from Supabase
 export const fetchGitHubLikes = async (): Promise<Record<string, number>> => {
   try {
+    console.log('Fetching GitHub event likes from database');
     const { data: githubLikesData, error: githubLikesError } = await supabase
       .from('github_event_likes')
       .select('*');
@@ -74,6 +75,7 @@ export const fetchGitHubLikes = async (): Promise<Record<string, number>> => {
     // Create a map of GitHub event likes
     const githubLikesMap: Record<string, number> = {};
     if (githubLikesData) {
+      console.log(`Loaded ${githubLikesData.length} GitHub event likes from database`);
       githubLikesData.forEach(like => {
         githubLikesMap[like.event_id] = like.likes;
       });
@@ -111,8 +113,12 @@ export const fetchExternalEvents = async (eventLikes: Record<string, number>): P
 // Update event likes in Supabase
 export const updateEventLikes = async (eventId: string, newLikesValue: number): Promise<void> => {
   try {
+    console.log(`Updating likes for event ${eventId} to ${newLikesValue}`);
+    
     // For GitHub events
     if (eventId.startsWith('github-')) {
+      console.log(`Updating GitHub event like: ${eventId}`);
+      
       // Check if the record already exists
       const { data: existingLike, error: checkError } = await supabase
         .from('github_event_likes')
@@ -120,11 +126,16 @@ export const updateEventLikes = async (eventId: string, newLikesValue: number): 
         .eq('event_id', eventId)
         .single();
       
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means no rows returned
-        console.error('Error checking if GitHub like exists:', checkError);
+      if (checkError) {
+        if (checkError.code === 'PGRST116') { // PGRST116 means no rows returned
+          console.log(`No existing like found for GitHub event ${eventId}, creating new record`);
+        } else {
+          console.error('Error checking if GitHub like exists:', checkError);
+        }
       }
       
       if (existingLike) {
+        console.log(`Existing like found for GitHub event ${eventId}, updating to ${newLikesValue}`);
         // Update existing record
         const { error: updateError } = await supabase
           .from('github_event_likes')
@@ -133,8 +144,11 @@ export const updateEventLikes = async (eventId: string, newLikesValue: number): 
           
         if (updateError) {
           console.error('Error updating GitHub event likes:', updateError);
+        } else {
+          console.log(`Successfully updated likes for GitHub event ${eventId}`);
         }
       } else {
+        console.log(`Creating new like record for GitHub event ${eventId} with ${newLikesValue} likes`);
         // Insert new record
         const { error: insertError } = await supabase
           .from('github_event_likes')
@@ -142,11 +156,14 @@ export const updateEventLikes = async (eventId: string, newLikesValue: number): 
           
         if (insertError) {
           console.error('Error inserting GitHub event likes:', insertError);
+        } else {
+          console.log(`Successfully created new like record for GitHub event ${eventId}`);
         }
       }
     } 
     // For regular Supabase events
     else {
+      console.log(`Updating regular event like: ${eventId}`);
       const { error } = await supabase
         .from('community_events')
         .update({ likes: newLikesValue })
@@ -154,6 +171,8 @@ export const updateEventLikes = async (eventId: string, newLikesValue: number): 
         
       if (error) {
         console.error('Error updating likes in Supabase:', error);
+      } else {
+        console.log(`Successfully updated likes for regular event ${eventId}`);
       }
     }
   } catch (error) {

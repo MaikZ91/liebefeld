@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { startOfDay } from 'date-fns';
 import { Event } from '../types/eventTypes';
@@ -82,12 +83,17 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const handleLikeEvent = async (eventId: string) => {
     try {
+      console.log(`Liking event with ID: ${eventId}`);
       const currentEvent = events.find(event => event.id === eventId);
-      if (!currentEvent) return;
+      if (!currentEvent) {
+        console.error(`Event with ID ${eventId} not found`);
+        return;
+      }
       
       const currentLikes = currentEvent.likes || 0;
       const newLikesValue = currentLikes + 1;
       
+      // Update the local state
       setEventLikes(prev => {
         const updatedLikes = {
           ...prev,
@@ -97,6 +103,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return updatedLikes;
       });
       
+      // Update events array with new likes value
       const updatedEvents = events.map(event => 
         event.id === eventId 
           ? { ...event, likes: newLikesValue } 
@@ -105,7 +112,14 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       setEvents(updatedEvents);
       
-      await updateEventLikes(eventId, newLikesValue);
+      // Make sure to update database with new likes value
+      try {
+        console.log(`Updating event likes in database: ${eventId} -> ${newLikesValue}`);
+        await updateEventLikes(eventId, newLikesValue);
+        console.log(`Successfully updated likes in database for event ${eventId}`);
+      } catch (updateError) {
+        console.error(`Error updating likes in database for event ${eventId}:`, updateError);
+      }
     } catch (error) {
       console.error('Error updating likes:', error);
     }
