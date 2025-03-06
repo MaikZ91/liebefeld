@@ -174,6 +174,7 @@ export const transformGitHubEvents = (
   currentYear: number
 ): Event[] => {
   console.log(`Transforming ${githubEvents.length} GitHub events, current year: ${currentYear}`);
+  console.log('Using likes data:', eventLikes);
   
   return githubEvents.map((githubEvent, index) => {
     // Extract location from event title (if available)
@@ -237,7 +238,10 @@ export const transformGitHubEvents = (
     }
     
     const eventId = `github-${index}`;
+    
+    // Get likes from the provided eventLikes map, defaulting to 0 if not found
     const likesCount = eventLikes[eventId] || 0;
+    console.log(`Event ${eventId} (${title}) has ${likesCount} likes from database`);
     
     const formattedDate = format(eventDate, 'yyyy-MM-dd');
     console.log(`Event ${title} formatted date: ${formattedDate}`);

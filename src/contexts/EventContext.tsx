@@ -43,25 +43,35 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     try {
       console.log('Refreshing events...');
       
-      const supabaseEvents = await fetchSupabaseEvents();
-      console.log(`Loaded ${supabaseEvents.length} events from Supabase`);
-      
+      // First, fetch likes to ensure we have the most up-to-date data
       const githubLikes = await fetchGitHubLikes();
+      console.log('Fetched GitHub likes:', githubLikes);
       
       setEventLikes(prev => {
         const updatedLikes = { ...prev, ...githubLikes };
+        console.log('Updated event likes state:', updatedLikes);
         localStorage.setItem('eventLikes', JSON.stringify(updatedLikes));
         return updatedLikes;
       });
       
-      const externalEvents = await fetchExternalEvents(eventLikes);
+      // Now fetch events 
+      const supabaseEvents = await fetchSupabaseEvents();
+      console.log(`Loaded ${supabaseEvents.length} events from Supabase`);
+      
+      // Fetch external events with the latest likes data
+      const externalEvents = await fetchExternalEvents(githubLikes);
       console.log(`Loaded ${externalEvents.length} external events`);
       
       const combinedEvents = [...supabaseEvents];
       
       externalEvents.forEach(extEvent => {
+        // Make sure we're not adding duplicates
         if (!combinedEvents.some(event => event.id === extEvent.id)) {
-          combinedEvents.push(extEvent);
+          // Ensure the likes from the database are applied
+          combinedEvents.push({
+            ...extEvent,
+            likes: githubLikes[extEvent.id] || 0
+          });
         }
       });
       
@@ -71,6 +81,10 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         console.log('No events found, using example data');
         setEvents(bielefeldEvents);
       } else {
+        // Debugging: log likes for GitHub events
+        const githubEventsInCombined = combinedEvents.filter(e => e.id.startsWith('github-'));
+        console.log(`GitHub events with likes: ${githubEventsInCombined.map(e => `${e.id}: ${e.likes}`).join(', ')}`);
+        
         setEvents(combinedEvents);
       }
     } catch (error) {
@@ -92,6 +106,8 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       const currentLikes = currentEvent.likes || 0;
       const newLikesValue = currentLikes + 1;
+      
+      console.log(`Updating likes for ${eventId} from ${currentLikes} to ${newLikesValue}`);
       
       // Update the local state
       setEventLikes(prev => {
@@ -117,6 +133,9 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         console.log(`Updating event likes in database: ${eventId} -> ${newLikesValue}`);
         await updateEventLikes(eventId, newLikesValue);
         console.log(`Successfully updated likes in database for event ${eventId}`);
+        
+        // Refresh events to make sure we have the latest data
+        await refreshEvents();
       } catch (updateError) {
         console.error(`Error updating likes in database for event ${eventId}:`, updateError);
       }

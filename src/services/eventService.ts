@@ -78,7 +78,10 @@ export const fetchGitHubLikes = async (): Promise<Record<string, number>> => {
       console.log(`Loaded ${githubLikesData.length} GitHub event likes from database`);
       githubLikesData.forEach(like => {
         githubLikesMap[like.event_id] = like.likes;
+        console.log(`Found like for ${like.event_id}: ${like.likes} likes`);
       });
+    } else {
+      console.log('No GitHub likes data found in database');
     }
     
     return githubLikesMap;
@@ -102,8 +105,12 @@ export const fetchExternalEvents = async (eventLikes: Record<string, number>): P
     const githubEvents: GitHubEvent[] = await response.json();
     console.log(`Successfully loaded ${githubEvents.length} events from ${EXTERNAL_EVENTS_URL}`);
     
-    // Transform GitHub events to our format
-    return transformGitHubEvents(githubEvents, eventLikes, new Date().getFullYear());
+    // Transform GitHub events to our format and pass eventLikes to ensure likes are applied
+    const transformedEvents = transformGitHubEvents(githubEvents, eventLikes, new Date().getFullYear());
+    console.log(`Transformed ${transformedEvents.length} GitHub events with likes:`, 
+      transformedEvents.map(e => `${e.id}: ${e.likes || 0} likes`).join(', '));
+    
+    return transformedEvents;
   } catch (error) {
     console.error(`Fehler beim Laden von ${EXTERNAL_EVENTS_URL}:`, error);
     return [];
