@@ -57,18 +57,19 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     return savedLikes ? JSON.parse(savedLikes) : {};
   });
   
-  // Lade Events aus Supabase und externe Events beim Start
+  // Load events from Supabase and external events on component mount
   useEffect(() => {
     fetchSupabaseEvents();
     fetchExternalEvents(true);
     setIsInitialLoad(false);
     
-    // Check if today should be pre-selected
+    // Pre-select today's date on component load
     const today = new Date();
+    console.log('Setting initial selected date to today:', today);
     setSelectedDate(today);
   }, []);
 
-  // Funktion zum Laden der Events aus Supabase
+  // Function to load events from Supabase
   const fetchSupabaseEvents = async () => {
     setIsLoading(true);
     try {
@@ -136,7 +137,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     }
   };
 
-  // Funktion zum Laden externer Events
+  // Function to load external events
   const fetchExternalEvents = async (isInitialLoad = false) => {
     setIsLoading(true);
     
@@ -171,10 +172,10 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     setIsLoading(false);
   };
   
-  // Verarbeite die GitHub-Events
+  // Process GitHub events
   const processGitHubEvents = async (githubEvents: GitHubEvent[], isInitialLoad = false) => {
     try {
-      // Aktuelles Jahr für die Datumskonvertierung
+      // Current year for date conversion
       const currentYear = new Date().getFullYear();
       
       // Fetch GitHub event likes from database
@@ -194,22 +195,22 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         });
       }
       
-      // Transformiere GitHub-Events in das interne Format
+      // Transform GitHub events to internal format
       const transformedEvents = githubEvents.map((githubEvent, index) => {
-        // Extrahiere Veranstaltungsort aus dem Event-Titel (falls vorhanden)
+        // Extract location from the event title (if available)
         let title = githubEvent.event;
         let location = "Bielefeld";
         let category = determineEventCategory(githubEvent.event.toLowerCase());
         
-        // Überprüfe, ob es eine Standortangabe in Klammern gibt
+        // Check if there's a location in parentheses
         const locationMatch = githubEvent.event.match(/\(@([^)]+)\)/);
         if (locationMatch) {
-          // Entferne die Standortangabe aus dem Titel
+          // Remove the location from the title
           title = githubEvent.event.replace(/\s*\(@[^)]+\)/, '');
           location = locationMatch[1];
         }
         
-        // Parse das Datum (Format: "Fri, 04.04")
+        // Parse the date (Format: "Fri, 04.04")
         let eventDate;
         try {
           // Extract the day of week and date part
@@ -228,8 +229,11 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           if (eventDate < new Date() && month < 6) { // Only for first half of the year
             eventDate.setFullYear(currentYear + 1);
           }
+          
+          // Log for debugging
+          console.log(`Parsed GitHub event date: ${githubEvent.date} -> ${format(eventDate, 'yyyy-MM-dd')}`);
         } catch (err) {
-          console.warn(`Konnte Datum nicht parsen: ${githubEvent.date}`, err);
+          console.warn(`Could not parse date: ${githubEvent.date}`, err);
           // Fallback to today's date
           eventDate = new Date();
         }
@@ -239,13 +243,13 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         // Get likes from database or fallback to stored values
         const likesCount = githubLikesMap[eventId] !== undefined ? githubLikesMap[eventId] : (eventLikes[eventId] || 0);
         
-        // Erstelle das Event-Objekt und FIXED: Format the date correctly
+        // Create event object and FIXED: Format the date correctly
         return {
           id: eventId,
           title: title,
           description: `Mehr Informationen unter: ${githubEvent.link}`,
           date: format(eventDate, 'yyyy-MM-dd'), // Properly format as YYYY-MM-DD
-          time: "19:00", // Default-Zeit für Events ohne Zeitangabe
+          time: "19:00", // Default time for events without time specification
           location: location,
           organizer: "Liebefeld Community Bielefeld",
           category: category,
@@ -254,7 +258,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         } as Event;
       });
       
-      console.log(`Transformed ${transformedEvents.length} events successfully`);
+      console.log(`Transformed ${transformedEvents.length} GitHub events successfully`);
       
       // Update local map with database values
       const newLikesMap: Record<string, number> = {...eventLikes};
@@ -271,23 +275,21 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       setEvents(prevEvents => {
         // Filter out GitHub events and keep user-created events
         const userEvents = prevEvents.filter(event => !event.id.startsWith('github-'));
-        return [...userEvents, ...transformedEvents];
+        const combined = [...userEvents, ...transformedEvents];
+        console.log(`Total combined events: ${combined.length} (${userEvents.length} user events + ${transformedEvents.length} GitHub events)`);
+        return combined;
       });
-      
-      // Removed toast notification
     } catch (error) {
-      console.error("Fehler bei der Verarbeitung der GitHub-Events:", error);
+      console.error("Error processing GitHub events:", error);
       setEvents(prevEvents => {
         // Keep only events that are not from the example data
         const userEvents = prevEvents.filter(event => !bielefeldEvents.some(bEvent => bEvent.id === event.id));
         return [...userEvents, ...bielefeldEvents];
       });
-      
-      // Removed toast notification
     }
   };
 
-  // Bestimme Kategorie basierend auf Schlüsselwörtern im Titel
+  // Determine category based on keywords in title
   const determineEventCategory = (title: string): string => {
     if (title.includes("konzert") || title.includes("festival") || title.includes("musik") || 
         title.includes("band") || title.includes("jazz") || title.includes("chor")) {
@@ -404,22 +406,31 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
   
   // Debug log to check current date and selected date
-  console.log('Current date:', currentDate);
-  console.log('Selected date:', selectedDate);
-  console.log('Today date:', new Date());
+  console.log('Current date:', format(currentDate, 'yyyy-MM-dd'));
+  console.log('Selected date:', selectedDate ? format(selectedDate, 'yyyy-MM-dd') : 'null');
+  console.log('Today date:', format(new Date(), 'yyyy-MM-dd'));
   
-  // Filter events for the selected date and category filter
+  // FIXED: Improved filtering function for events on selected date
   const filteredEvents = selectedDate 
     ? events.filter(event => {
-        // Debug: check if we have events for today
-        if (isToday(selectedDate)) {
-          console.log('Checking today\'s events:', event.date, parseISO(event.date));
+        try {
+          // Debug: log event dates for today's events
+          if (isToday(selectedDate)) {
+            console.log(`Checking today's events: ${event.date}`, parseISO(event.date));
+          }
+          
+          // Parse the event date string to a Date object
+          const eventDate = parseISO(event.date);
+          
+          // Use isSameDay to compare the dates correctly
+          const sameDay = isSameDay(eventDate, selectedDate);
+          
+          // Apply category filter if active
+          return filter ? (sameDay && event.category === filter) : sameDay;
+        } catch (error) {
+          console.error(`Error comparing dates for event ${event.id}:`, error);
+          return false;
         }
-        
-        const eventDate = parseISO(event.date);
-        const sameDay = isSameDay(eventDate, selectedDate);
-        
-        return filter ? (sameDay && event.category === filter) : sameDay;
       })
     : [];
   
@@ -439,19 +450,24 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   // Get all events for the current month and sort by likes
   const currentMonthEvents = events
     .filter(event => {
-      // If viewing favorites, only show favorites regardless of month
-      if (showFavorites) {
-        // For GitHub events
-        if (event.id.startsWith('github-')) {
-          return eventLikes[event.id] && eventLikes[event.id] > 0;
+      try {
+        // If viewing favorites, only show favorites regardless of month
+        if (showFavorites) {
+          // For GitHub events
+          if (event.id.startsWith('github-')) {
+            return eventLikes[event.id] && eventLikes[event.id] > 0;
+          }
+          // For regular events
+          return event.likes && event.likes > 0;
         }
-        // For regular events
-        return event.likes && event.likes > 0;
+        
+        // Otherwise filter by current month
+        const eventDate = parseISO(event.date);
+        return isSameMonth(eventDate, currentDate);
+      } catch (error) {
+        console.error(`Error filtering month events for event ${event.id}:`, error);
+        return false;
       }
-      
-      // Otherwise filter by current month
-      const eventDate = parseISO(event.date);
-      return isSameMonth(eventDate, currentDate);
     })
     .sort((a, b) => {
       // First sort by likes (descending)
@@ -463,9 +479,14 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       }
       
       // Then by date (ascending)
-      const dateA = parseISO(a.date);
-      const dateB = parseISO(b.date);
-      return dateA.getTime() - dateB.getTime();
+      try {
+        const dateA = parseISO(a.date);
+        const dateB = parseISO(b.date);
+        return dateA.getTime() - dateB.getTime();
+      } catch (error) {
+        console.error('Error sorting events by date:', error);
+        return 0;
+      }
     });
   
   // Group events by date for the list view
@@ -480,7 +501,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   
   // Handler for selecting a date
   const handleDateClick = (day: Date) => {
-    console.log('Date clicked:', day);
+    console.log('Date clicked:', format(day, 'yyyy-MM-dd'));
     setSelectedDate(day);
     setSelectedEvent(null);
   };
@@ -511,16 +532,26 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   // Check if a day has events
   const hasEvents = (day: Date) => {
     return events.some(event => {
-      const eventDate = parseISO(event.date);
-      return isSameDay(eventDate, day);
+      try {
+        const eventDate = parseISO(event.date);
+        return isSameDay(eventDate, day);
+      } catch (error) {
+        console.error(`Error checking if day has events: ${day}, event date: ${event.date}`, error);
+        return false;
+      }
     });
   };
 
   // Get event count for a specific day
   const getEventCount = (day: Date) => {
     return events.filter(event => {
-      const eventDate = parseISO(event.date);
-      return isSameDay(eventDate, day);
+      try {
+        const eventDate = parseISO(event.date);
+        return isSameDay(eventDate, day);
+      } catch (error) {
+        console.error(`Error getting event count for day: ${day}, event date: ${event.date}`, error);
+        return false;
+      }
     }).length;
   };
 
@@ -536,13 +567,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     // Reset date selection when toggling favorites
     if (!showFavorites) {
       setSelectedDate(null);
-      // Removed toast notification
-    } else {
-      // Removed toast notification
     }
-    
-    // Important: We don't change the view state here anymore
-    // This allows users to stay in their current view (list or calendar)
   };
 
   // Get all unique categories from events

@@ -89,7 +89,7 @@ const Index = () => {
             </h1>
             <p className="text-xl md:text-2xl text-center max-w-2xl mb-6">
               Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
-              <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
+              <span className="inline-block animate-pulse text-red-500">❤</span>
             </p>
             
             {/* WhatsApp Community Button */}
