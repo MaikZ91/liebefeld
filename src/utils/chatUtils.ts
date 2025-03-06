@@ -29,10 +29,17 @@ export const createResponseHeader = (title: string) => {
 // Functions to identify common query patterns
 export const isListAllEventsQuery = (query: string): boolean => {
   const patterns = [
-    'alle', 'verfügbar', 'liste', 'zeig mir alle', 'was geht', 'gibts', 'gibt es',
-    'übersicht', 'welche events', 'alles', 'zeige alle', 'anzeigen', 'show all'
+    'alle', 'verfügbar', 'liste', 'zeig mir alle', 'alles', 'zeige alle', 'anzeigen', 'show all'
   ];
-  return patterns.some(pattern => query.includes(pattern));
+  return patterns.some(pattern => query.toLowerCase().includes(pattern));
+};
+
+export const isEventsForTodayQuery = (query: string): boolean => {
+  const patterns = [
+    'heute', 'today', 'was geht', 'was ist los', 'was läuft', 'was gibt es', 'was passiert'
+  ];
+  
+  return patterns.some(pattern => query.toLowerCase().includes(pattern));
 };
 
 export const checkCategoryQuery = (query: string): { isCategoryQuery: boolean; category: string } => {
@@ -98,9 +105,15 @@ export const checkTimeSpecificQuery = (query: string): { isTimeQuery: boolean; t
   ];
 
   for (const { pattern, timeFrame } of timePatterns) {
-    if (pattern.some(p => query.includes(p))) {
+    if (pattern.some(p => query.toLowerCase().includes(p))) {
       return { isTimeQuery: true, timeFrame };
     }
+  }
+
+  // If the query has phrases like "was geht" or "was ist los" without explicit time,
+  // default to today
+  if (isEventsForTodayQuery(query)) {
+    return { isTimeQuery: true, timeFrame: 'today' };
   }
 
   return { isTimeQuery: false, timeFrame: '' };
@@ -262,6 +275,26 @@ export const generateResponse = (query: string, events: Event[]): string => {
   const normalizedQuery = query.toLowerCase();
   
   console.log(`Generating response with ${events.length} events for query: "${query}"`);
+  
+  // Check if the query is for today's events in Liebefeld
+  if (normalizedQuery.includes('liebefeld') && isEventsForTodayQuery(normalizedQuery)) {
+    console.log('Detected query for today\'s events in Liebefeld');
+    
+    // Filter events for today
+    const todayEvents = events.filter(event => {
+      try {
+        if (!event.date) return false;
+        const eventDate = parseISO(event.date);
+        return isToday(eventDate);
+      } catch (error) {
+        console.error(`Error parsing date for event: ${event.title}`, error);
+        return false;
+      }
+    });
+    
+    const today = new Date();
+    return `${createResponseHeader(`Events heute in Liebefeld (${format(today, 'dd.MM.', { locale: de })})`)}${formatEvents(todayEvents)}`;
+  }
   
   // Check if the user is asking for all events
   if (isListAllEventsQuery(normalizedQuery)) {
