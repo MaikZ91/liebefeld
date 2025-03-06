@@ -1,3 +1,4 @@
+
 import { format, parseISO, isWithinInterval, startOfWeek, endOfWeek, addDays, 
   isToday, isTomorrow, isThisWeek, isWeekend, isAfter, isBefore, 
   addWeeks, addMonths, getMonth, getYear } from 'date-fns';
@@ -26,7 +27,7 @@ export const createResponseHeader = (title: string) => {
 };
 
 // Functions to identify common query patterns
-const isListAllEventsQuery = (query: string): boolean => {
+export const isListAllEventsQuery = (query: string): boolean => {
   const patterns = [
     'alle', 'verfügbar', 'liste', 'zeig mir alle', 'was geht', 'gibts', 'gibt es',
     'übersicht', 'welche events', 'alles', 'zeige alle', 'anzeigen', 'show all'
@@ -34,7 +35,7 @@ const isListAllEventsQuery = (query: string): boolean => {
   return patterns.some(pattern => query.includes(pattern));
 };
 
-const isCategoryQuery = (query: string): { isCategoryQuery: boolean; category: string } => {
+export const checkCategoryQuery = (query: string): { isCategoryQuery: boolean; category: string } => {
   const categoryPatterns = [
     { pattern: ['konzert', 'music', 'band', 'festival', 'musik'], category: 'Konzert' },
     { pattern: ['party', 'feier', 'feiern', 'fete', 'disco'], category: 'Party' },
@@ -53,7 +54,7 @@ const isCategoryQuery = (query: string): { isCategoryQuery: boolean; category: s
   return { isCategoryQuery: false, category: '' };
 };
 
-const isLocationQuery = (query: string): { isLocationQuery: boolean; location: string } => {
+export const checkLocationQuery = (query: string): { isLocationQuery: boolean; location: string } => {
   const locationPatterns = [
     { pattern: ['in der nähe', 'nearby', 'um die ecke', 'in meiner nähe'], location: 'nearby' },
     { pattern: ['zentrum', 'innenstadt', 'city center', 'downtown'], location: 'center' },
@@ -69,7 +70,7 @@ const isLocationQuery = (query: string): { isLocationQuery: boolean; location: s
   return { isLocationQuery: false, location: '' };
 };
 
-const isPriceQuery = (query: string): { isPriceQuery: boolean; priceRange: string } => {
+export const checkPriceQuery = (query: string): { isPriceQuery: boolean; priceRange: string } => {
   const pricePatterns = [
     { pattern: ['kostenlos', 'free', 'gratis', 'umsonst'], priceRange: 'free' },
     { pattern: ['günstig', 'cheap', 'preiswert', 'budget'], priceRange: 'cheap' },
@@ -85,7 +86,7 @@ const isPriceQuery = (query: string): { isPriceQuery: boolean; priceRange: strin
   return { isPriceQuery: false, priceRange: '' };
 };
 
-const isTimeSpecificQuery = (query: string): { isTimeQuery: boolean; timeFrame: string } => {
+export const checkTimeSpecificQuery = (query: string): { isTimeQuery: boolean; timeFrame: string } => {
   const timePatterns = [
     { pattern: ['heute', 'today', 'jetzt', 'now'], timeFrame: 'today' },
     { pattern: ['morgen', 'tomorrow'], timeFrame: 'tomorrow' },
@@ -268,37 +269,63 @@ export const generateResponse = (query: string, events: Event[]): string => {
   }
 
   // Check for time-specific queries
-  const { isTimeQuery, timeFrame } = isTimeSpecificQuery(normalizedQuery);
-  if (isTimeQuery) {
-    const { title, events: filteredEvents } = processTimeQuery(timeFrame, events);
+  const timeQuery = checkTimeSpecificQuery(normalizedQuery);
+  // Check for category queries
+  const categoryQuery = checkCategoryQuery(normalizedQuery);
+  
+  // Handle combination of time and category
+  if (timeQuery.isTimeQuery && categoryQuery.isCategoryQuery) {
+    console.log(`Combination query detected: ${timeQuery.timeFrame} + ${categoryQuery.category}`);
+    
+    // First filter by time
+    const { events: timeFilteredEvents } = processTimeQuery(timeQuery.timeFrame, events);
+    
+    // Then filter by category
+    const combinedFilteredEvents = timeFilteredEvents.filter(event => 
+      event.category?.toLowerCase() === categoryQuery.category.toLowerCase() || 
+      event.title.toLowerCase().includes(categoryQuery.category.toLowerCase())
+    );
+    
+    const timeTitle = timeQuery.timeFrame === 'nextWeek' ? 'nächste Woche' : 
+                      timeQuery.timeFrame === 'thisWeek' ? 'diese Woche' : 
+                      timeQuery.timeFrame === 'weekend' ? 'dieses Wochenende' : 
+                      timeQuery.timeFrame === 'nextWeekend' ? 'nächstes Wochenende' : 
+                      timeQuery.timeFrame === 'today' ? 'heute' : 
+                      timeQuery.timeFrame === 'tomorrow' ? 'morgen' : 'demnächst';
+                        
+    return `${createResponseHeader(`${categoryQuery.category}-Events ${timeTitle}:`)}${formatEvents(combinedFilteredEvents)}`;
+  }
+  
+  // Handle time-specific queries without category
+  if (timeQuery.isTimeQuery) {
+    const { title, events: filteredEvents } = processTimeQuery(timeQuery.timeFrame, events);
     return `${createResponseHeader(title)}${formatEvents(filteredEvents)}`;
   }
 
-  // Check for category queries
-  const { isCategoryQuery, category } = isCategoryQuery(normalizedQuery);
-  if (isCategoryQuery) {
+  // Handle category queries without time specification
+  if (categoryQuery.isCategoryQuery) {
     const categoryEvents = events.filter(event => 
-      event.category?.toLowerCase() === category.toLowerCase() || 
-      event.title.toLowerCase().includes(category.toLowerCase())
+      event.category?.toLowerCase() === categoryQuery.category.toLowerCase() || 
+      event.title.toLowerCase().includes(categoryQuery.category.toLowerCase())
     );
-    return `${createResponseHeader(`${category}-Events:`)}${formatEvents(categoryEvents)}`;
+    return `${createResponseHeader(`${categoryQuery.category}-Events:`)}${formatEvents(categoryEvents)}`;
   }
 
   // Check for location queries
-  const { isLocationQuery, location } = isLocationQuery(normalizedQuery);
-  if (isLocationQuery) {
+  const locationQuery = checkLocationQuery(normalizedQuery);
+  if (locationQuery.isLocationQuery) {
     // Process location based events
     const locationEvents = events.filter(event => 
-      event.location?.toLowerCase().includes(location.toLowerCase())
+      event.location?.toLowerCase().includes(locationQuery.location.toLowerCase())
     );
-    return `${createResponseHeader(`Events in ${location}:`)}${formatEvents(locationEvents)}`;
+    return `${createResponseHeader(`Events in ${locationQuery.location}:`)}${formatEvents(locationEvents)}`;
   }
 
   // Handle specific price ranges
-  const { isPriceQuery, priceRange } = isPriceQuery(normalizedQuery);
-  if (isPriceQuery) {
+  const priceQuery = checkPriceQuery(normalizedQuery);
+  if (priceQuery.isPriceQuery) {
     // This is a placeholder - we would need actual price data in the event objects
-    return `${createResponseHeader(`${priceRange} Events:`)}Preisfilterung ist aktuell nicht verfügbar.`;
+    return `${createResponseHeader(`${priceQuery.priceRange} Events:`)}Preisfilterung ist aktuell nicht verfügbar.`;
   }
 
   // Search for keywords in the query (fallback)
