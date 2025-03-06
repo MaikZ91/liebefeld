@@ -1,14 +1,13 @@
-
 import { format, parseISO, isWithinInterval, startOfWeek, endOfWeek, addDays, 
   isToday, isTomorrow, isThisWeek, isWeekend, isAfter, isBefore, 
   addWeeks, addMonths, getMonth, getYear } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { type Event } from '../types/eventTypes';
 
-// Helper to format events for display
+// Helper to format events for display with enhanced styling
 export const formatEvents = (filteredEvents: Event[]): string => {
   if (filteredEvents.length === 0) {
-    return "Leider sind keine Veranstaltungen für diesen Zeitraum geplant.";
+    return "<div class='text-center py-3 px-2 rounded-lg bg-gray-800/50 border border-gray-700/50'>Leider sind keine Veranstaltungen für diesen Zeitraum geplant.</div>";
   }
 
   const sortedEvents = [...filteredEvents].sort((a, b) => a.title.localeCompare(b.title));
@@ -16,14 +15,62 @@ export const formatEvents = (filteredEvents: Event[]): string => {
   return sortedEvents
     .map(event => {
       const link = event.link || '#';
-      return `<a href="${link}" target="_blank" class="block text-blue-400 hover:underline py-1">${event.title}</a>`;
+      const categoryClass = getCategoryColorClass(event.category);
+      const dateStr = format(parseISO(event.date), 'E, dd.MM.', { locale: de });
+      
+      return `
+        <div class="p-2 mb-2 rounded-lg bg-gradient-to-r from-gray-800/80 to-gray-900/80 border border-gray-700/50 hover:border-red-500/30 transition-all duration-300 animate-fade-in">
+          <a href="${link}" target="_blank" class="block hover:no-underline">
+            <div class="flex items-center justify-between">
+              <span class="font-medium text-red-400">${event.title}</span>
+              <span class="text-xs ${categoryClass} px-2 py-0.5 rounded-full">${event.category || 'Event'}</span>
+            </div>
+            <div class="flex items-center mt-1 text-xs text-gray-400">
+              <span class="flex items-center">
+                <span class="mr-1">📅</span> ${dateStr}
+              </span>
+              <span class="mx-2">•</span>
+              <span class="flex items-center">
+                <span class="mr-1">🕒</span> ${event.time} Uhr
+              </span>
+            </div>
+            <div class="text-xs text-gray-300 mt-1 truncate">
+              ${event.location || 'Liebefeld'}
+            </div>
+          </a>
+        </div>`;
     })
     .join("");
 };
 
+// Function to get color class based on category
+const getCategoryColorClass = (category?: string): string => {
+  if (!category) return "bg-gray-600 text-gray-200";
+  
+  const categoryMap: Record<string, string> = {
+    'Networking': 'bg-blue-900/70 text-blue-200',
+    'Workshop': 'bg-purple-900/70 text-purple-200',
+    'Sport': 'bg-green-900/70 text-green-200',
+    'Kultur': 'bg-yellow-900/70 text-yellow-200',
+    'Meeting': 'bg-gray-700/70 text-gray-200',
+    'Party': 'bg-pink-900/70 text-pink-200',
+    'Vortrag': 'bg-indigo-900/70 text-indigo-200',
+    'Konzert': 'bg-red-900/70 text-red-200',
+    'Ausstellung': 'bg-emerald-900/70 text-emerald-200'
+  };
+  
+  return categoryMap[category] || "bg-gray-600 text-gray-200";
+};
+
 // Create response header with proper formatting
 export const createResponseHeader = (title: string) => {
-  return `<h3 class="font-bold text-lg text-red-400 mb-2">${title}</h3>`;
+  return `
+    <div class="mb-3">
+      <h3 class="inline-block font-bold text-lg bg-gradient-to-r from-red-500 to-red-300 bg-clip-text text-transparent">
+        ${title}
+      </h3>
+      <div class="w-16 h-1 bg-gradient-to-r from-red-500 to-red-300 rounded-full mt-1"></div>
+    </div>`;
 };
 
 // Functions to identify common query patterns
@@ -378,27 +425,67 @@ export const generateResponse = (query: string, events: Event[]): string => {
   }
   
   // Default response if no match is found
-  return `<div class="space-y-2">
-    <p class="font-bold">Ich verstehe deine Frage leider nicht ganz.</p>
+  return `<div class="space-y-3 p-3 bg-gray-800/50 rounded-lg border border-gray-700/50 animate-fade-in">
+    <p class="font-bold text-red-400">Ich verstehe deine Frage leider nicht ganz.</p>
     <p>Du kannst mich zum Beispiel fragen:</p>
-    <ul class="list-disc pl-5 space-y-1">
-      <li>Was geht heute los?</li>
-      <li>Was ist am Wochenende los?</li>
-      <li>Welche Events gibt es nächste Woche?</li>
-      <li>Gibt es Konzerte diese Woche?</li>
-      <li>Welche Ausstellungen kann ich besuchen?</li>
-      <li>Events im Zentrum von Liebefeld?</li>
+    <ul class="space-y-2 pl-5">
+      <li class="flex items-center">
+        <span class="text-red-400 mr-2">❤️</span> Was geht heute los?
+      </li>
+      <li class="flex items-center">
+        <span class="text-red-400 mr-2">❤️</span> Was ist am Wochenende los?
+      </li>
+      <li class="flex items-center">
+        <span class="text-red-400 mr-2">❤️</span> Welche Events gibt es nächste Woche?
+      </li>
+      <li class="flex items-center">
+        <span class="text-red-400 mr-2">❤️</span> Gibt es Konzerte diese Woche?
+      </li>
+      <li class="flex items-center">
+        <span class="text-red-400 mr-2">❤️</span> Welche Ausstellungen kann ich besuchen?
+      </li>
+      <li class="flex items-center">
+        <span class="text-red-400 mr-2">❤️</span> Events im Zentrum von Liebefeld?
+      </li>
     </ul>
   </div>`;
 };
 
 // Initial welcome message for the chatbot
 export const getWelcomeMessage = (): string => {
-  return 'Willkommen beim Liebefeld Event-Assistent! 👋<br><br>' + 
-    'Ich halte dich über alle spannenden Veranstaltungen in Liebefeld auf dem Laufenden. Frag mich einfach nach Events, z.B.:<br>' +
-    '• "Was ist heute los?"<br>' +
-    '• "Zeige mir alle Events am Wochenende"<br>' +
-    '• "Gibt es Konzerte in dieser Woche?"<br>' +
-    '• "Welche Veranstaltungen sind im nächsten Monat?"<br>' +
-    '• "Ausstellungen in Liebefeld?"';
+  return `
+  <div class="space-y-3 animate-fade-in">
+    <div class="text-center mb-3">
+      <span class="inline-block text-2xl mb-2">❤️</span>
+      <h3 class="text-lg font-bold bg-gradient-to-r from-red-500 to-red-300 bg-clip-text text-transparent">Willkommen beim Liebefeld Event-Assistent!</h3>
+    </div>
+    
+    <p class="text-sm">Ich halte dich über alle spannenden Veranstaltungen in Liebefeld auf dem Laufenden. Frag mich einfach nach Events!</p>
+    
+    <div class="bg-gray-800/40 rounded-lg p-2 mt-2">
+      <p class="text-xs text-gray-300 mb-1">Beispiele:</p>
+      <ul class="space-y-1.5 text-sm">
+        <li class="flex items-start">
+          <span class="text-red-400 mr-2">❤️</span>
+          <span>Was ist heute los?</span>
+        </li>
+        <li class="flex items-start">
+          <span class="text-red-400 mr-2">❤️</span>
+          <span>Zeige mir alle Events am Wochenende</span>
+        </li>
+        <li class="flex items-start">
+          <span class="text-red-400 mr-2">❤️</span>
+          <span>Gibt es Konzerte in dieser Woche?</span>
+        </li>
+        <li class="flex items-start">
+          <span class="text-red-400 mr-2">❤️</span>
+          <span>Welche Veranstaltungen sind im nächsten Monat?</span>
+        </li>
+        <li class="flex items-start">
+          <span class="text-red-400 mr-2">❤️</span>
+          <span>Ausstellungen in Liebefeld?</span>
+        </li>
+      </ul>
+    </div>
+  </div>`;
 };

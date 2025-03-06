@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, Send, Calendar, X } from 'lucide-react';
+import { MessageCircle, Send, Calendar, X, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
@@ -93,7 +93,7 @@ const EventChatBot: React.FC = () => {
           </PopoverTrigger>
           <PopoverContent 
             side="right" 
-            className="bg-white dark:bg-[#1A1D2D] border-red-200 dark:border-red-900/30 p-2 mb-2 shadow-lg w-72 animate-fade-in"
+            className="bg-gradient-to-br from-[#1A1D2D] to-[#131722] border-red-900/30 p-2 mb-2 shadow-lg w-72 animate-fade-in"
           >
             <div className="flex items-center space-x-2">
               <Input
@@ -102,13 +102,13 @@ const EventChatBot: React.FC = () => {
                 value={quickInput}
                 onChange={(e) => setQuickInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleQuickSend()}
-                className="flex-1 bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
+                className="flex-1 bg-gray-800/50 border-gray-700 text-white placeholder-gray-400"
                 autoFocus
               />
               <Button
                 onClick={handleQuickSend}
                 size="icon"
-                className="bg-red-600 hover:bg-red-700 transition-all duration-300 shadow-md h-8 w-8"
+                className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 transition-all duration-300 shadow-md h-8 w-8"
                 disabled={!quickInput.trim()}
               >
                 <Send size={14} />
@@ -120,8 +120,8 @@ const EventChatBot: React.FC = () => {
         <DialogContent className="sm:max-w-[425px] h-[600px] flex flex-col p-0 gap-0 rounded-xl bg-[#1A1D2D] text-white border-gray-800 shadow-2xl animate-scale-in">
           <div className="flex items-center justify-between p-4 border-b border-gray-800 bg-gradient-to-r from-red-700 to-red-600 rounded-t-xl">
             <div className="flex items-center">
-              <Calendar className="mr-2 h-5 w-5 text-white" />
-              <h3 className="font-semibold">❤️ LiebefeldBot</h3>
+              <Heart className="mr-2 h-5 w-5 text-white fill-white animate-pulse-soft" />
+              <h3 className="font-semibold">LiebefeldBot</h3>
             </div>
             <Button
               variant="ghost"
@@ -133,7 +133,7 @@ const EventChatBot: React.FC = () => {
             </Button>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin bg-gradient-to-b from-[#1A1D2D] to-[#131722]">
             {messages.map(message => (
               <div
                 key={message.id}
@@ -142,11 +142,11 @@ const EventChatBot: React.FC = () => {
                 <div
                   className={`max-w-[80%] rounded-lg px-4 py-2 ${
                     message.isUser
-                      ? 'bg-red-600 text-white'
-                      : 'bg-gradient-to-br from-gray-800 to-gray-900 text-white'
+                      ? 'bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg'
+                      : 'bg-gradient-to-br from-gray-800 to-gray-900 text-white shadow-md border border-gray-700/30'
                   }`}
                 >
-                  <p className="text-sm" dangerouslySetInnerHTML={{ __html: message.text }}></p>
+                  <div className="text-sm" dangerouslySetInnerHTML={{ __html: message.text }}></div>
                   <span className="text-xs opacity-70 mt-1 block">
                     {format(message.timestamp, 'HH:mm')}
                   </span>
@@ -155,11 +155,11 @@ const EventChatBot: React.FC = () => {
             ))}
             {isTyping && (
               <div className="flex justify-start mt-2">
-                <div className="bg-gray-800/80 rounded-lg px-3 py-1.5 max-w-[80%]">
+                <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg px-3 py-1.5 max-w-[80%] border border-gray-700/30 shadow-md">
                   <div className="flex space-x-1">
-                    <div className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    <div className="w-2 h-2 rounded-full bg-red-500 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-2 h-2 rounded-full bg-red-500 animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="w-2 h-2 rounded-full bg-red-500 animate-bounce" style={{ animationDelay: '300ms' }}></div>
                   </div>
                 </div>
               </div>
@@ -179,7 +179,7 @@ const EventChatBot: React.FC = () => {
               />
               <Button
                 onClick={() => handleSend()}
-                className="bg-red-600 hover:bg-red-700 transition-all duration-300 shadow-md"
+                className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 transition-all duration-300 shadow-md"
                 disabled={!input.trim()}
               >
                 <Send size={18} />
