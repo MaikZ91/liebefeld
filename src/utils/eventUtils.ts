@@ -1,4 +1,3 @@
-
 import { Event, GitHubEvent } from '../types/eventTypes';
 import { parseAndNormalizeDate, debugDate } from './dateUtils';
 import { format, isSameDay, isSameMonth, startOfDay } from 'date-fns';
@@ -189,16 +188,23 @@ export const transformGitHubEvents = (
       
       // Create date with current year
       const now = new Date();
-      eventDate = new Date(Date.UTC(currentYear, month, day));
+      const thisMonth = now.getMonth();
+      const isMonthInPast = month < thisMonth;
       
-      // For debugging
-      console.log(`Parsed date: ${eventDate.toISOString()} (${day}.${month+1}.${currentYear})`);
+      // If the month is in the past, we should probably use next year
+      // otherwise use current year
+      const yearToUse = isMonthInPast ? currentYear + 1 : currentYear;
+      eventDate = new Date(Date.UTC(yearToUse, month, day));
       
-      // If the date is in the past, check if it's likely for next year
-      // (this handles events listed for later in the year when we're in early months)
-      if (eventDate < now && month < 6) { // Only for first half of the year
-        eventDate.setFullYear(currentYear + 1);
-        console.log(`Date adjusted to next year: ${eventDate.toISOString()}`);
+      // Log detailed parsing information
+      console.log(`Original date: ${githubEvent.date}`);
+      console.log(`Day: ${day}, Month: ${month+1}, Year: ${yearToUse}`);
+      console.log(`Parsed date: ${eventDate.toISOString()}`);
+      
+      // Debug for troubleshooting specific dates
+      if (day === 6 && month === 2) { // March 6th
+        console.log(`Found March 6th event: ${title}`);
+        console.log(`Using year: ${yearToUse}`);
       }
     } catch (err) {
       console.warn(`Konnte Datum nicht parsen: ${githubEvent.date}`, err);
