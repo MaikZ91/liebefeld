@@ -22,6 +22,7 @@ const EventChatBot: React.FC = () => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showHint, setShowHint] = useState(false);
   
   const { events } = useEventContext();
 
@@ -42,6 +43,15 @@ const EventChatBot: React.FC = () => {
       console.log("Sample events from context:", events.slice(0, 3));
     }
   }, [events]);
+
+  // Show chat hint after a delay to draw attention
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowHint(true);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -72,40 +82,47 @@ const EventChatBot: React.FC = () => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button 
-          className="fixed right-4 bottom-4 rounded-full w-12 h-12 shadow-lg bg-red-600 hover:bg-red-700 flex items-center justify-center"
-          aria-label="Event Chat"
-        >
-          <MessageCircle className="h-6 w-6" />
-        </Button>
+        <div className="fixed right-4 bottom-4 flex flex-col items-end">
+          {showHint && !isOpen && (
+            <div className="mb-2 bg-red-600/90 text-white py-2 px-4 rounded-lg shadow-lg animate-bounce-slow">
+              <span className="font-bold">Frag mich über Events! 👋</span>
+            </div>
+          )}
+          <Button 
+            className="rounded-full w-14 h-14 shadow-lg bg-gradient-to-tr from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 flex items-center justify-center animate-pulse-soft ring-4 ring-red-300 dark:ring-red-900/40"
+            aria-label="Event Chat"
+          >
+            <MessageCircle className="h-7 w-7" />
+          </Button>
+        </div>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] h-[600px] flex flex-col p-0 gap-0 rounded-xl bg-[#1A1D2D] text-white border-gray-800">
-        <div className="flex items-center justify-between p-4 border-b border-gray-800 bg-[#131722] rounded-t-xl">
+      <DialogContent className="sm:max-w-[425px] h-[600px] flex flex-col p-0 gap-0 rounded-xl bg-[#1A1D2D] text-white border-gray-800 shadow-2xl animate-scale-in">
+        <div className="flex items-center justify-between p-4 border-b border-gray-800 bg-gradient-to-r from-red-700 to-red-600 rounded-t-xl">
           <div className="flex items-center">
-            <Calendar className="mr-2 h-5 w-5 text-red-500" />
+            <Calendar className="mr-2 h-5 w-5 text-white" />
             <h3 className="font-semibold">❤️ LiebefeldBot</h3>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsOpen(false)}
-            className="text-gray-400 hover:text-white hover:bg-transparent"
+            className="text-gray-200 hover:text-white hover:bg-red-700/50"
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
           {messages.map(message => (
             <div
               key={message.id}
-              className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${message.isUser ? 'justify-end' : 'justify-start'} animate-fade-in`}
             >
               <div
                 className={`max-w-[80%] rounded-lg px-4 py-2 ${
                   message.isUser
                     ? 'bg-red-600 text-white'
-                    : 'bg-gray-800 text-white'
+                    : 'bg-gradient-to-br from-gray-800 to-gray-900 text-white'
                 }`}
               >
                 <p className="text-sm" dangerouslySetInnerHTML={{ __html: message.text }}></p>
@@ -141,7 +158,7 @@ const EventChatBot: React.FC = () => {
             />
             <Button
               onClick={handleSend}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600 hover:bg-red-700 transition-all duration-300 shadow-md"
               disabled={!input.trim()}
             >
               <Send size={18} />
