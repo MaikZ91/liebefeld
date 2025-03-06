@@ -1,5 +1,6 @@
+<lov-code>
 import React, { useState, useEffect } from 'react';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays, startOfDay } from 'date-fns';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, startOfDay } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, Music, PartyPopper, Image, Dumbbell, Map, CalendarIcon, List, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -43,11 +44,8 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<Event[]>([]);
   
-  // Initialize with today's date and make sure it's normalized to start of day
-  const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
-    const today = new Date();
-    return startOfDay(today);
-  });
+  // Initialize selectedDate to today's date at start of day
+  const [selectedDate, setSelectedDate] = useState<Date | null>(() => startOfDay(new Date()));
   
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -415,27 +413,18 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
             return false;
           }
           
-          // Ensure we're working with valid dates
-          const parsedEventDate = parseISO(event.date);
-          if (isNaN(parsedEventDate.getTime())) {
-            console.warn(`Event with id ${event.id} has invalid date: ${event.date}`);
-            return false;
-          }
+          // Ensure we're working with valid dates and normalize them
+          const parsedEventDate = startOfDay(parseISO(event.date));
+          const normalizedSelectedDate = startOfDay(selectedDate);
           
-          // Normalize both dates to the start of day to avoid time-related comparison issues
-          const eventDate = startOfDay(parsedEventDate);
-          const selectedDateStart = startOfDay(selectedDate);
+          console.log(`Comparing dates for event ${event.title}:`, {
+            eventDate: parsedEventDate.toISOString(),
+            selectedDate: normalizedSelectedDate.toISOString(),
+            isSameDay: isSameDay(parsedEventDate, normalizedSelectedDate)
+          });
           
           // Check if the dates are the same day
-          const sameDay = isSameDay(eventDate, selectedDateStart);
-          
-          console.log(`Event date comparison for ${event.title}:`, {
-            eventId: event.id,
-            eventDate: event.date,
-            parsedEventDate: eventDate.toISOString(),
-            selectedDate: selectedDateStart.toISOString(),
-            sameDay: sameDay
-          });
+          const sameDay = isSameDay(parsedEventDate, normalizedSelectedDate);
           
           // Apply category filter if present
           return filter ? (sameDay && event.category === filter) : sameDay;
@@ -523,12 +512,11 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     return acc;
   }, {} as Record<string, Event[]>);
   
-  // Handler for selecting a date
+  // Handle selecting a date
   const handleDateClick = (day: Date) => {
-    // Make sure to set the selected date to the beginning of the day to avoid time-related comparison issues
-    const dayStart = startOfDay(day);
-    console.log(`Selecting date: ${dayStart.toISOString()}`);
-    setSelectedDate(dayStart);
+    const normalizedDay = startOfDay(day);
+    console.log(`Selecting date: ${normalizedDay.toISOString()}`);
+    setSelectedDate(normalizedDay);
     setSelectedEvent(null);
   };
   
@@ -817,178 +805,4 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                       </div>
                       
                       {/* Calendar days */}
-                      <div className="grid grid-cols-7 gap-2">
-                        {daysInMonth.map((day, i) => {
-                          const isSelected = selectedDate && isSameDay(day, selectedDate);
-                          const isCurrentMonth = isSameMonth(day, currentDate);
-                          const dayHasEvents = hasEvents(day);
-                          const isCurrentDay = isToday(day);
-                          const eventCount = getEventCount(day);
-                          
-                          return (
-                            <button
-                              key={i}
-                              onClick={() => handleDateClick(day)}
-                              className={cn(
-                                "calendar-day hover-scale relative flex flex-col items-center justify-center",
-                                isSelected ? "bg-primary text-primary-foreground" : "",
-                                !isCurrentMonth ? "text-gray-600" : "text-gray-200",
-                                isCurrentDay ? "ring-2 ring-primary ring-offset-2 ring-offset-[#131722]" : ""
-                              )}
-                            >
-                              {format(day, 'd')}
-                              {dayHasEvents && (
-                                <div className="absolute bottom-1 flex space-x-0.5">
-                                  {eventCount > 3 ? (
-                                    <span className="text-[10px] font-semibold text-primary">{eventCount}</span>
-                                  ) : (
-                                    Array(eventCount).fill(0).map((_, i) => (
-                                      <div 
-                                        key={i} 
-                                        className="w-1 h-1 rounded-full bg-primary"
-                                      />
-                                    ))
-                                  )}
-                                </div>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </>
-                  )}
-                </div>
-                
-                {/* Event list for selected date */}
-                <div className="w-full md:w-2/5 dark-glass-card rounded-2xl p-6 overflow-hidden flex flex-col">
-                  <h3 className="text-xl font-medium mb-4 text-white">
-                    {showFavorites 
-                      ? "Meine Favoriten" 
-                      : (selectedDate 
-                          ? format(selectedDate, 'EEEE, d. MMMM', { locale: de })
-                          : "Wähle ein Datum aus"
-                        )
-                    }
-                  </h3>
-                  
-                  <div className="flex-grow overflow-auto scrollbar-thin">
-                    {showFavorites ? (
-                      favoriteEvents.length > 0 ? (
-                        <div className="space-y-4">
-                          {favoriteEvents.map(event => (
-                            <EventCard 
-                              key={event.id} 
-                              event={event}
-                              onClick={() => setSelectedEvent(event)}
-                              onLike={handleLikeEvent}
-                            />
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-gray-400">
-                          Du hast noch keine Favoriten
-                        </div>
-                      )
-                    ) : (
-                      selectedDate ? (
-                        filteredEvents.length > 0 ? (
-                          <div className="space-y-4">
-                            {filteredEvents.map(event => (
-                              <EventCard 
-                                key={event.id} 
-                                event={event}
-                                onClick={() => setSelectedEvent(event)}
-                                onLike={handleLikeEvent}
-                              />
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="flex h-full items-center justify-center text-gray-400">
-                            Keine Events an diesem Tag {filter ? `in der Kategorie "${filter}"` : ''}
-                          </div>
-                        )
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-gray-400">
-                          Wähle ein Datum, um Events anzuzeigen
-                        </div>
-                      )
-                    )}
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-        
-        {/* Event details modal */}
-        {selectedEvent && (
-          <EventDetails 
-            event={selectedEvent} 
-            onClose={() => setSelectedEvent(null)} 
-          />
-        )}
-      </div>
-    </div>
-  );
-};
-
-// Sample data for initial display
-const bielefeldEvents: Event[] = [
-  {
-    id: '1',
-    title: 'Indie Rock Konzert: Liebefeld Band',
-    description: 'Live-Musik mit lokalen Bands aus Bielefeld. Ein Abend voller Indie-Rock und guter Stimmung.',
-    date: new Date().toISOString().split('T')[0],
-    time: '20:00',
-    location: 'Forum Bielefeld, Niederwall 23',
-    organizer: 'Bielefeld Musik e.V.',
-    category: 'Konzert',
-    likes: 5
-  },
-  {
-    id: '2',
-    title: 'Kunstausstellung: Stadt im Wandel',
-    description: 'Fotografien und Gemälde zum Wandel von Bielefeld in den letzten Jahrzehnten.',
-    date: new Date().toISOString().split('T')[0],
-    time: '14:00',
-    location: 'Kunsthalle Bielefeld, Artur-Ladebeck-Straße 5',
-    organizer: 'Kunstverein Bielefeld',
-    category: 'Ausstellung',
-    likes: 3
-  },
-  {
-    id: '3',
-    title: 'Stadtlauf Bielefeld',
-    description: 'Jährlicher Stadtlauf durch die Innenstadt. Für Läufer aller Altersklassen.',
-    date: new Date(new Date().setDate(new Date().getDate() + 2)).toISOString().split('T')[0],
-    time: '10:00',
-    location: 'Start: Jahnplatz',
-    organizer: 'Sportbund Bielefeld',
-    category: 'Sport',
-    likes: 8
-  },
-  {
-    id: '4',
-    title: 'Weekend Party im Club Freitag',
-    description: 'Die beste Party am Wochenende mit DJ Max und Special Guests.',
-    date: new Date(new Date().setDate(new Date().getDate() + 3)).toISOString().split('T')[0],
-    time: '23:00',
-    location: 'Club Freitag, Niederstraße 9',
-    organizer: 'Club Freitag',
-    category: 'Party',
-    likes: 12
-  },
-  {
-    id: '5',
-    title: 'Workshop: Urban Gardening',
-    description: 'Lerne, wie du auch mit wenig Platz Gemüse und Kräuter anbauen kannst.',
-    date: new Date(new Date().setDate(new Date().getDate() + 5)).toISOString().split('T')[0],
-    time: '16:00',
-    location: 'Umweltzentrum, August-Bebel-Straße 16',
-    organizer: 'Grüne Stadt Bielefeld',
-    category: 'Workshop',
-    likes: 4
-  }
-];
-
-export default EventCalendar;
+                      <div className="grid grid-cols-7 gap
