@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { format, parseISO, isWithinInterval, startOfWeek, endOfWeek, addDays, isToday, isTomorrow, isThisWeek, isWeekend } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -107,7 +108,7 @@ const EventChatBot: React.FC = () => {
                     : 'bg-gray-800 text-white'
                 }`}
               >
-                <p className="text-sm">{message.text}</p>
+                <p className="text-sm" dangerouslySetInnerHTML={{ __html: message.text }}></p>
                 <span className="text-xs opacity-70 mt-1 block">
                   {format(message.timestamp, 'HH:mm')}
                 </span>
@@ -167,19 +168,20 @@ const generateResponse = (query: string, events: Event[]): string => {
 
     return sortedEvents
       .map(event => {
-        return `• [${event.title}](${event.link || '#'})`;
+        const link = event.link || '#';
+        return `<a href="${link}" target="_blank" class="block text-blue-400 hover:underline py-1">${event.title}</a>`;
       })
-      .join("\n");
+      .join("");
   };
 
   if (normalizedQuery.includes('alle') || normalizedQuery.includes('verfügbar') || 
       normalizedQuery.includes('liste') || normalizedQuery.includes('zeig mir alle') ||
       normalizedQuery === 'was geht?' || normalizedQuery === 'was geht') {
-    return `**Alle verfügbaren Events:**\n\n${formatEvents(events)}`;
+    return formatEvents(events);
   }
 
   const createResponseHeader = (title: string) => {
-    return `🔍 **${title}**\n\n`;
+    return `<h3 class="font-bold text-lg text-red-400 mb-2">${title}</h3>`;
   };
 
   if (normalizedQuery.includes('heute') || normalizedQuery.includes('today')) {
@@ -291,7 +293,16 @@ const generateResponse = (query: string, events: Event[]): string => {
     }
   }
   
-  return "❓ **Ich verstehe deine Frage leider nicht ganz.**\n\nDu kannst mich zum Beispiel fragen:\n- \"Was geht heute?\"\n- \"Was ist am Wochenende los?\"\n- \"Welche Events gibt es nächste Woche?\"\n- \"Gibt es Konzerte diese Woche?\"";
+  return `<div class="space-y-2">
+    <p class="font-bold">Ich verstehe deine Frage leider nicht ganz.</p>
+    <p>Du kannst mich zum Beispiel fragen:</p>
+    <ul class="list-disc pl-5 space-y-1">
+      <li>Was geht heute?</li>
+      <li>Was ist am Wochenende los?</li>
+      <li>Welche Events gibt es nächste Woche?</li>
+      <li>Gibt es Konzerte diese Woche?</li>
+    </ul>
+  </div>`;
 };
 
 export default EventChatBot;
