@@ -26,9 +26,9 @@ const EventList: React.FC<EventListProps> = ({
   // Group events by date
   const eventsByDate = groupEventsByDate(events);
   
-  // Scroll to today's section ONLY on component first load
+  // Scroll to today's section ONLY on component first load and when events are loaded
   useEffect(() => {
-    if (todayRef.current && listRef.current && !hasScrolledToToday) {
+    if (todayRef.current && listRef.current && !hasScrolledToToday && Object.keys(eventsByDate).length > 0) {
       console.log('EventList: Attempting to scroll to today (first load only)');
       
       // Wait for render to complete
@@ -77,10 +77,16 @@ const EventList: React.FC<EventListProps> = ({
       console.log('EventList: Today ref or list ref not found or already scrolled', { 
         todayRef: !!todayRef.current, 
         listRef: !!listRef.current,
-        hasScrolledToToday
+        hasScrolledToToday,
+        eventsLength: Object.keys(eventsByDate).length
       });
     }
-  }, []); // Empty dependency array ensures this only runs once on mount
+  }, [eventsByDate]); // Run when events grouping changes
+
+  // Reset scroll state when events or favorites change
+  useEffect(() => {
+    setHasScrolledToToday(false);
+  }, [showFavorites]);
   
   return (
     <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
