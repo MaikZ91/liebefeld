@@ -1,5 +1,5 @@
 
-import { format, startOfDay, isSameDay, parseISO, isToday } from 'date-fns';
+import { format, startOfDay, isSameDay, parseISO, isToday, Locale } from 'date-fns';
 
 // Normalize date to start of day for consistent comparison
 export const normalizeDate = (date: Date): Date => {

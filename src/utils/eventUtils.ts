@@ -1,5 +1,6 @@
 import { Event, GitHubEvent } from '../types/eventTypes';
 import { parseAndNormalizeDate } from './dateUtils';
+import { format, isSameDay, isSameMonth, startOfDay } from 'date-fns';
 
 // Determine event category based on keywords in title
 export const determineEventCategory = (title: string): string => {
