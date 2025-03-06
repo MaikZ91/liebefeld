@@ -54,14 +54,21 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   });
 
   useEffect(() => {
-    fetchSupabaseEvents();
-    fetchExternalEvents(true);
-    setIsInitialLoad(false);
+    console.log("EventCalendar: Initial loading...");
+    const fetchEvents = async () => {
+      await fetchSupabaseEvents();
+      await fetchExternalEvents(true);
+    };
     
+    fetchEvents();
+    
+    // Set today as the initial selected date
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     console.log('Setting initial selected date to today:', today);
     setSelectedDate(today);
+    
+    setIsInitialLoad(false);
   }, []);
 
   const fetchSupabaseEvents = async () => {
@@ -336,19 +343,26 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   const filteredEvents = selectedDate 
     ? events.filter(event => {
         try {
+          if (!event.date) {
+            console.warn('Event has no date property:', event);
+            return false;
+          }
+          
           const eventDate = parseISO(event.date);
           eventDate.setHours(0, 0, 0, 0);
           
-          if (isToday(selectedDate)) {
-            console.log('Comparing event:', {
-              eventDate: eventDate.toISOString(),
-              eventTitle: event.title,
-              selectedDate: selectedDate.toISOString(),
-              isMatch: isSameDay(eventDate, selectedDate)
-            });
-          }
+          const selectedDateMidnight = new Date(selectedDate);
+          selectedDateMidnight.setHours(0, 0, 0, 0);
           
-          const matchesDay = isSameDay(eventDate, selectedDate);
+          console.log('Comparing event:', {
+            eventId: event.id,
+            eventTitle: event.title,
+            eventDate: format(eventDate, 'yyyy-MM-dd'),
+            selectedDate: format(selectedDateMidnight, 'yyyy-MM-dd'),
+            isMatch: isSameDay(eventDate, selectedDateMidnight)
+          });
+          
+          const matchesDay = isSameDay(eventDate, selectedDateMidnight);
           const matchesFilter = filter ? event.category === filter : true;
           
           return matchesDay && matchesFilter;

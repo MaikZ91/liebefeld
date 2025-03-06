@@ -19,6 +19,7 @@ const Index = () => {
   useEffect(() => {
     // First try to get events from Supabase
     const fetchEvents = async () => {
+      console.log("Index: Fetching events...");
       try {
         const { data, error } = await supabase
           .from('community_events')
@@ -39,6 +40,8 @@ const Index = () => {
           if (savedEvents) {
             console.log('Loading events from localStorage as fallback');
             setEvents(JSON.parse(savedEvents));
+          } else {
+            console.log('No events found in Supabase or localStorage');
           }
         }
       } catch (err) {
