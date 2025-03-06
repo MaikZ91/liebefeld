@@ -63,7 +63,11 @@ const CalendarDays: React.FC<CalendarDaysProps> = ({
       {/* Calendar days - add horizontal scrolling */}
       <div 
         ref={containerRef}
-        className="overflow-x-auto pb-2 mb-2 hide-scrollbar"
+        className="overflow-x-auto pb-2 mb-2 scrollbar-hide"
+        style={{
+          scrollbarWidth: 'none', /* Firefox */
+          msOverflowStyle: 'none'  /* IE and Edge */
+        }}
       >
         <div className="grid grid-cols-7 gap-1 md:gap-2 min-w-full">
           {daysInMonth.map((day) => {
@@ -105,15 +109,13 @@ const CalendarDays: React.FC<CalendarDaysProps> = ({
         </div>
       </div>
 
-      {/* Add custom CSS for hiding scrollbar but allowing scrolling */}
-      <style jsx>{`
-        .hide-scrollbar {
-          scrollbar-width: none;  /* Firefox */
-        }
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;  /* Safari and Chrome */
-        }
-      `}</style>
+      <style>
+        {`
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
+        `}
+      </style>
     </>
   );
 };
