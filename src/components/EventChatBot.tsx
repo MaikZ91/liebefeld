@@ -84,8 +84,8 @@ const EventChatBot: React.FC = () => {
       <DialogTrigger asChild>
         <div className="fixed right-4 bottom-4 flex flex-col items-end">
           {showHint && !isOpen && (
-            <div className="mb-2 bg-red-600/90 text-white py-2 px-4 rounded-lg shadow-lg animate-bounce-slow">
-              <span className="font-bold">Frag mich über Events! 👋</span>
+            <div className="mb-2 bg-red-500/90 text-white py-1 px-3 rounded-lg shadow-md animate-bounce-slow text-xs">
+              <span className="font-medium">Frag mich über Events 👋</span>
             </div>
           )}
           <Button 
