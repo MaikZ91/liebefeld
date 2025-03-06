@@ -62,6 +62,10 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     fetchSupabaseEvents();
     fetchExternalEvents(true);
     setIsInitialLoad(false);
+    
+    // Check if today should be pre-selected
+    const today = new Date();
+    setSelectedDate(today);
   }, []);
 
   // Funktion zum Laden der Events aus Supabase
@@ -399,13 +403,28 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   const monthEnd = endOfMonth(currentDate);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
   
+  // Debug log to check current date and selected date
+  console.log('Current date:', currentDate);
+  console.log('Selected date:', selectedDate);
+  console.log('Today date:', new Date());
+  
   // Filter events for the selected date and category filter
   const filteredEvents = selectedDate 
     ? events.filter(event => {
-        const sameDay = isSameDay(parseISO(event.date), selectedDate);
+        // Debug: check if we have events for today
+        if (isToday(selectedDate)) {
+          console.log('Checking today\'s events:', event.date, parseISO(event.date));
+        }
+        
+        const eventDate = parseISO(event.date);
+        const sameDay = isSameDay(eventDate, selectedDate);
+        
         return filter ? (sameDay && event.category === filter) : sameDay;
       })
     : [];
+  
+  // Debug log to see filtered events
+  console.log('Filtered events for selected date:', filteredEvents);
 
   // Get user's favorite events (events with likes)
   const favoriteEvents = events.filter(event => {
@@ -461,6 +480,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   
   // Handler for selecting a date
   const handleDateClick = (day: Date) => {
+    console.log('Date clicked:', day);
     setSelectedDate(day);
     setSelectedEvent(null);
   };
@@ -490,12 +510,18 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
 
   // Check if a day has events
   const hasEvents = (day: Date) => {
-    return events.some(event => isSameDay(parseISO(event.date), day));
+    return events.some(event => {
+      const eventDate = parseISO(event.date);
+      return isSameDay(eventDate, day);
+    });
   };
 
   // Get event count for a specific day
   const getEventCount = (day: Date) => {
-    return events.filter(event => isSameDay(parseISO(event.date), day)).length;
+    return events.filter(event => {
+      const eventDate = parseISO(event.date);
+      return isSameDay(eventDate, day);
+    }).length;
   };
 
   // Toggle category filter
