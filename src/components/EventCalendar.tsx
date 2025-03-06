@@ -1,4 +1,4 @@
-<lov-code>
+
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, startOfDay } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -39,12 +39,36 @@ interface EventCalendarProps {
   defaultView?: "calendar" | "list";
 }
 
+// Beispieldaten für Bielefeld Events
+const bielefeldEvents: Event[] = [
+  {
+    id: "example-1",
+    title: "Jazz-Konzert",
+    description: "Live-Jazz-Musik in der Innenstadt",
+    date: format(new Date(), 'yyyy-MM-dd'), // Heute
+    time: "19:00",
+    location: "Bielefeld",
+    organizer: "Jazzclub Bielefeld",
+    category: "Konzert"
+  },
+  {
+    id: "example-2",
+    title: "Stadtfest",
+    description: "Jährliches Stadtfest mit vielen Attraktionen",
+    date: format(new Date(), 'yyyy-MM-dd'), // Heute
+    time: "10:00",
+    location: "Bielefeld",
+    organizer: "Stadt Bielefeld",
+    category: "Sonstiges"
+  }
+];
+
 const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   // State variables
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<Event[]>([]);
   
-  // Initialize selectedDate to today's date at start of day
+  // WICHTIG: Initialize selectedDate to today's date at start of day
   const [selectedDate, setSelectedDate] = useState<Date | null>(() => startOfDay(new Date()));
   
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -423,7 +447,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
             isSameDay: isSameDay(parsedEventDate, normalizedSelectedDate)
           });
           
-          // Check if the dates are the same day
+          // Check if the dates are the same day - WICHTIG!
           const sameDay = isSameDay(parsedEventDate, normalizedSelectedDate);
           
           // Apply category filter if present
@@ -514,6 +538,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   
   // Handle selecting a date
   const handleDateClick = (day: Date) => {
+    // Wichtig: Normalisiere das Datum auf den Beginn des Tages
     const normalizedDay = startOfDay(day);
     console.log(`Selecting date: ${normalizedDay.toISOString()}`);
     setSelectedDate(normalizedDay);
@@ -805,4 +830,110 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                       </div>
                       
                       {/* Calendar days */}
-                      <div className="grid grid-cols-7 gap
+                      <div className="grid grid-cols-7 gap-1 md:gap-2">
+                        {daysInMonth.map((day) => {
+                          const isCurrentDay = isToday(day);
+                          const isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
+                          const dayHasEvents = hasEvents(day);
+                          const eventCount = getEventCount(day);
+                          
+                          return (
+                            <button
+                              key={day.toISOString()}
+                              className={cn(
+                                "aspect-square p-1 md:p-2 relative flex flex-col items-center justify-center rounded-lg hover:bg-white/10 transition-colors cursor-pointer",
+                                isCurrentDay && "border-red-500 border-2",
+                                isSelected && "bg-white/20",
+                                (isCurrentDay || isSelected) && "font-bold"
+                              )}
+                              onClick={() => handleDateClick(day)}
+                            >
+                              <span className={cn(
+                                "text-sm md:text-base",
+                                isCurrentDay ? "text-red-500" : "text-white"
+                              )}>
+                                {format(day, 'd')}
+                              </span>
+                              
+                              {dayHasEvents && (
+                                <span className={cn(
+                                  "flex items-center justify-center text-[10px] font-bold rounded-full w-4 h-4 mt-1",
+                                  isSelected ? "bg-white text-black" : "bg-red-500 text-white"
+                                )}>
+                                  {eventCount}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+                
+                {/* Event details panel */}
+                <div className="w-full md:w-2/5 mt-6 md:mt-0">
+                  {selectedDate && !showFavorites ? (
+                    // If a date is selected but no specific event, show the event list for that day
+                    filteredEvents.length > 0 ? (
+                      <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
+                        <h3 className="text-lg font-medium mb-4 text-white">
+                          {format(selectedDate, 'EEEE, d. MMMM', { locale: de })}
+                          {filter && <span className="ml-2 text-sm text-gray-400">({filter})</span>}
+                        </h3>
+                        <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin">
+                          {filteredEvents.map(event => (
+                            <EventCard
+                              key={event.id}
+                              event={event}
+                              onClick={() => setSelectedEvent(event)}
+                              onLike={handleLikeEvent}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="dark-glass-card rounded-2xl p-6 flex flex-col items-center justify-center h-[300px]">
+                        <CalendarIcon className="w-12 h-12 mb-4 text-gray-500" />
+                        <h3 className="text-xl font-medium text-white mb-2">Keine Events</h3>
+                        <p className="text-center text-gray-400">
+                          Für den {format(selectedDate, 'd. MMMM yyyy', { locale: de })} sind keine Events
+                          {filter ? ` in der Kategorie "${filter}"` : ''} geplant.
+                        </p>
+                        <Button
+                          className="mt-4 rounded-full"
+                          onClick={() => setShowEventForm(true)}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Event erstellen
+                        </Button>
+                      </div>
+                    )
+                  ) : selectedEvent ? (
+                    // If a specific event is selected, show its details
+                    <EventDetails
+                      event={selectedEvent}
+                      onClose={() => setSelectedEvent(null)}
+                      onLike={() => handleLikeEvent(selectedEvent.id)}
+                    />
+                  ) : (
+                    // Default state - no date selected
+                    <div className="dark-glass-card rounded-2xl p-6 flex flex-col items-center justify-center h-[300px]">
+                      <CalendarIcon className="w-12 h-12 mb-4 text-gray-500" />
+                      <h3 className="text-xl font-medium text-white mb-2">Event-Details</h3>
+                      <p className="text-center text-gray-400">
+                        Wähle ein Datum oder Event aus, um Details zu sehen.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default EventCalendar;
