@@ -7,19 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { type Event } from './EventCalendar';
+import { useEventContext } from '@/contexts/EventContext';
 
-interface ChatBotProps {
-  events: Event[];
-}
-
-interface Message {
-  id: string;
-  text: string;
-  isUser: boolean;
-  timestamp: Date;
-}
-
-const EventChatBot: React.FC<ChatBotProps> = ({ events }) => {
+// Remove the interface that accepted events as props
+const EventChatBot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -32,18 +23,28 @@ const EventChatBot: React.FC<ChatBotProps> = ({ events }) => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Get events from EventContext instead of props
+  const { events } = useEventContext();
+
+  interface Message {
+    id: string;
+    text: string;
+    isUser: boolean;
+    timestamp: Date;
+  }
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Debug log to verify events are being passed correctly
+  // Debug log to verify events are being received from context
   useEffect(() => {
-    console.log(`EventChatBot received ${events.length} events`);
+    console.log(`EventChatBot received ${events.length} events from context`);
     if (events.length > 0) {
       // Log a few events as a sample to verify data structure
-      console.log("Sample events:", events.slice(0, 3));
+      console.log("Sample events from context:", events.slice(0, 3));
     }
   }, [events]);
 
@@ -286,6 +287,19 @@ const generateResponse = (query: string, events: Event[]): string => {
         event.title.toLowerCase().includes(category)
       );
       return `${category.charAt(0).toUpperCase() + category.slice(1)}-Events:\n\n${formatEvents(categoryEvents)}`;
+    }
+  }
+
+  // Search for events by title keywords
+  const searchTerms = normalizedQuery.split(' ').filter(term => term.length > 3);
+  if (searchTerms.length > 0) {
+    const matchingEvents = events.filter(event => {
+      const eventTitle = event.title.toLowerCase();
+      return searchTerms.some(term => eventTitle.includes(term));
+    });
+    
+    if (matchingEvents.length > 0) {
+      return `Ich habe folgende Events gefunden, die zu deiner Suche passen:\n\n${formatEvents(matchingEvents)}`;
     }
   }
   

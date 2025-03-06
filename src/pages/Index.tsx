@@ -115,15 +115,16 @@ const Index = () => {
         {/* Live Ticker for all events */}
         <LiveTicker events={events} />
 
-        {/* Updated the background color to a soft gray for better text contrast */}
-        <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-6 rounded-t-lg shadow-inner mt-0">
-          <EventProvider>
+        {/* Wrap both EventCalendar and EventChatBot in the same EventProvider */}
+        <EventProvider>
+          {/* Updated the background color to a soft gray for better text contrast */}
+          <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-6 rounded-t-lg shadow-inner mt-0">
             <EventCalendar defaultView="list" />
-          </EventProvider>
-        </div>
-        
-        {/* Event Chat Bot - Pass events directly from state */}
-        <EventChatBot events={events} />
+          </div>
+          
+          {/* Event Chat Bot - Now using EventContext instead of direct props */}
+          <EventChatBot />
+        </EventProvider>
       </main>
     </div>
   );
