@@ -1,17 +1,18 @@
 
-import React, { useState, useEffect } from 'react';
-import { type Event } from './EventCalendar';
+import React, { useState } from 'react';
+import { type Event } from '../types/eventTypes';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, MapPin, User, Tag, X } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Heart, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 interface EventDetailsProps {
   event: Event;
   onClose: () => void;
+  onLike?: () => void;
 }
 
 const categoryColors: Record<string, string> = {
@@ -24,12 +25,18 @@ const categoryColors: Record<string, string> = {
   'Vortrag': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300',
 };
 
-const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose }) => {
+const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike }) => {
   const [isOpen, setIsOpen] = useState(true);
   
   const handleClose = () => {
     setIsOpen(false);
     setTimeout(onClose, 300); // Allow animation to complete
+  };
+
+  const handleLike = () => {
+    if (onLike) {
+      onLike();
+    }
   };
   
   // Format the date for display
@@ -89,8 +96,18 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose }) => {
           </div>
         </div>
         
-        <DialogFooter>
-          <Button onClick={handleClose} className="w-full sm:w-auto rounded-full">
+        <DialogFooter className="flex justify-between">
+          {onLike && (
+            <Button 
+              onClick={handleLike} 
+              variant="outline"
+              className="flex items-center gap-2 rounded-full"
+            >
+              <Heart className={cn("h-4 w-4", event.likes && event.likes > 0 ? "fill-red-500 text-red-500" : "")} />
+              Gefällt mir {event.likes && event.likes > 0 ? `(${event.likes})` : ''}
+            </Button>
+          )}
+          <Button onClick={handleClose} className="rounded-full">
             Schließen
           </Button>
         </DialogFooter>
