@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays } from 'date-fns';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, parseISO, isToday, parse, addDays, startOfDay } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, Music, PartyPopper, Image, Dumbbell, Map, CalendarIcon, List, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -42,7 +43,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   // State variables
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<Event[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date()); // Initialize with today's date
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState<string | null>(null);
@@ -56,7 +57,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     const savedLikes = localStorage.getItem('eventLikes');
     return savedLikes ? JSON.parse(savedLikes) : {};
   });
-  
+
   // Lade Events aus Supabase und externe Events beim Start
   useEffect(() => {
     fetchSupabaseEvents();
@@ -402,10 +403,34 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   // Filter events for the selected date and category filter
   const filteredEvents = selectedDate 
     ? events.filter(event => {
-        const sameDay = isSameDay(parseISO(event.date), selectedDate);
-        return filter ? (sameDay && event.category === filter) : sameDay;
+        try {
+          // Normalize both dates to the start of day to avoid time-related comparison issues
+          const eventDate = startOfDay(parseISO(event.date));
+          const selectedDateStart = startOfDay(selectedDate);
+          
+          // Debug logging to help diagnose the issue
+          const sameDay = isSameDay(eventDate, selectedDateStart);
+          
+          console.log(`Event date comparison:`, {
+            eventId: event.id,
+            eventTitle: event.title,
+            eventDate: event.date,
+            parsedEventDate: eventDate.toISOString(),
+            selectedDate: selectedDateStart.toISOString(),
+            sameDay: sameDay
+          });
+          
+          // Apply category filter if present
+          return filter ? (sameDay && event.category === filter) : sameDay;
+        } catch (error) {
+          console.error(`Error comparing dates for event ${event.title}:`, error);
+          return false;
+        }
       })
     : [];
+
+  // Log filtered events for debugging
+  console.log(`Found ${filteredEvents.length} events for selected date: ${selectedDate?.toISOString()}`);
 
   // Get user's favorite events (events with likes)
   const favoriteEvents = events.filter(event => {
@@ -461,7 +486,10 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   
   // Handler for selecting a date
   const handleDateClick = (day: Date) => {
-    setSelectedDate(day);
+    // Make sure to set the selected date to the beginning of the day to avoid time-related comparison issues
+    const dayStart = startOfDay(day);
+    console.log(`Selecting date: ${dayStart.toISOString()}`);
+    setSelectedDate(dayStart);
     setSelectedEvent(null);
   };
   
@@ -490,12 +518,28 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
 
   // Check if a day has events
   const hasEvents = (day: Date) => {
-    return events.some(event => isSameDay(parseISO(event.date), day));
+    return events.some(event => {
+      try {
+        const eventDate = parseISO(event.date);
+        return isSameDay(eventDate, day);
+      } catch (error) {
+        console.error(`Error in hasEvents for day ${day.toISOString()}:`, error);
+        return false;
+      }
+    });
   };
 
   // Get event count for a specific day
   const getEventCount = (day: Date) => {
-    return events.filter(event => isSameDay(parseISO(event.date), day)).length;
+    return events.filter(event => {
+      try {
+        const eventDate = parseISO(event.date);
+        return isSameDay(eventDate, day);
+      } catch (error) {
+        console.error(`Error in getEventCount for day ${day.toISOString()}:`, error);
+        return false;
+      }
+    }).length;
   };
 
   // Toggle category filter

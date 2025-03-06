@@ -20,6 +20,7 @@ const Index = () => {
     // First try to get events from Supabase
     const fetchEvents = async () => {
       try {
+        console.log('Fetching events from Supabase...');
         const { data, error } = await supabase
           .from('community_events')
           .select('*')
