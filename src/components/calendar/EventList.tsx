@@ -28,11 +28,15 @@ const EventList: React.FC<EventListProps> = ({
   useEffect(() => {
     // Scroll to today's section when component mounts or when events/favorites change
     if (todayRef.current && listRef.current && !showFavorites) {
-      // Use a small delay to ensure the component is fully rendered
+      // Use a longer delay to ensure the component is fully rendered
+      // and make the scrolling smoother
       const timer = setTimeout(() => {
-        todayRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
+        todayRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
         console.log('Scrolling to today');
-      }, 100);
+      }, 300);
       
       return () => clearTimeout(timer);
     }
