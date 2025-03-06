@@ -33,3 +33,14 @@ export const formatDateForDisplay = (date: Date, formatString: string, locale: L
 export const isDateToday = (date: Date): boolean => {
   return isToday(date);
 };
+
+// Debug function to help diagnose date issues
+export const debugDate = (date: Date | string, label: string = "Date"): void => {
+  try {
+    const dateObj = typeof date === 'string' ? parseISO(date) : date;
+    console.log(`${label}: ${dateObj.toISOString()} (${format(dateObj, 'yyyy-MM-dd')})`);
+  } catch (error) {
+    console.error(`Error debugging ${label}:`, error, date);
+  }
+};
+

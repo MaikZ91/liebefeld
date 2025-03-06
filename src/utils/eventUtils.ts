@@ -1,5 +1,6 @@
+
 import { Event, GitHubEvent } from '../types/eventTypes';
-import { parseAndNormalizeDate } from './dateUtils';
+import { parseAndNormalizeDate, debugDate } from './dateUtils';
 import { format, isSameDay, isSameMonth, startOfDay } from 'date-fns';
 
 // Determine event category based on keywords in title
@@ -27,14 +28,21 @@ export const determineEventCategory = (title: string): string => {
 
 // Get events for a specific day
 export const getEventsForDay = (events: Event[], day: Date, filter: string | null = null): Event[] => {
-  return events.filter(event => {
+  console.log(`Checking events for day: ${day.toISOString()}`);
+  
+  const result = events.filter(event => {
     try {
       if (!event.date) return false;
       const eventDate = parseAndNormalizeDate(event.date);
       const normalizedDay = startOfDay(day);
       
+      // For debugging
+      debugDate(eventDate, `Event date for ${event.title}`);
+      debugDate(normalizedDay, "Target day");
+      
       // Check if dates are the same day
       const sameDay = isSameDay(eventDate, normalizedDay);
+      console.log(`${event.title}: Same day? ${sameDay ? 'YES' : 'NO'}`);
       
       // Apply category filter if present
       return filter ? (sameDay && event.category === filter) : sameDay;
@@ -43,6 +51,9 @@ export const getEventsForDay = (events: Event[], day: Date, filter: string | nul
       return false;
     }
   });
+  
+  console.log(`Found ${result.length} events for ${day.toISOString()}`);
+  return result;
 };
 
 // Check if a day has events
@@ -139,6 +150,8 @@ export const transformGitHubEvents = (
   eventLikes: Record<string, number>,
   currentYear: number
 ): Event[] => {
+  console.log(`Transforming ${githubEvents.length} GitHub events, current year: ${currentYear}`);
+  
   return githubEvents.map((githubEvent, index) => {
     // Extract location from event title (if available)
     let title = githubEvent.event;
@@ -153,23 +166,39 @@ export const transformGitHubEvents = (
       location = locationMatch[1];
     }
     
-    // Parse the date (Format: "Fri, 04.04")
+    // Parse the date (Format: "Fri, 04.04" or similar)
     let eventDate;
     try {
+      // Log the original date string
+      console.log(`Parsing date: ${githubEvent.date} for event: ${title}`);
+      
       // Extract the day of week and date part
       const dateParts = githubEvent.date.split(', ');
+      if (dateParts.length < 2) {
+        throw new Error(`Invalid date format: ${githubEvent.date}`);
+      }
+      
       const dateNumbers = dateParts[1].split('.'); // e.g., ["04", "04"]
+      if (dateNumbers.length < 2) {
+        throw new Error(`Invalid date format: ${dateParts[1]}`);
+      }
       
       // Parse day and month numbers
       const day = parseInt(dateNumbers[0], 10);
       const month = parseInt(dateNumbers[1], 10) - 1; // JavaScript months are 0-indexed
       
       // Create date with current year
+      const now = new Date();
       eventDate = new Date(Date.UTC(currentYear, month, day));
       
-      // If the date is in the past, add a year (for events happening next year)
-      if (eventDate < new Date() && month < 6) { // Only for first half of the year
+      // For debugging
+      console.log(`Parsed date: ${eventDate.toISOString()} (${day}.${month+1}.${currentYear})`);
+      
+      // If the date is in the past, check if it's likely for next year
+      // (this handles events listed for later in the year when we're in early months)
+      if (eventDate < now && month < 6) { // Only for first half of the year
         eventDate.setFullYear(currentYear + 1);
+        console.log(`Date adjusted to next year: ${eventDate.toISOString()}`);
       }
     } catch (err) {
       console.warn(`Konnte Datum nicht parsen: ${githubEvent.date}`, err);
@@ -180,12 +209,15 @@ export const transformGitHubEvents = (
     const eventId = `github-${index}`;
     const likesCount = eventLikes[eventId] || 0;
     
+    const formattedDate = format(eventDate, 'yyyy-MM-dd');
+    console.log(`Event ${title} formatted date: ${formattedDate}`);
+    
     // Create and return the event object
     return {
       id: eventId,
       title: title,
       description: `Mehr Informationen unter: ${githubEvent.link}`,
-      date: format(eventDate, 'yyyy-MM-dd'),
+      date: formattedDate,
       time: "19:00", // Default time for events without time
       location: location,
       organizer: "Liebefeld Community Bielefeld",

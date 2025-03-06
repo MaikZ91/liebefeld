@@ -42,17 +42,15 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return savedLikes ? JSON.parse(savedLikes) : {};
   });
 
-  // Load events on component mount
-  useEffect(() => {
-    refreshEvents();
-  }, []);
-
   // Function to refresh events
   const refreshEvents = async () => {
     setIsLoading(true);
     try {
+      console.log('Refreshing events...');
+      
       // Load events from Supabase
       const supabaseEvents = await fetchSupabaseEvents();
+      console.log(`Loaded ${supabaseEvents.length} events from Supabase`);
       
       // Load GitHub likes
       const githubLikes = await fetchGitHubLikes();
@@ -66,6 +64,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       // Load external events
       const externalEvents = await fetchExternalEvents(eventLikes);
+      console.log(`Loaded ${externalEvents.length} external events`);
       
       // Combine events, ensuring no duplicates
       const combinedEvents = [...supabaseEvents];
@@ -77,8 +76,11 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }
       });
       
+      console.log(`Combined ${combinedEvents.length} total events`);
+      
       // If no events were loaded, use example data
       if (combinedEvents.length === 0) {
+        console.log('No events found, using example data');
         setEvents(bielefeldEvents);
       } else {
         setEvents(combinedEvents);
@@ -91,6 +93,11 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setIsLoading(false);
     }
   };
+
+  // Load events on component mount
+  useEffect(() => {
+    refreshEvents();
+  }, []);
 
   // Handle like functionality
   const handleLikeEvent = async (eventId: string) => {
