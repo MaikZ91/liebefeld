@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -44,7 +45,8 @@ const EventCalendarInner = ({ defaultView = "list" }: EventCalendarProps) => {
     handleLikeEvent,
     showFavorites,
     setShowFavorites,
-    eventLikes
+    eventLikes,
+    refreshEvents
   } = useEventContext();
 
   // Local state
@@ -99,9 +101,7 @@ const EventCalendarInner = ({ defaultView = "list" }: EventCalendarProps) => {
         likes: 0
       };
       
-      // We don't have direct access to setEvents from context here
-      // Instead, we'll refresh events via the context
-      const { refreshEvents } = useEventContext();
+      // Refresh events after adding a new one
       refreshEvents();
       
       // Hide form after successful submission
@@ -237,7 +237,7 @@ const EventCalendarInner = ({ defaultView = "list" }: EventCalendarProps) => {
   );
 };
 
-// Ensure the EventProvider wraps the component that uses the context
+// This component wrapper ensures proper context nesting
 const EventCalendar = (props: EventCalendarProps) => (
   <EventProvider>
     <EventCalendarInner {...props} />
