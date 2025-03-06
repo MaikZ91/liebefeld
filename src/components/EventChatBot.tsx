@@ -14,7 +14,7 @@ const EventChatBot: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
-      text: 'Hallo! Ich bin dein Event-Assistent. Du kannst mich fragen, was heute oder am Wochenende los ist. Zum Beispiel: "Was geht am Wochenende?" oder "Welche Events gibt es morgen?"',
+      text: 'Willkommen beim Liebefeld Event-Assistent! 👋<br><br>Ich halte dich über alle spannenden Veranstaltungen in Liebefeld auf dem Laufenden. Frag mich einfach nach Events, z.B.:<br>• "Was ist heute los?"<br>• "Zeige mir alle Events am Wochenende"<br>• "Gibt es Konzerte in dieser Woche?"',
       isUser: false,
       timestamp: new Date()
     }
@@ -73,17 +73,17 @@ const EventChatBot: React.FC = () => {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button 
-          className="fixed right-4 bottom-4 rounded-full w-12 h-12 shadow-lg bg-red-600 hover:bg-red-700"
+          className="fixed right-4 bottom-4 rounded-full w-12 h-12 shadow-lg bg-red-600 hover:bg-red-700 flex items-center justify-center"
           aria-label="Event Chat"
         >
-          <MessageCircle />
+          <MessageCircle className="h-6 w-6" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] h-[600px] flex flex-col p-0 gap-0 rounded-xl bg-[#1A1D2D] text-white border-gray-800">
         <div className="flex items-center justify-between p-4 border-b border-gray-800 bg-[#131722] rounded-t-xl">
           <div className="flex items-center">
             <Calendar className="mr-2 h-5 w-5 text-red-500" />
-            <h3 className="font-semibold">Event-Assistent</h3>
+            <h3 className="font-semibold">Liebefeld Event-Assistent</h3>
           </div>
           <Button
             variant="ghost"
@@ -133,7 +133,7 @@ const EventChatBot: React.FC = () => {
           <div className="flex items-center space-x-2">
             <Input
               type="text"
-              placeholder="Frag mich etwas zu den Events..."
+              placeholder="Frag mich nach Liebefeld Events..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
