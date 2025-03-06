@@ -176,12 +176,19 @@ const generateResponse = (query: string, events: Event[]): string => {
 
     return filteredEvents
       .slice(0, 5) // Limit to 5 events to avoid too long responses
-      .map((event) => {
+      .map((event, index) => {
         const date = parseISO(event.date);
         const formattedDate = format(date, 'dd.MM. (EEEE)', { locale: de });
-        return `- ${event.title} am ${formattedDate} um ${event.time} Uhr in ${event.location || 'k.A.'}`;
+        
+        // Create a more readable format with emojis and better spacing
+        return `📅 **${event.title}**\n   📍 ${event.location || 'k.A.'}\n   🕒 ${formattedDate}, ${event.time} Uhr\n   ${event.category ? `🏷️ ${event.category}` : ''}\n`;
       })
-      .join("\n\n") + (filteredEvents.length > 5 ? `\n\nUnd ${filteredEvents.length - 5} weitere Events...` : "");
+      .join("\n") + (filteredEvents.length > 5 ? `\n\n...und ${filteredEvents.length - 5} weitere Events.` : "");
+  };
+
+  // Response header function to create consistent styling
+  const createResponseHeader = (title: string) => {
+    return `🔍 **${title}**\n\n`;
   };
 
   // Check for today's events
@@ -195,7 +202,7 @@ const generateResponse = (query: string, events: Event[]): string => {
         return false;
       }
     });
-    return `Heute (${format(today, 'dd.MM.', { locale: de })}) gibt es folgende Events:\n\n${formatEvents(todayEvents)}`;
+    return `${createResponseHeader(`Events heute (${format(today, 'dd.MM.', { locale: de })}):`)}${formatEvents(todayEvents)}`;
   }
   
   // Check for tomorrow's events
@@ -209,7 +216,7 @@ const generateResponse = (query: string, events: Event[]): string => {
         return false;
       }
     });
-    return `Morgen (${format(addDays(today, 1), 'dd.MM.', { locale: de })}) gibt es folgende Events:\n\n${formatEvents(tomorrowEvents)}`;
+    return `${createResponseHeader(`Events morgen (${format(addDays(today, 1), 'dd.MM.', { locale: de })}):`)}${formatEvents(tomorrowEvents)}`;
   }
   
   // Check for weekend events
@@ -244,7 +251,7 @@ const generateResponse = (query: string, events: Event[]): string => {
     });
     
     const weekendLabel = isNextWeekendQuery ? 'nächsten' : 'diesen';
-    return `Am ${weekendLabel} Wochenende (${format(weekendStart, 'dd.MM.', { locale: de })} - ${format(weekendEnd, 'dd.MM.', { locale: de })}) gibt es folgende Events:\n\n${formatEvents(weekendEvents)}`;
+    return `${createResponseHeader(`Events am ${weekendLabel} Wochenende (${format(weekendStart, 'dd.MM.', { locale: de })} - ${format(weekendEnd, 'dd.MM.', { locale: de })}):`)}${formatEvents(weekendEvents)}`;
   }
   
   // Check for this week events
@@ -258,7 +265,7 @@ const generateResponse = (query: string, events: Event[]): string => {
         return false;
       }
     });
-    return `Diese Woche gibt es folgende Events:\n\n${formatEvents(thisWeekEvents)}`;
+    return `${createResponseHeader("Events diese Woche:")}${formatEvents(thisWeekEvents)}`;
   }
   
   // Check for next week events
@@ -275,7 +282,7 @@ const generateResponse = (query: string, events: Event[]): string => {
         return false;
       }
     });
-    return `Nächste Woche gibt es folgende Events:\n\n${formatEvents(nextWeekEvents)}`;
+    return `${createResponseHeader("Events nächste Woche:")}${formatEvents(nextWeekEvents)}`;
   }
   
   // Check for events by category
@@ -283,10 +290,10 @@ const generateResponse = (query: string, events: Event[]): string => {
   for (const category of categories) {
     if (normalizedQuery.includes(category)) {
       const categoryEvents = events.filter(event => 
-        event.category.toLowerCase() === category || 
+        event.category?.toLowerCase() === category || 
         event.title.toLowerCase().includes(category)
       );
-      return `${category.charAt(0).toUpperCase() + category.slice(1)}-Events:\n\n${formatEvents(categoryEvents)}`;
+      return `${createResponseHeader(`${category.charAt(0).toUpperCase() + category.slice(1)}-Events:`)}${formatEvents(categoryEvents)}`;
     }
   }
 
@@ -299,12 +306,12 @@ const generateResponse = (query: string, events: Event[]): string => {
     });
     
     if (matchingEvents.length > 0) {
-      return `Ich habe folgende Events gefunden, die zu deiner Suche passen:\n\n${formatEvents(matchingEvents)}`;
+      return `${createResponseHeader("Gefundene Events:")}${formatEvents(matchingEvents)}`;
     }
   }
   
   // Default response for unrecognized queries
-  return "Ich verstehe deine Frage leider nicht ganz. Du kannst mich zum Beispiel fragen: 'Was geht heute?', 'Was ist am Wochenende los?' oder 'Welche Events gibt es nächste Woche?'";
+  return "❓ **Ich verstehe deine Frage leider nicht ganz.**\n\nDu kannst mich zum Beispiel fragen:\n- \"Was geht heute?\"\n- \"Was ist am Wochenende los?\"\n- \"Welche Events gibt es nächste Woche?\"\n- \"Gibt es Konzerte diese Woche?\"";
 };
 
 export default EventChatBot;
