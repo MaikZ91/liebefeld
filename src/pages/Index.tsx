@@ -19,7 +19,6 @@ const Index = () => {
   useEffect(() => {
     // First try to get events from Supabase
     const fetchEvents = async () => {
-      console.log("Index: Fetching events...");
       try {
         const { data, error } = await supabase
           .from('community_events')
@@ -40,8 +39,6 @@ const Index = () => {
           if (savedEvents) {
             console.log('Loading events from localStorage as fallback');
             setEvents(JSON.parse(savedEvents));
-          } else {
-            console.log('No events found in Supabase or localStorage');
           }
         }
       } catch (err) {
@@ -92,7 +89,7 @@ const Index = () => {
             </h1>
             <p className="text-xl md:text-2xl text-center max-w-2xl mb-6">
               Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
-              <span className="inline-block animate-pulse text-red-500">❤</span>
+              <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
             </p>
             
             {/* WhatsApp Community Button */}

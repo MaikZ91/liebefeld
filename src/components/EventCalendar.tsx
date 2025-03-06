@@ -11,6 +11,7 @@ import { toast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 
+// Type definitions
 export interface Event {
   id: string;
   title: string;
@@ -24,6 +25,7 @@ export interface Event {
   link?: string;
 }
 
+// URL zur JSON-Datei mit Events
 const EXTERNAL_EVENTS_URL = "https://raw.githubusercontent.com/MaikZ91/productiontools/master/events.json";
 
 interface GitHubEvent {
@@ -37,6 +39,7 @@ interface EventCalendarProps {
 }
 
 const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
+  // State variables
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -48,32 +51,24 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   const [showEventForm, setShowEventForm] = useState(false);
   const [showFavorites, setShowFavorites] = useState(false);
   
+  // Use this state only for initial loading to avoid flickering
   const [eventLikes, setEventLikes] = useState<Record<string, number>>(() => {
     const savedLikes = localStorage.getItem('eventLikes');
     return savedLikes ? JSON.parse(savedLikes) : {};
   });
-
+  
+  // Lade Events aus Supabase und externe Events beim Start
   useEffect(() => {
-    console.log("EventCalendar: Initial loading...");
-    const fetchEvents = async () => {
-      await fetchSupabaseEvents();
-      await fetchExternalEvents(true);
-    };
-    
-    fetchEvents();
-    
-    // Set today as the initial selected date
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    console.log('Setting initial selected date to today:', today);
-    setSelectedDate(today);
-    
+    fetchSupabaseEvents();
+    fetchExternalEvents(true);
     setIsInitialLoad(false);
   }, []);
 
+  // Funktion zum Laden der Events aus Supabase
   const fetchSupabaseEvents = async () => {
     setIsLoading(true);
     try {
+      // Fetch all events including GitHub-sourced events
       const { data: eventsData, error: eventsError } = await supabase
         .from('community_events')
         .select('*');
@@ -82,6 +77,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         throw eventsError;
       }
       
+      // Fetch GitHub event likes from separate table
       const { data: githubLikesData, error: githubLikesError } = await supabase
         .from('github_event_likes')
         .select('*');
@@ -90,6 +86,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         console.error('Error loading GitHub likes:', githubLikesError);
       }
       
+      // Create a map of GitHub event likes
       const githubLikesMap: Record<string, number> = {};
       if (githubLikesData) {
         githubLikesData.forEach(like => {
@@ -99,24 +96,28 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       
       if (eventsData) {
         console.log('Loaded events from Supabase:', eventsData);
+        // Konvertiere Supabase UUIDs zu Strings und kombiniere mit existierenden Events
         const supabaseEvents = eventsData.map(event => ({
           ...event,
           id: event.id.toString()
         }));
         
         setEvents(prevEvents => {
+          // Entferne Duplikate (Events mit gleicher ID)
           const filteredEvents = prevEvents.filter(
             event => !supabaseEvents.some(supaEvent => supaEvent.id === event.id)
           );
           return [...filteredEvents, ...supabaseEvents];
         });
         
+        // Update local storage with GitHub likes for a smooth experience
         if (githubLikesData && githubLikesData.length > 0) {
           setEventLikes(prev => ({
             ...prev,
             ...githubLikesMap
           }));
           
+          // Also update localStorage for immediate use
           localStorage.setItem('eventLikes', JSON.stringify({
             ...eventLikes,
             ...githubLikesMap
@@ -125,11 +126,13 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       }
     } catch (error) {
       console.error('Error loading events from Supabase:', error);
+      // Removed toast notification
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Funktion zum Laden externer Events
   const fetchExternalEvents = async (isInitialLoad = false) => {
     setIsLoading(true);
     
@@ -145,23 +148,32 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       const githubEvents: GitHubEvent[] = await response.json();
       console.log(`Successfully loaded ${githubEvents.length} events from ${EXTERNAL_EVENTS_URL}`);
       
+      // Transformiere die GitHub-Events in das interne Format
       processGitHubEvents(githubEvents, isInitialLoad);
+      
     } catch (error) {
       console.error(`Fehler beim Laden von ${EXTERNAL_EVENTS_URL}:`, error);
+      // Verwende Beispieldaten
       console.log("Verwende lokale Beispieldaten, da keine externe Quelle verfügbar ist.");
       setEvents(prevEvents => {
+        // Keep only events that are not from the example data
         const userEvents = prevEvents.filter(event => !bielefeldEvents.some(bEvent => bEvent.id === event.id));
         return [...userEvents, ...bielefeldEvents];
       });
+      
+      // Removed toast notification
     }
     
     setIsLoading(false);
   };
-
+  
+  // Verarbeite die GitHub-Events
   const processGitHubEvents = async (githubEvents: GitHubEvent[], isInitialLoad = false) => {
     try {
+      // Aktuelles Jahr für die Datumskonvertierung
       const currentYear = new Date().getFullYear();
       
+      // Fetch GitHub event likes from database
       const { data: githubLikesData, error: githubLikesError } = await supabase
         .from('github_event_likes')
         .select('*');
@@ -170,6 +182,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         console.error('Error loading GitHub likes:', githubLikesError);
       }
       
+      // Create a map of GitHub event likes
       const githubLikesMap: Record<string, number> = {};
       if (githubLikesData) {
         githubLikesData.forEach(like => {
@@ -177,48 +190,58 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         });
       }
       
+      // Transformiere GitHub-Events in das interne Format
       const transformedEvents = githubEvents.map((githubEvent, index) => {
+        // Extrahiere Veranstaltungsort aus dem Event-Titel (falls vorhanden)
         let title = githubEvent.event;
         let location = "Bielefeld";
         let category = determineEventCategory(githubEvent.event.toLowerCase());
         
+        // Überprüfe, ob es eine Standortangabe in Klammern gibt
         const locationMatch = githubEvent.event.match(/\(@([^)]+)\)/);
         if (locationMatch) {
+          // Entferne die Standortangabe aus dem Titel
           title = githubEvent.event.replace(/\s*\(@[^)]+\)/, '');
           location = locationMatch[1];
         }
         
+        // Parse das Datum (Format: "Fri, 04.04")
         let eventDate;
         try {
+          // Extract the day of week and date part
           const dateParts = githubEvent.date.split(', ');
-          const dayOfWeek = dateParts[0];
-          const dateNumbers = dateParts[1].split('.');
+          const dayOfWeek = dateParts[0]; // e.g., "Fri"
+          const dateNumbers = dateParts[1].split('.'); // e.g., ["04", "04"]
           
+          // Parse day and month numbers
           const day = parseInt(dateNumbers[0], 10);
-          const month = parseInt(dateNumbers[1], 10) - 1;
+          const month = parseInt(dateNumbers[1], 10) - 1; // JavaScript months are 0-indexed
           
+          // Create date with current year - FIXED: Use UTC to avoid timezone issues
           eventDate = new Date(Date.UTC(currentYear, month, day));
           
-          if (eventDate < new Date() && month < 6) {
+          // If the date is in the past, add a year (for events happening next year)
+          if (eventDate < new Date() && month < 6) { // Only for first half of the year
             eventDate.setFullYear(currentYear + 1);
           }
-          
-          console.log(`Parsed GitHub event date: ${githubEvent.date} -> ${format(eventDate, 'yyyy-MM-dd')}`);
         } catch (err) {
-          console.warn(`Could not parse date: ${githubEvent.date}`, err);
+          console.warn(`Konnte Datum nicht parsen: ${githubEvent.date}`, err);
+          // Fallback to today's date
           eventDate = new Date();
         }
         
         const eventId = `github-${index}`;
         
+        // Get likes from database or fallback to stored values
         const likesCount = githubLikesMap[eventId] !== undefined ? githubLikesMap[eventId] : (eventLikes[eventId] || 0);
         
+        // Erstelle das Event-Objekt und FIXED: Format the date correctly
         return {
           id: eventId,
           title: title,
           description: `Mehr Informationen unter: ${githubEvent.link}`,
-          date: format(eventDate, 'yyyy-MM-dd'),
-          time: "19:00",
+          date: format(eventDate, 'yyyy-MM-dd'), // Properly format as YYYY-MM-DD
+          time: "19:00", // Default-Zeit für Events ohne Zeitangabe
           location: location,
           organizer: "Liebefeld Community Bielefeld",
           category: category,
@@ -227,8 +250,9 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         } as Event;
       });
       
-      console.log(`Transformed ${transformedEvents.length} GitHub events successfully`);
+      console.log(`Transformed ${transformedEvents.length} events successfully`);
       
+      // Update local map with database values
       const newLikesMap: Record<string, number> = {...eventLikes};
       transformedEvents.forEach(event => {
         if (githubLikesMap[event.id] !== undefined) {
@@ -239,21 +263,27 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       setEventLikes(newLikesMap);
       localStorage.setItem('eventLikes', JSON.stringify(newLikesMap));
       
+      // Merge with user-created events (non-GitHub events)
       setEvents(prevEvents => {
+        // Filter out GitHub events and keep user-created events
         const userEvents = prevEvents.filter(event => !event.id.startsWith('github-'));
-        const combined = [...userEvents, ...transformedEvents];
-        console.log(`Total combined events: ${combined.length} (${userEvents.length} user events + ${transformedEvents.length} GitHub events)`);
-        return combined;
+        return [...userEvents, ...transformedEvents];
       });
+      
+      // Removed toast notification
     } catch (error) {
-      console.error("Error processing GitHub events:", error);
+      console.error("Fehler bei der Verarbeitung der GitHub-Events:", error);
       setEvents(prevEvents => {
+        // Keep only events that are not from the example data
         const userEvents = prevEvents.filter(event => !bielefeldEvents.some(bEvent => bEvent.id === event.id));
         return [...userEvents, ...bielefeldEvents];
       });
+      
+      // Removed toast notification
     }
   };
 
+  // Bestimme Kategorie basierend auf Schlüsselwörtern im Titel
   const determineEventCategory = (title: string): string => {
     if (title.includes("konzert") || title.includes("festival") || title.includes("musik") || 
         title.includes("band") || title.includes("jazz") || title.includes("chor")) {
@@ -276,8 +306,10 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     }
   };
 
+  // Handle like functionality
   const handleLikeEvent = async (eventId: string) => {
     try {
+      // Update the likes in our separate state for immediate UI update
       setEventLikes(prev => {
         const currentLikes = prev[eventId] || 0;
         const updatedLikes = {
@@ -285,10 +317,12 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           [eventId]: currentLikes + 1
         };
         
+        // Update localStorage too
         localStorage.setItem('eventLikes', JSON.stringify(updatedLikes));
         return updatedLikes;
       });
       
+      // Also update the likes in the events array for immediate UI update
       setEvents(prevEvents => 
         prevEvents.map(event => 
           event.id === eventId 
@@ -297,19 +331,46 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         )
       );
       
+      // If this is a GitHub event, update likes in github_event_likes table
       if (eventId.startsWith('github-')) {
         const currentLikesValue = eventLikes[eventId] || 0;
         const newLikesValue = currentLikesValue + 1;
         
-        const { error: updateError } = await supabase
+        // Check if the record already exists
+        const { data: existingLike, error: checkError } = await supabase
           .from('github_event_likes')
-          .update({ likes: newLikesValue })
-          .eq('event_id', eventId);
-          
-        if (updateError) {
-          console.error('Error updating GitHub event likes:', updateError);
+          .select('*')
+          .eq('event_id', eventId)
+          .single();
+        
+        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means no rows returned
+          console.error('Error checking if GitHub like exists:', checkError);
         }
-      } else if (!eventId.startsWith('github-')) {
+        
+        if (existingLike) {
+          // Update existing record
+          const { error: updateError } = await supabase
+            .from('github_event_likes')
+            .update({ likes: newLikesValue })
+            .eq('event_id', eventId);
+            
+          if (updateError) {
+            console.error('Error updating GitHub event likes:', updateError);
+          }
+        } else {
+          // Insert new record
+          const { error: insertError } = await supabase
+            .from('github_event_likes')
+            .insert({ event_id: eventId, likes: newLikesValue });
+            
+          if (insertError) {
+            console.error('Error inserting GitHub event likes:', insertError);
+          }
+        }
+      } 
+      // If this is a Supabase event (not a github-* event), update the likes in Supabase
+      else if (!eventId.startsWith('github-')) {
+        // Find the current event to get the updated likes count
         const currentEvent = events.find(event => event.id === eventId);
         if (currentEvent) {
           const updatedLikes = (currentEvent.likes || 0) + 1;
@@ -329,75 +390,52 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     }
   };
 
+  // Calendar navigation functions
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   
+  // Generate days for the current month view
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
   
-  console.log('Current date:', format(currentDate, 'yyyy-MM-dd'));
-  console.log('Selected date:', selectedDate ? format(selectedDate, 'yyyy-MM-dd') : 'null');
-  console.log('Today date:', format(new Date(), 'yyyy-MM-dd'));
-  
+  // Filter events for the selected date and category filter
   const filteredEvents = selectedDate 
     ? events.filter(event => {
-        try {
-          if (!event.date) {
-            console.warn('Event has no date property:', event);
-            return false;
-          }
-          
-          const eventDate = parseISO(event.date);
-          eventDate.setHours(0, 0, 0, 0);
-          
-          const selectedDateMidnight = new Date(selectedDate);
-          selectedDateMidnight.setHours(0, 0, 0, 0);
-          
-          console.log('Comparing event:', {
-            eventId: event.id,
-            eventTitle: event.title,
-            eventDate: format(eventDate, 'yyyy-MM-dd'),
-            selectedDate: format(selectedDateMidnight, 'yyyy-MM-dd'),
-            isMatch: isSameDay(eventDate, selectedDateMidnight)
-          });
-          
-          const matchesDay = isSameDay(eventDate, selectedDateMidnight);
-          const matchesFilter = filter ? event.category === filter : true;
-          
-          return matchesDay && matchesFilter;
-        } catch (error) {
-          console.error(`Error comparing dates for event ${event.id}:`, error);
-          return false;
-        }
+        const sameDay = isSameDay(parseISO(event.date), selectedDate);
+        return filter ? (sameDay && event.category === filter) : sameDay;
       })
     : [];
 
+  // Get user's favorite events (events with likes)
   const favoriteEvents = events.filter(event => {
+    // For GitHub events
     if (event.id.startsWith('github-')) {
       return eventLikes[event.id] && eventLikes[event.id] > 0;
     }
+    // For regular events
     return event.likes && event.likes > 0;
   });
-
+  
+  // Get all events for the current month and sort by likes
   const currentMonthEvents = events
     .filter(event => {
-      try {
-        if (showFavorites) {
-          if (event.id.startsWith('github-')) {
-            return eventLikes[event.id] && eventLikes[event.id] > 0;
-          }
-          return event.likes && event.likes > 0;
+      // If viewing favorites, only show favorites regardless of month
+      if (showFavorites) {
+        // For GitHub events
+        if (event.id.startsWith('github-')) {
+          return eventLikes[event.id] && eventLikes[event.id] > 0;
         }
-        
-        const eventDate = parseISO(event.date);
-        return isSameMonth(eventDate, currentDate);
-      } catch (error) {
-        console.error(`Error filtering month events for event ${event.id}:`, error);
-        return false;
+        // For regular events
+        return event.likes && event.likes > 0;
       }
+      
+      // Otherwise filter by current month
+      const eventDate = parseISO(event.date);
+      return isSameMonth(eventDate, currentDate);
     })
     .sort((a, b) => {
+      // First sort by likes (descending)
       const likesA = a.likes || 0;
       const likesB = b.likes || 0;
       
@@ -405,16 +443,13 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
         return likesB - likesA;
       }
       
-      try {
-        const dateA = parseISO(a.date);
-        const dateB = parseISO(b.date);
-        return dateA.getTime() - dateB.getTime();
-      } catch (error) {
-        console.error('Error sorting events by date:', error);
-        return 0;
-      }
+      // Then by date (ascending)
+      const dateA = parseISO(a.date);
+      const dateB = parseISO(b.date);
+      return dateA.getTime() - dateB.getTime();
     });
-
+  
+  // Group events by date for the list view
   const eventsByDate = currentMonthEvents.reduce((acc, event) => {
     const dateStr = event.date;
     if (!acc[dateStr]) {
@@ -423,15 +458,17 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
     acc[dateStr].push(event);
     return acc;
   }, {} as Record<string, Event[]>);
-
+  
+  // Handler for selecting a date
   const handleDateClick = (day: Date) => {
-    console.log('Date clicked:', format(day, 'yyyy-MM-dd'));
     setSelectedDate(day);
     setSelectedEvent(null);
   };
-
+  
+  // Handler for adding a new event
   const handleAddEvent = async (newEvent: Omit<Event, 'id'>) => {
     try {
+      // Add the event to local state directly
       const tempId = `temp-${Math.random().toString(36).substring(2, 9)}`;
       const eventWithId = {
         ...newEvent,
@@ -441,50 +478,51 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
       
       setEvents(prevEvents => [...prevEvents, eventWithId]);
       
+      // Removed toast notification
+      
+      // Formular nach erfolgreichem Hinzufügen ausblenden
       setShowEventForm(false);
     } catch (error) {
       console.error('Error adding event:', error);
+      // Removed toast notification
     }
   };
 
+  // Check if a day has events
   const hasEvents = (day: Date) => {
-    return events.some(event => {
-      try {
-        const eventDate = parseISO(event.date);
-        return isSameDay(eventDate, day);
-      } catch (error) {
-        console.error(`Error checking if day has events: ${day}, event date: ${event.date}`, error);
-        return false;
-      }
-    });
+    return events.some(event => isSameDay(parseISO(event.date), day));
   };
 
+  // Get event count for a specific day
   const getEventCount = (day: Date) => {
-    return events.filter(event => {
-      try {
-        const eventDate = parseISO(event.date);
-        return isSameDay(eventDate, day);
-      } catch (error) {
-        console.error(`Error getting event count for day: ${day}, event date: ${event.date}`, error);
-        return false;
-      }
-    }).length;
+    return events.filter(event => isSameDay(parseISO(event.date), day)).length;
   };
 
+  // Toggle category filter
   const toggleFilter = (category: string) => {
     setFilter(current => current === category ? null : category);
   };
 
+  // Toggle favorites view
   const toggleFavorites = () => {
     setShowFavorites(prev => !prev);
     
+    // Reset date selection when toggling favorites
     if (!showFavorites) {
       setSelectedDate(null);
+      // Removed toast notification
+    } else {
+      // Removed toast notification
     }
+    
+    // Important: We don't change the view state here anymore
+    // This allows users to stay in their current view (list or calendar)
   };
 
+  // Get all unique categories from events
   const categories = Array.from(new Set(events.map(event => event.category)));
 
+  // Category icons mapping
   const categoryIcons = {
     "Konzert": <Music className="h-4 w-4" />,
     "Party": <PartyPopper className="h-4 w-4" />,
@@ -498,6 +536,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl animate-fade-in">
       <div className="flex flex-col space-y-6">
+        {/* Calendar header with month navigation */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center justify-between md:justify-start">
             <Button 
@@ -524,6 +563,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
+              {/* Favorites button positioned at the beginning of the filter list */}
               <Button 
                 className={cn(
                   "flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all",
@@ -567,10 +607,11 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           </div>
         </div>
         
+        {/* View toggle with Add Event button moved beside it */}
         <div className="flex justify-center items-center flex-col">
           <Tabs 
             defaultValue={view} 
-            value={view} 
+            value={view} // Explicitly set the current value
             onValueChange={(value) => setView(value as "calendar" | "list")} 
             className="flex flex-col items-center w-full"
           >
@@ -595,6 +636,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
               </Button>
             </div>
 
+            {/* Neues Event-Formular zwischen Menü und Kalender */}
             {showEventForm && (
               <div className="w-full mt-4 mb-4 dark-glass-card rounded-2xl p-6 animate-fade-down animate-duration-300">
                 <EventForm 
@@ -605,6 +647,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
               </div>
             )}
             
+            {/* Main calendar and list views */}
             <TabsContent value="list" className="w-full">
               <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
                 <div className="flex items-center justify-between mb-4">
@@ -677,6 +720,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                     </div>
                   ) : (
                     <>
+                      {/* Day names header */}
                       <div className="grid grid-cols-7 mb-4">
                         {['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'].map((day) => (
                           <div key={day} className="text-center font-medium text-gray-400">
@@ -685,6 +729,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                         ))}
                       </div>
                       
+                      {/* Calendar days */}
                       <div className="grid grid-cols-7 gap-2">
                         {daysInMonth.map((day, i) => {
                           const isSelected = selectedDate && isSameDay(day, selectedDate);
@@ -727,6 +772,7 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
                   )}
                 </div>
                 
+                {/* Event list for selected date */}
                 <div className="w-full md:w-2/5 dark-glass-card rounded-2xl p-6 overflow-hidden flex flex-col">
                   <h3 className="text-xl font-medium mb-4 text-white">
                     {showFavorites 
@@ -787,15 +833,19 @@ const EventCalendar = ({ defaultView = "calendar" }: EventCalendarProps) => {
           </Tabs>
         </div>
         
-        <EventDetails 
-          event={selectedEvent} 
-          onClose={() => setSelectedEvent(null)} 
-        />
+        {/* Event details modal */}
+        {selectedEvent && (
+          <EventDetails 
+            event={selectedEvent} 
+            onClose={() => setSelectedEvent(null)} 
+          />
+        )}
       </div>
     </div>
   );
 };
 
+// Sample data for initial display
 const bielefeldEvents: Event[] = [
   {
     id: '1',
