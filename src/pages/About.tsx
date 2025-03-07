@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { BadgeCheck, Calendar, Clock, Heart, Mail, MessageSquare, Users } from 'lucide-react';
+import { BadgeCheck, Calendar, Clock, Heart, Link, Mail, MapPin, MessageSquare, Users } from 'lucide-react';
 
 const About = () => {
   // Add smooth scroll-in animation effect on page load
@@ -19,9 +19,9 @@ const About = () => {
           <section className="mb-16">
             <div className="text-center mb-10">
               <span className="inline-block py-1 px-3 rounded-full bg-secondary text-sm font-medium mb-4">Über Uns</span>
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">Community Event Kalender</h1>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">THE TRIBE.BI</h1>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Ein Ort für gemeinsame Erlebnisse, Vernetzung und Wissensaustausch in unserer Community.
+                Wir verbinden Menschen im echten Leben und machen Bielefeld lebendiger!
               </p>
             </div>
           </section>
@@ -33,17 +33,21 @@ const About = () => {
                   <div>
                     <h2 className="text-2xl font-bold mb-3">Unsere Mission</h2>
                     <p className="text-muted-foreground">
-                      Wir möchten einen zentralen Ort schaffen, an dem Community-Mitglieder Events entdecken, 
-                      teilen und gemeinsam erleben können. Unser Kalender verbindet Menschen mit ähnlichen 
-                      Interessen und fördert den Austausch in der Gemeinschaft.
+                      Wir möchten Bielefeld lebendiger gestalten, indem wir Menschen im echten Leben zusammenbringen. 
+                      In einer Zeit, in der digitale Verbindungen oft unseren Alltag dominieren, schaffen wir 
+                      Möglichkeiten für authentische Begegnungen, gemeinsame Erlebnisse und den Aufbau einer 
+                      starken lokalen Gemeinschaft.
                     </p>
                   </div>
                   
                   <div>
                     <h2 className="text-2xl font-bold mb-3">Unsere Vision</h2>
                     <p className="text-muted-foreground">
-                      Eine lebendige Community, in der jeder willkommen ist, Ideen und Wissen zu teilen. 
-                      Wir träumen von einer Plattform, die Menschen zusammenbringt und gemeinsame Erlebnisse ermöglicht.
+                      Wir streben nach einer Stadt, in der Gemeinschaft wieder im Mittelpunkt steht. 
+                      Eine Stadt, in der Menschen verschiedener Hintergründe und Interessen zusammenkommen, 
+                      Ideen teilen und gemeinsam Bielefeld zu einem pulsierenden Ort machen. 
+                      Unser Kalender ist mehr als eine Plattform – er ist eine Einladung, Teil dieser 
+                      lebenswerten Gemeinschaft zu werden.
                     </p>
                   </div>
                 </div>
@@ -61,7 +65,7 @@ const About = () => {
                   <div className="absolute -bottom-5 -right-5 glass-card rounded-2xl p-4 shadow-lg animate-float">
                     <div className="flex items-center gap-2">
                       <Calendar className="text-primary h-5 w-5" />
-                      <p className="font-medium">Events verbinden uns</p>
+                      <p className="font-medium">Gemeinsam erleben</p>
                     </div>
                   </div>
                 </div>
@@ -87,11 +91,42 @@ const About = () => {
             </div>
           </section>
           
+          {/* Partner Section */}
+          <section className="mb-16">
+            <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">Unsere Partner</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center bg-white/50 rounded-xl p-8 shadow-sm border border-white/30">
+              <div>
+                <h3 className="text-xl font-bold mb-4">Social Tides</h3>
+                <p className="text-muted-foreground mb-4">
+                  Gemeinsam mit Social Tides arbeiten wir daran, Bielefeld zu verbinden und lokale Gemeinschaften zu stärken. 
+                  Mit Unterstützung durch Google.org schaffen wir neue Wege, um Menschen zusammenzubringen und positive 
+                  Veränderungen in unserer Stadt zu bewirken.
+                </p>
+                <Button variant="outline" className="rounded-full gap-2">
+                  <Link className="h-4 w-4" />
+                  Mehr erfahren
+                </Button>
+              </div>
+              
+              <div className="flex justify-center">
+                <div className="glass-card p-6 rounded-xl hover-scale">
+                  <img 
+                    src="/lovable-uploads/764c9b33-5d7d-4134-b503-c77e23c469f9.png" 
+                    alt="Social Tides Logo" 
+                    className="max-h-40 object-contain"
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
+          
           <section className="mb-16">
             <div className="glass-card rounded-2xl p-8 md:p-12 text-center">
               <h2 className="text-2xl md:text-3xl font-bold mb-4">Mach mit!</h2>
               <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-8">
-                Sei Teil unserer Community, entdecke spannende Events, teile deine eigenen Veranstaltungen und vernetze dich mit Gleichgesinnten.
+                Sei Teil unserer Bewegung für ein lebendigeres Bielefeld! Entdecke spannende Events, 
+                triff neue Menschen und bringe deine eigenen Ideen ein.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button className="rounded-full shadow-md hover:shadow-lg transition-all">
@@ -156,7 +191,7 @@ const About = () => {
           
           <section className="text-center">
             <p className="text-muted-foreground">
-              &copy; {new Date().getFullYear()} Community Event Kalender • Mit ♥ erstellt
+              &copy; {new Date().getFullYear()} THE TRIBE.BI • Mit ♥ in Bielefeld erstellt
             </p>
           </section>
         </div>
@@ -167,34 +202,34 @@ const About = () => {
 
 const features = [
   {
-    title: "Events entdecken",
-    description: "Finde spannende Veranstaltungen in deiner Community und erweitere deinen Horizont.",
+    title: "Echte Begegnungen",
+    description: "Entdecke Veranstaltungen, die Menschen im echten Leben zusammenbringen und neue Freundschaften entstehen lassen.",
     icon: Calendar
   },
   {
-    title: "Netzwerken",
-    description: "Knüpfe Kontakte zu Gleichgesinnten und baue dein persönliches Netzwerk aus.",
+    title: "Lokale Gemeinschaft",
+    description: "Werde Teil einer wachsenden Community von Menschen, die Bielefeld aktiv und lebendig gestalten wollen.",
     icon: Users
   },
   {
-    title: "Wissen teilen",
-    description: "Organisiere eigene Events und teile dein Wissen mit der Community.",
+    title: "Ideen teilen",
+    description: "Bring deine eigenen Veranstaltungen ein und teile deine Leidenschaften mit Gleichgesinnten.",
     icon: MessageSquare
   },
   {
-    title: "Gemeinsam erleben",
-    description: "Nimm an gemeinsamen Aktivitäten teil und schaffe bleibende Erinnerungen.",
+    title: "Stadt beleben",
+    description: "Gemeinsam machen wir Bielefeld zu einem Ort voller spannender Möglichkeiten und Erlebnisse.",
     icon: Heart
   },
   {
     title: "Immer informiert",
-    description: "Bleibe auf dem Laufenden über alle Veranstaltungen in deiner Community.",
+    description: "Verpasse keine Events mehr und bleibe stets auf dem Laufenden, was in deiner Stadt passiert.",
     icon: Clock
   },
   {
-    title: "Vertrauenswürdig",
-    description: "Alle Events werden von Community-Mitgliedern erstellt und geteilt.",
-    icon: BadgeCheck
+    title: "Von Bielefeldernz für Bielefelder",
+    description: "Unsere Community lebt vom Engagement lokaler Menschen, die ihre Stadt lieben.",
+    icon: MapPin
   }
 ];
 
