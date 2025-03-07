@@ -18,34 +18,34 @@ type Question = {
 const questions: Question[] = [
   {
     id: 1,
-    text: "Was ist das Hauptziel der Liebefeld Community?",
+    text: "Was würdest du am liebsten in der Liebefeld Community tun?",
     options: [
-      { id: "a", text: "Geld zu verdienen" },
-      { id: "b", text: "Lokale Events und Menschen zu verbinden" },
-      { id: "c", text: "Online zu spielen" },
-      { id: "d", text: "Werbung zu machen" }
+      { id: "a", text: "Hauptsächlich Beiträge lesen und über Events informiert werden" },
+      { id: "b", text: "Aktiv an Treffen teilnehmen und selbst Ideen für gemeinsame Aktivitäten einbringen" },
+      { id: "c", text: "Nur bei sehr interessanten Themen mitmachen" },
+      { id: "d", text: "Hauptsächlich online diskutieren, aber selten persönlich erscheinen" }
     ],
     correctAnswer: "b"
   },
   {
     id: 2,
-    text: "Welche Art von Inhalten sind in der Community erwünscht?",
+    text: "Wie würdest du zur Vielfalt unserer Community beitragen?",
     options: [
-      { id: "a", text: "Nur politische Diskussionen" },
-      { id: "b", text: "Nur Werbung für eigene Produkte" },
-      { id: "c", text: "Lokale Events, respektvolle Diskussionen und gemeinschaftsfördernde Inhalte" },
-      { id: "d", text: "Kontroverse und polarisierende Themen" }
+      { id: "a", text: "Ich habe wenig Zeit und möchte hauptsächlich informiert bleiben" },
+      { id: "b", text: "Durch Teilen von lokalen Geheimtipps und interessanten Orten in der Umgebung" },
+      { id: "c", text: "Indem ich meine speziellen Fähigkeiten oder Hobbys mit anderen teile" },
+      { id: "d", text: "Durch Vernetzung mit anderen Mitgliedern mit ähnlichen Interessen" }
     ],
     correctAnswer: "c"
   },
   {
     id: 3,
-    text: "Wie sollten Mitglieder miteinander umgehen?",
+    text: "Was erhoffst du dir von deiner Teilnahme in der Community?",
     options: [
-      { id: "a", text: "Mit Respekt und Freundlichkeit" },
-      { id: "b", text: "Möglichst kritisch und konfrontativ" },
-      { id: "c", text: "Ignorieren anderer Meinungen" },
-      { id: "d", text: "Nur kommunizieren wenn nötig" }
+      { id: "a", text: "Neue Freundschaften knüpfen und gemeinsame Aktivitäten unternehmen" },
+      { id: "b", text: "Hauptsächlich Informationen über lokale Ereignisse erhalten" },
+      { id: "c", text: "Berufliche Kontakte knüpfen" },
+      { id: "d", text: "Angebote und Rabatte von lokalen Geschäften bekommen" }
     ],
     correctAnswer: "a"
   }
@@ -75,8 +75,8 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
     if (currentStep < questions.length) {
       if (!answers[currentQuestion.id]) {
         toast({
-          title: "Bitte wählen Sie eine Antwort",
-          description: "Sie müssen eine Option auswählen, um fortzufahren.",
+          title: "Bitte wähle eine Antwort",
+          description: "Du musst eine Option auswählen, um fortzufahren.",
           variant: "destructive",
           duration: 3000,
         });
@@ -98,10 +98,10 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
   };
   
   const checkAnswers = () => {
-    if (freeText.trim().length < 10) {
+    if (freeText.trim().length < 20) {
       toast({
-        title: "Antwort zu kurz",
-        description: "Bitte schreiben Sie mindestens ein paar Sätze im Freitext-Feld.",
+        title: "Deine Antwort ist zu kurz",
+        description: "Bitte teile uns etwas mehr über dich mit. Was sind deine Hobbys und Interessen?",
         variant: "destructive",
         duration: 3000,
       });
@@ -112,12 +112,12 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
       return answers[question.id] === question.correctAnswer ? count + 1 : count;
     }, 0);
     
-    const passThreshold = questions.length; // All questions must be answered correctly
+    const passThreshold = 2; // At least 2 questions must be answered correctly
     
     if (correctAnswersCount >= passThreshold) {
       toast({
-        title: "Herzlichen Glückwunsch!",
-        description: "Sie haben den Test bestanden. Sie werden zur WhatsApp Community weitergeleitet.",
+        title: "Du passt perfekt zu uns!",
+        description: "Wir freuen uns, dich in unserer Community begrüßen zu dürfen. Du wirst gleich zur WhatsApp Gruppe weitergeleitet.",
         variant: "success",
         duration: 5000,
       });
@@ -129,8 +129,8 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
       }, 1500);
     } else {
       toast({
-        title: "Test nicht bestanden",
-        description: `Sie haben ${correctAnswersCount} von ${questions.length} Fragen richtig beantwortet. Bitte versuchen Sie es erneut.`,
+        title: "Wir suchen aktive Mitglieder",
+        description: "Es scheint, als ob du vielleicht nicht nach einer aktiven Teilnahme in unserer Community suchst. Wir möchten vor allem Menschen verbinden, die sich aktiv einbringen möchten.",
         variant: "destructive",
         duration: 5000,
       });
@@ -164,15 +164,15 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
   const renderFreeTextStep = () => {
     return (
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">Warum möchten Sie der Liebefeld Community beitreten?</h3>
+        <h3 className="text-lg font-medium">Erzähl uns etwas über dich!</h3>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Bitte teilen Sie uns mit, warum Sie an der Community interessiert sind und was Sie beitragen möchten.
+          Was sind deine Hobbys und Interessen? Hast du besondere Fähigkeiten oder Talente, die du gerne mit anderen teilen würdest? Was macht dich als Person interessant?
         </p>
         <Textarea 
-          placeholder="Schreiben Sie Ihre Antwort hier..." 
+          placeholder="Ich bin... / Meine Interessen sind... / In meiner Freizeit..." 
           value={freeText}
           onChange={(e) => setFreeText(e.target.value)}
-          className="min-h-[120px]"
+          className="min-h-[150px]"
         />
       </div>
     );
@@ -182,17 +182,17 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Community-Beitrittstest</DialogTitle>
+          <DialogTitle>Werde Teil unserer Community</DialogTitle>
           <DialogDescription>
-            Bevor Sie der WhatsApp Community beitreten können, bitten wir Sie, diesen kurzen Test zu absolvieren.
-            Dies hilft uns, eine respektvolle und konstruktive Gemeinschaft zu fördern.
+            Hey! Schön, dass du Interesse an unserer Liebefeld-Community hast! Damit wir eine aktive und vielfältige Gruppe bleiben, 
+            möchten wir dich etwas besser kennenlernen. Erzähl uns ein bisschen über dich und deine Erwartungen.
           </DialogDescription>
         </DialogHeader>
         
         <div className="py-4">
           <div className="mb-4 flex justify-between text-sm text-gray-500">
             <span>Schritt {currentStep + 1} von {totalSteps}</span>
-            <span>{Math.round(((currentStep + 1) / totalSteps) * 100)}% abgeschlossen</span>
+            <span>{Math.round(((currentStep + 1) / totalSteps) * 100)}% geschafft</span>
           </div>
           
           <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700 mb-6">
@@ -220,7 +220,7 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
             onClick={handleNext}
             className="bg-orange-600 hover:bg-orange-700"
           >
-            {currentStep === totalSteps - 1 ? "Fertigstellen" : "Weiter"}
+            {currentStep === totalSteps - 1 ? "Beitritt bestätigen" : "Weiter"}
           </Button>
         </DialogFooter>
       </DialogContent>
