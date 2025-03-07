@@ -57,7 +57,7 @@ const About = () => {
                 <div className="relative">
                   <div className="glass-card rounded-2xl overflow-hidden aspect-[4/3]">
                     <img 
-                      src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
+                      src="https://images.unsplash.com/photo-1605810230434-7631ac76ec81?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
                       alt="Community Gathering" 
                       className="w-full h-full object-cover"
                     />
@@ -99,9 +99,9 @@ const About = () => {
               <div>
                 <h3 className="text-xl font-bold mb-4">Social Tides</h3>
                 <p className="text-muted-foreground mb-4">
-                  Gemeinsam mit Social Tides arbeiten wir daran, Bielefeld zu verbinden und lokale Gemeinschaften zu stärken. 
-                  Mit Unterstützung durch Google.org schaffen wir neue Wege, um Menschen zusammenzubringen und positive 
-                  Veränderungen in unserer Stadt zu bewirken.
+                  Wir werden durch Social Tides gefördert, um Bielefeld zu verbinden und lokale 
+                  Gemeinschaften zu stärken. Mit ihrer Unterstützung schaffen wir neue Wege, 
+                  um Menschen zusammenzubringen.
                 </p>
                 <Button variant="outline" className="rounded-full gap-2">
                   <Link className="h-4 w-4" />
@@ -234,3 +234,4 @@ const features = [
 ];
 
 export default About;
+
