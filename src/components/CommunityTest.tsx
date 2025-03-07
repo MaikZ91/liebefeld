@@ -20,7 +20,7 @@ const questions: Question[] = [
     id: 1,
     text: "Was würdest du am liebsten in der Liebefeld Community unternehmen?",
     options: [
-      { id: "a", text: "Hauptsächlich über Events informiert werden" },
+      { id: "a", text: "Ich bin lieber online und lese mit" },
       { id: "b", text: "An Konzerten, Festivals und kulturellen Veranstaltungen teilnehmen" },
       { id: "c", text: "Sportliche Aktivitäten und Outdoor-Abenteuer erleben" },
       { id: "d", text: "Kreative Workshops und künstlerische Projekte mitgestalten" }
@@ -42,12 +42,12 @@ const questions: Question[] = [
     id: 3,
     text: "Welche Art von Gemeinschaftsaktivitäten interessieren dich am meisten?",
     options: [
-      { id: "a", text: "Gemeinsame Konzertbesuche und kulturelle Veranstaltungen" },
+      { id: "a", text: "Über politische Themen diskutieren" },
       { id: "b", text: "Sportliche Aktivitäten wie Wandern, Radfahren oder Teamsport" },
       { id: "c", text: "Kreative Projekte, Kunst und Musik" },
       { id: "d", text: "Gemeinsame Treffen um neue Leute kennenzulernen" }
     ],
-    correctAnswer: "a"
+    correctAnswer: "b"
   }
 ];
 
@@ -108,6 +108,25 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
         variant: "destructive",
         duration: 3000,
       });
+      return;
+    }
+    
+    // Check for disqualifying answers - political discussions or passive reading
+    const hasPoliticalInterest = answers[3] === "a";
+    const isPassiveReader = answers[1] === "a";
+    
+    if (hasPoliticalInterest || isPassiveReader) {
+      toast({
+        title: "Leider nicht passend für unsere Community",
+        description: "Unsere Community fokussiert sich auf aktive Teilnahme bei Kultur-, Sport- und Kreativaktivitäten. Politische Diskussionen und passive Teilnahme passen nicht zu unserem Konzept.",
+        variant: "destructive",
+        duration: 5000,
+      });
+      
+      // Close the dialog after showing the toast
+      setTimeout(() => {
+        onOpenChange(false);
+      }, 5000);
       return;
     }
     
