@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { BadgeCheck, Calendar, Clock, Heart, Link, Mail, MapPin, MessageSquare, Users } from 'lucide-react';
 
 const About = () => {
-  // Add smooth scroll-in animation effect on page load
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
@@ -103,9 +101,11 @@ const About = () => {
                   Gemeinschaften zu stärken. Mit ihrer Unterstützung schaffen wir neue Wege, 
                   um Menschen zusammenzubringen.
                 </p>
-                <Button variant="outline" className="rounded-full gap-2">
-                  <Link className="h-4 w-4" />
-                  Mehr erfahren
+                <Button variant="outline" className="rounded-full gap-2" asChild>
+                  <a href="https://www.socialtides.eu/community/the-tribe.bi" target="_blank" rel="noopener noreferrer">
+                    <Link className="h-4 w-4" />
+                    Mehr erfahren
+                  </a>
                 </Button>
               </div>
               
@@ -234,4 +234,3 @@ const features = [
 ];
 
 export default About;
-
