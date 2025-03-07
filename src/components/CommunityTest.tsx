@@ -64,6 +64,9 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
   const { toast } = useToast();
   
   const totalSteps = questions.length + 1; // Questions + free text
+  const minCharacters = 20; // Minimum characters required for free text
+  const characterCount = freeText.length;
+  const needsMoreCharacters = characterCount < minCharacters;
   
   const handleAnswer = (questionId: number, answerId: string) => {
     setAnswers(prev => ({ ...prev, [questionId]: answerId }));
@@ -98,7 +101,7 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
   };
   
   const checkAnswers = () => {
-    if (freeText.trim().length < 20) {
+    if (freeText.trim().length < minCharacters) {
       toast({
         title: "Deine Antwort ist zu kurz",
         description: "Bitte teile uns etwas mehr über dich mit. Was sind deine Hobbys und Interessen?",
@@ -168,12 +171,29 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Was sind deine Hobbys und Interessen? Hast du besondere Fähigkeiten oder Talente, die du gerne mit anderen teilen würdest? Was macht dich als Person interessant?
         </p>
-        <Textarea 
-          placeholder="Ich bin... / Meine Interessen sind... / In meiner Freizeit..." 
-          value={freeText}
-          onChange={(e) => setFreeText(e.target.value)}
-          className="min-h-[150px]"
-        />
+        <div className="space-y-2">
+          <Textarea 
+            placeholder="Ich bin... / Meine Interessen sind... / In meiner Freizeit..." 
+            value={freeText}
+            onChange={(e) => setFreeText(e.target.value)}
+            className={`min-h-[150px] ${needsMoreCharacters ? 'border-orange-300 focus-visible:ring-orange-300' : 'border-green-500 focus-visible:ring-green-500'}`}
+          />
+          <div className="flex justify-between text-sm">
+            <span className={`${needsMoreCharacters ? 'text-orange-500' : 'text-green-600'}`}>
+              {characterCount} / {minCharacters} Zeichen
+            </span>
+            {needsMoreCharacters && (
+              <span className="text-orange-500">
+                Noch {minCharacters - characterCount} Zeichen benötigt
+              </span>
+            )}
+            {!needsMoreCharacters && (
+              <span className="text-green-600">
+                ✓ Ausreichend Zeichen
+              </span>
+            )}
+          </div>
+        </div>
       </div>
     );
   };
