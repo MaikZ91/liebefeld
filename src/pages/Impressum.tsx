@@ -29,10 +29,10 @@ const Impressum = () => {
             <section>
               <h2 className="text-xl font-semibold mb-2">Angaben zum Betreiber</h2>
               <div className="rounded-lg border p-4 bg-card">
-                <p className="font-medium">THE TRIBE.BI GmbH</p>
-                <p>Musterstraße 123</p>
-                <p>12345 Musterstadt</p>
-                <p>Schweiz</p>
+                <p className="font-medium">Maik Zschach</p>
+                <p>Merianstraße 8</p>
+                <p>33615 Bielefeld</p>
+                <p>Deutschland</p>
               </div>
             </section>
             
@@ -40,28 +40,16 @@ const Impressum = () => {
               <h2 className="text-xl font-semibold mb-2">Kontakt</h2>
               <div className="rounded-lg border p-4 bg-card space-y-2">
                 <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-primary" />
-                  <p>+41 123 456 789</p>
-                </div>
-                <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-primary" />
-                  <p>info@tribe.bi</p>
+                  <p>mschach@googlemail.com</p>
                 </div>
-              </div>
-            </section>
-            
-            <section>
-              <h2 className="text-xl font-semibold mb-2">Handelsregistereintrag</h2>
-              <div className="rounded-lg border p-4 bg-card">
-                <p>Eingetragen im Handelsregister des Kantons Bern</p>
-                <p>Firmennummer: CHE-123.456.789</p>
               </div>
             </section>
             
             <section>
               <h2 className="text-xl font-semibold mb-2">Verantwortlich für den Inhalt</h2>
               <div className="rounded-lg border p-4 bg-card">
-                <p>Max Mustermann</p>
+                <p>Maik Zschach</p>
                 <p>Adresse wie oben</p>
               </div>
             </section>
