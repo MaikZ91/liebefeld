@@ -8,7 +8,7 @@ import InstagramFeed from '@/components/InstagramFeed';
 import CommunityTest from '@/components/CommunityTest';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { QrCode, RefreshCw } from 'lucide-react';
+import { QrCode } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { EventProvider } from '@/contexts/EventContext';
 import { useToast } from '@/hooks/use-toast';
@@ -19,7 +19,6 @@ const Index = () => {
   }, []);
   
   const [events, setEvents] = useState<Event[]>([]);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [testModalOpen, setTestModalOpen] = useState(false);
   const { toast } = useToast();
   
@@ -62,42 +61,11 @@ const Index = () => {
     // Set up interval to refresh events every hour
     const intervalId = setInterval(() => {
       console.log('Auto-refreshing events from GitHub...');
-      handleRefreshEvents(false);
+      window.refreshEventsContext?.();
     }, 60 * 60 * 1000); // 1 hour in milliseconds
 
     return () => clearInterval(intervalId);
   }, []);
-  
-  // Function to manually refresh events
-  const handleRefreshEvents = async (showToast = true) => {
-    setIsRefreshing(true);
-    try {
-      console.log('Manually refreshing events...');
-      // Call the refreshEvents method from EventContext
-      await window.refreshEventsContext?.();
-      
-      if (showToast) {
-        toast({
-          title: "Events aktualisiert",
-          description: "Die neuesten Events wurden geladen.",
-          variant: "success",
-          duration: 5000,
-        });
-      }
-    } catch (error) {
-      console.error('Error refreshing events:', error);
-      if (showToast) {
-        toast({
-          title: "Fehler beim Aktualisieren",
-          description: "Events konnten nicht aktualisiert werden.",
-          variant: "destructive",
-          duration: 5000,
-        });
-      }
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
   
   console.log(`Index: Rendering with ${events.length} events for ticker`);
   
@@ -197,15 +165,6 @@ const Index = () => {
                     </PopoverContent>
                   </Popover>
                 </div>
-                
-                <Button
-                  onClick={() => handleRefreshEvents()}
-                  disabled={isRefreshing}
-                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center gap-2 px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-all"
-                >
-                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                  Events aktualisieren
-                </Button>
               </div>
             </div>
           </div>

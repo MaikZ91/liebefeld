@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -137,10 +138,10 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
         duration: 5000,
       });
       
-      // Reset test
-      setCurrentStep(0);
-      setAnswers({});
-      setFreeText("");
+      // Close the dialog instead of resetting the test
+      setTimeout(() => {
+        onOpenChange(false);
+      }, 3000);
     }
   };
   
