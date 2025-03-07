@@ -1,12 +1,36 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>community-event-harbor</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
+    <title>THE TRIBE.BI - Bielefelds Community Event Kalender</title>
+    <meta name="description" content="Entdecke lokale Events in Bielefeld, verbinde dich mit Menschen und erlebe deine Stadt. Der Community-Kalender, der Bielefeld lebendiger macht." />
+    <meta name="keywords" content="Bielefeld, Events, Veranstaltungen, Community, Kalender, lokale Events, THE TRIBE.BI, Gemeinschaft" />
+    <meta name="author" content="Maik Zschach" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://the-tribe.bi/" />
+    <meta property="og:title" content="THE TRIBE.BI - Bielefelds Community Event Kalender" />
+    <meta property="og:description" content="Entdecke lokale Events in Bielefeld, verbinde dich mit Menschen und erlebe deine Stadt." />
     <meta property="og:image" content="/og-image.png" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://the-tribe.bi/" />
+    <meta property="twitter:title" content="THE TRIBE.BI - Bielefelds Community Event Kalender" />
+    <meta property="twitter:description" content="Entdecke lokale Events in Bielefeld, verbinde dich mit Menschen und erlebe deine Stadt." />
+    <meta property="twitter:image" content="/og-image.png" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://the-tribe.bi/" />
+    
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico" />
+    
+    <!-- Robots -->
+    <meta name="robots" content="index, follow" />
   </head>
 
   <body>
@@ -14,5 +38,42 @@
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Structured Data for Local Business/Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "THE TRIBE.BI",
+      "url": "https://the-tribe.bi",
+      "logo": "https://the-tribe.bi/og-image.png",
+      "description": "Wir verbinden Menschen im echten Leben und machen Bielefeld lebendiger!",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Bielefeld",
+        "addressRegion": "NRW",
+        "postalCode": "33615",
+        "addressCountry": "DE"
+      },
+      "email": "mschach@googlemail.com"
+    }
+    </script>
+    
+    <!-- Structured Data for Event Series -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "THE TRIBE.BI - Community Event Kalender",
+      "speakable": {
+        "@type": "SpeakableSpecification",
+        "cssSelector": ["h1", "h2", "p"]
+      },
+      "mainContentOfPage": {
+        "@type": "WebPageElement",
+        "cssSelector": "main"
+      }
+    }
+    </script>
   </body>
 </html>
