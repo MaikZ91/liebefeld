@@ -7,9 +7,10 @@ import EventChatBot from '@/components/EventChatBot';
 import InstagramFeed from '@/components/InstagramFeed';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { QrCode } from 'lucide-react';
+import { QrCode, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { EventProvider } from '@/contexts/EventContext';
+import { useToast } from '@/components/ui/use-toast';
 
 const Index = () => {
   useEffect(() => {
@@ -17,6 +18,8 @@ const Index = () => {
   }, []);
   
   const [events, setEvents] = useState<Event[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { toast } = useToast();
   
   useEffect(() => {
     const fetchEvents = async () => {
@@ -53,7 +56,44 @@ const Index = () => {
     };
     
     fetchEvents();
+
+    // Set up interval to refresh events every hour
+    const intervalId = setInterval(() => {
+      console.log('Auto-refreshing events from GitHub...');
+      handleRefreshEvents(false);
+    }, 60 * 60 * 1000); // 1 hour in milliseconds
+
+    return () => clearInterval(intervalId);
   }, []);
+  
+  // Function to manually refresh events
+  const handleRefreshEvents = async (showToast = true) => {
+    setIsRefreshing(true);
+    try {
+      // Call the refreshEvents method from EventContext
+      await window.refreshEventsContext?.();
+      
+      if (showToast) {
+        toast({
+          title: "Events aktualisiert",
+          description: "Die neuesten Events wurden geladen.",
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      console.error('Error refreshing events:', error);
+      if (showToast) {
+        toast({
+          title: "Fehler beim Aktualisieren",
+          description: "Events konnten nicht aktualisiert werden.",
+          variant: "destructive",
+          duration: 3000,
+        });
+      }
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
   
   console.log(`Index: Rendering with ${events.length} events for ticker`);
   
@@ -105,50 +145,61 @@ const Index = () => {
                 </Button>
               </a>
               
-              <div className="flex items-center justify-center gap-3 mt-1">
-                <InstagramFeed />
-                
-                <a 
-                  href="https://drive.google.com/uc?export=download&id=1Fn3mG9AT4dEPKR37nfVt6IdyIbukeWJr" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                >
-                  <Button 
-                    className="bg-[#a4c639] hover:bg-[#8baa30] text-white rounded-full h-10 w-10 p-0 flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
-                    size="icon"
+              <div className="flex flex-col items-center gap-2 mt-1">
+                <div className="flex items-center justify-center gap-3 w-full">
+                  <InstagramFeed />
+                  
+                  <a 
+                    href="https://drive.google.com/uc?export=download&id=1Fn3mG9AT4dEPKR37nfVt6IdyIbukeWJr" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
                   >
-                    <img 
-                      src="/lovable-uploads/4a08308d-0a6d-4114-b820-f511ce7d7a65.png" 
-                      alt="Android App" 
-                      className="h-7 w-7"
-                    />
-                  </Button>
-                </a>
-                
-                <Popover>
-                  <PopoverTrigger asChild>
                     <Button 
-                      className="bg-[#F97316] hover:bg-orange-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all relative"
+                      className="bg-[#a4c639] hover:bg-[#8baa30] text-white rounded-full h-10 w-10 p-0 flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
                       size="icon"
                     >
-                      <QrCode className="h-5 w-5" />
-                      <span className="absolute -top-1 -right-1 text-[8px] bg-white text-orange-700 rounded-full px-1 py-0.5 font-bold animate-pulse-soft">QR</span>
+                      <img 
+                        src="/lovable-uploads/4a08308d-0a6d-4114-b820-f511ce7d7a65.png" 
+                        alt="Android App" 
+                        className="h-7 w-7"
+                      />
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-4">
-                    <div className="flex flex-col items-center">
-                      <div className="bg-white p-2 rounded-lg mb-2">
-                        <img 
-                          src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://liebefeld.lovable.app/`}
-                          alt="QR Code für Liebefeld App"
-                          width={150}
-                          height={150}
-                        />
+                  </a>
+                  
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button 
+                        className="bg-[#F97316] hover:bg-orange-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all relative"
+                        size="icon"
+                      >
+                        <QrCode className="h-5 w-5" />
+                        <span className="absolute -top-1 -right-1 text-[8px] bg-white text-orange-700 rounded-full px-1 py-0.5 font-bold animate-pulse-soft">QR</span>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-4">
+                      <div className="flex flex-col items-center">
+                        <div className="bg-white p-2 rounded-lg mb-2">
+                          <img 
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://liebefeld.lovable.app/`}
+                            alt="QR Code für Liebefeld App"
+                            width={150}
+                            height={150}
+                          />
+                        </div>
+                        <p className="text-xs text-center">Besuche unsere Webseite</p>
                       </div>
-                      <p className="text-xs text-center">Besuche unsere Webseite</p>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                
+                <Button
+                  onClick={() => handleRefreshEvents()}
+                  disabled={isRefreshing}
+                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center gap-2 px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-all"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  Events aktualisieren
+                </Button>
               </div>
             </div>
           </div>
