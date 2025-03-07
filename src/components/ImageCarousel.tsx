@@ -51,7 +51,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
     <div className="relative w-full overflow-hidden rounded-xl shadow-xl my-8">
       {/* Image container with smooth transitions */}
       <div 
-        className="relative w-full h-[500px] overflow-hidden"
+        className="relative w-full h-[400px] overflow-hidden"
       >
         {images.map((image, index) => (
           <div 
@@ -64,11 +64,8 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
             <img 
               src={image.src} 
               alt={image.alt}
-              className="w-full h-full object-cover object-center"
+              className="w-full h-full object-contain"
             />
-            
-            {/* Dark gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
           </div>
         ))}
       </div>
@@ -109,7 +106,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
         ))}
       </div>
       
-      {/* Caption overlay (if needed) */}
+      {/* Caption overlay */}
       <div className="absolute bottom-12 left-0 w-full text-center z-20 text-white px-6">
         <h3 className="text-2xl font-bold text-white mb-2 drop-shadow-md">
           Community Momente
