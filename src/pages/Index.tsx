@@ -8,7 +8,6 @@ import InstagramFeed from '@/components/InstagramFeed';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { EventProvider } from '@/contexts/EventContext';
-import { Smartphone } from 'lucide-react';
 
 const Index = () => {
   useEffect(() => {
@@ -105,20 +104,24 @@ const Index = () => {
                 </a>
                 
                 <InstagramFeed />
-              </div>
-              
-              <a 
-                href="https://drive.google.com/file/d/1Fn3mG9AT4dEPKR37nfVt6IdyIbukeWJr/view?usp=drivesdk" 
-                target="_blank" 
-                rel="noopener noreferrer"
-              >
-                <Button 
-                  className="bg-green-900 hover:bg-green-800 text-white flex items-center gap-2 rounded-full px-6 py-2 transition-all shadow-lg hover:shadow-xl"
+                
+                <a 
+                  href="https://drive.google.com/file/d/1Fn3mG9AT4dEPKR37nfVt6IdyIbukeWJr/view?usp=drivesdk" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
                 >
-                  <Smartphone className="w-5 h-5" />
-                  Android App herunterladen
-                </Button>
-              </a>
+                  <Button 
+                    className="bg-[#a4c639] hover:bg-[#8baa30] text-white rounded-full h-10 w-10 p-0 flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
+                    size="icon"
+                  >
+                    <img 
+                      src="/lovable-uploads/4a08308d-0a6d-4114-b820-f511ce7d7a65.png" 
+                      alt="Android App" 
+                      className="h-7 w-7"
+                    />
+                  </Button>
+                </a>
+              </div>
             </div>
           </div>
         </div>
