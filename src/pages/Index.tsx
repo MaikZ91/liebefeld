@@ -5,6 +5,7 @@ import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
 import EventChatBot from '@/components/EventChatBot';
 import InstagramFeed from '@/components/InstagramFeed';
+import ImageCarousel from '@/components/ImageCarousel';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { EventProvider } from '@/contexts/EventContext';
@@ -59,6 +60,26 @@ const Index = () => {
   }, []);
   
   console.log(`Index: Rendering with ${events.length} events for ticker`);
+  
+  // Community images for the carousel
+  const communityImages = [
+    {
+      src: "/lovable-uploads/c38064ee-a32f-4ecc-b148-f9c53c28d472.png",
+      alt: "Music session with the community"
+    },
+    {
+      src: "/lovable-uploads/8562fff2-2b62-4552-902b-cc62457a3402.png",
+      alt: "Electric Circle Vol.3 DJ session"
+    },
+    {
+      src: "/lovable-uploads/2653c557-0afe-4690-9d23-0b523cb09e3e.png",
+      alt: "Tribe Stammtisch community gathering"
+    },
+    {
+      src: "/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png",
+      alt: "Music band session"
+    }
+  ];
   
   return (
     <div className="min-h-screen flex flex-col bg-[#FFF5EB] dark:bg-[#2E1E12] text-orange-900 dark:text-orange-100">
@@ -117,6 +138,11 @@ const Index = () => {
               <InstagramFeed />
             </div>
           </div>
+        </div>
+        
+        {/* Add the ImageCarousel section here */}
+        <div className="container mx-auto px-4 md:px-6 py-4 md:py-8">
+          <ImageCarousel images={communityImages} autoSlideInterval={6000} />
         </div>
         
         {/* Live Ticker for all events */}
