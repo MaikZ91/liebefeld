@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -10,16 +9,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { EventProvider } from '@/contexts/EventContext';
 
 const Index = () => {
-  // Add smooth scroll-in animation effect on page load
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
   
-  // Get stored events for the live ticker
   const [events, setEvents] = useState<Event[]>([]);
   
   useEffect(() => {
-    // First try to get events from Supabase
     const fetchEvents = async () => {
       try {
         console.log('Fetching events from Supabase...');
@@ -37,7 +33,6 @@ const Index = () => {
           console.log('Loaded events from Supabase:', data);
           setEvents(data as Event[]);
         } else {
-          // Fallback to local storage if no events in Supabase
           const savedEvents = localStorage.getItem('communityEvents');
           if (savedEvents) {
             console.log('Loading events from localStorage as fallback');
@@ -46,7 +41,6 @@ const Index = () => {
         }
       } catch (err) {
         console.error('Error in event fetching:', err);
-        // Fallback to local storage
         const savedEvents = localStorage.getItem('communityEvents');
         if (savedEvents) {
           console.log('Loading events from localStorage due to error');
@@ -64,9 +58,7 @@ const Index = () => {
     <div className="min-h-screen flex flex-col bg-[#FFF5EB] dark:bg-[#2E1E12] text-orange-900 dark:text-orange-100">
       <CalendarNavbar />
       <main className="flex-grow">
-        {/* Video Banner Section with Black Background */}
         <div className="relative w-full h-[50vh] overflow-hidden bg-black">
-          {/* Video background */}
           <video 
             className="absolute inset-0 w-full h-full object-cover opacity-70"
             autoPlay
@@ -78,10 +70,8 @@ const Index = () => {
             Your browser does not support the video tag.
           </video>
           
-          {/* Overlay with red gradient */}
           <div className="absolute inset-0 bg-gradient-to-r from-red-900/70 to-black/70"></div>
           
-          {/* Content */}
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4">
             <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center font-serif">
               Entdecke den 
@@ -95,14 +85,12 @@ const Index = () => {
               <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
             </p>
             
-            {/* Social Media Buttons */}
-            <div className="flex items-center justify-center">
-              {/* WhatsApp Community Button */}
+            <div className="flex items-center justify-center flex-wrap gap-2">
               <a 
                 href="https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="inline-flex mr-2"
+                className="inline-flex"
               >
                 <Button 
                   className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 rounded-full px-6 py-2 transition-all shadow-lg hover:shadow-xl"
@@ -114,23 +102,35 @@ const Index = () => {
                 </Button>
               </a>
               
-              {/* Instagram Button - Now positioned directly to the right of WhatsApp */}
               <InstagramFeed />
+              
+              <a 
+                href="https://drive.google.com/file/d/1Fn3mG9AT4dEPKR37nfVt6IdyIbukeWJr/view?usp=drivesdk" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex"
+              >
+                <Button 
+                  className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 rounded-full px-6 py-2 transition-all shadow-lg hover:shadow-xl"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                    <line x1="12" y1="18" x2="12" y2="18"></line>
+                  </svg>
+                  Android App herunterladen
+                </Button>
+              </a>
             </div>
           </div>
         </div>
         
-        {/* Live Ticker for all events */}
         <LiveTicker events={events} />
 
-        {/* Wrap both EventCalendar and EventChatBot in the same EventProvider */}
         <EventProvider>
-          {/* Updated the background color to a soft gray for better text contrast */}
           <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-6 rounded-t-lg shadow-inner mt-0">
             <EventCalendar defaultView="list" />
           </div>
           
-          {/* Event Chat Bot - Now using EventContext instead of direct props */}
           <EventChatBot />
         </EventProvider>
       </main>
