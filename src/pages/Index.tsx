@@ -4,6 +4,7 @@ import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
 import EventChatBot from '@/components/EventChatBot';
+import InstagramFeed from '@/components/InstagramFeed';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { EventProvider } from '@/contexts/EventContext';
@@ -125,6 +126,9 @@ const Index = () => {
           {/* Event Chat Bot - Now using EventContext instead of direct props */}
           <EventChatBot />
         </EventProvider>
+        
+        {/* Instagram Feed Section */}
+        <InstagramFeed />
       </main>
     </div>
   );
