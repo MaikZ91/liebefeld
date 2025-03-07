@@ -1,13 +1,35 @@
+
 import React, { useEffect } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { BadgeCheck, Calendar, Clock, Heart, Link, Mail, MapPin, MessageSquare, Users } from 'lucide-react';
+import ImageCarousel from '@/components/ImageCarousel';
 
 const About = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
+  
+  // Community images for the carousel - same as on index page
+  const communityImages = [
+    {
+      src: "/lovable-uploads/c38064ee-a32f-4ecc-b148-f9c53c28d472.png",
+      alt: "Music session with the community"
+    },
+    {
+      src: "/lovable-uploads/8562fff2-2b62-4552-902b-cc62457a3402.png",
+      alt: "Electric Circle Vol.3 DJ session"
+    },
+    {
+      src: "/lovable-uploads/2653c557-0afe-4690-9d23-0b523cb09e3e.png",
+      alt: "Tribe Stammtisch community gathering"
+    },
+    {
+      src: "/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png",
+      alt: "Music band session"
+    }
+  ];
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -52,21 +74,7 @@ const About = () => {
               </div>
               
               <div className="order-1 md:order-2">
-                <div className="relative">
-                  <div className="glass-card rounded-2xl overflow-hidden aspect-[4/3]">
-                    <img 
-                      src="https://images.unsplash.com/photo-1605810230434-7631ac76ec81?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
-                      alt="Community Gathering" 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="absolute -bottom-5 -right-5 glass-card rounded-2xl p-4 shadow-lg animate-float">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="text-primary h-5 w-5" />
-                      <p className="font-medium">Gemeinsam erleben</p>
-                    </div>
-                  </div>
-                </div>
+                <ImageCarousel images={communityImages} autoSlideInterval={6000} />
               </div>
             </div>
           </section>
