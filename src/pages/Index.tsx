@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -5,6 +6,8 @@ import LiveTicker from '@/components/LiveTicker';
 import EventChatBot from '@/components/EventChatBot';
 import InstagramFeed from '@/components/InstagramFeed';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { QrCode } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { EventProvider } from '@/contexts/EventContext';
 
@@ -120,6 +123,30 @@ const Index = () => {
                   />
                 </Button>
               </a>
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-full h-10 w-10 p-0 flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
+                    size="icon"
+                  >
+                    <QrCode className="h-5 w-5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-4">
+                  <div className="flex flex-col items-center">
+                    <div className="bg-white p-2 rounded-lg mb-2">
+                      <img 
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://liebefeld.lovable.app/`}
+                        alt="QR Code für Liebefeld App"
+                        width={150}
+                        height={150}
+                      />
+                    </div>
+                    <p className="text-xs text-center">Besuche unsere Webseite</p>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </div>
