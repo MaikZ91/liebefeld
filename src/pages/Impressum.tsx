@@ -2,7 +2,7 @@
 import React from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone } from 'lucide-react';
+import { ArrowLeft, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Impressum = () => {
@@ -11,9 +11,9 @@ const Impressum = () => {
       <CalendarNavbar />
       <main className="flex-grow container mx-auto px-4 py-8 max-w-3xl">
         <div className="mb-6">
-          <Link to="/">
+          <Link to="/about">
             <Button variant="ghost" size="sm" className="gap-2">
-              <ArrowLeft className="h-4 w-4" /> Zurück
+              <ArrowLeft className="h-4 w-4" /> Zurück zu Über uns
             </Button>
           </Link>
         </div>

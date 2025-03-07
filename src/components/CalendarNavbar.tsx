@@ -3,6 +3,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { CalendarDays, Info, Users } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { Badge } from './ui/badge';
 
 const CalendarNavbar: React.FC = () => {
   const location = useLocation();
@@ -23,7 +24,8 @@ const CalendarNavbar: React.FC = () => {
         <nav className="hidden md:block">
           <ul className="flex space-x-1">
             {links.map((link) => {
-              const isActive = location.pathname === link.href;
+              const isActive = location.pathname === link.href || 
+                               (link.href === '/about' && location.pathname === '/impressum');
               return (
                 <li key={link.href}>
                   <Link
@@ -37,24 +39,20 @@ const CalendarNavbar: React.FC = () => {
                   >
                     <link.icon className="h-4 w-4 mr-2" />
                     {link.label}
+                    {link.href === '/about' && location.pathname === '/impressum' && (
+                      <Badge variant="secondary" className="ml-2 text-[10px]">Impressum</Badge>
+                    )}
                   </Link>
                 </li>
               );
             })}
-            <li>
-              <Link 
-                to="/impressum" 
-                className="flex items-center px-4 py-2 rounded-full text-xs text-muted-foreground hover:bg-secondary transition-all duration-200"
-              >
-                Impressum
-              </Link>
-            </li>
           </ul>
         </nav>
         
         <div className="md:hidden flex items-center">
           {links.map((link) => {
-            const isActive = location.pathname === link.href;
+            const isActive = location.pathname === link.href || 
+                             (link.href === '/about' && location.pathname === '/impressum');
             return (
               <Link
                 key={link.href}
@@ -67,15 +65,12 @@ const CalendarNavbar: React.FC = () => {
                 )}
               >
                 <link.icon className="h-5 w-5" />
+                {link.href === '/about' && location.pathname === '/impressum' && (
+                  <Badge variant="secondary" className="ml-1 text-[8px] absolute -mt-1">Impressum</Badge>
+                )}
               </Link>
             );
           })}
-          <Link 
-            to="/impressum"
-            className="ml-2 p-2 text-xs text-muted-foreground"
-          >
-            Impressum
-          </Link>
         </div>
       </div>
     </header>
