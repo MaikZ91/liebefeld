@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -64,7 +63,7 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
   const { toast } = useToast();
   
   const totalSteps = questions.length + 1; // Questions + free text
-  const minCharacters = 20; // Minimum characters required for free text
+  const minCharacters = 50; // Changed from 20 to 50 characters required for free text
   const characterCount = freeText.length;
   const needsMoreCharacters = characterCount < minCharacters;
   
