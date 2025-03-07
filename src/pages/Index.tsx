@@ -127,10 +127,11 @@ const Index = () => {
               <Popover>
                 <PopoverTrigger asChild>
                   <Button 
-                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-full h-10 w-10 p-0 flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
+                    className="bg-[#F97316] hover:bg-orange-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all relative"
                     size="icon"
                   >
                     <QrCode className="h-5 w-5" />
+                    <span className="absolute -top-1 -right-1 text-[8px] bg-white text-orange-700 rounded-full px-1 py-0.5 font-bold animate-pulse-soft">QR</span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-4">
