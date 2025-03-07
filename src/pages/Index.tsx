@@ -96,13 +96,13 @@ const Index = () => {
             </p>
             
             {/* Social Media Buttons */}
-            <div className="flex items-center gap-3 justify-center">
+            <div className="flex items-center justify-center">
               {/* WhatsApp Community Button */}
               <a 
                 href="https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="inline-flex"
+                className="inline-flex mr-2"
               >
                 <Button 
                   className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 rounded-full px-6 py-2 transition-all shadow-lg hover:shadow-xl"
@@ -114,7 +114,7 @@ const Index = () => {
                 </Button>
               </a>
               
-              {/* Instagram Button - Positioned directly to the right of WhatsApp */}
+              {/* Instagram Button - Now positioned directly to the right of WhatsApp */}
               <InstagramFeed />
             </div>
           </div>
