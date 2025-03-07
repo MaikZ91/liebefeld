@@ -29,9 +29,9 @@ const questions: Question[] = [
   },
   {
     id: 2,
-    text: "Wie würdest du zur Vielfalt unserer Community beitragen?",
+    text: "Wie würdest du zur Gemeinschaft in Liebefeld beitragen?",
     options: [
-      { id: "a", text: "Ich habe wenig Zeit und möchte hauptsächlich informiert bleiben" },
+      { id: "a", text: "Ich bin neu in der Stadt und möchte Leute kennenlernen" },
       { id: "b", text: "Durch Teilen von Konzert- und Event-Tipps in der Region" },
       { id: "c", text: "Indem ich sportliche Aktivitäten oder kreative Workshops organisiere" },
       { id: "d", text: "Durch das Einbringen meiner künstlerischen oder musikalischen Talente" }
@@ -45,7 +45,7 @@ const questions: Question[] = [
       { id: "a", text: "Gemeinsame Konzertbesuche und kulturelle Veranstaltungen" },
       { id: "b", text: "Sportliche Aktivitäten wie Wandern, Radfahren oder Teamsport" },
       { id: "c", text: "Kreative Projekte, Kunst und Musik" },
-      { id: "d", text: "Ich bevorzuge es, Diskussionen über aktuelle Themen zu führen" }
+      { id: "d", text: "Gemeinsame Treffen um neue Leute kennenzulernen" }
     ],
     correctAnswer: "a"
   }
@@ -64,7 +64,7 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
   const { toast } = useToast();
   
   const totalSteps = questions.length + 1; // Questions + free text
-  const minCharacters = 50; // Changed from 20 to 50 characters required for free text
+  const minCharacters = 30; // Reduced from 50 to 30 characters required for free text
   const characterCount = freeText.length;
   const needsMoreCharacters = characterCount < minCharacters;
   
@@ -111,13 +111,17 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
       return;
     }
     
-    const correctAnswersCount = questions.reduce((count, question) => {
-      return answers[question.id] === question.correctAnswer ? count + 1 : count;
+    // Count how many answers match any of the "active" answers (not just the "correct" ones)
+    const activeAnswers = questions.reduce((count, question) => {
+      const answer = answers[question.id];
+      // Consider answers b, c, and d as "active" participation (not just "a")
+      return (answer && answer !== "a") ? count + 1 : count;
     }, 0);
     
-    const passThreshold = 2; // At least 2 questions must be answered correctly
+    // Reduced threshold - just 1 active answer is enough
+    const passThreshold = 1;
     
-    if (correctAnswersCount >= passThreshold) {
+    if (activeAnswers >= passThreshold) {
       toast({
         title: "Du passt perfekt zu uns!",
         description: "Wir freuen uns, dich in unserer Community begrüßen zu dürfen. Du wirst gleich zur WhatsApp Gruppe weitergeleitet.",
@@ -129,19 +133,19 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
       setTimeout(() => {
         window.open(whatsappUrl, "_blank");
         onOpenChange(false);
-      }, 1500);
+      }, 2500);
     } else {
       toast({
         title: "Wir suchen aktive Mitglieder",
-        description: "Es scheint, als ob du vielleicht nicht nach einer aktiven Teilnahme in unserer Community suchst. Wir möchten vor allem Menschen verbinden, die sich für Kultur, Sport und kreative Aktivitäten begeistern.",
+        description: "Es scheint, als ob du vielleicht nicht nach einer aktiven Teilnahme in unserer Community suchst. Wir möchten vor allem Menschen verbinden, die sich für gemeinsame Aktivitäten begeistern können.",
         variant: "destructive",
         duration: 5000,
       });
       
-      // Close the dialog instead of resetting the test
+      // Close the dialog after showing the toast
       setTimeout(() => {
         onOpenChange(false);
-      }, 3000);
+      }, 5000);
     }
   };
   
@@ -169,7 +173,7 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Erzähl uns etwas über dich!</h3>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Was sind deine Hobbys und Interessen? Hast du besondere Fähigkeiten oder Talente, die du gerne mit anderen teilen würdest? Was macht dich als Person interessant?
+          Was sind deine Hobbys und Interessen? Bist du neu in der Stadt? Was erhoffst du dir von einer Community?
         </p>
         <div className="space-y-2">
           <Textarea 
@@ -204,7 +208,7 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
         <DialogHeader>
           <DialogTitle>Werde Teil unserer Community</DialogTitle>
           <DialogDescription>
-            Hey! Schön, dass du Interesse an unserer Liebefeld-Community hast! Wir sind eine Gruppe von Menschen, die sich für Kultur, Sport und kreative Aktivitäten begeistern. 
+            Hey! Schön, dass du Interesse an unserer Liebefeld-Community hast! Wir sind eine Gruppe von Menschen, die sich für gemeinsame Aktivitäten begeistern und neue Leute kennenlernen möchten. 
             Damit wir eine aktive und vielfältige Gruppe bleiben, möchten wir dich etwas besser kennenlernen.
           </DialogDescription>
         </DialogHeader>
