@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { QrCode, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { EventProvider } from '@/contexts/EventContext';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   useEffect(() => {
@@ -70,6 +70,7 @@ const Index = () => {
   const handleRefreshEvents = async (showToast = true) => {
     setIsRefreshing(true);
     try {
+      console.log('Manually refreshing events...');
       // Call the refreshEvents method from EventContext
       await window.refreshEventsContext?.();
       
@@ -77,7 +78,8 @@ const Index = () => {
         toast({
           title: "Events aktualisiert",
           description: "Die neuesten Events wurden geladen.",
-          duration: 3000,
+          variant: "success",
+          duration: 5000,
         });
       }
     } catch (error) {
@@ -87,7 +89,7 @@ const Index = () => {
           title: "Fehler beim Aktualisieren",
           description: "Events konnten nicht aktualisiert werden.",
           variant: "destructive",
-          duration: 3000,
+          duration: 5000,
         });
       }
     } finally {
