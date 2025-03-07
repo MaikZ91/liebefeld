@@ -18,12 +18,12 @@ type Question = {
 const questions: Question[] = [
   {
     id: 1,
-    text: "Was würdest du am liebsten in der Liebefeld Community tun?",
+    text: "Was würdest du am liebsten in der Liebefeld Community unternehmen?",
     options: [
-      { id: "a", text: "Hauptsächlich Beiträge lesen und über Events informiert werden" },
-      { id: "b", text: "Aktiv an Treffen teilnehmen und selbst Ideen für gemeinsame Aktivitäten einbringen" },
-      { id: "c", text: "Nur bei sehr interessanten Themen mitmachen" },
-      { id: "d", text: "Hauptsächlich online diskutieren, aber selten persönlich erscheinen" }
+      { id: "a", text: "Hauptsächlich über Events informiert werden" },
+      { id: "b", text: "An Konzerten, Festivals und kulturellen Veranstaltungen teilnehmen" },
+      { id: "c", text: "Sportliche Aktivitäten und Outdoor-Abenteuer erleben" },
+      { id: "d", text: "Kreative Workshops und künstlerische Projekte mitgestalten" }
     ],
     correctAnswer: "b"
   },
@@ -32,20 +32,20 @@ const questions: Question[] = [
     text: "Wie würdest du zur Vielfalt unserer Community beitragen?",
     options: [
       { id: "a", text: "Ich habe wenig Zeit und möchte hauptsächlich informiert bleiben" },
-      { id: "b", text: "Durch Teilen von lokalen Geheimtipps und interessanten Orten in der Umgebung" },
-      { id: "c", text: "Indem ich meine speziellen Fähigkeiten oder Hobbys mit anderen teile" },
-      { id: "d", text: "Durch Vernetzung mit anderen Mitgliedern mit ähnlichen Interessen" }
+      { id: "b", text: "Durch Teilen von Konzert- und Event-Tipps in der Region" },
+      { id: "c", text: "Indem ich sportliche Aktivitäten oder kreative Workshops organisiere" },
+      { id: "d", text: "Durch das Einbringen meiner künstlerischen oder musikalischen Talente" }
     ],
     correctAnswer: "c"
   },
   {
     id: 3,
-    text: "Was erhoffst du dir von deiner Teilnahme in der Community?",
+    text: "Welche Art von Gemeinschaftsaktivitäten interessieren dich am meisten?",
     options: [
-      { id: "a", text: "Neue Freundschaften knüpfen und gemeinsame Aktivitäten unternehmen" },
-      { id: "b", text: "Hauptsächlich Informationen über lokale Ereignisse erhalten" },
-      { id: "c", text: "Berufliche Kontakte knüpfen" },
-      { id: "d", text: "Angebote und Rabatte von lokalen Geschäften bekommen" }
+      { id: "a", text: "Gemeinsame Konzertbesuche und kulturelle Veranstaltungen" },
+      { id: "b", text: "Sportliche Aktivitäten wie Wandern, Radfahren oder Teamsport" },
+      { id: "c", text: "Kreative Projekte, Kunst und Musik" },
+      { id: "d", text: "Ich bevorzuge es, Diskussionen über aktuelle Themen zu führen" }
     ],
     correctAnswer: "a"
   }
@@ -133,7 +133,7 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
     } else {
       toast({
         title: "Wir suchen aktive Mitglieder",
-        description: "Es scheint, als ob du vielleicht nicht nach einer aktiven Teilnahme in unserer Community suchst. Wir möchten vor allem Menschen verbinden, die sich aktiv einbringen möchten.",
+        description: "Es scheint, als ob du vielleicht nicht nach einer aktiven Teilnahme in unserer Community suchst. Wir möchten vor allem Menschen verbinden, die sich für Kultur, Sport und kreative Aktivitäten begeistern.",
         variant: "destructive",
         duration: 5000,
       });
@@ -204,8 +204,8 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
         <DialogHeader>
           <DialogTitle>Werde Teil unserer Community</DialogTitle>
           <DialogDescription>
-            Hey! Schön, dass du Interesse an unserer Liebefeld-Community hast! Damit wir eine aktive und vielfältige Gruppe bleiben, 
-            möchten wir dich etwas besser kennenlernen. Erzähl uns ein bisschen über dich und deine Erwartungen.
+            Hey! Schön, dass du Interesse an unserer Liebefeld-Community hast! Wir sind eine Gruppe von Menschen, die sich für Kultur, Sport und kreative Aktivitäten begeistern. 
+            Damit wir eine aktive und vielfältige Gruppe bleiben, möchten wir dich etwas besser kennenlernen.
           </DialogDescription>
         </DialogHeader>
         
