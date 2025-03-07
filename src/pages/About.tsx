@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { BadgeCheck, Calendar, Clock, Heart, MessageSquare, Users } from 'lucide-react';
+import { BadgeCheck, Calendar, Clock, Heart, Mail, MessageSquare, Users } from 'lucide-react';
 
 const About = () => {
   // Add smooth scroll-in animation effect on page load
@@ -100,6 +100,56 @@ const About = () => {
                 <Button variant="outline" className="rounded-full">
                   <Calendar className="mr-2 h-4 w-4" /> Event erstellen
                 </Button>
+              </div>
+            </div>
+          </section>
+          
+          {/* Impressum Section */}
+          <section id="impressum" className="mb-16">
+            <div className="max-w-3xl mx-auto border rounded-lg p-6 bg-card">
+              <h2 className="text-2xl font-bold mb-4">Impressum</h2>
+              <div className="h-1 w-20 bg-primary/70 rounded mb-6"></div>
+              <p className="text-muted-foreground mb-4">Gemäß § 5 TMG</p>
+              
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Angaben zum Betreiber</h3>
+                  <div className="rounded-lg border p-4 bg-card/50">
+                    <p className="font-medium">Maik Zschach</p>
+                    <p>Merianstraße 8</p>
+                    <p>33615 Bielefeld</p>
+                    <p>Deutschland</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Kontakt</h3>
+                  <div className="rounded-lg border p-4 bg-card/50">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-primary" />
+                      <p>mschach@googlemail.com</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Haftungsausschluss</h3>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>
+                      Die Inhalte unserer Seiten wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen.
+                    </p>
+                    <p>
+                      Als Diensteanbieter sind wir für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Wir sind jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen.
+                    </p>
+                    <p>
+                      Unser Angebot enthält Links zu externen Webseiten Dritter, auf deren Inhalte wir keinen Einfluss haben. Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6 text-sm text-muted-foreground">
+                <p>Stand: {new Date().toLocaleDateString('de-CH')}</p>
               </div>
             </div>
           </section>
