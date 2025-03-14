@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
+import { createWorker } from 'tesseract.js';
 
 interface ExtractedEventData {
   title?: string;
@@ -13,67 +14,39 @@ interface ExtractedEventData {
 }
 
 /**
- * Extracts text from an image using OCR via Supabase Edge Function
+ * Extracts text from an image using Tesseract.js OCR in the browser
  */
 export async function extractTextFromImage(imageFile: File): Promise<string> {
   try {
-    console.log('Starting text extraction from image:', imageFile.name);
+    console.log('Starting browser-based text extraction from image:', imageFile.name);
     
-    // Create a FormData object to send the image
-    const formData = new FormData();
-    formData.append('image', imageFile);
+    toast({
+      title: "Texterkennung läuft",
+      description: "Das Bild wird analysiert, bitte einen Moment Geduld...",
+    });
     
-    console.log('Calling OCR function with image:', imageFile.name, 'size:', imageFile.size, 'type:', imageFile.type);
+    // Create a Tesseract worker
+    const worker = await createWorker('deu'); // German language
     
-    // Get the current session
-    const { data: sessionData } = await supabase.auth.getSession();
-    const accessToken = sessionData?.session?.access_token;
+    // Create an object URL from the image file
+    const imageUrl = URL.createObjectURL(imageFile);
     
-    console.log('Auth token available:', !!accessToken);
+    console.log('Processing image with Tesseract.js');
     
-    // Call the Supabase Edge Function for OCR - directly with fetch instead of supabase.functions.invoke
-    // to have more control over the headers and request format
-    const response = await fetch(
-      'https://ykleosfvtqcmqxqihnod.supabase.co/functions/v1/ocr-extract-text',
-      {
-        method: 'POST',
-        body: formData,
-        headers: {
-          // Set the Authorization header properly - using the anon key which is public
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrbGVvc2Z2dHFjbXF4cWlobm9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA5MzQ0NjIsImV4cCI6MjA1NjUxMDQ2Mn0.70wsZ-c7poYFnbTyXbKrG0b6YPSe-BonMN6kjZ2a2Wo`,
-          'apikey': `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrbGVvc2Z2dHFjbXF4cWlobm9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA5MzQ0NjIsImV4cCI6MjA1NjUxMDQ2Mn0.70wsZ-c7poYFnbTyXbKrG0b6YPSe-BonMN6kjZ2a2Wo`,
-        }
-      }
-    );
+    // Recognize text in the image
+    const { data: { text } } = await worker.recognize(imageUrl);
     
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('Error response from OCR function:', response.status, errorData);
-      throw new Error(`OCR-Service hat mit Status ${response.status} geantwortet: ${errorData.error || 'Unbekannter Fehler'}`);
-    }
+    // Cleanup
+    URL.revokeObjectURL(imageUrl);
+    await worker.terminate();
     
-    const functionData = await response.json();
-    console.log('OCR function response:', functionData);
-    
-    if (!functionData) {
-      console.error('No data returned from OCR function');
-      throw new Error('Keine Daten vom OCR-Service erhalten');
-    }
-    
-    if (functionData.error) {
-      console.error('OCR function error:', functionData.error);
-      throw new Error(functionData.error);
-    }
-    
-    const extractedText = functionData?.text || '';
-    
-    if (!extractedText || extractedText.trim() === '') {
+    if (!text || text.trim() === '') {
       console.warn('No text extracted from image');
       throw new Error('Aus dem Bild konnte kein Text extrahiert werden');
     }
     
-    console.log('Extracted text from image:', extractedText);
-    return extractedText;
+    console.log('Extracted text from image:', text);
+    return text;
   } catch (error) {
     console.error('Error in extractTextFromImage:', error);
     throw error;
@@ -133,7 +106,7 @@ export async function processEventImage(file: File): Promise<ExtractedEventData>
       description: "Das Bild wird verarbeitet, um Eventdaten zu extrahieren...",
     });
     
-    // Step 1: Extract text from the image
+    // Step 1: Extract text from the image with in-browser OCR
     const extractedText = await extractTextFromImage(file);
     console.log('Extracted text from image:', extractedText);
     
