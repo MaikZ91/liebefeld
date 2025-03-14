@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar';
@@ -8,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type Event } from './EventCalendar';
-import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft, X } from 'lucide-react';
+import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft, X, Camera, Upload, Image } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
@@ -40,6 +41,83 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
   const [category, setCategory] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [images, setImages] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      
+      // Add to existing images
+      setImages(prev => [...prev, ...newFiles]);
+      
+      // Create preview URLs for the new images
+      const newPreviewUrls = newFiles.map(file => URL.createObjectURL(file));
+      setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
+      
+      // Reset the input value so the same file can be selected again if needed
+      e.target.value = '';
+    }
+  };
+  
+  const handleCameraCapture = () => {
+    if (cameraInputRef.current) {
+      cameraInputRef.current.click();
+    }
+  };
+  
+  const handleFileUpload = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+  
+  const removeImage = (index: number) => {
+    // Release the object URL to avoid memory leaks
+    URL.revokeObjectURL(previewUrls[index]);
+    
+    // Remove the image from state
+    setImages(images.filter((_, i) => i !== index));
+    setPreviewUrls(previewUrls.filter((_, i) => i !== index));
+  };
+  
+  const uploadImagesToSupabase = async (eventId: string): Promise<string[]> => {
+    const imageUrls: string[] = [];
+    
+    for (let i = 0; i < images.length; i++) {
+      const file = images[i];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${eventId}-${i}.${fileExt}`;
+      const filePath = `event-images/${fileName}`;
+      
+      // Upload the file to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('event-images')
+        .upload(filePath, file);
+      
+      if (error) {
+        console.error('Error uploading image:', error);
+        toast({
+          title: "Bildupload fehlgeschlagen",
+          description: `Bild ${i+1} konnte nicht hochgeladen werden: ${error.message}`,
+          variant: "destructive"
+        });
+        continue;
+      }
+      
+      // Get the public URL for the uploaded file
+      const { data: publicUrlData } = supabase.storage
+        .from('event-images')
+        .getPublicUrl(filePath);
+      
+      imageUrls.push(publicUrlData.publicUrl);
+    }
+    
+    return imageUrls;
+  };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +153,42 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       }
       
       if (data && data[0]) {
+        const eventId = data[0].id;
+        
+        // Upload any attached images to Supabase
+        let imageUrls: string[] = [];
+        if (images.length > 0) {
+          try {
+            toast({
+              title: "Bilder werden hochgeladen",
+              description: `${images.length} Bilder werden hochgeladen...`,
+            });
+            
+            imageUrls = await uploadImagesToSupabase(eventId);
+            
+            // Update the event with image URLs
+            if (imageUrls.length > 0) {
+              const { error: updateError } = await supabase
+                .from('community_events')
+                .update({ 
+                  image_urls: imageUrls 
+                })
+                .eq('id', eventId);
+              
+              if (updateError) {
+                console.error('Error updating event with image URLs:', updateError);
+              }
+            }
+          } catch (uploadError) {
+            console.error('Error uploading images:', uploadError);
+            toast({
+              title: "Bildupload Fehler",
+              description: "Es gab ein Problem beim Hochladen der Bilder. Das Event wurde trotzdem erstellt.",
+              variant: "destructive"
+            });
+          }
+        }
+        
         // Event successfully saved, update the local list
         onAddEvent({
           ...newEvent,
@@ -93,6 +207,8 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         setLocation('');
         setOrganizer('');
         setCategory('');
+        setImages([]);
+        setPreviewUrls([]);
         
         // Hide form after successful addition
         if (onCancel) onCancel();
@@ -278,6 +394,78 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
               </SelectContent>
             </Select>
           </div>
+        </div>
+        
+        {/* Image Upload Section */}
+        <div className="grid gap-2 mt-2">
+          <div className="flex items-center">
+            <Image className="h-4 w-4 mr-2 text-muted-foreground" />
+            <Label>Bilder hinzufügen</Label>
+          </div>
+          
+          <div className="flex gap-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="rounded-lg flex gap-2"
+              onClick={handleFileUpload}
+            >
+              <Upload size={16} />
+              <span>Bilder auswählen</span>
+            </Button>
+            
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="rounded-lg flex gap-2"
+              onClick={handleCameraCapture}
+            >
+              <Camera size={16} />
+              <span>Kamera</span>
+            </Button>
+            
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept="image/*"
+              multiple
+              className="hidden"
+            />
+            
+            <input
+              type="file"
+              ref={cameraInputRef}
+              onChange={handleFileChange}
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+            />
+          </div>
+          
+          {/* Image Preview */}
+          {previewUrls.length > 0 && (
+            <div className="grid grid-cols-3 gap-2 mt-2">
+              {previewUrls.map((url, index) => (
+                <div key={index} className="relative">
+                  <img 
+                    src={url} 
+                    alt={`Preview ${index + 1}`} 
+                    className="w-full h-24 object-cover rounded"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-1 right-1 h-6 w-6 rounded-full"
+                    onClick={() => removeImage(index)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       

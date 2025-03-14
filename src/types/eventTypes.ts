@@ -11,6 +11,7 @@ export interface Event {
   category: string;
   likes?: number;
   link?: string;
+  image_urls?: string[]; // Added to store URLs of uploaded images
 }
 
 export interface GitHubEvent {
