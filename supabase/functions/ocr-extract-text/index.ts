@@ -89,6 +89,14 @@ serve(async (req) => {
     
     console.log("Extracted text:", extractedText);
 
+    if (!extractedText) {
+      console.warn("No text was extracted from the image");
+      return new Response(
+        JSON.stringify({ text: '', warning: 'No text was detected in the image' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ text: extractedText }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

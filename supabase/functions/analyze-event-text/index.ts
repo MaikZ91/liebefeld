@@ -51,21 +51,22 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are an AI assistant that extracts event information from text. 
-            Extract the following fields if present: title, description, date (in YYYY-MM-DD format), 
-            time (in HH:MM format), location, organizer, and category. 
-            Respond in JSON format with these fields. If a field is not present, omit it.
-            Valid categories are: Konzert, Party, Ausstellung, Sport, Workshop, Kultur, Sonstiges.
-            Use the closest matching category if unsure.
+            content: `Du bist ein Assistent, der Eventinformationen aus Text extrahiert. 
+            Extrahiere die folgenden Felder, wenn vorhanden: title (Titel des Events), description (Beschreibung), 
+            date (im Format YYYY-MM-DD), time (im Format HH:MM), location (Ort), organizer (Veranstalter), 
+            und category (Kategorie). 
             
-            For example, if the text mentions "FREITAG, 14. MÄRZ 2025, CUTIE, BIELEFELD", 
-            you should extract date: "2025-03-14" and location: "CUTIE, BIELEFELD".
+            Gültige Kategorien sind: Konzert, Party, Ausstellung, Sport, Workshop, Kultur, Sonstiges.
+            Verwende die am besten passende Kategorie.
+            Antworte nur im JSON-Format mit diesen Feldern. Wenn ein Feld nicht vorhanden ist, lasse es weg.
             
-            If the text mentions "INDIE-POSTPUNK-ELEKTRO-ALTERNATIVE", 
-            you should determine that the category is likely "Party" or "Konzert".
+            Beispiel: Wenn im Text "FREITAG, 14. MÄRZ 2025, CUTIE, BIELEFELD" steht, 
+            solltest du "date": "2025-03-14" und "location": "CUTIE, BIELEFELD" extrahieren.
             
-            If DJs are mentioned, it's likely a "Party" category.
-            `
+            Wenn "INDIE-POSTPUNK-ELEKTRO-ALTERNATIVE" erwähnt wird, 
+            solltest du feststellen, dass die Kategorie wahrscheinlich "Party" oder "Konzert" ist.
+            
+            Achte bei deutschen Datumsangaben auf das Format. Zum Beispiel "14.03.2025" oder "14. März 2025" sollte als "2025-03-14" extrahiert werden.`
           },
           {
             role: 'user',
@@ -104,13 +105,17 @@ serve(async (req) => {
       const timeMatch = content.match(/time[":]+\s*["']?([^"',}]+)["']?/i);
       const locationMatch = content.match(/location[":]+\s*["']?([^"',}]+)["']?/i);
       const categoryMatch = content.match(/category[":]+\s*["']?([^"',}]+)["']?/i);
+      const descriptionMatch = content.match(/description[":]+\s*["']?([^"',}]+)["']?/i);
+      const organizerMatch = content.match(/organizer[":]+\s*["']?([^"',}]+)["']?/i);
       
       eventData = {
         ...(titleMatch && { title: titleMatch[1].trim() }),
         ...(dateMatch && { date: dateMatch[1].trim() }),
         ...(timeMatch && { time: timeMatch[1].trim() }),
         ...(locationMatch && { location: locationMatch[1].trim() }),
-        ...(categoryMatch && { category: categoryMatch[1].trim() })
+        ...(categoryMatch && { category: categoryMatch[1].trim() }),
+        ...(descriptionMatch && { description: descriptionMatch[1].trim() }),
+        ...(organizerMatch && { organizer: organizerMatch[1].trim() })
       };
       
       console.log("Manually extracted data:", eventData);

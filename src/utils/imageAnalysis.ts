@@ -23,6 +23,8 @@ export async function extractTextFromImage(imageFile: File): Promise<string> {
     const formData = new FormData();
     formData.append('image', imageFile);
     
+    console.log('Calling OCR function with image:', imageFile.name, 'size:', imageFile.size, 'type:', imageFile.type);
+    
     // Call the Supabase Edge Function for OCR
     const { data: functionData, error: functionError } = await supabase.functions.invoke(
       'ocr-extract-text',
@@ -36,8 +38,26 @@ export async function extractTextFromImage(imageFile: File): Promise<string> {
       throw new Error(functionError.message);
     }
     
+    if (!functionData) {
+      console.error('No data returned from OCR function');
+      throw new Error('Keine Daten vom OCR-Service erhalten');
+    }
+    
+    if (functionData.error) {
+      console.error('OCR function error:', functionData.error);
+      throw new Error(functionData.error);
+    }
+    
     console.log('OCR extraction result:', functionData);
-    return functionData?.text || '';
+    
+    const extractedText = functionData?.text || '';
+    
+    if (!extractedText || extractedText.trim() === '') {
+      console.warn('No text extracted from image');
+      throw new Error('Aus dem Bild konnte kein Text extrahiert werden');
+    }
+    
+    return extractedText;
   } catch (error) {
     console.error('Error in extractTextFromImage:', error);
     throw error;
@@ -67,6 +87,11 @@ export async function analyzeEventText(text: string): Promise<ExtractedEventData
     if (error) {
       console.error('Error analyzing text:', error);
       throw new Error(error.message);
+    }
+    
+    if (!data) {
+      console.error('No data returned from text analysis function');
+      throw new Error('Keine Daten vom Textanalyse-Service erhalten');
     }
     
     console.log('Text analysis result:', data);
@@ -113,6 +138,12 @@ export async function processEventImage(file: File): Promise<ExtractedEventData>
         title: "Eventdaten erkannt",
         description: "Die Daten wurden aus dem Bild extrahiert.",
         variant: "success"
+      });
+    } else {
+      toast({
+        title: "Keine Eventdaten erkannt",
+        description: "Es konnten keine Eventdaten aus dem Text extrahiert werden.",
+        variant: "destructive"
       });
     }
     
