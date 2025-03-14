@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -9,11 +8,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type Event } from '@/types/eventTypes';
-import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft, X, Camera, Upload, Image } from 'lucide-react';
+import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft, X, Camera, Upload, Image, Sparkles } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { processEventImage } from '@/utils/imageAnalysis';
 
 interface EventFormProps {
   selectedDate: Date;
@@ -43,11 +43,12 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
   const [error, setError] = useState<string | null>(null);
   const [images, setImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
       
@@ -60,7 +61,79 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       
       // Reset the input value so the same file can be selected again if needed
       e.target.value = '';
+      
+      // Process the first image for data extraction
+      if (newFiles.length > 0 && title === '' && description === '') {
+        await analyzeImageForEventData(newFiles[0]);
+      }
     }
+  };
+  
+  const analyzeImageForEventData = async (imageFile: File) => {
+    setIsAnalyzing(true);
+    try {
+      // Process the image to extract event data
+      const extractedData = await processEventImage(imageFile);
+      
+      // Apply the extracted data to the form fields
+      if (extractedData.title) setTitle(extractedData.title);
+      if (extractedData.description) setDescription(extractedData.description);
+      if (extractedData.location) setLocation(extractedData.location);
+      if (extractedData.organizer) setOrganizer(extractedData.organizer);
+      if (extractedData.category) setCategory(extractedData.category);
+      
+      // Handle date and time if available
+      if (extractedData.date) {
+        try {
+          const extractedDate = new Date(extractedData.date);
+          if (!isNaN(extractedDate.getTime())) {
+            setDate(extractedDate);
+          }
+        } catch (err) {
+          console.error('Error parsing extracted date:', err);
+        }
+      }
+      
+      if (extractedData.time) {
+        setTime(extractedData.time);
+      }
+      
+      if (Object.keys(extractedData).length > 0) {
+        toast({
+          title: "Eventdaten erkannt",
+          description: "Die Formularfelder wurden mit erkannten Daten aus dem Bild gefüllt.",
+        });
+      } else {
+        toast({
+          title: "Keine Eventdaten erkannt",
+          description: "Das Bild konnte nicht analysiert werden. Bitte füllen Sie das Formular manuell aus.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error analyzing image:', error);
+      toast({
+        title: "Fehler bei der Analyse",
+        description: "Das Bild konnte nicht verarbeitet werden. Bitte versuchen Sie es erneut oder füllen Sie das Formular manuell aus.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+  
+  const handleAnalyzeImage = async () => {
+    if (images.length === 0) {
+      toast({
+        title: "Kein Bild vorhanden",
+        description: "Bitte laden Sie zuerst ein Bild hoch.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Analyze the first image
+    await analyzeImageForEventData(images[0]);
   };
   
   const handleCameraCapture = () => {
@@ -282,6 +355,91 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         </div>
       )}
       
+      {/* Image Upload Section */}
+      <div className="grid gap-2 mb-6">
+        <div className="flex items-center">
+          <Image className="h-4 w-4 mr-2 text-muted-foreground" />
+          <Label>Bilder hinzufügen</Label>
+        </div>
+        
+        <div className="flex gap-2">
+          <Button 
+            type="button" 
+            variant="outline" 
+            className="rounded-lg flex gap-2"
+            onClick={handleFileUpload}
+          >
+            <Upload size={16} />
+            <span>Bilder auswählen</span>
+          </Button>
+          
+          <Button 
+            type="button" 
+            variant="outline" 
+            className="rounded-lg flex gap-2"
+            onClick={handleCameraCapture}
+          >
+            <Camera size={16} />
+            <span>Kamera</span>
+          </Button>
+          
+          {images.length > 0 && (
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="rounded-lg flex gap-2"
+              onClick={handleAnalyzeImage}
+              disabled={isAnalyzing}
+            >
+              <Sparkles size={16} />
+              <span>{isAnalyzing ? "Analysiere..." : "Daten erkennen"}</span>
+            </Button>
+          )}
+          
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept="image/*"
+            multiple
+            className="hidden"
+          />
+          
+          <input
+            type="file"
+            ref={cameraInputRef}
+            onChange={handleFileChange}
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+          />
+        </div>
+        
+        {/* Image Preview */}
+        {previewUrls.length > 0 && (
+          <div className="grid grid-cols-3 gap-2 mt-2">
+            {previewUrls.map((url, index) => (
+              <div key={index} className="relative">
+                <img 
+                  src={url} 
+                  alt={`Preview ${index + 1}`} 
+                  className="w-full h-24 object-cover rounded"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-1 right-1 h-6 w-6 rounded-full"
+                  onClick={() => removeImage(index)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      
       <div className="grid gap-4 py-4">
         <div className="grid gap-2">
           <div className="flex items-center">
@@ -403,78 +561,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
             </Select>
           </div>
         </div>
-        
-        {/* Image Upload Section */}
-        <div className="grid gap-2 mt-2">
-          <div className="flex items-center">
-            <Image className="h-4 w-4 mr-2 text-muted-foreground" />
-            <Label>Bilder hinzufügen</Label>
-          </div>
-          
-          <div className="flex gap-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              className="rounded-lg flex gap-2"
-              onClick={handleFileUpload}
-            >
-              <Upload size={16} />
-              <span>Bilder auswählen</span>
-            </Button>
-            
-            <Button 
-              type="button" 
-              variant="outline" 
-              className="rounded-lg flex gap-2"
-              onClick={handleCameraCapture}
-            >
-              <Camera size={16} />
-              <span>Kamera</span>
-            </Button>
-            
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept="image/*"
-              multiple
-              className="hidden"
-            />
-            
-            <input
-              type="file"
-              ref={cameraInputRef}
-              onChange={handleFileChange}
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-            />
-          </div>
-          
-          {/* Image Preview */}
-          {previewUrls.length > 0 && (
-            <div className="grid grid-cols-3 gap-2 mt-2">
-              {previewUrls.map((url, index) => (
-                <div key={index} className="relative">
-                  <img 
-                    src={url} 
-                    alt={`Preview ${index + 1}`} 
-                    className="w-full h-24 object-cover rounded"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-1 right-1 h-6 w-6 rounded-full"
-                    onClick={() => removeImage(index)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
       
       <div className="flex justify-end gap-2 mt-4">
@@ -491,7 +577,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         <Button 
           type="submit" 
           className="rounded-full"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isAnalyzing}
         >
           {isSubmitting ? "Wird erstellt..." : "Event erstellen"}
         </Button>
