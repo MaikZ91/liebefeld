@@ -64,7 +64,7 @@ serve(async (req) => {
               features: [
                 {
                   type: 'TEXT_DETECTION',
-                  maxResults: 10,
+                  maxResults: 50,  // Increased from 10 to 50
                 },
               ],
             },
@@ -83,9 +83,20 @@ serve(async (req) => {
       );
     }
 
+    console.log("Vision API response received:", JSON.stringify(visionData).substring(0, 200) + "...");
+
     // Extract the OCR text from the response
     const textAnnotations = visionData?.responses?.[0]?.textAnnotations;
-    const extractedText = textAnnotations?.[0]?.description || '';
+    
+    if (!textAnnotations || textAnnotations.length === 0) {
+      console.warn("No text annotations found in Vision API response");
+      return new Response(
+        JSON.stringify({ text: '', warning: 'No text was detected in the image' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const extractedText = textAnnotations[0]?.description || '';
     
     console.log("Extracted text:", extractedText);
 

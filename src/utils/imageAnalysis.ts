@@ -30,6 +30,9 @@ export async function extractTextFromImage(imageFile: File): Promise<string> {
       'ocr-extract-text',
       {
         body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       }
     );
     
@@ -37,6 +40,8 @@ export async function extractTextFromImage(imageFile: File): Promise<string> {
       console.error('Error extracting text from image:', functionError);
       throw new Error(functionError.message);
     }
+    
+    console.log('OCR function response:', functionData);
     
     if (!functionData) {
       console.error('No data returned from OCR function');
@@ -48,8 +53,6 @@ export async function extractTextFromImage(imageFile: File): Promise<string> {
       throw new Error(functionData.error);
     }
     
-    console.log('OCR extraction result:', functionData);
-    
     const extractedText = functionData?.text || '';
     
     if (!extractedText || extractedText.trim() === '') {
@@ -57,6 +60,7 @@ export async function extractTextFromImage(imageFile: File): Promise<string> {
       throw new Error('Aus dem Bild konnte kein Text extrahiert werden');
     }
     
+    console.log('Extracted text from image:', extractedText);
     return extractedText;
   } catch (error) {
     console.error('Error in extractTextFromImage:', error);
@@ -88,6 +92,8 @@ export async function analyzeEventText(text: string): Promise<ExtractedEventData
       console.error('Error analyzing text:', error);
       throw new Error(error.message);
     }
+    
+    console.log('Text analysis response:', data);
     
     if (!data) {
       console.error('No data returned from text analysis function');

@@ -51,22 +51,22 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `Du bist ein Assistent, der Eventinformationen aus Text extrahiert. 
+            content: `Du bist ein Assistent, der Eventinformationen aus Text extrahiert.
             Extrahiere die folgenden Felder, wenn vorhanden: title (Titel des Events), description (Beschreibung), 
             date (im Format YYYY-MM-DD), time (im Format HH:MM), location (Ort), organizer (Veranstalter), 
-            und category (Kategorie). 
+            und category (Kategorie).
             
             Gültige Kategorien sind: Konzert, Party, Ausstellung, Sport, Workshop, Kultur, Sonstiges.
             Verwende die am besten passende Kategorie.
-            Antworte nur im JSON-Format mit diesen Feldern. Wenn ein Feld nicht vorhanden ist, lasse es weg.
             
-            Beispiel: Wenn im Text "FREITAG, 14. MÄRZ 2025, CUTIE, BIELEFELD" steht, 
-            solltest du "date": "2025-03-14" und "location": "CUTIE, BIELEFELD" extrahieren.
+            WICHTIG: Antworte ausschließlich im JSON-Format mit diesen Feldern. Wenn ein Feld nicht vorhanden ist, lasse es weg.
+            KEIN einleitender Text oder andere Informationen - NUR das reine JSON.
             
-            Wenn "INDIE-POSTPUNK-ELEKTRO-ALTERNATIVE" erwähnt wird, 
-            solltest du feststellen, dass die Kategorie wahrscheinlich "Party" oder "Konzert" ist.
+            Bei Datumsangaben wie "14. März 2025" oder "14.03.2025", wandle diese in "2025-03-14" um.
             
-            Achte bei deutschen Datumsangaben auf das Format. Zum Beispiel "14.03.2025" oder "14. März 2025" sollte als "2025-03-14" extrahiert werden.`
+            Wenn "INDIE-POSTPUNK-ELEKTRO-ALTERNATIVE" erwähnt wird, ist die Kategorie "Konzert" oder "Party".
+            
+            Bei Zeitangaben, wandle alle Formate in 24h-Format um (HH:MM). Beispiel: "8 PM" oder "20 Uhr" wird zu "20:00".`
           },
           {
             role: 'user',
@@ -94,7 +94,17 @@ serve(async (req) => {
     // Parse the JSON from the content
     let eventData = {};
     try {
-      eventData = JSON.parse(content);
+      // Trim any non-JSON text that might be in the response
+      const jsonStart = content.indexOf('{');
+      const jsonEnd = content.lastIndexOf('}');
+      
+      if (jsonStart >= 0 && jsonEnd >= 0) {
+        const jsonString = content.substring(jsonStart, jsonEnd + 1);
+        eventData = JSON.parse(jsonString);
+      } else {
+        eventData = JSON.parse(content);
+      }
+      
       console.log("Parsed event data:", eventData);
     } catch (error) {
       console.error('Error parsing AI response as JSON:', error, 'Response was:', content);
