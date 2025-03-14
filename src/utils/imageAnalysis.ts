@@ -25,6 +25,12 @@ export async function extractTextFromImage(imageFile: File): Promise<string> {
     
     console.log('Calling OCR function with image:', imageFile.name, 'size:', imageFile.size, 'type:', imageFile.type);
     
+    // Get the current session
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+    
+    console.log('Auth token available:', !!accessToken);
+    
     // Call the Supabase Edge Function for OCR - directly with fetch instead of supabase.functions.invoke
     // to have more control over the headers and request format
     const response = await fetch(
@@ -33,8 +39,9 @@ export async function extractTextFromImage(imageFile: File): Promise<string> {
         method: 'POST',
         body: formData,
         headers: {
-          'Authorization': `Bearer ${supabase.auth.getSession().then(res => res.data.session?.access_token || '')}`,
-          // Don't set Content-Type here - fetch will set it automatically with the correct boundary
+          // Set the Authorization header properly - using the API key for public access
+          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'apikey': supabase.supabaseKey,
         }
       }
     );

@@ -18,6 +18,8 @@ serve(async (req) => {
     
     // Log request content type and headers for debugging
     console.log("Request Content-Type:", req.headers.get("content-type"));
+    console.log("Authorization header present:", !!req.headers.get("authorization"));
+    console.log("API key header present:", !!req.headers.get("apikey"));
     
     // Special handling for multipart/form-data
     if (!req.headers.get("content-type")?.includes("multipart/form-data")) {
