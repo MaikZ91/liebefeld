@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { type Event } from './EventCalendar';
+import { type Event } from '@/types/eventTypes';
 import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft, X, Camera, Upload, Image } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -131,10 +131,16 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
     setIsSubmitting(true);
     
     try {
+      // Fix for date timezone issue - ensure we get the correct date
+      // Format the date without timezone adjustments to preserve the selected date
+      const formattedDate = format(date, 'yyyy-MM-dd');
+      console.log('Selected date:', date);
+      console.log('Formatted date for DB:', formattedDate);
+      
       const newEvent: Omit<Event, 'id'> = {
         title,
         description,
-        date: date.toISOString().split('T')[0],
+        date: formattedDate,  // Use formatted date string
         time,
         location,
         organizer,
@@ -192,7 +198,8 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         // Event successfully saved, update the local list
         onAddEvent({
           ...newEvent,
-          id: data[0].id
+          id: data[0].id,
+          image_urls: imageUrls.length > 0 ? imageUrls : undefined
         });
         
         toast({
@@ -221,11 +228,12 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         ...{
           title,
           description,
-          date: date.toISOString().split('T')[0],
+          date: format(date, 'yyyy-MM-dd'),
           time,
           location,
           organizer,
           category: category || 'Sonstiges',
+          image_urls: [] // Add empty array for fallback
         },
         id: `local-${Date.now()}`
       };

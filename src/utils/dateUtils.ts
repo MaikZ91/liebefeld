@@ -43,4 +43,3 @@ export const debugDate = (date: Date | string, label: string = "Date"): void => 
     console.error(`Error debugging ${label}:`, error, date);
   }
 };
-
