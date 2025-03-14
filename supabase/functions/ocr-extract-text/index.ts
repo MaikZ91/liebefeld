@@ -16,7 +16,31 @@ serve(async (req) => {
   try {
     console.log("OCR function called");
     
-    const formData = await req.formData();
+    // Log request content type and headers for debugging
+    console.log("Request Content-Type:", req.headers.get("content-type"));
+    
+    // Special handling for multipart/form-data
+    if (!req.headers.get("content-type")?.includes("multipart/form-data")) {
+      console.error("Invalid content type. Expected multipart/form-data");
+      return new Response(
+        JSON.stringify({ error: 'Invalid content type. Expected multipart/form-data' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+    
+    const formData = await req.formData().catch(err => {
+      console.error("Failed to parse form data:", err);
+      return null;
+    });
+    
+    if (!formData) {
+      console.error("Failed to parse form data");
+      return new Response(
+        JSON.stringify({ error: 'Failed to parse form data' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+    
     const image = formData.get('image');
     
     if (!image || !(image instanceof File)) {

@@ -25,22 +25,27 @@ export async function extractTextFromImage(imageFile: File): Promise<string> {
     
     console.log('Calling OCR function with image:', imageFile.name, 'size:', imageFile.size, 'type:', imageFile.type);
     
-    // Call the Supabase Edge Function for OCR
-    const { data: functionData, error: functionError } = await supabase.functions.invoke(
-      'ocr-extract-text',
+    // Call the Supabase Edge Function for OCR - directly with fetch instead of supabase.functions.invoke
+    // to have more control over the headers and request format
+    const response = await fetch(
+      'https://ykleosfvtqcmqxqihnod.supabase.co/functions/v1/ocr-extract-text',
       {
+        method: 'POST',
         body: formData,
         headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+          'Authorization': `Bearer ${supabase.auth.getSession().then(res => res.data.session?.access_token || '')}`,
+          // Don't set Content-Type here - fetch will set it automatically with the correct boundary
+        }
       }
     );
     
-    if (functionError) {
-      console.error('Error extracting text from image:', functionError);
-      throw new Error(functionError.message);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Error response from OCR function:', response.status, errorData);
+      throw new Error(`OCR-Service hat mit Status ${response.status} geantwortet: ${errorData.error || 'Unbekannter Fehler'}`);
     }
     
+    const functionData = await response.json();
     console.log('OCR function response:', functionData);
     
     if (!functionData) {
