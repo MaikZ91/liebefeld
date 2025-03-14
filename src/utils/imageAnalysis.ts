@@ -25,8 +25,17 @@ export async function extractTextFromImage(imageFile: File): Promise<string> {
       description: "Das Bild wird analysiert, bitte einen Moment Geduld...",
     });
     
-    // Create a Tesseract worker
-    const worker = await createWorker('deu'); // German language
+    // Create a Tesseract worker with proper options format
+    const worker = await createWorker({
+      langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+      logger: progress => {
+        console.log('Tesseract progress:', progress);
+      }
+    });
+    
+    // Load German language data
+    await worker.loadLanguage('deu');
+    await worker.initialize('deu');
     
     // Create an object URL from the image file
     const imageUrl = URL.createObjectURL(imageFile);
