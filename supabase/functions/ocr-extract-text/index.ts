@@ -14,19 +14,25 @@ serve(async (req) => {
   }
 
   try {
+    console.log("OCR function called");
+    
     const formData = await req.formData();
     const image = formData.get('image');
     
     if (!image || !(image instanceof File)) {
+      console.error("No image provided or invalid image");
       return new Response(
         JSON.stringify({ error: 'No image provided or invalid image' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
+    console.log(`Processing image: ${image.name}, size: ${image.size} bytes, type: ${image.type}`);
+
     // Get the Vision API key from environment variables
     const VISION_API_KEY = Deno.env.get('VISION_API_KEY');
     if (!VISION_API_KEY) {
+      console.error("Vision API key not configured");
       return new Response(
         JSON.stringify({ error: 'API key not configured' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
@@ -38,6 +44,8 @@ serve(async (req) => {
     const base64Image = btoa(
       String.fromCharCode(...new Uint8Array(arrayBuffer))
     );
+    
+    console.log("Image converted to base64, calling Vision API");
 
     // Call Google Cloud Vision API for OCR
     const visionResponse = await fetch(
@@ -56,6 +64,7 @@ serve(async (req) => {
               features: [
                 {
                   type: 'TEXT_DETECTION',
+                  maxResults: 10,
                 },
               ],
             },
@@ -77,6 +86,8 @@ serve(async (req) => {
     // Extract the OCR text from the response
     const textAnnotations = visionData?.responses?.[0]?.textAnnotations;
     const extractedText = textAnnotations?.[0]?.description || '';
+    
+    console.log("Extracted text:", extractedText);
 
     return new Response(
       JSON.stringify({ text: extractedText }),

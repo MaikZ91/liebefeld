@@ -14,18 +14,25 @@ serve(async (req) => {
   }
 
   try {
-    const { text } = await req.json();
+    console.log("Text analysis function called");
+    
+    const requestData = await req.json();
+    const { text } = requestData;
     
     if (!text) {
+      console.error("No text provided");
       return new Response(
         JSON.stringify({ error: 'No text provided' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
+    console.log("Analyzing text:", text);
+
     // Get the OpenAI API key from environment variables
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     if (!OPENAI_API_KEY) {
+      console.error("OpenAI API key not configured");
       return new Response(
         JSON.stringify({ error: 'API key not configured' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
@@ -49,7 +56,16 @@ serve(async (req) => {
             time (in HH:MM format), location, organizer, and category. 
             Respond in JSON format with these fields. If a field is not present, omit it.
             Valid categories are: Konzert, Party, Ausstellung, Sport, Workshop, Kultur, Sonstiges.
-            Use the closest matching category if unsure.`
+            Use the closest matching category if unsure.
+            
+            For example, if the text mentions "FREITAG, 14. MÄRZ 2025, CUTIE, BIELEFELD", 
+            you should extract date: "2025-03-14" and location: "CUTIE, BIELEFELD".
+            
+            If the text mentions "INDIE-POSTPUNK-ELEKTRO-ALTERNATIVE", 
+            you should determine that the category is likely "Party" or "Konzert".
+            
+            If DJs are mentioned, it's likely a "Party" category.
+            `
           },
           {
             role: 'user',
@@ -72,14 +88,32 @@ serve(async (req) => {
 
     // Extract the AI-generated content
     const content = openAIData?.choices?.[0]?.message?.content;
+    console.log("OpenAI response:", content);
     
     // Parse the JSON from the content
     let eventData = {};
     try {
       eventData = JSON.parse(content);
+      console.log("Parsed event data:", eventData);
     } catch (error) {
       console.error('Error parsing AI response as JSON:', error, 'Response was:', content);
-      eventData = {};
+      
+      // Attempt to extract data anyway if the response is not valid JSON
+      const titleMatch = content.match(/title[":]+\s*["']?([^"',}]+)["']?/i);
+      const dateMatch = content.match(/date[":]+\s*["']?([^"',}]+)["']?/i);
+      const timeMatch = content.match(/time[":]+\s*["']?([^"',}]+)["']?/i);
+      const locationMatch = content.match(/location[":]+\s*["']?([^"',}]+)["']?/i);
+      const categoryMatch = content.match(/category[":]+\s*["']?([^"',}]+)["']?/i);
+      
+      eventData = {
+        ...(titleMatch && { title: titleMatch[1].trim() }),
+        ...(dateMatch && { date: dateMatch[1].trim() }),
+        ...(timeMatch && { time: timeMatch[1].trim() }),
+        ...(locationMatch && { location: locationMatch[1].trim() }),
+        ...(categoryMatch && { category: categoryMatch[1].trim() })
+      };
+      
+      console.log("Manually extracted data:", eventData);
     }
 
     return new Response(

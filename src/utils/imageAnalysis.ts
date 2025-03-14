@@ -17,6 +17,8 @@ interface ExtractedEventData {
  */
 export async function extractTextFromImage(imageFile: File): Promise<string> {
   try {
+    console.log('Starting text extraction from image:', imageFile.name);
+    
     // Create a FormData object to send the image
     const formData = new FormData();
     formData.append('image', imageFile);
@@ -34,6 +36,7 @@ export async function extractTextFromImage(imageFile: File): Promise<string> {
       throw new Error(functionError.message);
     }
     
+    console.log('OCR extraction result:', functionData);
     return functionData?.text || '';
   } catch (error) {
     console.error('Error in extractTextFromImage:', error);
@@ -46,10 +49,13 @@ export async function extractTextFromImage(imageFile: File): Promise<string> {
  */
 export async function analyzeEventText(text: string): Promise<ExtractedEventData> {
   if (!text || text.trim() === '') {
+    console.log('No text provided for analysis');
     return {};
   }
   
   try {
+    console.log('Analyzing extracted text:', text);
+    
     // Call the Supabase Edge Function for AI text analysis
     const { data, error } = await supabase.functions.invoke(
       'analyze-event-text',
@@ -63,6 +69,7 @@ export async function analyzeEventText(text: string): Promise<ExtractedEventData
       throw new Error(error.message);
     }
     
+    console.log('Text analysis result:', data);
     return data as ExtractedEventData;
   } catch (error) {
     console.error('Error in analyzeEventText:', error);
@@ -76,6 +83,8 @@ export async function analyzeEventText(text: string): Promise<ExtractedEventData
  */
 export async function processEventImage(file: File): Promise<ExtractedEventData> {
   try {
+    console.log('Starting image processing for:', file.name);
+    
     toast({
       title: "Bild wird analysiert",
       description: "Das Bild wird verarbeitet, um Eventdaten zu extrahieren...",
@@ -83,6 +92,8 @@ export async function processEventImage(file: File): Promise<ExtractedEventData>
     
     // Step 1: Extract text from the image
     const extractedText = await extractTextFromImage(file);
+    console.log('Extracted text from image:', extractedText);
+    
     if (!extractedText) {
       toast({
         title: "Keine Textinformationen gefunden",
@@ -94,6 +105,16 @@ export async function processEventImage(file: File): Promise<ExtractedEventData>
     
     // Step 2: Analyze the text to find event details
     const eventData = await analyzeEventText(extractedText);
+    console.log('Extracted event data:', eventData);
+    
+    // Show success toast if we found some data
+    if (Object.keys(eventData).length > 0) {
+      toast({
+        title: "Eventdaten erkannt",
+        description: "Die Daten wurden aus dem Bild extrahiert.",
+        variant: "success"
+      });
+    }
     
     // Return the extracted data
     return eventData;
