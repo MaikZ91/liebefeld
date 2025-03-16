@@ -29,26 +29,29 @@ const EventList: React.FC<EventListProps> = ({
   // Reset scroll state when events or favorites change
   useEffect(() => {
     setHasScrolledToToday(false);
-  }, [showFavorites]);
+  }, [events, showFavorites]);
   
   // Scroll to today's section when component loads or events change
   useEffect(() => {
-    if (todayRef.current && listRef.current && !hasScrolledToToday && Object.keys(eventsByDate).length > 0) {
-      console.log('EventList: Attempting to scroll to today');
+    // Only attempt to scroll if we haven't scrolled yet and we have events
+    if (!hasScrolledToToday && Object.keys(eventsByDate).length > 0) {
+      console.log('EventList: Checking if we can scroll to today section');
       
-      // Wait for render to complete
+      // Use setTimeout to ensure DOM is fully rendered
       setTimeout(() => {
-        if (todayRef.current && listRef.current) {
-          // Calculate the target scroll position (with offset to position the date header nicely)
-          const targetScrollTop = todayRef.current.offsetTop - 80;
+        // Find today's section if it exists
+        const todayElement = document.getElementById('today-section');
+        
+        if (todayElement && listRef.current) {
+          console.log('EventList: Found today section element', todayElement);
           
-          // Get current scroll position
-          const currentScrollTop = listRef.current.scrollTop;
+          // Calculate the target scroll position (with offset for better positioning)
+          const targetScrollTop = todayElement.offsetTop - 80;
           
-          // Set immediate scroll for better UX
+          // Immediate scroll for performance
           listRef.current.scrollTop = targetScrollTop;
           
-          // Then do smooth scroll for polish
+          // Then smooth scroll for visual polish
           listRef.current.scrollTo({
             top: targetScrollTop,
             behavior: 'smooth'
@@ -56,15 +59,14 @@ const EventList: React.FC<EventListProps> = ({
           
           console.log('EventList: Scrolled to today section at position', targetScrollTop);
           setHasScrolledToToday(true);
+        } else {
+          console.log('EventList: Today section not found in DOM', { 
+            todayElement: !!todayElement, 
+            listRef: !!listRef.current,
+            eventsByDateLength: Object.keys(eventsByDate).length
+          });
         }
-      }, 300);
-    } else {
-      console.log('EventList: Today ref or list ref not found or already scrolled', { 
-        todayRef: !!todayRef.current, 
-        listRef: !!listRef.current,
-        hasScrolledToToday,
-        eventsLength: Object.keys(eventsByDate).length
-      });
+      }, 100); // Short delay to ensure DOM is ready
     }
   }, [eventsByDate, hasScrolledToToday]);
   
