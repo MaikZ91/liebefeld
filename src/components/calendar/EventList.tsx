@@ -2,6 +2,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { CalendarIcon } from 'lucide-react';
 import { Event } from '@/types/eventTypes';
 import EventCard from '@/components/EventCard';
 import { groupEventsByDate } from '@/utils/eventUtils';
@@ -25,6 +26,11 @@ const EventList: React.FC<EventListProps> = ({
   
   // Group events by date
   const eventsByDate = groupEventsByDate(events);
+  
+  // Determine if there are any events for today
+  const today = new Date();
+  const todayStr = format(today, 'yyyy-MM-dd');
+  const hasEventsToday = Boolean(eventsByDate[todayStr] && eventsByDate[todayStr].length > 0);
   
   // Scroll to today's section ONLY on component first load and when events are loaded
   useEffect(() => {
@@ -98,36 +104,56 @@ const EventList: React.FC<EventListProps> = ({
       
       <div ref={listRef} className="overflow-y-auto max-h-[600px] pr-2 scrollbar-thin">
         {Object.keys(eventsByDate).length > 0 ? (
-          Object.keys(eventsByDate).sort().map(dateStr => {
-            const date = parseISO(dateStr);
-            const isCurrentDay = isToday(date);
+          <>
+            {Object.keys(eventsByDate).sort().map(dateStr => {
+              const date = parseISO(dateStr);
+              const isCurrentDay = isToday(date);
+              
+              return (
+                <div 
+                  key={dateStr} 
+                  ref={isCurrentDay ? todayRef : null}
+                  className={`mb-4 ${isCurrentDay ? 'scroll-mt-12' : ''}`}
+                  id={isCurrentDay ? "today-section" : undefined}
+                >
+                  <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
+                    {format(date, 'EEEE, d. MMMM', { locale: de })}
+                  </h4>
+                  <div className="space-y-1">
+                    {eventsByDate[dateStr].map(event => (
+                      <EventCard 
+                        key={event.id} 
+                        event={event}
+                        compact={true}
+                        onClick={() => onSelectEvent(event, date)}
+                        onLike={onLike}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
             
-            return (
+            {/* Add "Today" section with "No events" message if there are no events today */}
+            {!hasEventsToday && !showFavorites && (
               <div 
-                key={dateStr} 
-                ref={isCurrentDay ? todayRef : null}
-                className={`mb-4 ${isCurrentDay ? 'scroll-mt-12' : ''}`}
-                id={isCurrentDay ? "today-section" : undefined}
+                ref={todayRef}
+                className="mb-4 scroll-mt-12"
+                id="today-section"
               >
                 <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
-                  {format(date, 'EEEE, d. MMMM', { locale: de })}
+                  {format(today, 'EEEE, d. MMMM', { locale: de })}
                 </h4>
-                <div className="space-y-1">
-                  {eventsByDate[dateStr].map(event => (
-                    <EventCard 
-                      key={event.id} 
-                      event={event}
-                      compact={true}
-                      onClick={() => onSelectEvent(event, date)}
-                      onLike={onLike}
-                    />
-                  ))}
+                <div className="flex flex-col items-center justify-center py-6 px-4 bg-[#1E293B]/30 rounded-lg border border-gray-800">
+                  <CalendarIcon className="w-8 h-8 mb-2 text-gray-500" />
+                  <p className="text-gray-400 text-center">Noch keine Events heute</p>
                 </div>
               </div>
-            );
-          })
+            )}
+          </>
         ) : (
-          <div className="flex items-center justify-center h-40 text-gray-400">
+          <div className="flex flex-col items-center justify-center h-40 text-gray-400">
+            <CalendarIcon className="w-8 h-8 mb-2 text-gray-500" />
             {showFavorites 
               ? "Du hast noch keine Favoriten" 
               : "Keine Events gefunden"}
