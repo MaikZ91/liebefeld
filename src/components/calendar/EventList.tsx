@@ -5,6 +5,7 @@ import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
 import EventCard from '@/components/EventCard';
 import { groupEventsByDate } from '@/utils/eventUtils';
+import { CalendarIcon } from 'lucide-react';
 
 interface EventListProps {
   events: Event[];
@@ -70,6 +71,10 @@ const EventList: React.FC<EventListProps> = ({
     }
   }, [eventsByDate, hasScrolledToToday]);
   
+  // Check if there are any events for today
+  const todayString = format(new Date(), 'yyyy-MM-dd');
+  const hasTodayEvents = eventsByDate[todayString] && eventsByDate[todayString].length > 0;
+  
   return (
     <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
       <div className="flex items-center justify-between mb-4">
@@ -108,8 +113,16 @@ const EventList: React.FC<EventListProps> = ({
               </div>
             );
           })
+        ) : hasTodayEvents ? (
+          <div className="flex flex-col items-center justify-center h-40 text-gray-400">
+            <CalendarIcon className="h-12 w-12 mb-4 text-gray-500" />
+            {showFavorites 
+              ? "Du hast noch keine Favoriten" 
+              : "Noch keine Events"}
+          </div>
         ) : (
-          <div className="flex items-center justify-center h-40 text-gray-400">
+          <div className="flex flex-col items-center justify-center h-40 text-gray-400">
+            <CalendarIcon className="h-12 w-12 mb-4 text-gray-500" />
             {showFavorites 
               ? "Du hast noch keine Favoriten" 
               : "Keine Events gefunden"}
