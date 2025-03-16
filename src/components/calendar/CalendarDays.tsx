@@ -50,7 +50,7 @@ const CalendarDays: React.FC<CalendarDaysProps> = ({
         console.log('Scrolled calendar to today');
       }, 100);
     }
-  }, [daysInMonth]); // Add daysInMonth as a dependency to ensure scroll happens when month changes
+  }, []);
   
   return (
     <>

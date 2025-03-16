@@ -5,7 +5,6 @@ import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
 import EventCard from '@/components/EventCard';
 import { groupEventsByDate } from '@/utils/eventUtils';
-import { CalendarIcon } from 'lucide-react';
 
 interface EventListProps {
   events: Event[];
@@ -27,53 +26,67 @@ const EventList: React.FC<EventListProps> = ({
   // Group events by date
   const eventsByDate = groupEventsByDate(events);
   
+  // Scroll to today's section ONLY on component first load and when events are loaded
+  useEffect(() => {
+    if (todayRef.current && listRef.current && !hasScrolledToToday && Object.keys(eventsByDate).length > 0) {
+      console.log('EventList: Attempting to scroll to today (first load only)');
+      
+      // Wait for render to complete
+      setTimeout(() => {
+        if (todayRef.current && listRef.current) {
+          // Calculate the target scroll position (with offset to position the date header nicely)
+          // Increased offset to 80px to leave more space above the first event
+          const targetScrollTop = todayRef.current.offsetTop - 80;
+          
+          // Get current scroll position
+          const currentScrollTop = listRef.current.scrollTop;
+          
+          // Scroll with slow animation using custom easing
+          const duration = 800; // Longer duration for slower scroll
+          const startTime = performance.now();
+          
+          const animateScroll = (currentTime: number) => {
+            const elapsedTime = currentTime - startTime;
+            
+            if (elapsedTime < duration) {
+              // Easing function (ease-out) for smooth deceleration
+              const progress = 1 - Math.pow(1 - elapsedTime / duration, 2);
+              
+              // Calculate intermediate scroll position
+              const scrollValue = currentScrollTop + (targetScrollTop - currentScrollTop) * progress;
+              
+              // Update scroll position
+              listRef.current!.scrollTop = scrollValue;
+              
+              // Continue animation
+              requestAnimationFrame(animateScroll);
+            } else {
+              // Ensure we land exactly at the target
+              listRef.current!.scrollTop = targetScrollTop;
+              console.log('EventList: Smooth scroll completed');
+              setHasScrolledToToday(true);
+            }
+          };
+          
+          // Start the animation
+          requestAnimationFrame(animateScroll);
+          console.log('EventList: Starting gentle scroll animation');
+        }
+      }, 300); // Wait a bit longer before starting to ensure rendering is complete
+    } else {
+      console.log('EventList: Today ref or list ref not found or already scrolled', { 
+        todayRef: !!todayRef.current, 
+        listRef: !!listRef.current,
+        hasScrolledToToday,
+        eventsLength: Object.keys(eventsByDate).length
+      });
+    }
+  }, [eventsByDate]); // Run when events grouping changes
+
   // Reset scroll state when events or favorites change
   useEffect(() => {
     setHasScrolledToToday(false);
-  }, [events, showFavorites]);
-  
-  // Scroll to today's section when component loads or events change
-  useEffect(() => {
-    // Only attempt to scroll if we haven't scrolled yet and we have events
-    if (!hasScrolledToToday && Object.keys(eventsByDate).length > 0) {
-      console.log('EventList: Checking if we can scroll to today section');
-      
-      // Use setTimeout to ensure DOM is fully rendered
-      setTimeout(() => {
-        // Find today's section if it exists
-        const todayElement = document.getElementById('today-section');
-        
-        if (todayElement && listRef.current) {
-          console.log('EventList: Found today section element', todayElement);
-          
-          // Calculate the target scroll position (with offset for better positioning)
-          const targetScrollTop = todayElement.offsetTop - 80;
-          
-          // Immediate scroll for performance
-          listRef.current.scrollTop = targetScrollTop;
-          
-          // Then smooth scroll for visual polish
-          listRef.current.scrollTo({
-            top: targetScrollTop,
-            behavior: 'smooth'
-          });
-          
-          console.log('EventList: Scrolled to today section at position', targetScrollTop);
-          setHasScrolledToToday(true);
-        } else {
-          console.log('EventList: Today section not found in DOM', { 
-            todayElement: !!todayElement, 
-            listRef: !!listRef.current,
-            eventsByDateLength: Object.keys(eventsByDate).length
-          });
-        }
-      }, 100); // Short delay to ensure DOM is ready
-    }
-  }, [eventsByDate, hasScrolledToToday]);
-  
-  // Check if there are any events for today
-  const todayString = format(new Date(), 'yyyy-MM-dd');
-  const hasTodayEvents = eventsByDate[todayString] && eventsByDate[todayString].length > 0;
+  }, [showFavorites]);
   
   return (
     <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
@@ -113,16 +126,8 @@ const EventList: React.FC<EventListProps> = ({
               </div>
             );
           })
-        ) : hasTodayEvents ? (
-          <div className="flex flex-col items-center justify-center h-40 text-gray-400">
-            <CalendarIcon className="h-12 w-12 mb-4 text-gray-500" />
-            {showFavorites 
-              ? "Du hast noch keine Favoriten" 
-              : "Noch keine Events"}
-          </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-40 text-gray-400">
-            <CalendarIcon className="h-12 w-12 mb-4 text-gray-500" />
+          <div className="flex items-center justify-center h-40 text-gray-400">
             {showFavorites 
               ? "Du hast noch keine Favoriten" 
               : "Keine Events gefunden"}
