@@ -98,13 +98,17 @@ const CalendarDays: React.FC<CalendarDaysProps> = ({
                   {format(day, 'd')}
                 </span>
                 
-                {dayHasEvents && (
+                {dayHasEvents ? (
                   <span className={cn(
                     "flex items-center justify-center text-[10px] font-bold rounded-full w-4 h-4 mt-1",
                     isSelected ? "bg-white text-black" : "bg-red-500 text-white"
                   )}>
                     {eventCount}
                   </span>
+                ) : (
+                  isCurrentDay && (
+                    <span className="text-[8px] text-gray-400 mt-1">keine Events</span>
+                  )
                 )}
               </button>
             );

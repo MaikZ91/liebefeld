@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { format } from 'date-fns';
+import { format, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { CalendarIcon, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,8 @@ const EventPanel: React.FC<EventPanelProps> = ({
   }
 
   if (selectedDate && !showFavorites) {
+    const isTodaySelected = isToday(selectedDate);
+    
     // If a date is selected but no specific event, show the event list for that day
     return filteredEvents.length > 0 ? (
       <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
@@ -63,10 +65,13 @@ const EventPanel: React.FC<EventPanelProps> = ({
     ) : (
       <div className="dark-glass-card rounded-2xl p-6 flex flex-col items-center justify-center h-[300px]">
         <CalendarIcon className="w-12 h-12 mb-4 text-gray-500" />
-        <h3 className="text-xl font-medium text-white mb-2">Keine Events</h3>
+        <h3 className="text-xl font-medium text-white mb-2">
+          {isTodaySelected ? "Noch keine Events heute" : "Keine Events"}
+        </h3>
         <p className="text-center text-gray-400">
-          Für den {format(selectedDate, 'd. MMMM yyyy', { locale: de })} sind keine Events
-          {filter ? ` in der Kategorie "${filter}"` : ''} geplant.
+          {isTodaySelected 
+            ? `Für heute sind noch keine Events${filter ? ` in der Kategorie "${filter}"` : ''} geplant.`
+            : `Für den ${format(selectedDate, 'd. MMMM yyyy', { locale: de })} sind keine Events${filter ? ` in der Kategorie "${filter}"` : ''} geplant.`}
         </p>
         <Button
           className="mt-4 rounded-full"
