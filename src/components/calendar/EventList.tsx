@@ -26,53 +26,38 @@ const EventList: React.FC<EventListProps> = ({
   // Group events by date
   const eventsByDate = groupEventsByDate(events);
   
-  // Scroll to today's section ONLY on component first load and when events are loaded
+  // Reset scroll state when events or favorites change
+  useEffect(() => {
+    setHasScrolledToToday(false);
+  }, [showFavorites]);
+  
+  // Scroll to today's section when component loads or events change
   useEffect(() => {
     if (todayRef.current && listRef.current && !hasScrolledToToday && Object.keys(eventsByDate).length > 0) {
-      console.log('EventList: Attempting to scroll to today (first load only)');
+      console.log('EventList: Attempting to scroll to today');
       
       // Wait for render to complete
       setTimeout(() => {
         if (todayRef.current && listRef.current) {
           // Calculate the target scroll position (with offset to position the date header nicely)
-          // Increased offset to 80px to leave more space above the first event
           const targetScrollTop = todayRef.current.offsetTop - 80;
           
           // Get current scroll position
           const currentScrollTop = listRef.current.scrollTop;
           
-          // Scroll with slow animation using custom easing
-          const duration = 800; // Longer duration for slower scroll
-          const startTime = performance.now();
+          // Set immediate scroll for better UX
+          listRef.current.scrollTop = targetScrollTop;
           
-          const animateScroll = (currentTime: number) => {
-            const elapsedTime = currentTime - startTime;
-            
-            if (elapsedTime < duration) {
-              // Easing function (ease-out) for smooth deceleration
-              const progress = 1 - Math.pow(1 - elapsedTime / duration, 2);
-              
-              // Calculate intermediate scroll position
-              const scrollValue = currentScrollTop + (targetScrollTop - currentScrollTop) * progress;
-              
-              // Update scroll position
-              listRef.current!.scrollTop = scrollValue;
-              
-              // Continue animation
-              requestAnimationFrame(animateScroll);
-            } else {
-              // Ensure we land exactly at the target
-              listRef.current!.scrollTop = targetScrollTop;
-              console.log('EventList: Smooth scroll completed');
-              setHasScrolledToToday(true);
-            }
-          };
+          // Then do smooth scroll for polish
+          listRef.current.scrollTo({
+            top: targetScrollTop,
+            behavior: 'smooth'
+          });
           
-          // Start the animation
-          requestAnimationFrame(animateScroll);
-          console.log('EventList: Starting gentle scroll animation');
+          console.log('EventList: Scrolled to today section at position', targetScrollTop);
+          setHasScrolledToToday(true);
         }
-      }, 300); // Wait a bit longer before starting to ensure rendering is complete
+      }, 300);
     } else {
       console.log('EventList: Today ref or list ref not found or already scrolled', { 
         todayRef: !!todayRef.current, 
@@ -81,12 +66,7 @@ const EventList: React.FC<EventListProps> = ({
         eventsLength: Object.keys(eventsByDate).length
       });
     }
-  }, [eventsByDate]); // Run when events grouping changes
-
-  // Reset scroll state when events or favorites change
-  useEffect(() => {
-    setHasScrolledToToday(false);
-  }, [showFavorites]);
+  }, [eventsByDate, hasScrolledToToday]);
   
   return (
     <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
