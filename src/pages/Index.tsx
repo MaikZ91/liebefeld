@@ -98,7 +98,7 @@ const Index = () => {
               <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
             </p>
             
-            <div className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-24 relative z-30">
+            <div className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-12 relative z-30">
               <Button 
                 onClick={() => setTestModalOpen(true)}
                 className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-all shadow-lg hover:shadow-xl w-full max-w-sm"
@@ -165,8 +165,8 @@ const Index = () => {
           </div>
         </div>
         
-        {/* LiveTicker Section - positioned after the hero content */}
-        <div className="absolute left-0 right-0 z-20" style={{ bottom: "calc(50vh - 130px)" }}>
+        {/* LiveTicker Section - after the hero but before the calendar */}
+        <div className="w-full relative">
           <LiveTicker events={events} />
         </div>
 
