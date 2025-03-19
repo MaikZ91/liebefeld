@@ -97,7 +97,7 @@ const Index = () => {
               <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
             </p>
             
-            <div className="flex flex-col items-center justify-center gap-3 w-full max-w-xl">
+            <div className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-8">
               <Button 
                 onClick={() => setTestModalOpen(true)}
                 className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-all shadow-lg hover:shadow-xl w-full max-w-sm"
@@ -114,7 +114,7 @@ const Index = () => {
                 whatsappUrl={WHATSAPP_URL}
               />
               
-              <div className="flex items-center justify-center gap-3 mt-3">
+              <div className="flex items-center justify-center gap-3 mt-2">
                 <InstagramFeed />
                 
                 <a 
@@ -164,7 +164,9 @@ const Index = () => {
           </div>
         </div>
         
-        <LiveTicker events={events} />
+        <div className="relative z-20">
+          <LiveTicker events={events} />
+        </div>
 
         <EventProvider>
           <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-6 rounded-t-lg shadow-inner mt-0">
