@@ -74,7 +74,8 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col bg-[#FFF5EB] dark:bg-[#2E1E12] text-orange-900 dark:text-orange-100">
       <CalendarNavbar />
-      <main className="flex-grow">
+      <main className="flex-grow relative">
+        {/* Hero Section */}
         <div className="relative w-full h-[50vh] overflow-hidden bg-black">
           <img 
             src="/lovable-uploads/e3d0a85b-9935-450a-bba8-5693570597a3.png" 
@@ -97,7 +98,7 @@ const Index = () => {
               <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
             </p>
             
-            <div className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-8">
+            <div className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-12 relative z-20">
               <Button 
                 onClick={() => setTestModalOpen(true)}
                 className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-all shadow-lg hover:shadow-xl w-full max-w-sm"
@@ -164,12 +165,14 @@ const Index = () => {
           </div>
         </div>
         
-        <div className="relative z-20">
+        {/* LiveTicker Section - positioned after the hero content */}
+        <div className="relative">
           <LiveTicker events={events} />
         </div>
 
+        {/* Calendar Section */}
         <EventProvider>
-          <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-6 rounded-t-lg shadow-inner mt-0">
+          <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-6 rounded-t-lg shadow-inner">
             <EventCalendar defaultView="list" />
           </div>
           
