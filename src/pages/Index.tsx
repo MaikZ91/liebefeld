@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -76,16 +75,11 @@ const Index = () => {
       <CalendarNavbar />
       <main className="flex-grow">
         <div className="relative w-full h-[50vh] overflow-hidden bg-black">
-          <video 
-            className="absolute inset-0 w-full h-full object-cover opacity-70"
-            autoPlay
-            muted
-            loop
-            playsInline
-          >
-            <source src="https://cdn.gpteng.co/file/g-demo-assets/city-life.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
+          <img 
+            src="/lovable-uploads/e3d0a85b-9935-450a-bba8-5693570597a3.png" 
+            alt="Freunde genießen ein Event zusammen" 
+            className="absolute inset-0 w-full h-full object-cover opacity-90"
+          />
           
           <div className="absolute inset-0 bg-gradient-to-r from-red-900/70 to-black/70"></div>
           
