@@ -75,8 +75,8 @@ const Index = () => {
     <div className="min-h-screen flex flex-col bg-[#FFF5EB] dark:bg-[#2E1E12] text-orange-900 dark:text-orange-100">
       <CalendarNavbar />
       <main className="flex-grow relative">
-        {/* Hero Section */}
-        <div className="relative w-full h-[50vh] overflow-hidden bg-black">
+        {/* Hero Section - increased height to make room for buttons and prevent overlap */}
+        <div className="relative w-full h-[70vh] overflow-hidden bg-black">
           <img 
             src="/lovable-uploads/e3d0a85b-9935-450a-bba8-5693570597a3.png" 
             alt="Freunde genießen ein Event zusammen" 
@@ -98,7 +98,7 @@ const Index = () => {
               <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
             </p>
             
-            <div className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-12 relative z-30">
+            <div className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-16 relative z-30">
               <Button 
                 onClick={() => setTestModalOpen(true)}
                 className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-all shadow-lg hover:shadow-xl w-full max-w-sm"
@@ -165,8 +165,8 @@ const Index = () => {
           </div>
         </div>
         
-        {/* LiveTicker Section - after the hero but before the calendar */}
-        <div className="w-full relative">
+        {/* LiveTicker Section - clearly separated from the hero section */}
+        <div className="w-full bg-black">
           <LiveTicker events={events} />
         </div>
 
