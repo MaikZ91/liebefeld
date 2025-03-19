@@ -122,6 +122,7 @@ const Index = () => {
                     href="https://drive.google.com/uc?export=download&id=1Fn3mG9AT4dEPKR37nfVt6IdyIbukeWJr" 
                     target="_blank" 
                     rel="noopener noreferrer"
+                    className="block"
                   >
                     <Button 
                       className="bg-[#a4c639] hover:bg-[#8baa30] text-white rounded-full h-10 w-10 p-0 flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
@@ -138,7 +139,7 @@ const Index = () => {
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button 
-                        className="bg-[#F97316] hover:bg-orange-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all relative"
+                        className="bg-[#F97316] hover:bg-orange-600 text-white rounded-full h-10 w-10 p-0 flex items-center justify-center shadow-lg hover:shadow-xl transition-all relative"
                         size="icon"
                       >
                         <QrCode className="h-5 w-5" />
