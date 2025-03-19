@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -83,8 +84,8 @@ const Index = () => {
           
           <div className="absolute inset-0 bg-gradient-to-r from-red-900/70 to-black/70"></div>
           
-          <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4">
-            <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center font-serif">
+          <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4 pt-16">
+            <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center font-serif mt-12">
               Entdecke den 
               <span className="mx-2">
                 Puls
