@@ -43,12 +43,12 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
 
   return (
     <div 
-      className="text-white overflow-hidden py-2 relative"
+      className="text-white overflow-hidden py-1 relative"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
       {/* Header */}
-      <div className="absolute left-0 top-0 bottom-0 flex items-center z-10 bg-red-600 px-3 py-2">
+      <div className="absolute left-0 top-0 bottom-0 flex items-center z-10 bg-red-600 px-3 py-1">
         <Calendar className="w-4 h-4 mr-1" />
         <span className="font-bold text-sm whitespace-nowrap">Events</span>
         <ArrowRight className="w-4 h-4 ml-1" />
