@@ -44,3 +44,12 @@ export interface EventShareData {
 }
 
 export type RsvpOption = 'yes' | 'no' | 'maybe';
+
+// Helper to normalize RSVP counts from different sources
+export const normalizeRsvpCounts = (event: Event) => {
+  return {
+    yes: event.rsvp?.yes ?? event.rsvp_yes ?? 0,
+    no: event.rsvp?.no ?? event.rsvp_no ?? 0,
+    maybe: event.rsvp?.maybe ?? event.rsvp_maybe ?? 0
+  };
+};

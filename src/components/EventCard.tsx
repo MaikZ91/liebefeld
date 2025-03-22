@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { type Event } from './EventCalendar';
+import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, Check, HelpCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -57,8 +57,8 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     }
   };
 
-  // Get RSVP counts or default to zeros
-  const rsvpCounts = event.rsvp || { yes: 0, no: 0, maybe: 0 };
+  // Get normalized RSVP counts
+  const rsvpCounts = normalizeRsvpCounts(event);
   const totalRsvp = rsvpCounts.yes + rsvpCounts.no + rsvpCounts.maybe;
 
   if (compact) {
@@ -207,15 +207,15 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
         
         {totalRsvp > 0 && (
           <div className="flex items-center gap-4 mt-2 pt-2 border-t border-gray-700/50">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1" title="Zusagen">
               <Check className="w-4 h-4 text-green-500" />
               <span>{rsvpCounts.yes}</span>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1" title="Vielleicht">
               <HelpCircle className="w-4 h-4 text-yellow-500" />
               <span>{rsvpCounts.maybe}</span>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1" title="Absagen">
               <X className="w-4 h-4 text-red-500" />
               <span>{rsvpCounts.no}</span>
             </div>

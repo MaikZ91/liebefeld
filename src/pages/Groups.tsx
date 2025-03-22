@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import CalendarNavbar from "@/components/CalendarNavbar";
-import { Send, Users, User, Clock, Loader2, Image, ThumbsUp, ThumbsDown, HelpCircle, Smile, Paperclip, MessageSquare, Check, CheckCheck, Calendar, Search } from 'lucide-react';
+import { Send, Users, User, Clock, Loader2, Image, ThumbsUp, ThumbsDown, HelpCircle, Smile, Paperclip, MessageSquare, Check, CheckCheck, Calendar, Search, MapPin, X } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase, type ChatMessage, type MessageReaction } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -46,6 +46,14 @@ const USERNAME_KEY = "community_chat_username";
 const AVATAR_KEY = "community_chat_avatar";
 
 const EMOJI_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
+
+const normalizeRsvpCounts = (eventData: Event) => {
+  return {
+    yes: eventData.rsvp?.yes ?? eventData.rsvp_yes ?? 0,
+    no: eventData.rsvp?.no ?? eventData.rsvp_no ?? 0,
+    maybe: eventData.rsvp?.maybe ?? eventData.rsvp_maybe ?? 0
+  };
+};
 
 const Groups = () => {
   const [activeGroup, setActiveGroup] = useState<string>("");
@@ -529,62 +537,73 @@ const Groups = () => {
   const formatEventMessage = (messageText: string, eventData?: Event) => {
     if (!eventData) return messageText;
 
-    const rsvpCounts = {
-      yes: eventData.rsvp?.yes ?? eventData.rsvp_yes ?? 0,
-      no: eventData.rsvp?.no ?? eventData.rsvp_no ?? 0,
-      maybe: eventData.rsvp?.maybe ?? eventData.rsvp_maybe ?? 0
-    };
+    const rsvpCounts = normalizeRsvpCounts(eventData);
+    const totalRsvp = rsvpCounts.yes + rsvpCounts.no + rsvpCounts.maybe;
 
     return (
       <div>
-        <div dangerouslySetInnerHTML={{ __html: messageText }} />
+        <div className="mb-2" dangerouslySetInnerHTML={{ __html: messageText }} />
         
         <div className="mt-2 p-3 rounded-md bg-primary/10 border border-primary/20">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-2">
             <Calendar className="h-4 w-4 text-primary" />
             <span className="font-medium">{eventData.title}</span>
           </div>
-          <div className="text-xs text-muted-foreground space-y-1">
-            <div>📆 {eventData.date} um {eventData.time}</div>
-            {eventData.location && <div>📍 {eventData.location}</div>}
-            <div>🏷️ {eventData.category}</div>
+          <div className="text-xs text-muted-foreground space-y-1.5">
+            <div className="flex items-center">
+              <Clock className="h-3 w-3 mr-1.5" />
+              <span>{eventData.date} um {eventData.time}</span>
+            </div>
+            {eventData.location && (
+              <div className="flex items-center">
+                <MapPin className="h-3 w-3 mr-1.5" />
+                <span>{eventData.location}</span>
+              </div>
+            )}
+            <div className="flex items-center">
+              <Users className="h-3 w-3 mr-1.5" />
+              <span>{eventData.category}</span>
+            </div>
             
-            <div className="flex gap-2 mt-1">
-              <div className="flex items-center text-green-500 gap-1">
-                <ThumbsUp className="h-3 w-3" /> {rsvpCounts.yes}
+            <div className="flex items-center gap-3 mt-2 pt-2 border-t border-primary/10">
+              <div className="flex items-center text-green-500 gap-1" title="Zusagen">
+                <Check className="h-3.5 w-3.5" /> 
+                <span className="font-medium">{rsvpCounts.yes}</span>
               </div>
-              <div className="flex items-center text-red-500 gap-1">
-                <ThumbsDown className="h-3 w-3" /> {rsvpCounts.no}
+              <div className="flex items-center text-yellow-500 gap-1" title="Vielleicht">
+                <HelpCircle className="h-3.5 w-3.5" /> 
+                <span className="font-medium">{rsvpCounts.maybe}</span>
               </div>
-              <div className="flex items-center text-yellow-500 gap-1">
-                <HelpCircle className="h-3 w-3" /> {rsvpCounts.maybe}
+              <div className="flex items-center text-red-500 gap-1" title="Absagen">
+                <X className="h-3.5 w-3.5" /> 
+                <span className="font-medium">{rsvpCounts.no}</span>
               </div>
             </div>
             
-            <div className="flex gap-2 mt-2">
+            <div className="flex gap-2 mt-3">
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="h-7 bg-green-500/10 hover:bg-green-500/20 border-green-500/30"
+                className="h-7 bg-green-500/10 hover:bg-green-500/20 border-green-500/30 flex-1"
                 onClick={() => handleRsvp(eventData.id, 'yes')}
               >
-                <ThumbsUp className="h-3 w-3 mr-1" /> Ja
+                <Check className="h-3 w-3 mr-1.5" /> Zusagen
               </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="h-7 bg-red-500/10 hover:bg-red-500/20 border-red-500/30"
-                onClick={() => handleRsvp(eventData.id, 'no')}
-              >
-                <ThumbsDown className="h-3 w-3 mr-1" /> Nein
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-7 bg-yellow-500/10 hover:bg-yellow-500/20 border-yellow-500/30"
+                className="h-7 bg-yellow-500/10 hover:bg-yellow-500/20 border-yellow-500/30 flex-1"
                 onClick={() => handleRsvp(eventData.id, 'maybe')}
               >
-                <HelpCircle className="h-3 w-3 mr-1" /> Vielleicht
+                <HelpCircle className="h-3 w-3 mr-1.5" /> Vielleicht
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 bg-red-500/10 hover:bg-red-500/20 border-red-500/30 flex-1"
+                onClick={() => handleRsvp(eventData.id, 'no')}
+              >
+                <X className="h-3 w-3 mr-1.5" /> Absagen
               </Button>
             </div>
           </div>

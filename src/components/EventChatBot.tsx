@@ -1,10 +1,9 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, Send, Calendar, X, Heart, Loader2, Image, ThumbsUp, Smile, CheckCheck, Check, Share2, Search } from 'lucide-react';
+import { MessageCircle, Send, Calendar, X, Heart, Loader2, Image, ThumbsUp, Smile, CheckCheck, Check, Share2, Search, HelpCircle, Clock, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { type Event } from '@/types/eventTypes';
+import { type Event, RsvpOption, normalizeRsvpCounts } from '@/types/eventTypes';
 import { useEventContext } from '@/contexts/EventContext';
 import { generateResponse, getWelcomeMessage } from '@/utils/chatUtils';
 import { format, parseISO } from 'date-fns';
@@ -26,7 +25,7 @@ interface Message {
   reactions?: MessageReaction[];
   read_by?: string[];
   media_url?: string;
-  eventData?: Event; // Added to store event data for sharing
+  eventData?: Event;
 }
 
 const EventChatBot: React.FC = () => {
@@ -50,7 +49,7 @@ const EventChatBot: React.FC = () => {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventSearchQuery, setEventSearchQuery] = useState('');
   
-  const { events } = useEventContext();
+  const { events, handleRsvpEvent } = useEventContext();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -83,7 +82,6 @@ const EventChatBot: React.FC = () => {
     setIsOpen(true);
     setSelectedEventId(null);
 
-    // Handle file upload if present
     let mediaUrl: string | undefined = undefined;
     const processMessage = async () => {
       try {
@@ -93,7 +91,6 @@ const EventChatBot: React.FC = () => {
           const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
           const filePath = `event_chat/${fileName}`;
           
-          // Make sure storage bucket exists
           const { data: buckets } = await supabase.storage.listBuckets();
           if (!buckets?.find(b => b.name === 'chat_media')) {
             await supabase.storage.createBucket('chat_media', { public: true });
@@ -119,7 +116,6 @@ const EventChatBot: React.FC = () => {
               
             mediaUrl = urlData.publicUrl;
             
-            // Update the message with the media URL
             setMessages(prev => prev.map(msg => 
               msg.id === userMessage.id 
                 ? { ...msg, media_url: mediaUrl } 
@@ -127,7 +123,6 @@ const EventChatBot: React.FC = () => {
             ));
           }
           
-          // Clear the file input
           if (fileInputRef.current) {
             fileInputRef.current.value = '';
           }
@@ -137,19 +132,16 @@ const EventChatBot: React.FC = () => {
       }
     };
     
-    // Store user's message to analyze later
     const storeUserMessage = async () => {
       try {
         await processMessage();
         
-        // Check if we have chat_groups table (only if this is being used with groups page)
         const { data: groupsCheck } = await supabase
           .from('chat_groups')
           .select('id')
           .limit(1);
           
         if (groupsCheck && groupsCheck.length > 0) {
-          // Get or create a special group for event bot
           const botGroupName = "LiebefeldBot";
           const { data: botGroup } = await supabase
             .from('chat_groups')
@@ -160,7 +152,6 @@ const EventChatBot: React.FC = () => {
           let botGroupId;
           
           if (!botGroup) {
-            // Create the bot group if it doesn't exist
             const { data: newGroup } = await supabase
               .from('chat_groups')
               .insert({
@@ -176,13 +167,8 @@ const EventChatBot: React.FC = () => {
             botGroupId = botGroup.id;
           }
           
-          // Store the message with event data if present
           if (botGroupId) {
-            // Format event data as JSON
-            let eventText = messageText;
-            if (sharedEvent) {
-              eventText = `🗓️ **Event: ${sharedEvent.title}**\nDatum: ${sharedEvent.date} um ${sharedEvent.time}\nOrt: ${sharedEvent.location || 'k.A.'}\nKategorie: ${sharedEvent.category}\n\n${messageText}`;
-            }
+            const eventText = `🗓️ **Event: ${sharedEvent.title}**\nDatum: ${sharedEvent.date} um ${sharedEvent.time}\nOrt: ${sharedEvent.location || 'k.A.'}\nKategorie: ${sharedEvent.category}\n\n${messageText}`;
             
             await supabase
               .from('chat_messages')
@@ -199,14 +185,12 @@ const EventChatBot: React.FC = () => {
         }
       } catch (error) {
         console.error("Error storing user message:", error);
-        // Don't interrupt the flow if this fails
       }
     };
     
     storeUserMessage();
 
     setTimeout(() => {
-      // If message contains shared event data, customize bot response
       let botResponse = '';
       if (sharedEvent) {
         botResponse = `Danke für das Teilen des Events "${sharedEvent.title}"! Das klingt spannend. Möchtest du mehr Details dazu wissen oder soll ich ähnliche Events in ${sharedEvent.location || 'der Umgebung'} vorschlagen?`;
@@ -225,7 +209,6 @@ const EventChatBot: React.FC = () => {
       setMessages(prev => [...prev, botMessage]);
       setIsTyping(false);
       
-      // Also store the bot's response if groups exist
       const storeBotResponse = async () => {
         try {
           const { data: groupsCheck } = await supabase
@@ -269,38 +252,30 @@ const EventChatBot: React.FC = () => {
   
   const handleAddReaction = async (messageId: string, emoji: string) => {
     try {
-      // Find the message in the current state
       const messageIndex = messages.findIndex(m => m.id === messageId);
       if (messageIndex < 0) return;
       
       const message = messages[messageIndex];
       
-      // Update reactions
       const reactions = message.reactions || [];
       let updated = false;
       
-      // Check if this emoji is already used
       const existingReactionIndex = reactions.findIndex(r => r.emoji === emoji);
       
       if (existingReactionIndex >= 0) {
-        // Check if this user already reacted with this emoji
         const users = reactions[existingReactionIndex].users;
         const userIndex = users.indexOf(username);
         
         if (userIndex >= 0) {
-          // Remove user from this reaction
           users.splice(userIndex, 1);
           if (users.length === 0) {
-            // Remove the reaction if no users left
             reactions.splice(existingReactionIndex, 1);
           }
         } else {
-          // Add user to this reaction
           users.push(username);
         }
         updated = true;
       } else {
-        // Add new reaction
         reactions.push({
           emoji,
           users: [username]
@@ -309,7 +284,6 @@ const EventChatBot: React.FC = () => {
       }
       
       if (updated) {
-        // Update local state
         const updatedMessages = [...messages];
         updatedMessages[messageIndex] = {
           ...message,
@@ -317,14 +291,12 @@ const EventChatBot: React.FC = () => {
         };
         setMessages(updatedMessages);
         
-        // Update in DB if this is from a group
         const { data: groupsCheck } = await supabase
           .from('chat_groups')
           .select('id')
           .limit(1);
           
         if (groupsCheck && groupsCheck.length > 0) {
-          // Find the actual DB message ID if this is a temporary one
           const realMessageId = messageId.startsWith('user-') || messageId.startsWith('bot-') 
             ? null 
             : messageId;
@@ -356,7 +328,6 @@ const EventChatBot: React.FC = () => {
   const handleShareEvent = () => {
     console.log("Opening event selection dropdown");
     setIsEventSelectOpen(prev => !prev);
-    // Reset search query when opening the dropdown
     setEventSearchQuery('');
   };
 
@@ -364,13 +335,24 @@ const EventChatBot: React.FC = () => {
     console.log("Event selected:", eventId);
     const selectedEvent = events.find(event => event.id === eventId);
     if (selectedEvent) {
-      // Share the event in chat
       handleSend(`Ich möchte dieses Event teilen: ${selectedEvent.title}`, selectedEvent);
       setIsEventSelectOpen(false);
     }
   };
 
-  // Filter events based on search query
+  const handleRsvp = (eventId: string, option: RsvpOption) => {
+    console.log(`Chat RSVP selection: ${eventId} - ${option}`);
+    handleRsvpEvent(eventId, option);
+    
+    toast({
+      title: "RSVP gespeichert",
+      description: option === 'yes' ? "Du hast zugesagt!" : 
+                   option === 'no' ? "Du hast abgesagt." : 
+                   "Du kommst vielleicht.",
+      variant: "default"
+    });
+  };
+
   const filteredEvents = events.filter(event => {
     if (!eventSearchQuery.trim()) return true;
     
@@ -384,18 +366,90 @@ const EventChatBot: React.FC = () => {
     );
   });
 
-  // Component to display an event card in the chat
   const EventCard = ({ event }: { event: Event }) => {
+    const rsvpCounts = normalizeRsvpCounts(event);
+    const totalRsvp = rsvpCounts.yes + rsvpCounts.no + rsvpCounts.maybe;
+
     return (
       <div className="mt-2 p-3 rounded-md bg-red-500/10 border border-red-500/20">
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-2 mb-2">
           <Calendar className="h-4 w-4 text-red-500" />
           <span className="font-medium text-white">{event.title}</span>
         </div>
-        <div className="text-xs text-gray-300 space-y-1">
-          <div>📆 {event.date} um {event.time}</div>
-          {event.location && <div>📍 {event.location}</div>}
-          <div>🏷️ {event.category}</div>
+        
+        <div className="text-xs text-gray-300 space-y-1.5">
+          <div className="flex items-center">
+            <Clock className="h-3 w-3 mr-1.5" />
+            <span>{event.date} um {event.time}</span>
+          </div>
+          {event.location && (
+            <div className="flex items-center">
+              <MapPin className="h-3 w-3 mr-1.5" />
+              <span>{event.location}</span>
+            </div>
+          )}
+          <div className="flex items-center">
+            <Heart className="h-3 w-3 mr-1.5" />
+            <span>{event.category}</span>
+            {event.likes && event.likes > 0 && (
+              <span className="ml-2 flex items-center">
+                • <Heart className="h-3 w-3 mx-1 fill-red-500 text-red-500" /> {event.likes}
+              </span>
+            )}
+          </div>
+          
+          {totalRsvp > 0 && (
+            <div className="flex items-center gap-3 mt-2 pt-2 border-t border-gray-700/50">
+              <div className="flex items-center text-green-500 gap-1" title="Zusagen">
+                <Check className="h-3.5 w-3.5" /> 
+                <span className="font-medium">{rsvpCounts.yes}</span>
+              </div>
+              <div className="flex items-center text-yellow-500 gap-1" title="Vielleicht">
+                <HelpCircle className="h-3.5 w-3.5" /> 
+                <span className="font-medium">{rsvpCounts.maybe}</span>
+              </div>
+              <div className="flex items-center text-red-500 gap-1" title="Absagen">
+                <X className="h-3.5 w-3.5" /> 
+                <span className="font-medium">{rsvpCounts.no}</span>
+              </div>
+            </div>
+          )}
+          
+          <div className="flex gap-2 mt-3">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-7 bg-green-500/20 hover:bg-green-500/30 border-green-500/30 flex-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRsvp(event.id, 'yes');
+              }}
+            >
+              <Check className="h-3 w-3 mr-1.5" /> Zusagen
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-7 bg-yellow-500/20 hover:bg-yellow-500/30 border-yellow-500/30 flex-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRsvp(event.id, 'maybe');
+              }}
+            >
+              <HelpCircle className="h-3 w-3 mr-1.5" /> Vielleicht
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-7 bg-red-500/20 hover:bg-red-500/30 border-red-500/30 flex-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRsvp(event.id, 'no');
+              }}
+            >
+              <X className="h-3 w-3 mr-1.5" /> Absagen
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -478,10 +532,8 @@ const EventChatBot: React.FC = () => {
                   >
                     <div className="text-sm" dangerouslySetInnerHTML={{ __html: message.text }}></div>
                     
-                    {/* Display event data if available */}
                     {message.eventData && <EventCard event={message.eventData} />}
                     
-                    {/* Display media if available */}
                     {message.media_url && (
                       <div className="mt-2">
                         <img 
@@ -497,7 +549,6 @@ const EventChatBot: React.FC = () => {
                     </span>
                   </div>
                   
-                  {/* Display reactions */}
                   {message.reactions && message.reactions.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1 ml-2">
                       {message.reactions.map((reaction, index) => (
@@ -516,7 +567,6 @@ const EventChatBot: React.FC = () => {
                     </div>
                   )}
                   
-                  {/* Message status (read receipts) */}
                   {message.isUser && (
                     <div className="flex justify-end mt-1">
                       {message.read_by && message.read_by.length > 1 ? (
@@ -536,7 +586,6 @@ const EventChatBot: React.FC = () => {
                     </Avatar>
                   )}
                   
-                  {/* Reaction button */}
                   <Popover open={selectedMessageId === message.id} onOpenChange={(open) => {
                     if (open) setSelectedMessageId(message.id);
                     else setSelectedMessageId(null);
@@ -699,3 +748,4 @@ const EventChatBot: React.FC = () => {
 };
 
 export default EventChatBot;
+
