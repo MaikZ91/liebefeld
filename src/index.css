@@ -191,6 +191,11 @@
     @apply sticky top-0 bg-[#F1F0FB]/90 dark:bg-[#3A1E1E]/90 backdrop-blur-md py-2 z-10 border-b border-red-500/20 mb-2 text-red-800 dark:text-red-200;
   }
 
+  /* Event date headers in group chat */
+  .event-date-header {
+    @apply sticky top-0 bg-primary text-white py-1.5 px-3 text-sm font-semibold rounded-md shadow-sm z-10;
+  }
+
   /* Category badge colors */
   .badge-concert {
     @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300;

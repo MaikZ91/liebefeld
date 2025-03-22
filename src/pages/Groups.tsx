@@ -920,7 +920,7 @@ const Groups = () => {
                                         const date = parseISO(dateStr);
                                         return (
                                           <div key={dateStr} className="mb-2">
-                                            <div className="sticky top-0 bg-muted/70 backdrop-blur-sm py-1 px-2 text-xs font-semibold rounded text-white mb-1 border-l-2 border-primary">
+                                            <div className="sticky top-0 bg-primary text-white py-1.5 px-3 text-sm font-semibold rounded-md mb-1.5 shadow-sm">
                                               {format(date, 'EEEE, d. MMMM', { locale: de })}
                                             </div>
                                             <div className="space-y-1 pl-2">
