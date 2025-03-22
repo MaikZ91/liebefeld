@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Event, GitHubEvent } from "../types/eventTypes";
 import { transformGitHubEvents } from "../utils/eventUtils";
@@ -184,6 +183,90 @@ export const updateEventLikes = async (eventId: string, newLikesValue: number): 
     }
   } catch (error) {
     console.error('Error updating likes:', error);
+  }
+};
+
+// Update event RSVP counts in Supabase
+export const updateEventRsvp = async (eventId: string, rsvpData: { yes: number, no: number, maybe: number }): Promise<void> => {
+  try {
+    console.log(`Updating RSVP for event ${eventId} to ${JSON.stringify(rsvpData)}`);
+    
+    // For GitHub events
+    if (eventId.startsWith('github-')) {
+      console.log(`Updating GitHub event RSVP: ${eventId}`);
+      
+      // Check if the record already exists
+      const { data: existingEvent, error: checkError } = await supabase
+        .from('github_event_likes')
+        .select('*')
+        .eq('event_id', eventId)
+        .single();
+      
+      if (checkError) {
+        if (checkError.code === 'PGRST116') { // PGRST116 means no rows returned
+          console.log(`No existing record found for GitHub event ${eventId}, creating new record with RSVP data`);
+        } else {
+          console.error('Error checking if GitHub event exists:', checkError);
+        }
+      }
+      
+      if (existingEvent) {
+        console.log(`Existing record found for GitHub event ${eventId}, updating with RSVP data`);
+        // Update existing record with RSVP data
+        const { error: updateError } = await supabase
+          .from('github_event_likes')
+          .update({ 
+            rsvp_yes: rsvpData.yes,
+            rsvp_no: rsvpData.no,
+            rsvp_maybe: rsvpData.maybe
+          })
+          .eq('event_id', eventId);
+          
+        if (updateError) {
+          console.error('Error updating GitHub event RSVP:', updateError);
+        } else {
+          console.log(`Successfully updated RSVP for GitHub event ${eventId}`);
+        }
+      } else {
+        console.log(`Creating new record for GitHub event ${eventId} with RSVP data`);
+        // Insert new record with RSVP data
+        const { error: insertError } = await supabase
+          .from('github_event_likes')
+          .insert({ 
+            event_id: eventId, 
+            likes: 0,
+            rsvp_yes: rsvpData.yes,
+            rsvp_no: rsvpData.no,
+            rsvp_maybe: rsvpData.maybe
+          });
+          
+        if (insertError) {
+          console.error('Error inserting GitHub event RSVP:', insertError);
+        } else {
+          console.log(`Successfully created new record with RSVP for GitHub event ${eventId}`);
+        }
+      }
+    } 
+    // For regular Supabase events
+    else {
+      console.log(`Updating regular event RSVP: ${eventId}`);
+      const { error } = await supabase
+        .from('community_events')
+        .update({ 
+          rsvp_yes: rsvpData.yes,
+          rsvp_no: rsvpData.no,
+          rsvp_maybe: rsvpData.maybe 
+        })
+        .eq('id', eventId);
+        
+      if (error) {
+        console.error('Error updating RSVP in Supabase:', error);
+      } else {
+        console.log(`Successfully updated RSVP for regular event ${eventId}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error updating RSVP:', error);
   }
 };
 

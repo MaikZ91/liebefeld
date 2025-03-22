@@ -1,18 +1,20 @@
 
 import React, { useState } from 'react';
-import { type Event } from '../types/eventTypes';
+import { type Event, RsvpOption } from '../types/eventTypes';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, MapPin, User, Heart, X, Sparkles } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Heart, Check, X, HelpCircle, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 interface EventDetailsProps {
   event: Event;
   onClose: () => void;
   onLike?: () => void;
+  onRsvp?: (option: RsvpOption) => void;
 }
 
 const categoryColors: Record<string, string> = {
@@ -27,7 +29,7 @@ const categoryColors: Record<string, string> = {
   'Ausstellung': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300',
 };
 
-const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike }) => {
+const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike, onRsvp }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [showSparkle, setShowSparkle] = useState(false);
   
@@ -44,8 +46,17 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike }) =
     }
   };
   
+  const handleRsvp = (option: RsvpOption) => {
+    if (onRsvp) {
+      onRsvp(option);
+    }
+  };
+  
   // Format the date for display
   const formattedDate = format(parseISO(event.date), 'EEEE, d. MMMM yyyy', { locale: de });
+  
+  // Default RSVP counts
+  const rsvpCounts = event.rsvp || { yes: 0, no: 0, maybe: 0 };
   
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -107,6 +118,42 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike }) =
             <div className="flex-1">
               <div className="font-medium text-white">Organisator</div>
               <div className="text-sm text-gray-300">{event.organizer}</div>
+            </div>
+          </div>
+          
+          <Separator className="bg-gray-700/50" />
+          
+          {/* RSVP Section */}
+          <div className="mt-4">
+            <div className="font-medium text-white mb-2">Teilnahme</div>
+            <div className="grid grid-cols-3 gap-3">
+              <Button 
+                onClick={() => handleRsvp('yes')} 
+                variant="outline"
+                className="flex flex-col items-center gap-1 py-3 bg-green-500/10 border-green-500/30 hover:bg-green-500/20"
+              >
+                <Check className="h-5 w-5 text-green-500" />
+                <span className="text-white">Ja</span>
+                <span className="text-xs text-gray-300">{rsvpCounts.yes}</span>
+              </Button>
+              <Button 
+                onClick={() => handleRsvp('maybe')} 
+                variant="outline"
+                className="flex flex-col items-center gap-1 py-3 bg-yellow-500/10 border-yellow-500/30 hover:bg-yellow-500/20"
+              >
+                <HelpCircle className="h-5 w-5 text-yellow-500" />
+                <span className="text-white">Vielleicht</span>
+                <span className="text-xs text-gray-300">{rsvpCounts.maybe}</span>
+              </Button>
+              <Button 
+                onClick={() => handleRsvp('no')} 
+                variant="outline"
+                className="flex flex-col items-center gap-1 py-3 bg-red-500/10 border-red-500/30 hover:bg-red-500/20"
+              >
+                <X className="h-5 w-5 text-red-500" />
+                <span className="text-white">Nein</span>
+                <span className="text-xs text-gray-300">{rsvpCounts.no}</span>
+              </Button>
             </div>
           </div>
         </div>

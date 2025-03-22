@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { startOfDay } from 'date-fns';
-import { Event } from '../types/eventTypes';
+import { Event, RsvpOption } from '../types/eventTypes';
 import { 
   fetchSupabaseEvents, 
   fetchExternalEvents, 
   fetchGitHubLikes, 
   updateEventLikes,
-  bielefeldEvents
+  bielefeldEvents,
+  updateEventRsvp
 } from '../services/eventService';
 
 interface EventContextProps {
@@ -21,6 +22,7 @@ interface EventContextProps {
   setFilter: React.Dispatch<React.SetStateAction<string | null>>;
   eventLikes: Record<string, number>;
   handleLikeEvent: (eventId: string) => Promise<void>;
+  handleRsvpEvent: (eventId: string, option: RsvpOption) => Promise<void>;
   showFavorites: boolean;
   setShowFavorites: React.Dispatch<React.SetStateAction<boolean>>;
   refreshEvents: () => Promise<void>;
@@ -49,7 +51,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     try {
       console.log('Refreshing events...');
       
-      // First, fetch likes to ensure we have the most up-to-date data
       const githubLikes = await fetchGitHubLikes();
       console.log('Fetched GitHub likes:', githubLikes);
       
@@ -60,32 +61,25 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return updatedLikes;
       });
       
-      // Store the old events to compare later
       const oldEvents = [...events];
       
-      // Now fetch events 
       const supabaseEvents = await fetchSupabaseEvents();
       console.log(`Loaded ${supabaseEvents.length} events from Supabase`);
       
-      // Fetch external events with the latest likes data
       const externalEvents = await fetchExternalEvents(githubLikes);
       console.log(`Loaded ${externalEvents.length} external events`);
       
       const combinedEvents = [...supabaseEvents];
       
-      // Keep track of new events
       const newEvents: Event[] = [];
       
       externalEvents.forEach(extEvent => {
-        // Make sure we're not adding duplicates
         if (!combinedEvents.some(event => event.id === extEvent.id)) {
-          // Ensure the likes from the database are applied
           combinedEvents.push({
             ...extEvent,
             likes: githubLikes[extEvent.id] || 0
           });
           
-          // Check if this event existed in the old events list
           if (!oldEvents.some(oldEvent => oldEvent.id === extEvent.id)) {
             newEvents.push(extEvent);
           }
@@ -99,13 +93,11 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         console.log('No events found, using example data');
         setEvents(bielefeldEvents);
       } else {
-        // Debugging: log likes for GitHub events
         const githubEventsInCombined = combinedEvents.filter(e => e.id.startsWith('github-'));
         console.log(`GitHub events with likes: ${githubEventsInCombined.map(e => `${e.id}: ${e.likes}`).join(', ')}`);
         
         setEvents(combinedEvents);
         
-        // Store last refresh time
         setLastRefreshed(new Date());
         localStorage.setItem('lastEventsRefresh', new Date().toISOString());
       }
@@ -131,7 +123,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       console.log(`Updating likes for ${eventId} from ${currentLikes} to ${newLikesValue}`);
       
-      // Update the local state
       setEventLikes(prev => {
         const updatedLikes = {
           ...prev,
@@ -141,7 +132,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return updatedLikes;
       });
       
-      // Update events array with new likes value
       const updatedEvents = events.map(event => 
         event.id === eventId 
           ? { ...event, likes: newLikesValue } 
@@ -150,13 +140,11 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       setEvents(updatedEvents);
       
-      // Make sure to update database with new likes value
       try {
         console.log(`Updating event likes in database: ${eventId} -> ${newLikesValue}`);
         await updateEventLikes(eventId, newLikesValue);
         console.log(`Successfully updated likes in database for event ${eventId}`);
         
-        // Refresh events to make sure we have the latest data
         await refreshEvents();
       } catch (updateError) {
         console.error(`Error updating likes in database for event ${eventId}:`, updateError);
@@ -166,10 +154,47 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
+  const handleRsvpEvent = async (eventId: string, option: RsvpOption) => {
+    try {
+      console.log(`RSVP for event with ID: ${eventId}, option: ${option}`);
+      const currentEvent = events.find(event => event.id === eventId);
+      if (!currentEvent) {
+        console.error(`Event with ID ${eventId} not found`);
+        return;
+      }
+      
+      const currentRsvp = currentEvent.rsvp || { yes: 0, no: 0, maybe: 0 };
+      const newRsvp = { ...currentRsvp };
+      
+      newRsvp[option] += 1;
+      
+      console.log(`Updating RSVP for ${eventId} to:`, newRsvp);
+      
+      const updatedEvents = events.map(event => 
+        event.id === eventId 
+          ? { ...event, rsvp: newRsvp } 
+          : event
+      );
+      
+      setEvents(updatedEvents);
+      
+      try {
+        console.log(`Updating event RSVP in database: ${eventId} -> ${JSON.stringify(newRsvp)}`);
+        await updateEventRsvp(eventId, newRsvp);
+        console.log(`Successfully updated RSVP in database for event ${eventId}`);
+        
+        await refreshEvents();
+      } catch (updateError) {
+        console.error(`Error updating RSVP in database for event ${eventId}:`, updateError);
+      }
+    } catch (error) {
+      console.error('Error updating RSVP:', error);
+    }
+  };
+
   useEffect(() => {
     console.log('EventProvider: Loading events...');
     
-    // Check when events were last refreshed
     const lastRefreshStr = localStorage.getItem('lastEventsRefresh');
     if (lastRefreshStr) {
       const lastRefresh = new Date(lastRefreshStr);
@@ -178,26 +203,21 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       console.log(`Last events refresh was ${hoursSinceLastRefresh.toFixed(2)} hours ago`);
       
-      // If it's been more than an hour, refresh events
       if (hoursSinceLastRefresh > 1) {
         console.log('More than 1 hour since last refresh, fetching new events');
         refreshEvents();
       } else {
         console.log('Less than 1 hour since last refresh, loading cached events');
-        // Still fetch events, but we won't force a refresh of external data
         refreshEvents();
       }
     } else {
-      // No record of last refresh, so do a full refresh
       console.log('No record of last refresh, doing full refresh');
       refreshEvents();
     }
     
-    // Expose refreshEvents globally so it can be called from other components
     window.refreshEventsContext = refreshEvents;
     
     return () => {
-      // Clean up global reference when component unmounts
       delete window.refreshEventsContext;
     };
   }, []);
@@ -214,6 +234,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setFilter,
     eventLikes,
     handleLikeEvent,
+    handleRsvpEvent,
     showFavorites,
     setShowFavorites,
     refreshEvents,

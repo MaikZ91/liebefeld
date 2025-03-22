@@ -6,7 +6,7 @@ import { Music, PartyPopper, Image, Dumbbell, Map, CalendarIcon, List, Plus } fr
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Event } from '@/types/eventTypes';
+import { Event, RsvpOption } from '@/types/eventTypes';
 import { getEventsForDay, getMonthOrFavoriteEvents } from '@/utils/eventUtils';
 import { normalizeDate } from '@/utils/dateUtils';
 import CalendarHeader from './calendar/CalendarHeader';

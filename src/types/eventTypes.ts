@@ -12,6 +12,11 @@ export interface Event {
   likes?: number;
   link?: string;
   image_urls?: string[]; // Added to store URLs of uploaded images
+  rsvp?: {
+    yes: number;
+    no: number;
+    maybe: number;
+  };
 }
 
 export interface GitHubEvent {
@@ -33,3 +38,5 @@ export interface EventShareData {
   location?: string;
   category: string;
 }
+
+export type RsvpOption = 'yes' | 'no' | 'maybe';

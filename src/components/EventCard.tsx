@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { type Event } from './EventCalendar';
-import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink } from 'lucide-react';
+import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, Check, HelpCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -57,6 +57,10 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     }
   };
 
+  // Get RSVP counts or default to zeros
+  const rsvpCounts = event.rsvp || { yes: 0, no: 0, maybe: 0 };
+  const totalRsvp = rsvpCounts.yes + rsvpCounts.no + rsvpCounts.maybe;
+
   if (compact) {
     return (
       <div 
@@ -104,7 +108,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               {icon}
             </Badge>
             
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -117,6 +121,23 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
                 <span className="text-xs text-white">{event.likes}</span>
               )}
             </div>
+            
+            {totalRsvp > 0 && (
+              <div className="flex items-center gap-1 text-[10px] text-gray-300 mt-1">
+                <div className="flex items-center">
+                  <Check className="w-3 h-3 text-green-500" />
+                  <span>{rsvpCounts.yes}</span>
+                </div>
+                <div className="flex items-center">
+                  <HelpCircle className="w-3 h-3 text-yellow-500" />
+                  <span>{rsvpCounts.maybe}</span>
+                </div>
+                <div className="flex items-center">
+                  <X className="w-3 h-3 text-red-500" />
+                  <span>{rsvpCounts.no}</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -183,6 +204,23 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
           <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
           <span className="break-words">{event.location}</span>
         </div>
+        
+        {totalRsvp > 0 && (
+          <div className="flex items-center gap-4 mt-2 pt-2 border-t border-gray-700/50">
+            <div className="flex items-center gap-1">
+              <Check className="w-4 h-4 text-green-500" />
+              <span>{rsvpCounts.yes}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <HelpCircle className="w-4 h-4 text-yellow-500" />
+              <span>{rsvpCounts.maybe}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <X className="w-4 h-4 text-red-500" />
+              <span>{rsvpCounts.no}</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
