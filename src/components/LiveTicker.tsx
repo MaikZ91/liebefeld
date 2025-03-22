@@ -19,6 +19,8 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
     if (events.length === 0) return;
     
     try {
+      console.log(`LiveTicker: Processing ${events.length} events for ticker`);
+      
       // Get current month
       const currentDate = new Date();
       
@@ -33,6 +35,8 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
           return false;
         }
       });
+      
+      console.log(`LiveTicker: Found ${currentMonthEvents.length} events for current month`);
       
       // Group events by day
       const eventsByDay: Record<string, Event[]> = {};

@@ -9,65 +9,21 @@ import CommunityTest from '@/components/CommunityTest';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { QrCode } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { EventProvider } from '@/contexts/EventContext';
+import { EventProvider, useEventContext } from '@/contexts/EventContext';
 import { useToast } from '@/hooks/use-toast';
+
+const LiveTickerWrapper = () => {
+  const { events } = useEventContext();
+  console.log(`LiveTickerWrapper: Passing ${events.length} events to LiveTicker`);
+  return <LiveTicker events={events} />;
+};
 
 const Index = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
   
-  const [events, setEvents] = useState<Event[]>([]);
   const [testModalOpen, setTestModalOpen] = useState(false);
-  const { toast } = useToast();
-  
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        console.log('Fetching events from Supabase...');
-        const { data, error } = await supabase
-          .from('community_events')
-          .select('*')
-          .order('date', { ascending: false });
-        
-        if (error) {
-          console.error('Error fetching events from Supabase:', error);
-          throw error;
-        }
-        
-        if (data && data.length > 0) {
-          console.log('Loaded events from Supabase:', data);
-          setEvents(data as Event[]);
-        } else {
-          const savedEvents = localStorage.getItem('communityEvents');
-          if (savedEvents) {
-            console.log('Loading events from localStorage as fallback');
-            setEvents(JSON.parse(savedEvents));
-          }
-        }
-      } catch (err) {
-        console.error('Error in event fetching:', err);
-        const savedEvents = localStorage.getItem('communityEvents');
-        if (savedEvents) {
-          console.log('Loading events from localStorage due to error');
-          setEvents(JSON.parse(savedEvents));
-        }
-      }
-    };
-    
-    fetchEvents();
-
-    // Set up interval to refresh events every hour
-    const intervalId = setInterval(() => {
-      console.log('Auto-refreshing events from GitHub...');
-      window.refreshEventsContext?.();
-    }, 60 * 60 * 1000); // 1 hour in milliseconds
-
-    return () => clearInterval(intervalId);
-  }, []);
-  
-  console.log(`Index: Rendering with ${events.length} events for ticker`);
   
   const WHATSAPP_URL = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
   
@@ -166,12 +122,12 @@ const Index = () => {
         </div>
         
         {/* LiveTicker Section - reduced spacing */}
-        <div className="w-full bg-black">
-          <LiveTicker events={events} />
-        </div>
-
-        {/* Calendar Section */}
         <EventProvider>
+          <div className="w-full bg-black">
+            <LiveTickerWrapper />
+          </div>
+
+          {/* Calendar Section */}
           <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-6 rounded-t-lg shadow-inner">
             <EventCalendar defaultView="list" />
           </div>
