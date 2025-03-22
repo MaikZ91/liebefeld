@@ -39,6 +39,9 @@ export type Database = {
           created_at: string
           group_id: string
           id: string
+          media_url: string | null
+          reactions: Json | null
+          read_by: string[] | null
           sender: string
           text: string
         }
@@ -47,6 +50,9 @@ export type Database = {
           created_at?: string
           group_id: string
           id?: string
+          media_url?: string | null
+          reactions?: Json | null
+          read_by?: string[] | null
           sender: string
           text: string
         }
@@ -55,6 +61,9 @@ export type Database = {
           created_at?: string
           group_id?: string
           id?: string
+          media_url?: string | null
+          reactions?: Json | null
+          read_by?: string[] | null
           sender?: string
           text?: string
         }

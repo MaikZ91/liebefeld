@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, Send, Calendar, X, Heart, Loader2 } from 'lucide-react';
+import { MessageCircle, Send, Calendar, X, Heart, Loader2, Image, ThumbsUp, Smile, CheckCheck, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
@@ -9,16 +9,22 @@ import { useEventContext } from '@/contexts/EventContext';
 import { generateResponse, getWelcomeMessage } from '@/utils/chatUtils';
 import { format } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, type ChatMessage, type MessageReaction } from '@/integrations/supabase/client';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { toast } from '@/hooks/use-toast';
 
 const USERNAME_KEY = "community_chat_username";
 const AVATAR_KEY = "community_chat_avatar";
+const EMOJI_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
 interface Message {
   id: string;
   text: string;
   isUser: boolean;
   timestamp: Date;
+  reactions?: MessageReaction[];
+  read_by?: string[];
+  media_url?: string;
 }
 
 const EventChatBot: React.FC = () => {
@@ -36,6 +42,8 @@ const EventChatBot: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [quickInput, setQuickInput] = useState('');
   const [username, setUsername] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || "Gast");
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { events } = useEventContext();
 
@@ -52,13 +60,14 @@ const EventChatBot: React.FC = () => {
 
   const handleSend = (text = input) => {
     const messageText = text.trim();
-    if (!messageText) return;
+    if (!messageText && !fileInputRef.current?.files?.length) return;
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       text: messageText,
       isUser: true,
-      timestamp: new Date()
+      timestamp: new Date(),
+      read_by: [username]
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -67,9 +76,65 @@ const EventChatBot: React.FC = () => {
     setIsTyping(true);
     setIsOpen(true);
 
-    // Store user's question to analyze later
-    const storeUserQuestion = async () => {
+    // Handle file upload if present
+    let mediaUrl: string | undefined = undefined;
+    const processMessage = async () => {
       try {
+        if (fileInputRef.current?.files?.length) {
+          const file = fileInputRef.current.files[0];
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+          const filePath = `event_chat/${fileName}`;
+          
+          // Make sure storage bucket exists
+          const { data: buckets } = await supabase.storage.listBuckets();
+          if (!buckets?.find(b => b.name === 'chat_media')) {
+            await supabase.storage.createBucket('chat_media', { public: true });
+          }
+          
+          const { error: uploadError } = await supabase
+            .storage
+            .from('chat_media')
+            .upload(filePath, file);
+            
+          if (uploadError) {
+            console.error("Error uploading file:", uploadError);
+            toast({
+              title: "Fehler beim Hochladen",
+              description: "Die Datei konnte nicht hochgeladen werden.",
+              variant: "destructive"
+            });
+          } else {
+            const { data: urlData } = supabase
+              .storage
+              .from('chat_media')
+              .getPublicUrl(filePath);
+              
+            mediaUrl = urlData.publicUrl;
+            
+            // Update the message with the media URL
+            setMessages(prev => prev.map(msg => 
+              msg.id === userMessage.id 
+                ? { ...msg, media_url: mediaUrl } 
+                : msg
+            ));
+          }
+          
+          // Clear the file input
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+        }
+      } catch (error) {
+        console.error("Error processing file:", error);
+      }
+    };
+    
+    // Store user's message to analyze later
+    const storeUserMessage = async () => {
+      try {
+        await processMessage();
+        
         // Check if we have chat_groups table (only if this is being used with groups page)
         const { data: groupsCheck } = await supabase
           .from('chat_groups')
@@ -112,17 +177,20 @@ const EventChatBot: React.FC = () => {
                 group_id: botGroupId,
                 sender: username,
                 text: messageText,
-                avatar: localStorage.getItem(AVATAR_KEY)
+                avatar: localStorage.getItem(AVATAR_KEY),
+                media_url: mediaUrl,
+                read_by: [username],
+                reactions: []
               });
           }
         }
       } catch (error) {
-        console.error("Error storing user question:", error);
+        console.error("Error storing user message:", error);
         // Don't interrupt the flow if this fails
       }
     };
     
-    storeUserQuestion();
+    storeUserMessage();
 
     setTimeout(() => {
       const botResponse = generateResponse(messageText, events);
@@ -131,7 +199,8 @@ const EventChatBot: React.FC = () => {
         id: `bot-${Date.now()}`,
         text: botResponse,
         isUser: false,
-        timestamp: new Date()
+        timestamp: new Date(),
+        read_by: [username]
       };
       
       setMessages(prev => [...prev, botMessage]);
@@ -160,7 +229,8 @@ const EventChatBot: React.FC = () => {
                   group_id: botGroup.id,
                   sender: "LiebefeldBot",
                   text: botResponse,
-                  avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=LiebefeldBot"
+                  avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=LiebefeldBot",
+                  read_by: [username]
                 });
             }
           }
@@ -176,6 +246,92 @@ const EventChatBot: React.FC = () => {
   const handleQuickSend = () => {
     if (!quickInput.trim()) return;
     handleSend(quickInput);
+  };
+  
+  const handleAddReaction = async (messageId: string, emoji: string) => {
+    try {
+      // Find the message in the current state
+      const messageIndex = messages.findIndex(m => m.id === messageId);
+      if (messageIndex < 0) return;
+      
+      const message = messages[messageIndex];
+      
+      // Update reactions
+      const reactions = message.reactions || [];
+      let updated = false;
+      
+      // Check if this emoji is already used
+      const existingReactionIndex = reactions.findIndex(r => r.emoji === emoji);
+      
+      if (existingReactionIndex >= 0) {
+        // Check if this user already reacted with this emoji
+        const users = reactions[existingReactionIndex].users;
+        const userIndex = users.indexOf(username);
+        
+        if (userIndex >= 0) {
+          // Remove user from this reaction
+          users.splice(userIndex, 1);
+          if (users.length === 0) {
+            // Remove the reaction if no users left
+            reactions.splice(existingReactionIndex, 1);
+          }
+        } else {
+          // Add user to this reaction
+          users.push(username);
+        }
+        updated = true;
+      } else {
+        // Add new reaction
+        reactions.push({
+          emoji,
+          users: [username]
+        });
+        updated = true;
+      }
+      
+      if (updated) {
+        // Update local state
+        const updatedMessages = [...messages];
+        updatedMessages[messageIndex] = {
+          ...message,
+          reactions
+        };
+        setMessages(updatedMessages);
+        
+        // Update in DB if this is from a group
+        const { data: groupsCheck } = await supabase
+          .from('chat_groups')
+          .select('id')
+          .limit(1);
+          
+        if (groupsCheck && groupsCheck.length > 0) {
+          // Find the actual DB message ID if this is a temporary one
+          const realMessageId = messageId.startsWith('user-') || messageId.startsWith('bot-') 
+            ? null 
+            : messageId;
+            
+          if (realMessageId) {
+            await supabase
+              .from('chat_messages')
+              .update({ reactions })
+              .eq('id', realMessageId);
+          }
+        }
+      }
+      
+      setSelectedMessageId(null);
+    } catch (error) {
+      console.error('Error adding reaction:', error);
+      toast({
+        title: "Fehler beim Hinzufügen der Reaktion",
+        description: "Die Reaktion konnte nicht hinzugefügt werden.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const handleFileUpload = () => {
+    fileInputRef.current?.click();
   };
 
   return (
@@ -238,22 +394,117 @@ const EventChatBot: React.FC = () => {
                 key={message.id}
                 className={`flex ${message.isUser ? 'justify-end' : 'justify-start'} animate-fade-in`}
               >
-                <div
-                  className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                    message.isUser
-                      ? 'bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg'
-                      : 'bg-gradient-to-br from-gray-800 to-gray-900 text-white shadow-md border border-gray-700/30'
-                  }`}
-                >
-                  <div className="text-sm" dangerouslySetInnerHTML={{ __html: message.text }}></div>
-                  <span className="text-xs opacity-70 mt-1 block">
-                    {format(message.timestamp, 'HH:mm')}
-                  </span>
+                {!message.isUser && (
+                  <Avatar className="h-8 w-8 mr-2 mt-1">
+                    <AvatarImage src="https://api.dicebear.com/7.x/bottts/svg?seed=LiebefeldBot" alt="LiebefeldBot" />
+                    <AvatarFallback>LB</AvatarFallback>
+                  </Avatar>
+                )}
+                
+                <div className="flex flex-col max-w-[80%]">
+                  <div
+                    className={`rounded-lg px-4 py-2 ${
+                      message.isUser
+                        ? 'bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg'
+                        : 'bg-gradient-to-br from-gray-800 to-gray-900 text-white shadow-md border border-gray-700/30'
+                    }`}
+                  >
+                    <div className="text-sm" dangerouslySetInnerHTML={{ __html: message.text }}></div>
+                    
+                    {/* Display media if available */}
+                    {message.media_url && (
+                      <div className="mt-2">
+                        <img 
+                          src={message.media_url} 
+                          alt="Shared media" 
+                          className="rounded-md max-w-full max-h-[200px] object-contain"
+                        />
+                      </div>
+                    )}
+                    
+                    <span className="text-xs opacity-70 mt-1 block">
+                      {format(message.timestamp, 'HH:mm')}
+                    </span>
+                  </div>
+                  
+                  {/* Display reactions */}
+                  {message.reactions && message.reactions.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1 ml-2">
+                      {message.reactions.map((reaction, index) => (
+                        <Button
+                          key={index}
+                          variant="outline"
+                          size="sm"
+                          className={`px-1.5 py-0 h-6 text-xs rounded-full ${
+                            reaction.users.includes(username) ? 'bg-primary/20' : 'bg-muted'
+                          }`}
+                          onClick={() => handleAddReaction(message.id, reaction.emoji)}
+                        >
+                          {reaction.emoji} {reaction.users.length}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Message status (read receipts) */}
+                  {message.isUser && (
+                    <div className="flex justify-end mt-1">
+                      {message.read_by && message.read_by.length > 1 ? (
+                        <CheckCheck className="h-3 w-3 text-primary" />
+                      ) : (
+                        <Check className="h-3 w-3 text-muted-foreground" />
+                      )}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex flex-col ml-1">
+                  {message.isUser && (
+                    <Avatar className="h-8 w-8 ml-2 mt-1">
+                      <AvatarImage src={localStorage.getItem(AVATAR_KEY) || undefined} alt={username} />
+                      <AvatarFallback>{username.slice(0, 2).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                  )}
+                  
+                  {/* Reaction button */}
+                  <Popover open={selectedMessageId === message.id} onOpenChange={(open) => {
+                    if (open) setSelectedMessageId(message.id);
+                    else setSelectedMessageId(null);
+                  }}>
+                    <PopoverTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-6 w-6 p-0 rounded-full mt-1"
+                      >
+                        <Smile className="h-3 w-3" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-2">
+                      <div className="flex gap-1">
+                        {EMOJI_REACTIONS.map((emoji) => (
+                          <Button
+                            key={emoji}
+                            variant="ghost"
+                            size="sm"
+                            className="px-1.5 py-0 h-8 text-lg hover:bg-muted"
+                            onClick={() => handleAddReaction(message.id, emoji)}
+                          >
+                            {emoji}
+                          </Button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
             ))}
             {isTyping && (
               <div className="flex justify-start mt-2">
+                <Avatar className="h-8 w-8 mr-2">
+                  <AvatarImage src="https://api.dicebear.com/7.x/bottts/svg?seed=LiebefeldBot" alt="LiebefeldBot" />
+                  <AvatarFallback>LB</AvatarFallback>
+                </Avatar>
                 <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg px-3 py-1.5 max-w-[80%] border border-gray-700/30 shadow-md">
                   <div className="flex space-x-1">
                     <div className="w-2 h-2 rounded-full bg-red-500 animate-bounce" style={{ animationDelay: '0ms' }}></div>
@@ -268,6 +519,15 @@ const EventChatBot: React.FC = () => {
           
           <div className="p-4 border-t border-gray-800 bg-[#131722] rounded-b-xl">
             <div className="flex items-center space-x-2">
+              <Button
+                onClick={handleFileUpload} 
+                variant="outline"
+                size="icon"
+                type="button"
+                className="h-10 w-10 rounded-full bg-gray-800 border-gray-700 hover:bg-gray-700"
+              >
+                <Image className="h-4 w-4" />
+              </Button>
               <Input
                 type="text"
                 placeholder="Frag mich nach Liebefeld Events..."
@@ -279,7 +539,7 @@ const EventChatBot: React.FC = () => {
               <Button
                 onClick={() => handleSend()}
                 className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 transition-all duration-300 shadow-md"
-                disabled={!input.trim() || isTyping}
+                disabled={!input.trim() && !fileInputRef.current?.files?.length || isTyping}
               >
                 {isTyping ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -287,6 +547,12 @@ const EventChatBot: React.FC = () => {
                   <Send size={18} />
                 )}
               </Button>
+              <input 
+                type="file" 
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+              />
             </div>
           </div>
         </DialogContent>
