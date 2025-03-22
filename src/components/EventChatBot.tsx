@@ -570,41 +570,6 @@ const EventChatBot: React.FC = () => {
             <div ref={messagesEndRef} />
           </div>
           
-          {/* Event selection popover - FIXED POSITIONING */}
-          <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
-            <PopoverContent 
-              className="w-80 p-0 max-h-[300px] overflow-y-auto" 
-              side="top" 
-              align="end"
-              sideOffset={5}
-            >
-              <div className="p-3 bg-muted">
-                <h3 className="font-medium mb-2">Event auswählen</h3>
-                <div className="space-y-2 max-h-[250px] overflow-y-auto pr-2">
-                  {events && events.length > 0 ? (
-                    events
-                      .sort((a, b) => a.date.localeCompare(b.date))
-                      .map(event => (
-                        <div
-                          key={event.id}
-                          className="cursor-pointer hover:bg-muted/80 rounded p-2 transition-colors"
-                          onClick={() => handleEventSelect(event.id)}
-                        >
-                          <div className="font-medium">{event.title}</div>
-                          <div className="text-xs text-muted-foreground flex items-center mt-1">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            {event.date} • {event.time}
-                          </div>
-                        </div>
-                      ))
-                  ) : (
-                    <div className="text-sm text-muted-foreground p-2">Keine Events verfügbar</div>
-                  )}
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-          
           <div className="p-4 border-t border-gray-800 bg-[#131722] rounded-b-xl">
             <div className="flex items-center space-x-2">
               <Button
@@ -617,18 +582,51 @@ const EventChatBot: React.FC = () => {
               >
                 <Image className="h-4 w-4" />
               </Button>
-              <PopoverTrigger asChild>
-                <Button
-                  onClick={handleShareEvent}
-                  variant="outline"
-                  size="icon"
-                  type="button"
-                  className="h-10 w-10 rounded-full bg-gray-800 border-gray-700 hover:bg-gray-700"
-                  title="Event teilen"
+              <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    onClick={handleShareEvent}
+                    variant="outline"
+                    size="icon"
+                    type="button"
+                    className="h-10 w-10 rounded-full bg-gray-800 border-gray-700 hover:bg-gray-700"
+                    title="Event teilen"
+                  >
+                    <Calendar className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent 
+                  className="w-80 p-0 max-h-[300px] overflow-y-auto" 
+                  side="top" 
+                  align="end"
+                  sideOffset={5}
                 >
-                  <Calendar className="h-4 w-4" />
-                </Button>
-              </PopoverTrigger>
+                  <div className="p-3 bg-muted">
+                    <h3 className="font-medium mb-2">Event auswählen</h3>
+                    <div className="space-y-2 max-h-[250px] overflow-y-auto pr-2">
+                      {events && events.length > 0 ? (
+                        events
+                          .sort((a, b) => a.date.localeCompare(b.date))
+                          .map(event => (
+                            <div
+                              key={event.id}
+                              className="cursor-pointer hover:bg-muted/80 rounded p-2 transition-colors"
+                              onClick={() => handleEventSelect(event.id)}
+                            >
+                              <div className="font-medium">{event.title}</div>
+                              <div className="text-xs text-muted-foreground flex items-center mt-1">
+                                <Calendar className="h-3 w-3 mr-1" />
+                                {event.date} • {event.time}
+                              </div>
+                            </div>
+                          ))
+                      ) : (
+                        <div className="text-sm text-muted-foreground p-2">Keine Events verfügbar</div>
+                      )}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
               <Input
                 type="text"
                 placeholder="Frag mich nach Liebefeld Events..."
