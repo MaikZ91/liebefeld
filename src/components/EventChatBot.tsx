@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, Send, Calendar, X, Heart } from 'lucide-react';
+import { MessageCircle, Send, Calendar, X, Heart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
@@ -9,6 +9,17 @@ import { useEventContext } from '@/contexts/EventContext';
 import { generateResponse, getWelcomeMessage } from '@/utils/chatUtils';
 import { format } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { supabase } from '@/integrations/supabase/client';
+
+const USERNAME_KEY = "community_chat_username";
+const AVATAR_KEY = "community_chat_avatar";
+
+interface Message {
+  id: string;
+  text: string;
+  isUser: boolean;
+  timestamp: Date;
+}
 
 const EventChatBot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,15 +35,9 @@ const EventChatBot: React.FC = () => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [quickInput, setQuickInput] = useState('');
+  const [username, setUsername] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || "Gast");
   
   const { events } = useEventContext();
-
-  interface Message {
-    id: string;
-    text: string;
-    isUser: boolean;
-    timestamp: Date;
-  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -62,15 +67,109 @@ const EventChatBot: React.FC = () => {
     setIsTyping(true);
     setIsOpen(true);
 
+    // Store user's question to analyze later
+    const storeUserQuestion = async () => {
+      try {
+        // Check if we have chat_groups table (only if this is being used with groups page)
+        const { data: groupsCheck } = await supabase
+          .from('chat_groups')
+          .select('id')
+          .limit(1);
+          
+        if (groupsCheck && groupsCheck.length > 0) {
+          // Get or create a special group for event bot
+          const botGroupName = "LiebefeldBot";
+          const { data: botGroup } = await supabase
+            .from('chat_groups')
+            .select('id')
+            .eq('name', botGroupName)
+            .single();
+            
+          let botGroupId;
+          
+          if (!botGroup) {
+            // Create the bot group if it doesn't exist
+            const { data: newGroup } = await supabase
+              .from('chat_groups')
+              .insert({
+                name: botGroupName,
+                description: "Frag den Bot nach Events in Liebefeld",
+                created_by: "System"
+              })
+              .select()
+              .single();
+              
+            botGroupId = newGroup?.id;
+          } else {
+            botGroupId = botGroup.id;
+          }
+          
+          // Store the message
+          if (botGroupId) {
+            await supabase
+              .from('chat_messages')
+              .insert({
+                group_id: botGroupId,
+                sender: username,
+                text: messageText,
+                avatar: localStorage.getItem(AVATAR_KEY)
+              });
+          }
+        }
+      } catch (error) {
+        console.error("Error storing user question:", error);
+        // Don't interrupt the flow if this fails
+      }
+    };
+    
+    storeUserQuestion();
+
     setTimeout(() => {
       const botResponse = generateResponse(messageText, events);
-      setMessages(prev => [...prev, {
+      
+      const botMessage: Message = {
         id: `bot-${Date.now()}`,
         text: botResponse,
         isUser: false,
         timestamp: new Date()
-      }]);
+      };
+      
+      setMessages(prev => [...prev, botMessage]);
       setIsTyping(false);
+      
+      // Also store the bot's response if groups exist
+      const storeBotResponse = async () => {
+        try {
+          const { data: groupsCheck } = await supabase
+            .from('chat_groups')
+            .select('id')
+            .limit(1);
+            
+          if (groupsCheck && groupsCheck.length > 0) {
+            const botGroupName = "LiebefeldBot";
+            const { data: botGroup } = await supabase
+              .from('chat_groups')
+              .select('id')
+              .eq('name', botGroupName)
+              .single();
+              
+            if (botGroup) {
+              await supabase
+                .from('chat_messages')
+                .insert({
+                  group_id: botGroup.id,
+                  sender: "LiebefeldBot",
+                  text: botResponse,
+                  avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=LiebefeldBot"
+                });
+            }
+          }
+        } catch (error) {
+          console.error("Error storing bot response:", error);
+        }
+      };
+      
+      storeBotResponse();
     }, 700);
   };
 
@@ -180,9 +279,13 @@ const EventChatBot: React.FC = () => {
               <Button
                 onClick={() => handleSend()}
                 className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 transition-all duration-300 shadow-md"
-                disabled={!input.trim()}
+                disabled={!input.trim() || isTyping}
               >
-                <Send size={18} />
+                {isTyping ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send size={18} />
+                )}
               </Button>
             </div>
           </div>

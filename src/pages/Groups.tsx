@@ -6,28 +6,29 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import CalendarNavbar from "@/components/CalendarNavbar";
-import { Send, Users, Plus, UserPlus, User, Clock } from 'lucide-react';
+import { Send, Users, Plus, UserPlus, User, Clock, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-type Message = {
-  id: number;
-  text: string;
-  sender: string;
-  timestamp: Date;
-  avatar?: string;
-};
-
-type Group = {
+type ChatGroup = {
   id: string;
   name: string;
   description: string;
-  members: number;
-  messages: Message[];
-};
+  created_by: string;
+  created_at: string;
+}
+
+type ChatMessage = {
+  id: string;
+  group_id: string;
+  sender: string;
+  text: string;
+  avatar?: string;
+  created_at: string;
+}
 
 const getInitials = (name: string) => {
   return name
@@ -38,20 +39,16 @@ const getInitials = (name: string) => {
 };
 
 const getRandomAvatar = () => {
-  const avatars = [
-    "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
-    "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane",
-    "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
-    "https://api.dicebear.com/7.x/avataaars/svg?seed=Maria",
-    "https://api.dicebear.com/7.x/avataaars/svg?seed=Tom"
-  ];
-  return avatars[Math.floor(Math.random() * avatars.length)];
+  // Generate a random seed to get different avatars
+  const seed = Math.random().toString(36).substring(2, 8);
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
 };
 
 const USERNAME_KEY = "community_chat_username";
+const AVATAR_KEY = "community_chat_avatar";
 
 const Groups = () => {
-  const [activeGroup, setActiveGroup] = useState<string>("ausgehen");
+  const [activeGroup, setActiveGroup] = useState<string>("");
   const [newMessage, setNewMessage] = useState("");
   const [username, setUsername] = useState<string>(() => {
     return localStorage.getItem(USERNAME_KEY) || "";
@@ -63,107 +60,141 @@ const Groups = () => {
   const [newGroupDescription, setNewGroupDescription] = useState("");
   const messageEndRef = useRef<HTMLDivElement>(null);
   
-  const [groups, setGroups] = useState<Record<string, Group>>({
-    ausgehen: {
-      id: "ausgehen",
-      name: "Ausgehen",
-      description: "Gemeinsam ausgehen, feiern und Spaß haben",
-      members: 42,
-      messages: [
-        { id: 1, text: "Hey, was geht heute Abend?", sender: "Max", timestamp: new Date(2023, 7, 5, 18, 30), avatar: getRandomAvatar() },
-        { id: 2, text: "Ich bin für alles offen! Wer hat noch Lust?", sender: "Lisa", timestamp: new Date(2023, 7, 5, 18, 35), avatar: getRandomAvatar() }
-      ]
-    },
-    sport: {
-      id: "sport",
-      name: "Sport",
-      description: "Zusammen Sport treiben und fit bleiben",
-      members: 28,
-      messages: [
-        { id: 1, text: "Morgen 18 Uhr Laufen im Park?", sender: "Thomas", timestamp: new Date(2023, 7, 6, 10, 15), avatar: getRandomAvatar() },
-        { id: 2, text: "Bin dabei!", sender: "Anna", timestamp: new Date(2023, 7, 6, 10, 20), avatar: getRandomAvatar() }
-      ]
-    },
-    kreativ: {
-      id: "kreativ",
-      name: "Kreativität",
-      description: "Kreative Projekte zusammen gestalten",
-      members: 18,
-      messages: [
-        { id: 1, text: "Hat jemand Lust auf einen Malkurs am Wochenende?", sender: "Julia", timestamp: new Date(2023, 7, 4, 14, 10), avatar: getRandomAvatar() },
-        { id: 2, text: "Ich wäre interessiert! Wo findet das statt?", sender: "Mark", timestamp: new Date(2023, 7, 4, 14, 25), avatar: getRandomAvatar() }
-      ]
-    }
-  });
+  const [groups, setGroups] = useState<ChatGroup[]>([]);
+  const [messages, setMessages] = useState<Record<string, ChatMessage[]>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
 
   // Check for username on component mount
   useEffect(() => {
     if (!username) {
       setIsUsernameModalOpen(true);
+    } else if (!localStorage.getItem(AVATAR_KEY)) {
+      // Generate and save avatar if username exists but no avatar
+      const userAvatar = getRandomAvatar();
+      localStorage.setItem(AVATAR_KEY, userAvatar);
     }
   }, [username]);
 
-  // Subscribe to real-time updates for new messages
+  // Fetch groups from Supabase
   useEffect(() => {
-    // Set up a channel to simulate real-time updates
-    const interval = setInterval(() => {
-      const randomResponses = [
-        "Das klingt super! Ich bin dabei.",
-        "Hat jemand einen Vorschlag für einen guten Treffpunkt?",
-        "Wer kommt noch alles mit?",
-        "Kann leider nicht, aber viel Spaß euch!",
-        "Hat jemand Erfahrung damit? Würde gerne mehr darüber erfahren."
-      ];
-      
-      const randomSenders = ["Alex", "Sarah", "Tim", "Sophia", "David"];
-      
-      // 10% chance of getting a simulated response
-      if (Math.random() < 0.1 && username) {
-        const randomResponse = randomResponses[Math.floor(Math.random() * randomResponses.length)];
-        const randomSender = randomSenders[Math.floor(Math.random() * randomSenders.length)];
+    const fetchGroups = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('chat_groups')
+          .select('*')
+          .order('created_at', { ascending: true });
         
-        // Add message to the active group
-        const updatedGroups = { ...groups };
-        updatedGroups[activeGroup].messages.push({
-          id: Date.now(),
-          text: randomResponse,
-          sender: randomSender,
-          timestamp: new Date(),
-          avatar: getRandomAvatar()
+        if (error) {
+          throw error;
+        }
+
+        setGroups(data);
+        if (data && data.length > 0 && !activeGroup) {
+          setActiveGroup(data[0].id);
+        }
+      } catch (error) {
+        console.error('Error fetching groups:', error);
+        toast({
+          title: "Fehler beim Laden der Gruppen",
+          description: "Die Gruppen konnten nicht geladen werden.",
+          variant: "destructive"
         });
-        
-        setGroups(updatedGroups);
+      } finally {
+        setIsLoading(false);
       }
-    }, 15000); // Check every 15 seconds
-    
-    return () => clearInterval(interval);
-  }, [groups, activeGroup, username]);
+    };
+
+    fetchGroups();
+  }, [activeGroup]);
+
+  // Subscribe to real-time updates for chat messages
+  useEffect(() => {
+    if (!activeGroup) return;
+
+    // Fetch existing messages for the active group
+    const fetchMessages = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .eq('group_id', activeGroup)
+          .order('created_at', { ascending: true });
+        
+        if (error) {
+          throw error;
+        }
+
+        setMessages(prev => ({
+          ...prev,
+          [activeGroup]: data || []
+        }));
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+      }
+    };
+
+    fetchMessages();
+
+    // Subscribe to new messages
+    const channel = supabase
+      .channel('public:chat_messages')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `group_id=eq.${activeGroup}`
+      }, (payload) => {
+        const newMessage = payload.new as ChatMessage;
+        setMessages(prev => ({
+          ...prev,
+          [activeGroup]: [...(prev[activeGroup] || []), newMessage]
+        }));
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeGroup]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [groups[activeGroup]?.messages]);
+  }, [messages, activeGroup]);
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim() || !username) return;
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !username || !activeGroup) return;
 
-    const updatedGroups = { ...groups };
-    
-    updatedGroups[activeGroup].messages.push({
-      id: Date.now(),
-      text: newMessage,
-      sender: username,
-      timestamp: new Date(),
-      avatar: localStorage.getItem("userAvatar") || getRandomAvatar()
-    });
+    try {
+      setIsSending(true);
+      
+      const newChatMessage = {
+        group_id: activeGroup,
+        sender: username,
+        text: newMessage,
+        avatar: localStorage.getItem(AVATAR_KEY) || getRandomAvatar()
+      };
 
-    setGroups(updatedGroups);
-    setNewMessage("");
-    
-    toast({
-      title: "Nachricht gesendet",
-      description: "Deine Nachricht wurde an die Gruppe gesendet.",
-    });
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert(newChatMessage);
+
+      if (error) {
+        throw error;
+      }
+
+      setNewMessage("");
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Fehler beim Senden",
+        description: "Deine Nachricht konnte nicht gesendet werden.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -180,7 +211,7 @@ const Groups = () => {
       
       // Generate and store an avatar for this user
       const userAvatar = getRandomAvatar();
-      localStorage.setItem("userAvatar", userAvatar);
+      localStorage.setItem(AVATAR_KEY, userAvatar);
       
       setIsUsernameModalOpen(false);
       
@@ -192,48 +223,59 @@ const Groups = () => {
     }
   };
 
-  const createNewGroup = () => {
-    if (!newGroupName.trim() || !newGroupDescription.trim()) return;
+  const createNewGroup = async () => {
+    if (!newGroupName.trim() || !newGroupDescription.trim() || !username) return;
     
-    const groupId = newGroupName.toLowerCase().replace(/\s+/g, '-');
-    
-    if (groups[groupId]) {
+    try {
+      const newGroup = {
+        name: newGroupName,
+        description: newGroupDescription,
+        created_by: username
+      };
+      
+      const { data, error } = await supabase
+        .from('chat_groups')
+        .insert(newGroup)
+        .select()
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Add the new group to the local state
+      setGroups(prev => [...prev, data]);
+      setActiveGroup(data.id);
+      setIsCreatingGroup(false);
+      setNewGroupName("");
+      setNewGroupDescription("");
+      
       toast({
-        title: "Gruppe existiert bereits",
-        description: "Bitte wähle einen anderen Namen.",
+        title: "Gruppe erstellt",
+        description: `Deine Gruppe "${newGroupName}" wurde erfolgreich erstellt.`,
+        variant: "success"
+      });
+      
+    } catch (error) {
+      console.error('Error creating group:', error);
+      toast({
+        title: "Fehler beim Erstellen der Gruppe",
+        description: "Die Gruppe konnte nicht erstellt werden.",
         variant: "destructive"
       });
-      return;
     }
-    
-    const updatedGroups = { ...groups };
-    updatedGroups[groupId] = {
-      id: groupId,
-      name: newGroupName,
-      description: newGroupDescription,
-      members: 1, // Start with the creator
-      messages: [
-        {
-          id: Date.now(),
-          text: `Willkommen in der neuen Gruppe "${newGroupName}"!`,
-          sender: "System",
-          timestamp: new Date()
-        }
-      ]
-    };
-    
-    setGroups(updatedGroups);
-    setActiveGroup(groupId);
-    setIsCreatingGroup(false);
-    setNewGroupName("");
-    setNewGroupDescription("");
-    
-    toast({
-      title: "Gruppe erstellt",
-      description: `Deine Gruppe "${newGroupName}" wurde erfolgreich erstellt.`,
-      variant: "success"
-    });
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-lg font-medium">Lade Gruppen...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -249,7 +291,7 @@ const Groups = () => {
           {username && (
             <div className="flex items-center gap-2">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={localStorage.getItem("userAvatar") || undefined} alt={username} />
+                <AvatarImage src={localStorage.getItem(AVATAR_KEY) || undefined} alt={username} />
                 <AvatarFallback>{getInitials(username)}</AvatarFallback>
               </Avatar>
               <div>
@@ -271,7 +313,7 @@ const Groups = () => {
           <Tabs value={activeGroup} onValueChange={setActiveGroup} className="w-full">
             <div className="flex justify-between items-center">
               <TabsList className="mb-4">
-                {Object.values(groups).map((group) => (
+                {groups.map((group) => (
                   <TabsTrigger key={group.id} value={group.id}>
                     {group.name}
                   </TabsTrigger>
@@ -284,20 +326,26 @@ const Groups = () => {
               </Button>
             </div>
             
-            {Object.entries(groups).map(([id, group]) => (
-              <TabsContent key={id} value={id}>
+            {groups.map((group) => (
+              <TabsContent key={group.id} value={group.id}>
                 <Card className="w-full">
                   <CardHeader>
                     <CardTitle>{group.name}</CardTitle>
                     <CardDescription>
-                      {group.description} • <span className="inline-flex items-center"><Users className="h-4 w-4 mr-1" />{group.members} Mitglieder</span>
+                      {group.description} • <span className="inline-flex items-center">
+                        <Users className="h-4 w-4 mr-1" />
+                        {/* Display member count based on unique senders */}
+                        {messages[group.id] 
+                          ? new Set(messages[group.id].map(msg => msg.sender)).size 
+                          : 0} Mitglieder
+                      </span>
                     </CardDescription>
                   </CardHeader>
                   
                   <CardContent className="pb-0">
                     <ScrollArea className="h-[400px] rounded-md p-4 mb-4 bg-muted/20">
                       <div className="flex flex-col space-y-3">
-                        {group.messages.map(message => (
+                        {(messages[group.id] || []).map(message => (
                           <div 
                             key={message.id} 
                             className={`flex items-start gap-2 ${message.sender === username 
@@ -325,7 +373,7 @@ const Groups = () => {
                                 </div>
                                 <div className="text-xs opacity-70 flex items-center">
                                   <Clock className="h-3 w-3 mr-1" />
-                                  {message.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                  {new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                 </div>
                               </div>
                               <div className="text-sm">{message.text}</div>
@@ -333,7 +381,7 @@ const Groups = () => {
                             
                             {message.sender === username && (
                               <Avatar className="h-8 w-8">
-                                <AvatarImage src={localStorage.getItem("userAvatar") || undefined} alt={username} />
+                                <AvatarImage src={localStorage.getItem(AVATAR_KEY) || undefined} alt={username} />
                                 <AvatarFallback>{getInitials(username)}</AvatarFallback>
                               </Avatar>
                             )}
@@ -356,9 +404,13 @@ const Groups = () => {
                         />
                         <Button 
                           onClick={handleSendMessage} 
-                          disabled={!newMessage.trim()}
+                          disabled={!newMessage.trim() || isSending}
                         >
-                          <Send className="h-4 w-4" />
+                          {isSending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Send className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     ) : (

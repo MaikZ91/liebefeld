@@ -9,6 +9,65 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      chat_groups: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          avatar: string | null
+          created_at: string
+          group_id: string
+          id: string
+          sender: string
+          text: string
+        }
+        Insert: {
+          avatar?: string | null
+          created_at?: string
+          group_id: string
+          id?: string
+          sender: string
+          text: string
+        }
+        Update: {
+          avatar?: string | null
+          created_at?: string
+          group_id?: string
+          id?: string
+          sender?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "chat_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_events: {
         Row: {
           category: string
