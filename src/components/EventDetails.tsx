@@ -5,7 +5,7 @@ import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, MapPin, User, Heart, ThumbsUp, Flame, Sparkles } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Heart, X, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -46,15 +46,6 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike }) =
   
   // Format the date for display
   const formattedDate = format(parseISO(event.date), 'EEEE, d. MMMM yyyy', { locale: de });
-  
-  // Determine which like icon to use based on number of likes
-  const getLikeIcon = () => {
-    const likes = event.likes || 0;
-    if (likes > 5) {
-      return <Flame className="h-5 w-5 text-red-500" />;
-    }
-    return <ThumbsUp className={cn("h-5 w-5", likes > 0 ? "text-red-500" : "text-white")} />;
-  };
   
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -125,16 +116,15 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike }) =
             <Button 
               onClick={handleLike} 
               variant="outline"
-              className="flex items-center gap-2 rounded-full bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 text-white border-none transition-all duration-300"
+              className="flex items-center gap-2 rounded-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white border-none transition-all duration-300"
             >
               <div className="relative">
-                {getLikeIcon()}
+                <Heart className={cn("h-4 w-4", event.likes && event.likes > 0 ? "fill-white text-white" : "")} />
                 {showSparkle && (
                   <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-yellow-300 animate-pulse" />
                 )}
               </div>
-              {event.likes && event.likes > 5 ? "Hot! " : "Gefällt mir "}
-              {event.likes && event.likes > 0 ? `(${event.likes})` : ''}
+              Gefällt mir {event.likes && event.likes > 0 ? `(${event.likes})` : ''}
             </Button>
           )}
           <Button onClick={handleClose} className="rounded-full bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 border-none transition-all duration-300">
