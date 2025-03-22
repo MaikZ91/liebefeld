@@ -168,7 +168,13 @@ const EventChatBot: React.FC = () => {
           }
           
           if (botGroupId) {
-            const eventText = `🗓️ **Event: ${sharedEvent.title}**\nDatum: ${sharedEvent.date} um ${sharedEvent.time}\nOrt: ${sharedEvent.location || 'k.A.'}\nKategorie: ${sharedEvent.category}\n\n${messageText}`;
+            let eventText = "";
+            
+            if (sharedEvent) {
+              eventText = `🗓️ **Event: ${sharedEvent.title}**\nDatum: ${sharedEvent.date} um ${sharedEvent.time}\nOrt: ${sharedEvent.location || 'k.A.'}\nKategorie: ${sharedEvent.category}\n\n${messageText}`;
+            } else {
+              eventText = messageText;
+            }
             
             await supabase
               .from('chat_messages')
@@ -748,4 +754,3 @@ const EventChatBot: React.FC = () => {
 };
 
 export default EventChatBot;
-
