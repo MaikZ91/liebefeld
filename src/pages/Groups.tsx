@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -6,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import CalendarNavbar from "@/components/CalendarNavbar";
-import { Send, Users, User, Clock, Loader2, Image, ThumbsUp, Smile, Paperclip, MessageSquare, Check, CheckCheck, Calendar } from 'lucide-react';
+import { Send, Users, User, Clock, Loader2, Image, ThumbsUp, Smile, Paperclip, MessageSquare, Check, CheckCheck, Calendar, Search } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase, type ChatMessage, type MessageReaction } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -67,6 +66,7 @@ const Groups = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
+  const [eventSearchQuery, setEventSearchQuery] = useState('');
   
   const { events } = useEventContext();
 
@@ -487,6 +487,7 @@ const Groups = () => {
   const handleShareEvent = () => {
     console.log("Opening event selection dropdown in Groups", events.length);
     setIsEventSelectOpen(true);
+    setEventSearchQuery('');
   };
 
   const handleEventSelect = (eventId: string) => {
@@ -499,6 +500,19 @@ const Groups = () => {
       console.error("Selected event not found:", eventId);
     }
   };
+
+  const filteredEvents = events.filter(event => {
+    if (!eventSearchQuery.trim()) return true;
+    
+    const query = eventSearchQuery.toLowerCase();
+    return (
+      event.title.toLowerCase().includes(query) ||
+      (event.description && event.description.toLowerCase().includes(query)) ||
+      (event.location && event.location.toLowerCase().includes(query)) ||
+      (event.category && event.category.toLowerCase().includes(query)) ||
+      (event.date && event.date.toLowerCase().includes(query))
+    );
+  });
 
   if (isLoading) {
     return (
@@ -755,37 +769,52 @@ const Groups = () => {
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent 
-                                className="w-80 p-0 max-h-[300px] overflow-y-auto" 
+                                className="w-80 p-0 max-h-[400px] overflow-y-auto" 
                                 side="top" 
                                 align="end"
                                 sideOffset={5}
                               >
-                                <div className="p-3 bg-muted">
+                                <div className="p-3 bg-muted border-b">
                                   <h3 className="font-medium mb-2">Event auswählen</h3>
-                                  <div className="space-y-2 max-h-[250px] overflow-y-auto pr-2">
-                                    {events && events.length > 0 ? (
-                                      events
-                                        .sort((a, b) => a.date.localeCompare(b.date))
-                                        .map(event => (
-                                          <div
-                                            key={event.id}
-                                            className="cursor-pointer hover:bg-muted/80 rounded p-2 transition-colors"
-                                            onClick={() => {
-                                              console.log("Selecting event in Groups:", event.id, event.title);
-                                              handleEventSelect(event.id);
-                                            }}
-                                          >
-                                            <div className="font-medium">{event.title}</div>
-                                            <div className="text-xs text-muted-foreground flex items-center mt-1">
-                                              <Calendar className="h-3 w-3 mr-1" />
-                                              {event.date} • {event.time}
-                                            </div>
-                                          </div>
-                                        ))
-                                    ) : (
-                                      <div className="text-sm text-muted-foreground p-2">Keine Events verfügbar</div>
-                                    )}
+                                  <div className="relative">
+                                    <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                      placeholder="Nach Events suchen..."
+                                      value={eventSearchQuery}
+                                      onChange={(e) => setEventSearchQuery(e.target.value)}
+                                      className="pl-8 bg-background"
+                                    />
                                   </div>
+                                </div>
+                                <div className="space-y-2 max-h-[300px] overflow-y-auto p-3">
+                                  {filteredEvents && filteredEvents.length > 0 ? (
+                                    filteredEvents
+                                      .sort((a, b) => a.date.localeCompare(b.date))
+                                      .map(event => (
+                                        <div
+                                          key={event.id}
+                                          className="cursor-pointer hover:bg-muted/80 rounded p-2 transition-colors"
+                                          onClick={() => {
+                                            console.log("Selecting event in Groups:", event.id, event.title);
+                                            handleEventSelect(event.id);
+                                          }}
+                                        >
+                                          <div className="font-medium">{event.title}</div>
+                                          <div className="text-xs text-muted-foreground flex flex-col mt-1">
+                                            <div className="flex items-center font-medium text-primary">
+                                              <Calendar className="h-3 w-3 mr-1" />
+                                              {event.date}
+                                            </div>
+                                            <div>Zeit: {event.time}</div>
+                                            {event.location && <div>Ort: {event.location}</div>}
+                                          </div>
+                                        </div>
+                                      ))
+                                  ) : (
+                                    <div className="text-sm text-muted-foreground p-2">
+                                      {eventSearchQuery.trim() ? "Keine passenden Events gefunden" : "Keine Events verfügbar"}
+                                    </div>
+                                  )}
                                 </div>
                               </PopoverContent>
                             </Popover>
@@ -861,8 +890,6 @@ const Groups = () => {
           </div>
         </DrawerContent>
       </Drawer>
-      
-      {/* Removed duplicate Popover that was outside of component structure */}
       
     </div>
   );
