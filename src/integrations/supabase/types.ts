@@ -90,6 +90,9 @@ export type Database = {
           link: string | null
           location: string | null
           organizer: string | null
+          rsvp_maybe: number | null
+          rsvp_no: number | null
+          rsvp_yes: number | null
           time: string
           title: string
         }
@@ -105,6 +108,9 @@ export type Database = {
           link?: string | null
           location?: string | null
           organizer?: string | null
+          rsvp_maybe?: number | null
+          rsvp_no?: number | null
+          rsvp_yes?: number | null
           time: string
           title: string
         }
@@ -120,6 +126,9 @@ export type Database = {
           link?: string | null
           location?: string | null
           organizer?: string | null
+          rsvp_maybe?: number | null
+          rsvp_no?: number | null
+          rsvp_yes?: number | null
           time?: string
           title?: string
         }
@@ -131,6 +140,9 @@ export type Database = {
           event_id: string
           id: number
           likes: number
+          rsvp_maybe: number | null
+          rsvp_no: number | null
+          rsvp_yes: number | null
           updated_at: string | null
         }
         Insert: {
@@ -138,6 +150,9 @@ export type Database = {
           event_id: string
           id?: number
           likes?: number
+          rsvp_maybe?: number | null
+          rsvp_no?: number | null
+          rsvp_yes?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -145,6 +160,9 @@ export type Database = {
           event_id?: string
           id?: number
           likes?: number
+          rsvp_maybe?: number | null
+          rsvp_no?: number | null
+          rsvp_yes?: number | null
           updated_at?: string | null
         }
         Relationships: []

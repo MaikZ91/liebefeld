@@ -1,11 +1,13 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { format, isSameDay } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Event, RsvpOption } from '@/types/eventTypes';
 import EventDetails from '@/components/EventDetails';
 import { Button } from '@/components/ui/button';
-import { Calendar } from 'lucide-react';
+import { Calendar, ThumbsUp, ThumbsDown, HelpCircle } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
+import { Badge } from '@/components/ui/badge';
 
 interface EventPanelProps {
   selectedDate: Date | null;
@@ -61,6 +63,16 @@ const EventPanel: React.FC<EventPanelProps> = ({
     }
   };
   
+  // Helper to get RSVP counts
+  const getRsvpCounts = (event: Event) => {
+    // Handle both old rsvp object format and new individual rsvp fields
+    return {
+      yes: event.rsvp?.yes ?? event.rsvp_yes ?? 0,
+      no: event.rsvp?.no ?? event.rsvp_no ?? 0,
+      maybe: event.rsvp?.maybe ?? event.rsvp_maybe ?? 0
+    };
+  };
+  
   return (
     <div className="h-full dark-glass-card rounded-2xl p-6">
       <div className="flex items-center justify-between mb-4">
@@ -95,17 +107,37 @@ const EventPanel: React.FC<EventPanelProps> = ({
       {!selectedEvent && selectedDate && (
         <div ref={panelRef} className="overflow-y-auto max-h-[400px] pr-2 scrollbar-thin">
           {filteredEvents.length > 0 ? (
-            filteredEvents.map(event => (
-              <div 
-                key={event.id}
-                id={`event-${event.id}`}
-                className="mb-2 cursor-pointer hover:opacity-75 transition-opacity"
-                onClick={() => onEventSelect(event)}
-              >
-                <div className="text-white font-medium">{event.title}</div>
-                <div className="text-gray-300 text-sm">{event.time} - {event.location}</div>
-              </div>
-            ))
+            filteredEvents.map(event => {
+              const rsvpCounts = getRsvpCounts(event);
+              
+              return (
+                <div 
+                  key={event.id}
+                  id={`event-${event.id}`}
+                  className="mb-3 cursor-pointer hover:opacity-75 transition-opacity bg-gray-800/30 p-3 rounded-lg border border-gray-700/30"
+                  onClick={() => onEventSelect(event)}
+                >
+                  <div className="text-white font-medium">{event.title}</div>
+                  <div className="text-gray-300 text-sm">{event.time} - {event.location}</div>
+                  
+                  {/* RSVP counts */}
+                  <div className="flex gap-2 mt-2">
+                    <Badge variant="outline" className="flex items-center gap-1 text-xs">
+                      <ThumbsUp className="h-3 w-3 text-green-500" />
+                      {rsvpCounts.yes}
+                    </Badge>
+                    <Badge variant="outline" className="flex items-center gap-1 text-xs">
+                      <ThumbsDown className="h-3 w-3 text-red-500" />
+                      {rsvpCounts.no}
+                    </Badge>
+                    <Badge variant="outline" className="flex items-center gap-1 text-xs">
+                      <HelpCircle className="h-3 w-3 text-yellow-500" />
+                      {rsvpCounts.maybe}
+                    </Badge>
+                  </div>
+                </div>
+              );
+            })
           ) : (
             <div className="text-gray-400 italic">Keine Events an diesem Tag.</div>
           )}

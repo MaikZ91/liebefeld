@@ -17,6 +17,10 @@ export interface Event {
     no: number;
     maybe: number;
   };
+  // New individual RSVP fields to match database columns
+  rsvp_yes?: number;
+  rsvp_no?: number;
+  rsvp_maybe?: number;
 }
 
 export interface GitHubEvent {
