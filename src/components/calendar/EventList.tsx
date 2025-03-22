@@ -5,7 +5,7 @@ import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
 import EventCard from '@/components/EventCard';
 import { groupEventsByDate } from '@/utils/eventUtils';
-import { Star } from 'lucide-react';
+import { Star, Fire } from 'lucide-react';
 
 interface EventListProps {
   events: Event[];
@@ -158,8 +158,8 @@ const EventList: React.FC<EventListProps> = ({
                         <div className={`${isTopEvent ? 'bg-gradient-to-r from-[#C62828]/20 to-transparent rounded-lg' : ''}`}>
                           {isTopEvent && (
                             <div className="absolute right-2 top-2 bg-[#E53935] text-white px-2 py-1 rounded-full text-xs flex items-center z-20">
-                              <Star className="w-3 h-3 mr-1 fill-white" />
-                              <span>Top Event</span>
+                              <Fire className="w-3 h-3 mr-1 fill-yellow-400 text-yellow-400" />
+                              <span>Hot Event</span>
                             </div>
                           )}
                           <EventCard 

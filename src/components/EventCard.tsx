@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { type Event } from './EventCalendar';
-import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink } from 'lucide-react';
+import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, ThumbsUp, Fire } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,13 +17,13 @@ interface EventCardProps {
 const categoryColors: Record<string, string> = {
   'Konzert': 'bg-black text-red-500 dark:bg-black dark:text-red-500',
   'Party': 'bg-black text-red-500 dark:bg-black dark:text-red-500',
-  'Ausstellung': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
+  'Ausstellung': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
   'Sport': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
-  'Workshop': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
+  'Workshop': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
   'Kultur': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
   'Sonstiges': 'bg-black text-red-500 dark:bg-black dark:text-red-500',
-  'Networking': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
-  'Meeting': 'bg-orange-400/70 text-orange-50 dark:bg-orange-400/70 dark:text-orange-50',
+  'Networking': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
+  'Meeting': 'bg-red-400/70 text-red-50 dark:bg-red-400/70 dark:text-red-50',
 };
 
 const categoryIcons: Record<string, React.ReactNode> = {
@@ -55,6 +55,28 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     if (event.link) {
       window.open(event.link, '_blank', 'noopener,noreferrer');
     }
+  };
+
+  // Determine which like icon to use based on number of likes
+  const getLikeIcon = () => {
+    const likes = event.likes || 0;
+    if (likes > 5) {
+      return <Fire className="w-4 h-4 text-red-500" />;
+    }
+    return <ThumbsUp className={cn("w-4 h-4", likes > 0 ? "text-red-500" : "text-white")} />;
+  };
+
+  // Get like count style based on number of likes
+  const getLikeCountStyle = () => {
+    const likes = event.likes || 0;
+    if (likes > 10) {
+      return "font-bold text-red-400";
+    } else if (likes > 5) {
+      return "font-semibold text-red-300";
+    } else if (likes > 0) {
+      return "text-red-200";
+    }
+    return "text-white/70";
   };
 
   if (compact) {
@@ -99,7 +121,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
               event.category in categoryColors 
                 ? categoryColors[event.category] 
-                : "bg-orange-400/70 text-orange-50"
+                : "bg-red-400/70 text-red-50"
             )}>
               {icon}
             </Badge>
@@ -108,13 +130,15 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-6 w-6 rounded-full" 
+                className="h-6 w-6 rounded-full bg-red-900/30 hover:bg-red-800/50" 
                 onClick={handleLike}
               >
-                <Heart className={cn("w-4 h-4", event.likes && event.likes > 0 ? "fill-red-500 text-red-500" : "text-white")} />
+                {getLikeIcon()}
               </Button>
               {event.likes && event.likes > 0 && (
-                <span className="text-xs text-white">{event.likes}</span>
+                <span className={cn("text-xs ml-1", getLikeCountStyle())}>
+                  {event.likes}
+                </span>
               )}
             </div>
           </div>
@@ -151,24 +175,24 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
             "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
             event.category in categoryColors 
               ? categoryColors[event.category] 
-              : "bg-orange-400/70 text-orange-50"
+              : "bg-red-400/70 text-red-50"
           )}>
             {icon}
             {event.category}
           </Badge>
           
-          <div className="flex items-center">
+          <div className="flex items-center px-2 py-1 bg-red-900/30 rounded-full">
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-7 w-7 rounded-full mr-1"
+              className="h-7 w-7 rounded-full mr-1 hover:bg-red-800/50"
               onClick={handleLike}
             >
-              <Heart className={cn("w-4 h-4", event.likes && event.likes > 0 ? "fill-red-500 text-red-500" : "text-white")} />
+              {getLikeIcon()}
             </Button>
-            {event.likes && event.likes > 0 && (
-              <span className="text-sm text-white">{event.likes}</span>
-            )}
+            <span className={cn("text-sm", getLikeCountStyle())}>
+              {event.likes || 0}
+            </span>
           </div>
         </div>
       </div>
