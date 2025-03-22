@@ -14,6 +14,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useEventContext } from "@/contexts/EventContext"; 
 import { Event, RsvpOption, normalizeRsvpCounts } from "@/types/eventTypes";
+import { format, parseISO } from 'date-fns';
+import { de } from 'date-fns/locale';
+import { groupFutureEventsByDate } from "@/utils/eventUtils";
 
 type ChatGroup = {
   id: string;
@@ -525,6 +528,8 @@ const Groups = () => {
       (event.date && event.date.toLowerCase().includes(query))
     );
   });
+  
+  const groupedEvents = groupFutureEventsByDate(filteredEvents);
 
   const formatEventMessage = (messageText: string, eventData?: Event) => {
     if (!eventData) return messageText;
@@ -905,27 +910,39 @@ const Groups = () => {
                                   </div>
                                 </div>
                                 <div className="p-2">
-                                  {filteredEvents.length === 0 ? (
+                                  {Object.keys(groupedEvents).length === 0 ? (
                                     <div className="py-3 px-2 text-center text-muted-foreground text-sm">
                                       Keine Events gefunden
                                     </div>
                                   ) : (
-                                    <div className="space-y-1">
-                                      {filteredEvents.map(event => (
-                                        <Button
-                                          key={event.id}
-                                          variant="ghost"
-                                          className="w-full justify-start text-left px-2 py-1.5 h-auto"
-                                          onClick={() => handleEventSelect(event.id)}
-                                        >
-                                          <div>
-                                            <div className="font-medium line-clamp-1">{event.title}</div>
-                                            <div className="text-xs text-muted-foreground">
-                                              {event.date} • {event.time} • {event.category}
+                                    <div className="space-y-2">
+                                      {Object.keys(groupedEvents).sort().map(dateStr => {
+                                        const date = parseISO(dateStr);
+                                        return (
+                                          <div key={dateStr} className="mb-2">
+                                            <div className="sticky top-0 bg-muted/70 backdrop-blur-sm py-1 px-2 text-xs font-semibold rounded text-white mb-1 border-l-2 border-primary">
+                                              {format(date, 'EEEE, d. MMMM', { locale: de })}
+                                            </div>
+                                            <div className="space-y-1 pl-2">
+                                              {groupedEvents[dateStr].map(event => (
+                                                <Button
+                                                  key={event.id}
+                                                  variant="ghost"
+                                                  className="w-full justify-start text-left px-2 py-1.5 h-auto"
+                                                  onClick={() => handleEventSelect(event.id)}
+                                                >
+                                                  <div>
+                                                    <div className="font-medium line-clamp-1">{event.title}</div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                      {event.time} • {event.category}
+                                                    </div>
+                                                  </div>
+                                                </Button>
+                                              ))}
                                             </div>
                                           </div>
-                                        </Button>
-                                      ))}
+                                        );
+                                      })}
                                     </div>
                                   )}
                                 </div>

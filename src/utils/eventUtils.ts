@@ -1,6 +1,6 @@
 import { Event, GitHubEvent } from '../types/eventTypes';
 import { parseAndNormalizeDate, debugDate } from './dateUtils';
-import { format, isSameDay, isSameMonth, startOfDay, isAfter, isBefore, differenceInDays } from 'date-fns';
+import { format, isSameDay, isSameMonth, startOfDay, isAfter, isBefore, differenceInDays, parseISO, compareAsc } from 'date-fns';
 
 // Determine event category based on keywords in title
 export const determineEventCategory = (title: string): string => {
@@ -165,6 +165,39 @@ export const groupEventsByDate = (events: Event[]): Record<string, Event[]> => {
   });
   
   return groupedEvents;
+};
+
+// Get future events (starting from today) sorted by date
+export const getFutureEvents = (events: Event[]): Event[] => {
+  const today = startOfDay(new Date());
+  
+  return events
+    .filter(event => {
+      try {
+        if (!event.date) return false;
+        const eventDate = parseAndNormalizeDate(event.date);
+        return isAfter(eventDate, today) || isSameDay(eventDate, today);
+      } catch (error) {
+        console.error(`Error filtering future events:`, error);
+        return false;
+      }
+    })
+    .sort((a, b) => {
+      try {
+        const dateA = parseISO(a.date);
+        const dateB = parseISO(b.date);
+        return compareAsc(dateA, dateB);
+      } catch (error) {
+        console.error(`Error sorting future events:`, error);
+        return 0;
+      }
+    });
+};
+
+// Group future events by date (starting from today)
+export const groupFutureEventsByDate = (events: Event[]): Record<string, Event[]> => {
+  const futureEvents = getFutureEvents(events);
+  return groupEventsByDate(futureEvents);
 };
 
 // Transform GitHub events to our format
