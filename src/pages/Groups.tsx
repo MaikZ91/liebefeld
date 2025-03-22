@@ -534,14 +534,14 @@ const Groups = () => {
 
     return (
       <div>
-        <div className="mb-2" dangerouslySetInnerHTML={{ __html: messageText }} />
+        <div className="mb-2 text-white" dangerouslySetInnerHTML={{ __html: messageText }} />
         
         <div className="mt-2 p-3 rounded-md bg-primary/10 border border-primary/20">
           <div className="flex items-center gap-2 mb-2">
             <Calendar className="h-4 w-4 text-primary" />
-            <span className="font-medium">{eventData.title}</span>
+            <span className="font-medium text-white">{eventData.title}</span>
           </div>
-          <div className="text-xs text-muted-foreground space-y-1.5">
+          <div className="text-xs text-white space-y-1.5">
             <div className="flex items-center">
               <Clock className="h-3 w-3 mr-1.5" />
               <span>{eventData.date} um {eventData.time}</span>
@@ -576,7 +576,7 @@ const Groups = () => {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="h-7 bg-green-500/10 hover:bg-green-500/20 border-green-500/30 flex-1"
+                className="h-7 bg-green-500/10 hover:bg-green-500/20 border-green-500/30 flex-1 text-white"
                 onClick={() => handleRsvp(eventData.id, 'yes')}
               >
                 <Check className="h-3 w-3 mr-1.5" /> Zusagen
@@ -584,7 +584,7 @@ const Groups = () => {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="h-7 bg-yellow-500/10 hover:bg-yellow-500/20 border-yellow-500/30 flex-1"
+                className="h-7 bg-yellow-500/10 hover:bg-yellow-500/20 border-yellow-500/30 flex-1 text-white"
                 onClick={() => handleRsvp(eventData.id, 'maybe')}
               >
                 <HelpCircle className="h-3 w-3 mr-1.5" /> Vielleicht
@@ -592,7 +592,7 @@ const Groups = () => {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="h-7 bg-red-500/10 hover:bg-red-500/20 border-red-500/30 flex-1"
+                className="h-7 bg-red-500/10 hover:bg-red-500/20 border-red-500/30 flex-1 text-white"
                 onClick={() => handleRsvp(eventData.id, 'no')}
               >
                 <X className="h-3 w-3 mr-1.5" /> Absagen
@@ -695,10 +695,10 @@ const Groups = () => {
                             <div className="flex flex-col">
                               <div className={`max-w-[280px] p-3 rounded-lg space-y-1 ${
                                 message.sender === username 
-                                  ? "bg-primary text-primary-foreground" 
+                                  ? "bg-primary text-white" 
                                   : message.sender === "System"
-                                    ? "bg-secondary text-secondary-foreground italic"
-                                    : "bg-secondary text-secondary-foreground"
+                                    ? "bg-secondary text-white italic"
+                                    : "bg-secondary text-white"
                               }`}>
                                 <div className="flex justify-between items-center">
                                   <div className="font-medium text-xs">
@@ -736,7 +736,7 @@ const Groups = () => {
                                     return formatEventMessage(userMessage, eventData);
                                   })()
                                 ) : (
-                                  <div className="text-sm whitespace-pre-wrap">{message.text}</div>
+                                  <div className="text-sm whitespace-pre-wrap text-white">{message.text}</div>
                                 )}
                                 
                                 {message.media_url && (
