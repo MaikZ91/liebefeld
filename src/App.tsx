@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import About from "./pages/About";
 import Groups from "./pages/Groups";
 import NotFound from "./pages/NotFound";
+import { EventProvider } from "./contexts/EventContext";
 
 const queryClient = new QueryClient();
 
@@ -19,7 +20,11 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/groups" element={<Groups />} />
+          <Route path="/groups" element={
+            <EventProvider>
+              <Groups />
+            </EventProvider>
+          } />
           <Route path="/about" element={<About />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
