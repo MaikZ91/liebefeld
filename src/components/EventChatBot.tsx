@@ -585,12 +585,15 @@ const EventChatBot: React.FC = () => {
               <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
                 <PopoverTrigger asChild>
                   <Button
-                    onClick={handleShareEvent}
                     variant="outline"
                     size="icon"
                     type="button"
                     className="h-10 w-10 rounded-full bg-gray-800 border-gray-700 hover:bg-gray-700"
                     title="Event teilen"
+                    onClick={() => {
+                      console.log("Calendar button clicked");
+                      setIsEventSelectOpen(true);
+                    }}
                   >
                     <Calendar className="h-4 w-4" />
                   </Button>
@@ -611,7 +614,10 @@ const EventChatBot: React.FC = () => {
                             <div
                               key={event.id}
                               className="cursor-pointer hover:bg-muted/80 rounded p-2 transition-colors"
-                              onClick={() => handleEventSelect(event.id)}
+                              onClick={() => {
+                                console.log("Selecting event:", event.id);
+                                handleEventSelect(event.id);
+                              }}
                             >
                               <div className="font-medium">{event.title}</div>
                               <div className="text-xs text-muted-foreground flex items-center mt-1">
