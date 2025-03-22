@@ -483,15 +483,18 @@ const Groups = () => {
   };
 
   const handleShareEvent = () => {
-    console.log("Opening event selection dropdown in Groups");
-    setIsEventSelectOpen(prev => !prev);
+    console.log("Opening event selection dropdown in Groups", events.length);
+    setIsEventSelectOpen(true);
   };
 
   const handleEventSelect = (eventId: string) => {
     console.log("Event selected in Groups:", eventId);
     const selectedEvent = events.find(event => event.id === eventId);
     if (selectedEvent) {
+      setIsEventSelectOpen(false);
       handleSendMessage(selectedEvent);
+    } else {
+      console.error("Selected event not found:", eventId);
     }
   };
 
@@ -761,7 +764,6 @@ const Groups = () => {
                             ref={fileInputRef}
                             className="hidden"
                             accept="image/*"
-                            onChange={() => handleSendMessage()}
                           />
                         </div>
                       </div>
@@ -817,7 +819,13 @@ const Groups = () => {
         </DrawerContent>
       </Drawer>
       
-      <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
+      <Popover 
+        open={isEventSelectOpen} 
+        onOpenChange={(open) => {
+          console.log("Popover state changed:", open);
+          setIsEventSelectOpen(open);
+        }}
+      >
         <PopoverContent 
           className="w-80 p-0 max-h-[300px] overflow-y-auto" 
           side="top" 
@@ -834,7 +842,10 @@ const Groups = () => {
                     <div
                       key={event.id}
                       className="cursor-pointer hover:bg-muted/80 rounded p-2 transition-colors"
-                      onClick={() => handleEventSelect(event.id)}
+                      onClick={() => {
+                        console.log("Selecting event in Groups:", event.id, event.title);
+                        handleEventSelect(event.id);
+                      }}
                     >
                       <div className="font-medium">{event.title}</div>
                       <div className="text-xs text-muted-foreground flex items-center mt-1">
