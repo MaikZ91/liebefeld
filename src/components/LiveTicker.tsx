@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Calendar, ArrowRight } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { Calendar, ArrowRight, ThumbsUp } from 'lucide-react';
+import { format, parseISO, isSameMonth, startOfDay } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { type Event } from './EventCalendar';
 
@@ -14,30 +14,82 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
   const [isPaused, setIsPaused] = useState(false);
   const tickerRef = useRef<HTMLDivElement>(null);
 
-  // Process all events for the ticker (both GitHub and user-added)
+  // Process events for the ticker - only the most popular event per day
   useEffect(() => {
     if (events.length === 0) return;
     
-    // Sort all events by date (most recent first)
-    const sortedEvents = [...events].sort((a, b) => {
-      try {
-        return parseISO(b.date).getTime() - parseISO(a.date).getTime();
-      } catch (error) {
-        console.error(`Error sorting dates: ${a.date}, ${b.date}`, error);
-        return 0;
-      }
-    });
-    
-    // Limit to 20 events for better performance
-    const limitedEvents = sortedEvents.slice(0, 20);
-    
-    setTickerEvents(limitedEvents);
-    console.log(`LiveTicker: Displaying ${limitedEvents.length} events (from ${events.length} total)`);
+    try {
+      // Get current month
+      const currentDate = new Date();
+      
+      // Filter events for current month only
+      const currentMonthEvents = events.filter(event => {
+        try {
+          if (!event.date) return false;
+          const eventDate = parseISO(event.date);
+          return isSameMonth(eventDate, currentDate);
+        } catch (error) {
+          console.error(`Error filtering for current month: ${event.date}`, error);
+          return false;
+        }
+      });
+      
+      // Group events by day
+      const eventsByDay: Record<string, Event[]> = {};
+      
+      currentMonthEvents.forEach(event => {
+        try {
+          if (!event.date) return;
+          
+          // Use just the date part for grouping
+          const eventDate = parseISO(event.date);
+          const dateKey = format(eventDate, 'yyyy-MM-dd');
+          
+          if (!eventsByDay[dateKey]) {
+            eventsByDay[dateKey] = [];
+          }
+          
+          eventsByDay[dateKey].push(event);
+        } catch (error) {
+          console.error(`Error grouping events by day: ${event.date}`, error);
+        }
+      });
+      
+      // Get the top event (most likes) for each day
+      const topEventsByDay = Object.keys(eventsByDay).map(dateKey => {
+        const dayEvents = eventsByDay[dateKey];
+        
+        // Sort by likes (highest first)
+        return dayEvents.sort((a, b) => {
+          const likesA = a.likes || 0;
+          const likesB = b.likes || 0;
+          return likesB - likesA;
+        })[0]; // Take only the top event
+      });
+      
+      console.log(`LiveTicker: Found ${topEventsByDay.length} top events for the current month`);
+      
+      // Sort by date (closest first)
+      const sortedTopEvents = topEventsByDay.sort((a, b) => {
+        try {
+          const dateA = parseISO(a.date);
+          const dateB = parseISO(b.date);
+          return dateA.getTime() - dateB.getTime();
+        } catch (error) {
+          console.error(`Error sorting top events by date: ${a.date}, ${b.date}`, error);
+          return 0;
+        }
+      });
+      
+      setTickerEvents(sortedTopEvents);
+    } catch (error) {
+      console.error("Error processing events for ticker:", error);
+    }
   }, [events]);
 
   // Don't render if no events
-  if (events.length === 0) {
-    console.log('LiveTicker: No events to display');
+  if (!tickerEvents.length) {
+    console.log('LiveTicker: No top events to display');
     return null;
   }
 
@@ -50,16 +102,16 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
       {/* Header */}
       <div className="absolute left-0 top-0 bottom-0 flex items-center z-10 bg-red-600 px-3 py-1">
         <Calendar className="w-4 h-4 mr-1" />
-        <span className="font-bold text-sm whitespace-nowrap">Events</span>
+        <span className="font-bold text-sm whitespace-nowrap">Top Events</span>
         <ArrowRight className="w-4 h-4 ml-1" />
       </div>
       
       {/* Gradient fades */}
-      <div className="absolute left-[100px] top-0 bottom-0 w-8 bg-gradient-to-r from-black to-transparent z-[5]"></div>
+      <div className="absolute left-[110px] top-0 bottom-0 w-8 bg-gradient-to-r from-black to-transparent z-[5]"></div>
       <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black to-transparent z-[5]"></div>
       
       {/* Scrolling content */}
-      <div className="ml-[120px] mr-2 overflow-hidden">
+      <div className="ml-[130px] mr-2 overflow-hidden">
         <div 
           ref={tickerRef}
           className={`whitespace-nowrap inline-block ${isPaused ? 'ticker-paused' : 'ticker-scroll'}`}
@@ -82,7 +134,11 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
                   })()}:
                 </span>
                 <span className="text-white mr-1">{event.title}</span>
-                <span className="text-gray-400 text-sm">({event.location || 'Keine Ortsangabe'})</span>
+                <span className="text-gray-400 text-sm mr-1">({event.location || 'Keine Ortsangabe'})</span>
+                <span className="text-yellow-500 text-xs flex items-center">
+                  <ThumbsUp className="w-3 h-3 mr-1" /> 
+                  {event.likes || 0}
+                </span>
               </span>
               <span className="mx-3 text-red-500">•</span>
             </div>
