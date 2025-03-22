@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -38,7 +37,6 @@ const getInitials = (name: string) => {
 };
 
 const getRandomAvatar = () => {
-  // Generate a random seed to get different avatars
   const seed = Math.random().toString(36).substring(2, 8);
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
 };
@@ -46,7 +44,6 @@ const getRandomAvatar = () => {
 const USERNAME_KEY = "community_chat_username";
 const AVATAR_KEY = "community_chat_avatar";
 
-// Common emoji reactions
 const EMOJI_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
 const Groups = () => {
@@ -72,18 +69,15 @@ const Groups = () => {
   
   const { events } = useEventContext();
 
-  // Check for username on component mount
   useEffect(() => {
     if (!username) {
       setIsUsernameModalOpen(true);
     } else if (!localStorage.getItem(AVATAR_KEY)) {
-      // Generate and save avatar if username exists but no avatar
       const userAvatar = getRandomAvatar();
       localStorage.setItem(AVATAR_KEY, userAvatar);
     }
   }, [username]);
 
-  // Fetch groups from Supabase
   useEffect(() => {
     const fetchGroups = async () => {
       try {
@@ -115,11 +109,9 @@ const Groups = () => {
     fetchGroups();
   }, [activeGroup]);
 
-  // Subscribe to real-time updates for chat messages
   useEffect(() => {
     if (!activeGroup) return;
 
-    // Fetch existing messages for the active group
     const fetchMessages = async () => {
       try {
         const { data, error } = await supabase
@@ -132,7 +124,6 @@ const Groups = () => {
           throw error;
         }
 
-        // Mark all messages as read by this user
         if (username && data && data.length > 0) {
           const messagesToUpdate = data.filter(msg => 
             msg.sender !== username && 
@@ -150,7 +141,6 @@ const Groups = () => {
           }
         }
 
-        // Ensure the data conforms to the ChatMessage type
         if (data) {
           const typedMessages = data.map(msg => ({
             ...msg,
@@ -170,7 +160,6 @@ const Groups = () => {
 
     fetchMessages();
 
-    // Subscribe to new messages
     const messagesChannel = supabase
       .channel('public:chat_messages')
       .on('postgres_changes', {
@@ -181,7 +170,6 @@ const Groups = () => {
       }, (payload) => {
         const newMessage = payload.new as ChatMessage;
         
-        // Mark message as read if we're the recipient
         if (username && newMessage.sender !== username) {
           const readBy = newMessage.read_by || [];
           supabase
@@ -216,7 +204,6 @@ const Groups = () => {
       })
       .subscribe();
 
-    // Setup typing indicators channel
     const typingChannel = supabase
       .channel(`typing:${activeGroup}`)
       .on('broadcast', { event: 'typing' }, (payload) => {
@@ -228,7 +215,6 @@ const Groups = () => {
           const groupTypingUsers = [...(prev[activeGroup] || [])];
           
           if (isTyping) {
-            // Add or update typing user
             const existingIndex = groupTypingUsers.findIndex(u => u.username === username);
             if (existingIndex >= 0) {
               groupTypingUsers[existingIndex] = {
@@ -243,7 +229,6 @@ const Groups = () => {
               });
             }
           } else {
-            // Remove typing user
             const filteredUsers = groupTypingUsers.filter(u => u.username !== username);
             return {
               ...prev,
@@ -259,11 +244,9 @@ const Groups = () => {
       })
       .subscribe();
 
-    // Clean up expired typing indicators every 2 seconds
     const typingInterval = setInterval(() => {
       setTypingUsers(prev => {
         const groupTypingUsers = [...(prev[activeGroup] || [])];
-        // Remove users who haven't typed in the last 3 seconds
         const now = new Date();
         const filteredUsers = groupTypingUsers.filter(user => {
           return now.getTime() - user.lastTyped.getTime() < 3000;
@@ -286,7 +269,6 @@ const Groups = () => {
     };
   }, [activeGroup, username]);
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, activeGroup]);
@@ -299,7 +281,6 @@ const Groups = () => {
       
       let mediaUrl = undefined;
       
-      // Upload file if present
       if (fileInputRef.current?.files?.length) {
         const file = fileInputRef.current.files[0];
         const fileExt = file.name.split('.').pop();
@@ -323,7 +304,6 @@ const Groups = () => {
         mediaUrl = urlData.publicUrl;
       }
       
-      // Format message text with event data if provided
       let messageText = newMessage;
       if (eventData) {
         const { title, date, time, location, category } = eventData;
@@ -336,7 +316,7 @@ const Groups = () => {
         text: messageText,
         avatar: localStorage.getItem(AVATAR_KEY) || getRandomAvatar(),
         media_url: mediaUrl,
-        read_by: [username], // Initially only read by sender
+        read_by: [username],
         reactions: []
       };
 
@@ -353,7 +333,6 @@ const Groups = () => {
         fileInputRef.current.value = '';
       }
       
-      // Stop typing indicator
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = null;
@@ -395,7 +374,6 @@ const Groups = () => {
   const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);
     
-    // Send typing indicator
     if (!isTyping && e.target.value.trim()) {
       setIsTyping(true);
       supabase
@@ -411,7 +389,6 @@ const Groups = () => {
         });
     }
     
-    // Clear existing timeout and set a new one
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
@@ -439,7 +416,6 @@ const Groups = () => {
       setUsername(tempUsername);
       localStorage.setItem(USERNAME_KEY, tempUsername);
       
-      // Generate and store an avatar for this user
       const userAvatar = getRandomAvatar();
       localStorage.setItem(AVATAR_KEY, userAvatar);
       
@@ -455,36 +431,28 @@ const Groups = () => {
 
   const handleAddReaction = async (messageId: string, emoji: string) => {
     try {
-      // Find the message in the current state
       const message = messages[activeGroup]?.find(m => m.id === messageId);
       if (!message) return;
       
-      // Update reactions
       const reactions = message.reactions || [];
       let updated = false;
       
-      // Check if this emoji is already used
       const existingReactionIndex = reactions.findIndex(r => r.emoji === emoji);
       
       if (existingReactionIndex >= 0) {
-        // Check if this user already reacted with this emoji
         const users = reactions[existingReactionIndex].users;
         const userIndex = users.indexOf(username);
         
         if (userIndex >= 0) {
-          // Remove user from this reaction
           users.splice(userIndex, 1);
           if (users.length === 0) {
-            // Remove the reaction if no users left
             reactions.splice(existingReactionIndex, 1);
           }
         } else {
-          // Add user to this reaction
           users.push(username);
         }
         updated = true;
       } else {
-        // Add new reaction
         reactions.push({
           emoji,
           users: [username]
@@ -515,10 +483,12 @@ const Groups = () => {
   };
 
   const handleShareEvent = () => {
-    setIsEventSelectOpen(true);
+    console.log("Opening event selection dropdown in Groups");
+    setIsEventSelectOpen(prev => !prev);
   };
 
   const handleEventSelect = (eventId: string) => {
+    console.log("Event selected in Groups:", eventId);
     const selectedEvent = events.find(event => event.id === eventId);
     if (selectedEvent) {
       handleSendMessage(selectedEvent);
@@ -588,7 +558,6 @@ const Groups = () => {
                     <CardDescription>
                       {group.description} • <span className="inline-flex items-center">
                         <Users className="h-4 w-4 mr-1" />
-                        {/* Display member count based on unique senders */}
                         {messages[group.id] 
                           ? new Set(messages[group.id].map(msg => msg.sender)).size 
                           : 0} Mitglieder
@@ -633,7 +602,6 @@ const Groups = () => {
                                 </div>
                                 <div className="text-sm whitespace-pre-wrap">{message.text}</div>
                                 
-                                {/* Display media if available */}
                                 {message.media_url && (
                                   <div className="mt-2">
                                     <img 
@@ -645,7 +613,6 @@ const Groups = () => {
                                 )}
                               </div>
                               
-                              {/* Display reactions */}
                               {message.reactions && message.reactions.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mt-1 ml-2">
                                   {message.reactions.map((reaction, index) => (
@@ -664,7 +631,6 @@ const Groups = () => {
                                 </div>
                               )}
                               
-                              {/* Message status (read receipts) */}
                               {message.sender === username && (
                                 <div className="flex justify-end mt-1">
                                   {message.read_by && message.read_by.length > 1 ? (
@@ -684,7 +650,6 @@ const Groups = () => {
                                 </Avatar>
                               )}
                               
-                              {/* Reaction button */}
                               <Popover open={selectedMessageId === message.id} onOpenChange={(open) => {
                                 if (open) setSelectedMessageId(message.id);
                                 else setSelectedMessageId(null);
@@ -718,7 +683,6 @@ const Groups = () => {
                           </div>
                         ))}
                         
-                        {/* Typing indicators */}
                         {typingUsers[group.id]?.length > 0 && (
                           <div className="flex items-start gap-2 mt-2">
                             <div className="flex items-center gap-1">
@@ -815,7 +779,6 @@ const Groups = () => {
         </div>
       </div>
       
-      {/* Username Modal */}
       <Drawer open={isUsernameModalOpen} onOpenChange={setIsUsernameModalOpen}>
         <DrawerContent>
           <div className="px-4 py-8 max-w-md mx-auto">
@@ -854,13 +817,17 @@ const Groups = () => {
         </DrawerContent>
       </Drawer>
       
-      {/* Event selection popover */}
       <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
-        <PopoverContent className="w-80 p-0 max-h-[300px] overflow-y-auto" side="top" align="start">
+        <PopoverContent 
+          className="w-80 p-0 max-h-[300px] overflow-y-auto" 
+          side="top" 
+          align="end"
+          sideOffset={5}
+        >
           <div className="p-3 bg-muted">
             <h3 className="font-medium mb-2">Event auswählen</h3>
             <div className="space-y-2 max-h-[250px] overflow-y-auto pr-2">
-              {events.length > 0 ? (
+              {events && events.length > 0 ? (
                 events
                   .sort((a, b) => a.date.localeCompare(b.date))
                   .map(event => (

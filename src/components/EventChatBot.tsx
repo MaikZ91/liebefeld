@@ -353,10 +353,12 @@ const EventChatBot: React.FC = () => {
   };
 
   const handleShareEvent = () => {
-    setIsEventSelectOpen(true);
+    console.log("Opening event selection dropdown");
+    setIsEventSelectOpen(prev => !prev);
   };
 
   const handleEventSelect = (eventId: string) => {
+    console.log("Event selected:", eventId);
     const selectedEvent = events.find(event => event.id === eventId);
     if (selectedEvent) {
       // Share the event in chat
@@ -568,13 +570,18 @@ const EventChatBot: React.FC = () => {
             <div ref={messagesEndRef} />
           </div>
           
-          {/* Event selection popover */}
+          {/* Event selection popover - FIXED POSITIONING */}
           <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
-            <PopoverContent className="w-80 p-0 max-h-[300px] overflow-y-auto" side="top" align="start">
+            <PopoverContent 
+              className="w-80 p-0 max-h-[300px] overflow-y-auto" 
+              side="top" 
+              align="end"
+              sideOffset={5}
+            >
               <div className="p-3 bg-muted">
                 <h3 className="font-medium mb-2">Event auswählen</h3>
                 <div className="space-y-2 max-h-[250px] overflow-y-auto pr-2">
-                  {events.length > 0 ? (
+                  {events && events.length > 0 ? (
                     events
                       .sort((a, b) => a.date.localeCompare(b.date))
                       .map(event => (
@@ -610,16 +617,18 @@ const EventChatBot: React.FC = () => {
               >
                 <Image className="h-4 w-4" />
               </Button>
-              <Button
-                onClick={handleShareEvent}
-                variant="outline"
-                size="icon"
-                type="button"
-                className="h-10 w-10 rounded-full bg-gray-800 border-gray-700 hover:bg-gray-700"
-                title="Event teilen"
-              >
-                <Calendar className="h-4 w-4" />
-              </Button>
+              <PopoverTrigger asChild>
+                <Button
+                  onClick={handleShareEvent}
+                  variant="outline"
+                  size="icon"
+                  type="button"
+                  className="h-10 w-10 rounded-full bg-gray-800 border-gray-700 hover:bg-gray-700"
+                  title="Event teilen"
+                >
+                  <Calendar className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
               <Input
                 type="text"
                 placeholder="Frag mich nach Liebefeld Events..."
