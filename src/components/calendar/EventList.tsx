@@ -153,11 +153,11 @@ const EventList: React.FC<EventListProps> = ({
                     return (
                       <div key={event.id} className={`relative ${isTopEvent ? 'transform transition-all' : ''}`}>
                         {isTopEvent && (
-                          <div className="absolute -left-2 top-0 bottom-0 w-1 bg-gradient-to-b from-[#9b87f5] to-[#D946EF] rounded-full"></div>
+                          <div className="absolute -left-2 top-0 bottom-0 w-1 bg-gradient-to-b from-[#E53935] to-[#C62828] rounded-full"></div>
                         )}
-                        <div className={`${isTopEvent ? 'bg-gradient-to-r from-[#6E59A5]/20 to-transparent rounded-lg' : ''}`}>
+                        <div className={`${isTopEvent ? 'bg-gradient-to-r from-[#C62828]/20 to-transparent rounded-lg' : ''}`}>
                           {isTopEvent && (
-                            <div className="absolute right-2 top-2 bg-[#9b87f5] text-white px-2 py-1 rounded-full text-xs flex items-center z-20">
+                            <div className="absolute right-2 top-2 bg-[#E53935] text-white px-2 py-1 rounded-full text-xs flex items-center z-20">
                               <Star className="w-3 h-3 mr-1 fill-white" />
                               <span>Top Event</span>
                             </div>
@@ -168,7 +168,7 @@ const EventList: React.FC<EventListProps> = ({
                             compact={true}
                             onClick={() => onSelectEvent(event, date)}
                             onLike={onLike}
-                            className={isTopEvent ? 'border-l-2 border-[#9b87f5]' : ''}
+                            className={isTopEvent ? 'border-l-2 border-[#E53935]' : ''}
                           />
                         </div>
                       </div>
