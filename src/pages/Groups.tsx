@@ -893,4 +893,91 @@ const Groups = () => {
                                     />
                                   </div>
                                 </div>
-                                <div className
+                                <div className="p-2">
+                                  {filteredEvents.length === 0 ? (
+                                    <div className="py-3 px-2 text-center text-muted-foreground text-sm">
+                                      Keine Events gefunden
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-1">
+                                      {filteredEvents.map(event => (
+                                        <Button
+                                          key={event.id}
+                                          variant="ghost"
+                                          className="w-full justify-start text-left px-2 py-1.5 h-auto"
+                                          onClick={() => handleEventSelect(event.id)}
+                                        >
+                                          <div>
+                                            <div className="font-medium line-clamp-1">{event.title}</div>
+                                            <div className="text-xs text-muted-foreground">
+                                              {event.date} • {event.time} • {event.category}
+                                            </div>
+                                          </div>
+                                        </Button>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                          <input 
+                            type="file" 
+                            ref={fileInputRef} 
+                            className="hidden" 
+                            accept="image/*"
+                            onChange={() => {}}
+                          />
+                          <Button 
+                            onClick={() => handleSendMessage()} 
+                            disabled={isSending || (!newMessage.trim() && !fileInputRef.current?.files?.length)}
+                            className="rounded-full min-w-[40px]"
+                          >
+                            {isSending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Send className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="w-full py-4 text-center">
+                        <p className="mb-2">Du musst angemeldet sein, um Nachrichten zu schreiben.</p>
+                        <Button onClick={() => setIsUsernameModalOpen(true)}>
+                          Benutzernamen erstellen
+                        </Button>
+                      </div>
+                    )}
+                  </CardFooter>
+                </Card>
+              </TabsContent>
+            ))}
+          </Tabs>
+        </div>
+      </div>
+      
+      <Drawer open={isUsernameModalOpen} onOpenChange={setIsUsernameModalOpen}>
+        <DrawerContent className="p-4 sm:p-6">
+          <DrawerHeader>
+            <DrawerTitle>Wähle deinen Benutzernamen</DrawerTitle>
+            <DrawerDescription>Dieser Name wird in den Gruppenchats angezeigt.</DrawerDescription>
+          </DrawerHeader>
+          <div className="space-y-4 py-4">
+            <Input 
+              placeholder="Dein Benutzername" 
+              value={tempUsername} 
+              onChange={(e) => setTempUsername(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && saveUsername()}
+            />
+            <Button onClick={saveUsername} disabled={!tempUsername.trim()} className="w-full">
+              Speichern
+            </Button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+    </div>
+  );
+};
+
+export default Groups;
