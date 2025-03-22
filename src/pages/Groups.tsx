@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import CalendarNavbar from "@/components/CalendarNavbar";
-import { Send, Users, Plus, UserPlus, User, Clock, Loader2 } from 'lucide-react';
+import { Send, Users, User, Clock, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -55,9 +55,6 @@ const Groups = () => {
   });
   const [tempUsername, setTempUsername] = useState("");
   const [isUsernameModalOpen, setIsUsernameModalOpen] = useState(false);
-  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
-  const [newGroupName, setNewGroupName] = useState("");
-  const [newGroupDescription, setNewGroupDescription] = useState("");
   const messageEndRef = useRef<HTMLDivElement>(null);
   
   const [groups, setGroups] = useState<ChatGroup[]>([]);
@@ -223,49 +220,6 @@ const Groups = () => {
     }
   };
 
-  const createNewGroup = async () => {
-    if (!newGroupName.trim() || !newGroupDescription.trim() || !username) return;
-    
-    try {
-      const newGroup = {
-        name: newGroupName,
-        description: newGroupDescription,
-        created_by: username
-      };
-      
-      const { data, error } = await supabase
-        .from('chat_groups')
-        .insert(newGroup)
-        .select()
-        .single();
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Add the new group to the local state
-      setGroups(prev => [...prev, data]);
-      setActiveGroup(data.id);
-      setIsCreatingGroup(false);
-      setNewGroupName("");
-      setNewGroupDescription("");
-      
-      toast({
-        title: "Gruppe erstellt",
-        description: `Deine Gruppe "${newGroupName}" wurde erfolgreich erstellt.`,
-        variant: "success"
-      });
-      
-    } catch (error) {
-      console.error('Error creating group:', error);
-      toast({
-        title: "Fehler beim Erstellen der Gruppe",
-        description: "Die Gruppe konnte nicht erstellt werden.",
-        variant: "destructive"
-      });
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -319,11 +273,6 @@ const Groups = () => {
                   </TabsTrigger>
                 ))}
               </TabsList>
-              
-              <Button onClick={() => setIsCreatingGroup(true)} variant="outline" className="mb-4">
-                <Plus className="h-4 w-4 mr-2" />
-                Neue Gruppe
-              </Button>
             </div>
             
             {groups.map((group) => (
@@ -415,7 +364,7 @@ const Groups = () => {
                       </div>
                     ) : (
                       <Button onClick={() => setIsUsernameModalOpen(true)} className="w-full">
-                        <UserPlus className="h-4 w-4 mr-2" />
+                        <User className="h-4 w-4 mr-2" />
                         Benutzernamen erstellen zum Chatten
                       </Button>
                     )}
@@ -460,46 +409,6 @@ const Groups = () => {
               >
                 <User className="h-4 w-4 mr-2" />
                 {username ? "Namen ändern" : "Jetzt loschatten"}
-              </Button>
-            </div>
-          </div>
-        </DrawerContent>
-      </Drawer>
-      
-      {/* Create Group Modal */}
-      <Drawer open={isCreatingGroup} onOpenChange={setIsCreatingGroup}>
-        <DrawerContent>
-          <div className="px-4 py-8 max-w-md mx-auto">
-            <DrawerHeader>
-              <DrawerTitle className="text-center text-xl font-semibold">Neue Gruppe erstellen</DrawerTitle>
-              <DrawerDescription className="text-center">
-                Starte deine eigene Community zu einem Thema deiner Wahl
-              </DrawerDescription>
-            </DrawerHeader>
-            
-            <div className="p-4 space-y-4">
-              <Input
-                placeholder="Gruppenname"
-                value={newGroupName}
-                onChange={(e) => setNewGroupName(e.target.value)}
-                className="mb-2"
-                autoFocus
-              />
-              
-              <Textarea
-                placeholder="Beschreibung der Gruppe"
-                value={newGroupDescription}
-                onChange={(e) => setNewGroupDescription(e.target.value)}
-                className="min-h-[100px]"
-              />
-              
-              <Button 
-                onClick={createNewGroup} 
-                disabled={!newGroupName.trim() || !newGroupDescription.trim()} 
-                className="w-full"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Gruppe erstellen
               </Button>
             </div>
           </div>
