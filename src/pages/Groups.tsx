@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import CalendarNavbar from "@/components/CalendarNavbar";
-import { Send, Users, User, Clock, Loader2, Image, ThumbsUp, Smile, Paperclip, MessageSquare, Check, CheckCheck, Calendar, Search } from 'lucide-react';
+import { Send, Users, User, Clock, Loader2, Image, ThumbsUp, ThumbsDown, HelpCircle, Smile, Paperclip, MessageSquare, Check, CheckCheck, Calendar, Search } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase, type ChatMessage, type MessageReaction } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -13,6 +13,7 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, Dr
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useEventContext } from "@/contexts/EventContext"; 
+import { Event, RsvpOption } from "@/types/eventTypes";
 
 type ChatGroup = {
   id: string;
@@ -68,7 +69,7 @@ const Groups = () => {
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
   const [eventSearchQuery, setEventSearchQuery] = useState('');
   
-  const { events } = useEventContext();
+  const { events, handleRsvpEvent } = useEventContext();
 
   useEffect(() => {
     if (!username) {
@@ -274,6 +275,17 @@ const Groups = () => {
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, activeGroup]);
+
+  const handleRsvp = (eventId: string, option: RsvpOption) => {
+    console.log(`Group chat RSVP selection: ${eventId} - ${option}`);
+    handleRsvpEvent(eventId, option);
+    
+    toast({
+      title: "RSVP gespeichert",
+      description: `Du hast mit "${option}" auf das Event geantwortet.`,
+      variant: "default"
+    });
+  };
 
   const handleSendMessage = async (eventData?: any) => {
     if ((!newMessage.trim() && !fileInputRef.current?.files?.length && !eventData) || !username || !activeGroup) return;
@@ -514,6 +526,73 @@ const Groups = () => {
     );
   });
 
+  const formatEventMessage = (messageText: string, eventData?: Event) => {
+    if (!eventData) return messageText;
+
+    const rsvpCounts = {
+      yes: eventData.rsvp?.yes ?? eventData.rsvp_yes ?? 0,
+      no: eventData.rsvp?.no ?? eventData.rsvp_no ?? 0,
+      maybe: eventData.rsvp?.maybe ?? eventData.rsvp_maybe ?? 0
+    };
+
+    return (
+      <div>
+        <div dangerouslySetInnerHTML={{ __html: messageText }} />
+        
+        <div className="mt-2 p-3 rounded-md bg-primary/10 border border-primary/20">
+          <div className="flex items-center gap-2 mb-1">
+            <Calendar className="h-4 w-4 text-primary" />
+            <span className="font-medium">{eventData.title}</span>
+          </div>
+          <div className="text-xs text-muted-foreground space-y-1">
+            <div>📆 {eventData.date} um {eventData.time}</div>
+            {eventData.location && <div>📍 {eventData.location}</div>}
+            <div>🏷️ {eventData.category}</div>
+            
+            <div className="flex gap-2 mt-1">
+              <div className="flex items-center text-green-500 gap-1">
+                <ThumbsUp className="h-3 w-3" /> {rsvpCounts.yes}
+              </div>
+              <div className="flex items-center text-red-500 gap-1">
+                <ThumbsDown className="h-3 w-3" /> {rsvpCounts.no}
+              </div>
+              <div className="flex items-center text-yellow-500 gap-1">
+                <HelpCircle className="h-3 w-3" /> {rsvpCounts.maybe}
+              </div>
+            </div>
+            
+            <div className="flex gap-2 mt-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 bg-green-500/10 hover:bg-green-500/20 border-green-500/30"
+                onClick={() => handleRsvp(eventData.id, 'yes')}
+              >
+                <ThumbsUp className="h-3 w-3 mr-1" /> Ja
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 bg-red-500/10 hover:bg-red-500/20 border-red-500/30"
+                onClick={() => handleRsvp(eventData.id, 'no')}
+              >
+                <ThumbsDown className="h-3 w-3 mr-1" /> Nein
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 bg-yellow-500/10 hover:bg-yellow-500/20 border-yellow-500/30"
+                onClick={() => handleRsvp(eventData.id, 'maybe')}
+              >
+                <HelpCircle className="h-3 w-3 mr-1" /> Vielleicht
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -619,7 +698,35 @@ const Groups = () => {
                                     {new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                   </div>
                                 </div>
-                                <div className="text-sm whitespace-pre-wrap">{message.text}</div>
+                                {message.text.includes('🗓️ **Event:') ? (
+                                  (() => {
+                                    const eventTitleMatch = message.text.match(/🗓️ \*\*Event: (.*?)\*\*/);
+                                    const eventTitle = eventTitleMatch ? eventTitleMatch[1] : '';
+                                    
+                                    const eventDateMatch = message.text.match(/Datum: (.*?) um (.*?)(?:\n|$)/);
+                                    const eventDate = eventDateMatch ? eventDateMatch[1] : '';
+                                    const eventTime = eventDateMatch ? eventDateMatch[2] : '';
+                                    
+                                    const eventLocationMatch = message.text.match(/Ort: (.*?)(?:\n|$)/);
+                                    const eventLocation = eventLocationMatch ? eventLocationMatch[1] : '';
+                                    
+                                    const eventCategoryMatch = message.text.match(/Kategorie: (.*?)(?:\n|$)/);
+                                    const eventCategory = eventCategoryMatch ? eventCategoryMatch[1] : '';
+                                    
+                                    const eventData = events.find(event => 
+                                      event.title === eventTitle && 
+                                      event.date === eventDate && 
+                                      event.time === eventTime
+                                    );
+                                    
+                                    const userMessageMatch = message.text.match(/(?:\n\n)([\s\S]*)/);
+                                    const userMessage = userMessageMatch ? userMessageMatch[1] : '';
+                                    
+                                    return formatEventMessage(userMessage, eventData);
+                                  })()
+                                ) : (
+                                  <div className="text-sm whitespace-pre-wrap">{message.text}</div>
+                                )}
                                 
                                 {message.media_url && (
                                   <div className="mt-2">
@@ -786,113 +893,4 @@ const Groups = () => {
                                     />
                                   </div>
                                 </div>
-                                <div className="space-y-2 max-h-[300px] overflow-y-auto p-3">
-                                  {filteredEvents && filteredEvents.length > 0 ? (
-                                    filteredEvents
-                                      .sort((a, b) => a.date.localeCompare(b.date))
-                                      .map(event => (
-                                        <div
-                                          key={event.id}
-                                          className="cursor-pointer hover:bg-muted/80 rounded p-2 transition-colors"
-                                          onClick={() => {
-                                            console.log("Selecting event in Groups:", event.id, event.title);
-                                            handleEventSelect(event.id);
-                                          }}
-                                        >
-                                          <div className="font-medium">{event.title}</div>
-                                          <div className="text-xs text-muted-foreground flex flex-col mt-1">
-                                            <div className="flex items-center font-medium text-primary">
-                                              <Calendar className="h-3 w-3 mr-1" />
-                                              {event.date}
-                                            </div>
-                                            <div>Zeit: {event.time}</div>
-                                            {event.location && <div>Ort: {event.location}</div>}
-                                          </div>
-                                        </div>
-                                      ))
-                                  ) : (
-                                    <div className="text-sm text-muted-foreground p-2">
-                                      {eventSearchQuery.trim() ? "Keine passenden Events gefunden" : "Keine Events verfügbar"}
-                                    </div>
-                                  )}
-                                </div>
-                              </PopoverContent>
-                            </Popover>
-                            <Button 
-                              onClick={() => handleSendMessage()} 
-                              disabled={(!newMessage.trim() && !fileInputRef.current?.files?.length) || isSending}
-                              size="icon"
-                              className="rounded-full"
-                            >
-                              {isSending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Send className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
-                          <input 
-                            type="file" 
-                            ref={fileInputRef}
-                            className="hidden"
-                            accept="image/*"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <Button onClick={() => setIsUsernameModalOpen(true)} className="w-full">
-                        <User className="h-4 w-4 mr-2" />
-                        Benutzernamen erstellen zum Chatten
-                      </Button>
-                    )}
-                  </CardFooter>
-                </Card>
-              </TabsContent>
-            ))}
-          </Tabs>
-        </div>
-      </div>
-      
-      <Drawer open={isUsernameModalOpen} onOpenChange={setIsUsernameModalOpen}>
-        <DrawerContent>
-          <div className="px-4 py-8 max-w-md mx-auto">
-            <DrawerHeader>
-              <DrawerTitle className="text-center text-xl font-semibold">Wie möchtest du genannt werden?</DrawerTitle>
-              <DrawerDescription className="text-center">
-                Dein Nutzername wird in den Gruppenchats angezeigt
-              </DrawerDescription>
-            </DrawerHeader>
-            
-            <div className="p-4 space-y-4">
-              <div className="flex justify-center mb-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarFallback>{tempUsername ? getInitials(tempUsername) : "?"}</AvatarFallback>
-                </Avatar>
-              </div>
-              
-              <Input
-                placeholder="Dein Name"
-                value={tempUsername}
-                onChange={(e) => setTempUsername(e.target.value)}
-                className="text-center"
-                autoFocus
-              />
-              
-              <Button 
-                onClick={saveUsername} 
-                disabled={!tempUsername.trim()} 
-                className="w-full"
-              >
-                <User className="h-4 w-4 mr-2" />
-                {username ? "Namen ändern" : "Jetzt loschatten"}
-              </Button>
-            </div>
-          </div>
-        </DrawerContent>
-      </Drawer>
-      
-    </div>
-  );
-};
-
-export default Groups;
+                                <div className
