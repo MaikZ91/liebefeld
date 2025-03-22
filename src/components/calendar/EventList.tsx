@@ -23,18 +23,36 @@ const EventList: React.FC<EventListProps> = ({
   const listRef = useRef<HTMLDivElement>(null);
   const todayRef = useRef<HTMLDivElement>(null);
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
-  const [mostPopularEvent, setMostPopularEvent] = useState<Event | null>(null);
+  const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
   
-  // Find the most popular event (with highest likes)
+  // Find the most popular event of today
   useEffect(() => {
     if (events.length > 0) {
-      const popular = [...events].sort((a, b) => {
-        const likesA = a.likes || 0;
-        const likesB = b.likes || 0;
-        return likesB - likesA;
-      })[0];
+      // Filter for today's events
+      const todayEvents = events.filter(event => {
+        if (!event.date) return false;
+        try {
+          const eventDate = parseISO(event.date);
+          return isToday(eventDate);
+        } catch (error) {
+          console.error(`Error checking if event is today:`, error);
+          return false;
+        }
+      });
       
-      setMostPopularEvent(popular);
+      // If we have events today, find the one with most likes
+      if (todayEvents.length > 0) {
+        const popular = [...todayEvents].sort((a, b) => {
+          const likesA = a.likes || 0;
+          const likesB = b.likes || 0;
+          return likesB - likesA;
+        })[0];
+        
+        setTopTodayEvent(popular);
+        console.log("Top event today:", popular.title, "with", popular.likes, "likes");
+      } else {
+        setTopTodayEvent(null);
+      }
     }
   }, [events]);
   
@@ -129,15 +147,16 @@ const EventList: React.FC<EventListProps> = ({
                 </h4>
                 <div className="space-y-1">
                   {eventsByDate[dateStr].map(event => {
-                    const isPopular = mostPopularEvent && event.id === mostPopularEvent.id;
+                    // Only highlight if it's today's top event
+                    const isTopEvent = isCurrentDay && topTodayEvent && event.id === topTodayEvent.id;
                     
                     return (
-                      <div key={event.id} className={`relative ${isPopular ? 'transform transition-all' : ''}`}>
-                        {isPopular && (
+                      <div key={event.id} className={`relative ${isTopEvent ? 'transform transition-all' : ''}`}>
+                        {isTopEvent && (
                           <div className="absolute -left-2 top-0 bottom-0 w-1 bg-gradient-to-b from-[#9b87f5] to-[#D946EF] rounded-full"></div>
                         )}
-                        <div className={`${isPopular ? 'bg-gradient-to-r from-[#6E59A5]/20 to-transparent rounded-lg' : ''}`}>
-                          {isPopular && (
+                        <div className={`${isTopEvent ? 'bg-gradient-to-r from-[#6E59A5]/20 to-transparent rounded-lg' : ''}`}>
+                          {isTopEvent && (
                             <div className="absolute right-2 top-2 bg-[#9b87f5] text-white px-2 py-1 rounded-full text-xs flex items-center z-20">
                               <Star className="w-3 h-3 mr-1 fill-white" />
                               <span>Top Event</span>
@@ -149,7 +168,7 @@ const EventList: React.FC<EventListProps> = ({
                             compact={true}
                             onClick={() => onSelectEvent(event, date)}
                             onLike={onLike}
-                            className={isPopular ? 'border-l-2 border-[#9b87f5]' : ''}
+                            className={isTopEvent ? 'border-l-2 border-[#9b87f5]' : ''}
                           />
                         </div>
                       </div>
