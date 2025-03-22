@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { startOfDay } from 'date-fns';
 import { Event, RsvpOption } from '../types/eventTypes';
@@ -51,6 +52,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     try {
       console.log('Refreshing events...');
       
+      // First fetch GitHub likes to ensure we have the latest counts
       const githubLikes = await fetchGitHubLikes();
       console.log('Fetched GitHub likes:', githubLikes);
       
@@ -63,9 +65,11 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       const oldEvents = [...events];
       
+      // Fetch events from Supabase
       const supabaseEvents = await fetchSupabaseEvents();
       console.log(`Loaded ${supabaseEvents.length} events from Supabase`);
       
+      // Fetch events from external source (GitHub)
       const externalEvents = await fetchExternalEvents(githubLikes);
       console.log(`Loaded ${externalEvents.length} external events`);
       
@@ -73,11 +77,16 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       const newEvents: Event[] = [];
       
+      // Combine the events, ensuring no duplicates
       externalEvents.forEach(extEvent => {
         if (!combinedEvents.some(event => event.id === extEvent.id)) {
+          // Add GitHub likes count to external events
           combinedEvents.push({
             ...extEvent,
-            likes: githubLikes[extEvent.id] || 0
+            likes: githubLikes[extEvent.id] || 0,
+            rsvp_yes: githubLikes[extEvent.id]?.rsvp_yes || 0,
+            rsvp_no: githubLikes[extEvent.id]?.rsvp_no || 0,
+            rsvp_maybe: githubLikes[extEvent.id]?.rsvp_maybe || 0
           });
           
           if (!oldEvents.some(oldEvent => oldEvent.id === extEvent.id)) {
@@ -89,14 +98,48 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       console.log(`Combined ${combinedEvents.length} total events`);
       console.log(`Found ${newEvents.length} new events since last refresh`);
       
+      // If no events found, use example data
       if (combinedEvents.length === 0) {
         console.log('No events found, using example data');
         setEvents(bielefeldEvents);
       } else {
-        const githubEventsInCombined = combinedEvents.filter(e => e.id.startsWith('github-'));
-        console.log(`GitHub events with likes: ${githubEventsInCombined.map(e => `${e.id}: ${e.likes}`).join(', ')}`);
+        // Map RSVP counts from GitHub likes to the event objects consistently
+        const eventsWithSyncedRsvp = combinedEvents.map(event => {
+          // For GitHub events, make sure we have the latest RSVP counts
+          if (event.id.startsWith('github-') && githubLikes[event.id]) {
+            return {
+              ...event,
+              rsvp_yes: githubLikes[event.id].rsvp_yes || 0,
+              rsvp_no: githubLikes[event.id].rsvp_no || 0,
+              rsvp_maybe: githubLikes[event.id].rsvp_maybe || 0,
+              // Also maintain the rsvp object for backward compatibility
+              rsvp: {
+                yes: githubLikes[event.id].rsvp_yes || 0,
+                no: githubLikes[event.id].rsvp_no || 0,
+                maybe: githubLikes[event.id].rsvp_maybe || 0
+              }
+            };
+          }
+          
+          // For regular events, ensure we have an rsvp object
+          if (!event.rsvp && (event.rsvp_yes !== undefined || event.rsvp_no !== undefined || event.rsvp_maybe !== undefined)) {
+            return {
+              ...event,
+              rsvp: {
+                yes: event.rsvp_yes || 0,
+                no: event.rsvp_no || 0,
+                maybe: event.rsvp_maybe || 0
+              }
+            };
+          }
+          
+          return event;
+        });
         
-        setEvents(combinedEvents);
+        const githubEventsInCombined = eventsWithSyncedRsvp.filter(e => e.id.startsWith('github-'));
+        console.log(`GitHub events with likes: ${githubEventsInCombined.map(e => `${e.id}: ${e.likes} - RSVP: yes=${e.rsvp_yes || e.rsvp?.yes || 0}, no=${e.rsvp_no || e.rsvp?.no || 0}, maybe=${e.rsvp_maybe || e.rsvp?.maybe || 0}`).join(', ')}`);
+        
+        setEvents(eventsWithSyncedRsvp);
         
         setLastRefreshed(new Date());
         localStorage.setItem('lastEventsRefresh', new Date().toISOString());
@@ -163,16 +206,30 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return;
       }
       
-      const currentRsvp = currentEvent.rsvp || { yes: 0, no: 0, maybe: 0 };
+      // Normalize the current RSVP counts
+      const currentRsvp = {
+        yes: currentEvent.rsvp_yes ?? currentEvent.rsvp?.yes ?? 0,
+        no: currentEvent.rsvp_no ?? currentEvent.rsvp?.no ?? 0,
+        maybe: currentEvent.rsvp_maybe ?? currentEvent.rsvp?.maybe ?? 0
+      };
+      
       const newRsvp = { ...currentRsvp };
       
       newRsvp[option] += 1;
       
       console.log(`Updating RSVP for ${eventId} to:`, newRsvp);
       
+      // Update the events state with the new RSVP counts
       const updatedEvents = events.map(event => 
         event.id === eventId 
-          ? { ...event, rsvp: newRsvp } 
+          ? { 
+              ...event, 
+              // Update both the individual fields and the rsvp object
+              rsvp_yes: newRsvp.yes,
+              rsvp_no: newRsvp.no,
+              rsvp_maybe: newRsvp.maybe,
+              rsvp: newRsvp 
+            } 
           : event
       );
       
@@ -183,6 +240,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         await updateEventRsvp(eventId, newRsvp);
         console.log(`Successfully updated RSVP in database for event ${eventId}`);
         
+        // Refresh events to ensure all components have the updated data
         await refreshEvents();
       } catch (updateError) {
         console.error(`Error updating RSVP in database for event ${eventId}:`, updateError);

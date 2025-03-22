@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { format, isSameDay } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Event, RsvpOption } from '@/types/eventTypes';
+import { Event, RsvpOption, normalizeRsvpCounts } from '@/types/eventTypes';
 import EventDetails from '@/components/EventDetails';
 import { Button } from '@/components/ui/button';
 import { Calendar, ThumbsUp, ThumbsDown, HelpCircle } from 'lucide-react';
@@ -63,16 +63,6 @@ const EventPanel: React.FC<EventPanelProps> = ({
     }
   };
   
-  // Helper to get RSVP counts
-  const getRsvpCounts = (event: Event) => {
-    // Handle both old rsvp object format and new individual rsvp fields
-    return {
-      yes: event.rsvp?.yes ?? event.rsvp_yes ?? 0,
-      no: event.rsvp?.no ?? event.rsvp_no ?? 0,
-      maybe: event.rsvp?.maybe ?? event.rsvp_maybe ?? 0
-    };
-  };
-  
   return (
     <div className="h-full dark-glass-card rounded-2xl p-6">
       <div className="flex items-center justify-between mb-4">
@@ -108,7 +98,7 @@ const EventPanel: React.FC<EventPanelProps> = ({
         <div ref={panelRef} className="overflow-y-auto max-h-[400px] pr-2 scrollbar-thin">
           {filteredEvents.length > 0 ? (
             filteredEvents.map(event => {
-              const rsvpCounts = getRsvpCounts(event);
+              const rsvpCounts = normalizeRsvpCounts(event);
               
               return (
                 <div 

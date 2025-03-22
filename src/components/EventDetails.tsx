@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { type Event, RsvpOption } from '../types/eventTypes';
+import { type Event, RsvpOption, normalizeRsvpCounts } from '../types/eventTypes';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -55,8 +55,8 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike, onR
   // Format the date for display
   const formattedDate = format(parseISO(event.date), 'EEEE, d. MMMM yyyy', { locale: de });
   
-  // Default RSVP counts
-  const rsvpCounts = event.rsvp || { yes: 0, no: 0, maybe: 0 };
+  // Normalize RSVP counts using the utility function
+  const rsvpCounts = normalizeRsvpCounts(event);
   
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

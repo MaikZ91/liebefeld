@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Event, GitHubEvent } from "../types/eventTypes";
 import { transformGitHubEvents } from "../utils/eventUtils";
@@ -44,10 +45,16 @@ export const fetchSupabaseEvents = async (): Promise<Event[]> => {
     
     if (eventsData) {
       console.log('Loaded events from Supabase:', eventsData);
-      // Convert Supabase UUIDs to Strings
+      // Convert Supabase UUIDs to Strings and ensure RSVP data is properly formatted
       return eventsData.map(event => ({
         ...event,
-        id: event.id.toString()
+        id: event.id.toString(),
+        // Format RSVP data consistently
+        rsvp: {
+          yes: event.rsvp_yes || 0,
+          no: event.rsvp_no || 0,
+          maybe: event.rsvp_maybe || 0
+        }
       }));
     }
     
@@ -59,7 +66,7 @@ export const fetchSupabaseEvents = async (): Promise<Event[]> => {
 };
 
 // Fetch GitHub event likes from Supabase
-export const fetchGitHubLikes = async (): Promise<Record<string, number>> => {
+export const fetchGitHubLikes = async (): Promise<Record<string, any>> => {
   try {
     console.log('Fetching GitHub event likes from database');
     const { data: githubLikesData, error: githubLikesError } = await supabase
@@ -71,13 +78,18 @@ export const fetchGitHubLikes = async (): Promise<Record<string, number>> => {
       return {};
     }
     
-    // Create a map of GitHub event likes
-    const githubLikesMap: Record<string, number> = {};
+    // Create a map of GitHub event likes and RSVP counts
+    const githubLikesMap: Record<string, any> = {};
     if (githubLikesData) {
       console.log(`Loaded ${githubLikesData.length} GitHub event likes from database`);
       githubLikesData.forEach(like => {
-        githubLikesMap[like.event_id] = like.likes;
-        console.log(`Found like for ${like.event_id}: ${like.likes} likes`);
+        githubLikesMap[like.event_id] = {
+          likes: like.likes || 0,
+          rsvp_yes: like.rsvp_yes || 0,
+          rsvp_no: like.rsvp_no || 0,
+          rsvp_maybe: like.rsvp_maybe || 0
+        };
+        console.log(`Found data for ${like.event_id}: ${like.likes} likes, RSVP: yes=${like.rsvp_yes || 0}, no=${like.rsvp_no || 0}, maybe=${like.rsvp_maybe || 0}`);
       });
     } else {
       console.log('No GitHub likes data found in database');
