@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { Calendar, ArrowRight, ThumbsUp } from 'lucide-react';
-import { format, parseISO, isSameMonth, startOfDay } from 'date-fns';
+import { format, parseISO, isSameMonth, startOfDay, isAfter, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { type Event } from './EventCalendar';
 
@@ -23,13 +23,16 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
       
       // Get current month
       const currentDate = new Date();
+      const today = startOfDay(new Date());
       
-      // Filter events for current month only
+      // Filter events for current month only and ensure they're not in the past
       const currentMonthEvents = events.filter(event => {
         try {
           if (!event.date) return false;
           const eventDate = parseISO(event.date);
-          return isSameMonth(eventDate, currentDate);
+          
+          // Only include events from today or future dates
+          return isSameMonth(eventDate, currentDate) && (isAfter(eventDate, today) || isToday(eventDate));
         } catch (error) {
           console.error(`Error filtering for current month: ${event.date}`, error);
           return false;
@@ -84,6 +87,10 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
           return 0;
         }
       });
+      
+      if (sortedTopEvents.length > 0) {
+        console.log(`Top event today: ${sortedTopEvents[0]?.title} with ${sortedTopEvents[0]?.likes || 0} likes`);
+      }
       
       setTickerEvents(sortedTopEvents);
     } catch (error) {
@@ -162,11 +169,11 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
           }
           
           .ticker-scroll {
-            animation: ticker 30s linear infinite;
+            animation: ticker 60s linear infinite;
           }
           
           .ticker-paused {
-            animation: ticker 30s linear infinite;
+            animation: ticker 60s linear infinite;
             animation-play-state: paused;
           }
         `}
