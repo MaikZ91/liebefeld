@@ -5,6 +5,7 @@ import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
 import EventCard from '@/components/EventCard';
 import { groupEventsByDate } from '@/utils/eventUtils';
+import { Star } from 'lucide-react';
 
 interface EventListProps {
   events: Event[];
@@ -22,6 +23,20 @@ const EventList: React.FC<EventListProps> = ({
   const listRef = useRef<HTMLDivElement>(null);
   const todayRef = useRef<HTMLDivElement>(null);
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
+  const [mostPopularEvent, setMostPopularEvent] = useState<Event | null>(null);
+  
+  // Find the most popular event (with highest likes)
+  useEffect(() => {
+    if (events.length > 0) {
+      const popular = [...events].sort((a, b) => {
+        const likesA = a.likes || 0;
+        const likesB = b.likes || 0;
+        return likesB - likesA;
+      })[0];
+      
+      setMostPopularEvent(popular);
+    }
+  }, [events]);
   
   // Group events by date
   const eventsByDate = groupEventsByDate(events);
@@ -113,15 +128,33 @@ const EventList: React.FC<EventListProps> = ({
                   {format(date, 'EEEE, d. MMMM', { locale: de })}
                 </h4>
                 <div className="space-y-1">
-                  {eventsByDate[dateStr].map(event => (
-                    <EventCard 
-                      key={event.id} 
-                      event={event}
-                      compact={true}
-                      onClick={() => onSelectEvent(event, date)}
-                      onLike={onLike}
-                    />
-                  ))}
+                  {eventsByDate[dateStr].map(event => {
+                    const isPopular = mostPopularEvent && event.id === mostPopularEvent.id;
+                    
+                    return (
+                      <div key={event.id} className={`relative ${isPopular ? 'transform transition-all' : ''}`}>
+                        {isPopular && (
+                          <div className="absolute -left-2 top-0 bottom-0 w-1 bg-gradient-to-b from-[#9b87f5] to-[#D946EF] rounded-full"></div>
+                        )}
+                        <div className={`${isPopular ? 'bg-gradient-to-r from-[#6E59A5]/20 to-transparent rounded-lg' : ''}`}>
+                          {isPopular && (
+                            <div className="absolute right-2 top-2 bg-[#9b87f5] text-white px-2 py-1 rounded-full text-xs flex items-center z-20">
+                              <Star className="w-3 h-3 mr-1 fill-white" />
+                              <span>Top Event</span>
+                            </div>
+                          )}
+                          <EventCard 
+                            key={event.id} 
+                            event={event}
+                            compact={true}
+                            onClick={() => onSelectEvent(event, date)}
+                            onLike={onLike}
+                            className={isPopular ? 'border-l-2 border-[#9b87f5]' : ''}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
