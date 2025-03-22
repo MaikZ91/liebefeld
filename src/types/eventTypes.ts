@@ -23,3 +23,13 @@ export interface GitHubEvent {
 export interface EventCalendarProps {
   defaultView?: "calendar" | "list";
 }
+
+// Define shared event display format for chats
+export interface EventShareData {
+  eventId: string;
+  title: string;
+  date: string;
+  time: string;
+  location?: string;
+  category: string;
+}

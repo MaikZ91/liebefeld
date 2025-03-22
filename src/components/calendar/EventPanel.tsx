@@ -2,11 +2,14 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { CalendarIcon, Plus } from 'lucide-react';
+import { CalendarIcon, Plus, Share2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Event } from '@/types/eventTypes';
 import EventCard from '@/components/EventCard';
 import EventDetails from '@/components/EventDetails';
+import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 interface EventPanelProps {
   selectedDate: Date | null;
@@ -31,13 +34,105 @@ const EventPanel: React.FC<EventPanelProps> = ({
   onShowEventForm,
   showFavorites
 }) => {
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  
+  const handleShareInChat = async (event: Event) => {
+    try {
+      // Get or create LiebefeldBot group
+      const { data: botGroup } = await supabase
+        .from('chat_groups')
+        .select('id')
+        .eq('name', 'LiebefeldBot')
+        .single();
+        
+      let botGroupId;
+      
+      if (!botGroup) {
+        // Create the bot group if it doesn't exist
+        const { data: newGroup } = await supabase
+          .from('chat_groups')
+          .insert({
+            name: 'LiebefeldBot',
+            description: 'Frag den Bot nach Events in Liebefeld',
+            created_by: 'System'
+          })
+          .select()
+          .single();
+          
+        botGroupId = newGroup?.id;
+      } else {
+        botGroupId = botGroup.id;
+      }
+      
+      if (botGroupId) {
+        // Format the event message
+        const eventText = `🗓️ **Event: ${event.title}**\nDatum: ${event.date} um ${event.time}\nOrt: ${event.location || 'k.A.'}\nKategorie: ${event.category}\n\nDieses Event wurde geteilt über den Kalender.`;
+        
+        // Get username
+        const username = localStorage.getItem('community_chat_username') || 'Benutzer';
+        const avatar = localStorage.getItem('community_chat_avatar');
+        
+        await supabase
+          .from('chat_messages')
+          .insert({
+            group_id: botGroupId,
+            sender: username,
+            text: eventText,
+            avatar: avatar,
+            read_by: [username],
+            reactions: []
+          });
+          
+        toast({
+          title: "Event geteilt!",
+          description: "Das Event wurde im Chat geteilt und kann dort diskutiert werden.",
+          variant: "success",
+        });
+        
+        setDialogOpen(false);
+      }
+    } catch (error) {
+      console.error('Error sharing event:', error);
+      toast({
+        title: "Fehler beim Teilen",
+        description: "Das Event konnte nicht geteilt werden.",
+        variant: "destructive"
+      });
+    }
+  };
+  
   if (selectedEvent) {
     return (
-      <EventDetails
-        event={selectedEvent}
-        onClose={onEventClose}
-        onLike={() => onLike(selectedEvent.id)}
-      />
+      <div>
+        <EventDetails
+          event={selectedEvent}
+          onClose={onEventClose}
+          onLike={() => onLike(selectedEvent.id)}
+        />
+        <div className="flex justify-center mt-4">
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <Share2 className="h-4 w-4" />
+                Im Chat teilen
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <div className="p-6">
+                <h3 className="text-lg font-medium mb-4">Event im Chat teilen</h3>
+                <p className="mb-4">Möchtest du das Event "{selectedEvent.title}" im Chat teilen, damit andere darüber diskutieren können?</p>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setDialogOpen(false)}>Abbrechen</Button>
+                  <Button onClick={() => handleShareInChat(selectedEvent)} className="flex items-center gap-2">
+                    <MessageCircle className="h-4 w-4" />
+                    Im Chat teilen
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
     );
   }
 

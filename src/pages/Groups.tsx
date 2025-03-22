@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import CalendarNavbar from "@/components/CalendarNavbar";
-import { Send, Users, User, Clock, Loader2, Image, ThumbsUp, Smile, Paperclip, MessageSquare, Check, CheckCheck } from 'lucide-react';
+import { Send, Users, User, Clock, Loader2, Image, ThumbsUp, Smile, Paperclip, MessageSquare, Check, CheckCheck, Calendar } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, type ChatMessage, type MessageReaction } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useEventContext } from "@/contexts/EventContext"; 
 
 type ChatGroup = {
   id: string;
@@ -20,23 +21,6 @@ type ChatGroup = {
   description: string;
   created_by: string;
   created_at: string;
-}
-
-type MessageReaction = {
-  emoji: string;
-  users: string[];
-}
-
-type ChatMessage = {
-  id: string;
-  group_id: string;
-  sender: string;
-  text: string;
-  avatar?: string;
-  created_at: string;
-  media_url?: string;
-  reactions?: MessageReaction[];
-  read_by?: string[];
 }
 
 type TypingUser = {
@@ -84,6 +68,9 @@ const Groups = () => {
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
+  const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
+  
+  const { events } = useEventContext();
 
   // Check for username on component mount
   useEffect(() => {
@@ -163,10 +150,19 @@ const Groups = () => {
           }
         }
 
-        setMessages(prev => ({
-          ...prev,
-          [activeGroup]: data || []
-        }));
+        // Ensure the data conforms to the ChatMessage type
+        if (data) {
+          const typedMessages = data.map(msg => ({
+            ...msg,
+            reactions: msg.reactions as MessageReaction[] || [],
+            read_by: msg.read_by as string[] || []
+          }));
+
+          setMessages(prev => ({
+            ...prev,
+            [activeGroup]: typedMessages
+          }));
+        }
       } catch (error) {
         console.error('Error fetching messages:', error);
       }
@@ -295,8 +291,8 @@ const Groups = () => {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, activeGroup]);
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() && !fileInputRef.current?.files?.length && !username || !activeGroup) return;
+  const handleSendMessage = async (eventData?: any) => {
+    if ((!newMessage.trim() && !fileInputRef.current?.files?.length && !eventData) || !username || !activeGroup) return;
 
     try {
       setIsSending(true);
@@ -327,13 +323,21 @@ const Groups = () => {
         mediaUrl = urlData.publicUrl;
       }
       
+      // Format message text with event data if provided
+      let messageText = newMessage;
+      if (eventData) {
+        const { title, date, time, location, category } = eventData;
+        messageText = `🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${newMessage}`;
+      }
+
       const newChatMessage = {
         group_id: activeGroup,
         sender: username,
-        text: newMessage,
+        text: messageText,
         avatar: localStorage.getItem(AVATAR_KEY) || getRandomAvatar(),
         media_url: mediaUrl,
-        read_by: [username] // Initially only read by sender
+        read_by: [username], // Initially only read by sender
+        reactions: []
       };
 
       const { error } = await supabase
@@ -368,6 +372,7 @@ const Groups = () => {
         });
         
       setIsTyping(false);
+      setIsEventSelectOpen(false);
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
@@ -509,6 +514,17 @@ const Groups = () => {
     fileInputRef.current?.click();
   };
 
+  const handleShareEvent = () => {
+    setIsEventSelectOpen(true);
+  };
+
+  const handleEventSelect = (eventId: string) => {
+    const selectedEvent = events.find(event => event.id === eventId);
+    if (selectedEvent) {
+      handleSendMessage(selectedEvent);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -593,7 +609,7 @@ const Groups = () => {
                           >
                             {message.sender !== username && (
                               <Avatar className="h-8 w-8">
-                                <AvatarImage src={message.avatar} alt={message.sender} />
+                                <AvatarImage src={message.avatar || undefined} alt={message.sender} />
                                 <AvatarFallback>{getInitials(message.sender)}</AvatarFallback>
                               </Avatar>
                             )}
@@ -749,11 +765,22 @@ const Groups = () => {
                               size="icon"
                               type="button"
                               className="rounded-full"
+                              title="Bild anhängen"
                             >
                               <Paperclip className="h-4 w-4" />
                             </Button>
                             <Button 
-                              onClick={handleSendMessage} 
+                              onClick={handleShareEvent} 
+                              variant="outline"
+                              size="icon"
+                              type="button"
+                              className="rounded-full"
+                              title="Event teilen"
+                            >
+                              <Calendar className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              onClick={() => handleSendMessage()} 
                               disabled={(!newMessage.trim() && !fileInputRef.current?.files?.length) || isSending}
                               size="icon"
                               className="rounded-full"
@@ -826,6 +853,36 @@ const Groups = () => {
           </div>
         </DrawerContent>
       </Drawer>
+      
+      {/* Event selection popover */}
+      <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
+        <PopoverContent className="w-80 p-0 max-h-[300px] overflow-y-auto" side="top" align="start">
+          <div className="p-3 bg-muted">
+            <h3 className="font-medium mb-2">Event auswählen</h3>
+            <div className="space-y-2 max-h-[250px] overflow-y-auto pr-2">
+              {events.length > 0 ? (
+                events
+                  .sort((a, b) => a.date.localeCompare(b.date))
+                  .map(event => (
+                    <div
+                      key={event.id}
+                      className="cursor-pointer hover:bg-muted/80 rounded p-2 transition-colors"
+                      onClick={() => handleEventSelect(event.id)}
+                    >
+                      <div className="font-medium">{event.title}</div>
+                      <div className="text-xs text-muted-foreground flex items-center mt-1">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        {event.date} • {event.time}
+                      </div>
+                    </div>
+                  ))
+              ) : (
+                <div className="text-sm text-muted-foreground p-2">Keine Events verfügbar</div>
+              )}
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 };

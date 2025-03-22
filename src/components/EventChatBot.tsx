@@ -1,17 +1,18 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, Send, Calendar, X, Heart, Loader2, Image, ThumbsUp, Smile, CheckCheck, Check } from 'lucide-react';
+import { MessageCircle, Send, Calendar, X, Heart, Loader2, Image, ThumbsUp, Smile, CheckCheck, Check, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { type Event } from './EventCalendar';
+import { type Event } from '@/types/eventTypes';
 import { useEventContext } from '@/contexts/EventContext';
 import { generateResponse, getWelcomeMessage } from '@/utils/chatUtils';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { supabase, type ChatMessage, type MessageReaction } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const USERNAME_KEY = "community_chat_username";
 const AVATAR_KEY = "community_chat_avatar";
@@ -25,6 +26,7 @@ interface Message {
   reactions?: MessageReaction[];
   read_by?: string[];
   media_url?: string;
+  eventData?: Event; // Added to store event data for sharing
 }
 
 const EventChatBot: React.FC = () => {
@@ -44,6 +46,8 @@ const EventChatBot: React.FC = () => {
   const [username, setUsername] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || "Gast");
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   
   const { events } = useEventContext();
 
@@ -58,16 +62,17 @@ const EventChatBot: React.FC = () => {
     }
   }, [events]);
 
-  const handleSend = (text = input) => {
+  const handleSend = (text = input, sharedEvent?: Event) => {
     const messageText = text.trim();
-    if (!messageText && !fileInputRef.current?.files?.length) return;
+    if (!messageText && !fileInputRef.current?.files?.length && !sharedEvent) return;
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       text: messageText,
       isUser: true,
       timestamp: new Date(),
-      read_by: [username]
+      read_by: [username],
+      eventData: sharedEvent
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -75,6 +80,7 @@ const EventChatBot: React.FC = () => {
     setQuickInput('');
     setIsTyping(true);
     setIsOpen(true);
+    setSelectedEventId(null);
 
     // Handle file upload if present
     let mediaUrl: string | undefined = undefined;
@@ -169,14 +175,20 @@ const EventChatBot: React.FC = () => {
             botGroupId = botGroup.id;
           }
           
-          // Store the message
+          // Store the message with event data if present
           if (botGroupId) {
+            // Format event data as JSON
+            let eventText = messageText;
+            if (sharedEvent) {
+              eventText = `🗓️ **Event: ${sharedEvent.title}**\nDatum: ${sharedEvent.date} um ${sharedEvent.time}\nOrt: ${sharedEvent.location || 'k.A.'}\nKategorie: ${sharedEvent.category}\n\n${messageText}`;
+            }
+            
             await supabase
               .from('chat_messages')
               .insert({
                 group_id: botGroupId,
                 sender: username,
-                text: messageText,
+                text: eventText,
                 avatar: localStorage.getItem(AVATAR_KEY),
                 media_url: mediaUrl,
                 read_by: [username],
@@ -193,7 +205,13 @@ const EventChatBot: React.FC = () => {
     storeUserMessage();
 
     setTimeout(() => {
-      const botResponse = generateResponse(messageText, events);
+      // If message contains shared event data, customize bot response
+      let botResponse = '';
+      if (sharedEvent) {
+        botResponse = `Danke für das Teilen des Events "${sharedEvent.title}"! Das klingt spannend. Möchtest du mehr Details dazu wissen oder soll ich ähnliche Events in ${sharedEvent.location || 'der Umgebung'} vorschlagen?`;
+      } else {
+        botResponse = generateResponse(messageText, events);
+      }
       
       const botMessage: Message = {
         id: `bot-${Date.now()}`,
@@ -334,6 +352,36 @@ const EventChatBot: React.FC = () => {
     fileInputRef.current?.click();
   };
 
+  const handleShareEvent = () => {
+    setIsEventSelectOpen(true);
+  };
+
+  const handleEventSelect = (eventId: string) => {
+    const selectedEvent = events.find(event => event.id === eventId);
+    if (selectedEvent) {
+      // Share the event in chat
+      handleSend(`Ich möchte dieses Event teilen: ${selectedEvent.title}`, selectedEvent);
+      setIsEventSelectOpen(false);
+    }
+  };
+
+  // Component to display an event card in the chat
+  const EventCard = ({ event }: { event: Event }) => {
+    return (
+      <div className="mt-2 p-3 rounded-md bg-red-500/10 border border-red-500/20">
+        <div className="flex items-center gap-2 mb-1">
+          <Calendar className="h-4 w-4 text-red-500" />
+          <span className="font-medium text-white">{event.title}</span>
+        </div>
+        <div className="text-xs text-gray-300 space-y-1">
+          <div>📆 {event.date} um {event.time}</div>
+          {event.location && <div>📍 {event.location}</div>}
+          <div>🏷️ {event.category}</div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -410,6 +458,9 @@ const EventChatBot: React.FC = () => {
                     }`}
                   >
                     <div className="text-sm" dangerouslySetInnerHTML={{ __html: message.text }}></div>
+                    
+                    {/* Display event data if available */}
+                    {message.eventData && <EventCard event={message.eventData} />}
                     
                     {/* Display media if available */}
                     {message.media_url && (
@@ -517,6 +568,36 @@ const EventChatBot: React.FC = () => {
             <div ref={messagesEndRef} />
           </div>
           
+          {/* Event selection popover */}
+          <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
+            <PopoverContent className="w-80 p-0 max-h-[300px] overflow-y-auto" side="top" align="start">
+              <div className="p-3 bg-muted">
+                <h3 className="font-medium mb-2">Event auswählen</h3>
+                <div className="space-y-2 max-h-[250px] overflow-y-auto pr-2">
+                  {events.length > 0 ? (
+                    events
+                      .sort((a, b) => a.date.localeCompare(b.date))
+                      .map(event => (
+                        <div
+                          key={event.id}
+                          className="cursor-pointer hover:bg-muted/80 rounded p-2 transition-colors"
+                          onClick={() => handleEventSelect(event.id)}
+                        >
+                          <div className="font-medium">{event.title}</div>
+                          <div className="text-xs text-muted-foreground flex items-center mt-1">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {event.date} • {event.time}
+                          </div>
+                        </div>
+                      ))
+                  ) : (
+                    <div className="text-sm text-muted-foreground p-2">Keine Events verfügbar</div>
+                  )}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+          
           <div className="p-4 border-t border-gray-800 bg-[#131722] rounded-b-xl">
             <div className="flex items-center space-x-2">
               <Button
@@ -525,8 +606,19 @@ const EventChatBot: React.FC = () => {
                 size="icon"
                 type="button"
                 className="h-10 w-10 rounded-full bg-gray-800 border-gray-700 hover:bg-gray-700"
+                title="Bild teilen"
               >
                 <Image className="h-4 w-4" />
+              </Button>
+              <Button
+                onClick={handleShareEvent}
+                variant="outline"
+                size="icon"
+                type="button"
+                className="h-10 w-10 rounded-full bg-gray-800 border-gray-700 hover:bg-gray-700"
+                title="Event teilen"
+              >
+                <Calendar className="h-4 w-4" />
               </Button>
               <Input
                 type="text"

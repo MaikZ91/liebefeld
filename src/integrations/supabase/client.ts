@@ -25,7 +25,7 @@ export type ChatMessage = {
   text: string;
   avatar?: string;
   created_at: string;
-  media_url?: string;
-  reactions?: MessageReaction[];
-  read_by?: string[];
+  media_url?: string | null;
+  reactions?: MessageReaction[] | null;
+  read_by?: string[] | null;
 }
