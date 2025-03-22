@@ -5,7 +5,7 @@ import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, MapPin, User, Heart, ThumbsUp, Fire, Sparkles } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Heart, ThumbsUp, Flame, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -51,7 +51,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike }) =
   const getLikeIcon = () => {
     const likes = event.likes || 0;
     if (likes > 5) {
-      return <Fire className="h-5 w-5 text-red-500" />;
+      return <Flame className="h-5 w-5 text-red-500" />;
     }
     return <ThumbsUp className={cn("h-5 w-5", likes > 0 ? "text-red-500" : "text-white")} />;
   };

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { type Event } from './EventCalendar';
-import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, ThumbsUp, Fire } from 'lucide-react';
+import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, ThumbsUp, Flame } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,15 +15,16 @@ interface EventCardProps {
 }
 
 const categoryColors: Record<string, string> = {
-  'Konzert': 'bg-black text-red-500 dark:bg-black dark:text-red-500',
-  'Party': 'bg-black text-red-500 dark:bg-black dark:text-red-500',
-  'Ausstellung': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
-  'Sport': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
-  'Workshop': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
-  'Kultur': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
-  'Sonstiges': 'bg-black text-red-500 dark:bg-black dark:text-red-500',
   'Networking': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
+  'Workshop': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
+  'Sport': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
+  'Kultur': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
   'Meeting': 'bg-red-400/70 text-red-50 dark:bg-red-400/70 dark:text-red-50',
+  'Party': 'bg-black text-red-500 dark:bg-black dark:text-red-500',
+  'Vortrag': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
+  'Konzert': 'bg-black text-red-500 dark:bg-black dark:text-red-500',
+  'Ausstellung': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
+  'Sonstiges': 'bg-black text-red-500 dark:bg-black dark:text-red-500',
 };
 
 const categoryIcons: Record<string, React.ReactNode> = {
@@ -61,7 +62,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
   const getLikeIcon = () => {
     const likes = event.likes || 0;
     if (likes > 5) {
-      return <Fire className="w-4 h-4 text-red-500" />;
+      return <Flame className="w-4 h-4 text-red-500" />;
     }
     return <ThumbsUp className={cn("w-4 h-4", likes > 0 ? "text-red-500" : "text-white")} />;
   };
