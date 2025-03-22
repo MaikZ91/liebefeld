@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Calendar, ArrowRight, ThumbsUp } from 'lucide-react';
 import { format, parseISO, isSameMonth, startOfDay, isAfter, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { type Event } from './EventCalendar';
+import { type Event } from '../types/eventTypes';
 
 interface LiveTickerProps {
   events: Event[];
@@ -148,7 +148,8 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
                 <span className="text-gray-400 text-sm mr-1">({event.location || 'Keine Ortsangabe'})</span>
                 <span className="text-yellow-500 text-xs flex items-center">
                   <ThumbsUp className="w-3 h-3 mr-1" /> 
-                  {event.likes || 0}
+                  {/* Make sure to render the likes count as a number or string, not an object */}
+                  {typeof event.likes === 'number' ? event.likes : 0}
                 </span>
               </span>
               <span className="mx-3 text-red-500">•</span>

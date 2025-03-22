@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { de } from 'date-fns/locale';

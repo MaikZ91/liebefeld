@@ -83,7 +83,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           // Add GitHub likes count to external events
           combinedEvents.push({
             ...extEvent,
-            likes: githubLikes[extEvent.id] || 0,
+            likes: typeof githubLikes[extEvent.id] === 'number' ? githubLikes[extEvent.id] : 0,
             rsvp_yes: githubLikes[extEvent.id]?.rsvp_yes || 0,
             rsvp_no: githubLikes[extEvent.id]?.rsvp_no || 0,
             rsvp_maybe: githubLikes[extEvent.id]?.rsvp_maybe || 0
@@ -109,14 +109,14 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           if (event.id.startsWith('github-') && githubLikes[event.id]) {
             return {
               ...event,
-              rsvp_yes: githubLikes[event.id].rsvp_yes || 0,
-              rsvp_no: githubLikes[event.id].rsvp_no || 0,
-              rsvp_maybe: githubLikes[event.id].rsvp_maybe || 0,
+              rsvp_yes: githubLikes[event.id]?.rsvp_yes || 0,
+              rsvp_no: githubLikes[event.id]?.rsvp_no || 0,
+              rsvp_maybe: githubLikes[event.id]?.rsvp_maybe || 0,
               // Also maintain the rsvp object for backward compatibility
               rsvp: {
-                yes: githubLikes[event.id].rsvp_yes || 0,
-                no: githubLikes[event.id].rsvp_no || 0,
-                maybe: githubLikes[event.id].rsvp_maybe || 0
+                yes: githubLikes[event.id]?.rsvp_yes || 0,
+                no: githubLikes[event.id]?.rsvp_no || 0,
+                maybe: githubLikes[event.id]?.rsvp_maybe || 0
               }
             };
           }
