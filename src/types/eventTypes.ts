@@ -1,4 +1,3 @@
-
 // Shared type definitions for events and calendar
 export interface Event {
   id: string;

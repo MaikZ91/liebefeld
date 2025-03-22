@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, Check, HelpCircle, X } from 'lucide-react';
@@ -123,7 +122,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
             </div>
             
             {totalRsvp > 0 && (
-              <div className="flex items-center gap-1 text-[10px] text-gray-300 mt-1">
+              <div className="flex items-center gap-1 text-[10px] text-white mt-1">
                 <div className="flex items-center">
                   <Check className="w-3 h-3 text-green-500" />
                   <span>{rsvpCounts.yes}</span>
@@ -207,15 +206,15 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
         
         {totalRsvp > 0 && (
           <div className="flex items-center gap-4 mt-2 pt-2 border-t border-gray-700/50">
-            <div className="flex items-center gap-1" title="Zusagen">
+            <div className="flex items-center gap-1 text-white" title="Zusagen">
               <Check className="w-4 h-4 text-green-500" />
               <span>{rsvpCounts.yes}</span>
             </div>
-            <div className="flex items-center gap-1" title="Vielleicht">
+            <div className="flex items-center gap-1 text-white" title="Vielleicht">
               <HelpCircle className="w-4 h-4 text-yellow-500" />
               <span>{rsvpCounts.maybe}</span>
             </div>
-            <div className="flex items-center gap-1" title="Absagen">
+            <div className="flex items-center gap-1 text-white" title="Absagen">
               <X className="w-4 h-4 text-red-500" />
               <span>{rsvpCounts.no}</span>
             </div>

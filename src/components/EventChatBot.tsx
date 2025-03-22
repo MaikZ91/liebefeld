@@ -400,16 +400,16 @@ const EventChatBot: React.FC = () => {
           
           {totalRsvp > 0 && (
             <div className="flex items-center gap-3 mt-2 pt-2 border-t border-gray-700/50">
-              <div className="flex items-center text-green-500 gap-1" title="Zusagen">
-                <Check className="h-3.5 w-3.5" /> 
+              <div className="flex items-center text-white gap-1" title="Zusagen">
+                <Check className="h-3.5 w-3.5 text-green-500" /> 
                 <span className="font-medium">{rsvpCounts.yes}</span>
               </div>
-              <div className="flex items-center text-yellow-500 gap-1" title="Vielleicht">
-                <HelpCircle className="h-3.5 w-3.5" /> 
+              <div className="flex items-center text-white gap-1" title="Vielleicht">
+                <HelpCircle className="h-3.5 w-3.5 text-yellow-500" /> 
                 <span className="font-medium">{rsvpCounts.maybe}</span>
               </div>
-              <div className="flex items-center text-red-500 gap-1" title="Absagen">
-                <X className="h-3.5 w-3.5" /> 
+              <div className="flex items-center text-white gap-1" title="Absagen">
+                <X className="h-3.5 w-3.5 text-red-500" /> 
                 <span className="font-medium">{rsvpCounts.no}</span>
               </div>
             </div>
