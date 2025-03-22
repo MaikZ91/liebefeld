@@ -13,7 +13,7 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, Dr
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useEventContext } from "@/contexts/EventContext"; 
-import { Event, RsvpOption } from "@/types/eventTypes";
+import { Event, RsvpOption, normalizeRsvpCounts } from "@/types/eventTypes";
 
 type ChatGroup = {
   id: string;
@@ -46,14 +46,6 @@ const USERNAME_KEY = "community_chat_username";
 const AVATAR_KEY = "community_chat_avatar";
 
 const EMOJI_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
-
-const normalizeRsvpCounts = (eventData: Event) => {
-  return {
-    yes: eventData.rsvp?.yes ?? eventData.rsvp_yes ?? 0,
-    no: eventData.rsvp?.no ?? eventData.rsvp_no ?? 0,
-    maybe: eventData.rsvp?.maybe ?? eventData.rsvp_maybe ?? 0
-  };
-};
 
 const Groups = () => {
   const [activeGroup, setActiveGroup] = useState<string>("");
@@ -566,16 +558,16 @@ const Groups = () => {
             </div>
             
             <div className="flex items-center gap-3 mt-2 pt-2 border-t border-primary/10">
-              <div className="flex items-center text-green-500 gap-1" title="Zusagen">
-                <Check className="h-3.5 w-3.5" /> 
+              <div className="flex items-center text-white gap-1" title="Zusagen">
+                <Check className="h-3.5 w-3.5 text-green-500" /> 
                 <span className="font-medium">{rsvpCounts.yes}</span>
               </div>
-              <div className="flex items-center text-yellow-500 gap-1" title="Vielleicht">
-                <HelpCircle className="h-3.5 w-3.5" /> 
+              <div className="flex items-center text-white gap-1" title="Vielleicht">
+                <HelpCircle className="h-3.5 w-3.5 text-yellow-500" /> 
                 <span className="font-medium">{rsvpCounts.maybe}</span>
               </div>
-              <div className="flex items-center text-red-500 gap-1" title="Absagen">
-                <X className="h-3.5 w-3.5" /> 
+              <div className="flex items-center text-white gap-1" title="Absagen">
+                <X className="h-3.5 w-3.5 text-red-500" /> 
                 <span className="font-medium">{rsvpCounts.no}</span>
               </div>
             </div>
