@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -737,18 +738,57 @@ const Groups = () => {
                             >
                               <Paperclip className="h-4 w-4" />
                             </Button>
-                            <PopoverTrigger asChild>
-                              <Button 
-                                onClick={handleShareEvent} 
-                                variant="outline"
-                                size="icon"
-                                type="button"
-                                className="rounded-full"
-                                title="Event teilen"
+                            <Popover 
+                              open={isEventSelectOpen} 
+                              onOpenChange={setIsEventSelectOpen}
+                            >
+                              <PopoverTrigger asChild>
+                                <Button 
+                                  onClick={handleShareEvent} 
+                                  variant="outline"
+                                  size="icon"
+                                  type="button"
+                                  className="rounded-full"
+                                  title="Event teilen"
+                                >
+                                  <Calendar className="h-4 w-4" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent 
+                                className="w-80 p-0 max-h-[300px] overflow-y-auto" 
+                                side="top" 
+                                align="end"
+                                sideOffset={5}
                               >
-                                <Calendar className="h-4 w-4" />
-                              </Button>
-                            </PopoverTrigger>
+                                <div className="p-3 bg-muted">
+                                  <h3 className="font-medium mb-2">Event auswählen</h3>
+                                  <div className="space-y-2 max-h-[250px] overflow-y-auto pr-2">
+                                    {events && events.length > 0 ? (
+                                      events
+                                        .sort((a, b) => a.date.localeCompare(b.date))
+                                        .map(event => (
+                                          <div
+                                            key={event.id}
+                                            className="cursor-pointer hover:bg-muted/80 rounded p-2 transition-colors"
+                                            onClick={() => {
+                                              console.log("Selecting event in Groups:", event.id, event.title);
+                                              handleEventSelect(event.id);
+                                            }}
+                                          >
+                                            <div className="font-medium">{event.title}</div>
+                                            <div className="text-xs text-muted-foreground flex items-center mt-1">
+                                              <Calendar className="h-3 w-3 mr-1" />
+                                              {event.date} • {event.time}
+                                            </div>
+                                          </div>
+                                        ))
+                                    ) : (
+                                      <div className="text-sm text-muted-foreground p-2">Keine Events verfügbar</div>
+                                    )}
+                                  </div>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
                             <Button 
                               onClick={() => handleSendMessage()} 
                               disabled={(!newMessage.trim() && !fileInputRef.current?.files?.length) || isSending}
@@ -822,48 +862,8 @@ const Groups = () => {
         </DrawerContent>
       </Drawer>
       
-      <Popover 
-        open={isEventSelectOpen} 
-        onOpenChange={(open) => {
-          console.log("Popover state changed:", open);
-          setIsEventSelectOpen(open);
-        }}
-      >
-        <PopoverContent 
-          className="w-80 p-0 max-h-[300px] overflow-y-auto" 
-          side="top" 
-          align="end"
-          sideOffset={5}
-        >
-          <div className="p-3 bg-muted">
-            <h3 className="font-medium mb-2">Event auswählen</h3>
-            <div className="space-y-2 max-h-[250px] overflow-y-auto pr-2">
-              {events && events.length > 0 ? (
-                events
-                  .sort((a, b) => a.date.localeCompare(b.date))
-                  .map(event => (
-                    <div
-                      key={event.id}
-                      className="cursor-pointer hover:bg-muted/80 rounded p-2 transition-colors"
-                      onClick={() => {
-                        console.log("Selecting event in Groups:", event.id, event.title);
-                        handleEventSelect(event.id);
-                      }}
-                    >
-                      <div className="font-medium">{event.title}</div>
-                      <div className="text-xs text-muted-foreground flex items-center mt-1">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        {event.date} • {event.time}
-                      </div>
-                    </div>
-                  ))
-              ) : (
-                <div className="text-sm text-muted-foreground p-2">Keine Events verfügbar</div>
-              )}
-            </div>
-          </div>
-        </PopoverContent>
-      </Popover>
+      {/* Removed duplicate Popover that was outside of component structure */}
+      
     </div>
   );
 };
