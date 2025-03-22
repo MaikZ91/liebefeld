@@ -84,7 +84,8 @@ const Groups = () => {
         const { data, error } = await supabase
           .from('chat_groups')
           .select('*')
-          .order('created_at', { ascending: true });
+          .order('created_at', { ascending: true })
+          .not('name', 'eq', 'LiebefeldBot');
         
         if (error) {
           throw error;
@@ -736,16 +737,18 @@ const Groups = () => {
                             >
                               <Paperclip className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              onClick={handleShareEvent} 
-                              variant="outline"
-                              size="icon"
-                              type="button"
-                              className="rounded-full"
-                              title="Event teilen"
-                            >
-                              <Calendar className="h-4 w-4" />
-                            </Button>
+                            <PopoverTrigger asChild>
+                              <Button 
+                                onClick={handleShareEvent} 
+                                variant="outline"
+                                size="icon"
+                                type="button"
+                                className="rounded-full"
+                                title="Event teilen"
+                              >
+                                <Calendar className="h-4 w-4" />
+                              </Button>
+                            </PopoverTrigger>
                             <Button 
                               onClick={() => handleSendMessage()} 
                               disabled={(!newMessage.trim() && !fileInputRef.current?.files?.length) || isSending}
