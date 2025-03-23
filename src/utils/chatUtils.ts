@@ -41,7 +41,7 @@ const getNextWeekHighlights = (events: Event[]): string => {
     const currentDay = addDays(today, i);
     const dayEvents = getEventsForDay(events, currentDay);
     
-    // If there are events on this day, add them to the highlights
+    // If there are events on this day, add the top one to the highlights
     if (dayEvents.length > 0) {
       hasEvents = true;
       const dayName = getDayOfWeekInGerman(currentDay);
@@ -50,32 +50,25 @@ const getNextWeekHighlights = (events: Event[]): string => {
       highlights += `<div class="event-day">`;
       highlights += `<b>📅 ${dayName}, ${formattedDate}</b>\n`;
       
-      // Get up to top 3 events for the day
-      const topEvents = dayEvents.slice(0, 3);
-      topEvents.forEach((event, index) => {
-        const likes = event.likes || 0;
-        const rsvpYes = event.rsvp_yes || 0;
-        const interestCount = likes + rsvpYes;
-        
-        highlights += `<div class="event-item">`;
-        highlights += `<b>${event.title}</b>\n`;
-        highlights += `⏰ ${event.time || '??:??'}\n`;
-        highlights += `📍 ${event.location || 'Ort unbekannt'}\n`;
-        
-        if (interestCount > 0) {
-          highlights += `❤️ ${interestCount} ${interestCount === 1 ? 'Person' : 'Personen'} interessiert\n`;
-        }
-        
-        highlights += `</div>`;
-        
-        // Add a separator between events, but not after the last one
-        if (index < topEvents.length - 1) {
-          highlights += `<div class="event-separator"></div>`;
-        }
-      });
+      // Get only the top event for the day (most likes)
+      const topEvent = dayEvents[0];
+      const likes = topEvent.likes || 0;
+      const rsvpYes = topEvent.rsvp_yes || 0;
+      const interestCount = likes + rsvpYes;
       
-      if (dayEvents.length > 3) {
-        highlights += `<div class="event-more">... und ${dayEvents.length - 3} weitere</div>`;
+      highlights += `<div class="event-item">`;
+      highlights += `<b>${topEvent.title}</b>\n`;
+      highlights += `⏰ ${topEvent.time || '??:??'}\n`;
+      highlights += `📍 ${topEvent.location || 'Ort unbekannt'}\n`;
+      
+      if (interestCount > 0) {
+        highlights += `❤️ ${interestCount} ${interestCount === 1 ? 'Person' : 'Personen'} interessiert\n`;
+      }
+      
+      highlights += `</div>`;
+      
+      if (dayEvents.length > 1) {
+        highlights += `<div class="event-more">... und ${dayEvents.length - 1} weitere Events an diesem Tag</div>`;
       }
       
       highlights += `</div>`;
