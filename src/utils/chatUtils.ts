@@ -22,7 +22,6 @@ const getEventsForDay = (events: Event[], date: Date): Event[] => {
     return isSameDay(eventDate, date);
   });
   
-  // Sort by likes or RSVP counts (descending)
   return dayEvents.sort((a, b) => {
     const aLikes = a.likes || 0;
     const bLikes = b.likes || 0;
@@ -36,12 +35,10 @@ const getNextWeekHighlights = (events: Event[]): string => {
   let highlights = "🗓️ <b>Highlights für die nächste Woche</b>\n\n";
   let hasEvents = false;
 
-  // Loop through the next 7 days
   for (let i = 0; i < 7; i++) {
     const currentDay = addDays(today, i);
     const dayEvents = getEventsForDay(events, currentDay);
     
-    // If there are events on this day, add the top one to the highlights
     if (dayEvents.length > 0) {
       hasEvents = true;
       const dayName = getDayOfWeekInGerman(currentDay);
@@ -50,7 +47,6 @@ const getNextWeekHighlights = (events: Event[]): string => {
       highlights += `<div class="event-day">`;
       highlights += `<b>📅 ${dayName}, ${formattedDate}</b>\n`;
       
-      // Get only the top event for the day (most likes)
       const topEvent = dayEvents[0];
       const likes = topEvent.likes || 0;
       const rsvpYes = topEvent.rsvp_yes || 0;
@@ -67,13 +63,8 @@ const getNextWeekHighlights = (events: Event[]): string => {
       
       highlights += `</div>`;
       
-      if (dayEvents.length > 1) {
-        highlights += `<div class="event-more">... und ${dayEvents.length - 1} weitere Events an diesem Tag</div>`;
-      }
-      
       highlights += `</div>`;
       
-      // Add a separator between days, but not after the last day with events
       if (i < 6) {
         const nextDayEvents = getEventsForDay(events, addDays(today, i + 1));
         if (nextDayEvents.length > 0) {
@@ -93,7 +84,6 @@ const getNextWeekHighlights = (events: Event[]): string => {
 export const generateResponse = (input: string, events: Event[]): string => {
   const normalizedInput = input.toLowerCase().trim();
   
-  // Check for next week's highlights query
   if ((normalizedInput.includes('highlight') || normalizedInput.includes('top events')) && 
       (normalizedInput.includes('woche') || normalizedInput.includes('nächste woche'))) {
     return getNextWeekHighlights(events);
@@ -140,7 +130,6 @@ export const generateResponse = (input: string, events: Event[]): string => {
       response += `🏷️ ${event.category || 'Keine Kategorie'}\n`;
       response += `</div>`;
       
-      // Add separator between events
       if (index < upcomingEvents.length - 1) {
         response += `<div class="event-separator"></div>`;
       }
@@ -172,7 +161,6 @@ export const generateResponse = (input: string, events: Event[]): string => {
       response += `📍 ${event.location || 'Ort unbekannt'}\n`;
       response += `</div>`;
       
-      // Add separator between events
       if (index < Math.min(todayEvents.length, 3) - 1) {
         response += `<div class="event-separator"></div>`;
       }
@@ -208,7 +196,6 @@ export const generateResponse = (input: string, events: Event[]): string => {
       response += `📍 ${event.location || 'Ort unbekannt'}\n`;
       response += `</div>`;
       
-      // Add separator between events
       if (index < Math.min(tomorrowEvents.length, 3) - 1) {
         response += `<div class="event-separator"></div>`;
       }
@@ -225,7 +212,7 @@ export const generateResponse = (input: string, events: Event[]): string => {
   
   if (normalizedInput.includes('wochenende')) {
     const today = new Date();
-    const fridayIndex = 5; // 0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday
+    const fridayIndex = 5;
     const saturdayIndex = 6;
     const sundayIndex = 0;
     
@@ -257,7 +244,6 @@ export const generateResponse = (input: string, events: Event[]): string => {
       response += `📍 ${event.location || 'Ort unbekannt'}\n`;
       response += `</div>`;
       
-      // Add separator between events
       if (index < Math.min(weekendEvents.length, 3) - 1) {
         response += `<div class="event-separator"></div>`;
       }
@@ -272,6 +258,5 @@ export const generateResponse = (input: string, events: Event[]): string => {
     return response;
   }
   
-  // Default response if no specific query matched
   return 'Ich kann dir Informationen zu Events in Liebefeld geben. Frag mich nach Events heute, morgen, am Wochenende oder nach den Highlights der nächsten Woche!';
 };
