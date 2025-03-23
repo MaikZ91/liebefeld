@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { startOfDay } from 'date-fns';
 import { Event, RsvpOption } from '../types/eventTypes';
@@ -56,8 +55,16 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const githubLikes = await fetchGitHubLikes();
       console.log('Fetched GitHub likes:', githubLikes);
       
+      // Create a proper likes map with only numeric values
+      const likesMap: Record<string, number> = {};
+      Object.keys(githubLikes).forEach(eventId => {
+        if (typeof githubLikes[eventId].likes === 'number') {
+          likesMap[eventId] = githubLikes[eventId].likes;
+        }
+      });
+      
       setEventLikes(prev => {
-        const updatedLikes = { ...prev, ...githubLikes };
+        const updatedLikes = { ...prev, ...likesMap };
         console.log('Updated event likes state:', updatedLikes);
         localStorage.setItem('eventLikes', JSON.stringify(updatedLikes));
         return updatedLikes;
@@ -70,7 +77,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       console.log(`Loaded ${supabaseEvents.length} events from Supabase`);
       
       // Fetch events from external source (GitHub)
-      const externalEvents = await fetchExternalEvents(githubLikes);
+      const externalEvents = await fetchExternalEvents(likesMap);
       console.log(`Loaded ${externalEvents.length} external events`);
       
       const combinedEvents = [...supabaseEvents];
@@ -83,7 +90,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           // Add GitHub likes count to external events
           combinedEvents.push({
             ...extEvent,
-            likes: typeof githubLikes[extEvent.id] === 'number' ? githubLikes[extEvent.id] : 0,
+            likes: typeof likesMap[extEvent.id] === 'number' ? likesMap[extEvent.id] : 0,
             rsvp_yes: githubLikes[extEvent.id]?.rsvp_yes || 0,
             rsvp_no: githubLikes[extEvent.id]?.rsvp_no || 0,
             rsvp_maybe: githubLikes[extEvent.id]?.rsvp_maybe || 0
@@ -107,8 +114,16 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         const eventsWithSyncedRsvp = combinedEvents.map(event => {
           // For GitHub events, make sure we have the latest RSVP counts
           if (event.id.startsWith('github-') && githubLikes[event.id]) {
+            // Calculate total RSVP counts for likes
+            const totalRsvp = (githubLikes[event.id]?.rsvp_yes || 0) + 
+                            (githubLikes[event.id]?.rsvp_maybe || 0);
+            
+            // Synchronize likes with RSVP counts
+            const syncedLikes = Math.max(totalRsvp, githubLikes[event.id]?.likes || 0);
+            
             return {
               ...event,
+              likes: syncedLikes,
               rsvp_yes: githubLikes[event.id]?.rsvp_yes || 0,
               rsvp_no: githubLikes[event.id]?.rsvp_no || 0,
               rsvp_maybe: githubLikes[event.id]?.rsvp_maybe || 0,
@@ -121,10 +136,14 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             };
           }
           
-          // For regular events, ensure we have an rsvp object
-          if (!event.rsvp && (event.rsvp_yes !== undefined || event.rsvp_no !== undefined || event.rsvp_maybe !== undefined)) {
+          // For regular events, ensure we have an rsvp object and sync with likes
+          if (event.rsvp_yes !== undefined || event.rsvp_no !== undefined || event.rsvp_maybe !== undefined) {
+            const totalRsvp = (event.rsvp_yes || 0) + (event.rsvp_maybe || 0);
+            const syncedLikes = Math.max(totalRsvp, event.likes || 0);
+            
             return {
               ...event,
+              likes: syncedLikes,
               rsvp: {
                 yes: event.rsvp_yes || 0,
                 no: event.rsvp_no || 0,
@@ -166,6 +185,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       console.log(`Updating likes for ${eventId} from ${currentLikes} to ${newLikesValue}`);
       
+      // Update likes in local state
       setEventLikes(prev => {
         const updatedLikes = {
           ...prev,
@@ -175,9 +195,30 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return updatedLikes;
       });
       
+      // Update RSVP counts to match likes (synchronization)
+      const currentRsvp = {
+        yes: currentEvent.rsvp_yes ?? currentEvent.rsvp?.yes ?? 0,
+        no: currentEvent.rsvp_no ?? currentEvent.rsvp?.no ?? 0,
+        maybe: currentEvent.rsvp_maybe ?? currentEvent.rsvp?.maybe ?? 0
+      };
+      
+      // Increment "yes" RSVP count along with likes
+      const newRsvp = { 
+        ...currentRsvp,
+        yes: currentRsvp.yes + 1 
+      };
+      
+      // Update the event in the events array
       const updatedEvents = events.map(event => 
         event.id === eventId 
-          ? { ...event, likes: newLikesValue } 
+          ? { 
+              ...event, 
+              likes: newLikesValue,
+              rsvp_yes: newRsvp.yes,
+              rsvp_no: newRsvp.no,
+              rsvp_maybe: newRsvp.maybe,
+              rsvp: newRsvp
+            } 
           : event
       );
       
@@ -186,11 +227,17 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       try {
         console.log(`Updating event likes in database: ${eventId} -> ${newLikesValue}`);
         await updateEventLikes(eventId, newLikesValue);
-        console.log(`Successfully updated likes in database for event ${eventId}`);
         
+        // Also update RSVP to keep them in sync
+        console.log(`Synchronizing RSVP counts with likes: ${eventId} -> ${JSON.stringify(newRsvp)}`);
+        await updateEventRsvp(eventId, newRsvp);
+        
+        console.log(`Successfully updated likes and RSVP in database for event ${eventId}`);
+        
+        // Refresh events to get the latest data
         await refreshEvents();
       } catch (updateError) {
-        console.error(`Error updating likes in database for event ${eventId}:`, updateError);
+        console.error(`Error updating likes/RSVP in database for event ${eventId}:`, updateError);
       }
     } catch (error) {
       console.error('Error updating likes:', error);
@@ -219,12 +266,20 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       console.log(`Updating RSVP for ${eventId} to:`, newRsvp);
       
-      // Update the events state with the new RSVP counts
+      // Calculate new likes value based on RSVP counts
+      const currentLikes = currentEvent.likes || 0;
+      // Likes should be at least as high as the sum of 'yes' and 'maybe' RSVPs
+      const newLikesValue = Math.max(currentLikes, newRsvp.yes + newRsvp.maybe);
+      
+      console.log(`Synchronizing likes with RSVP: ${eventId} -> ${newLikesValue}`);
+      
+      // Update the events state with the new RSVP counts and likes
       const updatedEvents = events.map(event => 
         event.id === eventId 
           ? { 
               ...event, 
               // Update both the individual fields and the rsvp object
+              likes: newLikesValue,
               rsvp_yes: newRsvp.yes,
               rsvp_no: newRsvp.no,
               rsvp_maybe: newRsvp.maybe,
@@ -236,14 +291,19 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setEvents(updatedEvents);
       
       try {
+        // Update both RSVP and likes to keep them in sync
         console.log(`Updating event RSVP in database: ${eventId} -> ${JSON.stringify(newRsvp)}`);
         await updateEventRsvp(eventId, newRsvp);
-        console.log(`Successfully updated RSVP in database for event ${eventId}`);
+        
+        console.log(`Updating event likes in database to match RSVP: ${eventId} -> ${newLikesValue}`);
+        await updateEventLikes(eventId, newLikesValue);
+        
+        console.log(`Successfully updated RSVP and likes in database for event ${eventId}`);
         
         // Refresh events to ensure all components have the updated data
         await refreshEvents();
       } catch (updateError) {
-        console.error(`Error updating RSVP in database for event ${eventId}:`, updateError);
+        console.error(`Error updating RSVP/likes in database for event ${eventId}:`, updateError);
       }
     } catch (error) {
       console.error('Error updating RSVP:', error);
