@@ -1,491 +1,225 @@
-import { format, parseISO, isWithinInterval, startOfWeek, endOfWeek, addDays, 
-  isToday, isTomorrow, isThisWeek, isWeekend, isAfter, isBefore, 
-  addWeeks, addMonths, getMonth, getYear } from 'date-fns';
+import { formatDistance, parseISO, format, addDays, startOfDay, endOfDay, isBefore, isAfter, isSameDay, addWeeks } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { type Event } from '../types/eventTypes';
+import { Event } from '@/types/eventTypes';
 
-// Helper to format events for display with enhanced styling
-export const formatEvents = (filteredEvents: Event[]): string => {
-  if (filteredEvents.length === 0) {
-    return "<div class='text-center py-3 px-2 rounded-lg bg-gray-800/50 border border-gray-700/50'>Leider sind keine Veranstaltungen für diesen Zeitraum geplant.</div>";
-  }
-
-  const sortedEvents = [...filteredEvents].sort((a, b) => a.title.localeCompare(b.title));
-
-  return sortedEvents
-    .map(event => {
-      const link = event.link || '#';
-      const categoryClass = getCategoryColorClass(event.category);
-      const dateStr = format(parseISO(event.date), 'E, dd.MM.', { locale: de });
-      
-      return `
-        <div class="p-2 mb-2 rounded-lg bg-gradient-to-r from-gray-800/80 to-gray-900/80 border border-gray-700/50 hover:border-red-500/30 transition-all duration-300 animate-fade-in">
-          <a href="${link}" target="_blank" class="block hover:no-underline">
-            <div class="flex items-center justify-between">
-              <span class="font-medium text-red-400">${event.title}</span>
-              <span class="text-xs ${categoryClass} px-2 py-0.5 rounded-full">${event.category || 'Event'}</span>
-            </div>
-            <div class="flex items-center mt-1 text-xs text-gray-400">
-              <span class="flex items-center">
-                <span class="mr-1">📅</span> ${dateStr}
-              </span>
-              <span class="mx-2">•</span>
-              <span class="flex items-center">
-                <span class="mr-1">🕒</span> ${event.time} Uhr
-              </span>
-            </div>
-            <div class="text-xs text-gray-300 mt-1 truncate">
-              ${event.location || 'Liebefeld'}
-            </div>
-          </a>
-        </div>`;
-    })
-    .join("");
+export const getWelcomeMessage = (): string => {
+  const messages = [
+    "Hallo! Ich bin der Liebefeld Bot. Frag mich nach Events in deiner Gegend!",
+    "Grüezi! Auf der Suche nach lokalen Events? Ich helfe dir gerne weiter!",
+    "Willkommen! Ich kenne alle Events in Liebefeld und Umgebung. Wie kann ich helfen?",
+    "Hi! Lust auf Events in Liebefeld? Frag mich einfach!"
+  ];
+  return messages[Math.floor(Math.random() * messages.length)];
 };
 
-// Function to get color class based on category
-const getCategoryColorClass = (category?: string): string => {
-  if (!category) return "bg-gray-600 text-gray-200";
+const getDayOfWeekInGerman = (date: Date): string => {
+  return format(date, 'EEEE', { locale: de });
+};
+
+const getEventsForDay = (events: Event[], date: Date): Event[] => {
+  const dayEvents = events.filter(event => {
+    const eventDate = parseISO(event.date);
+    return isSameDay(eventDate, date);
+  });
   
-  const categoryMap: Record<string, string> = {
-    'Networking': 'bg-blue-900/70 text-blue-200',
-    'Workshop': 'bg-purple-900/70 text-purple-200',
-    'Sport': 'bg-green-900/70 text-green-200',
-    'Kultur': 'bg-yellow-900/70 text-yellow-200',
-    'Meeting': 'bg-gray-700/70 text-gray-200',
-    'Party': 'bg-pink-900/70 text-pink-200',
-    'Vortrag': 'bg-indigo-900/70 text-indigo-200',
-    'Konzert': 'bg-red-900/70 text-red-200',
-    'Ausstellung': 'bg-emerald-900/70 text-emerald-200'
-  };
-  
-  return categoryMap[category] || "bg-gray-600 text-gray-200";
+  // Sort by likes or RSVP counts (descending)
+  return dayEvents.sort((a, b) => {
+    const aLikes = a.likes || 0;
+    const bLikes = b.likes || 0;
+    return bLikes - aLikes;
+  });
 };
 
-// Create response header with proper formatting
-export const createResponseHeader = (title: string) => {
-  return `
-    <div class="mb-3">
-      <h3 class="inline-block font-bold text-lg bg-gradient-to-r from-red-500 to-red-300 bg-clip-text text-transparent">
-        ${title}
-      </h3>
-      <div class="w-16 h-1 bg-gradient-to-r from-red-500 to-red-300 rounded-full mt-1"></div>
-    </div>`;
-};
+const getNextWeekHighlights = (events: Event[]): string => {
+  const today = startOfDay(new Date());
+  const nextWeek = addWeeks(today, 1);
+  let highlights = "🌟 <b>Highlights für die nächste Woche:</b>\n\n";
+  let hasEvents = false;
 
-// Functions to identify common query patterns
-export const isListAllEventsQuery = (query: string): boolean => {
-  const patterns = [
-    'alle', 'verfügbar', 'liste', 'zeig mir alle', 'alles', 'zeige alle', 'anzeigen', 'show all'
-  ];
-  return patterns.some(pattern => query.toLowerCase().includes(pattern));
-};
-
-export const isEventsForTodayQuery = (query: string): boolean => {
-  const patterns = [
-    'heute', 'today', 'was geht', 'was ist los', 'was läuft', 'was gibt es', 'was passiert'
-  ];
-  
-  return patterns.some(pattern => query.toLowerCase().includes(pattern));
-};
-
-export const checkCategoryQuery = (query: string): { isCategoryQuery: boolean; category: string } => {
-  const categoryPatterns = [
-    { pattern: ['konzert', 'music', 'band', 'festival', 'musik'], category: 'Konzert' },
-    { pattern: ['party', 'feier', 'feiern', 'fete', 'disco'], category: 'Party' },
-    { pattern: ['ausstellung', 'exhibition', 'museum', 'galerie', 'kunst', 'art'], category: 'Ausstellung' },
-    { pattern: ['sport', 'sportlich', 'fitness', 'laufen', 'fußball', 'soccer'], category: 'Sport' },
-    { pattern: ['workshop', 'seminar', 'kurs', 'lernen', 'weiterbildung'], category: 'Workshop' },
-    { pattern: ['kultur', 'cultural', 'theater', 'schauspiel', 'film', 'kino'], category: 'Kultur' }
-  ];
-
-  for (const { pattern, category } of categoryPatterns) {
-    if (pattern.some(p => query.includes(p))) {
-      return { isCategoryQuery: true, category };
-    }
-  }
-
-  return { isCategoryQuery: false, category: '' };
-};
-
-export const checkLocationQuery = (query: string): { isLocationQuery: boolean; location: string } => {
-  const locationPatterns = [
-    { pattern: ['in der nähe', 'nearby', 'um die ecke', 'in meiner nähe'], location: 'nearby' },
-    { pattern: ['zentrum', 'innenstadt', 'city center', 'downtown'], location: 'center' },
-    { pattern: ['außerhalb', 'outskirts', 'vorort', 'suburb'], location: 'outskirts' }
-  ];
-
-  for (const { pattern, location } of locationPatterns) {
-    if (pattern.some(p => query.includes(p))) {
-      return { isLocationQuery: true, location };
-    }
-  }
-
-  return { isLocationQuery: false, location: '' };
-};
-
-export const checkPriceQuery = (query: string): { isPriceQuery: boolean; priceRange: string } => {
-  const pricePatterns = [
-    { pattern: ['kostenlos', 'free', 'gratis', 'umsonst'], priceRange: 'free' },
-    { pattern: ['günstig', 'cheap', 'preiswert', 'budget'], priceRange: 'cheap' },
-    { pattern: ['teuer', 'expensive', 'premium', 'luxus'], priceRange: 'expensive' }
-  ];
-
-  for (const { pattern, priceRange } of pricePatterns) {
-    if (pattern.some(p => query.includes(p))) {
-      return { isPriceQuery: true, priceRange };
-    }
-  }
-
-  return { isPriceQuery: false, priceRange: '' };
-};
-
-export const checkTimeSpecificQuery = (query: string): { isTimeQuery: boolean; timeFrame: string } => {
-  const timePatterns = [
-    { pattern: ['heute', 'today', 'jetzt', 'now'], timeFrame: 'today' },
-    { pattern: ['morgen', 'tomorrow'], timeFrame: 'tomorrow' },
-    { pattern: ['wochenende', 'weekend', 'samstag', 'sonntag', 'saturday', 'sunday'], timeFrame: 'weekend' },
-    { pattern: ['diese woche', 'this week', 'aktuelle woche', 'current week'], timeFrame: 'thisWeek' },
-    { pattern: ['nächste woche', 'next week', 'kommende woche'], timeFrame: 'nextWeek' },
-    { pattern: ['nächsten monat', 'next month', 'im kommenden monat'], timeFrame: 'nextMonth' },
-    { pattern: ['nächstes wochenende', 'next weekend', 'kommendes wochenende'], timeFrame: 'nextWeekend' }
-  ];
-
-  for (const { pattern, timeFrame } of timePatterns) {
-    if (pattern.some(p => query.toLowerCase().includes(p))) {
-      return { isTimeQuery: true, timeFrame };
-    }
-  }
-
-  // If the query has phrases like "was geht" or "was ist los" without explicit time,
-  // default to today
-  if (isEventsForTodayQuery(query)) {
-    return { isTimeQuery: true, timeFrame: 'today' };
-  }
-
-  return { isTimeQuery: false, timeFrame: '' };
-};
-
-// Process time-specific queries
-export const processTimeQuery = (timeFrame: string, events: Event[]): { title: string, events: Event[] } => {
-  const today = new Date();
-  
-  switch (timeFrame) {
-    case 'today': {
-      const todayEvents = events.filter(event => {
-        try {
-          const eventDate = parseISO(event.date);
-          return isToday(eventDate);
-        } catch (error) {
-          console.error(`Error parsing date for event: ${event.title}`, error);
-          return false;
-        }
-      });
-      return {
-        title: `Events heute (${format(today, 'dd.MM.', { locale: de })})`,
-        events: todayEvents
-      };
-    }
+  // Loop through the next 7 days
+  for (let i = 0; i < 7; i++) {
+    const currentDay = addDays(today, i);
+    const dayEvents = getEventsForDay(events, currentDay);
     
-    case 'tomorrow': {
-      const tomorrow = addDays(today, 1);
-      const tomorrowEvents = events.filter(event => {
-        try {
-          const eventDate = parseISO(event.date);
-          return isTomorrow(eventDate);
-        } catch (error) {
-          console.error(`Error parsing date for event: ${event.title}`, error);
-          return false;
-        }
-      });
-      return {
-        title: `Events morgen (${format(tomorrow, 'dd.MM.', { locale: de })})`,
-        events: tomorrowEvents
-      };
-    }
-    
-    case 'weekend': {
-      const thisWeekStart = startOfWeek(today, { weekStartsOn: 1 });
-      const thisWeekendStart = addDays(thisWeekStart, 5);
-      const thisWeekendEnd = addDays(thisWeekStart, 6);
+    // If there are events on this day, add them to the highlights
+    if (dayEvents.length > 0) {
+      hasEvents = true;
+      const dayName = getDayOfWeekInGerman(currentDay);
+      const formattedDate = format(currentDay, 'dd.MM.', { locale: de });
       
-      const weekendEvents = events.filter(event => {
-        try {
-          const eventDate = parseISO(event.date);
-          return isWithinInterval(eventDate, { 
-            start: thisWeekendStart, 
-            end: addDays(thisWeekendEnd, 1)
-          });
-        } catch (error) {
-          console.error(`Error parsing date for event: ${event.title}`, error);
-          return false;
+      highlights += `<b>${dayName}, ${formattedDate}</b>\n`;
+      
+      // Get up to top 3 events for the day
+      const topEvents = dayEvents.slice(0, 3);
+      topEvents.forEach((event, index) => {
+        const likes = event.likes || 0;
+        const rsvpYes = event.rsvp_yes || 0;
+        
+        highlights += `- ${event.title} (${event.time || '?'}, ${event.location || 'k.A.'})`;
+        if (likes > 0 || rsvpYes > 0) {
+          highlights += ` • ${likes + rsvpYes} Personen interessiert`;
         }
+        highlights += '\n';
       });
       
-      return {
-        title: `Events dieses Wochenende (${format(thisWeekendStart, 'dd.MM.', { locale: de })} - ${format(thisWeekendEnd, 'dd.MM.', { locale: de })})`,
-        events: weekendEvents
-      };
-    }
-    
-    case 'nextWeekend': {
-      const thisWeekStart = startOfWeek(today, { weekStartsOn: 1 });
-      const nextWeekStart = addDays(thisWeekStart, 7);
-      const nextWeekendStart = addDays(nextWeekStart, 5);
-      const nextWeekendEnd = addDays(nextWeekStart, 6);
-      
-      const nextWeekendEvents = events.filter(event => {
-        try {
-          const eventDate = parseISO(event.date);
-          return isWithinInterval(eventDate, { 
-            start: nextWeekendStart, 
-            end: addDays(nextWeekendEnd, 1)
-          });
-        } catch (error) {
-          console.error(`Error parsing date for event: ${event.title}`, error);
-          return false;
-        }
-      });
-      
-      return {
-        title: `Events nächstes Wochenende (${format(nextWeekendStart, 'dd.MM.', { locale: de })} - ${format(nextWeekendEnd, 'dd.MM.', { locale: de })})`,
-        events: nextWeekendEvents
-      };
-    }
-    
-    case 'thisWeek': {
-      const thisWeekEvents = events.filter(event => {
-        try {
-          const eventDate = parseISO(event.date);
-          return isThisWeek(eventDate, { weekStartsOn: 1 });
-        } catch (error) {
-          console.error(`Error parsing date for event: ${event.title}`, error);
-          return false;
-        }
-      });
-      return {
-        title: "Events diese Woche",
-        events: thisWeekEvents
-      };
-    }
-    
-    case 'nextWeek': {
-      const nextWeekStart = addDays(startOfWeek(today, { weekStartsOn: 1 }), 7);
-      const nextWeekEnd = addDays(nextWeekStart, 6);
-      
-      const nextWeekEvents = events.filter(event => {
-        try {
-          const eventDate = parseISO(event.date);
-          return isWithinInterval(eventDate, { 
-            start: nextWeekStart, 
-            end: nextWeekEnd 
-          });
-        } catch (error) {
-          console.error(`Error parsing date for event: ${event.title}`, error);
-          return false;
-        }
-      });
-      return {
-        title: "Events nächste Woche",
-        events: nextWeekEvents
-      };
-    }
-    
-    case 'nextMonth': {
-      const nextMonth = addMonths(today, 1);
-      const nextMonthEvents = events.filter(event => {
-        try {
-          const eventDate = parseISO(event.date);
-          return getMonth(eventDate) === getMonth(nextMonth) && 
-                 getYear(eventDate) === getYear(nextMonth);
-        } catch (error) {
-          console.error(`Error parsing date for event: ${event.title}`, error);
-          return false;
-        }
-      });
-      return {
-        title: `Events im ${format(nextMonth, 'MMMM yyyy', { locale: de })}`,
-        events: nextMonthEvents
-      };
-    }
-    
-    default:
-      return {
-        title: "Alle Events",
-        events: []
-      };
-  }
-};
-
-// Generate a response based on a user query
-export const generateResponse = (query: string, events: Event[]): string => {
-  const normalizedQuery = query.toLowerCase();
-  
-  console.log(`Generating response with ${events.length} events for query: "${query}"`);
-  
-  // Check if the query is for today's events in Liebefeld
-  if (normalizedQuery.includes('liebefeld') && isEventsForTodayQuery(normalizedQuery)) {
-    console.log('Detected query for today\'s events in Liebefeld');
-    
-    // Filter events for today
-    const todayEvents = events.filter(event => {
-      try {
-        if (!event.date) return false;
-        const eventDate = parseISO(event.date);
-        return isToday(eventDate);
-      } catch (error) {
-        console.error(`Error parsing date for event: ${event.title}`, error);
-        return false;
+      if (dayEvents.length > 3) {
+        highlights += `... und ${dayEvents.length - 3} weitere\n`;
       }
-    });
+      
+      highlights += '\n';
+    }
+  }
+  
+  if (!hasEvents) {
+    highlights += "Für die nächste Woche sind noch keine Events geplant. Schau später wieder vorbei!";
+  }
+  
+  return highlights;
+};
+
+export const generateResponse = (input: string, events: Event[]): string => {
+  const normalizedInput = input.toLowerCase().trim();
+  
+  // Check for next week's highlights query
+  if (normalizedInput.includes('highlight') && (normalizedInput.includes('woche') || normalizedInput.includes('nächste woche'))) {
+    return getNextWeekHighlights(events);
+  }
+  
+  if (normalizedInput.includes('hallo') || normalizedInput.includes('hi') || normalizedInput.includes('grüezi')) {
+    return 'Hallo! Wie kann ich dir mit Events in Liebefeld helfen?';
+  }
+  
+  if (normalizedInput.includes('danke') || normalizedInput.includes('merci')) {
+    return 'Gerne! Gibt es noch etwas, wobei ich dir helfen kann?';
+  }
+  
+  if (normalizedInput.includes('event') || normalizedInput.includes('veranstaltung')) {
+    if (events.length === 0) {
+      return 'Leider habe ich keine Events in der Datenbank gefunden. Schau später wieder vorbei!';
+    }
     
     const today = new Date();
-    return `${createResponseHeader(`Events heute in Liebefeld (${format(today, 'dd.MM.', { locale: de })})`)}${formatEvents(todayEvents)}`;
-  }
-  
-  // Check if the user is asking for all events
-  if (isListAllEventsQuery(normalizedQuery)) {
-    return formatEvents(events);
-  }
-
-  // Check for time-specific queries
-  const timeQuery = checkTimeSpecificQuery(normalizedQuery);
-  // Check for category queries
-  const categoryQuery = checkCategoryQuery(normalizedQuery);
-  
-  // Handle combination of time and category
-  if (timeQuery.isTimeQuery && categoryQuery.isCategoryQuery) {
-    console.log(`Combination query detected: ${timeQuery.timeFrame} + ${categoryQuery.category}`);
+    const upcomingEvents = events
+      .filter(event => {
+        const eventDate = parseISO(event.date);
+        return isAfter(eventDate, today) || isSameDay(eventDate, today);
+      })
+      .sort((a, b) => {
+        const dateA = parseISO(a.date);
+        const dateB = parseISO(b.date);
+        return dateA.getTime() - dateB.getTime();
+      })
+      .slice(0, 3);
     
-    // First filter by time
-    const { events: timeFilteredEvents } = processTimeQuery(timeQuery.timeFrame, events);
+    if (upcomingEvents.length === 0) {
+      return 'Es sind derzeit keine kommenden Events geplant. Schau später wieder vorbei!';
+    }
     
-    // Then filter by category
-    const combinedFilteredEvents = timeFilteredEvents.filter(event => 
-      event.category?.toLowerCase() === categoryQuery.category.toLowerCase() || 
-      event.title.toLowerCase().includes(categoryQuery.category.toLowerCase())
-    );
+    let response = 'Hier sind einige bevorstehende Events:\n\n';
     
-    const timeTitle = timeQuery.timeFrame === 'nextWeek' ? 'nächste Woche' : 
-                      timeQuery.timeFrame === 'thisWeek' ? 'diese Woche' : 
-                      timeQuery.timeFrame === 'weekend' ? 'dieses Wochenende' : 
-                      timeQuery.timeFrame === 'nextWeekend' ? 'nächstes Wochenende' : 
-                      timeQuery.timeFrame === 'today' ? 'heute' : 
-                      timeQuery.timeFrame === 'tomorrow' ? 'morgen' : 'demnächst';
-                        
-    return `${createResponseHeader(`${categoryQuery.category}-Events ${timeTitle}:`)}${formatEvents(combinedFilteredEvents)}`;
-  }
-  
-  // Handle time-specific queries without category
-  if (timeQuery.isTimeQuery) {
-    const { title, events: filteredEvents } = processTimeQuery(timeQuery.timeFrame, events);
-    return `${createResponseHeader(title)}${formatEvents(filteredEvents)}`;
-  }
-
-  // Handle category queries without time specification
-  if (categoryQuery.isCategoryQuery) {
-    const categoryEvents = events.filter(event => 
-      event.category?.toLowerCase() === categoryQuery.category.toLowerCase() || 
-      event.title.toLowerCase().includes(categoryQuery.category.toLowerCase())
-    );
-    return `${createResponseHeader(`${categoryQuery.category}-Events:`)}${formatEvents(categoryEvents)}`;
-  }
-
-  // Check for location queries
-  const locationQuery = checkLocationQuery(normalizedQuery);
-  if (locationQuery.isLocationQuery) {
-    // Process location based events
-    const locationEvents = events.filter(event => 
-      event.location?.toLowerCase().includes(locationQuery.location.toLowerCase())
-    );
-    return `${createResponseHeader(`Events in ${locationQuery.location}:`)}${formatEvents(locationEvents)}`;
-  }
-
-  // Handle specific price ranges
-  const priceQuery = checkPriceQuery(normalizedQuery);
-  if (priceQuery.isPriceQuery) {
-    // This is a placeholder - we would need actual price data in the event objects
-    return `${createResponseHeader(`${priceQuery.priceRange} Events:`)}Preisfilterung ist aktuell nicht verfügbar.`;
-  }
-
-  // Search for keywords in the query (fallback)
-  const searchTerms = normalizedQuery.split(' ').filter(term => term.length > 3);
-  if (searchTerms.length > 0) {
-    const matchingEvents = events.filter(event => {
-      const eventTitle = event.title.toLowerCase();
-      const eventDescription = event.description?.toLowerCase() || '';
-      return searchTerms.some(term => 
-        eventTitle.includes(term) || eventDescription.includes(term)
-      );
+    upcomingEvents.forEach(event => {
+      response += `🗓️ <b>${event.title}</b>\n`;
+      response += `📅 ${event.date} um ${event.time || 'k.A.'}\n`;
+      response += `📍 ${event.location || 'Ort unbekannt'}\n`;
+      response += `🏷️ ${event.category || 'Keine Kategorie'}\n\n`;
     });
     
-    if (matchingEvents.length > 0) {
-      return `${createResponseHeader("Gefundene Events:")}${formatEvents(matchingEvents)}`;
-    }
+    response += 'Möchtest du mehr Details zu einem bestimmten Event erfahren?';
+    
+    return response;
   }
   
-  // Default response if no match is found
-  return `<div class="space-y-3 p-3 bg-gray-800/50 rounded-lg border border-gray-700/50 animate-fade-in">
-    <p class="font-bold text-red-400">Ich verstehe deine Frage leider nicht ganz.</p>
-    <p>Du kannst mich zum Beispiel fragen:</p>
-    <ul class="space-y-2 pl-5">
-      <li class="flex items-center">
-        <span class="text-red-400 mr-2">❤️</span> Was geht heute los?
-      </li>
-      <li class="flex items-center">
-        <span class="text-red-400 mr-2">❤️</span> Was ist am Wochenende los?
-      </li>
-      <li class="flex items-center">
-        <span class="text-red-400 mr-2">❤️</span> Welche Events gibt es nächste Woche?
-      </li>
-      <li class="flex items-center">
-        <span class="text-red-400 mr-2">❤️</span> Gibt es Konzerte diese Woche?
-      </li>
-      <li class="flex items-center">
-        <span class="text-red-400 mr-2">❤️</span> Welche Ausstellungen kann ich besuchen?
-      </li>
-      <li class="flex items-center">
-        <span class="text-red-400 mr-2">❤️</span> Events im Zentrum von Liebefeld?
-      </li>
-    </ul>
-  </div>`;
-};
-
-// Initial welcome message for the chatbot
-export const getWelcomeMessage = (): string => {
-  return `
-  <div class="space-y-3 animate-fade-in">
-    <div class="text-center mb-3">
-      <span class="inline-block text-2xl mb-2">❤️</span>
-      <h3 class="text-lg font-bold bg-gradient-to-r from-red-500 to-red-300 bg-clip-text text-transparent">Willkommen beim Liebefeld Event-Assistent!</h3>
-    </div>
+  if (normalizedInput.includes('heute')) {
+    const today = new Date();
+    const todayEvents = events.filter(event => {
+      const eventDate = parseISO(event.date);
+      return isSameDay(eventDate, today);
+    });
     
-    <p class="text-sm">Ich halte dich über alle spannenden Veranstaltungen in Liebefeld auf dem Laufenden. Frag mich einfach nach Events!</p>
+    if (todayEvents.length === 0) {
+      return 'Heute finden keine Events statt. Frag mich nach Events für morgen oder die nächsten Tage!';
+    }
     
-    <div class="bg-gray-800/40 rounded-lg p-2 mt-2">
-      <p class="text-xs text-gray-300 mb-1">Beispiele:</p>
-      <ul class="space-y-1.5 text-sm">
-        <li class="flex items-start">
-          <span class="text-red-400 mr-2">❤️</span>
-          <span>Was ist heute los?</span>
-        </li>
-        <li class="flex items-start">
-          <span class="text-red-400 mr-2">❤️</span>
-          <span>Zeige mir alle Events am Wochenende</span>
-        </li>
-        <li class="flex items-start">
-          <span class="text-red-400 mr-2">❤️</span>
-          <span>Gibt es Konzerte in dieser Woche?</span>
-        </li>
-        <li class="flex items-start">
-          <span class="text-red-400 mr-2">❤️</span>
-          <span>Welche Veranstaltungen sind im nächsten Monat?</span>
-        </li>
-        <li class="flex items-start">
-          <span class="text-red-400 mr-2">❤️</span>
-          <span>Ausstellungen in Liebefeld?</span>
-        </li>
-      </ul>
-    </div>
-  </div>`;
+    let response = `Heute finden ${todayEvents.length} Events statt:\n\n`;
+    
+    todayEvents.slice(0, 3).forEach(event => {
+      response += `🗓️ <b>${event.title}</b>\n`;
+      response += `🕒 ${event.time || 'k.A.'}\n`;
+      response += `📍 ${event.location || 'Ort unbekannt'}\n\n`;
+    });
+    
+    if (todayEvents.length > 3) {
+      response += `... und ${todayEvents.length - 3} weitere Events.\n\n`;
+    }
+    
+    return response;
+  }
+  
+  if (normalizedInput.includes('morgen')) {
+    const tomorrow = addDays(new Date(), 1);
+    const tomorrowEvents = events.filter(event => {
+      const eventDate = parseISO(event.date);
+      return isSameDay(eventDate, tomorrow);
+    });
+    
+    if (tomorrowEvents.length === 0) {
+      return 'Morgen finden keine Events statt. Frag mich nach Events für die nächsten Tage!';
+    }
+    
+    let response = `Morgen finden ${tomorrowEvents.length} Events statt:\n\n`;
+    
+    tomorrowEvents.slice(0, 3).forEach(event => {
+      response += `🗓️ <b>${event.title}</b>\n`;
+      response += `🕒 ${event.time || 'k.A.'}\n`;
+      response += `📍 ${event.location || 'Ort unbekannt'}\n\n`;
+    });
+    
+    if (tomorrowEvents.length > 3) {
+      response += `... und ${tomorrowEvents.length - 3} weitere Events.\n\n`;
+    }
+    
+    return response;
+  }
+  
+  if (normalizedInput.includes('wochenende')) {
+    const today = new Date();
+    const fridayIndex = 5; // 0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday
+    const saturdayIndex = 6;
+    const sundayIndex = 0;
+    
+    const weekendEvents = events.filter(event => {
+      const eventDate = parseISO(event.date);
+      const dayOfWeek = eventDate.getDay();
+      return (dayOfWeek === fridayIndex || dayOfWeek === saturdayIndex || dayOfWeek === sundayIndex) && 
+             (isAfter(eventDate, today) || isSameDay(eventDate, today));
+    }).sort((a, b) => {
+      const dateA = parseISO(a.date);
+      const dateB = parseISO(b.date);
+      return dateA.getTime() - dateB.getTime();
+    });
+    
+    if (weekendEvents.length === 0) {
+      return 'Am Wochenende finden keine Events statt. Frag mich nach Events für die nächsten Tage!';
+    }
+    
+    let response = `Am Wochenende finden ${weekendEvents.length} Events statt:\n\n`;
+    
+    weekendEvents.slice(0, 3).forEach(event => {
+      const eventDate = parseISO(event.date);
+      const dayName = getDayOfWeekInGerman(eventDate);
+      
+      response += `🗓️ <b>${event.title}</b>\n`;
+      response += `📅 ${dayName}, ${event.date} um ${event.time || 'k.A.'}\n`;
+      response += `📍 ${event.location || 'Ort unbekannt'}\n\n`;
+    });
+    
+    if (weekendEvents.length > 3) {
+      response += `... und ${weekendEvents.length - 3} weitere Events.\n\n`;
+    }
+    
+    return response;
+  }
+  
+  // Default response if no specific query matched
+  return 'Ich kann dir Informationen zu Events in Liebefeld geben. Frag mich nach Events heute, morgen, am Wochenende oder nach den Highlights der nächsten Woche!';
 };
