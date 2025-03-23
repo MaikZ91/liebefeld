@@ -461,6 +461,60 @@ const EventChatBot: React.FC = () => {
     );
   };
 
+  useEffect(() => {
+    // Apply custom styles for chat message formatting
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .event-day {
+        margin-bottom: 12px;
+        border-left: 3px solid #ef4444;
+        padding-left: 10px;
+      }
+      .event-item {
+        margin: 8px 0;
+        padding: 8px;
+        background: rgba(239, 68, 68, 0.1);
+        border-radius: 6px;
+      }
+      .event-separator {
+        border-top: 1px dashed rgba(255, 255, 255, 0.1);
+        margin: 8px 0;
+      }
+      .day-separator {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        margin: 12px 0;
+      }
+      .event-more {
+        font-size: 0.85em;
+        opacity: 0.8;
+        font-style: italic;
+        margin-top: 6px;
+      }
+      .no-events {
+        padding: 12px;
+        text-align: center;
+        opacity: 0.7;
+        font-style: italic;
+      }
+      .events-list, .today-events, .tomorrow-events, .weekend-events {
+        padding: 6px;
+        border-radius: 8px;
+        background: rgba(239, 68, 68, 0.05);
+      }
+      .event-card {
+        padding: 8px;
+        background: rgba(239, 68, 68, 0.1);
+        border-radius: 8px;
+        margin: 8px 0;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>

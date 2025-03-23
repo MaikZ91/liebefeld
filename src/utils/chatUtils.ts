@@ -33,7 +33,7 @@ const getEventsForDay = (events: Event[], date: Date): Event[] => {
 const getNextWeekHighlights = (events: Event[]): string => {
   const today = startOfDay(new Date());
   const nextWeek = addWeeks(today, 1);
-  let highlights = "🌟 <b>Highlights für die nächste Woche:</b>\n\n";
+  let highlights = "🗓️ <b>Highlights für die nächste Woche</b>\n\n";
   let hasEvents = false;
 
   // Loop through the next 7 days
@@ -47,31 +47,51 @@ const getNextWeekHighlights = (events: Event[]): string => {
       const dayName = getDayOfWeekInGerman(currentDay);
       const formattedDate = format(currentDay, 'dd.MM.', { locale: de });
       
-      highlights += `<b>${dayName}, ${formattedDate}</b>\n`;
+      highlights += `<div class="event-day">`;
+      highlights += `<b>📅 ${dayName}, ${formattedDate}</b>\n`;
       
       // Get up to top 3 events for the day
       const topEvents = dayEvents.slice(0, 3);
       topEvents.forEach((event, index) => {
         const likes = event.likes || 0;
         const rsvpYes = event.rsvp_yes || 0;
+        const interestCount = likes + rsvpYes;
         
-        highlights += `- ${event.title} (${event.time || '?'}, ${event.location || 'k.A.'})`;
-        if (likes > 0 || rsvpYes > 0) {
-          highlights += ` • ${likes + rsvpYes} Personen interessiert`;
+        highlights += `<div class="event-item">`;
+        highlights += `<b>${event.title}</b>\n`;
+        highlights += `⏰ ${event.time || '??:??'}\n`;
+        highlights += `📍 ${event.location || 'Ort unbekannt'}\n`;
+        
+        if (interestCount > 0) {
+          highlights += `❤️ ${interestCount} ${interestCount === 1 ? 'Person' : 'Personen'} interessiert\n`;
         }
-        highlights += '\n';
+        
+        highlights += `</div>`;
+        
+        // Add a separator between events, but not after the last one
+        if (index < topEvents.length - 1) {
+          highlights += `<div class="event-separator"></div>`;
+        }
       });
       
       if (dayEvents.length > 3) {
-        highlights += `... und ${dayEvents.length - 3} weitere\n`;
+        highlights += `<div class="event-more">... und ${dayEvents.length - 3} weitere</div>`;
       }
       
-      highlights += '\n';
+      highlights += `</div>`;
+      
+      // Add a separator between days, but not after the last day with events
+      if (i < 6) {
+        const nextDayEvents = getEventsForDay(events, addDays(today, i + 1));
+        if (nextDayEvents.length > 0) {
+          highlights += `<div class="day-separator"></div>`;
+        }
+      }
     }
   }
   
   if (!hasEvents) {
-    highlights += "Für die nächste Woche sind noch keine Events geplant. Schau später wieder vorbei!";
+    highlights += `<div class="no-events">Für die nächste Woche sind noch keine Events geplant. Schau später wieder vorbei!</div>`;
   }
   
   return highlights;
@@ -81,7 +101,8 @@ export const generateResponse = (input: string, events: Event[]): string => {
   const normalizedInput = input.toLowerCase().trim();
   
   // Check for next week's highlights query
-  if (normalizedInput.includes('highlight') && (normalizedInput.includes('woche') || normalizedInput.includes('nächste woche'))) {
+  if ((normalizedInput.includes('highlight') || normalizedInput.includes('top events')) && 
+      (normalizedInput.includes('woche') || normalizedInput.includes('nächste woche'))) {
     return getNextWeekHighlights(events);
   }
   
@@ -115,16 +136,24 @@ export const generateResponse = (input: string, events: Event[]): string => {
       return 'Es sind derzeit keine kommenden Events geplant. Schau später wieder vorbei!';
     }
     
-    let response = 'Hier sind einige bevorstehende Events:\n\n';
+    let response = '<div class="events-list">';
+    response += '<b>Hier sind einige bevorstehende Events:</b>\n\n';
     
-    upcomingEvents.forEach(event => {
-      response += `🗓️ <b>${event.title}</b>\n`;
+    upcomingEvents.forEach((event, index) => {
+      response += `<div class="event-card">`;
+      response += `<b>🗓️ ${event.title}</b>\n`;
       response += `📅 ${event.date} um ${event.time || 'k.A.'}\n`;
       response += `📍 ${event.location || 'Ort unbekannt'}\n`;
-      response += `🏷️ ${event.category || 'Keine Kategorie'}\n\n`;
+      response += `🏷️ ${event.category || 'Keine Kategorie'}\n`;
+      response += `</div>`;
+      
+      // Add separator between events
+      if (index < upcomingEvents.length - 1) {
+        response += `<div class="event-separator"></div>`;
+      }
     });
     
-    response += 'Möchtest du mehr Details zu einem bestimmten Event erfahren?';
+    response += '</div>\n\nMöchtest du mehr Details zu einem bestimmten Event erfahren?';
     
     return response;
   }
@@ -140,17 +169,27 @@ export const generateResponse = (input: string, events: Event[]): string => {
       return 'Heute finden keine Events statt. Frag mich nach Events für morgen oder die nächsten Tage!';
     }
     
-    let response = `Heute finden ${todayEvents.length} Events statt:\n\n`;
+    let response = `<div class="today-events">`;
+    response += `<b>Heute finden ${todayEvents.length} Events statt:</b>\n\n`;
     
-    todayEvents.slice(0, 3).forEach(event => {
-      response += `🗓️ <b>${event.title}</b>\n`;
-      response += `🕒 ${event.time || 'k.A.'}\n`;
-      response += `📍 ${event.location || 'Ort unbekannt'}\n\n`;
+    todayEvents.slice(0, 3).forEach((event, index) => {
+      response += `<div class="event-card">`;
+      response += `<b>🗓️ ${event.title}</b>\n`;
+      response += `⏰ ${event.time || 'k.A.'}\n`;
+      response += `📍 ${event.location || 'Ort unbekannt'}\n`;
+      response += `</div>`;
+      
+      // Add separator between events
+      if (index < Math.min(todayEvents.length, 3) - 1) {
+        response += `<div class="event-separator"></div>`;
+      }
     });
     
     if (todayEvents.length > 3) {
-      response += `... und ${todayEvents.length - 3} weitere Events.\n\n`;
+      response += `<div class="event-more">... und ${todayEvents.length - 3} weitere Events.</div>`;
     }
+    
+    response += `</div>`;
     
     return response;
   }
@@ -166,17 +205,27 @@ export const generateResponse = (input: string, events: Event[]): string => {
       return 'Morgen finden keine Events statt. Frag mich nach Events für die nächsten Tage!';
     }
     
-    let response = `Morgen finden ${tomorrowEvents.length} Events statt:\n\n`;
+    let response = `<div class="tomorrow-events">`;
+    response += `<b>Morgen finden ${tomorrowEvents.length} Events statt:</b>\n\n`;
     
-    tomorrowEvents.slice(0, 3).forEach(event => {
-      response += `🗓️ <b>${event.title}</b>\n`;
-      response += `🕒 ${event.time || 'k.A.'}\n`;
-      response += `📍 ${event.location || 'Ort unbekannt'}\n\n`;
+    tomorrowEvents.slice(0, 3).forEach((event, index) => {
+      response += `<div class="event-card">`;
+      response += `<b>🗓️ ${event.title}</b>\n`;
+      response += `⏰ ${event.time || 'k.A.'}\n`;
+      response += `📍 ${event.location || 'Ort unbekannt'}\n`;
+      response += `</div>`;
+      
+      // Add separator between events
+      if (index < Math.min(tomorrowEvents.length, 3) - 1) {
+        response += `<div class="event-separator"></div>`;
+      }
     });
     
     if (tomorrowEvents.length > 3) {
-      response += `... und ${tomorrowEvents.length - 3} weitere Events.\n\n`;
+      response += `<div class="event-more">... und ${tomorrowEvents.length - 3} weitere Events.</div>`;
     }
+    
+    response += `</div>`;
     
     return response;
   }
@@ -202,20 +251,30 @@ export const generateResponse = (input: string, events: Event[]): string => {
       return 'Am Wochenende finden keine Events statt. Frag mich nach Events für die nächsten Tage!';
     }
     
-    let response = `Am Wochenende finden ${weekendEvents.length} Events statt:\n\n`;
+    let response = `<div class="weekend-events">`;
+    response += `<b>Am Wochenende finden ${weekendEvents.length} Events statt:</b>\n\n`;
     
-    weekendEvents.slice(0, 3).forEach(event => {
+    weekendEvents.slice(0, 3).forEach((event, index) => {
       const eventDate = parseISO(event.date);
       const dayName = getDayOfWeekInGerman(eventDate);
       
-      response += `🗓️ <b>${event.title}</b>\n`;
+      response += `<div class="event-card">`;
+      response += `<b>🗓️ ${event.title}</b>\n`;
       response += `📅 ${dayName}, ${event.date} um ${event.time || 'k.A.'}\n`;
-      response += `📍 ${event.location || 'Ort unbekannt'}\n\n`;
+      response += `📍 ${event.location || 'Ort unbekannt'}\n`;
+      response += `</div>`;
+      
+      // Add separator between events
+      if (index < Math.min(weekendEvents.length, 3) - 1) {
+        response += `<div class="event-separator"></div>`;
+      }
     });
     
     if (weekendEvents.length > 3) {
-      response += `... und ${weekendEvents.length - 3} weitere Events.\n\n`;
+      response += `<div class="event-more">... und ${weekendEvents.length - 3} weitere Events.</div>`;
     }
+    
+    response += `</div>`;
     
     return response;
   }
