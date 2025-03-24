@@ -1,15 +1,25 @@
 
 import { useState, useEffect, useRef } from 'react'
-import type { ToastActionElement, ToastProps } from "@/components/ui/toast"
+import type { ToastActionElement, ToastProps as ToastPrimitivesProps } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 20
 const TOAST_REMOVE_DELAY = 1000
 
-type ToasterToast = ToastProps & {
+export type ToastProps = {
+  title?: React.ReactNode
+  description?: React.ReactNode
+  action?: ToastActionElement
+  variant?: "default" | "destructive" | "success"
+  duration?: number
+}
+
+type ToasterToast = ToastPrimitivesProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  open?: boolean
+  duration?: number
 }
 
 const actionTypes = {
@@ -132,13 +142,6 @@ function dispatch(action: Action) {
   })
 }
 
-interface ToastProps {
-  title?: React.ReactNode
-  description?: React.ReactNode
-  action?: ToastActionElement
-  variant?: "default" | "destructive" | "success"
-}
-
 export function useToast() {
   const [state, setState] = useState<State>(memoryState)
 
@@ -189,28 +192,59 @@ export function useToast() {
 
 export type Toast = ReturnType<typeof useToast>
 
-// Fix: Create toast instance with direct call methods instead of properties that return functions
-const toastInstance = useToast()
+// Create a proper function-based API to avoid hooks outside of components
+function createToastFunctions() {
+  const state = { toasts: [] };
+  
+  // This function is what we'll expose as the toast API
+  const toast = (props: ToastProps) => {
+    const id = genId();
+    
+    const update = (newProps: Partial<ToasterToast>) =>
+      dispatch({
+        type: actionTypes.UPDATE_TOAST,
+        toast: { ...newProps, id },
+      });
+      
+    const dismiss = () => 
+      dispatch({
+        type: actionTypes.DISMISS_TOAST,
+        toastId: id
+      });
+    
+    dispatch({
+      type: actionTypes.ADD_TOAST,
+      toast: {
+        ...props,
+        id,
+        open: true,
+        onOpenChange: (open: boolean) => {
+          if (!open) dismiss();
+        },
+      },
+    });
+    
+    return {
+      id,
+      dismiss,
+      update,
+    };
+  };
 
-export const toast = {
-  // These now are functions that can be called directly
-  success(props: ToastProps) {
-    return toastInstance.toast({ ...props, variant: "success" })
-  },
-  default(props: ToastProps) {
-    return toastInstance.toast(props)
-  },
-  destructive(props: ToastProps) {
-    return toastInstance.toast({ ...props, variant: "destructive" })
-  },
-  // For backwards compatibility
-  error(props: ToastProps) {
-    return toastInstance.toast({ ...props, variant: "destructive" })
-  },
-  warning(props: ToastProps) {
-    return toastInstance.toast({ ...props, variant: "destructive" })
-  },
-  info(props: ToastProps) {
-    return toastInstance.toast(props)
-  }
+  return {
+    // Main toast methods
+    toast,
+    success: (props: ToastProps) => toast({ ...props, variant: "success" }),
+    error: (props: ToastProps) => toast({ ...props, variant: "destructive" }),
+    warning: (props: ToastProps) => toast({ ...props, variant: "destructive" }),
+    info: (props: ToastProps) => toast(props),
+    default: (props: ToastProps) => toast(props),
+    destructive: (props: ToastProps) => toast({ ...props, variant: "destructive" }),
+    
+    // Additional utility methods
+    dismiss: (toastId?: string) => dispatch({ type: actionTypes.DISMISS_TOAST, toastId }),
+    remove: (toastId?: string) => dispatch({ type: actionTypes.REMOVE_TOAST, toastId }),
+  };
 }
+
+export const toast = createToastFunctions();
