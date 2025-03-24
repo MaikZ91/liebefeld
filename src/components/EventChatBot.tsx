@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Send, Calendar, X, Heart, Loader2, Image, ThumbsUp, Smile, CheckCheck, Check, Share2, Search, HelpCircle, Clock, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '@/components/ui/dialog';
 import { type Event, RsvpOption, normalizeRsvpCounts } from '@/types/eventTypes';
 import { useEventContext } from '@/contexts/EventContext';
 import { generateResponse, getWelcomeMessage } from '@/utils/chatUtils';
@@ -63,165 +63,90 @@ const EventChatBot: React.FC = () => {
   }, [events]);
 
   const handleSend = (text = input, sharedEvent?: Event) => {
-    const messageText = text.trim();
-    if (!messageText && !fileInputRef.current?.files?.length && !sharedEvent) return;
+    try {
+      const messageText = text.trim();
+      if (!messageText && !fileInputRef.current?.files?.length && !sharedEvent) return;
 
-    const userMessage: Message = {
-      id: `user-${Date.now()}`,
-      text: messageText,
-      isUser: true,
-      timestamp: new Date(),
-      read_by: [username],
-      eventData: sharedEvent
-    };
+      // Create user message
+      const userMessage: Message = {
+        id: `user-${Date.now()}`,
+        text: messageText,
+        isUser: true,
+        timestamp: new Date(),
+        read_by: [username],
+        eventData: sharedEvent
+      };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setQuickInput('');
-    setIsTyping(true);
-    setIsOpen(true);
-    setSelectedEventId(null);
+      // Update UI state
+      setMessages(prev => [...prev, userMessage]);
+      setInput('');
+      setQuickInput('');
+      setIsTyping(true);
+      setIsOpen(true);
+      setSelectedEventId(null);
 
-    let mediaUrl: string | undefined = undefined;
-    const processMessage = async () => {
-      try {
-        if (fileInputRef.current?.files?.length) {
-          const file = fileInputRef.current.files[0];
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-          const filePath = `event_chat/${fileName}`;
-          
-          const { data: buckets } = await supabase.storage.listBuckets();
-          if (!buckets?.find(b => b.name === 'chat_media')) {
-            await supabase.storage.createBucket('chat_media', { public: true });
-          }
-          
-          const { error: uploadError } = await supabase
-            .storage
-            .from('chat_media')
-            .upload(filePath, file);
+      let mediaUrl: string | undefined = undefined;
+
+      // Process file uploads
+      const processMessage = async () => {
+        try {
+          if (fileInputRef.current?.files?.length) {
+            const file = fileInputRef.current.files[0];
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+            const filePath = `event_chat/${fileName}`;
             
-          if (uploadError) {
-            console.error("Error uploading file:", uploadError);
-            toast({
-              title: "Fehler beim Hochladen",
-              description: "Die Datei konnte nicht hochgeladen werden.",
-              variant: "destructive"
-            });
-          } else {
-            const { data: urlData } = supabase
-              .storage
-              .from('chat_media')
-              .getPublicUrl(filePath);
-              
-            mediaUrl = urlData.publicUrl;
-            
-            setMessages(prev => prev.map(msg => 
-              msg.id === userMessage.id 
-                ? { ...msg, media_url: mediaUrl } 
-                : msg
-            ));
-          }
-          
-          if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-          }
-        }
-      } catch (error) {
-        console.error("Error processing file:", error);
-      }
-    };
-    
-    const storeUserMessage = async () => {
-      try {
-        await processMessage();
-        
-        const { data: groupsCheck } = await supabase
-          .from('chat_groups')
-          .select('id')
-          .limit(1);
-          
-        if (groupsCheck && groupsCheck.length > 0) {
-          const botGroupName = "LiebefeldBot";
-          const { data: botGroup } = await supabase
-            .from('chat_groups')
-            .select('id')
-            .eq('name', botGroupName)
-            .single();
-            
-          let botGroupId;
-          
-          if (!botGroup) {
-            const { data: newGroup } = await supabase
-              .from('chat_groups')
-              .insert({
-                name: botGroupName,
-                description: "Frag den Bot nach Events in Liebefeld",
-                created_by: "System"
-              })
-              .select()
-              .single();
-              
-            botGroupId = newGroup?.id;
-          } else {
-            botGroupId = botGroup.id;
-          }
-          
-          if (botGroupId) {
-            let eventText = "";
-            
-            if (sharedEvent) {
-              eventText = `🗓️ **Event: ${sharedEvent.title}**\nDatum: ${sharedEvent.date} um ${sharedEvent.time}\nOrt: ${sharedEvent.location || 'k.A.'}\nKategorie: ${sharedEvent.category}\n\n${messageText}`;
-            } else {
-              eventText = messageText;
+            const { data: buckets } = await supabase.storage.listBuckets();
+            if (!buckets?.find(b => b.name === 'chat_media')) {
+              await supabase.storage.createBucket('chat_media', { public: true });
             }
             
-            await supabase
-              .from('chat_messages')
-              .insert({
-                group_id: botGroupId,
-                sender: username,
-                text: eventText,
-                avatar: localStorage.getItem(AVATAR_KEY),
-                media_url: mediaUrl,
-                read_by: [username],
-                reactions: []
+            const { error: uploadError } = await supabase
+              .storage
+              .from('chat_media')
+              .upload(filePath, file);
+            
+            if (uploadError) {
+              console.error("Error uploading file:", uploadError);
+              toast({
+                title: "Fehler beim Hochladen",
+                description: "Die Datei konnte nicht hochgeladen werden.",
+                variant: "destructive"
               });
+            } else {
+              const { data: urlData } = supabase
+                .storage
+                .from('chat_media')
+                .getPublicUrl(filePath);
+              
+              mediaUrl = urlData.publicUrl;
+            
+              setMessages(prev => prev.map(msg => 
+                msg.id === userMessage.id 
+                  ? { ...msg, media_url: mediaUrl } 
+                  : msg
+              ));
+            }
+          
+            if (fileInputRef.current) {
+              fileInputRef.current.value = '';
+            }
           }
+        } catch (error) {
+          console.error("Error processing file:", error);
         }
-      } catch (error) {
-        console.error("Error storing user message:", error);
-      }
-    };
-    
-    storeUserMessage();
-
-    setTimeout(() => {
-      let botResponse = '';
-      if (sharedEvent) {
-        botResponse = `Danke für das Teilen des Events "${sharedEvent.title}"! Das klingt spannend. Möchtest du mehr Details dazu wissen oder soll ich ähnliche Events in ${sharedEvent.location || 'der Umgebung'} vorschlagen?`;
-      } else {
-        botResponse = generateResponse(messageText, events);
-      }
-      
-      const botMessage: Message = {
-        id: `bot-${Date.now()}`,
-        text: botResponse,
-        isUser: false,
-        timestamp: new Date(),
-        read_by: [username]
       };
       
-      setMessages(prev => [...prev, botMessage]);
-      setIsTyping(false);
-      
-      const storeBotResponse = async () => {
+      // Store user message
+      const storeUserMessage = async () => {
         try {
+          await processMessage();
+          
           const { data: groupsCheck } = await supabase
             .from('chat_groups')
             .select('id')
             .limit(1);
-            
+          
           if (groupsCheck && groupsCheck.length > 0) {
             const botGroupName = "LiebefeldBot";
             const { data: botGroup } = await supabase
@@ -229,26 +154,140 @@ const EventChatBot: React.FC = () => {
               .select('id')
               .eq('name', botGroupName)
               .single();
+            
+            let botGroupId;
+          
+            if (!botGroup) {
+              const { data: newGroup } = await supabase
+                .from('chat_groups')
+                .insert({
+                  name: botGroupName,
+                  description: "Frag den Bot nach Events in Liebefeld",
+                  created_by: "System"
+                })
+                .select()
+                .single();
               
-            if (botGroup) {
+              botGroupId = newGroup?.id;
+            } else {
+              botGroupId = botGroup.id;
+            }
+          
+            if (botGroupId) {
+              let eventText = "";
+            
+              if (sharedEvent) {
+                eventText = `🗓️ **Event: ${sharedEvent.title}**\nDatum: ${sharedEvent.date} um ${sharedEvent.time}\nOrt: ${sharedEvent.location || 'k.A.'}\nKategorie: ${sharedEvent.category}\n\n${messageText}`;
+              } else {
+                eventText = messageText;
+              }
+            
               await supabase
                 .from('chat_messages')
                 .insert({
-                  group_id: botGroup.id,
-                  sender: "LiebefeldBot",
-                  text: botResponse,
-                  avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=LiebefeldBot",
-                  read_by: [username]
+                  group_id: botGroupId,
+                  sender: username,
+                  text: eventText,
+                  avatar: localStorage.getItem(AVATAR_KEY),
+                  media_url: mediaUrl,
+                  read_by: [username],
+                  reactions: []
                 });
             }
           }
         } catch (error) {
-          console.error("Error storing bot response:", error);
+          console.error("Error storing user message:", error);
         }
       };
       
-      storeBotResponse();
-    }, 700);
+      storeUserMessage();
+
+      // Generate bot response
+      setTimeout(() => {
+        try {
+          let botResponse = '';
+          
+          // Check if we have events data
+          if (!events || !Array.isArray(events)) {
+            console.error("Events data is invalid in handleSend:", events);
+            botResponse = "Entschuldigung, ich konnte keine Event-Daten laden. Bitte versuche es später noch einmal.";
+          } else if (sharedEvent) {
+            botResponse = `Danke für das Teilen des Events "${sharedEvent.title}"! Das klingt spannend. Möchtest du mehr Details dazu wissen oder soll ich ähnliche Events in ${sharedEvent.location || 'der Umgebung'} vorschlagen?`;
+          } else {
+            // Safe call to generateResponse
+            botResponse = generateResponse(messageText, events);
+          }
+          
+          const botMessage: Message = {
+            id: `bot-${Date.now()}`,
+            text: botResponse,
+            isUser: false,
+            timestamp: new Date(),
+            read_by: [username]
+          };
+          
+          setMessages(prev => [...prev, botMessage]);
+          setIsTyping(false);
+          
+          // Store bot response
+          const storeBotResponse = async () => {
+            try {
+              const { data: groupsCheck } = await supabase
+                .from('chat_groups')
+                .select('id')
+                .limit(1);
+            
+              if (groupsCheck && groupsCheck.length > 0) {
+                const botGroupName = "LiebefeldBot";
+                const { data: botGroup } = await supabase
+                  .from('chat_groups')
+                  .select('id')
+                  .eq('name', botGroupName)
+                  .single();
+              
+                if (botGroup) {
+                  await supabase
+                    .from('chat_messages')
+                    .insert({
+                      group_id: botGroup.id,
+                      sender: "LiebefeldBot",
+                      text: botResponse,
+                      avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=LiebefeldBot",
+                      read_by: [username]
+                    });
+                }
+              }
+            } catch (error) {
+              console.error("Error storing bot response:", error);
+            }
+          };
+          
+          storeBotResponse();
+        } catch (error) {
+          console.error("Error generating bot response:", error);
+          // Add fallback for when response generation fails
+          const errorMessage: Message = {
+            id: `bot-error-${Date.now()}`,
+            text: "Entschuldigung, ich konnte deine Anfrage nicht verarbeiten. Bitte versuche es noch einmal.",
+            isUser: false,
+            timestamp: new Date(),
+            read_by: [username]
+          };
+          
+          setMessages(prev => [...prev, errorMessage]);
+          setIsTyping(false);
+        }
+      }, 700);
+    } catch (error) {
+      console.error("Critical error in handleSend:", error);
+      // Recover UI state in case of critical error
+      setIsTyping(false);
+      toast({
+        title: "Fehler",
+        description: "Es ist ein Fehler aufgetreten. Bitte versuche es erneut.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleQuickSend = () => {
@@ -553,7 +592,15 @@ const EventChatBot: React.FC = () => {
           </PopoverContent>
         </Popover>
         
-        <DialogContent className="sm:max-w-[425px] h-[600px] flex flex-col p-0 gap-0 rounded-xl bg-[#1A1D2D] text-white border-gray-800 shadow-2xl animate-scale-in">
+        <DialogContent className="sm:max-w-[425px] h-[600px] flex flex-col p-0 gap-0 rounded-xl bg-[#1A1D2D] text-white border-gray-800 shadow-2xl animate-scale-in" aria-describedby="chat-description">
+          {/* Fix: Add DialogTitle with screen reader only class for accessibility */}
+          <DialogTitle className="sr-only">Liebefeld Event Chat</DialogTitle>
+          
+          {/* A hidden description for screen readers */}
+          <div id="chat-description" className="sr-only">
+            Chat mit dem Liebefeld Bot über Events in deiner Region
+          </div>
+          
           <div className="flex items-center justify-between p-4 border-b border-gray-800 bg-gradient-to-r from-red-700 to-red-600 rounded-t-xl">
             <div className="flex items-center">
               <Heart className="mr-2 h-5 w-5 text-white fill-white animate-pulse-soft" />
@@ -767,44 +814,3 @@ const EventChatBot: React.FC = () => {
                           </div>
                         ))
                     ) : (
-                      <div className="text-sm text-muted-foreground p-2">
-                        {eventSearchQuery.trim() ? "Keine passenden Events gefunden" : "Keine Events verfügbar"}
-                      </div>
-                    )}
-                  </div>
-                </PopoverContent>
-              </Popover>
-              <Input
-                type="text"
-                placeholder="Frag mich nach Liebefeld Events..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                className="flex-1 bg-gray-800 border-gray-700 focus:ring-red-500 focus:border-red-500 text-white"
-              />
-              <Button
-                onClick={() => handleSend()}
-                className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 transition-all duration-300 shadow-md"
-                disabled={!input.trim() && !fileInputRef.current?.files?.length || isTyping}
-              >
-                {isTyping ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send size={18} />
-                )}
-              </Button>
-              <input 
-                type="file" 
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/*"
-              />
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-};
-
-export default EventChatBot;

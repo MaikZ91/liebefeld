@@ -224,9 +224,20 @@ const getTodaysHighlights = (events: Event[]): string => {
 };
 
 export const generateResponse = (input: string, events: Event[]): string => {
+  // Critical fix: Add defensive check before trying to process any input
+  if (!input || typeof input !== 'string') {
+    console.error("Invalid input to generateResponse:", input);
+    return "Entschuldigung, ich konnte deine Anfrage nicht verarbeiten. Bitte versuche es erneut.";
+  }
+  
   // Safety check to ensure we have events array
-  if (!events || !Array.isArray(events)) {
-    console.error("Events is not an array:", events);
+  if (!events) {
+    console.error("Events is undefined in generateResponse");
+    return "Ich konnte leider keine Event-Informationen finden. Bitte versuche es später noch einmal.";
+  }
+  
+  if (!Array.isArray(events)) {
+    console.error("Events is not an array in generateResponse:", typeof events);
     return "Ich konnte leider keine Event-Informationen finden. Bitte versuche es später noch einmal.";
   }
   
@@ -234,6 +245,7 @@ export const generateResponse = (input: string, events: Event[]): string => {
     console.log("Generating response for input:", input);
     console.log("Events array length:", events.length);
     
+    // Normalize the input for consistent processing
     const normalizedInput = input.toLowerCase().trim();
     
     // Check if user is asking about a specific event by ID
@@ -282,6 +294,7 @@ export const generateResponse = (input: string, events: Event[]): string => {
       const upcomingEvents = events
         .filter(event => {
           try {
+            if (!event.date) return false;
             const eventDate = parseISO(event.date);
             return isAfter(eventDate, today) || isSameDay(eventDate, today);
           } catch (error) {
@@ -291,6 +304,7 @@ export const generateResponse = (input: string, events: Event[]): string => {
         })
         .sort((a, b) => {
           try {
+            if (!a.date || !b.date) return 0;
             const dateA = parseISO(a.date);
             const dateB = parseISO(b.date);
             return dateA.getTime() - dateB.getTime();
@@ -330,6 +344,7 @@ export const generateResponse = (input: string, events: Event[]): string => {
       const tomorrow = addDays(new Date(), 1);
       const tomorrowEvents = events.filter(event => {
         try {
+          if (!event.date) return false;
           const eventDate = parseISO(event.date);
           return isSameDay(eventDate, tomorrow);
         } catch (error) {
@@ -375,6 +390,7 @@ export const generateResponse = (input: string, events: Event[]): string => {
         
         const weekendEvents = events.filter(event => {
           try {
+            if (!event.date) return false;
             const eventDate = parseISO(event.date);
             const dayOfWeek = eventDate.getDay();
             return (dayOfWeek === fridayIndex || dayOfWeek === saturdayIndex || dayOfWeek === sundayIndex) && 
@@ -385,6 +401,7 @@ export const generateResponse = (input: string, events: Event[]): string => {
           }
         }).sort((a, b) => {
           try {
+            if (!a.date || !b.date) return 0;
             const dateA = parseISO(a.date);
             const dateB = parseISO(b.date);
             return dateA.getTime() - dateB.getTime();
@@ -403,6 +420,11 @@ export const generateResponse = (input: string, events: Event[]): string => {
         
         weekendEvents.slice(0, 3).forEach((event, index) => {
           try {
+            if (!event.date) {
+              response += `<div class="event-card"><b>🗓️ ${event.title}</b>\n(Datum unbekannt)</div>`;
+              return;
+            }
+            
             const eventDate = parseISO(event.date);
             const dayName = getDayOfWeekInGerman(eventDate);
             
@@ -417,6 +439,8 @@ export const generateResponse = (input: string, events: Event[]): string => {
             }
           } catch (error) {
             console.error("Error formatting weekend event:", event, error);
+            // Skip this event or add a fallback
+            response += `<div class="event-card"><b>🗓️ ${event.title}</b>\n(Details nicht verfügbar)</div>`;
           }
         });
         
@@ -433,6 +457,7 @@ export const generateResponse = (input: string, events: Event[]): string => {
       }
     }
     
+    // Catch-all response for any other input
     return 'Ich kann dir Informationen zu Events in Liebefeld geben. Frag mich nach Events heute, morgen, am Wochenende oder nach den Highlights der nächsten Woche!';
   } catch (error) {
     console.error("Error in chatbot response generation:", error);
