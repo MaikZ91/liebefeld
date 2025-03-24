@@ -128,9 +128,22 @@ const Index = () => {
             <LiveTickerWrapper />
           </div>
 
-          {/* Partnerships Info Box */}
+          {/* Community & Partnerships Section */}
           <div className="container mx-auto px-4 py-8">
-            <PartnershipsInfo />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Community Test Component */}
+              <div className="animate-fade-up">
+                <CommunityTest 
+                  showButton={true}
+                  whatsappUrl={WHATSAPP_URL}
+                />
+              </div>
+              
+              {/* Partnerships Info Box */}
+              <div className="animate-fade-up">
+                <PartnershipsInfo />
+              </div>
+            </div>
           </div>
 
           {/* Calendar Section */}
