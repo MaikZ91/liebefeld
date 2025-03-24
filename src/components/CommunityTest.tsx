@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -5,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 type Question = {
   id: number;
@@ -60,6 +61,7 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [freeText, setFreeText] = useState("");
+  const { toast } = useToast();
   
   const totalSteps = questions.length + 1; // Questions + free text
   const minCharacters = 30; // Reduced from 50 to 30 characters required for free text
@@ -75,9 +77,11 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
     
     if (currentStep < questions.length) {
       if (!answers[currentQuestion.id]) {
-        toast.destructive({
+        toast({
           title: "Bitte wähle eine Antwort",
-          description: "Du musst eine Option auswählen, um fortzufahren."
+          description: "Du musst eine Option auswählen, um fortzufahren.",
+          variant: "destructive",
+          duration: 3000,
         });
         return;
       }
@@ -98,51 +102,66 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
   
   const checkAnswers = () => {
     if (freeText.trim().length < minCharacters) {
-      toast.destructive({
+      toast({
         title: "Deine Antwort ist zu kurz",
-        description: "Bitte teile uns etwas mehr über dich mit. Was sind deine Hobbys und Interessen?"
+        description: "Bitte teile uns etwas mehr über dich mit. Was sind deine Hobbys und Interessen?",
+        variant: "destructive",
+        duration: 3000,
       });
       return;
     }
     
+    // Check for disqualifying answers - political discussions or passive reading
     const hasPoliticalInterest = answers[3] === "a";
     const isPassiveReader = answers[1] === "a";
     
     if (hasPoliticalInterest || isPassiveReader) {
-      toast.destructive({
+      toast({
         title: "Leider nicht passend für unsere Community",
-        description: "Unsere Community fokussiert sich auf aktive Teilnahme bei Kultur-, Sport- und Kreativaktivitäten. Politische Diskussionen und passive Teilnahme passen nicht zu unserem Konzept."
+        description: "Unsere Community fokussiert sich auf aktive Teilnahme bei Kultur-, Sport- und Kreativaktivitäten. Politische Diskussionen und passive Teilnahme passen nicht zu unserem Konzept.",
+        variant: "destructive",
+        duration: 5000,
       });
       
+      // Close the dialog after showing the toast
       setTimeout(() => {
         onOpenChange(false);
       }, 5000);
       return;
     }
     
+    // Count how many answers match any of the "active" answers (not just the "correct" ones)
     const activeAnswers = questions.reduce((count, question) => {
       const answer = answers[question.id];
+      // Consider answers b, c, and d as "active" participation (not just "a")
       return (answer && answer !== "a") ? count + 1 : count;
     }, 0);
     
+    // Reduced threshold - just 1 active answer is enough
     const passThreshold = 1;
     
     if (activeAnswers >= passThreshold) {
-      toast.success({
+      toast({
         title: "Du passt perfekt zu uns!",
-        description: "Wir freuen uns, dich in unserer Community begrüßen zu dürfen. Du wirst gleich zur WhatsApp Gruppe weitergeleitet."
+        description: "Wir freuen uns, dich in unserer Community begrüßen zu dürfen. Du wirst gleich zur WhatsApp Gruppe weitergeleitet.",
+        variant: "success",
+        duration: 5000,
       });
       
+      // Redirect to WhatsApp after a short delay
       setTimeout(() => {
         window.open(whatsappUrl, "_blank");
         onOpenChange(false);
       }, 2500);
     } else {
-      toast.destructive({
+      toast({
         title: "Wir suchen aktive Mitglieder",
-        description: "Es scheint, als ob du vielleicht nicht nach einer aktiven Teilnahme in unserer Community suchst. Wir möchten vor allem Menschen verbinden, die sich für gemeinsame Aktivitäten begeistern können."
+        description: "Es scheint, als ob du vielleicht nicht nach einer aktiven Teilnahme in unserer Community suchst. Wir möchten vor allem Menschen verbinden, die sich für gemeinsame Aktivitäten begeistern können.",
+        variant: "destructive",
+        duration: 5000,
       });
       
+      // Close the dialog after showing the toast
       setTimeout(() => {
         onOpenChange(false);
       }, 5000);

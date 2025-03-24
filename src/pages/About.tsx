@@ -3,30 +3,13 @@ import React, { useEffect } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { BadgeCheck, Calendar, Clock, Heart, Link, Mail, MapPin, MessageSquare, SendIcon, Users } from 'lucide-react';
+import { BadgeCheck, Calendar, Clock, Heart, Link, Mail, MapPin, MessageSquare, Users } from 'lucide-react';
 import ImageCarousel from '@/components/ImageCarousel';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from '@/components/ui/form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
 
 const About = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
-  
-  const { toast } = useToast();
   
   // Community images for the carousel - same as on index page
   const communityImages = [
@@ -47,57 +30,6 @@ const About = () => {
       alt: "Music band session"
     }
   ];
-
-  // Define the form schema with zod
-  const formSchema = z.object({
-    name: z.string().min(2, {
-      message: "Name muss mindestens 2 Zeichen lang sein."
-    }),
-    email: z.string().email({
-      message: "Bitte gib eine gültige E-Mail-Adresse ein."
-    }),
-    company: z.string().optional(),
-    message: z.string().min(10, {
-      message: "Nachricht muss mindestens 10 Zeichen lang sein."
-    })
-  });
-
-  // Initialize the form
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      company: "",
-      message: ""
-    }
-  });
-
-  // Form submission handler
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    try {
-      // In a real implementation, you would send an email to maik.z@gmx.de
-      // This is a simple simulation of a successful submission
-      console.log("Form submitted:", values);
-      
-      // Show success toast
-      toast({
-        title: "Nachricht gesendet!",
-        description: "Vielen Dank für deine Anfrage. Wir werden uns so schnell wie möglich bei dir melden.",
-        variant: "default"
-      });
-      
-      // Reset form
-      form.reset();
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      toast({
-        title: "Fehler beim Senden",
-        description: "Es gab ein Problem beim Senden deiner Nachricht. Bitte versuche es später noch einmal.",
-        variant: "destructive"
-      });
-    }
-  };
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -197,140 +129,20 @@ const About = () => {
             </div>
           </section>
           
-          {/* Partnerships Section - Highlighted and modified to be more prominent */}
-          <section className="mb-16 scroll-mt-24 relative" id="partnerships">
-            <div className="absolute -inset-2 bg-gradient-to-r from-amber-300/20 via-orange-300/20 to-amber-300/20 rounded-3xl blur-xl"></div>
-            
-            <div className="glass-card bg-gradient-to-br from-orange-50/90 to-amber-50/90 dark:from-amber-950/40 dark:to-orange-900/30 rounded-2xl p-8 md:p-12 shadow-lg border-2 border-amber-300/50 dark:border-amber-600/40 relative">
-              <div className="absolute top-0 right-0 w-40 h-40 bg-amber-300/20 rounded-full blur-2xl -mr-10 -mt-10 z-0"></div>
-              <div className="absolute bottom-0 left-0 w-40 h-40 bg-orange-300/20 rounded-full blur-2xl -ml-10 -mb-10 z-0"></div>
-              
-              <div className="relative z-10">
-                <div className="inline-block px-4 py-1 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-100 font-medium text-sm mb-4">
-                  Partnerschaften
-                </div>
-                <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-amber-700 to-orange-600 bg-clip-text text-transparent dark:from-amber-300 dark:to-orange-400">Gemeinsam Bielefeld gestalten</h2>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-                  <div>
-                    <p className="text-muted-foreground mb-6 text-lg">
-                      Wir sind ständig auf der Suche nach Partnerschaften mit lokalen Unternehmen und Initiativen, 
-                      die unsere Vision für ein lebendigeres Bielefeld teilen. Ob du Events anbieten möchtest,
-                      durch Sponsoring unterstützen oder andere Ideen hast – wir freuen uns auf deine Nachricht!
-                    </p>
-                    
-                    <div className="space-y-5 mb-8">
-                      <div className="flex items-start gap-3 bg-white/60 dark:bg-white/10 p-4 rounded-xl shadow-sm">
-                        <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-800/30 flex items-center justify-center shrink-0 mt-1">
-                          <BadgeCheck className="h-5 w-5 text-amber-600 dark:text-amber-300" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-lg">Event-Hosting</h3>
-                          <p className="text-muted-foreground">Nutze unsere Plattform, um deine eigenen Events zu bewerben und ein breites Publikum zu erreichen</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start gap-3 bg-white/60 dark:bg-white/10 p-4 rounded-xl shadow-sm">
-                        <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-800/30 flex items-center justify-center shrink-0 mt-1">
-                          <BadgeCheck className="h-5 w-5 text-amber-600 dark:text-amber-300" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-lg">Sponsoring</h3>
-                          <p className="text-muted-foreground">Unterstütze kommende Community-Events durch Sponsoring und stelle dein Unternehmen vor</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start gap-3 bg-white/60 dark:bg-white/10 p-4 rounded-xl shadow-sm">
-                        <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-800/30 flex items-center justify-center shrink-0 mt-1">
-                          <BadgeCheck className="h-5 w-5 text-amber-600 dark:text-amber-300" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-lg">Lokale Kooperationen</h3>
-                          <p className="text-muted-foreground">Gemeinsam erreichen wir mehr als allein - lass uns zusammen Bielefeld beleben</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row gap-4">
-                      <a href="mailto:maik.z@gmx.de" className="inline-flex items-center gap-2">
-                        <Button variant="outline" className="rounded-full">
-                          <Mail className="mr-2 h-4 w-4" /> maik.z@gmx.de
-                        </Button>
-                      </a>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-white dark:bg-black/20 p-6 rounded-xl shadow-md border border-gray-100 dark:border-gray-800">
-                    <h3 className="text-xl font-bold mb-4">Kontaktiere uns</h3>
-                    <Form {...form}>
-                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        <FormField
-                          control={form.control}
-                          name="name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Name</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Dein Name" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>E-Mail</FormLabel>
-                              <FormControl>
-                                <Input placeholder="deine.email@beispiel.de" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="company"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Unternehmen/Organisation <span className="text-muted-foreground text-sm">(optional)</span></FormLabel>
-                              <FormControl>
-                                <Input placeholder="Dein Unternehmen" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="message"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Nachricht</FormLabel>
-                              <FormControl>
-                                <Textarea 
-                                  placeholder="Wie können wir zusammenarbeiten? Erzähl uns mehr über deine Idee..." 
-                                  className="min-h-[120px]" 
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <Button type="submit" className="w-full gap-2">
-                          <SendIcon className="h-4 w-4" /> Nachricht senden
-                        </Button>
-                      </form>
-                    </Form>
-                  </div>
-                </div>
+          <section className="mb-16">
+            <div className="glass-card rounded-2xl p-8 md:p-12 text-center">
+              <h2 className="text-2xl md:text-3xl font-bold mb-4">Mach mit!</h2>
+              <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-8">
+                Sei Teil unserer Bewegung für ein lebendigeres Bielefeld! Entdecke spannende Events, 
+                triff neue Menschen und bringe deine eigenen Ideen ein.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button className="rounded-full shadow-md hover:shadow-lg transition-all">
+                  <Users className="mr-2 h-4 w-4" /> Community beitreten
+                </Button>
+                <Button variant="outline" className="rounded-full">
+                  <Calendar className="mr-2 h-4 w-4" /> Event erstellen
+                </Button>
               </div>
             </div>
           </section>
