@@ -7,7 +7,7 @@ import type {
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 5
-const TOAST_REMOVE_DELAY = 10000 // Change from 1000000 to 10000 (10 seconds)
+const TOAST_REMOVE_DELAY = 10000 // 10 seconds
 
 type ToasterToast = ToastProps & {
   id: string
@@ -91,8 +91,6 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -168,6 +166,19 @@ function toast({ ...props }: Toast) {
     update,
   }
 }
+
+// Add variant shortcuts
+toast.success = (message: string, options?: Omit<Toast, "title" | "description" | "variant">) => 
+  toast({ ...options, variant: "success", description: message });
+
+toast.error = (message: string, options?: Omit<Toast, "title" | "description" | "variant">) => 
+  toast({ ...options, variant: "destructive", description: message });
+
+toast.info = (message: string, options?: Omit<Toast, "title" | "description" | "variant">) => 
+  toast({ ...options, description: message });
+
+toast.warn = (message: string, options?: Omit<Toast, "title" | "description" | "variant">) => 
+  toast({ ...options, variant: "warning", description: message });
 
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
