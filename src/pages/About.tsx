@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { BadgeCheck, Calendar, Heart, Link, Mail, MapPin, MessageSquare, SendIcon, Users } from 'lucide-react';
+import { BadgeCheck, Calendar, Clock, Heart, Link, Mail, MapPin, MessageSquare, SendIcon, Users } from 'lucide-react';
 import ImageCarousel from '@/components/ImageCarousel';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
