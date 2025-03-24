@@ -170,13 +170,13 @@ export function useToast() {
       dispatch({
         type: actionTypes.ADD_TOAST,
         toast: {
-          ...props,
           id,
           open: true,
+          ...props,
           onOpenChange: (open) => {
             if (!open) dismiss()
           },
-        },
+        } as ToasterToast,
       })
 
       return {
@@ -192,8 +192,8 @@ export function useToast() {
 
 export type Toast = ReturnType<typeof useToast>
 
-// Create individual toast functions
-export function toast(props: ToastProps) {
+// Create callable toast function
+export const toast = ((props: ToastProps) => {
   const id = genId()
   
   const update = (newProps: Partial<ToasterToast>) =>
@@ -211,13 +211,13 @@ export function toast(props: ToastProps) {
   dispatch({
     type: actionTypes.ADD_TOAST,
     toast: {
-      ...props,
       id,
       open: true,
+      ...props,
       onOpenChange: (open: boolean) => {
         if (!open) dismiss();
       },
-    },
+    } as ToasterToast,
   });
   
   return {
@@ -225,7 +225,16 @@ export function toast(props: ToastProps) {
     dismiss,
     update,
   };
-}
+}) as ((props: ToastProps) => { id: string; dismiss: () => void; update: (props: Partial<ToasterToast>) => void }) & {
+  success: (props: ToastProps) => { id: string; dismiss: () => void; update: (props: Partial<ToasterToast>) => void };
+  error: (props: ToastProps) => { id: string; dismiss: () => void; update: (props: Partial<ToasterToast>) => void };
+  warning: (props: ToastProps) => { id: string; dismiss: () => void; update: (props: Partial<ToasterToast>) => void };
+  info: (props: ToastProps) => { id: string; dismiss: () => void; update: (props: Partial<ToasterToast>) => void };
+  default: (props: ToastProps) => { id: string; dismiss: () => void; update: (props: Partial<ToasterToast>) => void };
+  destructive: (props: ToastProps) => { id: string; dismiss: () => void; update: (props: Partial<ToasterToast>) => void };
+  dismiss: (toastId?: string) => void;
+  remove: (toastId?: string) => void;
+};
 
 // Variant-specific toast functions
 toast.success = (props: ToastProps) => toast({ ...props, variant: "success" });

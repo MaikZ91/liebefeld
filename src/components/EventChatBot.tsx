@@ -344,8 +344,11 @@ const EventChatBot = () => {
         return;
       }
       
-      // Update reactions
-      let updatedReactions = [...(messageData.reactions || [])];
+      // Fix for the array iteration issue
+      let updatedReactions = Array.isArray(messageData.reactions) 
+        ? [...messageData.reactions] 
+        : [];
+      
       const existingReactionIndex = updatedReactions.findIndex(r => r.emoji === emoji);
       
       if (existingReactionIndex >= 0) {
