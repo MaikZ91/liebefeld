@@ -6,6 +6,7 @@ import LiveTicker from '@/components/LiveTicker';
 import EventChatBot from '@/components/EventChatBot';
 import InstagramFeed from '@/components/InstagramFeed';
 import CommunityTest from '@/components/CommunityTest';
+import PartnershipsInfo from '@/components/PartnershipsInfo';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { QrCode } from 'lucide-react';
@@ -125,6 +126,11 @@ const Index = () => {
         <EventProvider>
           <div className="w-full bg-black">
             <LiveTickerWrapper />
+          </div>
+
+          {/* Partnerships Info Box */}
+          <div className="container mx-auto px-4 py-8">
+            <PartnershipsInfo />
           </div>
 
           {/* Calendar Section */}
