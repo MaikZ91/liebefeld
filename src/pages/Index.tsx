@@ -6,7 +6,6 @@ import LiveTicker from '@/components/LiveTicker';
 import EventChatBot from '@/components/EventChatBot';
 import InstagramFeed from '@/components/InstagramFeed';
 import CommunityTest from '@/components/CommunityTest';
-import PartnershipsInfo from '@/components/PartnershipsInfo';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { QrCode } from 'lucide-react';
@@ -126,25 +125,6 @@ const Index = () => {
         <EventProvider>
           <div className="w-full bg-black">
             <LiveTickerWrapper />
-          </div>
-
-          {/* Community & Partnerships Section */}
-          <div className="container mx-auto px-4 py-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Community Test Component */}
-              <div className="animate-fade-up">
-                <CommunityTest 
-                  open={testModalOpen}
-                  onOpenChange={setTestModalOpen}
-                  whatsappUrl={WHATSAPP_URL}
-                />
-              </div>
-              
-              {/* Partnerships Info Box */}
-              <div className="animate-fade-up">
-                <PartnershipsInfo />
-              </div>
-            </div>
           </div>
 
           {/* Calendar Section */}
