@@ -1,17 +1,16 @@
-
 import React, { useEffect } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { BadgeCheck, Calendar, Clock, Heart, Link, Mail, MapPin, MessageSquare, Users } from 'lucide-react';
 import ImageCarousel from '@/components/ImageCarousel';
+import PartnershipsInfo from '@/components/PartnershipsInfo';
 
 const About = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
   
-  // Community images for the carousel - same as on index page
   const communityImages = [
     {
       src: "/lovable-uploads/c38064ee-a32f-4ecc-b148-f9c53c28d472.png",
@@ -145,6 +144,12 @@ const About = () => {
                 </Button>
               </div>
             </div>
+          </section>
+          
+          {/* Partnerships Section */}
+          <section className="mb-16">
+            <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">Partnerschaften</h2>
+            <PartnershipsInfo />
           </section>
           
           {/* Impressum Section */}

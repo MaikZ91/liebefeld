@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -134,7 +133,6 @@ const Index = () => {
               {/* Community Test Component */}
               <div className="animate-fade-up">
                 <CommunityTest 
-                  showButton={true}
                   whatsappUrl={WHATSAPP_URL}
                 />
               </div>
