@@ -1,3 +1,4 @@
+
 import { formatDistance, parseISO, format, addDays, startOfDay, endOfDay, isBefore, isAfter, isSameDay, addWeeks } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
@@ -72,8 +73,48 @@ const getNextWeekHighlights = (events: Event[]): string => {
   return highlights;
 };
 
+const getEventDetail = (eventId: string, events: Event[]): string => {
+  const event = events.find(e => e.id === eventId);
+  
+  if (!event) {
+    return "Dieses Event konnte ich leider nicht finden.";
+  }
+  
+  let response = `<div class="event-detail">`;
+  response += `<b>🎯 ${event.title}</b>\n\n`;
+  
+  const date = parseISO(event.date);
+  const dayOfWeek = getDayOfWeekInGerman(date);
+  
+  response += `📅 ${dayOfWeek}, ${event.date}\n`;
+  response += `⏰ ${event.time || 'k.A.'}\n`;
+  response += `📍 ${event.location || 'Ort unbekannt'}\n`;
+  
+  if (event.description) {
+    response += `\n${event.description}\n`;
+  }
+  
+  if (event.organizer) {
+    response += `\n👥 Veranstalter: ${event.organizer}\n`;
+  }
+  
+  const likes = event.likes || 0;
+  response += `\n❤️ ${likes} Personen gefällt dieses Event`;
+  
+  response += `</div>`;
+  
+  return response;
+};
+
 export const generateResponse = (input: string, events: Event[]): string => {
   const normalizedInput = input.toLowerCase().trim();
+  
+  // Check if user is asking about a specific event by ID
+  const eventIdMatch = normalizedInput.match(/event:([a-f0-9-]+)/i);
+  if (eventIdMatch && eventIdMatch[1]) {
+    const eventId = eventIdMatch[1];
+    return getEventDetail(eventId, events);
+  }
   
   if ((normalizedInput.includes('highlight') || normalizedInput.includes('top events')) && 
       (normalizedInput.includes('woche') || normalizedInput.includes('nächste woche'))) {
@@ -116,7 +157,7 @@ export const generateResponse = (input: string, events: Event[]): string => {
     upcomingEvents.forEach((event, index) => {
       response += `<div class="event-card">`;
       response += `<b>🗓️ ${event.title}</b>\n`;
-      response += `⏰ ${event.time || 'k.A.'}\n`;
+      response += `📅 ${event.date} um ${event.time || 'k.A.'}\n`;
       response += `📍 ${event.location || 'Ort unbekannt'}\n`;
       response += `🏷️ ${event.category || 'Keine Kategorie'}\n`;
       response += `</div>`;
