@@ -132,6 +132,13 @@ function dispatch(action: Action) {
   })
 }
 
+interface ToastProps {
+  title?: React.ReactNode
+  description?: React.ReactNode
+  action?: ToastActionElement
+  variant?: "default" | "destructive" | "success"
+}
+
 export function useToast() {
   const [state, setState] = useState<State>(memoryState)
 
@@ -182,14 +189,28 @@ export function useToast() {
 
 export type Toast = ReturnType<typeof useToast>
 
+// Fix: Create toast instance with direct call methods instead of properties that return functions
+const toastInstance = useToast()
+
 export const toast = {
-  success: (props: Omit<ToasterToast, "id">) => {
-    return useToast().toast({ ...props, variant: "success" })
+  // These now are functions that can be called directly
+  success(props: ToastProps) {
+    return toastInstance.toast({ ...props, variant: "success" })
   },
-  default: (props: Omit<ToasterToast, "id">) => {
-    return useToast().toast(props)
+  default(props: ToastProps) {
+    return toastInstance.toast(props)
   },
-  destructive: (props: Omit<ToasterToast, "id">) => {
-    return useToast().toast({ ...props, variant: "destructive" })
+  destructive(props: ToastProps) {
+    return toastInstance.toast({ ...props, variant: "destructive" })
   },
+  // For backwards compatibility
+  error(props: ToastProps) {
+    return toastInstance.toast({ ...props, variant: "destructive" })
+  },
+  warning(props: ToastProps) {
+    return toastInstance.toast({ ...props, variant: "destructive" })
+  },
+  info(props: ToastProps) {
+    return toastInstance.toast(props)
+  }
 }
