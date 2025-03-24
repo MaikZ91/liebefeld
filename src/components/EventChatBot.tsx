@@ -3,814 +3,712 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Send, Calendar, X, Heart, Loader2, Image, ThumbsUp, Smile, CheckCheck, Check, Share2, Search, HelpCircle, Clock, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '@/components/ui/dialog';
-import { type Event, RsvpOption, normalizeRsvpCounts } from '@/types/eventTypes';
-import { useEventContext } from '@/contexts/EventContext';
-import { generateResponse, getWelcomeMessage } from '@/utils/chatUtils';
-import { format, parseISO } from 'date-fns';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { supabase, type ChatMessage, type MessageReaction } from '@/integrations/supabase/client';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ChatMessage, supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { generateResponse } from '@/utils/chatUtils';
+import { useEventContext } from '@/contexts/EventContext';
+import { v4 as uuidv4 } from 'uuid';
+import { format, parseISO, isToday, isThisWeek, isTomorrow, isThisMonth } from 'date-fns';
+import { de } from 'date-fns/locale';
+import { Event } from '@/types/eventTypes';
 
-const USERNAME_KEY = "community_chat_username";
-const AVATAR_KEY = "community_chat_avatar";
-const EMOJI_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
-
-interface Message {
-  id: string;
-  text: string;
-  isUser: boolean;
-  timestamp: Date;
-  reactions?: MessageReaction[];
-  read_by?: string[];
-  media_url?: string;
-  eventData?: Event;
+type MessageReaction = {
+  emoji: string;
+  users: string[];
 }
 
-const EventChatBot: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'welcome',
-      text: getWelcomeMessage(),
-      isUser: false,
-      timestamp: new Date()
-    }
-  ]);
-  const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [quickInput, setQuickInput] = useState('');
-  const [username, setUsername] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || "Gast");
-  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const [eventSearchQuery, setEventSearchQuery] = useState('');
-  
-  const { events, handleRsvpEvent } = useEventContext();
+type EventPopoverContentProps = {
+  events: Event[];
+}
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+const EventPopoverContent: React.FC<EventPopoverContentProps> = ({ events }) => {
+  return (
+    <div className="grid gap-2 max-h-[300px] overflow-y-auto p-2">
+      {events && events.length > 0 ? (
+        events.map(event => (
+          <div key={event.id} className="flex flex-col bg-muted/50 dark:bg-muted/20 p-2 rounded-md text-sm">
+            <div className="font-semibold">{event.title}</div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span>{format(new Date(`${event.date}T${event.time}`), 'HH:mm')} Uhr</span>
+            </div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <MapPin className="h-3 w-3" />
+              <span>{event.location || 'Kein Ort angegeben'}</span>
+            </div>
+          </div>
+        ))
+      ) : (
+        <div className="text-center py-8 text-muted-foreground">
+          Keine Events gefunden
+        </div>
+      )}
+    </div>
+  );
+};
 
-  useEffect(() => {
-    console.log(`EventChatBot received ${events.length} events from context`);
-    if (events.length > 0) {
-      console.log("Sample events from context:", events.slice(0, 3));
-    }
-  }, [events]);
+const useChatMessages = (chatGroupId: string) => {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleSend = (text = input, sharedEvent?: Event) => {
+  const fetchMessages = async () => {
     try {
-      const messageText = text.trim();
-      if (!messageText && !fileInputRef.current?.files?.length && !sharedEvent) return;
-
-      // Create user message
-      const userMessage: Message = {
-        id: `user-${Date.now()}`,
-        text: messageText,
-        isUser: true,
-        timestamp: new Date(),
-        read_by: [username],
-        eventData: sharedEvent
-      };
-
-      // Update UI state
-      setMessages(prev => [...prev, userMessage]);
-      setInput('');
-      setQuickInput('');
-      setIsTyping(true);
-      setIsOpen(true);
-      setSelectedEventId(null);
-
-      let mediaUrl: string | undefined = undefined;
-
-      // Process file uploads
-      const processMessage = async () => {
-        try {
-          if (fileInputRef.current?.files?.length) {
-            const file = fileInputRef.current.files[0];
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-            const filePath = `event_chat/${fileName}`;
-            
-            const { data: buckets } = await supabase.storage.listBuckets();
-            if (!buckets?.find(b => b.name === 'chat_media')) {
-              await supabase.storage.createBucket('chat_media', { public: true });
-            }
-            
-            const { error: uploadError } = await supabase
-              .storage
-              .from('chat_media')
-              .upload(filePath, file);
-            
-            if (uploadError) {
-              console.error("Error uploading file:", uploadError);
-              toast({
-                title: "Fehler beim Hochladen",
-                description: "Die Datei konnte nicht hochgeladen werden.",
-                variant: "destructive"
-              });
-            } else {
-              const { data: urlData } = supabase
-                .storage
-                .from('chat_media')
-                .getPublicUrl(filePath);
-              
-              mediaUrl = urlData.publicUrl;
-            
-              setMessages(prev => prev.map(msg => 
-                msg.id === userMessage.id 
-                  ? { ...msg, media_url: mediaUrl } 
-                  : msg
-              ));
-            }
-          
-            if (fileInputRef.current) {
-              fileInputRef.current.value = '';
-            }
-          }
-        } catch (error) {
-          console.error("Error processing file:", error);
-        }
-      };
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('group_id', chatGroupId)
+        .order('created_at', { ascending: true });
       
-      // Store user message
-      const storeUserMessage = async () => {
-        try {
-          await processMessage();
-          
-          const { data: groupsCheck } = await supabase
-            .from('chat_groups')
-            .select('id')
-            .limit(1);
-          
-          if (groupsCheck && groupsCheck.length > 0) {
-            const botGroupName = "LiebefeldBot";
-            const { data: botGroup } = await supabase
-              .from('chat_groups')
-              .select('id')
-              .eq('name', botGroupName)
-              .single();
-            
-            let botGroupId;
-          
-            if (!botGroup) {
-              const { data: newGroup } = await supabase
-                .from('chat_groups')
-                .insert({
-                  name: botGroupName,
-                  description: "Frag den Bot nach Events in Liebefeld",
-                  created_by: "System"
-                })
-                .select()
-                .single();
-              
-              botGroupId = newGroup?.id;
-            } else {
-              botGroupId = botGroup.id;
-            }
-          
-            if (botGroupId) {
-              let eventText = "";
-            
-              if (sharedEvent) {
-                eventText = `🗓️ **Event: ${sharedEvent.title}**\nDatum: ${sharedEvent.date} um ${sharedEvent.time}\nOrt: ${sharedEvent.location || 'k.A.'}\nKategorie: ${sharedEvent.category}\n\n${messageText}`;
-              } else {
-                eventText = messageText;
-              }
-            
-              await supabase
-                .from('chat_messages')
-                .insert({
-                  group_id: botGroupId,
-                  sender: username,
-                  text: eventText,
-                  avatar: localStorage.getItem(AVATAR_KEY),
-                  media_url: mediaUrl,
-                  read_by: [username],
-                  reactions: []
-                });
-            }
-          }
-        } catch (error) {
-          console.error("Error storing user message:", error);
-        }
-      };
-      
-      storeUserMessage();
-
-      // Generate bot response
-      setTimeout(() => {
-        try {
-          let botResponse = '';
-          
-          // Check if we have events data
-          if (!events || !Array.isArray(events)) {
-            console.error("Events data is invalid in handleSend:", events);
-            botResponse = "Entschuldigung, ich konnte keine Event-Daten laden. Bitte versuche es später noch einmal.";
-          } else if (sharedEvent) {
-            botResponse = `Danke für das Teilen des Events "${sharedEvent.title}"! Das klingt spannend. Möchtest du mehr Details dazu wissen oder soll ich ähnliche Events in ${sharedEvent.location || 'der Umgebung'} vorschlagen?`;
-          } else {
-            // Safe call to generateResponse
-            botResponse = generateResponse(messageText, events);
-          }
-          
-          const botMessage: Message = {
-            id: `bot-${Date.now()}`,
-            text: botResponse,
-            isUser: false,
-            timestamp: new Date(),
-            read_by: [username]
-          };
-          
-          setMessages(prev => [...prev, botMessage]);
-          setIsTyping(false);
-          
-          // Store bot response
-          const storeBotResponse = async () => {
-            try {
-              const { data: groupsCheck } = await supabase
-                .from('chat_groups')
-                .select('id')
-                .limit(1);
-            
-              if (groupsCheck && groupsCheck.length > 0) {
-                const botGroupName = "LiebefeldBot";
-                const { data: botGroup } = await supabase
-                  .from('chat_groups')
-                  .select('id')
-                  .eq('name', botGroupName)
-                  .single();
-              
-                if (botGroup) {
-                  await supabase
-                    .from('chat_messages')
-                    .insert({
-                      group_id: botGroup.id,
-                      sender: "LiebefeldBot",
-                      text: botResponse,
-                      avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=LiebefeldBot",
-                      read_by: [username]
-                    });
-                }
-              }
-            } catch (error) {
-              console.error("Error storing bot response:", error);
-            }
-          };
-          
-          storeBotResponse();
-        } catch (error) {
-          console.error("Error generating bot response:", error);
-          // Add fallback for when response generation fails
-          const errorMessage: Message = {
-            id: `bot-error-${Date.now()}`,
-            text: "Entschuldigung, ich konnte deine Anfrage nicht verarbeiten. Bitte versuche es noch einmal.",
-            isUser: false,
-            timestamp: new Date(),
-            read_by: [username]
-          };
-          
-          setMessages(prev => [...prev, errorMessage]);
-          setIsTyping(false);
-        }
-      }, 700);
-    } catch (error) {
-      console.error("Critical error in handleSend:", error);
-      // Recover UI state in case of critical error
-      setIsTyping(false);
-      toast({
-        title: "Fehler",
-        description: "Es ist ein Fehler aufgetreten. Bitte versuche es erneut.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleQuickSend = () => {
-    if (!quickInput.trim()) return;
-    handleSend(quickInput);
-  };
-  
-  const handleAddReaction = async (messageId: string, emoji: string) => {
-    try {
-      const messageIndex = messages.findIndex(m => m.id === messageId);
-      if (messageIndex < 0) return;
-      
-      const message = messages[messageIndex];
-      
-      const reactions = message.reactions || [];
-      let updated = false;
-      
-      const existingReactionIndex = reactions.findIndex(r => r.emoji === emoji);
-      
-      if (existingReactionIndex >= 0) {
-        const users = reactions[existingReactionIndex].users;
-        const userIndex = users.indexOf(username);
-        
-        if (userIndex >= 0) {
-          users.splice(userIndex, 1);
-          if (users.length === 0) {
-            reactions.splice(existingReactionIndex, 1);
-          }
-        } else {
-          users.push(username);
-        }
-        updated = true;
-      } else {
-        reactions.push({
-          emoji,
-          users: [username]
-        });
-        updated = true;
+      if (error) {
+        console.error('Error fetching messages:', error);
+        return;
       }
       
-      if (updated) {
-        const updatedMessages = [...messages];
-        updatedMessages[messageIndex] = {
-          ...message,
-          reactions
-        };
-        setMessages(updatedMessages);
+      setMessages(data as ChatMessage[]);
+    } catch (err) {
+      console.error('Error in fetchMessages:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (chatGroupId) {
+      fetchMessages();
+      
+      // Subscribe to realtime updates
+      const subscription = supabase
+        .channel('chat_messages_changes')
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'chat_messages',
+            filter: `group_id=eq.${chatGroupId}`
+          },
+          (payload) => {
+            console.log('Realtime update:', payload);
+            fetchMessages();
+          }
+        )
+        .subscribe();
         
-        const { data: groupsCheck } = await supabase
+      return () => {
+        supabase.removeChannel(subscription);
+      };
+    }
+  }, [chatGroupId]);
+
+  return { messages, loading, refetch: fetchMessages };
+};
+
+const EventChatBot = () => {
+  const { events } = useEventContext();
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState('');
+  const [chatGroupId, setChatGroupId] = useState<string>('');
+  const [userName, setUserName] = useState<string>('Maik');
+  const [userAvatar, setUserAvatar] = useState<string>(`https://api.dicebear.com/7.x/avataaars/svg?seed=${Math.random().toString(36).substring(7)}`);
+  const { messages, loading, refetch } = useChatMessages(chatGroupId);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [searchInput, setSearchInput] = useState('');
+  const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
+
+  useEffect(() => {
+    // Setting up a random avatar for this session
+    const randomSeed = Math.random().toString(36).substring(7);
+    setUserAvatar(`https://api.dicebear.com/7.x/avataaars/svg?seed=${randomSeed}`);
+    const storedName = localStorage.getItem('chatUserName');
+    if (storedName) {
+      setUserName(storedName);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (searchInput.trim()) {
+      const filtered = events.filter(event => 
+        event.title.toLowerCase().includes(searchInput.toLowerCase()) || 
+        (event.description && event.description.toLowerCase().includes(searchInput.toLowerCase())) ||
+        (event.location && event.location.toLowerCase().includes(searchInput.toLowerCase())) ||
+        (event.organizer && event.organizer.toLowerCase().includes(searchInput.toLowerCase()))
+      );
+      setFilteredEvents(filtered);
+    } else {
+      setFilteredEvents([]);
+    }
+  }, [searchInput, events]);
+
+  useEffect(() => {
+    // Create or fetch the bot chat group when component mounts
+    const init = async () => {
+      try {
+        // First check if we can get any chat group (to verify connection)
+        const { data: anyGroup, error: anyGroupError } = await supabase
           .from('chat_groups')
           .select('id')
           .limit(1);
+        
+        if (anyGroupError) {
+          console.error('Error checking chat groups:', anyGroupError);
+          return;
+        }
+        
+        // Now check if our specific bot group exists
+        const { data: botGroup, error: botGroupError } = await supabase
+          .from('chat_groups')
+          .select('id')
+          .eq('name', 'LiebefeldBot')
+          .single();
+        
+        if (botGroupError && botGroupError.code !== 'PGRST116') {
+          console.error('Error fetching bot group:', botGroupError);
+          return;
+        }
+        
+        if (botGroup) {
+          setChatGroupId(botGroup.id);
+        } else {
+          // Create a new bot group if it doesn't exist
+          const { data: newGroup, error: createError } = await supabase
+            .from('chat_groups')
+            .insert([
+              { 
+                name: 'LiebefeldBot',
+                description: 'Chat mit dem LiebefeldBot'
+              }
+            ])
+            .select('id')
+            .single();
           
-        if (groupsCheck && groupsCheck.length > 0) {
-          const realMessageId = messageId.startsWith('user-') || messageId.startsWith('bot-') 
-            ? null 
-            : messageId;
-            
-          if (realMessageId) {
-            await supabase
-              .from('chat_messages')
-              .update({ reactions })
-              .eq('id', realMessageId);
+          if (createError) {
+            console.error('Error creating bot group:', createError);
+            return;
+          }
+          
+          if (newGroup) {
+            setChatGroupId(newGroup.id);
           }
         }
+      } catch (err) {
+        console.error('Error in chat group initialization:', err);
+      }
+    };
+    
+    init();
+  }, []);
+
+  useEffect(() => {
+    // Scroll to bottom when new messages come in
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
+  const handleImageUpload = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleSend = async () => {
+    if ((!input.trim() && !fileInputRef.current?.files?.length) || !chatGroupId) return;
+
+    const trimmedInput = input.trim();
+    
+    // Handle file upload if present
+    let mediaUrl = null;
+    if (fileInputRef.current?.files?.length) {
+      const file = fileInputRef.current.files[0];
+      try {
+        const { data, error } = await supabase.storage
+          .from('chat_media')
+          .upload(`${uuidv4()}-${file.name}`, file);
+        
+        if (error) {
+          toast({
+            title: "Fehler beim Hochladen",
+            description: "Das Bild konnte nicht hochgeladen werden.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('chat_media')
+          .getPublicUrl(data.path);
+        
+        mediaUrl = publicUrl;
+      } catch (error) {
+        console.error('File upload error:', error);
+        return;
+      }
+    }
+    
+    // Send user message
+    try {
+      await supabase.from('chat_messages').insert([
+        {
+          group_id: chatGroupId,
+          sender: userName,
+          text: trimmedInput,
+          avatar: userAvatar,
+          media_url: mediaUrl,
+          read_by: [userName],
+          reactions: []
+        }
+      ]);
+      
+      setInput('');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
       
-      setSelectedMessageId(null);
+      // Show typing indicator
+      setIsTyping(true);
+      
+      // Give some time for the UI to update
+      setTimeout(async () => {
+        try {
+          // Generate bot response
+          let responseText = '';
+          
+          if (events && Array.isArray(events)) {
+            responseText = generateResponse(trimmedInput, events);
+          } else {
+            responseText = "Ich kann derzeit keine Eventdaten laden. Bitte versuche es später erneut.";
+            console.error("Events array is not available:", events);
+          }
+          
+          // Send bot response
+          await supabase.from('chat_messages').insert([
+            {
+              group_id: chatGroupId,
+              sender: 'LiebefeldBot',
+              text: responseText,
+              avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=LiebefeldBot',
+              read_by: [userName]
+            }
+          ]);
+          
+        } catch (error) {
+          console.error('Error generating or sending bot response:', error);
+          
+          // Send fallback response on error
+          await supabase.from('chat_messages').insert([
+            {
+              group_id: chatGroupId,
+              sender: 'LiebefeldBot',
+              text: "Entschuldigung, ich habe technische Schwierigkeiten. Versuche es später noch einmal.",
+              avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=LiebefeldBot',
+              read_by: [userName]
+            }
+          ]);
+        } finally {
+          setIsTyping(false);
+        }
+      }, 1000);
+      
     } catch (error) {
-      console.error('Error adding reaction:', error);
+      console.error('Error sending message:', error);
       toast({
-        title: "Fehler beim Hinzufügen der Reaktion",
-        description: "Die Reaktion konnte nicht hinzugefügt werden.",
+        title: "Fehler beim Senden",
+        description: "Deine Nachricht konnte nicht gesendet werden.",
         variant: "destructive"
       });
     }
   };
-  
-  const handleFileUpload = () => {
-    fileInputRef.current?.click();
-  };
 
-  const handleShareEvent = () => {
-    console.log("Opening event selection dropdown");
-    setIsEventSelectOpen(prev => !prev);
-    setEventSearchQuery('');
-  };
-
-  const handleEventSelect = (eventId: string) => {
-    console.log("Event selected:", eventId);
-    const selectedEvent = events.find(event => event.id === eventId);
-    if (selectedEvent) {
-      handleSend(`Ich möchte dieses Event teilen: ${selectedEvent.title}`, selectedEvent);
-      setIsEventSelectOpen(false);
+  const addReaction = async (messageId: string, emoji: string) => {
+    try {
+      // Get the current message to update its reactions
+      const { data: messageData, error: messageError } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('id', messageId)
+        .single();
+      
+      if (messageError) {
+        console.error('Error fetching message for reaction:', messageError);
+        return;
+      }
+      
+      // Update reactions
+      let updatedReactions = [...(messageData.reactions || [])];
+      const existingReactionIndex = updatedReactions.findIndex(r => r.emoji === emoji);
+      
+      if (existingReactionIndex >= 0) {
+        // Toggle user from existing reaction
+        const reaction = updatedReactions[existingReactionIndex];
+        if (reaction.users.includes(userName)) {
+          reaction.users = reaction.users.filter(u => u !== userName);
+          if (reaction.users.length === 0) {
+            // Remove reaction if no users left
+            updatedReactions = updatedReactions.filter(r => r.emoji !== emoji);
+          }
+        } else {
+          reaction.users.push(userName);
+        }
+      } else {
+        // Add new reaction
+        updatedReactions.push({
+          emoji,
+          users: [userName]
+        });
+      }
+      
+      // Update the message with new reactions
+      const { error: updateError } = await supabase
+        .from('chat_messages')
+        .update({ reactions: updatedReactions })
+        .eq('id', messageId);
+      
+      if (updateError) {
+        console.error('Error updating reactions:', updateError);
+      }
+      
+    } catch (error) {
+      console.error('Error adding reaction:', error);
     }
   };
 
-  const handleRsvp = (eventId: string, option: RsvpOption) => {
-    console.log(`Chat RSVP selection: ${eventId} - ${option}`);
-    handleRsvpEvent(eventId, option);
-    
-    toast({
-      title: "RSVP gespeichert",
-      description: option === 'yes' ? "Du hast zugesagt!" : 
-                   option === 'no' ? "Du hast abgesagt." : 
-                   "Du kommst vielleicht.",
-      variant: "default"
-    });
-  };
-
-  const filteredEvents = events.filter(event => {
-    if (!eventSearchQuery.trim()) return true;
-    
-    const query = eventSearchQuery.toLowerCase();
-    return (
-      event.title.toLowerCase().includes(query) ||
-      (event.description && event.description.toLowerCase().includes(query)) ||
-      (event.location && event.location.toLowerCase().includes(query)) ||
-      (event.category && event.category.toLowerCase().includes(query)) ||
-      (event.date && event.date.toLowerCase().includes(query))
-    );
-  });
-
-  const EventCard = ({ event }: { event: Event }) => {
-    const rsvpCounts = normalizeRsvpCounts(event);
-    const totalRsvp = rsvpCounts.yes + rsvpCounts.no + rsvpCounts.maybe;
-
-    return (
-      <div className="mt-2 p-3 rounded-md bg-red-500/10 border border-red-500/20">
-        <div className="flex items-center gap-2 mb-2">
-          <Calendar className="h-4 w-4 text-red-500" />
-          <span className="font-medium text-white">{event.title}</span>
-        </div>
+  const groupMessagesByDate = (msgs: ChatMessage[]) => {
+    return msgs.reduce((groups, message) => {
+      try {
+        const date = message.created_at ? new Date(message.created_at) : new Date();
+        const dateStr = format(date, 'yyyy-MM-dd');
         
-        <div className="text-xs text-gray-300 space-y-1.5">
-          <div className="flex items-center">
-            <Clock className="h-3 w-3 mr-1.5" />
-            <span>{event.date} um {event.time}</span>
-          </div>
-          {event.location && (
-            <div className="flex items-center">
-              <MapPin className="h-3 w-3 mr-1.5" />
-              <span>{event.location}</span>
-            </div>
-          )}
-          <div className="flex items-center">
-            <Heart className="h-3 w-3 mr-1.5" />
-            <span>{event.category}</span>
-            {event.likes && event.likes > 0 && (
-              <span className="ml-2 flex items-center">
-                • <Heart className="h-3 w-3 mx-1 fill-red-500 text-red-500" /> {event.likes}
-              </span>
-            )}
-          </div>
-          
-          {totalRsvp > 0 && (
-            <div className="flex items-center gap-3 mt-2 pt-2 border-t border-gray-700/50">
-              <div className="flex items-center text-white gap-1" title="Zusagen">
-                <Check className="h-3.5 w-3.5 text-green-500" /> 
-                <span className="font-medium">{rsvpCounts.yes}</span>
-              </div>
-              <div className="flex items-center text-white gap-1" title="Vielleicht">
-                <HelpCircle className="h-3.5 w-3.5 text-yellow-500" /> 
-                <span className="font-medium">{rsvpCounts.maybe}</span>
-              </div>
-              <div className="flex items-center text-white gap-1" title="Absagen">
-                <X className="h-3.5 w-3.5 text-red-500" /> 
-                <span className="font-medium">{rsvpCounts.no}</span>
-              </div>
-            </div>
-          )}
-          
-          <div className="flex gap-2 mt-3">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-7 bg-green-500/20 hover:bg-green-500/30 border-green-500/30 flex-1"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleRsvp(event.id, 'yes');
-              }}
-            >
-              <Check className="h-3 w-3 mr-1.5" /> Zusagen
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-7 bg-yellow-500/20 hover:bg-yellow-500/30 border-yellow-500/30 flex-1"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleRsvp(event.id, 'maybe');
-              }}
-            >
-              <HelpCircle className="h-3 w-3 mr-1.5" /> Vielleicht
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-7 bg-red-500/20 hover:bg-red-500/30 border-red-500/30 flex-1"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleRsvp(event.id, 'no');
-              }}
-            >
-              <X className="h-3 w-3 mr-1.5" /> Absagen
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
+        if (!groups[dateStr]) {
+          groups[dateStr] = [];
+        }
+        
+        groups[dateStr].push(message);
+        return groups;
+      } catch (error) {
+        console.error('Error grouping message by date:', error, message);
+        return groups;
+      }
+    }, {} as Record<string, ChatMessage[]>);
+  };
+  
+  const formatDateHeader = (dateStr: string) => {
+    try {
+      const date = parseISO(dateStr);
+      if (isToday(date)) {
+        return 'Heute';
+      } else if (isTomorrow(date)) {
+        return 'Morgen';
+      } else if (isThisWeek(date)) {
+        return format(date, 'EEEE', { locale: de });
+      } else if (isThisMonth(date)) {
+        return format(date, 'dd. MMMM', { locale: de });
+      } else {
+        return format(date, 'dd. MMMM yyyy', { locale: de });
+      }
+    } catch (error) {
+      console.error('Error formatting date header:', error, dateStr);
+      return 'Unbekanntes Datum';
+    }
   };
 
-  useEffect(() => {
-    // Apply custom styles for chat message formatting
-    const style = document.createElement('style');
-    style.innerHTML = `
-      .event-day {
-        margin-bottom: 12px;
-        border-left: 3px solid #ef4444;
-        padding-left: 10px;
-      }
-      .event-item {
-        margin: 8px 0;
-        padding: 8px;
-        background: rgba(239, 68, 68, 0.1);
-        border-radius: 6px;
-      }
-      .event-separator {
-        border-top: 1px dashed rgba(255, 255, 255, 0.1);
-        margin: 8px 0;
-      }
-      .day-separator {
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        margin: 12px 0;
-      }
-      .event-more {
-        font-size: 0.85em;
-        opacity: 0.8;
-        font-style: italic;
-        margin-top: 6px;
-      }
-      .no-events {
-        padding: 12px;
-        text-align: center;
-        opacity: 0.7;
-        font-style: italic;
-      }
-      .events-list, .today-events, .tomorrow-events, .weekend-events {
-        padding: 6px;
-        border-radius: 8px;
-        background: rgba(239, 68, 68, 0.05);
-      }
-      .event-card {
-        padding: 8px;
-        background: rgba(239, 68, 68, 0.1);
-        border-radius: 8px;
-        margin: 8px 0;
-      }
-    `;
-    document.head.appendChild(style);
-    
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
+  const messageGroups = messages && messages.length > 0 ? groupMessagesByDate(messages) : {};
+
+  // Render HTML content safely
+  const renderHtmlContent = (html: string) => {
+    return <div dangerouslySetInnerHTML={{ __html: html }} />;
+  };
+
+  const toggleEventDetails = (event: Event) => {
+    setSelectedEvent(selectedEvent?.id === event.id ? null : event);
+  };
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button 
-              className="fixed left-4 bottom-8 rounded-full w-14 h-14 shadow-lg bg-gradient-to-tr from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 flex items-center justify-center animate-pulse-soft ring-4 ring-red-300 dark:ring-red-900/40 z-50"
-              aria-label="Event Chat"
-            >
-              <MessageCircle className="h-7 w-7" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent 
-            side="right" 
-            className="bg-gradient-to-br from-[#1A1D2D] to-[#131722] border-red-900/30 p-2 mb-2 shadow-lg w-72 animate-fade-in"
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button 
+            className="fixed bottom-5 right-5 h-12 w-12 rounded-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 transition-all duration-300 shadow-lg"
+            size="icon"
           >
-            <div className="flex items-center space-x-2">
-              <Input
-                type="text"
-                placeholder="Frag mich nach Events..."
-                value={quickInput}
-                onChange={(e) => setQuickInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleQuickSend()}
-                className="flex-1 bg-gray-800/50 border-gray-700 text-white placeholder-gray-400"
-                autoFocus
-              />
-              <Button
-                onClick={handleQuickSend}
-                size="icon"
-                className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 transition-all duration-300 shadow-md h-8 w-8"
-                disabled={!quickInput.trim()}
-              >
-                <Send size={14} />
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
-        
-        <DialogContent className="sm:max-w-[425px] h-[600px] flex flex-col p-0 gap-0 rounded-xl bg-[#1A1D2D] text-white border-gray-800 shadow-2xl animate-scale-in" aria-describedby="chat-description">
-          {/* Fix: Add DialogTitle with screen reader only class for accessibility */}
-          <DialogTitle className="sr-only">Liebefeld Event Chat</DialogTitle>
-          
-          {/* A hidden description for screen readers */}
-          <div id="chat-description" className="sr-only">
-            Chat mit dem Liebefeld Bot über Events in deiner Region
-          </div>
-          
-          <div className="flex items-center justify-between p-4 border-b border-gray-800 bg-gradient-to-r from-red-700 to-red-600 rounded-t-xl">
-            <div className="flex items-center">
-              <Heart className="mr-2 h-5 w-5 text-white fill-white animate-pulse-soft" />
-              <h3 className="font-semibold">LiebefeldBot</h3>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsOpen(false)}
-              className="text-gray-200 hover:text-white hover:bg-red-700/50"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin bg-gradient-to-b from-[#1A1D2D] to-[#131722]">
-            {messages.map(message => (
-              <div
-                key={message.id}
-                className={`flex ${message.isUser ? 'justify-end' : 'justify-start'} animate-fade-in`}
-              >
-                {!message.isUser && (
-                  <Avatar className="h-8 w-8 mr-2 mt-1">
-                    <AvatarImage src="https://api.dicebear.com/7.x/bottts/svg?seed=LiebefeldBot" alt="LiebefeldBot" />
-                    <AvatarFallback>LB</AvatarFallback>
-                  </Avatar>
-                )}
-                
-                <div className="flex flex-col max-w-[80%]">
-                  <div
-                    className={`rounded-lg px-4 py-2 ${
-                      message.isUser
-                        ? 'bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg'
-                        : 'bg-gradient-to-br from-gray-800 to-gray-900 text-white shadow-md border border-gray-700/30'
-                    }`}
-                  >
-                    <div className="text-sm" dangerouslySetInnerHTML={{ __html: message.text }}></div>
-                    
-                    {message.eventData && <EventCard event={message.eventData} />}
-                    
-                    {message.media_url && (
-                      <div className="mt-2">
-                        <img 
-                          src={message.media_url} 
-                          alt="Shared media" 
-                          className="rounded-md max-w-full max-h-[200px] object-contain"
-                        />
-                      </div>
-                    )}
-                    
-                    <span className="text-xs opacity-70 mt-1 block">
-                      {format(message.timestamp, 'HH:mm')}
-                    </span>
-                  </div>
-                  
-                  {message.reactions && message.reactions.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1 ml-2">
-                      {message.reactions.map((reaction, index) => (
-                        <Button
-                          key={index}
-                          variant="outline"
-                          size="sm"
-                          className={`px-1.5 py-0 h-6 text-xs rounded-full ${
-                            reaction.users.includes(username) ? 'bg-primary/20' : 'bg-muted'
-                          }`}
-                          onClick={() => handleAddReaction(message.id, reaction.emoji)}
-                        >
-                          {reaction.emoji} {reaction.users.length}
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {message.isUser && (
-                    <div className="flex justify-end mt-1">
-                      {message.read_by && message.read_by.length > 1 ? (
-                        <CheckCheck className="h-3 w-3 text-primary" />
-                      ) : (
-                        <Check className="h-3 w-3 text-muted-foreground" />
-                      )}
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex flex-col ml-1">
-                  {message.isUser && (
-                    <Avatar className="h-8 w-8 ml-2 mt-1">
-                      <AvatarImage src={localStorage.getItem(AVATAR_KEY) || undefined} alt={username} />
-                      <AvatarFallback>{username.slice(0, 2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                  )}
-                  
-                  <Popover open={selectedMessageId === message.id} onOpenChange={(open) => {
-                    if (open) setSelectedMessageId(message.id);
-                    else setSelectedMessageId(null);
-                  }}>
-                    <PopoverTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-6 w-6 p-0 rounded-full mt-1"
-                      >
-                        <Smile className="h-3 w-3" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-2">
-                      <div className="flex gap-1">
-                        {EMOJI_REACTIONS.map((emoji) => (
-                          <Button
-                            key={emoji}
-                            variant="ghost"
-                            size="sm"
-                            className="px-1.5 py-0 h-8 text-lg hover:bg-muted"
-                            onClick={() => handleAddReaction(message.id, emoji)}
-                          >
-                            {emoji}
-                          </Button>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-            ))}
-            {isTyping && (
-              <div className="flex justify-start mt-2">
-                <Avatar className="h-8 w-8 mr-2">
-                  <AvatarImage src="https://api.dicebear.com/7.x/bottts/svg?seed=LiebefeldBot" alt="LiebefeldBot" />
+            <MessageCircle className="h-6 w-6 text-white" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col p-0 gap-0 bg-gray-900 text-white border-gray-800 rounded-lg">
+          <DialogTitle className="sr-only">Chat mit dem LiebefeldBot</DialogTitle>
+          <div className="flex flex-col h-full max-h-[90vh]">
+            <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gradient-to-r from-red-800 to-red-700">
+              <div className="flex items-center gap-2">
+                <Avatar>
+                  <AvatarImage src="https://api.dicebear.com/7.x/bottts/svg?seed=LiebefeldBot" />
                   <AvatarFallback>LB</AvatarFallback>
                 </Avatar>
-                <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg px-3 py-1.5 max-w-[80%] border border-gray-700/30 shadow-md">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 rounded-full bg-red-500 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-red-500 animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-red-500 animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                  </div>
+                <div>
+                  <h3 className="font-semibold">LiebefeldBot</h3>
+                  <p className="text-xs text-gray-300">Event-Assistent</p>
                 </div>
               </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-          
-          <div className="p-4 border-t border-gray-800 bg-[#131722] rounded-b-xl">
-            <div className="flex items-center space-x-2">
-              <Button
-                onClick={handleFileUpload} 
-                variant="outline"
-                size="icon"
-                type="button"
-                className="h-10 w-10 rounded-full bg-gray-800 border-gray-700 hover:bg-gray-700"
-                title="Bild teilen"
-              >
-                <Image className="h-4 w-4" />
-              </Button>
-              <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    type="button"
-                    className="h-10 w-10 rounded-full bg-gray-800 border-gray-700 hover:bg-gray-700"
-                    title="Event teilen"
-                    onClick={() => {
-                      console.log("Calendar button clicked");
-                      setIsEventSelectOpen(true);
-                    }}
-                  >
-                    <Calendar className="h-4 w-4" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent 
-                  className="w-80 p-0 max-h-[400px] overflow-y-auto" 
-                  side="top" 
-                  align="end"
-                  sideOffset={5}
+              <div>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="text-white hover:bg-red-600/20"
+                  onClick={() => setOpen(false)}
                 >
-                  <div className="p-3 bg-muted border-b">
-                    <h3 className="font-medium mb-2">Event auswählen</h3>
-                    <div className="relative">
-                      <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Nach Events suchen..."
-                        value={eventSearchQuery}
-                        onChange={(e) => setEventSearchQuery(e.target.value)}
-                        className="pl-8 bg-background"
-                      />
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {loading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-[200px]" />
+                        <Skeleton className="h-20 w-[300px]" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                Object.keys(messageGroups).map((dateStr) => (
+                  <div key={dateStr} className="space-y-4">
+                    <div className="flex justify-center">
+                      <Badge variant="outline" className="text-xs bg-gray-800/50 text-gray-300">
+                        {formatDateHeader(dateStr)}
+                      </Badge>
+                    </div>
+                    
+                    {messageGroups[dateStr].map((message) => (
+                      <div key={message.id} className={`flex ${message.sender === userName ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`flex gap-2 max-w-[80%] ${message.sender === userName ? 'flex-row-reverse' : 'flex-row'}`}>
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={message.avatar} />
+                            <AvatarFallback>{message.sender.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          
+                          <div className={`space-y-1 ${message.sender === userName ? 'items-end' : 'items-start'}`}>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium text-gray-400">
+                                {message.sender}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {message.created_at && format(new Date(message.created_at), 'HH:mm')}
+                              </span>
+                              {message.read_by && message.read_by.length > 1 && (
+                                <span className="text-xs text-blue-400">
+                                  <CheckCheck className="h-3 w-3" />
+                                </span>
+                              )}
+                            </div>
+                            
+                            <div className={`px-4 py-2 rounded-lg ${
+                              message.sender === userName 
+                                ? 'bg-red-700 text-white'
+                                : 'bg-gray-800 text-white'
+                            }`}>
+                              {message.media_url && (
+                                <img 
+                                  src={message.media_url} 
+                                  alt="Shared media" 
+                                  className="mb-2 max-w-full rounded"
+                                  onError={(e) => { e.currentTarget.style.display = 'none' }} 
+                                />
+                              )}
+                              
+                              {message.text.startsWith('<div') 
+                                ? renderHtmlContent(message.text)
+                                : <p>{message.text}</p>
+                              }
+                              
+                              {message.sender === 'LiebefeldBot' && message.text.includes('event-details-id=') && (
+                                <div className="mt-2">
+                                  {events.filter(event => message.text.includes(`event-details-id=${event.id}`)).map(event => (
+                                    <div 
+                                      key={event.id}
+                                      className="p-2 border border-gray-700 rounded bg-gray-800/50 cursor-pointer hover:bg-gray-700/50 transition-colors mt-2"
+                                      onClick={() => toggleEventDetails(event)}
+                                    >
+                                      <h4 className="font-medium">{event.title}</h4>
+                                      <div className="flex text-xs text-gray-400 gap-4 mt-1">
+                                        <div className="flex items-center gap-1">
+                                          <Calendar className="h-3 w-3" />
+                                          <span>{format(new Date(event.date), 'dd.MM.yyyy')}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                          <Clock className="h-3 w-3" />
+                                          <span>{event.time.substring(0, 5)} Uhr</span>
+                                        </div>
+                                      </div>
+                                      
+                                      {selectedEvent?.id === event.id && (
+                                        <div className="mt-2 text-sm animate-fade-in">
+                                          {event.description && (
+                                            <p className="text-gray-300 mb-2">{event.description}</p>
+                                          )}
+                                          {event.location && (
+                                            <div className="flex items-center gap-1 text-gray-400">
+                                              <MapPin className="h-3 w-3" />
+                                              <span>{event.location}</span>
+                                            </div>
+                                          )}
+                                          {event.organizer && (
+                                            <div className="text-gray-400 mt-1">
+                                              <span className="text-xs">Veranstalter: {event.organizer}</span>
+                                            </div>
+                                          )}
+                                          <div className="flex gap-2 mt-2">
+                                            <Badge variant="outline" className="text-xs">
+                                              {event.category || 'Sonstiges'}
+                                            </Badge>
+                                            <Badge variant="outline" className="text-xs flex items-center gap-1">
+                                              <Heart className="h-3 w-3 fill-red-500 text-red-500" />
+                                              <span>{event.likes || 0}</span>
+                                            </Badge>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            
+                            {message.reactions && message.reactions.length > 0 && (
+                              <div className={`flex gap-1 ${message.sender === userName ? 'justify-end' : 'justify-start'}`}>
+                                {message.reactions.map((reaction, idx) => (
+                                  <Badge
+                                    key={idx}
+                                    variant="outline" 
+                                    className={`text-xs py-0 h-5 ${
+                                      reaction.users.includes(userName) 
+                                        ? 'bg-gray-700'
+                                        : 'bg-transparent'
+                                    }`}
+                                    onClick={() => addReaction(message.id, reaction.emoji)}
+                                  >
+                                    {reaction.emoji} {reaction.users.length}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                            
+                            {message.sender !== 'System' && (
+                              <div className={`flex gap-1 opacity-0 hover:opacity-100 transition-opacity ${message.sender === userName ? 'justify-end' : 'justify-start'}`}>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 rounded-full hover:bg-gray-800"
+                                  onClick={() => addReaction(message.id, '👍')}
+                                >
+                                  <ThumbsUp className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 rounded-full hover:bg-gray-800"
+                                  onClick={() => addReaction(message.id, '❤️')}
+                                >
+                                  <Heart className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 rounded-full hover:bg-gray-800"
+                                  onClick={() => addReaction(message.id, '😂')}
+                                >
+                                  <Smile className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))
+              )}
+              
+              {isTyping && (
+                <div className="flex justify-start">
+                  <div className="flex gap-2 max-w-[80%]">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src="https://api.dicebear.com/7.x/bottts/svg?seed=LiebefeldBot" />
+                      <AvatarFallback>LB</AvatarFallback>
+                    </Avatar>
+                    
+                    <div className="px-4 py-2 rounded-lg bg-gray-800 text-white flex items-center">
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Schreibt...
                     </div>
                   </div>
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto p-3">
-                    {filteredEvents && filteredEvents.length > 0 ? (
-                      filteredEvents
-                        .sort((a, b) => a.date.localeCompare(b.date))
-                        .map(event => (
-                          <div
+                </div>
+              )}
+              
+              <div ref={messagesEndRef} />
+            </div>
+            
+            <div className="p-4 border-t border-gray-800 flex gap-2 items-center">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="text-gray-400 hover:text-gray-300 hover:bg-gray-800"
+                onClick={handleImageUpload}
+              >
+                <Image className="h-5 w-5" />
+              </Button>
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="text-gray-400 hover:text-gray-300 hover:bg-gray-800"
+                  >
+                    <Search className="h-5 w-5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0 bg-gray-900 border-gray-800 text-white">
+                  <div className="p-2">
+                    <Input
+                      placeholder="Events suchen..."
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      className="bg-gray-800 border-gray-700 text-white"
+                    />
+                  </div>
+                  <Separator className="bg-gray-800" />
+                  <div className="max-h-60 overflow-y-auto p-2">
+                    {filteredEvents.length > 0 ? (
+                        filteredEvents.map((event) => (
+                          <div 
                             key={event.id}
-                            className="cursor-pointer hover:bg-muted/80 rounded p-2 transition-colors"
+                            className="flex flex-col p-2 hover:bg-gray-800 rounded cursor-pointer"
                             onClick={() => {
-                              console.log("Selecting event:", event.id);
-                              handleEventSelect(event.id);
+                              setInput(`Erzähl mir mehr über "${event.title}"`);
+                              setSearchInput('');
                             }}
                           >
                             <div className="font-medium">{event.title}</div>
-                            <div className="text-xs text-muted-foreground flex flex-col mt-1">
-                              <div className="flex items-center font-medium text-primary">
-                                <Calendar className="h-3 w-3 mr-1" />
-                                {event.date}
-                              </div>
-                              <div>Zeit: {event.time}</div>
-                              {event.location && <div>Ort: {event.location}</div>}
+                            <div className="text-xs text-gray-400 flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              <span>{format(new Date(event.date), 'dd.MM.yyyy')}</span>
+                              <span>·</span>
+                              <Clock className="h-3 w-3" />
+                              <span>{event.time.substring(0, 5)} Uhr</span>
                             </div>
                           </div>
                         ))
