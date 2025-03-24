@@ -1,4 +1,3 @@
-
 import * as React from "react"
 
 import type {
@@ -167,7 +166,6 @@ function toast({ ...props }: Toast) {
   }
 }
 
-// Add variant shortcuts
 toast.success = (message: string, options?: Omit<Toast, "title" | "description" | "variant">) => 
   toast({ ...options, variant: "success", description: message });
 
@@ -178,7 +176,7 @@ toast.info = (message: string, options?: Omit<Toast, "title" | "description" | "
   toast({ ...options, description: message });
 
 toast.warn = (message: string, options?: Omit<Toast, "title" | "description" | "variant">) => 
-  toast({ ...options, variant: "warning", description: message });
+  toast({ ...options, variant: "default", description: message });
 
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
