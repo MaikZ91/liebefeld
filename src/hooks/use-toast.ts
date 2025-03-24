@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import type { ToastActionElement, ToastProps as ToastPrimitivesProps } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 20
@@ -157,7 +157,7 @@ export function useToast() {
 
   return {
     ...state,
-    toast: (props: Omit<ToasterToast, "id">) => {
+    toast: (props: ToastProps) => {
       const id = genId()
 
       const update = (props: Partial<ToasterToast>) =>
@@ -192,59 +192,49 @@ export function useToast() {
 
 export type Toast = ReturnType<typeof useToast>
 
-// Create a proper function-based API to avoid hooks outside of components
-function createToastFunctions() {
-  const state = { toasts: [] };
+// Create individual toast functions
+export function toast(props: ToastProps) {
+  const id = genId()
   
-  // This function is what we'll expose as the toast API
-  const toast = (props: ToastProps) => {
-    const id = genId();
-    
-    const update = (newProps: Partial<ToasterToast>) =>
-      dispatch({
-        type: actionTypes.UPDATE_TOAST,
-        toast: { ...newProps, id },
-      });
-      
-    const dismiss = () => 
-      dispatch({
-        type: actionTypes.DISMISS_TOAST,
-        toastId: id
-      });
-    
+  const update = (newProps: Partial<ToasterToast>) =>
     dispatch({
-      type: actionTypes.ADD_TOAST,
-      toast: {
-        ...props,
-        id,
-        open: true,
-        onOpenChange: (open: boolean) => {
-          if (!open) dismiss();
-        },
-      },
+      type: actionTypes.UPDATE_TOAST,
+      toast: { ...newProps, id },
     });
     
-    return {
+  const dismiss = () => 
+    dispatch({
+      type: actionTypes.DISMISS_TOAST,
+      toastId: id
+    });
+  
+  dispatch({
+    type: actionTypes.ADD_TOAST,
+    toast: {
+      ...props,
       id,
-      dismiss,
-      update,
-    };
-  };
-
+      open: true,
+      onOpenChange: (open: boolean) => {
+        if (!open) dismiss();
+      },
+    },
+  });
+  
   return {
-    // Main toast methods
-    toast,
-    success: (props: ToastProps) => toast({ ...props, variant: "success" }),
-    error: (props: ToastProps) => toast({ ...props, variant: "destructive" }),
-    warning: (props: ToastProps) => toast({ ...props, variant: "destructive" }),
-    info: (props: ToastProps) => toast(props),
-    default: (props: ToastProps) => toast(props),
-    destructive: (props: ToastProps) => toast({ ...props, variant: "destructive" }),
-    
-    // Additional utility methods
-    dismiss: (toastId?: string) => dispatch({ type: actionTypes.DISMISS_TOAST, toastId }),
-    remove: (toastId?: string) => dispatch({ type: actionTypes.REMOVE_TOAST, toastId }),
+    id,
+    dismiss,
+    update,
   };
 }
 
-export const toast = createToastFunctions();
+// Variant-specific toast functions
+toast.success = (props: ToastProps) => toast({ ...props, variant: "success" });
+toast.error = (props: ToastProps) => toast({ ...props, variant: "destructive" });
+toast.warning = (props: ToastProps) => toast({ ...props, variant: "destructive" });
+toast.info = (props: ToastProps) => toast(props);
+toast.default = (props: ToastProps) => toast(props);
+toast.destructive = (props: ToastProps) => toast({ ...props, variant: "destructive" });
+
+// Utility methods
+toast.dismiss = (toastId?: string) => dispatch({ type: actionTypes.DISMISS_TOAST, toastId });
+toast.remove = (toastId?: string) => dispatch({ type: actionTypes.REMOVE_TOAST, toastId });
