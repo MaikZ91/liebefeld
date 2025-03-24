@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Send, Calendar, X, Heart, Loader2, Image, ThumbsUp, Smile, CheckCheck, Check, Share2, Search, HelpCircle, Clock, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -814,3 +815,49 @@ const EventChatBot: React.FC = () => {
                           </div>
                         ))
                     ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Keine Events gefunden
+                      </div>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+              
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={() => {
+                  if (fileInputRef.current?.files?.length) {
+                    handleSend();
+                  }
+                }}
+              />
+              
+              <Input
+                type="text"
+                placeholder="Schreibe eine Nachricht..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                className="flex-1 bg-gray-800 border-gray-700 text-white placeholder-gray-400"
+              />
+              
+              <Button
+                onClick={() => handleSend()}
+                size="icon"
+                className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 transition-all duration-300 shadow-md"
+                disabled={!input.trim() && !fileInputRef.current?.files?.length}
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+export default EventChatBot;
