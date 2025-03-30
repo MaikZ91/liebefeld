@@ -24,7 +24,6 @@ export interface Event {
 }
 
 export interface GitHubEvent {
-  id?: string;
   date: string; // Format: "Fri, 04.04"
   event: string;
   link: string;

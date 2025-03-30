@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect, useState } from 'react';
-import { format, parseISO, isToday, isValid } from 'date-fns';
+import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
 import EventCard from '@/components/EventCard';
@@ -28,13 +28,12 @@ const EventList: React.FC<EventListProps> = ({
   // Find the most popular event of today
   useEffect(() => {
     if (events.length > 0) {
-      // Filter for today's events with improved error handling
+      // Filter for today's events
       const todayEvents = events.filter(event => {
         if (!event.date) return false;
         try {
           const eventDate = parseISO(event.date);
-          // Verify date is valid before checking if it's today
-          return isValid(eventDate) && isToday(eventDate);
+          return isToday(eventDate);
         } catch (error) {
           console.error(`Error checking if event is today:`, error);
           return false;
@@ -57,12 +56,8 @@ const EventList: React.FC<EventListProps> = ({
     }
   }, [events]);
   
-  // Debug how many events we have
-  console.log(`EventList received ${events.length} events`);
-  
-  // Group events by date with detailed logging for troubleshooting
+  // Group events by date
   const eventsByDate = groupEventsByDate(events);
-  console.log(`EventList: Grouped events by date, got ${Object.keys(eventsByDate).length} date groups`);
   
   // Scroll to today's section ONLY on component first load and when events are loaded
   useEffect(() => {
@@ -126,22 +121,6 @@ const EventList: React.FC<EventListProps> = ({
     setHasScrolledToToday(false);
   }, [showFavorites]);
   
-  // Log individual events for debugging
-  useEffect(() => {
-    const sample = events.slice(0, 5);
-    sample.forEach(event => {
-      console.log(`Sample event: ${event.id} - ${event.title} - Date: ${event.date}`);
-    });
-    
-    // Check for specific events
-    const tuesdayRun = events.find(e => e.title && e.title.includes("Tuesday Run"));
-    const pubQuiz = events.find(e => e.title && e.title.includes("Pub Quiz"));
-    
-    console.log(`Tuesday Run event found: ${tuesdayRun ? 'YES' : 'NO'}`);
-    console.log(`Pub Quiz event found: ${pubQuiz ? 'YES' : 'NO'}`);
-    
-  }, [events]);
-  
   return (
     <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
       <div className="flex items-center justify-between mb-4">
@@ -153,76 +132,51 @@ const EventList: React.FC<EventListProps> = ({
       <div ref={listRef} className="overflow-y-auto max-h-[600px] pr-2 scrollbar-thin">
         {Object.keys(eventsByDate).length > 0 ? (
           Object.keys(eventsByDate).sort().map(dateStr => {
-            try {
-              let date;
-              try {
-                date = parseISO(dateStr);
-                // Validate the date is actually valid
-                if (!isValid(date)) {
-                  console.error(`Invalid date format: ${dateStr}`);
-                  return null;
-                }
-              } catch (error) {
-                console.error(`Failed to parse date: ${dateStr}`, error);
-                return null;
-              }
-              
-              const isCurrentDay = isToday(date);
-              const eventsForDate = eventsByDate[dateStr] || [];
-              
-              // Skip rendering dates with no events
-              if (eventsForDate.length === 0) {
-                return null;
-              }
-              
-              console.log(`Rendering date ${dateStr} with ${eventsForDate.length} events`);
-              
-              return (
-                <div 
-                  key={dateStr} 
-                  ref={isCurrentDay ? todayRef : null}
-                  className={`mb-4 ${isCurrentDay ? 'scroll-mt-12' : ''}`}
-                  id={isCurrentDay ? "today-section" : undefined}
-                >
-                  <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
-                    {format(date, 'EEEE, d. MMMM', { locale: de })}
-                  </h4>
-                  <div className="space-y-1">
-                    {eventsForDate.map(event => {
-                      // Only highlight if it's today's top event
-                      const isTopEvent = isCurrentDay && topTodayEvent && event.id === topTodayEvent.id;
-                      
-                      return (
-                        <div key={event.id} className={`relative ${isTopEvent ? 'transform transition-all' : ''}`}>
+            const date = parseISO(dateStr);
+            const isCurrentDay = isToday(date);
+            
+            return (
+              <div 
+                key={dateStr} 
+                ref={isCurrentDay ? todayRef : null}
+                className={`mb-4 ${isCurrentDay ? 'scroll-mt-12' : ''}`}
+                id={isCurrentDay ? "today-section" : undefined}
+              >
+                <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
+                  {format(date, 'EEEE, d. MMMM', { locale: de })}
+                </h4>
+                <div className="space-y-1">
+                  {eventsByDate[dateStr].map(event => {
+                    // Only highlight if it's today's top event
+                    const isTopEvent = isCurrentDay && topTodayEvent && event.id === topTodayEvent.id;
+                    
+                    return (
+                      <div key={event.id} className={`relative ${isTopEvent ? 'transform transition-all' : ''}`}>
+                        {isTopEvent && (
+                          <div className="absolute -left-2 top-0 bottom-0 w-1 bg-gradient-to-b from-[#E53935] to-[#C62828] rounded-full"></div>
+                        )}
+                        <div className={`${isTopEvent ? 'bg-gradient-to-r from-[#C62828]/20 to-transparent rounded-lg' : ''}`}>
                           {isTopEvent && (
-                            <div className="absolute -left-2 top-0 bottom-0 w-1 bg-gradient-to-b from-[#E53935] to-[#C62828] rounded-full"></div>
+                            <div className="absolute right-2 top-2 bg-[#E53935] text-white px-2 py-1 rounded-full text-xs flex items-center z-20">
+                              <Star className="w-3 h-3 mr-1 fill-white" />
+                              <span>Top Event</span>
+                            </div>
                           )}
-                          <div className={`${isTopEvent ? 'bg-gradient-to-r from-[#C62828]/20 to-transparent rounded-lg' : ''}`}>
-                            {isTopEvent && (
-                              <div className="absolute right-2 top-2 bg-[#E53935] text-white px-2 py-1 rounded-full text-xs flex items-center z-20">
-                                <Star className="w-3 h-3 mr-1 fill-white" />
-                                <span>Top Event</span>
-                              </div>
-                            )}
-                            <EventCard 
-                              key={event.id} 
-                              event={event}
-                              compact={true}
-                              onClick={() => onSelectEvent(event, date)}
-                              onLike={onLike}
-                              className={isTopEvent ? 'border-l-2 border-[#E53935]' : ''}
-                            />
-                          </div>
+                          <EventCard 
+                            key={event.id} 
+                            event={event}
+                            compact={true}
+                            onClick={() => onSelectEvent(event, date)}
+                            onLike={onLike}
+                            className={isTopEvent ? 'border-l-2 border-[#E53935]' : ''}
+                          />
                         </div>
-                      );
-                    })}
-                  </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            } catch (error) {
-              console.error(`Error rendering date group: ${dateStr}`, error);
-              return null;
-            }
+              </div>
+            );
           })
         ) : (
           <div className="flex items-center justify-center h-40 text-gray-400">

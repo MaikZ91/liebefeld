@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -63,21 +62,8 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   const monthEnd = endOfMonth(currentDate);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
   
-  // Debug for events
-  useEffect(() => {
-    console.log(`EventCalendar: Total events available: ${events.length}`);
-    
-    // Check for specific events
-    const tuesdayRun = events.find(e => e.title && e.title.includes("Tuesday Run"));
-    const pubQuiz = events.find(e => e.title && e.title.includes("Pub Quiz"));
-    
-    console.log(`Tuesday Run found in main events array: ${tuesdayRun ? 'YES - ' + tuesdayRun.id : 'NO'}`);
-    console.log(`Pub Quiz found in main events array: ${pubQuiz ? 'YES - ' + pubQuiz.id : 'NO'}`);
-  }, [events]);
-  
-  // For list view, show all events
-  // Remove monthly filtering to ensure all events are shown
-  const allEvents = events;
+  // Get events for the current month or favorites
+  const monthEvents = getMonthOrFavoriteEvents(events, currentDate, showFavorites, eventLikes);
   
   // Filter events for the selected date and category filter
   const filteredEvents = selectedDate 
@@ -106,6 +92,14 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   // Handler for adding a new event
   const handleAddEvent = async (newEvent: Omit<Event, 'id'>) => {
     try {
+      // Add the event to local state directly
+      const tempId = `temp-${Math.random().toString(36).substring(2, 9)}`;
+      const eventWithId = {
+        ...newEvent,
+        id: tempId,
+        likes: 0
+      };
+      
       // Refresh events after adding a new one
       refreshEvents();
       
@@ -191,7 +185,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
             {/* Main calendar and list views */}
             <TabsContent value="list" className="w-full">
               <EventList 
-                events={allEvents}
+                events={monthEvents}
                 showFavorites={showFavorites}
                 onSelectEvent={(event, date) => {
                   setSelectedDate(date);

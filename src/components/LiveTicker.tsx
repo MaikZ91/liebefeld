@@ -145,11 +145,10 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
                   })()}:
                 </span>
                 <span className="text-white mr-1">{event.title}</span>
-                {event.location && (
-                  <span className="text-gray-400 text-sm mr-1">({event.location})</span>
-                )}
+                <span className="text-gray-400 text-sm mr-1">({event.location || 'Keine Ortsangabe'})</span>
                 <span className="text-yellow-500 text-xs flex items-center">
                   <ThumbsUp className="w-3 h-3 mr-1" /> 
+                  {/* Make sure to render the likes count as a number or string, not an object */}
                   {typeof event.likes === 'number' ? event.likes : 0}
                 </span>
               </span>
@@ -171,11 +170,11 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
           }
           
           .ticker-scroll {
-            animation: ticker 30s linear infinite;
+            animation: ticker 60s linear infinite;
           }
           
           .ticker-paused {
-            animation: ticker 30s linear infinite;
+            animation: ticker 60s linear infinite;
             animation-play-state: paused;
           }
         `}
