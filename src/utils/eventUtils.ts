@@ -1,3 +1,4 @@
+
 import { Event, GitHubEvent } from '../types/eventTypes';
 import { parseAndNormalizeDate, debugDate } from './dateUtils';
 import { format, isSameDay, isSameMonth, startOfDay, isAfter, isBefore, differenceInDays, parseISO, compareAsc } from 'date-fns';
@@ -209,7 +210,10 @@ export const transformGitHubEvents = (
   console.log(`Transforming ${githubEvents.length} GitHub events, current year: ${currentYear}`);
   console.log('Using likes data:', eventLikes);
   
-  return githubEvents.map((githubEvent, index) => {
+  // Create a map of event IDs for consistent ID generation
+  const eventIdMap = new Map<string, number>();
+  
+  return githubEvents.map((githubEvent) => {
     // Extract location from event title (if available)
     let title = githubEvent.event;
     let location = "Bielefeld";
@@ -222,6 +226,16 @@ export const transformGitHubEvents = (
       title = githubEvent.event.replace(/\s*\(@[^)]+\)/, '');
       location = locationMatch[1];
     }
+    
+    // Generate a consistent ID for this event based on its title and link
+    // This ensures the same event gets the same ID across refreshes
+    const eventKey = `${title}:${githubEvent.link}`;
+    let index = eventIdMap.get(eventKey);
+    if (index === undefined) {
+      index = eventIdMap.size;
+      eventIdMap.set(eventKey, index);
+    }
+    const eventId = `github-${index}`;
     
     // Parse the date (Format: "Fri, 04.04" or similar)
     let eventDate;
@@ -269,8 +283,6 @@ export const transformGitHubEvents = (
       // Fallback to today's date
       eventDate = new Date();
     }
-    
-    const eventId = `github-${index}`;
     
     // Get likes from the provided eventLikes map, defaulting to 0 if not found
     const likesCount = eventLikes[eventId] || 0;
