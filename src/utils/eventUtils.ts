@@ -1,3 +1,4 @@
+
 import { Event, GitHubEvent } from '../types/eventTypes';
 import { format, parseISO, isSameDay, isValid } from 'date-fns';
 
@@ -172,7 +173,7 @@ export const transformGitHubEvents = (
         description: '',
         date: formattedDate,
         time: '19:00',
-        location: 'Bielefeld',
+        location: 'Bielefeld', // Default location for GitHub events
         organizer: '',
         category: 'Sonstiges',
         link: ghEvent.link || '',
