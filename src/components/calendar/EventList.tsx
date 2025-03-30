@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect, useState } from 'react';
-import { format, parseISO, isToday } from 'date-fns';
+import { format, parseISO, isToday, isValid } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
 import EventCard from '@/components/EventCard';
@@ -28,12 +28,13 @@ const EventList: React.FC<EventListProps> = ({
   // Find the most popular event of today
   useEffect(() => {
     if (events.length > 0) {
-      // Filter for today's events
+      // Filter for today's events with improved error handling
       const todayEvents = events.filter(event => {
         if (!event.date) return false;
         try {
           const eventDate = parseISO(event.date);
-          return isToday(eventDate);
+          // Verify date is valid before checking if it's today
+          return isValid(eventDate) && isToday(eventDate);
         } catch (error) {
           console.error(`Error checking if event is today:`, error);
           return false;
@@ -56,8 +57,12 @@ const EventList: React.FC<EventListProps> = ({
     }
   }, [events]);
   
-  // Group events by date - directly use the events array without filtering
+  // Debug how many events we have
+  console.log(`EventList received ${events.length} events`);
+  
+  // Group events by date with detailed logging for troubleshooting
   const eventsByDate = groupEventsByDate(events);
+  console.log(`EventList: Grouped events by date, got ${Object.keys(eventsByDate).length} date groups`);
   
   // Scroll to today's section ONLY on component first load and when events are loaded
   useEffect(() => {
@@ -121,8 +126,21 @@ const EventList: React.FC<EventListProps> = ({
     setHasScrolledToToday(false);
   }, [showFavorites]);
   
-  // Debug how many events we have
-  console.log(`EventList rendering with ${events.length} events and ${Object.keys(eventsByDate).length} unique dates`);
+  // Log individual events for debugging
+  useEffect(() => {
+    const sample = events.slice(0, 5);
+    sample.forEach(event => {
+      console.log(`Sample event: ${event.id} - ${event.title} - Date: ${event.date}`);
+    });
+    
+    // Check for specific events
+    const tuesdayRun = events.find(e => e.title && e.title.includes("Tuesday Run"));
+    const pubQuiz = events.find(e => e.title && e.title.includes("Pub Quiz"));
+    
+    console.log(`Tuesday Run event found: ${tuesdayRun ? 'YES' : 'NO'}`);
+    console.log(`Pub Quiz event found: ${pubQuiz ? 'YES' : 'NO'}`);
+    
+  }, [events]);
   
   return (
     <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
@@ -136,8 +154,28 @@ const EventList: React.FC<EventListProps> = ({
         {Object.keys(eventsByDate).length > 0 ? (
           Object.keys(eventsByDate).sort().map(dateStr => {
             try {
-              const date = parseISO(dateStr);
+              let date;
+              try {
+                date = parseISO(dateStr);
+                // Validate the date is actually valid
+                if (!isValid(date)) {
+                  console.error(`Invalid date format: ${dateStr}`);
+                  return null;
+                }
+              } catch (error) {
+                console.error(`Failed to parse date: ${dateStr}`, error);
+                return null;
+              }
+              
               const isCurrentDay = isToday(date);
+              const eventsForDate = eventsByDate[dateStr] || [];
+              
+              // Skip rendering dates with no events
+              if (eventsForDate.length === 0) {
+                return null;
+              }
+              
+              console.log(`Rendering date ${dateStr} with ${eventsForDate.length} events`);
               
               return (
                 <div 
@@ -150,7 +188,7 @@ const EventList: React.FC<EventListProps> = ({
                     {format(date, 'EEEE, d. MMMM', { locale: de })}
                   </h4>
                   <div className="space-y-1">
-                    {eventsByDate[dateStr].map(event => {
+                    {eventsForDate.map(event => {
                       // Only highlight if it's today's top event
                       const isTopEvent = isCurrentDay && topTodayEvent && event.id === topTodayEvent.id;
                       
