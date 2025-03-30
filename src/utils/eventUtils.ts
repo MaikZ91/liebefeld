@@ -71,6 +71,16 @@ export const groupEventsByDate = (events: Event[]): Record<string, Event[]> => {
   return eventsByDate;
 };
 
+// Check if a day has any events
+export const hasEventsOnDay = (events: Event[], day: Date): boolean => {
+  return getEventsForDay(events, day).length > 0;
+};
+
+// Get the count of events for a specific day
+export const getEventCountForDay = (events: Event[], day: Date): number => {
+  return getEventsForDay(events, day).length;
+};
+
 // Get events for a specific day
 export const getEventsForDay = (events: Event[], day: Date, categoryFilter: string | null = null): Event[] => {
   return events.filter(event => {
@@ -158,13 +168,13 @@ export const transformGitHubEvents = (
       
       return {
         id: eventId,
-        title: ghEvent.title || 'Unnamed Event',
-        description: ghEvent.description || '',
+        title: ghEvent.event || 'Unnamed Event',
+        description: '',
         date: formattedDate,
-        time: ghEvent.time || '19:00',
-        location: ghEvent.location || 'Bielefeld',
-        organizer: ghEvent.organizer || '',
-        category: ghEvent.category || 'Sonstiges',
+        time: '19:00',
+        location: 'Bielefeld',
+        organizer: '',
+        category: 'Sonstiges',
         link: ghEvent.link || '',
         likes: likes,
         // Add empty RSVP counts if not available
