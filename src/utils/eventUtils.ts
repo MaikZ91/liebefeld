@@ -1,4 +1,3 @@
-
 import { Event, GitHubEvent } from '../types/eventTypes';
 import { parseAndNormalizeDate, debugDate } from './dateUtils';
 import { format, isSameDay, isSameMonth, startOfDay, isAfter, isBefore, differenceInDays, parseISO, compareAsc } from 'date-fns';
@@ -84,88 +83,121 @@ export const getMonthOrFavoriteEvents = (
 ): Event[] => {
   const today = startOfDay(new Date());
   
-  return events
-    .filter(event => {
+  console.log(`getMonthOrFavoriteEvents: Starting with ${events.length} events`);
+  
+  try {
+    if (showFavorites) {
+      const favorites = events.filter(event => {
+        if (event.id.startsWith('github-')) {
+          return eventLikes[event.id] && eventLikes[event.id] > 0;
+        }
+        return event.likes && event.likes > 0;
+      });
+      console.log(`getMonthOrFavoriteEvents: Found ${favorites.length} favorites`);
+      return favorites;
+    }
+    
+    const filteredEvents = events.filter(event => {
       try {
-        // If viewing favorites, only show favorites regardless of month
-        if (showFavorites) {
-          // For GitHub events
-          if (event.id.startsWith('github-')) {
-            return eventLikes[event.id] && eventLikes[event.id] > 0;
-          }
-          // For regular events
-          return event.likes && event.likes > 0;
+        if (!event.date) {
+          console.log(`Event ${event.id} (${event.title}) has no date, skipping`);
+          return false;
         }
         
-        // Check if the event date is valid
-        if (!event.date) return false;
         const eventDate = parseAndNormalizeDate(event.date);
-        if (isNaN(eventDate.getTime())) return false;
+        if (isNaN(eventDate.getTime())) {
+          console.warn(`Event ${event.id} (${event.title}) has invalid date: ${event.date}, skipping`);
+          return false;
+        }
         
-        // Otherwise filter by current month
-        return isSameMonth(eventDate, currentDate);
+        const isInCurrentMonth = isSameMonth(eventDate, currentDate);
+        if (!isInCurrentMonth) {
+          console.log(`Event ${event.id} (${event.title}) is not in current month, skipping`);
+        }
+        
+        return isInCurrentMonth;
       } catch (error) {
-        console.error(`Error filtering events for month:`, error);
+        console.error(`Error filtering event by month: ${event.id} (${event.title}), ${event.date}`, error);
         return false;
       }
-    })
-    .sort((a, b) => {
+    });
+    
+    console.log(`getMonthOrFavoriteEvents: Found ${filteredEvents.length} events for current month`);
+    
+    const sortedEvents = filteredEvents.sort((a, b) => {
       try {
         const dateA = parseAndNormalizeDate(a.date);
         const dateB = parseAndNormalizeDate(b.date);
         
-        // First group: today and future events (sorted by proximity to today)
-        // Second group: past events (sorted by most recent first)
         const isABeforeToday = isBefore(dateA, today);
         const isBBeforeToday = isBefore(dateB, today);
         
         if (isABeforeToday && !isBBeforeToday) {
-          return 1; // B comes first (it's not in the past)
+          return 1;
         } else if (!isABeforeToday && isBBeforeToday) {
-          return -1; // A comes first (it's not in the past)
+          return -1;
         } else if (!isABeforeToday && !isBBeforeToday) {
-          // Both are today or future, sort by proximity to today
           return differenceInDays(dateA, today) - differenceInDays(dateB, today);
         } else {
-          // Both are past, sort by most recent first
           return dateB.getTime() - dateA.getTime();
         }
       } catch (error) {
-        console.error(`Error sorting events by date:`, error);
+        console.error(`Error sorting events by date: ${a.title} vs ${b.title}`, error);
         
-        // If there's a likes difference, fall back to that
         const likesA = a.likes || 0;
         const likesB = b.likes || 0;
         return likesB - likesA;
       }
     });
+    
+    return sortedEvents;
+  } catch (error) {
+    console.error("Error in getMonthOrFavoriteEvents:", error);
+    return events;
+  }
 };
 
 // Group events by date for list view
 export const groupEventsByDate = (events: Event[]): Record<string, Event[]> => {
-  const groupedEvents = events.reduce((acc, event) => {
-    try {
-      const dateStr = event.date;
-      if (!acc[dateStr]) {
-        acc[dateStr] = [];
+  try {
+    console.log(`groupEventsByDate: Grouping ${events.length} events`);
+    
+    const groupedEvents = events.reduce((acc, event) => {
+      try {
+        if (!event.date) {
+          console.log(`Event ${event.id} (${event.title}) has no date, skipping grouping`);
+          return acc;
+        }
+        
+        const dateStr = event.date;
+        
+        if (!acc[dateStr]) {
+          acc[dateStr] = [];
+        }
+        acc[dateStr].push(event);
+      } catch (error) {
+        console.error(`Error grouping event ${event.id} (${event.title}) by date:`, error);
       }
-      acc[dateStr].push(event);
-    } catch (error) {
-      console.error(`Error grouping events by date:`, error);
-    }
-    return acc;
-  }, {} as Record<string, Event[]>);
-  
-  // Sort events within each date group by likes (higher likes first)
-  Object.keys(groupedEvents).forEach(dateStr => {
-    groupedEvents[dateStr].sort((a, b) => {
-      const likesA = a.likes || 0;
-      const likesB = b.likes || 0;
-      return likesB - likesA; // Sort by likes in descending order
+      return acc;
+    }, {} as Record<string, Event[]>);
+    
+    console.log(`groupEventsByDate: Created ${Object.keys(groupedEvents).length} date groups`);
+    
+    Object.keys(groupedEvents).forEach(dateStr => {
+      groupedEvents[dateStr].sort((a, b) => {
+        const likesA = a.likes || 0;
+        const likesB = b.likes || 0;
+        return likesB - likesA;
+      });
+      
+      console.log(`Date ${dateStr} has ${groupedEvents[dateStr].length} events`);
     });
-  });
-  
-  return groupedEvents;
+    
+    return groupedEvents;
+  } catch (error) {
+    console.error("Error in groupEventsByDate:", error);
+    return {};
+  }
 };
 
 // Get future events (starting from today) sorted by date
@@ -210,25 +242,19 @@ export const transformGitHubEvents = (
   console.log(`Transforming ${githubEvents.length} GitHub events, current year: ${currentYear}`);
   console.log('Using likes data:', eventLikes);
   
-  // Create a map of event IDs for consistent ID generation
   const eventIdMap = new Map<string, number>();
   
   return githubEvents.map((githubEvent) => {
-    // Extract location from event title (if available)
     let title = githubEvent.event;
     let location = "Bielefeld";
     let category = determineEventCategory(githubEvent.event.toLowerCase());
     
-    // Check if there's a location in parentheses
     const locationMatch = githubEvent.event.match(/\(@([^)]+)\)/);
     if (locationMatch) {
-      // Remove the location from the title
       title = githubEvent.event.replace(/\s*\(@[^)]+\)/, '');
       location = locationMatch[1];
     }
     
-    // Generate a consistent ID for this event based on its title and link
-    // This ensures the same event gets the same ID across refreshes
     const eventKey = `${title}:${githubEvent.link}`;
     let index = eventIdMap.get(eventKey);
     if (index === undefined) {
@@ -237,72 +263,49 @@ export const transformGitHubEvents = (
     }
     const eventId = `github-${index}`;
     
-    // Parse the date (Format: "Fri, 04.04" or similar)
     let eventDate;
     try {
-      // Log the original date string
       console.log(`Parsing date: ${githubEvent.date} for event: ${title}`);
       
-      // Extract the day of week and date part
       const dateParts = githubEvent.date.split(', ');
       if (dateParts.length < 2) {
         throw new Error(`Invalid date format: ${githubEvent.date}`);
       }
       
-      const dateNumbers = dateParts[1].split('.'); // e.g., ["04", "04"]
+      const dateNumbers = dateParts[1].split('.');
       if (dateNumbers.length < 2) {
         throw new Error(`Invalid date format: ${dateParts[1]}`);
       }
       
-      // Parse day and month numbers
       const day = parseInt(dateNumbers[0], 10);
-      const month = parseInt(dateNumbers[1], 10) - 1; // JavaScript months are 0-indexed
-      
-      // Create date with current year
+      const month = parseInt(dateNumbers[1], 10) - 1;
       const now = new Date();
       const thisMonth = now.getMonth();
       const isMonthInPast = month < thisMonth;
       
-      // If the month is in the past, we should probably use next year
-      // otherwise use current year
       const yearToUse = isMonthInPast ? currentYear + 1 : currentYear;
       eventDate = new Date(Date.UTC(yearToUse, month, day));
       
-      // Log detailed parsing information
-      console.log(`Original date: ${githubEvent.date}`);
-      console.log(`Day: ${day}, Month: ${month+1}, Year: ${yearToUse}`);
-      console.log(`Parsed date: ${eventDate.toISOString()}`);
+      const formattedDate = format(eventDate, 'yyyy-MM-dd');
+      console.log(`Event ${title} formatted date: ${formattedDate}`);
       
-      // Debug for troubleshooting specific dates
-      if (day === 6 && month === 2) { // March 6th
-        console.log(`Found March 6th event: ${title}`);
-        console.log(`Using year: ${yearToUse}`);
-      }
+      const likesCount = eventLikes[eventId] || 0;
+      
+      return {
+        id: eventId,
+        title: title,
+        description: `Mehr Informationen unter: ${githubEvent.link}`,
+        date: formattedDate,
+        time: "19:00",
+        location: location,
+        organizer: "Liebefeld Community Bielefeld",
+        category: category,
+        likes: likesCount,
+        link: githubEvent.link
+      } as Event;
     } catch (err) {
       console.warn(`Konnte Datum nicht parsen: ${githubEvent.date}`, err);
-      // Fallback to today's date
-      eventDate = new Date();
+      return null;
     }
-    
-    // Get likes from the provided eventLikes map, defaulting to 0 if not found
-    const likesCount = eventLikes[eventId] || 0;
-    console.log(`Event ${eventId} (${title}) has ${likesCount} likes from database`);
-    
-    const formattedDate = format(eventDate, 'yyyy-MM-dd');
-    console.log(`Event ${title} formatted date: ${formattedDate}`);
-    
-    // Create and return the event object
-    return {
-      id: eventId,
-      title: title,
-      description: `Mehr Informationen unter: ${githubEvent.link}`,
-      date: formattedDate,
-      time: "19:00", // Default time for events without time
-      location: location,
-      organizer: "Liebefeld Community Bielefeld",
-      category: category,
-      likes: likesCount,
-      link: githubEvent.link
-    } as Event;
-  });
+  }).filter(Boolean) as Event[];
 };

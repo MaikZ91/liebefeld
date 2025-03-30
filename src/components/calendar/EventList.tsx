@@ -56,7 +56,7 @@ const EventList: React.FC<EventListProps> = ({
     }
   }, [events]);
   
-  // Group events by date
+  // Group events by date - directly use the events array without filtering
   const eventsByDate = groupEventsByDate(events);
   
   // Scroll to today's section ONLY on component first load and when events are loaded
@@ -121,6 +121,9 @@ const EventList: React.FC<EventListProps> = ({
     setHasScrolledToToday(false);
   }, [showFavorites]);
   
+  // Debug how many events we have
+  console.log(`EventList rendering with ${events.length} events and ${Object.keys(eventsByDate).length} unique dates`);
+  
   return (
     <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
       <div className="flex items-center justify-between mb-4">
@@ -132,51 +135,56 @@ const EventList: React.FC<EventListProps> = ({
       <div ref={listRef} className="overflow-y-auto max-h-[600px] pr-2 scrollbar-thin">
         {Object.keys(eventsByDate).length > 0 ? (
           Object.keys(eventsByDate).sort().map(dateStr => {
-            const date = parseISO(dateStr);
-            const isCurrentDay = isToday(date);
-            
-            return (
-              <div 
-                key={dateStr} 
-                ref={isCurrentDay ? todayRef : null}
-                className={`mb-4 ${isCurrentDay ? 'scroll-mt-12' : ''}`}
-                id={isCurrentDay ? "today-section" : undefined}
-              >
-                <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
-                  {format(date, 'EEEE, d. MMMM', { locale: de })}
-                </h4>
-                <div className="space-y-1">
-                  {eventsByDate[dateStr].map(event => {
-                    // Only highlight if it's today's top event
-                    const isTopEvent = isCurrentDay && topTodayEvent && event.id === topTodayEvent.id;
-                    
-                    return (
-                      <div key={event.id} className={`relative ${isTopEvent ? 'transform transition-all' : ''}`}>
-                        {isTopEvent && (
-                          <div className="absolute -left-2 top-0 bottom-0 w-1 bg-gradient-to-b from-[#E53935] to-[#C62828] rounded-full"></div>
-                        )}
-                        <div className={`${isTopEvent ? 'bg-gradient-to-r from-[#C62828]/20 to-transparent rounded-lg' : ''}`}>
+            try {
+              const date = parseISO(dateStr);
+              const isCurrentDay = isToday(date);
+              
+              return (
+                <div 
+                  key={dateStr} 
+                  ref={isCurrentDay ? todayRef : null}
+                  className={`mb-4 ${isCurrentDay ? 'scroll-mt-12' : ''}`}
+                  id={isCurrentDay ? "today-section" : undefined}
+                >
+                  <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md">
+                    {format(date, 'EEEE, d. MMMM', { locale: de })}
+                  </h4>
+                  <div className="space-y-1">
+                    {eventsByDate[dateStr].map(event => {
+                      // Only highlight if it's today's top event
+                      const isTopEvent = isCurrentDay && topTodayEvent && event.id === topTodayEvent.id;
+                      
+                      return (
+                        <div key={event.id} className={`relative ${isTopEvent ? 'transform transition-all' : ''}`}>
                           {isTopEvent && (
-                            <div className="absolute right-2 top-2 bg-[#E53935] text-white px-2 py-1 rounded-full text-xs flex items-center z-20">
-                              <Star className="w-3 h-3 mr-1 fill-white" />
-                              <span>Top Event</span>
-                            </div>
+                            <div className="absolute -left-2 top-0 bottom-0 w-1 bg-gradient-to-b from-[#E53935] to-[#C62828] rounded-full"></div>
                           )}
-                          <EventCard 
-                            key={event.id} 
-                            event={event}
-                            compact={true}
-                            onClick={() => onSelectEvent(event, date)}
-                            onLike={onLike}
-                            className={isTopEvent ? 'border-l-2 border-[#E53935]' : ''}
-                          />
+                          <div className={`${isTopEvent ? 'bg-gradient-to-r from-[#C62828]/20 to-transparent rounded-lg' : ''}`}>
+                            {isTopEvent && (
+                              <div className="absolute right-2 top-2 bg-[#E53935] text-white px-2 py-1 rounded-full text-xs flex items-center z-20">
+                                <Star className="w-3 h-3 mr-1 fill-white" />
+                                <span>Top Event</span>
+                              </div>
+                            )}
+                            <EventCard 
+                              key={event.id} 
+                              event={event}
+                              compact={true}
+                              onClick={() => onSelectEvent(event, date)}
+                              onLike={onLike}
+                              className={isTopEvent ? 'border-l-2 border-[#E53935]' : ''}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            );
+              );
+            } catch (error) {
+              console.error(`Error rendering date group: ${dateStr}`, error);
+              return null;
+            }
           })
         ) : (
           <div className="flex items-center justify-center h-40 text-gray-400">
