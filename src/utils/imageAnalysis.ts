@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { createWorker } from 'tesseract.js';
@@ -44,8 +43,7 @@ export async function extractTextFromImage(imageFile: File): Promise<string> {
     
     // Use only supported Tesseract options
     const { data: { text } } = await worker.recognize(imageUrl, {
-      // Fixed: Using only supported options
-      preserve_interword_spaces: '1',
+      // Using only options actually supported by Tesseract.js
       tessedit_char_whitelist: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZäöüÄÖÜß0123456789:.,-_/@#&+()=?!%€ '
     });
     
@@ -99,9 +97,9 @@ async function enhancedImageExtraction(imageFile: File): Promise<string> {
     
     console.log('Processing preprocessed image with Tesseract.js');
     
-    // Fixed: Use only supported options
+    // Use only supported Tesseract options
     const { data: { text } } = await worker.recognize(preprocessedImageUrl, {
-      preserve_interword_spaces: '1',
+      // Using only options actually supported by Tesseract.js
       tessedit_ocr_engine_mode: '2' // Neural net LSTM engine only
     });
     
