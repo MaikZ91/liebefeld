@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { createWorker } from 'tesseract.js';
@@ -42,8 +41,11 @@ export async function extractTextFromImage(imageFile: File): Promise<string> {
     
     console.log('Processing image with Tesseract.js');
     
-    // Recognize text in the image
-    const { data: { text } } = await worker.recognize(imageUrl);
+    // Enhanced recognition parameters for better results
+    const { data: { text } } = await worker.recognize(imageUrl, {
+      tessedit_pageseg_mode: '1', // Treat the image as a single block of text
+      tessedit_char_whitelist: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZäöüÄÖÜß0123456789:.,-_/@#&+()=?!%€ ', // Include German characters
+    });
     
     // Cleanup
     URL.revokeObjectURL(imageUrl);
@@ -51,15 +53,154 @@ export async function extractTextFromImage(imageFile: File): Promise<string> {
     
     if (!text || text.trim() === '') {
       console.warn('No text extracted from image');
-      throw new Error('Aus dem Bild konnte kein Text extrahiert werden');
+      
+      // Try again with enhanced image processing
+      return await enhancedImageExtraction(imageFile);
     }
     
     console.log('Extracted text from image:', text);
     return text;
   } catch (error) {
     console.error('Error in extractTextFromImage:', error);
+    
+    // Fallback to enhanced extraction on error
+    return await enhancedImageExtraction(imageFile);
+  }
+}
+
+/**
+ * Enhanced image extraction with preprocessing for better OCR results
+ */
+async function enhancedImageExtraction(imageFile: File): Promise<string> {
+  try {
+    console.log('Attempting enhanced image extraction with preprocessing');
+    
+    toast({
+      title: "Erweiterte Texterkennung",
+      description: "Versuche mit Bildoptimierung, bitte warten...",
+    });
+    
+    // Create a worker with enhanced settings
+    const worker = await createWorker({
+      langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+      logger: progress => {
+        console.log('Enhanced Tesseract progress:', progress);
+      }
+    });
+    
+    // Load German language data and set configurations
+    await worker.loadLanguage('deu');
+    await worker.initialize('deu');
+    
+    // Load and preprocess the image using canvas
+    const preprocessedImageUrl = await preprocessImage(imageFile);
+    
+    console.log('Processing preprocessed image with Tesseract.js');
+    
+    // Recognize with more flexible settings
+    const { data: { text } } = await worker.recognize(preprocessedImageUrl, {
+      tessedit_pageseg_mode: '3', // Fully automatic page segmentation
+      tessedit_ocr_engine_mode: '2', // Neural net LSTM engine only
+      preserve_interword_spaces: '1',
+    });
+    
+    // Cleanup
+    URL.revokeObjectURL(preprocessedImageUrl);
+    await worker.terminate();
+    
+    if (!text || text.trim() === '') {
+      console.warn('No text extracted from enhanced image processing');
+      throw new Error('Aus dem Bild konnte kein Text extrahiert werden');
+    }
+    
+    console.log('Extracted text from enhanced image:', text);
+    return text;
+  } catch (error) {
+    console.error('Error in enhancedImageExtraction:', error);
     throw error;
   }
+}
+
+/**
+ * Preprocess the image to improve OCR results using canvas
+ */
+async function preprocessImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    
+    if (!ctx) {
+      reject(new Error('Could not get canvas context'));
+      return;
+    }
+    
+    image.onload = () => {
+      try {
+        // Set canvas dimensions
+        let width = image.width;
+        let height = image.height;
+        
+        // Resize very large images to improve processing
+        const MAX_DIMENSION = 2048;
+        if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+          if (width > height) {
+            height = Math.floor(height * (MAX_DIMENSION / width));
+            width = MAX_DIMENSION;
+          } else {
+            width = Math.floor(width * (MAX_DIMENSION / height));
+            height = MAX_DIMENSION;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw original image
+        ctx.drawImage(image, 0, 0, width, height);
+        
+        // Get image data
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const data = imageData.data;
+        
+        // Apply image processing for better OCR:
+        // 1. Convert to grayscale
+        // 2. Increase contrast
+        // 3. Threshold to black and white
+        for (let i = 0; i < data.length; i += 4) {
+          // Convert to grayscale
+          const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+          
+          // Apply threshold for black and white (increase contrast)
+          const threshold = 180;
+          const val = gray > threshold ? 255 : 0;
+          
+          data[i] = val;     // R
+          data[i + 1] = val; // G
+          data[i + 2] = val; // B
+          // Keep alpha channel as is (data[i+3])
+        }
+        
+        // Put the modified image data back on the canvas
+        ctx.putImageData(imageData, 0, 0);
+        
+        // Convert canvas to dataURL and resolve
+        const dataUrl = canvas.toDataURL('image/png');
+        resolve(dataUrl);
+      } catch (err) {
+        console.error('Error preprocessing image:', err);
+        reject(err);
+      }
+    };
+    
+    image.onerror = (err) => {
+      console.error('Error loading image for preprocessing:', err);
+      reject(err);
+    };
+    
+    // Load image from file
+    image.src = URL.createObjectURL(file);
+  });
 }
 
 /**
@@ -75,32 +216,28 @@ export async function analyzeEventText(text: string): Promise<ExtractedEventData
   try {
     console.log('Analyzing extracted text:', text);
     
-    // Call the Supabase Edge Function for AI text analysis
-    const { data, error } = await supabase.functions.invoke(
-      'analyze-event-text',
-      {
-        body: { text },
-      }
-    );
-    
-    if (error) {
-      console.error('Error analyzing text:', error);
+    // Try to analyze with the Supabase Edge Function if available
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        'analyze-event-text',
+        {
+          body: { text },
+        }
+      );
       
-      // Basic fallback if the edge function fails
-      const fallbackData = extractBasicEventData(text);
-      console.log('Using fallback data extraction:', fallbackData);
-      return fallbackData;
+      if (!error && data) {
+        console.log('Text analysis response from edge function:', data);
+        return data as ExtractedEventData;
+      }
+    } catch (edgeFunctionError) {
+      console.error('Edge function error, using fallback:', edgeFunctionError);
+      // Continue to fallback
     }
     
-    console.log('Text analysis response:', data);
-    
-    if (!data) {
-      console.error('No data returned from text analysis function');
-      return {};
-    }
-    
-    console.log('Text analysis result:', data);
-    return data as ExtractedEventData;
+    // If edge function fails or isn't available, use fallback
+    const fallbackData = extractBasicEventData(text);
+    console.log('Using fallback data extraction:', fallbackData);
+    return fallbackData;
   } catch (error) {
     console.error('Error in analyzeEventText:', error);
     
@@ -111,61 +248,176 @@ export async function analyzeEventText(text: string): Promise<ExtractedEventData
 
 /**
  * Extract basic event data as a fallback when the edge function fails
- * This is a simplified version of what the edge function does
+ * Enhanced to better extract information from typical event flyers
  */
 function extractBasicEventData(text: string): ExtractedEventData {
   console.log('Using client-side fallback text analysis');
   
-  // Basic data extraction using regex patterns
-  const dateRegex = /(\d{1,2})[.,\s]+([A-ZÄÖÜa-zäöü]+)[.,\s]+(\d{4})/i;
-  const dateMatch = text.match(dateRegex);
+  // Normalize text for better matching (remove extra spaces, convert to lowercase)
+  const normalizedText = text.replace(/\s+/g, ' ').toLowerCase();
   
+  // Extract date with improved regex patterns
   let date = '';
-  if (dateMatch) {
-    const day = dateMatch[1].padStart(2, '0');
+  
+  // Pattern 1: DD.MM.YYYY or DD-MM-YYYY
+  const dateRegex1 = /(\d{1,2})[\.-](\d{1,2})[\.-](\d{2,4})/i;
+  const dateMatch1 = normalizedText.match(dateRegex1);
+  
+  // Pattern 2: DD Month YYYY (e.g., "23 August 2023" or "23. August 2023")
+  const monthNames = [
+    'januar', 'februar', 'märz', 'april', 'mai', 'juni', 'juli', 
+    'august', 'september', 'oktober', 'november', 'dezember'
+  ];
+  const monthPattern = monthNames.join('|');
+  const dateRegex2 = new RegExp(`(\\d{1,2})\\s*\\.?\\s*(${monthPattern})\\s*,?\\s*(\\d{2,4})`, 'i');
+  const dateMatch2 = normalizedText.match(dateRegex2);
+  
+  if (dateMatch1) {
+    // Format from DD.MM.YYYY
+    const day = dateMatch1[1].padStart(2, '0');
+    const month = dateMatch1[2].padStart(2, '0');
+    const year = dateMatch1[3].length === 2 ? `20${dateMatch1[3]}` : dateMatch1[3];
+    date = `${year}-${month}-${day}`;
+  } else if (dateMatch2) {
+    // Format from DD Month YYYY
+    const day = dateMatch2[1].padStart(2, '0');
+    const monthName = dateMatch2[2].toLowerCase();
     let month = '01';
     
     // Convert month name to number
-    const monthName = dateMatch[2].toLowerCase();
-    if (monthName.includes("jan")) month = "01";
-    else if (monthName.includes("feb")) month = "02";
-    else if (monthName.includes("mär") || monthName.includes("mar")) month = "03";
-    else if (monthName.includes("apr")) month = "04";
-    else if (monthName.includes("mai")) month = "05";
-    else if (monthName.includes("jun")) month = "06";
-    else if (monthName.includes("jul")) month = "07";
-    else if (monthName.includes("aug")) month = "08";
-    else if (monthName.includes("sep")) month = "09";
-    else if (monthName.includes("okt")) month = "10";
-    else if (monthName.includes("nov")) month = "11";
-    else if (monthName.includes("dez")) month = "12";
-    
-    const year = dateMatch[3];
-    date = `${year}-${month}-${day}`;
-  }
-  
-  // Default values
-  let category = 'Sonstiges';
-  if (text.match(/(INDIE|POSTPUNK|ELEKTRO|ALTERNATIVE)/i)) {
-    category = text.match(/(TANZMUSIK|PARTY)/i) ? "Party" : "Konzert";
-  }
-  
-  let location = '';
-  if (text.toLowerCase().includes('bielefeld')) {
-    location = 'Bielefeld';
-    if (text.toLowerCase().includes('cutie')) {
-      location = 'Cutie, Bielefeld';
+    for (let i = 0; i < monthNames.length; i++) {
+      if (monthName.includes(monthNames[i])) {
+        month = (i + 1).toString().padStart(2, '0');
+        break;
+      }
     }
+    
+    const year = dateMatch2[3].length === 2 ? `20${dateMatch2[3]}` : dateMatch2[3];
+    date = `${year}-${month}-${day}`;
+  } else {
+    // Try to find any date-like patterns
+    const anyDateRegex = /(\d{1,2})[-\.\/\s](\d{1,2}|\w+)[-\.\/\s](\d{2,4})/i;
+    const anyDateMatch = normalizedText.match(anyDateRegex);
+    
+    if (anyDateMatch) {
+      try {
+        const parts = anyDateMatch[0].split(/[-\.\/\s]/);
+        // Assuming day-month-year format (common in Germany)
+        if (parts.length >= 3) {
+          let day = parts[0].padStart(2, '0');
+          let month = '01';
+          let year = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+          
+          // Try to parse the month
+          if (/^\d+$/.test(parts[1])) {
+            month = parseInt(parts[1]).toString().padStart(2, '0');
+          } else {
+            // Check if month is a name
+            const monthText = parts[1].toLowerCase();
+            for (let i = 0; i < monthNames.length; i++) {
+              if (monthNames[i].includes(monthText) || monthText.includes(monthNames[i])) {
+                month = (i + 1).toString().padStart(2, '0');
+                break;
+              }
+            }
+          }
+          
+          date = `${year}-${month}-${day}`;
+        }
+      } catch (err) {
+        console.error('Error parsing any date match:', err);
+      }
+    }
+  }
+  
+  // Extract time 
+  let time = '';
+  const timeRegex = /(\d{1,2})[:\.](\d{2})(?:\s*(?:uhr|h))?/i;
+  const timeMatch = normalizedText.match(timeRegex);
+  
+  if (timeMatch) {
+    const hours = timeMatch[1].padStart(2, '0');
+    const minutes = timeMatch[2].padStart(2, '0');
+    time = `${hours}:${minutes}`;
+  } else {
+    // Fallback time
+    time = '19:00';
+  }
+  
+  // Try to determine event category
+  let category = 'Sonstiges';
+  
+  if (normalizedText.match(/(konzert|live\s*musik|band|musik|sängerin|sänger)/i)) {
+    category = 'Konzert';
+  } else if (normalizedText.match(/(party|feier|tanzen|club|dj|disco|elektronische musik|techno)/i)) {
+    category = 'Party';
+  } else if (normalizedText.match(/(ausstellung|galerie|kunst|vernissage|exhibition)/i)) {
+    category = 'Ausstellung';
+  } else if (normalizedText.match(/(sport|training|spiel|match|fitness|yoga|laufen)/i)) {
+    category = 'Sport';
+  } else if (normalizedText.match(/(workshop|seminar|kurs|lernen|training)/i)) {
+    category = 'Workshop';
+  } else if (normalizedText.match(/(kultur|theater|lesung|film|kino|festival)/i)) {
+    category = 'Kultur';
+  }
+  
+  // Find location
+  let location = '';
+  
+  // Common location indicators
+  const locationIndicators = [
+    'ort:', 'location:', 'veranstaltungsort:', 'venue:', 'in:', 'at:', '@', 'im', 'am', 'beim'
+  ];
+  
+  for (const indicator of locationIndicators) {
+    const regex = new RegExp(`${indicator}\\s+([^,\\.\\n]+)`, 'i');
+    const match = normalizedText.match(regex);
+    if (match && match[1]) {
+      location = match[1].trim();
+      break;
+    }
+  }
+  
+  // Find title - usually larger text, often at beginning
+  // Take first line or first sentence if no clear title found
+  let title = '';
+  const lines = text.split('\n').filter(line => line.trim() !== '');
+  
+  if (lines.length > 0) {
+    // First line is often the title
+    title = lines[0].trim();
+    
+    // If first line is very short, add second line
+    if (title.length < 5 && lines.length > 1) {
+      title = `${title} ${lines[1].trim()}`;
+    }
+    
+    // If title is too long, truncate it
+    if (title.length > 100) {
+      title = title.substring(0, 100) + '...';
+    }
+  } else {
+    // Fallback title
+    title = 'Event in ' + (location || 'Bielefeld');
+  }
+  
+  // Create a description from the text
+  let description = '';
+  if (lines.length > 1) {
+    // Use a few lines after the title, but not too many
+    description = lines.slice(1, Math.min(5, lines.length)).join(' ').trim();
+  } else {
+    description = text.trim();
   }
   
   // Return the extracted data
   return {
-    title: text.match(/(INDIE[-\s]*POSTPUNK[-\s]*ELEKTRO[-\s]*ALTERNATIVE|ALTERNATIVE[-\s]*TANZMUSIK)/i)?.[0] || 'Event',
+    title: title || 'Event',
     date: date || undefined,
-    time: text.match(/(\d{1,2}):(\d{2})/)?.[0] || '19:00',
+    time: time || '19:00',
     location: location || undefined,
     category: category,
-    description: text.split('\n').slice(0, 3).join(' ').trim()
+    description: description || undefined
   };
 }
 

@@ -75,7 +75,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       // Process the image to extract event data
       const extractedData = await processEventImage(imageFile);
       
-      // Apply the extracted data to the form fields
+      // Apply the extracted data to the form fields if available
       if (extractedData.title) setTitle(extractedData.title);
       if (extractedData.description) setDescription(extractedData.description);
       if (extractedData.location) setLocation(extractedData.location);
@@ -277,7 +277,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         
         toast({
           title: "Event erstellt",
-          description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`,
+          description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.",
         });
         
         // Reset form
