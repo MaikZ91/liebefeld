@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, Check, HelpCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -39,14 +38,24 @@ const categoryIcons: Record<string, React.ReactNode> = {
 };
 
 const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compact = false, onLike }) => {
+  const [optimisticLikes, setOptimisticLikes] = useState<number | undefined>(undefined);
+  const [isLiking, setIsLiking] = useState(false);
+  
+  const displayLikes = optimisticLikes !== undefined ? optimisticLikes : (event.likes || 0);
+  
   const icon = event.category in categoryIcons 
     ? categoryIcons[event.category] 
     : <Calendar className="w-4 h-4" />;
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onLike) {
+    if (onLike && !isLiking) {
+      setIsLiking(true);
+      setOptimisticLikes((event.likes || 0) + 1);
       onLike(event.id);
+      setTimeout(() => {
+        setIsLiking(false);
+      }, 500);
     }
   };
 
@@ -57,7 +66,6 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     }
   };
 
-  // Get normalized RSVP counts
   const rsvpCounts = normalizeRsvpCounts(event);
   const totalRsvp = rsvpCounts.yes + rsvpCounts.no + rsvpCounts.maybe;
 
@@ -112,13 +120,21 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-6 w-6 rounded-full" 
+                className={cn(
+                  "h-6 w-6 rounded-full transition-all", 
+                  isLiking ? "opacity-70" : ""
+                )}
                 onClick={handleLike}
+                disabled={isLiking}
               >
-                <Heart className={cn("w-4 h-4", event.likes && event.likes > 0 ? "fill-red-500 text-red-500" : "text-white")} />
+                <Heart className={cn(
+                  "w-4 h-4 transition-transform", 
+                  displayLikes > 0 ? "fill-red-500 text-red-500" : "text-white",
+                  isLiking ? "scale-125" : ""
+                )} />
               </Button>
-              {event.likes && event.likes > 0 && (
-                <span className="text-xs text-white">{event.likes}</span>
+              {displayLikes > 0 && (
+                <span className="text-xs text-white">{displayLikes}</span>
               )}
             </div>
             
@@ -182,13 +198,21 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-7 w-7 rounded-full mr-1"
+              className={cn(
+                "h-7 w-7 rounded-full mr-1 transition-all",
+                isLiking ? "opacity-70" : ""
+              )}
               onClick={handleLike}
+              disabled={isLiking}
             >
-              <Heart className={cn("w-4 h-4", event.likes && event.likes > 0 ? "fill-red-500 text-red-500" : "text-white")} />
+              <Heart className={cn(
+                "w-4 h-4 transition-transform", 
+                displayLikes > 0 ? "fill-red-500 text-red-500" : "text-white",
+                isLiking ? "scale-125" : ""
+              )} />
             </Button>
-            {event.likes && event.likes > 0 && (
-              <span className="text-sm text-white">{event.likes}</span>
+            {displayLikes > 0 && (
+              <span className="text-sm text-white">{displayLikes}</span>
             )}
           </div>
         </div>
