@@ -24,15 +24,21 @@ const Index = () => {
   }, []);
   
   const [testModalOpen, setTestModalOpen] = useState(false);
-  const [animatedText, setAnimatedText] = useState(false);
+  const [typedText, setTypedText] = useState("");
+  const fullText = "Entdecke den Puls der Stadt";
   
   useEffect(() => {
-    // Trigger animation shortly after component mount
-    const timer = setTimeout(() => {
-      setAnimatedText(true);
-    }, 300);
+    let currentIndex = 0;
+    const typingInterval = setInterval(() => {
+      if (currentIndex <= fullText.length) {
+        setTypedText(fullText.substring(0, currentIndex));
+        currentIndex++;
+      } else {
+        clearInterval(typingInterval);
+      }
+    }, 100); // Speed of typing animation
     
-    return () => clearTimeout(timer);
+    return () => clearInterval(typingInterval);
   }, []);
   
   const WHATSAPP_URL = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
@@ -52,31 +58,18 @@ const Index = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-red-900/70 to-black/70"></div>
           
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4 pt-16">
-            <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center font-serif mt-12 overflow-hidden">
-              <span className={`inline-block transition-all duration-700 ${animatedText ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`} style={{ transitionDelay: '0ms' }}>
-                Entdecke 
-              </span>
-              <span className={`inline-block mx-2 transition-all duration-700 ${animatedText ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`} style={{ transitionDelay: '200ms' }}>
-                den
-              </span> 
-              <span className={`inline-block transition-all duration-700 ${animatedText ? 'translate-y-0 opacity-100 text-red-500' : 'translate-y-8 opacity-0'}`} style={{ transitionDelay: '400ms' }}>
-                Puls
-              </span> 
-              <span className={`inline-block transition-all duration-700 ${animatedText ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`} style={{ transitionDelay: '600ms' }}>
-                der
-              </span>
-              <span className={`inline-block transition-all duration-700 ${animatedText ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`} style={{ transitionDelay: '800ms' }}>
-                Stadt
+            <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center font-serif mt-12">
+              <span className="relative">
+                {typedText}
+                <span className="absolute -right-1 top-0 h-full w-[3px] bg-red-500 animate-pulse"></span>
               </span>
             </h1>
-            <p className={`text-xl md:text-2xl text-center max-w-2xl mb-6 transition-all duration-700 ${animatedText ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`} 
-              style={{ transitionDelay: '1000ms' }}>
+            <p className="text-xl md:text-2xl text-center max-w-2xl mb-6 animate-fade-in opacity-0" style={{ animationDelay: "2.5s", animationFillMode: "forwards" }}>
               Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
               <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
             </p>
             
-            <div className={`flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-12 relative z-30 transition-all duration-700 ${animatedText ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}
-              style={{ transitionDelay: '1200ms' }}>
+            <div className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-12 relative z-30 animate-fade-in opacity-0" style={{ animationDelay: "3s", animationFillMode: "forwards" }}>
               <Button 
                 onClick={() => setTestModalOpen(true)}
                 className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-all shadow-lg hover:shadow-xl w-full max-w-sm"
