@@ -41,11 +41,8 @@ export async function extractTextFromImage(imageFile: File): Promise<string> {
     
     console.log('Processing image with Tesseract.js');
     
-    // Use only supported Tesseract options
-    const { data: { text } } = await worker.recognize(imageUrl, {
-      // Using only options actually supported by Tesseract.js
-      tessedit_char_whitelist: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZäöüÄÖÜß0123456789:.,-_/@#&+()=?!%€ '
-    });
+    // Use recognize method without problematic options
+    const { data: { text } } = await worker.recognize(imageUrl);
     
     // Cleanup
     URL.revokeObjectURL(imageUrl);
@@ -97,11 +94,8 @@ async function enhancedImageExtraction(imageFile: File): Promise<string> {
     
     console.log('Processing preprocessed image with Tesseract.js');
     
-    // Use only supported Tesseract options
-    const { data: { text } } = await worker.recognize(preprocessedImageUrl, {
-      // Using only options actually supported by Tesseract.js
-      tessedit_ocr_engine_mode: '2' // Neural net LSTM engine only
-    });
+    // Use recognize method with compatible options
+    const { data: { text } } = await worker.recognize(preprocessedImageUrl);
     
     // Cleanup
     URL.revokeObjectURL(preprocessedImageUrl);
