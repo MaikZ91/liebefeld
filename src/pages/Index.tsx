@@ -24,13 +24,6 @@ const Index = () => {
   }, []);
   
   const [testModalOpen, setTestModalOpen] = useState(false);
-  const [animationStarted, setAnimationStarted] = useState(false);
-  
-  // Start animations after component mounts
-  useEffect(() => {
-    setAnimationStarted(true);
-  }, []);
-  
   const WHATSAPP_URL = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
   
   return (
@@ -48,17 +41,17 @@ const Index = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-red-900/70 to-black/70"></div>
           
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4 pt-16">
-            <h1 className={`text-5xl md:text-6xl font-bold mb-4 text-center font-serif mt-12 ${animationStarted ? 'animate-fade-in' : 'opacity-0'}`}>
+            <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center font-serif mt-12 animate-fade-in">
               Entdecke den <span className="text-red-500">Puls</span> der Stadt
             </h1>
-            <p className={`text-xl md:text-2xl text-center max-w-2xl mb-6 ${animationStarted ? 'animate-fade-in' : 'opacity-0'}`}
-               style={{ animationDelay: "0.3s" }}>
+            <p className="text-xl md:text-2xl text-center max-w-2xl mb-6 animate-fade-in" 
+               style={{ animationDelay: "0.1s" }}>
               Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
               <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
             </p>
             
-            <div className={`flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-12 relative z-30 ${animationStarted ? 'animate-fade-in' : 'opacity-0'}`}
-                 style={{ animationDelay: "0.6s" }}>
+            <div className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-12 relative z-30 animate-fade-in" 
+                 style={{ animationDelay: "0.2s" }}>
               <Button 
                 onClick={() => setTestModalOpen(true)}
                 className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-all shadow-lg hover:shadow-xl w-full max-w-sm"
