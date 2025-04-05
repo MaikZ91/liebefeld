@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -277,7 +278,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         
         toast({
           title: "Event erstellt",
-          description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.",
+          description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`
         });
         
         // Reset form
@@ -297,17 +298,20 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       console.error('Error adding event:', err);
       
       // Add fallback behavior: Add to local state even if Supabase fails
+      const eventData = {
+        title,
+        description,
+        date: format(date, 'yyyy-MM-dd'),
+        time,
+        location,
+        organizer,
+        category: category || 'Sonstiges',
+        image_urls: [] // Add empty array for fallback
+      };
+      
+      // Create the temporary event with correctly structured object
       const tempEvent: Omit<Event, 'id'> & { id: string } = {
-        ...{
-          title,
-          description,
-          date: format(date, 'yyyy-MM-dd'),
-          time,
-          location,
-          organizer,
-          category: category || 'Sonstiges',
-          image_urls: [] // Add empty array for fallback
-        },
+        ...eventData,
         id: `local-${Date.now()}`
       };
       
