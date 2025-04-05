@@ -170,11 +170,11 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
           }
           
           .ticker-scroll {
-            animation: ticker 60s linear infinite;
+            animation: ticker 120s linear infinite;
           }
           
           .ticker-paused {
-            animation: ticker 60s linear infinite;
+            animation: ticker 120s linear infinite;
             animation-play-state: paused;
           }
         `}
