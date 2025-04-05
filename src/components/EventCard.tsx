@@ -51,11 +51,12 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     e.stopPropagation();
     if (onLike && !isLiking) {
       setIsLiking(true);
-      setOptimisticLikes((event.likes || 0) + 1);
+      const newLikeCount = (event.likes || 0) + 1;
+      setOptimisticLikes(newLikeCount);
       onLike(event.id);
       setTimeout(() => {
         setIsLiking(false);
-      }, 500);
+      }, 300);
     }
   };
 

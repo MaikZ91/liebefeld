@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { startOfDay } from 'date-fns';
 import { Event, RsvpOption } from '../types/eventTypes';
@@ -161,6 +162,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const handleLikeEvent = async (eventId: string) => {
     try {
+      // Early return if already processing a like for this event
       if (pendingLikes.has(eventId)) {
         console.log(`Like operation already in progress for event ${eventId}`);
         return;
@@ -173,31 +175,43 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return;
       }
       
+      // Add to pending likes set to prevent duplicate requests
       setPendingLikes(prev => new Set(prev).add(eventId));
       
       const currentLikes = currentEvent.likes || 0;
       const newLikesValue = currentLikes + 1;
       
-      console.log(`Updating likes for ${eventId} from ${currentLikes} to ${newLikesValue}`);
-      
+      // Update local state immediately for better UI responsiveness
       setEvents(prevEvents => {
-        const updatedEvents = prevEvents.map(event => 
+        return prevEvents.map(event => 
           event.id === eventId 
-            ? { ...event, likes: newLikesValue } 
+            ? { 
+                ...event, 
+                likes: newLikesValue,
+                // Also update RSVP counts synchronously
+                rsvp_yes: (event.rsvp_yes || 0) + 1,
+                rsvp: {
+                  ...(event.rsvp || {}),
+                  yes: ((event.rsvp?.yes || 0) + 1),
+                  no: (event.rsvp?.no || 0),
+                  maybe: (event.rsvp?.maybe || 0)
+                }
+              } 
             : event
         );
-        return updatedEvents;
       });
       
+      // Update likes in local storage
       setEventLikes(prev => {
         const updatedLikes = {
           ...prev,
-          [eventId]: prev[eventId] ? prev[eventId] + 1 : 1
+          [eventId]: newLikesValue
         };
         localStorage.setItem('eventLikes', JSON.stringify(updatedLikes));
         return updatedLikes;
       });
       
+      // Prepare RSVP data
       const currentRsvp = {
         yes: currentEvent.rsvp_yes ?? currentEvent.rsvp?.yes ?? 0,
         no: currentEvent.rsvp_no ?? currentEvent.rsvp?.no ?? 0,
@@ -209,30 +223,22 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         yes: currentRsvp.yes + 1 
       };
       
-      setEvents(prevEvents => {
-        const updatedEvents = prevEvents.map(event => 
-          event.id === eventId 
-            ? { 
-                ...event, 
-                rsvp_yes: newRsvp.yes,
-                rsvp_no: newRsvp.no,
-                rsvp_maybe: newRsvp.maybe,
-                rsvp: newRsvp
-              } 
-            : event
-        );
-        return updatedEvents;
-      });
-      
-      await Promise.all([
+      // Update the database in background without waiting for it
+      Promise.all([
         updateEventLikes(eventId, newLikesValue),
         updateEventRsvp(eventId, newRsvp)
-      ]);
+      ]).finally(() => {
+        // Remove from pending set when database operation completes
+        setPendingLikes(prev => {
+          const updated = new Set(prev);
+          updated.delete(eventId);
+          return updated;
+        });
+      });
       
-      console.log(`Successfully updated likes and RSVP in database for event ${eventId}`);
     } catch (error) {
       console.error('Error updating likes:', error);
-    } finally {
+      // Remove from pending set on error
       setPendingLikes(prev => {
         const updated = new Set(prev);
         updated.delete(eventId);
