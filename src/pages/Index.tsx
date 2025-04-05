@@ -25,6 +25,7 @@ const Index = () => {
   
   const [testModalOpen, setTestModalOpen] = useState(false);
   const [typedText, setTypedText] = useState("");
+  const [typingComplete, setTypingComplete] = useState(false);
   const fullText = "Entdecke den Puls der Stadt";
   
   useEffect(() => {
@@ -35,8 +36,9 @@ const Index = () => {
         currentIndex++;
       } else {
         clearInterval(typingInterval);
+        setTypingComplete(true);
       }
-    }, 100); // Speed of typing animation
+    }, 60); // Speed of typing animation - faster now at 60ms
     
     return () => clearInterval(typingInterval);
   }, []);
@@ -60,16 +62,25 @@ const Index = () => {
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4 pt-16">
             <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center font-serif mt-12">
               <span className="relative">
-                {typedText}
+                {typedText.split(' ').map((word, index) => (
+                  <React.Fragment key={index}>
+                    {index > 0 && ' '}
+                    <span className={word === 'Puls' ? 'text-red-500' : ''}>
+                      {word}
+                    </span>
+                  </React.Fragment>
+                ))}
                 <span className="absolute -right-1 top-0 h-full w-[3px] bg-red-500 animate-pulse"></span>
               </span>
             </h1>
-            <p className="text-xl md:text-2xl text-center max-w-2xl mb-6 animate-fade-in opacity-0" style={{ animationDelay: "2.5s", animationFillMode: "forwards" }}>
+            <p className="text-xl md:text-2xl text-center max-w-2xl mb-6 animate-fade-in opacity-0" 
+               style={{ animationDelay: "1.5s", animationFillMode: "forwards" }}>
               Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
               <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
             </p>
             
-            <div className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-12 relative z-30 animate-fade-in opacity-0" style={{ animationDelay: "3s", animationFillMode: "forwards" }}>
+            <div className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-12 relative z-30 animate-fade-in opacity-0" 
+                 style={{ animationDelay: "2s", animationFillMode: "forwards" }}>
               <Button 
                 onClick={() => setTestModalOpen(true)}
                 className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-all shadow-lg hover:shadow-xl w-full max-w-sm"
