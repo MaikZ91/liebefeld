@@ -1,5 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { createWorker } from 'tesseract.js';
 
 interface ExtractedEventData {
@@ -41,10 +42,11 @@ export async function extractTextFromImage(imageFile: File): Promise<string> {
     
     console.log('Processing image with Tesseract.js');
     
-    // Enhanced recognition parameters for better results
+    // Use only supported Tesseract options
     const { data: { text } } = await worker.recognize(imageUrl, {
-      tessedit_pageseg_mode: '1', // Treat the image as a single block of text
-      tessedit_char_whitelist: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZäöüÄÖÜß0123456789:.,-_/@#&+()=?!%€ ', // Include German characters
+      // Fixed: Using only supported options
+      preserve_interword_spaces: '1',
+      tessedit_char_whitelist: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZäöüÄÖÜß0123456789:.,-_/@#&+()=?!%€ '
     });
     
     // Cleanup
@@ -97,11 +99,10 @@ async function enhancedImageExtraction(imageFile: File): Promise<string> {
     
     console.log('Processing preprocessed image with Tesseract.js');
     
-    // Recognize with more flexible settings
+    // Fixed: Use only supported options
     const { data: { text } } = await worker.recognize(preprocessedImageUrl, {
-      tessedit_pageseg_mode: '3', // Fully automatic page segmentation
-      tessedit_ocr_engine_mode: '2', // Neural net LSTM engine only
       preserve_interword_spaces: '1',
+      tessedit_ocr_engine_mode: '2' // Neural net LSTM engine only
     });
     
     // Cleanup
