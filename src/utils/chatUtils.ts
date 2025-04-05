@@ -1,6 +1,6 @@
 import { format, parseISO, isWithinInterval, startOfWeek, endOfWeek, addDays, 
   isToday, isTomorrow, isThisWeek, isWeekend, isAfter, isBefore, 
-  addWeeks, addMonths, getMonth, getYear } from 'date-fns';
+  addWeeks, addMonths, getMonth, getYear, startOfMonth, endOfMonth } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { type Event } from '../types/eventTypes';
 
@@ -317,11 +317,61 @@ export const processTimeQuery = (timeFrame: string, events: Event[]): { title: s
   }
 };
 
+// Get the monthly highlights (events with more than 10 likes)
+export const getMonthlyHighlights = (events: Event[], threshold: number = 10): Event[] => {
+  const today = new Date();
+  const monthStart = startOfMonth(today);
+  const monthEnd = endOfMonth(today);
+  
+  console.log(`Getting highlights for ${format(monthStart, 'MMMM yyyy', { locale: de })}`);
+  
+  return events
+    .filter(event => {
+      try {
+        if (!event.date) return false;
+        const eventDate = parseISO(event.date);
+        
+        // Check if event is in the current month
+        const isInCurrentMonth = isWithinInterval(eventDate, {
+          start: monthStart,
+          end: monthEnd
+        });
+        
+        // Check if the event has more likes than the threshold
+        const hasEnoughLikes = (event.likes || 0) > threshold;
+        
+        return isInCurrentMonth && hasEnoughLikes;
+      } catch (error) {
+        console.error(`Error filtering month highlights for event: ${event.title}`, error);
+        return false;
+      }
+    })
+    .sort((a, b) => {
+      // Sort by likes count (highest first)
+      const likesA = a.likes || 0;
+      const likesB = b.likes || 0;
+      return likesB - likesA;
+    });
+};
+
 // Generate a response based on a user query
 export const generateResponse = (query: string, events: Event[]): string => {
   const normalizedQuery = query.toLowerCase();
   
   console.log(`Generating response with ${events.length} events for query: "${query}"`);
+  
+  // Check for monthly highlights query
+  if (normalizedQuery.includes('highlight') || 
+      (normalizedQuery.includes('monat') && 
+       (normalizedQuery.includes('top') || normalizedQuery.includes('beste') || 
+        normalizedQuery.includes('beliebte')))) {
+    console.log('Detected query for monthly highlights');
+    
+    const highlights = getMonthlyHighlights(events);
+    const currentMonth = format(new Date(), 'MMMM yyyy', { locale: de });
+    
+    return `${createResponseHeader(`Highlights im ${currentMonth}`)}${formatEvents(highlights)}`;
+  }
   
   // Check if the query is for today's events in Liebefeld
   if (normalizedQuery.includes('liebefeld') && isEventsForTodayQuery(normalizedQuery)) {
