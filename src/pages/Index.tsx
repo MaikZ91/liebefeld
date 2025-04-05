@@ -38,7 +38,7 @@ const Index = () => {
         clearInterval(typingInterval);
         setTypingComplete(true);
       }
-    }, 60); // Speed of typing animation - faster now at 60ms
+    }, 30); // Speed of typing animation - much faster now at 30ms
     
     return () => clearInterval(typingInterval);
   }, []);
@@ -74,13 +74,13 @@ const Index = () => {
               </span>
             </h1>
             <p className="text-xl md:text-2xl text-center max-w-2xl mb-6 animate-fade-in opacity-0" 
-               style={{ animationDelay: "1.5s", animationFillMode: "forwards" }}>
+               style={{ animationDelay: "0.8s", animationFillMode: "forwards" }}>
               Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
               <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
             </p>
             
             <div className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-12 relative z-30 animate-fade-in opacity-0" 
-                 style={{ animationDelay: "2s", animationFillMode: "forwards" }}>
+                 style={{ animationDelay: "1.2s", animationFillMode: "forwards" }}>
               <Button 
                 onClick={() => setTestModalOpen(true)}
                 className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-all shadow-lg hover:shadow-xl w-full max-w-sm"
