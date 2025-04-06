@@ -354,11 +354,133 @@ export const getMonthlyHighlights = (events: Event[], threshold: number = 10): E
     });
 };
 
+// Get the weekly highlights for the upcoming week, grouped by day
+export const getWeeklyHighlights = (events: Event[], startDate: Date = new Date()): Record<string, Event[]> => {
+  // Get tomorrow's date as start date if using today
+  const tomorrow = addDays(new Date(), 1);
+  const effectiveStartDate = isToday(startDate) ? tomorrow : startDate;
+  
+  // End date is 7 days from the start date
+  const endDate = addDays(effectiveStartDate, 6);
+  
+  console.log(`Getting weekly highlights from ${format(effectiveStartDate, 'dd.MM.yyyy')} to ${format(endDate, 'dd.MM.yyyy')}`);
+  
+  // Filter for events in the date range
+  const weekEvents = events.filter(event => {
+    try {
+      if (!event.date) return false;
+      const eventDate = parseISO(event.date);
+      
+      return isWithinInterval(eventDate, {
+        start: effectiveStartDate,
+        end: endDate
+      });
+    } catch (error) {
+      console.error(`Error filtering week highlights for event: ${event.title}`, error);
+      return false;
+    }
+  });
+  
+  // Group events by date
+  const groupedEvents: Record<string, Event[]> = {};
+  
+  weekEvents.forEach(event => {
+    if (!event.date) return;
+    
+    if (!groupedEvents[event.date]) {
+      groupedEvents[event.date] = [];
+    }
+    
+    groupedEvents[event.date].push(event);
+  });
+  
+  // Sort events within each day by likes (highest first)
+  Object.keys(groupedEvents).forEach(dateKey => {
+    groupedEvents[dateKey].sort((a, b) => {
+      const likesA = a.likes || 0;
+      const likesB = b.likes || 0;
+      return likesB - likesA;
+    });
+  });
+  
+  return groupedEvents;
+};
+
+// Format weekly highlights for display
+export const formatWeeklyHighlights = (groupedEvents: Record<string, Event[]>): string => {
+  if (Object.keys(groupedEvents).length === 0) {
+    return "<div class='text-center py-3 px-2 rounded-lg bg-gray-800/50 border border-gray-700/50'>Leider sind keine Veranstaltungen für diesen Zeitraum geplant.</div>";
+  }
+
+  // Sort the dates chronologically
+  const sortedDates = Object.keys(groupedEvents).sort((a, b) => {
+    return parseISO(a).getTime() - parseISO(b).getTime();
+  });
+
+  return sortedDates
+    .map(dateKey => {
+      const dateObj = parseISO(dateKey);
+      const dateStr = format(dateObj, 'EEEE, dd.MM.yyyy', { locale: de });
+      const dayEvents = groupedEvents[dateKey];
+      
+      // Take top event for each day
+      const topEvent = dayEvents[0];
+      const categoryClass = getCategoryColorClass(topEvent.category);
+      const link = topEvent.link || '#';
+      
+      return `
+        <div class="mb-4">
+          <div class="font-medium text-sm text-gray-400 mb-2">${dateStr}</div>
+          <div class="p-2 rounded-lg bg-gradient-to-r from-gray-800/80 to-gray-900/80 border border-gray-700/50 hover:border-red-500/30 transition-all duration-300 animate-fade-in">
+            <a href="${link}" target="_blank" class="block hover:no-underline">
+              <div class="flex items-center justify-between">
+                <span class="font-medium text-red-400">${topEvent.title}</span>
+                <span class="text-xs ${categoryClass} px-2 py-0.5 rounded-full">${topEvent.category || 'Event'}</span>
+              </div>
+              <div class="flex items-center mt-1 text-xs text-gray-400">
+                <span class="flex items-center">
+                  <span class="mr-1">📅</span> ${format(dateObj, 'dd.MM.', { locale: de })}
+                </span>
+                <span class="mx-2">•</span>
+                <span class="flex items-center">
+                  <span class="mr-1">🕒</span> ${topEvent.time} Uhr
+                </span>
+                <span class="mx-2">•</span>
+                <span class="flex items-center">
+                  <span class="mr-1">❤️</span> ${topEvent.likes || 0}
+                </span>
+              </div>
+              <div class="text-xs text-gray-300 mt-1 truncate">
+                ${topEvent.location || 'Liebefeld'}
+              </div>
+            </a>
+          </div>
+          ${dayEvents.length > 1 ? `<div class="text-xs text-gray-500 mt-1 text-right">+${dayEvents.length - 1} weitere Events</div>` : ''}
+        </div>`;
+    })
+    .join("");
+};
+
 // Generate a response based on a user query
 export const generateResponse = (query: string, events: Event[]): string => {
   const normalizedQuery = query.toLowerCase();
   
   console.log(`Generating response with ${events.length} events for query: "${query}"`);
+  
+  // Check for weekly highlights query
+  if ((normalizedQuery.includes('highlight') || normalizedQuery.includes('top')) && 
+      (normalizedQuery.includes('woche') || normalizedQuery.includes('week') || 
+       normalizedQuery.includes('nächste') || normalizedQuery.includes('kommende'))) {
+    console.log('Detected query for weekly highlights');
+    
+    const weeklyHighlights = getWeeklyHighlights(events);
+    const tomorrow = addDays(new Date(), 1);
+    const nextWeek = addDays(tomorrow, 6);
+    
+    const dateRangeStr = `${format(tomorrow, 'dd.MM.', { locale: de })} - ${format(nextWeek, 'dd.MM.', { locale: de })}`;
+    
+    return `${createResponseHeader(`Top Events der nächsten Woche (${dateRangeStr})`)}${formatWeeklyHighlights(weeklyHighlights)}`;
+  }
   
   // Check for monthly highlights query
   if (normalizedQuery.includes('highlight') || 
@@ -480,22 +602,28 @@ export const generateResponse = (query: string, events: Event[]): string => {
     <p>Du kannst mich zum Beispiel fragen:</p>
     <ul class="space-y-2 pl-5">
       <li class="flex items-center">
-        <span class="text-red-400 mr-2">❤️</span> Was geht heute los?
+        <span class="text-red-400 mr-2">❤️</span>
+        <span>Was geht heute los?</span>
       </li>
       <li class="flex items-center">
-        <span class="text-red-400 mr-2">❤️</span> Was ist am Wochenende los?
+        <span class="text-red-400 mr-2">❤️</span>
+        <span>Zeige mir alle Events am Wochenende</span>
       </li>
       <li class="flex items-center">
-        <span class="text-red-400 mr-2">❤️</span> Welche Events gibt es nächste Woche?
+        <span class="text-red-400 mr-2">❤️</span>
+        <span>Gibt es Konzerte in dieser Woche?</span>
       </li>
       <li class="flex items-center">
-        <span class="text-red-400 mr-2">❤️</span> Gibt es Konzerte diese Woche?
+        <span class="text-red-400 mr-2">❤️</span>
+        <span>Welche Events gibt es nächste Woche?</span>
       </li>
       <li class="flex items-center">
-        <span class="text-red-400 mr-2">❤️</span> Welche Ausstellungen kann ich besuchen?
+        <span class="text-red-400 mr-2">❤️</span>
+        <span>Highlights im aktuellen Monat?</span>
       </li>
       <li class="flex items-center">
-        <span class="text-red-400 mr-2">❤️</span> Events im Zentrum von Liebefeld?
+        <span class="text-red-400 mr-2">❤️</span>
+        <span>Events im Zentrum von Liebefeld?</span>
       </li>
     </ul>
   </div>`;
@@ -529,11 +657,11 @@ export const getWelcomeMessage = (): string => {
         </li>
         <li class="flex items-start">
           <span class="text-red-400 mr-2">❤️</span>
-          <span>Welche Veranstaltungen sind im nächsten Monat?</span>
+          <span>Was sind die Highlights nächste Woche?</span>
         </li>
         <li class="flex items-start">
           <span class="text-red-400 mr-2">❤️</span>
-          <span>Ausstellungen in Liebefeld?</span>
+          <span>Highlights im aktuellen Monat?</span>
         </li>
       </ul>
     </div>
