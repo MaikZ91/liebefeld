@@ -238,9 +238,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         location,
         organizer,
         category: category || 'Sonstiges',
-        is_paid: isPaid,
         payment_link: isPaid ? 'maik.z@gmx.de' : null,
-        listing_expires_at: expiresAt,
         link: url ? url : undefined,
       };
       
@@ -308,7 +306,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         } else {
           toast({
             title: "Event erstellt",
-            description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`
+            description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt."
           });
         }
         
@@ -324,10 +322,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         errorMessage = errorMessage + " Fehler: " + err.message;
       }
       
-      const expiresAt = isPaid ? 
-        new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString() : 
-        undefined;
-      
       const eventData = {
         title,
         description,
@@ -337,9 +331,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         organizer,
         category: category || 'Sonstiges',
         image_urls: [],
-        is_paid: isPaid,
         payment_link: isPaid ? 'maik.z@gmx.de' : null,
-        listing_expires_at: expiresAt,
         link: url ? url : undefined,
       };
       

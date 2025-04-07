@@ -21,7 +21,7 @@ export interface Event {
   rsvp_yes?: number;
   rsvp_no?: number;
   rsvp_maybe?: number;
-  // Payment fields
+  // Payment fields 
   is_paid?: boolean;
   payment_link?: string | null;
   // Event listing fields
