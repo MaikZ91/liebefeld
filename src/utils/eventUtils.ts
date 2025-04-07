@@ -1,3 +1,4 @@
+
 import { Event, GitHubEvent } from '../types/eventTypes';
 import { parseAndNormalizeDate, debugDate } from './dateUtils';
 import { format, isSameDay, isSameMonth, startOfDay, isAfter, isBefore, differenceInDays, parseISO, compareAsc } from 'date-fns';
@@ -135,6 +136,12 @@ export const getMonthOrFavoriteEvents = (
         // If there's a likes difference, fall back to that
         const likesA = a.likes || 0;
         const likesB = b.likes || 0;
+        
+        // If likes are equal, use id for stable sorting
+        if (likesB === likesA) {
+          return a.id.localeCompare(b.id);
+        }
+        
         return likesB - likesA;
       }
     });
@@ -145,6 +152,8 @@ export const groupEventsByDate = (events: Event[]): Record<string, Event[]> => {
   const groupedEvents = events.reduce((acc, event) => {
     try {
       const dateStr = event.date;
+      if (!dateStr) return acc;
+      
       if (!acc[dateStr]) {
         acc[dateStr] = [];
       }
@@ -155,15 +164,7 @@ export const groupEventsByDate = (events: Event[]): Record<string, Event[]> => {
     return acc;
   }, {} as Record<string, Event[]>);
   
-  // Sort events within each date group by likes (higher likes first)
-  Object.keys(groupedEvents).forEach(dateStr => {
-    groupedEvents[dateStr].sort((a, b) => {
-      const likesA = a.likes || 0;
-      const likesB = b.likes || 0;
-      return likesB - likesA; // Sort by likes in descending order
-    });
-  });
-  
+  // No need to sort here as we'll do this in the component
   return groupedEvents;
 };
 

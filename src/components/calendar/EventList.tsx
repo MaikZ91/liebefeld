@@ -25,7 +25,7 @@ const EventList: React.FC<EventListProps> = ({
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
   
-  // Find the most popular event of today
+  // Find the most popular event of today with improved sorting stability
   useEffect(() => {
     if (events.length > 0) {
       // Filter for today's events
@@ -42,22 +42,51 @@ const EventList: React.FC<EventListProps> = ({
       
       // If we have events today, find the one with most likes
       if (todayEvents.length > 0) {
+        // Sort by likes first, then by id for stable sorting when likes are equal
         const popular = [...todayEvents].sort((a, b) => {
           const likesA = a.likes || 0;
           const likesB = b.likes || 0;
-          return likesB - likesA;
+          
+          // First compare by likes (descending)
+          if (likesB !== likesA) {
+            return likesB - likesA;
+          }
+          
+          // If likes are equal, use id as a stable secondary sort key
+          return a.id.localeCompare(b.id);
         })[0];
         
         setTopTodayEvent(popular);
-        console.log("Top event today:", popular.title, "with", popular.likes, "likes");
+        console.log("Top event today:", popular.title, "with", popular.likes, "likes", "ID:", popular.id);
       } else {
         setTopTodayEvent(null);
       }
     }
   }, [events]);
   
-  // Group events by date
-  const eventsByDate = groupEventsByDate(events);
+  // Group events by date with improved sorting stability
+  const eventsByDate = React.useMemo(() => {
+    const grouped = groupEventsByDate(events);
+    
+    // Sort events within each date group by likes (higher likes first)
+    // and with a stable secondary sort by id
+    Object.keys(grouped).forEach(dateStr => {
+      grouped[dateStr].sort((a, b) => {
+        const likesA = a.likes || 0;
+        const likesB = b.likes || 0;
+        
+        // First compare by likes (descending)
+        if (likesB !== likesA) {
+          return likesB - likesA;
+        }
+        
+        // If likes are equal, use id as a stable secondary sort key
+        return a.id.localeCompare(b.id);
+      });
+    });
+    
+    return grouped;
+  }, [events]);
   
   // Scroll to today's section ONLY on component first load and when events are loaded
   useEffect(() => {
