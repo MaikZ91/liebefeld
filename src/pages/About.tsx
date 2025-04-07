@@ -1,15 +1,25 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { BadgeCheck, Calendar, Clock, Heart, Link as LinkIcon, Lock, Mail, MapPin, MessageSquare, Users } from 'lucide-react';
 import ImageCarousel from '@/components/ImageCarousel';
 import { Link } from 'react-router-dom';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useToast } from '@/components/ui/use-toast';
 
 const About = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
+  
+  const { toast } = useToast();
   
   const communityImages = [
     {
@@ -29,6 +39,42 @@ const About = () => {
       alt: "Music band session"
     }
   ];
+  
+  // Define form schema for partner contact form
+  const partnerFormSchema = z.object({
+    name: z.string().min(2, { message: "Name muss mindestens 2 Zeichen lang sein." }),
+    email: z.string().email({ message: "Bitte gib eine gültige E-Mail-Adresse ein." }),
+    company: z.string().optional(),
+    partnershipType: z.string().min(1, { message: "Bitte wähle eine Kooperationsart." }),
+    message: z.string().min(10, { message: "Nachricht muss mindestens 10 Zeichen lang sein." }),
+  });
+  
+  // Initialize form
+  const form = useForm<z.infer<typeof partnerFormSchema>>({
+    resolver: zodResolver(partnerFormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      company: "",
+      partnershipType: "premium",
+      message: "",
+    },
+  });
+  
+  const onSubmit = (values: z.infer<typeof partnerFormSchema>) => {
+    // In a real application, this would send the form data to a backend
+    console.log("Partner form submitted:", values);
+    
+    // Show success message
+    toast({
+      title: "Nachricht gesendet!",
+      description: "Vielen Dank für dein Interesse. Wir werden uns in Kürze bei dir melden.",
+      duration: 5000,
+    });
+    
+    // Reset form
+    form.reset();
+  };
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -124,6 +170,134 @@ const About = () => {
                     className="max-h-40 object-contain"
                   />
                 </div>
+              </div>
+            </div>
+          </section>
+          
+          {/* New Partner Opportunity Section */}
+          <section className="mb-16">
+            <div className="glass-card p-8 md:p-12 rounded-2xl">
+              <div className="text-center mb-10">
+                <span className="inline-block py-1 px-3 rounded-full bg-secondary text-sm font-medium mb-4">Werde Partner</span>
+                <h2 className="text-2xl md:text-3xl font-bold mb-4">Deine Marke in der Bielefelder Community</h2>
+                <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                  Erreiche die aktive Bielefelder Community und profitiere von unserer lokalen Reichweite.
+                  Gemeinsam können wir maßgeschneiderte Kooperationen entwickeln.
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                {partnershipOptions.map((option, index) => (
+                  <Card key={index} className="hover-scale">
+                    <CardContent className="p-6">
+                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                        <option.icon className="h-6 w-6 text-primary" />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">{option.title}</h3>
+                      <p className="text-muted-foreground">{option.description}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              
+              <div className="bg-card rounded-xl p-6 md:p-8 shadow-sm border border-border">
+                <h3 className="text-xl font-bold mb-6 text-center">Kontaktiere uns für eine Partnerschaft</h3>
+                
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Name *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Dein Name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>E-Mail *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="deine@email.de" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={form.control}
+                      name="company"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Unternehmen / Organisation</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Dein Unternehmen oder Organisation" {...field} />
+                          </FormControl>
+                          <FormDescription>Optional, falls zutreffend</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="partnershipType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Art der Kooperation *</FormLabel>
+                          <FormControl>
+                            <select 
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                              {...field}
+                            >
+                              <option value="premium">Premium Event Posting</option>
+                              <option value="sponsorship">Event Sponsoring</option>
+                              <option value="advertising">Lokale Werbung</option>
+                              <option value="workshop">Workshop / Talk</option>
+                              <option value="other">Andere Kooperation</option>
+                            </select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="message"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nachricht *</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Beschreibe deine Idee für eine Kooperation..."
+                              className="min-h-32"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="flex justify-center pt-4">
+                      <Button type="submit" className="rounded-full px-8 py-6" size="lg">
+                        <Mail className="mr-2 h-4 w-4" /> Anfrage senden
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
               </div>
             </div>
           </section>
@@ -261,6 +435,25 @@ const features = [
     description: "Unsere Community lebt vom Engagement lokaler Menschen, die ihre Stadt lieben.",
     icon: MapPin
   }
+];
+
+// Define partnership options
+const partnershipOptions = [
+  {
+    title: "Premium Event Posting",
+    description: "Hebe deine Veranstaltungen hervor mit besserer Sichtbarkeit und Platzierung in unserem Kalender.",
+    icon: Calendar
+  },
+  {
+    title: "Workshop & Talks",
+    description: "Präsentiere dein Fachwissen und erreiche engagierte Teilnehmer in der Bielefelder Community.",
+    icon: Users
+  },
+  {
+    title: "Lokale Werbung",
+    description: "Stelle deine Marke der Bielefelder Community vor und nutze unsere lokale Reichweite.",
+    icon: Heart
+  },
 ];
 
 export default About;
