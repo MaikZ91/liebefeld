@@ -216,11 +216,11 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({
                 <div className="text-sm font-medium text-red-600 dark:text-red-400 flex flex-col gap-2 ml-1 mt-1 p-3 bg-red-100 dark:bg-red-900/30 rounded-md border border-red-200 dark:border-red-800/30">
                   <p className="flex items-center gap-1">
                     <Euro className="h-4 w-4 text-red-500" />
-                    <span>Für das Bewerben von kostenpflichtigen Events wie Workshops etc. wird eine Gebühr von 10€ erhoben.</span>
+                    <span>Für das Bewerben von kostenpflichtigen Events wie Workshops etc. wird eine Gebühr erhoben.</span>
                   </p>
                   <p className="flex items-center gap-1 mt-1">
                     <Mail className="h-4 w-4 text-red-500" />
-                    <span>Schreib uns dazu einfach eine Anfrage an <a href="mailto:info@liebefeld.de" className="underline hover:text-red-700">info@liebefeld.de</a></span>
+                    <span>Schreib uns dazu einfach eine Anfrage an <a href="mailto:maik.z@gmx.de" className="underline hover:text-red-700">maik.z@gmx.de</a></span>
                   </p>
                 </div>
               )}
