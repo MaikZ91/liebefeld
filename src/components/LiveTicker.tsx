@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { Calendar, ArrowRight, ThumbsUp } from 'lucide-react';
-import { format, parseISO, isSameMonth, startOfDay, isAfter, isToday } from 'date-fns';
+import { format, parseISO, isSameMonth, startOfDay, isAfter, isToday, isValid } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { type Event } from '../types/eventTypes';
 
@@ -29,9 +29,12 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
       const currentMonthEvents = events.filter(event => {
         try {
           if (!event.date) return false;
-          const eventDate = parseISO(event.date);
           
-          // Only include events from today or future dates
+          // Parse date and validate it's a real date
+          const eventDate = parseISO(event.date);
+          if (!isValid(eventDate)) return false;
+          
+          // Only include events from today or future dates in current month
           return isSameMonth(eventDate, currentDate) && (isAfter(eventDate, today) || isToday(eventDate));
         } catch (error) {
           console.error(`Error filtering for current month: ${event.date}`, error);
@@ -50,6 +53,8 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
           
           // Use just the date part for grouping
           const eventDate = parseISO(event.date);
+          if (!isValid(eventDate)) return;
+          
           const dateKey = format(eventDate, 'yyyy-MM-dd');
           
           if (!eventsByDay[dateKey]) {
@@ -66,21 +71,33 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
       const topEventsByDay = Object.keys(eventsByDay).map(dateKey => {
         const dayEvents = eventsByDay[dateKey];
         
-        // Sort by likes (highest first)
+        // Sort by likes (highest first) with a stable secondary sort by ID
         return dayEvents.sort((a, b) => {
           const likesA = a.likes || 0;
           const likesB = b.likes || 0;
-          return likesB - likesA;
+          
+          // First compare by likes (descending)
+          if (likesB !== likesA) {
+            return likesB - likesA;
+          }
+          
+          // If likes are equal, use id as a stable secondary sort key
+          return (a.id || '').localeCompare(b.id || '');
         })[0]; // Take only the top event
       });
       
       console.log(`LiveTicker: Found ${topEventsByDay.length} top events for the current month`);
       
       // Sort by date (closest first)
-      const sortedTopEvents = topEventsByDay.sort((a, b) => {
+      const sortedTopEvents = [...topEventsByDay].sort((a, b) => {
         try {
+          if (!a.date || !b.date) return 0;
+          
           const dateA = parseISO(a.date);
           const dateB = parseISO(b.date);
+          
+          if (!isValid(dateA) || !isValid(dateB)) return 0;
+          
           return dateA.getTime() - dateB.getTime();
         } catch (error) {
           console.error(`Error sorting top events by date: ${a.date}, ${b.date}`, error);
@@ -137,6 +154,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
                   {(() => {
                     try {
                       const date = parseISO(event.date);
+                      if (!isValid(date)) return 'Datum?';
                       return format(date, 'dd.MM', { locale: de });
                     } catch (error) {
                       console.error(`Failed to format date: ${event.date}`, error);
@@ -148,7 +166,6 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
                 <span className="text-gray-400 text-sm mr-1">({event.location || 'Keine Ortsangabe'})</span>
                 <span className="text-yellow-500 text-xs flex items-center">
                   <ThumbsUp className="w-3 h-3 mr-1" /> 
-                  {/* Make sure to render the likes count as a number or string, not an object */}
                   {typeof event.likes === 'number' ? event.likes : 0}
                 </span>
               </span>
