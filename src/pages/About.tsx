@@ -1,17 +1,16 @@
-
 import React, { useEffect } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { BadgeCheck, Calendar, Clock, Heart, Link, Mail, MapPin, MessageSquare, Users } from 'lucide-react';
+import { BadgeCheck, Calendar, Clock, Heart, Link as LinkIcon, Lock, Mail, MapPin, MessageSquare, Users } from 'lucide-react';
 import ImageCarousel from '@/components/ImageCarousel';
+import { Link } from 'react-router-dom';
 
 const About = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
   
-  // Community images for the carousel - same as on index page
   const communityImages = [
     {
       src: "/lovable-uploads/c38064ee-a32f-4ecc-b148-f9c53c28d472.png",
@@ -111,7 +110,7 @@ const About = () => {
                 </p>
                 <Button variant="outline" className="rounded-full gap-2" asChild>
                   <a href="https://www.socialtides.eu/community/the-tribe.bi" target="_blank" rel="noopener noreferrer">
-                    <Link className="h-4 w-4" />
+                    <LinkIcon className="h-4 w-4" />
                     Mehr erfahren
                   </a>
                 </Button>
@@ -171,6 +170,29 @@ const About = () => {
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-primary" />
                       <p>mschach@googlemail.com</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Datenschutz</h3>
+                  <div className="rounded-lg border p-4 bg-card/50 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Lock className="h-4 w-4 text-primary" />
+                      <Link to="/privacy" className="text-primary hover:underline font-medium">
+                        Zur Datenschutzerklärung
+                      </Link>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Informationen zum Umgang mit Ihren Daten und zu Ihren Rechten finden Sie in unserer Datenschutzerklärung.
+                    </p>
+                    <div className="mt-3">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to="/privacy" className="flex items-center gap-2">
+                          <Lock className="h-4 w-4" />
+                          Datenschutzerklärung öffnen
+                        </Link>
+                      </Button>
                     </div>
                   </div>
                 </div>
