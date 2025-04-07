@@ -226,22 +226,6 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({
               )}
             </div>
           </div>
-          
-          {isPaid && (
-            <div className="grid gap-2 mt-2 ml-7">
-              <Label htmlFor="paypalLink">Kontakt Email (optional)</Label>
-              <Input
-                id="paypalLink"
-                value={paypalLink}
-                onChange={(e) => setPaypalLink(e.target.value)}
-                placeholder="deine@email.de"
-                className="rounded-lg"
-              />
-              <p className="text-xs text-muted-foreground">
-                Gib deine E-Mail-Adresse an, damit wir dich bezüglich des kostenpflichtigen Events kontaktieren können
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </>

@@ -48,11 +48,9 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
                 info@liebefeld.de
               </a>
             </div>
-            {contactEmail && (
-              <p className="text-sm mt-2">
-                Wir werden auch deine angegebene Email-Adresse ({contactEmail}) für Rückfragen verwenden.
-              </p>
-            )}
+            <p className="text-sm mt-2">
+              Wir werden auch deine angegebene Email-Adresse ({contactEmail}) für Rückfragen verwenden.
+            </p>
           </div>
           
           <div className="bg-muted p-3 rounded-lg">

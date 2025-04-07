@@ -203,7 +203,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         organizer,
         category: category || 'Sonstiges',
         is_paid: isPaid,
-        payment_link: isPaid ? paypalLink : null,
+        payment_link: isPaid ? 'maik.z@gmx.de' : null,
         listing_expires_at: expiresAt,
       };
       
@@ -287,7 +287,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         category: category || 'Sonstiges',
         image_urls: [],
         is_paid: isPaid,
-        payment_link: isPaid ? paypalLink : null,
+        payment_link: isPaid ? 'maik.z@gmx.de' : null,
         listing_expires_at: expiresAt,
       };
       
@@ -383,7 +383,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         open={showPaymentDialog}
         onOpenChange={setShowPaymentDialog}
         onSubmitPayment={handlePaymentSubmit}
-        contactEmail={paypalLink}
+        contactEmail="maik.z@gmx.de"
       />
     </form>
   );
