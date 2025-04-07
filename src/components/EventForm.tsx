@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { toast } from '@/components/ui/use-toast';
@@ -306,7 +307,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         } else {
           toast({
             title: "Event erstellt",
-            description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt."
+            description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`
           });
         }
         
