@@ -2,7 +2,7 @@
 import React from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Mail } from 'lucide-react';
+import { ArrowLeft, Mail, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Impressum = () => {
@@ -55,6 +55,19 @@ const Impressum = () => {
             </section>
             
             <section>
+              <h2 className="text-xl font-semibold mb-2">Datenschutz</h2>
+              <div className="rounded-lg border p-4 bg-card space-y-2">
+                <div className="flex items-center gap-2">
+                  <Lock className="h-4 w-4 text-primary" />
+                  <Link to="/privacy" className="text-primary hover:underline">Zur Datenschutzerklärung</Link>
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Informationen zum Umgang mit Ihren Daten und zu Ihren Rechten finden Sie in unserer Datenschutzerklärung.
+                </p>
+              </div>
+            </section>
+            
+            <section>
               <h2 className="text-xl font-semibold mb-2">Haftungsausschluss</h2>
               <div className="space-y-4">
                 <div>
@@ -71,13 +84,6 @@ const Impressum = () => {
                   </p>
                 </div>
               </div>
-            </section>
-            
-            <section>
-              <h2 className="text-xl font-semibold mb-2">Datenschutz</h2>
-              <p className="text-sm text-muted-foreground">
-                Die Nutzung unserer Webseite ist in der Regel ohne Angabe personenbezogener Daten möglich. Soweit auf unseren Seiten personenbezogene Daten erhoben werden, erfolgt dies, soweit möglich, stets auf freiwilliger Basis. Diese Daten werden ohne Ihre ausdrückliche Zustimmung nicht an Dritte weitergegeben.
-              </p>
             </section>
           </div>
           
