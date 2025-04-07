@@ -1,4 +1,3 @@
-
 // Shared type definitions for events and calendar
 export interface Event {
   id: string;
@@ -21,6 +20,9 @@ export interface Event {
   rsvp_yes?: number;
   rsvp_no?: number;
   rsvp_maybe?: number;
+  // Payment fields
+  is_paid?: boolean;
+  payment_link?: string | null;
 }
 
 export interface GitHubEvent {

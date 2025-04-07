@@ -9,12 +9,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type Event } from '@/types/eventTypes';
-import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft, X, Camera, Upload, Image, Sparkles } from 'lucide-react';
+import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft, X, Camera, Upload, Image, Sparkles, DollarSign } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { processEventImage } from '@/utils/imageAnalysis';
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface EventFormProps {
   selectedDate: Date;
@@ -45,6 +46,8 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
   const [images, setImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isPaid, setIsPaid] = useState(false);
+  const [paypalLink, setPaypalLink] = useState('');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -202,6 +205,12 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       return;
     }
     
+    // Validate PayPal link if this is a paid event
+    if (isPaid && !paypalLink) {
+      setError('Bitte gib einen PayPal-Link für kostenpflichtige Events ein');
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -219,6 +228,8 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         location,
         organizer,
         category: category || 'Sonstiges',
+        is_paid: isPaid,
+        payment_link: isPaid ? paypalLink : null,
       };
       
       // Try saving directly to Supabase first
@@ -290,6 +301,8 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         setCategory('');
         setImages([]);
         setPreviewUrls([]);
+        setIsPaid(false);
+        setPaypalLink('');
         
         // Hide form after successful addition
         if (onCancel) onCancel();
@@ -306,7 +319,9 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         location,
         organizer,
         category: category || 'Sonstiges',
-        image_urls: [] // Add empty array for fallback
+        image_urls: [], // Add empty array for fallback
+        is_paid: isPaid,
+        payment_link: isPaid ? paypalLink : null,
       };
       
       // Create the temporary event with correctly structured object
@@ -564,6 +579,47 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
               </SelectContent>
             </Select>
           </div>
+        </div>
+        
+        {/* Payment Option Section */}
+        <div className="grid gap-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="isPaid" 
+              checked={isPaid} 
+              onCheckedChange={(checked) => {
+                setIsPaid(checked === true);
+                if (checked === false) {
+                  setPaypalLink('');
+                }
+              }} 
+            />
+            <div className="grid gap-1.5">
+              <Label htmlFor="isPaid" className="flex items-center">
+                <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
+                Kostenpflichtiges Event
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Aktiviere diese Option für kostenpflichtige Events mit PayPal-Bezahlung
+              </p>
+            </div>
+          </div>
+          
+          {isPaid && (
+            <div className="grid gap-2 mt-2 ml-7">
+              <Label htmlFor="paypalLink">PayPal Link</Label>
+              <Input
+                id="paypalLink"
+                value={paypalLink}
+                onChange={(e) => setPaypalLink(e.target.value)}
+                placeholder="https://paypal.me/yourlink"
+                className="rounded-lg"
+              />
+              <p className="text-xs text-muted-foreground">
+                Gib den Link zu deiner PayPal-Zahlungsseite ein
+              </p>
+            </div>
+          )}
         </div>
       </div>
       
