@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -10,8 +9,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft, DollarSign, Euro } from 'lucide-react';
+import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft, DollarSign, Euro, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface EventFormFieldsProps {
   title: string;
@@ -180,7 +180,7 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({
         </div>
         
         <div className="grid gap-2">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 rounded-lg">
             <Checkbox 
               id="isPaid" 
               checked={isPaid} 
@@ -189,17 +189,32 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({
                 if (checked === false) {
                   setPaypalLink('');
                 }
-              }} 
+              }}
+              className="h-5 w-5 border-2 border-red-500 data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500" 
             />
             <div className="grid gap-1.5">
-              <Label htmlFor="isPaid" className="flex items-center">
-                <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
+              <Label 
+                htmlFor="isPaid" 
+                className="flex items-center text-base font-medium text-red-700 dark:text-red-300"
+              >
+                <DollarSign className="h-5 w-5 mr-2 text-red-500" />
                 Kostenpflichtiges Event
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 ml-2 text-red-500 cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-white dark:bg-slate-900 border border-red-200 dark:border-red-800/30 p-3 max-w-xs">
+                      <p>Für kostenpflichtige Events wird eine Gebühr von 10€ erhoben.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </Label>
+              
               {isPaid && (
-                <p className="text-sm text-muted-foreground flex items-center gap-1">
-                  <Euro className="h-4 w-4" />
-                  <span>Für kostenpflichtige Events wird eine Gebühr von 10€ erhoben</span>
+                <p className="text-sm font-medium text-red-600 dark:text-red-400 flex items-center gap-1 ml-1 mt-1 p-2 bg-red-100 dark:bg-red-900/30 rounded-md border border-red-200 dark:border-red-800/30">
+                  <Euro className="h-4 w-4 text-red-500" />
+                  <span>Für das Bewerben von kostenpflichtigen Events wie Workshops etc. wird eine Gebühr von 10€ erhoben.</span>
                 </p>
               )}
             </div>
