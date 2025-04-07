@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, Check, HelpCircle, X, BadgePlus, DollarSign } from 'lucide-react';

@@ -10,7 +10,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft, DollarSign, Euro, Info, Mail } from 'lucide-react';
+import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft, DollarSign, Euro, Info, Mail, Link as LinkIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -35,6 +35,8 @@ interface EventFormFieldsProps {
   setPaypalLink: (paypalLink: string) => void;
   eventCategories: string[];
   error: string | null;
+  url: string;
+  setUrl: (url: string) => void;
 }
 
 const EventFormFields: React.FC<EventFormFieldsProps> = ({
@@ -48,7 +50,8 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({
   isPaid, setIsPaid,
   paypalLink, setPaypalLink,
   eventCategories,
-  error
+  error,
+  url, setUrl
 }) => {
   return (
     <>
@@ -148,6 +151,21 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({
           />
         </div>
         
+        <div className="grid gap-2">
+          <div className="flex items-center">
+            <LinkIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+            <Label htmlFor="url">URL</Label>
+          </div>
+          <Input
+            id="url"
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://www.example.com"
+            className="rounded-lg"
+          />
+        </div>
+        
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="grid gap-2">
             <div className="flex items-center">
@@ -206,7 +224,7 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({
                       <Info className="h-4 w-4 ml-2 text-red-500 cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent className="bg-white dark:bg-slate-900 border border-red-200 dark:border-red-800/30 p-3 max-w-xs">
-                      <p>Für kostenpflichtige Events wird eine Gebühr von 10€ erhoben.</p>
+                      <p>Für kostenpflichtige Events wird eine Gebühr erhoben.</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>

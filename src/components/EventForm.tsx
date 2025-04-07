@@ -41,6 +41,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
   const [images, setImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [url, setUrl] = useState('');
   
   const [isPaid, setIsPaid] = useState(false);
   const [paypalLink, setPaypalLink] = useState('');
@@ -205,6 +206,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         is_paid: isPaid,
         payment_link: isPaid ? 'maik.z@gmx.de' : null,
         listing_expires_at: expiresAt,
+        link: url ? url : undefined,
       };
       
       const { data, error: supabaseError } = await supabase
@@ -266,7 +268,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         } else {
           toast({
             title: "Event erstellt",
-            description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`
+            description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt."
           });
         }
         
@@ -293,11 +295,12 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         is_paid: isPaid,
         payment_link: isPaid ? 'maik.z@gmx.de' : null,
         listing_expires_at: expiresAt,
+        link: url ? url : undefined,
       };
       
       const tempEvent: Omit<Event, 'id'> & { id: string } = {
         ...eventData,
-        id: `local-${Date.now()}`
+        id: "local-" + Date.now()
       };
       
       onAddEvent(tempEvent);
@@ -326,6 +329,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
     setPreviewUrls([]);
     setIsPaid(false);
     setPaypalLink('');
+    setUrl('');
   };
   
   const handlePaymentSubmit = () => {
@@ -375,6 +379,8 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         setPaypalLink={setPaypalLink}
         eventCategories={eventCategories}
         error={error}
+        url={url}
+        setUrl={setUrl}
       />
       
       <FormFooter 
