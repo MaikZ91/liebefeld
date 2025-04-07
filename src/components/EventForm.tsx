@@ -266,7 +266,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         } else {
           toast({
             title: "Event erstellt",
-            description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt."
+            description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`
           });
         }
         
