@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { toast } from '@/components/ui/use-toast';
@@ -244,7 +243,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
           organizer,
           category: category || 'Sonstiges',
           image_urls: [],
-          payment_link: 'maik.z@gmx.de',
           id: "local-paid-" + Date.now(),
           link: url || undefined
         };
@@ -267,7 +265,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         location,
         organizer,
         category: category || 'Sonstiges',
-        payment_link: null,
         link: url || undefined
       };
       
@@ -353,7 +350,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         organizer,
         category: category || 'Sonstiges',
         image_urls: [],
-        payment_link: null,
         link: url || undefined,
       };
       
