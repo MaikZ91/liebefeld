@@ -266,7 +266,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         } else {
           toast({
             title: "Event erstellt",
-            description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`
+            description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt."
           });
         }
         
@@ -276,6 +276,10 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       }
     } catch (err) {
       console.error('Error adding event:', err);
+      
+      const expiresAt = isPaid ? 
+        new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString() : 
+        undefined;
       
       const eventData = {
         title,
