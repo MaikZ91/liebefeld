@@ -227,10 +227,38 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       console.log('Selected date:', date);
       console.log('Formatted date for DB:', formattedDate);
       
-      const expiresAt = isPaid ? 
-        new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString() : 
-        undefined;
+      // For paid events that were processed via the dialog, we don't actually 
+      // insert into the database, we just show a success message
+      if (isPaid && isPaidAndProcessed) {
+        toast({
+          title: "Kostenpflichtiges Event erstellt",
+          description: `"${title}" wurde erfolgreich als kostenpflichtiges Event für 10€ hinzugefügt.`
+        });
+        
+        const tempEvent: Omit<Event, 'id'> & { id: string } = {
+          title,
+          description,
+          date: formattedDate,
+          time,
+          location,
+          organizer,
+          category: category || 'Sonstiges',
+          image_urls: [],
+          payment_link: 'maik.z@gmx.de',
+          id: "local-paid-" + Date.now(),
+          link: url || undefined
+        };
+        
+        onAddEvent(tempEvent);
+        resetForm();
+        
+        if (onCancel) onCancel();
+        setIsSubmitting(false);
+        setShowPaymentDialog(false);
+        return;
+      }
       
+      // Only continue with database insertion for free events
       const newEvent: Omit<Event, 'id'> = {
         title,
         description,
@@ -239,8 +267,8 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         location,
         organizer,
         category: category || 'Sonstiges',
-        payment_link: isPaid ? 'maik.z@gmx.de' : null,
-        link: url ? url : undefined,
+        payment_link: null,
+        link: url || undefined
       };
       
       console.log('Attempting to insert event:', newEvent);
@@ -299,17 +327,10 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
           image_urls: imageUrls.length > 0 ? imageUrls : undefined
         });
         
-        if (isPaid && isPaidAndProcessed) {
-          toast({
-            title: "Kostenpflichtiges Event erstellt",
-            description: `"${newEvent.title}" wurde erfolgreich als kostenpflichtiges Event für 10€ hinzugefügt.`
-          });
-        } else {
-          toast({
-            title: "Event erstellt",
-            description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`
-          });
-        }
+        toast({
+          title: "Event erstellt",
+          description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`
+        });
         
         resetForm();
         
@@ -332,8 +353,8 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         organizer,
         category: category || 'Sonstiges',
         image_urls: [],
-        payment_link: isPaid ? 'maik.z@gmx.de' : null,
-        link: url ? url : undefined,
+        payment_link: null,
+        link: url || undefined,
       };
       
       const tempEvent: Omit<Event, 'id'> & { id: string } = {
