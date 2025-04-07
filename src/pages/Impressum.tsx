@@ -59,11 +59,21 @@ const Impressum = () => {
               <div className="rounded-lg border p-4 bg-card space-y-2">
                 <div className="flex items-center gap-2">
                   <Lock className="h-4 w-4 text-primary" />
-                  <Link to="/privacy" className="text-primary hover:underline">Zur Datenschutzerklärung</Link>
+                  <Link to="/privacy" className="text-primary hover:underline font-medium">
+                    Zur Datenschutzerklärung
+                  </Link>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
                   Informationen zum Umgang mit Ihren Daten und zu Ihren Rechten finden Sie in unserer Datenschutzerklärung.
                 </p>
+                <div className="mt-3">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/privacy" className="flex items-center gap-2">
+                      <Lock className="h-4 w-4" />
+                      Datenschutzerklärung öffnen
+                    </Link>
+                  </Button>
+                </div>
               </div>
             </section>
             
