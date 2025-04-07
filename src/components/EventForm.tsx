@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { toast } from '@/components/ui/use-toast';
@@ -322,7 +321,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       
       let errorMessage = "Das Event konnte nicht in der Datenbank gespeichert werden.";
       if (err instanceof Error) {
-        errorMessage += ` Fehler: ${err.message}`;
+        errorMessage = errorMessage + " Fehler: " + err.message;
       }
       
       const expiresAt = isPaid ? 
