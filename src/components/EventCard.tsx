@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
-import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, Check, HelpCircle, X, BadgePlus, Repeat, DollarSign } from 'lucide-react';
+import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, Check, HelpCircle, X, BadgePlus, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -92,12 +91,6 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
                   <span>Neu</span>
                 </Badge>
               )}
-              {event.is_recurring && (
-                <Badge className="bg-purple-600 text-white text-xs flex items-center gap-0.5 h-4 px-1.5">
-                  <Repeat className="w-3 h-3" />
-                  <span>Regelmäßig</span>
-                </Badge>
-              )}
               {event.is_paid && (
                 <Badge className="bg-amber-500 text-white text-xs flex items-center gap-0.5 h-4 px-1.5">
                   <DollarSign className="w-3 h-3" />
@@ -182,12 +175,6 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               <Badge className="bg-green-600 text-white text-xs flex items-center gap-1 h-5 px-2 self-start">
                 <BadgePlus className="w-3 h-3" />
                 <span>Neu</span>
-              </Badge>
-            )}
-            {event.is_recurring && (
-              <Badge className="bg-purple-600 text-white text-xs flex items-center gap-1 h-5 px-2 self-start">
-                <Repeat className="w-3 h-3" />
-                <span>Regelmäßig</span>
               </Badge>
             )}
             {event.is_paid && (

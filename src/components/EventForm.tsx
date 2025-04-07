@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type Event } from '@/types/eventTypes';
-import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft, X, Camera, Upload, Image, Sparkles, DollarSign, Repeat, Euro, CreditCard } from 'lucide-react';
+import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft, X, Camera, Upload, Image, Sparkles, DollarSign, Euro, CreditCard } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
@@ -57,9 +57,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
   
   const [isPaid, setIsPaid] = useState(false);
   const [paypalLink, setPaypalLink] = useState('');
-  
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [recurrencePattern, setRecurrencePattern] = useState<'weekly' | 'monthly' | 'custom'>('weekly');
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'credit_card' | 'paypal'>('credit_card');
   
@@ -206,12 +203,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       return;
     }
     
-    if (isPaid && !paypalLink) {
-      setError('Bitte gib einen PayPal-Link für kostenpflichtige Events ein');
-      return;
-    }
-    
-    if (isRecurring) {
+    if (isPaid) {
       setShowPaymentDialog(true);
       return;
     }
@@ -219,7 +211,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
     submitEvent(false);
   };
   
-  const submitEvent = async (isRecurringPaid: boolean = false) => {
+  const submitEvent = async (isPaidAndProcessed: boolean = false) => {
     setIsSubmitting(true);
     
     try {
@@ -227,7 +219,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       console.log('Selected date:', date);
       console.log('Formatted date for DB:', formattedDate);
       
-      const expiresAt = isRecurring ? 
+      const expiresAt = isPaid ? 
         new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString() : 
         undefined;
       
@@ -241,9 +233,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         category: category || 'Sonstiges',
         is_paid: isPaid,
         payment_link: isPaid ? paypalLink : null,
-        is_recurring: isRecurring,
-        recurrence_pattern: isRecurring ? recurrencePattern : undefined,
-        recurrence_fee_paid: isRecurringPaid,
         listing_expires_at: expiresAt,
       };
       
@@ -298,10 +287,10 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
           image_urls: imageUrls.length > 0 ? imageUrls : undefined
         });
         
-        if (isRecurring && isRecurringPaid) {
+        if (isPaid && isPaidAndProcessed) {
           toast({
-            title: "Regelmäßiges Event erstellt",
-            description: `"${newEvent.title}" wurde erfolgreich als regelmäßiges Event für 10€ hinzugefügt und bleibt 3 Monate aktiv.`
+            title: "Kostenpflichtiges Event erstellt",
+            description: `"${newEvent.title}" wurde erfolgreich als kostenpflichtiges Event für 10€ hinzugefügt.`
           });
         } else {
           toast({
@@ -328,9 +317,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         image_urls: [],
         is_paid: isPaid,
         payment_link: isPaid ? paypalLink : null,
-        is_recurring: isRecurring,
-        recurrence_pattern: isRecurring ? recurrencePattern : undefined,
-        recurrence_fee_paid: isRecurringPaid,
       };
       
       const tempEvent: Omit<Event, 'id'> & { id: string } = {
@@ -366,8 +352,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
     setPreviewUrls([]);
     setIsPaid(false);
     setPaypalLink('');
-    setIsRecurring(false);
-    setRecurrencePattern('weekly');
   };
   
   const handlePaymentSubmit = () => {
@@ -379,7 +363,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
     setTimeout(() => {
       toast({
         title: "Zahlung erfolgreich",
-        description: "Ihre Zahlung von 10€ für das regelmäßige Event wurde erfolgreich verarbeitet.",
+        description: "Ihre Zahlung von 10€ für das kostenpflichtige Event wurde erfolgreich verarbeitet.",
       });
       
       submitEvent(true);
@@ -635,15 +619,16 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
                 <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
                 Kostenpflichtiges Event
               </Label>
-              <p className="text-sm text-muted-foreground">
-                Aktiviere diese Option für kostenpflichtige Events mit PayPal-Bezahlung
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <Euro className="h-4 w-4" />
+                <span>Für kostenpflichtige Events wird eine Gebühr von 10€ erhoben</span>
               </p>
             </div>
           </div>
           
           {isPaid && (
             <div className="grid gap-2 mt-2 ml-7">
-              <Label htmlFor="paypalLink">PayPal Link</Label>
+              <Label htmlFor="paypalLink">PayPal Link (optional)</Label>
               <Input
                 id="paypalLink"
                 value={paypalLink}
@@ -652,54 +637,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
                 className="rounded-lg"
               />
               <p className="text-xs text-muted-foreground">
-                Gib den Link zu deiner PayPal-Zahlungsseite ein
-              </p>
-            </div>
-          )}
-        </div>
-        
-        <div className="grid gap-2 border-t pt-4 mt-2">
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="isRecurring" 
-              checked={isRecurring} 
-              onCheckedChange={(checked) => setIsRecurring(checked === true)} 
-            />
-            <div className="grid gap-1.5">
-              <Label htmlFor="isRecurring" className="flex items-center">
-                <Repeat className="h-4 w-4 mr-2 text-muted-foreground" />
-                Regelmäßiges Event
-              </Label>
-              <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <Euro className="h-4 w-4" />
-                <span>Für regelmäßige Events wird eine Gebühr von 10€ für 3 Monate erhoben</span>
-              </p>
-            </div>
-          </div>
-          
-          {isRecurring && (
-            <div className="grid gap-2 mt-2 ml-7">
-              <Label>Wiederholungsmuster</Label>
-              <RadioGroup 
-                value={recurrencePattern} 
-                onValueChange={(value) => setRecurrencePattern(value as 'weekly' | 'monthly' | 'custom')}
-                className="grid gap-2"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="weekly" id="weekly" />
-                  <Label htmlFor="weekly">Wöchentlich</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="monthly" id="monthly" />
-                  <Label htmlFor="monthly">Monatlich</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="custom" id="custom" />
-                  <Label htmlFor="custom">Benutzerdefiniert</Label>
-                </div>
-              </RadioGroup>
-              <p className="text-xs text-muted-foreground mt-1">
-                Dein Event wird für 3 Monate im Kalender angezeigt werden
+                Gib den Link zu deiner PayPal-Zahlungsseite ein, wenn Besucher dort Tickets kaufen können
               </p>
             </div>
           )}
@@ -722,16 +660,16 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
           className="rounded-full"
           disabled={isSubmitting || isAnalyzing}
         >
-          {isSubmitting ? "Wird erstellt..." : isRecurring ? "Weiter zur Zahlung" : "Event erstellen"}
+          {isSubmitting ? "Wird erstellt..." : isPaid ? "Weiter zur Zahlung" : "Event erstellen"}
         </Button>
       </div>
       
       <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Zahlung für regelmäßiges Event</DialogTitle>
+            <DialogTitle>Zahlung für kostenpflichtiges Event</DialogTitle>
             <DialogDescription>
-              Für regelmäßige Events berechnen wir eine Gebühr von 10€ für 3 Monate Laufzeit.
+              Für kostenpflichtige Events berechnen wir eine Gebühr von 10€.
             </DialogDescription>
           </DialogHeader>
           
@@ -798,7 +736,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
             
             <div className="bg-muted p-3 rounded-lg">
               <div className="flex justify-between items-center">
-                <span>Regelmäßiges Event (3 Monate)</span>
+                <span>Kostenpflichtiges Event</span>
                 <span>10,00 €</span>
               </div>
             </div>

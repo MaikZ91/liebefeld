@@ -24,10 +24,7 @@ export interface Event {
   // Payment fields
   is_paid?: boolean;
   payment_link?: string | null;
-  // Recurring event fields
-  is_recurring?: boolean;
-  recurrence_pattern?: 'weekly' | 'monthly' | 'custom';
-  recurrence_fee_paid?: boolean;
+  // Event listing fields
   listing_expires_at?: string;
 }
 
