@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const About = () => {
   useEffect(() => {
@@ -20,6 +20,7 @@ const About = () => {
   }, []);
   
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const communityImages = [
     {
@@ -40,7 +41,6 @@ const About = () => {
     }
   ];
   
-  // Define form schema for partner contact form
   const partnerFormSchema = z.object({
     name: z.string().min(2, { message: "Name muss mindestens 2 Zeichen lang sein." }),
     email: z.string().email({ message: "Bitte gib eine gültige E-Mail-Adresse ein." }),
@@ -49,7 +49,6 @@ const About = () => {
     message: z.string().min(10, { message: "Nachricht muss mindestens 10 Zeichen lang sein." }),
   });
   
-  // Initialize form
   const form = useForm<z.infer<typeof partnerFormSchema>>({
     resolver: zodResolver(partnerFormSchema),
     defaultValues: {
@@ -61,19 +60,38 @@ const About = () => {
     },
   });
   
-  const onSubmit = (values: z.infer<typeof partnerFormSchema>) => {
-    // In a real application, this would send the form data to a backend
-    console.log("Partner form submitted:", values);
+  const onSubmit = async (values: z.infer<typeof partnerFormSchema>) => {
+    setIsSubmitting(true);
     
-    // Show success message
-    toast({
-      title: "Nachricht gesendet!",
-      description: "Vielen Dank für dein Interesse. Wir werden uns in Kürze bei dir melden.",
-      duration: 5000,
-    });
-    
-    // Reset form
-    form.reset();
+    try {
+      const { data, error } = await supabase.functions.invoke('send-partner-email', {
+        body: values
+      });
+      
+      if (error) {
+        throw new Error(error.message || 'Ein Fehler ist aufgetreten');
+      }
+      
+      toast({
+        title: "Nachricht gesendet!",
+        description: "Vielen Dank für dein Interesse. Wir werden uns in Kürze bei dir melden.",
+        duration: 5000,
+      });
+      
+      form.reset();
+      
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      
+      toast({
+        title: "Fehler beim Senden",
+        description: "Deine Nachricht konnte nicht gesendet werden. Bitte versuche es später erneut.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -142,7 +160,6 @@ const About = () => {
             </div>
           </section>
           
-          {/* Partner Section */}
           <section className="mb-16">
             <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">Unsere Partner</h2>
             
@@ -174,7 +191,6 @@ const About = () => {
             </div>
           </section>
           
-          {/* New Partner Opportunity Section */}
           <section className="mb-16">
             <div className="glass-card p-8 md:p-12 rounded-2xl">
               <div className="text-center mb-10">
@@ -292,8 +308,19 @@ const About = () => {
                     />
                     
                     <div className="flex justify-center pt-4">
-                      <Button type="submit" className="rounded-full px-8 py-6" size="lg">
-                        <Mail className="mr-2 h-4 w-4" /> Anfrage senden
+                      <Button 
+                        type="submit" 
+                        className="rounded-full px-8 py-6" 
+                        size="lg"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <>Wird gesendet...</>
+                        ) : (
+                          <>
+                            <Mail className="mr-2 h-4 w-4" /> Anfrage senden
+                          </>
+                        )}
                       </Button>
                     </div>
                   </form>
@@ -320,7 +347,6 @@ const About = () => {
             </div>
           </section>
           
-          {/* Impressum Section */}
           <section id="impressum" className="mb-16">
             <div className="max-w-3xl mx-auto border rounded-lg p-6 bg-card">
               <h2 className="text-2xl font-bold mb-4">Impressum</h2>
@@ -437,7 +463,6 @@ const features = [
   }
 ];
 
-// Define partnership options
 const partnershipOptions = [
   {
     title: "Premium Event Posting",
