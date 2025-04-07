@@ -64,13 +64,7 @@ const About = () => {
     setIsSubmitting(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('send-partner-email', {
-        body: values
-      });
-      
-      if (error) {
-        throw new Error(error.message || 'Ein Fehler ist aufgetreten');
-      }
+      console.log("Partner form submitted:", values);
       
       toast({
         title: "Nachricht gesendet!",
@@ -218,6 +212,22 @@ const About = () => {
               
               <div className="bg-card rounded-xl p-6 md:p-8 shadow-sm border border-border">
                 <h3 className="text-xl font-bold mb-6 text-center">Kontaktiere uns für eine Partnerschaft</h3>
+                
+                <div className="text-center mb-8">
+                  <Button 
+                    variant="default" 
+                    className="rounded-full px-8 py-6" 
+                    size="lg"
+                    asChild
+                  >
+                    <a href="mailto:maik.z@gmx.de">
+                      <Mail className="mr-2 h-4 w-4" /> Direkt per E-Mail kontaktieren
+                    </a>
+                  </Button>
+                  <p className="mt-4 text-muted-foreground">
+                    Oder nutze das Formular unten:
+                  </p>
+                </div>
                 
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -369,7 +379,9 @@ const About = () => {
                   <div className="rounded-lg border p-4 bg-card/50">
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-primary" />
-                      <p>mschach@googlemail.com</p>
+                      <a href="mailto:maik.z@gmx.de" className="text-primary hover:underline">
+                        maik.z@gmx.de
+                      </a>
                     </div>
                   </div>
                 </div>
