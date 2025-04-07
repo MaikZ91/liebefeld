@@ -27,6 +27,7 @@ interface EventContextProps {
   showFavorites: boolean;
   setShowFavorites: React.Dispatch<React.SetStateAction<boolean>>;
   refreshEvents: () => Promise<void>;
+  newEventIds: Set<string>; // Added to track new events
 }
 
 declare global {
@@ -47,11 +48,17 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [eventLikes, setEventLikes] = useState<Record<string, number>>({});
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
   const [pendingLikes, setPendingLikes] = useState<Set<string>>(new Set());
+  const [newEventIds, setNewEventIds] = useState<Set<string>>(new Set());
 
   const refreshEvents = async () => {
     setIsLoading(true);
     try {
       console.log('Refreshing events...');
+      
+      // Get previously seen event IDs from localStorage
+      const previouslySeenEventsJson = localStorage.getItem('seenEventIds');
+      const previouslySeenEvents: string[] = previouslySeenEventsJson ? JSON.parse(previouslySeenEventsJson) : [];
+      const previouslySeenSet = new Set(previouslySeenEvents);
       
       const githubLikes = await fetchGitHubLikes();
       console.log('Fetched GitHub likes:', githubLikes);
@@ -81,6 +88,15 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const combinedEvents = [...supabaseEvents];
       
       const newEvents: Event[] = [];
+      const currentEventIds: string[] = [];
+      
+      // Collect all current event IDs to update the seen events list later
+      [...supabaseEvents, ...externalEvents].forEach(event => {
+        currentEventIds.push(event.id);
+      });
+      
+      // Create set of new event IDs
+      const newEventIdsSet = new Set<string>();
       
       externalEvents.forEach(extEvent => {
         if (!combinedEvents.some(event => event.id === extEvent.id)) {
@@ -92,14 +108,22 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             rsvp_maybe: githubLikes[extEvent.id]?.rsvp_maybe || 0
           });
           
-          if (!oldEvents.some(oldEvent => oldEvent.id === extEvent.id)) {
+          // If we haven't seen this event before, it's new
+          if (!previouslySeenSet.has(extEvent.id)) {
             newEvents.push(extEvent);
+            newEventIdsSet.add(extEvent.id);
           }
         }
       });
       
       console.log(`Combined ${combinedEvents.length} total events`);
       console.log(`Found ${newEvents.length} new events since last refresh`);
+      
+      // Update the set of new event IDs
+      setNewEventIds(newEventIdsSet);
+      
+      // Save the current list of event IDs
+      localStorage.setItem('seenEventIds', JSON.stringify(currentEventIds));
       
       if (combinedEvents.length === 0) {
         console.log('No events found, using example data');
@@ -345,6 +369,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     showFavorites,
     setShowFavorites,
     refreshEvents,
+    newEventIds,
   };
 
   return <EventContext.Provider value={value}>{children}</EventContext.Provider>;

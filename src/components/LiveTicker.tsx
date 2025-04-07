@@ -1,9 +1,10 @@
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Calendar, ArrowRight, ThumbsUp } from 'lucide-react';
+import { Calendar, ArrowRight, ThumbsUp, BadgePlus } from 'lucide-react';
 import { format, parseISO, isSameMonth, startOfDay, isAfter, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { type Event } from '../types/eventTypes';
+import { useEventContext } from '@/contexts/EventContext';
 
 interface LiveTickerProps {
   events: Event[];
@@ -13,6 +14,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
   const [tickerEvents, setTickerEvents] = useState<Event[]>([]);
   const [isPaused, setIsPaused] = useState(false);
   const tickerRef = useRef<HTMLDivElement>(null);
+  const { newEventIds } = useEventContext();
 
   // Process events for the ticker - only the most popular event per day
   useEffect(() => {
@@ -145,6 +147,12 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
                   })()}:
                 </span>
                 <span className="text-white mr-1">{event.title}</span>
+                {newEventIds.has(event.id) && (
+                  <span className="bg-green-600 text-white text-xs px-1.5 py-0.5 rounded-full flex items-center gap-0.5 mx-1">
+                    <BadgePlus className="w-3 h-3" />
+                    <span>Neu</span>
+                  </span>
+                )}
                 <span className="text-gray-400 text-sm mr-1">({event.location || 'Keine Ortsangabe'})</span>
                 <span className="text-yellow-500 text-xs flex items-center">
                   <ThumbsUp className="w-3 h-3 mr-1" /> 
