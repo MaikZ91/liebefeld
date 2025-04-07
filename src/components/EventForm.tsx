@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { toast } from '@/components/ui/use-toast';
@@ -46,7 +45,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
   const [isPaid, setIsPaid] = useState(false);
   const [paypalLink, setPaypalLink] = useState('');
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'credit_card' | 'paypal'>('credit_card');
   
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -290,6 +288,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         image_urls: [],
         is_paid: isPaid,
         payment_link: isPaid ? paypalLink : null,
+        listing_expires_at: expiresAt,
       };
       
       const tempEvent: Omit<Event, 'id'> & { id: string } = {
@@ -327,18 +326,11 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
   
   const handlePaymentSubmit = () => {
     toast({
-      title: "Zahlung wird verarbeitet",
-      description: "Bitte warten Sie, während Ihre Zahlung verarbeitet wird...",
+      title: "Event wird erstellt",
+      description: "Dein kostenpflichtiges Event wird erstellt. Wir werden dich bezüglich der Zahlung kontaktieren.",
     });
     
-    setTimeout(() => {
-      toast({
-        title: "Zahlung erfolgreich",
-        description: "Ihre Zahlung von 10€ für das kostenpflichtige Event wurde erfolgreich verarbeitet.",
-      });
-      
-      submitEvent(true);
-    }, 1500);
+    submitEvent(true);
   };
   
   return (
@@ -391,8 +383,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         open={showPaymentDialog}
         onOpenChange={setShowPaymentDialog}
         onSubmitPayment={handlePaymentSubmit}
-        paymentMethod={paymentMethod}
-        setPaymentMethod={setPaymentMethod}
+        contactEmail={paypalLink}
       />
     </form>
   );

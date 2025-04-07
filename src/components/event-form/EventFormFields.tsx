@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -9,7 +10,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft, DollarSign, Euro, Info } from 'lucide-react';
+import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft, DollarSign, Euro, Info, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -212,26 +213,32 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({
               </Label>
               
               {isPaid && (
-                <p className="text-sm font-medium text-red-600 dark:text-red-400 flex items-center gap-1 ml-1 mt-1 p-2 bg-red-100 dark:bg-red-900/30 rounded-md border border-red-200 dark:border-red-800/30">
-                  <Euro className="h-4 w-4 text-red-500" />
-                  <span>Für das Bewerben von kostenpflichtigen Events wie Workshops etc. wird eine Gebühr von 10€ erhoben.</span>
-                </p>
+                <div className="text-sm font-medium text-red-600 dark:text-red-400 flex flex-col gap-2 ml-1 mt-1 p-3 bg-red-100 dark:bg-red-900/30 rounded-md border border-red-200 dark:border-red-800/30">
+                  <p className="flex items-center gap-1">
+                    <Euro className="h-4 w-4 text-red-500" />
+                    <span>Für das Bewerben von kostenpflichtigen Events wie Workshops etc. wird eine Gebühr von 10€ erhoben.</span>
+                  </p>
+                  <p className="flex items-center gap-1 mt-1">
+                    <Mail className="h-4 w-4 text-red-500" />
+                    <span>Schreib uns dazu einfach eine Anfrage an <a href="mailto:info@liebefeld.de" className="underline hover:text-red-700">info@liebefeld.de</a></span>
+                  </p>
+                </div>
               )}
             </div>
           </div>
           
           {isPaid && (
             <div className="grid gap-2 mt-2 ml-7">
-              <Label htmlFor="paypalLink">PayPal Link (optional)</Label>
+              <Label htmlFor="paypalLink">Kontakt Email (optional)</Label>
               <Input
                 id="paypalLink"
                 value={paypalLink}
                 onChange={(e) => setPaypalLink(e.target.value)}
-                placeholder="https://paypal.me/yourlink"
+                placeholder="deine@email.de"
                 className="rounded-lg"
               />
               <p className="text-xs text-muted-foreground">
-                Gib den Link zu deiner PayPal-Zahlungsseite ein, wenn Besucher dort Tickets kaufen können
+                Gib deine E-Mail-Adresse an, damit wir dich bezüglich des kostenpflichtigen Events kontaktieren können
               </p>
             </div>
           )}
