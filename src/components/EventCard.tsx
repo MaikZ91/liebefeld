@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
-import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, Check, HelpCircle, X, BadgePlus } from 'lucide-react';
+import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, Check, HelpCircle, X, BadgePlus, Repeat, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -85,11 +85,22 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
       >
         <div className="flex justify-between items-start gap-1">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-wrap">
               {isNewEvent && (
                 <Badge className="bg-green-600 text-white text-xs flex items-center gap-0.5 h-4 px-1.5">
                   <BadgePlus className="w-3 h-3" />
                   <span>Neu</span>
+                </Badge>
+              )}
+              {event.is_recurring && (
+                <Badge className="bg-purple-600 text-white text-xs flex items-center gap-0.5 h-4 px-1.5">
+                  <Repeat className="w-3 h-3" />
+                  <span>Regelmäßig</span>
+                </Badge>
+              )}
+              {event.is_paid && (
+                <Badge className="bg-amber-500 text-white text-xs flex items-center gap-0.5 h-4 px-1.5">
+                  <DollarSign className="w-3 h-3" />
                 </Badge>
               )}
               {event.link ? (
@@ -166,12 +177,26 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     >
       <div className="flex justify-between items-start mb-2 gap-2">
         <div className="flex flex-col">
-          {isNewEvent && (
-            <Badge className="bg-green-600 text-white text-xs flex items-center gap-1 h-5 px-2 mb-1 self-start">
-              <BadgePlus className="w-3 h-3" />
-              <span>Neu</span>
-            </Badge>
-          )}
+          <div className="flex flex-wrap gap-1 mb-1">
+            {isNewEvent && (
+              <Badge className="bg-green-600 text-white text-xs flex items-center gap-1 h-5 px-2 self-start">
+                <BadgePlus className="w-3 h-3" />
+                <span>Neu</span>
+              </Badge>
+            )}
+            {event.is_recurring && (
+              <Badge className="bg-purple-600 text-white text-xs flex items-center gap-1 h-5 px-2 self-start">
+                <Repeat className="w-3 h-3" />
+                <span>Regelmäßig</span>
+              </Badge>
+            )}
+            {event.is_paid && (
+              <Badge className="bg-amber-500 text-white text-xs flex items-center gap-1 h-5 px-2 self-start">
+                <DollarSign className="w-3 h-3" />
+                <span>Kostenpflichtig</span>
+              </Badge>
+            )}
+          </div>
           {event.link ? (
             <h4 
               className="font-medium text-lg text-white break-words hover:underline cursor-pointer flex items-center gap-1"

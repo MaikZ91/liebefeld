@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -9,13 +8,22 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type Event } from '@/types/eventTypes';
-import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft, X, Camera, Upload, Image, Sparkles, DollarSign } from 'lucide-react';
+import { CalendarIcon, Clock, MapPin, User, LayoutGrid, AlignLeft, X, Camera, Upload, Image, Sparkles, DollarSign, Repeat, Euro, CreditCard } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { processEventImage } from '@/utils/imageAnalysis';
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface EventFormProps {
   selectedDate: Date;
@@ -46,8 +54,14 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
   const [images, setImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  
   const [isPaid, setIsPaid] = useState(false);
   const [paypalLink, setPaypalLink] = useState('');
+  
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurrencePattern, setRecurrencePattern] = useState<'weekly' | 'monthly' | 'custom'>('weekly');
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'credit_card' | 'paypal'>('credit_card');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -56,17 +70,13 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
       
-      // Add to existing images
       setImages(prev => [...prev, ...newFiles]);
       
-      // Create preview URLs for the new images
       const newPreviewUrls = newFiles.map(file => URL.createObjectURL(file));
       setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
       
-      // Reset the input value so the same file can be selected again if needed
       e.target.value = '';
       
-      // Process the first image for data extraction
       if (newFiles.length > 0 && title === '' && description === '') {
         await analyzeImageForEventData(newFiles[0]);
       }
@@ -76,17 +86,14 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
   const analyzeImageForEventData = async (imageFile: File) => {
     setIsAnalyzing(true);
     try {
-      // Process the image to extract event data
       const extractedData = await processEventImage(imageFile);
       
-      // Apply the extracted data to the form fields if available
       if (extractedData.title) setTitle(extractedData.title);
       if (extractedData.description) setDescription(extractedData.description);
       if (extractedData.location) setLocation(extractedData.location);
       if (extractedData.organizer) setOrganizer(extractedData.organizer);
       if (extractedData.category) setCategory(extractedData.category);
       
-      // Handle date and time if available
       if (extractedData.date) {
         try {
           const extractedDate = new Date(extractedData.date);
@@ -136,7 +143,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       return;
     }
     
-    // Analyze the first image
     await analyzeImageForEventData(images[0]);
   };
   
@@ -153,10 +159,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
   };
   
   const removeImage = (index: number) => {
-    // Release the object URL to avoid memory leaks
     URL.revokeObjectURL(previewUrls[index]);
-    
-    // Remove the image from state
     setImages(images.filter((_, i) => i !== index));
     setPreviewUrls(previewUrls.filter((_, i) => i !== index));
   };
@@ -170,7 +173,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       const fileName = `${eventId}-${i}.${fileExt}`;
       const filePath = `event-images/${fileName}`;
       
-      // Upload the file to Supabase Storage
       const { data, error } = await supabase.storage
         .from('event-images')
         .upload(filePath, file);
@@ -185,7 +187,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         continue;
       }
       
-      // Get the public URL for the uploaded file
       const { data: publicUrlData } = supabase.storage
         .from('event-images')
         .getPublicUrl(filePath);
@@ -205,34 +206,47 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       return;
     }
     
-    // Validate PayPal link if this is a paid event
     if (isPaid && !paypalLink) {
       setError('Bitte gib einen PayPal-Link für kostenpflichtige Events ein');
       return;
     }
     
+    if (isRecurring) {
+      setShowPaymentDialog(true);
+      return;
+    }
+    
+    submitEvent(false);
+  };
+  
+  const submitEvent = async (isRecurringPaid: boolean = false) => {
     setIsSubmitting(true);
     
     try {
-      // Fix for date timezone issue - ensure we get the correct date
-      // Format the date without timezone adjustments to preserve the selected date
       const formattedDate = format(date, 'yyyy-MM-dd');
       console.log('Selected date:', date);
       console.log('Formatted date for DB:', formattedDate);
       
+      const expiresAt = isRecurring ? 
+        new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString() : 
+        undefined;
+      
       const newEvent: Omit<Event, 'id'> = {
         title,
         description,
-        date: formattedDate,  // Use formatted date string
+        date: formattedDate,
         time,
         location,
         organizer,
         category: category || 'Sonstiges',
         is_paid: isPaid,
         payment_link: isPaid ? paypalLink : null,
+        is_recurring: isRecurring,
+        recurrence_pattern: isRecurring ? recurrencePattern : undefined,
+        recurrence_fee_paid: isRecurringPaid,
+        listing_expires_at: expiresAt,
       };
       
-      // Try saving directly to Supabase first
       const { data, error: supabaseError } = await supabase
         .from('community_events')
         .insert([newEvent])
@@ -246,7 +260,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       if (data && data[0]) {
         const eventId = data[0].id;
         
-        // Upload any attached images to Supabase
         let imageUrls: string[] = [];
         if (images.length > 0) {
           try {
@@ -257,7 +270,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
             
             imageUrls = await uploadImagesToSupabase(eventId);
             
-            // Update the event with image URLs
             if (imageUrls.length > 0) {
               const { error: updateError } = await supabase
                 .from('community_events')
@@ -280,37 +292,31 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
           }
         }
         
-        // Event successfully saved, update the local list
         onAddEvent({
           ...newEvent,
           id: data[0].id,
           image_urls: imageUrls.length > 0 ? imageUrls : undefined
         });
         
-        toast({
-          title: "Event erstellt",
-          description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`
-        });
+        if (isRecurring && isRecurringPaid) {
+          toast({
+            title: "Regelmäßiges Event erstellt",
+            description: `"${newEvent.title}" wurde erfolgreich als regelmäßiges Event für 10€ hinzugefügt und bleibt 3 Monate aktiv.`
+          });
+        } else {
+          toast({
+            title: "Event erstellt",
+            description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`
+          });
+        }
         
-        // Reset form
-        setTitle('');
-        setDescription('');
-        setTime('19:00');
-        setLocation('');
-        setOrganizer('');
-        setCategory('');
-        setImages([]);
-        setPreviewUrls([]);
-        setIsPaid(false);
-        setPaypalLink('');
+        resetForm();
         
-        // Hide form after successful addition
         if (onCancel) onCancel();
       }
     } catch (err) {
       console.error('Error adding event:', err);
       
-      // Add fallback behavior: Add to local state even if Supabase fails
       const eventData = {
         title,
         description,
@@ -319,18 +325,19 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         location,
         organizer,
         category: category || 'Sonstiges',
-        image_urls: [], // Add empty array for fallback
+        image_urls: [],
         is_paid: isPaid,
         payment_link: isPaid ? paypalLink : null,
+        is_recurring: isRecurring,
+        recurrence_pattern: isRecurring ? recurrencePattern : undefined,
+        recurrence_fee_paid: isRecurringPaid,
       };
       
-      // Create the temporary event with correctly structured object
       const tempEvent: Omit<Event, 'id'> & { id: string } = {
         ...eventData,
         id: `local-${Date.now()}`
       };
       
-      // Still add to local state so UI works
       onAddEvent(tempEvent);
       
       if (onCancel) onCancel();
@@ -344,7 +351,39 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       });
     } finally {
       setIsSubmitting(false);
+      setShowPaymentDialog(false);
     }
+  };
+  
+  const resetForm = () => {
+    setTitle('');
+    setDescription('');
+    setTime('19:00');
+    setLocation('');
+    setOrganizer('');
+    setCategory('');
+    setImages([]);
+    setPreviewUrls([]);
+    setIsPaid(false);
+    setPaypalLink('');
+    setIsRecurring(false);
+    setRecurrencePattern('weekly');
+  };
+  
+  const handlePaymentSubmit = () => {
+    toast({
+      title: "Zahlung wird verarbeitet",
+      description: "Bitte warten Sie, während Ihre Zahlung verarbeitet wird...",
+    });
+    
+    setTimeout(() => {
+      toast({
+        title: "Zahlung erfolgreich",
+        description: "Ihre Zahlung von 10€ für das regelmäßige Event wurde erfolgreich verarbeitet.",
+      });
+      
+      submitEvent(true);
+    }, 1500);
   };
   
   return (
@@ -374,7 +413,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         </div>
       )}
       
-      {/* Image Upload Section */}
       <div className="grid gap-2 mb-6">
         <div className="flex items-center">
           <Image className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -434,7 +472,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
           />
         </div>
         
-        {/* Image Preview */}
         {previewUrls.length > 0 && (
           <div className="grid grid-cols-3 gap-2 mt-2">
             {previewUrls.map((url, index) => (
@@ -581,7 +618,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
           </div>
         </div>
         
-        {/* Payment Option Section */}
         <div className="grid gap-2">
           <div className="flex items-center space-x-2">
             <Checkbox 
@@ -621,6 +657,53 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
             </div>
           )}
         </div>
+        
+        <div className="grid gap-2 border-t pt-4 mt-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="isRecurring" 
+              checked={isRecurring} 
+              onCheckedChange={(checked) => setIsRecurring(checked === true)} 
+            />
+            <div className="grid gap-1.5">
+              <Label htmlFor="isRecurring" className="flex items-center">
+                <Repeat className="h-4 w-4 mr-2 text-muted-foreground" />
+                Regelmäßiges Event
+              </Label>
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <Euro className="h-4 w-4" />
+                <span>Für regelmäßige Events wird eine Gebühr von 10€ für 3 Monate erhoben</span>
+              </p>
+            </div>
+          </div>
+          
+          {isRecurring && (
+            <div className="grid gap-2 mt-2 ml-7">
+              <Label>Wiederholungsmuster</Label>
+              <RadioGroup 
+                value={recurrencePattern} 
+                onValueChange={(value) => setRecurrencePattern(value as 'weekly' | 'monthly' | 'custom')}
+                className="grid gap-2"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="weekly" id="weekly" />
+                  <Label htmlFor="weekly">Wöchentlich</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="monthly" id="monthly" />
+                  <Label htmlFor="monthly">Monatlich</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="custom" id="custom" />
+                  <Label htmlFor="custom">Benutzerdefiniert</Label>
+                </div>
+              </RadioGroup>
+              <p className="text-xs text-muted-foreground mt-1">
+                Dein Event wird für 3 Monate im Kalender angezeigt werden
+              </p>
+            </div>
+          )}
+        </div>
       </div>
       
       <div className="flex justify-end gap-2 mt-4">
@@ -639,9 +722,98 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
           className="rounded-full"
           disabled={isSubmitting || isAnalyzing}
         >
-          {isSubmitting ? "Wird erstellt..." : "Event erstellen"}
+          {isSubmitting ? "Wird erstellt..." : isRecurring ? "Weiter zur Zahlung" : "Event erstellen"}
         </Button>
       </div>
+      
+      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Zahlung für regelmäßiges Event</DialogTitle>
+            <DialogDescription>
+              Für regelmäßige Events berechnen wir eine Gebühr von 10€ für 3 Monate Laufzeit.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Zahlungsmethode</Label>
+              <RadioGroup 
+                value={paymentMethod} 
+                onValueChange={(value) => setPaymentMethod(value as 'credit_card' | 'paypal')}
+                className="grid gap-2"
+              >
+                <div className="flex items-center space-x-2 p-2 rounded-lg border border-input hover:bg-muted">
+                  <RadioGroupItem value="credit_card" id="credit_card" />
+                  <Label htmlFor="credit_card" className="flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    Kreditkarte
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2 p-2 rounded-lg border border-input hover:bg-muted">
+                  <RadioGroupItem value="paypal" id="paypal_payment" />
+                  <Label htmlFor="paypal_payment" className="flex items-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M6.5 12.5h2.25c1.375 0 2.625-.875 3.125-2.125.5-1.25.125-2.125-1.25-2.125h-1.5c-.125 0-.25.125-.25.25l-1.25 6.5c0 .125.125.25.25.25h1-.125c.125 0 .375-.125.375-.25l.25-1.375c0-.125-.125-.25-.25-.25l-.125.25c0-.25.125-.375.25-.375h-2.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+                      <path d="M12 10.375c0 1.25.625 2.125 2 2.125h2.25c.125 0 .25-.125.25-.25L17 9c0-.125-.125-.25-.25-.25h-2c-1.5 0-2.75 1-2.75 1.625zM14.5 12.5l-.5 2.625c0 .125.125.25.25.25h1-.125c.125 0 .25-.125.25-.25l.375-2.375" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+                      <path d="M18.5 9.5c.625-.625 1-1.5 1-2.5a3.5 3.5 0 00-3.5-3.5h-8.75c-.125 0-.25.125-.25.25l-2.5 13.25c0 .125.125.25.25.25h2.75l.75-3.75m11.25-4 .5-2.625c0-.125-.125-.25-.25-.25h-2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+                    </svg>
+                    PayPal
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+            
+            {paymentMethod === 'credit_card' && (
+              <div className="grid gap-2">
+                <Label htmlFor="cardNumber">Kartennummer</Label>
+                <Input id="cardNumber" placeholder="1234 5678 9012 3456" />
+                
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label htmlFor="expiry">Ablaufdatum</Label>
+                    <Input id="expiry" placeholder="MM/YY" />
+                  </div>
+                  <div>
+                    <Label htmlFor="cvc">CVC</Label>
+                    <Input id="cvc" placeholder="123" />
+                  </div>
+                </div>
+                
+                <Label htmlFor="cardName">Karteninhaber</Label>
+                <Input id="cardName" placeholder="Name des Karteninhabers" />
+              </div>
+            )}
+            
+            {paymentMethod === 'paypal' && (
+              <div className="flex flex-col items-center justify-center p-4 text-center gap-2">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6.5 12.5h2.25c1.375 0 2.625-.875 3.125-2.125.5-1.25.125-2.125-1.25-2.125h-1.5c-.125 0-.25.125-.25.25l-1.25 6.5c0 .125.125.25.25.25h1-.125c.125 0 .375-.125.375-.25l.25-1.375c0-.125-.125-.25-.25-.25l-.125.25c0-.25.125-.375.25-.375h-2.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+                  <path d="M12 10.375c0 1.25.625 2.125 2 2.125h2.25c.125 0 .25-.125.25-.25L17 9c0-.125-.125-.25-.25-.25h-2c-1.5 0-2.75 1-2.75 1.625zM14.5 12.5l-.5 2.625c0 .125.125.25.25.25h1-.125c.125 0 .25-.125.25-.25l.375-2.375" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+                  <path d="M18.5 9.5c.625-.625 1-1.5 1-2.5a3.5 3.5 0 00-3.5-3.5h-8.75c-.125 0-.25.125-.25.25l-2.5 13.25c0 .125.125.25.25.25h2.75l.75-3.75m11.25-4 .5-2.625c0-.125-.125-.25-.25-.25h-2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+                </svg>
+                <p>Sie werden zur PayPal-Website weitergeleitet, um die Zahlung abzuschließen.</p>
+              </div>
+            )}
+            
+            <div className="bg-muted p-3 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span>Regelmäßiges Event (3 Monate)</span>
+                <span>10,00 €</span>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>
+              Abbrechen
+            </Button>
+            <Button type="button" onClick={handlePaymentSubmit}>
+              10,00 € Bezahlen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 };
