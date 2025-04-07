@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,6 +46,27 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
   const [isPaid, setIsPaid] = useState(false);
   const [paypalLink, setPaypalLink] = useState('');
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [bucketExists, setBucketExists] = useState(false);
+  
+  useEffect(() => {
+    const checkBucket = async () => {
+      try {
+        const { data, error } = await supabase.storage.getBucket('event-images');
+        if (error) {
+          console.error('Error checking bucket:', error);
+          setBucketExists(false);
+        } else {
+          console.log('Bucket exists:', data);
+          setBucketExists(true);
+        }
+      } catch (err) {
+        console.error('Error checking storage bucket:', err);
+        setBucketExists(false);
+      }
+    };
+    
+    checkBucket();
+  }, []);
   
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -134,6 +155,16 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
   };
   
   const uploadImagesToSupabase = async (eventId: string): Promise<string[]> => {
+    if (!bucketExists) {
+      console.error('Storage bucket "event-images" does not exist');
+      toast({
+        title: "Fehler beim Bildupload",
+        description: "Der Speicherbereich für Bilder ist nicht konfiguriert. Bilder werden nicht gespeichert.",
+        variant: "destructive"
+      });
+      return [];
+    }
+    
     const imageUrls: string[] = [];
     
     for (let i = 0; i < images.length; i++) {
@@ -142,25 +173,29 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       const fileName = `${eventId}-${i}.${fileExt}`;
       const filePath = `event-images/${fileName}`;
       
-      const { data, error } = await supabase.storage
-        .from('event-images')
-        .upload(filePath, file);
-      
-      if (error) {
-        console.error('Error uploading image:', error);
-        toast({
-          title: "Bildupload fehlgeschlagen",
-          description: `Bild ${i+1} konnte nicht hochgeladen werden: ${error.message}`,
-          variant: "destructive"
-        });
-        continue;
+      try {
+        const { data, error } = await supabase.storage
+          .from('event-images')
+          .upload(filePath, file);
+        
+        if (error) {
+          console.error('Error uploading image:', error);
+          toast({
+            title: "Bildupload fehlgeschlagen",
+            description: `Bild ${i+1} konnte nicht hochgeladen werden: ${error.message}`,
+            variant: "destructive"
+          });
+          continue;
+        }
+        
+        const { data: publicUrlData } = supabase.storage
+          .from('event-images')
+          .getPublicUrl(filePath);
+        
+        imageUrls.push(publicUrlData.publicUrl);
+      } catch (error) {
+        console.error('Unexpected error during upload:', error);
       }
-      
-      const { data: publicUrlData } = supabase.storage
-        .from('event-images')
-        .getPublicUrl(filePath);
-      
-      imageUrls.push(publicUrlData.publicUrl);
     }
     
     return imageUrls;
@@ -209,17 +244,19 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         link: url ? url : undefined,
       };
       
+      console.log('Attempting to insert event:', newEvent);
       const { data, error: supabaseError } = await supabase
         .from('community_events')
         .insert([newEvent])
         .select();
       
       if (supabaseError) {
-        console.error('Supabase error:', supabaseError);
+        console.error('Supabase error when inserting event:', supabaseError);
         throw new Error(supabaseError.message || 'Fehler beim Speichern des Events');
       }
       
       if (data && data[0]) {
+        console.log('Event successfully inserted:', data[0]);
         const eventId = data[0].id;
         
         let imageUrls: string[] = [];
@@ -233,6 +270,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
             imageUrls = await uploadImagesToSupabase(eventId);
             
             if (imageUrls.length > 0) {
+              console.log('Updating event with image URLs:', imageUrls);
               const { error: updateError } = await supabase
                 .from('community_events')
                 .update({ 
@@ -242,6 +280,8 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
               
               if (updateError) {
                 console.error('Error updating event with image URLs:', updateError);
+              } else {
+                console.log('Successfully updated event with image URLs');
               }
             }
           } catch (uploadError) {
@@ -268,7 +308,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         } else {
           toast({
             title: "Event erstellt",
-            description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`
+            description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt."
           });
         }
         
@@ -278,6 +318,11 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       }
     } catch (err) {
       console.error('Error adding event:', err);
+      
+      let errorMessage = "Das Event konnte nicht in der Datenbank gespeichert werden.";
+      if (err instanceof Error) {
+        errorMessage += ` Fehler: ${err.message}`;
+      }
       
       const expiresAt = isPaid ? 
         new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString() : 
@@ -309,7 +354,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       
       toast({
         title: "Event wurde lokal hinzugefügt",
-        description: "Das Event wurde zum Kalender hinzugefügt, konnte aber nicht in der Datenbank gespeichert werden aufgrund von Berechtigungsproblemen.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
