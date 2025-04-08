@@ -54,7 +54,6 @@ const Index = () => {
   const [testModalOpen, setTestModalOpen] = useState(false);
   const [animationComplete, setAnimationComplete] = useState(false);
   const [showCircle, setShowCircle] = useState(false);
-  const [showTitle, setShowTitle] = useState(true);
   const [circleAnimationComplete, setCircleAnimationComplete] = useState(false);
   const circleRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -65,8 +64,7 @@ const Index = () => {
       setAnimationComplete(true);
     }, 2500);
     
-    const titleTimer = setTimeout(() => {
-      setShowTitle(false);
+    const circleTimer = setTimeout(() => {
       setShowCircle(true);
     }, 3500);
     
@@ -76,7 +74,7 @@ const Index = () => {
     
     return () => {
       clearTimeout(textTimer);
-      clearTimeout(titleTimer);
+      clearTimeout(circleTimer);
       clearTimeout(circleAnimationTimer);
     };
   }, []);
@@ -95,27 +93,25 @@ const Index = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-red-900/70 to-black/70"></div>
           
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4 pt-2">
-            {showTitle && (
-              <div className="transition-opacity duration-500 ease-in-out" style={{ opacity: showTitle ? 1 : 0 }}>
-                <h1 className="text-5xl md:text-6xl font-bold mb-3 text-center font-serif mt-2">
-                  {animationComplete ? (
-                    <>Entdecke den <span className="text-red-500">Puls</span> der Stadt</>
-                  ) : (
-                    <>
-                      <AnimatedText text="Entdecke den " delay={0.3} />
-                      <AnimatedText text="Puls" delay={1.2} className="text-red-500" />
-                      <AnimatedText text=" der Stadt" delay={1.5} />
-                    </>
-                  )}
-                </h1>
-                
-                <p className="text-xl md:text-2xl text-center max-w-2xl mb-4" 
-                  style={{ opacity: animationComplete ? 1 : 0, transition: 'opacity 0.5s ease' }}>
-                  Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
-                  <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
-                </p>
-              </div>
-            )}
+            <div className="transition-opacity duration-500 ease-in-out">
+              <h1 className="text-5xl md:text-6xl font-bold mb-3 text-center font-serif mt-2">
+                {animationComplete ? (
+                  <>Entdecke den <span className="text-red-500">Puls</span> der Stadt</>
+                ) : (
+                  <>
+                    <AnimatedText text="Entdecke den " delay={0.3} />
+                    <AnimatedText text="Puls" delay={1.2} className="text-red-500" />
+                    <AnimatedText text=" der Stadt" delay={1.5} />
+                  </>
+                )}
+              </h1>
+              
+              <p className="text-xl md:text-2xl text-center max-w-2xl mb-4" 
+                style={{ opacity: animationComplete ? 1 : 0, transition: 'opacity 0.5s ease' }}>
+                Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
+                <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
+              </p>
+            </div>
             
             {showCircle && (
               <div 
