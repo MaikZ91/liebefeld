@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -128,7 +129,7 @@ const Index = () => {
           />
           
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4 pt-2">
-            <div className="absolute left-5 top-2 flex items-center gap-2 z-20">
+            <div className="absolute left-5 top-5 flex items-center gap-2 z-20">
               <InstagramFeed />
               
               <a 
@@ -175,7 +176,7 @@ const Index = () => {
               </Popover>
             </div>
 
-            <div className="transition-opacity duration-500 ease-in-out mt-24 flex flex-col items-center">
+            <div className="transition-opacity duration-500 ease-in-out mt-16 flex flex-col items-center">
               <h1 className="text-5xl md:text-6xl font-bold mb-3 text-center font-serif">
                 {titleAnimating ? (
                   <>
@@ -216,7 +217,7 @@ const Index = () => {
               </Button>
             </div>
             
-            <div className="w-full bg-black/80 backdrop-blur-sm mb-0 absolute bottom-0 left-0">
+            <div className="w-full bg-black/80 backdrop-blur-sm absolute bottom-0 left-0">
               <EventProvider>
                 <LiveTickerWrapper />
               </EventProvider>
