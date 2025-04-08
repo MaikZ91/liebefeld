@@ -146,6 +146,11 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     }
   };
 
+  // Toggle event form visibility
+  const toggleEventForm = () => {
+    setShowEventForm(prev => !prev);
+  };
+
   // When a filter is applied, reset date selection
   useEffect(() => {
     if (filter !== null) {
@@ -173,18 +178,9 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
           newEventsCount={newEventIds.size}
           view={view}
           setView={setView}
+          onShowEventForm={toggleEventForm}
+          showEventForm={showEventForm}
         />
-        
-        {/* Add Event button */}
-        <div className="flex justify-center items-center">
-          <Button 
-            className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all"
-            onClick={() => setShowEventForm(!showEventForm)}
-          >
-            <Plus className="h-5 w-5" />
-            <span className="hidden md:inline">Event {showEventForm ? "schließen" : "erstellen"}</span>
-          </Button>
-        </div>
 
         {/* Event form between menu and calendar */}
         {showEventForm && (
@@ -254,7 +250,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                   onEventSelect={handleEventSelect}
                   onEventClose={() => setSelectedEvent(null)}
                   onLike={handleLikeEvent}
-                  onShowEventForm={() => setShowEventForm(true)}
+                  onShowEventForm={toggleEventForm}
                   showFavorites={showFavorites}
                 />
               </div>

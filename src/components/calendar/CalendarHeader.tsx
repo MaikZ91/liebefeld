@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Heart, Filter, FilterX, CalendarIcon, List } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Heart, Filter, FilterX, CalendarIcon, List, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -30,6 +30,8 @@ interface CalendarHeaderProps {
   newEventsCount: number;
   view: "calendar" | "list";
   setView: (view: "calendar" | "list") => void;
+  onShowEventForm: () => void;
+  showEventForm: boolean;
 }
 
 const CalendarHeader: React.FC<CalendarHeaderProps> = ({
@@ -47,7 +49,9 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   toggleNewEvents,
   newEventsCount,
   view,
-  setView
+  setView,
+  onShowEventForm,
+  showEventForm
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isViewDropdownOpen, setIsViewDropdownOpen] = useState(false);
@@ -91,7 +95,18 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
       
       <div className="flex items-center gap-0.5">
         <div className="flex items-center gap-0.5 overflow-x-auto pb-0 scrollbar-none">
-          {/* View toggle dropdown - NEW */}
+          {/* Add Event button - NEW POSITION */}
+          <Button 
+            className="rounded-full whitespace-nowrap flex items-center gap-2 bg-black/70 text-white border-gray-700 hover:bg-black/60 hover:text-white dark-button"
+            onClick={onShowEventForm}
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">
+              {showEventForm ? "Schließen" : "Neu"}
+            </span>
+          </Button>
+          
+          {/* View toggle dropdown */}
           <DropdownMenu open={isViewDropdownOpen} onOpenChange={setIsViewDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <Button
