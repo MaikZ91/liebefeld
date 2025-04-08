@@ -142,37 +142,7 @@ const Index = () => {
           />
           
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4 pt-2">
-            <div className="transition-opacity duration-500 ease-in-out">
-              <h1 className="text-5xl md:text-6xl font-bold mb-3 text-center font-serif mt-2">
-                {titleAnimating ? (
-                  <>
-                    <AnimatedText text="Entdecke den " delay={0.5} animationType="word" />
-                    <AnimatedText text="Puls" delay={1.2} className="text-red-500 font-bold" animationType="char" />
-                    <AnimatedText text=" der Stadt" delay={1.7} animationType="word" />
-                  </>
-                ) : (
-                  <span className="relative">
-                    Entdecke den <span className="text-red-500 relative inline-block">
-                      Puls
-                    </span> der Stadt
-                  </span>
-                )}
-              </h1>
-              
-              {showSubtitle && (
-                <p 
-                  className="text-xl md:text-2xl text-center max-w-2xl mb-4 transition-all duration-700" 
-                  style={{ 
-                    opacity: animationComplete ? 1 : 0, 
-                    transform: animationComplete ? 'translateY(0)' : 'translateY(20px)'
-                  }}
-                >
-                  Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
-                </p>
-              )}
-            </div>
-            
-            <div className="absolute left-5 top-5 flex items-center gap-3 z-20">
+            <div className="absolute left-5 top-2 flex items-center gap-2 z-20">
               <InstagramFeed />
               
               <a 
@@ -218,6 +188,36 @@ const Index = () => {
                 </PopoverContent>
               </Popover>
             </div>
+
+            <div className="transition-opacity duration-500 ease-in-out mt-8">
+              <h1 className="text-5xl md:text-6xl font-bold mb-3 text-center font-serif mt-2">
+                {titleAnimating ? (
+                  <>
+                    <AnimatedText text="Entdecke den " delay={0.5} animationType="word" />
+                    <AnimatedText text="Puls" delay={1.2} className="text-red-500 font-bold" animationType="char" />
+                    <AnimatedText text=" der Stadt" delay={1.7} animationType="word" />
+                  </>
+                ) : (
+                  <span className="relative">
+                    Entdecke den <span className="text-red-500 relative inline-block">
+                      Puls
+                    </span> der Stadt
+                  </span>
+                )}
+              </h1>
+              
+              {showSubtitle && (
+                <p 
+                  className="text-xl md:text-2xl text-center max-w-2xl mb-4 transition-all duration-700" 
+                  style={{ 
+                    opacity: animationComplete ? 1 : 0, 
+                    transform: animationComplete ? 'translateY(0)' : 'translateY(20px)'
+                  }}
+                >
+                  Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
+                </p>
+              )}
+            </div>
             
             {showHeart && (
               <div 
@@ -225,7 +225,7 @@ const Index = () => {
                 onClick={() => setTestModalOpen(true)}
                 className={`absolute z-20 flex items-center justify-center cursor-pointer transition-all duration-1000`}
                 style={{ 
-                  top: '80%', // Moved down from 70% to 80% to avoid overlapping with subtitle
+                  top: '85%', // Moved even further down to avoid overlapping with subtitle
                   left: '50%',
                   width: '140px',
                   height: '140px',
