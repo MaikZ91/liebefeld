@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { startOfDay } from 'date-fns';
 import { Event, RsvpOption } from '../types/eventTypes';
@@ -27,7 +26,8 @@ interface EventContextProps {
   showFavorites: boolean;
   setShowFavorites: React.Dispatch<React.SetStateAction<boolean>>;
   refreshEvents: () => Promise<void>;
-  newEventIds: Set<string>; // Added to track new events
+  newEventIds: Set<string>;
+  topEventsPerDay: Record<string, string>;
 }
 
 declare global {
@@ -49,13 +49,13 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
   const [pendingLikes, setPendingLikes] = useState<Set<string>>(new Set());
   const [newEventIds, setNewEventIds] = useState<Set<string>>(new Set());
+  const [topEventsPerDay, setTopEventsPerDay] = useState<Record<string, string>>({});
 
   const refreshEvents = async () => {
     setIsLoading(true);
     try {
       console.log('Refreshing events...');
       
-      // Get previously seen event IDs from localStorage
       const previouslySeenEventsJson = localStorage.getItem('seenEventIds');
       const previouslySeenEvents: string[] = previouslySeenEventsJson ? JSON.parse(previouslySeenEventsJson) : [];
       const previouslySeenSet = new Set(previouslySeenEvents);
@@ -90,12 +90,10 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const newEvents: Event[] = [];
       const currentEventIds: string[] = [];
       
-      // Collect all current event IDs to update the seen events list later
       [...supabaseEvents, ...externalEvents].forEach(event => {
         currentEventIds.push(event.id);
       });
       
-      // Create set of new event IDs
       const newEventIdsSet = new Set<string>();
       
       externalEvents.forEach(extEvent => {
@@ -108,7 +106,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             rsvp_maybe: githubLikes[extEvent.id]?.rsvp_maybe || 0
           });
           
-          // If we haven't seen this event before, it's new
           if (!previouslySeenSet.has(extEvent.id)) {
             newEvents.push(extEvent);
             newEventIdsSet.add(extEvent.id);
@@ -119,10 +116,8 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       console.log(`Combined ${combinedEvents.length} total events`);
       console.log(`Found ${newEvents.length} new events since last refresh`);
       
-      // Update the set of new event IDs
       setNewEventIds(newEventIdsSet);
       
-      // Save the current list of event IDs
       localStorage.setItem('seenEventIds', JSON.stringify(currentEventIds));
       
       if (combinedEvents.length === 0) {
@@ -186,7 +181,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const handleLikeEvent = async (eventId: string) => {
     try {
-      // Early return if already processing a like for this event
       if (pendingLikes.has(eventId)) {
         console.log(`Like operation already in progress for event ${eventId}`);
         return;
@@ -199,20 +193,17 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return;
       }
       
-      // Add to pending likes set to prevent duplicate requests
       setPendingLikes(prev => new Set(prev).add(eventId));
       
       const currentLikes = currentEvent.likes || 0;
       const newLikesValue = currentLikes + 1;
       
-      // Update local state immediately for better UI responsiveness
       setEvents(prevEvents => {
         return prevEvents.map(event => 
           event.id === eventId 
             ? { 
                 ...event, 
                 likes: newLikesValue,
-                // Also update RSVP counts synchronously
                 rsvp_yes: (event.rsvp_yes || 0) + 1,
                 rsvp: {
                   ...(event.rsvp || {}),
@@ -225,7 +216,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         );
       });
       
-      // Update likes in local storage
       setEventLikes(prev => {
         const updatedLikes = {
           ...prev,
@@ -235,7 +225,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return updatedLikes;
       });
       
-      // Prepare RSVP data
       const currentRsvp = {
         yes: currentEvent.rsvp_yes ?? currentEvent.rsvp?.yes ?? 0,
         no: currentEvent.rsvp_no ?? currentEvent.rsvp?.no ?? 0,
@@ -247,22 +236,18 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         yes: currentRsvp.yes + 1 
       };
       
-      // Update the database in background without waiting for it
       Promise.all([
         updateEventLikes(eventId, newLikesValue),
         updateEventRsvp(eventId, newRsvp)
       ]).finally(() => {
-        // Remove from pending set when database operation completes
         setPendingLikes(prev => {
           const updated = new Set(prev);
           updated.delete(eventId);
           return updated;
         });
       });
-      
     } catch (error) {
       console.error('Error updating likes:', error);
-      // Remove from pending set on error
       setPendingLikes(prev => {
         const updated = new Set(prev);
         updated.delete(eventId);
@@ -370,6 +355,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setShowFavorites,
     refreshEvents,
     newEventIds,
+    topEventsPerDay,
   };
 
   return <EventContext.Provider value={value}>{children}</EventContext.Provider>;

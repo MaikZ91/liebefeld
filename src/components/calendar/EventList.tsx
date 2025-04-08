@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -27,14 +26,22 @@ const EventList: React.FC<EventListProps> = ({
   const todayRef = useRef<HTMLDivElement>(null);
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
-  const { newEventIds, filter } = useEventContext();
+  const { newEventIds, filter, topEventsPerDay } = useEventContext();
   
   const filteredEvents = React.useMemo(() => {
     if (!filter) return events;
     return events.filter(event => event.category === filter);
   }, [events, filter]);
   
-  const displayEvents = filteredEvents;
+  const displayEvents = React.useMemo(() => {
+    if (!showFavorites) return filteredEvents;
+    
+    return filteredEvents.filter(event => {
+      if (!event.date) return false;
+      
+      return topEventsPerDay[event.date] === event.id;
+    });
+  }, [filteredEvents, showFavorites, topEventsPerDay]);
   
   useEffect(() => {
     if (displayEvents.length > 0) {
@@ -138,7 +145,7 @@ const EventList: React.FC<EventListProps> = ({
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xl font-medium text-white">
           {showFavorites 
-            ? "Meine Favoriten" 
+            ? "Top Events" 
             : showNewEvents 
               ? "Neue Events" 
               : filter 

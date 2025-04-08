@@ -95,17 +95,6 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
       
       <div className="flex items-center gap-0.5">
         <div className="flex items-center gap-0.5 overflow-x-auto pb-0 scrollbar-none">
-          {/* Add Event button - NEW POSITION */}
-          <Button 
-            className="rounded-full whitespace-nowrap flex items-center gap-2 bg-black/70 text-white border-gray-700 hover:bg-black/60 hover:text-white dark-button"
-            onClick={onShowEventForm}
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">
-              {showEventForm ? "Schließen" : "Neu"}
-            </span>
-          </Button>
-          
           {/* View toggle dropdown */}
           <DropdownMenu open={isViewDropdownOpen} onOpenChange={setIsViewDropdownOpen}>
             <DropdownMenuTrigger asChild>
@@ -253,6 +242,17 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+          
+          {/* Add Event button - Now positioned at the end and styled red */}
+          <Button 
+            className="rounded-full whitespace-nowrap flex items-center gap-2 bg-red-500 text-white border-red-600 hover:bg-red-600 hover:text-white"
+            onClick={onShowEventForm}
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">
+              {showEventForm ? "Schließen" : "Neu"}
+            </span>
+          </Button>
         </div>
       </div>
     </div>
