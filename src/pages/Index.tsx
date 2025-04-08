@@ -71,7 +71,6 @@ const AnimatedText = ({ text, delay = 0, className = '', animationType = 'char' 
     );
   }
   
-  // Default char animation
   return (
     <span className={`relative inline-block ${className}`}>
       {text.split('').map((char, i) => (
@@ -104,22 +103,18 @@ const Index = () => {
   const WHATSAPP_URL = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
   
   useEffect(() => {
-    // Start showing text animations
     const textTimer = setTimeout(() => {
       setAnimationComplete(true);
       setTitleAnimating(false);
     }, 2500);
     
-    // Start showing heart with pulsing effect
     const heartTimer = setTimeout(() => {
       setShowHeart(true);
     }, 3000);
     
-    // Complete heart animation and hide subtitle
     const heartAnimationTimer = setTimeout(() => {
       setHeartAnimationComplete(true);
       
-      // Fade out subtitle with a small delay
       setTimeout(() => {
         setShowSubtitle(false);
       }, 300);
@@ -137,35 +132,15 @@ const Index = () => {
       <CalendarNavbar />
       <main className="flex-grow relative">
         <div className="relative w-full h-[55vh] overflow-hidden bg-black">
-          {/* Background image without any pulsing animation */}
           <img 
             src="/lovable-uploads/e3d0a85b-9935-450a-bba8-5693570597a3.png" 
             alt="Freunde genießen ein Event zusammen" 
-            className="absolute inset-0 w-full h-full object-cover opacity-90"
+            className="absolute inset-0 w-full h-full object-cover"
             style={{
               animation: 'subtle-zoom 15s ease-in-out infinite alternate',
               animationDelay: '1s'
             }}
           />
-          
-          {/* Gradient overlay with subtle animation - keeping but without pulsing */}
-          <div 
-            className="absolute inset-0"
-            style={{
-              background: 'linear-gradient(135deg, rgba(128, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.7) 100%)',
-              opacity: 0.7
-            }}
-          ></div>
-          
-          {/* Light effect overlay - removed pulsing */}
-          <div 
-            className="absolute inset-0 opacity-20"
-            style={{
-              background: 'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.8) 0%, transparent 60%)',
-              animation: 'light-move 15s ease-in-out infinite alternate',
-              mixBlendMode: 'overlay'
-            }}
-          ></div>
           
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4 pt-2">
             <div className="transition-opacity duration-500 ease-in-out">
