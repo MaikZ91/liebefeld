@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -225,7 +224,7 @@ const Index = () => {
                 onClick={() => setTestModalOpen(true)}
                 className={`absolute z-20 flex items-center justify-center cursor-pointer transition-all duration-1000`}
                 style={{ 
-                  top: '90%', // Moved even further down to avoid overlapping with subtitle
+                  top: '75%', // Moved higher up from 90% to 75%
                   left: '50%',
                   width: '140px',
                   height: '140px',
