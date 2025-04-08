@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { BadgeCheck, Calendar, Clock, Heart, Link as LinkIcon, Lock, Mail, MapPin, MessageSquare, Users } from 'lucide-react';
+import { BadgeCheck, Calendar, Clock, Heart, Link as LinkIcon, Lock, Mail, MapPin, MessageSquare, Users, FileText } from 'lucide-react';
 import ImageCarousel from '@/components/ImageCarousel';
 import { Link } from 'react-router-dom';
 
@@ -234,6 +234,29 @@ const About = () => {
                         <Link to="/privacy" className="flex items-center gap-2">
                           <Lock className="h-4 w-4" />
                           Datenschutzerklärung öffnen
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">CSAE Richtlinien</h3>
+                  <div className="rounded-lg border p-4 bg-card/50 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-primary" />
+                      <Link to="/csae-policies" className="text-primary hover:underline font-medium">
+                        Zu den CSAE Richtlinien
+                      </Link>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Informationen zu unseren Community Standards und Event-Ethik finden Sie in unseren CSAE Richtlinien.
+                    </p>
+                    <div className="mt-3">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to="/csae-policies" className="flex items-center gap-2">
+                          <FileText className="h-4 w-4" />
+                          CSAE Richtlinien öffnen
                         </Link>
                       </Button>
                     </div>
