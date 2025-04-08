@@ -45,13 +45,6 @@ const Index = () => {
               Entdecke den <span className="text-red-500">Puls</span> der Stadt
             </h1>
             
-            {/* Live Ticker moved here, right after the title */}
-            <div className="w-full bg-black/80 backdrop-blur-sm rounded-lg mb-4 max-w-3xl">
-              <EventProvider>
-                <LiveTickerWrapper />
-              </EventProvider>
-            </div>
-            
             <p className="text-xl md:text-2xl text-center max-w-2xl mb-6 animate-fade-in" 
                style={{ animationDelay: "0.1s" }}>
               Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
@@ -122,6 +115,13 @@ const Index = () => {
                   </PopoverContent>
                 </Popover>
               </div>
+            </div>
+            
+            {/* Live Ticker moved here - after the icons/buttons but still inside the hero section */}
+            <div className="w-full bg-black/80 backdrop-blur-sm rounded-lg mb-4 max-w-3xl">
+              <EventProvider>
+                <LiveTickerWrapper />
+              </EventProvider>
             </div>
           </div>
         </div>
