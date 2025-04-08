@@ -13,11 +13,11 @@ const FavoritesView: React.FC<FavoritesViewProps> = ({ favoriteEvents, onSwitchT
   return (
     <div className="flex flex-col items-center justify-center h-[300px] text-gray-400">
       <Heart className="w-12 h-12 mb-4 text-red-500" />
-      <h3 className="text-xl font-medium text-white mb-2">Deine Favoriten</h3>
+      <h3 className="text-xl font-medium text-white mb-2">Top Events</h3>
       <p className="text-center mb-4">
         {favoriteEvents.length 
-          ? `Du hast ${favoriteEvents.length} Favoriten` 
-          : "Du hast noch keine Favoriten"}
+          ? `Du hast ${favoriteEvents.length} Top Events` 
+          : "Du hast noch keine Top Events"}
       </p>
       {favoriteEvents.length > 0 && (
         <Button

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -47,7 +46,8 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     setShowFavorites,
     eventLikes,
     refreshEvents,
-    newEventIds
+    newEventIds,
+    topEventsPerDay
   } = useEventContext();
 
   // Local state
@@ -69,20 +69,27 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   const eventsToDisplay = React.useMemo(() => {
     if (showNewEvents) {
       return events.filter(event => newEventIds.has(event.id));
+    } else if (showFavorites) {
+      // For favorites, return only the top events for each day
+      return events.filter(event => 
+        event.date && topEventsPerDay[event.date] === event.id
+      );
     } else {
-      return getMonthOrFavoriteEvents(events, currentDate, showFavorites, eventLikes);
+      return getMonthOrFavoriteEvents(events, currentDate, false, eventLikes);
     }
-  }, [events, currentDate, showFavorites, eventLikes, showNewEvents, newEventIds]);
+  }, [events, currentDate, showFavorites, eventLikes, showNewEvents, newEventIds, topEventsPerDay]);
   
   // Filter events for the selected date and category filter
   const filteredEvents = selectedDate 
     ? getEventsForDay(events, selectedDate, filter)
     : [];
     
-  // Get user's favorite events (events with likes)
-  const favoriteEvents = events.filter(event => 
-    (event.likes && event.likes > 0)
-  );
+  // Get user's favorite events (top events per day)
+  const favoriteEvents = React.useMemo(() => {
+    return events.filter(event => 
+      event.date && topEventsPerDay[event.date] === event.id
+    );
+  }, [events, topEventsPerDay]);
 
   // Handle selecting a date
   const handleDateClick = (day: Date) => {

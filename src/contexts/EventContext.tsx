@@ -163,6 +163,34 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           return event;
         });
         
+        const topEventsByDay: Record<string, string> = {};
+        const eventsByDate: Record<string, Event[]> = {};
+        
+        eventsWithSyncedRsvp.forEach(event => {
+          if (!event.date) return;
+          
+          if (!eventsByDate[event.date]) {
+            eventsByDate[event.date] = [];
+          }
+          
+          eventsByDate[event.date].push(event);
+        });
+        
+        Object.keys(eventsByDate).forEach(date => {
+          const sortedEvents = [...eventsByDate[date]].sort((a, b) => {
+            const likesA = a.likes || 0;
+            const likesB = b.likes || 0;
+            
+            return likesB - likesA;
+          });
+          
+          if (sortedEvents.length > 0) {
+            topEventsByDay[date] = sortedEvents[0].id;
+          }
+        });
+        
+        setTopEventsPerDay(topEventsByDay);
+        
         const githubEventsInCombined = eventsWithSyncedRsvp.filter(e => e.id.startsWith('github-'));
         console.log(`GitHub events with likes: ${githubEventsInCombined.map(e => `${e.id}: ${e.likes} - RSVP: yes=${e.rsvp_yes || e.rsvp?.yes || 0}, no=${e.rsvp_no || e.rsvp?.no || 0}, maybe=${e.rsvp_maybe || e.rsvp?.maybe || 0}`).join(', ')}`);
         
