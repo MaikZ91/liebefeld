@@ -32,9 +32,71 @@ const LiveTickerWrapper = () => {
   return <LiveTicker events={events} tickerRef={tickerRef} />;
 };
 
+const AnimatedText = ({ text, delay = 0 }) => {
+  return (
+    <span className="relative inline-block">
+      {text.split('').map((char, i) => (
+        <span
+          key={i}
+          className="inline-block animate-char-appear"
+          style={{ 
+            animationDelay: `${delay + i * 0.05}s`,
+            opacity: 0 
+          }}
+        >
+          {char === ' ' ? '\u00A0' : char}
+        </span>
+      ))}
+    </span>
+  );
+};
+
 const Index = () => {
   const [testModalOpen, setTestModalOpen] = useState(false);
+  const [animationComplete, setAnimationComplete] = useState(false);
+  const [showCircle, setShowCircle] = useState(false);
+  const circleRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const WHATSAPP_URL = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
+  
+  useEffect(() => {
+    // Start text animation sequence
+    const textTimer = setTimeout(() => {
+      setAnimationComplete(true);
+    }, 2500);
+    
+    // Show the circle after text animation
+    const circleTimer = setTimeout(() => {
+      setShowCircle(true);
+    }, 3000);
+    
+    // Animate circle to button
+    const animateCircleTimer = setTimeout(() => {
+      if (circleRef.current && buttonRef.current) {
+        const circleBounds = circleRef.current.getBoundingClientRect();
+        const buttonBounds = buttonRef.current.getBoundingClientRect();
+        
+        const xDistance = buttonBounds.left - circleBounds.left + (buttonBounds.width/2 - circleBounds.width/2);
+        const yDistance = buttonBounds.top - circleBounds.top + (buttonBounds.height/2 - circleBounds.height/2);
+        
+        circleRef.current.style.transform = `translate(${xDistance}px, ${yDistance}px) scale(0.15)`;
+        circleRef.current.style.opacity = '0';
+        
+        // Highlight the button after circle animation
+        setTimeout(() => {
+          if (buttonRef.current) {
+            buttonRef.current.classList.add('button-highlight');
+          }
+        }, 600);
+      }
+    }, 4000);
+    
+    return () => {
+      clearTimeout(textTimer);
+      clearTimeout(circleTimer);
+      clearTimeout(animateCircleTimer);
+    };
+  }, []);
   
   return (
     <div className="min-h-screen flex flex-col bg-[#FFF5EB] dark:bg-[#2E1E12] text-orange-900 dark:text-orange-100">
@@ -51,19 +113,41 @@ const Index = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-red-900/70 to-black/70"></div>
           
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4 pt-2">
-            <h1 className="text-5xl md:text-6xl font-bold mb-3 text-center font-serif mt-2 animate-fade-in">
-              Entdecke den <span className="text-red-500">Puls</span> der Stadt
+            <h1 className="text-5xl md:text-6xl font-bold mb-3 text-center font-serif mt-2">
+              {animationComplete ? (
+                <>Entdecke den <span className="text-red-500">Puls</span> der Stadt</>
+              ) : (
+                <>
+                  <AnimatedText text="Entdecke den " delay={0.3} />
+                  <AnimatedText text="Puls" delay={1.2} className="text-red-500" />
+                  <AnimatedText text=" der Stadt" delay={1.5} />
+                </>
+              )}
             </h1>
             
-            <p className="text-xl md:text-2xl text-center max-w-2xl mb-4 animate-fade-in" 
-               style={{ animationDelay: "0.1s" }}>
+            <p className="text-xl md:text-2xl text-center max-w-2xl mb-4" 
+               style={{ opacity: animationComplete ? 1 : 0, transition: 'opacity 0.5s ease' }}>
               Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
               <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
             </p>
             
-            <div className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-5 relative z-30 animate-fade-in" 
-                 style={{ animationDelay: "0.2s" }}>
+            {showCircle && (
+              <div 
+                ref={circleRef}
+                className="absolute z-20 w-20 h-20 bg-green-600 rounded-full animate-spin-slow transition-all duration-1000"
+                style={{ 
+                  top: '60%',
+                  left: '50%',
+                  marginLeft: '-40px',
+                  boxShadow: '0 0 20px rgba(0, 255, 0, 0.5)'
+                }}
+              />
+            )}
+            
+            <div className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-5 relative z-30"
+                 style={{ opacity: animationComplete ? 1 : 0, transition: 'opacity 0.5s ease' }}>
               <Button 
+                ref={buttonRef}
                 onClick={() => setTestModalOpen(true)}
                 className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-all shadow-lg hover:shadow-xl w-full max-w-sm"
               >
