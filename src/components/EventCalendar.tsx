@@ -2,11 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Music, PartyPopper, Image, Dumbbell, Map, CalendarIcon, List, Plus } from 'lucide-react';
+import { Music, PartyPopper, Image, Dumbbell, Map, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Event, RsvpOption } from '@/types/eventTypes';
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Event } from '@/types/eventTypes';
 import { getEventsForDay, getMonthOrFavoriteEvents } from '@/utils/eventUtils';
 import { normalizeDate } from '@/utils/dateUtils';
 import CalendarHeader from './calendar/CalendarHeader';
@@ -171,108 +171,96 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
           showNewEvents={showNewEvents}
           toggleNewEvents={toggleNewEvents}
           newEventsCount={newEventIds.size}
+          view={view}
+          setView={setView}
         />
         
-        {/* View toggle with Add Event button moved beside it */}
-        <div className="flex justify-center items-center flex-col">
-          <Tabs 
-            defaultValue={view} 
-            value={view}
-            onValueChange={(value) => setView(value as "calendar" | "list")} 
-            className="flex flex-col items-center w-full"
+        {/* Add Event button */}
+        <div className="flex justify-center items-center">
+          <Button 
+            className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all"
+            onClick={() => setShowEventForm(!showEventForm)}
           >
-            <div className="flex items-center gap-3">
-              <TabsList className="dark-tabs">
-                <TabsTrigger value="list" className={view === "list" ? "text-white" : "text-gray-400"}>
-                  <List className="w-4 h-4 mr-2" />
-                  Liste
-                </TabsTrigger>
-                <TabsTrigger value="calendar" className={view === "calendar" ? "text-white" : "text-gray-400"}>
-                  <CalendarIcon className="w-4 h-4 mr-2" />
-                  Kalender
-                </TabsTrigger>
-              </TabsList>
-              
-              <Button 
-                className="flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all"
-                onClick={() => setShowEventForm(!showEventForm)}
-              >
-                <Plus className="h-5 w-5" />
-                <span className="hidden md:inline">Event {showEventForm ? "schließen" : "erstellen"}</span>
-              </Button>
-            </div>
+            <Plus className="h-5 w-5" />
+            <span className="hidden md:inline">Event {showEventForm ? "schließen" : "erstellen"}</span>
+          </Button>
+        </div>
 
-            {/* Event form between menu and calendar */}
-            {showEventForm && (
-              <div className="w-full mt-4 mb-4 dark-glass-card rounded-2xl p-6 animate-fade-down animate-duration-300">
-                <EventForm 
-                  selectedDate={selectedDate ? selectedDate : new Date()} 
-                  onAddEvent={handleAddEvent}
-                  onCancel={() => setShowEventForm(false)}
+        {/* Event form between menu and calendar */}
+        {showEventForm && (
+          <div className="w-full mt-4 mb-4 dark-glass-card rounded-2xl p-6 animate-fade-down animate-duration-300">
+            <EventForm 
+              selectedDate={selectedDate ? selectedDate : new Date()} 
+              onAddEvent={handleAddEvent}
+              onCancel={() => setShowEventForm(false)}
+            />
+          </div>
+        )}
+        
+        {/* Main calendar and list views */}
+        <Tabs 
+          defaultValue={view} 
+          value={view} 
+          className="flex flex-col items-center w-full"
+        >
+          <TabsContent value="list" className="w-full">
+            <EventList 
+              events={eventsToDisplay}
+              showFavorites={showFavorites}
+              showNewEvents={showNewEvents}
+              onSelectEvent={(event, date) => {
+                setSelectedDate(date);
+                setSelectedEvent(event);
+              }}
+              onLike={handleLikeEvent}
+            />
+          </TabsContent>
+          
+          <TabsContent value="calendar" className="w-full">
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="w-full md:w-3/5 dark-glass-card rounded-2xl p-6">
+                {showFavorites ? (
+                  <FavoritesView 
+                    favoriteEvents={favoriteEvents}
+                    onSwitchToList={() => setView("list")}
+                  />
+                ) : showNewEvents ? (
+                  <div className="text-center p-4">
+                    <h3 className="text-lg font-medium mb-2">Neue Events</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Es gibt {newEventIds.size} neue Events seit deinem letzten Besuch.
+                    </p>
+                    <Button onClick={() => setView("list")}>
+                      Als Liste anzeigen
+                    </Button>
+                  </div>
+                ) : (
+                  <CalendarDays 
+                    daysInMonth={daysInMonth}
+                    events={filter ? events.filter(event => event.category === filter) : events}
+                    selectedDate={selectedDate}
+                    onDateClick={handleDateClick}
+                  />
+                )}
+              </div>
+              
+              {/* Event details panel */}
+              <div className="w-full md:w-2/5 mt-6 md:mt-0">
+                <EventPanel 
+                  selectedDate={selectedDate}
+                  selectedEvent={selectedEvent}
+                  filteredEvents={filteredEvents}
+                  filter={filter}
+                  onEventSelect={handleEventSelect}
+                  onEventClose={() => setSelectedEvent(null)}
+                  onLike={handleLikeEvent}
+                  onShowEventForm={() => setShowEventForm(true)}
+                  showFavorites={showFavorites}
                 />
               </div>
-            )}
-            
-            {/* Main calendar and list views */}
-            <TabsContent value="list" className="w-full">
-              <EventList 
-                events={eventsToDisplay}
-                showFavorites={showFavorites}
-                showNewEvents={showNewEvents}
-                onSelectEvent={(event, date) => {
-                  setSelectedDate(date);
-                  setSelectedEvent(event);
-                }}
-                onLike={handleLikeEvent}
-              />
-            </TabsContent>
-            
-            <TabsContent value="calendar" className="w-full">
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="w-full md:w-3/5 dark-glass-card rounded-2xl p-6">
-                  {showFavorites ? (
-                    <FavoritesView 
-                      favoriteEvents={favoriteEvents}
-                      onSwitchToList={() => setView("list")}
-                    />
-                  ) : showNewEvents ? (
-                    <div className="text-center p-4">
-                      <h3 className="text-lg font-medium mb-2">Neue Events</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Es gibt {newEventIds.size} neue Events seit deinem letzten Besuch.
-                      </p>
-                      <Button onClick={() => setView("list")}>
-                        Als Liste anzeigen
-                      </Button>
-                    </div>
-                  ) : (
-                    <CalendarDays 
-                      daysInMonth={daysInMonth}
-                      events={filter ? events.filter(event => event.category === filter) : events}
-                      selectedDate={selectedDate}
-                      onDateClick={handleDateClick}
-                    />
-                  )}
-                </div>
-                
-                {/* Event details panel */}
-                <div className="w-full md:w-2/5 mt-6 md:mt-0">
-                  <EventPanel 
-                    selectedDate={selectedDate}
-                    selectedEvent={selectedEvent}
-                    filteredEvents={filteredEvents}
-                    filter={filter}
-                    onEventSelect={handleEventSelect}
-                    onEventClose={() => setSelectedEvent(null)}
-                    onLike={handleLikeEvent}
-                    onShowEventForm={() => setShowEventForm(true)}
-                    showFavorites={showFavorites}
-                  />
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Heart, Filter, FilterX } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Heart, Filter, FilterX, CalendarIcon, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -28,6 +28,8 @@ interface CalendarHeaderProps {
   showNewEvents: boolean;
   toggleNewEvents: () => void;
   newEventsCount: number;
+  view: "calendar" | "list";
+  setView: (view: "calendar" | "list") => void;
 }
 
 const CalendarHeader: React.FC<CalendarHeaderProps> = ({
@@ -43,9 +45,12 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   categoryIcons,
   showNewEvents,
   toggleNewEvents,
-  newEventsCount
+  newEventsCount,
+  view,
+  setView
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isViewDropdownOpen, setIsViewDropdownOpen] = useState(false);
 
   // Function to clear the current filter
   const clearFilter = () => {
@@ -55,7 +60,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   };
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1 mb-0">
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-0.5 mb-0">
       <div className="flex items-center justify-between md:justify-start">
         <Button 
           variant="outline" 
@@ -84,8 +89,56 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
         </Button>
       </div>
       
-      <div className="flex items-center gap-1">
-        <div className="flex items-center gap-1 overflow-x-auto pb-0 scrollbar-none">
+      <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-0.5 overflow-x-auto pb-0 scrollbar-none">
+          {/* View toggle dropdown - NEW */}
+          <DropdownMenu open={isViewDropdownOpen} onOpenChange={setIsViewDropdownOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                className={cn(
+                  "rounded-full whitespace-nowrap flex items-center gap-2",
+                  "bg-black/70 text-white border-gray-700 hover:bg-black/60 hover:text-white dark-button"
+                )}
+              >
+                {view === "list" ? <List className="h-4 w-4" /> : <CalendarIcon className="h-4 w-4" />}
+                <span className="hidden sm:inline">
+                  {view === "list" ? "Liste" : "Kalender"}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent 
+              className="bg-black/90 border-gray-700 text-white rounded-xl p-2 shadow-xl min-w-48 z-50"
+              align="center"
+            >
+              <DropdownMenuLabel className="text-center text-gray-300">Ansicht</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-gray-700" />
+              <DropdownMenuCheckboxItem
+                checked={view === "list"}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setView("list");
+                  setIsViewDropdownOpen(false);
+                }}
+                className="cursor-pointer hover:bg-gray-800 rounded-lg flex items-center gap-2"
+              >
+                <List className="h-4 w-4 mr-1" />
+                Liste
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={view === "calendar"}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setView("calendar");
+                  setIsViewDropdownOpen(false);
+                }}
+                className="cursor-pointer hover:bg-gray-800 rounded-lg flex items-center gap-2"
+              >
+                <CalendarIcon className="h-4 w-4 mr-1" />
+                Kalender
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
           {/* Favorites button positioned at the beginning of the filter list */}
           <Button 
             className={cn(
