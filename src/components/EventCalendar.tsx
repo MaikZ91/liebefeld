@@ -70,9 +70,11 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     if (showNewEvents) {
       return events.filter(event => newEventIds.has(event.id));
     } else if (showFavorites) {
-      // For favorites, return only the top events for each day
+      // For favorites, return only the top events for each day that have at least one like
       return events.filter(event => 
-        event.date && topEventsPerDay[event.date] === event.id
+        event.date && 
+        topEventsPerDay[event.date] === event.id && 
+        (event.likes && event.likes > 0)
       );
     } else {
       return getMonthOrFavoriteEvents(events, currentDate, false, eventLikes);
@@ -84,10 +86,12 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     ? getEventsForDay(events, selectedDate, filter)
     : [];
     
-  // Get user's favorite events (top events per day)
+  // Get user's favorite events (top events per day with likes > 0)
   const favoriteEvents = React.useMemo(() => {
     return events.filter(event => 
-      event.date && topEventsPerDay[event.date] === event.id
+      event.date && 
+      topEventsPerDay[event.date] === event.id && 
+      (event.likes && event.likes > 0)
     );
   }, [events, topEventsPerDay]);
 

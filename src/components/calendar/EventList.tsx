@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -39,7 +40,8 @@ const EventList: React.FC<EventListProps> = ({
     return filteredEvents.filter(event => {
       if (!event.date) return false;
       
-      return topEventsPerDay[event.date] === event.id;
+      // Make sure it's a top event and has at least one like
+      return topEventsPerDay[event.date] === event.id && (event.likes && event.likes > 0);
     });
   }, [filteredEvents, showFavorites, topEventsPerDay]);
   
