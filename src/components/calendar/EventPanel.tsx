@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, MapPin, Heart, Link } from 'lucide-react';
+import { CalendarIcon, MapPin, Heart, Link, Badge } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
 
 interface EventPanelProps {
@@ -42,7 +42,6 @@ const EventPanel: React.FC<EventPanelProps> = ({
   
   return (
     <div className="dark-glass-card rounded-2xl p-6 h-full animate-fade-in">
-      {/* When no event is selected, show the event list for the selected date */}
       {!selectedEvent && (
         <div className="h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
@@ -81,7 +80,6 @@ const EventPanel: React.FC<EventPanelProps> = ({
         </div>
       )}
       
-      {/* Event detail view */}
       {selectedEvent && (
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between mb-4">
