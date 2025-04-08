@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
@@ -52,43 +51,27 @@ interface CommunityTestProps {
 }
 
 const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) => {
-  const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const { toast } = useToast();
-  
-  const totalSteps = questions.length;
   
   const handleAnswer = (questionId: number, answerId: string) => {
     setAnswers(prev => ({ ...prev, [questionId]: answerId }));
   };
   
-  const handleNext = () => {
-    const currentQuestion = questions[currentStep];
+  const handleSubmit = () => {
+    // Check if all questions are answered
+    const allQuestionsAnswered = questions.every(question => answers[question.id]);
     
-    if (!answers[currentQuestion.id]) {
+    if (!allQuestionsAnswered) {
       toast({
-        title: "Bitte wähle eine Antwort",
-        description: "Du musst eine Option auswählen, um fortzufahren.",
+        title: "Bitte beantworte alle Fragen",
+        description: "Du musst alle Fragen beantworten, um fortzufahren.",
         variant: "destructive",
         duration: 3000,
       });
       return;
     }
     
-    if (currentStep < totalSteps - 1) {
-      setCurrentStep(prev => prev + 1);
-    } else {
-      checkAnswers();
-    }
-  };
-  
-  const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep(prev => prev - 1);
-    }
-  };
-  
-  const checkAnswers = () => {
     // Check if the user is interested in active participation
     const isActive = answers[3] === "a";
     
@@ -124,25 +107,6 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
     }
   };
   
-  const renderQuestion = (question: Question) => {
-    return (
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">{question.text}</h3>
-        <RadioGroup 
-          value={answers[question.id]} 
-          onValueChange={(value) => handleAnswer(question.id, value)}
-        >
-          {question.options.map(option => (
-            <div key={option.id} className="flex items-center space-x-2">
-              <RadioGroupItem value={option.id} id={`q${question.id}-${option.id}`} />
-              <Label htmlFor={`q${question.id}-${option.id}`}>{option.text}</Label>
-            </div>
-          ))}
-        </RadioGroup>
-      </div>
-    );
-  };
-  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
@@ -153,35 +117,31 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
           </DialogDescription>
         </DialogHeader>
         
-        <div className="py-4">
-          <div className="mb-4 flex justify-between text-sm text-gray-500">
-            <span>Schritt {currentStep + 1} von {totalSteps}</span>
-            <span>{Math.round(((currentStep + 1) / totalSteps) * 100)}% geschafft</span>
-          </div>
-          
-          <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700 mb-6">
-            <div 
-              className="bg-orange-600 h-2 rounded-full transition-all duration-300 ease-in-out" 
-              style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
-            ></div>
-          </div>
-          
-          {renderQuestion(questions[currentStep])}
+        <div className="py-4 space-y-6">
+          {questions.map((question) => (
+            <div key={question.id} className="space-y-4 border-b pb-4 last:border-b-0">
+              <h3 className="text-lg font-medium">{question.text}</h3>
+              <RadioGroup 
+                value={answers[question.id]} 
+                onValueChange={(value) => handleAnswer(question.id, value)}
+              >
+                {question.options.map(option => (
+                  <div key={option.id} className="flex items-center space-x-2">
+                    <RadioGroupItem value={option.id} id={`q${question.id}-${option.id}`} />
+                    <Label htmlFor={`q${question.id}-${option.id}`}>{option.text}</Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+          ))}
         </div>
         
-        <DialogFooter className="flex justify-between sm:justify-between">
+        <DialogFooter>
           <Button 
-            variant="outline" 
-            onClick={handleBack}
-            disabled={currentStep === 0}
+            onClick={handleSubmit}
+            className="bg-orange-600 hover:bg-orange-700 w-full sm:w-auto"
           >
-            Zurück
-          </Button>
-          <Button 
-            onClick={handleNext}
-            className="bg-orange-600 hover:bg-orange-700"
-          >
-            {currentStep === totalSteps - 1 ? "Beitritt bestätigen" : "Weiter"}
+            Beitritt bestätigen
           </Button>
         </DialogFooter>
       </DialogContent>
