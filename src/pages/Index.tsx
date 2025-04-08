@@ -55,6 +55,7 @@ const Index = () => {
   const [testModalOpen, setTestModalOpen] = useState(false);
   const [animationComplete, setAnimationComplete] = useState(false);
   const [showCircle, setShowCircle] = useState(false);
+  const [showTitle, setShowTitle] = useState(true);
   const circleRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const WHATSAPP_URL = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
@@ -65,10 +66,11 @@ const Index = () => {
       setAnimationComplete(true);
     }, 2500);
     
-    // Show the circle after text animation
-    const circleTimer = setTimeout(() => {
+    // Hide the title and show the circle
+    const titleTimer = setTimeout(() => {
+      setShowTitle(false);
       setShowCircle(true);
-    }, 3000);
+    }, 3500);
     
     // Animate circle to button
     const animateCircleTimer = setTimeout(() => {
@@ -89,11 +91,11 @@ const Index = () => {
           }
         }, 600);
       }
-    }, 4000);
+    }, 5000);
     
     return () => {
       clearTimeout(textTimer);
-      clearTimeout(circleTimer);
+      clearTimeout(titleTimer);
       clearTimeout(animateCircleTimer);
     };
   }, []);
@@ -113,35 +115,47 @@ const Index = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-red-900/70 to-black/70"></div>
           
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4 pt-2">
-            <h1 className="text-5xl md:text-6xl font-bold mb-3 text-center font-serif mt-2">
-              {animationComplete ? (
-                <>Entdecke den <span className="text-red-500">Puls</span> der Stadt</>
-              ) : (
-                <>
-                  <AnimatedText text="Entdecke den " delay={0.3} />
-                  <AnimatedText text="Puls" delay={1.2} className="text-red-500" />
-                  <AnimatedText text=" der Stadt" delay={1.5} />
-                </>
-              )}
-            </h1>
-            
-            <p className="text-xl md:text-2xl text-center max-w-2xl mb-4" 
-               style={{ opacity: animationComplete ? 1 : 0, transition: 'opacity 0.5s ease' }}>
-              Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
-              <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
-            </p>
+            {showTitle && (
+              <div className="transition-opacity duration-500 ease-in-out" style={{ opacity: showTitle ? 1 : 0 }}>
+                <h1 className="text-5xl md:text-6xl font-bold mb-3 text-center font-serif mt-2">
+                  {animationComplete ? (
+                    <>Entdecke den <span className="text-red-500">Puls</span> der Stadt</>
+                  ) : (
+                    <>
+                      <AnimatedText text="Entdecke den " delay={0.3} />
+                      <AnimatedText text="Puls" delay={1.2} className="text-red-500" />
+                      <AnimatedText text=" der Stadt" delay={1.5} />
+                    </>
+                  )}
+                </h1>
+                
+                <p className="text-xl md:text-2xl text-center max-w-2xl mb-4" 
+                  style={{ opacity: animationComplete ? 1 : 0, transition: 'opacity 0.5s ease' }}>
+                  Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
+                  <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
+                </p>
+              </div>
+            )}
             
             {showCircle && (
               <div 
                 ref={circleRef}
-                className="absolute z-20 w-20 h-20 bg-green-600 rounded-full animate-spin-slow transition-all duration-1000"
+                className="absolute z-20 flex items-center justify-center w-32 h-32 bg-green-600 rounded-full animate-spin-slow transition-all duration-1000"
                 style={{ 
-                  top: '60%',
+                  top: '50%',
                   left: '50%',
-                  marginLeft: '-40px',
+                  marginLeft: '-64px',
+                  marginTop: '-64px',
                   boxShadow: '0 0 20px rgba(0, 255, 0, 0.5)'
                 }}
-              />
+              >
+                <div className="text-white text-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-16 h-16 mb-1">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                  </svg>
+                  <div className="text-xs">WhatsApp</div>
+                </div>
+              </div>
             )}
             
             <div className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-5 relative z-30"
