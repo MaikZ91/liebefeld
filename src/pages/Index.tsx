@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -31,7 +30,7 @@ const LiveTickerWrapper = () => {
   return <LiveTicker events={events} tickerRef={tickerRef} />;
 };
 
-const AnimatedText = ({ text, delay = 0, className = '', animationType = 'char' }: 
+const AnimatedText = ({ text, delay = 0, className = '', animationType = 'char' | 'word' | 'whole' }: 
   { text: string; delay?: number; className?: string; animationType?: 'char' | 'word' | 'whole' }) => {
   
   if (animationType === 'whole') {
@@ -115,7 +114,6 @@ const Index = () => {
     
     const heartAnimationTimer = setTimeout(() => {
       setHeartAnimationComplete(true);
-      // Removed the code that sets showSubtitle to false
     }, 4800);
     
     return () => {
@@ -167,7 +165,6 @@ const Index = () => {
                   }}
                 >
                   Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
-                  <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
                 </p>
               )}
             </div>
@@ -203,7 +200,7 @@ const Index = () => {
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                     <div className="text-white text-xs px-1 mb-1 max-w-[90px]">
-                      Verbinde dich in unserer Community
+                      Hier gehts zu unserer Community
                     </div>
                     <svg 
                       viewBox="0 0 24 24" 
