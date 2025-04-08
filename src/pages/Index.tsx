@@ -32,9 +32,9 @@ const LiveTickerWrapper = () => {
   return <LiveTicker events={events} tickerRef={tickerRef} />;
 };
 
-const AnimatedText = ({ text, delay = 0 }) => {
+const AnimatedText = ({ text, delay = 0, className = '' }: { text: string; delay?: number; className?: string }) => {
   return (
-    <span className="relative inline-block">
+    <span className={`relative inline-block ${className}`}>
       {text.split('').map((char, i) => (
         <span
           key={i}
