@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -96,7 +97,7 @@ const Index = () => {
   const [animationComplete, setAnimationComplete] = useState(false);
   const [showHeart, setShowHeart] = useState(false);
   const [heartAnimationComplete, setHeartAnimationComplete] = useState(false);
-  const [showSubtitle, setShowSubtitle] = useState(true);
+  const [showSubtitle, setShowSubtitle] = useState(true); // Always keep this true now
   const [titleAnimating, setTitleAnimating] = useState(true);
   const heartRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -114,10 +115,7 @@ const Index = () => {
     
     const heartAnimationTimer = setTimeout(() => {
       setHeartAnimationComplete(true);
-      
-      setTimeout(() => {
-        setShowSubtitle(false);
-      }, 300);
+      // Removed the code that sets showSubtitle to false
     }, 4800);
     
     return () => {
@@ -188,8 +186,8 @@ const Index = () => {
                   marginTop: '-70px',
                   filter: 'drop-shadow(0 0 15px rgba(220, 38, 38, 0.8))',
                   transform: heartAnimationComplete ? 'scale(0.8)' : 'scale(1)',
-                  animation: !heartAnimationComplete ? 'heart-entrance 1s cubic-bezier(0.17, 0.67, 0.83, 0.67) forwards, heart-beat 1.5s ease-in-out infinite' : 'none',
-                  opacity: 0
+                  animation: !heartAnimationComplete ? 'heart-entrance 1s cubic-bezier(0.17, 0.67, 0.83, 0.67) forwards, heart-beat 1.5s ease-in-out infinite' : 'heart-beat 1.5s ease-in-out infinite',
+                  opacity: heartAnimationComplete ? 1 : 0 // Keep the heart visible after animation completes
                 }}
               >
                 <div className="relative w-full h-full flex items-center justify-center">
