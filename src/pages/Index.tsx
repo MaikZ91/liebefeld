@@ -31,7 +31,7 @@ const Index = () => {
       <CalendarNavbar />
       <main className="flex-grow relative">
         {/* Hero Section - adjusted height for better spacing */}
-        <div className="relative w-full h-[65vh] overflow-hidden bg-black">
+        <div className="relative w-full h-[60vh] overflow-hidden bg-black">
           <img 
             src="/lovable-uploads/e3d0a85b-9935-450a-bba8-5693570597a3.png" 
             alt="Freunde genießen ein Event zusammen" 
@@ -51,7 +51,7 @@ const Index = () => {
               <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
             </p>
             
-            <div className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-12 relative z-30 animate-fade-in" 
+            <div className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-6 relative z-30 animate-fade-in" 
                  style={{ animationDelay: "0.2s" }}>
               <Button 
                 onClick={() => setTestModalOpen(true)}
@@ -117,8 +117,8 @@ const Index = () => {
               </div>
             </div>
             
-            {/* Live Ticker moved here - after the icons/buttons but still inside the hero section */}
-            <div className="w-full bg-black/80 backdrop-blur-sm rounded-lg mb-4 max-w-3xl">
+            {/* Live Ticker moved here with full-width alignment */}
+            <div className="w-full bg-black/80 backdrop-blur-sm rounded-lg mb-0 absolute bottom-0 left-0">
               <EventProvider>
                 <LiveTickerWrapper />
               </EventProvider>
@@ -126,7 +126,6 @@ const Index = () => {
           </div>
         </div>
         
-        {/* Remove the LiveTicker section that was here before */}
         <EventProvider>
           {/* Calendar Section */}
           <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-6 rounded-t-lg shadow-inner">
