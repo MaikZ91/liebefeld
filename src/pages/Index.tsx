@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -30,16 +31,59 @@ const LiveTickerWrapper = () => {
   return <LiveTicker events={events} tickerRef={tickerRef} />;
 };
 
-const AnimatedText = ({ text, delay = 0, className = '' }: { text: string; delay?: number; className?: string }) => {
+const AnimatedText = ({ text, delay = 0, className = '', animationType = 'char' }: 
+  { text: string; delay?: number; className?: string; animationType?: 'char' | 'word' | 'whole' }) => {
+  
+  if (animationType === 'whole') {
+    return (
+      <span 
+        className={`relative inline-block ${className}`}
+        style={{ 
+          animationDelay: `${delay}s`,
+          animation: 'text-appear 0.8s ease-out forwards',
+          opacity: 0,
+          transform: 'translateY(20px)'
+        }}
+      >
+        {text}
+      </span>
+    );
+  }
+  
+  if (animationType === 'word') {
+    return (
+      <span className={`relative inline-block ${className}`}>
+        {text.split(' ').map((word, i) => (
+          <span
+            key={i}
+            className="inline-block"
+            style={{ 
+              animationDelay: `${delay + i * 0.15}s`,
+              animation: 'word-appear 0.8s ease-out forwards',
+              opacity: 0,
+              transform: 'translateY(20px)',
+              marginRight: word === text.split(' ').slice(-1)[0] ? '0' : '0.3em'
+            }}
+          >
+            {word}
+          </span>
+        ))}
+      </span>
+    );
+  }
+  
+  // Default char animation
   return (
     <span className={`relative inline-block ${className}`}>
       {text.split('').map((char, i) => (
         <span
           key={i}
-          className="inline-block animate-char-appear"
+          className="inline-block"
           style={{ 
             animationDelay: `${delay + i * 0.05}s`,
-            opacity: 0 
+            animation: 'char-appear 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+            opacity: 0,
+            textShadow: char !== ' ' ? '0 0 8px rgba(255, 255, 255, 0.5)' : 'none'
           }}
         >
           {char === ' ' ? '\u00A0' : char}
@@ -55,23 +99,32 @@ const Index = () => {
   const [showHeart, setShowHeart] = useState(false);
   const [heartAnimationComplete, setHeartAnimationComplete] = useState(false);
   const [showSubtitle, setShowSubtitle] = useState(true);
+  const [titleAnimating, setTitleAnimating] = useState(true);
   const heartRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const WHATSAPP_URL = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
   
   useEffect(() => {
+    // Start showing text animations
     const textTimer = setTimeout(() => {
       setAnimationComplete(true);
+      setTitleAnimating(false);
     }, 2500);
     
+    // Start showing heart with pulsing effect
     const heartTimer = setTimeout(() => {
       setShowHeart(true);
-    }, 3500);
+    }, 3000);
     
+    // Complete heart animation and hide subtitle
     const heartAnimationTimer = setTimeout(() => {
       setHeartAnimationComplete(true);
-      setShowSubtitle(false);
-    }, 5000);
+      
+      // Fade out subtitle with a small delay
+      setTimeout(() => {
+        setShowSubtitle(false);
+      }, 300);
+    }, 4800);
     
     return () => {
       clearTimeout(textTimer);
@@ -85,31 +138,73 @@ const Index = () => {
       <CalendarNavbar />
       <main className="flex-grow relative">
         <div className="relative w-full h-[55vh] overflow-hidden bg-black">
+          {/* Background image with zoom effect */}
           <img 
             src="/lovable-uploads/e3d0a85b-9935-450a-bba8-5693570597a3.png" 
             alt="Freunde genießen ein Event zusammen" 
             className="absolute inset-0 w-full h-full object-cover opacity-90"
+            style={{
+              animation: 'subtle-zoom 15s ease-in-out infinite alternate',
+              animationDelay: '1s'
+            }}
           />
           
-          <div className="absolute inset-0 bg-gradient-to-r from-red-900/70 to-black/70"></div>
+          {/* Gradient overlay with subtle animation */}
+          <div 
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(135deg, rgba(128, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.7) 100%)',
+              animation: 'gradient-shift 8s ease-in-out infinite alternate',
+              opacity: 0,
+              animationDelay: '0.5s',
+              animationFillMode: 'forwards'
+            }}
+          ></div>
+          
+          {/* Moving light effect overlay */}
+          <div 
+            className="absolute inset-0 opacity-20"
+            style={{
+              background: 'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.8) 0%, transparent 60%)',
+              animation: 'light-move 15s ease-in-out infinite alternate',
+              mixBlendMode: 'overlay'
+            }}
+          ></div>
           
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4 pt-2">
             <div className="transition-opacity duration-500 ease-in-out">
               <h1 className="text-5xl md:text-6xl font-bold mb-3 text-center font-serif mt-2">
-                {animationComplete ? (
-                  <>Entdecke den <span className="text-red-500">Puls</span> der Stadt</>
-                ) : (
+                {titleAnimating ? (
                   <>
-                    <AnimatedText text="Entdecke den " delay={0.3} />
-                    <AnimatedText text="Puls" delay={1.2} className="text-red-500" />
-                    <AnimatedText text=" der Stadt" delay={1.5} />
+                    <AnimatedText text="Entdecke den " delay={0.5} animationType="word" />
+                    <AnimatedText text="Puls" delay={1.2} className="text-red-500 font-bold" animationType="char" />
+                    <AnimatedText text=" der Stadt" delay={1.7} animationType="word" />
                   </>
+                ) : (
+                  <span className="relative">
+                    Entdecke den <span className="text-red-500 relative inline-block">
+                      Puls
+                      <span 
+                        className="absolute -inset-1 rounded-lg" 
+                        style={{
+                          background: 'radial-gradient(circle, rgba(255,0,0,0.3) 0%, transparent 70%)',
+                          filter: 'blur(5px)',
+                          animation: 'pulse 2s ease-in-out infinite'
+                        }}
+                      ></span>
+                    </span> der Stadt
+                  </span>
                 )}
               </h1>
               
               {showSubtitle && (
-                <p className="text-xl md:text-2xl text-center max-w-2xl mb-4" 
-                  style={{ opacity: animationComplete ? 1 : 0, transition: 'opacity 0.5s ease' }}>
+                <p 
+                  className="text-xl md:text-2xl text-center max-w-2xl mb-4 transition-all duration-700" 
+                  style={{ 
+                    opacity: animationComplete ? 1 : 0, 
+                    transform: animationComplete ? 'translateY(0)' : 'translateY(20px)'
+                  }}
+                >
                   Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
                   <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
                 </p>
@@ -120,7 +215,7 @@ const Index = () => {
               <div 
                 ref={heartRef}
                 onClick={() => setTestModalOpen(true)}
-                className={`absolute z-20 flex items-center justify-center cursor-pointer transition-all duration-1000 ${!heartAnimationComplete ? "animate-pulse-soft" : ""}`}
+                className={`absolute z-20 flex items-center justify-center cursor-pointer transition-all duration-1000`}
                 style={{ 
                   top: '50%',
                   left: '50%',
@@ -128,8 +223,10 @@ const Index = () => {
                   height: '140px',
                   marginLeft: '-70px',
                   marginTop: '-70px',
-                  filter: 'drop-shadow(0 0 12px rgba(220, 38, 38, 0.7))',
-                  transform: heartAnimationComplete ? 'scale(0.8)' : 'scale(1)'
+                  filter: 'drop-shadow(0 0 15px rgba(220, 38, 38, 0.8))',
+                  transform: heartAnimationComplete ? 'scale(0.8)' : 'scale(1)',
+                  animation: !heartAnimationComplete ? 'heart-entrance 1s cubic-bezier(0.17, 0.67, 0.83, 0.67) forwards, heart-beat 1.5s ease-in-out infinite' : 'none',
+                  opacity: 0
                 }}
               >
                 <div className="relative w-full h-full flex items-center justify-center">
@@ -137,6 +234,9 @@ const Index = () => {
                     viewBox="0 0 24 24" 
                     fill="#e11d48" 
                     className="w-32 h-32"
+                    style={{
+                      filter: 'drop-shadow(0 0 5px rgba(255, 0, 0, 0.7))'
+                    }}
                   >
                     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                   </svg>
@@ -156,7 +256,7 @@ const Index = () => {
               </div>
             )}
             
-            <div className={`flex flex-col items-center justify-center gap-3 w-full max-w-xl relative z-30 mt-32 transition-opacity duration-500 ${heartAnimationComplete ? "opacity-100" : "opacity-0"}`}>
+            <div className={`flex flex-col items-center justify-center gap-3 w-full max-w-xl relative z-30 mt-32 transition-all duration-700 ${heartAnimationComplete ? "opacity-100 transform translate-y-0" : "opacity-0 transform translate-y-10"}`}>
               <div className="flex items-center justify-center gap-3 mt-8">
                 <InstagramFeed />
                 
