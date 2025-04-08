@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { Calendar, ArrowRight, ThumbsUp } from 'lucide-react';
 import { format, parseISO, isSameMonth, startOfDay, isAfter, isToday } from 'date-fns';
@@ -97,20 +98,20 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
 
   return (
     <div 
-      className="text-white overflow-hidden py-1 relative"
+      className="text-white overflow-hidden py-0.5 relative"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <div className="absolute left-0 top-0 bottom-0 flex items-center z-10 bg-red-600 px-3 py-1">
-        <Calendar className="w-4 h-4 mr-1" />
-        <span className="font-bold text-sm whitespace-nowrap">Top Events</span>
-        <ArrowRight className="w-4 h-4 ml-1" />
+      <div className="absolute left-0 top-0 bottom-0 flex items-center z-10 bg-red-600 px-2 py-0.5">
+        <Calendar className="w-3.5 h-3.5 mr-1" />
+        <span className="font-bold text-xs whitespace-nowrap">Top Events</span>
+        <ArrowRight className="w-3.5 h-3.5 ml-1" />
       </div>
       
-      <div className="absolute left-[110px] top-0 bottom-0 w-8 bg-gradient-to-r from-black to-transparent z-[5]"></div>
+      <div className="absolute left-[100px] top-0 bottom-0 w-8 bg-gradient-to-r from-black to-transparent z-[5]"></div>
       <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black to-transparent z-[5]"></div>
       
-      <div className="ml-[130px] mr-2 overflow-hidden">
+      <div className="ml-[120px] mr-2 overflow-hidden">
         <div 
           ref={tickerRef}
           className={`whitespace-nowrap inline-block ${isPaused ? 'ticker-paused' : 'ticker-scroll'}`}
@@ -118,10 +119,10 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
           {[...tickerEvents, ...tickerEvents].map((event, index) => (
             <div 
               key={`${event.id}-${index}`} 
-              className="inline-block mx-4"
+              className="inline-block mx-3"
             >
               <span className="inline-flex items-center">
-                <span className="text-red-500 font-semibold mr-1">
+                <span className="text-red-500 font-semibold mr-1 text-sm">
                   {(() => {
                     try {
                       const date = parseISO(event.date);
@@ -132,14 +133,14 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events }) => {
                     }
                   })()}:
                 </span>
-                <span className="text-white mr-1">{event.title}</span>
-                <span className="text-gray-400 text-sm mr-1">({event.location || 'Keine Ortsangabe'})</span>
+                <span className="text-white mr-1 text-sm">{event.title}</span>
+                <span className="text-gray-400 text-xs mr-1">({event.location || 'Keine Ortsangabe'})</span>
                 <span className="text-yellow-500 text-xs flex items-center">
-                  <ThumbsUp className="w-3 h-3 mr-1" /> 
+                  <ThumbsUp className="w-3 h-3 mr-0.5" /> 
                   {typeof event.likes === 'number' ? event.likes : 0}
                 </span>
               </span>
-              <span className="mx-3 text-red-500">•</span>
+              <span className="mx-2 text-red-500">•</span>
             </div>
           ))}
         </div>

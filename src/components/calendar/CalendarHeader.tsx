@@ -55,7 +55,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   };
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1 mb-0">
       <div className="flex items-center justify-between md:justify-start">
         <Button 
           variant="outline" 
@@ -84,8 +84,8 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
         </Button>
       </div>
       
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+      <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 overflow-x-auto pb-0 scrollbar-none">
           {/* Favorites button positioned at the beginning of the filter list */}
           <Button 
             className={cn(

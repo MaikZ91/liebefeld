@@ -31,7 +31,7 @@ const Index = () => {
       <CalendarNavbar />
       <main className="flex-grow relative">
         {/* Hero Section - adjusted height for better spacing */}
-        <div className="relative w-full h-[60vh] overflow-hidden bg-black">
+        <div className="relative w-full h-[55vh] overflow-hidden bg-black">
           <img 
             src="/lovable-uploads/e3d0a85b-9935-450a-bba8-5693570597a3.png" 
             alt="Freunde genießen ein Event zusammen" 
@@ -40,18 +40,18 @@ const Index = () => {
           
           <div className="absolute inset-0 bg-gradient-to-r from-red-900/70 to-black/70"></div>
           
-          <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4 pt-6">
-            <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center font-serif mt-4 animate-fade-in">
+          <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4 pt-2">
+            <h1 className="text-5xl md:text-6xl font-bold mb-3 text-center font-serif mt-2 animate-fade-in">
               Entdecke den <span className="text-red-500">Puls</span> der Stadt
             </h1>
             
-            <p className="text-xl md:text-2xl text-center max-w-2xl mb-6 animate-fade-in" 
+            <p className="text-xl md:text-2xl text-center max-w-2xl mb-4 animate-fade-in" 
                style={{ animationDelay: "0.1s" }}>
               Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
               <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
             </p>
             
-            <div className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-6 relative z-30 animate-fade-in" 
+            <div className="flex flex-col items-center justify-center gap-3 w-full max-w-xl mb-5 relative z-30 animate-fade-in" 
                  style={{ animationDelay: "0.2s" }}>
               <Button 
                 onClick={() => setTestModalOpen(true)}
@@ -69,7 +69,7 @@ const Index = () => {
                 whatsappUrl={WHATSAPP_URL}
               />
               
-              <div className="flex items-center justify-center gap-3 mt-2">
+              <div className="flex items-center justify-center gap-3 mt-1">
                 <InstagramFeed />
                 
                 <a 
@@ -118,7 +118,7 @@ const Index = () => {
             </div>
             
             {/* Live Ticker moved here with full-width alignment */}
-            <div className="w-full bg-black/80 backdrop-blur-sm rounded-lg mb-0 absolute bottom-0 left-0">
+            <div className="w-full bg-black/80 backdrop-blur-sm mb-0 absolute bottom-0 left-0">
               <EventProvider>
                 <LiveTickerWrapper />
               </EventProvider>
@@ -127,8 +127,8 @@ const Index = () => {
         </div>
         
         <EventProvider>
-          {/* Calendar Section */}
-          <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-6 rounded-t-lg shadow-inner">
+          {/* Calendar Section - reduced top margin */}
+          <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-3 rounded-t-lg shadow-inner">
             <EventCalendar defaultView="list" />
           </div>
           
