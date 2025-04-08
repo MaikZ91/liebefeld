@@ -55,6 +55,7 @@ const Index = () => {
   const [animationComplete, setAnimationComplete] = useState(false);
   const [showCircle, setShowCircle] = useState(false);
   const [circleAnimationComplete, setCircleAnimationComplete] = useState(false);
+  const [showSubtitle, setShowSubtitle] = useState(true);
   const circleRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const WHATSAPP_URL = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
@@ -70,6 +71,7 @@ const Index = () => {
     
     const circleAnimationTimer = setTimeout(() => {
       setCircleAnimationComplete(true);
+      setShowSubtitle(false); // Hide subtitle after animation completes
     }, 5000);
     
     return () => {
@@ -106,11 +108,13 @@ const Index = () => {
                 )}
               </h1>
               
-              <p className="text-xl md:text-2xl text-center max-w-2xl mb-4" 
-                style={{ opacity: animationComplete ? 1 : 0, transition: 'opacity 0.5s ease' }}>
-                Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
-                <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
-              </p>
+              {showSubtitle && (
+                <p className="text-xl md:text-2xl text-center max-w-2xl mb-4" 
+                  style={{ opacity: animationComplete ? 1 : 0, transition: 'opacity 0.5s ease' }}>
+                  Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
+                  <span className="inline-block ml-1 animate-pulse text-red-500">❤</span>
+                </p>
+              )}
             </div>
             
             {showCircle && (
