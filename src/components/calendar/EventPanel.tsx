@@ -6,6 +6,7 @@ import { Event } from '@/types/eventTypes';
 import { Button } from '@/components/ui/button';
 import { CalendarIcon, MapPin, Heart, Link } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
+import EventCard from '@/components/EventCard';
 
 interface EventPanelProps {
   selectedDate: Date | null;
@@ -30,7 +31,7 @@ const EventPanel: React.FC<EventPanelProps> = ({
   onShowEventForm,
   showFavorites
 }) => {
-  const { eventLikes } = useEventContext();
+  const { eventLikes, newEventIds } = useEventContext();
   
   // If we're on list view with a filter applied, let's make sure we show the right title
   const panelTitle = selectedDate 
@@ -58,14 +59,14 @@ const EventPanel: React.FC<EventPanelProps> = ({
             <div className="overflow-y-auto pr-2 scrollbar-thin">
               {filteredEvents.length > 0 ? (
                 filteredEvents.map(event => (
-                  <div 
+                  <EventCard 
                     key={event.id} 
-                    className="mb-2 p-4 rounded-lg bg-black/20 hover:bg-black/40 transition-colors cursor-pointer"
+                    event={event}
+                    compact={true}
                     onClick={() => onEventSelect(event)}
-                  >
-                    <h4 className="text-lg font-medium text-white">{event.title}</h4>
-                    <p className="text-sm text-gray-300">{event.location}</p>
-                  </div>
+                    onLike={onLike}
+                    className={newEventIds.has(event.id) ? 'border-l-2 border-green-500' : ''}
+                  />
                 ))
               ) : (
                 <div className="flex items-center justify-center h-32 text-gray-400">
