@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -176,8 +175,8 @@ const Index = () => {
               </Popover>
             </div>
 
-            <div className="transition-opacity duration-500 ease-in-out mt-0 -translate-y-10 flex flex-col items-center">
-              <h1 className="text-5xl md:text-6xl font-bold mb-3 text-center font-serif mt-2">
+            <div className="transition-opacity duration-500 ease-in-out mt-24 flex flex-col items-center">
+              <h1 className="text-5xl md:text-6xl font-bold mb-3 text-center font-serif">
                 {titleAnimating ? (
                   <>
                     <AnimatedText text="Entdecke den " delay={0.5} animationType="word" />
@@ -195,7 +194,7 @@ const Index = () => {
               
               {showSubtitle && (
                 <p 
-                  className="text-xl md:text-2xl text-center max-w-2xl mb-6 transition-all duration-700" 
+                  className="text-xl md:text-2xl text-center max-w-2xl mb-8 transition-all duration-700" 
                   style={{ 
                     opacity: animationComplete ? 1 : 0, 
                     transform: animationComplete ? 'translateY(0)' : 'translateY(20px)'
@@ -205,9 +204,8 @@ const Index = () => {
                 </p>
               )}
               
-              {/* WhatsApp Community Button - Repositioned below subtitle and made more prominent */}
               <Button 
-                className="bg-[#25D366] hover:bg-[#128C7E] text-white rounded-full px-6 py-6 flex items-center justify-center shadow-xl hover:shadow-2xl transition-all gap-2 animate-bounce-slow mb-8 border-2 border-white/30"
+                className="bg-[#25D366] hover:bg-[#128C7E] text-white rounded-full px-6 py-6 flex items-center justify-center shadow-xl hover:shadow-2xl transition-all gap-2 animate-bounce-slow mb-10 border-2 border-white/30"
                 onClick={() => setTestModalOpen(true)}
                 size="lg"
               >
