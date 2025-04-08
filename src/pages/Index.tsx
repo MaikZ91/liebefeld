@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -216,7 +217,7 @@ const Index = () => {
               </div>
             )}
             
-            <div className={`flex flex-col items-center justify-center gap-3 w-full max-w-xl relative z-30 mt-32 transition-all duration-700 ${heartAnimationComplete ? "opacity-100 transform translate-y-0" : "opacity-0 transform translate-y-10"}`}>
+            <div className={`flex flex-col items-center justify-center gap-3 w-full max-w-xl relative z-30 mt-24 transition-all duration-700 ${heartAnimationComplete ? "opacity-100 transform translate-y-0" : "opacity-0 transform translate-y-10"}`}>
               <div className="flex items-center justify-center gap-3 mt-8">
                 <InstagramFeed />
                 
