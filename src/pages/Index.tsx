@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -16,12 +17,13 @@ const LiveTickerWrapper = () => {
   const tickerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
+    // Increase the delay to 1500ms (1.5 seconds) to give the page more time to render
     const timer = setTimeout(() => {
       if (tickerRef.current) {
         tickerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
         console.log('Scrolling to live ticker');
       }
-    }, 500);
+    }, 1500);
     
     return () => clearTimeout(timer);
   }, []);
