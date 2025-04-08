@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -138,7 +137,7 @@ const Index = () => {
       <CalendarNavbar />
       <main className="flex-grow relative">
         <div className="relative w-full h-[55vh] overflow-hidden bg-black">
-          {/* Background image with zoom effect */}
+          {/* Background image without any pulsing animation */}
           <img 
             src="/lovable-uploads/e3d0a85b-9935-450a-bba8-5693570597a3.png" 
             alt="Freunde genießen ein Event zusammen" 
@@ -149,19 +148,16 @@ const Index = () => {
             }}
           />
           
-          {/* Gradient overlay with subtle animation */}
+          {/* Gradient overlay with subtle animation - keeping but without pulsing */}
           <div 
             className="absolute inset-0"
             style={{
               background: 'linear-gradient(135deg, rgba(128, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.7) 100%)',
-              animation: 'gradient-shift 8s ease-in-out infinite alternate',
-              opacity: 0,
-              animationDelay: '0.5s',
-              animationFillMode: 'forwards'
+              opacity: 0.7
             }}
           ></div>
           
-          {/* Moving light effect overlay */}
+          {/* Light effect overlay - removed pulsing */}
           <div 
             className="absolute inset-0 opacity-20"
             style={{
@@ -184,14 +180,6 @@ const Index = () => {
                   <span className="relative">
                     Entdecke den <span className="text-red-500 relative inline-block">
                       Puls
-                      <span 
-                        className="absolute -inset-1 rounded-lg" 
-                        style={{
-                          background: 'radial-gradient(circle, rgba(255,0,0,0.3) 0%, transparent 70%)',
-                          filter: 'blur(5px)',
-                          animation: 'pulse 2s ease-in-out infinite'
-                        }}
-                      ></span>
                     </span> der Stadt
                   </span>
                 )}
