@@ -2,7 +2,7 @@
 import React from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Mail, Lock } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Impressum = () => {
@@ -71,6 +71,29 @@ const Impressum = () => {
                     <Link to="/privacy" className="flex items-center gap-2">
                       <Lock className="h-4 w-4" />
                       Datenschutzerklärung öffnen
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </section>
+            
+            <section>
+              <h2 className="text-xl font-semibold mb-2">CSAE Richtlinien</h2>
+              <div className="rounded-lg border p-4 bg-card space-y-2">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary" />
+                  <Link to="/csae-policies" className="text-primary hover:underline font-medium">
+                    Zu den CSAE Richtlinien
+                  </Link>
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Informationen zu unseren Community Standards und Event-Ethik finden Sie in unseren CSAE Richtlinien.
+                </p>
+                <div className="mt-3">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/csae-policies" className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      CSAE Richtlinien öffnen
                     </Link>
                   </Button>
                 </div>
