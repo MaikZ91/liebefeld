@@ -44,6 +44,14 @@ const Index = () => {
             <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center font-serif mt-4 animate-fade-in">
               Entdecke den <span className="text-red-500">Puls</span> der Stadt
             </h1>
+            
+            {/* Live Ticker moved here, right after the title */}
+            <div className="w-full bg-black/80 backdrop-blur-sm rounded-lg mb-4 max-w-3xl">
+              <EventProvider>
+                <LiveTickerWrapper />
+              </EventProvider>
+            </div>
+            
             <p className="text-xl md:text-2xl text-center max-w-2xl mb-6 animate-fade-in" 
                style={{ animationDelay: "0.1s" }}>
               Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
@@ -118,12 +126,8 @@ const Index = () => {
           </div>
         </div>
         
-        {/* LiveTicker Section - reduced spacing */}
+        {/* Remove the LiveTicker section that was here before */}
         <EventProvider>
-          <div className="w-full bg-black">
-            <LiveTickerWrapper />
-          </div>
-
           {/* Calendar Section */}
           <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-6 rounded-t-lg shadow-inner">
             <EventCalendar defaultView="list" />
