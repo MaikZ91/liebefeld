@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
@@ -18,36 +17,31 @@ type Question = {
 const questions: Question[] = [
   {
     id: 1,
-    text: "Was würdest du am liebsten in der Liebefeld Community unternehmen?",
+    text: "Bist du neu in Liebefeld?",
     options: [
-      { id: "a", text: "Ich bin lieber online und lese mit" },
-      { id: "b", text: "An Konzerten, Festivals und kulturellen Veranstaltungen teilnehmen" },
-      { id: "c", text: "Sportliche Aktivitäten und Outdoor-Abenteuer erleben" },
-      { id: "d", text: "Kreative Workshops und künstlerische Projekte mitgestalten" }
+      { id: "a", text: "Ja, ich bin neu hier und möchte Leute kennenlernen" },
+      { id: "b", text: "Nein, ich lebe schon länger hier" }
     ],
-    correctAnswer: "b"
+    correctAnswer: "a"
   },
   {
     id: 2,
-    text: "Wie würdest du zur Gemeinschaft in Liebefeld beitragen?",
+    text: "Wofür interessierst du dich am meisten?",
     options: [
-      { id: "a", text: "Ich bin neu in der Stadt und möchte Leute kennenlernen" },
-      { id: "b", text: "Durch Teilen von Konzert- und Event-Tipps in der Region" },
-      { id: "c", text: "Indem ich sportliche Aktivitäten oder kreative Workshops organisiere" },
-      { id: "d", text: "Durch das Einbringen meiner künstlerischen oder musikalischen Talente" }
+      { id: "a", text: "Ausgehen, Events und Kulturveranstaltungen" },
+      { id: "b", text: "Sport und Outdoor-Aktivitäten" },
+      { id: "c", text: "Kreative Projekte und künstlerische Aktivitäten" }
     ],
-    correctAnswer: "c"
+    correctAnswer: "a"
   },
   {
     id: 3,
-    text: "Welche Art von Gemeinschaftsaktivitäten interessieren dich am meisten?",
+    text: "Wie möchtest du dich in der Community einbringen?",
     options: [
-      { id: "a", text: "Über politische Themen diskutieren" },
-      { id: "b", text: "Sportliche Aktivitäten wie Wandern, Radfahren oder Teamsport" },
-      { id: "c", text: "Kreative Projekte, Kunst und Musik" },
-      { id: "d", text: "Gemeinsame Treffen um neue Leute kennenzulernen" }
+      { id: "a", text: "Ich würde gerne aktiv teilnehmen und Ideen einbringen" },
+      { id: "b", text: "Ich schaue erstmal und lese lieber mit" }
     ],
-    correctAnswer: "b"
+    correctAnswer: "a"
   }
 ];
 
@@ -60,13 +54,9 @@ interface CommunityTestProps {
 const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
-  const [freeText, setFreeText] = useState("");
   const { toast } = useToast();
   
-  const totalSteps = questions.length + 1; // Questions + free text
-  const minCharacters = 30; // Reduced from 50 to 30 characters required for free text
-  const characterCount = freeText.length;
-  const needsMoreCharacters = characterCount < minCharacters;
+  const totalSteps = questions.length;
   
   const handleAnswer = (questionId: number, answerId: string) => {
     setAnswers(prev => ({ ...prev, [questionId]: answerId }));
@@ -75,16 +65,14 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
   const handleNext = () => {
     const currentQuestion = questions[currentStep];
     
-    if (currentStep < questions.length) {
-      if (!answers[currentQuestion.id]) {
-        toast({
-          title: "Bitte wähle eine Antwort",
-          description: "Du musst eine Option auswählen, um fortzufahren.",
-          variant: "destructive",
-          duration: 3000,
-        });
-        return;
-      }
+    if (!answers[currentQuestion.id]) {
+      toast({
+        title: "Bitte wähle eine Antwort",
+        description: "Du musst eine Option auswählen, um fortzufahren.",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
     }
     
     if (currentStep < totalSteps - 1) {
@@ -101,70 +89,38 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
   };
   
   const checkAnswers = () => {
-    if (freeText.trim().length < minCharacters) {
-      toast({
-        title: "Deine Antwort ist zu kurz",
-        description: "Bitte teile uns etwas mehr über dich mit. Was sind deine Hobbys und Interessen?",
-        variant: "destructive",
-        duration: 3000,
-      });
-      return;
-    }
+    // Check if the user is interested in active participation
+    const isActive = answers[3] === "a";
     
-    // Check for disqualifying answers - political discussions or passive reading
-    const hasPoliticalInterest = answers[3] === "a";
-    const isPassiveReader = answers[1] === "a";
+    // Accept users who are new to the area or interested in events/activities
+    const isNewToArea = answers[1] === "a";
+    const hasInterests = answers[2] && ["a", "b", "c"].includes(answers[2]);
     
-    if (hasPoliticalInterest || isPassiveReader) {
-      toast({
-        title: "Leider nicht passend für unsere Community",
-        description: "Unsere Community fokussiert sich auf aktive Teilnahme bei Kultur-, Sport- und Kreativaktivitäten. Politische Diskussionen und passive Teilnahme passen nicht zu unserem Konzept.",
-        variant: "destructive",
-        duration: 5000,
-      });
-      
-      // Close the dialog after showing the toast
-      setTimeout(() => {
-        onOpenChange(false);
-      }, 5000);
-      return;
-    }
-    
-    // Count how many answers match any of the "active" answers (not just the "correct" ones)
-    const activeAnswers = questions.reduce((count, question) => {
-      const answer = answers[question.id];
-      // Consider answers b, c, and d as "active" participation (not just "a")
-      return (answer && answer !== "a") ? count + 1 : count;
-    }, 0);
-    
-    // Reduced threshold - just 1 active answer is enough
-    const passThreshold = 1;
-    
-    if (activeAnswers >= passThreshold) {
+    if (isActive && (isNewToArea || hasInterests)) {
       toast({
         title: "Du passt perfekt zu uns!",
         description: "Wir freuen uns, dich in unserer Community begrüßen zu dürfen. Du wirst gleich zur WhatsApp Gruppe weitergeleitet.",
         variant: "success",
-        duration: 5000,
+        duration: 3000,
       });
       
       // Redirect to WhatsApp after a short delay
       setTimeout(() => {
         window.open(whatsappUrl, "_blank");
         onOpenChange(false);
-      }, 2500);
+      }, 2000);
     } else {
       toast({
         title: "Wir suchen aktive Mitglieder",
-        description: "Es scheint, als ob du vielleicht nicht nach einer aktiven Teilnahme in unserer Community suchst. Wir möchten vor allem Menschen verbinden, die sich für gemeinsame Aktivitäten begeistern können.",
+        description: "Es scheint, als ob du vielleicht nicht nach einer aktiven Teilnahme in unserer Community suchst. Wir möchten vor allem Menschen verbinden, die sich aktiv beteiligen möchten.",
         variant: "destructive",
-        duration: 5000,
+        duration: 4000,
       });
       
       // Close the dialog after showing the toast
       setTimeout(() => {
         onOpenChange(false);
-      }, 5000);
+      }, 4000);
     }
   };
   
@@ -187,48 +143,13 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
     );
   };
   
-  const renderFreeTextStep = () => {
-    return (
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Erzähl uns etwas über dich!</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Was sind deine Hobbys und Interessen? Bist du neu in der Stadt? Was erhoffst du dir von einer Community?
-        </p>
-        <div className="space-y-2">
-          <Textarea 
-            placeholder="Ich bin... / Meine Interessen sind... / In meiner Freizeit..." 
-            value={freeText}
-            onChange={(e) => setFreeText(e.target.value)}
-            className={`min-h-[150px] ${needsMoreCharacters ? 'border-orange-300 focus-visible:ring-orange-300' : 'border-green-500 focus-visible:ring-green-500'}`}
-          />
-          <div className="flex justify-between text-sm">
-            <span className={`${needsMoreCharacters ? 'text-orange-500' : 'text-green-600'}`}>
-              {characterCount} / {minCharacters} Zeichen
-            </span>
-            {needsMoreCharacters && (
-              <span className="text-orange-500">
-                Noch {minCharacters - characterCount} Zeichen benötigt
-              </span>
-            )}
-            {!needsMoreCharacters && (
-              <span className="text-green-600">
-                ✓ Ausreichend Zeichen
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Werde Teil unserer Community</DialogTitle>
           <DialogDescription>
-            Hey! Schön, dass du Interesse an unserer Liebefeld-Community hast! Wir sind eine Gruppe von Menschen, die sich für gemeinsame Aktivitäten begeistern und neue Leute kennenlernen möchten. 
-            Damit wir eine aktive und vielfältige Gruppe bleiben, möchten wir dich etwas besser kennenlernen.
+            Hey! Schön, dass du Interesse an unserer Liebefeld-Community hast! Beantworte bitte kurz diese Fragen, damit wir dich besser kennenlernen können.
           </DialogDescription>
         </DialogHeader>
         
@@ -245,10 +166,7 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
             ></div>
           </div>
           
-          {currentStep < questions.length 
-            ? renderQuestion(questions[currentStep]) 
-            : renderFreeTextStep()
-          }
+          {renderQuestion(questions[currentStep])}
         </div>
         
         <DialogFooter className="flex justify-between sm:justify-between">
