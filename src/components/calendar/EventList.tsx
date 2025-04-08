@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -27,11 +26,18 @@ const EventList: React.FC<EventListProps> = ({
   const todayRef = useRef<HTMLDivElement>(null);
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
-  const { newEventIds } = useEventContext();
+  const { newEventIds, filter } = useEventContext();
+  
+  const filteredEvents = React.useMemo(() => {
+    if (!filter) return events;
+    return events.filter(event => event.category === filter);
+  }, [events, filter]);
+  
+  const displayEvents = filteredEvents;
   
   useEffect(() => {
-    if (events.length > 0) {
-      const todayEvents = events.filter(event => {
+    if (displayEvents.length > 0) {
+      const todayEvents = displayEvents.filter(event => {
         if (!event.date) return false;
         try {
           const eventDate = parseISO(event.date);
@@ -60,10 +66,10 @@ const EventList: React.FC<EventListProps> = ({
         setTopTodayEvent(null);
       }
     }
-  }, [events]);
+  }, [displayEvents]);
   
   const eventsByDate = React.useMemo(() => {
-    const grouped = groupEventsByDate(events);
+    const grouped = groupEventsByDate(displayEvents);
     
     Object.keys(grouped).forEach(dateStr => {
       grouped[dateStr].sort((a, b) => {
@@ -79,7 +85,7 @@ const EventList: React.FC<EventListProps> = ({
     });
     
     return grouped;
-  }, [events]);
+  }, [displayEvents]);
   
   useEffect(() => {
     if (todayRef.current && listRef.current && !hasScrolledToToday && Object.keys(eventsByDate).length > 0) {
@@ -124,7 +130,7 @@ const EventList: React.FC<EventListProps> = ({
   
   useEffect(() => {
     setHasScrolledToToday(false);
-  }, [showFavorites, showNewEvents]);
+  }, [showFavorites, showNewEvents, filter]);
   
   return (
     <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
@@ -134,7 +140,9 @@ const EventList: React.FC<EventListProps> = ({
             ? "Meine Favoriten" 
             : showNewEvents 
               ? "Neue Events" 
-              : "Alle Events"}
+              : filter 
+                ? `${filter} Events` 
+                : "Alle Events"}
         </h3>
         
         {newEventIds.size > 0 && !showFavorites && !showNewEvents && (
@@ -210,7 +218,9 @@ const EventList: React.FC<EventListProps> = ({
               ? "Du hast noch keine Favoriten" 
               : showNewEvents
                 ? "Keine neuen Events gefunden"
-                : "Keine Events gefunden"}
+                : filter
+                  ? `Keine ${filter} Events gefunden`
+                  : "Keine Events gefunden"}
           </div>
         )}
       </div>

@@ -1,13 +1,10 @@
-
-import React, { useState, useRef, useEffect } from 'react';
-import { format, isSameDay } from 'date-fns';
+import React from 'react';
+import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Event, RsvpOption, normalizeRsvpCounts } from '@/types/eventTypes';
-import EventDetails from '@/components/EventDetails';
+import { Event } from '@/types/eventTypes';
 import { Button } from '@/components/ui/button';
-import { Calendar, ThumbsUp, ThumbsDown, HelpCircle } from 'lucide-react';
+import { CalendarIcon, MapPin, Heart, Link } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
-import { Badge } from '@/components/ui/badge';
 
 interface EventPanelProps {
   selectedDate: Date | null;
@@ -23,7 +20,7 @@ interface EventPanelProps {
 
 const EventPanel: React.FC<EventPanelProps> = ({
   selectedDate,
-  selectedEvent,
+  selectedEvent, 
   filteredEvents,
   filter,
   onEventSelect,
@@ -32,110 +29,101 @@ const EventPanel: React.FC<EventPanelProps> = ({
   onShowEventForm,
   showFavorites
 }) => {
-  const panelRef = useRef<HTMLDivElement>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const { eventLikes } = useEventContext();
   
-  // Destructure context to get handleRsvpEvent
-  const { handleRsvpEvent } = useEventContext();
-  
-  // Function to scroll the selected event into view
-  useEffect(() => {
-    if (selectedEvent && panelRef.current) {
-      const selectedEventElement = document.getElementById(`event-${selectedEvent.id}`);
-      if (selectedEventElement) {
-        selectedEventElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-        });
-      }
-    }
-  }, [selectedEvent, filteredEvents]);
-  
-  // Handler for toggling the event form
-  const handleAddEventClick = () => {
-    onShowEventForm();
-  };
-  
-  // RSVP handler
-  const handleRsvp = (option: RsvpOption) => {
-    if (selectedEvent) {
-      handleRsvpEvent(selectedEvent.id, option);
-    }
-  };
+  // If we're on list view with a filter applied, let's make sure we show the right title
+  const panelTitle = selectedDate 
+    ? `Events am ${format(selectedDate, 'dd. MMMM', { locale: de })}`
+    : filter 
+      ? `${filter} Events` 
+      : showFavorites 
+        ? "Meine Favoriten" 
+        : "Events";
   
   return (
-    <div className="h-full dark-glass-card rounded-2xl p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-medium text-white">
-          {selectedDate
-            ? format(selectedDate, 'EEEE, d. MMMM', { locale: de })
-            : "Event Details"}
-        </h3>
-        
-        {!showFavorites && (
-          <Button 
-            variant="secondary" 
-            size="sm"
-            className="rounded-full"
-            onClick={handleAddEventClick}
-          >
-            <Calendar className="w-4 h-4 mr-2" />
-            Event erstellen
-          </Button>
-        )}
-      </div>
-      
-      {selectedEvent && (
-        <EventDetails 
-          event={selectedEvent} 
-          onClose={onEventClose} 
-          onLike={() => onLike(selectedEvent.id)} 
-          onRsvp={handleRsvp}
-        />
-      )}
-      
-      {!selectedEvent && selectedDate && (
-        <div ref={panelRef} className="overflow-y-auto max-h-[400px] pr-2 scrollbar-thin">
-          {filteredEvents.length > 0 ? (
-            filteredEvents.map(event => {
-              const rsvpCounts = normalizeRsvpCounts(event);
-              
-              return (
-                <div 
-                  key={event.id}
-                  id={`event-${event.id}`}
-                  className="mb-3 cursor-pointer hover:opacity-75 transition-opacity bg-gray-800/30 p-3 rounded-lg border border-gray-700/30"
-                  onClick={() => onEventSelect(event)}
-                >
-                  <div className="text-white font-medium">{event.title}</div>
-                  <div className="text-gray-300 text-sm">{event.time} - {event.location}</div>
-                  
-                  {/* RSVP counts */}
-                  <div className="flex gap-2 mt-2">
-                    <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                      <ThumbsUp className="h-3 w-3 text-green-500" />
-                      {rsvpCounts.yes}
-                    </Badge>
-                    <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                      <ThumbsDown className="h-3 w-3 text-red-500" />
-                      {rsvpCounts.no}
-                    </Badge>
-                    <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                      <HelpCircle className="h-3 w-3 text-yellow-500" />
-                      {rsvpCounts.maybe}
-                    </Badge>
+    <div className="dark-glass-card rounded-2xl p-6 h-full animate-fade-in">
+      {/* When no event is selected, show the event list for the selected date */}
+      {!selectedEvent && (
+        <div className="h-full flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-medium text-white">{panelTitle}</h3>
+            {selectedDate && (
+              <span className="text-sm text-gray-300">
+                {filteredEvents.length} {filteredEvents.length === 1 ? 'Event' : 'Events'}
+              </span>
+            )}
+          </div>
+          
+          {selectedDate ? (
+            <div className="overflow-y-auto pr-2 scrollbar-thin">
+              {filteredEvents.length > 0 ? (
+                filteredEvents.map(event => (
+                  <div 
+                    key={event.id} 
+                    className="mb-2 p-4 rounded-lg bg-black/20 hover:bg-black/40 transition-colors cursor-pointer"
+                    onClick={() => onEventSelect(event)}
+                  >
+                    <h4 className="text-lg font-medium text-white">{event.title}</h4>
+                    <p className="text-sm text-gray-300">{event.location}</p>
                   </div>
+                ))
+              ) : (
+                <div className="flex items-center justify-center h-32 text-gray-400">
+                  Keine Events an diesem Tag
                 </div>
-              );
-            })
+              )}
+            </div>
           ) : (
-            <div className="text-gray-400 italic">Keine Events an diesem Tag.</div>
+            <div className="flex items-center justify-center h-32 text-gray-400">
+              Bitte wähle ein Datum aus
+            </div>
           )}
         </div>
       )}
       
-      {!selectedDate && !selectedEvent && (
-        <div className="text-gray-400 italic">Bitte wähle ein Datum aus, um die Events anzuzeigen.</div>
+      {/* Event detail view */}
+      {selectedEvent && (
+        <div className="flex flex-col h-full">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-medium text-white">{selectedEvent.title}</h3>
+            <Button variant="ghost" size="icon" onClick={onEventClose}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x w-4 h-4"><path d="M18 6 6 18"/><path d="M6 6 18 18"/></svg>
+            </Button>
+          </div>
+          
+          <div className="overflow-y-auto pr-2 scrollbar-thin flex-grow">
+            <div className="text-gray-300 mb-2 flex items-center">
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {selectedEvent.date && format(new Date(selectedEvent.date), 'EEEE, dd. MMMM yyyy', { locale: de })}
+            </div>
+            
+            <div className="text-gray-300 mb-2 flex items-center">
+              <MapPin className="mr-2 h-4 w-4" />
+              {selectedEvent.location}
+            </div>
+            
+            <p className="text-gray-300 mb-4">{selectedEvent.description}</p>
+            
+            {selectedEvent.link && (
+              <a href={selectedEvent.link} target="_blank" rel="noopener noreferrer" className="text-red-500 hover:text-red-400 flex items-center mb-4">
+                <Link className="mr-2 h-4 w-4" />
+                Mehr Informationen
+              </a>
+            )}
+          </div>
+          
+          <div className="mt-auto flex justify-between items-center">
+            <Button 
+              variant="outline" 
+              className="bg-black/50 text-white hover:bg-black/70"
+              onClick={() => onLike(selectedEvent.id)}
+            >
+              <Heart className="mr-2 h-4 w-4" fill={eventLikes[selectedEvent.id] ? 'white' : 'none'} />
+              {eventLikes[selectedEvent.id] || 0}
+            </Button>
+            <Button onClick={onShowEventForm}>Bearbeiten</Button>
+          </div>
+        </div>
       )}
     </div>
   );

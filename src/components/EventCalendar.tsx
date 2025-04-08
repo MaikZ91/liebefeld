@@ -146,6 +146,13 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     }
   };
 
+  // When a filter is applied, reset date selection
+  useEffect(() => {
+    if (filter !== null) {
+      setSelectedDate(null);
+    }
+  }, [filter]);
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl animate-fade-in">
       <div className="flex flex-col space-y-6">
@@ -241,7 +248,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                   ) : (
                     <CalendarDays 
                       daysInMonth={daysInMonth}
-                      events={events}
+                      events={filter ? events.filter(event => event.category === filter) : events}
                       selectedDate={selectedDate}
                       onDateClick={handleDateClick}
                     />
