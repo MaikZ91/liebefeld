@@ -2,7 +2,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Heart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Heart, BadgePlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -17,6 +17,9 @@ interface CalendarHeaderProps {
   toggleFilter: (category: string) => void;
   categories: string[];
   categoryIcons: Record<string, React.ReactNode>;
+  showNewEvents: boolean;
+  toggleNewEvents: () => void;
+  newEventsCount: number;
 }
 
 const CalendarHeader: React.FC<CalendarHeaderProps> = ({
@@ -29,7 +32,10 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   filter,
   toggleFilter,
   categories,
-  categoryIcons
+  categoryIcons,
+  showNewEvents,
+  toggleNewEvents,
+  newEventsCount
 }) => {
   return (
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -43,14 +49,19 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           <ChevronLeft className="h-5 w-5" />
         </Button>
         <h2 className="text-xl md:text-2xl font-medium w-48 text-center text-black">
-          {showFavorites ? "Meine Favoriten" : format(currentDate, 'MMMM yyyy', { locale: de })}
+          {showFavorites 
+            ? "Meine Favoriten" 
+            : showNewEvents 
+              ? "Neue Events" 
+              : format(currentDate, 'MMMM yyyy', { locale: de })
+          }
         </h2>
         <Button 
           variant="outline" 
           size="icon" 
           onClick={nextMonth} 
           className="rounded-full hover:scale-105 transition-transform bg-red-500 text-black border-red-600"
-          disabled={showFavorites}
+          disabled={showFavorites || showNewEvents}
         >
           <ChevronRight className="h-5 w-5" />
         </Button>
@@ -73,6 +84,25 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
             {!showFavorites && favoriteEvents > 0 && (
               <span className="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
                 {favoriteEvents}
+              </span>
+            )}
+          </Button>
+          
+          {/* New events button */}
+          <Button 
+            className={cn(
+              "flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all",
+              showNewEvents ? "bg-green-600 text-white hover:bg-green-700" : "bg-black text-green-500 border-green-500 hover:bg-black/90 hover:text-green-500"
+            )}
+            onClick={toggleNewEvents}
+          >
+            <BadgePlus className={cn("h-4 w-4", showNewEvents ? "" : "")} />
+            <span className="hidden sm:inline">
+              {showNewEvents ? "Alle" : "Neu"}
+            </span>
+            {!showNewEvents && newEventsCount > 0 && (
+              <span className="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-green-600 rounded-full">
+                {newEventsCount}
               </span>
             )}
           </Button>

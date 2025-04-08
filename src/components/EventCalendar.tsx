@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -45,13 +46,15 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     showFavorites,
     setShowFavorites,
     eventLikes,
-    refreshEvents
+    refreshEvents,
+    newEventIds
   } = useEventContext();
 
   // Local state
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"calendar" | "list">(defaultView);
   const [showEventForm, setShowEventForm] = useState(false);
+  const [showNewEvents, setShowNewEvents] = useState(false);
   
   // Calendar navigation functions
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
@@ -62,8 +65,14 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   const monthEnd = endOfMonth(currentDate);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
   
-  // Get events for the current month or favorites
-  const monthEvents = getMonthOrFavoriteEvents(events, currentDate, showFavorites, eventLikes);
+  // Get events for the current month, favorites, or new events
+  const eventsToDisplay = React.useMemo(() => {
+    if (showNewEvents) {
+      return events.filter(event => newEventIds.has(event.id));
+    } else {
+      return getMonthOrFavoriteEvents(events, currentDate, showFavorites, eventLikes);
+    }
+  }, [events, currentDate, showFavorites, eventLikes, showNewEvents, newEventIds]);
   
   // Filter events for the selected date and category filter
   const filteredEvents = selectedDate 
@@ -117,10 +126,22 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
 
   // Toggle favorites view
   const toggleFavorites = () => {
+    if (showNewEvents) setShowNewEvents(false);
     setShowFavorites(prev => !prev);
     
     // Reset date selection when toggling favorites
     if (!showFavorites) {
+      setSelectedDate(null);
+    }
+  };
+  
+  // Toggle new events view
+  const toggleNewEvents = () => {
+    if (showFavorites) setShowFavorites(false);
+    setShowNewEvents(prev => !prev);
+    
+    // Reset date selection when toggling new events view
+    if (!showNewEvents) {
       setSelectedDate(null);
     }
   };
@@ -140,6 +161,9 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
           toggleFilter={toggleFilter}
           categories={Array.from(new Set(events.map(event => event.category)))}
           categoryIcons={categoryIcons}
+          showNewEvents={showNewEvents}
+          toggleNewEvents={toggleNewEvents}
+          newEventsCount={newEventIds.size}
         />
         
         {/* View toggle with Add Event button moved beside it */}
@@ -185,8 +209,9 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
             {/* Main calendar and list views */}
             <TabsContent value="list" className="w-full">
               <EventList 
-                events={monthEvents}
+                events={eventsToDisplay}
                 showFavorites={showFavorites}
+                showNewEvents={showNewEvents}
                 onSelectEvent={(event, date) => {
                   setSelectedDate(date);
                   setSelectedEvent(event);
@@ -203,6 +228,16 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                       favoriteEvents={favoriteEvents}
                       onSwitchToList={() => setView("list")}
                     />
+                  ) : showNewEvents ? (
+                    <div className="text-center p-4">
+                      <h3 className="text-lg font-medium mb-2">Neue Events</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Es gibt {newEventIds.size} neue Events seit deinem letzten Besuch.
+                      </p>
+                      <Button onClick={() => setView("list")}>
+                        Als Liste anzeigen
+                      </Button>
+                    </div>
                   ) : (
                     <CalendarDays 
                       daysInMonth={daysInMonth}

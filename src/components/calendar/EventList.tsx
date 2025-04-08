@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -10,6 +11,7 @@ import { useEventContext } from '@/contexts/EventContext';
 interface EventListProps {
   events: Event[];
   showFavorites: boolean;
+  showNewEvents?: boolean;
   onSelectEvent: (event: Event, date: Date) => void;
   onLike: (eventId: string) => void;
 }
@@ -17,6 +19,7 @@ interface EventListProps {
 const EventList: React.FC<EventListProps> = ({
   events,
   showFavorites,
+  showNewEvents = false,
   onSelectEvent,
   onLike
 }) => {
@@ -121,16 +124,20 @@ const EventList: React.FC<EventListProps> = ({
   
   useEffect(() => {
     setHasScrolledToToday(false);
-  }, [showFavorites]);
+  }, [showFavorites, showNewEvents]);
   
   return (
     <div className="dark-glass-card rounded-2xl p-6 overflow-hidden">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xl font-medium text-white">
-          {showFavorites ? "Meine Favoriten" : "Alle Events"}
+          {showFavorites 
+            ? "Meine Favoriten" 
+            : showNewEvents 
+              ? "Neue Events" 
+              : "Alle Events"}
         </h3>
         
-        {newEventIds.size > 0 && !showFavorites && (
+        {newEventIds.size > 0 && !showFavorites && !showNewEvents && (
           <div className="flex items-center gap-1 bg-green-600/20 px-2 py-1 rounded-full">
             <BadgePlus className="w-4 h-4 text-green-500" />
             <span className="text-green-400 text-xs font-medium">{newEventIds.size} neue Events</span>
@@ -201,7 +208,9 @@ const EventList: React.FC<EventListProps> = ({
           <div className="flex items-center justify-center h-40 text-gray-400">
             {showFavorites 
               ? "Du hast noch keine Favoriten" 
-              : "Keine Events gefunden"}
+              : showNewEvents
+                ? "Keine neuen Events gefunden"
+                : "Keine Events gefunden"}
           </div>
         )}
       </div>
