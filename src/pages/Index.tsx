@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
@@ -14,15 +13,24 @@ import { useToast } from '@/hooks/use-toast';
 
 const LiveTickerWrapper = () => {
   const { events } = useEventContext();
+  const tickerRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (tickerRef.current) {
+        tickerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        console.log('Scrolling to live ticker');
+      }
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
   console.log(`LiveTickerWrapper: Passing ${events.length} events to LiveTicker`);
-  return <LiveTicker events={events} />;
+  return <LiveTicker events={events} tickerRef={tickerRef} />;
 };
 
 const Index = () => {
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
-  
   const [testModalOpen, setTestModalOpen] = useState(false);
   const WHATSAPP_URL = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
   
@@ -117,7 +125,6 @@ const Index = () => {
               </div>
             </div>
             
-            {/* Live Ticker moved here with full-width alignment */}
             <div className="w-full bg-black/80 backdrop-blur-sm mb-0 absolute bottom-0 left-0">
               <EventProvider>
                 <LiveTickerWrapper />
@@ -127,7 +134,6 @@ const Index = () => {
         </div>
         
         <EventProvider>
-          {/* Calendar Section - reduced top margin */}
           <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-3 rounded-t-lg shadow-inner">
             <EventCalendar defaultView="list" />
           </div>
