@@ -23,32 +23,32 @@ const CalendarDays: React.FC<CalendarDaysProps> = ({
   const todayRef = useRef<HTMLButtonElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Scroll to today's element when component mounts
+  // Scroll to today's element when component mounts, but wait for animations to complete
   useEffect(() => {
     if (todayRef.current && containerRef.current) {
-      // Calculate positioning to center the current day in the grid view
-      const container = containerRef.current;
-      const todayElement = todayRef.current;
-      
-      // Scroll immediately for faster response
-      const containerRect = container.getBoundingClientRect();
-      const todayRect = todayElement.getBoundingClientRect();
-      
-      // Calculate the position to center today's date
-      const scrollLeft = todayElement.offsetLeft - containerRect.width / 2 + todayRect.width / 2;
-      
-      // Immediate scroll first for better user experience
-      container.scrollLeft = Math.max(0, scrollLeft);
-      
-      // Then smooth scroll for polish
-      setTimeout(() => {
+      // Wait longer to ensure all animations are completed before scrolling
+      const scrollTimer = setTimeout(() => {
+        // Calculate positioning to center the current day in the grid view
+        const container = containerRef.current;
+        const todayElement = todayRef.current;
+        
+        if (!container || !todayElement) return;
+        
+        // Calculate the position to center today's date
+        const containerRect = container.getBoundingClientRect();
+        const todayRect = todayElement.getBoundingClientRect();
+        const scrollLeft = todayElement.offsetLeft - containerRect.width / 2 + todayRect.width / 2;
+        
+        // Use smooth scrolling for better user experience
         container.scrollTo({
           left: Math.max(0, scrollLeft),
           behavior: 'smooth'
         });
         
-        console.log('Scrolled calendar to today');
-      }, 100);
+        console.log('Scrolled calendar to today after animations completed');
+      }, 5500); // Wait 5.5 seconds to ensure all animations are done
+      
+      return () => clearTimeout(scrollTimer);
     }
   }, []);
   

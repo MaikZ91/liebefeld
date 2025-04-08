@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -20,9 +19,9 @@ const LiveTickerWrapper = () => {
     const timer = setTimeout(() => {
       if (tickerRef.current) {
         tickerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        console.log('Scrolling to live ticker');
+        console.log('Scrolling to live ticker after animations completed');
       }
-    }, 1500);
+    }, 5000);
     
     return () => clearTimeout(timer);
   }, []);
@@ -71,7 +70,7 @@ const Index = () => {
     
     const heartAnimationTimer = setTimeout(() => {
       setHeartAnimationComplete(true);
-      setShowSubtitle(false); // Hide subtitle after animation completes
+      setShowSubtitle(false);
     }, 5000);
     
     return () => {

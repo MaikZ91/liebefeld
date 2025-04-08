@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -99,9 +98,9 @@ const EventList: React.FC<EventListProps> = ({
   
   useEffect(() => {
     if (todayRef.current && listRef.current && !hasScrolledToToday && Object.keys(eventsByDate).length > 0) {
-      console.log('EventList: Attempting to scroll to today (first load only)');
+      console.log('EventList: Waiting for animations to complete before scrolling to today');
       
-      setTimeout(() => {
+      const scrollTimer = setTimeout(() => {
         if (todayRef.current && listRef.current) {
           const targetScrollTop = todayRef.current.offsetTop - 80;
           const currentScrollTop = listRef.current.scrollTop;
@@ -119,24 +118,18 @@ const EventList: React.FC<EventListProps> = ({
               requestAnimationFrame(animateScroll);
             } else {
               listRef.current!.scrollTop = targetScrollTop;
-              console.log('EventList: Smooth scroll completed');
+              console.log('EventList: Smooth scroll completed after animations');
               setHasScrolledToToday(true);
             }
           };
           
           requestAnimationFrame(animateScroll);
-          console.log('EventList: Starting gentle scroll animation');
         }
-      }, 300);
-    } else {
-      console.log('EventList: Today ref or list ref not found or already scrolled', { 
-        todayRef: !!todayRef.current, 
-        listRef: !!listRef.current,
-        hasScrolledToToday,
-        eventsLength: Object.keys(eventsByDate).length
-      });
+      }, 5500);
+      
+      return () => clearTimeout(scrollTimer);
     }
-  }, [eventsByDate]);
+  }, [eventsByDate, hasScrolledToToday]);
   
   useEffect(() => {
     setHasScrolledToToday(false);
