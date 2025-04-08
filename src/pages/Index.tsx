@@ -178,7 +178,7 @@ const Index = () => {
                 onClick={() => setTestModalOpen(true)}
                 className={`absolute z-20 flex items-center justify-center cursor-pointer transition-all duration-1000`}
                 style={{ 
-                  top: '65%',
+                  top: '80%', // Moved down to not overlap with subtitle
                   left: '50%',
                   width: '140px',
                   height: '140px',
@@ -217,8 +217,8 @@ const Index = () => {
               </div>
             )}
             
-            <div className={`flex flex-col items-center justify-center gap-3 w-full max-w-xl relative z-30 mt-16 transition-all duration-700 ${heartAnimationComplete ? "opacity-100 transform translate-y-0" : "opacity-0 transform translate-y-10"}`}>
-              <div className="flex items-center justify-center gap-3 mt-4">
+            <div className={`flex flex-col items-center justify-center gap-3 w-full max-w-xl relative z-30 mt-8 transition-all duration-700 ${heartAnimationComplete ? "opacity-100 transform translate-y-0" : "opacity-0 transform translate-y-10"}`}>
+              <div className="flex items-center justify-center gap-3 mt-2">
                 <InstagramFeed />
                 
                 <a 
