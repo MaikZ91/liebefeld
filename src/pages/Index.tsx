@@ -225,7 +225,7 @@ const Index = () => {
                 onClick={() => setTestModalOpen(true)}
                 className={`absolute z-20 flex items-center justify-center cursor-pointer transition-all duration-1000`}
                 style={{ 
-                  top: '70%', // Adjusted to be below the subtitle
+                  top: '80%', // Moved down from 70% to 80% to avoid overlapping with subtitle
                   left: '50%',
                   width: '140px',
                   height: '140px',
