@@ -1,10 +1,11 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
 import EventCard from '@/components/EventCard';
 import { groupEventsByDate } from '@/utils/eventUtils';
-import { Star, BadgePlus } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
 
 interface EventListProps {
@@ -147,7 +148,7 @@ const EventList: React.FC<EventListProps> = ({
         
         {newEventIds.size > 0 && !showFavorites && !showNewEvents && (
           <div className="flex items-center gap-1 bg-green-600/20 px-2 py-1 rounded-full">
-            <BadgePlus className="w-4 h-4 text-green-500" />
+            <span className="text-green-400 text-xs font-bold">NEW</span>
             <span className="text-green-400 text-xs font-medium">{newEventIds.size} neue Events</span>
           </div>
         )}
@@ -171,8 +172,7 @@ const EventList: React.FC<EventListProps> = ({
                   {format(date, 'EEEE, d. MMMM', { locale: de })}
                   {hasNewEvents && (
                     <span className="ml-2 text-xs bg-green-600 text-white px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                      <BadgePlus className="w-3 h-3" />
-                      <span>Neu</span>
+                      <span className="font-bold">NEW</span>
                     </span>
                   )}
                 </h4>

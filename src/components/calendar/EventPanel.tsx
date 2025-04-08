@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, MapPin, Heart, Link, Badge } from 'lucide-react';
+import { CalendarIcon, MapPin, Heart, Link } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
 
 interface EventPanelProps {

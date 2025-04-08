@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Heart, Badge, Filter, FilterX } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Heart, Filter, FilterX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -105,7 +105,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
             )}
           </Button>
           
-          {/* New events button with new icon */}
+          {/* New events button with NEW text */}
           <Button 
             className={cn(
               "flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all",
@@ -113,10 +113,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
             )}
             onClick={toggleNewEvents}
           >
-            <Badge className={cn("h-4 w-4", showNewEvents ? "" : "")} />
-            <span className="hidden sm:inline">
-              {showNewEvents ? "Alle" : "Neu"}
-            </span>
+            <span className="font-bold">NEW</span>
             {!showNewEvents && newEventsCount > 0 && (
               <span className="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-green-600 rounded-full">
                 {newEventsCount}
