@@ -3,7 +3,6 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { CalendarDays, Info, Users } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import InstagramFeed from './InstagramFeed';
 import { Button } from './ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { QrCode } from 'lucide-react';
@@ -24,53 +23,6 @@ const CalendarNavbar: React.FC = () => {
           <Link to="/" className="flex items-center">
             <h1 className="font-serif text-2xl font-bold tracking-tight">THE TRIBE.BI</h1>
           </Link>
-          
-          <div className="flex items-center gap-3 mt-2">
-            <InstagramFeed />
-            
-            <a 
-              href="https://drive.google.com/uc?export=download&id=1Fn3mG9AT4dEPKR37nfVt6IdyIbukeWJr" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="block"
-            >
-              <Button 
-                className="bg-[#a4c639] hover:bg-[#8baa30] text-white rounded-full h-10 w-10 p-0 flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
-                size="icon"
-              >
-                <img 
-                  src="/lovable-uploads/4a08308d-0a6d-4114-b820-f511ce7d7a65.png" 
-                  alt="Android App" 
-                  className="h-7 w-7"
-                />
-              </Button>
-            </a>
-            
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button 
-                  className="bg-[#F97316] hover:bg-orange-600 text-white rounded-full h-10 w-10 p-0 flex items-center justify-center shadow-lg hover:shadow-xl transition-all relative"
-                  size="icon"
-                >
-                  <QrCode className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 text-[8px] bg-white text-orange-700 rounded-full px-1 py-0.5 font-bold animate-pulse-soft">QR</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-4">
-                <div className="flex flex-col items-center">
-                  <div className="bg-white p-2 rounded-lg mb-2">
-                    <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://liebefeld.lovable.app/`}
-                      alt="QR Code für Liebefeld App"
-                      width={150}
-                      height={150}
-                    />
-                  </div>
-                  <p className="text-xs text-center">Besuche unsere Webseite</p>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
         </div>
         
         <nav className="hidden md:block mt-4 md:mt-0">
