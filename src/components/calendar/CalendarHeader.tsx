@@ -1,10 +1,18 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Heart, BadgePlus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Heart, BadgePlus, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel
+} from '@/components/ui/dropdown-menu';
 
 interface CalendarHeaderProps {
   currentDate: Date;
@@ -37,6 +45,8 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   toggleNewEvents,
   newEventsCount
 }) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
   return (
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <div className="flex items-center justify-between md:justify-start">
@@ -107,27 +117,50 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
             )}
           </Button>
           
-          {categories.map(category => (
-            <Button
-              key={category}
-              variant={filter === category ? "default" : "outline"}
-              size="sm"
-              onClick={() => toggleFilter(category)}
-              className={cn(
-                "rounded-full whitespace-nowrap",
-                (category === "Konzert" || category === "Party" || category === "Sonstiges") ?
-                  (filter === category 
-                    ? "bg-black text-red-500 border-red-500 hover:bg-black/90 hover:text-red-500" 
-                    : "bg-black text-red-500 border-red-500 hover:bg-black/90 hover:text-red-500")
-                  : (filter === category 
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90" 
-                    : "bg-black/70 text-white border-gray-700 hover:bg-black/60 hover:text-white dark-button")
-              )}
+          {/* Category filter dropdown */}
+          <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                className={cn(
+                  "rounded-full whitespace-nowrap flex items-center gap-2",
+                  filter ? "bg-black text-red-500 border-red-500 hover:bg-black/90 hover:text-red-500" : 
+                  "bg-black/70 text-white border-gray-700 hover:bg-black/60 hover:text-white dark-button"
+                )}
+              >
+                <Filter className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  {filter || "Kategorien"}
+                </span>
+                {filter && (
+                  <div className="ml-1 flex items-center">
+                    {categoryIcons[filter] && categoryIcons[filter]}
+                  </div>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent 
+              className="bg-black/90 border-gray-700 text-white rounded-xl p-2 shadow-xl min-w-48"
+              align="center"
             >
-              {category in categoryIcons ? categoryIcons[category as keyof typeof categoryIcons] : null}
-              {category}
-            </Button>
-          ))}
+              <DropdownMenuLabel className="text-center text-gray-300">Veranstaltungstyp</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-gray-700" />
+              {categories.map(category => (
+                <DropdownMenuCheckboxItem
+                  key={category}
+                  checked={filter === category}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    toggleFilter(category);
+                    setIsDropdownOpen(false);
+                  }}
+                  className="cursor-pointer hover:bg-gray-800 rounded-lg flex items-center gap-2"
+                >
+                  {category in categoryIcons ? categoryIcons[category] : null}
+                  {category}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </div>
