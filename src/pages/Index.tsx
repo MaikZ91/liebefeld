@@ -189,7 +189,7 @@ const Index = () => {
               </Popover>
             </div>
 
-            <div className="transition-opacity duration-500 ease-in-out mt-8">
+            <div className="transition-opacity duration-500 ease-in-out mt-0 -translate-y-10">
               <h1 className="text-5xl md:text-6xl font-bold mb-3 text-center font-serif mt-2">
                 {titleAnimating ? (
                   <>
@@ -225,7 +225,7 @@ const Index = () => {
                 onClick={() => setTestModalOpen(true)}
                 className={`absolute z-20 flex items-center justify-center cursor-pointer transition-all duration-1000`}
                 style={{ 
-                  top: '85%', // Moved even further down to avoid overlapping with subtitle
+                  top: '90%', // Moved even further down to avoid overlapping with subtitle
                   left: '50%',
                   width: '140px',
                   height: '140px',
