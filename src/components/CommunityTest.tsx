@@ -3,44 +3,38 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 
-type Question = {
+type CheckboxQuestion = {
   id: number;
   text: string;
   options: { id: string; text: string }[];
-  correctAnswer: string;
 };
 
-const questions: Question[] = [
+const questions: CheckboxQuestion[] = [
   {
     id: 1,
-    text: "Bist du neu in Liebefeld?",
+    text: "Bist du neu in Bielefeld?",
     options: [
-      { id: "a", text: "Ja, ich bin neu hier und möchte Leute kennenlernen" },
-      { id: "b", text: "Nein, ich lebe schon länger hier" }
-    ],
-    correctAnswer: "a"
+      { id: "a", text: "Ja, ich bin neu hier und möchte Leute kennenlernen" }
+    ]
   },
   {
     id: 2,
-    text: "Wofür interessierst du dich am meisten?",
+    text: "Wofür interessierst du dich?",
     options: [
       { id: "a", text: "Ausgehen, Events und Kulturveranstaltungen" },
       { id: "b", text: "Sport und Outdoor-Aktivitäten" },
       { id: "c", text: "Kreative Projekte und künstlerische Aktivitäten" }
-    ],
-    correctAnswer: "a"
+    ]
   },
   {
     id: 3,
     text: "Wie möchtest du dich in der Community einbringen?",
     options: [
-      { id: "a", text: "Ich würde gerne aktiv teilnehmen und Ideen einbringen" },
-      { id: "b", text: "Ich schaue erstmal und lese lieber mit" }
-    ],
-    correctAnswer: "a"
+      { id: "a", text: "Ich habe Bock mich mit anderen Menschen zu verbinden mit gleichen Interessen" }
+    ]
   }
 ];
 
@@ -51,60 +45,43 @@ interface CommunityTestProps {
 }
 
 const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) => {
-  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   
-  const handleAnswer = (questionId: number, answerId: string) => {
-    setAnswers(prev => ({ ...prev, [questionId]: answerId }));
+  const handleCheckboxChange = (questionId: number, optionId: string, checked: boolean) => {
+    setSelectedOptions(prev => ({
+      ...prev,
+      [`${questionId}-${optionId}`]: checked
+    }));
   };
   
   const handleSubmit = () => {
-    // Check if all questions are answered
-    const allQuestionsAnswered = questions.every(question => answers[question.id]);
+    // Check if at least one checkbox is selected
+    const atLeastOneSelected = Object.values(selectedOptions).some(isSelected => isSelected);
     
-    if (!allQuestionsAnswered) {
+    if (!atLeastOneSelected) {
       toast({
-        title: "Bitte beantworte alle Fragen",
-        description: "Du musst alle Fragen beantworten, um fortzufahren.",
+        title: "Bitte wähle mindestens eine Option",
+        description: "Du musst mindestens eine Option auswählen, um fortzufahren.",
         variant: "destructive",
         duration: 3000,
       });
       return;
     }
     
-    // Check if the user is interested in active participation
-    const isActive = answers[3] === "a";
+    // Test passed if at least one checkbox is selected
+    toast({
+      title: "Du passt perfekt zu uns!",
+      description: "Wir freuen uns, dich in unserer Community begrüßen zu dürfen. Du wirst gleich zur WhatsApp Gruppe weitergeleitet.",
+      variant: "success",
+      duration: 3000,
+    });
     
-    // Accept users who are new to the area or interested in events/activities
-    const isNewToArea = answers[1] === "a";
-    const hasInterests = answers[2] && ["a", "b", "c"].includes(answers[2]);
-    
-    if (isActive && (isNewToArea || hasInterests)) {
-      toast({
-        title: "Du passt perfekt zu uns!",
-        description: "Wir freuen uns, dich in unserer Community begrüßen zu dürfen. Du wirst gleich zur WhatsApp Gruppe weitergeleitet.",
-        variant: "success",
-        duration: 3000,
-      });
-      
-      // Redirect to WhatsApp after a short delay
-      setTimeout(() => {
-        window.open(whatsappUrl, "_blank");
-        onOpenChange(false);
-      }, 2000);
-    } else {
-      toast({
-        title: "Wir suchen aktive Mitglieder",
-        description: "Es scheint, als ob du vielleicht nicht nach einer aktiven Teilnahme in unserer Community suchst. Wir möchten vor allem Menschen verbinden, die sich aktiv beteiligen möchten.",
-        variant: "destructive",
-        duration: 4000,
-      });
-      
-      // Close the dialog after showing the toast
-      setTimeout(() => {
-        onOpenChange(false);
-      }, 4000);
-    }
+    // Redirect to WhatsApp after a short delay
+    setTimeout(() => {
+      window.open(whatsappUrl, "_blank");
+      onOpenChange(false);
+    }, 2000);
   };
   
   return (
@@ -113,7 +90,7 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
         <DialogHeader>
           <DialogTitle>Werde Teil unserer Community</DialogTitle>
           <DialogDescription>
-            Hey! Schön, dass du Interesse an unserer Liebefeld-Community hast! Beantworte bitte kurz diese Fragen, damit wir dich besser kennenlernen können.
+            Hey! Schön, dass du Interesse an unserer Bielefeld-Community hast! Wähle mindestens eine der folgenden Optionen aus, um teilzunehmen.
           </DialogDescription>
         </DialogHeader>
         
@@ -121,17 +98,25 @@ const CommunityTest = ({ open, onOpenChange, whatsappUrl }: CommunityTestProps) 
           {questions.map((question) => (
             <div key={question.id} className="space-y-4 border-b pb-4 last:border-b-0">
               <h3 className="text-lg font-medium">{question.text}</h3>
-              <RadioGroup 
-                value={answers[question.id]} 
-                onValueChange={(value) => handleAnswer(question.id, value)}
-              >
+              <div className="space-y-3">
                 {question.options.map(option => (
                   <div key={option.id} className="flex items-center space-x-2">
-                    <RadioGroupItem value={option.id} id={`q${question.id}-${option.id}`} />
-                    <Label htmlFor={`q${question.id}-${option.id}`}>{option.text}</Label>
+                    <Checkbox 
+                      id={`q${question.id}-${option.id}`} 
+                      checked={selectedOptions[`${question.id}-${option.id}`] || false}
+                      onCheckedChange={(checked) => 
+                        handleCheckboxChange(question.id, option.id, checked as boolean)
+                      }
+                    />
+                    <Label 
+                      htmlFor={`q${question.id}-${option.id}`}
+                      className="text-sm"
+                    >
+                      {option.text}
+                    </Label>
                   </div>
                 ))}
-              </RadioGroup>
+              </div>
             </div>
           ))}
         </div>
