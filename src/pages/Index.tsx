@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -119,7 +120,7 @@ const Index = () => {
             {showCircle && (
               <div 
                 ref={circleRef}
-                onClick={() => window.open(WHATSAPP_URL, "_blank")}
+                onClick={() => setTestModalOpen(true)}
                 className={`absolute z-20 flex items-center justify-center w-32 h-32 bg-green-600 rounded-full cursor-pointer transition-all duration-1000 ${!circleAnimationComplete ? "animate-spin-slow" : ""}`}
                 style={{ 
                   top: '50%',
@@ -140,7 +141,7 @@ const Index = () => {
             )}
             
             <div className={`flex flex-col items-center justify-center gap-3 w-full max-w-xl relative z-30 mt-32 transition-opacity duration-500 ${circleAnimationComplete ? "opacity-100" : "opacity-0"}`}>
-              <div className="flex items-center justify-center gap-3 mt-1">
+              <div className="flex items-center justify-center gap-3 mt-8">
                 <InstagramFeed />
                 
                 <a 
