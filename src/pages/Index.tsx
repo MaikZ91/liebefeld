@@ -224,7 +224,7 @@ const Index = () => {
                 onClick={() => setTestModalOpen(true)}
                 className={`absolute z-20 flex items-center justify-center cursor-pointer transition-all duration-1000`}
                 style={{ 
-                  top: '75%', // Moved higher up from 90% to 75%
+                  top: '65%', // Positioned higher
                   left: '50%',
                   width: '140px',
                   height: '140px',
@@ -279,6 +279,12 @@ const Index = () => {
           <EventChatBot />
         </EventProvider>
       </main>
+
+      <CommunityTest 
+        open={testModalOpen} 
+        onOpenChange={setTestModalOpen} 
+        whatsappUrl={WHATSAPP_URL} 
+      />
     </div>
   );
 };
