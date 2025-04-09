@@ -112,9 +112,10 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     setSelectedEvent(event);
   };
   
-  // Handler for adding a new event
+  // Handler for adding a new event - Updated to only call the context method
   const handleAddEvent = async (newEvent: Omit<Event, 'id'>) => {
     try {
+      console.log('Adding new event to database only:', newEvent);
       await addUserEvent(newEvent);
       toast.success("Event erfolgreich hinzugefügt!");
       setShowEventForm(false);

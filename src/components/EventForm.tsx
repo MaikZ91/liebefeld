@@ -232,7 +232,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
           description: `"${title}" wurde erfolgreich als kostenpflichtiges Event für 10€ hinzugefügt.`
         });
         
-        const userAddedEvent: Omit<Event, 'id'> & { id: string } = {
+        const newEvent: Omit<Event, 'id'> = {
           title,
           description,
           date: formattedDate,
@@ -240,12 +240,10 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
           location,
           organizer,
           category: category || 'Sonstiges',
-          image_urls: [],
-          id: "local-paid-" + Date.now(),
           link: url || undefined
         };
         
-        onAddEvent(userAddedEvent);
+        onAddEvent(newEvent);
         resetForm();
         
         if (onCancel) onCancel();
@@ -315,11 +313,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
           }
         }
         
-        onAddEvent({
-          ...newEvent,
-          id: data[0].id,
-          image_urls: imageUrls.length > 0 ? imageUrls : undefined
-        });
+        onAddEvent(newEvent);
         
         toast({
           title: "Event erstellt",

@@ -343,10 +343,10 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const addUserEvent = async (eventData: Omit<Event, 'id'>): Promise<Event> => {
     try {
-      console.log('Adding new user event:', eventData);
+      console.log('Adding new user event to database only:', eventData);
       
       const newEvent = await addNewEvent(eventData);
-      console.log('Successfully added new event:', newEvent);
+      console.log('Successfully added new event to database:', newEvent);
       
       await refreshEvents();
       
