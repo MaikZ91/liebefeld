@@ -48,8 +48,8 @@ interface CalendarWithChatProps {
 }
 
 const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [activeMobileView, setActiveMobileView] = useState<'calendar' | 'chat'>('chat');
+  const [showChat, setShowChat] = useState(false);
+  const [activeMobileView, setActiveMobileView] = useState<'calendar' | 'chat'>('calendar');
   const { events } = useEventContext();
   
   const [activeGroup, setActiveGroup] = useState<string>("");
@@ -136,91 +136,103 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
     <div className="w-full">
       {/* Desktop Layout - Side by Side */}
       <div className="hidden md:flex gap-4 h-[calc(100vh-220px)] min-h-[600px]">
-        {showCalendar ? (
-          <div className="w-1/3 flex flex-col">
+        <div className={cn(
+          "transition-all duration-300 overflow-hidden",
+          showChat ? "w-1/3" : "w-full"
+        )}>
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-lg font-bold">Kalender</h2>
+            {!showChat && (
+              <Button 
+                onClick={() => setShowChat(true)} 
+                className="flex items-center gap-2 bg-primary text-white hover:bg-primary/90"
+              >
+                <Users className="h-4 w-4" />
+                <span>Community Chat</span>
+              </Button>
+            )}
+          </div>
+          <div className="h-full flex-grow overflow-hidden border rounded-lg">
+            <EventCalendar defaultView={defaultView} />
+          </div>
+        </div>
+        
+        {showChat ? (
+          <div className="w-2/3 flex flex-col">
             <div className="flex justify-between items-center mb-2">
-              <h2 className="text-lg font-bold">Kalender</h2>
+              <h2 className="text-lg font-bold">Community Chat</h2>
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => setShowCalendar(false)}
+                onClick={() => setShowChat(false)}
                 className="h-8 w-8 p-0"
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <div className="flex-grow overflow-hidden border rounded-lg">
-              <EventCalendar defaultView={defaultView} />
+            
+            <div className="mb-4">
+              {username && (
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={localStorage.getItem(AVATAR_KEY) || undefined} alt={username} />
+                      <AvatarFallback>{getInitials(username)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="text-sm font-medium">{username}</div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setIsUsernameModalOpen(true)}
+                        className="p-0 h-auto text-xs text-muted-foreground"
+                      >
+                        Ändern
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <Tabs value={activeGroup} onValueChange={setActiveGroup} className="w-full">
+                <TabsList className="mb-2 w-full h-auto p-1 flex flex-wrap justify-start">
+                  {groups.map((group) => (
+                    <TabsTrigger key={group.id} value={group.id} className="px-4 py-2 flex items-center gap-1">
+                      <Users className="h-4 w-4" />
+                      {group.name}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                
+                {groups.map((group) => (
+                  <TabsContent key={group.id} value={group.id} className="border rounded-lg overflow-hidden">
+                    <div className="h-[calc(100vh-320px)] min-h-[400px]">
+                      <GroupChat compact={false} groupId={group.id} groupName={group.name} />
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
             </div>
           </div>
         ) : (
           <Button 
-            onClick={() => setShowCalendar(true)} 
-            className="fixed left-4 bottom-20 bg-primary text-white rounded-full shadow-lg"
+            onClick={() => setShowChat(true)} 
+            className="fixed right-4 bottom-20 bg-primary text-white rounded-full shadow-lg"
             size="icon"
           >
-            <Calendar className="h-5 w-5" />
+            <MessageSquare className="h-5 w-5" />
           </Button>
         )}
-        
-        <div className={cn(
-          "transition-all duration-300 overflow-hidden",
-          showCalendar ? "w-2/3" : "w-full"
-        )}>
-          <div className="mb-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold">Community Chat</h2>
-              
-              {username && (
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={localStorage.getItem(AVATAR_KEY) || undefined} alt={username} />
-                    <AvatarFallback>{getInitials(username)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="text-sm font-medium">{username}</div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => setIsUsernameModalOpen(true)}
-                      className="p-0 h-auto text-xs text-muted-foreground"
-                    >
-                      Ändern
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            <Tabs value={activeGroup} onValueChange={setActiveGroup} className="w-full mt-2">
-              <TabsList className="mb-2">
-                {groups.map((group) => (
-                  <TabsTrigger key={group.id} value={group.id}>
-                    {group.name}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-              
-              {groups.map((group) => (
-                <TabsContent key={group.id} value={group.id} className="border rounded-lg overflow-hidden">
-                  <div className="h-[calc(100vh-320px)] min-h-[400px]">
-                    <GroupChat compact={false} groupId={group.id} groupName={group.name} />
-                  </div>
-                </TabsContent>
-              ))}
-            </Tabs>
-          </div>
-        </div>
       </div>
       
-      {/* Mobile Layout - Tabbed - Default to Chat */}
+      {/* Mobile Layout - Tabbed - Default to Calendar */}
       <div className="md:hidden flex flex-col h-[calc(100vh-200px)] min-h-[500px]">
         <div className="flex justify-center mb-4">
-          <div className="inline-flex rounded-md shadow-sm" role="group">
+          <div className="inline-flex rounded-md shadow-sm w-full" role="group">
             <Button
               variant={activeMobileView === 'calendar' ? 'default' : 'outline'} 
               onClick={() => setActiveMobileView('calendar')}
-              className="rounded-l-md rounded-r-none"
+              className="rounded-l-md rounded-r-none flex-1"
             >
               <Calendar className="h-4 w-4 mr-2" />
               Kalender
@@ -228,10 +240,10 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
             <Button
               variant={activeMobileView === 'chat' ? 'default' : 'outline'} 
               onClick={() => setActiveMobileView('chat')}
-              className="rounded-r-md rounded-l-none"
+              className="rounded-r-md rounded-l-none flex-1"
             >
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Chat
+              <Users className="h-4 w-4 mr-2" />
+              Community
             </Button>
           </div>
         </div>
@@ -251,9 +263,10 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
             <>
               <div className="flex items-center justify-between mb-2">
                 <Tabs value={activeGroup} onValueChange={setActiveGroup} className="w-full">
-                  <TabsList className="mb-2">
+                  <TabsList className="mb-2 w-full h-auto p-1 flex flex-wrap justify-start">
                     {groups.map((group) => (
-                      <TabsTrigger key={group.id} value={group.id}>
+                      <TabsTrigger key={group.id} value={group.id} className="px-4 py-2 flex items-center gap-1">
+                        <Users className="h-4 w-4" />
                         {group.name}
                       </TabsTrigger>
                     ))}
@@ -313,3 +326,4 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
 };
 
 export default CalendarWithChat;
+
