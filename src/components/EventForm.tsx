@@ -14,7 +14,7 @@ import FormFooter from './event-form/FormFooter';
 
 interface EventFormProps {
   selectedDate: Date;
-  onAddEvent: (event: Omit<Event, 'id'> & { id?: string }) => void;
+  onAddEvent: (event: Omit<Event, 'id'>) => void;
   onCancel?: () => void;
 }
 
@@ -226,32 +226,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       console.log('Selected date:', date);
       console.log('Formatted date for DB:', formattedDate);
       
-      if (isPaid && isPaidAndProcessed) {
-        toast({
-          title: "Kostenpflichtiges Event erstellt",
-          description: `"${title}" wurde erfolgreich als kostenpflichtiges Event für 10€ hinzugefügt.`
-        });
-        
-        const newEvent: Omit<Event, 'id'> = {
-          title,
-          description,
-          date: formattedDate,
-          time,
-          location,
-          organizer,
-          category: category || 'Sonstiges',
-          link: url || undefined
-        };
-        
-        onAddEvent(newEvent);
-        resetForm();
-        
-        if (onCancel) onCancel();
-        setIsSubmitting(false);
-        setShowPaymentDialog(false);
-        return;
-      }
-      
       const newEvent: Omit<Event, 'id'> = {
         title,
         description,
@@ -263,67 +237,31 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         link: url || undefined
       };
       
-      console.log('Attempting to insert event:', newEvent);
-      const { data, error: supabaseError } = await supabase
-        .from('community_events')
-        .insert([newEvent])
-        .select();
-      
-      if (supabaseError) {
-        console.error('Supabase error when inserting event:', supabaseError);
-        throw new Error(supabaseError.message || 'Fehler beim Speichern des Events');
-      }
-      
-      if (data && data[0]) {
-        console.log('Event successfully inserted:', data[0]);
-        const eventId = data[0].id;
-        
-        let imageUrls: string[] = [];
-        if (images.length > 0) {
-          try {
-            toast({
-              title: "Bilder werden hochgeladen",
-              description: `${images.length} Bilder werden hochgeladen...`,
-            });
-            
-            imageUrls = await uploadImagesToSupabase(eventId);
-            
-            if (imageUrls.length > 0) {
-              console.log('Updating event with image URLs:', imageUrls);
-              const { error: updateError } = await supabase
-                .from('community_events')
-                .update({ 
-                  image_urls: imageUrls 
-                })
-                .eq('id', eventId);
-              
-              if (updateError) {
-                console.error('Error updating event with image URLs:', updateError);
-              } else {
-                console.log('Successfully updated event with image URLs');
-              }
-            }
-          } catch (uploadError) {
-            console.error('Error uploading images:', uploadError);
-            toast({
-              title: "Bildupload Fehler",
-              description: "Es gab ein Problem beim Hochladen der Bilder. Das Event wurde trotzdem erstellt.",
-              variant: "destructive"
-            });
-          }
-        }
-        
-        onAddEvent(newEvent);
-        
+      if (isPaid && isPaidAndProcessed) {
         toast({
-          title: "Event erstellt",
-          description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`
+          title: "Kostenpflichtiges Event erstellt",
+          description: `"${title}" wurde erfolgreich als kostenpflichtiges Event für 10€ hinzugefügt.`
         });
         
+        onAddEvent(newEvent);
         resetForm();
         
         if (onCancel) onCancel();
+        setIsSubmitting(false);
+        setShowPaymentDialog(false);
+        return;
       }
+      
+      onAddEvent(newEvent);
+      
+      toast({
+        title: "Event erstellt",
+        description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`
+      });
+      
+      resetForm();
+      
+      if (onCancel) onCancel();
     } catch (err) {
       console.error('Error adding event:', err);
       
