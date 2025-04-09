@@ -242,58 +242,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
     }
   };
 
-  // Helper function to format event messages
-  const formatEventMessage = (content: string) => {
-    // Check if content includes event information
-    if (content.includes('🗓️ **Event:')) {
-      try {
-        // Extract event title
-        const titleMatch = content.match(/🗓️ \*\*Event: (.*?)\*\*/);
-        const eventTitle = titleMatch ? titleMatch[1] : '';
-        
-        // Extract date and time
-        const dateTimeMatch = content.match(/Datum: (.*?) um (.*?)(?:\n|$)/);
-        const eventDate = dateTimeMatch ? dateTimeMatch[1] : '';
-        const eventTime = dateTimeMatch ? dateTimeMatch[2] : '';
-        
-        // Extract location
-        const locationMatch = content.match(/Ort: (.*?)(?:\n|$)/);
-        const eventLocation = locationMatch ? locationMatch[1] : '';
-        
-        // Extract category
-        const categoryMatch = content.match(/Kategorie: (.*?)(?:\n|$)/);
-        const eventCategory = categoryMatch ? categoryMatch[1] : '';
-        
-        // Extract user message part (after the event data)
-        const userMessageMatch = content.match(/(?:\n\n)([\s\S]*)/);
-        const userMessage = userMessageMatch ? userMessageMatch[1] : '';
-        
-        return (
-          <div className="event-message">
-            <div className="bg-gray-800 rounded-lg p-3 mb-2 border border-red-500/30">
-              <div className="text-sm font-semibold text-white mb-1">Geteiltes Event</div>
-              <div className="text-lg font-bold text-white">{eventTitle}</div>
-              <div className="text-xs text-gray-300 mt-1">
-                <span>{eventDate}</span>
-                {eventTime && <span> • {eventTime}</span>}
-                {eventLocation && <span> • {eventLocation}</span>}
-              </div>
-              <div className="text-xs bg-red-500 text-white inline-block px-2 py-0.5 rounded mt-2">
-                {eventCategory || "Event"}
-              </div>
-            </div>
-            {userMessage && <div className="text-sm text-white mt-2">{userMessage}</div>}
-          </div>
-        );
-      } catch (error) {
-        console.error("Error formatting event message:", error);
-        return <div className="text-sm text-white">{content}</div>;
-      }
-    }
-    
-    return <div className="text-sm text-white">{content}</div>;
-  };
-
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-2 bg-gray-900 text-white flex items-center justify-between">
@@ -333,7 +281,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
                 </div>
               )}
               <div className="ml-8">
-                {formatEventMessage(message.content)}
+                <div className="text-sm text-white">{message.content}</div>
               </div>
             </div>
           );
