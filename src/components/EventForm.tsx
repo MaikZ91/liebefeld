@@ -234,7 +234,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
           description: `"${title}" wurde erfolgreich als kostenpflichtiges Event für 10€ hinzugefügt.`
         });
         
-        const tempEvent: Omit<Event, 'id'> & { id: string } = {
+        const userAddedEvent: Omit<Event, 'id'> & { id: string } = {
           title,
           description,
           date: formattedDate,
@@ -247,7 +247,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
           link: url || undefined
         };
         
-        onAddEvent(tempEvent);
+        onAddEvent(userAddedEvent);
         resetForm();
         
         if (onCancel) onCancel();
@@ -353,12 +353,12 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         link: url || undefined,
       };
       
-      const tempEvent: Omit<Event, 'id'> & { id: string } = {
+      const userAddedEvent: Omit<Event, 'id'> & { id: string } = {
         ...eventData,
         id: "local-" + Date.now()
       };
       
-      onAddEvent(tempEvent);
+      onAddEvent(userAddedEvent);
       
       if (onCancel) onCancel();
       

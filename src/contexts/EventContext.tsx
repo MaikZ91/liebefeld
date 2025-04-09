@@ -31,7 +31,7 @@ interface EventContextProps {
   refreshEvents: () => Promise<void>;
   newEventIds: Set<string>;
   topEventsPerDay: Record<string, string>;
-  addUserEvent: (event: Omit<Event, 'id'>) => Promise<void>;
+  addUserEvent: (event: Omit<Event, 'id'>) => Promise<Event>;
 }
 
 declare global {
@@ -370,7 +370,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
-  const addUserEvent = async (eventData: Omit<Event, 'id'>) => {
+  const addUserEvent = async (eventData: Omit<Event, 'id'>): Promise<Event> => {
     try {
       console.log('Adding new user event:', eventData);
       

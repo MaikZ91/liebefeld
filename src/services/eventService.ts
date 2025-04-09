@@ -326,11 +326,11 @@ export const addNewEvent = async (newEvent: Omit<Event, 'id'>): Promise<Event> =
     if (error) {
       console.error('Error adding event to database:', error);
       
-      // If there's an error, create a temporary event as fallback
-      const tempId = `temp-${Math.random().toString(36).substring(2, 9)}`;
+      // If there's an error, create a user-added event with a local ID as fallback
+      const localId = `local-${Math.random().toString(36).substring(2, 9)}`;
       return {
         ...newEvent,
-        id: tempId,
+        id: localId,
         likes: 0
       };
     }
@@ -351,13 +351,13 @@ export const addNewEvent = async (newEvent: Omit<Event, 'id'>): Promise<Event> =
   } catch (error) {
     console.error('Error adding event:', error);
     
-    // Create a temporary ID as fallback
-    const tempId = `temp-${Math.random().toString(36).substring(2, 9)}`;
+    // Create a local ID as fallback
+    const localId = `local-${Math.random().toString(36).substring(2, 9)}`;
     
-    // Return event with temporary ID
+    // Return event with local ID
     return {
       ...newEvent,
-      id: tempId,
+      id: localId,
       likes: 0
     };
   }
@@ -406,3 +406,58 @@ export const syncGitHubEvents = async (githubEvents: Event[]): Promise<void> => 
     console.error('Error syncing GitHub events:', error);
   }
 };
+
+// Helper to log today's events in console
+export const logTodaysEvents = (events: Event[]) => {
+  const today = format(new Date(), 'yyyy-MM-dd');
+  console.log('===== TODAY\'S EVENTS =====');
+  
+  const todaysEvents = events.filter(event => event.date === today);
+  
+  if (todaysEvents.length === 0) {
+    console.log('No events found for today');
+    return;
+  }
+  
+  // Sort by likes (highest first)
+  const sortedEvents = [...todaysEvents].sort((a, b) => {
+    const likesA = a.likes || 0;
+    const likesB = b.likes || 0;
+    
+    if (likesB !== likesA) {
+      return likesB - likesA;
+    }
+    
+    return a.id.localeCompare(b.id);
+  });
+  
+  console.log(`Found ${sortedEvents.length} events for today (${today}):`);
+  
+  sortedEvents.forEach((event, index) => {
+    console.log(`${index + 1}. ${event.title} (ID: ${event.id})`);
+    console.log(`   Category: ${event.category}, Likes: ${event.likes || 0}`);
+    console.log(`   RSVP: yes=${event.rsvp?.yes || event.rsvp_yes || 0}, no=${event.rsvp?.no || event.rsvp_no || 0}, maybe=${event.rsvp?.maybe || event.rsvp_maybe || 0}`);
+    console.log(`   Origin: ${event.id.startsWith('github-') ? 'GitHub' : (event.id.startsWith('local-') ? 'User-added' : 'Database')}`);
+  });
+  
+  console.log('=========================');
+};
+
+// Expose function to window for easy access in browser console
+if (typeof window !== 'undefined') {
+  (window as any).logTodaysEvents = (events?: Event[]) => {
+    if (!events) {
+      // Try to get events from context if available
+      try {
+        const contextModule = require('../contexts/EventContext');
+        const context = contextModule.useEventContext();
+        logTodaysEvents(context.events);
+      } catch (error) {
+        console.error('Could not access events from context. Please provide events as parameter.');
+        console.log('Usage: window.logTodaysEvents(events)');
+      }
+    } else {
+      logTodaysEvents(events);
+    }
+  };
+}
