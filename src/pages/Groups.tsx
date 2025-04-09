@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -90,7 +91,8 @@ const Groups = () => {
           .from('chat_groups')
           .select('*')
           .order('created_at', { ascending: true })
-          .not('name', 'eq', 'LiebefeldBot');
+          .not('name', 'eq', 'LiebefeldBot')
+          .not('name', 'eq', 'Liebefeld'); // Exclude Liebefeld group
         
         if (error) {
           throw error;

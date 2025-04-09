@@ -78,7 +78,8 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
           .from('chat_groups')
           .select('*')
           .order('created_at', { ascending: true })
-          .not('name', 'eq', 'LiebefeldBot');
+          .not('name', 'eq', 'LiebefeldBot')
+          .not('name', 'eq', 'Liebefeld'); // Exclude Liebefeld group
         
         if (error) {
           throw error;
