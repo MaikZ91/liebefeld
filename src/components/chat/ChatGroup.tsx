@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, Send, RefreshCw } from 'lucide-react';
@@ -5,10 +6,19 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ChatMessage from './ChatMessage';
-import MessageInput from './MessageInput';
 import EventMessageFormatter from './EventMessageFormatter';
 import { getInitials } from '@/utils/chatUIUtils';
-import { USERNAME_KEY, AVATAR_KEY, EventShare, TypingUser, Message } from '@/types/chatTypes';
+import { USERNAME_KEY, AVATAR_KEY, EventShare, TypingUser } from '@/types/chatTypes';
+
+interface Message {
+  id: string;
+  created_at: string;
+  content: string;
+  user_name: string;
+  user_avatar: string;
+  group_id: string;
+  event_share: EventShare | null;
+}
 
 interface ChatGroupProps {
   groupId: string;
@@ -185,7 +195,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
           user_name: data[0].sender,
           user_avatar: data[0].avatar || '',
           group_id: data[0].group_id,
-          event_share: data[0].event_share as EventShare | null
+          event_share: null // New messages won't have event_share by default
         };
         
         setMessages(prevMessages => [...prevMessages, newMsg]);

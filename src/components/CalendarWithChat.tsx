@@ -46,7 +46,6 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
   });
   const [isUsernameModalOpen, setIsUsernameModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [isGroupsOpen, setIsGroupsOpen] = useState(true);
   const [newMessages, setNewMessages] = useState(0);
   const [newEvents, setNewEvents] = useState(0);
   const lastCheckedMessages = useRef(new Date());
@@ -63,9 +62,11 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
   // Check for new events
   useEffect(() => {
     if (events.length > 0) {
-      const recentEvents = events.filter(event => 
-        new Date(event.created_at) > lastCheckedEvents.current
-      );
+      const recentEvents = events.filter(event => {
+        // Use created_at if it exists, otherwise use a fallback date
+        const eventDate = event.created_at ? new Date(event.created_at) : new Date();
+        return eventDate > lastCheckedEvents.current;
+      });
       setNewEvents(recentEvents.length);
     }
   }, [events]);
@@ -163,6 +164,10 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
     setSelectedCategory(category);
     setActiveGroup(""); // Reset active group when changing category
   };
+
+  const handleGroupSelect = (groupId: string) => {
+    setActiveGroup(groupId);
+  };
   
   const handleClickCalendar = () => {
     setActiveMobileView('calendar');
@@ -176,6 +181,9 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
     setNewMessages(0);
     lastCheckedMessages.current = new Date();
   };
+
+  // Get the name of the currently selected group
+  const activeGroupName = groups.find(g => g.id === activeGroup)?.name || "Gruppe wählen";
   
   if (isLoading) {
     return (
@@ -252,79 +260,77 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
                     </div>
                   </div>
                   
-                  {/* Category filter dropdown */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button className="text-white bg-gray-800 hover:bg-gray-700 border border-gray-700">
-                        {selectedCategory || "Alle Gruppen"} <ChevronDown className="ml-2 h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56 bg-gray-900 border border-gray-700 text-white">
-                      <DropdownMenuLabel>Kategorie wählen</DropdownMenuLabel>
-                      <DropdownMenuSeparator className="bg-gray-700" />
-                      <DropdownMenuItem 
-                        className={cn(
-                          "hover:bg-gray-800 cursor-pointer", 
-                          !selectedCategory && "bg-gray-800"
-                        )}
-                        onClick={() => handleCategorySelect(null)}
-                      >
-                        Alle anzeigen
-                      </DropdownMenuItem>
-                      {GROUP_CATEGORIES.map(category => (
+                  <div className="flex items-center gap-2">
+                    {/* Category filter dropdown */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button className="text-white bg-gray-800 hover:bg-gray-700 border border-gray-700">
+                          {selectedCategory || "Alle Gruppen"} <ChevronDown className="ml-2 h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-56 bg-gray-900 border border-gray-700 text-white">
+                        <DropdownMenuLabel>Kategorie wählen</DropdownMenuLabel>
+                        <DropdownMenuSeparator className="bg-gray-700" />
                         <DropdownMenuItem 
-                          key={category} 
                           className={cn(
-                            "cursor-pointer hover:bg-gray-800",
-                            selectedCategory === category && "bg-gray-800"
+                            "hover:bg-gray-800 cursor-pointer", 
+                            !selectedCategory && "bg-gray-800"
                           )}
-                          onClick={() => handleCategorySelect(category)}
+                          onClick={() => handleCategorySelect(null)}
                         >
-                          {category}
+                          Alle anzeigen
                         </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                        {GROUP_CATEGORIES.map(category => (
+                          <DropdownMenuItem 
+                            key={category} 
+                            className={cn(
+                              "cursor-pointer hover:bg-gray-800",
+                              selectedCategory === category && "bg-gray-800"
+                            )}
+                            onClick={() => handleCategorySelect(category)}
+                          >
+                            {category}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    
+                    {/* Group selection dropdown */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button className="bg-red-500 text-white hover:bg-red-600">
+                          {activeGroupName} <ChevronDown className="ml-2 h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-56 bg-gray-900 border border-gray-700 text-white">
+                        <DropdownMenuLabel>Gruppe wählen</DropdownMenuLabel>
+                        <DropdownMenuSeparator className="bg-gray-700" />
+                        {groups.map((group) => (
+                          <DropdownMenuItem 
+                            key={group.id} 
+                            className={cn(
+                              "cursor-pointer hover:bg-gray-800",
+                              activeGroup === group.id && "bg-gray-800"
+                            )}
+                            onClick={() => handleGroupSelect(group.id)}
+                          >
+                            <Users className="h-4 w-4 mr-2" />
+                            {group.name}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
               )}
               
-              <Collapsible open={isGroupsOpen} onOpenChange={setIsGroupsOpen} className="space-y-2">
-                <div className="flex items-center justify-between bg-gray-800 p-2 rounded-lg">
-                  <h4 className="text-sm font-semibold text-white pl-2">
-                    {selectedCategory ? selectedCategory : "Alle Gruppen"} ({groups.length})
-                  </h4>
-                  <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="w-8 h-8 p-0 text-white">
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </CollapsibleTrigger>
+              {activeGroup && (
+                <div className="border border-gray-700 rounded-lg overflow-hidden">
+                  <div className="h-[calc(100vh-320px)] min-h-[400px]">
+                    <GroupChat compact={false} groupId={activeGroup} groupName={activeGroupName} />
+                  </div>
                 </div>
-                
-                <CollapsibleContent>
-                  <Tabs value={activeGroup} onValueChange={setActiveGroup} className="w-full">
-                    <TabsList className="mb-2 w-full h-auto p-1 flex flex-wrap justify-start bg-gray-800 border border-gray-700">
-                      {groups.map((group) => (
-                        <TabsTrigger 
-                          key={group.id} 
-                          value={group.id} 
-                          className="px-4 py-2 flex items-center gap-1 text-white data-[state=active]:bg-red-500 data-[state=active]:text-white"
-                        >
-                          <Users className="h-4 w-4" />
-                          {group.name}
-                        </TabsTrigger>
-                      ))}
-                    </TabsList>
-                    
-                    {groups.map((group) => (
-                      <TabsContent key={group.id} value={group.id} className="border border-gray-700 rounded-lg overflow-hidden">
-                        <div className="h-[calc(100vh-320px)] min-h-[400px]">
-                          <GroupChat compact={false} groupId={group.id} groupName={group.name} />
-                        </div>
-                      </TabsContent>
-                    ))}
-                  </Tabs>
-                </CollapsibleContent>
-              </Collapsible>
+              )}
             </div>
           </div>
         ) : (
@@ -395,7 +401,7 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
         )}>
           {username ? (
             <>
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-2 gap-2">
                 {/* Mobile category dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -403,7 +409,7 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
                       {selectedCategory || "Alle Gruppen"} <ChevronDown className="ml-2 h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 bg-gray-900 border border-gray-700 text-white">
+                  <DropdownMenuContent className="w-56 bg-gray-900 border border-gray-700 text-white z-50">
                     <DropdownMenuLabel>Kategorie wählen</DropdownMenuLabel>
                     <DropdownMenuSeparator className="bg-gray-700" />
                     <DropdownMenuItem 
@@ -430,39 +436,44 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
                   </DropdownMenuContent>
                 </DropdownMenu>
                 
+                {/* Mobile group dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button className="bg-red-500 text-white hover:bg-red-600 flex-grow">
+                      {activeGroupName} <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 bg-gray-900 border border-gray-700 text-white z-50">
+                    <DropdownMenuLabel>Gruppe wählen</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-gray-700" />
+                    {groups.map((group) => (
+                      <DropdownMenuItem 
+                        key={group.id} 
+                        className={cn(
+                          "cursor-pointer hover:bg-gray-800",
+                          activeGroup === group.id && "bg-gray-800"
+                        )}
+                        onClick={() => handleGroupSelect(group.id)}
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        {group.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                
                 <Avatar className="h-8 w-8 ml-2 bg-gray-800 border border-gray-700" onClick={() => setIsUsernameModalOpen(true)}>
                   <AvatarImage src={localStorage.getItem(AVATAR_KEY) || undefined} alt={username} />
                   <AvatarFallback className="bg-red-500 text-white">{getInitials(username)}</AvatarFallback>
                 </Avatar>
               </div>
               
-              {/* Groups in mobile view */}
-              <Tabs value={activeGroup} onValueChange={setActiveGroup} className="w-full">
-                <TabsList className="mb-2 w-full h-auto p-1 flex flex-wrap justify-start bg-gray-800 border border-gray-700">
-                  {groups.map((group) => (
-                    <TabsTrigger 
-                      key={group.id} 
-                      value={group.id} 
-                      className="px-4 py-2 flex items-center gap-1 text-white data-[state=active]:bg-red-500 data-[state=active]:text-white"
-                    >
-                      <Users className="h-4 w-4" />
-                      {group.name}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-                
-                {groups.map((group) => (
-                  <div 
-                    key={group.id} 
-                    className={cn(
-                      "h-[calc(100vh-280px)] min-h-[400px] border border-gray-700 rounded-lg overflow-hidden",
-                      activeGroup === group.id ? 'block' : 'hidden'
-                    )}
-                  >
-                    <GroupChat compact={false} groupId={group.id} groupName={group.name} />
-                  </div>
-                ))}
-              </Tabs>
+              {/* Active group chat */}
+              {activeGroup && (
+                <div className="h-[calc(100vh-280px)] min-h-[400px] border border-gray-700 rounded-lg overflow-hidden">
+                  <GroupChat compact={false} groupId={activeGroup} groupName={activeGroupName} />
+                </div>
+              )}
             </>
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-white">
