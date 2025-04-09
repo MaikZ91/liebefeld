@@ -12,50 +12,55 @@ interface CalendarWithChatProps {
 }
 
 const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
-  const [showChat, setShowChat] = useState(false);
-  const [activeMobileView, setActiveMobileView] = useState<'calendar' | 'chat'>('calendar');
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [activeMobileView, setActiveMobileView] = useState<'calendar' | 'chat'>('chat');
   const { events } = useEventContext();
   
   return (
     <div className="w-full">
       {/* Desktop Layout - Side by Side */}
       <div className="hidden md:flex gap-4 h-[calc(100vh-220px)] min-h-[600px]">
-        <div className={cn(
-          "transition-all duration-300 overflow-hidden",
-          showChat ? "w-2/3" : "w-full"
-        )}>
-          <EventCalendar defaultView={defaultView} />
-        </div>
-        
-        {showChat ? (
+        {showCalendar ? (
           <div className="w-1/3 flex flex-col">
             <div className="flex justify-between items-center mb-2">
-              <h2 className="text-lg font-bold">Community Chat</h2>
+              <h2 className="text-lg font-bold">Kalender</h2>
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => setShowChat(false)}
+                onClick={() => setShowCalendar(false)}
                 className="h-8 w-8 p-0"
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
             <div className="flex-grow overflow-hidden border rounded-lg">
-              <GroupChat compact={true} />
+              <EventCalendar defaultView={defaultView} />
             </div>
           </div>
         ) : (
           <Button 
-            onClick={() => setShowChat(true)} 
-            className="fixed right-4 bottom-20 bg-primary text-white rounded-full shadow-lg"
+            onClick={() => setShowCalendar(true)} 
+            className="fixed left-4 bottom-20 bg-primary text-white rounded-full shadow-lg"
             size="icon"
           >
-            <MessageSquare className="h-5 w-5" />
+            <Calendar className="h-5 w-5" />
           </Button>
         )}
+        
+        <div className={cn(
+          "transition-all duration-300 overflow-hidden",
+          showCalendar ? "w-2/3" : "w-full"
+        )}>
+          <div className="mb-2">
+            <h2 className="text-lg font-bold">Community Chat</h2>
+          </div>
+          <div className="h-[calc(100%-2rem)] border rounded-lg overflow-hidden">
+            <GroupChat compact={false} />
+          </div>
+        </div>
       </div>
       
-      {/* Mobile Layout - Tabbed */}
+      {/* Mobile Layout - Tabbed - Default to Chat */}
       <div className="md:hidden flex flex-col h-[calc(100vh-200px)] min-h-[500px]">
         <div className="flex justify-center mb-4">
           <div className="inline-flex rounded-md shadow-sm" role="group">
@@ -89,7 +94,7 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
           "flex-grow transition-all duration-300 overflow-hidden",
           activeMobileView === 'chat' ? 'block' : 'hidden'
         )}>
-          <GroupChat compact={true} />
+          <GroupChat compact={false} />
         </div>
       </div>
     </div>
