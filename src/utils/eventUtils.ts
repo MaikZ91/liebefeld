@@ -9,7 +9,7 @@ export const determineEventCategory = (title: string): string => {
       title.includes("band") || title.includes("jazz") || title.includes("chor")) {
     return "Konzert";
   } else if (title.includes("party") || title.includes("feier") || title.includes("disco") || 
-             title.includes("club") || title.includes("tanz")) {
+             title.includes("club") || title.includes("tanz") || title.includes("youth")) {
     return "Party";
   } else if (title.includes("ausstellung") || title.includes("galerie") || title.includes("kunst") || 
              title.includes("museum") || title.includes("vernissage")) {

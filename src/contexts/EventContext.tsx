@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { startOfDay } from 'date-fns';
 import { Event, RsvpOption } from '../types/eventTypes';
@@ -50,15 +51,25 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [pendingLikes, setPendingLikes] = useState<Set<string>>(new Set());
   const [newEventIds, setNewEventIds] = useState<Set<string>>(new Set());
   const [topEventsPerDay, setTopEventsPerDay] = useState<Record<string, string>>({});
+  const [knownEventTitles, setKnownEventTitles] = useState<Set<string>>(new Set());
 
   const refreshEvents = async () => {
     setIsLoading(true);
     try {
       console.log('Refreshing events...');
       
+      // Get previously seen event IDs from localStorage
       const previouslySeenEventsJson = localStorage.getItem('seenEventIds');
       const previouslySeenEvents: string[] = previouslySeenEventsJson ? JSON.parse(previouslySeenEventsJson) : [];
       const previouslySeenSet = new Set(previouslySeenEvents);
+      
+      // Get previously known event titles from localStorage
+      const previouslyKnownTitlesJson = localStorage.getItem('knownEventTitles');
+      const previouslyKnownTitles: string[] = previouslyKnownTitlesJson ? JSON.parse(previouslyKnownTitlesJson) : [];
+      const previouslyKnownTitlesSet = new Set(previouslyKnownTitles);
+      
+      // Update the known titles set from stored data
+      setKnownEventTitles(previouslyKnownTitlesSet);
       
       const githubLikes = await fetchGitHubLikes();
       console.log('Fetched GitHub likes:', githubLikes);
@@ -89,15 +100,23 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       const newEvents: Event[] = [];
       const currentEventIds: string[] = [];
+      const currentEventTitles: string[] = [];
       
-      [...supabaseEvents, ...externalEvents].forEach(event => {
+      // Collect current event IDs and titles
+      supabaseEvents.forEach(event => {
         currentEventIds.push(event.id);
+        if (event.title) currentEventTitles.push(event.title.toLowerCase());
       });
       
       const newEventIdsSet = new Set<string>();
       
+      // Process external events and detect new ones
       externalEvents.forEach(extEvent => {
+        currentEventIds.push(extEvent.id);
+        if (extEvent.title) currentEventTitles.push(extEvent.title.toLowerCase());
+        
         if (!combinedEvents.some(event => event.id === extEvent.id)) {
+          // Add the event to the combined list
           combinedEvents.push({
             ...extEvent,
             likes: typeof likesMap[extEvent.id] === 'number' ? likesMap[extEvent.id] : 0,
@@ -106,7 +125,13 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             rsvp_maybe: githubLikes[extEvent.id]?.rsvp_maybe || 0
           });
           
-          if (!previouslySeenSet.has(extEvent.id)) {
+          // Check if this is a new event by ID or title
+          const isNewById = !previouslySeenSet.has(extEvent.id);
+          const isNewByTitle = extEvent.title && 
+                              !previouslyKnownTitlesSet.has(extEvent.title.toLowerCase());
+          
+          if (isNewById || isNewByTitle) {
+            console.log(`Found new event: ${extEvent.title} (${extEvent.id})`);
             newEvents.push(extEvent);
             newEventIdsSet.add(extEvent.id);
           }
@@ -116,9 +141,12 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       console.log(`Combined ${combinedEvents.length} total events`);
       console.log(`Found ${newEvents.length} new events since last refresh`);
       
+      // Update the list of new event IDs
       setNewEventIds(newEventIdsSet);
       
+      // Save current event IDs and titles to localStorage
       localStorage.setItem('seenEventIds', JSON.stringify(currentEventIds));
+      localStorage.setItem('knownEventTitles', JSON.stringify(currentEventTitles));
       
       if (combinedEvents.length === 0) {
         console.log('No events found, using example data');
@@ -163,6 +191,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           return event;
         });
         
+        // Calculate top events per day based on likes
         const topEventsByDay: Record<string, string> = {};
         const eventsByDate: Record<string, Event[]> = {};
         
@@ -181,11 +210,17 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             const likesA = a.likes || 0;
             const likesB = b.likes || 0;
             
-            return likesB - likesA;
+            if (likesB !== likesA) {
+              return likesB - likesA;
+            }
+            
+            // For stability, if likes are equal, sort by ID
+            return a.id.localeCompare(b.id);
           });
           
           if (sortedEvents.length > 0) {
             topEventsByDay[date] = sortedEvents[0].id;
+            console.log(`Top event for ${date}: ${sortedEvents[0].title} (${sortedEvents[0].id}) with ${sortedEvents[0].likes || 0} likes`);
           }
         });
         

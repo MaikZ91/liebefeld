@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -85,16 +86,26 @@ const EventList: React.FC<EventListProps> = ({
         const likesA = a.likes || 0;
         const likesB = b.likes || 0;
         
+        // First prioritize events with likes
         if (likesB !== likesA) {
           return likesB - likesA;
         }
         
+        // Then prioritize old events over new events
+        const isANew = newEventIds.has(a.id);
+        const isBNew = newEventIds.has(b.id);
+        
+        if (isANew !== isBNew) {
+          return isANew ? 1 : -1; // New events come last
+        }
+        
+        // Finally, sort alphabetically for stable sorting
         return a.id.localeCompare(b.id);
       });
     });
     
     return grouped;
-  }, [displayEvents]);
+  }, [displayEvents, newEventIds]);
   
   useEffect(() => {
     if (todayRef.current && listRef.current && !hasScrolledToToday && Object.keys(eventsByDate).length > 0) {
