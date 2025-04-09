@@ -7,7 +7,10 @@ import {
   fetchGitHubLikes, 
   updateEventLikes,
   bielefeldEvents,
-  updateEventRsvp
+  updateEventRsvp,
+  syncGitHubEvents,
+  addNewEvent,
+  logTodaysEvents
 } from '../services/eventService';
 
 interface EventContextProps {
@@ -28,6 +31,7 @@ interface EventContextProps {
   refreshEvents: () => Promise<void>;
   newEventIds: Set<string>;
   topEventsPerDay: Record<string, string>;
+  addUserEvent: (event: Omit<Event, 'id'>) => Promise<void>;
 }
 
 declare global {
@@ -77,13 +81,13 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return updatedLikes;
       });
       
-      const oldEvents = [...events];
-      
       const supabaseEvents = await fetchSupabaseEvents();
       console.log(`Loaded ${supabaseEvents.length} events from Supabase`);
       
       const externalEvents = await fetchExternalEvents(likesMap);
       console.log(`Loaded ${externalEvents.length} external events`);
+      
+      await syncGitHubEvents(externalEvents);
       
       const combinedEvents = [...supabaseEvents];
       
@@ -112,6 +116,19 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           }
         }
       });
+      
+      const jamesLegEvent = combinedEvents.find(e => e.title.includes("James Leg"));
+      if (jamesLegEvent) {
+        console.log("Found James Leg event in combined events:", jamesLegEvent);
+      } else {
+        console.log("James Leg event NOT found in combined events");
+        
+        const inSupabase = supabaseEvents.find(e => e.title.includes("James Leg"));
+        const inExternal = externalEvents.find(e => e.title.includes("James Leg"));
+        
+        console.log("James Leg in Supabase:", inSupabase ? "YES" : "NO");
+        console.log("James Leg in External:", inExternal ? "YES" : "NO");
+      }
       
       console.log(`Combined ${combinedEvents.length} total events`);
       console.log(`Found ${newEvents.length} new events since last refresh`);
@@ -192,7 +209,11 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             const likesA = a.likes || 0;
             const likesB = b.likes || 0;
             
-            return likesB - likesA;
+            if (likesB !== likesA) {
+              return likesB - likesA;
+            }
+            
+            return a.id.localeCompare(b.id);
           });
           
           if (sortedEvents.length > 0) {
@@ -209,6 +230,8 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         
         setLastRefreshed(new Date());
         localStorage.setItem('lastEventsRefresh', new Date().toISOString());
+        
+        logTodaysEvents(eventsWithSyncedRsvp);
       }
     } catch (error) {
       console.error('Error loading events:', error);
@@ -347,6 +370,28 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
+  const addUserEvent = async (eventData: Omit<Event, 'id'>) => {
+    try {
+      console.log('Adding new user event:', eventData);
+      
+      const newEvent = await addNewEvent(eventData);
+      
+      setEvents(prev => [...prev, newEvent]);
+      
+      setNewEventIds(prev => {
+        const updated = new Set(prev);
+        updated.add(newEvent.id);
+        return updated;
+      });
+      
+      console.log('Successfully added new event:', newEvent);
+      return newEvent;
+    } catch (error) {
+      console.error('Error adding new event:', error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     console.log('EventProvider: Loading events...');
     
@@ -395,6 +440,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     refreshEvents,
     newEventIds,
     topEventsPerDay,
+    addUserEvent,
   };
 
   return <EventContext.Provider value={value}>{children}</EventContext.Provider>;

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Event, GitHubEvent } from "../types/eventTypes";
 import { transformGitHubEvents } from "../utils/eventUtils";
@@ -106,7 +105,10 @@ export const fetchGitHubLikes = async (): Promise<Record<string, any>> => {
 export const fetchExternalEvents = async (eventLikes: Record<string, number>): Promise<Event[]> => {
   try {
     console.log(`Attempting to fetch events from: ${EXTERNAL_EVENTS_URL}`);
-    const response = await fetch(EXTERNAL_EVENTS_URL);
+    
+    // Add cache-busting parameter to avoid caching issues
+    const cacheBuster = `?t=${new Date().getTime()}`;
+    const response = await fetch(`${EXTERNAL_EVENTS_URL}${cacheBuster}`);
     
     if (!response.ok) {
       console.log(`Fehler beim Laden von ${EXTERNAL_EVENTS_URL}: ${response.status}`);
@@ -115,6 +117,19 @@ export const fetchExternalEvents = async (eventLikes: Record<string, number>): P
     
     const githubEvents: GitHubEvent[] = await response.json();
     console.log(`Successfully loaded ${githubEvents.length} events from ${EXTERNAL_EVENTS_URL}`);
+    
+    // Log all titles to help debug missing events
+    githubEvents.forEach((event, index) => {
+      console.log(`GitHub event ${index}: ${event.event}`);
+    });
+    
+    // Check specifically for "James Leg" event
+    const jamesLegEvent = githubEvents.find(e => e.event.includes("James Leg"));
+    if (jamesLegEvent) {
+      console.log("Found James Leg event in GitHub data:", jamesLegEvent);
+    } else {
+      console.log("James Leg event NOT found in GitHub data");
+    }
     
     // Transform GitHub events to our format and pass eventLikes to ensure likes are applied
     const transformedEvents = transformGitHubEvents(githubEvents, eventLikes, new Date().getFullYear());
@@ -282,22 +297,112 @@ export const updateEventRsvp = async (eventId: string, rsvpData: { yes: number, 
   }
 };
 
-// Add a new event
+// Add a new event to Supabase
 export const addNewEvent = async (newEvent: Omit<Event, 'id'>): Promise<Event> => {
   try {
-    // Generate temporary ID
+    console.log('Adding new event to database:', newEvent);
+    
+    // Insert the event into Supabase
+    const { data, error } = await supabase
+      .from('community_events')
+      .insert({
+        title: newEvent.title,
+        description: newEvent.description,
+        date: newEvent.date,
+        time: newEvent.time,
+        location: newEvent.location,
+        organizer: newEvent.organizer,
+        category: newEvent.category,
+        likes: 0,
+        rsvp_yes: 0,
+        rsvp_no: 0,
+        rsvp_maybe: 0,
+        link: newEvent.link || null,
+        image_urls: newEvent.image_urls || null
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error adding event to database:', error);
+      
+      // If there's an error, create a temporary event as fallback
+      const tempId = `temp-${Math.random().toString(36).substring(2, 9)}`;
+      return {
+        ...newEvent,
+        id: tempId,
+        likes: 0
+      };
+    }
+    
+    console.log('Successfully added event to database:', data);
+    
+    // Return the event with the new ID
+    return {
+      ...newEvent,
+      id: data.id,
+      likes: 0,
+      rsvp: {
+        yes: 0,
+        no: 0,
+        maybe: 0
+      }
+    };
+  } catch (error) {
+    console.error('Error adding event:', error);
+    
+    // Create a temporary ID as fallback
     const tempId = `temp-${Math.random().toString(36).substring(2, 9)}`;
     
-    // Create event with ID and zero likes
-    const eventWithId = {
+    // Return event with temporary ID
+    return {
       ...newEvent,
       id: tempId,
       likes: 0
     };
+  }
+};
+
+// Sync GitHub events with database
+export const syncGitHubEvents = async (githubEvents: Event[]): Promise<void> => {
+  try {
+    console.log(`Syncing ${githubEvents.length} GitHub events with database`);
     
-    return eventWithId;
+    const { data: existingEventLikes, error: likesError } = await supabase
+      .from('github_event_likes')
+      .select('event_id');
+    
+    if (likesError) {
+      console.error('Error fetching existing GitHub event likes:', likesError);
+      return;
+    }
+    
+    const existingEventIds = new Set(existingEventLikes?.map(e => e.event_id) || []);
+    const newEvents = githubEvents.filter(e => !existingEventIds.has(e.id));
+    
+    console.log(`Found ${newEvents.length} new GitHub events to sync`);
+    
+    // Insert records for new GitHub events
+    if (newEvents.length > 0) {
+      const newEventRecords = newEvents.map(event => ({
+        event_id: event.id,
+        likes: 0,
+        rsvp_yes: 0,
+        rsvp_no: 0,
+        rsvp_maybe: 0
+      }));
+      
+      const { error: insertError } = await supabase
+        .from('github_event_likes')
+        .insert(newEventRecords);
+      
+      if (insertError) {
+        console.error('Error syncing new GitHub events:', insertError);
+      } else {
+        console.log(`Successfully synced ${newEvents.length} new GitHub events`);
+      }
+    }
   } catch (error) {
-    console.error('Error adding event:', error);
-    throw error;
+    console.error('Error syncing GitHub events:', error);
   }
 };

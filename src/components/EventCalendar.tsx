@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -15,6 +16,7 @@ import EventPanel from './calendar/EventPanel';
 import FavoritesView from './calendar/FavoritesView';
 import EventForm from './EventForm';
 import { useEventContext } from '@/contexts/EventContext';
+import { toast } from 'sonner';
 
 interface EventCalendarProps {
   defaultView?: "calendar" | "list";
@@ -47,7 +49,8 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     eventLikes,
     refreshEvents,
     newEventIds,
-    topEventsPerDay
+    topEventsPerDay,
+    addUserEvent
   } = useEventContext();
 
   // Local state
@@ -112,21 +115,12 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   // Handler for adding a new event
   const handleAddEvent = async (newEvent: Omit<Event, 'id'>) => {
     try {
-      // Add the event to local state directly
-      const tempId = `temp-${Math.random().toString(36).substring(2, 9)}`;
-      const eventWithId = {
-        ...newEvent,
-        id: tempId,
-        likes: 0
-      };
-      
-      // Refresh events after adding a new one
-      refreshEvents();
-      
-      // Hide form after successful submission
+      await addUserEvent(newEvent);
+      toast.success("Event erfolgreich hinzugefügt!");
       setShowEventForm(false);
     } catch (error) {
       console.error('Error adding event:', error);
+      toast.error("Fehler beim Hinzufügen des Events");
     }
   };
 
