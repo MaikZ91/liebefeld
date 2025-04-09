@@ -1,9 +1,8 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { CalendarDays, Users, Info } from 'lucide-react';
+import { CalendarDays, Info } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import { Button } from './ui/button';
 
 const CalendarNavbar: React.FC = () => {
   const location = useLocation();
@@ -14,7 +13,7 @@ const CalendarNavbar: React.FC = () => {
   ];
   
   return (
-    <header className="w-full bg-transparent py-4">
+    <header className="w-full bg-black py-4 text-white">
       <div className="container mx-auto px-4 flex flex-row justify-between items-center">
         <div className="flex items-center">
           <Link to="/" className="flex items-center">
@@ -34,7 +33,7 @@ const CalendarNavbar: React.FC = () => {
                         "flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all duration-200",
                         isActive
                           ? "bg-primary text-primary-foreground"
-                          : "hover:bg-secondary"
+                          : "hover:bg-gray-800"
                       )}
                     >
                       <link.icon className="h-4 w-4 mr-2" />
@@ -59,7 +58,7 @@ const CalendarNavbar: React.FC = () => {
                   "p-2 rounded-full",
                   isActive
                     ? "bg-primary text-primary-foreground"
-                    : "text-foreground/80 hover:bg-secondary"
+                    : "text-white hover:bg-gray-800"
                 )}
               >
                 <link.icon className="h-5 w-5" />

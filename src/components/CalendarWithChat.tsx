@@ -4,9 +4,9 @@ import EventCalendar from './EventCalendar';
 import GroupChat from './GroupChat';
 import { Button } from '@/components/ui/button';
 import { useEventContext } from '@/contexts/EventContext';
-import { X, MessageSquare, Calendar, Users, Clock, Loader2, Search } from 'lucide-react';
+import { X, MessageSquare, Users, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { supabase, type ChatMessage } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -123,7 +123,7 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
   
   if (isLoading) {
     return (
-      <div className="min-h-[400px] bg-background flex items-center justify-center">
+      <div className="min-h-[400px] bg-black text-white flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-lg font-medium">Lade Gruppen...</p>
@@ -147,7 +147,6 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
                 onClick={() => setShowChat(true)} 
                 className="flex items-center gap-2 bg-primary text-white hover:bg-primary/90"
               >
-                <Users className="h-4 w-4" />
                 <span>Community Chat</span>
               </Button>
             )}
@@ -234,7 +233,6 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
               onClick={() => setActiveMobileView('calendar')}
               className="rounded-l-md rounded-r-none flex-1"
             >
-              <Calendar className="h-4 w-4 mr-2" />
               Kalender
             </Button>
             <Button
@@ -242,7 +240,6 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
               onClick={() => setActiveMobileView('chat')}
               className="rounded-r-md rounded-l-none flex-1"
             >
-              <Users className="h-4 w-4 mr-2" />
               Community
             </Button>
           </div>
@@ -326,4 +323,3 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
 };
 
 export default CalendarWithChat;
-

@@ -6,23 +6,23 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 12 83% 30%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 12 83% 30%;
+    --card: 0 0% 0%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 12 83% 30%;
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 100%;
 
     --primary: 0 100% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 100% 95%;
-    --secondary-foreground: 12 83% 30%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 90%;
 
-    --muted: 0 20% 95%;
-    --muted-foreground: 12 40% 50%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 70%;
 
     --accent: 0 100% 95%;
     --accent-foreground: 12 83% 30%;
@@ -30,19 +30,19 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 20% 90%;
-    --input: 0 20% 90%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
     --ring: 0 100% 55%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 70% 98%;
-    --sidebar-foreground: 12 83% 30%;
+    --sidebar-background: 0 0% 5%;
+    --sidebar-foreground: 0 0% 90%;
     --sidebar-primary: 0 100% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 100% 95%;
-    --sidebar-accent-foreground: 12 83% 30%;
-    --sidebar-border: 0 20% 90%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 0 0% 15%;
     --sidebar-ring: 0 100% 55%;
   }
 
@@ -93,10 +93,10 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    background-color: #FFF5EB;
+    background-color: #000000;
     background-image: 
-      radial-gradient(circle at 100% 100%, rgba(246, 58, 59, 0.2) 0%, transparent 50%),
-      radial-gradient(circle at 0% 0%, rgba(240, 50, 50, 0.2) 0%, transparent 40%);
+      radial-gradient(circle at 100% 100%, rgba(246, 58, 59, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 0% 0%, rgba(240, 50, 50, 0.1) 0%, transparent 40%);
     background-attachment: fixed;
   }
   

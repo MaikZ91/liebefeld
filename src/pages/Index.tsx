@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
@@ -8,7 +7,7 @@ import CommunityTest from '@/components/CommunityTest';
 import CalendarWithChat from '@/components/CalendarWithChat';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { QrCode, Calendar, MessageSquare } from 'lucide-react';
+import { QrCode } from 'lucide-react';
 import { EventProvider, useEventContext } from '@/contexts/EventContext';
 
 const LiveTickerWrapper = () => {
@@ -120,14 +119,14 @@ const Index = () => {
   }, []);
   
   return (
-    <div className="min-h-screen flex flex-col bg-[#FFF5EB] dark:bg-[#2E1E12] text-orange-900 dark:text-orange-100">
+    <div className="min-h-screen flex flex-col bg-black text-white">
       <CalendarNavbar />
       <main className="flex-grow relative">
         <div className="relative w-full h-[55vh] overflow-hidden bg-black">
           <img 
             src="/lovable-uploads/e3d0a85b-9935-450a-bba8-5693570597a3.png" 
             alt="Freunde genießen ein Event zusammen" 
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover opacity-70"
             style={{
               animation: 'subtle-zoom 15s ease-in-out infinite alternate',
               animationDelay: '1s'
@@ -231,23 +230,11 @@ const Index = () => {
           </div>
         </div>
         
-        <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-3 rounded-t-lg shadow-inner">
+        <div className="bg-black py-3 rounded-t-lg shadow-inner">
           <div className="container mx-auto px-4 py-4">
             <div className="mb-6 text-center">
               <h2 className="text-2xl font-bold mb-2 font-serif">Kalender & Community</h2>
-              <p className="text-muted-foreground">Entdecke Events und tausche dich mit der Community aus</p>
-              
-              <div className="flex justify-center gap-4 mt-4">
-                <div className="flex items-center p-2 bg-primary/10 rounded-lg">
-                  <Calendar className="h-5 w-5 text-primary mr-2" />
-                  <span className="font-medium">Kalender</span>
-                </div>
-                
-                <div className="flex items-center p-2 bg-primary/10 rounded-lg">
-                  <MessageSquare className="h-5 w-5 text-primary mr-2" />
-                  <span className="font-medium">Community Chat</span>
-                </div>
-              </div>
+              <p className="text-gray-400">Entdecke Events und tausche dich mit der Community aus</p>
             </div>
           
             <EventProvider>
@@ -269,4 +256,3 @@ const Index = () => {
 };
 
 export default Index;
-
