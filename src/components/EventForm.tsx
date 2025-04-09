@@ -226,8 +226,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
       console.log('Selected date:', date);
       console.log('Formatted date for DB:', formattedDate);
       
-      // For paid events that were processed via the dialog, we don't actually 
-      // insert into the database, we just show a success message
       if (isPaid && isPaidAndProcessed) {
         toast({
           title: "Kostenpflichtiges Event erstellt",
@@ -256,7 +254,6 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         return;
       }
       
-      // Only continue with database insertion for free events
       const newEvent: Omit<Event, 'id'> = {
         title,
         description,
@@ -341,29 +338,8 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         errorMessage = errorMessage + " Fehler: " + err.message;
       }
       
-      const eventData = {
-        title,
-        description,
-        date: format(date, 'yyyy-MM-dd'),
-        time,
-        location,
-        organizer,
-        category: category || 'Sonstiges',
-        image_urls: [],
-        link: url || undefined,
-      };
-      
-      const userAddedEvent: Omit<Event, 'id'> & { id: string } = {
-        ...eventData,
-        id: "local-" + Date.now()
-      };
-      
-      onAddEvent(userAddedEvent);
-      
-      if (onCancel) onCancel();
-      
       toast({
-        title: "Event wurde lokal hinzugefügt",
+        title: "Fehler beim Hinzufügen des Events",
         description: errorMessage,
         variant: "destructive"
       });

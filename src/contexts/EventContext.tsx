@@ -89,49 +89,34 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       await syncGitHubEvents(externalEvents);
       
-      const combinedEvents = [...supabaseEvents];
+      const eventMap = new Map<string, Event>();
       
-      const newEvents: Event[] = [];
-      const currentEventIds: string[] = [];
-      
-      [...supabaseEvents, ...externalEvents].forEach(event => {
-        currentEventIds.push(event.id);
+      supabaseEvents.forEach(event => {
+        eventMap.set(event.id, event);
       });
       
-      const newEventIdsSet = new Set<string>();
-      
       externalEvents.forEach(extEvent => {
-        if (!combinedEvents.some(event => event.id === extEvent.id)) {
-          combinedEvents.push({
+        if (!eventMap.has(extEvent.id)) {
+          eventMap.set(extEvent.id, {
             ...extEvent,
             likes: typeof likesMap[extEvent.id] === 'number' ? likesMap[extEvent.id] : 0,
             rsvp_yes: githubLikes[extEvent.id]?.rsvp_yes || 0,
             rsvp_no: githubLikes[extEvent.id]?.rsvp_no || 0,
             rsvp_maybe: githubLikes[extEvent.id]?.rsvp_maybe || 0
           });
-          
-          if (!previouslySeenSet.has(extEvent.id)) {
-            newEvents.push(extEvent);
-            newEventIdsSet.add(extEvent.id);
-          }
         }
       });
       
-      const jamesLegEvent = combinedEvents.find(e => e.title.includes("James Leg"));
-      if (jamesLegEvent) {
-        console.log("Found James Leg event in combined events:", jamesLegEvent);
-      } else {
-        console.log("James Leg event NOT found in combined events");
-        
-        const inSupabase = supabaseEvents.find(e => e.title.includes("James Leg"));
-        const inExternal = externalEvents.find(e => e.title.includes("James Leg"));
-        
-        console.log("James Leg in Supabase:", inSupabase ? "YES" : "NO");
-        console.log("James Leg in External:", inExternal ? "YES" : "NO");
-      }
+      const combinedEvents = Array.from(eventMap.values());
       
-      console.log(`Combined ${combinedEvents.length} total events`);
-      console.log(`Found ${newEvents.length} new events since last refresh`);
+      const newEventIdsSet = new Set<string>();
+      
+      const currentEventIds = combinedEvents.map(event => event.id);
+      currentEventIds.forEach(id => {
+        if (!previouslySeenSet.has(id)) {
+          newEventIdsSet.add(id);
+        }
+      });
       
       setNewEventIds(newEventIdsSet);
       
@@ -180,17 +165,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           return event;
         });
         
-        const todayStr = format(new Date(), 'yyyy-MM-dd');
-        const todaysEvents = eventsWithSyncedRsvp.filter(event => event.date === todayStr);
-        console.log('===== TODAY\'S EVENTS =====');
-        console.log(`Found ${todaysEvents.length} events for today (${todayStr}):`);
-        todaysEvents.forEach(event => {
-          console.log(`- ${event.title} (ID: ${event.id})`);
-          console.log(`  Category: ${event.category}, Likes: ${event.likes || 0}`);
-          console.log(`  RSVP: yes=${event.rsvp?.yes || event.rsvp_yes || 0}, no=${event.rsvp?.no || event.rsvp_no || 0}, maybe=${event.rsvp?.maybe || event.rsvp_maybe || 0}`);
-        });
-        console.log('=========================');
-        
         const topEventsByDay: Record<string, string> = {};
         const eventsByDate: Record<string, Event[]> = {};
         
@@ -222,9 +196,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         });
         
         setTopEventsPerDay(topEventsByDay);
-        
-        const githubEventsInCombined = eventsWithSyncedRsvp.filter(e => e.id.startsWith('github-'));
-        console.log(`GitHub events with likes: ${githubEventsInCombined.map(e => `${e.id}: ${e.likes} - RSVP: yes=${e.rsvp_yes || e.rsvp?.yes || 0}, no=${e.rsvp_no || e.rsvp?.no || 0}, maybe=${e.rsvp_maybe || e.rsvp?.maybe || 0}`).join(', ')}`);
         
         setEvents(eventsWithSyncedRsvp);
         
@@ -375,16 +346,10 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       console.log('Adding new user event:', eventData);
       
       const newEvent = await addNewEvent(eventData);
-      
-      setEvents(prev => [...prev, newEvent]);
-      
-      setNewEventIds(prev => {
-        const updated = new Set(prev);
-        updated.add(newEvent.id);
-        return updated;
-      });
-      
       console.log('Successfully added new event:', newEvent);
+      
+      await refreshEvents();
+      
       return newEvent;
     } catch (error) {
       console.error('Error adding new event:', error);
