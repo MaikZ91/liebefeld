@@ -14,7 +14,7 @@ import FormFooter from './event-form/FormFooter';
 
 interface EventFormProps {
   selectedDate: Date;
-  onAddEvent: (event: Omit<Event, 'id'> & { id?: string }) => Promise<Event>;
+  onAddEvent: (event: Omit<Event, 'id'> & { id?: string }) => void;
   onCancel?: () => void;
 }
 
@@ -268,28 +268,70 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         link: url || undefined
       };
       
-      try {
-        const addedEvent = await onAddEvent(newEvent);
+      console.log('Attempting to insert event:', newEvent);
+      const { data, error: supabaseError } = await supabase
+        .from('community_events')
+        .insert([newEvent])
+        .select();
+      
+      if (supabaseError) {
+        console.error('Supabase error when inserting event:', supabaseError);
+        throw new Error(supabaseError.message || 'Fehler beim Speichern des Events');
+      }
+      
+      if (data && data[0]) {
+        console.log('Event successfully inserted:', data[0]);
+        const eventId = data[0].id;
+        
+        let imageUrls: string[] = [];
+        if (images.length > 0) {
+          try {
+            toast({
+              title: "Bilder werden hochgeladen",
+              description: `${images.length} Bilder werden hochgeladen...`,
+            });
+            
+            imageUrls = await uploadImagesToSupabase(eventId);
+            
+            if (imageUrls.length > 0) {
+              console.log('Updating event with image URLs:', imageUrls);
+              const { error: updateError } = await supabase
+                .from('community_events')
+                .update({ 
+                  image_urls: imageUrls 
+                })
+                .eq('id', eventId);
+              
+              if (updateError) {
+                console.error('Error updating event with image URLs:', updateError);
+              } else {
+                console.log('Successfully updated event with image URLs');
+              }
+            }
+          } catch (uploadError) {
+            console.error('Error uploading images:', uploadError);
+            toast({
+              title: "Bildupload Fehler",
+              description: "Es gab ein Problem beim Hochladen der Bilder. Das Event wurde trotzdem erstellt.",
+              variant: "destructive"
+            });
+          }
+        }
+        
+        onAddEvent({
+          ...newEvent,
+          id: data[0].id,
+          image_urls: imageUrls.length > 0 ? imageUrls : undefined
+        });
         
         toast({
           title: "Event erstellt",
-          description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt."
+          description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`
         });
         
         resetForm();
         
         if (onCancel) onCancel();
-      } catch (err) {
-        console.error('Error adding event:', err);
-        
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("Das Event konnte nicht hinzugefügt werden. Bitte versuche es erneut.");
-        }
-        
-        setIsSubmitting(false);
-        return;
       }
     } catch (err) {
       console.error('Error adding event:', err);
@@ -299,8 +341,29 @@ const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCance
         errorMessage = errorMessage + " Fehler: " + err.message;
       }
       
+      const eventData = {
+        title,
+        description,
+        date: format(date, 'yyyy-MM-dd'),
+        time,
+        location,
+        organizer,
+        category: category || 'Sonstiges',
+        image_urls: [],
+        link: url || undefined,
+      };
+      
+      const userAddedEvent: Omit<Event, 'id'> & { id: string } = {
+        ...eventData,
+        id: "local-" + Date.now()
+      };
+      
+      onAddEvent(userAddedEvent);
+      
+      if (onCancel) onCancel();
+      
       toast({
-        title: "Fehler beim Erstellen des Events",
+        title: "Event wurde lokal hinzugefügt",
         description: errorMessage,
         variant: "destructive"
       });
