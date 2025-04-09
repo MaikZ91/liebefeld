@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, Send, RefreshCw } from 'lucide-react';
@@ -7,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ChatMessage from './ChatMessage';
 import EventMessageFormatter from './EventMessageFormatter';
 import { getInitials } from '@/utils/chatUIUtils';
-import { USERNAME_KEY, AVATAR_KEY, EventShare, TypingUser } from '@/types/chatTypes';
+import { USERNAME_KEY, AVATAR_KEY, TypingUser } from '@/types/chatTypes';
 
 interface Message {
   id: string;
@@ -16,7 +17,6 @@ interface Message {
   user_name: string;
   user_avatar: string;
   group_id: string;
-  event_share: EventShare | null;
 }
 
 interface ChatGroupProps {
@@ -67,22 +67,14 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         if (error) {
           setError(error.message);
         } else {
-          const formattedMessages: Message[] = (data || []).map(msg => {
-            let eventShare: EventShare | null = null;
-            if (msg.event_share && typeof msg.event_share === 'object') {
-              eventShare = msg.event_share as EventShare;
-            }
-            
-            return {
-              id: msg.id,
-              created_at: msg.created_at,
-              content: msg.text,
-              user_name: msg.sender,
-              user_avatar: msg.avatar || '',
-              group_id: msg.group_id,
-              event_share: eventShare
-            };
-          });
+          const formattedMessages: Message[] = (data || []).map(msg => ({
+            id: msg.id,
+            created_at: msg.created_at,
+            content: msg.text,
+            user_name: msg.sender,
+            user_avatar: msg.avatar || '',
+            group_id: msg.group_id,
+          }));
           
           setMessages(formattedMessages);
           setLastSeen(new Date());
@@ -105,12 +97,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
       .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, (payload) => {
         if (payload.new && payload.eventType === 'INSERT') {
           const newPayload = payload.new as any;
-          if (newPayload && newPayload.group_id === groupId) {
-            let eventShare: EventShare | null = null;
-            if (newPayload.event_share && typeof newPayload.event_share === 'object') {
-              eventShare = newPayload.event_share as EventShare;
-            }
-            
+          if (newPayload && newPayload.group_id === groupId) {            
             const newMsg: Message = {
               id: newPayload.id,
               created_at: newPayload.created_at,
@@ -118,7 +105,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
               user_name: newPayload.sender,
               user_avatar: newPayload.avatar || '',
               group_id: newPayload.group_id,
-              event_share: eventShare
             };
             
             setMessages((oldMessages) => [...oldMessages, newMsg]);
@@ -203,7 +189,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
           user_name: data[0].sender,
           user_avatar: data[0].avatar || '',
           group_id: data[0].group_id,
-          event_share: null
         };
         
         setMessages(prevMessages => [...prevMessages, newMsg]);
@@ -280,7 +265,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         {error && <div className="text-center text-red-500">Error: {error}</div>}
 
         {messages.map((message, index) => {
-          const isEventShare = message.event_share !== null && typeof message.event_share === 'object';
           const isConsecutive = index > 0 && messages[index - 1].user_name === message.user_name;
           const timeAgo = formatTime(message.created_at);
 
@@ -297,11 +281,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
                 </div>
               )}
               <div className="ml-8">
-                {isEventShare ? (
-                  <EventMessageFormatter event={message.event_share as EventShare} />
-                ) : (
-                  <div className="text-sm text-white">{message.content}</div>
-                )}
+                <div className="text-sm text-white">{message.content}</div>
               </div>
             </div>
           );

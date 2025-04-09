@@ -349,7 +349,7 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
           {username ? (
             <>
               <div className="flex items-center justify-between mb-2 gap-2">
-                {/* Single Group selection dropdown for mobile */}
+                {/* Single Group selection dropdown for mobile - just one button */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button className="bg-red-500 text-white hover:bg-red-600 flex-grow">
