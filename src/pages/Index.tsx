@@ -1,15 +1,15 @@
+
 import React, { useEffect, useState, useRef } from 'react';
-import EventCalendar, { Event } from '@/components/EventCalendar';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
 import EventChatBot from '@/components/EventChatBot';
 import InstagramFeed from '@/components/InstagramFeed';
 import CommunityTest from '@/components/CommunityTest';
+import CalendarWithChat from '@/components/CalendarWithChat';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { QrCode } from 'lucide-react';
 import { EventProvider, useEventContext } from '@/contexts/EventContext';
-import { useToast } from '@/hooks/use-toast';
 
 const LiveTickerWrapper = () => {
   const tickerRef = useRef<HTMLDivElement>(null);
@@ -106,7 +106,6 @@ const Index = () => {
   const [animationComplete, setAnimationComplete] = useState(false);
   const [showSubtitle, setShowSubtitle] = useState(true);
   const [titleAnimating, setTitleAnimating] = useState(true);
-  const buttonRef = useRef<HTMLButtonElement>(null);
   const WHATSAPP_URL = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
   
   useEffect(() => {
@@ -232,7 +231,7 @@ const Index = () => {
         
         <EventProvider>
           <div className="bg-[#F1F0FB] dark:bg-[#3A2A1E] py-3 rounded-t-lg shadow-inner">
-            <EventCalendar defaultView="list" />
+            <CalendarWithChat defaultView="list" />
           </div>
           
           <EventChatBot />
