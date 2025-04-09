@@ -1,11 +1,47 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import EventCalendar from './EventCalendar';
 import GroupChat from './GroupChat';
 import { Button } from '@/components/ui/button';
 import { useEventContext } from '@/contexts/EventContext';
-import { X, MessageSquare, Calendar } from 'lucide-react';
+import { X, MessageSquare, Calendar, Users, Clock, Loader2, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase, type ChatMessage } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { toast } from '@/hooks/use-toast';
+import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+
+type ChatGroup = {
+  id: string;
+  name: string;
+  description: string;
+  created_by: string;
+  created_at: string;
+}
+
+type TypingUser = {
+  username: string;
+  avatar?: string;
+  lastTyped: Date;
+}
+
+const getInitials = (name: string) => {
+  return name
+    .split(' ')
+    .map(part => part.charAt(0))
+    .join('')
+    .toUpperCase();
+};
+
+const getRandomAvatar = () => {
+  const seed = Math.random().toString(36).substring(2, 8);
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+};
+
+const USERNAME_KEY = "community_chat_username";
+const AVATAR_KEY = "community_chat_avatar";
 
 interface CalendarWithChatProps {
   defaultView?: "calendar" | "list";
@@ -15,6 +51,86 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [activeMobileView, setActiveMobileView] = useState<'calendar' | 'chat'>('chat');
   const { events } = useEventContext();
+  
+  const [activeGroup, setActiveGroup] = useState<string>("");
+  const [groups, setGroups] = useState<ChatGroup[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [username, setUsername] = useState<string>(() => {
+    return localStorage.getItem(USERNAME_KEY) || "";
+  });
+  const [tempUsername, setTempUsername] = useState("");
+  const [isUsernameModalOpen, setIsUsernameModalOpen] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<Record<string, TypingUser[]>>({});
+
+  useEffect(() => {
+    if (!username) {
+      setIsUsernameModalOpen(true);
+    } else if (!localStorage.getItem(AVATAR_KEY)) {
+      const userAvatar = getRandomAvatar();
+      localStorage.setItem(AVATAR_KEY, userAvatar);
+    }
+  }, [username]);
+
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('chat_groups')
+          .select('*')
+          .order('created_at', { ascending: true })
+          .not('name', 'eq', 'LiebefeldBot');
+        
+        if (error) {
+          throw error;
+        }
+
+        setGroups(data);
+        if (data && data.length > 0 && !activeGroup) {
+          setActiveGroup(data[0].id);
+        }
+      } catch (error) {
+        console.error('Error fetching groups:', error);
+        toast({
+          title: "Fehler beim Laden der Gruppen",
+          description: "Die Gruppen konnten nicht geladen werden.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchGroups();
+  }, [activeGroup]);
+
+  const saveUsername = () => {
+    if (tempUsername.trim()) {
+      setUsername(tempUsername);
+      localStorage.setItem(USERNAME_KEY, tempUsername);
+      
+      const userAvatar = getRandomAvatar();
+      localStorage.setItem(AVATAR_KEY, userAvatar);
+      
+      setIsUsernameModalOpen(false);
+      
+      toast({
+        title: "Willkommen " + tempUsername + "!",
+        description: "Du kannst jetzt in den Gruppen chatten.",
+        variant: "success"
+      });
+    }
+  };
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-[400px] bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-lg font-medium">Lade Gruppen...</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="w-full">
@@ -51,11 +167,48 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
           "transition-all duration-300 overflow-hidden",
           showCalendar ? "w-2/3" : "w-full"
         )}>
-          <div className="mb-2">
-            <h2 className="text-lg font-bold">Community Chat</h2>
-          </div>
-          <div className="h-[calc(100%-2rem)] border rounded-lg overflow-hidden">
-            <GroupChat compact={false} />
+          <div className="mb-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">Community Chat</h2>
+              
+              {username && (
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={localStorage.getItem(AVATAR_KEY) || undefined} alt={username} />
+                    <AvatarFallback>{getInitials(username)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="text-sm font-medium">{username}</div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setIsUsernameModalOpen(true)}
+                      className="p-0 h-auto text-xs text-muted-foreground"
+                    >
+                      Ändern
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <Tabs value={activeGroup} onValueChange={setActiveGroup} className="w-full mt-2">
+              <TabsList className="mb-2">
+                {groups.map((group) => (
+                  <TabsTrigger key={group.id} value={group.id}>
+                    {group.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              
+              {groups.map((group) => (
+                <TabsContent key={group.id} value={group.id} className="border rounded-lg overflow-hidden">
+                  <div className="h-[calc(100vh-320px)] min-h-[400px]">
+                    <GroupChat compact={false} groupId={group.id} groupName={group.name} />
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
           </div>
         </div>
       </div>
@@ -94,9 +247,67 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
           "flex-grow transition-all duration-300 overflow-hidden",
           activeMobileView === 'chat' ? 'block' : 'hidden'
         )}>
-          <GroupChat compact={false} />
+          {username ? (
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <Tabs value={activeGroup} onValueChange={setActiveGroup} className="w-full">
+                  <TabsList className="mb-2">
+                    {groups.map((group) => (
+                      <TabsTrigger key={group.id} value={group.id}>
+                        {group.name}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+                
+                <Avatar className="h-8 w-8 ml-2" onClick={() => setIsUsernameModalOpen(true)}>
+                  <AvatarImage src={localStorage.getItem(AVATAR_KEY) || undefined} alt={username} />
+                  <AvatarFallback>{getInitials(username)}</AvatarFallback>
+                </Avatar>
+              </div>
+              
+              {groups.map((group) => (
+                <div 
+                  key={group.id} 
+                  className={cn(
+                    "h-[calc(100vh-280px)] min-h-[400px] border rounded-lg overflow-hidden",
+                    activeGroup === group.id ? 'block' : 'hidden'
+                  )}
+                >
+                  <GroupChat compact={false} groupId={group.id} groupName={group.name} />
+                </div>
+              ))}
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full">
+              <p className="mb-4 text-center">Bitte erstelle einen Benutzernamen, um am Chat teilzunehmen</p>
+              <Button onClick={() => setIsUsernameModalOpen(true)}>
+                Benutzernamen erstellen
+              </Button>
+            </div>
+          )}
         </div>
       </div>
+      
+      <Drawer open={isUsernameModalOpen} onOpenChange={setIsUsernameModalOpen}>
+        <DrawerContent className="p-4 sm:p-6">
+          <DrawerHeader>
+            <DrawerTitle>Wähle deinen Benutzernamen</DrawerTitle>
+            <DrawerDescription>Dieser Name wird in den Gruppenchats angezeigt.</DrawerDescription>
+          </DrawerHeader>
+          <div className="space-y-4 py-4">
+            <Input 
+              placeholder="Dein Benutzername" 
+              value={tempUsername} 
+              onChange={(e) => setTempUsername(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && saveUsername()}
+            />
+            <Button onClick={saveUsername} disabled={!tempUsername.trim()} className="w-full">
+              Speichern
+            </Button>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };
