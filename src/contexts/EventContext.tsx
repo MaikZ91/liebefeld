@@ -89,33 +89,40 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       await syncGitHubEvents(externalEvents);
       
-      const combinedEvents = [...supabaseEvents];
+      const supabaseEventsMap = new Map<string, Event>();
+      supabaseEvents.forEach(event => {
+        supabaseEventsMap.set(event.id, event);
+      });
+      
+      const combinedEvents: Event[] = [...supabaseEvents];
       
       const newEvents: Event[] = [];
       const currentEventIds: string[] = [];
       
-      [...supabaseEvents, ...externalEvents].forEach(event => {
+      supabaseEvents.forEach(event => {
         currentEventIds.push(event.id);
       });
       
-      const newEventIdsSet = new Set<string>();
-      
-      externalEvents.forEach(extEvent => {
-        if (!combinedEvents.some(event => event.id === extEvent.id)) {
+      externalEvents.forEach(event => {
+        currentEventIds.push(event.id);
+        
+        if (!supabaseEventsMap.has(event.id)) {
           combinedEvents.push({
-            ...extEvent,
-            likes: typeof likesMap[extEvent.id] === 'number' ? likesMap[extEvent.id] : 0,
-            rsvp_yes: githubLikes[extEvent.id]?.rsvp_yes || 0,
-            rsvp_no: githubLikes[extEvent.id]?.rsvp_no || 0,
-            rsvp_maybe: githubLikes[extEvent.id]?.rsvp_maybe || 0
+            ...event,
+            likes: typeof likesMap[event.id] === 'number' ? likesMap[event.id] : 0,
+            rsvp_yes: githubLikes[event.id]?.rsvp_yes || 0,
+            rsvp_no: githubLikes[event.id]?.rsvp_no || 0,
+            rsvp_maybe: githubLikes[event.id]?.rsvp_maybe || 0
           });
           
-          if (!previouslySeenSet.has(extEvent.id)) {
-            newEvents.push(extEvent);
-            newEventIdsSet.add(extEvent.id);
+          if (!previouslySeenSet.has(event.id)) {
+            newEvents.push(event);
+            newEventIdsSet.add(event.id);
           }
         }
       });
+      
+      const newEventIdsSet = new Set<string>();
       
       const jamesLegEvent = combinedEvents.find(e => e.title.includes("James Leg"));
       if (jamesLegEvent) {
@@ -374,9 +381,28 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     try {
       console.log('Adding new user event:', eventData);
       
+      const isDuplicate = events.some(
+        existingEvent => 
+          existingEvent.title === eventData.title && 
+          existingEvent.date === eventData.date &&
+          !existingEvent.id.startsWith('local-')
+      );
+      
+      if (isDuplicate) {
+        console.warn('Attempted to add duplicate event:', eventData.title);
+        throw new Error(`Ein Event mit dem Titel "${eventData.title}" existiert bereits an diesem Datum.`);
+      }
+      
       const newEvent = await addNewEvent(eventData);
       
-      setEvents(prev => [...prev, newEvent]);
+      setEvents(prev => {
+        const eventExists = prev.some(e => e.id === newEvent.id);
+        if (eventExists) {
+          console.log(`Event with ID ${newEvent.id} already exists in state, not adding again`);
+          return prev;
+        }
+        return [...prev, newEvent];
+      });
       
       setNewEventIds(prev => {
         const updated = new Set(prev);

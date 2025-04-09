@@ -302,6 +302,20 @@ export const addNewEvent = async (newEvent: Omit<Event, 'id'>): Promise<Event> =
   try {
     console.log('Adding new event to database:', newEvent);
     
+    // Check if similar event already exists in the database
+    const { data: existingEvents, error: checkError } = await supabase
+      .from('community_events')
+      .select('*')
+      .eq('title', newEvent.title)
+      .eq('date', newEvent.date);
+    
+    if (checkError) {
+      console.error('Error checking for existing events:', checkError);
+    } else if (existingEvents && existingEvents.length > 0) {
+      console.warn('Found existing event with same title and date:', existingEvents[0]);
+      throw new Error(`Ein Event mit dem Titel "${newEvent.title}" existiert bereits an diesem Datum.`);
+    }
+    
     // Insert the event into Supabase
     const { data, error } = await supabase
       .from('community_events')
@@ -350,6 +364,10 @@ export const addNewEvent = async (newEvent: Omit<Event, 'id'>): Promise<Event> =
     };
   } catch (error) {
     console.error('Error adding event:', error);
+    
+    if (error instanceof Error) {
+      throw error;
+    }
     
     // Create a local ID as fallback
     const localId = `local-${Math.random().toString(36).substring(2, 9)}`;
