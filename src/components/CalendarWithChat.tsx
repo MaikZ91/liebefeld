@@ -4,14 +4,15 @@ import EventCalendar from './EventCalendar';
 import GroupChat from './GroupChat';
 import { Button } from '@/components/ui/button';
 import { useEventContext } from '@/contexts/EventContext';
-import { X, MessageSquare, Users, Loader2, ChevronDown } from 'lucide-react';
+import { X, MessageSquare, Users, Loader2, ChevronDown, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { toast } from '@/hooks/use-toast';
 import UsernameDialog from './chat/UsernameDialog';
-import { ChatGroup, GROUP_CATEGORIES, USERNAME_KEY, AVATAR_KEY, TypingUser } from '@/types/chatTypes';
+import { ChatGroup, GROUP_CATEGORIES, USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
 import { getInitials, getCategoryColor } from '@/utils/chatUIUtils';
 import { 
   DropdownMenu,
@@ -44,9 +45,12 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
     return localStorage.getItem(USERNAME_KEY) || "";
   });
   const [isUsernameModalOpen, setIsUsernameModalOpen] = useState(false);
-  const [typingUsers, setTypingUsers] = useState<Record<string, TypingUser[]>>({});
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isGroupsOpen, setIsGroupsOpen] = useState(true);
+  const [newMessages, setNewMessages] = useState(0);
+  const [newEvents, setNewEvents] = useState(0);
+  const lastCheckedMessages = useRef(new Date());
+  const lastCheckedEvents = useRef(new Date());
 
   useEffect(() => {
     if (!username) {
@@ -54,6 +58,62 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
     } else if (!localStorage.getItem(AVATAR_KEY)) {
       localStorage.setItem(AVATAR_KEY, getInitials(username));
     }
+  }, [username]);
+
+  // Check for new events
+  useEffect(() => {
+    if (events.length > 0) {
+      const recentEvents = events.filter(event => 
+        new Date(event.created_at) > lastCheckedEvents.current
+      );
+      setNewEvents(recentEvents.length);
+    }
+  }, [events]);
+
+  // Check for new messages
+  useEffect(() => {
+    const fetchUnreadMessages = async () => {
+      if (!username) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .gt('created_at', lastCheckedMessages.current.toISOString())
+          .not('sender', 'eq', username);
+        
+        if (error) {
+          console.error('Error fetching unread messages:', error);
+          return;
+        }
+        
+        if (data && data.length > 0) {
+          setNewMessages(data.length);
+        }
+      } catch (error) {
+        console.error('Error checking for new messages:', error);
+      }
+    };
+
+    fetchUnreadMessages();
+    
+    // Subscribe to real-time messages
+    const messagesChannel = supabase
+      .channel('public:chat_messages')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages'
+      }, (payload) => {
+        if (payload.new && payload.new.sender !== username) {
+          setNewMessages(prev => prev + 1);
+        }
+      })
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(messagesChannel);
+    };
   }, [username]);
 
   useEffect(() => {
@@ -104,6 +164,19 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
     setActiveGroup(""); // Reset active group when changing category
   };
   
+  const handleClickCalendar = () => {
+    setActiveMobileView('calendar');
+    setNewEvents(0);
+    lastCheckedEvents.current = new Date();
+  };
+  
+  const handleClickChat = () => {
+    setActiveMobileView('chat');
+    setShowChat(true);
+    setNewMessages(0);
+    lastCheckedMessages.current = new Date();
+  };
+  
   if (isLoading) {
     return (
       <div className="min-h-[400px] bg-black text-white flex items-center justify-center">
@@ -127,10 +200,15 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
             <h2 className="text-lg font-bold text-white bg-red-500 rounded-full px-4 py-1">Kalender</h2>
             {!showChat && (
               <Button 
-                onClick={() => setShowChat(true)} 
-                className="flex items-center gap-2 bg-white text-black hover:bg-gray-200 shadow-lg"
+                onClick={handleClickChat} 
+                className="flex items-center gap-2 bg-white text-black hover:bg-gray-200 shadow-lg relative"
               >
                 <span>Community Chat</span>
+                {newMessages > 0 && (
+                  <Badge className="absolute -top-2 -right-2 bg-red-500 text-white">
+                    {newMessages}
+                  </Badge>
+                )}
               </Button>
             )}
           </div>
@@ -251,11 +329,16 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
           </div>
         ) : (
           <Button 
-            onClick={() => setShowChat(true)} 
-            className="fixed right-4 bottom-20 bg-white text-black hover:bg-gray-200 rounded-full shadow-lg"
+            onClick={handleClickChat} 
+            className="fixed right-4 bottom-20 bg-white text-black hover:bg-gray-200 rounded-full shadow-lg relative"
             size="icon"
           >
             <MessageSquare className="h-5 w-5" />
+            {newMessages > 0 && (
+              <Badge className="absolute -top-2 -right-2 bg-red-500 text-white">
+                {newMessages}
+              </Badge>
+            )}
           </Button>
         )}
       </div>
@@ -266,23 +349,35 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
           <div className="inline-flex rounded-md shadow-sm w-full" role="group">
             <Button
               variant={activeMobileView === 'calendar' ? 'default' : 'outline'} 
-              onClick={() => setActiveMobileView('calendar')}
+              onClick={handleClickCalendar}
               className={cn(
-                "rounded-l-md rounded-r-none flex-1",
+                "rounded-l-md rounded-r-none flex-1 relative",
                 activeMobileView === 'calendar' ? "bg-white text-black" : "bg-gray-800 text-white border-gray-700"
               )}
             >
+              <Calendar className="mr-2 h-4 w-4" />
               Kalender
+              {newEvents > 0 && (
+                <Badge className="absolute -top-2 -right-2 bg-red-500 text-white">
+                  {newEvents}
+                </Badge>
+              )}
             </Button>
             <Button
               variant={activeMobileView === 'chat' ? 'default' : 'outline'} 
-              onClick={() => setActiveMobileView('chat')}
+              onClick={handleClickChat}
               className={cn(
-                "rounded-r-md rounded-l-none flex-1",
+                "rounded-r-md rounded-l-none flex-1 relative",
                 activeMobileView === 'chat' ? "bg-white text-black" : "bg-gray-800 text-white border-gray-700"
               )}
             >
+              <MessageSquare className="mr-2 h-4 w-4" />
               Community
+              {newMessages > 0 && activeMobileView !== 'chat' && (
+                <Badge className="absolute -top-2 -right-2 bg-red-500 text-white">
+                  {newMessages}
+                </Badge>
+              )}
             </Button>
           </div>
         </div>

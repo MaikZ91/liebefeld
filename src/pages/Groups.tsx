@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -287,11 +286,9 @@ const Groups = () => {
             
             {groups.map((group) => (
               <TabsContent key={group.id} value={group.id}>
-                <ChatGroupComponent
-                  group={group}
-                  username={username}
-                  messages={messages[group.id] || []}
-                  typingUsers={typingUsers[group.id] || []}
+                <ChatGroupComponent 
+                  groupId={group.id}
+                  groupName={group.name}
                 />
               </TabsContent>
             ))}

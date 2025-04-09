@@ -24,6 +24,16 @@ export type EventShare = {
   category: string;
 }
 
+export interface Message {
+  id: string;
+  created_at: string;
+  content: string;
+  user_name: string;
+  user_avatar: string;
+  group_id: string;
+  event_share?: EventShare | null;
+}
+
 export const EMOJI_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
 export const USERNAME_KEY = "community_chat_username";

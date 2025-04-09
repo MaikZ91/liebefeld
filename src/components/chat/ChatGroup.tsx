@@ -1,29 +1,20 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, Send, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ChatMessage } from './ChatMessage';
-import { MessageInput } from './MessageInput';
+import ChatMessage from './ChatMessage';
+import MessageInput from './MessageInput';
 import { EventMessageFormatter } from './EventMessageFormatter';
 import { getInitials } from '@/utils/chatUIUtils';
-import { USERNAME_KEY, AVATAR_KEY, EventShare, TypingUser } from '@/types/chatTypes';
+import { USERNAME_KEY, AVATAR_KEY, EventShare, TypingUser, Message } from '@/types/chatTypes';
 
 interface ChatGroupProps {
   groupId: string;
   groupName: string;
   compact?: boolean;
-}
-
-interface Message {
-  id: string;
-  created_at: string;
-  content: string;
-  user_name: string;
-  user_avatar: string;
-  group_id: string;
-  event_share?: EventShare | null;
 }
 
 const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = false }) => {
@@ -60,7 +51,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
       setLoading(true);
       try {
         const { data, error } = await supabase
-          .from('messages')
+          .from('chat_messages')
           .select('*')
           .eq('group_id', groupId)
           .order('created_at', { ascending: true });
@@ -68,7 +59,18 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         if (error) {
           setError(error.message);
         } else {
-          setMessages(data || []);
+          // Transform the data to match our Message type
+          const formattedMessages: Message[] = (data || []).map(msg => ({
+            id: msg.id,
+            created_at: msg.created_at,
+            content: msg.text,
+            user_name: msg.sender,
+            user_avatar: msg.avatar || '',
+            group_id: msg.group_id,
+            event_share: msg.event_share
+          }));
+          
+          setMessages(formattedMessages);
           setLastSeen(new Date());
         }
       } catch (err: any) {
@@ -86,9 +88,20 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
 
     const channel = supabase
       .channel(`group_chat:${groupId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, (payload) => {
-        if (payload.new) {
-          setMessages((oldMessages) => [...oldMessages, payload.new as Message]);
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, (payload) => {
+        if (payload.new && payload.new.group_id === groupId) {
+          // Transform to our Message type
+          const newMsg: Message = {
+            id: payload.new.id,
+            created_at: payload.new.created_at,
+            content: payload.new.text,
+            user_name: payload.new.sender,
+            user_avatar: payload.new.avatar || '',
+            group_id: payload.new.group_id,
+            event_share: payload.new.event_share
+          };
+          
+          setMessages((oldMessages) => [...oldMessages, newMsg]);
           setLastSeen(new Date());
         }
       })
@@ -148,21 +161,31 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
 
     try {
       const { data, error } = await supabase
-        .from('messages')
+        .from('chat_messages')
         .insert([{
-          content: trimmedMessage,
-          user_name: username,
-          user_avatar: avatar,
+          text: trimmedMessage,
+          sender: username,
+          avatar: avatar,
           group_id: groupId,
         }])
-        .select()
-        .single();
+        .select();
 
       if (error) {
         console.error('Error sending message:', error);
         setError(error.message);
-      } else {
-        setMessages(prevMessages => [...prevMessages, data]);
+      } else if (data && data.length > 0) {
+        // Transform to our Message type
+        const newMsg: Message = {
+          id: data[0].id,
+          created_at: data[0].created_at,
+          content: data[0].text,
+          user_name: data[0].sender,
+          user_avatar: data[0].avatar || '',
+          group_id: data[0].group_id,
+          event_share: data[0].event_share
+        };
+        
+        setMessages(prevMessages => [...prevMessages, newMsg]);
         setLastSeen(new Date());
         setError(null);
       }
@@ -256,7 +279,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
                 {isEventShare ? (
                   <EventMessageFormatter event={message.event_share as EventShare} />
                 ) : (
-                  <ChatMessage message={message.content} isConsecutive={isConsecutive} />
+                  <div className="text-sm text-white">{message.content}</div>
                 )}
               </div>
             </div>
