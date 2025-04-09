@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
@@ -5,6 +6,7 @@ import EventChatBot from '@/components/EventChatBot';
 import InstagramFeed from '@/components/InstagramFeed';
 import CommunityTest from '@/components/CommunityTest';
 import CalendarWithChat from '@/components/CalendarWithChat';
+import BetaTesterBanner from '@/components/BetaTesterBanner';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { QrCode } from 'lucide-react';
@@ -121,6 +123,7 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col bg-black text-white">
       <CalendarNavbar />
+      <BetaTesterBanner />
       <main className="flex-grow relative">
         <div className="relative w-full h-[55vh] overflow-hidden bg-black">
           <img 
