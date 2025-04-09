@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, Send, RefreshCw } from 'lucide-react';
@@ -68,16 +67,22 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         if (error) {
           setError(error.message);
         } else {
-          // Transform the data to match our Message type
-          const formattedMessages: Message[] = (data || []).map(msg => ({
-            id: msg.id,
-            created_at: msg.created_at,
-            content: msg.text,
-            user_name: msg.sender,
-            user_avatar: msg.avatar || '',
-            group_id: msg.group_id,
-            event_share: msg.event_share as EventShare | null
-          }));
+          const formattedMessages: Message[] = (data || []).map(msg => {
+            let eventShare: EventShare | null = null;
+            if (msg.event_share && typeof msg.event_share === 'object') {
+              eventShare = msg.event_share as EventShare;
+            }
+            
+            return {
+              id: msg.id,
+              created_at: msg.created_at,
+              content: msg.text,
+              user_name: msg.sender,
+              user_avatar: msg.avatar || '',
+              group_id: msg.group_id,
+              event_share: eventShare
+            };
+          });
           
           setMessages(formattedMessages);
           setLastSeen(new Date());
@@ -100,8 +105,12 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
       .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, (payload) => {
         if (payload.new && payload.eventType === 'INSERT') {
           const newPayload = payload.new as any;
-          // Transform to our Message type
           if (newPayload && newPayload.group_id === groupId) {
+            let eventShare: EventShare | null = null;
+            if (newPayload.event_share && typeof newPayload.event_share === 'object') {
+              eventShare = newPayload.event_share as EventShare;
+            }
+            
             const newMsg: Message = {
               id: newPayload.id,
               created_at: newPayload.created_at,
@@ -109,7 +118,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
               user_name: newPayload.sender,
               user_avatar: newPayload.avatar || '',
               group_id: newPayload.group_id,
-              event_share: newPayload.event_share as EventShare | null
+              event_share: eventShare
             };
             
             setMessages((oldMessages) => [...oldMessages, newMsg]);
@@ -187,7 +196,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         console.error('Error sending message:', error);
         setError(error.message);
       } else if (data && data.length > 0) {
-        // Transform to our Message type
         const newMsg: Message = {
           id: data[0].id,
           created_at: data[0].created_at,
@@ -195,7 +203,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
           user_name: data[0].sender,
           user_avatar: data[0].avatar || '',
           group_id: data[0].group_id,
-          event_share: null // New messages won't have event_share by default
+          event_share: null
         };
         
         setMessages(prevMessages => [...prevMessages, newMsg]);

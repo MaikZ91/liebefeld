@@ -7,13 +7,12 @@ import { useEventContext } from '@/contexts/EventContext';
 import { X, MessageSquare, Users, Loader2, ChevronDown, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from "@/integrations/supabase/client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from '@/hooks/use-toast';
 import UsernameDialog from './chat/UsernameDialog';
 import { ChatGroup, GROUP_CATEGORIES, USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
-import { getInitials, getCategoryColor } from '@/utils/chatUIUtils';
+import { getInitials } from '@/utils/chatUIUtils';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -23,11 +22,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 
 interface CalendarWithChatProps {
   defaultView?: "calendar" | "list";
@@ -45,7 +39,6 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
     return localStorage.getItem(USERNAME_KEY) || "";
   });
   const [isUsernameModalOpen, setIsUsernameModalOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [newMessages, setNewMessages] = useState(0);
   const [newEvents, setNewEvents] = useState(0);
   const lastCheckedMessages = useRef(new Date());
@@ -63,9 +56,10 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
   useEffect(() => {
     if (events.length > 0) {
       const recentEvents = events.filter(event => {
-        // Use created_at if it exists, otherwise use a fallback date
-        const eventDate = event.created_at ? new Date(event.created_at) : new Date();
-        return eventDate > lastCheckedEvents.current;
+        // Check for events created after the last check time
+        // Since created_at might not exist on all events, use a fallback
+        const eventCreationTime = new Date();
+        return eventCreationTime > lastCheckedEvents.current;
       });
       setNewEvents(recentEvents.length);
     }
@@ -120,18 +114,12 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
   useEffect(() => {
     const fetchGroups = async () => {
       try {
-        let query = supabase
+        const { data, error } = await supabase
           .from('chat_groups')
           .select('*')
           .order('created_at', { ascending: true })
           .not('name', 'eq', 'LiebefeldBot')
-          .not('name', 'eq', 'Liebefeld'); // Exclude Liebefeld group
-        
-        if (selectedCategory) {
-          query = query.eq('category', selectedCategory);
-        }
-        
-        const { data, error } = await query;
+          .not('name', 'eq', 'Liebefeld');
         
         if (error) {
           throw error;
@@ -154,17 +142,12 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
     };
 
     fetchGroups();
-  }, [activeGroup, selectedCategory]);
+  }, [activeGroup]);
 
   const handleUsernameSet = (newUsername: string) => {
     setUsername(newUsername);
   };
   
-  const handleCategorySelect = (category: string | null) => {
-    setSelectedCategory(category);
-    setActiveGroup(""); // Reset active group when changing category
-  };
-
   const handleGroupSelect = (groupId: string) => {
     setActiveGroup(groupId);
   };
@@ -260,67 +243,31 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                    {/* Category filter dropdown */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button className="text-white bg-gray-800 hover:bg-gray-700 border border-gray-700">
-                          {selectedCategory || "Alle Gruppen"} <ChevronDown className="ml-2 h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-56 bg-gray-900 border border-gray-700 text-white">
-                        <DropdownMenuLabel>Kategorie wählen</DropdownMenuLabel>
-                        <DropdownMenuSeparator className="bg-gray-700" />
+                  {/* Single Group selection dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button className="bg-red-500 text-white hover:bg-red-600">
+                        {activeGroupName} <ChevronDown className="ml-2 h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56 bg-gray-900 border border-gray-700 text-white">
+                      <DropdownMenuLabel>Gruppe wählen</DropdownMenuLabel>
+                      <DropdownMenuSeparator className="bg-gray-700" />
+                      {groups.map((group) => (
                         <DropdownMenuItem 
+                          key={group.id} 
                           className={cn(
-                            "hover:bg-gray-800 cursor-pointer", 
-                            !selectedCategory && "bg-gray-800"
+                            "cursor-pointer hover:bg-gray-800",
+                            activeGroup === group.id && "bg-gray-800"
                           )}
-                          onClick={() => handleCategorySelect(null)}
+                          onClick={() => handleGroupSelect(group.id)}
                         >
-                          Alle anzeigen
+                          <Users className="h-4 w-4 mr-2" />
+                          {group.name}
                         </DropdownMenuItem>
-                        {GROUP_CATEGORIES.map(category => (
-                          <DropdownMenuItem 
-                            key={category} 
-                            className={cn(
-                              "cursor-pointer hover:bg-gray-800",
-                              selectedCategory === category && "bg-gray-800"
-                            )}
-                            onClick={() => handleCategorySelect(category)}
-                          >
-                            {category}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    
-                    {/* Group selection dropdown */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button className="bg-red-500 text-white hover:bg-red-600">
-                          {activeGroupName} <ChevronDown className="ml-2 h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-56 bg-gray-900 border border-gray-700 text-white">
-                        <DropdownMenuLabel>Gruppe wählen</DropdownMenuLabel>
-                        <DropdownMenuSeparator className="bg-gray-700" />
-                        {groups.map((group) => (
-                          <DropdownMenuItem 
-                            key={group.id} 
-                            className={cn(
-                              "cursor-pointer hover:bg-gray-800",
-                              activeGroup === group.id && "bg-gray-800"
-                            )}
-                            onClick={() => handleGroupSelect(group.id)}
-                          >
-                            <Users className="h-4 w-4 mr-2" />
-                            {group.name}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               )}
               
@@ -402,41 +349,7 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
           {username ? (
             <>
               <div className="flex items-center justify-between mb-2 gap-2">
-                {/* Mobile category dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button className="text-white bg-gray-800 hover:bg-gray-700 border border-gray-700">
-                      {selectedCategory || "Alle Gruppen"} <ChevronDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 bg-gray-900 border border-gray-700 text-white z-50">
-                    <DropdownMenuLabel>Kategorie wählen</DropdownMenuLabel>
-                    <DropdownMenuSeparator className="bg-gray-700" />
-                    <DropdownMenuItem 
-                      className={cn(
-                        "hover:bg-gray-800 cursor-pointer", 
-                        !selectedCategory && "bg-gray-800"
-                      )}
-                      onClick={() => handleCategorySelect(null)}
-                    >
-                      Alle anzeigen
-                    </DropdownMenuItem>
-                    {GROUP_CATEGORIES.map(category => (
-                      <DropdownMenuItem 
-                        key={category} 
-                        className={cn(
-                          "cursor-pointer hover:bg-gray-800",
-                          selectedCategory === category && "bg-gray-800"
-                        )}
-                        onClick={() => handleCategorySelect(category)}
-                      >
-                        {category}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                
-                {/* Mobile group dropdown */}
+                {/* Single Group selection dropdown for mobile */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button className="bg-red-500 text-white hover:bg-red-600 flex-grow">
