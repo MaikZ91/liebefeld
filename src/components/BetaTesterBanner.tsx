@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { X, Mail } from 'lucide-react';
+import { X, Mail, Download } from 'lucide-react';
 
 const BetaTesterBanner: React.FC = () => {
   const [isVisible, setIsVisible] = useState(true);
@@ -42,20 +42,21 @@ const BetaTesterBanner: React.FC = () => {
           href="https://drive.google.com/uc?export=download&id=1Fn3mG9AT4dEPKR37nfVt6IdyIbukeWJr" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="inline-flex items-center animate-bounce-slow"
+          className="inline-flex items-center"
         >
           <Button 
-            className="bg-[#a4c639] hover:bg-[#8baa30] text-white rounded-full h-8 px-3 flex items-center justify-center shadow-md hover:shadow-lg transition-all gap-1 text-xs relative overflow-hidden"
+            className="bg-[#F97316] hover:bg-[#ea580c] text-white rounded-full h-9 px-4 flex items-center justify-center shadow-lg hover:shadow-xl transition-all gap-1.5 text-xs sm:text-sm scale-105 relative overflow-hidden border-2 border-white/40"
             size="sm"
           >
-            <span className="absolute inset-0 bg-white/20 animate-pulse opacity-0 hover:opacity-100 transition-opacity"></span>
+            <span className="absolute inset-0 bg-white/20 opacity-0 hover:opacity-100 transition-opacity"></span>
             <img 
               src="/lovable-uploads/4a08308d-0a6d-4114-b820-f511ce7d7a65.png" 
               alt="Android App" 
-              className="h-5 w-5"
+              className="h-5 w-5 animate-pulse-soft"
             />
-            <span className="hidden sm:inline">Für Android herunterladen</span>
-            <span className="sm:hidden">Download</span>
+            <span className="hidden sm:inline font-bold">Für Android herunterladen</span>
+            <span className="sm:hidden font-bold">Download</span>
+            <Download className="h-4 w-4 animate-bounce-slow" />
           </Button>
         </a>
       </div>
