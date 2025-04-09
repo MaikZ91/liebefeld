@@ -106,7 +106,16 @@ export const fetchGitHubLikes = async (): Promise<Record<string, any>> => {
 export const fetchExternalEvents = async (eventLikes: Record<string, number>): Promise<Event[]> => {
   try {
     console.log(`Attempting to fetch events from: ${EXTERNAL_EVENTS_URL}`);
-    const response = await fetch(EXTERNAL_EVENTS_URL);
+    const response = await fetch(EXTERNAL_EVENTS_URL, {
+      // Add cache-busting parameter to avoid browser cache issues
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      },
+      // Use timestamp to bust cache
+      cache: 'no-store'
+    });
     
     if (!response.ok) {
       console.log(`Fehler beim Laden von ${EXTERNAL_EVENTS_URL}: ${response.status}`);
@@ -115,6 +124,23 @@ export const fetchExternalEvents = async (eventLikes: Record<string, number>): P
     
     const githubEvents: GitHubEvent[] = await response.json();
     console.log(`Successfully loaded ${githubEvents.length} events from ${EXTERNAL_EVENTS_URL}`);
+    
+    // Log all event titles to verify content
+    console.log("Event titles from GitHub:");
+    githubEvents.forEach((event, index) => {
+      console.log(`${index + 1}. ${event.event}`);
+    });
+    
+    // Specifically check for James Leg event
+    const jamesLegEvent = githubEvents.find(event => 
+      event.event && event.event.toLowerCase().includes("james leg")
+    );
+    
+    if (jamesLegEvent) {
+      console.log("Found James Leg event in GitHub events:", jamesLegEvent);
+    } else {
+      console.log("James Leg event NOT found in GitHub events");
+    }
     
     // Transform GitHub events to our format and pass eventLikes to ensure likes are applied
     const transformedEvents = transformGitHubEvents(githubEvents, eventLikes, new Date().getFullYear());

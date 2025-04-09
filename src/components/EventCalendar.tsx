@@ -67,17 +67,38 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   
   // Get events for the current month, favorites, or new events
   const eventsToDisplay = React.useMemo(() => {
+    console.log(`Calculating events to display. showNewEvents: ${showNewEvents}, showFavorites: ${showFavorites}`);
+    console.log(`Total events available: ${events.length}`);
+    
+    // DEBUG: Check if James Leg is in the events array
+    const jamesLegEvent = events.find(event => 
+      event.title && event.title.toLowerCase().includes("james leg")
+    );
+    
+    if (jamesLegEvent) {
+      console.log("Found James Leg event in all events:", jamesLegEvent);
+    } else {
+      console.log("James Leg event NOT found in all events");
+    }
+    
     if (showNewEvents) {
-      return events.filter(event => newEventIds.has(event.id));
+      console.log(`Filtering for new events. New event IDs: ${Array.from(newEventIds).join(', ')}`);
+      const newEventsArray = events.filter(event => event.id && newEventIds.has(event.id));
+      console.log(`Found ${newEventsArray.length} new events`);
+      return newEventsArray;
     } else if (showFavorites) {
       // For favorites, return only the top events for each day that have at least one like
-      return events.filter(event => 
-        event.date && 
+      const favoriteEvents = events.filter(event => 
+        event.date && event.id && 
         topEventsPerDay[event.date] === event.id && 
         (event.likes && event.likes > 0)
       );
+      console.log(`Found ${favoriteEvents.length} favorite events`);
+      return favoriteEvents;
     } else {
-      return getMonthOrFavoriteEvents(events, currentDate, false, eventLikes);
+      const monthEvents = getMonthOrFavoriteEvents(events, currentDate, false, eventLikes);
+      console.log(`Found ${monthEvents.length} events for the current month`);
+      return monthEvents;
     }
   }, [events, currentDate, showFavorites, eventLikes, showNewEvents, newEventIds, topEventsPerDay]);
   
@@ -89,7 +110,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   // Get user's favorite events (top events per day with likes > 0)
   const favoriteEvents = React.useMemo(() => {
     return events.filter(event => 
-      event.date && 
+      event.date && event.id && 
       topEventsPerDay[event.date] === event.id && 
       (event.likes && event.likes > 0)
     );
@@ -168,6 +189,16 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
       setSelectedDate(null);
     }
   }, [filter]);
+
+  // Force a refresh when component mounts
+  useEffect(() => {
+    // Add a slight delay to avoid race conditions
+    const timer = setTimeout(() => {
+      refreshEvents();
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl animate-fade-in">

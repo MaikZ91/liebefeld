@@ -38,12 +38,30 @@ const EventList: React.FC<EventListProps> = ({
     if (!showFavorites) return filteredEvents;
     
     return filteredEvents.filter(event => {
-      if (!event.date) return false;
+      if (!event.date || !event.id) return false;
       
       // Make sure it's a top event and has at least one like
       return topEventsPerDay[event.date] === event.id && (event.likes && event.likes > 0);
     });
   }, [filteredEvents, showFavorites, topEventsPerDay]);
+  
+  // Debug: Log all events to check if James Leg is there
+  useEffect(() => {
+    console.log(`EventList received ${events.length} events:`);
+    events.forEach(event => {
+      console.log(`- ${event.title} (${event.id})`);
+    });
+    
+    const jamesLegEvent = events.find(event => 
+      event.title && event.title.toLowerCase().includes("james leg")
+    );
+    
+    if (jamesLegEvent) {
+      console.log("Found James Leg event:", jamesLegEvent);
+    } else {
+      console.log("James Leg event NOT found in the events list");
+    }
+  }, [events]);
   
   useEffect(() => {
     if (displayEvents.length > 0) {
@@ -67,7 +85,15 @@ const EventList: React.FC<EventListProps> = ({
             return likesB - likesA;
           }
           
-          return a.id.localeCompare(b.id);
+          // If likes are equal and one of the events is new, the non-new one comes first
+          const isANew = newEventIds.has(a.id || '');
+          const isBNew = newEventIds.has(b.id || '');
+          
+          if (isANew !== isBNew) {
+            return isANew ? 1 : -1; // New events come last when likes are equal
+          }
+          
+          return (a.id || '').localeCompare(b.id || '');
         })[0];
         
         setTopTodayEvent(popular);
@@ -76,7 +102,7 @@ const EventList: React.FC<EventListProps> = ({
         setTopTodayEvent(null);
       }
     }
-  }, [displayEvents]);
+  }, [displayEvents, newEventIds]);
   
   const eventsByDate = React.useMemo(() => {
     const grouped = groupEventsByDate(displayEvents);
@@ -92,15 +118,15 @@ const EventList: React.FC<EventListProps> = ({
         }
         
         // Then prioritize old events over new events
-        const isANew = newEventIds.has(a.id);
-        const isBNew = newEventIds.has(b.id);
+        const isANew = a.id ? newEventIds.has(a.id) : false;
+        const isBNew = b.id ? newEventIds.has(b.id) : false;
         
         if (isANew !== isBNew) {
-          return isANew ? 1 : -1; // New events come last
+          return isANew ? 1 : -1; // New events come last when likes are equal
         }
         
         // Finally, sort alphabetically for stable sorting
-        return a.id.localeCompare(b.id);
+        return (a.id || '').localeCompare(b.id || '');
       });
     });
     
@@ -172,7 +198,7 @@ const EventList: React.FC<EventListProps> = ({
           Object.keys(eventsByDate).sort().map(dateStr => {
             const date = parseISO(dateStr);
             const isCurrentDay = isToday(date);
-            const hasNewEvents = eventsByDate[dateStr].some(event => newEventIds.has(event.id));
+            const hasNewEvents = eventsByDate[dateStr].some(event => event.id && newEventIds.has(event.id));
             
             return (
               <div 
@@ -191,6 +217,8 @@ const EventList: React.FC<EventListProps> = ({
                 </h4>
                 <div className="space-y-1">
                   {eventsByDate[dateStr].map(event => {
+                    if (!event.id) return null; // Skip events without ID
+                    
                     const isTopEvent = isCurrentDay && topTodayEvent && event.id === topTodayEvent.id;
                     const isNewEvent = newEventIds.has(event.id);
                     
