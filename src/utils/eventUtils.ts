@@ -1,4 +1,3 @@
-
 import { Event, GitHubEvent } from '../types/eventTypes';
 import { parseAndNormalizeDate, debugDate } from './dateUtils';
 import { format, isSameDay, isSameMonth, startOfDay, isAfter, isBefore, differenceInDays, parseISO, compareAsc } from 'date-fns';
@@ -295,3 +294,58 @@ export const transformGitHubEvents = (
     } as Event;
   });
 };
+
+// Helper to log today's events in console
+export const logTodaysEvents = (events: Event[]) => {
+  const today = format(new Date(), 'yyyy-MM-dd');
+  console.log('===== TODAY\'S EVENTS =====');
+  
+  const todaysEvents = events.filter(event => event.date === today);
+  
+  if (todaysEvents.length === 0) {
+    console.log('No events found for today');
+    return;
+  }
+  
+  // Sort by likes (highest first)
+  const sortedEvents = [...todaysEvents].sort((a, b) => {
+    const likesA = a.likes || 0;
+    const likesB = b.likes || 0;
+    
+    if (likesB !== likesA) {
+      return likesB - likesA;
+    }
+    
+    return a.id.localeCompare(b.id);
+  });
+  
+  console.log(`Found ${sortedEvents.length} events for today (${today}):`);
+  
+  sortedEvents.forEach((event, index) => {
+    console.log(`${index + 1}. ${event.title} (ID: ${event.id})`);
+    console.log(`   Category: ${event.category}, Likes: ${event.likes || 0}`);
+    console.log(`   RSVP: yes=${event.rsvp?.yes || event.rsvp_yes || 0}, no=${event.rsvp?.no || event.rsvp_no || 0}, maybe=${event.rsvp?.maybe || event.rsvp_maybe || 0}`);
+    console.log(`   Origin: ${event.id.startsWith('github-') ? 'GitHub' : (event.id.startsWith('temp-') ? 'Temporary' : 'Database')}`);
+  });
+  
+  console.log('=========================');
+};
+
+// Expose function to window for easy access in browser console
+if (typeof window !== 'undefined') {
+  (window as any).logTodaysEvents = (events?: Event[]) => {
+    if (!events) {
+      // Try to get events from context if available
+      try {
+        const contextModule = require('../contexts/EventContext');
+        const context = contextModule.useEventContext();
+        logTodaysEvents(context.events);
+      } catch (error) {
+        console.error('Could not access events from context. Please provide events as parameter.');
+        console.log('Usage: window.logTodaysEvents(events)');
+      }
+    } else {
+      logTodaysEvents(events);
+    }
+  };
+}

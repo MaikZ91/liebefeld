@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { startOfDay } from 'date-fns';
+import { startOfDay, format } from 'date-fns';
 import { Event, RsvpOption } from '../types/eventTypes';
 import { 
   fetchSupabaseEvents, 
@@ -162,6 +162,17 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           
           return event;
         });
+        
+        const todayStr = format(new Date(), 'yyyy-MM-dd');
+        const todaysEvents = eventsWithSyncedRsvp.filter(event => event.date === todayStr);
+        console.log('===== TODAY\'S EVENTS =====');
+        console.log(`Found ${todaysEvents.length} events for today (${todayStr}):`);
+        todaysEvents.forEach(event => {
+          console.log(`- ${event.title} (ID: ${event.id})`);
+          console.log(`  Category: ${event.category}, Likes: ${event.likes || 0}`);
+          console.log(`  RSVP: yes=${event.rsvp?.yes || event.rsvp_yes || 0}, no=${event.rsvp?.no || event.rsvp_no || 0}, maybe=${event.rsvp?.maybe || event.rsvp_maybe || 0}`);
+        });
+        console.log('=========================');
         
         const topEventsByDay: Record<string, string> = {};
         const eventsByDate: Record<string, Event[]> = {};
