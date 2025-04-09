@@ -7,6 +7,7 @@ export type ChatGroup = {
   description: string;
   created_by: string;
   created_at: string;
+  category?: string; // Added category field
 }
 
 export type TypingUser = {
@@ -27,3 +28,6 @@ export const EMOJI_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"
 
 export const USERNAME_KEY = "community_chat_username";
 export const AVATAR_KEY = "community_chat_avatar";
+
+// Group categories
+export const GROUP_CATEGORIES = ["Ausgehen", "Sport", "Kreativität"];

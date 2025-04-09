@@ -42,10 +42,10 @@ const UsernameDialog: React.FC<UsernameDialogProps> = ({
 
   return (
     <Drawer open={isOpen} onOpenChange={onOpenChange}>
-      <DrawerContent className="p-4 sm:p-6">
+      <DrawerContent className="bg-gray-900 p-4 sm:p-6 border-t border-gray-700">
         <DrawerHeader>
-          <DrawerTitle>Wähle deinen Benutzernamen</DrawerTitle>
-          <DrawerDescription>Dieser Name wird in den Gruppenchats angezeigt.</DrawerDescription>
+          <DrawerTitle className="text-white">Wähle deinen Benutzernamen</DrawerTitle>
+          <DrawerDescription className="text-gray-300">Dieser Name wird in den Gruppenchats angezeigt.</DrawerDescription>
         </DrawerHeader>
         <div className="space-y-4 py-4">
           <Input 
@@ -53,8 +53,9 @@ const UsernameDialog: React.FC<UsernameDialogProps> = ({
             value={tempUsername} 
             onChange={(e) => setTempUsername(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && saveUsername()}
+            className="bg-gray-800 border-gray-700 text-white"
           />
-          <Button onClick={saveUsername} disabled={!tempUsername.trim()} className="w-full">
+          <Button onClick={saveUsername} disabled={!tempUsername.trim()} className="w-full bg-red-500 hover:bg-red-600 text-white">
             Speichern
           </Button>
         </div>

@@ -4,44 +4,29 @@ import EventCalendar from './EventCalendar';
 import GroupChat from './GroupChat';
 import { Button } from '@/components/ui/button';
 import { useEventContext } from '@/contexts/EventContext';
-import { X, MessageSquare, Users, Loader2 } from 'lucide-react';
+import { X, MessageSquare, Users, Loader2, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
 import { toast } from '@/hooks/use-toast';
-import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-
-type ChatGroup = {
-  id: string;
-  name: string;
-  description: string;
-  created_by: string;
-  created_at: string;
-}
-
-type TypingUser = {
-  username: string;
-  avatar?: string;
-  lastTyped: Date;
-}
-
-const getInitials = (name: string) => {
-  return name
-    .split(' ')
-    .map(part => part.charAt(0))
-    .join('')
-    .toUpperCase();
-};
-
-const getRandomAvatar = () => {
-  const seed = Math.random().toString(36).substring(2, 8);
-  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
-};
-
-const USERNAME_KEY = "community_chat_username";
-const AVATAR_KEY = "community_chat_avatar";
+import UsernameDialog from './chat/UsernameDialog';
+import { ChatGroup, GROUP_CATEGORIES, USERNAME_KEY, AVATAR_KEY, TypingUser } from '@/types/chatTypes';
+import { getInitials, getCategoryColor } from '@/utils/chatUIUtils';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface CalendarWithChatProps {
   defaultView?: "calendar" | "list";
@@ -58,28 +43,34 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
   const [username, setUsername] = useState<string>(() => {
     return localStorage.getItem(USERNAME_KEY) || "";
   });
-  const [tempUsername, setTempUsername] = useState("");
   const [isUsernameModalOpen, setIsUsernameModalOpen] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Record<string, TypingUser[]>>({});
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isGroupsOpen, setIsGroupsOpen] = useState(true);
 
   useEffect(() => {
     if (!username) {
       setIsUsernameModalOpen(true);
     } else if (!localStorage.getItem(AVATAR_KEY)) {
-      const userAvatar = getRandomAvatar();
-      localStorage.setItem(AVATAR_KEY, userAvatar);
+      localStorage.setItem(AVATAR_KEY, getInitials(username));
     }
   }, [username]);
 
   useEffect(() => {
     const fetchGroups = async () => {
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('chat_groups')
           .select('*')
           .order('created_at', { ascending: true })
           .not('name', 'eq', 'LiebefeldBot')
           .not('name', 'eq', 'Liebefeld'); // Exclude Liebefeld group
+        
+        if (selectedCategory) {
+          query = query.eq('category', selectedCategory);
+        }
+        
+        const { data, error } = await query;
         
         if (error) {
           throw error;
@@ -102,31 +93,22 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
     };
 
     fetchGroups();
-  }, [activeGroup]);
+  }, [activeGroup, selectedCategory]);
 
-  const saveUsername = () => {
-    if (tempUsername.trim()) {
-      setUsername(tempUsername);
-      localStorage.setItem(USERNAME_KEY, tempUsername);
-      
-      const userAvatar = getRandomAvatar();
-      localStorage.setItem(AVATAR_KEY, userAvatar);
-      
-      setIsUsernameModalOpen(false);
-      
-      toast({
-        title: "Willkommen " + tempUsername + "!",
-        description: "Du kannst jetzt in den Gruppen chatten.",
-        variant: "success"
-      });
-    }
+  const handleUsernameSet = (newUsername: string) => {
+    setUsername(newUsername);
+  };
+  
+  const handleCategorySelect = (category: string | null) => {
+    setSelectedCategory(category);
+    setActiveGroup(""); // Reset active group when changing category
   };
   
   if (isLoading) {
     return (
       <div className="min-h-[400px] bg-black text-white flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-red-500" />
           <p className="text-lg font-medium">Lade Gruppen...</p>
         </div>
       </div>
@@ -142,17 +124,17 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
           showChat ? "w-1/3" : "w-full"
         )}>
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-lg font-bold">Kalender</h2>
+            <h2 className="text-lg font-bold text-white bg-red-500 rounded-full px-4 py-1">Kalender</h2>
             {!showChat && (
               <Button 
                 onClick={() => setShowChat(true)} 
-                className="flex items-center gap-2 bg-primary text-white hover:bg-primary/90"
+                className="flex items-center gap-2 bg-white text-black hover:bg-gray-200 shadow-lg"
               >
                 <span>Community Chat</span>
               </Button>
             )}
           </div>
-          <div className="h-full flex-grow overflow-hidden border rounded-lg">
+          <div className="h-full flex-grow overflow-hidden border border-gray-700 rounded-lg">
             <EventCalendar defaultView={defaultView} />
           </div>
         </div>
@@ -160,12 +142,12 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
         {showChat ? (
           <div className="w-2/3 flex flex-col">
             <div className="flex justify-between items-center mb-2">
-              <h2 className="text-lg font-bold">Community Chat</h2>
+              <h2 className="text-lg font-bold text-white bg-red-500 rounded-full px-4 py-1">Community Chat</h2>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => setShowChat(false)}
-                className="h-8 w-8 p-0"
+                className="h-8 w-8 p-0 bg-gray-800 text-white hover:bg-gray-700"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -175,49 +157,102 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
               {username && (
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
+                    <Avatar className="h-8 w-8 bg-gray-800 border border-gray-700">
                       <AvatarImage src={localStorage.getItem(AVATAR_KEY) || undefined} alt={username} />
-                      <AvatarFallback>{getInitials(username)}</AvatarFallback>
+                      <AvatarFallback className="bg-red-500 text-white">{getInitials(username)}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <div className="text-sm font-medium">{username}</div>
+                      <div className="text-sm font-medium text-white">{username}</div>
                       <Button 
                         variant="ghost" 
                         size="sm" 
                         onClick={() => setIsUsernameModalOpen(true)}
-                        className="p-0 h-auto text-xs text-muted-foreground"
+                        className="p-0 h-auto text-xs text-gray-400 hover:text-white"
                       >
                         Ändern
                       </Button>
                     </div>
                   </div>
+                  
+                  {/* Category filter dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button className="text-white bg-gray-800 hover:bg-gray-700 border border-gray-700">
+                        {selectedCategory || "Alle Gruppen"} <ChevronDown className="ml-2 h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56 bg-gray-900 border border-gray-700 text-white">
+                      <DropdownMenuLabel>Kategorie wählen</DropdownMenuLabel>
+                      <DropdownMenuSeparator className="bg-gray-700" />
+                      <DropdownMenuItem 
+                        className={cn(
+                          "hover:bg-gray-800 cursor-pointer", 
+                          !selectedCategory && "bg-gray-800"
+                        )}
+                        onClick={() => handleCategorySelect(null)}
+                      >
+                        Alle anzeigen
+                      </DropdownMenuItem>
+                      {GROUP_CATEGORIES.map(category => (
+                        <DropdownMenuItem 
+                          key={category} 
+                          className={cn(
+                            "cursor-pointer hover:bg-gray-800",
+                            selectedCategory === category && "bg-gray-800"
+                          )}
+                          onClick={() => handleCategorySelect(category)}
+                        >
+                          {category}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               )}
               
-              <Tabs value={activeGroup} onValueChange={setActiveGroup} className="w-full">
-                <TabsList className="mb-2 w-full h-auto p-1 flex flex-wrap justify-start">
-                  {groups.map((group) => (
-                    <TabsTrigger key={group.id} value={group.id} className="px-4 py-2 flex items-center gap-1">
-                      <Users className="h-4 w-4" />
-                      {group.name}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
+              <Collapsible open={isGroupsOpen} onOpenChange={setIsGroupsOpen} className="space-y-2">
+                <div className="flex items-center justify-between bg-gray-800 p-2 rounded-lg">
+                  <h4 className="text-sm font-semibold text-white pl-2">
+                    {selectedCategory ? selectedCategory : "Alle Gruppen"} ({groups.length})
+                  </h4>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="w-8 h-8 p-0 text-white">
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </CollapsibleTrigger>
+                </div>
                 
-                {groups.map((group) => (
-                  <TabsContent key={group.id} value={group.id} className="border rounded-lg overflow-hidden">
-                    <div className="h-[calc(100vh-320px)] min-h-[400px]">
-                      <GroupChat compact={false} groupId={group.id} groupName={group.name} />
-                    </div>
-                  </TabsContent>
-                ))}
-              </Tabs>
+                <CollapsibleContent>
+                  <Tabs value={activeGroup} onValueChange={setActiveGroup} className="w-full">
+                    <TabsList className="mb-2 w-full h-auto p-1 flex flex-wrap justify-start bg-gray-800 border border-gray-700">
+                      {groups.map((group) => (
+                        <TabsTrigger 
+                          key={group.id} 
+                          value={group.id} 
+                          className="px-4 py-2 flex items-center gap-1 text-white data-[state=active]:bg-red-500 data-[state=active]:text-white"
+                        >
+                          <Users className="h-4 w-4" />
+                          {group.name}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                    
+                    {groups.map((group) => (
+                      <TabsContent key={group.id} value={group.id} className="border border-gray-700 rounded-lg overflow-hidden">
+                        <div className="h-[calc(100vh-320px)] min-h-[400px]">
+                          <GroupChat compact={false} groupId={group.id} groupName={group.name} />
+                        </div>
+                      </TabsContent>
+                    ))}
+                  </Tabs>
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           </div>
         ) : (
           <Button 
             onClick={() => setShowChat(true)} 
-            className="fixed right-4 bottom-20 bg-primary text-white rounded-full shadow-lg"
+            className="fixed right-4 bottom-20 bg-white text-black hover:bg-gray-200 rounded-full shadow-lg"
             size="icon"
           >
             <MessageSquare className="h-5 w-5" />
@@ -232,14 +267,20 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
             <Button
               variant={activeMobileView === 'calendar' ? 'default' : 'outline'} 
               onClick={() => setActiveMobileView('calendar')}
-              className="rounded-l-md rounded-r-none flex-1"
+              className={cn(
+                "rounded-l-md rounded-r-none flex-1",
+                activeMobileView === 'calendar' ? "bg-white text-black" : "bg-gray-800 text-white border-gray-700"
+              )}
             >
               Kalender
             </Button>
             <Button
               variant={activeMobileView === 'chat' ? 'default' : 'outline'} 
               onClick={() => setActiveMobileView('chat')}
-              className="rounded-r-md rounded-l-none flex-1"
+              className={cn(
+                "rounded-r-md rounded-l-none flex-1",
+                activeMobileView === 'chat' ? "bg-white text-black" : "bg-gray-800 text-white border-gray-700"
+              )}
             >
               Community
             </Button>
@@ -260,39 +301,78 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
           {username ? (
             <>
               <div className="flex items-center justify-between mb-2">
-                <Tabs value={activeGroup} onValueChange={setActiveGroup} className="w-full">
-                  <TabsList className="mb-2 w-full h-auto p-1 flex flex-wrap justify-start">
-                    {groups.map((group) => (
-                      <TabsTrigger key={group.id} value={group.id} className="px-4 py-2 flex items-center gap-1">
-                        <Users className="h-4 w-4" />
-                        {group.name}
-                      </TabsTrigger>
+                {/* Mobile category dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button className="text-white bg-gray-800 hover:bg-gray-700 border border-gray-700">
+                      {selectedCategory || "Alle Gruppen"} <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 bg-gray-900 border border-gray-700 text-white">
+                    <DropdownMenuLabel>Kategorie wählen</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-gray-700" />
+                    <DropdownMenuItem 
+                      className={cn(
+                        "hover:bg-gray-800 cursor-pointer", 
+                        !selectedCategory && "bg-gray-800"
+                      )}
+                      onClick={() => handleCategorySelect(null)}
+                    >
+                      Alle anzeigen
+                    </DropdownMenuItem>
+                    {GROUP_CATEGORIES.map(category => (
+                      <DropdownMenuItem 
+                        key={category} 
+                        className={cn(
+                          "cursor-pointer hover:bg-gray-800",
+                          selectedCategory === category && "bg-gray-800"
+                        )}
+                        onClick={() => handleCategorySelect(category)}
+                      >
+                        {category}
+                      </DropdownMenuItem>
                     ))}
-                  </TabsList>
-                </Tabs>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 
-                <Avatar className="h-8 w-8 ml-2" onClick={() => setIsUsernameModalOpen(true)}>
+                <Avatar className="h-8 w-8 ml-2 bg-gray-800 border border-gray-700" onClick={() => setIsUsernameModalOpen(true)}>
                   <AvatarImage src={localStorage.getItem(AVATAR_KEY) || undefined} alt={username} />
-                  <AvatarFallback>{getInitials(username)}</AvatarFallback>
+                  <AvatarFallback className="bg-red-500 text-white">{getInitials(username)}</AvatarFallback>
                 </Avatar>
               </div>
               
-              {groups.map((group) => (
-                <div 
-                  key={group.id} 
-                  className={cn(
-                    "h-[calc(100vh-280px)] min-h-[400px] border rounded-lg overflow-hidden",
-                    activeGroup === group.id ? 'block' : 'hidden'
-                  )}
-                >
-                  <GroupChat compact={false} groupId={group.id} groupName={group.name} />
-                </div>
-              ))}
+              {/* Groups in mobile view */}
+              <Tabs value={activeGroup} onValueChange={setActiveGroup} className="w-full">
+                <TabsList className="mb-2 w-full h-auto p-1 flex flex-wrap justify-start bg-gray-800 border border-gray-700">
+                  {groups.map((group) => (
+                    <TabsTrigger 
+                      key={group.id} 
+                      value={group.id} 
+                      className="px-4 py-2 flex items-center gap-1 text-white data-[state=active]:bg-red-500 data-[state=active]:text-white"
+                    >
+                      <Users className="h-4 w-4" />
+                      {group.name}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                
+                {groups.map((group) => (
+                  <div 
+                    key={group.id} 
+                    className={cn(
+                      "h-[calc(100vh-280px)] min-h-[400px] border border-gray-700 rounded-lg overflow-hidden",
+                      activeGroup === group.id ? 'block' : 'hidden'
+                    )}
+                  >
+                    <GroupChat compact={false} groupId={group.id} groupName={group.name} />
+                  </div>
+                ))}
+              </Tabs>
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full">
+            <div className="flex flex-col items-center justify-center h-full text-white">
               <p className="mb-4 text-center">Bitte erstelle einen Benutzernamen, um am Chat teilzunehmen</p>
-              <Button onClick={() => setIsUsernameModalOpen(true)}>
+              <Button onClick={() => setIsUsernameModalOpen(true)} className="bg-red-500 hover:bg-red-600 text-white">
                 Benutzernamen erstellen
               </Button>
             </div>
@@ -300,25 +380,11 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
         </div>
       </div>
       
-      <Drawer open={isUsernameModalOpen} onOpenChange={setIsUsernameModalOpen}>
-        <DrawerContent className="p-4 sm:p-6">
-          <DrawerHeader>
-            <DrawerTitle>Wähle deinen Benutzernamen</DrawerTitle>
-            <DrawerDescription>Dieser Name wird in den Gruppenchats angezeigt.</DrawerDescription>
-          </DrawerHeader>
-          <div className="space-y-4 py-4">
-            <Input 
-              placeholder="Dein Benutzername" 
-              value={tempUsername} 
-              onChange={(e) => setTempUsername(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && saveUsername()}
-            />
-            <Button onClick={saveUsername} disabled={!tempUsername.trim()} className="w-full">
-              Speichern
-            </Button>
-          </div>
-        </DrawerContent>
-      </Drawer>
+      <UsernameDialog 
+        isOpen={isUsernameModalOpen} 
+        onOpenChange={setIsUsernameModalOpen} 
+        onUsernameSet={handleUsernameSet} 
+      />
     </div>
   );
 };

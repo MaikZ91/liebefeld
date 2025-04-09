@@ -1,290 +1,291 @@
-
-import React, { useState, useRef, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, Input as InputIcon, Search } from 'lucide-react';
-import { Input } from "@/components/ui/input";
-import { useEventContext } from "@/contexts/EventContext";
-import ChatMessage from './ChatMessage';
-import MessageInput from './MessageInput';
-import { format, parseISO } from 'date-fns';
-import { de } from 'date-fns/locale';
-import { supabase, type ChatMessage as ChatMessageType } from "@/integrations/supabase/client";
-import { ChatGroup, TypingUser, USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
+import React, { useState, useEffect, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Users, Send, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ChatMessage } from './ChatMessage';
+import { MessageInput } from './MessageInput';
+import { EventMessageFormatter } from './EventMessageFormatter';
 import { getInitials } from '@/utils/chatUIUtils';
-import { groupFutureEventsByDate } from "@/utils/eventUtils";
-import { toast } from '@/hooks/use-toast';
+import { USERNAME_KEY, AVATAR_KEY, EventShare, TypingUser } from '@/types/chatTypes';
 
 interface ChatGroupProps {
-  group: ChatGroup;
-  username: string;
-  messages: ChatMessageType[];
-  typingUsers: TypingUser[];
+  groupId: string;
+  groupName: string;
+  compact?: boolean;
 }
 
-const ChatGroupComponent: React.FC<ChatGroupProps> = ({ 
-  group, 
-  username, 
-  messages, 
-  typingUsers 
-}) => {
-  const messageEndRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [newMessage, setNewMessage] = useState("");
-  const [isSending, setIsSending] = useState(false);
-  const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
-  const [eventSearchQuery, setEventSearchQuery] = useState('');
+interface Message {
+  id: string;
+  created_at: string;
+  content: string;
+  user_name: string;
+  user_avatar: string;
+  group_id: string;
+  event_share?: EventShare | null;
+}
 
-  const { events, handleRsvpEvent } = useEventContext();
+const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = false }) => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [username, setUsername] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || 'Gast');
+  const [avatar, setAvatar] = useState<string | null>(() => localStorage.getItem(AVATAR_KEY));
+  const [error, setError] = useState<string | null>(null);
+  const [lastSeen, setLastSeen] = useState<Date>(new Date());
+  const [typing, setTyping] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
+  const chatBottomRef = useRef<HTMLDivElement>(null);
+  const [isReconnecting, setIsReconnecting] = useState(false);
 
   useEffect(() => {
-    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    scrollToBottom();
   }, [messages]);
 
-  const handleRsvp = (eventId: string, option: 'yes' | 'no' | 'maybe') => {
-    console.log(`Group chat RSVP selection: ${eventId} - ${option}`);
-    handleRsvpEvent(eventId, option);
-    
-    toast({
-      title: "RSVP gespeichert",
-      description: `Du hast mit "${option}" auf das Event geantwortet.`,
-      variant: "default"
-    });
-  };
+  useEffect(() => {
+    if (username) {
+      localStorage.setItem(USERNAME_KEY, username);
+    }
+  }, [username]);
 
-  const handleSendMessage = async (eventData?: any) => {
-    if ((!newMessage.trim() && !fileInputRef.current?.files?.length && !eventData) || !username || !group.id) return;
+  useEffect(() => {
+    if (avatar) {
+      localStorage.setItem(AVATAR_KEY, avatar);
+    }
+  }, [avatar]);
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('group_id', groupId)
+          .order('created_at', { ascending: true });
+
+        if (error) {
+          setError(error.message);
+        } else {
+          setMessages(data || []);
+          setLastSeen(new Date());
+        }
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMessages();
+  }, [groupId]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const channel = supabase
+      .channel(`group_chat:${groupId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, (payload) => {
+        if (payload.new) {
+          setMessages((oldMessages) => [...oldMessages, payload.new as Message]);
+          setLastSeen(new Date());
+        }
+      })
+      .on('presence', { event: 'sync' }, () => {
+        if (!ignore) {
+          const state = channel.presenceState();
+          const onlineUsers = Object.keys(state[groupId] || {});
+          const typingUsers = onlineUsers.map(username => ({ username, lastTyped: new Date() }));
+          setTypingUsers(typingUsers);
+        }
+      })
+      .on('presence', { event: 'join' }, ({ key }) => {
+        if (!ignore) {
+          setTypingUsers(prevTypingUsers => {
+            if (!prevTypingUsers.find(user => user.username === key)) {
+              return [...prevTypingUsers, { username: key, lastTyped: new Date() }];
+            }
+            return prevTypingUsers;
+          });
+        }
+      })
+      .on('presence', { event: 'leave' }, ({ key }) => {
+        if (!ignore) {
+          setTypingUsers(prevTypingUsers => prevTypingUsers.filter(user => user.username !== key));
+        }
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({ username: localStorage.getItem(USERNAME_KEY) });
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          if (!ignore) {
+            setIsReconnecting(true);
+            setTimeout(() => {
+              channel.unsubscribe();
+              channel.subscribe();
+              setIsReconnecting(false);
+            }, 5000);
+          }
+        }
+      });
+
+    return () => {
+      ignore = true;
+      channel.unsubscribe();
+    };
+  }, [groupId, username]);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!newMessage.trim()) {
+      return;
+    }
+
+    const trimmedMessage = newMessage.trim();
+    setNewMessage('');
 
     try {
-      setIsSending(true);
-      
-      let mediaUrl = undefined;
-      
-      if (fileInputRef.current?.files?.length) {
-        const file = fileInputRef.current.files[0];
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-        const filePath = `${group.id}/${fileName}`;
-        
-        const { error: uploadError } = await supabase
-          .storage
-          .from('chat_media')
-          .upload(filePath, file);
-          
-        if (uploadError) {
-          throw uploadError;
-        }
-        
-        const { data: urlData } = supabase
-          .storage
-          .from('chat_media')
-          .getPublicUrl(filePath);
-          
-        mediaUrl = urlData.publicUrl;
-      }
-      
-      let messageText = newMessage;
-      if (eventData) {
-        const { title, date, time, location, category } = eventData;
-        messageText = `🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${newMessage}`;
-      }
-
-      const newChatMessage = {
-        group_id: group.id,
-        sender: username,
-        text: messageText,
-        avatar: localStorage.getItem(AVATAR_KEY) || '',
-        media_url: mediaUrl,
-        read_by: [username],
-        reactions: []
-      };
-
-      const { error } = await supabase
-        .from('chat_messages')
-        .insert(newChatMessage);
+      const { data, error } = await supabase
+        .from('messages')
+        .insert([{
+          content: trimmedMessage,
+          user_name: username,
+          user_avatar: avatar,
+          group_id: groupId,
+        }])
+        .select()
+        .single();
 
       if (error) {
-        throw error;
+        console.error('Error sending message:', error);
+        setError(error.message);
+      } else {
+        setMessages(prevMessages => [...prevMessages, data]);
+        setLastSeen(new Date());
+        setError(null);
       }
-
-      setNewMessage("");
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      
-      await supabase
-        .channel(`typing:${group.id}`)
-        .send({
-          type: 'broadcast',
-          event: 'typing',
-          payload: {
-            username,
-            avatar: localStorage.getItem(AVATAR_KEY),
-            isTyping: false
-          }
-        });
-        
-      setIsEventSelectOpen(false);
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast({
-        title: "Fehler beim Senden",
-        description: "Deine Nachricht konnte nicht gesendet werden.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSending(false);
+    } catch (err: any) {
+      console.error('Error sending message:', err);
+      setError(err.message);
     }
   };
 
-  const filteredEvents = events.filter(event => {
-    if (!eventSearchQuery.trim()) return true;
-    
-    const query = eventSearchQuery.toLowerCase();
-    return (
-      event.title.toLowerCase().includes(query) ||
-      (event.description && event.description.toLowerCase().includes(query)) ||
-      (event.location && event.location.toLowerCase().includes(query)) ||
-      (event.category && event.category.toLowerCase().includes(query)) ||
-      (event.date && event.date.toLowerCase().includes(query))
-    );
-  });
-  
-  const groupedEvents = groupFutureEventsByDate(filteredEvents);
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNewMessage(e.target.value);
+    setTyping(e.target.value.length > 0);
+  };
 
-  const eventSelectContent = (
-    <>
-      <div className="p-3 bg-muted border-b">
-        <h3 className="font-medium mb-2">Event auswählen</h3>
-        <div className="relative">
-          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Nach Events suchen..."
-            value={eventSearchQuery}
-            onChange={(e) => setEventSearchQuery(e.target.value)}
-            className="pl-8 bg-background"
-          />
-        </div>
-      </div>
-      <div className="p-2">
-        {Object.keys(groupedEvents).length === 0 ? (
-          <div className="py-3 px-2 text-center text-muted-foreground text-sm">
-            Keine Events gefunden
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {Object.keys(groupedEvents).sort().map(dateStr => {
-              const date = parseISO(dateStr);
-              return (
-                <div key={dateStr} className="mb-2">
-                  <div className="sticky top-0 bg-primary text-white py-1.5 px-3 text-sm font-semibold rounded-md mb-1.5 shadow-sm">
-                    {format(date, 'EEEE, d. MMMM', { locale: de })}
-                  </div>
-                  <div className="space-y-1 pl-2">
-                    {groupedEvents[dateStr].map(event => (
-                      <Button
-                        key={event.id}
-                        variant="ghost"
-                        className="w-full justify-start text-left px-2 py-1.5 h-auto"
-                        onClick={() => handleSendMessage(event)}
-                      >
-                        <div>
-                          <div className="font-medium line-clamp-1">{event.title}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {event.time} • {event.category}
-                          </div>
-                        </div>
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </>
-  );
+  const handleReconnect = () => {
+    setIsReconnecting(true);
+    supabase.removeAllChannels().then(() => {
+      setTimeout(() => {
+        setIsReconnecting(false);
+      }, 3000);
+    });
+  };
+
+  const scrollToBottom = () => {
+    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const formatTime = (isoDateString: string): string => {
+    const date = new Date(isoDateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const diffInMinutes = Math.floor(diff / (1000 * 60));
+    const diffInHours = Math.floor(diff / (1000 * 3600));
+    const diffInDays = Math.floor(diff / (1000 * 3600 * 24));
+
+    if (diffInMinutes < 1) {
+      return 'jetzt';
+    } else if (diffInMinutes < 60) {
+      return `vor ${diffInMinutes} Minuten`;
+    } else if (diffInHours < 24) {
+      return `vor ${diffInHours} Stunden`;
+    } else if (diffInDays === 1) {
+      return 'gestern';
+    } else if (diffInDays < 7) {
+      return `vor ${diffInDays} Tagen`;
+    } else {
+      return date.toLocaleDateString('de-DE');
+    }
+  };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>{group.name}</CardTitle>
-        <CardDescription>
-          {group.description} • <span className="inline-flex items-center">
-            <Users className="h-4 w-4 mr-1" />
-            {messages.length > 0 
-              ? new Set(messages.map(msg => msg.sender)).size 
-              : 0} Mitglieder
-          </span>
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent className="pb-0">
-        <ScrollArea className="h-[400px] rounded-md p-4 mb-4 bg-muted/20">
-          <div className="flex flex-col space-y-3">
-            {messages.map(message => (
-              <ChatMessage 
-                key={message.id} 
-                message={message} 
-                username={username} 
-                events={events} 
-                avatarUrl={localStorage.getItem(AVATAR_KEY) || undefined}
-              />
-            ))}
-            
-            {typingUsers.length > 0 && (
-              <div className="flex items-start gap-2 mt-2">
-                <div className="flex items-center gap-1">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage 
-                      src={typingUsers[0].avatar} 
-                      alt={typingUsers[0].username} 
-                    />
-                    <AvatarFallback>
-                      {getInitials(typingUsers[0].username)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="bg-muted p-2 rounded-full text-xs">
-                    <div className="flex space-x-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-foreground/60 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-1.5 h-1.5 rounded-full bg-foreground/60 animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-1.5 h-1.5 rounded-full bg-foreground/60 animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            <div ref={messageEndRef} />
-          </div>
-        </ScrollArea>
-      </CardContent>
-      
-      <CardFooter>
-        {username ? (
-          <MessageInput 
-            username={username}
-            groupId={group.id}
-            handleSendMessage={handleSendMessage}
-            isEventSelectOpen={isEventSelectOpen}
-            setIsEventSelectOpen={setIsEventSelectOpen}
-            eventSelectContent={eventSelectContent}
-            isSending={isSending}
-          />
-        ) : (
-          <div className="w-full py-4 text-center">
-            <p className="mb-2">Du musst angemeldet sein, um Nachrichten zu schreiben.</p>
-            <Button onClick={() => {}}>
-              Benutzernamen erstellen
+    <div className="flex flex-col h-full">
+      <div className="px-4 py-2 bg-gray-900 text-white flex items-center justify-between">
+        {!compact && <h3 className="text-lg font-semibold">{groupName}</h3>}
+        <div className="flex items-center space-x-2">
+          {isReconnecting && (
+            <Button variant="secondary" disabled>
+              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+              Reconnecting...
             </Button>
-          </div>
-        )}
-      </CardFooter>
-    </Card>
+          )}
+          <Button variant="outline" size="icon" onClick={handleReconnect}>
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          {!compact && <Users className="h-5 w-5" />}
+        </div>
+      </div>
+
+      <div className="flex-grow overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-red-500 scrollbar-track-gray-700">
+        {loading && <div className="text-center text-gray-500">Loading messages...</div>}
+        {error && <div className="text-center text-red-500">Error: {error}</div>}
+
+        {messages.map((message, index) => {
+          const isEventShare = message.event_share !== null && typeof message.event_share === 'object';
+          const isConsecutive = index > 0 && messages[index - 1].user_name === message.user_name;
+          const timeAgo = formatTime(message.created_at);
+
+          return (
+            <div key={message.id} className="mb-2">
+              {!isConsecutive && (
+                <div className="flex items-start mb-1">
+                  <Avatar className="h-6 w-6 mr-2">
+                    <AvatarImage src={message.user_avatar} alt={message.user_name} />
+                    <AvatarFallback>{getInitials(message.user_name)}</AvatarFallback>
+                  </Avatar>
+                  <div className="text-sm font-semibold text-gray-300">{message.user_name}</div>
+                  <span className="text-xs text-gray-500 ml-1">{timeAgo}</span>
+                </div>
+              )}
+              <div className="ml-8">
+                {isEventShare ? (
+                  <EventMessageFormatter event={message.event_share as EventShare} />
+                ) : (
+                  <ChatMessage message={message.content} isConsecutive={isConsecutive} />
+                )}
+              </div>
+            </div>
+          );
+        })}
+        <div ref={chatBottomRef} />
+      </div>
+
+      <div className="bg-gray-900 p-4 border-t border-gray-700">
+        <form onSubmit={handleSubmit} className="relative">
+          <Textarea
+            value={newMessage}
+            onChange={handleInputChange}
+            placeholder="Nachricht senden..."
+            className="w-full rounded-md py-2 px-3 bg-gray-800 text-white border-gray-700 pr-10"
+            rows={1}
+            style={{ resize: 'none' }}
+          />
+          <Button
+            type="submit"
+            className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-red-500 hover:bg-red-600 text-white rounded-md p-2"
+            size="icon"
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </form>
+      </div>
+    </div>
   );
 };
 
-export default ChatGroupComponent;
+export default ChatGroup;
