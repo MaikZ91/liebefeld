@@ -4,7 +4,6 @@ import { Calendar, ArrowRight, ThumbsUp } from 'lucide-react';
 import { format, parseISO, isSameMonth, startOfDay, isAfter, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { type Event } from '../types/eventTypes';
-import { useEventContext } from '@/contexts/EventContext';
 
 interface LiveTickerProps {
   events: Event[];
@@ -15,8 +14,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef }) => {
   const [tickerEvents, setTickerEvents] = useState<Event[]>([]);
   const [isPaused, setIsPaused] = useState(false);
   const innerTickerRef = useRef<HTMLDivElement>(null);
-  const { newEventIds } = useEventContext();
-
+  
   useEffect(() => {
     if (events.length === 0) return;
     

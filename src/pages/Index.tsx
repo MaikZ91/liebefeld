@@ -12,7 +12,6 @@ import { EventProvider, useEventContext } from '@/contexts/EventContext';
 import { useToast } from '@/hooks/use-toast';
 
 const LiveTickerWrapper = () => {
-  const { events } = useEventContext();
   const tickerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -26,7 +25,16 @@ const LiveTickerWrapper = () => {
     return () => clearTimeout(timer);
   }, []);
   
-  console.log(`LiveTickerWrapper: Passing ${events.length} events to LiveTicker`);
+  return (
+    <EventProvider>
+      <EventProviderConsumer tickerRef={tickerRef} />
+    </EventProvider>
+  );
+};
+
+const EventProviderConsumer = ({ tickerRef }: { tickerRef: React.RefObject<HTMLDivElement> }) => {
+  const { events } = useEventContext();
+  console.log(`EventProviderConsumer: Passing ${events.length} events to LiveTicker`);
   return <LiveTicker events={events} tickerRef={tickerRef} />;
 };
 
@@ -217,9 +225,7 @@ const Index = () => {
             </div>
             
             <div className="w-full bg-black/80 backdrop-blur-sm absolute bottom-0 left-0">
-              <EventProvider>
-                <LiveTickerWrapper />
-              </EventProvider>
+              <LiveTickerWrapper />
             </div>
           </div>
         </div>
