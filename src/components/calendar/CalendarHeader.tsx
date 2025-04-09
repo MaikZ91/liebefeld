@@ -70,11 +70,11 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           variant="outline" 
           size="icon" 
           onClick={prevMonth} 
-          className="rounded-full hover:scale-105 transition-transform bg-red-500 text-black border-red-600"
+          className="rounded-full hover:scale-105 transition-transform bg-red-500 text-white border-red-600"
         >
           <ChevronLeft className="h-5 w-5" />
         </Button>
-        <h2 className="text-xl md:text-2xl font-medium w-48 text-center text-black">
+        <h2 className="text-xl md:text-2xl font-medium w-48 text-center text-white">
           {showFavorites 
             ? "Meine Favoriten" 
             : showNewEvents 
@@ -86,7 +86,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           variant="outline" 
           size="icon" 
           onClick={nextMonth} 
-          className="rounded-full hover:scale-105 transition-transform bg-red-500 text-black border-red-600"
+          className="rounded-full hover:scale-105 transition-transform bg-red-500 text-white border-red-600"
           disabled={showFavorites || showNewEvents}
         >
           <ChevronRight className="h-5 w-5" />

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, Send, RefreshCw } from 'lucide-react';
@@ -7,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ChatMessage from './ChatMessage';
 import MessageInput from './MessageInput';
-import { EventMessageFormatter } from './EventMessageFormatter';
+import EventMessageFormatter from './EventMessageFormatter';
 import { getInitials } from '@/utils/chatUIUtils';
 import { USERNAME_KEY, AVATAR_KEY, EventShare, TypingUser, Message } from '@/types/chatTypes';
 
@@ -67,7 +66,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
             user_name: msg.sender,
             user_avatar: msg.avatar || '',
             group_id: msg.group_id,
-            event_share: msg.event_share
+            event_share: msg.event_share as EventShare | null
           }));
           
           setMessages(formattedMessages);
@@ -89,26 +88,30 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
     const channel = supabase
       .channel(`group_chat:${groupId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, (payload) => {
-        if (payload.new && payload.new.group_id === groupId) {
+        if (payload.new && payload.eventType === 'INSERT') {
+          const newPayload = payload.new as any;
           // Transform to our Message type
-          const newMsg: Message = {
-            id: payload.new.id,
-            created_at: payload.new.created_at,
-            content: payload.new.text,
-            user_name: payload.new.sender,
-            user_avatar: payload.new.avatar || '',
-            group_id: payload.new.group_id,
-            event_share: payload.new.event_share
-          };
-          
-          setMessages((oldMessages) => [...oldMessages, newMsg]);
-          setLastSeen(new Date());
+          if (newPayload && newPayload.group_id === groupId) {
+            const newMsg: Message = {
+              id: newPayload.id,
+              created_at: newPayload.created_at,
+              content: newPayload.text,
+              user_name: newPayload.sender,
+              user_avatar: newPayload.avatar || '',
+              group_id: newPayload.group_id,
+              event_share: newPayload.event_share as EventShare | null
+            };
+            
+            setMessages((oldMessages) => [...oldMessages, newMsg]);
+            setLastSeen(new Date());
+          }
         }
       })
       .on('presence', { event: 'sync' }, () => {
         if (!ignore) {
           const state = channel.presenceState();
-          const onlineUsers = Object.keys(state[groupId] || {});
+          const presenceState = state as Record<string, any>;
+          const onlineUsers = Object.keys(presenceState[groupId] || {});
           const typingUsers = onlineUsers.map(username => ({ username, lastTyped: new Date() }));
           setTypingUsers(typingUsers);
         }
@@ -182,7 +185,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
           user_name: data[0].sender,
           user_avatar: data[0].avatar || '',
           group_id: data[0].group_id,
-          event_share: data[0].event_share
+          event_share: data[0].event_share as EventShare | null
         };
         
         setMessages(prevMessages => [...prevMessages, newMsg]);
