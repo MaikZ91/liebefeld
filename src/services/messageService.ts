@@ -12,7 +12,10 @@ export const messageService = {
   async enableRealtime(): Promise<boolean> {
     try {
       // Important: Explicitly type the parameter object to avoid TypeScript errors
-      type EnableRealtimeParams = { table_name: string };
+      interface EnableRealtimeParams {
+        table_name: string;
+      }
+      
       const params: EnableRealtimeParams = { table_name: 'chat_messages' };
       
       const { error } = await supabase.rpc('enable_realtime_for_table', params);
