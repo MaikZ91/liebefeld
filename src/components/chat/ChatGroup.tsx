@@ -39,7 +39,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
 
-  // Define the initializeScrollPosition function outside of useEffect
   const initializeScrollPosition = () => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -272,11 +271,12 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
       <div 
         ref={chatContainerRef}
         className="flex-grow overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-red-500 scrollbar-track-gray-700"
+        style={{ scrollBehavior: 'smooth' }}
       >
         {loading && <div className="text-center text-gray-500">Loading messages...</div>}
         {error && <div className="text-center text-red-500">Error: {error}</div>}
 
-        <div className="flex flex-col space-y-3">
+        <div className="flex flex-col space-y-2">
           {messages.map((message, index) => {
             const isConsecutive = index > 0 && messages[index - 1].user_name === message.user_name;
             const timeAgo = formatTime(message.created_at);
@@ -285,7 +285,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
               <div key={message.id} className="mb-2 w-full">
                 {!isConsecutive && (
                   <div className="flex items-start mb-1">
-                    <Avatar className="h-4 w-4 mr-1 flex-shrink-0">
+                    <Avatar className="h-6 w-6 mr-1 flex-shrink-0">
                       <AvatarImage src={message.user_avatar} alt={message.user_name} />
                       <AvatarFallback>{getInitials(message.user_name)}</AvatarFallback>
                     </Avatar>
@@ -293,7 +293,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
                     <span className="text-xs text-gray-500">{timeAgo}</span>
                   </div>
                 )}
-                <div className="ml-4 w-full">
+                <div className="ml-2 w-full">
                   <ChatMessage 
                     message={message.content} 
                     isConsecutive={isConsecutive} 
@@ -312,7 +312,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
             value={newMessage}
             onChange={handleInputChange}
             placeholder="Nachricht senden..."
-            className="w-full rounded-md py-2 px-3 bg-gray-800 text-white border-gray-700 pr-10 text-base"
+            className="w-full rounded-md py-2 px-3 bg-gray-800 text-white border-gray-700 pr-10 text-sm md:text-base"
             rows={1}
             style={{ resize: 'none' }}
           />
