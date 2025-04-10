@@ -68,19 +68,25 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
       } finally {
         setLoading(false);
         setTimeout(() => {
-          scrollToBottom(false);
-        }, 100);
+          initializeScrollPosition();
+        }, 50);
       }
     };
 
     fetchMessages();
   }, [groupId]);
 
-  useEffect(() => {
-    if (messages.length > 0) {
-      scrollToBottom(true);
+  const initializeScrollPosition = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-  }, [messages]);
+  };
+
+  useEffect(() => {
+    if (messages.length > 0 && !loading) {
+      initializeScrollPosition();
+    }
+  }, [messages, loading]);
 
   useEffect(() => {
     if (username) {
@@ -218,19 +224,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         setIsReconnecting(false);
       }, 3000);
     });
-  };
-
-  const scrollToBottom = (smooth = true) => {
-    if (chatBottomRef.current) {
-      chatBottomRef.current.scrollIntoView({ 
-        behavior: smooth ? "smooth" : "auto",
-        block: "end"
-      });
-    }
-    
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
   };
 
   const formatTime = (isoDateString: string): string => {
