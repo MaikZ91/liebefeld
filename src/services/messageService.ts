@@ -28,9 +28,7 @@ export const messageService = {
         .subscribe();
         
       // Immediately unsubscribe - we're just doing this to ensure the table is tracked
-      setTimeout(() => {
-        supabase.removeChannel(channel);
-      }, 1000);
+      supabase.removeChannel(channel);
       
       console.log('Realtime subscription initialized');
       return true;
@@ -45,9 +43,6 @@ export const messageService = {
    */
   async fetchMessages(groupId: string): Promise<Message[]> {
     try {
-      // First enable Realtime for the table
-      await this.enableRealtime();
-      
       console.log(`Fetching messages for group ${groupId}`);
       
       const { data, error } = await supabase
@@ -127,9 +122,6 @@ export const messageService = {
     mediaUrl: string | null = null
   ): Promise<string | null> {
     try {
-      // Ensure Realtime is enabled
-      await this.enableRealtime();
-      
       console.log(`Sending message to group ${groupId} from ${username}`);
       
       const { data, error } = await supabase

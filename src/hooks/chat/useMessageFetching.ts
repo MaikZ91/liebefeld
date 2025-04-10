@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { Message } from '@/types/chatTypes';
-import { chatService } from '@/services/chatService';
+import { messageService } from '@/services/messageService';
 
 export const useMessageFetching = (groupId: string) => {
   const [loading, setLoading] = useState(true);
@@ -17,7 +17,8 @@ export const useMessageFetching = (groupId: string) => {
     setLoading(true);
     try {
       console.log(`Nachrichten für Gruppe abrufen: ${groupId}`);
-      const messages = await chatService.fetchMessages(groupId);
+      const messages = await messageService.fetchMessages(groupId);
+      console.log(`${messages.length} Nachrichten empfangen`);
       setError(null);
       return messages;
     } catch (err: any) {

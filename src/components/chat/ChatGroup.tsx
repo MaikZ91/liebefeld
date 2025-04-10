@@ -19,7 +19,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   const [username, setUsername] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || 'Gast');
   const [avatar, setAvatar] = useState<string | null>(() => localStorage.getItem(AVATAR_KEY));
   
-  // Fix the group detection logic - correct the inverted group names
+  // Fixed group detection logic - using the correct names
   const isSpotGroup = groupName.toLowerCase() === 'spot';
   const isSportGroup = groupName.toLowerCase() === 'sport';
   const isAusgehenGroup = groupName.toLowerCase() === 'ausgehen';
