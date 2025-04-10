@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
 import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
-import { useChatMessages } from './useChatMessages';
+import { useChatMessages } from '@/hooks/chat/useChatMessages';
 import { useMessageSending } from '@/hooks/chat/useMessageSending';
 
 interface ChatGroupProps {
@@ -67,6 +67,13 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
       localStorage.setItem(AVATAR_KEY, avatar);
     }
   }, [avatar]);
+
+  // Log out important variables to debug
+  useEffect(() => {
+    console.log(`ChatGroup: Rendering for group ${groupId}, ${groupName}`);
+    console.log(`isSpotGroup: ${isSpotGroup}, isSportGroup: ${isSportGroup}, isAusgehenGroup: ${isAusgehenGroup}`);
+    console.log(`Total messages: ${messages.length}`);
+  }, [groupId, groupName, isSpotGroup, isSportGroup, isAusgehenGroup, messages.length]);
 
   const formatTime = (isoDateString: string): string => {
     const date = new Date(isoDateString);
