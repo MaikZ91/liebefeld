@@ -210,8 +210,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         console.error('Error sending message:', error);
         setError(error.message);
       } else if (data && data.length > 0) {
-        // We no longer add the message directly to the local state here
-        // as it will come through the real-time subscription
+        // Message will come through the real-time subscription
         setError(null);
       }
     } catch (err: any) {
