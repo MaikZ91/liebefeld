@@ -40,14 +40,15 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   handleGroupSelect,
   defaultView
 }) => {
-  // Add a state to force remounting of the GroupChat component
-  // We also add activeGroupName to the dependencies to ensure rerendering when group changes
-  const [chatKey, setChatKey] = useState(() => Date.now() + activeGroup);
+  // Update key generation to ensure remounting when any relevant prop changes
+  const [chatKey, setChatKey] = useState(() => `mobile-chat-${Date.now()}-${activeGroup}`);
   
-  // When the view, active group, or active group name changes, force a remount of the chat component
+  // When active view or group changes, update the key to force remount
   useEffect(() => {
     if (activeMobileView === 'chat') {
-      setChatKey(Date.now() + activeGroup + activeGroupName);
+      // Ensure a new key is always generated when relevant props change
+      setChatKey(`mobile-chat-${Date.now()}-${activeGroup}-${activeGroupName}`);
+      console.log(`Remounting GroupChat with new key: ${chatKey} for group: ${activeGroupName}`);
     }
   }, [activeMobileView, activeGroup, activeGroupName]);
   
@@ -109,9 +110,10 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                 activeGroupName={activeGroupName}
                 groups={groups}
                 handleGroupSelect={(newGroupId) => {
+                  console.log(`Group selection changed to ${newGroupId}`);
                   handleGroupSelect(newGroupId);
                   // Force remount when group changes
-                  setChatKey(Date.now() + newGroupId);
+                  setChatKey(`mobile-chat-${Date.now()}-${newGroupId}`);
                 }}
                 mobile={true}
               />
@@ -131,7 +133,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                   compact={false} 
                   groupId={activeGroup} 
                   groupName={activeGroupName} 
-                  key={`mobile-group-chat-${chatKey}`} 
+                  key={chatKey} 
                 />
               </div>
             )}

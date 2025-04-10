@@ -22,7 +22,9 @@ export const messageService = {
           event: '*',
           schema: 'public',
           table: 'chat_messages'
-        }, () => {})
+        }, (payload) => {
+          console.log('Realtime change detected:', payload);
+        })
         .subscribe();
         
       // Immediately unsubscribe - we're just doing this to ensure the table is tracked
@@ -45,6 +47,8 @@ export const messageService = {
     try {
       // First enable Realtime for the table
       await this.enableRealtime();
+      
+      console.log(`Fetching messages for group ${groupId}`);
       
       const { data, error } = await supabase
         .from('chat_messages')
@@ -126,6 +130,8 @@ export const messageService = {
       // Ensure Realtime is enabled
       await this.enableRealtime();
       
+      console.log(`Sending message to group ${groupId} from ${username}`);
+      
       const { data, error } = await supabase
         .from('chat_messages')
         .insert([{
@@ -144,6 +150,7 @@ export const messageService = {
         throw error;
       }
       
+      console.log(`Message sent successfully with ID: ${data?.id}`);
       return data?.id || null;
     } catch (error) {
       console.error('Error in sendMessage:', error);

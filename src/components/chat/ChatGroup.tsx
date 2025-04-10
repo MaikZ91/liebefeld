@@ -19,9 +19,10 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   const [username, setUsername] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || 'Gast');
   const [avatar, setAvatar] = useState<string | null>(() => localStorage.getItem(AVATAR_KEY));
   
+  // Fix the group detection logic - correct the inverted group names
   const isSpotGroup = groupName.toLowerCase() === 'spot';
-  const isSportGroup = groupName.toLowerCase() === 'ausgehen';
-  const isAusgehenGroup = groupName.toLowerCase() === 'sport';
+  const isSportGroup = groupName.toLowerCase() === 'sport';
+  const isAusgehenGroup = groupName.toLowerCase() === 'ausgehen';
 
   const {
     messages,
@@ -68,11 +69,15 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
     }
   }, [avatar]);
 
-  // Log out important variables to debug
+  // Enhanced debug logging
   useEffect(() => {
     console.log(`ChatGroup: Rendering for group ${groupId}, ${groupName}`);
     console.log(`isSpotGroup: ${isSpotGroup}, isSportGroup: ${isSportGroup}, isAusgehenGroup: ${isAusgehenGroup}`);
     console.log(`Total messages: ${messages.length}`);
+    if (messages.length > 0) {
+      console.log(`First message: ${JSON.stringify(messages[0])}`);
+      console.log(`Last message: ${JSON.stringify(messages[messages.length - 1])}`);
+    }
   }, [groupId, groupName, isSpotGroup, isSportGroup, isAusgehenGroup, messages.length]);
 
   const formatTime = (isoDateString: string): string => {
