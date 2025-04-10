@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Message } from '@/types/chatTypes';
 
@@ -11,12 +10,10 @@ export const messageService = {
    */
   async enableRealtime(): Promise<boolean> {
     try {
-      // Important: Explicitly type the parameter object to avoid TypeScript errors
-      interface EnableRealtimeParams {
-        table_name: string;
-      }
+      // Wichtig: Typisieren des Parameters für die RPC-Funktion
+      type RpcParams = Record<string, any>;
       
-      const params: EnableRealtimeParams = { table_name: 'chat_messages' };
+      const params: RpcParams = { table_name: 'chat_messages' };
       
       const { error } = await supabase.rpc('enable_realtime_for_table', params);
       
