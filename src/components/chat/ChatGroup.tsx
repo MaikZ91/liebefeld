@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, Send, RefreshCw } from 'lucide-react';
@@ -36,6 +35,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   const [typing, setTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const chatBottomRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
 
   useEffect(() => {
@@ -67,6 +67,9 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         setError(err.message);
       } finally {
         setLoading(false);
+        setTimeout(() => {
+          scrollToBottom(false);
+        }, 100);
       }
     };
 
@@ -74,11 +77,9 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   }, [groupId]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      scrollToBottom();
-    }, 500);
-
-    return () => clearTimeout(timer);
+    if (messages.length > 0) {
+      scrollToBottom(true);
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -219,9 +220,16 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
     });
   };
 
-  const scrollToBottom = () => {
+  const scrollToBottom = (smooth = true) => {
     if (chatBottomRef.current) {
-      chatBottomRef.current.scrollIntoView({ behavior: "smooth" });
+      chatBottomRef.current.scrollIntoView({ 
+        behavior: smooth ? "smooth" : "auto",
+        block: "end"
+      });
+    }
+    
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   };
 
@@ -266,7 +274,10 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         </div>
       </div>
 
-      <div className="flex-grow overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-red-500 scrollbar-track-gray-700">
+      <div 
+        ref={chatContainerRef}
+        className="flex-grow overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-red-500 scrollbar-track-gray-700"
+      >
         {loading && <div className="text-center text-gray-500">Loading messages...</div>}
         {error && <div className="text-center text-red-500">Error: {error}</div>}
 
