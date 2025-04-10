@@ -112,7 +112,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
             
             {activeGroup && (
               <div className="h-[calc(100vh-280px)] min-h-[400px] border border-gray-700 rounded-lg overflow-hidden">
-                <GroupChat compact={false} groupId={activeGroup} groupName={activeGroupName} />
+                <GroupChat compact={false} groupId={activeGroup} groupName={activeGroupName} key={activeGroup} />
               </div>
             )}
           </>

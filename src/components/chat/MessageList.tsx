@@ -41,23 +41,33 @@ const MessageList: React.FC<MessageListProps> = ({
   isAusgehenGroup
 }) => {
   const chatBottomRef = useRef<HTMLDivElement>(null);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
-
+  const lastMessageCountRef = useRef<number>(0);
+  
   useEffect(() => {
-    if (chatBottomRef.current) {
-      chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    console.log(`MessageList received ${messages.length} messages`);
+    
+    // Only scroll if new messages have been added
+    if (messages.length > lastMessageCountRef.current) {
+      console.log('New messages added, scrolling to bottom');
+      if (chatBottomRef.current) {
+        chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+      lastMessageCountRef.current = messages.length;
     }
   }, [messages, typingUsers]);
 
   return (
     <div 
-      className={`flex-grow p-5 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto`} 
-      ref={chatContainerRef}
+      className={`flex-grow p-5 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto`}
     >
       {loading && <div className="text-center text-gray-500 text-lg font-semibold py-4">Loading messages...</div>}
       {error && <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>}
 
       <div className="flex flex-col space-y-3">
+        {messages.length === 0 && !loading && !error && (
+          <div className="text-center text-gray-400 py-4">No messages yet. Start the conversation!</div>
+        )}
+        
         {messages.map((message, index) => {
           const isConsecutive = index > 0 && messages[index - 1].user_name === message.user_name;
           const timeAgo = formatTime(message.created_at);

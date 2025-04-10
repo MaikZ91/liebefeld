@@ -36,11 +36,10 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         group_id: groupId,
       };
       
+      // Add optimistic message first before clearing input
+      addOptimisticMessage(optimisticMessage);
       setNewMessage('');
       
-      // Add optimistic message
-      addOptimisticMessage(optimisticMessage);
-
       const { data, error } = await supabase
         .from('chat_messages')
         .insert([{
@@ -58,6 +57,8 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
           description: error.message,
           variant: "destructive"
         });
+      } else {
+        console.log('Message sent successfully:', data);
       }
     } catch (err: any) {
       console.error('Error sending message:', err);

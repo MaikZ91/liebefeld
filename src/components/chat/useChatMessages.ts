@@ -38,6 +38,7 @@ export const useChatMessages = (groupId: string, username: string) => {
     const fetchMessages = async () => {
       setLoading(true);
       try {
+        console.log(`Fetching messages for group: ${groupId}`);
         const { data, error } = await supabase
           .from('chat_messages')
           .select('*')
@@ -45,8 +46,10 @@ export const useChatMessages = (groupId: string, username: string) => {
           .order('created_at', { ascending: true });
 
         if (error) {
+          console.error('Error fetching messages:', error);
           setError(error.message);
         } else {
+          console.log(`Received ${data?.length || 0} messages for group ${groupId}`);
           const formattedMessages: Message[] = (data || []).map(msg => ({
             id: msg.id,
             created_at: msg.created_at,
@@ -60,6 +63,7 @@ export const useChatMessages = (groupId: string, username: string) => {
           setLastSeen(new Date());
         }
       } catch (err: any) {
+        console.error('Error in fetchMessages:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -69,11 +73,15 @@ export const useChatMessages = (groupId: string, username: string) => {
       }
     };
 
-    fetchMessages();
+    if (groupId) {
+      console.log(`Group ID changed, fetching messages for: ${groupId}`);
+      fetchMessages();
+    }
   }, [groupId]);
 
   useEffect(() => {
     if (messages.length > 0) {
+      console.log('Messages changed, scrolling to bottom');
       setTimeout(() => {
         initializeScrollPosition();
       }, 100);
@@ -81,7 +89,13 @@ export const useChatMessages = (groupId: string, username: string) => {
   }, [messages]);
 
   useEffect(() => {
+    if (!groupId) {
+      console.log('No group ID, skipping subscription');
+      return;
+    }
+    
     let ignore = false;
+    console.log(`Setting up subscription for group: ${groupId}`);
 
     const channel = supabase
       .channel(`group_chat:${groupId}`)
@@ -159,6 +173,7 @@ export const useChatMessages = (groupId: string, username: string) => {
       });
 
     return () => {
+      console.log(`Unsubscribing from group: ${groupId}`);
       ignore = true;
       channel.unsubscribe();
     };
