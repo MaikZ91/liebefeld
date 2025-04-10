@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, Send, RefreshCw } from 'lucide-react';
+import { Send, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import ChatMessage from './ChatMessage';
-import EventMessageFormatter from './EventMessageFormatter';
-import { getInitials } from '@/utils/chatUIUtils';
 import { USERNAME_KEY, AVATAR_KEY, TypingUser } from '@/types/chatTypes';
+import ChatHeader from './ChatHeader';
+import MessageList from './MessageList';
+import { useChatMessages } from './useChatMessages';
+import { useMessageSending } from './useMessageSending';
 
 interface Message {
   id: string;
@@ -26,79 +26,36 @@ interface ChatGroupProps {
 }
 
 const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = false }) => {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || 'Gast');
   const [avatar, setAvatar] = useState<string | null>(() => localStorage.getItem(AVATAR_KEY));
-  const [error, setError] = useState<string | null>(null);
-  const [lastSeen, setLastSeen] = useState<Date>(new Date());
-  const [typing, setTyping] = useState(false);
-  const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
-  const [isSending, setIsSending] = useState(false);
-  const chatBottomRef = useRef<HTMLDivElement>(null);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
-  const [isReconnecting, setIsReconnecting] = useState(false);
   
   const isSpotGroup = groupName.toLowerCase() === 'spot';
   const isSportGroup = groupName.toLowerCase() === 'ausgehen';
   const isAusgehenGroup = groupName.toLowerCase() === 'sport';
 
-  const initializeScrollPosition = () => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-    
-    if (chatBottomRef.current) {
-      chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
+  const {
+    messages,
+    loading,
+    error,
+    typingUsers,
+    isReconnecting,
+    setMessages,
+    setError,
+    handleReconnect
+  } = useChatMessages(groupId, username);
+
+  const addOptimisticMessage = (message: Message) => {
+    setMessages(prevMessages => [...prevMessages, message]);
   };
 
-  useEffect(() => {
-    const fetchMessages = async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('chat_messages')
-          .select('*')
-          .eq('group_id', groupId)
-          .order('created_at', { ascending: true });
-
-        if (error) {
-          setError(error.message);
-        } else {
-          const formattedMessages: Message[] = (data || []).map(msg => ({
-            id: msg.id,
-            created_at: msg.created_at,
-            content: msg.text,
-            user_name: msg.sender,
-            user_avatar: msg.avatar || '',
-            group_id: msg.group_id,
-          }));
-          
-          setMessages(formattedMessages);
-          setLastSeen(new Date());
-        }
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-        setTimeout(() => {
-          initializeScrollPosition();
-        }, 100);
-      }
-    };
-
-    fetchMessages();
-  }, [groupId]);
-
-  useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(() => {
-        initializeScrollPosition();
-      }, 100);
-    }
-  }, [messages]);
+  const {
+    newMessage,
+    isSending,
+    fileInputRef,
+    handleSubmit,
+    handleInputChange,
+    handleKeyDown
+  } = useMessageSending(groupId, username, addOptimisticMessage);
 
   useEffect(() => {
     if (username) {
@@ -111,172 +68,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
       localStorage.setItem(AVATAR_KEY, avatar);
     }
   }, [avatar]);
-
-  useEffect(() => {
-    let ignore = false;
-
-    const channel = supabase
-      .channel(`group_chat:${groupId}`)
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'chat_messages',
-        filter: `group_id=eq.${groupId}`
-      }, (payload) => {
-        if (payload.new && payload.eventType === 'INSERT') {
-          const newPayload = payload.new as any;
-          if (newPayload && newPayload.group_id === groupId) {            
-            const newMsg: Message = {
-              id: newPayload.id,
-              created_at: newPayload.created_at,
-              content: newPayload.text,
-              user_name: newPayload.sender,
-              user_avatar: newPayload.avatar || '',
-              group_id: newPayload.group_id,
-            };
-            
-            console.log('New message received via subscription:', newMsg);
-            setMessages((oldMessages) => {
-              if (oldMessages.some(msg => msg.id === newMsg.id)) {
-                return oldMessages;
-              }
-              return [...oldMessages, newMsg];
-            });
-            setLastSeen(new Date());
-            
-            setTimeout(() => {
-              initializeScrollPosition();
-            }, 100);
-          }
-        }
-      })
-      .on('presence', { event: 'sync' }, () => {
-        if (!ignore) {
-          const state = channel.presenceState();
-          const presenceState = state as Record<string, any>;
-          const onlineUsers = Object.keys(presenceState[groupId] || {});
-          const typingUsers = onlineUsers.map(username => ({ username, lastTyped: new Date() }));
-          setTypingUsers(typingUsers);
-        }
-      })
-      .on('presence', { event: 'join' }, ({ key }) => {
-        if (!ignore) {
-          setTypingUsers(prevTypingUsers => {
-            if (!prevTypingUsers.find(user => user.username === key)) {
-              return [...prevTypingUsers, { username: key, lastTyped: new Date() }];
-            }
-            return prevTypingUsers;
-          });
-        }
-      })
-      .on('presence', { event: 'leave' }, ({ key }) => {
-        if (!ignore) {
-          setTypingUsers(prevTypingUsers => prevTypingUsers.filter(user => user.username !== key));
-        }
-      })
-      .subscribe(async (status) => {
-        console.log('Subscription status:', status);
-        if (status === 'SUBSCRIBED') {
-          await channel.track({ username: localStorage.getItem(USERNAME_KEY) });
-        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-          if (!ignore) {
-            setIsReconnecting(true);
-            setTimeout(() => {
-              channel.unsubscribe();
-              channel.subscribe();
-              setIsReconnecting(false);
-            }, 5000);
-          }
-        }
-      });
-
-    return () => {
-      ignore = true;
-      channel.unsubscribe();
-    };
-  }, [groupId, username]);
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!newMessage.trim() || isSending) {
-      return;
-    }
-
-    const trimmedMessage = newMessage.trim();
-    setIsSending(true);
-
-    try {
-      console.log('Sending message to group:', groupId);
-      
-      const tempId = `temp-${Date.now()}`;
-      const optimisticMessage: Message = {
-        id: tempId,
-        created_at: new Date().toISOString(),
-        content: trimmedMessage,
-        user_name: username,
-        user_avatar: avatar || '',
-        group_id: groupId,
-      };
-      
-      setNewMessage('');
-      
-      setMessages(prevMessages => [...prevMessages, optimisticMessage]);
-      
-      setTimeout(() => {
-        initializeScrollPosition();
-      }, 50);
-
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .insert([{
-          text: trimmedMessage,
-          sender: username,
-          avatar: avatar,
-          group_id: groupId,
-        }])
-        .select();
-
-      if (error) {
-        console.error('Error sending message:', error);
-        setError(error.message);
-        
-        setMessages(prevMessages => prevMessages.filter(msg => msg.id !== tempId));
-      } else if (data && data.length > 0) {
-        console.log('Message sent successfully, server response:', data[0]);
-        
-        setMessages(prevMessages => prevMessages.filter(msg => msg.id !== tempId));
-        
-        setError(null);
-      }
-    } catch (err: any) {
-      console.error('Error sending message:', err);
-      setError(err.message);
-    } finally {
-      setIsSending(false);
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setNewMessage(e.target.value);
-    setTyping(e.target.value.length > 0);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e as unknown as React.FormEvent);
-    }
-  };
-
-  const handleReconnect = () => {
-    setIsReconnecting(true);
-    supabase.removeAllChannels().then(() => {
-      setTimeout(() => {
-        setIsReconnecting(false);
-      }, 3000);
-    });
-  };
 
   const formatTime = (isoDateString: string): string => {
     const date = new Date(isoDateString);
@@ -303,59 +94,27 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
 
   return (
     <div className="flex flex-col h-full">
-      <div className={`px-4 py-3 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-gray-900'} text-white flex items-center justify-between`}>
-        {!compact && <h3 className="text-xl font-bold">{groupName}</h3>}
-        <div className="flex items-center space-x-2">
-          {isReconnecting && (
-            <Button variant="secondary" disabled>
-              <RefreshCw className="mr-2 h-5 w-5 animate-spin" />
-              Reconnecting...
-            </Button>
-          )}
-          <Button variant="outline" size="icon" onClick={handleReconnect}>
-            <RefreshCw className="h-5 w-5" />
-          </Button>
-          {!compact && <Users className="h-6 w-6" />}
-        </div>
-      </div>
+      <ChatHeader 
+        groupName={groupName}
+        isReconnecting={isReconnecting}
+        handleReconnect={handleReconnect}
+        compact={compact}
+        isSpotGroup={isSpotGroup}
+        isSportGroup={isSportGroup}
+        isAusgehenGroup={isAusgehenGroup}
+      />
 
-      <div 
-        className={`flex-grow p-5 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto`} 
-        ref={chatContainerRef}
-      >
-        {loading && <div className="text-center text-gray-500 text-lg font-semibold py-4">Loading messages...</div>}
-        {error && <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>}
-
-        <div className="flex flex-col space-y-3">
-          {messages.map((message, index) => {
-            const isConsecutive = index > 0 && messages[index - 1].user_name === message.user_name;
-            const timeAgo = formatTime(message.created_at);
-
-            return (
-              <div key={message.id} className="mb-4 w-full">
-                {!isConsecutive && (
-                  <div className="flex items-center mb-2">
-                    <Avatar className={`h-8 w-8 mr-2 flex-shrink-0 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'border-[#9b87f5]' : ''}`}>
-                      <AvatarImage src={message.user_avatar} alt={message.user_name} />
-                      <AvatarFallback>{getInitials(message.user_name)}</AvatarFallback>
-                    </Avatar>
-                    <div className="text-sm font-medium text-white mr-2">{message.user_name}</div>
-                    <span className="text-xs text-gray-400">{timeAgo}</span>
-                  </div>
-                )}
-                <div className="ml-3 w-full">
-                  <ChatMessage 
-                    message={message.content} 
-                    isConsecutive={isConsecutive}
-                    isSpotGroup={isSpotGroup || isSportGroup || isAusgehenGroup}
-                  />
-                </div>
-              </div>
-            );
-          })}
-          <div ref={chatBottomRef} />
-        </div>
-      </div>
+      <MessageList 
+        messages={messages}
+        loading={loading}
+        error={error}
+        username={username}
+        typingUsers={typingUsers}
+        formatTime={formatTime}
+        isSpotGroup={isSpotGroup}
+        isSportGroup={isSportGroup}
+        isAusgehenGroup={isAusgehenGroup}
+      />
 
       <div className={`${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-gray-900'} p-4 border-t ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'border-gray-800' : 'border-gray-700'}`}>
         <form onSubmit={handleSubmit} className="relative">
@@ -381,6 +140,13 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
               <Send className="h-4 w-4" />
             )}
           </Button>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            className="hidden" 
+            accept="image/*"
+            onChange={() => {}}
+          />
         </form>
       </div>
     </div>
