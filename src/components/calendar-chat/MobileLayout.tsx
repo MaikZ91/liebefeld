@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +40,16 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   handleGroupSelect,
   defaultView
 }) => {
+  // Add a state to force remounting of the GroupChat component
+  const [chatKey, setChatKey] = useState(Date.now());
+  
+  // When the view or active group changes, force a remount of the chat component
+  useEffect(() => {
+    if (activeMobileView === 'chat') {
+      setChatKey(Date.now());
+    }
+  }, [activeMobileView, activeGroup]);
+  
   return (
     <div className="md:hidden flex flex-col h-[calc(100vh-200px)] min-h-[500px]">
       <div className="flex justify-center mb-4">
@@ -112,7 +122,12 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
             
             {activeGroup && (
               <div className="h-[calc(100vh-280px)] min-h-[400px] border border-gray-700 rounded-lg overflow-hidden">
-                <GroupChat compact={false} groupId={activeGroup} groupName={activeGroupName} key={activeGroup} />
+                <GroupChat 
+                  compact={false} 
+                  groupId={activeGroup} 
+                  groupName={activeGroupName} 
+                  key={`${activeGroup}-${chatKey}`} 
+                />
               </div>
             )}
           </>

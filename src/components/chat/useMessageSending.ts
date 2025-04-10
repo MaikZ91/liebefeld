@@ -36,7 +36,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         group_id: groupId,
       };
       
-      // Add optimistic message first before clearing input
+      // Add optimistic message to local state before sending to server
       addOptimisticMessage(optimisticMessage);
       setNewMessage('');
       
@@ -59,6 +59,15 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         });
       } else {
         console.log('Message sent successfully:', data);
+        
+        // Force a re-sync of messages from the server after sending
+        const channel = supabase.channel(`force_refresh:${groupId}`);
+        channel.subscribe();
+        channel.send({
+          type: 'broadcast',
+          event: 'force_refresh',
+          payload: { timestamp: new Date().toISOString() }
+        });
       }
     } catch (err: any) {
       console.error('Error sending message:', err);

@@ -41,20 +41,36 @@ const MessageList: React.FC<MessageListProps> = ({
   isAusgehenGroup
 }) => {
   const chatBottomRef = useRef<HTMLDivElement>(null);
-  const lastMessageCountRef = useRef<number>(0);
+  const messagesLengthRef = useRef<number>(0);
   
+  // Scroll to bottom when new messages arrive
   useEffect(() => {
-    console.log(`MessageList received ${messages.length} messages`);
+    console.log(`MessageList received ${messages.length} messages, previous: ${messagesLengthRef.current}`);
     
-    // Only scroll if new messages have been added
-    if (messages.length > lastMessageCountRef.current) {
+    // If we have new messages, scroll to the bottom
+    if (messages.length > messagesLengthRef.current) {
       console.log('New messages added, scrolling to bottom');
-      if (chatBottomRef.current) {
-        chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
-      lastMessageCountRef.current = messages.length;
+      setTimeout(() => {
+        if (chatBottomRef.current) {
+          chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
     }
-  }, [messages, typingUsers]);
+    
+    // Update our ref with the new length
+    messagesLengthRef.current = messages.length;
+  }, [messages]);
+  
+  // Also scroll when typing indicators change
+  useEffect(() => {
+    if (typingUsers.length > 0) {
+      setTimeout(() => {
+        if (chatBottomRef.current) {
+          chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
+  }, [typingUsers]);
 
   return (
     <div 

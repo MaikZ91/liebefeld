@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { TypingUser } from '@/types/chatTypes';
@@ -23,6 +22,11 @@ export const useChatMessages = (groupId: string, username: string) => {
   
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<Message[]>(messages);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   const initializeScrollPosition = () => {
     if (chatContainerRef.current) {
@@ -34,45 +38,45 @@ export const useChatMessages = (groupId: string, username: string) => {
     }
   };
 
-  useEffect(() => {
-    const fetchMessages = async () => {
-      setLoading(true);
-      try {
-        console.log(`Fetching messages for group: ${groupId}`);
-        const { data, error } = await supabase
-          .from('chat_messages')
-          .select('*')
-          .eq('group_id', groupId)
-          .order('created_at', { ascending: true });
+  const fetchMessages = async () => {
+    setLoading(true);
+    try {
+      console.log(`Fetching messages for group: ${groupId}`);
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('group_id', groupId)
+        .order('created_at', { ascending: true });
 
-        if (error) {
-          console.error('Error fetching messages:', error);
-          setError(error.message);
-        } else {
-          console.log(`Received ${data?.length || 0} messages for group ${groupId}`);
-          const formattedMessages: Message[] = (data || []).map(msg => ({
-            id: msg.id,
-            created_at: msg.created_at,
-            content: msg.text,
-            user_name: msg.sender,
-            user_avatar: msg.avatar || '',
-            group_id: msg.group_id,
-          }));
-          
-          setMessages(formattedMessages);
-          setLastSeen(new Date());
-        }
-      } catch (err: any) {
-        console.error('Error in fetchMessages:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-        setTimeout(() => {
-          initializeScrollPosition();
-        }, 100);
+      if (error) {
+        console.error('Error fetching messages:', error);
+        setError(error.message);
+      } else {
+        console.log(`Received ${data?.length || 0} messages for group ${groupId}`);
+        const formattedMessages: Message[] = (data || []).map(msg => ({
+          id: msg.id,
+          created_at: msg.created_at,
+          content: msg.text,
+          user_name: msg.sender,
+          user_avatar: msg.avatar || '',
+          group_id: msg.group_id,
+        }));
+        
+        setMessages(formattedMessages);
+        setLastSeen(new Date());
       }
-    };
+    } catch (err: any) {
+      console.error('Error in fetchMessages:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+      setTimeout(() => {
+        initializeScrollPosition();
+      }, 100);
+    }
+  };
 
+  useEffect(() => {
     if (groupId) {
       console.log(`Group ID changed, fetching messages for: ${groupId}`);
       fetchMessages();
@@ -118,17 +122,21 @@ export const useChatMessages = (groupId: string, username: string) => {
             };
             
             console.log('New message received via subscription:', newMsg);
+            
             setMessages((oldMessages) => {
               if (oldMessages.some(msg => msg.id === newMsg.id)) {
                 return oldMessages;
               }
-              return [...oldMessages, newMsg];
+              const updatedMessages = [...oldMessages, newMsg];
+              
+              setTimeout(() => {
+                initializeScrollPosition();
+              }, 100);
+              
+              return updatedMessages;
             });
-            setLastSeen(new Date());
             
-            setTimeout(() => {
-              initializeScrollPosition();
-            }, 100);
+            setLastSeen(new Date());
           }
         }
       })
@@ -156,6 +164,10 @@ export const useChatMessages = (groupId: string, username: string) => {
           setTypingUsers(prevTypingUsers => prevTypingUsers.filter(user => user.username !== key));
         }
       })
+      .on('broadcast', { event: 'force_refresh' }, (payload) => {
+        console.log('Force refresh triggered:', payload);
+        fetchMessages();
+      })
       .subscribe(async (status) => {
         console.log('Subscription status:', status);
         if (status === 'SUBSCRIBED') {
@@ -182,6 +194,7 @@ export const useChatMessages = (groupId: string, username: string) => {
   const handleReconnect = () => {
     setIsReconnecting(true);
     supabase.removeAllChannels().then(() => {
+      fetchMessages();
       setTimeout(() => {
         setIsReconnecting(false);
       }, 3000);
