@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, Send, RefreshCw } from 'lucide-react';
@@ -39,7 +38,9 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   const [isReconnecting, setIsReconnecting] = useState(false);
 
   useEffect(() => {
-    scrollToBottom();
+    setTimeout(() => {
+      scrollToBottom();
+    }, 100);
   }, [messages]);
 
   useEffect(() => {
@@ -216,7 +217,9 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   };
 
   const scrollToBottom = () => {
-    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatBottomRef.current) {
+      chatBottomRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   const formatTime = (isoDateString: string): string => {
@@ -282,7 +285,9 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
                   </div>
                 )}
                 <div className="ml-8 break-words">
-                  <div className="text-sm text-white overflow-hidden break-words">{message.content}</div>
+                  <div className="text-sm text-white overflow-hidden break-words w-full pr-2">
+                    {message.content}
+                  </div>
                 </div>
               </div>
             );
