@@ -5,14 +5,32 @@ import { supabase } from '@/integrations/supabase/client';
 export const useReconnection = (onReconnect: () => void) => {
   const [isReconnecting, setIsReconnecting] = useState(false);
 
-  const handleReconnect = () => {
+  const handleReconnect = async () => {
     setIsReconnecting(true);
-    supabase.removeAllChannels().then(() => {
+    
+    // First, enable realtime for the table
+    try {
+      await supabase.rpc('enable_realtime_for_table', {
+        table_name: 'chat_messages'
+      }).catch(error => {
+        console.error('Error enabling realtime:', error);
+      });
+      
+      // Then remove all existing channels and reestablish
+      await supabase.removeAllChannels();
+      
+      // Execute the callback to refetch messages and reestablish subscriptions
       onReconnect();
+      
+      // Wait a bit to show the reconnection state
       setTimeout(() => {
         setIsReconnecting(false);
-      }, 3000);
-    });
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error during reconnection:', error);
+      setIsReconnecting(false);
+    }
   };
 
   return {

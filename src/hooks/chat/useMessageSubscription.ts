@@ -16,6 +16,15 @@ export const useMessageSubscription = (
     
     console.log(`Setting up subscription for group: ${groupId}`);
 
+    // Explicitly add the table to the realtime publication when subscribing
+    supabase.rpc('enable_realtime_for_table', {
+      table_name: 'chat_messages'
+    }).then(result => {
+      console.log('Realtime enabled result:', result);
+    }).catch(error => {
+      console.error('Error enabling realtime:', error);
+    });
+
     const channel = supabase
       .channel(`group_chat:${groupId}`)
       .on('postgres_changes', { 

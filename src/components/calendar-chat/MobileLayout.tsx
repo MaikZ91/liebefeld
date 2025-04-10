@@ -41,14 +41,15 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   defaultView
 }) => {
   // Add a state to force remounting of the GroupChat component
-  const [chatKey, setChatKey] = useState(Date.now());
+  // We also add activeGroupName to the dependencies to ensure rerendering when group changes
+  const [chatKey, setChatKey] = useState(() => Date.now() + activeGroup);
   
-  // When the view or active group changes, force a remount of the chat component
+  // When the view, active group, or active group name changes, force a remount of the chat component
   useEffect(() => {
     if (activeMobileView === 'chat') {
-      setChatKey(Date.now());
+      setChatKey(Date.now() + activeGroup + activeGroupName);
     }
-  }, [activeMobileView, activeGroup]);
+  }, [activeMobileView, activeGroup, activeGroupName]);
   
   return (
     <div className="md:hidden flex flex-col h-[calc(100vh-200px)] min-h-[500px]">
@@ -107,7 +108,11 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                 activeGroup={activeGroup}
                 activeGroupName={activeGroupName}
                 groups={groups}
-                handleGroupSelect={handleGroupSelect}
+                handleGroupSelect={(newGroupId) => {
+                  handleGroupSelect(newGroupId);
+                  // Force remount when group changes
+                  setChatKey(Date.now() + newGroupId);
+                }}
                 mobile={true}
               />
               
@@ -126,7 +131,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                   compact={false} 
                   groupId={activeGroup} 
                   groupName={activeGroupName} 
-                  key={`${activeGroup}-${chatKey}`} 
+                  key={`mobile-group-chat-${chatKey}`} 
                 />
               </div>
             )}
