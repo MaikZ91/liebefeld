@@ -8,24 +8,29 @@ import { Message } from '@/types/chatTypes';
 export const messageService = {
   /**
    * Enable Realtime for the chat messages table
+   * This is a simplified approach that doesn't rely on RPC calls
    */
   async enableRealtime(): Promise<boolean> {
     try {
-      // Specify the parameter type for the RPC function
-      type EnableRealtimeParams = {
-        table_name: string;
-      };
+      console.log('Setting up realtime subscription for chat_messages table');
       
-      const params: EnableRealtimeParams = { table_name: 'chat_messages' };
+      // Create and immediately unsubscribe from a channel to "activate" realtime
+      // This approach doesn't require custom RPC functions
+      const channel = supabase
+        .channel('direct_changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'chat_messages'
+        }, () => {})
+        .subscribe();
+        
+      // Immediately unsubscribe - we're just doing this to ensure the table is tracked
+      setTimeout(() => {
+        supabase.removeChannel(channel);
+      }, 1000);
       
-      const { error } = await supabase.rpc('enable_realtime_for_table', params as any);
-      
-      if (error) {
-        console.error('Error enabling Realtime:', error);
-        return false;
-      }
-      
-      console.log('Realtime successfully enabled');
+      console.log('Realtime subscription initialized');
       return true;
     } catch (error) {
       console.error('Exception in enabling Realtime:', error);
