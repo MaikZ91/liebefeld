@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, Send, RefreshCw } from 'lucide-react';
@@ -252,48 +251,48 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-2 bg-gray-900 text-white flex items-center justify-between">
-        {!compact && <h3 className="text-lg font-semibold">{groupName}</h3>}
+      <div className="px-4 py-3 bg-gray-900 text-white flex items-center justify-between">
+        {!compact && <h3 className="text-xl font-bold">{groupName}</h3>}
         <div className="flex items-center space-x-2">
           {isReconnecting && (
             <Button variant="secondary" disabled>
-              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+              <RefreshCw className="mr-2 h-5 w-5 animate-spin" />
               Reconnecting...
             </Button>
           )}
           <Button variant="outline" size="icon" onClick={handleReconnect}>
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className="h-5 w-5" />
           </Button>
-          {!compact && <Users className="h-5 w-5" />}
+          {!compact && <Users className="h-6 w-6" />}
         </div>
       </div>
 
       <div 
         ref={chatContainerRef}
-        className="flex-grow overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-red-500 scrollbar-track-gray-700"
+        className="flex-grow overflow-y-auto p-5 scrollbar-thin scrollbar-thumb-red-500 scrollbar-track-gray-700"
         style={{ scrollBehavior: 'smooth' }}
       >
-        {loading && <div className="text-center text-gray-500">Loading messages...</div>}
-        {error && <div className="text-center text-red-500">Error: {error}</div>}
+        {loading && <div className="text-center text-gray-500 text-lg font-semibold py-4">Loading messages...</div>}
+        {error && <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>}
 
-        <div className="flex flex-col space-y-2">
+        <div className="flex flex-col space-y-3">
           {messages.map((message, index) => {
             const isConsecutive = index > 0 && messages[index - 1].user_name === message.user_name;
             const timeAgo = formatTime(message.created_at);
 
             return (
-              <div key={message.id} className="mb-4 w-full">
+              <div key={message.id} className="mb-6 w-full">
                 {!isConsecutive && (
-                  <div className="flex items-start mb-2">
-                    <Avatar className="h-8 w-8 mr-2 flex-shrink-0">
+                  <div className="flex items-center mb-3">
+                    <Avatar className="h-10 w-10 mr-3 flex-shrink-0">
                       <AvatarImage src={message.user_avatar} alt={message.user_name} />
                       <AvatarFallback>{getInitials(message.user_name)}</AvatarFallback>
                     </Avatar>
-                    <div className="text-sm font-semibold text-gray-300 mr-2">{message.user_name}</div>
-                    <span className="text-xs text-gray-500">{timeAgo}</span>
+                    <div className="text-base font-bold text-white mr-3">{message.user_name}</div>
+                    <span className="text-sm text-gray-400">{timeAgo}</span>
                   </div>
                 )}
-                <div className="ml-4 w-full">
+                <div className="ml-5 w-full">
                   <ChatMessage 
                     message={message.content} 
                     isConsecutive={isConsecutive} 
@@ -306,22 +305,22 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         </div>
       </div>
 
-      <div className="bg-gray-900 p-4 border-t border-gray-700">
+      <div className="bg-gray-900 p-5 border-t border-gray-700">
         <form onSubmit={handleSubmit} className="relative">
           <Textarea
             value={newMessage}
             onChange={handleInputChange}
             placeholder="Nachricht senden..."
-            className="w-full rounded-md py-2 px-3 bg-gray-800 text-white border-gray-700 pr-10 text-base md:text-lg"
+            className="w-full rounded-md py-3 px-4 bg-gray-800 text-white border-gray-700 pr-12 text-lg md:text-xl"
             rows={1}
             style={{ resize: 'none' }}
           />
           <Button
             type="submit"
-            className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-red-500 hover:bg-red-600 text-white rounded-md p-2"
+            className="absolute top-1/2 right-3 transform -translate-y-1/2 bg-red-500 hover:bg-red-600 text-white rounded-md p-2"
             size="icon"
           >
-            <Send className="h-4 w-4" />
+            <Send className="h-5 w-5" />
           </Button>
         </form>
       </div>
