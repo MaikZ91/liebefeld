@@ -8,8 +8,8 @@ interface ChatMessageProps {
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ message, isConsecutive = false }) => {
   return (
-    <div className={`max-w-[90%] p-3 rounded-lg ${isConsecutive ? 'mt-1' : 'mt-2'} bg-gray-800 text-white shadow-md break-words`}>
-      <div className="w-full whitespace-normal break-words overflow-wrap-anywhere text-wrap">
+    <div className={`max-w-[90%] p-3 rounded-lg ${isConsecutive ? 'mt-1' : 'mt-2'} bg-gray-800 text-white shadow-md`}>
+      <div className="w-full whitespace-pre-wrap break-words">
         {message}
       </div>
     </div>

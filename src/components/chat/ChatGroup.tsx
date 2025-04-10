@@ -38,24 +38,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   const [isReconnecting, setIsReconnecting] = useState(false);
 
   useEffect(() => {
-    setTimeout(() => {
-      scrollToBottom();
-    }, 100);
-  }, [messages]);
-
-  useEffect(() => {
-    if (username) {
-      localStorage.setItem(USERNAME_KEY, username);
-    }
-  }, [username]);
-
-  useEffect(() => {
-    if (avatar) {
-      localStorage.setItem(AVATAR_KEY, avatar);
-    }
-  }, [avatar]);
-
-  useEffect(() => {
     const fetchMessages = async () => {
       setLoading(true);
       try {
@@ -89,6 +71,26 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
 
     fetchMessages();
   }, [groupId]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      scrollToBottom();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [messages]);
+
+  useEffect(() => {
+    if (username) {
+      localStorage.setItem(USERNAME_KEY, username);
+    }
+  }, [username]);
+
+  useEffect(() => {
+    if (avatar) {
+      localStorage.setItem(AVATAR_KEY, avatar);
+    }
+  }, [avatar]);
 
   useEffect(() => {
     let ignore = false;
@@ -284,10 +286,11 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
                     <span className="text-xs text-gray-500 ml-1">{timeAgo}</span>
                   </div>
                 )}
-                <div className="ml-8 break-words">
-                  <div className="text-sm text-white overflow-hidden break-words w-full pr-2">
-                    {message.content}
-                  </div>
+                <div className="ml-8 w-full">
+                  <ChatMessage 
+                    message={message.content} 
+                    isConsecutive={isConsecutive} 
+                  />
                 </div>
               </div>
             );
