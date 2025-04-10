@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import EventCalendar from './EventCalendar';
 import GroupChat from './GroupChat';
@@ -52,12 +51,9 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
     }
   }, [username]);
 
-  // Check for new events
   useEffect(() => {
     if (events.length > 0) {
       const recentEvents = events.filter(event => {
-        // Check for events created after the last check time
-        // Since created_at might not exist on all events, use a fallback
         const eventCreationTime = new Date();
         return eventCreationTime > lastCheckedEvents.current;
       });
@@ -65,7 +61,6 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
     }
   }, [events]);
 
-  // Check for new messages
   useEffect(() => {
     const fetchUnreadMessages = async () => {
       if (!username) return;
@@ -92,7 +87,6 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
 
     fetchUnreadMessages();
     
-    // Subscribe to real-time messages
     const messagesChannel = supabase
       .channel('public:chat_messages')
       .on('postgres_changes', {
@@ -165,7 +159,6 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
     lastCheckedMessages.current = new Date();
   };
 
-  // Get the name of the currently selected group
   const activeGroupName = groups.find(g => g.id === activeGroup)?.name || "Gruppe wählen";
   
   if (isLoading) {
@@ -181,7 +174,6 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
   
   return (
     <div className="w-full">
-      {/* Desktop Layout - Side by Side */}
       <div className="hidden md:flex gap-4 h-[calc(100vh-220px)] min-h-[600px]">
         <div className={cn(
           "transition-all duration-300 overflow-hidden",
@@ -243,7 +235,6 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
                     </div>
                   </div>
                   
-                  {/* Single Group selection dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button className="bg-red-500 text-white hover:bg-red-600">
@@ -296,7 +287,6 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
         )}
       </div>
       
-      {/* Mobile Layout - Tabbed - Default to Calendar */}
       <div className="md:hidden flex flex-col h-[calc(100vh-200px)] min-h-[500px]">
         <div className="flex justify-center mb-4">
           <div className="inline-flex rounded-md shadow-sm w-full" role="group">
@@ -349,7 +339,6 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
           {username ? (
             <>
               <div className="flex items-center justify-between mb-2 gap-2">
-                {/* Single Group selection dropdown for mobile - just one button */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button className="bg-red-500 text-white hover:bg-red-600 flex-grow">
@@ -381,7 +370,6 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
                 </Avatar>
               </div>
               
-              {/* Active group chat */}
               {activeGroup && (
                 <div className="h-[calc(100vh-280px)] min-h-[400px] border border-gray-700 rounded-lg overflow-hidden">
                   <GroupChat compact={false} groupId={activeGroup} groupName={activeGroupName} />

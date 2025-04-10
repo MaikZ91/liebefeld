@@ -293,7 +293,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
                     <span className="text-xs text-gray-500">{timeAgo}</span>
                   </div>
                 )}
-                <div className="ml-5 w-full">
+                <div className="ml-4 w-full">
                   <ChatMessage 
                     message={message.content} 
                     isConsecutive={isConsecutive} 
