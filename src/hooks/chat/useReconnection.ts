@@ -11,15 +11,15 @@ export const useReconnection = (onReconnect: () => void) => {
     // First, enable realtime for the table
     try {
       // Use a properly typed approach for RPC calls
-      await supabase.rpc('enable_realtime_for_table', {
+      const { data, error } = await supabase.rpc('enable_realtime_for_table', {
         table_name: 'chat_messages'
-      })
-      .then(result => {
-        console.log('Realtime enabled result:', result);
-      })
-      .catch(error => {
-        console.error('Error enabling realtime:', error);
       });
+      
+      if (error) {
+        console.error('Error enabling realtime:', error);
+      } else {
+        console.log('Realtime enabled result:', data);
+      }
       
       // Then remove all existing channels and reestablish
       await supabase.removeAllChannels();

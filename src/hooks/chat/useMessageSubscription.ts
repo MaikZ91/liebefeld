@@ -17,15 +17,19 @@ export const useMessageSubscription = (
     console.log(`Setting up subscription for group: ${groupId}`);
 
     // Explicitly add the table to the realtime publication when subscribing
-    supabase.rpc('enable_realtime_for_table', {
-      table_name: 'chat_messages'
-    })
-    .then(result => {
-      console.log('Realtime enabled result:', result);
-    })
-    .catch(error => {
-      console.error('Error enabling realtime:', error);
-    });
+    const enableRealtimeTable = async () => {
+      const { data, error } = await supabase.rpc('enable_realtime_for_table', {
+        table_name: 'chat_messages'
+      });
+      
+      if (error) {
+        console.error('Error enabling realtime:', error);
+      } else {
+        console.log('Realtime enabled result:', data);
+      }
+    };
+    
+    enableRealtimeTable();
 
     const channel = supabase
       .channel(`group_chat:${groupId}`)
