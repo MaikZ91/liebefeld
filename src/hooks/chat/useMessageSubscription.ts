@@ -14,36 +14,36 @@ export const useMessageSubscription = (
   const channelsRef = useRef<RealtimeChannel[]>([]);
   const timeoutsRef = useRef<{[key: string]: NodeJS.Timeout}>({});
 
-  // Callback zum Aktualisieren der Tipping-Benutzer
+  // Update typing users callback
   const handleTypingUpdate = useCallback((newTypingUser: TypingUser[]) => {
     setTypingUsers(prev => {
-      // Aktuelle Tipping-Liste klonen
+      // Clone current typing list
       const currentUsers = [...prev];
       
-      // Für jeden neuen Tipping-Benutzer
+      // For each new typing user
       newTypingUser.forEach(user => {
-        // Vorhandenen Benutzer finden oder -1, wenn nicht gefunden
+        // Find existing user or -1 if not found
         const existingIndex = currentUsers.findIndex(u => u.username === user.username);
         
         if (user.lastTyped) {
-          // Wenn ein Timeout für diesen Benutzer existiert, löschen
+          // If a timeout exists for this user, clear it
           if (timeoutsRef.current[user.username]) {
             clearTimeout(timeoutsRef.current[user.username]);
           }
           
-          // Neuen Timeout setzen, um den Benutzer nach 3 Sekunden zu entfernen
+          // Set new timeout to remove user after 3 seconds
           timeoutsRef.current[user.username] = setTimeout(() => {
             setTypingUsers(prev => prev.filter(u => u.username !== user.username));
           }, 3000);
           
-          // Benutzer aktualisieren oder hinzufügen
+          // Update or add user
           if (existingIndex >= 0) {
             currentUsers[existingIndex] = user;
           } else {
             currentUsers.push(user);
           }
         } else {
-          // Benutzer aus der Liste entfernen
+          // Remove user from list
           if (existingIndex >= 0) {
             currentUsers.splice(existingIndex, 1);
           }
@@ -56,47 +56,48 @@ export const useMessageSubscription = (
 
   useEffect(() => {
     if (!groupId || !username) {
-      console.log('Kein Abonnement: Gruppen-ID oder Benutzername fehlt');
+      console.log('No subscription: Group ID or username missing');
       return;
     }
     
-    console.log(`Abonnement einrichten für Gruppe: ${groupId}`);
+    console.log(`Setting up subscription for group: ${groupId}`);
 
-    // Sicherstellen, dass Realtime für die Tabelle aktiviert ist
+    // Ensure Realtime is enabled for the table
     chatService.enableRealtime();
     
-    // Channel für Nachrichten erstellen
+    // Create message channel
     const messageChannel = chatService.createMessageSubscription(
       groupId,
       onNewMessage,
-      onForceRefresh
+      onForceRefresh,
+      username
     );
     
-    // Channel für Tipping erstellen
+    // Create typing channel
     const typingChannel = chatService.createTypingSubscription(
       groupId,
       username,
       handleTypingUpdate
     );
     
-    // Alle Channels speichern
+    // Save all channels
     channelsRef.current = [messageChannel, typingChannel];
     
-    // Aufräumen beim Unmount der Komponente
+    // Cleanup on component unmount
     return () => {
-      console.log(`Abonnement beenden für Gruppe: ${groupId}`);
+      console.log(`Ending subscription for group: ${groupId}`);
       
-      // Alle aktiven Timeouts löschen
+      // Clear all active timeouts
       Object.values(timeoutsRef.current).forEach(timeout => {
         clearTimeout(timeout);
       });
       
-      // Alle Channels abbestellen
+      // Unsubscribe all channels
       channelsRef.current.forEach(channel => {
         channel.unsubscribe();
       });
       
-      // Tipping-Benutzer zurücksetzen
+      // Reset typing users
       setTypingUsers([]);
     };
   }, [groupId, username, onNewMessage, onForceRefresh, handleTypingUpdate]);

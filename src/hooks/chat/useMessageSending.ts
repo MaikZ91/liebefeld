@@ -28,13 +28,13 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       
       let messageContent = trimmedMessage;
       
-      // Eventdaten zur Nachricht hinzufügen, wenn vorhanden
+      // Add event data to message if available
       if (eventData) {
         const { title, date, time, location, category } = eventData;
         messageContent = `🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${trimmedMessage}`;
       }
       
-      // Optimistische Nachricht erstellen
+      // Create optimistic message
       const tempId = `temp-${Date.now()}`;
       const optimisticMessage = {
         id: tempId,
@@ -45,17 +45,17 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         group_id: groupId,
       };
       
-      // Optimistische Nachricht zum lokalen Zustand hinzufügen
+      // Add optimistic message to local state
       addOptimisticMessage(optimisticMessage);
       setNewMessage('');
       
-      // Tipping-Status auf 'nicht tippend' setzen
+      // Set typing status to not typing
       if (typing) {
         await chatService.sendTypingStatus(groupId, username, localStorage.getItem(AVATAR_KEY), false);
         setTyping(false);
       }
       
-      // Medien-URL abrufen, wenn eine Datei ausgewählt wurde
+      // Process file upload if a file is selected
       let mediaUrl = undefined;
       if (fileInputRef.current?.files?.length) {
         const file = fileInputRef.current.files[0];
@@ -63,16 +63,18 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
         const filePath = `${groupId}/${fileName}`;
         
-        const { error: uploadError, data } = await fetch(file); // Vereinfachte Datei-Upload-Logik - in der Realität würde hier der Upload erfolgen
-        
-        if (uploadError) {
-          throw uploadError;
+        // Simplified file upload logic - in reality, this would use supabase storage
+        // This is a placeholder for the actual upload
+        try {
+          // Create a mock upload response
+          mediaUrl = URL.createObjectURL(file);
+        } catch (uploadError) {
+          console.error('Error uploading file:', uploadError);
+          throw new Error('File upload failed');
         }
-        
-        mediaUrl = URL.createObjectURL(file); // Vereinfacht - in der Realität würde hier die URL aus Supabase kommen
       }
       
-      // Nachricht an den Server senden
+      // Send message to server
       const messageId = await chatService.sendMessage(
         groupId,
         username,
@@ -82,19 +84,19 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       );
       
       if (!messageId) {
-        throw new Error("Fehler beim Senden der Nachricht");
+        throw new Error("Error sending message");
       }
 
-      // Datei-Input zurücksetzen
+      // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
       
     } catch (err: any) {
-      console.error('Fehler beim Senden der Nachricht:', err);
+      console.error('Error sending message:', err);
       toast({
-        title: "Fehler beim Senden",
-        description: err.message || "Deine Nachricht konnte nicht gesendet werden",
+        title: "Error sending",
+        description: err.message || "Your message couldn't be sent",
         variant: "destructive"
       });
     } finally {
@@ -105,11 +107,11 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);
     
-    // Tipping-Status aktualisieren
+    // Update typing status
     const isCurrentlyTyping = e.target.value.trim().length > 0;
     
     if (!typing && isCurrentlyTyping) {
-      // Tipping beginnt
+      // Typing begins
       setTyping(true);
       chatService.sendTypingStatus(
         groupId,
@@ -119,12 +121,12 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       );
     }
     
-    // Bestehenden Timeout löschen
+    // Clear existing timeout
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
     
-    // Neuen Timeout setzen
+    // Set new timeout
     typingTimeoutRef.current = setTimeout(() => {
       if (typing) {
         chatService.sendTypingStatus(
@@ -145,7 +147,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     }
   }, [handleSubmit]);
 
-  // Aufräumen bei Unmount
+  // Cleanup on unmount
   const cleanup = useCallback(() => {
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);

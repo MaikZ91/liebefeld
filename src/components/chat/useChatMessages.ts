@@ -6,6 +6,7 @@ import { useMessageSubscription } from '@/hooks/chat/useMessageSubscription';
 import { useTypingIndicator } from '@/hooks/chat/useTypingIndicator';
 import { useReconnection } from '@/hooks/chat/useReconnection';
 import { useScrollManagement } from '@/hooks/chat/useScrollManagement';
+import { chatService } from '@/services/chatService';
 
 export const useChatMessages = (groupId: string, username: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -13,7 +14,6 @@ export const useChatMessages = (groupId: string, username: string) => {
   const messagesRef = useRef<Message[]>(messages);
   
   const { fetchMessages, loading, error, setError } = useMessageFetching(groupId);
-  const { typingUsers, typing } = useTypingIndicator(groupId, username);
   
   // Update the messages ref whenever messages change
   useEffect(() => {
@@ -32,6 +32,21 @@ export const useChatMessages = (groupId: string, username: string) => {
     const fetchedMessages = await fetchMessages();
     setMessages(fetchedMessages);
     setLastSeen(new Date());
+    
+    // Mark messages as read
+    if (fetchedMessages.length > 0 && username) {
+      const unreadMessages = fetchedMessages.filter(
+        msg => msg.user_name !== username
+      );
+      
+      if (unreadMessages.length > 0) {
+        chatService.markMessagesAsRead(
+          groupId,
+          unreadMessages.map(msg => msg.id),
+          username
+        );
+      }
+    }
   };
   
   // Handle new messages from subscription
@@ -40,6 +55,12 @@ export const useChatMessages = (groupId: string, username: string) => {
       if (oldMessages.some(msg => msg.id === newMsg.id)) {
         return oldMessages;
       }
+      
+      // Mark message as read if it's from someone else
+      if (newMsg.user_name !== username && username) {
+        chatService.markMessagesAsRead(groupId, [newMsg.id], username);
+      }
+      
       return [...oldMessages, newMsg];
     });
     
@@ -47,7 +68,12 @@ export const useChatMessages = (groupId: string, username: string) => {
   };
   
   // Set up the subscription
-  useMessageSubscription(groupId, handleNewMessage, fetchAndSetMessages);
+  const { typingUsers } = useMessageSubscription(
+    groupId, 
+    handleNewMessage, 
+    fetchAndSetMessages,
+    username
+  );
   
   // Reconnection handling
   const { isReconnecting, handleReconnect } = useReconnection(fetchAndSetMessages);
@@ -60,7 +86,6 @@ export const useChatMessages = (groupId: string, username: string) => {
     messages,
     loading,
     error,
-    typing,
     typingUsers,
     isReconnecting,
     setMessages,

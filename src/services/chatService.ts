@@ -1,41 +1,42 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Message, TypingUser } from '@/types/chatTypes';
+import { Json } from '@/integrations/supabase/types';
 
 /**
- * Zentraler Service für alle Chat-bezogenen Supabase-Operationen.
- * Dies verbessert die Wiederverwendbarkeit und Testbarkeit.
+ * Central service for all chat-related Supabase operations.
+ * This improves reusability and testability.
  */
 export const chatService = {
   /**
-   * Aktiviert Realtime für die Chat-Nachrichten-Tabelle
+   * Enable Realtime for the chat messages table
    */
   async enableRealtime(): Promise<boolean> {
     try {
-      // Typanmerkung mit 'any' um Typescript-Fehler zu vermeiden - das Schema der RPC-Funktion ist nicht in den generierten Typen
+      // Type annotation with 'any' to avoid TypeScript errors
       const { error } = await supabase.rpc('enable_realtime_for_table', {
         table_name: 'chat_messages'
       } as any);
       
       if (error) {
-        console.error('Fehler beim Aktivieren von Realtime:', error);
+        console.error('Error enabling Realtime:', error);
         return false;
       }
       
-      console.log('Realtime erfolgreich aktiviert');
+      console.log('Realtime successfully enabled');
       return true;
     } catch (error) {
-      console.error('Ausnahmefehler beim Aktivieren von Realtime:', error);
+      console.error('Exception in enabling Realtime:', error);
       return false;
     }
   },
 
   /**
-   * Lädt Nachrichten für eine bestimmte Gruppe
+   * Fetch messages for a specific group
    */
   async fetchMessages(groupId: string): Promise<Message[]> {
     try {
-      // Zuerst Realtime für die Tabelle aktivieren
+      // First enable Realtime for the table
       await this.enableRealtime();
       
       const { data, error } = await supabase
@@ -45,13 +46,13 @@ export const chatService = {
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('Fehler beim Abrufen von Nachrichten:', error);
+        console.error('Error fetching messages:', error);
         throw error;
       } 
       
-      console.log(`${data?.length || 0} Nachrichten für Gruppe ${groupId} empfangen`);
+      console.log(`${data?.length || 0} messages received for group ${groupId}`);
       
-      // Nachrichten in das erwartete Format umwandeln
+      // Convert messages to expected format
       const formattedMessages: Message[] = (data || []).map(msg => ({
         id: msg.id,
         created_at: msg.created_at,
@@ -63,13 +64,13 @@ export const chatService = {
       
       return formattedMessages;
     } catch (error) {
-      console.error('Fehler in fetchMessages:', error);
+      console.error('Error in fetchMessages:', error);
       return [];
     }
   },
 
   /**
-   * Markiert Nachrichten als gelesen durch einen bestimmten Benutzer
+   * Mark messages as read by a specific user
    */
   async markMessagesAsRead(groupId: string, messageIds: string[], username: string): Promise<void> {
     try {
@@ -81,13 +82,13 @@ export const chatService = {
           .single();
           
         if (error) {
-          console.error(`Fehler beim Abrufen von read_by für Nachricht ${messageId}:`, error);
+          console.error(`Error fetching read_by for message ${messageId}:`, error);
           continue;
         }
         
         const readBy = data?.read_by || [];
         
-        // Nur aktualisieren, wenn der Benutzer noch nicht in der read_by-Liste ist
+        // Only update if the user is not already in the read_by list
         if (!readBy.includes(username)) {
           const { error: updateError } = await supabase
             .from('chat_messages')
@@ -95,17 +96,17 @@ export const chatService = {
             .eq('id', messageId);
             
           if (updateError) {
-            console.error(`Fehler beim Aktualisieren von read_by für Nachricht ${messageId}:`, updateError);
+            console.error(`Error updating read_by for message ${messageId}:`, updateError);
           }
         }
       }
     } catch (error) {
-      console.error('Fehler beim Markieren von Nachrichten als gelesen:', error);
+      console.error('Error marking messages as read:', error);
     }
   },
 
   /**
-   * Sendet eine neue Nachricht
+   * Send a new message
    */
   async sendMessage(
     groupId: string, 
@@ -115,7 +116,7 @@ export const chatService = {
     mediaUrl: string | null = null
   ): Promise<string | null> {
     try {
-      // Sicherstellen, dass Realtime aktiviert ist
+      // Ensure Realtime is enabled
       await this.enableRealtime();
       
       const { data, error } = await supabase
@@ -126,25 +127,25 @@ export const chatService = {
           text: content,
           avatar: avatar,
           media_url: mediaUrl,
-          read_by: [username], // Die sendende Person hat die Nachricht bereits gelesen
+          read_by: [username], // The sending person has already read the message
         }])
         .select('id')
         .single();
 
       if (error) {
-        console.error('Fehler beim Senden der Nachricht:', error);
+        console.error('Error sending message:', error);
         throw error;
       }
       
       return data?.id || null;
     } catch (error) {
-      console.error('Fehler in sendMessage:', error);
+      console.error('Error in sendMessage:', error);
       return null;
     }
   },
 
   /**
-   * Sendet Tipping-Status für einen Benutzer
+   * Send typing status for a user
    */
   async sendTypingStatus(groupId: string, username: string, avatar: string | null, isTyping: boolean): Promise<void> {
     try {
@@ -160,16 +161,16 @@ export const chatService = {
           }
         });
     } catch (error) {
-      console.error('Fehler beim Senden des Tipping-Status:', error);
+      console.error('Error sending typing status:', error);
     }
   },
 
   /**
-   * Fügt eine Reaktion zu einer Nachricht hinzu oder entfernt sie
+   * Add or remove a reaction to a message
    */
   async toggleReaction(messageId: string, emoji: string, username: string): Promise<boolean> {
     try {
-      // Aktuelle Nachricht abrufen
+      // Get current message
       const { data, error } = await supabase
         .from('chat_messages')
         .select('reactions')
@@ -177,62 +178,70 @@ export const chatService = {
         .single();
         
       if (error) {
-        console.error('Fehler beim Abrufen der Nachricht für Reaktion:', error);
+        console.error('Error fetching message for reaction:', error);
         return false;
       }
       
-      // Aktualisieren der Reaktionen
-      const reactions = data?.reactions || [];
-      const existingIndex = reactions.findIndex((r: any) => r.emoji === emoji);
+      // Update reactions
+      const reactions = data?.reactions as any[] || [];
+      let updated = false;
       
-      if (existingIndex >= 0) {
-        // Reaktion existiert bereits, Benutzer hinzufügen oder entfernen
-        const userIndex = reactions[existingIndex].users.indexOf(username);
+      const existingReactionIndex = reactions.findIndex((r: any) => r.emoji === emoji);
+      
+      if (existingReactionIndex >= 0) {
+        // Reaction already exists, add or remove user
+        const users = reactions[existingReactionIndex].users;
+        const userIndex = users.indexOf(username);
         
         if (userIndex >= 0) {
-          // Benutzer entfernen
-          reactions[existingIndex].users.splice(userIndex, 1);
-          // Reaktion entfernen, wenn keine Benutzer mehr übrig sind
-          if (reactions[existingIndex].users.length === 0) {
-            reactions.splice(existingIndex, 1);
+          // Remove user
+          users.splice(userIndex, 1);
+          // Remove reaction if no users left
+          if (users.length === 0) {
+            reactions.splice(existingReactionIndex, 1);
           }
         } else {
-          // Benutzer hinzufügen
-          reactions[existingIndex].users.push(username);
+          // Add user
+          users.push(username);
         }
+        updated = true;
       } else {
-        // Neue Reaktion hinzufügen
+        // Add new reaction
         reactions.push({
           emoji,
           users: [username]
         });
+        updated = true;
       }
       
-      // Aktualisierte Reaktionen speichern
-      const { error: updateError } = await supabase
-        .from('chat_messages')
-        .update({ reactions })
-        .eq('id', messageId);
-        
-      if (updateError) {
-        console.error('Fehler beim Aktualisieren der Reaktionen:', updateError);
-        return false;
+      // Save updated reactions
+      if (updated) {
+        const { error: updateError } = await supabase
+          .from('chat_messages')
+          .update({ reactions })
+          .eq('id', messageId);
+          
+        if (updateError) {
+          console.error('Error updating reactions:', updateError);
+          return false;
+        }
       }
       
       return true;
     } catch (error) {
-      console.error('Fehler beim Umschalten der Reaktion:', error);
+      console.error('Error toggling reaction:', error);
       return false;
     }
   },
 
   /**
-   * Erstellt Channel-Abonnements für Echtzeit-Updates
+   * Create channel subscriptions for real-time updates
    */
   createMessageSubscription(
     groupId: string, 
     onNewMessage: (message: Message) => void,
-    onForceRefresh: () => void
+    onForceRefresh: () => void,
+    username: string
   ) {
     const messageChannel = supabase
       .channel(`group_chat:${groupId}`)
@@ -254,24 +263,24 @@ export const chatService = {
               group_id: newPayload.group_id,
             };
             
-            console.log('Neue Nachricht über Abonnement empfangen:', newMsg);
+            console.log('New message received via subscription:', newMsg);
             onNewMessage(newMsg);
           }
         }
       })
       .on('broadcast', { event: 'force_refresh' }, (payload) => {
-        console.log('Force refresh ausgelöst:', payload);
+        console.log('Force refresh triggered:', payload);
         onForceRefresh();
       })
       .subscribe((status) => {
-        console.log('Abonnement-Status für Nachrichten:', status);
+        console.log('Subscription status for messages:', status);
       });
 
     return messageChannel;
   },
 
   /**
-   * Erstellt ein Abonnement für Tipping-Updates
+   * Create a subscription for typing updates
    */
   createTypingSubscription(
     groupId: string,
@@ -283,7 +292,7 @@ export const chatService = {
       .on('broadcast', { event: 'typing' }, (payload) => {
         const { username: typingUsername, avatar, isTyping } = payload;
         
-        // Ignoriere das eigene Tipping
+        // Ignore own typing
         if (typingUsername === username) return;
         
         if (isTyping) {
@@ -297,7 +306,7 @@ export const chatService = {
         }
       })
       .subscribe((status) => {
-        console.log('Abonnement-Status für Tipping:', status);
+        console.log('Subscription status for typing:', status);
       });
 
     return typingChannel;
