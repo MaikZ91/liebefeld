@@ -121,10 +121,10 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
         }
 
         setGroups(data);
-        // Find the Spot group and set it as default
-        const spotGroup = data.find(g => g.name.toLowerCase() === 'spot');
-        if (spotGroup) {
-          setActiveGroup(spotGroup.id);
+        // Find the Sport group and set it as default
+        const sportGroup = data.find(g => g.name.toLowerCase() === 'sport');
+        if (sportGroup) {
+          setActiveGroup(sportGroup.id);
         } else if (data && data.length > 0 && !activeGroup) {
           setActiveGroup(data[0].id);
         }

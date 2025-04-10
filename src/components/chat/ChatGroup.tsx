@@ -39,6 +39,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const isSpotGroup = groupName.toLowerCase() === 'spot';
+  const isSportGroup = groupName.toLowerCase() === 'sport';
   const isAusgehenGroup = groupName.toLowerCase() === 'ausgehen';
 
   const initializeScrollPosition = () => {
@@ -254,7 +255,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
 
   return (
     <div className="flex flex-col h-full">
-      <div className={`px-4 py-3 ${isSpotGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-gray-900'} text-white flex items-center justify-between`}>
+      <div className={`px-4 py-3 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-gray-900'} text-white flex items-center justify-between`}>
         {!compact && <h3 className="text-xl font-bold">{groupName}</h3>}
         <div className="flex items-center space-x-2">
           {isReconnecting && (
@@ -270,7 +271,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         </div>
       </div>
 
-      <div className={`flex-grow p-5 ${isSpotGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto`} ref={chatContainerRef}>
+      <div className={`flex-grow p-5 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto`} ref={chatContainerRef}>
         {loading && <div className="text-center text-gray-500 text-lg font-semibold py-4">Loading messages...</div>}
         {error && <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>}
 
@@ -283,7 +284,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
               <div key={message.id} className="mb-4 w-full">
                 {!isConsecutive && (
                   <div className="flex items-center mb-2">
-                    <Avatar className={`h-8 w-8 mr-2 flex-shrink-0 ${isSpotGroup || isAusgehenGroup ? 'border-[#9b87f5]' : ''}`}>
+                    <Avatar className={`h-8 w-8 mr-2 flex-shrink-0 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'border-[#9b87f5]' : ''}`}>
                       <AvatarImage src={message.user_avatar} alt={message.user_name} />
                       <AvatarFallback>{getInitials(message.user_name)}</AvatarFallback>
                     </Avatar>
@@ -295,7 +296,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
                   <ChatMessage 
                     message={message.content} 
                     isConsecutive={isConsecutive}
-                    isSpotGroup={isSpotGroup || isAusgehenGroup}
+                    isSpotGroup={isSpotGroup || isSportGroup || isAusgehenGroup}
                   />
                 </div>
               </div>
@@ -305,20 +306,20 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         </div>
       </div>
 
-      <div className={`${isSpotGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-gray-900'} p-4 border-t ${isSpotGroup || isAusgehenGroup ? 'border-gray-800' : 'border-gray-700'}`}>
+      <div className={`${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-gray-900'} p-4 border-t ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'border-gray-800' : 'border-gray-700'}`}>
         <form onSubmit={handleSubmit} className="relative">
           <Textarea
             value={newMessage}
             onChange={handleInputChange}
             placeholder="Nachricht senden..."
-            className={`w-full rounded-md py-2 px-3 ${isSpotGroup || isAusgehenGroup ? 'bg-[#222632] text-white border-gray-800' : 'bg-gray-800 text-white border-gray-700'} pr-12 text-base`}
+            className={`w-full rounded-md py-2 px-3 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#222632] text-white border-gray-800' : 'bg-gray-800 text-white border-gray-700'} pr-12 text-base`}
             rows={1}
             style={{ resize: 'none', maxHeight: '100px' }}
             maxLength={1000}
           />
           <Button
             type="submit"
-            className={`absolute top-1/2 right-3 transform -translate-y-1/2 ${isSpotGroup || isAusgehenGroup ? 'bg-[#9b87f5] hover:bg-[#7E69AB]' : 'bg-red-500 hover:bg-red-600'} text-white rounded-md p-2`}
+            className={`absolute top-1/2 right-3 transform -translate-y-1/2 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#9b87f5] hover:bg-[#7E69AB]' : 'bg-red-500 hover:bg-red-600'} text-white rounded-md p-2`}
             size="icon"
           >
             <Send className="h-4 w-4" />
