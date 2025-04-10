@@ -61,14 +61,14 @@ export const subscriptionService = {
         table: 'chat_messages',
       }, (payload) => {
         console.log('Table INSERT received:', payload);
-        if (payload.new && payload.new.group_id === groupId) {
+        if (payload.new && (payload.new as any).group_id === groupId) {
           const newMsg: Message = {
-            id: payload.new.id,
-            created_at: payload.new.created_at,
-            content: payload.new.text,
-            user_name: payload.new.sender,
-            user_avatar: payload.new.avatar || '',
-            group_id: payload.new.group_id,
+            id: (payload.new as any).id,
+            created_at: (payload.new as any).created_at,
+            content: (payload.new as any).text,
+            user_name: (payload.new as any).sender,
+            user_avatar: (payload.new as any).avatar || '',
+            group_id: (payload.new as any).group_id,
           };
           
           console.log('Inserted message via table changes:', newMsg);

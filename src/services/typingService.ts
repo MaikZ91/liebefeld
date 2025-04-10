@@ -3,24 +3,26 @@ import { supabase } from '@/integrations/supabase/client';
 import { TypingUser } from '@/types/chatTypes';
 
 /**
- * Service for handling typing indicators
+ * Service for typing indicator operations
  */
 export const typingService = {
   /**
-   * Send typing status to other users
+   * Send typing status to other clients
    */
-  async sendTypingStatus(
-    groupId: string, 
-    username: string, 
-    avatar: string | null, 
+  sendTypingStatus(
+    groupId: string,
+    username: string,
+    avatar: string | null,
     isTyping: boolean
   ): Promise<boolean> {
+    console.log(`Sending typing status ${isTyping ? 'started' : 'stopped'} for ${username} in group ${groupId}`);
+    
     try {
-      console.log(`Sending typing status for ${username} in group ${groupId}: ${isTyping ? 'typing' : 'not typing'}`);
-      
+      // Get typing channel
       const channel = supabase.channel(`typing:${groupId}`);
-      await channel.subscribe();
-      await channel.send({
+      
+      // Send typing status
+      channel.send({
         type: 'broadcast',
         event: 'typing',
         payload: {
@@ -30,20 +32,15 @@ export const typingService = {
         }
       });
       
-      // Remove the channel after use to prevent too many open channels
-      setTimeout(() => {
-        supabase.removeChannel(channel);
-      }, 2000);
-      
-      return true;
+      return Promise.resolve(true);
     } catch (error) {
       console.error('Error sending typing status:', error);
-      return false;
+      return Promise.resolve(false);
     }
   },
-
+  
   /**
-   * Create a subscription for typing indicators
+   * Create typing indicator subscription
    */
   createTypingSubscription(
     groupId: string,
@@ -55,7 +52,7 @@ export const typingService = {
     const typingChannel = supabase
       .channel(`typing:${groupId}`)
       .on('broadcast', { event: 'typing' }, (payload) => {
-        console.log('Typing event received:', payload);
+        console.log('Typing status update received:', payload);
         
         if (payload.payload && payload.payload.username !== username) {
           const { username: typingUsername, avatar, isTyping } = payload.payload;

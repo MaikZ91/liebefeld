@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Send, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import MessageList from './MessageList';
 import { useChatMessages } from '@/hooks/chat/useChatMessages';
 import { useMessageSending } from '@/hooks/chat/useMessageSending';
 import { supabase } from '@/integrations/supabase/client';
+import { messageService } from '@/services/messageService';
 
 interface ChatGroupProps {
   groupId: string;
@@ -28,6 +30,9 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   useEffect(() => {
     const enableRealtime = async () => {
       try {
+        // Enable realtime through the messageService
+        await messageService.enableRealtime();
+        
         // This query activates realtime
         await supabase.from('chat_messages').select('id').limit(1);
         
@@ -41,7 +46,9 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
           }, (payload) => {
             console.log('ChatGroup saw direct table INSERT:', payload);
           })
-          .subscribe();
+          .subscribe((status) => {
+            console.log('ChatGroup direct subscription status:', status);
+          });
           
         return () => {
           supabase.removeChannel(channel);
