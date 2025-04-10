@@ -2,7 +2,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { AVATAR_KEY } from '@/types/chatTypes';
 import { toast } from '@/hooks/use-toast';
-import { messageService } from '@/services/messageService';
+import { chatService } from '@/services/chatService';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useMessageSending = (groupId: string, username: string, addOptimisticMessage: (message: any) => void) => {
   const [newMessage, setNewMessage] = useState('');
@@ -51,7 +52,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       
       // Set typing status to not typing
       if (typing) {
-        await messageService.sendTypingStatus(groupId, username, localStorage.getItem(AVATAR_KEY), false);
+        await chatService.sendTypingStatus(groupId, username, localStorage.getItem(AVATAR_KEY), false);
         setTyping(false);
       }
       
@@ -75,7 +76,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       }
       
       // Send message to server
-      const messageId = await messageService.sendMessage(
+      const messageId = await chatService.sendMessage(
         groupId,
         username,
         messageContent,
@@ -113,7 +114,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     if (!typing && isCurrentlyTyping) {
       // Typing begins
       setTyping(true);
-      messageService.sendTypingStatus(
+      chatService.sendTypingStatus(
         groupId,
         username,
         localStorage.getItem(AVATAR_KEY),
@@ -129,7 +130,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     // Set new timeout
     typingTimeoutRef.current = setTimeout(() => {
       if (typing) {
-        messageService.sendTypingStatus(
+        chatService.sendTypingStatus(
           groupId,
           username,
           localStorage.getItem(AVATAR_KEY),
@@ -154,45 +155,9 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     }
     
     if (typing) {
-      messageService.sendTypingStatus(groupId, username, localStorage.getItem(AVATAR_KEY), false);
+      chatService.sendTypingStatus(groupId, username, localStorage.getItem(AVATAR_KEY), false);
     }
   }, [groupId, username, typing]);
-  
-  // Add missing sendTypingStatus to messageService if needed
-  useEffect(() => {
-    if (!messageService.sendTypingStatus) {
-      messageService.sendTypingStatus = async (
-        groupId: string, 
-        username: string, 
-        avatar: string | null, 
-        isTyping: boolean
-      ) => {
-        try {
-          const channel = supabase.channel(`typing:${groupId}`);
-          await channel.subscribe();
-          await channel.send({
-            type: 'broadcast',
-            event: 'typing',
-            payload: {
-              username,
-              avatar,
-              isTyping
-            }
-          });
-          
-          // Remove the channel after use
-          setTimeout(() => {
-            supabase.removeChannel(channel);
-          }, 2000);
-          
-          return true;
-        } catch (error) {
-          console.error('Error sending typing status:', error);
-          return false;
-        }
-      };
-    }
-  }, []);
 
   return {
     newMessage,
