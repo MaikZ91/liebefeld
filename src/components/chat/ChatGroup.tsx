@@ -1,23 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { Send, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { USERNAME_KEY, AVATAR_KEY, TypingUser } from '@/types/chatTypes';
+import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
 import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
 import { useChatMessages } from './useChatMessages';
-import { useMessageSending } from './useMessageSending';
-
-interface Message {
-  id: string;
-  created_at: string;
-  content: string;
-  user_name: string;
-  user_avatar: string;
-  group_id: string;
-}
+import { useMessageSending } from '@/hooks/chat/useMessageSending';
 
 interface ChatGroupProps {
   groupId: string;
@@ -45,7 +35,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
     chatBottomRef
   } = useChatMessages(groupId, username);
 
-  const addOptimisticMessage = (message: Message) => {
+  const addOptimisticMessage = (message: any) => {
     setMessages(prevMessages => [...prevMessages, message]);
   };
 
@@ -55,8 +45,16 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
     fileInputRef,
     handleSubmit,
     handleInputChange,
-    handleKeyDown
+    handleKeyDown,
+    cleanup
   } = useMessageSending(groupId, username, addOptimisticMessage);
+
+  // Aufräumen beim Unmount
+  useEffect(() => {
+    return () => {
+      cleanup();
+    };
+  }, [cleanup]);
 
   useEffect(() => {
     if (username) {
