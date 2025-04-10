@@ -4,6 +4,7 @@ import { Users, Send, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import ChatMessage from './ChatMessage';
 import EventMessageFormatter from './EventMessageFormatter';
 import { getInitials } from '@/utils/chatUIUtils';
@@ -267,11 +268,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         </div>
       </div>
 
-      <div 
-        ref={chatContainerRef}
-        className="flex-grow overflow-y-auto p-5 scrollbar-thin scrollbar-thumb-red-500 scrollbar-track-gray-700"
-        style={{ scrollBehavior: 'smooth' }}
-      >
+      <ScrollArea className="flex-grow p-5">
         {loading && <div className="text-center text-gray-500 text-lg font-semibold py-4">Loading messages...</div>}
         {error && <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>}
 
@@ -281,18 +278,18 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
             const timeAgo = formatTime(message.created_at);
 
             return (
-              <div key={message.id} className="mb-6 w-full">
+              <div key={message.id} className="mb-4 w-full">
                 {!isConsecutive && (
-                  <div className="flex items-center mb-3">
-                    <Avatar className="h-10 w-10 mr-3 flex-shrink-0">
+                  <div className="flex items-center mb-2">
+                    <Avatar className="h-8 w-8 mr-2 flex-shrink-0">
                       <AvatarImage src={message.user_avatar} alt={message.user_name} />
                       <AvatarFallback>{getInitials(message.user_name)}</AvatarFallback>
                     </Avatar>
-                    <div className="text-base font-bold text-white mr-3">{message.user_name}</div>
-                    <span className="text-sm text-gray-400">{timeAgo}</span>
+                    <div className="text-sm font-medium text-white mr-2">{message.user_name}</div>
+                    <span className="text-xs text-gray-400">{timeAgo}</span>
                   </div>
                 )}
-                <div className="ml-5 w-full">
+                <div className="ml-3 w-full">
                   <ChatMessage 
                     message={message.content} 
                     isConsecutive={isConsecutive} 
@@ -303,24 +300,25 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
           })}
           <div ref={chatBottomRef} />
         </div>
-      </div>
+      </ScrollArea>
 
-      <div className="bg-gray-900 p-5 border-t border-gray-700">
+      <div className="bg-gray-900 p-4 border-t border-gray-700">
         <form onSubmit={handleSubmit} className="relative">
           <Textarea
             value={newMessage}
             onChange={handleInputChange}
             placeholder="Nachricht senden..."
-            className="w-full rounded-md py-3 px-4 bg-gray-800 text-white border-gray-700 pr-12 text-lg md:text-xl"
+            className="w-full rounded-md py-2 px-3 bg-gray-800 text-white border-gray-700 pr-12 text-base"
             rows={1}
-            style={{ resize: 'none' }}
+            style={{ resize: 'none', maxHeight: '100px' }}
+            maxLength={1000}
           />
           <Button
             type="submit"
             className="absolute top-1/2 right-3 transform -translate-y-1/2 bg-red-500 hover:bg-red-600 text-white rounded-md p-2"
             size="icon"
           >
-            <Send className="h-5 w-5" />
+            <Send className="h-4 w-4" />
           </Button>
         </form>
       </div>

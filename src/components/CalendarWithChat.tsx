@@ -120,7 +120,10 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
         }
 
         setGroups(data);
-        if (data && data.length > 0 && !activeGroup) {
+        const ausgehenGroup = data.find(g => g.name.toLowerCase() === 'ausgehen');
+        if (ausgehenGroup) {
+          setActiveGroup(ausgehenGroup.id);
+        } else if (data && data.length > 0 && !activeGroup) {
           setActiveGroup(data[0].id);
         }
       } catch (error) {
