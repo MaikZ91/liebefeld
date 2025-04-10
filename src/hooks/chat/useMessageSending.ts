@@ -1,8 +1,8 @@
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { AVATAR_KEY } from '@/types/chatTypes';
 import { toast } from '@/hooks/use-toast';
-import { chatService } from '@/services/chatService';
+import { messageService } from '@/services/messageService';
 
 export const useMessageSending = (groupId: string, username: string, addOptimisticMessage: (message: any) => void) => {
   const [newMessage, setNewMessage] = useState('');
@@ -34,7 +34,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         messageContent = `🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${trimmedMessage}`;
       }
       
-      // Create optimistic message
+      // Create optimistic message for immediate display
       const tempId = `temp-${Date.now()}`;
       const optimisticMessage = {
         id: tempId,
@@ -51,12 +51,12 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       
       // Set typing status to not typing
       if (typing) {
-        await chatService.sendTypingStatus(groupId, username, localStorage.getItem(AVATAR_KEY), false);
+        await messageService.sendTypingStatus(groupId, username, localStorage.getItem(AVATAR_KEY), false);
         setTyping(false);
       }
       
       // Process file upload if a file is selected
-      let mediaUrl = undefined;
+      let mediaUrl = null;
       if (fileInputRef.current?.files?.length) {
         const file = fileInputRef.current.files[0];
         const fileExt = file.name.split('.').pop();
@@ -75,7 +75,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       }
       
       // Send message to server
-      const messageId = await chatService.sendMessage(
+      const messageId = await messageService.sendMessage(
         groupId,
         username,
         messageContent,
@@ -113,7 +113,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     if (!typing && isCurrentlyTyping) {
       // Typing begins
       setTyping(true);
-      chatService.sendTypingStatus(
+      messageService.sendTypingStatus(
         groupId,
         username,
         localStorage.getItem(AVATAR_KEY),
@@ -129,7 +129,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     // Set new timeout
     typingTimeoutRef.current = setTimeout(() => {
       if (typing) {
-        chatService.sendTypingStatus(
+        messageService.sendTypingStatus(
           groupId,
           username,
           localStorage.getItem(AVATAR_KEY),
@@ -154,9 +154,45 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     }
     
     if (typing) {
-      chatService.sendTypingStatus(groupId, username, localStorage.getItem(AVATAR_KEY), false);
+      messageService.sendTypingStatus(groupId, username, localStorage.getItem(AVATAR_KEY), false);
     }
   }, [groupId, username, typing]);
+  
+  // Add missing sendTypingStatus to messageService if needed
+  useEffect(() => {
+    if (!messageService.sendTypingStatus) {
+      messageService.sendTypingStatus = async (
+        groupId: string, 
+        username: string, 
+        avatar: string | null, 
+        isTyping: boolean
+      ) => {
+        try {
+          const channel = supabase.channel(`typing:${groupId}`);
+          await channel.subscribe();
+          await channel.send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: {
+              username,
+              avatar,
+              isTyping
+            }
+          });
+          
+          // Remove the channel after use
+          setTimeout(() => {
+            supabase.removeChannel(channel);
+          }, 2000);
+          
+          return true;
+        } catch (error) {
+          console.error('Error sending typing status:', error);
+          return false;
+        }
+      };
+    }
+  }, []);
 
   return {
     newMessage,

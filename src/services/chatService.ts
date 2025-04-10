@@ -17,7 +17,7 @@ export const chatService = {
   sendMessage: messageService.sendMessage,
   
   // Reaction operations
-  toggleReaction: reactionService.toggleReaction,
+  toggleReaction: reactionService?.toggleReaction || (() => Promise.resolve(false)),
   
   // Typing indicator operations
   sendTypingStatus: typingService.sendTypingStatus,

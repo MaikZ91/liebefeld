@@ -14,21 +14,28 @@ export const messageService = {
     try {
       console.log('Setting up realtime subscription for chat_messages table');
       
-      // Create and immediately unsubscribe from a channel to "activate" realtime
-      // This approach doesn't require custom RPC functions
-      const channel = supabase
-        .channel('direct_changes')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'chat_messages'
-        }, (payload) => {
-          console.log('Realtime change detected:', payload);
-        })
-        .subscribe();
-        
-      // Immediately unsubscribe - we're just doing this to ensure the table is tracked
-      supabase.removeChannel(channel);
+      // Enable realtime for the chat_messages table
+      const { data, error } = await supabase.rpc('enable_realtime_for_table', {
+        table_name: 'chat_messages'
+      });
+      
+      if (error) {
+        console.warn('RPC not available, falling back to simpler approach', error);
+        // Fallback to creating and immediately removing a channel
+        const channel = supabase
+          .channel('setup_realtime')
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'chat_messages'
+          }, () => {})
+          .subscribe();
+          
+        // Unsubscribe after a moment
+        setTimeout(() => {
+          supabase.removeChannel(channel);
+        }, 1000);
+      }
       
       console.log('Realtime subscription initialized');
       return true;
@@ -143,6 +150,21 @@ export const messageService = {
       }
       
       console.log(`Message sent successfully with ID: ${data?.id}`);
+      
+      // Force a refresh by sending a broadcast to update everyone's view
+      const channel = supabase.channel(`force_refresh:${groupId}`);
+      await channel.subscribe();
+      await channel.send({
+        type: 'broadcast',
+        event: 'force_refresh',
+        payload: { message_id: data?.id, timestamp: new Date().toISOString() }
+      });
+      
+      // Remove the channel after use
+      setTimeout(() => {
+        supabase.removeChannel(channel);
+      }, 2000);
+      
       return data?.id || null;
     } catch (error) {
       console.error('Error in sendMessage:', error);

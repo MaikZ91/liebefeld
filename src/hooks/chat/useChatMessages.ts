@@ -55,16 +55,21 @@ export const useChatMessages = (groupId: string, username: string) => {
     } catch (err) {
       console.error('Error fetching messages directly:', err);
     }
-  }, [groupId, username]);
+  }, [groupId, username, fetchMessages]);
   
   // Handle new messages from subscription
   const handleNewMessage = useCallback((newMsg: Message) => {
     console.log('New message received via subscription:', newMsg);
+    
+    // Add message to state, avoiding duplicates
     setMessages((oldMessages) => {
       // Doppelte Nachrichten vermeiden
       if (oldMessages.some(msg => msg.id === newMsg.id)) {
+        console.log('Duplicate message detected, skipping');
         return oldMessages;
       }
+      
+      console.log('Adding new message to state');
       
       // Nachricht als gelesen markieren, wenn sie von jemand anderem ist
       if (newMsg.user_name !== username) {
@@ -103,6 +108,7 @@ export const useChatMessages = (groupId: string, username: string) => {
     handleReconnect,
     chatBottomRef,
     chatContainerRef,
-    initializeScrollPosition
+    initializeScrollPosition,
+    fetchAndSetMessages // Expose this so we can manually refresh
   };
 };
