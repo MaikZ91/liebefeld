@@ -12,12 +12,8 @@ export const chatService = {
    */
   async enableRealtime(): Promise<boolean> {
     try {
-      // Use a properly typed interface for the RPC call parameters
-      interface EnableRealtimeParams {
-        table_name: string;
-      }
-      
-      const { error } = await supabase.rpc<void, EnableRealtimeParams>(
+      // Using a simpler approach without complex generics
+      const { error } = await supabase.rpc(
         'enable_realtime_for_table', 
         { table_name: 'chat_messages' }
       );
