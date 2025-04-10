@@ -282,18 +282,18 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
             const timeAgo = formatTime(message.created_at);
 
             return (
-              <div key={message.id} className="mb-2 w-full">
+              <div key={message.id} className="mb-4 w-full">
                 {!isConsecutive && (
-                  <div className="flex items-start mb-1">
-                    <Avatar className="h-6 w-6 mr-1 flex-shrink-0">
+                  <div className="flex items-start mb-2">
+                    <Avatar className="h-8 w-8 mr-2 flex-shrink-0">
                       <AvatarImage src={message.user_avatar} alt={message.user_name} />
                       <AvatarFallback>{getInitials(message.user_name)}</AvatarFallback>
                     </Avatar>
-                    <div className="text-xs font-semibold text-gray-300 mr-1">{message.user_name}</div>
+                    <div className="text-sm font-semibold text-gray-300 mr-2">{message.user_name}</div>
                     <span className="text-xs text-gray-500">{timeAgo}</span>
                   </div>
                 )}
-                <div className="ml-2 w-full">
+                <div className="ml-4 w-full">
                   <ChatMessage 
                     message={message.content} 
                     isConsecutive={isConsecutive} 
@@ -312,7 +312,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
             value={newMessage}
             onChange={handleInputChange}
             placeholder="Nachricht senden..."
-            className="w-full rounded-md py-2 px-3 bg-gray-800 text-white border-gray-700 pr-10 text-sm md:text-base"
+            className="w-full rounded-md py-2 px-3 bg-gray-800 text-white border-gray-700 pr-10 text-base md:text-lg"
             rows={1}
             style={{ resize: 'none' }}
           />
