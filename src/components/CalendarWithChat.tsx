@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import EventCalendar from './EventCalendar';
 import GroupChat from './GroupChat';
@@ -120,9 +121,10 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
         }
 
         setGroups(data);
-        const ausgehenGroup = data.find(g => g.name.toLowerCase() === 'ausgehen');
-        if (ausgehenGroup) {
-          setActiveGroup(ausgehenGroup.id);
+        // Find the Spot group and set it as default
+        const spotGroup = data.find(g => g.name.toLowerCase() === 'spot');
+        if (spotGroup) {
+          setActiveGroup(spotGroup.id);
         } else if (data && data.length > 0 && !activeGroup) {
           setActiveGroup(data[0].id);
         }
