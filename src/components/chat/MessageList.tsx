@@ -27,6 +27,7 @@ interface MessageListProps {
   isSpotGroup: boolean;
   isSportGroup: boolean;
   isAusgehenGroup: boolean;
+  chatBottomRef: React.RefObject<HTMLDivElement>;
 }
 
 const MessageList: React.FC<MessageListProps> = ({
@@ -38,40 +39,9 @@ const MessageList: React.FC<MessageListProps> = ({
   formatTime,
   isSpotGroup,
   isSportGroup,
-  isAusgehenGroup
+  isAusgehenGroup,
+  chatBottomRef
 }) => {
-  const chatBottomRef = useRef<HTMLDivElement>(null);
-  const messagesLengthRef = useRef<number>(0);
-  
-  // Scroll to bottom when new messages arrive
-  useEffect(() => {
-    console.log(`MessageList received ${messages.length} messages, previous: ${messagesLengthRef.current}`);
-    
-    // If we have new messages, scroll to the bottom
-    if (messages.length > messagesLengthRef.current) {
-      console.log('New messages added, scrolling to bottom');
-      setTimeout(() => {
-        if (chatBottomRef.current) {
-          chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    }
-    
-    // Update our ref with the new length
-    messagesLengthRef.current = messages.length;
-  }, [messages]);
-  
-  // Also scroll when typing indicators change
-  useEffect(() => {
-    if (typingUsers.length > 0) {
-      setTimeout(() => {
-        if (chatBottomRef.current) {
-          chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    }
-  }, [typingUsers]);
-
   return (
     <div 
       className={`flex-grow p-5 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto`}

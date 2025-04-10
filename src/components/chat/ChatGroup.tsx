@@ -41,7 +41,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
     isReconnecting,
     setMessages,
     setError,
-    handleReconnect
+    handleReconnect,
+    chatBottomRef
   } = useChatMessages(groupId, username);
 
   const addOptimisticMessage = (message: Message) => {
@@ -114,6 +115,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         isSpotGroup={isSpotGroup}
         isSportGroup={isSportGroup}
         isAusgehenGroup={isAusgehenGroup}
+        chatBottomRef={chatBottomRef}
       />
 
       <div className={`${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-gray-900'} p-4 border-t ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'border-gray-800' : 'border-gray-700'}`}>
