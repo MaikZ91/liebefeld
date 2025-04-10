@@ -39,9 +39,11 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
+  
+  // Update the group name conditions
   const isSpotGroup = groupName.toLowerCase() === 'spot';
-  const isSportGroup = groupName.toLowerCase() === 'sport';
-  const isAusgehenGroup = groupName.toLowerCase() === 'ausgehen';
+  const isSportGroup = groupName.toLowerCase() === 'ausgehen';  // Renamed from 'sport' to 'ausgehen'
+  const isAusgehenGroup = groupName.toLowerCase() === 'sport';  // Renamed from 'ausgehen' to 'sport'
 
   const initializeScrollPosition = () => {
     if (chatContainerRef.current) {
@@ -108,6 +110,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   useEffect(() => {
     let ignore = false;
 
+    // Set up a Supabase realtime subscription for chat messages
     const channel = supabase
       .channel(`group_chat:${groupId}`)
       .on('postgres_changes', { 
@@ -128,6 +131,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
               group_id: newPayload.group_id,
             };
             
+            console.log('New message received:', newMsg);
             setMessages((oldMessages) => [...oldMessages, newMsg]);
             setLastSeen(new Date());
             
@@ -165,6 +169,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         }
       })
       .subscribe(async (status) => {
+        console.log('Subscription status:', status);
         if (status === 'SUBSCRIBED') {
           await channel.track({ username: localStorage.getItem(USERNAME_KEY) });
         } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
@@ -196,6 +201,28 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
     setNewMessage('');
 
     try {
+      console.log('Sending message to group:', groupId);
+      
+      // Optimistically add the message to the UI immediately
+      const tempId = `temp-${Date.now()}`;
+      const optimisticMessage: Message = {
+        id: tempId,
+        created_at: new Date().toISOString(),
+        content: trimmedMessage,
+        user_name: username,
+        user_avatar: avatar || '',
+        group_id: groupId,
+      };
+      
+      setMessages(prevMessages => [...prevMessages, optimisticMessage]);
+      
+      // Scroll to bottom with the new message
+      setTimeout(() => {
+        if (chatBottomRef.current) {
+          chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 50);
+
       const { data, error } = await supabase
         .from('chat_messages')
         .insert([{
@@ -209,8 +236,12 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
       if (error) {
         console.error('Error sending message:', error);
         setError(error.message);
+        
+        // Remove the optimistic message on error
+        setMessages(prevMessages => prevMessages.filter(msg => msg.id !== tempId));
       } else if (data && data.length > 0) {
-        // Message will come through the real-time subscription
+        // Remove the temporary message as it will come through the subscription
+        setMessages(prevMessages => prevMessages.filter(msg => msg.id !== tempId));
         setError(null);
       }
     } catch (err: any) {

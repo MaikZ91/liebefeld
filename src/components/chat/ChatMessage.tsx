@@ -12,7 +12,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isConsecutive = fals
   return (
     <div 
       className={`p-3 rounded-lg ${isConsecutive ? 'mt-1' : 'mt-2'} ${
-        isSpotGroup ? 'bg-[#1A1F2C] text-white' : 'bg-gray-800 text-white'
+        isSpotGroup ? 'bg-[#222632] text-white' : 'bg-gray-800 text-white'
       } shadow-md w-full max-w-full overflow-hidden`}
     >
       <div className="whitespace-pre-wrap break-words w-full text-base font-medium">

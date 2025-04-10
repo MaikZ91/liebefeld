@@ -120,14 +120,31 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
           throw error;
         }
 
-        setGroups(data);
+        // Swap the group names for display
+        const processedData = data.map(group => {
+          let displayName = group.name;
+          
+          // Swap the display names
+          if (group.name.toLowerCase() === 'sport') {
+            displayName = 'Ausgehen';
+          } else if (group.name.toLowerCase() === 'ausgehen') {
+            displayName = 'Sport';
+          }
+          
+          return {
+            ...group,
+            displayName
+          };
+        });
+
+        setGroups(processedData);
         
-        // Find the Sport group and set it as default
+        // Find the Sport group and set it as default (but now it's labeled as "Ausgehen")
         if (data && data.length > 0) {
           const sportGroup = data.find(g => g.name.toLowerCase() === 'sport');
           
           if (sportGroup) {
-            console.log('Setting Sport group as default:', sportGroup.id);
+            console.log('Setting Sport group (relabeled as Ausgehen) as default:', sportGroup.id);
             setActiveGroup(sportGroup.id);
           } else {
             console.log('Sport group not found, setting first group as default');
@@ -171,7 +188,9 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
     lastCheckedMessages.current = new Date();
   };
 
-  const activeGroupName = groups.find(g => g.id === activeGroup)?.name || "Gruppe wählen";
+  // Get the correct display name for the active group
+  const activeGroupObj = groups.find(g => g.id === activeGroup);
+  const activeGroupName = activeGroupObj ? (activeGroupObj.displayName || activeGroupObj.name) : "Gruppe wählen";
   console.log('Active group name:', activeGroupName);
   
   if (isLoading) {
@@ -267,7 +286,7 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
                           onClick={() => handleGroupSelect(group.id)}
                         >
                           <Users className="h-4 w-4 mr-2" />
-                          {group.name}
+                          {group.displayName || group.name}
                         </DropdownMenuItem>
                       ))}
                     </DropdownMenuContent>
@@ -371,7 +390,7 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
                         onClick={() => handleGroupSelect(group.id)}
                       >
                         <Users className="h-4 w-4 mr-2" />
-                        {group.name}
+                        {group.displayName || group.name}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
