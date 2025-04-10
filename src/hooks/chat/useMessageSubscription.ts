@@ -63,7 +63,7 @@ export const useMessageSubscription = (
     
     console.log(`Setting up subscription for group: ${groupId}`);
 
-    // Ensure Realtime is enabled for the table
+    // Ensure Realtime is enabled for the table by making a simple query
     supabase.from('chat_messages').select('id').limit(1);
     
     // Create message channels - this now returns an array of channels
@@ -100,6 +100,7 @@ export const useMessageSubscription = (
         if (channel) {
           try {
             channel.unsubscribe();
+            supabase.removeChannel(channel);
           } catch (e) {
             console.error('Error unsubscribing from channel:', e);
           }

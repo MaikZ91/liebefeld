@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Message } from '@/types/chatTypes';
 
@@ -8,39 +7,31 @@ import { Message } from '@/types/chatTypes';
 export const messageService = {
   /**
    * Enable Realtime for the chat messages table
-   * This is a simplified approach that doesn't rely on RPC calls
+   * We're using a direct channel approach instead of RPC
    */
   async enableRealtime(): Promise<boolean> {
     try {
       console.log('Setting up realtime subscription for chat_messages table');
       
-      // Enable realtime for the chat_messages table
-      try {
-        // First try to use the RPC method
-        const { data, error } = await supabase.rpc('enable_realtime_for_table', {
-          table_name: 'chat_messages'
-        });
-        
-        if (error) throw error;
-      } catch (rpcError) {
-        console.warn('RPC not available, falling back to simpler approach', rpcError);
-        // Fallback to creating and immediately removing a channel
-        const channel = supabase
-          .channel('setup_realtime')
-          .on('postgres_changes', {
-            event: '*',
-            schema: 'public',
-            table: 'chat_messages'
-          }, () => {})
-          .subscribe();
-          
-        // Unsubscribe after a moment
-        setTimeout(() => {
-          supabase.removeChannel(channel);
-        }, 1000);
-      }
+      // Direct approach - create a channel and enable realtime
+      const channel = supabase
+        .channel('realtime_setup')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'chat_messages'
+        }, () => {
+          // Empty callback - we just want to ensure the channel is created
+        })
+        .subscribe();
       
-      console.log('Realtime subscription initialized');
+      // Keep the channel open for a moment to ensure subscription is registered
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Then remove it to avoid having too many open channels
+      supabase.removeChannel(channel);
+      
+      console.log('Realtime subscription initialized directly');
       return true;
     } catch (error) {
       console.error('Exception in enabling Realtime:', error);

@@ -75,18 +75,40 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         }
       }
       
-      // Send message to server
-      const messageId = await chatService.sendMessage(
-        groupId,
-        username,
-        messageContent,
-        localStorage.getItem(AVATAR_KEY),
-        mediaUrl
-      );
-      
-      if (!messageId) {
-        throw new Error("Error sending message");
+      // Send message to server using direct DB insert for reliability
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .insert([{
+          group_id: groupId,
+          sender: username,
+          text: messageContent,
+          avatar: localStorage.getItem(AVATAR_KEY),
+          media_url: mediaUrl,
+          read_by: [username] // The sending person has already read the message
+        }])
+        .select('id')
+        .single();
+        
+      if (error) {
+        console.error('Error sending message:', error);
+        throw error;
       }
+      
+      console.log('Message sent successfully with ID:', data?.id);
+      
+      // Force a refresh to update everyone's view
+      const refreshChannel = supabase.channel(`force_refresh:${groupId}`);
+      await refreshChannel.subscribe();
+      await refreshChannel.send({
+        type: 'broadcast',
+        event: 'force_refresh',
+        payload: { message_id: data?.id, timestamp: new Date().toISOString() }
+      });
+      
+      // Remove the channel after use
+      setTimeout(() => {
+        supabase.removeChannel(refreshChannel);
+      }, 1000);
 
       // Reset file input
       if (fileInputRef.current) {

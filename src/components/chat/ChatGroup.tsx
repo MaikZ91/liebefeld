@@ -30,6 +30,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   useEffect(() => {
     const enableRealtime = async () => {
       try {
+        console.log('Enabling realtime in ChatGroup component');
         // Enable realtime through the messageService
         await messageService.enableRealtime();
         

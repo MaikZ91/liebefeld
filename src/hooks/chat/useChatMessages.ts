@@ -24,6 +24,7 @@ export const useChatMessages = (groupId: string, username: string) => {
   useEffect(() => {
     // Configure realtime
     const setupRealtime = async () => {
+      console.log('Setting up realtime in useChatMessages');
       await messageService.enableRealtime();
       
       // Enable real-time on the chat_messages table directly

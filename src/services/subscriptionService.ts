@@ -75,7 +75,9 @@ export const subscriptionService = {
           onNewMessage(newMsg);
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Table changes subscription status:', status);
+      });
 
     return [messageChannel, tableChangesChannel];
   },
