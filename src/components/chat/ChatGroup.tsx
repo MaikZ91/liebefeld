@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, Send, RefreshCw } from 'lucide-react';
@@ -74,14 +73,14 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
       }
     };
 
+    const initializeScrollPosition = () => {
+      if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      }
+    };
+
     fetchMessages();
   }, [groupId]);
-
-  const initializeScrollPosition = () => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-  };
 
   useEffect(() => {
     if (messages.length > 0 && !loading) {
@@ -284,7 +283,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
               <div key={message.id} className="mb-2 w-full">
                 {!isConsecutive && (
                   <div className="flex items-start mb-1">
-                    <Avatar className="h-5 w-5 mr-1 flex-shrink-0">
+                    <Avatar className="h-4 w-4 mr-1 flex-shrink-0">
                       <AvatarImage src={message.user_avatar} alt={message.user_name} />
                       <AvatarFallback>{getInitials(message.user_name)}</AvatarFallback>
                     </Avatar>
@@ -292,7 +291,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
                     <span className="text-xs text-gray-500">{timeAgo}</span>
                   </div>
                 )}
-                <div className="ml-6 w-full">
+                <div className="ml-5 w-full">
                   <ChatMessage 
                     message={message.content} 
                     isConsecutive={isConsecutive} 
@@ -311,7 +310,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
             value={newMessage}
             onChange={handleInputChange}
             placeholder="Nachricht senden..."
-            className="w-full rounded-md py-2 px-3 bg-gray-800 text-white border-gray-700 pr-10"
+            className="w-full rounded-md py-2 px-3 bg-gray-800 text-white border-gray-700 pr-10 text-base"
             rows={1}
             style={{ resize: 'none' }}
           />
