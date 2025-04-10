@@ -13,10 +13,10 @@ export const chatService = {
    */
   async enableRealtime(): Promise<boolean> {
     try {
-      // Type annotation with 'any' to avoid TypeScript errors
+      // Passing parameters object directly without type annotation
       const { error } = await supabase.rpc('enable_realtime_for_table', {
         table_name: 'chat_messages'
-      } as any);
+      });
       
       if (error) {
         console.error('Error enabling Realtime:', error);
