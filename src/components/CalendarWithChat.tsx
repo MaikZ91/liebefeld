@@ -27,13 +27,20 @@ interface CalendarWithChatProps {
   defaultView?: "calendar" | "list";
 }
 
+// Extend the ChatGroup type to include displayName
+interface ExtendedChatGroup extends ChatGroup {
+  name: string;
+  id: string;
+  displayName?: string;
+}
+
 const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
   const [showChat, setShowChat] = useState(false);
   const [activeMobileView, setActiveMobileView] = useState<'calendar' | 'chat'>('calendar');
   const { events } = useEventContext();
   
   const [activeGroup, setActiveGroup] = useState<string>("");
-  const [groups, setGroups] = useState<ChatGroup[]>([]);
+  const [groups, setGroups] = useState<ExtendedChatGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [username, setUsername] = useState<string>(() => {
     return localStorage.getItem(USERNAME_KEY) || "";
@@ -134,7 +141,7 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
           return {
             ...group,
             displayName
-          };
+          } as ExtendedChatGroup;
         });
 
         setGroups(processedData);

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, Send, RefreshCw } from 'lucide-react';
@@ -36,18 +35,22 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   const [lastSeen, setLastSeen] = useState<Date>(new Date());
   const [typing, setTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
+  const [isSending, setIsSending] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
   
-  // Update the group name conditions
   const isSpotGroup = groupName.toLowerCase() === 'spot';
-  const isSportGroup = groupName.toLowerCase() === 'ausgehen';  // Renamed from 'sport' to 'ausgehen'
-  const isAusgehenGroup = groupName.toLowerCase() === 'sport';  // Renamed from 'ausgehen' to 'sport'
+  const isSportGroup = groupName.toLowerCase() === 'ausgehen';
+  const isAusgehenGroup = groupName.toLowerCase() === 'sport';
 
   const initializeScrollPosition = () => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+    
+    if (chatBottomRef.current) {
+      chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -82,7 +85,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         setLoading(false);
         setTimeout(() => {
           initializeScrollPosition();
-        }, 50);
+        }, 100);
       }
     };
 
@@ -90,10 +93,12 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   }, [groupId]);
 
   useEffect(() => {
-    if (messages.length > 0 && !loading) {
-      initializeScrollPosition();
+    if (messages.length > 0) {
+      setTimeout(() => {
+        initializeScrollPosition();
+      }, 100);
     }
-  }, [messages, loading]);
+  }, [messages]);
 
   useEffect(() => {
     if (username) {
@@ -110,7 +115,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   useEffect(() => {
     let ignore = false;
 
-    // Set up a Supabase realtime subscription for chat messages
     const channel = supabase
       .channel(`group_chat:${groupId}`)
       .on('postgres_changes', { 
@@ -131,15 +135,17 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
               group_id: newPayload.group_id,
             };
             
-            console.log('New message received:', newMsg);
-            setMessages((oldMessages) => [...oldMessages, newMsg]);
+            console.log('New message received via subscription:', newMsg);
+            setMessages((oldMessages) => {
+              if (oldMessages.some(msg => msg.id === newMsg.id)) {
+                return oldMessages;
+              }
+              return [...oldMessages, newMsg];
+            });
             setLastSeen(new Date());
             
-            // Scroll to bottom when new message arrives
             setTimeout(() => {
-              if (chatBottomRef.current) {
-                chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
-              }
+              initializeScrollPosition();
             }, 100);
           }
         }
@@ -193,17 +199,16 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!newMessage.trim()) {
+    if (!newMessage.trim() || isSending) {
       return;
     }
 
     const trimmedMessage = newMessage.trim();
-    setNewMessage('');
+    setIsSending(true);
 
     try {
       console.log('Sending message to group:', groupId);
       
-      // Optimistically add the message to the UI immediately
       const tempId = `temp-${Date.now()}`;
       const optimisticMessage: Message = {
         id: tempId,
@@ -214,13 +219,12 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         group_id: groupId,
       };
       
+      setNewMessage('');
+      
       setMessages(prevMessages => [...prevMessages, optimisticMessage]);
       
-      // Scroll to bottom with the new message
       setTimeout(() => {
-        if (chatBottomRef.current) {
-          chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
+        initializeScrollPosition();
       }, 50);
 
       const { data, error } = await supabase
@@ -237,22 +241,32 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         console.error('Error sending message:', error);
         setError(error.message);
         
-        // Remove the optimistic message on error
         setMessages(prevMessages => prevMessages.filter(msg => msg.id !== tempId));
       } else if (data && data.length > 0) {
-        // Remove the temporary message as it will come through the subscription
+        console.log('Message sent successfully, server response:', data[0]);
+        
         setMessages(prevMessages => prevMessages.filter(msg => msg.id !== tempId));
+        
         setError(null);
       }
     } catch (err: any) {
       console.error('Error sending message:', err);
       setError(err.message);
+    } finally {
+      setIsSending(false);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);
     setTyping(e.target.value.length > 0);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e as unknown as React.FormEvent);
+    }
   };
 
   const handleReconnect = () => {
@@ -305,7 +319,10 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         </div>
       </div>
 
-      <div className={`flex-grow p-5 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto`} ref={chatContainerRef}>
+      <div 
+        className={`flex-grow p-5 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto`} 
+        ref={chatContainerRef}
+      >
         {loading && <div className="text-center text-gray-500 text-lg font-semibold py-4">Loading messages...</div>}
         {error && <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>}
 
@@ -345,6 +362,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
           <Textarea
             value={newMessage}
             onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
             placeholder="Nachricht senden..."
             className={`w-full rounded-md py-2 px-3 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#222632] text-white border-gray-800' : 'bg-gray-800 text-white border-gray-700'} pr-12 text-base`}
             rows={1}
@@ -353,10 +371,15 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
           />
           <Button
             type="submit"
-            className={`absolute top-1/2 right-3 transform -translate-y-1/2 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#9b87f5] hover:bg-[#7E69AB]' : 'bg-red-500 hover:bg-red-600'} text-white rounded-md p-2`}
+            disabled={isSending || !newMessage.trim()}
+            className={`absolute top-1/2 right-3 transform -translate-y-1/2 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#9b87f5] hover:bg-[#7E69AB]' : 'bg-red-500 hover:bg-red-600'} text-white rounded-md p-2 ${isSending ? 'opacity-50' : ''}`}
             size="icon"
           >
-            <Send className="h-4 w-4" />
+            {isSending ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </Button>
         </form>
       </div>
