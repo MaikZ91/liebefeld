@@ -264,29 +264,31 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         {loading && <div className="text-center text-gray-500">Loading messages...</div>}
         {error && <div className="text-center text-red-500">Error: {error}</div>}
 
-        {messages.map((message, index) => {
-          const isConsecutive = index > 0 && messages[index - 1].user_name === message.user_name;
-          const timeAgo = formatTime(message.created_at);
+        <div className="flex flex-col space-y-3 w-full">
+          {messages.map((message, index) => {
+            const isConsecutive = index > 0 && messages[index - 1].user_name === message.user_name;
+            const timeAgo = formatTime(message.created_at);
 
-          return (
-            <div key={message.id} className="mb-2">
-              {!isConsecutive && (
-                <div className="flex items-start mb-1">
-                  <Avatar className="h-6 w-6 mr-2">
-                    <AvatarImage src={message.user_avatar} alt={message.user_name} />
-                    <AvatarFallback>{getInitials(message.user_name)}</AvatarFallback>
-                  </Avatar>
-                  <div className="text-sm font-semibold text-gray-300">{message.user_name}</div>
-                  <span className="text-xs text-gray-500 ml-1">{timeAgo}</span>
+            return (
+              <div key={message.id} className="mb-2 w-full">
+                {!isConsecutive && (
+                  <div className="flex items-start mb-1">
+                    <Avatar className="h-6 w-6 mr-2 flex-shrink-0">
+                      <AvatarImage src={message.user_avatar} alt={message.user_name} />
+                      <AvatarFallback>{getInitials(message.user_name)}</AvatarFallback>
+                    </Avatar>
+                    <div className="text-sm font-semibold text-gray-300">{message.user_name}</div>
+                    <span className="text-xs text-gray-500 ml-1">{timeAgo}</span>
+                  </div>
+                )}
+                <div className="ml-8 break-words">
+                  <div className="text-sm text-white overflow-hidden break-words">{message.content}</div>
                 </div>
-              )}
-              <div className="ml-8">
-                <div className="text-sm text-white">{message.content}</div>
               </div>
-            </div>
-          );
-        })}
-        <div ref={chatBottomRef} />
+            );
+          })}
+          <div ref={chatBottomRef} />
+        </div>
       </div>
 
       <div className="bg-gray-900 p-4 border-t border-gray-700">

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -536,24 +537,24 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="flex flex-col space-y-3">
+          <div className="flex flex-col space-y-3 w-full">
             {messages.map(message => (
               <div 
                 key={message.id} 
                 className={`flex items-start gap-2 ${message.sender === username 
                   ? "justify-end" 
                   : "justify-start"
-                }`}
+                } w-full`}
               >
                 {message.sender !== username && (
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-8 w-8 flex-shrink-0">
                     <AvatarImage src={message.avatar || undefined} alt={message.sender} />
                     <AvatarFallback>{getInitials(message.sender)}</AvatarFallback>
                   </Avatar>
                 )}
                 
-                <div className="flex flex-col">
-                  <div className={`max-w-[280px] p-3 rounded-lg space-y-1 ${
+                <div className="flex flex-col max-w-[85%]">
+                  <div className={`p-3 rounded-lg space-y-1 overflow-hidden break-words ${
                     message.sender === username 
                       ? "bg-primary text-white" 
                       : message.sender === "System"
@@ -569,6 +570,7 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
                         {new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                       </div>
                     </div>
+                    
                     {message.text.includes('🗓️ **Event:') ? (
                       (() => {
                         const eventTitleMatch = message.text.match(/🗓️ \*\*Event: (.*?)\*\*/);
@@ -596,7 +598,7 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
                         return formatEventMessage(userMessage, eventData);
                       })()
                     ) : (
-                      <div className="text-sm whitespace-pre-wrap text-white">{message.text}</div>
+                      <div className="text-sm whitespace-pre-wrap text-white break-words">{message.text}</div>
                     )}
                     
                     {message.media_url && (
@@ -639,7 +641,7 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
                   )}
                 </div>
                 
-                <div className="flex flex-col">
+                <div className="flex flex-col flex-shrink-0">
                   {message.sender === username && (
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={localStorage.getItem(AVATAR_KEY) || undefined} alt={username} />
