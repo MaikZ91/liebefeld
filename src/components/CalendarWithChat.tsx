@@ -121,12 +121,18 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
         }
 
         setGroups(data);
+        
         // Find the Sport group and set it as default
-        const sportGroup = data.find(g => g.name.toLowerCase() === 'sport');
-        if (sportGroup) {
-          setActiveGroup(sportGroup.id);
-        } else if (data && data.length > 0 && !activeGroup) {
-          setActiveGroup(data[0].id);
+        if (data && data.length > 0) {
+          const sportGroup = data.find(g => g.name.toLowerCase() === 'sport');
+          
+          if (sportGroup) {
+            console.log('Setting Sport group as default:', sportGroup.id);
+            setActiveGroup(sportGroup.id);
+          } else {
+            console.log('Sport group not found, setting first group as default');
+            setActiveGroup(data[0].id);
+          }
         }
       } catch (error) {
         console.error('Error fetching groups:', error);
@@ -141,13 +147,14 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
     };
 
     fetchGroups();
-  }, [activeGroup]);
+  }, []);
 
   const handleUsernameSet = (newUsername: string) => {
     setUsername(newUsername);
   };
   
   const handleGroupSelect = (groupId: string) => {
+    console.log('Group selected:', groupId);
     setActiveGroup(groupId);
   };
   
@@ -165,6 +172,7 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
   };
 
   const activeGroupName = groups.find(g => g.id === activeGroup)?.name || "Gruppe wählen";
+  console.log('Active group name:', activeGroupName);
   
   if (isLoading) {
     return (

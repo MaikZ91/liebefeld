@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, Send, RefreshCw } from 'lucide-react';
@@ -109,7 +110,12 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
 
     const channel = supabase
       .channel(`group_chat:${groupId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, (payload) => {
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'chat_messages',
+        filter: `group_id=eq.${groupId}`
+      }, (payload) => {
         if (payload.new && payload.eventType === 'INSERT') {
           const newPayload = payload.new as any;
           if (newPayload && newPayload.group_id === groupId) {            
@@ -124,6 +130,13 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
             
             setMessages((oldMessages) => [...oldMessages, newMsg]);
             setLastSeen(new Date());
+            
+            // Scroll to bottom when new message arrives
+            setTimeout(() => {
+              if (chatBottomRef.current) {
+                chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
+              }
+            }, 100);
           }
         }
       })
@@ -197,17 +210,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         console.error('Error sending message:', error);
         setError(error.message);
       } else if (data && data.length > 0) {
-        const newMsg: Message = {
-          id: data[0].id,
-          created_at: data[0].created_at,
-          content: data[0].text,
-          user_name: data[0].sender,
-          user_avatar: data[0].avatar || '',
-          group_id: data[0].group_id,
-        };
-        
-        setMessages(prevMessages => [...prevMessages, newMsg]);
-        setLastSeen(new Date());
+        // We no longer add the message directly to the local state here
+        // as it will come through the real-time subscription
         setError(null);
       }
     } catch (err: any) {
