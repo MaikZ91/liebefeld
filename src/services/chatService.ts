@@ -11,10 +11,10 @@ export const chatService = {
    */
   async enableRealtime(): Promise<boolean> {
     try {
-      // Fix: Pass parameters as direct object with explicit typing to match RPC function signature
-      const { error } = await supabase.rpc('enable_realtime_for_table', {
-        table_name: 'chat_messages'
-      } as { table_name: string });
+      // Different approach: Directly call RPC without type assertions
+      // Use a named variable with the right type structure
+      const params = { table_name: 'chat_messages' };
+      const { error } = await supabase.rpc('enable_realtime_for_table', params);
       
       if (error) {
         console.error('Error enabling Realtime:', error);
