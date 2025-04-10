@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, Send, RefreshCw } from 'lucide-react';
@@ -75,7 +76,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   useEffect(() => {
     const timer = setTimeout(() => {
       scrollToBottom();
-    }, 300);
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [messages]);
@@ -269,7 +270,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
         {loading && <div className="text-center text-gray-500">Loading messages...</div>}
         {error && <div className="text-center text-red-500">Error: {error}</div>}
 
-        <div className="flex flex-col space-y-3 w-full">
+        <div className="flex flex-col space-y-3">
           {messages.map((message, index) => {
             const isConsecutive = index > 0 && messages[index - 1].user_name === message.user_name;
             const timeAgo = formatTime(message.created_at);
