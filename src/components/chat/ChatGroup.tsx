@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, Send, RefreshCw } from 'lucide-react';
@@ -283,15 +284,15 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
               <div key={message.id} className="mb-2 w-full">
                 {!isConsecutive && (
                   <div className="flex items-start mb-1">
-                    <Avatar className="h-6 w-6 mr-2 flex-shrink-0">
+                    <Avatar className="h-5 w-5 mr-1 flex-shrink-0">
                       <AvatarImage src={message.user_avatar} alt={message.user_name} />
                       <AvatarFallback>{getInitials(message.user_name)}</AvatarFallback>
                     </Avatar>
-                    <div className="text-sm font-semibold text-gray-300">{message.user_name}</div>
-                    <span className="text-xs text-gray-500 ml-1">{timeAgo}</span>
+                    <div className="text-xs font-semibold text-gray-300 mr-1">{message.user_name}</div>
+                    <span className="text-xs text-gray-500">{timeAgo}</span>
                   </div>
                 )}
-                <div className="ml-8 w-full">
+                <div className="ml-6 w-full">
                   <ChatMessage 
                     message={message.content} 
                     isConsecutive={isConsecutive} 
