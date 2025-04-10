@@ -1,7 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Message } from '@/types/chatTypes';
-import { messageService } from './messageService';
+import { Message, TypingUser } from '@/types/chatTypes';
 
 /**
  * Service for real-time subscription operations
@@ -18,9 +17,7 @@ export const subscriptionService = {
   ) {
     console.log(`Creating message subscription for group ${groupId}`);
     
-    // Enable realtime for the chat_messages table
-    messageService.enableRealtime();
-    
+    // Set up a subscription for real-time message updates
     const messageChannel = supabase
       .channel(`group_chat:${groupId}`)
       .on('postgres_changes', { 
@@ -55,7 +52,32 @@ export const subscriptionService = {
         console.log('Subscription status for messages:', status);
       });
 
-    return messageChannel;
+    // Set up a subscription to monitor table changes directly
+    const tableChangesChannel = supabase
+      .channel('public:chat_messages')
+      .on('postgres_changes', { 
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages',
+      }, (payload) => {
+        console.log('Table INSERT received:', payload);
+        if (payload.new && payload.new.group_id === groupId) {
+          const newMsg: Message = {
+            id: payload.new.id,
+            created_at: payload.new.created_at,
+            content: payload.new.text,
+            user_name: payload.new.sender,
+            user_avatar: payload.new.avatar || '',
+            group_id: payload.new.group_id,
+          };
+          
+          console.log('Inserted message via table changes:', newMsg);
+          onNewMessage(newMsg);
+        }
+      })
+      .subscribe();
+
+    return [messageChannel, tableChangesChannel];
   },
 
   /**
@@ -64,7 +86,7 @@ export const subscriptionService = {
   createTypingSubscription(
     groupId: string,
     username: string,
-    onTypingUpdate: (users: any[]) => void
+    onTypingUpdate: (users: TypingUser[]) => void
   ) {
     console.log(`Creating typing subscription for group ${groupId}`);
     

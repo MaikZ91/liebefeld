@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { Message, TypingUser } from '@/types/chatTypes';
 import { chatService } from '@/services/chatService';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useMessageSubscription = (
   groupId: string,
@@ -63,10 +64,10 @@ export const useMessageSubscription = (
     console.log(`Setting up subscription for group: ${groupId}`);
 
     // Ensure Realtime is enabled for the table
-    chatService.enableRealtime();
+    supabase.from('chat_messages').select('id').limit(1);
     
-    // Create message channel
-    const messageChannel = chatService.createMessageSubscription(
+    // Create message channels - this now returns an array of channels
+    const messageChannels = chatService.createMessageSubscription(
       groupId,
       onNewMessage,
       onForceRefresh,
@@ -80,8 +81,10 @@ export const useMessageSubscription = (
       handleTypingUpdate
     );
     
-    // Save all channels
-    channelsRef.current = [messageChannel, typingChannel];
+    // Save all channels - now handling an array or a single channel
+    channelsRef.current = Array.isArray(messageChannels) 
+      ? [...messageChannels, typingChannel] 
+      : [messageChannels, typingChannel];
     
     // Cleanup on component unmount
     return () => {
@@ -94,7 +97,13 @@ export const useMessageSubscription = (
       
       // Unsubscribe all channels
       channelsRef.current.forEach(channel => {
-        channel.unsubscribe();
+        if (channel) {
+          try {
+            channel.unsubscribe();
+          } catch (e) {
+            console.error('Error unsubscribing from channel:', e);
+          }
+        }
       });
       
       // Reset typing users

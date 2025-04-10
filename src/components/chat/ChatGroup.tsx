@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Send, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
 import { useChatMessages } from '@/hooks/chat/useChatMessages';
 import { useMessageSending } from '@/hooks/chat/useMessageSending';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ChatGroupProps {
   groupId: string;
@@ -24,6 +24,36 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   const isSportGroup = groupName.toLowerCase() === 'sport';
   const isAusgehenGroup = groupName.toLowerCase() === 'ausgehen';
 
+  // Enable realtime for chat_messages table on component mount
+  useEffect(() => {
+    const enableRealtime = async () => {
+      try {
+        // This query activates realtime
+        await supabase.from('chat_messages').select('id').limit(1);
+        
+        // Set up a direct realtime subscription
+        const channel = supabase
+          .channel('public:chat_messages')
+          .on('postgres_changes', { 
+            event: 'INSERT',
+            schema: 'public',
+            table: 'chat_messages',
+          }, (payload) => {
+            console.log('ChatGroup saw direct table INSERT:', payload);
+          })
+          .subscribe();
+          
+        return () => {
+          supabase.removeChannel(channel);
+        };
+      } catch (error) {
+        console.error('Error enabling realtime:', error);
+      }
+    };
+    
+    enableRealtime();
+  }, []);
+
   const {
     messages,
     loading,
@@ -37,6 +67,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   } = useChatMessages(groupId, username);
 
   const addOptimisticMessage = (message: any) => {
+    console.log('Adding optimistic message:', message);
     setMessages(prevMessages => [...prevMessages, message]);
   };
 
@@ -50,7 +81,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
     cleanup
   } = useMessageSending(groupId, username, addOptimisticMessage);
 
-  // Aufräumen beim Unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       cleanup();

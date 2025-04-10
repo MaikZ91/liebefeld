@@ -25,7 +25,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     setIsSending(true);
 
     try {
-      console.log('Nachricht senden an Gruppe:', groupId);
+      console.log('Sending message to group:', groupId);
       
       let messageContent = trimmedMessage;
       
@@ -46,7 +46,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         group_id: groupId,
       };
       
-      // Add optimistic message to local state
+      // Add optimistic message to local state immediately
       addOptimisticMessage(optimisticMessage);
       setNewMessage('');
       

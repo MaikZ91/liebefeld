@@ -6,6 +6,7 @@ import { useMessageSubscription } from '@/hooks/chat/useMessageSubscription';
 import { useReconnection } from '@/hooks/chat/useReconnection';
 import { useScrollManagement } from '@/hooks/chat/useScrollManagement';
 import { messageService } from '@/services/messageService';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useChatMessages = (groupId: string, username: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -19,10 +20,26 @@ export const useChatMessages = (groupId: string, username: string) => {
     messagesRef.current = messages;
   }, [messages]);
   
+  // Initial setup for realtime
+  useEffect(() => {
+    // Configure realtime
+    const setupRealtime = async () => {
+      await messageService.enableRealtime();
+      
+      // Enable real-time on the chat_messages table directly
+      const { error } = await supabase.from('chat_messages').select('id').limit(1);
+      if (error) {
+        console.error('Error in initial query:', error);
+      }
+    };
+    
+    setupRealtime();
+  }, []);
+  
   // Fetch messages when group changes
   useEffect(() => {
     if (groupId && username) {
-      console.log(`Gruppen-ID geändert, Nachrichten für Gruppe abrufen: ${groupId}`);
+      console.log(`Group ID changed, fetching messages for: ${groupId}`);
       fetchAndSetMessages();
     }
   }, [groupId, username]);
@@ -38,7 +55,7 @@ export const useChatMessages = (groupId: string, username: string) => {
       setMessages(fetchedMessages);
       setLastSeen(new Date());
       
-      // Nachrichten als gelesen markieren
+      // Mark messages as read
       if (fetchedMessages.length > 0) {
         const unreadMessages = fetchedMessages.filter(
           msg => msg.user_name !== username
@@ -63,7 +80,7 @@ export const useChatMessages = (groupId: string, username: string) => {
     
     // Add message to state, avoiding duplicates
     setMessages((oldMessages) => {
-      // Doppelte Nachrichten vermeiden
+      // Skip duplicates
       if (oldMessages.some(msg => msg.id === newMsg.id)) {
         console.log('Duplicate message detected, skipping');
         return oldMessages;
@@ -71,7 +88,7 @@ export const useChatMessages = (groupId: string, username: string) => {
       
       console.log('Adding new message to state');
       
-      // Nachricht als gelesen markieren, wenn sie von jemand anderem ist
+      // Mark message as read if from someone else
       if (newMsg.user_name !== username) {
         messageService.markMessagesAsRead(groupId, [newMsg.id], username);
       }

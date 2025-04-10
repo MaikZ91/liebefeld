@@ -15,12 +15,15 @@ export const messageService = {
       console.log('Setting up realtime subscription for chat_messages table');
       
       // Enable realtime for the chat_messages table
-      const { data, error } = await supabase.rpc('enable_realtime_for_table', {
-        table_name: 'chat_messages'
-      });
-      
-      if (error) {
-        console.warn('RPC not available, falling back to simpler approach', error);
+      try {
+        // First try to use the RPC method
+        const { data, error } = await supabase.rpc('enable_realtime_for_table', {
+          table_name: 'chat_messages'
+        });
+        
+        if (error) throw error;
+      } catch (rpcError) {
+        console.warn('RPC not available, falling back to simpler approach', rpcError);
         // Fallback to creating and immediately removing a channel
         const channel = supabase
           .channel('setup_realtime')
