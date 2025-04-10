@@ -55,17 +55,21 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       // Set typing status to not typing
       if (typing) {
         const channel = supabase.channel(`typing:${groupId}`);
-        await channel.subscribe();
-        await channel.send({
-          type: 'broadcast',
-          event: 'typing',
-          payload: {
-            username,
-            avatar: localStorage.getItem(AVATAR_KEY),
-            isTyping: false
-          }
-        });
-        setTyping(false);
+        channel.subscribe();
+        
+        // After subscribing, send the typing status
+        setTimeout(() => {
+          channel.send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: {
+              username,
+              avatar: localStorage.getItem(AVATAR_KEY),
+              isTyping: false
+            }
+          });
+          setTyping(false);
+        }, 100);
       }
       
       // Process file upload if a file is selected
@@ -136,7 +140,10 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       // Typing begins
       setTyping(true);
       const channel = supabase.channel(`typing:${groupId}`);
-      channel.subscribe().then(() => {
+      channel.subscribe();
+      
+      // After subscribing, send the typing status
+      setTimeout(() => {
         channel.send({
           type: 'broadcast',
           event: 'typing',
@@ -146,7 +153,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
             isTyping: true
           }
         });
-      });
+      }, 100);
     }
     
     // Clear existing timeout
@@ -158,7 +165,10 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     typingTimeoutRef.current = setTimeout(() => {
       if (typing) {
         const channel = supabase.channel(`typing:${groupId}`);
-        channel.subscribe().then(() => {
+        channel.subscribe();
+        
+        // After subscribing, send the typing status
+        setTimeout(() => {
           channel.send({
             type: 'broadcast',
             event: 'typing',
@@ -168,8 +178,8 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
               isTyping: false
             }
           });
-        });
-        setTyping(false);
+          setTyping(false);
+        }, 100);
       }
     }, 2000);
   }, [groupId, username, typing]);
@@ -189,7 +199,10 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     
     if (typing) {
       const channel = supabase.channel(`typing:${groupId}`);
-      channel.subscribe().then(() => {
+      channel.subscribe();
+      
+      // After subscribing, send the typing status
+      setTimeout(() => {
         channel.send({
           type: 'broadcast',
           event: 'typing',
@@ -199,7 +212,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
             isTyping: false
           }
         });
-      });
+      }, 100);
     }
   }, [groupId, username, typing]);
 
