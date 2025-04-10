@@ -43,7 +43,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       // Enable realtime for the chat_messages table
       const { data: enableResult, error: enableError } = await supabase.rpc('enable_realtime_for_table', {
         table_name: 'chat_messages'
-      } as { table_name: string });
+      } as any);
       
       if (enableError) {
         console.error('Error enabling realtime:', enableError);

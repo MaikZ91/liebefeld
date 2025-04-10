@@ -20,7 +20,7 @@ export const useMessageSubscription = (
     const enableRealtimeTable = async () => {
       const { data, error } = await supabase.rpc('enable_realtime_for_table', {
         table_name: 'chat_messages'
-      } as { table_name: string });
+      } as any);
       
       if (error) {
         console.error('Error enabling realtime:', error);
