@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Message, TypingUser } from '@/types/chatTypes';
 import { Json } from '@/integrations/supabase/types';
@@ -13,11 +12,10 @@ export const chatService = {
    */
   async enableRealtime(): Promise<boolean> {
     try {
-      // Use a direct approach specifying the payload as a Record
-      const { error } = await supabase.rpc(
-        'enable_realtime_for_table', 
-        { table_name: 'chat_messages' } as Record<string, string>
-      );
+      // Use an object literal without type casting
+      const { error } = await supabase.rpc('enable_realtime_for_table', {
+        table_name: 'chat_messages'
+      });
       
       if (error) {
         console.error('Error enabling Realtime:', error);
