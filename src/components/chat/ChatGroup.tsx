@@ -8,8 +8,6 @@ import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
 import { useChatMessages } from '@/hooks/chat/useChatMessages';
 import { useMessageSending } from '@/hooks/chat/useMessageSending';
-import { supabase } from '@/integrations/supabase/client';
-import { messageService } from '@/services/messageService';
 
 interface ChatGroupProps {
   groupId: string;
@@ -21,46 +19,10 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   const [username, setUsername] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || 'Gast');
   const [avatar, setAvatar] = useState<string | null>(() => localStorage.getItem(AVATAR_KEY));
   
-  // Fixed group detection logic - using the correct names
+  // Fixed group detection logic
   const isSpotGroup = groupName.toLowerCase() === 'spot';
   const isSportGroup = groupName.toLowerCase() === 'sport';
   const isAusgehenGroup = groupName.toLowerCase() === 'ausgehen';
-
-  // Enable realtime for chat_messages table on component mount
-  useEffect(() => {
-    const enableRealtime = async () => {
-      try {
-        console.log('Enabling realtime in ChatGroup component');
-        // Enable realtime through the messageService
-        await messageService.enableRealtime();
-        
-        // This query activates realtime
-        await supabase.from('chat_messages').select('id').limit(1);
-        
-        // Set up a direct realtime subscription
-        const channel = supabase
-          .channel('public:chat_messages')
-          .on('postgres_changes', { 
-            event: 'INSERT',
-            schema: 'public',
-            table: 'chat_messages',
-          }, (payload) => {
-            console.log('ChatGroup saw direct table INSERT:', payload);
-          })
-          .subscribe((status) => {
-            console.log('ChatGroup direct subscription status:', status);
-          });
-          
-        return () => {
-          supabase.removeChannel(channel);
-        };
-      } catch (error) {
-        console.error('Error enabling realtime:', error);
-      }
-    };
-    
-    enableRealtime();
-  }, []);
 
   const {
     messages,
@@ -68,16 +30,10 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
     error,
     typingUsers,
     isReconnecting,
-    setMessages,
-    setError,
     handleReconnect,
-    chatBottomRef
+    chatBottomRef,
+    addOptimisticMessage
   } = useChatMessages(groupId, username);
-
-  const addOptimisticMessage = (message: any) => {
-    console.log('Adding optimistic message:', message);
-    setMessages(prevMessages => [...prevMessages, message]);
-  };
 
   const {
     newMessage,

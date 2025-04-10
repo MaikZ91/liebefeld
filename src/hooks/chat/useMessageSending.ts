@@ -2,8 +2,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { AVATAR_KEY } from '@/types/chatTypes';
 import { toast } from '@/hooks/use-toast';
-import { chatService } from '@/services/chatService';
 import { supabase } from '@/integrations/supabase/client';
+import { realtimeService } from '@/services/realtimeService';
 
 export const useMessageSending = (groupId: string, username: string, addOptimisticMessage: (message: any) => void) => {
   const [newMessage, setNewMessage] = useState('');
@@ -46,13 +46,25 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         group_id: groupId,
       };
       
-      // Add optimistic message to local state immediately
+      // Add optimistic message to local state IMMEDIATELY
       addOptimisticMessage(optimisticMessage);
+      
+      // Clear the input field immediately
       setNewMessage('');
       
       // Set typing status to not typing
       if (typing) {
-        await chatService.sendTypingStatus(groupId, username, localStorage.getItem(AVATAR_KEY), false);
+        const channel = supabase.channel(`typing:${groupId}`);
+        await channel.subscribe();
+        await channel.send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: {
+            username,
+            avatar: localStorage.getItem(AVATAR_KEY),
+            isTyping: false
+          }
+        });
         setTyping(false);
       }
       
@@ -60,22 +72,15 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       let mediaUrl = null;
       if (fileInputRef.current?.files?.length) {
         const file = fileInputRef.current.files[0];
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-        const filePath = `${groupId}/${fileName}`;
-        
-        // Simplified file upload logic - in reality, this would use supabase storage
-        // This is a placeholder for the actual upload
         try {
-          // Create a mock upload response
+          // Create a mock upload response for now
           mediaUrl = URL.createObjectURL(file);
         } catch (uploadError) {
           console.error('Error uploading file:', uploadError);
-          throw new Error('File upload failed');
         }
       }
       
-      // Send message to server using direct DB insert for reliability
+      // Send message to database
       const { data, error } = await supabase
         .from('chat_messages')
         .insert([{
@@ -96,19 +101,13 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       
       console.log('Message sent successfully with ID:', data?.id);
       
-      // Force a refresh to update everyone's view
-      const refreshChannel = supabase.channel(`force_refresh:${groupId}`);
-      await refreshChannel.subscribe();
-      await refreshChannel.send({
-        type: 'broadcast',
-        event: 'force_refresh',
-        payload: { message_id: data?.id, timestamp: new Date().toISOString() }
+      // Broadcast to the specific channel for this group
+      await realtimeService.sendToChannel(`messages:${groupId}`, 'new_message', {
+        message: {
+          ...optimisticMessage,
+          id: data?.id || optimisticMessage.id
+        }
       });
-      
-      // Remove the channel after use
-      setTimeout(() => {
-        supabase.removeChannel(refreshChannel);
-      }, 1000);
 
       // Reset file input
       if (fileInputRef.current) {
@@ -136,12 +135,18 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     if (!typing && isCurrentlyTyping) {
       // Typing begins
       setTyping(true);
-      chatService.sendTypingStatus(
-        groupId,
-        username,
-        localStorage.getItem(AVATAR_KEY),
-        true
-      );
+      const channel = supabase.channel(`typing:${groupId}`);
+      channel.subscribe().then(() => {
+        channel.send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: {
+            username,
+            avatar: localStorage.getItem(AVATAR_KEY),
+            isTyping: true
+          }
+        });
+      });
     }
     
     // Clear existing timeout
@@ -152,12 +157,18 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     // Set new timeout
     typingTimeoutRef.current = setTimeout(() => {
       if (typing) {
-        chatService.sendTypingStatus(
-          groupId,
-          username,
-          localStorage.getItem(AVATAR_KEY),
-          false
-        );
+        const channel = supabase.channel(`typing:${groupId}`);
+        channel.subscribe().then(() => {
+          channel.send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: {
+              username,
+              avatar: localStorage.getItem(AVATAR_KEY),
+              isTyping: false
+            }
+          });
+        });
         setTyping(false);
       }
     }, 2000);
@@ -177,7 +188,18 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     }
     
     if (typing) {
-      chatService.sendTypingStatus(groupId, username, localStorage.getItem(AVATAR_KEY), false);
+      const channel = supabase.channel(`typing:${groupId}`);
+      channel.subscribe().then(() => {
+        channel.send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: {
+            username,
+            avatar: localStorage.getItem(AVATAR_KEY),
+            isTyping: false
+          }
+        });
+      });
     }
   }, [groupId, username, typing]);
 
