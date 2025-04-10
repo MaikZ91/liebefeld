@@ -15,7 +15,11 @@ export const useMessageFetching = (groupId: string) => {
       // First, enable realtime for the table
       await supabase.rpc('enable_realtime_for_table', {
         table_name: 'chat_messages'
-      }).catch(error => {
+      })
+      .then(result => {
+        console.log('Realtime enabled result:', result);
+      })
+      .catch(error => {
         console.error('Error enabling realtime:', error);
       });
       

@@ -19,9 +19,11 @@ export const useMessageSubscription = (
     // Explicitly add the table to the realtime publication when subscribing
     supabase.rpc('enable_realtime_for_table', {
       table_name: 'chat_messages'
-    }).then(result => {
+    })
+    .then(result => {
       console.log('Realtime enabled result:', result);
-    }).catch(error => {
+    })
+    .catch(error => {
       console.error('Error enabling realtime:', error);
     });
 

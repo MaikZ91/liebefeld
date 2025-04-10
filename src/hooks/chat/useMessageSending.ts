@@ -1,3 +1,4 @@
+
 import { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
@@ -42,7 +43,11 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       // Enable realtime for the chat_messages table
       await supabase.rpc('enable_realtime_for_table', {
         table_name: 'chat_messages'
-      }).catch(error => {
+      })
+      .then(result => {
+        console.log('Realtime enabled result:', result);
+      })
+      .catch(error => {
         console.error('Error enabling realtime:', error);
       });
       
