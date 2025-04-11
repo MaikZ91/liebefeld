@@ -72,7 +72,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike, onR
       <DialogContent className="glass-effect max-w-md sm:max-w-lg animate-scale-in bg-gradient-to-b from-[#1A1D2D]/95 to-[#131722]/95 border-gray-700/50">
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-3xl bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+            <DialogTitle className="text-2xl bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
               {event.title}
             </DialogTitle>
             <div className="flex items-center gap-3">
@@ -104,7 +104,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike, onR
               )}
             </div>
           </div>
-          <DialogDescription className="text-muted-foreground mt-3 text-gray-300 font-light text-lg">
+          <DialogDescription className="text-muted-foreground mt-3 text-gray-300 font-light">
             {event.description}
           </DialogDescription>
         </DialogHeader>

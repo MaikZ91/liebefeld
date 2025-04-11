@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { Calendar, ArrowRight, ThumbsUp } from 'lucide-react';
 import { format, parseISO, isSameMonth, startOfDay, isAfter, isToday } from 'date-fns';
@@ -103,7 +104,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef }) => {
     >
       <div className="absolute left-0 top-0 bottom-0 flex items-center z-10 bg-red-600 px-2 py-0.5">
         <Calendar className="w-3.5 h-3.5 mr-1" />
-        <span className="font-bold text-sm whitespace-nowrap">Top Events</span>
+        <span className="font-bold text-xs whitespace-nowrap">Top Events</span>
         <ArrowRight className="w-3.5 h-3.5 ml-1" />
       </div>
       

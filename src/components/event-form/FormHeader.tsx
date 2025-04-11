@@ -10,7 +10,7 @@ interface FormHeaderProps {
 const FormHeader: React.FC<FormHeaderProps> = ({ onCancel }) => {
   return (
     <div className="flex justify-between items-center mb-6 border-b border-red-200 dark:border-red-800/30 pb-4">
-      <h2 className="text-4xl font-semibold text-red-700 dark:text-red-300">Event erstellen</h2>
+      <h2 className="text-3xl font-semibold text-red-700 dark:text-red-300">Event erstellen</h2>
       {onCancel && (
         <Button 
           type="button" 
