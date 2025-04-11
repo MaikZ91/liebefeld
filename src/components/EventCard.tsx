@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
-import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, Check, HelpCircle, X, BadgePlus, DollarSign } from 'lucide-react';
+import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,35 +28,37 @@ const categoryColors: Record<string, string> = {
 };
 
 const categoryIcons: Record<string, React.ReactNode> = {
-  'Konzert': <Music className="w-4 h-4" />,
-  'Party': <PartyPopper className="w-4 h-4" />,
-  'Ausstellung': <Image className="w-4 h-4" />,
-  'Sport': <Dumbbell className="w-4 h-4" />,
-  'Workshop': <Users className="w-4 h-4" />,
-  'Kultur': <Landmark className="w-4 h-4" />,
-  'Sonstiges': <Calendar className="w-4 h-4" />,
-  'Networking': <Users className="w-4 h-4" />,
-  'Meeting': <Users className="w-4 h-4" />,
+  'Konzert': <Music className="w-3 h-3" />,
+  'Party': <PartyPopper className="w-3 h-3" />,
+  'Ausstellung': <Image className="w-3 h-3" />,
+  'Sport': <Dumbbell className="w-3 h-3" />,
+  'Workshop': <Users className="w-3 h-3" />,
+  'Kultur': <Landmark className="w-3 h-3" />,
+  'Sonstiges': <Calendar className="w-3 h-3" />,
+  'Networking': <Users className="w-3 h-3" />,
+  'Meeting': <Users className="w-3 h-3" />,
 };
 
 const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compact = false, onLike }) => {
-  const [optimisticLikes, setOptimisticLikes] = useState<number | undefined>(undefined);
   const [isLiking, setIsLiking] = useState(false);
-  const { newEventIds } = useEventContext();
+  const { newEventIds, eventLikes } = useEventContext();
   
   const isNewEvent = newEventIds.has(event.id);
-  const displayLikes = optimisticLikes !== undefined ? optimisticLikes : (event.likes || 0);
+  
+  // Get likes directly from database sources
+  const displayLikes = event.id.startsWith('github-') 
+    ? (eventLikes[event.id] || 0) 
+    : (event.likes || 0);
   
   const icon = event.category in categoryIcons 
     ? categoryIcons[event.category] 
-    : <Calendar className="w-4 h-4" />;
+    : <Calendar className="w-3 h-3" />;
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onLike && !isLiking) {
       setIsLiking(true);
-      const newLikeCount = (event.likes || 0) + 1;
-      setOptimisticLikes(newLikeCount);
+      console.log(`Liking event ${event.id} (${event.title}) with current likes: ${displayLikes}`);
       onLike(event.id);
       setTimeout(() => {
         setIsLiking(false);
@@ -72,13 +74,12 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
   };
 
   const rsvpCounts = normalizeRsvpCounts(event);
-  const totalRsvp = rsvpCounts.yes + rsvpCounts.no + rsvpCounts.maybe;
 
   if (compact) {
     return (
       <div 
         className={cn(
-          "dark-glass-card rounded-lg p-2 cursor-pointer hover-scale mb-2 mx-1 w-[calc(100%-8px)]",
+          "dark-glass-card rounded-lg p-1.5 cursor-pointer hover-scale mb-0.5 w-full",
           className
         )}
         onClick={onClick}
@@ -87,46 +88,46 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1 flex-wrap">
               {isNewEvent && (
-                <Badge className="bg-green-600 text-white text-xs flex items-center gap-0.5 h-4 px-1.5">
-                  <BadgePlus className="w-3 h-3" />
+                <Badge className="bg-green-600 text-white text-[10px] flex items-center gap-0.5 h-3 px-1">
+                  <BadgePlus className="w-2 h-2" />
                   <span>Neu</span>
                 </Badge>
               )}
               {event.is_paid && (
-                <Badge className="bg-amber-500 text-white text-xs flex items-center gap-0.5 h-4 px-1.5">
-                  <DollarSign className="w-3 h-3" />
+                <Badge className="bg-amber-500 text-white text-[10px] flex items-center gap-0.5 h-3 px-1">
+                  <DollarSign className="w-2 h-2" />
                 </Badge>
               )}
               {event.link ? (
                 <h4 
-                  className="font-medium text-sm text-white break-words line-clamp-2 text-left hover:underline cursor-pointer flex items-center gap-1"
+                  className="font-medium text-xs text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1"
                   onClick={handleLinkClick}
                 >
                   {event.title}
-                  <ExternalLink className="w-3 h-3 inline-flex flex-shrink-0" />
+                  <ExternalLink className="w-2 h-2 inline-flex flex-shrink-0" />
                 </h4>
               ) : (
-                <h4 className="font-medium text-sm text-white break-words line-clamp-2 text-left">
+                <h4 className="font-medium text-xs text-white break-words line-clamp-1 text-left">
                   {event.title}
                 </h4>
               )}
             </div>
             
-            <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-white">
+            <div className="flex flex-wrap items-center gap-1 mt-0.5 text-[8px] text-white">
               <div className="flex items-center">
-                <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
+                <Clock className="w-2 h-2 mr-0.5 flex-shrink-0" />
                 <span>{event.time}</span>
               </div>
-              <div className="flex items-center max-w-[150px] overflow-hidden">
-                <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
+              <div className="flex items-center max-w-[120px] overflow-hidden">
+                <MapPin className="w-2 h-2 mr-0.5 flex-shrink-0" />
                 <span className="truncate">{event.location}</span>
               </div>
             </div>
           </div>
           
-          <div className="flex flex-col items-end gap-1">
+          <div className="flex items-center gap-2">
             <Badge className={cn(
-              "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
+              "flex-shrink-0 flex items-center gap-0.5 text-[8px] font-medium whitespace-nowrap px-1 py-0 h-3",
               event.category in categoryColors 
                 ? categoryColors[event.category] 
                 : "bg-orange-400/70 text-orange-50"
@@ -134,25 +135,25 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               {icon}
             </Badge>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-0.5">
               <Button 
                 variant="ghost" 
                 size="icon" 
                 className={cn(
-                  "h-6 w-6 rounded-full transition-all", 
+                  "h-4 w-4 rounded-full transition-all p-0", 
                   isLiking ? "opacity-70" : ""
                 )}
                 onClick={handleLike}
                 disabled={isLiking}
               >
                 <Heart className={cn(
-                  "w-4 h-4 transition-transform text-white", 
+                  "w-2 h-2 transition-transform text-white", 
                   displayLikes > 0 ? "fill-red-500 text-white" : "",
                   isLiking ? "scale-125" : ""
                 )} />
               </Button>
               {displayLikes > 0 && (
-                <span className="text-xs text-white">{displayLikes}</span>
+                <span className="text-[8px] text-white">{displayLikes}</span>
               )}
             </div>
           </div>
@@ -161,6 +162,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     );
   }
 
+  // Non-compact version
   return (
     <div 
       className={cn(
@@ -170,7 +172,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
       onClick={onClick}
     >
       <div className="flex justify-between items-start mb-2 gap-2">
-        <div className="flex flex-col">
+        <div className="flex flex-col w-4/5">
           <div className="flex flex-wrap gap-1 mb-1">
             {isNewEvent && (
               <Badge className="bg-green-600 text-white text-xs flex items-center gap-1 h-5 px-2 self-start">
@@ -187,20 +189,20 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
           </div>
           {event.link ? (
             <h4 
-              className="font-medium text-lg text-white break-words hover:underline cursor-pointer flex items-center gap-1"
+              className="font-medium text-2xl text-white break-words hover:underline cursor-pointer flex items-center gap-1"
               onClick={handleLinkClick}
             >
               {event.title}
-              <ExternalLink className="w-4 h-4 inline-flex flex-shrink-0" />
+              <ExternalLink className="w-5 h-5 inline-flex flex-shrink-0" />
             </h4>
           ) : (
-            <h4 className="font-medium text-lg text-white break-words">
+            <h4 className="font-medium text-2xl text-white break-words">
               {event.title}
             </h4>
           )}
         </div>
         
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex items-center gap-3 w-1/5 justify-end">
           <Badge className={cn(
             "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
             event.category in categoryColors 

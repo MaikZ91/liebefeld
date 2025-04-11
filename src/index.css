@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -34,7 +35,7 @@
     --input: 0 0% 20%;
     --ring: 0 100% 55%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
     --sidebar-background: 0 0% 5%;
     --sidebar-foreground: 0 0% 90%;
@@ -84,9 +85,7 @@
     --sidebar-border: 12 30% 20%;
     --sidebar-ring: 0 100% 55%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
@@ -117,7 +116,7 @@
   }
   
   .dark-glass-card {
-    @apply bg-[#E53935]/90 backdrop-blur-md shadow-md border border-red-400/40 transition-all duration-300;
+    @apply bg-[#E53935]/90 backdrop-blur-md shadow-md border border-red-400/40 transition-all duration-300 w-full;
   }
   
   .dark-glass-card:hover {
@@ -129,7 +128,23 @@
   }
   
   .hover-scale {
-    @apply transition-transform duration-300 ease-out hover:scale-[1.03];
+    @apply transition-transform duration-300 ease-out hover:scale-[1.01];
+  }
+  
+  .compact-container {
+    @apply max-w-[1400px] mx-auto px-1;
+  }
+  
+  .compact-card {
+    @apply p-2 rounded-lg;
+  }
+  
+  .compact-text {
+    @apply text-xs;
+  }
+  
+  .compact-spacing {
+    @apply space-y-1;
   }
   
   .calendar-day {
