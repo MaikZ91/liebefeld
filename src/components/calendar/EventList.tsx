@@ -82,18 +82,6 @@ const EventList: React.FC<EventListProps> = ({
     const grouped = groupEventsByDate(displayEvents);
     
     Object.keys(grouped).forEach(dateStr => {
-      // Debug info for specific dates (10th and 11th April)
-      if (dateStr.includes('2025-04-10') || dateStr.includes('2025-04-11')) {
-        console.log(`Debug: Events for ${dateStr}:`, 
-          grouped[dateStr].map(e => ({
-            id: e.id, 
-            title: e.title,
-            likes: e.likes || 0,
-            hash: e.id.substring(7) // Zeige den Hash-Teil der ID an
-          }))
-        );
-      }
-      
       grouped[dateStr].sort((a, b) => {
         const likesA = a.likes || 0;
         const likesB = b.likes || 0;
@@ -105,18 +93,6 @@ const EventList: React.FC<EventListProps> = ({
         // When likes are equal, use a stable ID sorting
         return a.id.localeCompare(b.id);
       });
-      
-      // Debug info after sorting for specific dates
-      if (dateStr.includes('2025-04-10') || dateStr.includes('2025-04-11')) {
-        console.log(`Debug: Sorted events for ${dateStr}:`, 
-          grouped[dateStr].map(e => ({
-            id: e.id, 
-            title: e.title,
-            likes: e.likes || 0,
-            hash: e.id.substring(7) // Zeige den Hash-Teil der ID an
-          }))
-        );
-      }
     });
     
     return grouped;
@@ -198,8 +174,6 @@ const EventList: React.FC<EventListProps> = ({
               >
                 <h4 className="text-sm font-medium mb-2 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-2 z-10 rounded-md flex items-center">
                   {format(date, 'EEEE, d. MMMM', { locale: de })}
-                  {dateStr === '2025-04-10' && <span className="ml-2 text-xs bg-orange-600 text-white px-1.5 py-0.5 rounded-full">Debug: 10.4</span>}
-                  {dateStr === '2025-04-11' && <span className="ml-2 text-xs bg-orange-600 text-white px-1.5 py-0.5 rounded-full">Debug: 11.4</span>}
                   {hasNewEvents && (
                     <span className="ml-2 text-xs bg-green-600 text-white px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
                       <span className="font-bold">NEW</span>
@@ -230,15 +204,10 @@ const EventList: React.FC<EventListProps> = ({
                             key={event.id} 
                             event={event}
                             compact={true}
-                            onClick={() => onSelectEvent(event, date)}
+                            onClick={() => onSelectSelect(event, date)}
                             onLike={onLike}
                             className={`${isTopEvent ? 'border-l-2 border-[#E53935]' : isNewEvent ? 'border-l-2 border-green-500' : ''} relative`}
                           />
-                          {(dateStr === '2025-04-10' || dateStr === '2025-04-11') && (
-                            <div className="absolute right-2 bottom-2 bg-orange-600/80 text-white px-2 py-0.5 rounded-full text-xs z-10">
-                              Hash: {event.id.substring(7)} | Likes: {event.likes || 0} | Pos: {eventIndex + 1}
-                            </div>
-                          )}
                         </div>
                       </div>
                     );

@@ -247,9 +247,6 @@ export const transformGitHubEvents = (
     let eventDate;
     let formattedDate = "";
     try {
-      // Log the original date string
-      console.log(`Parsing date: ${githubEvent.date} for event: ${title}`);
-      
       // Extract the day of week and date part
       const dateParts = githubEvent.date.split(', ');
       if (dateParts.length < 2) {
@@ -275,20 +272,6 @@ export const transformGitHubEvents = (
       const yearToUse = isMonthInPast ? currentYear + 1 : currentYear;
       eventDate = new Date(Date.UTC(yearToUse, month, day));
       formattedDate = format(eventDate, 'yyyy-MM-dd');
-      
-      // Log detailed parsing information
-      console.log(`Original date: ${githubEvent.date}`);
-      console.log(`Day: ${day}, Month: ${month+1}, Year: ${yearToUse}`);
-      console.log(`Parsed date: ${eventDate.toISOString()}`);
-      
-      // Debug for troubleshooting specific dates
-      if (day === 10 && month === 3) { // April 10th (month is 0-indexed)
-        console.log(`Found April 10th event: ${title}`);
-      }
-      
-      if (day === 11 && month === 3) { // April 11th (month is 0-indexed)
-        console.log(`Found April 11th event: ${title}`);
-      }
     } catch (err) {
       console.warn(`Konnte Datum nicht parsen: ${githubEvent.date}`, err);
       // Fallback to today's date
@@ -298,17 +281,6 @@ export const transformGitHubEvents = (
     
     // Erstelle eine stabile ID basierend auf Titel, Datum und Link
     const eventId = createStableEventId(title, formattedDate, githubEvent.link);
-    
-    // Check if this is an April 10th or 11th event for debugging
-    if (formattedDate === '2025-04-10' || formattedDate === '2025-04-11') {
-      console.log(`Important Debug - Event for ${formattedDate}:`, {
-        title,
-        id: eventId,
-        originalDate: githubEvent.date,
-        link: githubEvent.link,
-        likes: eventLikes[eventId] || 0
-      });
-    }
     
     // Get likes from the provided eventLikes map, defaulting to 0 if not found
     const likesCount = eventLikes[eventId] || 0;
