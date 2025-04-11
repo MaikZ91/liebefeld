@@ -1,6 +1,6 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { AVATAR_KEY } from '@/types/chatTypes';
+import { AVATAR_KEY, EventShare } from '@/types/chatTypes';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { realtimeService } from '@/services/realtimeService';
@@ -12,7 +12,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = useCallback(async (event?: React.FormEvent, eventData?: any) => {
+  const handleSubmit = useCallback(async (event?: React.FormEvent, eventData?: EventShare) => {
     if (event) {
       event.preventDefault();
     }
@@ -28,11 +28,13 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       console.log('Sending message to group:', groupId);
       
       let messageContent = trimmedMessage;
+      let eventMetadata = null;
       
       // Add event data to message if available
       if (eventData) {
         const { title, date, time, location, category } = eventData;
         messageContent = `🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${trimmedMessage}`;
+        eventMetadata = eventData;
       }
       
       // Create optimistic message for immediate display
@@ -44,6 +46,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         user_name: username,
         user_avatar: localStorage.getItem(AVATAR_KEY) || '',
         group_id: groupId,
+        event_data: eventMetadata
       };
       
       // Add optimistic message to local state IMMEDIATELY
@@ -93,7 +96,8 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
           text: messageContent,
           avatar: localStorage.getItem(AVATAR_KEY),
           media_url: mediaUrl,
-          read_by: [username] // The sending person has already read the message
+          read_by: [username], // The sending person has already read the message
+          event_data: eventMetadata
         }])
         .select('id')
         .single();

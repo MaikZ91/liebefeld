@@ -1,43 +1,29 @@
+export const USERNAME_KEY = 'username';
+export const AVATAR_KEY = 'avatar';
 
-import { MessageReaction } from "@/integrations/supabase/client";
+export interface TypingUser {
+  username: string;
+  avatar: string | null;
+  isTyping: boolean;
+}
 
-export type ChatGroup = {
+export interface ChatGroup {
   id: string;
   name: string;
-  description: string;
-  created_by: string;
   created_at: string;
-  category?: string; // Added category field
 }
 
-export type TypingUser = {
-  username: string;
-  avatar?: string;
-  lastTyped: Date;
-}
+export const GROUP_CATEGORIES = [
+  { id: 'spot', name: 'Spot' },
+  { id: 'sport', name: 'Sport' },
+  { id: 'ausgehen', name: 'Ausgehen' },
+];
 
-export type EventShare = {
+// Define shared event display format for chats
+export interface EventShare {
   title: string;
   date: string;
   time: string;
   location?: string;
   category: string;
 }
-
-export interface Message {
-  id: string;
-  created_at: string;
-  content: string;
-  user_name: string;
-  user_avatar: string;
-  group_id: string;
-  event_share?: EventShare | null;
-}
-
-export const EMOJI_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
-
-export const USERNAME_KEY = "community_chat_username";
-export const AVATAR_KEY = "community_chat_avatar";
-
-// Group categories
-export const GROUP_CATEGORIES = ["Ausgehen", "Sport", "Kreativität"];

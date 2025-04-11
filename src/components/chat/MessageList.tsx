@@ -6,7 +6,7 @@ import { getInitials } from '@/utils/chatUIUtils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ChatMessage from './ChatMessage';
 import TypingIndicator from './TypingIndicator';
-import { TypingUser } from '@/types/chatTypes';
+import { TypingUser, EventShare } from '@/types/chatTypes';
 
 interface Message {
   id: string;
@@ -15,6 +15,7 @@ interface Message {
   user_name: string;
   user_avatar: string;
   group_id: string;
+  event_data?: EventShare;
 }
 
 interface MessageListProps {
@@ -42,9 +43,29 @@ const MessageList: React.FC<MessageListProps> = ({
   isAusgehenGroup,
   chatBottomRef
 }) => {
+  // Parse event data from message content if available
+  const parseEventData = (message: Message): EventShare | undefined => {
+    if (message.event_data) return message.event_data;
+    
+    const eventRegex = /🗓️ \*\*Event: (.*?)\*\*\nDatum: (.*?) um (.*?)\nOrt: (.*?)\nKategorie: (.*?)(\n\n|$)/;
+    const match = message.content.match(eventRegex);
+    
+    if (match) {
+      return {
+        title: match[1],
+        date: match[2],
+        time: match[3],
+        location: match[4],
+        category: match[5]
+      };
+    }
+    
+    return undefined;
+  };
+
   return (
     <div 
-      className={`flex-grow p-5 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto`}
+      className={`flex-grow p-5 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto w-full`}
     >
       {loading && <div className="text-center text-gray-500 text-lg font-semibold py-4">Loading messages...</div>}
       {error && <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>}
@@ -57,6 +78,7 @@ const MessageList: React.FC<MessageListProps> = ({
         {messages.map((message, index) => {
           const isConsecutive = index > 0 && messages[index - 1].user_name === message.user_name;
           const timeAgo = formatTime(message.created_at);
+          const eventData = parseEventData(message);
 
           return (
             <div key={message.id} className="mb-4 w-full">
@@ -70,11 +92,12 @@ const MessageList: React.FC<MessageListProps> = ({
                   <span className="text-xs text-gray-400">{timeAgo}</span>
                 </div>
               )}
-              <div className="w-full pr-2">
+              <div className="w-full max-w-full overflow-hidden">
                 <ChatMessage 
-                  message={message.content} 
+                  message={eventData ? message.content.replace(eventData.title, '').replace(/🗓️ \*\*Event:.*?\n\n/s, '') : message.content} 
                   isConsecutive={isConsecutive}
                   isSpotGroup={isSpotGroup || isSportGroup || isAusgehenGroup}
+                  eventData={eventData}
                 />
               </div>
             </div>
