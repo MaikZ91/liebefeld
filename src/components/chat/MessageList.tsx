@@ -65,7 +65,7 @@ const MessageList: React.FC<MessageListProps> = ({
 
   return (
     <div 
-      className={`flex-grow p-5 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto w-full max-w-full`}
+      className={`flex-grow p-4 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto w-full max-w-full`}
     >
       {loading && <div className="text-center text-gray-500 text-lg font-semibold py-4">Loading messages...</div>}
       {error && <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>}
@@ -88,8 +88,8 @@ const MessageList: React.FC<MessageListProps> = ({
                     <AvatarImage src={message.user_avatar} alt={message.user_name} />
                     <AvatarFallback>{getInitials(message.user_name)}</AvatarFallback>
                   </Avatar>
-                  <div className="text-sm font-medium text-white mr-2">{message.user_name}</div>
-                  <span className="text-xs text-gray-400">{timeAgo}</span>
+                  <div className="text-base font-medium text-white mr-2">{message.user_name}</div>
+                  <span className="text-sm text-gray-400">{timeAgo}</span>
                 </div>
               )}
               <div className="w-full max-w-full overflow-hidden break-words">
