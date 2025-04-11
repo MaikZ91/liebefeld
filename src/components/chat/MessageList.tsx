@@ -88,7 +88,7 @@ const MessageList: React.FC<MessageListProps> = ({
                     <AvatarImage src={message.user_avatar} alt={message.user_name} />
                     <AvatarFallback>{getInitials(message.user_name)}</AvatarFallback>
                   </Avatar>
-                  <div className="text-base font-medium text-white mr-2">{message.user_name}</div>
+                  <div className="text-lg font-medium text-white mr-2">{message.user_name}</div>
                   <span className="text-sm text-gray-400">{timeAgo}</span>
                 </div>
               )}

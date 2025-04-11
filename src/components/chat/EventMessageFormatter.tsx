@@ -6,8 +6,8 @@ import { Calendar, Clock, MapPin } from 'lucide-react';
 export const EventMessageFormatter: React.FC<{ event: EventShare }> = ({ event }) => {
   return (
     <div className="bg-gray-800 rounded-lg p-4 border border-red-500/30 w-full max-w-full overflow-hidden break-words">
-      <div className="text-base font-semibold text-white mb-1">Geteiltes Event</div>
-      <div className="text-xl font-bold text-white break-words">{event.title}</div>
+      <div className="text-lg font-semibold text-white mb-1">Geteiltes Event</div>
+      <div className="text-2xl font-bold text-white break-words">{event.title}</div>
       <div className="flex flex-col gap-1 mt-2">
         <div className="flex items-center text-sm text-gray-300">
           <Calendar className="h-4 w-4 mr-1 flex-shrink-0" />
