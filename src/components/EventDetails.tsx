@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { type Event, RsvpOption, normalizeRsvpCounts } from '../types/eventTypes';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -32,6 +32,12 @@ const categoryColors: Record<string, string> = {
 const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike, onRsvp }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [showSparkle, setShowSparkle] = useState(false);
+  const [localLikes, setLocalLikes] = useState(event.likes || 0);
+  
+  // When event.likes changes (from parent/context), update our local state
+  useEffect(() => {
+    setLocalLikes(event.likes || 0);
+  }, [event.likes]);
   
   const handleClose = () => {
     setIsOpen(false);
@@ -40,6 +46,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike, onR
 
   const handleLike = () => {
     setShowSparkle(true);
+    setLocalLikes(prev => prev + 1); // Optimistically update local UI
     setTimeout(() => setShowSparkle(false), 1000);
     if (onLike) {
       onLike();
@@ -83,13 +90,13 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike, onR
                   className="rounded-full p-1 hover:bg-red-500/10"
                 >
                   <div className="relative">
-                    <Heart className={cn("h-5 w-5 text-red-500", event.likes && event.likes > 0 ? "fill-red-500" : "")} />
+                    <Heart className={cn("h-5 w-5 text-red-500", localLikes > 0 ? "fill-red-500" : "")} />
                     {showSparkle && (
                       <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-yellow-300 animate-pulse" />
                     )}
                   </div>
-                  {event.likes > 0 && (
-                    <span className="ml-1 text-xs text-red-500">{event.likes}</span>
+                  {localLikes > 0 && (
+                    <span className="ml-1 text-xs text-red-500">{localLikes}</span>
                   )}
                 </Button>
               )}
