@@ -100,14 +100,14 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               )}
               {event.link ? (
                 <h4 
-                  className="font-medium text-xs text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1"
+                  className="font-medium text-sm text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1"
                   onClick={handleLinkClick}
                 >
                   {event.title}
                   <ExternalLink className="w-2 h-2 inline-flex flex-shrink-0" />
                 </h4>
               ) : (
-                <h4 className="font-medium text-xs text-white break-words line-clamp-1 text-left">
+                <h4 className="font-medium text-sm text-white break-words line-clamp-1 text-left">
                   {event.title}
                 </h4>
               )}
