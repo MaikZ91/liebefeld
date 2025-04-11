@@ -143,7 +143,7 @@ export const fetchExternalEvents = async (eventLikes: Record<string, number>): P
   }
 };
 
-// Update event likes in Supabase - ensuring likes are properly stored
+// Update event likes in Supabase
 export const updateEventLikes = async (eventId: string, newLikesValue: number): Promise<void> => {
   try {
     console.log(`Updating likes for event ${eventId} to ${newLikesValue}`);

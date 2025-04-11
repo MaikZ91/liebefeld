@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -164,8 +165,8 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   }, [filter]);
 
   return (
-    <div className="container mx-auto px-2 py-6 max-w-[1280px] animate-fade-in">
-      <div className="flex flex-col space-y-4">
+    <div className="container mx-auto px-4 py-8 max-w-6xl animate-fade-in">
+      <div className="flex flex-col space-y-6">
         {/* Calendar header with month navigation */}
         <CalendarHeader 
           currentDate={currentDate}
@@ -189,7 +190,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
 
         {/* Event form between menu and calendar */}
         {showEventForm && (
-          <div className="w-full mt-3 mb-3 dark-glass-card rounded-xl p-4 animate-fade-down animate-duration-300">
+          <div className="w-full mt-4 mb-4 dark-glass-card rounded-2xl p-6 animate-fade-down animate-duration-300">
             <EventForm 
               selectedDate={selectedDate ? selectedDate : new Date()} 
               onAddEvent={handleAddEvent}
@@ -218,20 +219,20 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
           </TabsContent>
           
           <TabsContent value="calendar" className="w-full">
-            <div className="flex flex-col md:flex-row gap-3">
-              <div className="w-full md:w-3/5 dark-glass-card rounded-xl p-4">
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="w-full md:w-3/5 dark-glass-card rounded-2xl p-6">
                 {showFavorites ? (
                   <FavoritesView 
                     favoriteEvents={favoriteEvents}
                     onSwitchToList={() => setView("list")}
                   />
                 ) : showNewEvents ? (
-                  <div className="text-center p-3">
-                    <h3 className="text-base font-medium mb-2">Neue Events</h3>
-                    <p className="text-xs text-muted-foreground mb-3">
+                  <div className="text-center p-4">
+                    <h3 className="text-lg font-medium mb-2">Neue Events</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
                       Es gibt {newEventIds.size} neue Events seit deinem letzten Besuch.
                     </p>
-                    <Button onClick={() => setView("list")} size="sm" className="text-xs h-7 px-2">
+                    <Button onClick={() => setView("list")}>
                       Als Liste anzeigen
                     </Button>
                   </div>
@@ -246,7 +247,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
               </div>
               
               {/* Event details panel */}
-              <div className="w-full md:w-2/5 mt-3 md:mt-0">
+              <div className="w-full md:w-2/5 mt-6 md:mt-0">
                 <EventPanel 
                   selectedDate={selectedDate}
                   selectedEvent={selectedEvent}

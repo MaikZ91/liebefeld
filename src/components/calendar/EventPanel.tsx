@@ -43,11 +43,11 @@ const EventPanel: React.FC<EventPanelProps> = ({
         : "Events";
   
   return (
-    <div className="dark-glass-card rounded-xl p-4 h-full animate-fade-in w-full">
+    <div className="dark-glass-card rounded-2xl p-6 h-full animate-fade-in">
       {!selectedEvent && (
         <div className="h-full flex flex-col">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-2xl font-medium text-white">{panelTitle}</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-medium text-white">{panelTitle}</h3>
             {selectedDate && (
               <span className="text-sm text-gray-300">
                 {filteredEvents.length} {filteredEvents.length === 1 ? 'Event' : 'Events'}
@@ -56,20 +56,18 @@ const EventPanel: React.FC<EventPanelProps> = ({
           </div>
           
           {selectedDate ? (
-            <div className="overflow-y-auto pr-1 scrollbar-thin">
+            <div className="overflow-y-auto pr-2 scrollbar-thin">
               {filteredEvents.length > 0 ? (
-                <div className="grid grid-cols-1 gap-1">
-                  {filteredEvents.map(event => (
-                    <EventCard 
-                      key={event.id} 
-                      event={event}
-                      compact={true}
-                      onClick={() => onEventSelect(event)}
-                      onLike={onLike}
-                      className={newEventIds.has(event.id) ? 'border-l-2 border-green-500' : ''}
-                    />
-                  ))}
-                </div>
+                filteredEvents.map(event => (
+                  <EventCard 
+                    key={event.id} 
+                    event={event}
+                    compact={true}
+                    onClick={() => onEventSelect(event)}
+                    onLike={onLike}
+                    className={newEventIds.has(event.id) ? 'border-l-2 border-green-500' : ''}
+                  />
+                ))
               ) : (
                 <div className="flex items-center justify-center h-32 text-gray-400">
                   Keine Events an diesem Tag
@@ -86,29 +84,29 @@ const EventPanel: React.FC<EventPanelProps> = ({
       
       {selectedEvent && (
         <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-2xl font-medium text-white">{selectedEvent.title}</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-medium text-white">{selectedEvent.title}</h3>
             <Button variant="ghost" size="icon" onClick={onEventClose}>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x w-4 h-4"><path d="M18 6 6 18"/><path d="M6 6 18 18"/></svg>
             </Button>
           </div>
           
-          <div className="overflow-y-auto pr-1 scrollbar-thin flex-grow">
-            <div className="text-gray-300 mb-2 flex items-center text-sm">
-              <CalendarIcon className="mr-1 h-4 w-4" />
+          <div className="overflow-y-auto pr-2 scrollbar-thin flex-grow">
+            <div className="text-gray-300 mb-2 flex items-center">
+              <CalendarIcon className="mr-2 h-4 w-4" />
               {selectedEvent.date && format(new Date(selectedEvent.date), 'EEEE, dd. MMMM yyyy', { locale: de })}
             </div>
             
-            <div className="text-gray-300 mb-2 flex items-center text-sm">
-              <MapPin className="mr-1 h-4 w-4" />
+            <div className="text-gray-300 mb-2 flex items-center">
+              <MapPin className="mr-2 h-4 w-4" />
               {selectedEvent.location}
             </div>
             
-            <p className="text-gray-300 mb-3 text-sm">{selectedEvent.description}</p>
+            <p className="text-gray-300 mb-4">{selectedEvent.description}</p>
             
             {selectedEvent.link && (
-              <a href={selectedEvent.link} target="_blank" rel="noopener noreferrer" className="text-red-500 hover:text-red-400 flex items-center mb-3 text-sm">
-                <Link className="mr-1 h-4 w-4" />
+              <a href={selectedEvent.link} target="_blank" rel="noopener noreferrer" className="text-red-500 hover:text-red-400 flex items-center mb-4">
+                <Link className="mr-2 h-4 w-4" />
                 Mehr Informationen
               </a>
             )}
@@ -117,13 +115,13 @@ const EventPanel: React.FC<EventPanelProps> = ({
           <div className="mt-auto flex justify-between items-center">
             <Button 
               variant="outline" 
-              className="bg-black/50 text-white hover:bg-black/70 text-sm h-8 px-3"
+              className="bg-black/50 text-white hover:bg-black/70"
               onClick={() => onLike(selectedEvent.id)}
             >
-              <Heart className="mr-1 h-4 w-4" fill={eventLikes[selectedEvent.id] ? 'white' : 'none'} />
+              <Heart className="mr-2 h-4 w-4" fill={eventLikes[selectedEvent.id] ? 'white' : 'none'} />
               {eventLikes[selectedEvent.id] || 0}
             </Button>
-            <Button onClick={onShowEventForm} className="text-sm h-8 px-3">Bearbeiten</Button>
+            <Button onClick={onShowEventForm}>Bearbeiten</Button>
           </div>
         </div>
       )}
