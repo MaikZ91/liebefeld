@@ -260,9 +260,16 @@ export const transformGitHubEvents = (
       console.log(`Parsed date: ${eventDate.toISOString()}`);
       
       // Debug for troubleshooting specific dates
-      if (day === 6 && month === 2) { // March 6th
-        console.log(`Found March 6th event: ${title}`);
-        console.log(`Using year: ${yearToUse}`);
+      if (day === 10 && month === 3) { // April 10th (month is 0-indexed)
+        console.log(`Found April 10th event: ${title}`);
+        console.log(`Using year: ${yearToUse}, Event index: ${index}`);
+        console.log(`Will generate ID: github-${index}`);
+      }
+      
+      if (day === 11 && month === 3) { // April 11th (month is 0-indexed)
+        console.log(`Found April 11th event: ${title}`);
+        console.log(`Using year: ${yearToUse}, Event index: ${index}`);
+        console.log(`Will generate ID: github-${index}`);
       }
     } catch (err) {
       console.warn(`Konnte Datum nicht parsen: ${githubEvent.date}`, err);
@@ -270,14 +277,24 @@ export const transformGitHubEvents = (
       eventDate = new Date();
     }
     
+    // This is where the ID is generated - it's simply "github-" + the array index
     const eventId = `github-${index}`;
+    
+    // Check if this is an April 10th or 11th event for debugging
+    let formattedDate = format(eventDate, 'yyyy-MM-dd');
+    if (formattedDate === '2025-04-10' || formattedDate === '2025-04-11') {
+      console.log(`Important Debug - Event for ${formattedDate}:`, {
+        title,
+        id: eventId,
+        index: index,
+        originalIndex: githubEvents.indexOf(githubEvent),
+        likes: eventLikes[eventId] || 0
+      });
+    }
     
     // Get likes from the provided eventLikes map, defaulting to 0 if not found
     const likesCount = eventLikes[eventId] || 0;
     console.log(`Event ${eventId} (${title}) has ${likesCount} likes from database`);
-    
-    const formattedDate = format(eventDate, 'yyyy-MM-dd');
-    console.log(`Event ${title} formatted date: ${formattedDate}`);
     
     // Create and return the event object
     return {
