@@ -34,7 +34,7 @@
     --input: 0 0% 20%;
     --ring: 0 100% 55%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
     --sidebar-background: 0 0% 5%;
     --sidebar-foreground: 0 0% 90%;
@@ -127,23 +127,23 @@
   }
   
   .hover-scale {
-    @apply transition-transform duration-300 ease-out hover:scale-[1.02];
+    @apply transition-transform duration-300 ease-out hover:scale-[1.01];
   }
   
   .compact-container {
-    @apply max-w-[980px] mx-auto px-3;
+    @apply max-w-[1280px] mx-auto px-2;
   }
   
   .compact-card {
-    @apply p-3 rounded-lg;
+    @apply p-2 rounded-lg;
   }
   
   .compact-text {
-    @apply text-sm;
+    @apply text-xs;
   }
   
   .compact-spacing {
-    @apply space-y-2;
+    @apply space-y-1;
   }
   
   .calendar-day {
