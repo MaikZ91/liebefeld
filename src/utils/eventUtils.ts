@@ -200,6 +200,26 @@ export const groupFutureEventsByDate = (events: Event[]): Record<string, Event[]
   return groupEventsByDate(futureEvents);
 };
 
+// Erstellt eine stabile ID basierend auf Event-Eigenschaften
+export const createStableEventId = (title: string, date: string, link?: string): string => {
+  // Kombiniere die Event-Eigenschaften zu einem String
+  const baseString = `${title}-${date}${link ? `-${link}` : ''}`.toLowerCase();
+  
+  // Erstelle einen einfachen Hash aus dem String
+  let hash = 0;
+  for (let i = 0; i < baseString.length; i++) {
+    const char = baseString.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Konvertiere zu 32bit Integer
+  }
+  
+  // Wandle Hash in Hexadezimal um und nehme die letzten 8 Zeichen
+  const hashHex = Math.abs(hash).toString(16).padStart(8, '0').slice(-8);
+  
+  // Präfix für GitHub Events
+  return `github-${hashHex}`;
+};
+
 // Transform GitHub events to our format
 export const transformGitHubEvents = (
   githubEvents: GitHubEvent[], 
@@ -209,7 +229,7 @@ export const transformGitHubEvents = (
   console.log(`Transforming ${githubEvents.length} GitHub events, current year: ${currentYear}`);
   console.log('Using likes data:', eventLikes);
   
-  return githubEvents.map((githubEvent, index) => {
+  return githubEvents.map((githubEvent) => {
     // Extract location from event title (if available)
     let title = githubEvent.event;
     let location = "Bielefeld";
@@ -225,6 +245,7 @@ export const transformGitHubEvents = (
     
     // Parse the date (Format: "Fri, 04.04" or similar)
     let eventDate;
+    let formattedDate = "";
     try {
       // Log the original date string
       console.log(`Parsing date: ${githubEvent.date} for event: ${title}`);
@@ -253,6 +274,7 @@ export const transformGitHubEvents = (
       // otherwise use current year
       const yearToUse = isMonthInPast ? currentYear + 1 : currentYear;
       eventDate = new Date(Date.UTC(yearToUse, month, day));
+      formattedDate = format(eventDate, 'yyyy-MM-dd');
       
       // Log detailed parsing information
       console.log(`Original date: ${githubEvent.date}`);
@@ -262,32 +284,28 @@ export const transformGitHubEvents = (
       // Debug for troubleshooting specific dates
       if (day === 10 && month === 3) { // April 10th (month is 0-indexed)
         console.log(`Found April 10th event: ${title}`);
-        console.log(`Using year: ${yearToUse}, Event index: ${index}`);
-        console.log(`Will generate ID: github-${index}`);
       }
       
       if (day === 11 && month === 3) { // April 11th (month is 0-indexed)
         console.log(`Found April 11th event: ${title}`);
-        console.log(`Using year: ${yearToUse}, Event index: ${index}`);
-        console.log(`Will generate ID: github-${index}`);
       }
     } catch (err) {
       console.warn(`Konnte Datum nicht parsen: ${githubEvent.date}`, err);
       // Fallback to today's date
       eventDate = new Date();
+      formattedDate = format(eventDate, 'yyyy-MM-dd');
     }
     
-    // This is where the ID is generated - it's simply "github-" + the array index
-    const eventId = `github-${index}`;
+    // Erstelle eine stabile ID basierend auf Titel, Datum und Link
+    const eventId = createStableEventId(title, formattedDate, githubEvent.link);
     
     // Check if this is an April 10th or 11th event for debugging
-    let formattedDate = format(eventDate, 'yyyy-MM-dd');
     if (formattedDate === '2025-04-10' || formattedDate === '2025-04-11') {
       console.log(`Important Debug - Event for ${formattedDate}:`, {
         title,
         id: eventId,
-        index: index,
-        originalIndex: githubEvents.indexOf(githubEvent),
+        originalDate: githubEvent.date,
+        link: githubEvent.link,
         likes: eventLikes[eventId] || 0
       });
     }

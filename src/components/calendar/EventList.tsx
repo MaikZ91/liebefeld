@@ -88,7 +88,8 @@ const EventList: React.FC<EventListProps> = ({
           grouped[dateStr].map(e => ({
             id: e.id, 
             title: e.title,
-            likes: e.likes || 0
+            likes: e.likes || 0,
+            hash: e.id.substring(7) // Zeige den Hash-Teil der ID an
           }))
         );
       }
@@ -111,7 +112,8 @@ const EventList: React.FC<EventListProps> = ({
           grouped[dateStr].map(e => ({
             id: e.id, 
             title: e.title,
-            likes: e.likes || 0
+            likes: e.likes || 0,
+            hash: e.id.substring(7) // Zeige den Hash-Teil der ID an
           }))
         );
       }
@@ -234,7 +236,7 @@ const EventList: React.FC<EventListProps> = ({
                           />
                           {(dateStr === '2025-04-10' || dateStr === '2025-04-11') && (
                             <div className="absolute right-2 bottom-2 bg-orange-600/80 text-white px-2 py-0.5 rounded-full text-xs z-10">
-                              ID: {event.id} | Likes: {event.likes || 0} | Pos: {eventIndex + 1}
+                              Hash: {event.id.substring(7)} | Likes: {event.likes || 0} | Pos: {eventIndex + 1}
                             </div>
                           )}
                         </div>
