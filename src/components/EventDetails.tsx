@@ -66,14 +66,31 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike, onR
             <DialogTitle className="text-2xl bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
               {event.title}
             </DialogTitle>
-            <Badge className={cn(
-              "ml-2 font-medium",
-              event.category in categoryColors 
-                ? categoryColors[event.category] 
-                : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
-            )}>
-              {event.category}
-            </Badge>
+            <div className="flex items-center gap-3">
+              <Badge className={cn(
+                "ml-2 font-medium",
+                event.category in categoryColors 
+                  ? categoryColors[event.category] 
+                  : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+              )}>
+                {event.category}
+              </Badge>
+              {onLike && (
+                <Button 
+                  onClick={handleLike} 
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full p-1 hover:bg-red-500/10"
+                >
+                  <div className="relative">
+                    <Heart className={cn("h-5 w-5 text-red-500", event.likes && event.likes > 0 ? "fill-red-500" : "")} />
+                    {showSparkle && (
+                      <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-yellow-300 animate-pulse" />
+                    )}
+                  </div>
+                </Button>
+              )}
+            </div>
           </div>
           <DialogDescription className="text-muted-foreground mt-3 text-gray-300 font-light">
             {event.description}
@@ -159,21 +176,6 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike, onR
         </div>
         
         <DialogFooter className="flex justify-between">
-          {onLike && (
-            <Button 
-              onClick={handleLike} 
-              variant="outline"
-              className="flex items-center gap-2 rounded-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white border-none transition-all duration-300"
-            >
-              <div className="relative">
-                <Heart className={cn("h-4 w-4", event.likes && event.likes > 0 ? "fill-white text-white" : "")} />
-                {showSparkle && (
-                  <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-yellow-300 animate-pulse" />
-                )}
-              </div>
-              Gefällt mir {event.likes && event.likes > 0 ? `(${event.likes})` : ''}
-            </Button>
-          )}
           <Button onClick={handleClose} className="rounded-full bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 border-none transition-all duration-300">
             Schließen
           </Button>

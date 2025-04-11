@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { EventShare } from '@/types/chatTypes';
-import { Calendar, Clock, MapPin } from 'lucide-react';
+import { Calendar, Clock, MapPin, Heart } from 'lucide-react';
 
 export const EventMessageFormatter: React.FC<{ event: EventShare }> = ({ event }) => {
   return (
@@ -28,8 +28,13 @@ export const EventMessageFormatter: React.FC<{ event: EventShare }> = ({ event }
           </div>
         )}
       </div>
-      <div className="text-sm bg-red-500 text-white inline-block px-2 py-0.5 rounded mt-2">
-        {event.category || "Event"}
+      <div className="flex justify-between items-center mt-2">
+        <div className="text-sm bg-red-500 text-white inline-block px-2 py-0.5 rounded">
+          {event.category || "Event"}
+        </div>
+        <div className="flex items-center">
+          <Heart className="h-5 w-5 text-red-500" />
+        </div>
       </div>
     </div>
   );

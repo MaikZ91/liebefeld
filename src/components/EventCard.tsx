@@ -124,7 +124,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
             </div>
           </div>
           
-          <div className="flex flex-col items-end gap-0.5">
+          <div className="flex items-center gap-2">
             <Badge className={cn(
               "flex-shrink-0 flex items-center gap-0.5 text-[8px] font-medium whitespace-nowrap px-1 py-0 h-3",
               event.category in categoryColors 
@@ -200,7 +200,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
           )}
         </div>
         
-        <div className="flex flex-col items-end gap-2 w-1/5">
+        <div className="flex items-center gap-3 w-1/5 justify-end">
           <Badge className={cn(
             "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
             event.category in categoryColors 
