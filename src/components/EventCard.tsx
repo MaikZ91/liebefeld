@@ -78,47 +78,47 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     return (
       <div 
         className={cn(
-          "dark-glass-card rounded-lg p-2 cursor-pointer hover-scale mb-2 w-full",
+          "dark-glass-card rounded-lg p-2 cursor-pointer hover-scale mb-1 w-full",
           className
         )}
         onClick={onClick}
       >
-        <div className="flex justify-between items-start gap-2">
+        <div className="flex justify-between items-start gap-1">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1 flex-wrap">
               {isNewEvent && (
-                <Badge className="bg-green-600 text-white text-xs flex items-center gap-0.5 h-4 px-1.5">
+                <Badge className="bg-green-600 text-white text-xs flex items-center gap-0.5 h-4 px-1">
                   <BadgePlus className="w-3 h-3" />
                   <span>Neu</span>
                 </Badge>
               )}
               {event.is_paid && (
-                <Badge className="bg-amber-500 text-white text-xs flex items-center gap-0.5 h-4 px-1.5">
+                <Badge className="bg-amber-500 text-white text-xs flex items-center gap-0.5 h-4 px-1">
                   <DollarSign className="w-3 h-3" />
                 </Badge>
               )}
               {event.link ? (
                 <h4 
-                  className="font-medium text-sm text-white break-words line-clamp-2 text-left hover:underline cursor-pointer flex items-center gap-1"
+                  className="font-medium text-xs text-white break-words line-clamp-2 text-left hover:underline cursor-pointer flex items-center gap-1"
                   onClick={handleLinkClick}
                 >
                   {event.title}
                   <ExternalLink className="w-3 h-3 inline-flex flex-shrink-0" />
                 </h4>
               ) : (
-                <h4 className="font-medium text-sm text-white break-words line-clamp-2 text-left">
+                <h4 className="font-medium text-xs text-white break-words line-clamp-2 text-left">
                   {event.title}
                 </h4>
               )}
             </div>
             
-            <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-white">
+            <div className="flex flex-wrap items-center gap-1 mt-0.5 text-xs text-white">
               <div className="flex items-center">
-                <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
+                <Clock className="w-3 h-3 mr-0.5 flex-shrink-0" />
                 <span>{event.time}</span>
               </div>
-              <div className="flex items-center max-w-[200px] overflow-hidden">
-                <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
+              <div className="flex items-center max-w-[150px] overflow-hidden">
+                <MapPin className="w-3 h-3 mr-0.5 flex-shrink-0" />
                 <span className="truncate">{event.location}</span>
               </div>
             </div>
@@ -126,7 +126,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
           
           <div className="flex flex-col items-end gap-1">
             <Badge className={cn(
-              "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
+              "flex-shrink-0 flex items-center gap-0.5 text-xs font-medium whitespace-nowrap",
               event.category in categoryColors 
                 ? categoryColors[event.category] 
                 : "bg-orange-400/70 text-orange-50"
@@ -134,19 +134,19 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               {icon}
             </Badge>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <Button 
                 variant="ghost" 
                 size="icon" 
                 className={cn(
-                  "h-6 w-6 rounded-full transition-all", 
+                  "h-5 w-5 rounded-full transition-all", 
                   isLiking ? "opacity-70" : ""
                 )}
                 onClick={handleLike}
                 disabled={isLiking}
               >
                 <Heart className={cn(
-                  "w-4 h-4 transition-transform text-white", 
+                  "w-3 h-3 transition-transform text-white", 
                   displayLikes > 0 ? "fill-red-500 text-white" : "",
                   isLiking ? "scale-125" : ""
                 )} />

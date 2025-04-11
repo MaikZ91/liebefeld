@@ -56,13 +56,13 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({
   return (
     <>
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-4 w-full">
+        <div className="bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded-lg mb-3 w-full text-sm">
           {error}
         </div>
       )}
       
-      <div className="grid gap-6 py-4 w-full max-w-4xl mx-auto">
-        <div className="grid gap-2 w-full">
+      <div className="grid gap-4 py-3 w-full max-w-3xl mx-auto">
+        <div className="grid gap-1 w-full">
           <div className="flex items-center">
             <LayoutGrid className="h-4 w-4 mr-2 text-muted-foreground" />
             <Label htmlFor="title">Titel</Label>
@@ -77,7 +77,7 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({
           />
         </div>
         
-        <div className="grid gap-2 w-full">
+        <div className="grid gap-1 w-full">
           <div className="flex items-center">
             <AlignLeft className="h-4 w-4 mr-2 text-muted-foreground" />
             <Label htmlFor="description">Beschreibung</Label>
@@ -87,12 +87,12 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Beschreibe dein Event..."
-            className="rounded-lg min-h-[100px] w-full"
+            className="rounded-lg min-h-[80px] w-full"
           />
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
-          <div className="grid gap-2 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+          <div className="grid gap-1 w-full">
             <div className="flex items-center">
               <CalendarIcon className="h-4 w-4 mr-2 text-muted-foreground" />
               <Label>Datum</Label>
@@ -102,7 +102,7 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal rounded-lg",
+                    "w-full justify-start text-left font-normal rounded-lg text-sm",
                     !date && "text-muted-foreground"
                   )}
                 >
@@ -121,7 +121,7 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({
             </Popover>
           </div>
           
-          <div className="grid gap-2 w-full">
+          <div className="grid gap-1 w-full">
             <div className="flex items-center">
               <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
               <Label htmlFor="time">Uhrzeit</Label>
@@ -137,7 +137,7 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({
           </div>
         </div>
         
-        <div className="grid gap-2 w-full">
+        <div className="grid gap-1 w-full">
           <div className="flex items-center">
             <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
             <Label htmlFor="location">Ort</Label>
@@ -151,7 +151,7 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({
           />
         </div>
         
-        <div className="grid gap-2 w-full">
+        <div className="grid gap-1 w-full">
           <div className="flex items-center">
             <LinkIcon className="h-4 w-4 mr-2 text-muted-foreground" />
             <Label htmlFor="url">URL</Label>
@@ -166,8 +166,8 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({
           />
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
-          <div className="grid gap-2 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+          <div className="grid gap-1 w-full">
             <div className="flex items-center">
               <User className="h-4 w-4 mr-2 text-muted-foreground" />
               <Label htmlFor="organizer">Organisator</Label>
@@ -181,7 +181,7 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({
             />
           </div>
           
-          <div className="grid gap-2 w-full">
+          <div className="grid gap-1 w-full">
             <Label htmlFor="category">Kategorie</Label>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger className="rounded-lg w-full">
@@ -198,8 +198,8 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({
           </div>
         </div>
         
-        <div className="grid gap-2 w-full">
-          <div className="flex items-center space-x-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 rounded-lg w-full">
+        <div className="grid gap-1 w-full">
+          <div className="flex items-center space-x-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 rounded-lg w-full">
             <Checkbox 
               id="isPaid" 
               checked={isPaid} 
@@ -209,21 +209,21 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({
                   setPaypalLink('');
                 }
               }}
-              className="h-5 w-5 border-2 border-red-500 data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500" 
+              className="h-4 w-4 border-2 border-red-500 data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500" 
             />
-            <div className="grid gap-1.5 w-full">
+            <div className="grid gap-1 w-full">
               <Label 
                 htmlFor="isPaid" 
-                className="flex items-center text-base font-medium text-red-700 dark:text-red-300"
+                className="flex items-center text-sm font-medium text-red-700 dark:text-red-300"
               >
-                <DollarSign className="h-5 w-5 mr-2 text-red-500" />
+                <DollarSign className="h-4 w-4 mr-2 text-red-500" />
                 Kostenpflichtiges Event
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 ml-2 text-red-500 cursor-help" />
+                      <Info className="h-3 w-3 ml-1 text-red-500 cursor-help" />
                     </TooltipTrigger>
-                    <TooltipContent className="bg-white dark:bg-slate-900 border border-red-200 dark:border-red-800/30 p-3 max-w-xs">
+                    <TooltipContent className="bg-white dark:bg-slate-900 border border-red-200 dark:border-red-800/30 p-2 max-w-xs text-xs">
                       <p>Für kostenpflichtige Events wird eine Gebühr erhoben.</p>
                     </TooltipContent>
                   </Tooltip>
@@ -231,13 +231,13 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({
               </Label>
               
               {isPaid && (
-                <div className="text-sm font-medium text-red-600 dark:text-red-400 flex flex-col gap-2 ml-1 mt-2 p-4 bg-red-100 dark:bg-red-900/30 rounded-md border border-red-200 dark:border-red-800/30 w-full">
-                  <p className="flex items-center gap-2">
-                    <Euro className="h-4 w-4 text-red-500 flex-shrink-0" />
+                <div className="text-xs font-medium text-red-600 dark:text-red-400 flex flex-col gap-2 ml-1 mt-1 p-3 bg-red-100 dark:bg-red-900/30 rounded-md border border-red-200 dark:border-red-800/30 w-full">
+                  <p className="flex items-center gap-1">
+                    <Euro className="h-3 w-3 text-red-500 flex-shrink-0" />
                     <span>Für das Bewerben von kostenpflichtigen Events wie Workshops etc. wird eine Gebühr erhoben.</span>
                   </p>
-                  <p className="flex items-center gap-2 mt-1">
-                    <Mail className="h-4 w-4 text-red-500 flex-shrink-0" />
+                  <p className="flex items-center gap-1 mt-1">
+                    <Mail className="h-3 w-3 text-red-500 flex-shrink-0" />
                     <span>Schreib uns dazu einfach eine Anfrage an <a href="mailto:maik.z@gmx.de" className="underline hover:text-red-700">maik.z@gmx.de</a></span>
                   </p>
                 </div>

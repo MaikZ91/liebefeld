@@ -137,8 +137,8 @@ const EventList: React.FC<EventListProps> = ({
   }, [showFavorites, showNewEvents, filter]);
   
   return (
-    <div className="dark-glass-card rounded-2xl p-6 overflow-hidden w-full max-w-full">
-      <div className="flex items-center justify-between mb-4">
+    <div className="dark-glass-card rounded-2xl p-4 overflow-hidden w-full max-w-full">
+      <div className="flex items-center justify-between mb-3">
         <h3 className="text-xl font-medium text-white">
           {showFavorites 
             ? "Top Events" 
@@ -157,7 +157,7 @@ const EventList: React.FC<EventListProps> = ({
         )}
       </div>
       
-      <div ref={listRef} className="overflow-y-auto max-h-[600px] pr-2 scrollbar-thin w-full">
+      <div ref={listRef} className="overflow-y-auto max-h-[550px] pr-1 scrollbar-thin w-full">
         {Object.keys(eventsByDate).length > 0 ? (
           Object.keys(eventsByDate).sort().map(dateStr => {
             const date = parseISO(dateStr);
