@@ -231,6 +231,8 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const currentLikes = currentEvent.likes || 0;
       const newLikesValue = currentLikes + 1;
       
+      console.log(`Increasing likes for ${eventId} from ${currentLikes} to ${newLikesValue}`);
+      
       setEvents(prevEvents => {
         return prevEvents.map(event => 
           event.id === eventId 
@@ -365,25 +367,9 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   useEffect(() => {
     console.log('EventProvider: Loading events...');
     
-    const lastRefreshStr = localStorage.getItem('lastEventsRefresh');
-    if (lastRefreshStr) {
-      const lastRefresh = new Date(lastRefreshStr);
-      const now = new Date();
-      const hoursSinceLastRefresh = (now.getTime() - lastRefresh.getTime()) / (1000 * 60 * 60);
-      
-      console.log(`Last events refresh was ${hoursSinceLastRefresh.toFixed(2)} hours ago`);
-      
-      if (hoursSinceLastRefresh > 1) {
-        console.log('More than 1 hour since last refresh, fetching new events');
-        refreshEvents();
-      } else {
-        console.log('Less than 1 hour since last refresh, loading cached events');
-        refreshEvents();
-      }
-    } else {
-      console.log('No record of last refresh, doing full refresh');
-      refreshEvents();
-    }
+    localStorage.removeItem('lastEventsRefresh');
+    
+    refreshEvents();
     
     window.refreshEventsContext = refreshEvents;
     

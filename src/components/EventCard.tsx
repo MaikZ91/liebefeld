@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign } from 'lucide-react';
@@ -44,6 +45,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
   
   const isNewEvent = newEventIds.has(event.id);
   
+  // Determine the likes to display - for GitHub events use eventLikes, otherwise use event.likes
   const displayLikes = event.id.startsWith('github-') && eventLikes[event.id] !== undefined 
     ? eventLikes[event.id] 
     : (event.likes || 0);
@@ -57,6 +59,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     if (onLike && !isLiking) {
       setIsLiking(true);
       onLike(event.id);
+      console.log(`Sending like for event ${event.id} with current likes: ${displayLikes}`);
       setTimeout(() => {
         setIsLiking(false);
       }, 300);

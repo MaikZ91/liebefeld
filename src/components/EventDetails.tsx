@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { type Event, RsvpOption, normalizeRsvpCounts } from '../types/eventTypes';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -42,12 +42,14 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike, onR
     setShowSparkle(true);
     setTimeout(() => setShowSparkle(false), 1000);
     if (onLike) {
+      console.log(`Liking event ${event.id} from EventDetails`);
       onLike();
     }
   };
   
   const handleRsvp = (option: RsvpOption) => {
     if (onRsvp) {
+      console.log(`RSVP ${option} for event ${event.id}`);
       onRsvp(option);
     }
   };
