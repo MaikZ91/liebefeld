@@ -215,7 +215,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const currentLikes = currentEvent.id.startsWith('github-') 
         ? (eventLikes[eventId] || 0) 
         : (currentEvent.likes || 0);
-        
+      
       const newLikesValue = currentLikes + 1;
       
       console.log(`Increasing likes for ${eventId} from ${currentLikes} to ${newLikesValue}`);
@@ -368,7 +368,13 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     
     window.refreshEventsContext = refreshEvents;
     
+    const refreshInterval = setInterval(() => {
+      console.log('Performing periodic event refresh');
+      refreshEvents();
+    }, 60000); // Refresh every minute
+    
     return () => {
+      clearInterval(refreshInterval);
       delete window.refreshEventsContext;
     };
   }, []);
