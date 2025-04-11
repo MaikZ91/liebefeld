@@ -35,7 +35,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike, onR
   const [showSparkle, setShowSparkle] = useState(false);
   const { eventLikes } = useEventContext();
   
-  // Get the correct likes count based on event type
+  // Get the correct likes count based on event type - only from the database!
   const displayLikes = event.id.startsWith('github-') 
     ? (eventLikes[event.id] || 0) 
     : (event.likes || 0);

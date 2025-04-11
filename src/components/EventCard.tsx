@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign } from 'lucide-react';
@@ -44,6 +45,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
   
   const isNewEvent = newEventIds.has(event.id);
   
+  // Get likes directly from database sources
   const displayLikes = event.id.startsWith('github-') 
     ? (eventLikes[event.id] || 0) 
     : (event.likes || 0);
@@ -160,6 +162,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     );
   }
 
+  // Non-compact version
   return (
     <div 
       className={cn(
