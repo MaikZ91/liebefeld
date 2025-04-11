@@ -49,7 +49,7 @@ const MessageList: React.FC<MessageListProps> = ({
       {loading && <div className="text-center text-gray-500 text-lg font-semibold py-4">Loading messages...</div>}
       {error && <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>}
 
-      <div className="flex flex-col space-y-3">
+      <div className="flex flex-col space-y-3 w-full">
         {messages.length === 0 && !loading && !error && (
           <div className="text-center text-gray-400 py-4">No messages yet. Start the conversation!</div>
         )}
@@ -70,7 +70,7 @@ const MessageList: React.FC<MessageListProps> = ({
                   <span className="text-xs text-gray-400">{timeAgo}</span>
                 </div>
               )}
-              <div className="ml-3 w-full">
+              <div className="w-full pr-2">
                 <ChatMessage 
                   message={message.content} 
                   isConsecutive={isConsecutive}
