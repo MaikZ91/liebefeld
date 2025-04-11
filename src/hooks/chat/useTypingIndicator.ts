@@ -25,12 +25,14 @@ export const useTypingIndicator = (groupId: string, username: string) => {
             if (existingIndex >= 0) {
               existingUsers[existingIndex] = {
                 ...existingUsers[existingIndex],
+                isTyping: true,
                 lastTyped: new Date()
               };
             } else {
               existingUsers.push({
                 username: typingUsername,
                 avatar,
+                isTyping: true,
                 lastTyped: new Date()
               });
             }
@@ -47,7 +49,7 @@ export const useTypingIndicator = (groupId: string, username: string) => {
       setTypingUsers(prev => {
         const now = new Date();
         const filteredUsers = prev.filter(user => {
-          return now.getTime() - user.lastTyped.getTime() < 3000;
+          return user.lastTyped && now.getTime() - user.lastTyped.getTime() < 3000;
         });
         
         if (filteredUsers.length !== prev.length) {

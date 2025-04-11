@@ -103,7 +103,8 @@ export const subscriptionService = {
           onTypingUpdate([{
             username: typingUsername,
             avatar: avatar,
-            lastTyped: isTyping ? new Date() : null
+            isTyping: isTyping,
+            lastTyped: isTyping ? new Date() : undefined
           }]);
         }
       })
