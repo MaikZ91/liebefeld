@@ -47,7 +47,7 @@ const EventPanel: React.FC<EventPanelProps> = ({
       {!selectedEvent && (
         <div className="h-full flex flex-col">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-2xl font-medium text-white">{panelTitle}</h3>
+            <h3 className="text-3xl font-medium text-white">{panelTitle}</h3>
             {selectedDate && (
               <span className="text-sm text-gray-300">
                 {filteredEvents.length} {filteredEvents.length === 1 ? 'Event' : 'Events'}
@@ -87,7 +87,7 @@ const EventPanel: React.FC<EventPanelProps> = ({
       {selectedEvent && (
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-2xl font-medium text-white">{selectedEvent.title}</h3>
+            <h3 className="text-3xl font-medium text-white">{selectedEvent.title}</h3>
             <Button variant="ghost" size="icon" onClick={onEventClose}>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x w-4 h-4"><path d="M18 6 6 18"/><path d="M6 6 18 18"/></svg>
             </Button>

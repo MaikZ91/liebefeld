@@ -100,20 +100,20 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               )}
               {event.link ? (
                 <h4 
-                  className="font-medium text-xs text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1"
+                  className="font-medium text-sm text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1"
                   onClick={handleLinkClick}
                 >
                   {event.title}
                   <ExternalLink className="w-2 h-2 inline-flex flex-shrink-0" />
                 </h4>
               ) : (
-                <h4 className="font-medium text-xs text-white break-words line-clamp-1 text-left">
+                <h4 className="font-medium text-sm text-white break-words line-clamp-1 text-left">
                   {event.title}
                 </h4>
               )}
             </div>
             
-            <div className="flex flex-wrap items-center gap-1 mt-0.5 text-[8px] text-white">
+            <div className="flex flex-wrap items-center gap-1 mt-0.5 text-[9px] text-white">
               <div className="flex items-center">
                 <Clock className="w-2 h-2 mr-0.5 flex-shrink-0" />
                 <span>{event.time}</span>
@@ -189,14 +189,14 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
           </div>
           {event.link ? (
             <h4 
-              className="font-medium text-2xl text-white break-words hover:underline cursor-pointer flex items-center gap-1"
+              className="font-medium text-3xl text-white break-words hover:underline cursor-pointer flex items-center gap-1"
               onClick={handleLinkClick}
             >
               {event.title}
               <ExternalLink className="w-5 h-5 inline-flex flex-shrink-0" />
             </h4>
           ) : (
-            <h4 className="font-medium text-2xl text-white break-words">
+            <h4 className="font-medium text-3xl text-white break-words">
               {event.title}
             </h4>
           )}
