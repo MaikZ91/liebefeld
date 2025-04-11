@@ -99,7 +99,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName, compact = fal
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full">
       <ChatHeader 
         groupName={groupName}
         isReconnecting={isReconnecting}
