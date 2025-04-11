@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -39,23 +39,14 @@ const categoryIcons: Record<string, React.ReactNode> = {
 };
 
 const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compact = false, onLike }) => {
-  const [optimisticLikes, setOptimisticLikes] = useState<number | undefined>(undefined);
   const [isLiking, setIsLiking] = useState(false);
   const { newEventIds, eventLikes } = useEventContext();
   
   const isNewEvent = newEventIds.has(event.id);
   
-  const contextLikes = event.id.startsWith('github-') ? eventLikes[event.id] : undefined;
-  const baseLikes = contextLikes !== undefined ? contextLikes : (event.likes || 0);
-  const displayLikes = optimisticLikes !== undefined ? optimisticLikes : baseLikes;
-  
-  useEffect(() => {
-    if (optimisticLikes === undefined) return;
-    const newBaseLikes = contextLikes !== undefined ? contextLikes : (event.likes || 0);
-    if (newBaseLikes !== baseLikes) {
-      setOptimisticLikes(undefined);
-    }
-  }, [event.likes, contextLikes]);
+  const displayLikes = event.id.startsWith('github-') && eventLikes[event.id] !== undefined 
+    ? eventLikes[event.id] 
+    : (event.likes || 0);
   
   const icon = event.category in categoryIcons 
     ? categoryIcons[event.category] 
@@ -65,8 +56,6 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     e.stopPropagation();
     if (onLike && !isLiking) {
       setIsLiking(true);
-      const newLikeCount = displayLikes + 1;
-      setOptimisticLikes(newLikeCount);
       onLike(event.id);
       setTimeout(() => {
         setIsLiking(false);
@@ -82,7 +71,6 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
   };
 
   const rsvpCounts = normalizeRsvpCounts(event);
-  const totalRsvp = rsvpCounts.yes + rsvpCounts.no + rsvpCounts.maybe;
 
   if (compact) {
     return (
