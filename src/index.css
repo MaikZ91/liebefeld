@@ -84,9 +84,7 @@
     --sidebar-border: 12 30% 20%;
     --sidebar-ring: 0 100% 55%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
@@ -117,7 +115,7 @@
   }
   
   .dark-glass-card {
-    @apply bg-[#E53935]/90 backdrop-blur-md shadow-md border border-red-400/40 transition-all duration-300;
+    @apply bg-[#E53935]/90 backdrop-blur-md shadow-md border border-red-400/40 transition-all duration-300 w-full;
   }
   
   .dark-glass-card:hover {

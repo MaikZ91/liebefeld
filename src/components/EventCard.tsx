@@ -78,12 +78,12 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     return (
       <div 
         className={cn(
-          "dark-glass-card rounded-lg p-2 cursor-pointer hover-scale mb-2 mx-1 w-[calc(100%-8px)]",
+          "dark-glass-card rounded-lg p-2 cursor-pointer hover-scale mb-2 w-full",
           className
         )}
         onClick={onClick}
       >
-        <div className="flex justify-between items-start gap-1">
+        <div className="flex justify-between items-start gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1 flex-wrap">
               {isNewEvent && (
@@ -117,7 +117,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
                 <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
                 <span>{event.time}</span>
               </div>
-              <div className="flex items-center max-w-[150px] overflow-hidden">
+              <div className="flex items-center max-w-[200px] overflow-hidden">
                 <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
                 <span className="truncate">{event.location}</span>
               </div>
@@ -170,7 +170,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
       onClick={onClick}
     >
       <div className="flex justify-between items-start mb-2 gap-2">
-        <div className="flex flex-col">
+        <div className="flex flex-col w-4/5">
           <div className="flex flex-wrap gap-1 mb-1">
             {isNewEvent && (
               <Badge className="bg-green-600 text-white text-xs flex items-center gap-1 h-5 px-2 self-start">
@@ -200,7 +200,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
           )}
         </div>
         
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-col items-end gap-2 w-1/5">
           <Badge className={cn(
             "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
             event.category in categoryColors 
