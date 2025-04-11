@@ -88,6 +88,9 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike, onR
                       <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-yellow-300 animate-pulse" />
                     )}
                   </div>
+                  {event.likes > 0 && (
+                    <span className="ml-1 text-xs text-red-500">{event.likes}</span>
+                  )}
                 </Button>
               )}
             </div>
