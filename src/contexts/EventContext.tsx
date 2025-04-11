@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { startOfDay, format } from 'date-fns';
 import { Event, RsvpOption } from '../types/eventTypes';
@@ -219,7 +220,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return;
       }
       
-      console.log(`Liking event with ID: ${eventId}`);
+      console.log(`Starting like operation for event with ID: ${eventId}`);
       const currentEvent = events.find(event => event.id === eventId);
       if (!currentEvent) {
         console.error(`Event with ID ${eventId} not found`);
@@ -228,11 +229,30 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       setPendingLikes(prev => new Set(prev).add(eventId));
       
-      const currentLikes = currentEvent.likes || 0;
+      // Determine current likes based on event type
+      const currentLikes = currentEvent.id.startsWith('github-') 
+        ? (eventLikes[eventId] || 0) 
+        : (currentEvent.likes || 0);
+        
       const newLikesValue = currentLikes + 1;
       
       console.log(`Increasing likes for ${eventId} from ${currentLikes} to ${newLikesValue}`);
       
+      // Optimistically update the UI
+      if (currentEvent.id.startsWith('github-')) {
+        // For GitHub events, update eventLikes object
+        setEventLikes(prev => {
+          const updatedLikes = {
+            ...prev,
+            [eventId]: newLikesValue
+          };
+          localStorage.setItem('eventLikes', JSON.stringify(updatedLikes));
+          console.log(`Updated eventLikes for ${eventId} to:`, updatedLikes[eventId]);
+          return updatedLikes;
+        });
+      }
+      
+      // Update events array for all event types
       setEvents(prevEvents => {
         return prevEvents.map(event => 
           event.id === eventId 
@@ -251,15 +271,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         );
       });
       
-      setEventLikes(prev => {
-        const updatedLikes = {
-          ...prev,
-          [eventId]: newLikesValue
-        };
-        localStorage.setItem('eventLikes', JSON.stringify(updatedLikes));
-        return updatedLikes;
-      });
-      
       const currentRsvp = {
         yes: currentEvent.rsvp_yes ?? currentEvent.rsvp?.yes ?? 0,
         no: currentEvent.rsvp_no ?? currentEvent.rsvp?.no ?? 0,
@@ -272,11 +283,12 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       };
       
       try {
+        // Update database
         await Promise.all([
           updateEventLikes(eventId, newLikesValue),
           updateEventRsvp(eventId, newRsvp)
         ]);
-        console.log(`Successfully updated likes and RSVP in database for event ${eventId}`);
+        console.log(`Successfully updated likes (${newLikesValue}) and RSVP in database for event ${eventId}`);
       } catch (error) {
         console.error('Database update failed:', error);
       } finally {

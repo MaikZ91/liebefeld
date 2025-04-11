@@ -9,6 +9,7 @@ import { Calendar, Clock, MapPin, User, Heart, Check, X, HelpCircle, Sparkles } 
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { useEventContext } from '@/contexts/EventContext';
 
 interface EventDetailsProps {
   event: Event;
@@ -32,6 +33,12 @@ const categoryColors: Record<string, string> = {
 const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike, onRsvp }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [showSparkle, setShowSparkle] = useState(false);
+  const { eventLikes } = useEventContext();
+  
+  // Get the correct likes count based on event type
+  const displayLikes = event.id.startsWith('github-') 
+    ? (eventLikes[event.id] || 0) 
+    : (event.likes || 0);
   
   const handleClose = () => {
     setIsOpen(false);
@@ -42,7 +49,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike, onR
     setShowSparkle(true);
     setTimeout(() => setShowSparkle(false), 1000);
     if (onLike) {
-      console.log(`Liking event ${event.id} from EventDetails`);
+      console.log(`Liking event ${event.id} from EventDetails, current likes: ${displayLikes}`);
       onLike();
     }
   };
@@ -85,13 +92,13 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike, onR
                   className="rounded-full p-1 hover:bg-red-500/10"
                 >
                   <div className="relative">
-                    <Heart className={cn("h-5 w-5 text-red-500", event.likes && event.likes > 0 ? "fill-red-500" : "")} />
+                    <Heart className={cn("h-5 w-5 text-red-500", displayLikes > 0 ? "fill-red-500" : "")} />
                     {showSparkle && (
                       <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-yellow-300 animate-pulse" />
                     )}
                   </div>
-                  {event.likes && event.likes > 0 && (
-                    <span className="ml-1 text-xs text-red-500">{event.likes}</span>
+                  {displayLikes > 0 && (
+                    <span className="ml-1 text-xs text-red-500">{displayLikes}</span>
                   )}
                 </Button>
               )}
