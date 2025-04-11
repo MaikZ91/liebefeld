@@ -65,12 +65,12 @@ const MessageList: React.FC<MessageListProps> = ({
 
   return (
     <div 
-      className={`flex-grow p-5 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto w-full`}
+      className={`flex-grow p-5 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto w-full max-w-full`}
     >
       {loading && <div className="text-center text-gray-500 text-lg font-semibold py-4">Loading messages...</div>}
       {error && <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>}
 
-      <div className="flex flex-col space-y-3 w-full">
+      <div className="flex flex-col space-y-3 w-full max-w-full">
         {messages.length === 0 && !loading && !error && (
           <div className="text-center text-gray-400 py-4">No messages yet. Start the conversation!</div>
         )}
@@ -81,7 +81,7 @@ const MessageList: React.FC<MessageListProps> = ({
           const eventData = parseEventData(message);
 
           return (
-            <div key={message.id} className="mb-4 w-full">
+            <div key={message.id} className="mb-4 w-full max-w-full overflow-hidden">
               {!isConsecutive && (
                 <div className="flex items-center mb-2">
                   <Avatar className={`h-8 w-8 mr-2 flex-shrink-0 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'border-[#9b87f5]' : ''}`}>
@@ -92,7 +92,7 @@ const MessageList: React.FC<MessageListProps> = ({
                   <span className="text-xs text-gray-400">{timeAgo}</span>
                 </div>
               )}
-              <div className="w-full max-w-full overflow-hidden">
+              <div className="w-full max-w-full overflow-hidden break-words">
                 <ChatMessage 
                   message={eventData ? message.content.replace(eventData.title, '').replace(/🗓️ \*\*Event:.*?\n\n/s, '') : message.content} 
                   isConsecutive={isConsecutive}

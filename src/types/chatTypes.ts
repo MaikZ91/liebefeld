@@ -1,3 +1,4 @@
+
 export const USERNAME_KEY = 'username';
 export const AVATAR_KEY = 'avatar';
 
@@ -5,6 +6,7 @@ export interface TypingUser {
   username: string;
   avatar: string | null;
   isTyping: boolean;
+  lastTyped?: Date;
 }
 
 export interface ChatGroup {
@@ -26,4 +28,15 @@ export interface EventShare {
   time: string;
   location?: string;
   category: string;
+}
+
+// Message interface used across the application
+export interface Message {
+  id: string;
+  created_at: string;
+  content: string;
+  user_name: string;
+  user_avatar: string;
+  group_id: string;
+  event_data?: EventShare;
 }

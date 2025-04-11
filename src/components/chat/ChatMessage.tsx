@@ -23,19 +23,19 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     <div 
       className={`p-3 rounded-lg ${isConsecutive ? 'mt-1' : 'mt-2'} ${
         isSpotGroup ? 'bg-[#222632] text-white' : 'bg-gray-800 text-white'
-      } shadow-md w-full max-w-full overflow-hidden`}
+      } shadow-md w-full max-w-full overflow-hidden break-words`}
     >
       {containsEventData && eventData ? (
-        <div className="w-full overflow-hidden">
+        <div className="w-full max-w-full overflow-hidden break-words">
           <EventMessageFormatter event={eventData} />
           {message && message.trim() !== '' && (
-            <div className="whitespace-pre-wrap break-words w-full text-base font-medium mt-2">
+            <div className="whitespace-pre-wrap break-words w-full text-base font-medium mt-2 overflow-hidden">
               {message}
             </div>
           )}
         </div>
       ) : (
-        <div className="whitespace-pre-wrap break-words w-full text-base font-medium">
+        <div className="whitespace-pre-wrap break-words w-full text-base font-medium overflow-hidden">
           {message}
         </div>
       )}
