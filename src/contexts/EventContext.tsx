@@ -269,16 +269,21 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         yes: currentRsvp.yes + 1 
       };
       
-      Promise.all([
-        updateEventLikes(eventId, newLikesValue),
-        updateEventRsvp(eventId, newRsvp)
-      ]).finally(() => {
+      try {
+        await Promise.all([
+          updateEventLikes(eventId, newLikesValue),
+          updateEventRsvp(eventId, newRsvp)
+        ]);
+        console.log(`Successfully updated likes and RSVP in database for event ${eventId}`);
+      } catch (error) {
+        console.error('Database update failed:', error);
+      } finally {
         setPendingLikes(prev => {
           const updated = new Set(prev);
           updated.delete(eventId);
           return updated;
         });
-      });
+      }
     } catch (error) {
       console.error('Error updating likes:', error);
       setPendingLikes(prev => {
