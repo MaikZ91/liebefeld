@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -71,7 +70,6 @@ const EventList: React.FC<EventListProps> = ({
         })[0];
         
         setTopTodayEvent(popular);
-        console.log("Top event today:", popular.title, "with", popular.likes, "likes", "ID:", popular.id);
       } else {
         setTopTodayEvent(null);
       }
@@ -204,7 +202,7 @@ const EventList: React.FC<EventListProps> = ({
                             key={event.id} 
                             event={event}
                             compact={true}
-                            onClick={() => onSelectSelect(event, date)}
+                            onClick={() => onSelectEvent(event, date)}
                             onLike={onLike}
                             className={`${isTopEvent ? 'border-l-2 border-[#E53935]' : isNewEvent ? 'border-l-2 border-green-500' : ''} relative`}
                           />
