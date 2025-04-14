@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Users, X } from 'lucide-react';
+import { Calendar, MessageCircle, Users, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 
@@ -23,10 +23,10 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
   // Demo ad data
   const adEvents: AdEvent[] = [
     {
-      title: 'Anmeldung & Treffpunkt',
+      title: 'Tribe Kennenlernabend',
       date: 'Jeden letzten Sonntag im Monat',
-      location: 'In der Community',
-      imageUrl: '/lovable-uploads/8562fff2-2b62-4552-902b-cc62457a3402.png',
+      location: 'Anmeldung in der Community',
+      imageUrl: '/lovable-uploads/00f49b46-1709-43c5-9c12-89dee836df2c.png',
       link: 'https://the-tribe.bi'
     }
   ];
@@ -128,7 +128,7 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
               >
-                <MapPin className="w-4 h-4 mr-1.5 flex-shrink-0" />
+                <MessageCircle className="w-4 h-4 mr-1.5 flex-shrink-0" />
                 {ad.location}
               </motion.div>
               
