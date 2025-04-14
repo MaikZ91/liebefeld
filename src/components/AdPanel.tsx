@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Calendar, Users, X, UsersRound, Music, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [currentAd, setCurrentAd] = useState(0);
   const [imageError, setImageError] = useState<Record<number, boolean>>({});
+  const imageRefs = useRef<Record<number, HTMLImageElement | null>>({});
   
   const adEvents: AdEvent[] = [
     {
@@ -35,22 +36,21 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
       title: 'Patrick Pilgrim Blues Rock',
       date: 'Jetzt anhören und buchen',
       location: 'Für Events & Veranstaltungen',
-      imageUrl: '/lovable-uploads/b51c79e9-def5-4f57-ac47-ddbf5d443c49.png', // We'll force clear the cache with a timestamp
+      imageUrl: '/lovable-uploads/b51c79e9-def5-4f57-ac47-ddbf5d443c49.png',
       link: "https://patrickpilgrim.de/",
       type: "music"
     }
   ];
   
-  // Force re-render of images with timestamp to bypass caching
+  // Prepare images with cache busting
   useEffect(() => {
     const timestamp = new Date().getTime();
     adEvents.forEach((ad, index) => {
-      // Add a timestamp query parameter to force reload
-      if (ad.imageUrl.includes('lovable-uploads')) {
-        console.log(`Original image URL for ${ad.title}: ${ad.imageUrl}`);
-        const imageWithoutCache = `${ad.imageUrl}?t=${timestamp}`;
-        console.log(`Modified image URL with cache busting: ${imageWithoutCache}`);
-        adEvents[index].imageUrl = imageWithoutCache;
+      if (ad.imageUrl && ad.imageUrl.includes('lovable-uploads')) {
+        console.log(`Processing image URL for ${ad.title}: ${ad.imageUrl}`);
+        // Create a new URL with timestamp to bypass cache
+        adEvents[index].imageUrl = `${ad.imageUrl}?t=${timestamp}`;
+        console.log(`Modified image URL: ${adEvents[index].imageUrl}`);
       }
     });
   }, []);
@@ -70,7 +70,7 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
     setTimeout(() => setIsVisible(true), 60 * 60 * 1000);
   };
   
-  // Log the current image URL when it changes
+  // Log the current ad when it changes
   useEffect(() => {
     if (adEvents.length === 0) return;
     const currentAdObj = adEvents[currentAd];
@@ -80,6 +80,32 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
   if (!isVisible || adEvents.length === 0) return null;
   
   const ad = adEvents[currentAd];
+  
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>, adIndex: number) => {
+    console.error(`Failed to load ad image: ${ad.imageUrl}`);
+    setImageError(prev => ({...prev, [adIndex]: true}));
+    
+    // Try to load the image without cache parameters
+    try {
+      const img = e.currentTarget;
+      if (!img) return;
+      
+      const originalUrl = ad.imageUrl.split('?')[0];
+      console.log(`Trying fallback image without cache params: ${originalUrl}`);
+      img.src = originalUrl;
+      
+      // Set up one more fallback
+      img.onerror = () => {
+        console.log(`Fallback also failed, using placeholder`);
+        if (img) {
+          img.src = "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=800&q=80";
+          img.onerror = null; // Prevent infinite loop
+        }
+      };
+    } catch (err) {
+      console.error('Error in image error handler:', err);
+    }
+  };
   
   return (
     <AnimatePresence>
@@ -104,24 +130,11 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
               <>
                 <img 
                   key={`ad-image-${currentAd}-${ad.imageUrl}`}
+                  ref={el => imageRefs.current[currentAd] = el}
                   src={ad.imageUrl} 
                   alt={ad.title} 
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    console.error(`Failed to load ad image: ${ad.imageUrl}`);
-                    setImageError(prev => ({...prev, [currentAd]: true}));
-                    
-                    // Try without cache busting query parameter if it exists
-                    const originalUrl = ad.imageUrl.split('?')[0];
-                    console.log(`Trying fallback image without cache params: ${originalUrl}`);
-                    e.currentTarget.src = originalUrl;
-                    
-                    // If it fails again, use the placeholder
-                    e.currentTarget.onerror = () => {
-                      console.error(`Fallback also failed, using placeholder`);
-                      e.currentTarget.src = "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=800&q=80";
-                    };
-                  }}
+                  onError={(e) => handleImageError(e, currentAd)}
                   onLoad={() => {
                     console.log(`Successfully loaded image: ${ad.imageUrl}`);
                     setImageError(prev => ({...prev, [currentAd]: false}));
