@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Calendar, Users, X, UsersRound } from 'lucide-react';
+import { Calendar, Users, X, UsersRound, Music, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 
@@ -9,6 +10,7 @@ type AdEvent = {
   location: string;
   imageUrl: string;
   link?: string;
+  type?: string;
 };
 
 interface AdPanelProps {
@@ -25,7 +27,16 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
       date: 'Immer am letzten Sonntag im Monat',
       location: 'Anmeldung in der Community',
       imageUrl: '/lovable-uploads/83f7c05b-0e56-4f3c-a19c-adeab5429b59.jpg',
-      link: "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK"
+      link: "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK",
+      type: "event"
+    },
+    {
+      title: 'Patrick Pilgrim Blues Rock',
+      date: 'Jetzt anhören und buchen',
+      location: 'Für Events & Veranstaltungen',
+      imageUrl: '/lovable-uploads/8562fff2-2b62-4552-902b-cc62457a3402.png',
+      link: "https://patrickpilgrim.de/",
+      type: "music"
     }
   ];
   
@@ -109,7 +120,11 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                <Calendar className="w-4 h-4 mr-1.5 flex-shrink-0" />
+                {ad.type === "music" ? (
+                  <Music className="w-4 h-4 mr-1.5 flex-shrink-0" />
+                ) : (
+                  <Calendar className="w-4 h-4 mr-1.5 flex-shrink-0" />
+                )}
                 {ad.date}
               </motion.div>
               
@@ -119,7 +134,11 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
               >
-                <UsersRound className="w-4 h-4 mr-1.5 flex-shrink-0" />
+                {ad.type === "music" ? (
+                  <ExternalLink className="w-4 h-4 mr-1.5 flex-shrink-0" />
+                ) : (
+                  <UsersRound className="w-4 h-4 mr-1.5 flex-shrink-0" />
+                )}
                 {ad.location}
               </motion.div>
               
@@ -135,10 +154,19 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
                     rel="noopener noreferrer"
                   >
                     <Button 
-                      className="bg-red-600 hover:bg-red-700 text-white border-none w-full"
+                      className={`${ad.type === "music" ? "bg-blue-600 hover:bg-blue-700" : "bg-red-600 hover:bg-red-700"} text-white border-none w-full`}
                     >
-                      <Users className="w-4 h-4 mr-2" />
-                      Community beitreten
+                      {ad.type === "music" ? (
+                        <>
+                          <Music className="w-4 h-4 mr-2" />
+                          Jetzt anhören
+                        </>
+                      ) : (
+                        <>
+                          <Users className="w-4 h-4 mr-2" />
+                          Community beitreten
+                        </>
+                      )}
                     </Button>
                   </a>
                 </motion.div>
