@@ -193,22 +193,17 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
           className="flex flex-col items-center w-full"
         >
           <TabsContent value="list" className="w-full">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
-              <div className="md:col-span-2">
-                <EventList 
-                  events={eventsToDisplay}
-                  showFavorites={showFavorites}
-                  showNewEvents={showNewEvents}
-                  onSelectEvent={(event, date) => {
-                    setSelectedDate(date);
-                    setSelectedEvent(event);
-                  }}
-                  onLike={handleLikeEvent}
-                />
-              </div>
-              <div className="md:col-span-1">
-                <AdPanel className="h-[280px]" />
-              </div>
+            <div className="grid grid-cols-1 gap-3 w-full">
+              <EventList 
+                events={eventsToDisplay}
+                showFavorites={showFavorites}
+                showNewEvents={showNewEvents}
+                onSelectEvent={(event, date) => {
+                  setSelectedDate(date);
+                  setSelectedEvent(event);
+                }}
+                onLike={handleLikeEvent}
+              />
             </div>
           </TabsContent>
           
@@ -240,7 +235,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                 )}
               </div>
               
-              <div className="w-full md:w-2/5 mt-3 md:mt-0 flex flex-col gap-3">
+              <div className="w-full md:w-2/5 mt-3 md:mt-0">
                 <EventPanel 
                   selectedDate={selectedDate}
                   selectedEvent={selectedEvent}
@@ -252,12 +247,12 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                   onShowEventForm={toggleEventForm}
                   showFavorites={showFavorites}
                 />
-                
-                <AdPanel className="h-[200px]" />
               </div>
             </div>
           </TabsContent>
         </Tabs>
+        
+        <AdPanel />
       </div>
     </div>
   );
