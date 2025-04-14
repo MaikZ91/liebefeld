@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Calendar, Users, X, UsersRound } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,10 +22,10 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
   
   const adEvents: AdEvent[] = [
     {
-      title: '#Tribe Stammtisch',
+      title: 'Tribe Kennenlernabend',
       date: 'Immer am letzten Sonntag im Monat',
       location: 'Anmeldung in der Community',
-      imageUrl: '/lovable-uploads/972ef287-5c1e-4e03-b3b3-b9dbe0437a3c.png',
+      imageUrl: '/lovable-uploads/83f7c05b-0e56-4f3c-a19c-adeab5429b59.jpg',
       link: 'https://the-tribe.bi'
     }
   ];
