@@ -20,6 +20,7 @@ interface AdPanelProps {
 const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [currentAd, setCurrentAd] = useState(0);
+  const [imageError, setImageError] = useState<Record<number, boolean>>({});
   
   const adEvents: AdEvent[] = [
     {
@@ -55,6 +56,13 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
     setTimeout(() => setIsVisible(true), 60 * 60 * 1000);
   };
   
+  // Log the current image URL when it changes
+  useEffect(() => {
+    if (adEvents.length === 0) return;
+    const currentAdObj = adEvents[currentAd];
+    console.log(`Displaying ad [${currentAd}]: "${currentAdObj.title}" with image: ${currentAdObj.imageUrl}`);
+  }, [currentAd, adEvents]);
+  
   if (!isVisible || adEvents.length === 0) return null;
   
   const ad = adEvents[currentAd];
@@ -79,15 +87,28 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
         <div className="relative h-full w-full">
           <div className="absolute inset-0 overflow-hidden rounded-xl">
             {ad.imageUrl && (
-              <img 
-                src={ad.imageUrl} 
-                alt={ad.title} 
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  console.error(`Failed to load ad image: ${ad.imageUrl}`);
-                  e.currentTarget.src = "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=800&q=80";
-                }}
-              />
+              <>
+                <img 
+                  key={`ad-image-${currentAd}-${ad.imageUrl}`}
+                  src={ad.imageUrl} 
+                  alt={ad.title} 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    console.error(`Failed to load ad image: ${ad.imageUrl}`);
+                    setImageError(prev => ({...prev, [currentAd]: true}));
+                    e.currentTarget.src = "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=800&q=80";
+                  }}
+                  onLoad={() => {
+                    console.log(`Successfully loaded image: ${ad.imageUrl}`);
+                    setImageError(prev => ({...prev, [currentAd]: false}));
+                  }}
+                />
+                {imageError[currentAd] && (
+                  <div className="absolute bottom-0 right-0 bg-red-600 text-white text-xs px-1 py-0.5 rounded-tl-md">
+                    Error loading image
+                  </div>
+                )}
+              </>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
           </div>
