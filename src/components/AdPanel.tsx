@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Calendar, Users, X, UsersRound, Music, ExternalLink } from 'lucide-react';
+import { Calendar, Users, X, UsersRound, Music, ExternalLink, ImageOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/use-toast';
 
 type AdEvent = {
   title: string;
@@ -20,15 +21,15 @@ interface AdPanelProps {
 const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [currentAd, setCurrentAd] = useState(0);
-  const [imageError, setImageError] = useState<Record<number, boolean>>({});
-  const imageRefs = useRef<Record<number, HTMLImageElement | null>>({});
+  const [adImages, setAdImages] = useState<Record<number, string>>({});
+  const [imageLoading, setImageLoading] = useState<Record<number, boolean>>({});
   
   const adEvents: AdEvent[] = [
     {
       title: 'Tribe Kennenlernabend',
       date: 'Immer am letzten Sonntag im Monat',
       location: 'Anmeldung in der Community',
-      imageUrl: '/lovable-uploads/83f7c05b-0e56-4f3c-a19c-adeab5429b59.jpg',
+      imageUrl: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=1000',
       link: "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK",
       type: "event"
     },
@@ -36,22 +37,36 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
       title: 'Patrick Pilgrim Blues Rock',
       date: 'Jetzt anhören und buchen',
       location: 'Für Events & Veranstaltungen',
-      imageUrl: '/lovable-uploads/b51c79e9-def5-4f57-ac47-ddbf5d443c49.png',
+      imageUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=1000',
       link: "https://patrickpilgrim.de/",
       type: "music"
     }
   ];
   
-  // Prepare images with cache busting
   useEffect(() => {
-    const timestamp = new Date().getTime();
+    // Initialize loading state
+    const loadingState: Record<number, boolean> = {};
+    adEvents.forEach((_, index) => {
+      loadingState[index] = true;
+    });
+    setImageLoading(loadingState);
+    
+    // Pre-load images
     adEvents.forEach((ad, index) => {
-      if (ad.imageUrl && ad.imageUrl.includes('lovable-uploads')) {
-        console.log(`Processing image URL for ${ad.title}: ${ad.imageUrl}`);
-        // Create a new URL with timestamp to bypass cache
-        adEvents[index].imageUrl = `${ad.imageUrl}?t=${timestamp}`;
-        console.log(`Modified image URL: ${adEvents[index].imageUrl}`);
-      }
+      const img = new Image();
+      img.onload = () => {
+        setAdImages(prev => ({ ...prev, [index]: ad.imageUrl }));
+        setImageLoading(prev => ({ ...prev, [index]: false }));
+        console.log(`Successfully pre-loaded image for ad ${index}: ${ad.imageUrl}`);
+      };
+      img.onerror = () => {
+        // Try a fallback image on error
+        const fallbackUrl = 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=800&q=80';
+        console.log(`Failed to load ad image ${index}, using fallback: ${fallbackUrl}`);
+        setAdImages(prev => ({ ...prev, [index]: fallbackUrl }));
+        setImageLoading(prev => ({ ...prev, [index]: false }));
+      };
+      img.src = ad.imageUrl;
     });
   }, []);
   
@@ -74,38 +89,13 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
   useEffect(() => {
     if (adEvents.length === 0) return;
     const currentAdObj = adEvents[currentAd];
-    console.log(`Displaying ad [${currentAd}]: "${currentAdObj.title}" with image: ${currentAdObj.imageUrl}`);
-  }, [currentAd, adEvents]);
+    console.log(`Displaying ad [${currentAd}]: "${currentAdObj.title}" with image status: ${imageLoading[currentAd] ? 'loading' : 'loaded'}`);
+  }, [currentAd, adEvents, imageLoading]);
   
   if (!isVisible || adEvents.length === 0) return null;
   
   const ad = adEvents[currentAd];
-  
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>, adIndex: number) => {
-    console.error(`Failed to load ad image: ${ad.imageUrl}`);
-    setImageError(prev => ({...prev, [adIndex]: true}));
-    
-    // Try to load the image without cache parameters
-    try {
-      const img = e.currentTarget;
-      if (!img) return;
-      
-      const originalUrl = ad.imageUrl.split('?')[0];
-      console.log(`Trying fallback image without cache params: ${originalUrl}`);
-      img.src = originalUrl;
-      
-      // Set up one more fallback
-      img.onerror = () => {
-        console.log(`Fallback also failed, using placeholder`);
-        if (img) {
-          img.src = "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=800&q=80";
-          img.onerror = null; // Prevent infinite loop
-        }
-      };
-    } catch (err) {
-      console.error('Error in image error handler:', err);
-    }
-  };
+  const hasLoadedImage = adImages[currentAd] && !imageLoading[currentAd];
   
   return (
     <AnimatePresence>
@@ -125,28 +115,18 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
         </button>
         
         <div className="relative h-full w-full">
-          <div className="absolute inset-0 overflow-hidden rounded-xl">
-            {ad.imageUrl && (
-              <>
-                <img 
-                  key={`ad-image-${currentAd}-${ad.imageUrl}`}
-                  ref={el => imageRefs.current[currentAd] = el}
-                  src={ad.imageUrl} 
-                  alt={ad.title} 
-                  className="w-full h-full object-cover"
-                  onError={(e) => handleImageError(e, currentAd)}
-                  onLoad={() => {
-                    console.log(`Successfully loaded image: ${ad.imageUrl}`);
-                    setImageError(prev => ({...prev, [currentAd]: false}));
-                  }}
-                  style={{ objectPosition: 'center center' }}
-                />
-                {imageError[currentAd] && (
-                  <div className="absolute bottom-0 right-0 bg-red-600 text-white text-xs px-1 py-0.5 rounded-tl-md">
-                    Error loading image
-                  </div>
-                )}
-              </>
+          <div className="absolute inset-0 overflow-hidden rounded-xl bg-gradient-to-br from-gray-900 to-black">
+            {adImages[currentAd] ? (
+              <img 
+                src={adImages[currentAd]} 
+                alt={ad.title} 
+                className="w-full h-full object-cover transition-opacity duration-500"
+                style={{ opacity: hasLoadedImage ? 1 : 0.5 }}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <ImageOff className="w-8 h-8 text-gray-400" />
+              </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
           </div>
