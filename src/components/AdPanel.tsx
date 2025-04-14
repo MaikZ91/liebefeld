@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Calendar, Users, X, UsersRound, Music, ExternalLink, ImageOff } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar, Users, X, UsersRound, Music, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type AdEvent = {
   title: string;
@@ -60,19 +60,12 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
   
   const handleImageLoad = () => {
     setIsImageLoading(false);
-    console.log(`Ad image ${currentAd} loaded successfully`);
   };
   
   const handleImageError = () => {
     setIsImageLoading(false);
     console.error(`Failed to load ad image ${currentAd}`);
   };
-  
-  useEffect(() => {
-    if (adEvents.length === 0) return;
-    const currentAdObj = adEvents[currentAd];
-    console.log(`Displaying ad [${currentAd}]: "${currentAdObj.title}" with image: ${currentAdObj.imageUrl}`);
-  }, [currentAd, adEvents]);
   
   if (!isVisible || adEvents.length === 0) return null;
   
@@ -97,22 +90,20 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
         
         <div className="relative h-full w-full">
           <div className="absolute inset-0 overflow-hidden rounded-xl bg-gradient-to-br from-gray-900 to-black">
+            {isImageLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm">
+                <Skeleton className="w-full h-full" />
+              </div>
+            )}
             {ad.imageUrl && (
-              <>
-                {isImageLoading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-                    <div className="w-8 h-8 border-4 border-t-transparent border-white rounded-full animate-spin"></div>
-                  </div>
-                )}
-                <img 
-                  src={ad.imageUrl}
-                  alt={ad.title} 
-                  className="w-full h-full object-cover transition-opacity duration-500"
-                  style={{ opacity: isImageLoading ? 0 : 1 }}
-                  onLoad={handleImageLoad}
-                  onError={handleImageError}
-                />
-              </>
+              <img 
+                src={ad.imageUrl}
+                alt={ad.title} 
+                className="w-full h-full object-cover"
+                style={{ display: isImageLoading ? 'none' : 'block' }}
+                onLoad={handleImageLoad}
+                onError={handleImageError}
+              />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
           </div>
