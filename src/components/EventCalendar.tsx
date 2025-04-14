@@ -14,6 +14,7 @@ import EventList from './calendar/EventList';
 import EventPanel from './calendar/EventPanel';
 import FavoritesView from './calendar/FavoritesView';
 import EventForm from './EventForm';
+import AdPanel from './AdPanel';
 import { useEventContext } from '@/contexts/EventContext';
 import { toast } from 'sonner';
 
@@ -21,7 +22,6 @@ interface EventCalendarProps {
   defaultView?: "calendar" | "list";
 }
 
-// Category icons mapping
 const categoryIcons = {
   "Konzert": <Music className="h-4 w-4" />,
   "Party": <PartyPopper className="h-4 w-4" />,
@@ -33,7 +33,6 @@ const categoryIcons = {
 };
 
 const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
-  // Get shared state from context
   const { 
     events, 
     selectedDate, 
@@ -52,27 +51,22 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     addUserEvent
   } = useEventContext();
 
-  // Local state
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"calendar" | "list">(defaultView);
   const [showEventForm, setShowEventForm] = useState(false);
   const [showNewEvents, setShowNewEvents] = useState(false);
   
-  // Calendar navigation functions
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   
-  // Generate days for the current month view
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
   
-  // Get events for the current month, favorites, or new events
   const eventsToDisplay = React.useMemo(() => {
     if (showNewEvents) {
       return events.filter(event => newEventIds.has(event.id));
     } else if (showFavorites) {
-      // For favorites, return only the top events for each day that have at least one like
       return events.filter(event => 
         event.date && 
         topEventsPerDay[event.date] === event.id && 
@@ -83,12 +77,10 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     }
   }, [events, currentDate, showFavorites, eventLikes, showNewEvents, newEventIds, topEventsPerDay]);
   
-  // Filter events for the selected date and category filter
   const filteredEvents = selectedDate 
     ? getEventsForDay(events, selectedDate, filter)
     : [];
     
-  // Get user's favorite events (top events per day with likes > 0)
   const favoriteEvents = React.useMemo(() => {
     return events.filter(event => 
       event.date && 
@@ -97,21 +89,17 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     );
   }, [events, topEventsPerDay]);
 
-  // Handle selecting a date
   const handleDateClick = (day: Date) => {
-    // Normalize the date to the start of day
     const normalizedDay = normalizeDate(day);
     console.log(`Selecting date: ${normalizedDay.toISOString()}`);
     setSelectedDate(normalizedDay);
     setSelectedEvent(null);
   };
   
-  // Handle selecting an event
   const handleEventSelect = (event: Event) => {
     setSelectedEvent(event);
   };
   
-  // Handler for adding a new event - only passes to the context method
   const handleAddEvent = async (newEvent: Omit<Event, 'id'>) => {
     try {
       console.log('Adding new event to database only:', newEvent);
@@ -124,39 +112,32 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     }
   };
 
-  // Toggle category filter
   const toggleFilter = (category: string) => {
     setFilter(current => current === category ? null : category);
   };
 
-  // Toggle favorites view
   const toggleFavorites = () => {
     if (showNewEvents) setShowNewEvents(false);
     setShowFavorites(prev => !prev);
     
-    // Reset date selection when toggling favorites
     if (!showFavorites) {
       setSelectedDate(null);
     }
   };
   
-  // Toggle new events view
   const toggleNewEvents = () => {
     if (showFavorites) setShowFavorites(false);
     setShowNewEvents(prev => !prev);
     
-    // Reset date selection when toggling new events view
     if (!showNewEvents) {
       setSelectedDate(null);
     }
   };
 
-  // Toggle event form visibility
   const toggleEventForm = () => {
     setShowEventForm(prev => !prev);
   };
 
-  // When a filter is applied, reset date selection
   useEffect(() => {
     if (filter !== null) {
       setSelectedDate(null);
@@ -166,7 +147,6 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   return (
     <div className="container mx-auto px-2 py-6 max-w-[1280px] animate-fade-in">
       <div className="flex flex-col space-y-4">
-        {/* Calendar header with month navigation */}
         <CalendarHeader 
           currentDate={currentDate}
           prevMonth={prevMonth}
@@ -187,7 +167,6 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
           showEventForm={showEventForm}
         />
 
-        {/* Event form between menu and calendar */}
         {showEventForm && (
           <div className="w-full mt-3 mb-3 dark-glass-card rounded-xl p-4 animate-fade-down animate-duration-300">
             <EventForm 
@@ -198,23 +177,29 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
           </div>
         )}
         
-        {/* Main calendar and list views */}
         <Tabs 
           defaultValue={view} 
           value={view} 
           className="flex flex-col items-center w-full"
         >
           <TabsContent value="list" className="w-full">
-            <EventList 
-              events={eventsToDisplay}
-              showFavorites={showFavorites}
-              showNewEvents={showNewEvents}
-              onSelectEvent={(event, date) => {
-                setSelectedDate(date);
-                setSelectedEvent(event);
-              }}
-              onLike={handleLikeEvent}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
+              <div className="md:col-span-2">
+                <EventList 
+                  events={eventsToDisplay}
+                  showFavorites={showFavorites}
+                  showNewEvents={showNewEvents}
+                  onSelectEvent={(event, date) => {
+                    setSelectedDate(date);
+                    setSelectedEvent(event);
+                  }}
+                  onLike={handleLikeEvent}
+                />
+              </div>
+              <div className="md:col-span-1">
+                <AdPanel className="h-[280px]" />
+              </div>
+            </div>
           </TabsContent>
           
           <TabsContent value="calendar" className="w-full">
@@ -245,8 +230,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                 )}
               </div>
               
-              {/* Event details panel */}
-              <div className="w-full md:w-2/5 mt-3 md:mt-0">
+              <div className="w-full md:w-2/5 mt-3 md:mt-0 flex flex-col gap-3">
                 <EventPanel 
                   selectedDate={selectedDate}
                   selectedEvent={selectedEvent}
@@ -258,6 +242,8 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                   onShowEventForm={toggleEventForm}
                   showFavorites={showFavorites}
                 />
+                
+                <AdPanel className="h-[200px]" />
               </div>
             </div>
           </TabsContent>
