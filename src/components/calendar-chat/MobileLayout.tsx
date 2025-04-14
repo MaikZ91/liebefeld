@@ -137,7 +137,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
             onClick={handleClickCalendar}
             className={cn(
               "rounded-l-md rounded-r-none flex-1 relative",
-              activeMobileView === 'calendar' ? "bg-white text-black" : "bg-gray-800 text-white border-gray-700"
+              activeMobileView === 'calendar' ? "bg-red-500 text-white" : "bg-gray-800 text-white border-gray-700"
             )}
           >
             <Calendar className="mr-2 h-4 w-4" />
@@ -153,7 +153,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
             onClick={handleClickChat}
             className={cn(
               "rounded-r-md rounded-l-none flex-1 relative",
-              activeMobileView === 'chat' ? "bg-white text-black" : "bg-gray-800 text-white border-gray-700"
+              activeMobileView === 'chat' ? "bg-red-500 text-white" : "bg-gray-800 text-white border-gray-700"
             )}
           >
             <MessageSquare className="mr-2 h-4 w-4" />
@@ -228,3 +228,4 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
     </div>
   );
 };
+
