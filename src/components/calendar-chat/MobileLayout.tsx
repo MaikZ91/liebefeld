@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MessageSquare } from 'lucide-react';
+import { Calendar, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getInitials } from '@/utils/chatUIUtils';
 import { AVATAR_KEY } from '@/types/chatTypes';
@@ -43,6 +43,18 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   // Update key generation to ensure remounting when any relevant prop changes
   const [chatKey, setChatKey] = useState(() => `mobile-chat-${Date.now()}-${activeGroup}`);
   const touchStartX = useRef(0);
+  const [showSwipeHint, setShowSwipeHint] = useState(false);
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
+  const swipeHintTimeout = useRef<NodeJS.Timeout | null>(null);
+  
+  // Reset swipe animation after showing briefly
+  useEffect(() => {
+    return () => {
+      if (swipeHintTimeout.current) {
+        clearTimeout(swipeHintTimeout.current);
+      }
+    };
+  }, []);
   
   // Add touch handlers for swipe functionality directly in the component
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -61,12 +73,26 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
         // Swipe right -> go to calendar
         if (activeMobileView === 'chat') {
           console.log('Swiping right to calendar');
+          setSwipeDirection('right');
+          setShowSwipeHint(true);
+          
+          swipeHintTimeout.current = setTimeout(() => {
+            setShowSwipeHint(false);
+          }, 1000);
+          
           handleClickCalendar();
         }
       } else {
         // Swipe left -> go to chat
         if (activeMobileView === 'calendar') {
           console.log('Swiping left to chat');
+          setSwipeDirection('left');
+          setShowSwipeHint(true);
+          
+          swipeHintTimeout.current = setTimeout(() => {
+            setShowSwipeHint(false);
+          }, 1000);
+          
           handleClickChat();
         }
       }
@@ -84,10 +110,26 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   
   return (
     <div 
-      className="md:hidden flex flex-col h-[calc(100vh-200px)] min-h-[500px]"
+      className="md:hidden flex flex-col h-[calc(100vh-200px)] min-h-[500px] relative"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
+      {/* Swipe indicator overlay */}
+      {showSwipeHint && (
+        <div className="absolute inset-0 pointer-events-none z-50 flex items-center justify-center bg-black bg-opacity-40 transition-opacity duration-300">
+          <div className="bg-gray-900 bg-opacity-90 rounded-full p-6 shadow-lg transform scale-110 animate-pulse">
+            {swipeDirection === 'left' ? (
+              <ChevronLeft className="h-16 w-16 text-white" />
+            ) : (
+              <ChevronRight className="h-16 w-16 text-white" />
+            )}
+          </div>
+          <p className="absolute bottom-20 text-white font-bold text-xl">
+            {swipeDirection === 'left' ? 'Zum Chat' : 'Zum Kalender'}
+          </p>
+        </div>
+      )}
+
       <div className="flex justify-center mb-4">
         <div className="inline-flex rounded-md shadow-sm w-full" role="group">
           <Button
@@ -129,6 +171,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
         "flex-grow transition-all duration-300",
         activeMobileView === 'calendar' ? 'block' : 'hidden'
       )}>
+        <div className="text-center text-gray-500 text-xs mb-2">← Swipe nach links für Chat</div>
         <EventCalendar defaultView={defaultView} />
       </div>
       
@@ -136,6 +179,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
         "flex-grow transition-all duration-300 overflow-hidden",
         activeMobileView === 'chat' ? 'block' : 'hidden'
       )}>
+        <div className="text-center text-gray-500 text-xs mb-2">Swipe nach rechts für Kalender →</div>
         {username ? (
           <>
             <div className="flex items-center justify-between mb-2 gap-2">
