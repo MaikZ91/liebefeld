@@ -39,11 +39,20 @@ const categoryIcons: Record<string, React.ReactNode> = {
   'Meeting': <Users className="w-3 h-3" />,
 };
 
+// Function to check if an event is a Tribe event
+const isTribeEvent = (title: string): boolean => {
+  const tribeKeywords = ['tribe', 'tuesday run', 'kennenlernabend', 'creatives circle'];
+  return tribeKeywords.some(keyword => 
+    title.toLowerCase().includes(keyword.toLowerCase())
+  );
+};
+
 const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compact = false, onLike }) => {
   const [isLiking, setIsLiking] = useState(false);
   const { newEventIds, eventLikes } = useEventContext();
   
   const isNewEvent = newEventIds.has(event.id);
+  const isTribe = isTribeEvent(event.title);
   
   // Get likes directly from database sources
   const displayLikes = event.id.startsWith('github-') 
@@ -80,6 +89,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
       <div 
         className={cn(
           "dark-glass-card rounded-lg p-1.5 cursor-pointer hover-scale mb-0.5 w-full",
+          isTribe && "border-l-2 border-purple-500 bg-gradient-to-r from-purple-900/20 to-transparent",
           className
         )}
         onClick={onClick}
@@ -98,16 +108,28 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
                   <DollarSign className="w-2 h-2" />
                 </Badge>
               )}
+              {isTribe && (
+                <Badge className="bg-purple-600 text-white text-[10px] flex items-center gap-0.5 h-3 px-1">
+                  <Users className="w-2 h-2" />
+                  <span>Tribe</span>
+                </Badge>
+              )}
               {event.link ? (
                 <h4 
-                  className="font-medium text-sm text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1"
+                  className={cn(
+                    "font-medium text-sm text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1",
+                    isTribe && "text-purple-300"
+                  )}
                   onClick={handleLinkClick}
                 >
                   {event.title}
                   <ExternalLink className="w-2 h-2 inline-flex flex-shrink-0" />
                 </h4>
               ) : (
-                <h4 className="font-medium text-sm text-white break-words line-clamp-1 text-left">
+                <h4 className={cn(
+                  "font-medium text-sm text-white break-words line-clamp-1 text-left",
+                  isTribe && "text-purple-300"
+                )}>
                   {event.title}
                 </h4>
               )}
@@ -167,6 +189,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
     <div 
       className={cn(
         "dark-glass-card rounded-xl p-4 cursor-pointer hover-scale w-full",
+        isTribe && "border-l-4 border-purple-500 bg-gradient-to-r from-purple-900/20 to-transparent",
         className
       )}
       onClick={onClick}
@@ -186,17 +209,29 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
                 <span>Kostenpflichtig</span>
               </Badge>
             )}
+            {isTribe && (
+              <Badge className="bg-purple-600 text-white text-xs flex items-center gap-1 h-5 px-2 self-start">
+                <Users className="w-3 h-3" />
+                <span>Tribe</span>
+              </Badge>
+            )}
           </div>
           {event.link ? (
             <h4 
-              className="font-medium text-2xl text-white break-words hover:underline cursor-pointer flex items-center gap-1"
+              className={cn(
+                "font-medium text-2xl text-white break-words hover:underline cursor-pointer flex items-center gap-1",
+                isTribe && "text-purple-300"
+              )}
               onClick={handleLinkClick}
             >
               {event.title}
               <ExternalLink className="w-5 h-5 inline-flex flex-shrink-0" />
             </h4>
           ) : (
-            <h4 className="font-medium text-2xl text-white break-words">
+            <h4 className={cn(
+              "font-medium text-2xl text-white break-words",
+              isTribe && "text-purple-300"
+            )}>
               {event.title}
             </h4>
           )}

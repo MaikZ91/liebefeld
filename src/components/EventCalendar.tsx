@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Music, PartyPopper, Image, Dumbbell, Map, Plus } from 'lucide-react';
+import { Music, PartyPopper, Image, Dumbbell, Map, Plus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -29,7 +29,17 @@ const categoryIcons = {
   "Sport": <Dumbbell className="h-4 w-4" />,
   "Workshop": <Plus className="h-4 w-4" />,
   "Kultur": <Image className="h-4 w-4" />,
-  "Sonstiges": <Map className="h-4 w-4" />
+  "Sonstiges": <Map className="h-4 w-4" />,
+  "Networking": <Users className="h-4 w-4" />,
+  "Meeting": <Users className="h-4 w-4" />
+};
+
+// Function to check if an event is a Tribe event
+export const isTribeEvent = (title: string): boolean => {
+  const tribeKeywords = ['tribe', 'tuesday run', 'kennenlernabend', 'creatives circle'];
+  return tribeKeywords.some(keyword => 
+    title.toLowerCase().includes(keyword.toLowerCase())
+  );
 };
 
 const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
