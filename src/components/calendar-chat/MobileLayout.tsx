@@ -92,15 +92,15 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
       </div>
       
       <div className={cn(
-        "flex-grow transition-all duration-300 transform",
-        activeMobileView === 'calendar' ? 'translate-x-0 block' : 'translate-x-full hidden'
+        "flex-grow transition-all duration-300",
+        activeMobileView === 'calendar' ? 'block' : 'hidden'
       )}>
         <EventCalendar defaultView={defaultView} />
       </div>
       
       <div className={cn(
-        "flex-grow transition-all duration-300 transform overflow-hidden",
-        activeMobileView === 'chat' ? 'translate-x-0 block' : '-translate-x-full hidden'
+        "flex-grow transition-all duration-300 overflow-hidden",
+        activeMobileView === 'chat' ? 'block' : 'hidden'
       )}>
         {username ? (
           <>

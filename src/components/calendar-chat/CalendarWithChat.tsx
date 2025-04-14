@@ -38,33 +38,6 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
   const [newEvents, setNewEvents] = useState(0);
   const lastCheckedMessages = useRef(new Date());
   const lastCheckedEvents = useRef(new Date());
-  const touchStartX = useRef(0);
-  const contentRef = useRef<HTMLDivElement>(null);
-
-  // Add touch handlers for swipe functionality
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    const touchEndX = e.changedTouches[0].clientX;
-    const diffX = touchEndX - touchStartX.current;
-    
-    // If swipe distance is significant enough (more than 50px)
-    if (Math.abs(diffX) > 50) {
-      if (diffX > 0) {
-        // Swipe right -> go to calendar
-        if (activeMobileView === 'chat') {
-          handleClickCalendar();
-        }
-      } else {
-        // Swipe left -> go to chat
-        if (activeMobileView === 'calendar') {
-          handleClickChat();
-        }
-      }
-    }
-  };
 
   useEffect(() => {
     if (!username) {
@@ -235,28 +208,21 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
         defaultView={defaultView}
       />
       
-      {/* Mobile Layout with Swipe Support */}
-      <div 
-        ref={contentRef}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        className="md:hidden"
-      >
-        <MobileLayout 
-          activeMobileView={activeMobileView}
-          handleClickCalendar={handleClickCalendar}
-          handleClickChat={handleClickChat}
-          newEvents={newEvents}
-          newMessages={newMessages}
-          username={username}
-          setIsUsernameModalOpen={setIsUsernameModalOpen}
-          activeGroup={activeGroup}
-          activeGroupName={activeGroupName}
-          groups={groups}
-          handleGroupSelect={handleGroupSelect}
-          defaultView={defaultView}
-        />
-      </div>
+      {/* Mobile Layout */}
+      <MobileLayout 
+        activeMobileView={activeMobileView}
+        handleClickCalendar={handleClickCalendar}
+        handleClickChat={handleClickChat}
+        newEvents={newEvents}
+        newMessages={newMessages}
+        username={username}
+        setIsUsernameModalOpen={setIsUsernameModalOpen}
+        activeGroup={activeGroup}
+        activeGroupName={activeGroupName}
+        groups={groups}
+        handleGroupSelect={handleGroupSelect}
+        defaultView={defaultView}
+      />
       
       <UsernameDialog 
         isOpen={isUsernameModalOpen} 
