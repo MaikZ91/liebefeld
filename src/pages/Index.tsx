@@ -1,11 +1,10 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
 import EventChatBot from '@/components/EventChatBot';
 import InstagramFeed from '@/components/InstagramFeed';
 import CommunityTest from '@/components/CommunityTest';
-import { CalendarWithChat } from '@/components/calendar-chat';
+import CalendarWithChat from '@/components/CalendarWithChat';
 import BetaTesterBanner from '@/components/BetaTesterBanner';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -238,7 +237,6 @@ const Index = () => {
             <div className="mb-4 text-center">
               <h2 className="text-xl font-bold mb-1 font-serif">Kalender & Community</h2>
               <p className="text-gray-400 text-sm">Entdecke Events und tausche dich mit der Community aus</p>
-              <p className="text-orange-500 text-xs mt-1 animate-pulse md:hidden">Tipp: Du kannst zwischen Kalender und Chat swipen!</p>
             </div>
           
             <EventProvider>
