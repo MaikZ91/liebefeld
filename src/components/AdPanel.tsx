@@ -26,7 +26,7 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
       title: 'Anmeldung & Treffpunkt',
       date: 'Jeden letzten Sonntag im Monat',
       location: 'In der Community',
-      imageUrl: '/lovable-uploads/4f1d1037-e7fb-40e3-a665-674f278923ce.png',
+      imageUrl: '/lovable-uploads/8562fff2-2b62-4552-902b-cc62457a3402.png',
       link: 'https://the-tribe.bi'
     }
   ];
