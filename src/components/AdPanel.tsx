@@ -72,11 +72,18 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
         <div className="relative h-full w-full">
           {/* Background image with overlay */}
           <div className="absolute inset-0 overflow-hidden rounded-xl">
-            <img 
-              src={ad.imageUrl} 
-              alt={ad.title} 
-              className="w-full h-full object-cover"
-            />
+            {ad.imageUrl && (
+              <img 
+                src={ad.imageUrl} 
+                alt={ad.title} 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  console.error(`Failed to load ad image: ${ad.imageUrl}`);
+                  // Fallback to placeholder image if the original image fails to load
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=800&q=80";
+                }}
+              />
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
           </div>
           
