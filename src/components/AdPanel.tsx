@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Calendar, Users, X, UsersRound } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -26,7 +25,7 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
       date: 'Immer am letzten Sonntag im Monat',
       location: 'Anmeldung in der Community',
       imageUrl: '/lovable-uploads/83f7c05b-0e56-4f3c-a19c-adeab5429b59.jpg',
-      link: 'https://the-tribe.bi'
+      link: "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK"
     }
   ];
   
