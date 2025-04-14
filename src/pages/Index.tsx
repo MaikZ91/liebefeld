@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
@@ -6,6 +7,7 @@ import InstagramFeed from '@/components/InstagramFeed';
 import CommunityTest from '@/components/CommunityTest';
 import CalendarWithChat from '@/components/CalendarWithChat';
 import BetaTesterBanner from '@/components/BetaTesterBanner';
+import AdPanel from '@/components/AdPanel';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { QrCode } from 'lucide-react';
@@ -181,6 +183,11 @@ const Index = () => {
                   </div>
                 </PopoverContent>
               </Popover>
+              
+              {/* Add AdPanel for desktop */}
+              <div className="hidden md:block ml-4">
+                <AdPanel className="w-[280px] h-[180px]" />
+              </div>
             </div>
 
             <div className="transition-opacity duration-500 ease-in-out mt-12 flex flex-col items-center">
@@ -230,6 +237,11 @@ const Index = () => {
               <LiveTickerWrapper />
             </div>
           </div>
+        </div>
+        
+        {/* Add AdPanel for mobile */}
+        <div className="md:hidden mx-auto px-4 py-3">
+          <AdPanel className="w-full h-[180px]" />
         </div>
         
         <div className="bg-black py-2 rounded-t-lg shadow-inner">

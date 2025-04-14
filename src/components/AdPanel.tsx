@@ -21,15 +21,14 @@ interface AdPanelProps {
 const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [currentAd, setCurrentAd] = useState(0);
-  const [adImages, setAdImages] = useState<Record<number, string>>({});
-  const [imageLoading, setImageLoading] = useState<Record<number, boolean>>({});
+  const [isImageLoading, setIsImageLoading] = useState(true);
   
   const adEvents: AdEvent[] = [
     {
       title: 'Tribe Kennenlernabend',
       date: 'Immer am letzten Sonntag im Monat',
       location: 'Anmeldung in der Community',
-      imageUrl: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=1000',
+      imageUrl: '/lovable-uploads/3c71cdab-8ef8-4e5f-b8dc-1bd96e69c82d.png',
       link: "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK",
       type: "event"
     },
@@ -37,44 +36,18 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
       title: 'Patrick Pilgrim Blues Rock',
       date: 'Jetzt anhören und buchen',
       location: 'Für Events & Veranstaltungen',
-      imageUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=1000',
+      imageUrl: '/lovable-uploads/8a1c6a4c-a9a4-4a1b-8089-241873c45a76.png',
       link: "https://patrickpilgrim.de/",
       type: "music"
     }
   ];
   
   useEffect(() => {
-    // Initialize loading state
-    const loadingState: Record<number, boolean> = {};
-    adEvents.forEach((_, index) => {
-      loadingState[index] = true;
-    });
-    setImageLoading(loadingState);
-    
-    // Pre-load images
-    adEvents.forEach((ad, index) => {
-      const img = new Image();
-      img.onload = () => {
-        setAdImages(prev => ({ ...prev, [index]: ad.imageUrl }));
-        setImageLoading(prev => ({ ...prev, [index]: false }));
-        console.log(`Successfully pre-loaded image for ad ${index}: ${ad.imageUrl}`);
-      };
-      img.onerror = () => {
-        // Try a fallback image on error
-        const fallbackUrl = 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=800&q=80';
-        console.log(`Failed to load ad image ${index}, using fallback: ${fallbackUrl}`);
-        setAdImages(prev => ({ ...prev, [index]: fallbackUrl }));
-        setImageLoading(prev => ({ ...prev, [index]: false }));
-      };
-      img.src = ad.imageUrl;
-    });
-  }, []);
-  
-  useEffect(() => {
     if (adEvents.length <= 1) return;
     
     const interval = setInterval(() => {
       setCurrentAd((prev) => (prev + 1) % adEvents.length);
+      setIsImageLoading(true);
     }, 8000);
     
     return () => clearInterval(interval);
@@ -85,17 +58,25 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
     setTimeout(() => setIsVisible(true), 60 * 60 * 1000);
   };
   
-  // Log the current ad when it changes
+  const handleImageLoad = () => {
+    setIsImageLoading(false);
+    console.log(`Ad image ${currentAd} loaded successfully`);
+  };
+  
+  const handleImageError = () => {
+    setIsImageLoading(false);
+    console.error(`Failed to load ad image ${currentAd}`);
+  };
+  
   useEffect(() => {
     if (adEvents.length === 0) return;
     const currentAdObj = adEvents[currentAd];
-    console.log(`Displaying ad [${currentAd}]: "${currentAdObj.title}" with image status: ${imageLoading[currentAd] ? 'loading' : 'loaded'}`);
-  }, [currentAd, adEvents, imageLoading]);
+    console.log(`Displaying ad [${currentAd}]: "${currentAdObj.title}" with image: ${currentAdObj.imageUrl}`);
+  }, [currentAd, adEvents]);
   
   if (!isVisible || adEvents.length === 0) return null;
   
   const ad = adEvents[currentAd];
-  const hasLoadedImage = adImages[currentAd] && !imageLoading[currentAd];
   
   return (
     <AnimatePresence>
@@ -116,17 +97,22 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
         
         <div className="relative h-full w-full">
           <div className="absolute inset-0 overflow-hidden rounded-xl bg-gradient-to-br from-gray-900 to-black">
-            {adImages[currentAd] ? (
-              <img 
-                src={adImages[currentAd]} 
-                alt={ad.title} 
-                className="w-full h-full object-cover transition-opacity duration-500"
-                style={{ opacity: hasLoadedImage ? 1 : 0.5 }}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <ImageOff className="w-8 h-8 text-gray-400" />
-              </div>
+            {ad.imageUrl && (
+              <>
+                {isImageLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+                    <div className="w-8 h-8 border-4 border-t-transparent border-white rounded-full animate-spin"></div>
+                  </div>
+                )}
+                <img 
+                  src={ad.imageUrl}
+                  alt={ad.title} 
+                  className="w-full h-full object-cover transition-opacity duration-500"
+                  style={{ opacity: isImageLoading ? 0 : 1 }}
+                  onLoad={handleImageLoad}
+                  onError={handleImageError}
+                />
+              </>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
           </div>
