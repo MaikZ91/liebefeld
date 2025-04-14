@@ -35,11 +35,25 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
       title: 'Patrick Pilgrim Blues Rock',
       date: 'Jetzt anhören und buchen',
       location: 'Für Events & Veranstaltungen',
-      imageUrl: '/lovable-uploads/b51c79e9-def5-4f57-ac47-ddbf5d443c49.png',
+      imageUrl: '/lovable-uploads/b51c79e9-def5-4f57-ac47-ddbf5d443c49.png', // We'll force clear the cache with a timestamp
       link: "https://patrickpilgrim.de/",
       type: "music"
     }
   ];
+  
+  // Force re-render of images with timestamp to bypass caching
+  useEffect(() => {
+    const timestamp = new Date().getTime();
+    adEvents.forEach((ad, index) => {
+      // Add a timestamp query parameter to force reload
+      if (ad.imageUrl.includes('lovable-uploads')) {
+        console.log(`Original image URL for ${ad.title}: ${ad.imageUrl}`);
+        const imageWithoutCache = `${ad.imageUrl}?t=${timestamp}`;
+        console.log(`Modified image URL with cache busting: ${imageWithoutCache}`);
+        adEvents[index].imageUrl = imageWithoutCache;
+      }
+    });
+  }, []);
   
   useEffect(() => {
     if (adEvents.length <= 1) return;
@@ -96,12 +110,23 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
                   onError={(e) => {
                     console.error(`Failed to load ad image: ${ad.imageUrl}`);
                     setImageError(prev => ({...prev, [currentAd]: true}));
-                    e.currentTarget.src = "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=800&q=80";
+                    
+                    // Try without cache busting query parameter if it exists
+                    const originalUrl = ad.imageUrl.split('?')[0];
+                    console.log(`Trying fallback image without cache params: ${originalUrl}`);
+                    e.currentTarget.src = originalUrl;
+                    
+                    // If it fails again, use the placeholder
+                    e.currentTarget.onerror = () => {
+                      console.error(`Fallback also failed, using placeholder`);
+                      e.currentTarget.src = "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=800&q=80";
+                    };
                   }}
                   onLoad={() => {
                     console.log(`Successfully loaded image: ${ad.imageUrl}`);
                     setImageError(prev => ({...prev, [currentAd]: false}));
                   }}
+                  style={{ objectPosition: 'center center' }}
                 />
                 {imageError[currentAd] && (
                   <div className="absolute bottom-0 right-0 bg-red-600 text-white text-xs px-1 py-0.5 rounded-tl-md">
