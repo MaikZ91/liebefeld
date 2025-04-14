@@ -23,9 +23,9 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
   // Demo ad data
   const adEvents: AdEvent[] = [
     {
-      title: '#Tribe Stammtisch',
+      title: 'Anmeldung & Treffpunkt',
       date: 'Jeden letzten Sonntag im Monat',
-      location: 'Silbes Restaurant, Bielefeld',
+      location: 'In der Community',
       imageUrl: '/lovable-uploads/4f1d1037-e7fb-40e3-a665-674f278923ce.png',
       link: 'https://the-tribe.bi'
     }
@@ -147,7 +147,7 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
                       className="bg-red-600 hover:bg-red-700 text-white border-none w-full"
                     >
                       <Users className="w-4 h-4 mr-2" />
-                      Event anzeigen
+                      Community beitreten
                     </Button>
                   </a>
                 </motion.div>
