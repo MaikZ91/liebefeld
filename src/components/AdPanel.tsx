@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Calendar, Users, X, UsersRound, Music, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -33,7 +34,7 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
       title: 'Patrick Pilgrim Blues Rock',
       date: 'Jetzt anhören und buchen',
       location: 'Für Events & Veranstaltungen',
-      imageUrl: '/lovable-uploads/07fd4d37-5822-4c31-ac0c-6f14b998a5e0.png',
+      imageUrl: '/lovable-uploads/b51c79e9-def5-4f57-ac47-ddbf5d443c49.png',
       link: "https://patrickpilgrim.de/",
       type: "music"
     }
