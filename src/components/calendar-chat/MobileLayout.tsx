@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +42,36 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
 }) => {
   // Update key generation to ensure remounting when any relevant prop changes
   const [chatKey, setChatKey] = useState(() => `mobile-chat-${Date.now()}-${activeGroup}`);
+  const touchStartX = useRef(0);
+  
+  // Add touch handlers for swipe functionality directly in the component
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const diffX = touchEndX - touchStartX.current;
+    
+    console.log(`Swipe detected: ${diffX}px`);
+    
+    // If swipe distance is significant enough (more than 50px)
+    if (Math.abs(diffX) > 50) {
+      if (diffX > 0) {
+        // Swipe right -> go to calendar
+        if (activeMobileView === 'chat') {
+          console.log('Swiping right to calendar');
+          handleClickCalendar();
+        }
+      } else {
+        // Swipe left -> go to chat
+        if (activeMobileView === 'calendar') {
+          console.log('Swiping left to chat');
+          handleClickChat();
+        }
+      }
+    }
+  };
   
   // When active view or group changes, update the key to force remount
   useEffect(() => {
@@ -53,7 +83,11 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   }, [activeMobileView, activeGroup, activeGroupName]);
   
   return (
-    <div className="md:hidden flex flex-col h-[calc(100vh-200px)] min-h-[500px]">
+    <div 
+      className="md:hidden flex flex-col h-[calc(100vh-200px)] min-h-[500px]"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <div className="flex justify-center mb-4">
         <div className="inline-flex rounded-md shadow-sm w-full" role="group">
           <Button
@@ -92,15 +126,15 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
       </div>
       
       <div className={cn(
-        "flex-grow transition-all duration-300 transform",
-        activeMobileView === 'calendar' ? 'translate-x-0 block' : 'translate-x-full hidden'
+        "flex-grow transition-all duration-300",
+        activeMobileView === 'calendar' ? 'block' : 'hidden'
       )}>
         <EventCalendar defaultView={defaultView} />
       </div>
       
       <div className={cn(
-        "flex-grow transition-all duration-300 transform overflow-hidden",
-        activeMobileView === 'chat' ? 'translate-x-0 block' : '-translate-x-full hidden'
+        "flex-grow transition-all duration-300 overflow-hidden",
+        activeMobileView === 'chat' ? 'block' : 'hidden'
       )}>
         {username ? (
           <>
