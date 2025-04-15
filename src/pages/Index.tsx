@@ -114,8 +114,19 @@ const Index = () => {
       setTitleAnimating(false);
     }, 2500);
     
+    const setupCommunityTestButton = () => {
+      const button = document.getElementById('community-test');
+      if (button) {
+        button.addEventListener('click', () => setTestModalOpen(true));
+      }
+    };
+    
+    setupCommunityTestButton();
+    const buttonSetupTimer = setTimeout(setupCommunityTestButton, 1000);
+    
     return () => {
       clearTimeout(textTimer);
+      clearTimeout(buttonSetupTimer);
     };
   }, []);
   
