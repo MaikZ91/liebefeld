@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
@@ -11,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { QrCode } from 'lucide-react';
 import { EventProvider, useEventContext } from '@/contexts/EventContext';
-import { Badge, PartyPopper, Brush, Dumbbell, Hashtag } from 'lucide-react';
+import { Badge, PartyPopper, Brush, Dumbbell, Hash } from 'lucide-react';
 
 const LiveTickerWrapper = () => {
   const tickerRef = useRef<HTMLDivElement>(null);
@@ -231,17 +230,17 @@ const Index = () => {
                 
                 <div className="flex flex-wrap justify-center gap-3 mb-4">
                   <div className="flex items-center bg-[#FF5722]/20 backdrop-blur-md rounded-full px-3 py-1.5 border border-[#FF5722]/30 shadow-sm animate-pulse-soft hover:bg-[#FF5722]/30 transition-colors cursor-pointer">
-                    <Hashtag size={16} className="mr-1 text-[#FF5722]" />
+                    <Hash size={16} className="mr-1 text-[#FF5722]" />
                     <span className="text-white font-medium">ausgehen</span>
                   </div>
                   
                   <div className="flex items-center bg-[#9C27B0]/20 backdrop-blur-md rounded-full px-3 py-1.5 border border-[#9C27B0]/30 shadow-sm animate-pulse-soft hover:bg-[#9C27B0]/30 transition-colors cursor-pointer">
-                    <Hashtag size={16} className="mr-1 text-[#9C27B0]" />
+                    <Hash size={16} className="mr-1 text-[#9C27B0]" />
                     <span className="text-white font-medium">kreativität</span>
                   </div>
                   
                   <div className="flex items-center bg-[#2196F3]/20 backdrop-blur-md rounded-full px-3 py-1.5 border border-[#2196F3]/30 shadow-sm animate-pulse-soft hover:bg-[#2196F3]/30 transition-colors cursor-pointer">
-                    <Hashtag size={16} className="mr-1 text-[#2196F3]" />
+                    <Hash size={16} className="mr-1 text-[#2196F3]" />
                     <span className="text-white font-medium">sport</span>
                   </div>
                 </div>
