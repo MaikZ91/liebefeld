@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Clock, Cloud, CloudSun, Sun, Moon, Coffee, Utensils, Wine, Calendar, Music, Dumbbell } from 'lucide-react';
+import { Clock, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -94,7 +94,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   
   return (
     <motion.div 
-      className={`relative overflow-hidden rounded-xl bg-white dark:bg-zinc-900 shadow-lg border border-purple-200 dark:border-purple-500/20 ${className}`}
+      className={`relative bg-white dark:bg-zinc-900 shadow-lg border border-purple-200 dark:border-purple-500/20 rounded-xl ${className}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
@@ -112,7 +112,6 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
         </div>
         
         <div className="mb-4">
-          <p className="text-sm text-purple-700 dark:text-purple-300 mb-2">Interessen</p>
           <div className="flex gap-2 flex-wrap">
             {['Ausgehen', 'Sport', 'Kreativität'].map(interest => (
               <Badge 
@@ -136,54 +135,56 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
           </div>
         </div>
         
-        <div className="mb-4">
-          <p className="text-sm text-purple-700 dark:text-purple-300 mb-2">
-            {timeOfDay === 'morning' ? 'Morgens' : timeOfDay === 'afternoon' ? 'Mittags' : 'Abends'} in Bielefeld
-          </p>
-          <ul className="space-y-2">
-            {getActivities().map((activity, index) => (
-              <motion.li 
-                key={index}
-                className="bg-white/60 dark:bg-white/10 rounded-lg p-2 text-sm text-zinc-800 dark:text-white flex items-center gap-2 shadow-sm"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <div className={`h-2 w-2 rounded-full ${
-                  selectedInterest === 'Ausgehen' ? 'bg-purple-500' : 
-                  selectedInterest === 'Sport' ? 'bg-green-500' : 
-                  'bg-amber-500'
-                }`}></div>
-                {activity}
-              </motion.li>
-            ))}
-          </ul>
-        </div>
-        
-        {relevantEvents.length > 0 && (
-          <div className="mb-4">
-            <p className="text-sm text-purple-700 dark:text-purple-300 mb-2">Events heute</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <p className="text-sm text-purple-700 dark:text-purple-300 mb-2">
+              {timeOfDay === 'morning' ? 'Morgens' : timeOfDay === 'afternoon' ? 'Mittags' : 'Abends'} in Bielefeld
+            </p>
             <ul className="space-y-2">
-              {relevantEvents.map((event, index) => (
+              {getActivities().slice(0, 3).map((activity, index) => (
                 <motion.li 
-                  key={event.id}
+                  key={index}
                   className="bg-white/60 dark:bg-white/10 rounded-lg p-2 text-sm text-zinc-800 dark:text-white flex items-center gap-2 shadow-sm"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 + 0.3 }}
+                  transition={{ delay: index * 0.1 }}
                 >
-                  <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                  {event.title} - {event.time}
+                  <div className={`h-2 w-2 rounded-full ${
+                    selectedInterest === 'Ausgehen' ? 'bg-purple-500' : 
+                    selectedInterest === 'Sport' ? 'bg-green-500' : 
+                    'bg-amber-500'
+                  }`}></div>
+                  {activity}
                 </motion.li>
               ))}
             </ul>
           </div>
-        )}
+          
+          {relevantEvents.length > 0 && (
+            <div>
+              <p className="text-sm text-purple-700 dark:text-purple-300 mb-2">Events heute</p>
+              <ul className="space-y-2">
+                {relevantEvents.slice(0, 3).map((event, index) => (
+                  <motion.li 
+                    key={event.id}
+                    className="bg-white/60 dark:bg-white/10 rounded-lg p-2 text-sm text-zinc-800 dark:text-white flex items-center gap-2 shadow-sm"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 + 0.3 }}
+                  >
+                    <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                    {event.title} - {event.time}
+                  </motion.li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
         
         <Button 
           onClick={askForPersonalizedSuggestions}
           size="sm"
-          className="w-full mt-2 bg-purple-600 hover:bg-purple-700 text-white"
+          className="w-full mt-4 bg-purple-600 hover:bg-purple-700 text-white"
         >
           Mehr persönliche Vorschläge
         </Button>

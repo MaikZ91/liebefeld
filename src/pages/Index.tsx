@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
@@ -245,7 +244,6 @@ const Index = () => {
           </div>
         </div>
         
-        {/* Perfect Day Panel - Positioned between LiveTicker and Calendar */}
         <div className="bg-gray-900 py-6">
           <div className="container mx-auto px-3">
             <EventProvider>
