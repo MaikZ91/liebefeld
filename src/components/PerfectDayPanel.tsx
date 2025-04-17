@@ -431,24 +431,6 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
               ))}
             </div>
           </div>
-          
-          <div className="flex gap-2">
-            <Input
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder={suggestionPrompts[currentSuggestionIndex]}
-              className="flex-grow bg-gray-900 text-red-300 border-gray-700 focus:border-red-500"
-            />
-            <Button 
-              onClick={handleSendChat}
-              disabled={!chatInput.trim()}
-              size="default"
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              Senden
-            </Button>
-          </div>
         </div>
       </CollapsibleContent>
     </Collapsible>
