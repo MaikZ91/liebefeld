@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, ChevronDown } from 'lucide-react';
+import { Heart, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, ChevronDown, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -103,10 +103,18 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   return (
     <Collapsible className={`relative bg-black text-white dark:bg-black dark:text-white shadow-lg border border-gray-800 dark:border-gray-700 rounded-xl ${className}`}>
       <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-gray-900/50 transition-colors">
-        <h3 className="text-lg font-bold text-red-500 dark:text-red-500 flex items-center gap-2">
-          <Clock className="h-5 w-5" />
-          Dein perfekter Tag in Bielefeld
-        </h3>
+        <div className="flex items-center gap-3">
+          <Heart className="h-5 w-5 text-red-500" />
+          <div className="flex flex-col items-start">
+            <h3 className="text-lg font-bold text-red-500 dark:text-red-500 flex items-center gap-2">
+              Dein perfekter Tag in #Liebefeld
+            </h3>
+            <p className="text-sm text-gray-400 flex items-center gap-1">
+              <MessageSquare className="h-3.5 w-3.5" />
+              Chat mit der Community
+            </p>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           {getTimeIcon(timeOfDay)}
           {getWeatherIcon(weather)}
