@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useEventContext } from '@/contexts/EventContext';
 import { getFutureEvents } from '@/utils/eventUtils';
+import { getActivitySuggestions } from '@/utils/chatUIUtils';
 
 interface PerfectDayProps {
   className?: string;
@@ -31,25 +32,6 @@ const getWeatherIcon = (condition: string) => {
       return <CloudSun className="h-5 w-5 text-blue-400" />;
     default:
       return <CloudSun className="h-5 w-5 text-blue-400" />;
-  }
-};
-
-// Activities based on time of day and interests
-const activities = {
-  morning: {
-    'Ausgehen': ['Frühstücken im Café Milchladen', 'Morgenspaziergang im Teutoburger Wald'],
-    'Sport': ['Morgenlauf im Stadtpark', 'Yoga im Bürgerpark'],
-    'Kreativität': ['Besuch der Kunsthalle Bielefeld', 'Fotografieren in der Altstadt']
-  },
-  afternoon: {
-    'Ausgehen': ['Shopping in der Altstadt', 'Kaffee & Kuchen im Café Kaffeesatz'],
-    'Sport': ['Bouldern im Climbingspot', 'Radtour zum Obersee'],
-    'Kreativität': ['Workshop im Kulturzentrum', 'Stadtführung mit historischem Schwerpunkt']
-  },
-  evening: {
-    'Ausgehen': ['Konzert im Forum', 'Cocktails in der Neustadt', 'Kino im Lichtwerk'],
-    'Sport': ['Bouldern im Kletterpark', 'Abendlicher Beachvolleyball'],
-    'Kreativität': ['Theater im TAM', 'Open Mic Night', 'Kunstausstellung']
   }
 };
 
@@ -89,7 +71,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   
   // Get activities based on time, interest and weather
   const getActivities = () => {
-    return activities[timeOfDay][selectedInterest as keyof typeof activities[typeof timeOfDay]];
+    return getActivitySuggestions(timeOfDay, selectedInterest, weather === 'sunny' ? 'sunny' : 'cloudy');
   };
   
   // Ask chatbot for more personalized suggestions
@@ -112,7 +94,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   
   return (
     <motion.div 
-      className={`relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-900/20 shadow-lg border border-purple-200/50 dark:border-purple-500/20 ${className}`}
+      className={`relative overflow-hidden rounded-xl bg-white dark:bg-zinc-900 shadow-lg border border-purple-200 dark:border-purple-500/20 ${className}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
@@ -162,7 +144,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
             {getActivities().map((activity, index) => (
               <motion.li 
                 key={index}
-                className="bg-white/60 dark:bg-white/10 rounded-lg p-2 text-sm flex items-center gap-2 shadow-sm"
+                className="bg-white/60 dark:bg-white/10 rounded-lg p-2 text-sm text-zinc-800 dark:text-white flex items-center gap-2 shadow-sm"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
@@ -185,7 +167,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
               {relevantEvents.map((event, index) => (
                 <motion.li 
                   key={event.id}
-                  className="bg-white/60 dark:bg-white/10 rounded-lg p-2 text-sm flex items-center gap-2 shadow-sm"
+                  className="bg-white/60 dark:bg-white/10 rounded-lg p-2 text-sm text-zinc-800 dark:text-white flex items-center gap-2 shadow-sm"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 + 0.3 }}
