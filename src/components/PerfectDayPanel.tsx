@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Clock, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, Dice1 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -8,6 +9,7 @@ import { useEventContext } from '@/contexts/EventContext';
 import { getFutureEvents } from '@/utils/eventUtils';
 import { getActivitySuggestions } from '@/utils/chatUIUtils';
 import { fetchWeather } from '@/utils/weatherUtils';
+import { toast } from 'sonner';
 
 interface PerfectDayProps {
   className?: string;
@@ -88,8 +90,9 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   };
 
   const handleRollDice = () => {
-    const newActivities = getActivities();
+    const newActivities = getActivitySuggestions(timeOfDay, selectedInterest, weather === 'sunny' ? 'sunny' : 'cloudy');
     setActivities(newActivities);
+    toast.success("Neue Vorschläge generiert!");
   };
 
   useEffect(() => {
@@ -98,7 +101,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
 
   const handleSendChat = () => {
     if (chatInput.trim()) {
-      alert(`Chatbot wurde entfernt. Ihre Frage war: ${chatInput}`);
+      onAskChatbot(chatInput);
       setChatInput('');
     }
   };
@@ -170,7 +173,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
             <ul className="space-y-2">
               {activities.slice(0, 3).map((activity, index) => (
                 <motion.li 
-                  key={index}
+                  key={`${activity}-${index}`}
                   className="bg-gray-900/60 dark:bg-gray-900/60 rounded-lg p-2 text-sm text-red-300 dark:text-red-300 flex items-center gap-2 shadow-sm"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
