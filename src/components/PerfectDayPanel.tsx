@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Heart, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, ChevronDown, MessageCircle, Dice1, RefreshCw, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -50,7 +49,6 @@ const getTimeIcon = (timeOfDay: 'morning' | 'afternoon' | 'evening') => {
   }
 };
 
-// Suggestion prompts that will animate
 const suggestionPrompts = [
   "Was kannst du heute empfehlen?",
   "Wie sieht der perfekte Tag in Liebefeld aus?",
@@ -76,7 +74,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   const previousTimeRef = useRef<'morning' | 'afternoon' | 'evening'>(timeOfDay);
   const allSuggestionsRef = useRef<Array<{ activity: string; link?: string | null }>>([]);
   const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
-  const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(true);
+  const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(false);
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -142,7 +140,6 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
     loadInitialSuggestions();
   }, []);
   
-  // Effect for animating through suggestion prompts
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSuggestionIndex((prevIndex) => 
@@ -368,7 +365,6 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
             )}
           </div>
           
-          {/* Animated suggestion prompts */}
           <div className="mt-4 mb-2">
             <div className="flex flex-wrap gap-2">
               {suggestionPrompts.slice(0, 4).map((prompt, index) => (
@@ -393,7 +389,6 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
             </div>
           </div>
           
-          {/* Animated placeholder text */}
           <div className="mt-2 mb-3">
             <div className="relative h-6 overflow-hidden">
               {suggestionPrompts.map((prompt, index) => (
