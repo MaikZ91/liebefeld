@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Heart, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, ChevronDown, MessageSquare, Dice1 } from 'lucide-react';
+import { Heart, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, ChevronDown, MessageSquare, Dice1, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -57,6 +57,8 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   const [chatInput, setChatInput] = useState('');
   const { events } = useEventContext();
   const [relevantEvents, setRelevantEvents] = useState<any[]>([]);
+  const [activitySuggestions, setActivitySuggestions] = useState<string[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -85,13 +87,15 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
     }
   }, [events]);
   
-  const getActivities = () => {
-    return getActivitySuggestions(timeOfDay, selectedInterest, weather === 'sunny' ? 'sunny' : 'cloudy');
-  };
-
+  useEffect(() => {
+    // Get activity suggestions whenever dependencies change or refresh is triggered
+    const suggestions = getActivitySuggestions(timeOfDay, selectedInterest, weather === 'sunny' ? 'sunny' : 'cloudy');
+    setActivitySuggestions(suggestions);
+  }, [timeOfDay, selectedInterest, weather, refreshKey]);
+  
   const handleSendChat = () => {
     if (chatInput.trim()) {
-      alert(`Chatbot wurde entfernt. Ihre Frage war: ${chatInput}`);
+      onAskChatbot(chatInput);
       setChatInput('');
     }
   };
@@ -102,16 +106,16 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
     }
   };
 
-  const getRandomActivity = () => {
-    const activities = getActivitySuggestions(timeOfDay, selectedInterest, weather === 'sunny' ? 'sunny' : 'cloudy');
-    const randomIndex = Math.floor(Math.random() * activities.length);
-    return activities[randomIndex];
+  const refreshSuggestions = () => {
+    setRefreshKey(prev => prev + 1);
+    toast.info("Neue Vorschläge wurden geladen!");
   };
 
   const handleDiceClick = () => {
-    const randomActivity = getRandomActivity();
+    const activities = getActivitySuggestions(timeOfDay, selectedInterest, weather === 'sunny' ? 'sunny' : 'cloudy');
+    const randomIndex = Math.floor(Math.random() * activities.length);
     toast.info("Zufallsvorschlag für dich!", {
-      description: randomActivity,
+      description: activities[randomIndex],
       duration: 4000
     });
   };
@@ -162,15 +166,27 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
                 </Badge>
               ))}
               
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={handleDiceClick}
-                className="ml-auto h-7 w-7 rounded-full bg-gray-800 hover:bg-gray-700"
-                title="Zufallsvorschlag"
-              >
-                <Dice1 className="h-4 w-4 text-red-500" />
-              </Button>
+              <div className="ml-auto flex gap-1">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={refreshSuggestions}
+                  className="h-7 w-7 rounded-full bg-gray-800 hover:bg-gray-700"
+                  title="Neue Vorschläge laden"
+                >
+                  <RefreshCw className="h-4 w-4 text-blue-400" />
+                </Button>
+                
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={handleDiceClick}
+                  className="h-7 w-7 rounded-full bg-gray-800 hover:bg-gray-700"
+                  title="Zufallsvorschlag"
+                >
+                  <Dice1 className="h-4 w-4 text-red-500" />
+                </Button>
+              </div>
             </div>
           </div>
           
@@ -180,9 +196,9 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
                 {timeOfDay === 'morning' ? 'Morgens' : timeOfDay === 'afternoon' ? 'Mittags' : 'Abends'} in Bielefeld
               </p>
               <ul className="space-y-2">
-                {getActivities().slice(0, 3).map((activity, index) => (
+                {activitySuggestions.slice(0, 4).map((activity, index) => (
                   <motion.li 
-                    key={index}
+                    key={`${activity}-${index}-${refreshKey}`}
                     className="bg-gray-900/60 dark:bg-gray-900/60 rounded-lg p-2 text-sm text-red-300 dark:text-red-300 flex items-center gap-2 shadow-sm"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
