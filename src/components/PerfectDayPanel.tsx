@@ -100,11 +100,13 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
       previousTimeRef.current = timeOfDay;
       
       const fetchAndSetSuggestions = async () => {
+        const suggestions = await getActivitySuggestions(timeOfDay, selectedInterest, weather);
+        setActivitySuggestions(suggestions);
+        
         const allSuggestions = await getAllSuggestionsByCategory(timeOfDay, selectedInterest, weather);
         allSuggestionsRef.current = allSuggestions;
         
-        setActivitySuggestions(allSuggestions);
-        console.log(`Loaded all ${allSuggestions.length} suggestions for ${selectedInterest}`);
+        console.log(`Loaded ${suggestions.length} suggestions (showing max 4) from ${allSuggestions.length} total for ${selectedInterest}`);
       };
       
       fetchAndSetSuggestions();
@@ -113,10 +115,13 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   
   useEffect(() => {
     const loadInitialSuggestions = async () => {
-      const initialSuggestions = await getAllSuggestionsByCategory(timeOfDay, selectedInterest, weather);
-      allSuggestionsRef.current = initialSuggestions;
+      const initialSuggestions = await getActivitySuggestions(timeOfDay, selectedInterest, weather);
       setActivitySuggestions(initialSuggestions);
-      console.log(`Initially loaded ${initialSuggestions.length} suggestions for ${selectedInterest}`);
+      
+      const allSuggestions = await getAllSuggestionsByCategory(timeOfDay, selectedInterest, weather);
+      allSuggestionsRef.current = allSuggestions;
+      
+      console.log(`Initially loaded ${initialSuggestions.length} suggestions (showing max 4) from ${allSuggestions.length} total for ${selectedInterest}`);
     };
     
     loadInitialSuggestions();
@@ -137,22 +142,10 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
 
   const refreshSuggestions = async () => {
     try {
-      if (allSuggestionsRef.current.length > 0) {
-        const shuffled = [...allSuggestionsRef.current];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        
-        setActivitySuggestions(shuffled);
-        setRefreshKey(prev => prev + 1);
-        toast.info("Vorschläge wurden neu gemischt!");
-      } else {
-        const newSuggestions = await getAllSuggestionsByCategory(timeOfDay, selectedInterest, weather);
-        allSuggestionsRef.current = newSuggestions;
-        setActivitySuggestions(newSuggestions);
-        toast.info("Neue Vorschläge wurden geladen!");
-      }
+      const newSuggestions = await getActivitySuggestions(timeOfDay, selectedInterest, weather);
+      setActivitySuggestions(newSuggestions);
+      setRefreshKey(prev => prev + 1);
+      toast.info("Neue Vorschläge wurden geladen!");
     } catch (error) {
       console.error("Error refreshing suggestions:", error);
       toast.error("Fehler beim Laden neuer Vorschläge");
