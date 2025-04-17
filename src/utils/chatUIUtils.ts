@@ -77,3 +77,22 @@ export const getAllSuggestionsByCategory = async (
   // Get all suggestions for the category without weather filtering
   return fetchAllSuggestionsByCategory(timeOfDay, interest, weather);
 };
+
+export const generatePerfectDayResponse = async (
+  timeOfDay: 'morning' | 'afternoon' | 'evening',
+  weather: string,
+  interests: string[]
+): Promise<string> => {
+  const suggestions = await Promise.all(
+    interests.map(interest => getActivitySuggestions(timeOfDay, interest, weather))
+  );
+
+  const flatSuggestions = suggestions.flat();
+  
+  if (flatSuggestions.length === 0) {
+    return "Leider habe ich keine passenden Vorschläge gefunden. Versuche es mit anderen Filtern!";
+  }
+  
+  const shuffled = [...flatSuggestions].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 3).map(s => s.activity).join('\n• ');
+};

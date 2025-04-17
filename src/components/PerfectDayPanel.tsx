@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Heart, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, ChevronDown, MessageSquare, Dice1, RefreshCw, ExternalLink } from 'lucide-react';
+import { Heart, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, ChevronDown, MessageCircle, Dice1, RefreshCw, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -192,7 +192,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
               Dein perfekter Tag in #Liebefeld
             </h3>
             <p className="text-sm text-gray-400 flex items-center gap-1">
-              <MessageSquare className="h-3.5 w-3.5" />
+              <MessageCircle className="h-3.5 w-3.5" />
               Dein persönlicher Glücks-Navigator 🧭
             </p>
           </div>
