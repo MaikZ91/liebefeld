@@ -1,4 +1,4 @@
-import { getCategoryColor } from './chatUIUtils';
+
 import { fetchAllSuggestionsByCategory } from './suggestionUtils';
 
 export const getActivitySuggestions = async (
