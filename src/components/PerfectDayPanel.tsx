@@ -99,9 +99,13 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
       previousWeatherRef.current = weather;
       previousTimeRef.current = timeOfDay;
       
-      const newSuggestions = getRandomizedSuggestions();
-      setActivitySuggestions(newSuggestions);
-      displayedSuggestionsRef.current = new Set(newSuggestions);
+      const fetchAndSetSuggestions = async () => {
+        const newSuggestions = await getActivitySuggestions(timeOfDay, selectedInterest, weather);
+        setActivitySuggestions(newSuggestions);
+        displayedSuggestionsRef.current = new Set(newSuggestions);
+      };
+      
+      fetchAndSetSuggestions();
       console.log("Filter changed, generating new suggestions", { timeOfDay, weather, selectedInterest });
     }
   }, [timeOfDay, selectedInterest, weather]);
@@ -152,8 +156,8 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
     }
   };
 
-  const refreshSuggestions = () => {
-    const allPossibleSuggestions = getAllSuggestionsByCategory(
+  const refreshSuggestions = async () => {
+    const allPossibleSuggestions = await getAllSuggestionsByCategory(
       timeOfDay,
       selectedInterest,
       weather === 'sunny' ? 'sunny' : 'cloudy'
@@ -175,7 +179,8 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
       newSuggestions = shuffled.slice(0, 4);
     } else {
       displayedSuggestionsRef.current.clear();
-      newSuggestions = getRandomizedSuggestions();
+      const randomSuggestions = await getActivitySuggestions(timeOfDay, selectedInterest, weather);
+      newSuggestions = randomSuggestions;
       console.log("Resetting suggestion history due to limited new options");
     }
     
@@ -186,8 +191,8 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
     toast.info("Neue Vorschläge wurden geladen!");
   };
 
-  const handleDiceClick = () => {
-    const allActivities = getAllSuggestionsByCategory(
+  const handleDiceClick = async () => {
+    const allActivities = await getAllSuggestionsByCategory(
       timeOfDay, 
       selectedInterest, 
       weather === 'sunny' ? 'sunny' : 'cloudy'
