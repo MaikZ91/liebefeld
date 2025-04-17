@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Clock, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, 
-         Moon, Sunrise, Sunset } from 'lucide-react';
+         Moon, Sunrise, Sunset, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -190,10 +189,21 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
         <Button 
           onClick={askForPersonalizedSuggestions}
           size="sm"
-          className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white"
+          className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2"
         >
+          <MessageCircle className="h-4 w-4" />
           Mehr persönliche Vorschläge
         </Button>
+        
+        <div className="absolute bottom-2 right-2 animate-pulse">
+          <MessageCircle 
+            className="h-6 w-6 text-red-500 opacity-50 hover:opacity-100 transition-opacity" 
+            onClick={() => {
+              const query = `Hilf mir bei ${selectedInterest} Aktivitäten in Bielefeld`;
+              onAskChatbot(query);
+            }}
+          />
+        </div>
       </div>
     </motion.div>
   );
