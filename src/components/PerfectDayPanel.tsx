@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Heart, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, ChevronDown, MessageSquare, Dice1, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -59,6 +59,9 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   const [relevantEvents, setRelevantEvents] = useState<any[]>([]);
   const [activitySuggestions, setActivitySuggestions] = useState<string[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const previousInterestRef = useRef<string>(selectedInterest);
+  const previousWeatherRef = useRef<string>(weather);
+  const previousTimeRef = useRef<'morning' | 'afternoon' | 'evening'>(timeOfDay);
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -87,6 +90,25 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
     }
   }, [events]);
   
+  // Neues useEffect um auf Filteränderungen zu reagieren und zu bestätigen, dass neue Vorschläge angefordert werden
+  useEffect(() => {
+    // Prüfen, ob sich ein Parameter geändert hat
+    if (previousInterestRef.current !== selectedInterest || 
+        previousWeatherRef.current !== weather ||
+        previousTimeRef.current !== timeOfDay) {
+      
+      // Parameter aktualisieren
+      previousInterestRef.current = selectedInterest;
+      previousWeatherRef.current = weather;
+      previousTimeRef.current = timeOfDay;
+      
+      // Neue Vorschläge anfordern
+      const newSuggestions = getRandomizedSuggestions();
+      setActivitySuggestions(newSuggestions);
+      console.log("Filter changed, generating new suggestions", { timeOfDay, weather, selectedInterest });
+    }
+  }, [timeOfDay, selectedInterest, weather]);
+  
   const getRandomizedSuggestions = useCallback(() => {
     // Holt neue Vorschläge basierend auf den aktuellen Parametern
     const allSuggestions = getActivitySuggestions(
@@ -95,21 +117,35 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
       weather === 'sunny' ? 'sunny' : 'cloudy'
     );
     
-    // Mische die Vorschläge
-    const shuffled = [...allSuggestions];
+    // Zusätzliche Zufälligkeit - Wähle jedes Mal einen anderen Teil der Suggestions
+    const startIndex = Math.floor(Math.random() * Math.max(1, allSuggestions.length - 4));
+    const randomSubset = allSuggestions.slice(startIndex, startIndex + 4);
+    
+    // Mische die Vorschläge mit zusätzlicher Zufälligkeit
+    const shuffled = [...randomSubset];
     for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      // Füge mehr Zufälligkeit hinzu durch Kombination von Math.random und timestamp
+      const j = Math.floor((Math.random() * Date.now()) % (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     
-    // Nimm die ersten 4 oder weniger
+    // Prüfe, ob wir genügend Vorschläge haben
+    if (shuffled.length < 4) {
+      // Falls nicht, fülle mit anderen Vorschlägen auf
+      const remainingSuggestions = allSuggestions.filter(s => !shuffled.includes(s));
+      while (shuffled.length < 4 && remainingSuggestions.length > 0) {
+        const randomIndex = Math.floor(Math.random() * remainingSuggestions.length);
+        shuffled.push(remainingSuggestions.splice(randomIndex, 1)[0]);
+      }
+    }
+    
     return shuffled.slice(0, 4);
   }, [timeOfDay, selectedInterest, weather]);
   
   useEffect(() => {
     // Hole initial Vorschläge
     setActivitySuggestions(getRandomizedSuggestions());
-  }, [timeOfDay, selectedInterest, weather, getRandomizedSuggestions]);
+  }, [getRandomizedSuggestions]);
   
   const handleSendChat = () => {
     if (chatInput.trim()) {
@@ -127,7 +163,15 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   const refreshSuggestions = () => {
     // Aktualisiere die Vorschläge mit vollständig neuen Vorschlägen
     const newSuggestions = getRandomizedSuggestions();
-    setActivitySuggestions(newSuggestions);
+    // Stellen Sie sicher, dass die Vorschläge sich von den aktuellen unterscheiden
+    if (JSON.stringify(newSuggestions) === JSON.stringify(activitySuggestions)) {
+      // Wenn sie gleich sind, fordern wir erneut neue an
+      const moreRandomSuggestions = getRandomizedSuggestions();
+      setActivitySuggestions(moreRandomSuggestions);
+    } else {
+      setActivitySuggestions(newSuggestions);
+    }
+    
     setRefreshKey(prev => prev + 1); // Trigger Animation-Reset
     toast.info("Neue Vorschläge wurden geladen!");
   };
@@ -138,9 +182,14 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
       selectedInterest, 
       weather === 'sunny' ? 'sunny' : 'cloudy'
     );
-    const randomIndex = Math.floor(Math.random() * activities.length);
+    
+    // Wähle einen Vorschlag, der nicht bereits angezeigt wird
+    let filteredActivities = activities.filter(a => !activitySuggestions.includes(a));
+    if (filteredActivities.length === 0) filteredActivities = activities;
+    
+    const randomIndex = Math.floor(Math.random() * filteredActivities.length);
     toast.info("Zufallsvorschlag für dich!", {
-      description: activities[randomIndex],
+      description: filteredActivities[randomIndex],
       duration: 4000
     });
   };

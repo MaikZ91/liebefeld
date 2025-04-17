@@ -221,16 +221,24 @@ export const getActivitySuggestions = (
       'Besuche das Heimatmuseum in Bielefeld'
     ];
     
-    // For random selection in case we want to implement "Show more" functionality later
+    // Enhanced random selection with better shuffling
     const shuffleArray = (array: string[]) => {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
+      // Create a copy to avoid modifying the original
+      const arrayCopy = [...array];
+      
+      // Fisher-Yates (Knuth) Shuffle - modern version
+      for (let i = arrayCopy.length - 1; i > 0; i--) {
+        // Add more randomness by using both Math.random and Date.now
+        const j = Math.floor((Math.random() * Date.now()) % (i + 1));
+        [arrayCopy[i], arrayCopy[j]] = [arrayCopy[j], arrayCopy[i]];
       }
-      return array;
+      
+      // Add randomness to how many items we return
+      const randomLength = Math.floor(Math.random() * (Math.min(8, arrayCopy.length) - 3)) + 3;
+      return arrayCopy.slice(0, randomLength);
     };
     
-    // Return shuffled suggestions
+    // Return newly shuffled suggestions
     return shuffleArray([...allSuggestions]);
   } catch (error) {
     return [
@@ -240,4 +248,3 @@ export const getActivitySuggestions = (
     ];
   }
 };
-
