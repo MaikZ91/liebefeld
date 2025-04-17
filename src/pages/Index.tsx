@@ -1,7 +1,7 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
+import EventChatBot from '@/components/EventChatBot';
 import InstagramFeed from '@/components/InstagramFeed';
 import CommunityTest from '@/components/CommunityTest';
 import CalendarWithChat from '@/components/CalendarWithChat';
@@ -108,28 +108,29 @@ const Index = () => {
   const [showSubtitle, setShowSubtitle] = useState(true);
   const [titleAnimating, setTitleAnimating] = useState(true);
   const WHATSAPP_URL = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
+  const chatbotRef = useRef<any>(null);
   
   useEffect(() => {
-    // Set up the global chatbot query function
-    if (typeof window !== 'undefined') {
-      (window as any).chatbotQuery = (query: string) => {
-        console.log("Global chatbot query function called with:", query);
-        // Here you would normally trigger your chatbot to open with the query
-        // For now, we'll just log it
-        alert(`Chatbot-Anfrage: ${query}`);
-      };
-    }
-    
     const textTimer = setTimeout(() => {
       setAnimationComplete(true);
       setTitleAnimating(false);
     }, 2500);
     
+    if (typeof window !== 'undefined') {
+      chatbotRef.current = (window as any).chatbotQuery;
+    }
+    
     return () => {
       clearTimeout(textTimer);
     };
   }, []);
-
+  
+  const handleChatbotQuery = (query: string) => {
+    if (chatbotRef.current) {
+      chatbotRef.current(query);
+    }
+  };
+  
   return (
     <div className="min-h-screen flex flex-col bg-black text-white">
       <CalendarNavbar />
@@ -246,7 +247,10 @@ const Index = () => {
         <div className="bg-gray-900 py-6">
           <div className="container mx-auto px-3">
             <EventProvider>
-              <PerfectDayPanel className="w-full max-w-4xl mx-auto" />
+              <PerfectDayPanel 
+                className="w-full max-w-4xl mx-auto" 
+                onAskChatbot={handleChatbotQuery}
+              />
             </EventProvider>
           </div>
         </div>
@@ -263,6 +267,8 @@ const Index = () => {
             </EventProvider>
           </div>
         </div>
+          
+        <EventChatBot />
       </main>
 
       <CommunityTest 

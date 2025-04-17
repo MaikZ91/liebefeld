@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Clock, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, 
          Moon, Sunrise, Sunset } from 'lucide-react';
@@ -12,7 +11,7 @@ import { getActivitySuggestions } from '@/utils/chatUIUtils';
 
 interface PerfectDayProps {
   className?: string;
-  onAskChatbot?: (query: string) => void;
+  onAskChatbot: (query: string) => void;
 }
 
 const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' => {
@@ -90,12 +89,8 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
       
       if (typeof window !== 'undefined' && window.chatbotQuery) {
         window.chatbotQuery(query);
-      } else if (onAskChatbot) {
-        onAskChatbot(query);
       } else {
-        // If no handler is available, still provide feedback to the user
-        console.log("No chatbot handler available for query:", query);
-        // We could add a toast here if needed
+        onAskChatbot(query);
       }
       setChatInput('');
     }

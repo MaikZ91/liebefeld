@@ -149,13 +149,8 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   };
 
   const triggerChatbotQuery = (query: string) => {
-    if (typeof window !== 'undefined') {
-      console.log("EventCalendar: Triggering chatbot query:", query);
-      if (typeof (window as any).chatbotQuery === 'function') {
-        (window as any).chatbotQuery(query);
-      } else {
-        console.log("Chatbot query function not found on window");
-      }
+    if (typeof window !== 'undefined' && (window as any).chatbotQuery) {
+      (window as any).chatbotQuery(query);
     }
   };
 
