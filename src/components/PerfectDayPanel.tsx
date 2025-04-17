@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Clock, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, 
          Moon, Sunrise, Sunset } from 'lucide-react';
@@ -82,27 +83,16 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
     onAskChatbot(query);
   };
   
-  const getTimeIcon = () => {
-    switch (timeOfDay) {
-      case 'morning':
-        return <Sunrise className="h-5 w-5 text-orange-400" />;
-      case 'afternoon':
-        return <Sun className="h-5 w-5 text-yellow-400" />;
-      case 'evening':
-        return <Moon className="h-5 w-5 text-purple-400" />;
-    }
-  };
-  
   return (
     <motion.div 
-      className={`relative bg-white dark:bg-zinc-900 shadow-lg border border-purple-200 dark:border-purple-500/20 rounded-xl ${className}`}
+      className={`relative bg-black text-white dark:bg-black dark:text-white shadow-lg border border-gray-800 dark:border-gray-700 rounded-xl ${className}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
       <div className="p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-bold text-purple-800 dark:text-purple-300 flex items-center gap-2">
+          <h3 className="text-lg font-bold text-purple-300 dark:text-purple-300 flex items-center gap-2">
             <Clock className="h-5 w-5" />
             Dein perfekter Tag in Bielefeld
           </h3>
@@ -123,7 +113,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
                     ? (interest === 'Ausgehen' ? 'bg-purple-500 hover:bg-purple-600' : 
                        interest === 'Sport' ? 'bg-green-500 hover:bg-green-600' : 
                        'bg-amber-500 hover:bg-amber-600')
-                    : ''
+                    : 'bg-transparent hover:bg-gray-800'
                 }`}
                 onClick={() => setSelectedInterest(interest)}
               >
@@ -138,14 +128,14 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <p className="text-sm text-purple-700 dark:text-purple-300 mb-2">
+            <p className="text-sm text-purple-300 dark:text-purple-300 mb-2">
               {timeOfDay === 'morning' ? 'Morgens' : timeOfDay === 'afternoon' ? 'Mittags' : 'Abends'} in Bielefeld
             </p>
             <ul className="space-y-2">
               {getActivities().slice(0, 3).map((activity, index) => (
                 <motion.li 
                   key={index}
-                  className="bg-white/60 dark:bg-white/10 rounded-lg p-2 text-sm text-zinc-800 dark:text-white flex items-center gap-2 shadow-sm"
+                  className="bg-gray-900/60 dark:bg-gray-900/60 rounded-lg p-2 text-sm text-gray-200 dark:text-gray-200 flex items-center gap-2 shadow-sm"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
@@ -163,12 +153,12 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
           
           {relevantEvents.length > 0 && (
             <div>
-              <p className="text-sm text-purple-700 dark:text-purple-300 mb-2">Events heute</p>
+              <p className="text-sm text-purple-300 dark:text-purple-300 mb-2">Events heute</p>
               <ul className="space-y-2">
                 {relevantEvents.slice(0, 3).map((event, index) => (
                   <motion.li 
                     key={event.id}
-                    className="bg-white/60 dark:bg-white/10 rounded-lg p-2 text-sm text-zinc-800 dark:text-white flex items-center gap-2 shadow-sm"
+                    className="bg-gray-900/60 dark:bg-gray-900/60 rounded-lg p-2 text-sm text-gray-200 dark:text-gray-200 flex items-center gap-2 shadow-sm"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 + 0.3 }}
