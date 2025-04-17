@@ -245,17 +245,6 @@ const Index = () => {
           </div>
         </div>
         
-        <div className="bg-black py-4 border-b border-gray-800">
-          <div className="container mx-auto px-3">
-            <EventProvider>
-              <PerfectDayPanel 
-                className="w-full max-w-4xl mx-auto" 
-                onAskChatbot={handleChatbotQuery}
-              />
-            </EventProvider>
-          </div>
-        </div>
-        
         <div className="bg-gray-900 py-4">
           <div className="container mx-auto px-3">
             <AdPanel className="w-full max-w-4xl mx-auto h-64" />
@@ -272,6 +261,15 @@ const Index = () => {
             <EventProvider>
               <CalendarWithChat defaultView="list" />
             </EventProvider>
+            
+            <div className="mt-6">
+              <EventProvider>
+                <PerfectDayPanel 
+                  className="w-full max-w-4xl mx-auto" 
+                  onAskChatbot={handleChatbotQuery}
+                />
+              </EventProvider>
+            </div>
           </div>
         </div>
           
