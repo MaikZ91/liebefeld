@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, 
-         Moon, Sunrise, Sunset } from 'lucide-react';
+import { Clock, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { useEventContext } from '@/contexts/EventContext';
 import { getFutureEvents } from '@/utils/eventUtils';
 import { getActivitySuggestions } from '@/utils/chatUIUtils';
+import { fetchWeather } from '@/utils/weatherUtils';
 
 interface PerfectDayProps {
   className?: string;
@@ -64,10 +64,17 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   }, []);
   
   useEffect(() => {
-    const randomWeather = weatherConditions[Math.floor(Math.random() * weatherConditions.length)];
-    setWeather(randomWeather);
+    const getWeather = async () => {
+      const currentWeather = await fetchWeather();
+      setWeather(currentWeather);
+    };
+    
+    getWeather();
+    const interval = setInterval(getWeather, 30 * 60 * 1000);
+    
+    return () => clearInterval(interval);
   }, []);
-  
+
   useEffect(() => {
     if (events && events.length > 0) {
       const todaysEvents = getFutureEvents(events).slice(0, 3);
@@ -81,17 +88,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
 
   const handleSendChat = () => {
     if (chatInput.trim()) {
-      const query = `${chatInput} (${selectedInterest} Aktivitäten in Bielefeld am ${
-        timeOfDay === 'morning' ? 'Morgen' : timeOfDay === 'afternoon' ? 'Nachmittag' : 'Abend'
-      } bei ${weather === 'sunny' ? 'sonnigem' : weather === 'cloudy' ? 'bewölktem' : 'teilweise bewölktem'} Wetter)`;
-      
-      console.log("Sending chatbot query:", query);
-      
-      if (typeof window !== 'undefined' && window.chatbotQuery) {
-        window.chatbotQuery(query);
-      } else {
-        onAskChatbot(query);
-      }
+      alert(`Chatbot wurde entfernt. Ihre Frage war: ${chatInput}`);
       setChatInput('');
     }
   };
