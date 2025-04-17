@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Heart, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, ChevronDown, MessageCircle, Dice1, RefreshCw, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -7,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { useEventContext } from '@/contexts/EventContext';
 import { getFutureEvents } from '@/utils/eventUtils';
-import { getActivitySuggestions, getAllSuggestionsByCategory } from '@/utils/chatUIUtils';
+import { getActivitySuggestions, getAllSuggestionsByCategory, generatePerfectDayResponse } from '@/utils/chatUIUtils';
 import { fetchWeather } from '@/utils/weatherUtils';
 import { toast } from 'sonner';
 
@@ -49,6 +50,18 @@ const getTimeIcon = (timeOfDay: 'morning' | 'afternoon' | 'evening') => {
   }
 };
 
+// Suggestion prompts that will animate
+const suggestionPrompts = [
+  "Was kannst du heute empfehlen?",
+  "Wie sieht der perfekte Tag in Liebefeld aus?",
+  "Welche Events finden heute Abend statt?",
+  "Was ist heute das Tageshighlight?",
+  "Welche Events finden in diesem Monat statt?",
+  "Wo kann ich heute Abend ausgehen?",
+  "Was gibt es für Sportaktivitäten?",
+  "Gibt es kreative Workshops?"
+];
+
 const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot }) => {
   const [timeOfDay, setTimeOfDay] = useState<'morning' | 'afternoon' | 'evening'>(getTimeOfDay());
   const [weather, setWeather] = useState('partly_cloudy');
@@ -62,6 +75,8 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   const previousWeatherRef = useRef<string>(weather);
   const previousTimeRef = useRef<'morning' | 'afternoon' | 'evening'>(timeOfDay);
   const allSuggestionsRef = useRef<Array<{ activity: string; link?: string | null }>>([]);
+  const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
+  const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(true);
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -127,6 +142,17 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
     loadInitialSuggestions();
   }, []);
   
+  // Effect for animating through suggestion prompts
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSuggestionIndex((prevIndex) => 
+        (prevIndex + 1) % suggestionPrompts.length
+      );
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, []);
+  
   const handleSendChat = () => {
     if (chatInput.trim()) {
       onAskChatbot(chatInput);
@@ -182,8 +208,34 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
     }
   };
 
+  const handleSuggestionClick = (suggestion: string) => {
+    setChatInput(suggestion);
+  };
+
+  const handlePerfectDayQuery = async () => {
+    try {
+      const allInterests = ['Ausgehen', 'Sport', 'Kreativität'];
+      const response = await generatePerfectDayResponse(timeOfDay, weather, allInterests);
+      toast.info("Dein perfekter Tag:", {
+        description: response,
+        duration: 6000
+      });
+    } catch (error) {
+      console.error("Error generating perfect day response:", error);
+      toast.error("Fehler beim Erstellen eines perfekten Tages");
+    }
+  };
+
+  const handleCollapsibleOpenChange = (open: boolean) => {
+    setIsCollapsibleOpen(open);
+  };
+
   return (
-    <Collapsible className={`relative bg-black text-white dark:bg-black dark:text-white shadow-lg border border-gray-800 dark:border-gray-700 rounded-xl ${className}`}>
+    <Collapsible 
+      className={`relative bg-black text-white dark:bg-black dark:text-white shadow-lg border border-gray-800 dark:border-gray-700 rounded-xl ${className}`}
+      open={isCollapsibleOpen}
+      onOpenChange={handleCollapsibleOpenChange}
+    >
       <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-gray-900/50 transition-colors">
         <div className="flex items-center gap-3">
           <Heart className="h-5 w-5 text-red-500" />
@@ -316,12 +368,57 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
             )}
           </div>
           
-          <div className="mt-4 flex gap-2">
+          {/* Animated suggestion prompts */}
+          <div className="mt-4 mb-2">
+            <div className="flex flex-wrap gap-2">
+              {suggestionPrompts.slice(0, 4).map((prompt, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSuggestionClick(prompt)}
+                  className="bg-gray-900/60 text-red-300 border-gray-700 hover:bg-gray-800 hover:text-red-200 text-xs"
+                >
+                  {prompt}
+                </Button>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePerfectDayQuery}
+                className="bg-red-900/20 text-red-300 border-red-800/30 hover:bg-red-900/40 hover:text-red-200 text-xs"
+              >
+                Perfekter Tag
+              </Button>
+            </div>
+          </div>
+          
+          {/* Animated placeholder text */}
+          <div className="mt-2 mb-3">
+            <div className="relative h-6 overflow-hidden">
+              {suggestionPrompts.map((prompt, index) => (
+                <motion.div
+                  key={index}
+                  className="absolute inset-0 flex items-center text-sm text-gray-400 italic"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ 
+                    opacity: currentSuggestionIndex === index ? 1 : 0,
+                    y: currentSuggestionIndex === index ? 0 : 10
+                  }}
+                  transition={{ duration: 0.5 }}
+                >
+                  {prompt}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="flex gap-2">
             <Input
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Stelle eine Frage zu Aktivitäten..."
+              placeholder={suggestionPrompts[currentSuggestionIndex]}
               className="flex-grow bg-gray-900 text-red-300 border-gray-700 focus:border-red-500"
             />
             <Button 
