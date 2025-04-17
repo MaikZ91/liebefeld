@@ -79,8 +79,23 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   };
   
   const askForPersonalizedSuggestions = () => {
-    const query = `Gib mir Vorschläge für ${selectedInterest} Aktivitäten in Bielefeld am ${timeOfDay === 'morning' ? 'Morgen' : timeOfDay === 'afternoon' ? 'Nachmittag' : 'Abend'} bei ${weather === 'sunny' ? 'sonnigem' : weather === 'cloudy' ? 'bewölktem' : 'teilweise bewölktem'} Wetter`;
-    onAskChatbot(query);
+    try {
+      const query = `Gib mir Vorschläge für ${selectedInterest} Aktivitäten in Bielefeld am ${timeOfDay === 'morning' ? 'Morgen' : timeOfDay === 'afternoon' ? 'Nachmittag' : 'Abend'} bei ${weather === 'sunny' ? 'sonnigem' : weather === 'cloudy' ? 'bewölktem' : 'teilweise bewölktem'} Wetter`;
+      
+      console.log("Sending chatbot query:", query);
+      
+      // Make sure window.chatbotQuery exists before trying to use it
+      if (typeof window !== 'undefined' && window.chatbotQuery) {
+        window.chatbotQuery(query);
+      } else {
+        // Fallback to using the prop if window.chatbotQuery doesn't exist
+        onAskChatbot(query);
+      }
+    } catch (error) {
+      console.error("Error asking for personalized suggestions:", error);
+      // Still try the prop method as fallback
+      onAskChatbot(`Vorschläge für ${selectedInterest} in Bielefeld`);
+    }
   };
   
   return (
@@ -92,7 +107,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
     >
       <div className="p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-bold text-purple-300 dark:text-purple-300 flex items-center gap-2">
+          <h3 className="text-lg font-bold text-red-500 dark:text-red-500 flex items-center gap-2">
             <Clock className="h-5 w-5" />
             Dein perfekter Tag in Bielefeld
           </h3>
@@ -128,14 +143,14 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <p className="text-sm text-purple-300 dark:text-purple-300 mb-2">
+            <p className="text-sm text-red-500 dark:text-red-500 mb-2">
               {timeOfDay === 'morning' ? 'Morgens' : timeOfDay === 'afternoon' ? 'Mittags' : 'Abends'} in Bielefeld
             </p>
             <ul className="space-y-2">
               {getActivities().slice(0, 3).map((activity, index) => (
                 <motion.li 
                   key={index}
-                  className="bg-gray-900/60 dark:bg-gray-900/60 rounded-lg p-2 text-sm text-gray-200 dark:text-gray-200 flex items-center gap-2 shadow-sm"
+                  className="bg-gray-900/60 dark:bg-gray-900/60 rounded-lg p-2 text-sm text-red-300 dark:text-red-300 flex items-center gap-2 shadow-sm"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
@@ -153,12 +168,12 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
           
           {relevantEvents.length > 0 && (
             <div>
-              <p className="text-sm text-purple-300 dark:text-purple-300 mb-2">Events heute</p>
+              <p className="text-sm text-red-500 dark:text-red-500 mb-2">Events heute</p>
               <ul className="space-y-2">
                 {relevantEvents.slice(0, 3).map((event, index) => (
                   <motion.li 
                     key={event.id}
-                    className="bg-gray-900/60 dark:bg-gray-900/60 rounded-lg p-2 text-sm text-gray-200 dark:text-gray-200 flex items-center gap-2 shadow-sm"
+                    className="bg-gray-900/60 dark:bg-gray-900/60 rounded-lg p-2 text-sm text-red-300 dark:text-red-300 flex items-center gap-2 shadow-sm"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 + 0.3 }}
@@ -175,7 +190,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
         <Button 
           onClick={askForPersonalizedSuggestions}
           size="sm"
-          className="w-full mt-4 bg-purple-600 hover:bg-purple-700 text-white"
+          className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white"
         >
           Mehr persönliche Vorschläge
         </Button>

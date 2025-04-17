@@ -22,6 +22,13 @@ interface ChatMessage {
   html?: string;
 }
 
+// Declare global window interface to add chatbotQuery
+declare global {
+  interface Window {
+    chatbotQuery: (query: string) => void;
+  }
+}
+
 const EventChatBot: React.FC = () => {
   const isMobile = useIsMobile();
   const { events } = useEventContext();
@@ -139,13 +146,24 @@ const EventChatBot: React.FC = () => {
       handleSendMessage();
     }
   };
-
-  if (!isVisible) return null;
   
   // Expose the handleExternalQuery function to window for access from other components
-  if (typeof window !== 'undefined') {
-    (window as any).chatbotQuery = handleExternalQuery;
-  }
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.chatbotQuery = handleExternalQuery;
+      console.log("Registered window.chatbotQuery function");
+    }
+    
+    return () => {
+      // Clean up when component unmounts
+      if (typeof window !== 'undefined') {
+        // @ts-ignore - we're explicitly removing the property
+        window.chatbotQuery = undefined;
+      }
+    };
+  }, []);
+
+  if (!isVisible) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end">
@@ -153,8 +171,8 @@ const EventChatBot: React.FC = () => {
         <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg mb-3 w-[320px] sm:w-[350px] max-h-[500px] flex flex-col border border-orange-200 dark:border-orange-900/40 transition-all duration-300 animate-slide-up">
           <div className="flex items-center justify-between p-3 border-b border-orange-200 dark:border-orange-900/40 bg-orange-50 dark:bg-orange-950/30 rounded-t-lg">
             <div className="flex items-center">
-              <MessageCircle className="h-5 w-5 text-orange-500 mr-2" />
-              <h3 className="font-medium">Event-Assistent</h3>
+              <MessageCircle className="h-5 w-5 text-red-500 mr-2" />
+              <h3 className="font-medium text-red-500">Event-Assistent</h3>
             </div>
             <button
               onClick={handleToggleChat}
@@ -178,7 +196,7 @@ const EventChatBot: React.FC = () => {
                 {message.html ? (
                   <div dangerouslySetInnerHTML={{ __html: message.html }} />
                 ) : (
-                  <p>{message.text}</p>
+                  <p className="text-red-500">{message.text}</p>
                 )}
               </div>
             ))}
@@ -186,9 +204,9 @@ const EventChatBot: React.FC = () => {
             {isTyping && (
               <div className="bg-gray-100 dark:bg-zinc-800 max-w-[85%] rounded-lg p-3">
                 <div className="flex space-x-2 items-center">
-                  <div className="h-2 w-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="h-2 w-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="h-2 w-2 bg-orange-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                 </div>
               </div>
             )}
@@ -204,7 +222,7 @@ const EventChatBot: React.FC = () => {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Frage nach Events..."
-                className="flex-1 border border-orange-200 dark:border-orange-900/40 rounded-full px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-zinc-800 text-sm"
+                className="flex-1 border border-orange-200 dark:border-orange-900/40 rounded-full px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-zinc-800 text-sm text-red-500"
               />
               <button
                 onClick={() => handleSendMessage()}
@@ -212,7 +230,7 @@ const EventChatBot: React.FC = () => {
                 className={cn(
                   "ml-2 rounded-full p-2",
                   input.trim() && !isTyping
-                    ? "bg-orange-500 text-white hover:bg-orange-600"
+                    ? "bg-red-500 text-white hover:bg-red-600"
                     : "bg-gray-200 text-gray-500 dark:bg-zinc-700 dark:text-zinc-400"
                 )}
               >
@@ -226,7 +244,7 @@ const EventChatBot: React.FC = () => {
       <button
         onClick={handleToggleChat}
         className={cn(
-          "bg-orange-500 hover:bg-orange-600 text-white rounded-full p-3 shadow-lg transition-all",
+          "bg-red-500 hover:bg-red-600 text-white rounded-full p-3 shadow-lg transition-all",
           isChatOpen && "rotate-90"
         )}
       >
