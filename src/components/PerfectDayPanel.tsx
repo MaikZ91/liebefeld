@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, Dice } from 'lucide-react';
+import { Clock, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, Dice1 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -164,7 +164,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
                 size="icon"
                 className="h-8 w-8 hover:bg-red-500/20 hover:text-red-400"
               >
-                <Dice className="h-4 w-4" />
+                <Dice1 className="h-4 w-4" />
               </Button>
             </div>
             <ul className="space-y-2">
