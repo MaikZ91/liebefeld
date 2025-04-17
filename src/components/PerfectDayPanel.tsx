@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Clock, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, Dice1 } from 'lucide-react';
+import { Clock, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +8,6 @@ import { useEventContext } from '@/contexts/EventContext';
 import { getFutureEvents } from '@/utils/eventUtils';
 import { getActivitySuggestions } from '@/utils/chatUIUtils';
 import { fetchWeather } from '@/utils/weatherUtils';
-import { toast } from 'sonner';
 
 interface PerfectDayProps {
   className?: string;
@@ -56,7 +54,6 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   const [chatInput, setChatInput] = useState('');
   const { events } = useEventContext();
   const [relevantEvents, setRelevantEvents] = useState<any[]>([]);
-  const [activities, setActivities] = useState<string[]>([]);
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -89,19 +86,9 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
     return getActivitySuggestions(timeOfDay, selectedInterest, weather === 'sunny' ? 'sunny' : 'cloudy');
   };
 
-  const handleRollDice = () => {
-    const newActivities = getActivitySuggestions(timeOfDay, selectedInterest, weather === 'sunny' ? 'sunny' : 'cloudy');
-    setActivities(newActivities);
-    toast.success("Neue Vorschläge generiert!");
-  };
-
-  useEffect(() => {
-    setActivities(getActivities());
-  }, [timeOfDay, selectedInterest, weather]);
-
   const handleSendChat = () => {
     if (chatInput.trim()) {
-      onAskChatbot(chatInput);
+      alert(`Chatbot wurde entfernt. Ihre Frage war: ${chatInput}`);
       setChatInput('');
     }
   };
@@ -157,23 +144,13 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-red-500 dark:text-red-500">
-                {timeOfDay === 'morning' ? 'Morgens' : timeOfDay === 'afternoon' ? 'Mittags' : 'Abends'} in Bielefeld
-              </p>
-              <Button
-                onClick={handleRollDice}
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 hover:bg-red-500/20 hover:text-red-400"
-              >
-                <Dice1 className="h-4 w-4" />
-              </Button>
-            </div>
+            <p className="text-sm text-red-500 dark:text-red-500 mb-2">
+              {timeOfDay === 'morning' ? 'Morgens' : timeOfDay === 'afternoon' ? 'Mittags' : 'Abends'} in Bielefeld
+            </p>
             <ul className="space-y-2">
-              {activities.slice(0, 3).map((activity, index) => (
+              {getActivities().slice(0, 3).map((activity, index) => (
                 <motion.li 
-                  key={`${activity}-${index}`}
+                  key={index}
                   className="bg-gray-900/60 dark:bg-gray-900/60 rounded-lg p-2 text-sm text-red-300 dark:text-red-300 flex items-center gap-2 shadow-sm"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}

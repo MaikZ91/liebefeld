@@ -6,12 +6,11 @@ import InstagramFeed from '@/components/InstagramFeed';
 import CommunityTest from '@/components/CommunityTest';
 import CalendarWithChat from '@/components/CalendarWithChat';
 import BetaTesterBanner from '@/components/BetaTesterBanner';
+import PerfectDayPanel from '@/components/PerfectDayPanel';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { QrCode } from 'lucide-react';
 import { EventProvider, useEventContext } from '@/contexts/EventContext';
-import PerfectDayPanel from '@/components/PerfectDayPanel';
-import AdPanel from '@/components/AdPanel';
 
 const LiveTickerWrapper = () => {
   const tickerRef = useRef<HTMLDivElement>(null);
@@ -245,9 +244,14 @@ const Index = () => {
           </div>
         </div>
         
-        <div className="bg-gray-900 py-4">
+        <div className="bg-gray-900 py-6">
           <div className="container mx-auto px-3">
-            <AdPanel className="w-full max-w-4xl mx-auto h-64" />
+            <EventProvider>
+              <PerfectDayPanel 
+                className="w-full max-w-4xl mx-auto" 
+                onAskChatbot={handleChatbotQuery}
+              />
+            </EventProvider>
           </div>
         </div>
         
@@ -261,15 +265,6 @@ const Index = () => {
             <EventProvider>
               <CalendarWithChat defaultView="list" />
             </EventProvider>
-            
-            <div className="mt-6">
-              <EventProvider>
-                <PerfectDayPanel 
-                  className="w-full max-w-4xl mx-auto" 
-                  onAskChatbot={handleChatbotQuery}
-                />
-              </EventProvider>
-            </div>
           </div>
         </div>
           
