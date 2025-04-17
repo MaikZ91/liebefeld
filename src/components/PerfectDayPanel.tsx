@@ -110,8 +110,8 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
     }
   }, [timeOfDay, selectedInterest, weather]);
   
-  const getRandomizedSuggestions = useCallback(() => {
-    const allSuggestions = getActivitySuggestions(
+  const getRandomizedSuggestions = useCallback(async () => {
+    const allSuggestions = await getActivitySuggestions(
       timeOfDay, 
       selectedInterest, 
       weather === 'sunny' ? 'sunny' : 'cloudy'
@@ -138,9 +138,13 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   }, [timeOfDay, selectedInterest, weather]);
   
   useEffect(() => {
-    const initialSuggestions = getRandomizedSuggestions();
-    setActivitySuggestions(initialSuggestions);
-    displayedSuggestionsRef.current = new Set(initialSuggestions);
+    const loadInitialSuggestions = async () => {
+      const initialSuggestions = await getRandomizedSuggestions();
+      setActivitySuggestions(initialSuggestions);
+      displayedSuggestionsRef.current = new Set(initialSuggestions);
+    };
+    
+    loadInitialSuggestions();
   }, [getRandomizedSuggestions]);
   
   const handleSendChat = () => {
@@ -157,55 +161,74 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   };
 
   const refreshSuggestions = async () => {
-    const allPossibleSuggestions = await getAllSuggestionsByCategory(
-      timeOfDay,
-      selectedInterest,
-      weather === 'sunny' ? 'sunny' : 'cloudy'
-    );
-    
-    const notYetDisplayed = allPossibleSuggestions.filter(
-      suggestion => !displayedSuggestionsRef.current.has(suggestion)
-    );
-    
-    let newSuggestions: string[] = [];
-    
-    if (notYetDisplayed.length >= 4) {
-      const shuffled = [...notYetDisplayed];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    try {
+      const allPossibleSuggestions = await getAllSuggestionsByCategory(
+        timeOfDay,
+        selectedInterest,
+        weather === 'sunny' ? 'sunny' : 'cloudy'
+      );
+      
+      const displayedSuggestions = Array.from(displayedSuggestionsRef.current);
+      
+      const notYetDisplayed = allPossibleSuggestions.filter(
+        suggestion => !displayedSuggestions.includes(suggestion)
+      );
+      
+      let newSuggestions: string[] = [];
+      
+      if (notYetDisplayed.length >= 4) {
+        const shuffled = [...notYetDisplayed];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        
+        newSuggestions = shuffled.slice(0, 4);
+      } else {
+        displayedSuggestionsRef.current.clear();
+        const randomSuggestions = await getActivitySuggestions(timeOfDay, selectedInterest, weather);
+        newSuggestions = randomSuggestions;
+        console.log("Resetting suggestion history due to limited new options");
       }
       
-      newSuggestions = shuffled.slice(0, 4);
-    } else {
-      displayedSuggestionsRef.current.clear();
-      const randomSuggestions = await getActivitySuggestions(timeOfDay, selectedInterest, weather);
-      newSuggestions = randomSuggestions;
-      console.log("Resetting suggestion history due to limited new options");
+      setActivitySuggestions(newSuggestions);
+      
+      newSuggestions.forEach(suggestion => displayedSuggestionsRef.current.add(suggestion));
+      
+      setRefreshKey(prev => prev + 1);
+      toast.info("Neue Vorschläge wurden geladen!");
+    } catch (error) {
+      console.error("Error refreshing suggestions:", error);
+      toast.error("Fehler beim Laden neuer Vorschläge");
     }
-    
-    setActivitySuggestions(newSuggestions);
-    newSuggestions.forEach(suggestion => displayedSuggestionsRef.current.add(suggestion));
-    
-    setRefreshKey(prev => prev + 1);
-    toast.info("Neue Vorschläge wurden geladen!");
   };
 
   const handleDiceClick = async () => {
-    const allActivities = await getAllSuggestionsByCategory(
-      timeOfDay, 
-      selectedInterest, 
-      weather === 'sunny' ? 'sunny' : 'cloudy'
-    );
-    
-    let filteredActivities = allActivities.filter(a => !activitySuggestions.includes(a));
-    if (filteredActivities.length === 0) filteredActivities = allActivities;
-    
-    const randomIndex = Math.floor(Math.random() * filteredActivities.length);
-    toast.info("Zufallsvorschlag für dich!", {
-      description: filteredActivities[randomIndex],
-      duration: 4000
-    });
+    try {
+      const allActivities = await getAllSuggestionsByCategory(
+        timeOfDay, 
+        selectedInterest, 
+        weather === 'sunny' ? 'sunny' : 'cloudy'
+      );
+      
+      if (allActivities.length === 0) {
+        toast.error("Keine Aktivitäten gefunden!");
+        return;
+      }
+      
+      let filteredActivities = allActivities.filter(a => !activitySuggestions.includes(a));
+      
+      if (filteredActivities.length === 0) filteredActivities = allActivities;
+      
+      const randomIndex = Math.floor(Math.random() * filteredActivities.length);
+      toast.info("Zufallsvorschlag für dich!", {
+        description: filteredActivities[randomIndex],
+        duration: 4000
+      });
+    } catch (error) {
+      console.error("Error getting random suggestion:", error);
+      toast.error("Fehler beim Laden eines zufälligen Vorschlags");
+    }
   };
 
   return (
