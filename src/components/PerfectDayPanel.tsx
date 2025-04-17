@@ -111,7 +111,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
             </h3>
             <p className="text-sm text-gray-400 flex items-center gap-1">
               <MessageSquare className="h-3.5 w-3.5" />
-              Dein lokaler Glücksberater 🌟
+              Dein persönlicher Glücks-Navigator 🧭
             </p>
           </div>
         </div>
