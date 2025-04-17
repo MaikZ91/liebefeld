@@ -46,7 +46,8 @@ export const getActivitySuggestions = async (
     return arrayCopy;
   };
   
-  return shuffleArray(suggestions);
+  // Shuffle and limit to 4 suggestions
+  return shuffleArray(suggestions).slice(0, 4);
 };
 
 export const getAllSuggestionsByCategory = async (
