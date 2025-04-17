@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { QrCode } from 'lucide-react';
 import { EventProvider, useEventContext } from '@/contexts/EventContext';
 import PerfectDayPanel from '@/components/PerfectDayPanel';
+import AdPanel from '@/components/AdPanel';
 
 const LiveTickerWrapper = () => {
   const tickerRef = useRef<HTMLDivElement>(null);
@@ -244,7 +245,7 @@ const Index = () => {
           </div>
         </div>
         
-        <div className="bg-gray-900 py-4">
+        <div className="bg-black py-4 border-b border-gray-800">
           <div className="container mx-auto px-3">
             <EventProvider>
               <PerfectDayPanel 
@@ -252,6 +253,12 @@ const Index = () => {
                 onAskChatbot={handleChatbotQuery}
               />
             </EventProvider>
+          </div>
+        </div>
+        
+        <div className="bg-gray-900 py-4">
+          <div className="container mx-auto px-3">
+            <AdPanel className="w-full max-w-4xl mx-auto h-64" />
           </div>
         </div>
         
