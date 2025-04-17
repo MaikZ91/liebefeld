@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Heart, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, ChevronDown, MessageSquare, Dice1, RefreshCw, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -102,7 +103,11 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
       const fetchAndSetSuggestions = async () => {
         const newSuggestions = await getActivitySuggestions(timeOfDay, selectedInterest, weather);
         setActivitySuggestions(newSuggestions);
-        displayedSuggestionsRef.current = new Set(newSuggestions);
+        
+        // Store only the activity strings in the displayed suggestions set
+        const newDisplayedSuggestions = new Set<string>();
+        newSuggestions.forEach(suggestion => newDisplayedSuggestions.add(suggestion.activity));
+        displayedSuggestionsRef.current = newDisplayedSuggestions;
       };
       
       fetchAndSetSuggestions();
@@ -111,37 +116,36 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   }, [timeOfDay, selectedInterest, weather]);
   
   const getRandomizedSuggestions = useCallback(async () => {
-    const allSuggestions = await getActivitySuggestions(
+    const allSuggestions = await getAllSuggestionsByCategory(
       timeOfDay, 
       selectedInterest, 
       weather === 'sunny' ? 'sunny' : 'cloudy'
     );
     
-    const startIndex = Math.floor(Math.random() * Math.max(1, allSuggestions.length - 5));
-    const randomSubset = allSuggestions.slice(startIndex, startIndex + 5);
+    if (allSuggestions.length === 0) {
+      console.log("No suggestions found for the current filter criteria");
+      return [];
+    }
     
-    const shuffled = [...randomSubset];
+    // Get more suggestions to ensure variety
+    const shuffled = [...allSuggestions];
     for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor((Math.random() * Date.now()) % (i + 1));
+      const j = Math.floor(Math.random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     
-    if (shuffled.length < 4) {
-      const remainingSuggestions = allSuggestions.filter(s => !shuffled.includes(s));
-      while (shuffled.length < 4 && remainingSuggestions.length > 0) {
-        const randomIndex = Math.floor(Math.random() * remainingSuggestions.length);
-        shuffled.push(remainingSuggestions.splice(randomIndex, 1)[0]);
-      }
-    }
-    
-    return shuffled.slice(0, 4);
+    return shuffled.slice(0, Math.min(8, shuffled.length));
   }, [timeOfDay, selectedInterest, weather]);
   
   useEffect(() => {
     const loadInitialSuggestions = async () => {
       const initialSuggestions = await getRandomizedSuggestions();
       setActivitySuggestions(initialSuggestions);
-      displayedSuggestionsRef.current = new Set(initialSuggestions);
+      
+      // Store only the activity strings in the displayed suggestions set
+      const newDisplayedSuggestions = new Set<string>();
+      initialSuggestions.forEach(suggestion => newDisplayedSuggestions.add(suggestion.activity));
+      displayedSuggestionsRef.current = newDisplayedSuggestions;
     };
     
     loadInitialSuggestions();
@@ -168,8 +172,15 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
         weather === 'sunny' ? 'sunny' : 'cloudy'
       );
       
+      if (allPossibleSuggestions.length === 0) {
+        toast.error("Keine Aktivitäten gefunden für diese Filterkriterien!");
+        return;
+      }
+      
+      // Get only the activity names from the current suggestions
       const displayedActivities = Array.from(displayedSuggestionsRef.current);
       
+      // Filter out activities that have already been displayed
       const notYetDisplayed = allPossibleSuggestions.filter(
         suggestion => !displayedActivities.includes(suggestion.activity)
       );
@@ -177,14 +188,16 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
       let newSuggestions: Array<{ activity: string; link?: string | null }> = [];
       
       if (notYetDisplayed.length >= 4) {
+        // Shuffle the not yet displayed suggestions
         const shuffled = [...notYetDisplayed];
         for (let i = shuffled.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
         
-        newSuggestions = shuffled.slice(0, 4);
+        newSuggestions = shuffled.slice(0, Math.min(8, shuffled.length));
       } else {
+        // If we've displayed most suggestions, reset the history and start over
         displayedSuggestionsRef.current.clear();
         const randomSuggestions = await getActivitySuggestions(timeOfDay, selectedInterest, weather);
         newSuggestions = randomSuggestions;
@@ -193,6 +206,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
       
       setActivitySuggestions(newSuggestions);
       
+      // Update the set of displayed suggestions
       newSuggestions.forEach(suggestion => 
         displayedSuggestionsRef.current.add(suggestion.activity)
       );
@@ -314,34 +328,40 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
                 {timeOfDay === 'morning' ? 'Morgens' : timeOfDay === 'afternoon' ? 'Mittags' : 'Abends'} in Bielefeld
               </p>
               <ul className="space-y-2">
-                {activitySuggestions.map((suggestion, index) => (
-                  <motion.li 
-                    key={`${suggestion.activity}-${index}-${refreshKey}`}
-                    className="bg-gray-900/60 dark:bg-gray-900/60 rounded-lg p-2 text-sm text-red-300 dark:text-red-300 flex items-center gap-2 shadow-sm"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <div className={`h-2 w-2 rounded-full ${
-                      selectedInterest === 'Ausgehen' ? 'bg-purple-500' : 
-                      selectedInterest === 'Sport' ? 'bg-green-500' : 
-                      'bg-amber-500'
-                    }`}></div>
-                    {suggestion.link ? (
-                      <a 
-                        href={suggestion.link} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="hover:text-red-400 transition-colors flex items-center gap-1"
-                      >
-                        {suggestion.activity}
-                        <ExternalLink className="h-3 w-3 inline-block" />
-                      </a>
-                    ) : (
-                      suggestion.activity
-                    )}
-                  </motion.li>
-                ))}
+                {activitySuggestions.length === 0 ? (
+                  <li className="bg-gray-900/60 dark:bg-gray-900/60 rounded-lg p-2 text-sm text-gray-400">
+                    Keine Vorschläge gefunden. Bitte versuche andere Filter.
+                  </li>
+                ) : (
+                  activitySuggestions.map((suggestion, index) => (
+                    <motion.li 
+                      key={`${suggestion.activity}-${index}-${refreshKey}`}
+                      className="bg-gray-900/60 dark:bg-gray-900/60 rounded-lg p-2 text-sm text-red-300 dark:text-red-300 flex items-center gap-2 shadow-sm"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <div className={`h-2 w-2 rounded-full ${
+                        selectedInterest === 'Ausgehen' ? 'bg-purple-500' : 
+                        selectedInterest === 'Sport' ? 'bg-green-500' : 
+                        'bg-amber-500'
+                      }`}></div>
+                      {suggestion.link ? (
+                        <a 
+                          href={suggestion.link} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="hover:text-red-400 transition-colors flex items-center gap-1 break-all"
+                        >
+                          {suggestion.activity}
+                          <ExternalLink className="h-3 w-3 inline-block flex-shrink-0" />
+                        </a>
+                      ) : (
+                        suggestion.activity
+                      )}
+                    </motion.li>
+                  ))
+                )}
               </ul>
             </div>
             

@@ -1,3 +1,4 @@
+
 export const getInitials = (name: string) => {
   return name
     .split(' ')
@@ -30,14 +31,20 @@ export const getActivitySuggestions = async (
   weather: string
 ): Promise<Array<{ activity: string; link?: string | null }>> => {
   const suggestions = await fetchSuggestions(timeOfDay, interest, weather);
+  
+  if (suggestions.length === 0) {
+    console.log("No suggestions found for the provided criteria", { timeOfDay, interest, weather });
+    return [];
+  }
+  
   const shuffleArray = (array: Array<{ activity: string; link?: string | null }>) => {
     const arrayCopy = [...array];
     for (let i = arrayCopy.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [arrayCopy[i], arrayCopy[j]] = [arrayCopy[j], arrayCopy[i]];
     }
-    const randomLength = Math.floor(Math.random() * (Math.min(8, arrayCopy.length) - 3)) + 3;
-    return arrayCopy.slice(0, randomLength);
+    // Return more suggestions to ensure variety
+    return arrayCopy.slice(0, Math.min(arrayCopy.length, 8));
   };
   
   return shuffleArray([...suggestions]);

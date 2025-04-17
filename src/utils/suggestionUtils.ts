@@ -18,7 +18,7 @@ export const fetchSuggestions = async (
     return [];
   }
 
-  return suggestions;
+  return suggestions || [];
 };
 
 export const fetchAllSuggestionsByCategory = async (
@@ -38,5 +38,5 @@ export const fetchAllSuggestionsByCategory = async (
     return [];
   }
 
-  return suggestions;
+  return suggestions || [];
 };
