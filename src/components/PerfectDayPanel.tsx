@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, ChevronDown, MessageSquare } from 'lucide-react';
+import { Heart, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, ChevronDown, MessageSquare, Dice } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import { useEventContext } from '@/contexts/EventContext';
 import { getFutureEvents } from '@/utils/eventUtils';
 import { getActivitySuggestions } from '@/utils/chatUIUtils';
 import { fetchWeather } from '@/utils/weatherUtils';
+import { toast } from 'sonner';
 
 interface PerfectDayProps {
   className?: string;
@@ -100,6 +101,20 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
     }
   };
 
+  const getRandomActivity = () => {
+    const activities = getActivitySuggestions(timeOfDay, selectedInterest, weather === 'sunny' ? 'sunny' : 'cloudy');
+    const randomIndex = Math.floor(Math.random() * activities.length);
+    return activities[randomIndex];
+  };
+
+  const handleDiceClick = () => {
+    const randomActivity = getRandomActivity();
+    toast.info("Zufallsvorschlag für dich!", {
+      description: randomActivity,
+      duration: 4000
+    });
+  };
+
   return (
     <Collapsible className={`relative bg-black text-white dark:bg-black dark:text-white shadow-lg border border-gray-800 dark:border-gray-700 rounded-xl ${className}`}>
       <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-gray-900/50 transition-colors">
@@ -116,6 +131,18 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDiceClick();
+            }}
+            className="h-7 w-7 rounded-full hover:bg-gray-800"
+            title="Zufälliger Vorschlag"
+          >
+            <Dice className="h-4 w-4 text-red-500" />
+          </Button>
           {getTimeIcon(timeOfDay)}
           {getWeatherIcon(weather)}
           <ChevronDown className="h-4 w-4 text-red-500 transition-transform duration-200 data-[state=open]:rotate-180" />
