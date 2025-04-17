@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
-import { Clock, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar } from 'lucide-react';
+import { Clock, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, 
+         Moon, Sunrise, Sunset } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,6 @@ interface PerfectDayProps {
   onAskChatbot: (query: string) => void;
 }
 
-// Function to get current time of day
 const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' => {
   const hour = new Date().getHours();
   if (hour < 12) return 'morning';
@@ -21,7 +20,6 @@ const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' => {
   return 'evening';
 };
 
-// Function to get weather icon (in a real app, this would use a weather API)
 const getWeatherIcon = (condition: string) => {
   switch (condition) {
     case 'sunny':
@@ -35,8 +33,18 @@ const getWeatherIcon = (condition: string) => {
   }
 };
 
-// Weather conditions to simulate a real app
 const weatherConditions = ['sunny', 'cloudy', 'partly_cloudy'];
+
+const getTimeIcon = (timeOfDay: 'morning' | 'afternoon' | 'evening') => {
+  switch (timeOfDay) {
+    case 'morning':
+      return <Sunrise className="h-5 w-5 text-orange-400" />;
+    case 'afternoon':
+      return <Sun className="h-5 w-5 text-yellow-400" />;
+    case 'evening':
+      return <Moon className="h-5 w-5 text-purple-400" />;
+  }
+};
 
 const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot }) => {
   const [timeOfDay, setTimeOfDay] = useState<'morning' | 'afternoon' | 'evening'>(getTimeOfDay());
@@ -45,23 +53,19 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   const { events } = useEventContext();
   const [relevantEvents, setRelevantEvents] = useState<any[]>([]);
   
-  // Update time of day
   useEffect(() => {
     const interval = setInterval(() => {
       setTimeOfDay(getTimeOfDay());
-    }, 60000); // Check every minute
+    }, 60000);
     
     return () => clearInterval(interval);
   }, []);
   
-  // Simulate weather API
   useEffect(() => {
-    // In a real app, this would be an API call
     const randomWeather = weatherConditions[Math.floor(Math.random() * weatherConditions.length)];
     setWeather(randomWeather);
   }, []);
   
-  // Get relevant events
   useEffect(() => {
     if (events && events.length > 0) {
       const todaysEvents = getFutureEvents(events).slice(0, 3);
@@ -69,26 +73,23 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
     }
   }, [events]);
   
-  // Get activities based on time, interest and weather
   const getActivities = () => {
     return getActivitySuggestions(timeOfDay, selectedInterest, weather === 'sunny' ? 'sunny' : 'cloudy');
   };
   
-  // Ask chatbot for more personalized suggestions
   const askForPersonalizedSuggestions = () => {
     const query = `Gib mir Vorschläge für ${selectedInterest} Aktivitäten in Bielefeld am ${timeOfDay === 'morning' ? 'Morgen' : timeOfDay === 'afternoon' ? 'Nachmittag' : 'Abend'} bei ${weather === 'sunny' ? 'sonnigem' : weather === 'cloudy' ? 'bewölktem' : 'teilweise bewölktem'} Wetter`;
     onAskChatbot(query);
   };
   
-  // Get time of day icon
   const getTimeIcon = () => {
     switch (timeOfDay) {
       case 'morning':
-        return <Coffee className="h-5 w-5 text-orange-400" />;
+        return <Sunrise className="h-5 w-5 text-orange-400" />;
       case 'afternoon':
-        return <Utensils className="h-5 w-5 text-green-400" />;
+        return <Sun className="h-5 w-5 text-yellow-400" />;
       case 'evening':
-        return <Wine className="h-5 w-5 text-purple-400" />;
+        return <Moon className="h-5 w-5 text-purple-400" />;
     }
   };
   
@@ -106,7 +107,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
             Dein perfekter Tag in Bielefeld
           </h3>
           <div className="flex items-center gap-2">
-            {getTimeIcon()}
+            {getTimeIcon(timeOfDay)}
             {getWeatherIcon(weather)}
           </div>
         </div>
