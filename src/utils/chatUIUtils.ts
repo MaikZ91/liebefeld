@@ -1,4 +1,3 @@
-
 import { fetchAllSuggestionsByCategory } from './suggestionUtils';
 
 export const getActivitySuggestions = async (
@@ -32,7 +31,18 @@ export const getActivitySuggestions = async (
     .filter(suggestion => !suggestion.link)
     .slice(0, 2);
   
-  return [...shuffledWithLinks, ...shuffledWithoutLinks];
+  // Changed from 2 to 4 suggestions
+  const suggestionsToReturn = [...shuffledWithLinks, ...shuffledWithoutLinks];
+  
+  // If we don't have 4 suggestions, fill with random suggestions
+  while (suggestionsToReturn.length < 4 && suggestions.length > 0) {
+    const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
+    if (!suggestionsToReturn.includes(randomSuggestion)) {
+      suggestionsToReturn.push(randomSuggestion);
+    }
+  }
+  
+  return suggestionsToReturn;
 };
 
 export const getInitials = (name: string) => {
