@@ -76,13 +76,14 @@ const EventChatBot: React.FC = () => {
     }
   };
 
-  const handleSendMessage = () => {
-    if (!input.trim()) return;
+  const handleSendMessage = (customInput?: string) => {
+    const message = customInput || input;
+    if (!message.trim()) return;
     
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       isUser: true,
-      text: input
+      text: message
     };
     
     setMessages(prev => [...prev, userMessage]);
@@ -92,8 +93,8 @@ const EventChatBot: React.FC = () => {
     // Process with small delay to show typing indicator
     setTimeout(() => {
       try {
-        console.log(`Processing user query: "${input}" with ${events.length} events`);
-        const responseHtml = generateResponse(input, events);
+        console.log(`Processing user query: "${message}" with ${events.length} events`);
+        const responseHtml = generateResponse(message, events);
         
         const botMessage: ChatMessage = {
           id: `bot-${Date.now()}`,
@@ -123,6 +124,16 @@ const EventChatBot: React.FC = () => {
     }, 800);
   };
 
+  const handleExternalQuery = (query: string) => {
+    if (!isChatOpen) {
+      setIsChatOpen(true);
+    }
+    
+    setTimeout(() => {
+      handleSendMessage(query);
+    }, 500);
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       handleSendMessage();
@@ -130,6 +141,11 @@ const EventChatBot: React.FC = () => {
   };
 
   if (!isVisible) return null;
+  
+  // Expose the handleExternalQuery function to window for access from other components
+  if (typeof window !== 'undefined') {
+    (window as any).chatbotQuery = handleExternalQuery;
+  }
 
   return (
     <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end">
@@ -191,7 +207,7 @@ const EventChatBot: React.FC = () => {
                 className="flex-1 border border-orange-200 dark:border-orange-900/40 rounded-full px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-zinc-800 text-sm"
               />
               <button
-                onClick={handleSendMessage}
+                onClick={() => handleSendMessage()}
                 disabled={!input.trim() || isTyping}
                 className={cn(
                   "ml-2 rounded-full p-2",

@@ -15,6 +15,7 @@ import EventPanel from './calendar/EventPanel';
 import FavoritesView from './calendar/FavoritesView';
 import EventForm from './EventForm';
 import AdPanel from './AdPanel';
+import PerfectDayPanel from './PerfectDayPanel';
 import { useEventContext } from '@/contexts/EventContext';
 import { toast } from 'sonner';
 
@@ -34,7 +35,6 @@ const categoryIcons = {
   "Meeting": <Users className="h-4 w-4" />
 };
 
-// Function to check if an event is a Tribe event
 export const isTribeEvent = (title: string): boolean => {
   const tribeKeywords = ['tribe', 'tuesday run', 'kennenlernabend', 'creatives circle'];
   return tribeKeywords.some(keyword => 
@@ -148,6 +148,12 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     setShowEventForm(prev => !prev);
   };
 
+  const triggerChatbotQuery = (query: string) => {
+    if (typeof window !== 'undefined' && (window as any).chatbotQuery) {
+      (window as any).chatbotQuery(query);
+    }
+  };
+
   useEffect(() => {
     if (filter !== null) {
       setSelectedDate(null);
@@ -206,8 +212,9 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                   onLike={handleLikeEvent}
                 />
               </div>
-              <div className="md:col-span-1">
+              <div className="md:col-span-1 space-y-3">
                 <AdPanel className="h-[280px]" />
+                <PerfectDayPanel className="w-full" onAskChatbot={triggerChatbotQuery} />
               </div>
             </div>
           </TabsContent>
@@ -254,6 +261,10 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                 />
                 
                 <AdPanel className="h-[200px]" />
+                <PerfectDayPanel 
+                  className="w-full h-[280px]" 
+                  onAskChatbot={triggerChatbotQuery} 
+                />
               </div>
             </div>
           </TabsContent>

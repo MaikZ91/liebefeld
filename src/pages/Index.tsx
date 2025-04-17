@@ -107,12 +107,17 @@ const Index = () => {
   const [showSubtitle, setShowSubtitle] = useState(true);
   const [titleAnimating, setTitleAnimating] = useState(true);
   const WHATSAPP_URL = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
+  const chatbotRef = useRef<any>(null);
   
   useEffect(() => {
     const textTimer = setTimeout(() => {
       setAnimationComplete(true);
       setTitleAnimating(false);
     }, 2500);
+    
+    if (typeof window !== 'undefined') {
+      chatbotRef.current = (window as any).chatbotQuery;
+    }
     
     return () => {
       clearTimeout(textTimer);
