@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Heart, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, ChevronDown, MessageSquare, Dice1, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -87,11 +87,29 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
     }
   }, [events]);
   
+  const getRandomizedSuggestions = useCallback(() => {
+    // Holt neue Vorschläge basierend auf den aktuellen Parametern
+    const allSuggestions = getActivitySuggestions(
+      timeOfDay, 
+      selectedInterest, 
+      weather === 'sunny' ? 'sunny' : 'cloudy'
+    );
+    
+    // Mische die Vorschläge
+    const shuffled = [...allSuggestions];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    
+    // Nimm die ersten 4 oder weniger
+    return shuffled.slice(0, 4);
+  }, [timeOfDay, selectedInterest, weather]);
+  
   useEffect(() => {
-    // Get activity suggestions whenever dependencies change or refresh is triggered
-    const suggestions = getActivitySuggestions(timeOfDay, selectedInterest, weather === 'sunny' ? 'sunny' : 'cloudy');
-    setActivitySuggestions(suggestions);
-  }, [timeOfDay, selectedInterest, weather, refreshKey]);
+    // Hole initial Vorschläge
+    setActivitySuggestions(getRandomizedSuggestions());
+  }, [timeOfDay, selectedInterest, weather, getRandomizedSuggestions]);
   
   const handleSendChat = () => {
     if (chatInput.trim()) {
@@ -107,12 +125,19 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   };
 
   const refreshSuggestions = () => {
-    setRefreshKey(prev => prev + 1);
+    // Aktualisiere die Vorschläge mit vollständig neuen Vorschlägen
+    const newSuggestions = getRandomizedSuggestions();
+    setActivitySuggestions(newSuggestions);
+    setRefreshKey(prev => prev + 1); // Trigger Animation-Reset
     toast.info("Neue Vorschläge wurden geladen!");
   };
 
   const handleDiceClick = () => {
-    const activities = getActivitySuggestions(timeOfDay, selectedInterest, weather === 'sunny' ? 'sunny' : 'cloudy');
+    const activities = getActivitySuggestions(
+      timeOfDay, 
+      selectedInterest, 
+      weather === 'sunny' ? 'sunny' : 'cloudy'
+    );
     const randomIndex = Math.floor(Math.random() * activities.length);
     toast.info("Zufallsvorschlag für dich!", {
       description: activities[randomIndex],
@@ -196,7 +221,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
                 {timeOfDay === 'morning' ? 'Morgens' : timeOfDay === 'afternoon' ? 'Mittags' : 'Abends'} in Bielefeld
               </p>
               <ul className="space-y-2">
-                {activitySuggestions.slice(0, 4).map((activity, index) => (
+                {activitySuggestions.map((activity, index) => (
                   <motion.li 
                     key={`${activity}-${index}-${refreshKey}`}
                     className="bg-gray-900/60 dark:bg-gray-900/60 rounded-lg p-2 text-sm text-red-300 dark:text-red-300 flex items-center gap-2 shadow-sm"
