@@ -23,13 +23,13 @@ export const getCategoryColor = (category: string): string => {
   return categoryColors[category] || categoryColors.default;
 };
 
-// Enhanced recommendation system with more specific activities for Bielefeld
-export const getActivitySuggestions = (
+// Get ALL suggestions for a specific category, time of day, and weather
+export const getAllSuggestionsByCategory = (
   timeOfDay: 'morning' | 'afternoon' | 'evening', 
   interest: string, 
   weather: string
 ): string[] => {
-  // Expanded suggestion database with more Bielefeld-specific activities
+  // Access the full database of suggestions
   const suggestions: Record<string, Record<string, Record<string, string[]>>> = {
     morning: {
       sunny: {
@@ -213,33 +213,13 @@ export const getActivitySuggestions = (
   // Map the weather to our simplified categories
   const mappedWeather = weather === 'sunny' ? 'sunny' : 'cloudy';
   
-  // Get all suggestions for the selected parameters
   try {
-    const allSuggestions = suggestions[timeOfDay][mappedWeather][interest] || [
+    // Return ALL suggestions for the selected parameters
+    return suggestions[timeOfDay][mappedWeather][interest] || [
       'Entdecke Bielefeld auf eigene Faust!',
       'Spaziergang durch die wunderschöne Altstadt von Bielefeld',
       'Besuche das Heimatmuseum in Bielefeld'
     ];
-    
-    // Enhanced random selection with better shuffling
-    const shuffleArray = (array: string[]) => {
-      // Create a copy to avoid modifying the original
-      const arrayCopy = [...array];
-      
-      // Fisher-Yates (Knuth) Shuffle - modern version
-      for (let i = arrayCopy.length - 1; i > 0; i--) {
-        // Add more randomness by using both Math.random and Date.now
-        const j = Math.floor((Math.random() * Date.now()) % (i + 1));
-        [arrayCopy[i], arrayCopy[j]] = [arrayCopy[j], arrayCopy[i]];
-      }
-      
-      // Add randomness to how many items we return
-      const randomLength = Math.floor(Math.random() * (Math.min(8, arrayCopy.length) - 3)) + 3;
-      return arrayCopy.slice(0, randomLength);
-    };
-    
-    // Return newly shuffled suggestions
-    return shuffleArray([...allSuggestions]);
   } catch (error) {
     return [
       'Entdecke Bielefeld auf eigene Faust!',
@@ -247,4 +227,34 @@ export const getActivitySuggestions = (
       'Besuche das Heimatmuseum in Bielefeld'
     ];
   }
+};
+
+// Enhanced recommendation system with more specific activities for Bielefeld
+export const getActivitySuggestions = (
+  timeOfDay: 'morning' | 'afternoon' | 'evening', 
+  interest: string, 
+  weather: string
+): string[] => {
+  // Get all suggestions for the category
+  const allSuggestions = getAllSuggestionsByCategory(timeOfDay, interest, weather);
+  
+  // Enhanced random selection with better shuffling
+  const shuffleArray = (array: string[]) => {
+    // Create a copy to avoid modifying the original
+    const arrayCopy = [...array];
+    
+    // Fisher-Yates (Knuth) Shuffle - modern version
+    for (let i = arrayCopy.length - 1; i > 0; i--) {
+      // Add more randomness by using both Math.random and Date.now
+      const j = Math.floor((Math.random() * Date.now()) % (i + 1));
+      [arrayCopy[i], arrayCopy[j]] = [arrayCopy[j], arrayCopy[i]];
+    }
+    
+    // Add randomness to how many items we return
+    const randomLength = Math.floor(Math.random() * (Math.min(8, arrayCopy.length) - 3)) + 3;
+    return arrayCopy.slice(0, randomLength);
+  };
+  
+  // Return newly shuffled suggestions
+  return shuffleArray([...allSuggestions]);
 };
