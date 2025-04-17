@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Heart, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, ChevronDown, MessageSquare, Dice1 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -131,18 +132,6 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDiceClick();
-            }}
-            className="h-7 w-7 rounded-full hover:bg-gray-800"
-            title="Zufälliger Vorschlag"
-          >
-            <Dice1 className="h-4 w-4 text-red-500" />
-          </Button>
           {getTimeIcon(timeOfDay)}
           {getWeatherIcon(weather)}
           <ChevronDown className="h-4 w-4 text-red-500 transition-transform duration-200 data-[state=open]:rotate-180" />
@@ -172,6 +161,16 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
                   {interest}
                 </Badge>
               ))}
+              
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleDiceClick}
+                className="ml-auto h-7 w-7 rounded-full bg-gray-800 hover:bg-gray-700"
+                title="Zufallsvorschlag"
+              >
+                <Dice1 className="h-4 w-4 text-red-500" />
+              </Button>
             </div>
           </div>
           
