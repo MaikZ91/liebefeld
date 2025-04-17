@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, ChevronDown, MessageSquare, Dice } from 'lucide-react';
+import { Heart, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, ChevronDown, MessageSquare, Dice1 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -141,7 +141,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
             className="h-7 w-7 rounded-full hover:bg-gray-800"
             title="Zufälliger Vorschlag"
           >
-            <Dice className="h-4 w-4 text-red-500" />
+            <Dice1 className="h-4 w-4 text-red-500" />
           </Button>
           {getTimeIcon(timeOfDay)}
           {getWeatherIcon(weather)}
