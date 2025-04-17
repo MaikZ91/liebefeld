@@ -1,4 +1,3 @@
-
 export const getInitials = (name: string) => {
   return name
     .split(' ')
@@ -30,8 +29,8 @@ export const getActivitySuggestions = async (
   interest: string, 
   weather: string
 ): Promise<Array<{ activity: string; link?: string | null }>> => {
-  // Get all matching suggestions for the category
-  const suggestions = await fetchSuggestions(timeOfDay, interest, weather);
+  // Get ALL suggestions for the category
+  const suggestions = await fetchAllSuggestionsByCategory(timeOfDay, interest, weather);
   
   if (suggestions.length === 0) {
     console.log("No suggestions found for the provided criteria", { timeOfDay, interest, weather });
@@ -44,11 +43,10 @@ export const getActivitySuggestions = async (
       const j = Math.floor(Math.random() * (i + 1));
       [arrayCopy[i], arrayCopy[j]] = [arrayCopy[j], arrayCopy[i]];
     }
-    // Return all suggestions instead of limiting
     return arrayCopy;
   };
   
-  return shuffleArray([...suggestions]);
+  return shuffleArray(suggestions);
 };
 
 export const getAllSuggestionsByCategory = async (
