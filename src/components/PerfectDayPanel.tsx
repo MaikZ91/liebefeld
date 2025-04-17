@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Clock, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar } from 'lucide-react';
+import { Clock, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
