@@ -30,6 +30,7 @@ export const getActivitySuggestions = async (
   interest: string, 
   weather: string
 ): Promise<Array<{ activity: string; link?: string | null }>> => {
+  // Get all matching suggestions for the category
   const suggestions = await fetchSuggestions(timeOfDay, interest, weather);
   
   if (suggestions.length === 0) {
@@ -43,8 +44,8 @@ export const getActivitySuggestions = async (
       const j = Math.floor(Math.random() * (i + 1));
       [arrayCopy[i], arrayCopy[j]] = [arrayCopy[j], arrayCopy[i]];
     }
-    // Return more suggestions to ensure variety
-    return arrayCopy.slice(0, Math.min(arrayCopy.length, 8));
+    // Return all suggestions instead of limiting
+    return arrayCopy;
   };
   
   return shuffleArray([...suggestions]);
@@ -55,5 +56,6 @@ export const getAllSuggestionsByCategory = async (
   interest: string, 
   weather: string
 ): Promise<Array<{ activity: string; link?: string | null }>> => {
+  // Get all suggestions for the category without weather filtering
   return fetchAllSuggestionsByCategory(timeOfDay, interest, weather);
 };

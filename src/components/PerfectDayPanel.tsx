@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Heart, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, ChevronDown, MessageSquare, Dice1, RefreshCw, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -62,7 +61,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   const previousInterestRef = useRef<string>(selectedInterest);
   const previousWeatherRef = useRef<string>(weather);
   const previousTimeRef = useRef<'morning' | 'afternoon' | 'evening'>(timeOfDay);
-  const displayedSuggestionsRef = useRef<Set<string>>(new Set());
+  const allSuggestionsRef = useRef<Array<{ activity: string; link?: string | null }>>([]);
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -101,55 +100,27 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
       previousTimeRef.current = timeOfDay;
       
       const fetchAndSetSuggestions = async () => {
-        const newSuggestions = await getActivitySuggestions(timeOfDay, selectedInterest, weather);
-        setActivitySuggestions(newSuggestions);
+        const allSuggestions = await getAllSuggestionsByCategory(timeOfDay, selectedInterest, weather);
+        allSuggestionsRef.current = allSuggestions;
         
-        // Store only the activity strings in the displayed suggestions set
-        const newDisplayedSuggestions = new Set<string>();
-        newSuggestions.forEach(suggestion => newDisplayedSuggestions.add(suggestion.activity));
-        displayedSuggestionsRef.current = newDisplayedSuggestions;
+        setActivitySuggestions(allSuggestions);
+        console.log(`Loaded all ${allSuggestions.length} suggestions for ${selectedInterest}`);
       };
       
       fetchAndSetSuggestions();
-      console.log("Filter changed, generating new suggestions", { timeOfDay, weather, selectedInterest });
     }
-  }, [timeOfDay, selectedInterest, weather]);
-  
-  const getRandomizedSuggestions = useCallback(async () => {
-    const allSuggestions = await getAllSuggestionsByCategory(
-      timeOfDay, 
-      selectedInterest, 
-      weather === 'sunny' ? 'sunny' : 'cloudy'
-    );
-    
-    if (allSuggestions.length === 0) {
-      console.log("No suggestions found for the current filter criteria");
-      return [];
-    }
-    
-    // Get more suggestions to ensure variety
-    const shuffled = [...allSuggestions];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    
-    return shuffled.slice(0, Math.min(8, shuffled.length));
   }, [timeOfDay, selectedInterest, weather]);
   
   useEffect(() => {
     const loadInitialSuggestions = async () => {
-      const initialSuggestions = await getRandomizedSuggestions();
+      const initialSuggestions = await getAllSuggestionsByCategory(timeOfDay, selectedInterest, weather);
+      allSuggestionsRef.current = initialSuggestions;
       setActivitySuggestions(initialSuggestions);
-      
-      // Store only the activity strings in the displayed suggestions set
-      const newDisplayedSuggestions = new Set<string>();
-      initialSuggestions.forEach(suggestion => newDisplayedSuggestions.add(suggestion.activity));
-      displayedSuggestionsRef.current = newDisplayedSuggestions;
+      console.log(`Initially loaded ${initialSuggestions.length} suggestions for ${selectedInterest}`);
     };
     
     loadInitialSuggestions();
-  }, [getRandomizedSuggestions]);
+  }, []);
   
   const handleSendChat = () => {
     if (chatInput.trim()) {
@@ -166,53 +137,22 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
 
   const refreshSuggestions = async () => {
     try {
-      const allPossibleSuggestions = await getAllSuggestionsByCategory(
-        timeOfDay,
-        selectedInterest,
-        weather === 'sunny' ? 'sunny' : 'cloudy'
-      );
-      
-      if (allPossibleSuggestions.length === 0) {
-        toast.error("Keine Aktivitäten gefunden für diese Filterkriterien!");
-        return;
-      }
-      
-      // Get only the activity names from the current suggestions
-      const displayedActivities = Array.from(displayedSuggestionsRef.current);
-      
-      // Filter out activities that have already been displayed
-      const notYetDisplayed = allPossibleSuggestions.filter(
-        suggestion => !displayedActivities.includes(suggestion.activity)
-      );
-      
-      let newSuggestions: Array<{ activity: string; link?: string | null }> = [];
-      
-      if (notYetDisplayed.length >= 4) {
-        // Shuffle the not yet displayed suggestions
-        const shuffled = [...notYetDisplayed];
+      if (allSuggestionsRef.current.length > 0) {
+        const shuffled = [...allSuggestionsRef.current];
         for (let i = shuffled.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
         
-        newSuggestions = shuffled.slice(0, Math.min(8, shuffled.length));
+        setActivitySuggestions(shuffled);
+        setRefreshKey(prev => prev + 1);
+        toast.info("Vorschläge wurden neu gemischt!");
       } else {
-        // If we've displayed most suggestions, reset the history and start over
-        displayedSuggestionsRef.current.clear();
-        const randomSuggestions = await getActivitySuggestions(timeOfDay, selectedInterest, weather);
-        newSuggestions = randomSuggestions;
-        console.log("Resetting suggestion history due to limited new options");
+        const newSuggestions = await getAllSuggestionsByCategory(timeOfDay, selectedInterest, weather);
+        allSuggestionsRef.current = newSuggestions;
+        setActivitySuggestions(newSuggestions);
+        toast.info("Neue Vorschläge wurden geladen!");
       }
-      
-      setActivitySuggestions(newSuggestions);
-      
-      // Update the set of displayed suggestions
-      newSuggestions.forEach(suggestion => 
-        displayedSuggestionsRef.current.add(suggestion.activity)
-      );
-      
-      setRefreshKey(prev => prev + 1);
-      toast.info("Neue Vorschläge wurden geladen!");
     } catch (error) {
       console.error("Error refreshing suggestions:", error);
       toast.error("Fehler beim Laden neuer Vorschläge");
@@ -221,24 +161,21 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
 
   const handleDiceClick = async () => {
     try {
-      const allActivities = await getAllSuggestionsByCategory(
-        timeOfDay, 
-        selectedInterest, 
-        weather === 'sunny' ? 'sunny' : 'cloudy'
-      );
+      if (allSuggestionsRef.current.length === 0) {
+        allSuggestionsRef.current = await getAllSuggestionsByCategory(
+          timeOfDay, 
+          selectedInterest, 
+          weather
+        );
+      }
       
-      if (allActivities.length === 0) {
+      if (allSuggestionsRef.current.length === 0) {
         toast.error("Keine Aktivitäten gefunden!");
         return;
       }
       
-      const activityStrings = activitySuggestions.map(s => s.activity);
-      let filteredActivities = allActivities.filter(a => !activityStrings.includes(a.activity));
-      
-      if (filteredActivities.length === 0) filteredActivities = allActivities;
-      
-      const randomIndex = Math.floor(Math.random() * filteredActivities.length);
-      const randomSuggestion = filteredActivities[randomIndex];
+      const randomIndex = Math.floor(Math.random() * allSuggestionsRef.current.length);
+      const randomSuggestion = allSuggestionsRef.current[randomIndex];
       
       toast.info("Zufallsvorschlag für dich!", {
         description: randomSuggestion.link 
@@ -327,7 +264,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
               <p className="text-sm text-red-500 dark:text-red-500 mb-2">
                 {timeOfDay === 'morning' ? 'Morgens' : timeOfDay === 'afternoon' ? 'Mittags' : 'Abends'} in Bielefeld
               </p>
-              <ul className="space-y-2">
+              <ul className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
                 {activitySuggestions.length === 0 ? (
                   <li className="bg-gray-900/60 dark:bg-gray-900/60 rounded-lg p-2 text-sm text-gray-400">
                     Keine Vorschläge gefunden. Bitte versuche andere Filter.
@@ -339,7 +276,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
                       className="bg-gray-900/60 dark:bg-gray-900/60 rounded-lg p-2 text-sm text-red-300 dark:text-red-300 flex items-center gap-2 shadow-sm"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
+                      transition={{ delay: index * 0.05 }}
                     >
                       <div className={`h-2 w-2 rounded-full ${
                         selectedInterest === 'Ausgehen' ? 'bg-purple-500' : 
