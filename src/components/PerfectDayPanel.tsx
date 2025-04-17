@@ -233,24 +233,48 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
       open={isCollapsibleOpen}
       onOpenChange={handleCollapsibleOpenChange}
     >
-      <CollapsibleTrigger className="w-full p-4 flex items-center justify-between hover:bg-gray-900/50 transition-colors">
-        <div className="flex items-center gap-3">
-          <Heart className="h-5 w-5 text-red-500" />
-          <div className="flex flex-col items-start">
-            <h3 className="text-lg font-bold text-red-500 dark:text-red-500 flex items-center gap-2">
-              Dein perfekter Tag in #Liebefeld
-            </h3>
-            <p className="text-sm text-gray-400 flex items-center gap-1">
-              <MessageCircle className="h-3.5 w-3.5" />
-              Dein persönlicher Glücks-Navigator 🧭
-            </p>
+      <CollapsibleTrigger className="w-full p-4 flex flex-col hover:bg-gray-900/50 transition-colors">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-3">
+            <Heart className="h-5 w-5 text-red-500" />
+            <div className="flex flex-col items-start">
+              <h3 className="text-lg font-bold text-red-500 dark:text-red-500 flex items-center gap-2">
+                Dein perfekter Tag in #Liebefeld
+              </h3>
+              <p className="text-sm text-gray-400 flex items-center gap-1">
+                <MessageCircle className="h-3.5 w-3.5" />
+                Dein persönlicher Glücks-Navigator 🧭
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {getTimeIcon(timeOfDay)}
+            {getWeatherIcon(weather)}
+            <ChevronDown className="h-4 w-4 text-red-500 transition-transform duration-200 data-[state=open]:rotate-180" />
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {getTimeIcon(timeOfDay)}
-          {getWeatherIcon(weather)}
-          <ChevronDown className="h-4 w-4 text-red-500 transition-transform duration-200 data-[state=open]:rotate-180" />
-        </div>
+        
+        {!isCollapsibleOpen && (
+          <div className="mt-4 px-2">
+            <div className="flex gap-2">
+              <Input
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder={suggestionPrompts[currentSuggestionIndex]}
+                className="flex-grow bg-gray-900 text-red-300 border-gray-700 focus:border-red-500"
+              />
+              <Button 
+                onClick={handleSendChat}
+                disabled={!chatInput.trim()}
+                size="default"
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Senden
+              </Button>
+            </div>
+          </div>
+        )}
       </CollapsibleTrigger>
       
       <CollapsibleContent>
