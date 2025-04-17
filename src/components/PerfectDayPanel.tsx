@@ -168,13 +168,13 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
         weather === 'sunny' ? 'sunny' : 'cloudy'
       );
       
-      const displayedSuggestions = Array.from(displayedSuggestionsRef.current);
+      const displayedActivities = Array.from(displayedSuggestionsRef.current);
       
       const notYetDisplayed = allPossibleSuggestions.filter(
-        suggestion => !displayedSuggestions.includes(suggestion)
+        suggestion => !displayedActivities.includes(suggestion.activity)
       );
       
-      let newSuggestions: string[] = [];
+      let newSuggestions: Array<{ activity: string; link?: string | null }> = [];
       
       if (notYetDisplayed.length >= 4) {
         const shuffled = [...notYetDisplayed];
@@ -193,7 +193,9 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
       
       setActivitySuggestions(newSuggestions);
       
-      newSuggestions.forEach(suggestion => displayedSuggestionsRef.current.add(suggestion));
+      newSuggestions.forEach(suggestion => 
+        displayedSuggestionsRef.current.add(suggestion.activity)
+      );
       
       setRefreshKey(prev => prev + 1);
       toast.info("Neue Vorschläge wurden geladen!");
@@ -216,13 +218,18 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
         return;
       }
       
-      let filteredActivities = allActivities.filter(a => !activitySuggestions.includes(a));
+      const activityStrings = activitySuggestions.map(s => s.activity);
+      let filteredActivities = allActivities.filter(a => !activityStrings.includes(a.activity));
       
       if (filteredActivities.length === 0) filteredActivities = allActivities;
       
       const randomIndex = Math.floor(Math.random() * filteredActivities.length);
+      const randomSuggestion = filteredActivities[randomIndex];
+      
       toast.info("Zufallsvorschlag für dich!", {
-        description: filteredActivities[randomIndex],
+        description: randomSuggestion.link 
+          ? `${randomSuggestion.activity} - ${randomSuggestion.link}`
+          : randomSuggestion.activity,
         duration: 4000
       });
     } catch (error) {

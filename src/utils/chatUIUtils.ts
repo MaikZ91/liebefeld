@@ -30,7 +30,7 @@ export const getActivitySuggestions = async (
   weather: string
 ): Promise<Array<{ activity: string; link?: string | null }>> => {
   const suggestions = await fetchSuggestions(timeOfDay, interest, weather);
-  const shuffleArray = (array: any[]) => {
+  const shuffleArray = (array: Array<{ activity: string; link?: string | null }>) => {
     const arrayCopy = [...array];
     for (let i = arrayCopy.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));

@@ -15,6 +15,7 @@ export type Database = {
           category: string
           created_at: string | null
           id: string
+          link: string | null
           time_of_day: string
           weather: string
         }
@@ -23,6 +24,7 @@ export type Database = {
           category: string
           created_at?: string | null
           id?: string
+          link?: string | null
           time_of_day: string
           weather: string
         }
@@ -31,6 +33,7 @@ export type Database = {
           category?: string
           created_at?: string | null
           id?: string
+          link?: string | null
           time_of_day?: string
           weather?: string
         }

@@ -5,7 +5,7 @@ export const fetchSuggestions = async (
   timeOfDay: 'morning' | 'afternoon' | 'evening',
   interest: string,
   weather: string
-): Promise<string[]> => {
+): Promise<Array<{ activity: string; link?: string | null }>> => {
   const { data: suggestions, error } = await supabase
     .from('activity_suggestions')
     .select('activity, link')
@@ -18,7 +18,7 @@ export const fetchSuggestions = async (
     return [];
   }
 
-  return suggestions.map(s => s.activity);
+  return suggestions;
 };
 
 export const fetchAllSuggestionsByCategory = async (
