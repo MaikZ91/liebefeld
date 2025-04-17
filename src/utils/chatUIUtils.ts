@@ -1,4 +1,3 @@
-
 export const getInitials = (name: string) => {
   return name
     .split(' ')
@@ -23,7 +22,7 @@ export const getCategoryColor = (category: string): string => {
   return categoryColors[category] || categoryColors.default;
 };
 
-import { fetchAllSuggestionsByCategory, fetchSuggestions } from './suggestionUtils';
+import { fetchAllSuggestionsByCategory } from './suggestionUtils';
 
 export const getActivitySuggestions = async (
   timeOfDay: 'morning' | 'afternoon' | 'evening', 
@@ -47,8 +46,16 @@ export const getActivitySuggestions = async (
     return arrayCopy;
   };
   
-  // Shuffle and limit to 4 suggestions
-  return shuffleArray(suggestions).slice(0, 4);
+  // Shuffle and limit to 4 suggestions, prioritizing suggestions with links
+  const shuffledWithLinks = shuffleArray(suggestions)
+    .filter(suggestion => suggestion.link)
+    .slice(0, 2);
+  
+  const shuffledWithoutLinks = shuffleArray(suggestions)
+    .filter(suggestion => !suggestion.link)
+    .slice(0, 2);
+  
+  return [...shuffledWithLinks, ...shuffledWithoutLinks];
 };
 
 export const getAllSuggestionsByCategory = async (
