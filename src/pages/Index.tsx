@@ -10,7 +10,7 @@ import PerfectDayPanel from '@/components/PerfectDayPanel';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { QrCode } from 'lucide-react';
-import { EventProvider } from '@/contexts/EventContext';
+import { EventProvider, useEventContext } from '@/contexts/EventContext';
 
 const LiveTickerWrapper = () => {
   const tickerRef = useRef<HTMLDivElement>(null);
