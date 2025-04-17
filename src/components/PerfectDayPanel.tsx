@@ -92,6 +92,10 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
         window.chatbotQuery(query);
       } else if (onAskChatbot) {
         onAskChatbot(query);
+      } else {
+        // If no handler is available, still provide feedback to the user
+        console.log("No chatbot handler available for query:", query);
+        // We could add a toast here if needed
       }
       setChatInput('');
     }

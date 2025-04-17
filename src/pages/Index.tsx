@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
@@ -109,6 +110,16 @@ const Index = () => {
   const WHATSAPP_URL = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
   
   useEffect(() => {
+    // Set up the global chatbot query function
+    if (typeof window !== 'undefined') {
+      (window as any).chatbotQuery = (query: string) => {
+        console.log("Global chatbot query function called with:", query);
+        // Here you would normally trigger your chatbot to open with the query
+        // For now, we'll just log it
+        alert(`Chatbot-Anfrage: ${query}`);
+      };
+    }
+    
     const textTimer = setTimeout(() => {
       setAnimationComplete(true);
       setTitleAnimating(false);
