@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, 
-         Moon, Sunrise, Sunset, MessageCircle } from 'lucide-react';
+         Moon, Sunrise, Sunset } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { useEventContext } from '@/contexts/EventContext';
 import { getFutureEvents } from '@/utils/eventUtils';
 import { getActivitySuggestions } from '@/utils/chatUIUtils';
@@ -50,6 +51,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   const [timeOfDay, setTimeOfDay] = useState<'morning' | 'afternoon' | 'evening'>(getTimeOfDay());
   const [weather, setWeather] = useState('partly_cloudy');
   const [selectedInterest, setSelectedInterest] = useState<string>('Ausgehen');
+  const [chatInput, setChatInput] = useState('');
   const { events } = useEventContext();
   const [relevantEvents, setRelevantEvents] = useState<any[]>([]);
   
@@ -76,27 +78,30 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   const getActivities = () => {
     return getActivitySuggestions(timeOfDay, selectedInterest, weather === 'sunny' ? 'sunny' : 'cloudy');
   };
-  
-  const askForPersonalizedSuggestions = () => {
-    try {
-      const query = `Gib mir Vorschläge für ${selectedInterest} Aktivitäten in Bielefeld am ${timeOfDay === 'morning' ? 'Morgen' : timeOfDay === 'afternoon' ? 'Nachmittag' : 'Abend'} bei ${weather === 'sunny' ? 'sonnigem' : weather === 'cloudy' ? 'bewölktem' : 'teilweise bewölktem'} Wetter`;
+
+  const handleSendChat = () => {
+    if (chatInput.trim()) {
+      const query = `${chatInput} (${selectedInterest} Aktivitäten in Bielefeld am ${
+        timeOfDay === 'morning' ? 'Morgen' : timeOfDay === 'afternoon' ? 'Nachmittag' : 'Abend'
+      } bei ${weather === 'sunny' ? 'sonnigem' : weather === 'cloudy' ? 'bewölktem' : 'teilweise bewölktem'} Wetter)`;
       
       console.log("Sending chatbot query:", query);
       
-      // Make sure window.chatbotQuery exists before trying to use it
       if (typeof window !== 'undefined' && window.chatbotQuery) {
         window.chatbotQuery(query);
       } else {
-        // Fallback to using the prop if window.chatbotQuery doesn't exist
         onAskChatbot(query);
       }
-    } catch (error) {
-      console.error("Error asking for personalized suggestions:", error);
-      // Still try the prop method as fallback
-      onAskChatbot(`Vorschläge für ${selectedInterest} in Bielefeld`);
+      setChatInput('');
     }
   };
-  
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && chatInput.trim()) {
+      handleSendChat();
+    }
+  };
+
   return (
     <motion.div 
       className={`relative bg-black text-white dark:bg-black dark:text-white shadow-lg border border-gray-800 dark:border-gray-700 rounded-xl ${className}`}
@@ -186,23 +191,22 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
           )}
         </div>
         
-        <Button 
-          onClick={askForPersonalizedSuggestions}
-          size="sm"
-          className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2"
-        >
-          <MessageCircle className="h-4 w-4" />
-          Mehr persönliche Vorschläge
-        </Button>
-        
-        <div className="absolute bottom-2 right-2 animate-pulse">
-          <MessageCircle 
-            className="h-6 w-6 text-red-500 opacity-50 hover:opacity-100 transition-opacity" 
-            onClick={() => {
-              const query = `Hilf mir bei ${selectedInterest} Aktivitäten in Bielefeld`;
-              onAskChatbot(query);
-            }}
+        <div className="mt-4 flex gap-2">
+          <Input
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Stelle eine Frage zu Aktivitäten..."
+            className="flex-grow bg-gray-900 text-red-300 border-gray-700 focus:border-red-500"
           />
+          <Button 
+            onClick={handleSendChat}
+            disabled={!chatInput.trim()}
+            size="default"
+            className="bg-red-600 hover:bg-red-700 text-white"
+          >
+            Senden
+          </Button>
         </div>
       </div>
     </motion.div>
