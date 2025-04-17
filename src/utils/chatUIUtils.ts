@@ -1,4 +1,3 @@
-
 export const getInitials = (name: string) => {
   return name
     .split(' ')
@@ -25,26 +24,16 @@ export const getCategoryColor = (category: string): string => {
 
 import { fetchAllSuggestionsByCategory, fetchSuggestions } from './suggestionUtils';
 
-// Get ALL suggestions for a specific category, time of day, and weather
-export const getAllSuggestionsByCategory = async (
-  timeOfDay: 'morning' | 'afternoon' | 'evening', 
-  interest: string, 
-  weather: string
-): Promise<string[]> => {
-  return fetchAllSuggestionsByCategory(timeOfDay, interest, weather);
-};
-
-// Enhanced recommendation system with more specific activities for Bielefeld
 export const getActivitySuggestions = async (
   timeOfDay: 'morning' | 'afternoon' | 'evening', 
   interest: string, 
   weather: string
-): Promise<string[]> => {
+): Promise<Array<{ activity: string; link?: string | null }>> => {
   const suggestions = await fetchSuggestions(timeOfDay, interest, weather);
-  const shuffleArray = (array: string[]) => {
+  const shuffleArray = (array: any[]) => {
     const arrayCopy = [...array];
     for (let i = arrayCopy.length - 1; i > 0; i--) {
-      const j = Math.floor((Math.random() * Date.now()) % (i + 1));
+      const j = Math.floor(Math.random() * (i + 1));
       [arrayCopy[i], arrayCopy[j]] = [arrayCopy[j], arrayCopy[i]];
     }
     const randomLength = Math.floor(Math.random() * (Math.min(8, arrayCopy.length) - 3)) + 3;
@@ -52,4 +41,12 @@ export const getActivitySuggestions = async (
   };
   
   return shuffleArray([...suggestions]);
+};
+
+export const getAllSuggestionsByCategory = async (
+  timeOfDay: 'morning' | 'afternoon' | 'evening', 
+  interest: string, 
+  weather: string
+): Promise<Array<{ activity: string; link?: string | null }>> => {
+  return fetchAllSuggestionsByCategory(timeOfDay, interest, weather);
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Heart, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, ChevronDown, MessageSquare, Dice1, RefreshCw } from 'lucide-react';
+import { Heart, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, ChevronDown, MessageSquare, Dice1, RefreshCw, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -56,7 +56,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
   const [chatInput, setChatInput] = useState('');
   const { events } = useEventContext();
   const [relevantEvents, setRelevantEvents] = useState<any[]>([]);
-  const [activitySuggestions, setActivitySuggestions] = useState<string[]>([]);
+  const [activitySuggestions, setActivitySuggestions] = useState<Array<{ activity: string; link?: string | null }>>([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const previousInterestRef = useRef<string>(selectedInterest);
   const previousWeatherRef = useRef<string>(weather);
@@ -307,9 +307,9 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
                 {timeOfDay === 'morning' ? 'Morgens' : timeOfDay === 'afternoon' ? 'Mittags' : 'Abends'} in Bielefeld
               </p>
               <ul className="space-y-2">
-                {activitySuggestions.map((activity, index) => (
+                {activitySuggestions.map((suggestion, index) => (
                   <motion.li 
-                    key={`${activity}-${index}-${refreshKey}`}
+                    key={`${suggestion.activity}-${index}-${refreshKey}`}
                     className="bg-gray-900/60 dark:bg-gray-900/60 rounded-lg p-2 text-sm text-red-300 dark:text-red-300 flex items-center gap-2 shadow-sm"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -320,7 +320,19 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
                       selectedInterest === 'Sport' ? 'bg-green-500' : 
                       'bg-amber-500'
                     }`}></div>
-                    {activity}
+                    {suggestion.link ? (
+                      <a 
+                        href={suggestion.link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="hover:text-red-400 transition-colors flex items-center gap-1"
+                      >
+                        {suggestion.activity}
+                        <ExternalLink className="h-3 w-3 inline-block" />
+                      </a>
+                    ) : (
+                      suggestion.activity
+                    )}
                   </motion.li>
                 ))}
               </ul>
