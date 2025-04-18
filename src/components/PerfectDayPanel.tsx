@@ -156,10 +156,20 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
     }
     
     if (chatInput.trim()) {
-      const query = `Finde kreative Events und Workshops passend zu meiner Stimmung: ${chatInput}. Berücksichtige dabei die Tageszeit (${timeOfDay}) und das Wetter (${weather}). Konzentriere dich auf kreative Aktivitäten wie Kunst, Musik, Theater, Workshops und andere inspirierende Erlebnisse.`;
+      let query;
+      
+      if (chatInput.toLowerCase().includes('events heute') || 
+          chatInput.toLowerCase().includes('events today') ||
+          (chatInput.toLowerCase().includes('events') && chatInput.toLowerCase().includes('heute'))) {
+        query = `Finde Events für heute. Gib mir alle verfügbaren Events ohne Einschränkung auf bestimmte Kategorien.`;
+        toast.success("Ich suche alle Events für heute!");
+      } else {
+        query = `Finde kreative Events und Workshops passend zu meiner Stimmung: ${chatInput}. Berücksichtige dabei die Tageszeit (${timeOfDay}) und das Wetter (${weather}). Konzentriere dich auf kreative Aktivitäten wie Kunst, Musik, Theater, Workshops und andere inspirierende Erlebnisse.`;
+        toast.success("Ich suche kreative Events für dich!");
+      }
+      
       onAskChatbot(query);
       setChatInput('');
-      toast.success("Ich suche kreative Events für dich!");
     }
   };
 
