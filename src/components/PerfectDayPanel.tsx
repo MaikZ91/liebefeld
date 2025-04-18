@@ -150,15 +150,21 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
     return () => clearInterval(interval);
   }, []);
   
-  const handleSendChat = () => {
+  const handleSendChat = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    
     if (chatInput.trim()) {
       onAskChatbot(chatInput);
       setChatInput('');
+      toast.success("Frage an den Chatbot gesendet!");
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && chatInput.trim()) {
+      e.stopPropagation();
       handleSendChat();
     }
   };
@@ -255,12 +261,13 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
         </div>
         
         {!isCollapsibleOpen && (
-          <div className="mt-4 px-2">
+          <div className="mt-4 px-2" onClick={(e) => e.stopPropagation()}>
             <div className="flex gap-2">
               <Input
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyPress={handleKeyPress}
+                onClick={(e) => e.stopPropagation()}
                 placeholder={suggestionPrompts[currentSuggestionIndex]}
                 className="flex-grow bg-gray-900 text-red-300 border-gray-700 focus:border-red-500 text-sm"
               />
@@ -430,24 +437,6 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
                 </motion.div>
               ))}
             </div>
-          </div>
-          
-          <div className="flex gap-2">
-            <Input
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder={suggestionPrompts[currentSuggestionIndex]}
-              className="flex-grow bg-gray-900 text-red-300 border-gray-700 focus:border-red-500"
-            />
-            <Button 
-              onClick={handleSendChat}
-              disabled={!chatInput.trim()}
-              size="default"
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              Senden
-            </Button>
           </div>
         </div>
       </CollapsibleContent>
