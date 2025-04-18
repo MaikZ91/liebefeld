@@ -50,14 +50,14 @@ const getTimeIcon = (timeOfDay: 'morning' | 'afternoon' | 'evening') => {
 };
 
 const suggestionPrompts = [
-  "Events heute?",
-  "Perfekter Tag?", 
-  "Was läuft Abends?",
-  "Tageshighlight?",
-  "Events diesen Monat?",
-  "Ausgehen heute?",
-  "Sportaktivitäten?",
-  "Kreative Workshops?"
+  "Ich suche was Entspannendes 😌",
+  "Ich will unter Menschen 🤝",
+  "Ich brauche Abwechslung 🎯",
+  "Zeit für mich alleine 🧘‍♂️",
+  "Ich will tanzen 💃",
+  "Lust auf Sport 🏃‍♂️",
+  "Kreativ sein 🎨",
+  "Neue Leute kennenlernen 👋"
 ];
 
 const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot }) => {
@@ -156,9 +156,10 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
     }
     
     if (chatInput.trim()) {
-      onAskChatbot(chatInput);
+      const query = `Finde Events passend zu meiner Stimmung: ${chatInput}. Berücksichtige dabei die Tageszeit (${timeOfDay}) und das Wetter (${weather}).`;
+      onAskChatbot(query);
       setChatInput('');
-      toast.success("Frage an den Chatbot gesendet!");
+      toast.success("Ich suche passende Events für deine Stimmung!");
     }
   };
 
