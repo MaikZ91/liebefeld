@@ -156,10 +156,10 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
     }
     
     if (chatInput.trim()) {
-      const query = `Finde Events passend zu meiner Stimmung: ${chatInput}. Berücksichtige dabei die Tageszeit (${timeOfDay}) und das Wetter (${weather}).`;
+      const query = `Finde kreative Events und Workshops passend zu meiner Stimmung: ${chatInput}. Berücksichtige dabei die Tageszeit (${timeOfDay}) und das Wetter (${weather}). Konzentriere dich auf kreative Aktivitäten wie Kunst, Musik, Theater, Workshops und andere inspirierende Erlebnisse.`;
       onAskChatbot(query);
       setChatInput('');
-      toast.success("Ich suche passende Events für deine Stimmung!");
+      toast.success("Ich suche kreative Events für dich!");
     }
   };
 
