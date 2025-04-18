@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Heart, Cloud, CloudSun, Sun, Music, Dumbbell, Calendar, Sunrise, Moon, ChevronDown, MessageCircle, Dice1, RefreshCw, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -50,14 +50,14 @@ const getTimeIcon = (timeOfDay: 'morning' | 'afternoon' | 'evening') => {
 };
 
 const suggestionPrompts = [
-  "Was kannst du heute empfehlen?",
-  "Wie sieht der perfekte Tag in Liebefeld aus?",
-  "Welche Events finden heute Abend statt?",
-  "Was ist heute das Tageshighlight?",
-  "Welche Events finden in diesem Monat statt?",
-  "Wo kann ich heute Abend ausgehen?",
-  "Was gibt es für Sportaktivitäten?",
-  "Gibt es kreative Workshops?"
+  "Events heute?",
+  "Perfekter Tag?", 
+  "Was läuft Abends?",
+  "Tageshighlight?",
+  "Events diesen Monat?",
+  "Ausgehen heute?",
+  "Sportaktivitäten?",
+  "Kreative Workshops?"
 ];
 
 const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot }) => {
@@ -262,7 +262,7 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder={suggestionPrompts[currentSuggestionIndex]}
-                className="flex-grow bg-gray-900 text-red-300 border-gray-700 focus:border-red-500"
+                className="flex-grow bg-gray-900 text-red-300 border-gray-700 focus:border-red-500 text-sm"
               />
               <Button 
                 onClick={handleSendChat}
