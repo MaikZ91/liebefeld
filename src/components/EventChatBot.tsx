@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEventContext } from '@/contexts/EventContext';
@@ -98,10 +97,11 @@ const EventChatBot: React.FC = () => {
     setIsTyping(true);
     
     // Process with small delay to show typing indicator
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
         console.log(`Processing user query: "${message}" with ${events.length} events`);
-        const responseHtml = generateResponse(message, events);
+        // Fix: Await the response from generateResponse since it's async
+        const responseHtml = await generateResponse(message, events);
         
         const botMessage: ChatMessage = {
           id: `bot-${Date.now()}`,

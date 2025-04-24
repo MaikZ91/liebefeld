@@ -1,3 +1,4 @@
+
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { fetchWeather } from './weatherUtils';
@@ -60,7 +61,8 @@ export const generateResponse = async (query: string, events: any[]) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabase.supabaseKey}`
+        // Fix: Use the raw API key instead of the protected property
+        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrbGVvc2Z2dHFjbXF4cWlobm9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA5MzQ0NjIsImV4cCI6MjA1NjUxMDQ2Mn0.70wsZ-c7poYFnbTyXbKrG0b6YPSe-BonMN6kjZ2a2Wo`
       },
       body: JSON.stringify({
         query,
