@@ -63,6 +63,7 @@ serve(async (req) => {
 
     console.log('Sending request to Open Router API...');
     
+    // Using a free model (gpt-3.5-turbo) instead of Mistral
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -72,7 +73,7 @@ serve(async (req) => {
         'X-Title': 'Lovable Chat'
       },
       body: JSON.stringify({
-        model: 'mistralai/mistral-7b-instruct',
+        model: 'openai/gpt-3.5-turbo',  // Changed to a free/cheaper model
         messages: [
           { role: 'system', content: systemMessage },
           { role: 'user', content: query }
@@ -83,7 +84,38 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Open Router API error: ${response.statusText}`);
+      console.error(`Open Router API error: ${response.status} ${response.statusText}`);
+      
+      // Generate a fallback response without using the AI API
+      const fallbackResponse = `
+        <div class="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-3">
+          <h5 class="font-medium text-sm text-yellow-600 dark:text-yellow-400">Lokale Antwort:</h5>
+          <p class="text-sm mt-2">
+            Ich konnte leider keine KI-Antwort für deine Frage generieren. 
+            ${events.length > 0 ? 
+              `Hier sind die nächsten ${Math.min(3, events.length)} Events, die stattfinden:` : 
+              'Es sind derzeit keine Events verfügbar.'
+            }
+          </p>
+          ${events.length > 0 ? 
+            `<ul class="mt-2 space-y-2">
+              ${events.slice(0, 3).map(event => `
+                <li class="bg-gray-900/20 border border-gray-700/20 rounded-lg p-2">
+                  <strong>${event.title}</strong> (${event.date}, ${event.time})
+                  ${event.location ? `<br>Ort: ${event.location}` : ''}
+                </li>
+              `).join('')}
+            </ul>` : ''
+          }
+          <p class="text-sm mt-2">
+            Du kannst spezifischer nach Events fragen, z.B. nach Datum, Kategorie oder Ort.
+          </p>
+        </div>
+      `;
+      
+      return new Response(JSON.stringify({ response: fallbackResponse }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     const data = await response.json();
@@ -95,8 +127,25 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in AI chat function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
+    
+    // Return a friendly error message with suggestions
+    const errorResponse = `
+      <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
+        <h5 class="font-medium text-sm text-red-600 dark:text-red-400">Fehler bei der Verarbeitung:</h5>
+        <p class="text-sm mt-2">
+          Entschuldigung, ich konnte deine Anfrage nicht verarbeiten. 
+          Hier sind einige Möglichkeiten, wie du weitermachen kannst:
+        </p>
+        <ul class="list-disc list-inside mt-1 text-sm space-y-1">
+          <li>Stelle deine Frage anders</li>
+          <li>Frage nach Events für heute oder diese Woche</li>
+          <li>Suche nach einer bestimmten Kategorie, wie "Konzerte" oder "Sport"</li>
+        </ul>
+      </div>
+    `;
+    
+    return new Response(JSON.stringify({ response: errorResponse }), {
+      status: 200, // Return 200 even for errors to show the message to user
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
