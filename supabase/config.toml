@@ -1,5 +1,8 @@
 
 project_id = "ykleosfvtqcmqxqihnod"
 
+[functions.ai-event-chat]
+verify_jwt = false
+
 [functions.send-partner-email]
 verify_jwt = false
