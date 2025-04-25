@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
@@ -13,7 +12,6 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -21,10 +19,8 @@ serve(async (req) => {
   try {
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
     
-    // Get request data
     const { query, timeOfDay, weather } = await req.json();
     
-    // Fetch all events from the database
     const { data: events, error: eventsError } = await supabase
       .from('community_events')
       .select('*')
@@ -34,7 +30,6 @@ serve(async (req) => {
       throw new Error(`Error fetching events: ${eventsError.message}`);
     }
 
-    // Format events data for the AI
     const formattedEvents = events.map(event => `
       Event: ${event.title}
       Datum: ${event.date}
@@ -44,7 +39,6 @@ serve(async (req) => {
       ${event.description ? `Beschreibung: ${event.description}` : ''}
     `).join('\n\n');
 
-    // Prepare system message with context
     const systemMessage = `Du bist ein hilfreicher Event-Assistent für Liebefeld. 
     Aktuelle Tageszeit: ${timeOfDay}
     Aktuelles Wetter: ${weather}
@@ -61,9 +55,8 @@ serve(async (req) => {
     
     Format deine Antworten klar und übersichtlich.`;
 
-    console.log('Sending request to Open Router API...');
+    console.log('Sending request to Open Router API with Gemini model...');
     
-    // Using a free model (gpt-3.5-turbo) instead of Mistral
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -73,7 +66,7 @@ serve(async (req) => {
         'X-Title': 'Lovable Chat'
       },
       body: JSON.stringify({
-        model: 'openai/gpt-3.5-turbo',  // Changed to a free/cheaper model
+        model: 'google/gemini-2.0-flash-exp:free',
         messages: [
           { role: 'system', content: systemMessage },
           { role: 'user', content: query }
@@ -86,7 +79,6 @@ serve(async (req) => {
     if (!response.ok) {
       console.error(`Open Router API error: ${response.status} ${response.statusText}`);
       
-      // Generate a fallback response without using the AI API
       const fallbackResponse = `
         <div class="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-3">
           <h5 class="font-medium text-sm text-yellow-600 dark:text-yellow-400">Lokale Antwort:</h5>
@@ -128,7 +120,6 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in AI chat function:', error);
     
-    // Return a friendly error message with suggestions
     const errorResponse = `
       <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
         <h5 class="font-medium text-sm text-red-600 dark:text-red-400">Fehler bei der Verarbeitung:</h5>
@@ -145,7 +136,7 @@ serve(async (req) => {
     `;
     
     return new Response(JSON.stringify({ response: errorResponse }), {
-      status: 200, // Return 200 even for errors to show the message to user
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
