@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
@@ -19,9 +20,10 @@ serve(async (req) => {
   try {
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
     
-    const { query, timeOfDay, weather } = await req.json();
+    const { query, timeOfDay, weather, allEvents } = await req.json();
     
-    const { data: events, error: eventsError } = await supabase
+    // Fetch all events from the database for backup/fallback
+    const { data: dbEvents, error: eventsError } = await supabase
       .from('community_events')
       .select('*')
       .order('date', { ascending: true });
@@ -30,6 +32,12 @@ serve(async (req) => {
       throw new Error(`Error fetching events: ${eventsError.message}`);
     }
 
+    // Use the provided allEvents array (which includes GitHub events) instead of just database events
+    const events = allEvents && allEvents.length > 0 ? allEvents : dbEvents;
+    
+    console.log(`Processing ${events.length} events for AI response (${allEvents ? allEvents.length : 0} provided from frontend)`);
+
+    // Format events data for the AI - making sure all events are included
     const formattedEvents = events.map(event => `
       Event: ${event.title}
       Datum: ${event.date}
@@ -37,6 +45,7 @@ serve(async (req) => {
       Kategorie: ${event.category}
       ${event.location ? `Ort: ${event.location}` : ''}
       ${event.description ? `Beschreibung: ${event.description}` : ''}
+      ${event.id.startsWith('github-') ? 'Quelle: Externe Veranstaltung' : 'Quelle: Community Event'}
     `).join('\n\n');
 
     const systemMessage = `Du bist ein hilfreicher Event-Assistent für Liebefeld. 
@@ -52,6 +61,7 @@ serve(async (req) => {
     2. Die spezifischen Interessen in der Anfrage
     3. Gib relevante Events mit allen Details an
     4. Wenn keine passenden Events gefunden wurden, mache alternative Vorschläge
+    5. Berücksichtige ALLE Events, auch die aus externen Quellen (mit 'Quelle: Externe Veranstaltung' gekennzeichnet)
     
     Format deine Antworten klar und übersichtlich.`;
 

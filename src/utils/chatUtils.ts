@@ -57,17 +57,25 @@ export const formatEvents = (events: any[]) => {
 
 export const generateResponse = async (query: string, events: any[]) => {
   try {
+    console.log(`Generating AI response for query: "${query}" with ${events.length} events`);
+    
+    // Log a sample of events being sent to check if GitHub events are included
+    const sampleEvents = events.slice(0, 2);
+    const githubEventsCount = events.filter(e => e.id.startsWith('github-')).length;
+    console.log(`Sample of events being sent to AI: ${JSON.stringify(sampleEvents)}`);
+    console.log(`Total events: ${events.length}, GitHub events: ${githubEventsCount}`);
+    
     const response = await fetch('https://ykleosfvtqcmqxqihnod.supabase.co/functions/v1/ai-event-chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // Fix: Use the raw API key instead of the protected property
         'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrbGVvc2Z2dHFjbXF4cWlobm9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA5MzQ0NjIsImV4cCI6MjA1NjUxMDQ2Mn0.70wsZ-c7poYFnbTyXbKrG0b6YPSe-BonMN6kjZ2a2Wo`
       },
       body: JSON.stringify({
         query,
         timeOfDay: getTimeOfDay(),
-        weather: await fetchWeather()
+        weather: await fetchWeather(),
+        allEvents: events  // Pass all events, including GitHub events
       })
     });
 
