@@ -37,6 +37,49 @@ serve(async (req) => {
     
     console.log(`Processing ${events.length} events for AI response (${allEvents ? allEvents.length : 0} provided from frontend)`);
 
+    // Prüfe Events für heute
+    const today = new Date().toISOString().split('T')[0];
+    const todayEvents = events.filter(e => e.date === today);
+    console.log(`Events für heute (${today}): ${todayEvents.length}`);
+    
+    // Bei Fragen nach heutigen Events, schnellere Antwort direkt zurückgeben
+    const heutePatterns = [
+      /heute/i, /today/i, /was geht/i, /was gibt/i, /was ist los/i, 
+      /was läuft/i, /heute abend/i, /aktuell/i, /jetzt/i
+    ];
+    
+    const isAskingForToday = heutePatterns.some(pattern => pattern.test(query));
+    
+    if (isAskingForToday && todayEvents.length > 0) {
+      console.log('Direkte Antwort für heutige Events generieren');
+      
+      // Schnell direkte Antwort generieren ohne KI-Modell
+      let response = `
+        <div class="bg-amber-900/10 border border-amber-700/30 rounded-lg p-3 mb-3">
+          <p class="text-sm">Hier sind die Events für heute, ${today}:</p>
+        </div>
+      `;
+      
+      for (const event of todayEvents) {
+        const isGitHubEvent = event.id.startsWith('github-');
+        response += `
+          <div class="mb-3 p-3 rounded-md ${isGitHubEvent ? 'bg-blue-900/10 border border-blue-700/30' : 'bg-gray-900/10 border border-gray-700/30'}">
+            <h5 class="font-medium text-red-500">${event.title}</h5>
+            <p class="text-xs text-gray-400">${isGitHubEvent ? 'Externe Veranstaltung' : 'Community Event'}</p>
+            <p class="text-sm">
+              um ${event.time} Uhr
+              ${event.location ? `im ${event.location}` : ''}
+            </p>
+            ${event.description ? `<p class="text-sm mt-1">${event.description}</p>` : ''}
+          </div>
+        `;
+      }
+      
+      return new Response(JSON.stringify({ response }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
     // Format events data for the AI - making sure all events are included
     const formattedEvents = events.map(event => `
       Event: ${event.title}
@@ -88,6 +131,31 @@ serve(async (req) => {
 
     if (!response.ok) {
       console.error(`Open Router API error: ${response.status} ${response.statusText}`);
+      
+      // Fallback für heutige Events
+      if (todayEvents.length > 0) {
+        let fallbackResponse = '<div class="bg-yellow-900/10 border border-yellow-700/30 rounded-lg p-3 mb-3">';
+        fallbackResponse += `<p class="text-sm">Hier sind die Events für heute (${today}):</p></div>`;
+        
+        for (const event of todayEvents) {
+          const isGitHubEvent = event.id.startsWith('github-');
+          fallbackResponse += `
+            <div class="mb-3 p-3 rounded-md ${isGitHubEvent ? 'bg-blue-900/10 border border-blue-700/30' : 'bg-gray-900/10 border border-gray-700/30'}">
+              <h5 class="font-medium text-red-500">${event.title}</h5>
+              <p class="text-xs text-gray-400">${isGitHubEvent ? 'Externe Veranstaltung' : 'Community Event'}</p>
+              <p class="text-sm">
+                um ${event.time} Uhr
+                ${event.location ? `im ${event.location}` : ''}
+              </p>
+              ${event.description ? `<p class="text-sm mt-1">${event.description}</p>` : ''}
+            </div>
+          `;
+        }
+        
+        return new Response(JSON.stringify({ response: fallbackResponse }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
       
       const fallbackResponse = `
         <div class="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-3">
