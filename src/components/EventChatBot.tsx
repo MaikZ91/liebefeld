@@ -1,10 +1,10 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEventContext } from '@/contexts/EventContext';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  MessageCircle, X, Send, ChevronDown, 
-  CalendarDays, Clock, User, MapPin 
+  MessageCircle, X, Send, ChevronDown
 } from 'lucide-react';
 import { 
   generateResponse, 
@@ -168,41 +168,44 @@ const EventChatBot: React.FC = () => {
   return (
     <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end">
       {isChatOpen && (
-        <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg mb-3 w-[320px] sm:w-[350px] max-h-[500px] flex flex-col border border-orange-200 dark:border-orange-900/40 transition-all duration-300 animate-slide-up">
-          <div className="flex items-center justify-between p-3 border-b border-orange-200 dark:border-orange-900/40 bg-orange-50 dark:bg-orange-950/30 rounded-t-lg">
+        <div className="bg-black dark:bg-zinc-900/95 rounded-lg shadow-xl mb-3 w-[320px] sm:w-[350px] max-h-[500px] flex flex-col border border-red-500/20 transition-all duration-300 animate-slide-up backdrop-blur-lg">
+          <div className="flex items-center justify-between p-3 border-b border-red-500/20 bg-red-950/30 rounded-t-lg">
             <div className="flex items-center">
               <MessageCircle className="h-5 w-5 text-red-500 mr-2" />
               <h3 className="font-medium text-red-500">Event-Assistent</h3>
             </div>
             <button
               onClick={handleToggleChat}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-red-400 hover:text-red-300 transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+          <div className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-thin">
             {messages.map((message) => (
               <div
                 key={message.id}
                 className={cn(
-                  "max-w-[85%] rounded-lg p-3",
+                  "max-w-[85%] rounded-lg",
                   message.isUser
-                    ? "bg-orange-100 dark:bg-orange-900/30 ml-auto"
-                    : "bg-gray-100 dark:bg-zinc-800"
+                    ? "bg-red-500/10 dark:bg-red-950/30 border border-red-500/20 ml-auto"
+                    : "bg-zinc-900/50 dark:bg-zinc-800/50 border border-zinc-700/30"
                 )}
               >
                 {message.html ? (
-                  <div dangerouslySetInnerHTML={{ __html: message.html }} />
+                  <div 
+                    dangerouslySetInnerHTML={{ __html: message.html }} 
+                    className="p-3"
+                  />
                 ) : (
-                  <p className="text-red-500">{message.text}</p>
+                  <p className="p-3 text-red-200">{message.text}</p>
                 )}
               </div>
             ))}
             
             {isTyping && (
-              <div className="bg-gray-100 dark:bg-zinc-800 max-w-[85%] rounded-lg p-3">
+              <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30">
                 <div className="flex space-x-2 items-center">
                   <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                   <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
@@ -213,7 +216,7 @@ const EventChatBot: React.FC = () => {
             <div ref={messagesEndRef} />
           </div>
           
-          <div className="p-3 border-t border-orange-200 dark:border-orange-900/40">
+          <div className="p-3 border-t border-red-500/20">
             <div className="flex items-center">
               <input
                 ref={inputRef}
@@ -222,7 +225,7 @@ const EventChatBot: React.FC = () => {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Frage nach Events..."
-                className="flex-1 border border-orange-200 dark:border-orange-900/40 rounded-full px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 dark:bg-zinc-800 text-sm text-red-500"
+                className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50"
               />
               <button
                 onClick={() => handleSendMessage()}
@@ -230,8 +233,8 @@ const EventChatBot: React.FC = () => {
                 className={cn(
                   "ml-2 rounded-full p-2",
                   input.trim() && !isTyping
-                    ? "bg-red-500 text-white hover:bg-red-600"
-                    : "bg-gray-200 text-gray-500 dark:bg-zinc-700 dark:text-zinc-400"
+                    ? "bg-red-500 hover:bg-red-600 text-white"
+                    : "bg-zinc-800 text-zinc-500"
                 )}
               >
                 <Send className="h-4 w-4" />
@@ -244,7 +247,7 @@ const EventChatBot: React.FC = () => {
       <button
         onClick={handleToggleChat}
         className={cn(
-          "bg-red-500 hover:bg-red-600 text-white rounded-full p-3 shadow-lg transition-all",
+          "bg-red-500 hover:bg-red-600 text-white rounded-full p-3 shadow-lg transition-all duration-300",
           isChatOpen && "rotate-90"
         )}
       >
