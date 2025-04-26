@@ -1,4 +1,3 @@
-
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { fetchWeather } from './weatherUtils';
@@ -41,15 +40,50 @@ export const formatEvents = (events: any[]) => {
   events.forEach(event => {
     const isGitHubEvent = event.id.startsWith('github-');
     eventsHtml += `
-      <div class="mb-4 p-3 rounded-md ${isGitHubEvent ? 'bg-blue-900/20 border border-blue-700/30' : 'bg-gray-900/20 border border-gray-700/30'}">
-        <h5 class="font-medium text-red-500">${event.title}</h5>
-        <p class="text-xs text-gray-400">${isGitHubEvent ? 'Externe Veranstaltung' : 'Community Event'}</p>
-        <p class="text-sm">
-          ${format(new Date(event.date), 'EEEE, d. MMMM yyyy', { locale: de })}
-          um ${event.time} Uhr
-          ${event.location ? `im ${event.location}` : ''}
-        </p>
-        ${event.description ? `<p class="text-sm mt-1">${event.description}</p>` : ''}
+      <div class="mb-2 p-2 rounded-md ${isGitHubEvent ? 'bg-blue-900/20 border border-blue-700/30' : 'bg-gray-900/20 border border-gray-700/30'} hover:bg-opacity-30 transition-all">
+        <div class="flex items-center justify-between">
+          <div class="flex-1">
+            ${event.link ? 
+              `<a href="${event.link}" target="_blank" rel="noopener noreferrer" class="font-medium text-red-500 hover:underline flex items-center gap-1">
+                ${event.title}
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M7 17L17 7M17 7H8M17 7V16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>` : 
+              `<h5 class="font-medium text-red-500">${event.title}</h5>`
+            }
+            <p class="text-[10px] text-gray-400">${isGitHubEvent ? 'Externe Veranstaltung' : 'Community Event'}</p>
+          </div>
+          <div class="text-xs bg-black text-red-500 px-2 py-0.5 rounded-full">${event.category}</div>
+        </div>
+        <div class="mt-1 text-xs text-white">
+          <div class="flex items-center gap-2">
+            <div class="flex items-center">
+              <svg class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"/>
+                <line x1="16" y1="2" x2="16" y2="6" stroke-width="2" stroke-linecap="round"/>
+                <line x1="8" y1="2" x2="8" y2="6" stroke-width="2" stroke-linecap="round"/>
+                <line x1="3" y1="10" x2="21" y2="10" stroke-width="2"/>
+              </svg>
+              ${format(new Date(event.date), 'EEEE, d. MMMM yyyy', { locale: de })}
+            </div>
+            <div class="flex items-center">
+              <svg class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                <polyline points="12 6 12 12 16 14" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              ${event.time} Uhr
+            </div>
+          </div>
+          <div class="flex items-center mt-0.5">
+            <svg class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke-width="2"/>
+              <circle cx="12" cy="10" r="3" stroke-width="2"/>
+            </svg>
+            ${event.location}
+          </div>
+        </div>
+        ${event.description ? `<p class="text-xs mt-1 text-gray-300">${event.description}</p>` : ''}
       </div>
     `;
   });
