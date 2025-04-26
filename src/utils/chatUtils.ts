@@ -61,11 +61,23 @@ export const generateResponse = async (query: string, events: any[]) => {
   try {
     console.log(`Generating AI response for query: "${query}" with ${events.length} events`);
     
+    // Aktuelle Datum für Debugging und Kontext für AI
+    const currentDate = new Date();
+    const formattedDate = format(currentDate, 'yyyy-MM-dd');
+    console.log(`Current date being sent to AI: ${formattedDate}`);
+    
     // Log a sample of events being sent to check if GitHub events are included
     const sampleEvents = events.slice(0, 2);
     const githubEventsCount = events.filter(e => e.id.startsWith('github-')).length;
     console.log(`Sample of events being sent to AI: ${JSON.stringify(sampleEvents)}`);
     console.log(`Total events: ${events.length}, GitHub events: ${githubEventsCount}`);
+    
+    // Heute-Events für Debugging
+    const todayEvents = events.filter(e => e.date === formattedDate);
+    console.log(`Events specifically for today (${formattedDate}): ${todayEvents.length}`);
+    if (todayEvents.length > 0) {
+      console.log('First few today events:', todayEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
+    }
     
     // Timeout für die Anfrage setzen
     const controller = new AbortController();
@@ -80,6 +92,7 @@ export const generateResponse = async (query: string, events: any[]) => {
       body: JSON.stringify({
         query,
         timeOfDay: getTimeOfDay(),
+        currentDate: formattedDate, // Explizit das aktuelle Datum schicken
         weather: await fetchWeather(),
         allEvents: events
       }),
