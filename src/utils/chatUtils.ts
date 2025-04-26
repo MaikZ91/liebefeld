@@ -39,9 +39,11 @@ export const formatEvents = (events: any[]) => {
 
   let eventsHtml = '';
   events.forEach(event => {
+    const isGitHubEvent = event.id.startsWith('github-');
     eventsHtml += `
-      <div class="mb-4 p-3 rounded-md bg-gray-900/20 border border-gray-700/30">
+      <div class="mb-4 p-3 rounded-md ${isGitHubEvent ? 'bg-blue-900/20 border border-blue-700/30' : 'bg-gray-900/20 border border-gray-700/30'}">
         <h5 class="font-medium text-red-500">${event.title}</h5>
+        <p class="text-xs text-gray-400">${isGitHubEvent ? 'Externe Veranstaltung' : 'Community Event'}</p>
         <p class="text-sm">
           ${format(new Date(event.date), 'EEEE, d. MMMM yyyy', { locale: de })}
           um ${event.time} Uhr
@@ -65,12 +67,7 @@ export const generateResponse = async (query: string, events: any[]) => {
     console.log(`Sample of events being sent to AI: ${JSON.stringify(sampleEvents)}`);
     console.log(`Total events: ${events.length}, GitHub events: ${githubEventsCount}`);
     
-    // Prüfe ob die Events für heute dem Datum entsprechen (Logging)
-    const today = new Date().toISOString().split('T')[0];
-    const todayEvents = events.filter(e => e.date === today);
-    console.log(`Events für heute (${today}): ${todayEvents.length}`, todayEvents);
-    
-    // Timeout für die Anfrage setzen, um lange Antwortzeiten zu vermeiden
+    // Timeout für die Anfrage setzen
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 Sekunden Timeout
     
@@ -84,12 +81,11 @@ export const generateResponse = async (query: string, events: any[]) => {
         query,
         timeOfDay: getTimeOfDay(),
         weather: await fetchWeather(),
-        allEvents: events  // Pass all events, including GitHub events
+        allEvents: events
       }),
       signal: controller.signal
     });
 
-    // Timeout aufheben wenn die Antwort rechtzeitig kam
     clearTimeout(timeoutId);
 
     if (!response.ok) {
@@ -101,41 +97,11 @@ export const generateResponse = async (query: string, events: any[]) => {
   } catch (error) {
     console.error('Error generating AI response:', error);
     
-    // Bei Timeout oder anderen Fehlern, direkt nach heutigen Events filtern und zurückgeben
-    if (error.name === 'AbortError' || error.toString().includes('timeout')) {
-      console.log('AI request timed out, showing direct event list');
-      
-      // Direkt nach heutigen Events filtern
-      const today = new Date().toISOString().split('T')[0];
-      const todayEvents = events.filter(e => e.date === today);
-      
-      if (todayEvents.length > 0) {
-        let eventsHtml = '<div class="bg-amber-900/20 border border-amber-700/30 rounded-lg p-3 mb-3">' +
-                        '<p class="text-sm">Die KI-Antwort dauerte zu lange. Hier sind die Events für heute:</p></div>';
-        
-        todayEvents.forEach(event => {
-          const isGitHubEvent = event.id.startsWith('github-');
-          eventsHtml += `
-            <div class="mb-3 p-3 rounded-md ${isGitHubEvent ? 'bg-blue-900/20 border border-blue-700/30' : 'bg-gray-900/20 border border-gray-700/30'}">
-              <h5 class="font-medium text-red-500">${event.title}</h5>
-              <p class="text-xs text-gray-400">${isGitHubEvent ? 'Externe Veranstaltung' : 'Community Event'}</p>
-              <p class="text-sm">
-                um ${event.time} Uhr
-                ${event.location ? `im ${event.location}` : ''}
-              </p>
-              ${event.description ? `<p class="text-sm mt-1">${event.description}</p>` : ''}
-            </div>
-          `;
-        });
-        
-        return createResponseHeader("Heutige Events") + eventsHtml;
-      }
-    }
-    
+    // Bei Timeout oder anderen Fehlern, einfache Event-Liste als Fallback anzeigen
     return createResponseHeader("Fehler") + `
-      <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
-        Entschuldigung, ich konnte keine passende Antwort generieren. 
-        Bitte versuche es später noch einmal oder formuliere deine Frage anders.
-      </div>`;
+      <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm mb-3">
+        Entschuldigung, ich konnte keine KI-Antwort generieren. Hier sind die verfügbaren Events:
+      </div>
+      ${formatEvents(events)}`;
   }
 };

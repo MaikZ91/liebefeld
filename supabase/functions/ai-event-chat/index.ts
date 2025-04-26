@@ -19,7 +19,6 @@ serve(async (req) => {
 
   try {
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
-    
     const { query, timeOfDay, weather, allEvents } = await req.json();
     
     // Fetch all events from the database for backup/fallback
@@ -32,55 +31,11 @@ serve(async (req) => {
       throw new Error(`Error fetching events: ${eventsError.message}`);
     }
 
-    // Use the provided allEvents array (which includes GitHub events) instead of just database events
     const events = allEvents && allEvents.length > 0 ? allEvents : dbEvents;
     
     console.log(`Processing ${events.length} events for AI response (${allEvents ? allEvents.length : 0} provided from frontend)`);
-
-    // Prüfe Events für heute
-    const today = new Date().toISOString().split('T')[0];
-    const todayEvents = events.filter(e => e.date === today);
-    console.log(`Events für heute (${today}): ${todayEvents.length}`);
     
-    // Bei Fragen nach heutigen Events, schnellere Antwort direkt zurückgeben
-    const heutePatterns = [
-      /heute/i, /today/i, /was geht/i, /was gibt/i, /was ist los/i, 
-      /was läuft/i, /heute abend/i, /aktuell/i, /jetzt/i
-    ];
-    
-    const isAskingForToday = heutePatterns.some(pattern => pattern.test(query));
-    
-    if (isAskingForToday && todayEvents.length > 0) {
-      console.log('Direkte Antwort für heutige Events generieren');
-      
-      // Schnell direkte Antwort generieren ohne KI-Modell
-      let response = `
-        <div class="bg-amber-900/10 border border-amber-700/30 rounded-lg p-3 mb-3">
-          <p class="text-sm">Hier sind die Events für heute, ${today}:</p>
-        </div>
-      `;
-      
-      for (const event of todayEvents) {
-        const isGitHubEvent = event.id.startsWith('github-');
-        response += `
-          <div class="mb-3 p-3 rounded-md ${isGitHubEvent ? 'bg-blue-900/10 border border-blue-700/30' : 'bg-gray-900/10 border border-gray-700/30'}">
-            <h5 class="font-medium text-red-500">${event.title}</h5>
-            <p class="text-xs text-gray-400">${isGitHubEvent ? 'Externe Veranstaltung' : 'Community Event'}</p>
-            <p class="text-sm">
-              um ${event.time} Uhr
-              ${event.location ? `im ${event.location}` : ''}
-            </p>
-            ${event.description ? `<p class="text-sm mt-1">${event.description}</p>` : ''}
-          </div>
-        `;
-      }
-      
-      return new Response(JSON.stringify({ response }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-    
-    // Format events data for the AI - making sure all events are included
+    // Format events data for the AI
     const formattedEvents = events.map(event => `
       Event: ${event.title}
       Datum: ${event.date}
@@ -106,7 +61,13 @@ serve(async (req) => {
     4. Wenn keine passenden Events gefunden wurden, mache alternative Vorschläge
     5. Berücksichtige ALLE Events, auch die aus externen Quellen (mit 'Quelle: Externe Veranstaltung' gekennzeichnet)
     
-    Format deine Antworten klar und übersichtlich.`;
+    Format deine Antworten klar und übersichtlich in HTML mit diesen Klassen:
+    - Verwende bg-gray-900/20 border border-gray-700/30 für normale Event-Container
+    - Verwende bg-blue-900/20 border border-blue-700/30 für externe Event-Container
+    - Nutze text-red-500 für Überschriften
+    - Nutze text-sm für normalen Text
+    - Nutze rounded-lg p-3 mb-3 für Container-Padding
+    `;
 
     console.log('Sending request to Open Router API with Gemini model...');
     
@@ -130,62 +91,7 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      console.error(`Open Router API error: ${response.status} ${response.statusText}`);
-      
-      // Fallback für heutige Events
-      if (todayEvents.length > 0) {
-        let fallbackResponse = '<div class="bg-yellow-900/10 border border-yellow-700/30 rounded-lg p-3 mb-3">';
-        fallbackResponse += `<p class="text-sm">Hier sind die Events für heute (${today}):</p></div>`;
-        
-        for (const event of todayEvents) {
-          const isGitHubEvent = event.id.startsWith('github-');
-          fallbackResponse += `
-            <div class="mb-3 p-3 rounded-md ${isGitHubEvent ? 'bg-blue-900/10 border border-blue-700/30' : 'bg-gray-900/10 border border-gray-700/30'}">
-              <h5 class="font-medium text-red-500">${event.title}</h5>
-              <p class="text-xs text-gray-400">${isGitHubEvent ? 'Externe Veranstaltung' : 'Community Event'}</p>
-              <p class="text-sm">
-                um ${event.time} Uhr
-                ${event.location ? `im ${event.location}` : ''}
-              </p>
-              ${event.description ? `<p class="text-sm mt-1">${event.description}</p>` : ''}
-            </div>
-          `;
-        }
-        
-        return new Response(JSON.stringify({ response: fallbackResponse }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-      
-      const fallbackResponse = `
-        <div class="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-3">
-          <h5 class="font-medium text-sm text-yellow-600 dark:text-yellow-400">Lokale Antwort:</h5>
-          <p class="text-sm mt-2">
-            Ich konnte leider keine KI-Antwort für deine Frage generieren. 
-            ${events.length > 0 ? 
-              `Hier sind die nächsten ${Math.min(3, events.length)} Events, die stattfinden:` : 
-              'Es sind derzeit keine Events verfügbar.'
-            }
-          </p>
-          ${events.length > 0 ? 
-            `<ul class="mt-2 space-y-2">
-              ${events.slice(0, 3).map(event => `
-                <li class="bg-gray-900/20 border border-gray-700/20 rounded-lg p-2">
-                  <strong>${event.title}</strong> (${event.date}, ${event.time})
-                  ${event.location ? `<br>Ort: ${event.location}` : ''}
-                </li>
-              `).join('')}
-            </ul>` : ''
-          }
-          <p class="text-sm mt-2">
-            Du kannst spezifischer nach Events fragen, z.B. nach Datum, Kategorie oder Ort.
-          </p>
-        </div>
-      `;
-      
-      return new Response(JSON.stringify({ response: fallbackResponse }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
