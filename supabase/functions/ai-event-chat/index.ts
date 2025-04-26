@@ -19,12 +19,13 @@ serve(async (req) => {
 
   try {
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
-    const { query, timeOfDay, weather, allEvents, currentDate } = await req.json();
+    const { query, timeOfDay, weather, allEvents, currentDate, nextWeekStart, nextWeekEnd } = await req.json();
     
     // Log date info
     const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
     console.log(`Server current date: ${today}`);
     console.log(`Received currentDate from client: ${currentDate}`);
+    console.log(`Received next week range: ${nextWeekStart} to ${nextWeekEnd}`);
     
     // Fetch all events from the database for backup/fallback
     const { data: dbEvents, error: eventsError } = await supabase
@@ -45,6 +46,15 @@ serve(async (req) => {
     console.log(`Events specifically for today (${today}): ${todayEvents.length}`);
     if (todayEvents.length > 0) {
       console.log('First few today events:', todayEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
+    }
+    
+    // Log next week events
+    const nextWeekEvents = events.filter(event => 
+      event.date >= nextWeekStart && event.date <= nextWeekEnd
+    );
+    console.log(`Events for next week (${nextWeekStart} to ${nextWeekEnd}): ${nextWeekEvents.length}`);
+    if (nextWeekEvents.length > 0) {
+      console.log('First few next week events:', nextWeekEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
     }
     
     // Format events data for the AI
@@ -69,12 +79,14 @@ serve(async (req) => {
     Beantworte Fragen zu den Events präzise und freundlich auf Deutsch. 
     Berücksichtige dabei:
     1. Wenn der Nutzer nach "heute" fragt, beziehe dich auf Events mit Datum ${today}
-    2. Die aktuelle Tageszeit und das Wetter
-    3. Die spezifischen Interessen in der Anfrage
-    4. Gib relevante Events mit allen Details an
-    5. Wenn keine passenden Events gefunden wurden, mache alternative Vorschläge
-    6. Berücksichtige ALLE Events, auch die aus externen Quellen (mit 'Quelle: Externe Veranstaltung' gekennzeichnet)
-    7. Verwende das Datum-Format YYYY-MM-DD für Vergleiche
+    2. Wenn der Nutzer nach "nächster Woche" fragt, beziehe dich auf Events vom ${nextWeekStart} (Montag) bis ${nextWeekEnd} (Sonntag)
+    3. Die Woche beginnt immer am Montag und endet am Sonntag
+    4. Die aktuelle Tageszeit und das Wetter
+    5. Die spezifischen Interessen in der Anfrage
+    6. Gib relevante Events mit allen Details an
+    7. Wenn keine passenden Events gefunden wurden, mache alternative Vorschläge
+    8. Berücksichtige ALLE Events, auch die aus externen Quellen (mit 'Quelle: Externe Veranstaltung' gekennzeichnet)
+    9. Verwende das Datum-Format YYYY-MM-DD für Vergleiche
     
     Format deine Antworten klar und übersichtlich in HTML mit diesen Klassen:
     - Verwende bg-gray-900/20 border border-gray-700/30 für normale Event-Container

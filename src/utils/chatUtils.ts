@@ -66,6 +66,19 @@ export const generateResponse = async (query: string, events: any[]) => {
     const formattedDate = format(currentDate, 'yyyy-MM-dd');
     console.log(`Current date being sent to AI: ${formattedDate}`);
     
+    // Berechne Daten für nächste Woche
+    const nextWeekStart = new Date(currentDate);
+    // Setze auf nächsten Montag
+    const dayOfWeek = currentDate.getDay(); // 0 = Sonntag, 1 = Montag, ..., 6 = Samstag
+    const daysToAdd = dayOfWeek === 0 ? 1 : (8 - dayOfWeek); // Wenn heute Sonntag ist, +1 für Montag, sonst (8 - aktueller Tag)
+    nextWeekStart.setDate(currentDate.getDate() + daysToAdd);
+    const nextWeekEnd = new Date(nextWeekStart);
+    nextWeekEnd.setDate(nextWeekStart.getDate() + 6); // Montag bis Sonntag = 7 Tage
+    
+    const nextWeekStartStr = format(nextWeekStart, 'yyyy-MM-dd');
+    const nextWeekEndStr = format(nextWeekEnd, 'yyyy-MM-dd');
+    console.log(`Next week range: ${nextWeekStartStr} (Montag) bis ${nextWeekEndStr} (Sonntag)`);
+    
     // Log a sample of events being sent to check if GitHub events are included
     const sampleEvents = events.slice(0, 2);
     const githubEventsCount = events.filter(e => e.id.startsWith('github-')).length;
@@ -77,6 +90,16 @@ export const generateResponse = async (query: string, events: any[]) => {
     console.log(`Events specifically for today (${formattedDate}): ${todayEvents.length}`);
     if (todayEvents.length > 0) {
       console.log('First few today events:', todayEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
+    }
+    
+    // Events für nächste Woche für Debugging
+    const nextWeekEvents = events.filter(e => {
+      const eventDate = e.date;
+      return eventDate >= nextWeekStartStr && eventDate <= nextWeekEndStr;
+    });
+    console.log(`Events for next week (${nextWeekStartStr} to ${nextWeekEndStr}): ${nextWeekEvents.length}`);
+    if (nextWeekEvents.length > 0) {
+      console.log('First few next week events:', nextWeekEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
     }
     
     // Timeout für die Anfrage setzen
@@ -92,7 +115,9 @@ export const generateResponse = async (query: string, events: any[]) => {
       body: JSON.stringify({
         query,
         timeOfDay: getTimeOfDay(),
-        currentDate: formattedDate, // Explizit das aktuelle Datum schicken
+        currentDate: formattedDate,
+        nextWeekStart: nextWeekStartStr,
+        nextWeekEnd: nextWeekEndStr,
         weather: await fetchWeather(),
         allEvents: events
       }),
