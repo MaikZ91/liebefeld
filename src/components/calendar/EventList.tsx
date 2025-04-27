@@ -4,9 +4,9 @@ import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
 import EventCard from '@/components/EventCard';
 import { groupEventsByDate } from '@/utils/eventUtils';
-import { Star } from 'lucide-react';
+import { Star, ChevronDown, ChevronUp } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
-import UniversitySportsEvents from '@/components/UniversitySportsEvents';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface EventListProps {
   events: Event[];
@@ -28,37 +28,37 @@ const EventList: React.FC<EventListProps> = ({
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
   const { newEventIds, filter, topEventsPerDay } = useEventContext();
-  
-  const universitySportsEvents = React.useMemo(() => {
+  const [isHochschulsportOpen, setIsHochschulsportOpen] = useState(false);
+
+  const hochschulsportEvents = React.useMemo(() => {
     return events.filter(event => 
       event.title.toLowerCase().includes('hochschulsport') || 
       event.organizer?.toLowerCase().includes('hochschulsport')
     );
   }, [events]);
-  
+
   const regularEvents = React.useMemo(() => {
     return events.filter(event => 
       !event.title.toLowerCase().includes('hochschulsport') && 
       !event.organizer?.toLowerCase().includes('hochschulsport')
     );
   }, [events]);
-  
+
   const filteredEvents = React.useMemo(() => {
     if (!filter) return events;
     return events.filter(event => event.category === filter);
   }, [events, filter]);
-  
+
   const displayEvents = React.useMemo(() => {
     if (!showFavorites) return filteredEvents;
     
     return filteredEvents.filter(event => {
       if (!event.date) return false;
       
-      // Make sure it's a top event and has at least one like
       return topEventsPerDay[event.date] === event.id && (event.likes && event.likes > 0);
     });
   }, [filteredEvents, showFavorites, topEventsPerDay]);
-  
+
   useEffect(() => {
     if (displayEvents.length > 0) {
       const todayEvents = displayEvents.filter(event => {
@@ -90,9 +90,9 @@ const EventList: React.FC<EventListProps> = ({
       }
     }
   }, [displayEvents]);
-  
+
   const eventsByDate = React.useMemo(() => {
-    const grouped = groupEventsByDate(displayEvents);
+    const grouped = groupEventsByDate(regularEvents);
     
     Object.keys(grouped).forEach(dateStr => {
       grouped[dateStr].sort((a, b) => {
@@ -108,8 +108,8 @@ const EventList: React.FC<EventListProps> = ({
     });
     
     return grouped;
-  }, [displayEvents]);
-  
+  }, [regularEvents]);
+
   useEffect(() => {
     if (todayRef.current && listRef.current && !hasScrolledToToday && Object.keys(eventsByDate).length > 0) {
       console.log('EventList: Waiting for animations to complete before scrolling to today');
@@ -144,11 +144,11 @@ const EventList: React.FC<EventListProps> = ({
       return () => clearTimeout(scrollTimer);
     }
   }, [eventsByDate, hasScrolledToToday]);
-  
+
   useEffect(() => {
     setHasScrolledToToday(false);
   }, [showFavorites, showNewEvents, filter]);
-  
+
   return (
     <div className="dark-glass-card rounded-xl p-3 overflow-hidden w-full max-w-full">
       <div className="flex items-center justify-between mb-2">
@@ -173,13 +173,41 @@ const EventList: React.FC<EventListProps> = ({
       <div ref={listRef} className="overflow-y-auto max-h-[650px] pr-1 scrollbar-thin w-full">
         {Object.keys(eventsByDate).length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-2 gap-y-3">
-            {universitySportsEvents.length > 0 && (
+            {hochschulsportEvents.length > 0 && (
               <div className="col-span-full mb-2">
-                <UniversitySportsEvents 
-                  events={universitySportsEvents}
-                  onEventSelect={onSelectEvent}
-                  onLike={onLike}
-                />
+                <Collapsible 
+                  open={isHochschulsportOpen} 
+                  onOpenChange={setIsHochschulsportOpen}
+                  className="w-full"
+                >
+                  <CollapsibleTrigger className="w-full">
+                    <div className="flex items-center justify-between p-2 bg-blue-900/20 hover:bg-blue-900/30 transition-colors rounded-lg w-full">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-white">Hochschulsport Events</span>
+                        <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full">
+                          {hochschulsportEvents.length}
+                        </span>
+                      </div>
+                      {isHochschulsportOpen ? (
+                        <ChevronUp className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-gray-400" />
+                      )}
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-2 mt-2">
+                    {hochschulsportEvents.map(event => (
+                      <EventCard
+                        key={event.id}
+                        event={event}
+                        compact={true}
+                        onClick={() => onSelectEvent(event, new Date(event.date))}
+                        onLike={onLike}
+                        className="border-l-2 border-blue-500"
+                      />
+                    ))}
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
             )}
             
