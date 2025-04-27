@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -34,14 +33,18 @@ const EventList: React.FC<EventListProps> = ({
   const hochschulsportEvents = React.useMemo(() => {
     return events.filter(event => 
       event.title.toLowerCase().includes('hochschulsport') || 
-      event.organizer?.toLowerCase().includes('hochschulsport')
+      event.organizer?.toLowerCase().includes('hochschulsport') ||
+      event.title.toLowerCase().includes('@hochschulsport_bielefeld') ||
+      event.organizer?.toLowerCase().includes('@hochschulsport_bielefeld')
     );
   }, [events]);
 
   const regularEvents = React.useMemo(() => {
     return events.filter(event => 
       !event.title.toLowerCase().includes('hochschulsport') && 
-      !event.organizer?.toLowerCase().includes('hochschulsport')
+      !event.organizer?.toLowerCase().includes('hochschulsport') &&
+      !event.title.toLowerCase().includes('@hochschulsport_bielefeld') &&
+      !event.organizer?.toLowerCase().includes('@hochschulsport_bielefeld')
     );
   }, [events]);
 
@@ -111,7 +114,6 @@ const EventList: React.FC<EventListProps> = ({
     return grouped;
   }, [regularEvents]);
   
-  // Group Hochschulsport events by date
   const hochschulsportEventsByDate = React.useMemo(() => {
     return groupEventsByDate(hochschulsportEvents);
   }, [hochschulsportEvents]);
@@ -201,7 +203,6 @@ const EventList: React.FC<EventListProps> = ({
                     )}
                   </h4>
                   <div className="space-y-1 w-full">
-                    {/* Regular events for this date */}
                     {eventsByDate[dateStr].map((event, eventIndex) => {
                       const isTopEvent = isCurrentDay && topTodayEvent && event.id === topTodayEvent.id;
                       const isNewEvent = newEventIds.has(event.id);
@@ -234,13 +235,12 @@ const EventList: React.FC<EventListProps> = ({
                       );
                     })}
                     
-                    {/* Hochschulsport events accordion for this date */}
                     {hasHochschulsportEvents && (
                       <Accordion type="single" collapsible className="w-full mt-2">
                         <AccordionItem value="hochschulsport" className="border-none">
                           <AccordionTrigger className="py-2 px-3 bg-blue-900/20 hover:bg-blue-900/30 transition-colors rounded-lg text-white">
                             <div className="flex items-center">
-                              <span className="font-medium">Hochschulsport</span>
+                              <span className="font-medium">@hochschulsport_bielefeld</span>
                               <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full ml-2">
                                 {hochschulsportEventsByDate[dateStr].length}
                               </span>

@@ -25,6 +25,17 @@ export const determineEventCategory = (title: string): string => {
   }
 };
 
+// Check if an event is a Hochschulsport event
+export const isHochschulsportEvent = (event: Event): boolean => {
+  const titleLower = event.title.toLowerCase();
+  const organizerLower = event.organizer?.toLowerCase() || '';
+  
+  return titleLower.includes('hochschulsport') || 
+         organizerLower.includes('hochschulsport') ||
+         titleLower.includes('@hochschulsport_bielefeld') ||
+         organizerLower.includes('@hochschulsport_bielefeld');
+};
+
 // Get events for a specific day
 export const getEventsForDay = (events: Event[], day: Date, filter: string | null = null): Event[] => {
   console.log(`Checking events for day: ${day.toISOString()}`);
