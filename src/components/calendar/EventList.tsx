@@ -6,6 +6,7 @@ import EventCard from '@/components/EventCard';
 import { groupEventsByDate } from '@/utils/eventUtils';
 import { Star } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
+import UniversitySportsEvents from '@/components/UniversitySportsEvents';
 
 interface EventListProps {
   events: Event[];
