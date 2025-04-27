@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -28,6 +27,20 @@ const EventList: React.FC<EventListProps> = ({
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
   const { newEventIds, filter, topEventsPerDay } = useEventContext();
+  
+  const universitySportsEvents = React.useMemo(() => {
+    return events.filter(event => 
+      event.title.toLowerCase().includes('hochschulsport') || 
+      event.organizer?.toLowerCase().includes('hochschulsport')
+    );
+  }, [events]);
+  
+  const regularEvents = React.useMemo(() => {
+    return events.filter(event => 
+      !event.title.toLowerCase().includes('hochschulsport') && 
+      !event.organizer?.toLowerCase().includes('hochschulsport')
+    );
+  }, [events]);
   
   const filteredEvents = React.useMemo(() => {
     if (!filter) return events;
@@ -89,7 +102,6 @@ const EventList: React.FC<EventListProps> = ({
           return likesB - likesA;
         }
         
-        // When likes are equal, use a stable ID sorting
         return a.id.localeCompare(b.id);
       });
     });
@@ -160,6 +172,16 @@ const EventList: React.FC<EventListProps> = ({
       <div ref={listRef} className="overflow-y-auto max-h-[650px] pr-1 scrollbar-thin w-full">
         {Object.keys(eventsByDate).length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-2 gap-y-3">
+            {universitySportsEvents.length > 0 && (
+              <div className="col-span-full mb-2">
+                <UniversitySportsEvents 
+                  events={universitySportsEvents}
+                  onEventSelect={onSelectEvent}
+                  onLike={onLike}
+                />
+              </div>
+            )}
+            
             {Object.keys(eventsByDate).sort().map(dateStr => {
               const date = parseISO(dateStr);
               const isCurrentDay = isToday(date);
