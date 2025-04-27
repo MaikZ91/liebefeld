@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -7,6 +8,7 @@ import { groupEventsByDate } from '@/utils/eventUtils';
 import { Star, ChevronDown, ChevronUp } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface EventListProps {
   events: Event[];
@@ -28,7 +30,6 @@ const EventList: React.FC<EventListProps> = ({
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
   const { newEventIds, filter, topEventsPerDay } = useEventContext();
-  const [isHochschulsportOpen, setIsHochschulsportOpen] = useState(false);
 
   const hochschulsportEvents = React.useMemo(() => {
     return events.filter(event => 
@@ -109,6 +110,11 @@ const EventList: React.FC<EventListProps> = ({
     
     return grouped;
   }, [regularEvents]);
+  
+  // Group Hochschulsport events by date
+  const hochschulsportEventsByDate = React.useMemo(() => {
+    return groupEventsByDate(hochschulsportEvents);
+  }, [hochschulsportEvents]);
 
   useEffect(() => {
     if (todayRef.current && listRef.current && !hasScrolledToToday && Object.keys(eventsByDate).length > 0) {
@@ -173,48 +179,11 @@ const EventList: React.FC<EventListProps> = ({
       <div ref={listRef} className="overflow-y-auto max-h-[650px] pr-1 scrollbar-thin w-full">
         {Object.keys(eventsByDate).length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-2 gap-y-3">
-            {hochschulsportEvents.length > 0 && (
-              <div className="col-span-full mb-2">
-                <Collapsible 
-                  open={isHochschulsportOpen} 
-                  onOpenChange={setIsHochschulsportOpen}
-                  className="w-full"
-                >
-                  <CollapsibleTrigger className="w-full">
-                    <div className="flex items-center justify-between p-2 bg-blue-900/20 hover:bg-blue-900/30 transition-colors rounded-lg w-full">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-white">Hochschulsport Events</span>
-                        <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full">
-                          {hochschulsportEvents.length}
-                        </span>
-                      </div>
-                      {isHochschulsportOpen ? (
-                        <ChevronUp className="h-4 w-4 text-gray-400" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4 text-gray-400" />
-                      )}
-                    </div>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="space-y-2 mt-2">
-                    {hochschulsportEvents.map(event => (
-                      <EventCard
-                        key={event.id}
-                        event={event}
-                        compact={true}
-                        onClick={() => onSelectEvent(event, new Date(event.date))}
-                        onLike={onLike}
-                        className="border-l-2 border-blue-500"
-                      />
-                    ))}
-                  </CollapsibleContent>
-                </Collapsible>
-              </div>
-            )}
-            
             {Object.keys(eventsByDate).sort().map(dateStr => {
               const date = parseISO(dateStr);
               const isCurrentDay = isToday(date);
               const hasNewEvents = eventsByDate[dateStr].some(event => newEventIds.has(event.id));
+              const hasHochschulsportEvents = hochschulsportEventsByDate[dateStr] && hochschulsportEventsByDate[dateStr].length > 0;
               
               return (
                 <div 
@@ -232,6 +201,7 @@ const EventList: React.FC<EventListProps> = ({
                     )}
                   </h4>
                   <div className="space-y-1 w-full">
+                    {/* Regular events for this date */}
                     {eventsByDate[dateStr].map((event, eventIndex) => {
                       const isTopEvent = isCurrentDay && topTodayEvent && event.id === topTodayEvent.id;
                       const isNewEvent = newEventIds.has(event.id);
@@ -263,6 +233,36 @@ const EventList: React.FC<EventListProps> = ({
                         </div>
                       );
                     })}
+                    
+                    {/* Hochschulsport events accordion for this date */}
+                    {hasHochschulsportEvents && (
+                      <Accordion type="single" collapsible className="w-full mt-2">
+                        <AccordionItem value="hochschulsport" className="border-none">
+                          <AccordionTrigger className="py-2 px-3 bg-blue-900/20 hover:bg-blue-900/30 transition-colors rounded-lg text-white">
+                            <div className="flex items-center">
+                              <span className="font-medium">Hochschulsport</span>
+                              <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full ml-2">
+                                {hochschulsportEventsByDate[dateStr].length}
+                              </span>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="pb-0 pt-2">
+                            <div className="space-y-1 pl-2">
+                              {hochschulsportEventsByDate[dateStr].map(event => (
+                                <EventCard
+                                  key={event.id}
+                                  event={event}
+                                  compact={true}
+                                  onClick={() => onSelectEvent(event, date)}
+                                  onLike={onLike}
+                                  className="border-l-2 border-blue-500"
+                                />
+                              ))}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                    )}
                   </div>
                 </div>
               );
