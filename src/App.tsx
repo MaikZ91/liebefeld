@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound";
 import Impressum from "./pages/Impressum";
 import Privacy from "./pages/Privacy";
 import CSAEPolicies from "./pages/CSAEPolicies";
+import Chat from "./pages/Chat";
 import { EventProvider } from "./contexts/EventContext";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/about" element={<About />} />
+            <Route path="/chat" element={<Chat />} />
             <Route path="/impressum" element={<Impressum />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/csae-policies" element={<CSAEPolicies />} />

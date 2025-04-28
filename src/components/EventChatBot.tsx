@@ -28,12 +28,16 @@ declare global {
   }
 }
 
-const EventChatBot: React.FC = () => {
+interface EventChatBotProps {
+  fullPage?: boolean;
+}
+
+const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
   const isMobile = useIsMobile();
   const { events } = useEventContext();
   const { toast } = useToast();
   const [isVisible, setIsVisible] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(fullPage); // Auto open in full page mode
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -44,10 +48,10 @@ const EventChatBot: React.FC = () => {
     // Initialize the chat bot after a delay
     const timer = setTimeout(() => {
       setIsVisible(true);
-    }, 5000);
+    }, fullPage ? 0 : 5000); // No delay in fullPage mode
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [fullPage]);
 
   useEffect(() => {
     // Add welcome message when chat is opened for the first time
@@ -165,6 +169,81 @@ const EventChatBot: React.FC = () => {
 
   if (!isVisible) return null;
 
+  // If we're in fullPage mode, render a different UI
+  if (fullPage) {
+    return (
+      <div className="h-full flex flex-col">
+        <div className="flex items-center justify-between p-3 border-b border-red-500/20 bg-red-950/30 rounded-t-lg">
+          <div className="flex items-center">
+            <MessageCircle className="h-5 w-5 text-red-500 mr-2" />
+            <h3 className="font-medium text-red-500">Event-Assistent</h3>
+          </div>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-thin">
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={cn(
+                "max-w-[85%] rounded-lg",
+                message.isUser
+                  ? "bg-red-500/10 dark:bg-red-950/30 border border-red-500/20 ml-auto"
+                  : "bg-zinc-900/50 dark:bg-zinc-800/50 border border-zinc-700/30"
+              )}
+            >
+              {message.html ? (
+                <div 
+                  dangerouslySetInnerHTML={{ __html: message.html }} 
+                  className="p-3"
+                />
+              ) : (
+                <p className="p-3 text-red-200">{message.text}</p>
+              )}
+            </div>
+          ))}
+          
+          {isTyping && (
+            <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30">
+              <div className="flex space-x-2 items-center">
+                <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+        
+        <div className="p-3 border-t border-red-500/20">
+          <div className="flex items-center">
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Frage nach Events..."
+              className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50"
+            />
+            <button
+              onClick={() => handleSendMessage()}
+              disabled={!input.trim() || isTyping}
+              className={cn(
+                "ml-2 rounded-full p-2",
+                input.trim() && !isTyping
+                  ? "bg-red-500 hover:bg-red-600 text-white"
+                  : "bg-zinc-800 text-zinc-500"
+              )}
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Original UI for floating chatbot
   return (
     <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end">
       {isChatOpen && (
