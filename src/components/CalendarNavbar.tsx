@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { CalendarDays, Info } from 'lucide-react';
+import { CalendarDays, Info, MessageSquare } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 const CalendarNavbar: React.FC = () => {
@@ -9,6 +9,7 @@ const CalendarNavbar: React.FC = () => {
   
   const links = [
     { href: '/', icon: CalendarDays, label: 'Kalender & Community' },
+    { href: '/chat', icon: MessageSquare, label: 'Event Assistent' },
     { href: '/about', icon: Info, label: 'Über uns' },
   ];
   
