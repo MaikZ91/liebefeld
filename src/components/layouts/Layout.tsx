@@ -1,4 +1,3 @@
-
 import React from "react"
 import { Link, useLocation } from "react-router-dom"
 
@@ -13,14 +12,6 @@ import {
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { PlusCircle } from "lucide-react"
-
-// Add the theme toggle interface to the Window object
-declare global {
-  interface Window {
-    triggerAddEvent?: () => void;
-    chatbotQuery?: (query: string) => void;
-  }
-}
 
 interface LayoutProps {
   children: React.ReactNode
@@ -147,9 +138,7 @@ const MainNav = () => {
   )
 }
 
-// Renamed component to avoid conflict with the imported ThemeToggle
 const ThemeToggleButton = () => {
-  // Simple placeholder that doesn't use the circular reference
   return (
     <Button variant="ghost" size="icon" className="rounded-full">
       <span className="sr-only">Toggle theme</span>

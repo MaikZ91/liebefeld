@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEventContext } from '@/contexts/EventContext';
@@ -19,13 +18,6 @@ interface ChatMessage {
   isUser: boolean;
   text: string;
   html?: string;
-}
-
-// Declare global window interface to add chatbotQuery
-declare global {
-  interface Window {
-    chatbotQuery: (query: string) => void;
-  }
 }
 
 interface EventChatBotProps {

@@ -12,14 +12,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { chatService } from '@/services/chatService';
 import { USERNAME_KEY } from '@/types/chatTypes';
 
-// This declaration is already in Layout.tsx, but including it here for safety
-declare global {
-  interface Window {
-    triggerAddEvent?: () => void;
-    chatbotQuery?: (query: string) => void;
-  }
-}
-
 const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
   const [activeCommunityGroup, setActiveCommunityGroup] = useState<string>('Ausgehen');
