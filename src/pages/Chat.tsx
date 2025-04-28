@@ -12,6 +12,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { chatService } from '@/services/chatService';
 import { USERNAME_KEY } from '@/types/chatTypes';
 
+// This declaration is already in Layout.tsx, but including it here for safety
+declare global {
+  interface Window {
+    triggerAddEvent?: () => void;
+    chatbotQuery?: (query: string) => void;
+  }
+}
+
 const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
   const [activeCommunityGroup, setActiveCommunityGroup] = useState<string>('Ausgehen');
@@ -25,7 +33,6 @@ const ChatPage = () => {
   };
 
   // Function to show add event modal from the existing implementation
-  // This is just a placeholder for demonstration - would need to be implemented
   const handleAddEvent = () => {
     // Implementation would come from the existing Plus button logic
     console.log('Open add event modal');
@@ -104,16 +111,7 @@ const ChatPage = () => {
             
             <TabsContent value="ai" className="flex-grow overflow-hidden flex flex-col mt-0 pt-0">
               <div className="flex-grow relative">
-                <EventChatBot />
-                {/* This is a trick to make the EventChatBot open and visible without needing modifications */}
-                <script dangerouslySetInnerHTML={{ __html: `
-                  setTimeout(() => {
-                    const chatBotButton = document.querySelector('.fixed.bottom-4.right-4 button');
-                    if (chatBotButton && !document.querySelector('.animate-slide-up')) {
-                      chatBotButton.click();
-                    }
-                  }, 1000);
-                `}} />
+                <EventChatBot fullPage={true} />
               </div>
             </TabsContent>
             

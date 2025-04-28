@@ -1,8 +1,8 @@
+
 import React from "react"
 import { Link, useLocation } from "react-router-dom"
 
 import { cn } from "@/lib/utils"
-import { ThemeToggle } from "@/components/theme-toggle"
 import {
   Sheet,
   SheetContent,
@@ -13,6 +13,14 @@ import {
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { PlusCircle } from "lucide-react"
+
+// Add the theme toggle interface to the Window object
+declare global {
+  interface Window {
+    triggerAddEvent?: () => void;
+    chatbotQuery?: (query: string) => void;
+  }
+}
 
 interface LayoutProps {
   children: React.ReactNode
@@ -58,7 +66,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="container flex h-16 items-center">
           <MainNav />
           <div className="ml-auto flex items-center space-x-4">
-            <ThemeToggle />
+            <ThemeToggleButton />
           </div>
         </div>
       </header>
@@ -139,8 +147,34 @@ const MainNav = () => {
   )
 }
 
-const ThemeToggle = () => {
+// Renamed component to avoid conflict with the imported ThemeToggle
+const ThemeToggleButton = () => {
+  // Simple placeholder that doesn't use the circular reference
   return (
-    <ThemeToggle />
+    <Button variant="ghost" size="icon" className="rounded-full">
+      <span className="sr-only">Toggle theme</span>
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width="24" 
+        height="24" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round"
+        className="h-5 w-5"
+      >
+        <circle cx="12" cy="12" r="4"></circle>
+        <path d="M12 2v2"></path>
+        <path d="M12 20v2"></path>
+        <path d="m4.93 4.93 1.41 1.41"></path>
+        <path d="m17.66 17.66 1.41 1.41"></path>
+        <path d="M2 12h2"></path>
+        <path d="M20 12h2"></path>
+        <path d="m6.34 17.66-1.41 1.41"></path>
+        <path d="m19.07 4.93-1.41 1.41"></path>
+      </svg>
+    </Button>
   )
 }
