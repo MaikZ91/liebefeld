@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEventContext } from '@/contexts/EventContext';
@@ -12,6 +13,7 @@ import {
   createResponseHeader
 } from '@/utils/chatUtils';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ChatMessage {
   id: string;
@@ -172,39 +174,41 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
           </div>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-thin">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={cn(
-                "max-w-[85%] rounded-lg",
-                message.isUser
-                  ? "bg-red-500/10 dark:bg-red-950/30 border border-red-500/20 ml-auto"
-                  : "bg-zinc-900/50 dark:bg-zinc-800/50 border border-zinc-700/30"
-              )}
-            >
-              {message.html ? (
-                <div 
-                  dangerouslySetInnerHTML={{ __html: message.html }} 
-                  className="p-3"
-                />
-              ) : (
-                <p className="p-3 text-red-200">{message.text}</p>
-              )}
-            </div>
-          ))}
-          
-          {isTyping && (
-            <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30">
-              <div className="flex space-x-2 items-center">
-                <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+        <ScrollArea className="flex-1 p-3">
+          <div className="space-y-3 pb-2">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={cn(
+                  "max-w-[85%] rounded-lg",
+                  message.isUser
+                    ? "bg-red-500/10 dark:bg-red-950/30 border border-red-500/20 ml-auto"
+                    : "bg-zinc-900/50 dark:bg-zinc-800/50 border border-zinc-700/30"
+                )}
+              >
+                {message.html ? (
+                  <div 
+                    dangerouslySetInnerHTML={{ __html: message.html }} 
+                    className="p-3"
+                  />
+                ) : (
+                  <p className="p-3 text-red-200">{message.text}</p>
+                )}
               </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+            ))}
+            
+            {isTyping && (
+              <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30">
+                <div className="flex space-x-2 items-center">
+                  <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
         
         <div className="p-3 border-t border-red-500/20">
           <div className="flex items-center">
@@ -253,39 +257,41 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
             </button>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-thin">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={cn(
-                  "max-w-[85%] rounded-lg",
-                  message.isUser
-                    ? "bg-red-500/10 dark:bg-red-950/30 border border-red-500/20 ml-auto"
-                    : "bg-zinc-900/50 dark:bg-zinc-800/50 border border-zinc-700/30"
-                )}
-              >
-                {message.html ? (
-                  <div 
-                    dangerouslySetInnerHTML={{ __html: message.html }} 
-                    className="p-3"
-                  />
-                ) : (
-                  <p className="p-3 text-red-200">{message.text}</p>
-                )}
-              </div>
-            ))}
-            
-            {isTyping && (
-              <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30">
-                <div className="flex space-x-2 items-center">
-                  <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+          <ScrollArea className="flex-1 p-3">
+            <div className="space-y-3 pb-2">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={cn(
+                    "max-w-[85%] rounded-lg",
+                    message.isUser
+                      ? "bg-red-500/10 dark:bg-red-950/30 border border-red-500/20 ml-auto"
+                      : "bg-zinc-900/50 dark:bg-zinc-800/50 border border-zinc-700/30"
+                  )}
+                >
+                  {message.html ? (
+                    <div 
+                      dangerouslySetInnerHTML={{ __html: message.html }} 
+                      className="p-3"
+                    />
+                  ) : (
+                    <p className="p-3 text-red-200">{message.text}</p>
+                  )}
                 </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
+              ))}
+              
+              {isTyping && (
+                <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30">
+                  <div className="flex space-x-2 items-center">
+                    <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          </ScrollArea>
           
           <div className="p-3 border-t border-red-500/20">
             <div className="flex items-center">
