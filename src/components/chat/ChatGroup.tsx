@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, RefreshCw, Paperclip, Calendar } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -31,6 +30,7 @@ interface Message {
   user_name: string;
   user_avatar: string;
   group_id: string;
+  read_by?: string[]; // Added read_by as optional property
 }
 
 const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
@@ -106,6 +106,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
           user_name: msg.sender,
           user_avatar: msg.avatar || '',
           group_id: msg.group_id,
+          read_by: msg.read_by || []  // Add read_by property
         }));
         
         setMessages(formattedMessages);
@@ -166,7 +167,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
             content: msg.text,
             user_name: msg.sender,
             user_avatar: msg.avatar || '',
-            group_id: msg.group_id
+            group_id: msg.group_id,
+            read_by: msg.read_by || []  // Add read_by property
           };
           
           // Don't add duplicate messages
@@ -296,6 +298,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
         user_name: msg.sender,
         user_avatar: msg.avatar || '',
         group_id: msg.group_id,
+        read_by: msg.read_by || []  // Add read_by property
       }));
       
       setMessages(formattedMessages);
@@ -386,7 +389,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
         content: messageText,
         user_name: username,
         user_avatar: localStorage.getItem(AVATAR_KEY) || '',
-        group_id: groupId
+        group_id: groupId,
+        read_by: [username]  // Add read_by property
       };
       
       // Add optimistic message immediately
@@ -426,10 +430,10 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
         const typingUpdateChannel = supabase.channel(`typing:${groupId}`);
         
         // Subscribe to the channel
-        await typingUpdateChannel.subscribe();
+        typingUpdateChannel.subscribe();
         
         // Send the typing update
-        await typingUpdateChannel.send({
+        typingUpdateChannel.send({
           type: 'broadcast',
           event: 'typing',
           payload: {
@@ -477,21 +481,22 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
       // Create a new channel for typing updates
       const typingUpdateChannel = supabase.channel(`typing:${groupId}`);
       
-      // Subscribe and send typing update
-      typingUpdateChannel.subscribe().then(async () => {
-        await typingUpdateChannel.send({
-          type: 'broadcast',
-          event: 'typing',
-          payload: {
-            username,
-            avatar: localStorage.getItem(AVATAR_KEY),
-            isTyping: true
-          }
-        });
-        
-        // Remove the channel after sending
-        supabase.removeChannel(typingUpdateChannel);
+      // Subscribe and send typing update (fixed the then() chain with async/await)
+      typingUpdateChannel.subscribe();
+      
+      // After subscription, send the message
+      typingUpdateChannel.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: {
+          username,
+          avatar: localStorage.getItem(AVATAR_KEY),
+          isTyping: true
+        }
       });
+      
+      // Remove the channel after sending
+      supabase.removeChannel(typingUpdateChannel);
     }
     
     // Clear existing timeout
@@ -505,21 +510,22 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
         // Create a new channel for typing updates
         const typingUpdateChannel = supabase.channel(`typing:${groupId}`);
         
-        // Subscribe and send typing update
-        typingUpdateChannel.subscribe().then(async () => {
-          await typingUpdateChannel.send({
-            type: 'broadcast',
-            event: 'typing',
-            payload: {
-              username,
-              avatar: localStorage.getItem(AVATAR_KEY),
-              isTyping: false
-            }
-          });
-          
-          // Remove the channel after sending
-          supabase.removeChannel(typingUpdateChannel);
+        // Subscribe and send typing update (fixed the then() chain)
+        typingUpdateChannel.subscribe();
+        
+        // After subscription, send the message
+        typingUpdateChannel.send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: {
+            username,
+            avatar: localStorage.getItem(AVATAR_KEY),
+            isTyping: false
+          }
         });
+        
+        // Remove the channel after sending
+        supabase.removeChannel(typingUpdateChannel);
         
         setIsTyping(false);
       }
