@@ -1,44 +1,52 @@
 
 import React from 'react';
 import { EventShare } from '@/types/chatTypes';
-import EventMessageFormatter from './EventMessageFormatter';
 
 interface ChatMessageProps {
   message: string;
   isConsecutive?: boolean;
-  isSpotGroup?: boolean;
+  isGroup?: boolean;
   eventData?: EventShare;
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ 
   message, 
   isConsecutive = false, 
-  isSpotGroup = false,
+  isGroup = false,
   eventData
 }) => {
-  // Check if message contains event data
-  const containsEventData = (typeof message === 'string' && message.includes('🗓️ **Event:')) || eventData;
+  // Format message content - extract event data if present
+  const formatContent = () => {
+    if (eventData) {
+      return (
+        <div className="space-y-2">
+          <div className="p-3 bg-primary/10 rounded-md border border-primary/20">
+            <div className="font-semibold text-sm">{eventData.title}</div>
+            <div className="text-xs mt-1">
+              <div>Datum: {eventData.date} um {eventData.time}</div>
+              {eventData.location && <div>Ort: {eventData.location}</div>}
+              <div>Kategorie: {eventData.category}</div>
+            </div>
+          </div>
+          {message && message.trim() !== '' && (
+            <div className="whitespace-pre-wrap">{message}</div>
+          )}
+        </div>
+      );
+    }
+    
+    return <div className="whitespace-pre-wrap">{message}</div>;
+  };
   
   return (
     <div 
       className={`p-3 rounded-lg ${isConsecutive ? 'mt-1' : 'mt-2'} ${
-        isSpotGroup ? 'bg-[#222632] text-white' : 'bg-gray-800 text-white'
+        isGroup ? 'bg-[#222632] text-white' : 'bg-gray-800 text-white'
       } shadow-md w-full max-w-full overflow-hidden break-words`}
     >
-      {containsEventData && eventData ? (
-        <div className="w-full max-w-full overflow-hidden break-words">
-          <EventMessageFormatter event={eventData} />
-          {message && message.trim() !== '' && (
-            <div className="whitespace-pre-wrap break-words w-full text-base font-medium mt-2 overflow-hidden">
-              {message}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="whitespace-pre-wrap break-words w-full text-base font-medium overflow-hidden">
-          {message}
-        </div>
-      )}
+      <div className="w-full max-w-full overflow-hidden break-words">
+        {formatContent()}
+      </div>
     </div>
   );
 };

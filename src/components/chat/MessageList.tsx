@@ -1,21 +1,11 @@
-import React, { useRef, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+
+import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getInitials } from '@/utils/chatUIUtils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { getInitials } from '@/utils/chatUIUtils';
 import ChatMessage from './ChatMessage';
 import TypingIndicator from './TypingIndicator';
-import { TypingUser, EventShare } from '@/types/chatTypes';
-
-interface Message {
-  id: string;
-  created_at: string;
-  content: string;
-  user_name: string;
-  user_avatar: string;
-  group_id: string;
-  event_data?: EventShare;
-}
+import { Message, TypingUser, EventShare } from '@/types/chatTypes';
 
 interface MessageListProps {
   messages: Message[];
@@ -24,9 +14,8 @@ interface MessageListProps {
   username: string;
   typingUsers: TypingUser[];
   formatTime: (isoDateString: string) => string;
-  isSpotGroup: boolean;
-  isSportGroup: boolean;
-  isAusgehenGroup: boolean;
+  isGroup: boolean;
+  groupType: 'ausgehen' | 'sport' | 'kreativität';
   chatBottomRef: React.RefObject<HTMLDivElement>;
 }
 
@@ -37,21 +26,15 @@ const MessageList: React.FC<MessageListProps> = ({
   username,
   typingUsers,
   formatTime,
-  isSpotGroup,
-  isSportGroup,
-  isAusgehenGroup,
+  isGroup,
+  groupType,
   chatBottomRef
 }) => {
   // Parse event data from message content if available
   const parseEventData = (message: Message): EventShare | undefined => {
     try {
-      // First check if the message has event_data property
-      if (message.event_data) {
-        return message.event_data;
-      }
-      
-      // Otherwise try to parse from content
       if (typeof message.content === 'string' && message.content.includes('🗓️ **Event:')) {
+        // Extract event data from formatted message content
         const eventRegex = /🗓️ \*\*Event: (.*?)\*\*\nDatum: (.*?) um (.*?)\nOrt: (.*?)\nKategorie: (.*?)(\n\n|$)/;
         const match = message.content.match(eventRegex);
         
@@ -74,58 +57,68 @@ const MessageList: React.FC<MessageListProps> = ({
   };
 
   return (
-    <div 
-      className={`flex-grow p-4 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto w-full max-w-full`}
-    >
-      {loading && <div className="text-center text-gray-500 text-lg font-semibold py-4">Loading messages...</div>}
-      {error && <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>}
+    <div className={`flex-grow p-4 ${isGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto w-full max-w-full`}>
+      {loading && (
+        <div className="text-center text-gray-500 text-lg font-semibold py-4">Loading messages...</div>
+      )}
+      
+      {error && (
+        <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>
+      )}
 
-      <div className="flex flex-col space-y-3 w-full max-w-full">
-        {messages.length === 0 && !loading && !error && (
-          <div className="text-center text-gray-400 py-4">No messages yet. Start the conversation!</div>
-        )}
-        
-        {messages.map((message, index) => {
-          const isConsecutive = index > 0 && messages[index - 1].user_name === message.user_name;
-          const timeAgo = formatTime(message.created_at);
-          let eventData = undefined;
+      <ScrollArea className="h-full w-full">
+        <div className="flex flex-col space-y-3 w-full max-w-full">
+          {messages.length === 0 && !loading && !error && (
+            <div className="text-center text-gray-400 py-4">No messages yet. Start the conversation!</div>
+          )}
           
-          try {
-            eventData = parseEventData(message);
-          } catch (error) {
-            console.error("Failed to parse event data:", error);
-            // Continue without event data if there's an error
-          }
+          {messages.map((message, index) => {
+            const isConsecutive = index > 0 && messages[index - 1].user_name === message.user_name;
+            const timeAgo = formatTime(message.created_at);
+            
+            // Parse event data
+            let eventData: EventShare | undefined;
+            let messageContent = message.content;
+            
+            try {
+              eventData = parseEventData(message);
+              
+              // Remove event data from message content if present
+              if (eventData && typeof message.content === 'string' && message.content.includes('🗓️ **Event:')) {
+                messageContent = message.content.replace(/🗓️ \*\*Event:.*?\n\n/s, '').trim();
+              }
+            } catch (error) {
+              console.error("Failed to parse event data:", error);
+            }
 
-          return (
-            <div key={message.id} className="mb-4 w-full max-w-full overflow-hidden">
-              {!isConsecutive && (
-                <div className="flex items-center mb-2">
-                  <Avatar className={`h-8 w-8 mr-2 flex-shrink-0 ${isSpotGroup || isSportGroup || isAusgehenGroup ? 'border-[#9b87f5]' : ''}`}>
-                    <AvatarImage src={message.user_avatar} alt={message.user_name} />
-                    <AvatarFallback>{getInitials(message.user_name)}</AvatarFallback>
-                  </Avatar>
-                  <div className="text-lg font-medium text-white mr-2">{message.user_name}</div>
-                  <span className="text-sm text-gray-400">{timeAgo}</span>
+            return (
+              <div key={message.id} className="mb-4 w-full max-w-full overflow-hidden">
+                {!isConsecutive && (
+                  <div className="flex items-center mb-2">
+                    <Avatar className={`h-8 w-8 mr-2 flex-shrink-0 ${isGroup ? 'border-[#9b87f5]' : ''}`}>
+                      <AvatarImage src={message.user_avatar} alt={message.user_name} />
+                      <AvatarFallback>{getInitials(message.user_name)}</AvatarFallback>
+                    </Avatar>
+                    <div className="text-lg font-medium text-white mr-2">{message.user_name}</div>
+                    <span className="text-sm text-gray-400">{timeAgo}</span>
+                  </div>
+                )}
+                <div className="w-full max-w-full overflow-hidden break-words">
+                  <ChatMessage 
+                    message={messageContent} 
+                    isConsecutive={isConsecutive}
+                    isGroup={isGroup}
+                    eventData={eventData}
+                  />
                 </div>
-              )}
-              <div className="w-full max-w-full overflow-hidden break-words">
-                <ChatMessage 
-                  message={eventData && typeof message.content === 'string' && message.content.includes('🗓️ **Event:') 
-                    ? message.content.replace(/🗓️ \*\*Event:.*?\n\n/s, '') 
-                    : message.content
-                  } 
-                  isConsecutive={isConsecutive}
-                  isSpotGroup={isSpotGroup || isSportGroup || isAusgehenGroup}
-                  eventData={eventData}
-                />
               </div>
-            </div>
-          );
-        })}
-        <TypingIndicator typingUsers={typingUsers} />
-        <div ref={chatBottomRef} />
-      </div>
+            );
+          })}
+          
+          <TypingIndicator typingUsers={typingUsers} />
+          <div ref={chatBottomRef} />
+        </div>
+      </ScrollArea>
     </div>
   );
 };

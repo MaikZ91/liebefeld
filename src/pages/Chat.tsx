@@ -1,34 +1,21 @@
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
 import ChatGroup from '@/components/chat/ChatGroup';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MessageCircle, Users, Calendar } from 'lucide-react';
+import { PlusCircle, MessageCircle, Users } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
-import { Event } from '@/types/eventTypes';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion, AnimatePresence } from 'framer-motion';
-import { chatService } from '@/services/chatService';
+import { supabase } from '@/integrations/supabase/client';
 import { USERNAME_KEY } from '@/types/chatTypes';
 
 const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
-  const [activeCommunityGroup, setActiveCommunityGroup] = useState<string>('Ausgehen');
-  const { events } = useEventContext();
-
-  // Function to handle the chatbot query from external components
-  const handleChatQuery = (query: string) => {
-    if (typeof window !== 'undefined' && window.chatbotQuery) {
-      window.chatbotQuery(query);
-    }
-  };
-
-  // Function to show add event modal from the existing implementation
+  const [activeCommunityGroup, setActiveCommunityGroup] = useState<string>('ausgehen');
+  
+  // Function to show add event modal
   const handleAddEvent = () => {
-    // Implementation would come from the existing Plus button logic
-    console.log('Open add event modal');
-    // If there's a global state management for modals, you would trigger it here
     if (typeof window !== 'undefined' && window.triggerAddEvent) {
       window.triggerAddEvent();
     }
@@ -39,9 +26,37 @@ const ChatPage = () => {
     typeof window !== 'undefined' ? localStorage.getItem(USERNAME_KEY) || 'Gast' : 'Gast'
   );
 
+  // Enable realtime messaging when component mounts
   useEffect(() => {
-    // Enable realtime messaging when component mounts
-    chatService.enableRealtime();
+    const enableRealtime = async () => {
+      try {
+        console.log('Setting up realtime subscription for chat_messages table');
+        
+        // Direct approach - create a channel and enable realtime
+        const channel = supabase
+          .channel('realtime_setup')
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'chat_messages'
+          }, () => {
+            // Empty callback - we just want to ensure the channel is created
+          })
+          .subscribe();
+        
+        // Keep the channel open for a moment to ensure subscription is registered
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Then remove it to avoid having too many open channels
+        supabase.removeChannel(channel);
+        
+        console.log('Realtime subscription initialized');
+      } catch (error) {
+        console.error('Exception in enabling Realtime:', error);
+      }
+    };
+
+    enableRealtime();
   }, []);
 
   // Check if we're on mobile for responsive design adjustments
@@ -110,7 +125,7 @@ const ChatPage = () => {
             <TabsContent value="community" className="flex-grow overflow-hidden flex flex-col mt-0 pt-0">
               <div className="border-b border-gray-800 bg-gray-900/20">
                 <div className="flex overflow-x-auto py-2 px-4">
-                  {['Ausgehen', 'Sport', 'Kreativität'].map((group) => (
+                  {['ausgehen', 'sport', 'kreativität'].map((group) => (
                     <Button
                       key={group}
                       variant={activeCommunityGroup === group ? "secondary" : "ghost"}
@@ -118,7 +133,10 @@ const ChatPage = () => {
                       onClick={() => setActiveCommunityGroup(group)}
                       className={`mx-1 ${activeCommunityGroup === group ? 'bg-[#9b87f5] text-white' : ''}`}
                     >
-                      {group}
+                      {group === 'ausgehen' ? 'Ausgehen' : 
+                       group === 'sport' ? 'Sport' : 
+                       group === 'kreativität' ? 'Kreativität' : 
+                       group}
                     </Button>
                   ))}
                 </div>
@@ -134,8 +152,11 @@ const ChatPage = () => {
                     className="h-full"
                   >
                     <ChatGroup 
-                      groupId={activeCommunityGroup.toLowerCase()} 
-                      groupName={activeCommunityGroup}
+                      groupId={activeCommunityGroup} 
+                      groupName={activeCommunityGroup === 'ausgehen' ? 'Ausgehen' : 
+                                 activeCommunityGroup === 'sport' ? 'Sport' : 
+                                 activeCommunityGroup === 'kreativität' ? 'Kreativität' : 
+                                 'Ausgehen'}
                     />
                   </motion.div>
                 </AnimatePresence>
