@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Message } from '@/types/chatTypes';
 
@@ -67,6 +68,7 @@ export const messageService = {
         user_name: msg.sender,
         user_avatar: msg.avatar || '',
         group_id: msg.group_id,
+        // We no longer add event_data directly here
       }));
       
       return formattedMessages;
@@ -125,6 +127,7 @@ export const messageService = {
     try {
       console.log(`Sending message to group ${groupId} from ${username}`);
       
+      // Remove any event_data related fields to avoid schema issues
       const { data, error } = await supabase
         .from('chat_messages')
         .insert([{

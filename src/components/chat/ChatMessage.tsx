@@ -17,7 +17,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   eventData
 }) => {
   // Check if message contains event data
-  const containsEventData = message.includes('🗓️ **Event:') || eventData;
+  const containsEventData = (typeof message === 'string' && message.includes('🗓️ **Event:')) || eventData;
   
   return (
     <div 

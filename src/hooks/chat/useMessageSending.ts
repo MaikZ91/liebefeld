@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { AVATAR_KEY, EventShare } from '@/types/chatTypes';
 import { toast } from '@/hooks/use-toast';
@@ -28,13 +27,11 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       console.log('Sending message to group:', groupId);
       
       let messageContent = trimmedMessage;
-      let eventMetadata = null;
       
       // Add event data to message if available
       if (eventData) {
         const { title, date, time, location, category } = eventData;
         messageContent = `🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${trimmedMessage}`;
-        eventMetadata = eventData;
       }
       
       // Create optimistic message for immediate display
@@ -45,8 +42,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         content: messageContent,
         user_name: username,
         user_avatar: localStorage.getItem(AVATAR_KEY) || '',
-        group_id: groupId,
-        event_data: eventMetadata
+        group_id: groupId
       };
       
       // Add optimistic message to local state IMMEDIATELY
@@ -87,7 +83,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         }
       }
       
-      // Send message to database
+      // Send message to database - remove event_data to avoid schema issues
       const { data, error } = await supabase
         .from('chat_messages')
         .insert([{
@@ -96,8 +92,8 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
           text: messageContent,
           avatar: localStorage.getItem(AVATAR_KEY),
           media_url: mediaUrl,
-          read_by: [username], // The sending person has already read the message
-          event_data: eventMetadata
+          read_by: [username] // The sending person has already read the message
+          // We're not including event_data here to avoid schema issues
         }])
         .select('id')
         .single();

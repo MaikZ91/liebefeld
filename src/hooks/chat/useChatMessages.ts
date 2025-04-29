@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Message } from '@/types/chatTypes';
 import { useMessageFetching } from '@/hooks/chat/useMessageFetching';
@@ -41,7 +40,17 @@ export const useChatMessages = (groupId: string, username: string) => {
         messageService.markMessagesAsRead(groupId, [newMsg.id], username);
       }
       
-      return [...oldMessages, newMsg];
+      // Process and parse event data before adding to messages
+      try {
+        const processedMsg = {
+          ...newMsg,
+          // We'll parse event data from content in the MessageList component
+        };
+        return [...oldMessages, processedMsg];
+      } catch (error) {
+        console.error('Error processing message:', error);
+        return [...oldMessages, newMsg];
+      }
     });
     
     setLastSeen(new Date());
@@ -158,7 +167,13 @@ export const useChatMessages = (groupId: string, username: string) => {
       const fetchedMessages = await messageService.fetchMessages(groupId);
       console.log(`Fetched ${fetchedMessages.length} messages`);
       
-      setMessages(fetchedMessages);
+      // Process messages to parse event data from content if needed
+      const processedMessages = fetchedMessages.map(msg => ({
+        ...msg,
+        // We'll parse event data from content in the MessageList component
+      }));
+      
+      setMessages(processedMessages);
       setLastSeen(new Date());
       
       // Mark messages as read

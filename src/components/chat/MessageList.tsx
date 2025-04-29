@@ -45,21 +45,25 @@ const MessageList: React.FC<MessageListProps> = ({
   // Parse event data from message content if available
   const parseEventData = (message: Message): EventShare | undefined => {
     try {
-      // First check if the message already has event_data
-      if (message.event_data) return message.event_data;
+      // First check if the message has event_data property
+      if (message.event_data) {
+        return message.event_data;
+      }
       
       // Otherwise try to parse from content
-      const eventRegex = /🗓️ \*\*Event: (.*?)\*\*\nDatum: (.*?) um (.*?)\nOrt: (.*?)\nKategorie: (.*?)(\n\n|$)/;
-      const match = message.content.match(eventRegex);
-      
-      if (match) {
-        return {
-          title: match[1],
-          date: match[2],
-          time: match[3],
-          location: match[4],
-          category: match[5]
-        };
+      if (typeof message.content === 'string' && message.content.includes('🗓️ **Event:')) {
+        const eventRegex = /🗓️ \*\*Event: (.*?)\*\*\nDatum: (.*?) um (.*?)\nOrt: (.*?)\nKategorie: (.*?)(\n\n|$)/;
+        const match = message.content.match(eventRegex);
+        
+        if (match) {
+          return {
+            title: match[1],
+            date: match[2],
+            time: match[3],
+            location: match[4],
+            category: match[5]
+          };
+        }
       }
       
       return undefined;
@@ -84,13 +88,13 @@ const MessageList: React.FC<MessageListProps> = ({
         {messages.map((message, index) => {
           const isConsecutive = index > 0 && messages[index - 1].user_name === message.user_name;
           const timeAgo = formatTime(message.created_at);
-          let eventData;
+          let eventData = undefined;
           
           try {
             eventData = parseEventData(message);
           } catch (error) {
             console.error("Failed to parse event data:", error);
-            eventData = undefined;
+            // Continue without event data if there's an error
           }
 
           return (
@@ -107,8 +111,8 @@ const MessageList: React.FC<MessageListProps> = ({
               )}
               <div className="w-full max-w-full overflow-hidden break-words">
                 <ChatMessage 
-                  message={eventData && message.content.includes('🗓️ **Event:') 
-                    ? message.content.replace(eventData.title, '').replace(/🗓️ \*\*Event:.*?\n\n/s, '') 
+                  message={eventData && typeof message.content === 'string' && message.content.includes('🗓️ **Event:') 
+                    ? message.content.replace(/🗓️ \*\*Event:.*?\n\n/s, '') 
                     : message.content
                   } 
                   isConsecutive={isConsecutive}
