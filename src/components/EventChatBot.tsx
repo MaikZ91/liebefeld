@@ -148,6 +148,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
   // Expose the handleExternalQuery function to window for access from other components
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // @ts-ignore - We're explicitly adding a custom property
       window.chatbotQuery = handleExternalQuery;
       console.log("Registered window.chatbotQuery function");
     }
@@ -174,7 +175,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
           </div>
         </div>
         
-        <ScrollArea className="flex-1 p-3">
+        <ScrollArea className="flex-1 p-3 overflow-y-auto max-h-[calc(100vh-240px)]">
           <div className="space-y-3 pb-2">
             {messages.map((message) => (
               <div
@@ -257,7 +258,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
             </button>
           </div>
           
-          <ScrollArea className="flex-1 p-3">
+          <ScrollArea className="flex-1 p-3 overflow-y-auto max-h-[350px]">
             <div className="space-y-3 pb-2">
               {messages.map((message) => (
                 <div
