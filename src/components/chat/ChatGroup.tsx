@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, RefreshCw, Paperclip, Calendar } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -119,7 +119,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
               await supabase
                 .from('chat_messages')
                 .update({ 
-                  read_by: supabase.sql`array_append(read_by, ${username})` 
+                  read_by: [...(msg.read_by || []), username]
                 })
                 .eq('id', msg.id);
             }
@@ -182,7 +182,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
             supabase
               .from('chat_messages')
               .update({ 
-                read_by: supabase.sql`array_append(read_by, ${username})` 
+                read_by: [...(msg.read_by || []), username]
               })
               .eq('id', msg.id);
           }
@@ -422,9 +422,14 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
       }
       
       if (isTyping) {
-        const channel = supabase.channel(`typing:${groupId}`);
-        await channel.subscribe();
-        await channel.send({
+        // Create a new channel for typing updates
+        const typingUpdateChannel = supabase.channel(`typing:${groupId}`);
+        
+        // Subscribe to the channel
+        await typingUpdateChannel.subscribe();
+        
+        // Send the typing update
+        await typingUpdateChannel.send({
           type: 'broadcast',
           event: 'typing',
           payload: {
@@ -433,6 +438,10 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
             isTyping: false
           }
         });
+        
+        // Remove the channel after sending
+        supabase.removeChannel(typingUpdateChannel);
+        
         setIsTyping(false);
       }
       
@@ -465,9 +474,12 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
       // Typing begins
       setIsTyping(true);
       
-      const channel = supabase.channel(`typing:${groupId}`);
-      channel.subscribe().then(() => {
-        channel.send({
+      // Create a new channel for typing updates
+      const typingUpdateChannel = supabase.channel(`typing:${groupId}`);
+      
+      // Subscribe and send typing update
+      typingUpdateChannel.subscribe().then(async () => {
+        await typingUpdateChannel.send({
           type: 'broadcast',
           event: 'typing',
           payload: {
@@ -476,6 +488,9 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
             isTyping: true
           }
         });
+        
+        // Remove the channel after sending
+        supabase.removeChannel(typingUpdateChannel);
       });
     }
     
@@ -487,9 +502,12 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
     // Set timeout to stop typing after 2 seconds of inactivity
     typingTimeoutRef.current = setTimeout(() => {
       if (isTyping) {
-        const channel = supabase.channel(`typing:${groupId}`);
-        channel.subscribe().then(() => {
-          channel.send({
+        // Create a new channel for typing updates
+        const typingUpdateChannel = supabase.channel(`typing:${groupId}`);
+        
+        // Subscribe and send typing update
+        typingUpdateChannel.subscribe().then(async () => {
+          await typingUpdateChannel.send({
             type: 'broadcast',
             event: 'typing',
             payload: {
@@ -498,7 +516,11 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
               isTyping: false
             }
           });
+          
+          // Remove the channel after sending
+          supabase.removeChannel(typingUpdateChannel);
         });
+        
         setIsTyping(false);
       }
     }, 2000);
