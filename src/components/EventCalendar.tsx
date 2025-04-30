@@ -1,278 +1,466 @@
-import React, { useState, useEffect } from 'react';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+
+import React, { useState, useCallback } from 'react';
+import { format, isSameDay, parseISO, getDay } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Music, PartyPopper, Image, Dumbbell, Map, Plus, Users } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Event } from '@/types/eventTypes';
-import { getEventsForDay, getMonthOrFavoriteEvents } from '@/utils/eventUtils';
-import { normalizeDate } from '@/utils/dateUtils';
-import CalendarHeader from './calendar/CalendarHeader';
-import CalendarDays from './calendar/CalendarDays';
-import EventList from './calendar/EventList';
-import EventPanel from './calendar/EventPanel';
-import FavoritesView from './calendar/FavoritesView';
-import EventForm from './EventForm';
-import AdPanel from './AdPanel';
-import PerfectDayPanel from './PerfectDayPanel';
+import { Calendar } from '@/components/ui/calendar';
 import { useEventContext } from '@/contexts/EventContext';
+import { Button } from '@/components/ui/button';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
+  List,
+  PlusCircle,
+  ThumbsUp,
+  Check,
+  X,
+  HelpCircle,
+} from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose,
+} from '@/components/ui/sheet';
+import { Event } from '@/contexts/EventContext';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import EventForm from './EventForm';
+import { groupEventsByDate } from '@/utils/eventUtils';
 import { toast } from 'sonner';
 
 interface EventCalendarProps {
   defaultView?: "calendar" | "list";
 }
 
-const categoryIcons = {
-  "Konzert": <Music className="h-4 w-4" />,
-  "Party": <PartyPopper className="h-4 w-4" />,
-  "Ausstellung": <Image className="h-4 w-4" />,
-  "Sport": <Dumbbell className="h-4 w-4" />,
-  "Workshop": <Plus className="h-4 w-4" />,
-  "Kultur": <Image className="h-4 w-4" />,
-  "Sonstiges": <Map className="h-4 w-4" />,
-  "Networking": <Users className="h-4 w-4" />,
-  "Meeting": <Users className="h-4 w-4" />
-};
-
-export const isTribeEvent = (title: string): boolean => {
-  const tribeKeywords = ['tribe', 'tuesday run', 'kennenlernabend', 'creatives circle'];
-  return tribeKeywords.some(keyword => 
-    title.toLowerCase().includes(keyword.toLowerCase())
-  );
-};
-
-const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
-  const { 
-    events, 
-    selectedDate, 
-    setSelectedDate, 
-    selectedEvent, 
-    setSelectedEvent,
-    filter,
-    setFilter,
-    handleLikeEvent,
-    showFavorites,
-    setShowFavorites,
-    eventLikes,
-    refreshEvents,
-    newEventIds,
-    topEventsPerDay,
-    addUserEvent
-  } = useEventContext();
-
-  const [currentDate, setCurrentDate] = useState(new Date());
+function EventCalendar({ defaultView = "calendar" }: EventCalendarProps) {
+  const { events, isLoadingEvents, toggleLike, updateRSVP } = useEventContext();
   const [view, setView] = useState<"calendar" | "list">(defaultView);
-  const [showEventForm, setShowEventForm] = useState(false);
-  const [showNewEvents, setShowNewEvents] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [isEventDetailsOpen, setIsEventDetailsOpen] = useState(false);
+  const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  const [isAddSidebarOpen, setIsAddSidebarOpen] = useState(false);
   
-  const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
-  const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
-  
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
-  
-  const eventsToDisplay = React.useMemo(() => {
-    if (showNewEvents) {
-      return events.filter(event => newEventIds.has(event.id));
-    } else if (showFavorites) {
-      return events.filter(event => 
-        event.date && 
-        topEventsPerDay[event.date] === event.id && 
-        (event.likes && event.likes > 0)
-      );
-    } else {
-      return getMonthOrFavoriteEvents(events, currentDate, false, eventLikes);
-    }
-  }, [events, currentDate, showFavorites, eventLikes, showNewEvents, newEventIds, topEventsPerDay]);
-  
-  const filteredEvents = selectedDate 
-    ? getEventsForDay(events, selectedDate, filter)
-    : [];
-    
-  const favoriteEvents = React.useMemo(() => {
-    return events.filter(event => 
-      event.date && 
-      topEventsPerDay[event.date] === event.id && 
-      (event.likes && event.likes > 0)
-    );
-  }, [events, topEventsPerDay]);
+  const handleDateSelect = useCallback((date: Date) => {
+    setSelectedDate(date);
+  }, []);
 
-  const handleDateClick = (day: Date) => {
-    const normalizedDay = normalizeDate(day);
-    console.log(`Selecting date: ${normalizedDay.toISOString()}`);
-    setSelectedDate(normalizedDay);
-    setSelectedEvent(null);
-  };
-  
-  const handleEventSelect = (event: Event) => {
+  const handleEventClick = useCallback((event: Event) => {
     setSelectedEvent(event);
-  };
-  
-  const handleAddEvent = async (newEvent: Omit<Event, 'id'>) => {
-    try {
-      console.log('Adding new event to database only:', newEvent);
-      await addUserEvent(newEvent);
-      toast.success("Event erfolgreich hinzugefügt!");
-      setShowEventForm(false);
-    } catch (error) {
-      console.error('Error adding event:', error);
-      toast.error("Fehler beim Hinzufügen des Events");
-    }
-  };
+    setIsEventDetailsOpen(true);
+  }, []);
 
-  const toggleFilter = (category: string) => {
-    setFilter(current => current === category ? null : category);
-  };
+  const handleCloseEventDetails = useCallback(() => {
+    setIsEventDetailsOpen(false);
+    setSelectedEvent(null);
+  }, []);
 
-  const toggleFavorites = () => {
-    if (showNewEvents) setShowNewEvents(false);
-    setShowFavorites(prev => !prev);
+  const handleAddEventClick = useCallback(() => {
+    setIsAddEventOpen(true);
+  }, []);
+
+  const handleAddEventSuccess = useCallback(() => {
+    setIsAddEventOpen(false);
+    setIsAddSidebarOpen(false);
+    toast.success("Event erfolgreich erstellt!", {
+      description: "Dein Event wurde zum Kalender hinzugefügt.",
+    });
+  }, []);
+
+  const handleLike = useCallback(async (event: Event, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await toggleLike(event.id);
+  }, [toggleLike]);
+
+  const handleRSVP = useCallback(async (event: Event, status: 'yes' | 'no' | 'maybe', e: React.MouseEvent) => {
+    e.stopPropagation();
+    await updateRSVP(event.id, status);
+    toast.success(`RSVP als "${status}" gespeichert!`);
+  }, [updateRSVP]);
+
+  // Group events by date for list view
+  const eventsByDate = groupEventsByDate(events);
+
+  // Get events for selected date in calendar view
+  const eventsForSelectedDate = events.filter(event => {
+    const eventDate = typeof event.date === 'string' ? parseISO(event.date) : event.date;
+    return isSameDay(eventDate, selectedDate);
+  });
+
+  // Function to determine if a date has events
+  const hasEvents = useCallback((date: Date) => {
+    return events.some(event => {
+      const eventDate = typeof event.date === 'string' ? parseISO(event.date) : event.date;
+      return isSameDay(eventDate, date);
+    });
+  }, [events]);
+
+  // Custom day render for calendar
+  const renderDay = useCallback((day: Date) => {
+    const hasEventsOnDay = hasEvents(day);
+    return (
+      <div className={`relative p-2 ${hasEventsOnDay ? 'font-bold' : ''}`}>
+        {hasEventsOnDay && <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-red-500 rounded-full" />}
+        {day.getDate()}
+      </div>
+    );
+  }, [hasEvents]);
+
+  // Custom calendar styles
+  const dayClassNames = useCallback((date: Date) => {
+    const isWeekend = [0, 6].includes(getDay(date));
+    const hasEventsOnDay = hasEvents(date);
     
-    if (!showFavorites) {
-      setSelectedDate(null);
-    }
-  };
-  
-  const toggleNewEvents = () => {
-    if (showFavorites) setShowFavorites(false);
-    setShowNewEvents(prev => !prev);
-    
-    if (!showNewEvents) {
-      setSelectedDate(null);
-    }
-  };
-
-  const toggleEventForm = () => {
-    setShowEventForm(prev => !prev);
-  };
-
-  const triggerChatbotQuery = (query: string) => {
-    if (typeof window !== 'undefined' && (window as any).chatbotQuery) {
-      (window as any).chatbotQuery(query);
-    }
-  };
-
-  useEffect(() => {
-    if (filter !== null) {
-      setSelectedDate(null);
-    }
-  }, [filter]);
+    return {
+      'bg-muted hover:bg-accent': isWeekend,
+      'font-bold': hasEventsOnDay,
+      'hover:bg-accent hover:text-accent-foreground': true,
+    };
+  }, [hasEvents]);
 
   return (
-    <div className="container mx-auto px-2 py-6 max-w-[1280px] animate-fade-in">
-      <div className="flex flex-col space-y-4">
-        <CalendarHeader 
-          currentDate={currentDate}
-          prevMonth={prevMonth}
-          nextMonth={nextMonth}
-          showFavorites={showFavorites}
-          toggleFavorites={toggleFavorites}
-          favoriteEvents={favoriteEvents.length}
-          filter={filter}
-          toggleFilter={toggleFilter}
-          categories={Array.from(new Set(events.map(event => event.category)))}
-          categoryIcons={categoryIcons}
-          showNewEvents={showNewEvents}
-          toggleNewEvents={toggleNewEvents}
-          newEventsCount={newEventIds.size}
-          view={view}
-          setView={setView}
-          onShowEventForm={toggleEventForm}
-          showEventForm={showEventForm}
-        />
+    <div className="flex flex-col h-full bg-background">
+      <div className="flex justify-between items-center p-4 border-b">
+        <h2 className="text-xl font-bold">Events</h2>
+        <div className="flex gap-2">
+          <Button
+            variant={view === "calendar" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setView("calendar")}
+          >
+            <CalendarIcon className="h-4 w-4 mr-1" /> Kalender
+          </Button>
+          <Button
+            variant={view === "list" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setView("list")}
+          >
+            <List className="h-4 w-4 mr-1" /> Liste
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleAddEventClick}
+            className="ml-2"
+          >
+            <PlusCircle className="h-4 w-4 mr-1" /> Event
+          </Button>
+        </div>
+      </div>
 
-        {showEventForm && (
-          <div className="w-full mt-3 mb-3 dark-glass-card rounded-xl p-4 animate-fade-down animate-duration-300">
-            <EventForm 
-              selectedDate={selectedDate ? selectedDate : new Date()} 
-              onAddEvent={handleAddEvent}
-              onCancel={() => setShowEventForm(false)}
-            />
+      <div className="flex-1 overflow-y-auto">
+        {isLoadingEvents ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900"></div>
           </div>
-        )}
-        
-        <Tabs 
-          defaultValue={view} 
-          value={view} 
-          className="flex flex-col items-center w-full"
-        >
-          <TabsContent value="list" className="w-full">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
-              <div className="md:col-span-2">
-                <EventList 
-                  events={eventsToDisplay}
-                  showFavorites={showFavorites}
-                  showNewEvents={showNewEvents}
-                  onSelectEvent={(event, date) => {
-                    setSelectedDate(date);
-                    setSelectedEvent(event);
-                  }}
-                  onLike={handleLikeEvent}
+        ) : (
+          <>
+            {view === "calendar" && (
+              <div className="p-4">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={handleDateSelect}
+                  className="rounded-md border shadow"
+                  locale={de}
+                  weekStartsOn={1}
+                  disabled={() => false}
+                  dayClassName={dayClassNames}
+                  renderDay={renderDay}
                 />
+
+                <div className="mt-4">
+                  <h3 className="text-lg font-semibold mb-2">
+                    Events am {format(selectedDate, "dd.MM.yyyy", { locale: de })}
+                  </h3>
+                  
+                  {eventsForSelectedDate.length === 0 ? (
+                    <p className="text-gray-500">Keine Events an diesem Tag.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {eventsForSelectedDate.map(event => (
+                        <div
+                          key={event.id}
+                          onClick={() => handleEventClick(event)}
+                          className="p-3 border rounded-lg cursor-pointer hover:bg-accent transition-colors"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h4 className="font-medium">{event.title}</h4>
+                              <p className="text-sm text-gray-500">
+                                {event.time} • {event.location || 'Kein Ort angegeben'}
+                              </p>
+                            </div>
+                            <Badge variant="outline">{event.category}</Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="md:col-span-1 space-y-3">
-                <AdPanel className="h-[280px]" />
-                <PerfectDayPanel className="w-full" onAskChatbot={triggerChatbotQuery} />
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="calendar" className="w-full">
-            <div className="flex flex-col md:flex-row gap-3">
-              <div className="w-full md:w-3/5 dark-glass-card rounded-xl p-4">
-                {showFavorites ? (
-                  <FavoritesView 
-                    favoriteEvents={favoriteEvents}
-                    onSwitchToList={() => setView("list")}
-                  />
-                ) : showNewEvents ? (
-                  <div className="text-center p-3">
-                    <h3 className="text-base font-medium mb-2">Neue Events</h3>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Es gibt {newEventIds.size} neue Events seit deinem letzten Besuch.
-                    </p>
-                    <Button onClick={() => setView("list")} size="sm" className="text-xs h-7 px-2">
-                      Als Liste anzeigen
-                    </Button>
+            )}
+
+            {view === "list" && (
+              <div className="divide-y">
+                {Object.entries(eventsByDate).map(([date, dateEvents]) => (
+                  <div key={date} className="p-4">
+                    <h3 className="text-lg font-semibold mb-3">{date}</h3>
+                    <div className="space-y-3">
+                      {dateEvents.map(event => (
+                        <div
+                          key={event.id}
+                          onClick={() => handleEventClick(event)}
+                          className="p-3 border rounded-lg cursor-pointer hover:bg-accent transition-colors"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h4 className="font-medium">{event.title}</h4>
+                              <p className="text-sm text-gray-500">
+                                {event.time} • {event.location || 'Kein Ort angegeben'}
+                              </p>
+                            </div>
+                            <Badge variant="outline" className="ml-2 whitespace-nowrap">{event.category}</Badge>
+                          </div>
+                          
+                          <div className="flex mt-2 items-center gap-3">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="flex items-center gap-1 h-7 px-2"
+                              onClick={(e) => handleLike(event, e)}
+                            >
+                              <ThumbsUp className="h-3.5 w-3.5" /> 
+                              <span>{event.likes || 0}</span>
+                            </Button>
+                            
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="flex items-center gap-1 h-7 px-2 text-green-500"
+                                    onClick={(e) => handleRSVP(event, 'yes', e)}
+                                  >
+                                    <Check className="h-3.5 w-3.5" /> 
+                                    <span>{event.rsvp_yes || 0}</span>
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Ich nehme teil</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="flex items-center gap-1 h-7 px-2 text-red-500"
+                                    onClick={(e) => handleRSVP(event, 'no', e)}
+                                  >
+                                    <X className="h-3.5 w-3.5" /> 
+                                    <span>{event.rsvp_no || 0}</span>
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Ich nehme nicht teil</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="flex items-center gap-1 h-7 px-2 text-yellow-500"
+                                    onClick={(e) => handleRSVP(event, 'maybe', e)}
+                                  >
+                                    <HelpCircle className="h-3.5 w-3.5" /> 
+                                    <span>{event.rsvp_maybe || 0}</span>
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Vielleicht</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ) : (
-                  <CalendarDays 
-                    daysInMonth={daysInMonth}
-                    events={filter ? events.filter(event => event.category === filter) : events}
-                    selectedDate={selectedDate}
-                    onDateClick={handleDateClick}
-                  />
+                ))}
+
+                {Object.keys(eventsByDate).length === 0 && (
+                  <div className="p-6 text-center">
+                    <p className="text-gray-500">Keine anstehenden Events.</p>
+                  </div>
                 )}
               </div>
-              
-              <div className="w-full md:w-2/5 mt-3 md:mt-0 flex flex-col gap-3">
-                <EventPanel 
-                  selectedDate={selectedDate}
-                  selectedEvent={selectedEvent}
-                  filteredEvents={filteredEvents}
-                  filter={filter}
-                  onEventSelect={handleEventSelect}
-                  onEventClose={() => setSelectedEvent(null)}
-                  onLike={handleLikeEvent}
-                  onShowEventForm={toggleEventForm}
-                  showFavorites={showFavorites}
-                />
-                
-                <AdPanel className="h-[200px]" />
-                <PerfectDayPanel 
-                  className="w-full h-[280px]" 
-                  onAskChatbot={triggerChatbotQuery} 
-                />
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+            )}
+          </>
+        )}
       </div>
+
+      {/* Event Details Dialog */}
+      <Dialog open={isEventDetailsOpen} onOpenChange={handleCloseEventDetails}>
+        <DialogContent className="sm:max-w-md">
+          {selectedEvent && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{selectedEvent.title}</DialogTitle>
+                <DialogDescription>
+                  {format(parseISO(selectedEvent.date), "EEEE, dd.MM.yyyy", { locale: de })} um {selectedEvent.time}
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                {selectedEvent.location && (
+                  <div>
+                    <h4 className="text-sm font-medium">Ort</h4>
+                    <p>{selectedEvent.location}</p>
+                  </div>
+                )}
+                
+                {selectedEvent.description && (
+                  <div>
+                    <h4 className="text-sm font-medium">Beschreibung</h4>
+                    <p className="text-sm">{selectedEvent.description}</p>
+                  </div>
+                )}
+                
+                {selectedEvent.organizer && (
+                  <div>
+                    <h4 className="text-sm font-medium">Veranstalter</h4>
+                    <p>{selectedEvent.organizer}</p>
+                  </div>
+                )}
+                
+                {selectedEvent.link && (
+                  <div>
+                    <h4 className="text-sm font-medium">Link</h4>
+                    <a 
+                      href={selectedEvent.link} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="text-blue-600 hover:underline break-all"
+                    >
+                      {selectedEvent.link}
+                    </a>
+                  </div>
+                )}
+                
+                <div className="flex justify-between pt-4">
+                  <Badge variant="outline">{selectedEvent.category}</Badge>
+                  <div className="flex gap-3">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="flex items-center gap-1"
+                      onClick={(e) => handleLike(selectedEvent, e)}
+                    >
+                      <ThumbsUp className="h-4 w-4" /> 
+                      <span>{selectedEvent.likes || 0}</span>
+                    </Button>
+                    
+                    <div className="flex gap-1 items-center">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="flex items-center justify-center w-8 h-8 p-0 text-green-500"
+                        onClick={(e) => handleRSVP(selectedEvent, 'yes', e)}
+                        title="Teilnehmen"
+                      >
+                        <Check className="h-4 w-4" /> 
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="flex items-center justify-center w-8 h-8 p-0 text-red-500"
+                        onClick={(e) => handleRSVP(selectedEvent, 'no', e)}
+                        title="Absagen"
+                      >
+                        <X className="h-4 w-4" /> 
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="flex items-center justify-center w-8 h-8 p-0 text-yellow-500"
+                        onClick={(e) => handleRSVP(selectedEvent, 'maybe', e)}
+                        title="Vielleicht"
+                      >
+                        <HelpCircle className="h-4 w-4" /> 
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Event Dialog */}
+      <Dialog open={isAddEventOpen} onOpenChange={setIsAddEventOpen}>
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Event hinzufügen</DialogTitle>
+            <DialogDescription>
+              Erstelle ein neues Event für die Community.
+            </DialogDescription>
+          </DialogHeader>
+          <EventForm 
+            onSuccess={handleAddEventSuccess} 
+            selectedDate={selectedDate} 
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Event Sidebar (for mobile) */}
+      <Sheet open={isAddSidebarOpen} onOpenChange={setIsAddSidebarOpen}>
+        <SheetTrigger asChild>
+          <Button
+            variant="default"
+            size="sm"
+            className="fixed bottom-6 right-6 z-10 rounded-full shadow-lg md:hidden"
+          >
+            <PlusCircle className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="bottom" className="h-4/5">
+          <SheetHeader>
+            <SheetTitle>Event hinzufügen</SheetTitle>
+            <SheetDescription>
+              Erstelle ein neues Event für die Community.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-4 overflow-y-auto max-h-[calc(100%-5rem)]">
+            <EventForm 
+              onSuccess={handleAddEventSuccess} 
+              selectedDate={selectedDate}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
-};
+}
 
 export default EventCalendar;
-export type { Event };
