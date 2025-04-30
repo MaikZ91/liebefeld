@@ -1,271 +1,412 @@
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { startOfDay, format } from 'date-fns';
+import { Event, RsvpOption } from '../types/eventTypes';
+import { 
+  fetchSupabaseEvents, 
+  fetchExternalEvents, 
+  fetchGitHubLikes, 
+  updateEventLikes,
+  bielefeldEvents,
+  updateEventRsvp,
+  syncGitHubEvents,
+  addNewEvent,
+  logTodaysEvents
+} from '../services/eventService';
 
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { eventService } from '@/services/eventService';
-import { Event as EventType } from '@/types/eventTypes';
-
-// Use the Event type from types/eventTypes.ts for consistency
-export type Event = EventType;
-
-export interface EventContextProps {
+interface EventContextProps {
   events: Event[];
-  refreshEvents: () => Promise<void>;
-  addEvent: (event: Omit<Event, 'id'>) => Promise<void>;
-  toggleLike: (eventId: string) => Promise<void>;
-  isLoadingEvents: boolean;
-  updateRSVP: (eventId: string, status: 'yes' | 'no' | 'maybe') => Promise<void>;
-  // Add missing properties needed by components
-  eventLikes: Record<string, number>;
-  newEventIds: Set<string>;
+  setEvents: React.Dispatch<React.SetStateAction<Event[]>>;
+  isLoading: boolean;
+  selectedDate: Date | null;
+  setSelectedDate: React.Dispatch<React.SetStateAction<Date | null>>;
+  selectedEvent: Event | null;
+  setSelectedEvent: React.Dispatch<React.SetStateAction<Event | null>>;
   filter: string | null;
+  setFilter: React.Dispatch<React.SetStateAction<string | null>>;
+  eventLikes: Record<string, number>;
+  handleLikeEvent: (eventId: string) => Promise<void>;
+  handleRsvpEvent: (eventId: string, option: RsvpOption) => Promise<void>;
+  showFavorites: boolean;
+  setShowFavorites: React.Dispatch<React.SetStateAction<boolean>>;
+  refreshEvents: () => Promise<void>;
+  newEventIds: Set<string>;
   topEventsPerDay: Record<string, string>;
-  handleRsvpEvent: (eventId: string, status: 'yes' | 'no' | 'maybe') => Promise<void>;
+  addUserEvent: (event: Omit<Event, 'id'>) => Promise<Event>;
 }
 
-const EventContext = createContext<EventContextProps>({
-  events: [],
-  refreshEvents: async () => {},
-  addEvent: async () => {},
-  toggleLike: async () => {},
-  isLoadingEvents: false,
-  updateRSVP: async () => {},
-  // Initialize new properties
-  eventLikes: {},
-  newEventIds: new Set<string>(),
-  filter: null,
-  topEventsPerDay: {},
-  handleRsvpEvent: async () => {}
-});
+declare global {
+  interface Window {
+    refreshEventsContext?: () => Promise<void>;
+  }
+}
 
-export const useEventContext = () => useContext(EventContext);
+const EventContext = createContext<EventContextProps | undefined>(undefined);
 
-export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [events, setEvents] = useState<Event[]>([]);
-  const [isLoadingEvents, setIsLoadingEvents] = useState(true);
-  // Add new states for the additional properties
-  const [eventLikes, setEventLikes] = useState<Record<string, number>>({});
-  const [newEventIds] = useState<Set<string>>(new Set());
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(() => startOfDay(new Date()));
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [filter, setFilter] = useState<string | null>(null);
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [eventLikes, setEventLikes] = useState<Record<string, number>>({});
+  const [pendingLikes, setPendingLikes] = useState<Set<string>>(new Set());
+  const [newEventIds, setNewEventIds] = useState<Set<string>>(new Set());
   const [topEventsPerDay, setTopEventsPerDay] = useState<Record<string, string>>({});
 
-  const refreshEvents = useCallback(async () => {
+  const refreshEvents = async () => {
+    setIsLoading(true);
     try {
-      setIsLoadingEvents(true);
-      const fetchedEvents = await eventService.getAllEvents();
-      setEvents(fetchedEvents);
+      console.log('Refreshing events...');
       
-      // Calculate top events per day
-      const topEventsByDay: Record<string, string> = {};
-      fetchedEvents.forEach(event => {
-        if (!event.date) return;
-        
-        const currentTopEvent = topEventsByDay[event.date];
-        const currentTopEventLikes = currentTopEvent ? 
-          fetchedEvents.find(e => e.id === currentTopEvent)?.likes || 0 : 0;
-        
-        if (!currentTopEvent || (event.likes || 0) > currentTopEventLikes) {
-          topEventsByDay[event.date] = event.id;
+      const previouslySeenEventsJson = localStorage.getItem('seenEventIds');
+      const previouslySeenEvents: string[] = previouslySeenEventsJson ? JSON.parse(previouslySeenEventsJson) : [];
+      const previouslySeenSet = new Set(previouslySeenEvents);
+      
+      const githubLikes = await fetchGitHubLikes();
+      console.log('Fetched GitHub likes:', githubLikes);
+      
+      const likesMap: Record<string, number> = {};
+      Object.keys(githubLikes).forEach(eventId => {
+        if (typeof githubLikes[eventId].likes === 'number') {
+          likesMap[eventId] = githubLikes[eventId].likes;
         }
       });
       
-      setTopEventsPerDay(topEventsByDay);
+      setEventLikes(likesMap);
+      console.log('Updated event likes state directly from database:', likesMap);
       
-      // Extract event likes for GitHub events
-      const likes: Record<string, number> = {};
-      fetchedEvents.forEach(event => {
-        if (event.id.startsWith('github-')) {
-          likes[event.id] = event.likes || 0;
+      const supabaseEvents = await fetchSupabaseEvents();
+      console.log(`Loaded ${supabaseEvents.length} events from Supabase`);
+      
+      const externalEvents = await fetchExternalEvents(likesMap);
+      console.log(`Loaded ${externalEvents.length} external events`);
+      
+      await syncGitHubEvents(externalEvents);
+      
+      const eventMap = new Map<string, Event>();
+      
+      supabaseEvents.forEach(event => {
+        eventMap.set(event.id, event);
+      });
+      
+      externalEvents.forEach(extEvent => {
+        if (!eventMap.has(extEvent.id)) {
+          eventMap.set(extEvent.id, {
+            ...extEvent,
+            likes: likesMap[extEvent.id] || 0,
+            rsvp_yes: githubLikes[extEvent.id]?.rsvp_yes || 0,
+            rsvp_no: githubLikes[extEvent.id]?.rsvp_no || 0,
+            rsvp_maybe: githubLikes[extEvent.id]?.rsvp_maybe || 0
+          });
         }
       });
       
-      setEventLikes(likes);
-    } catch (error) {
-      console.error('Error fetching events:', error);
-      toast.error('Fehler beim Laden der Events', {
-        description: 'Bitte versuche es später noch einmal.',
+      const combinedEvents = Array.from(eventMap.values());
+      
+      const newEventIdsSet = new Set<string>();
+      
+      const currentEventIds = combinedEvents.map(event => event.id);
+      currentEventIds.forEach(id => {
+        if (!previouslySeenSet.has(id)) {
+          newEventIdsSet.add(id);
+        }
       });
-    } finally {
-      setIsLoadingEvents(false);
-    }
-  }, []);
-
-  const addEvent = useCallback(async (event: Omit<Event, 'id'>) => {
-    try {
-      // Add event to database
-      const { data, error } = await supabase
-        .from('community_events')
-        .insert({
-          title: event.title,
-          description: event.description || '',
-          date: event.date,
-          time: event.time,
-          location: event.location || '',
-          category: event.category,
-          organizer: event.organizer || '',
-          link: event.link || '',
-        })
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      // Add the new event to the local state
-      const newEvent: Event = {
-        id: data.id,
-        title: data.title,
-        description: data.description,
-        date: data.date,
-        time: data.time,
-        location: data.location,
-        category: data.category,
-        organizer: data.organizer,
-        link: data.link,
-        likes: 0,
-        rsvp_yes: 0,
-        rsvp_no: 0,
-        rsvp_maybe: 0,
-        origin: 'database',
-      };
-
-      setEvents(prevEvents => [...prevEvents, newEvent]);
       
-      // Add to new events set
-      newEventIds.add(data.id);
+      setNewEventIds(newEventIdsSet);
       
-      return;
-    } catch (error) {
-      console.error('Error adding event:', error);
-      throw error;
-    }
-  }, [newEventIds]);
-
-  const toggleLike = useCallback(async (eventId: string) => {
-    try {
-      // Optimistically update the UI
-      setEvents(prevEvents =>
-        prevEvents.map(event => {
-          if (event.id === eventId) {
-            const currentLikes = event.likes || 0;
+      localStorage.setItem('seenEventIds', JSON.stringify(currentEventIds));
+      
+      if (combinedEvents.length === 0) {
+        console.log('No events found, using example data');
+        setEvents(bielefeldEvents);
+      } else {
+        const eventsWithSyncedRsvp = combinedEvents.map(event => {
+          if (event.id.startsWith('github-') && githubLikes[event.id]) {
             return {
               ...event,
-              likes: currentLikes + 1,
+              likes: githubLikes[event.id]?.likes || 0,
+              rsvp_yes: githubLikes[event.id]?.rsvp_yes || 0,
+              rsvp_no: githubLikes[event.id]?.rsvp_no || 0,
+              rsvp_maybe: githubLikes[event.id]?.rsvp_maybe || 0,
+              rsvp: {
+                yes: githubLikes[event.id]?.rsvp_yes || 0,
+                no: githubLikes[event.id]?.rsvp_no || 0,
+                maybe: githubLikes[event.id]?.rsvp_maybe || 0
+              }
             };
           }
+          
+          if (event.rsvp_yes !== undefined || event.rsvp_no !== undefined || event.rsvp_maybe !== undefined) {
+            return {
+              ...event,
+              rsvp: {
+                yes: event.rsvp_yes || 0,
+                no: event.rsvp_no || 0,
+                maybe: event.rsvp_maybe || 0
+              }
+            };
+          }
+          
           return event;
-        })
-      );
-
-      // Also update eventLikes for GitHub events
-      if (eventId.startsWith('github-')) {
-        setEventLikes(prev => ({
-          ...prev,
-          [eventId]: (prev[eventId] || 0) + 1
-        }));
+        });
+        
+        const topEventsByDay: Record<string, string> = {};
+        const eventsByDate: Record<string, Event[]> = {};
+        
+        eventsWithSyncedRsvp.forEach(event => {
+          if (!event.date) return;
+          
+          if (!eventsByDate[event.date]) {
+            eventsByDate[event.date] = [];
+          }
+          
+          eventsByDate[event.date].push(event);
+        });
+        
+        Object.keys(eventsByDate).forEach(date => {
+          const sortedEvents = [...eventsByDate[date]].sort((a, b) => {
+            const likesA = a.likes || 0;
+            const likesB = b.likes || 0;
+            
+            if (likesB !== likesA) {
+              return likesB - likesA;
+            }
+            
+            return a.id.localeCompare(b.id);
+          });
+          
+          if (sortedEvents.length > 0) {
+            topEventsByDay[date] = sortedEvents[0].id;
+          }
+        });
+        
+        setTopEventsPerDay(topEventsByDay);
+        setEvents(eventsWithSyncedRsvp);
+        
+        localStorage.setItem('lastEventsRefresh', new Date().toISOString());
+        
+        logTodaysEvents(eventsWithSyncedRsvp);
       }
+    } catch (error) {
+      console.error('Error loading events:', error);
+      setEvents(bielefeldEvents);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      // Update likes in database
-      if (eventId.startsWith('github-')) {
-        const githubEventId = eventId.substring(7); // Remove "github-" prefix
-        await eventService.updateGithubEventLikes(githubEventId);
-      } else {
-        await eventService.updateDatabaseEventLikes(eventId);
+  const handleLikeEvent = async (eventId: string) => {
+    try {
+      if (pendingLikes.has(eventId)) {
+        console.log(`Like operation already in progress for event ${eventId}`);
+        return;
+      }
+      
+      console.log(`Starting like operation for event with ID: ${eventId}`);
+      const currentEvent = events.find(event => event.id === eventId);
+      if (!currentEvent) {
+        console.error(`Event with ID ${eventId} not found`);
+        return;
+      }
+      
+      setPendingLikes(prev => new Set(prev).add(eventId));
+      
+      const currentLikes = currentEvent.id.startsWith('github-') 
+        ? (eventLikes[eventId] || 0) 
+        : (currentEvent.likes || 0);
+      
+      const newLikesValue = currentLikes + 1;
+      
+      console.log(`Increasing likes for ${eventId} from ${currentLikes} to ${newLikesValue}`);
+      
+      try {
+        const currentRsvp = {
+          yes: currentEvent.rsvp_yes ?? currentEvent.rsvp?.yes ?? 0,
+          no: currentEvent.rsvp_no ?? currentEvent.rsvp?.no ?? 0,
+          maybe: currentEvent.rsvp_maybe ?? currentEvent.rsvp?.maybe ?? 0
+        };
+        
+        const newRsvp = { 
+          ...currentRsvp,
+          yes: currentRsvp.yes + 1 
+        };
+        
+        await Promise.all([
+          updateEventLikes(eventId, newLikesValue),
+          updateEventRsvp(eventId, newRsvp)
+        ]);
+        
+        console.log(`Successfully updated likes (${newLikesValue}) and RSVP in database for event ${eventId}`);
+        
+        if (currentEvent.id.startsWith('github-')) {
+          setEventLikes(prev => ({
+            ...prev,
+            [eventId]: newLikesValue
+          }));
+          console.log(`Updated eventLikes for ${eventId} to:`, newLikesValue);
+        }
+        
+        setEvents(prevEvents => {
+          return prevEvents.map(event => 
+            event.id === eventId 
+              ? { 
+                  ...event, 
+                  likes: newLikesValue,
+                  rsvp_yes: newRsvp.yes,
+                  rsvp_no: newRsvp.no,
+                  rsvp_maybe: newRsvp.maybe,
+                  rsvp: {
+                    yes: newRsvp.yes,
+                    no: newRsvp.no,
+                    maybe: newRsvp.maybe
+                  }
+                } 
+              : event
+          );
+        });
+      } catch (error) {
+        console.error('Database update failed:', error);
+      } finally {
+        setPendingLikes(prev => {
+          const updated = new Set(prev);
+          updated.delete(eventId);
+          return updated;
+        });
       }
     } catch (error) {
       console.error('Error updating likes:', error);
-      
-      // Revert the optimistic update
-      await refreshEvents();
-      
-      toast.error('Fehler beim Liken des Events', {
-        description: 'Bitte versuche es später noch einmal.',
+      setPendingLikes(prev => {
+        const updated = new Set(prev);
+        updated.delete(eventId);
+        return updated;
       });
     }
-  }, [refreshEvents]);
+  };
 
-  const updateRSVP = useCallback(async (eventId: string, status: 'yes' | 'no' | 'maybe') => {
+  const handleRsvpEvent = async (eventId: string, option: RsvpOption) => {
     try {
-      // Optimistically update the UI
-      setEvents(prevEvents =>
-        prevEvents.map(event => {
-          if (event.id === eventId) {
-            const updatedEvent = { ...event };
-            
-            // Increment the selected status
-            if (status === 'yes') {
-              updatedEvent.rsvp_yes = (updatedEvent.rsvp_yes || 0) + 1;
-            } else if (status === 'no') {
-              updatedEvent.rsvp_no = (updatedEvent.rsvp_no || 0) + 1;
-            } else if (status === 'maybe') {
-              updatedEvent.rsvp_maybe = (updatedEvent.rsvp_maybe || 0) + 1;
-            }
-            
-            return updatedEvent;
-          }
-          return event;
-        })
-      );
-
-      // Update RSVP in database
-      if (eventId.startsWith('github-')) {
-        const githubEventId = eventId.substring(7); // Remove "github-" prefix
-        await eventService.updateGithubEventRSVP(githubEventId, status);
-      } else {
-        await eventService.updateDatabaseEventRSVP(eventId, status);
+      console.log(`RSVP for event with ID: ${eventId}, option: ${option}`);
+      const currentEvent = events.find(event => event.id === eventId);
+      if (!currentEvent) {
+        console.error(`Event with ID ${eventId} not found`);
+        return;
       }
+      
+      const currentRsvp = {
+        yes: currentEvent.rsvp_yes ?? currentEvent.rsvp?.yes ?? 0,
+        no: currentEvent.rsvp_no ?? currentEvent.rsvp?.no ?? 0,
+        maybe: currentEvent.rsvp_maybe ?? currentEvent.rsvp?.maybe ?? 0
+      };
+      
+      const newRsvp = { ...currentRsvp };
+      
+      newRsvp[option] += 1;
+      
+      console.log(`Updating RSVP for ${eventId} to:`, newRsvp);
+      
+      await updateEventRsvp(eventId, newRsvp);
+      console.log(`Successfully updated RSVP in database for event ${eventId}`);
+      
+      const currentLikes = currentEvent.id.startsWith('github-')
+        ? (eventLikes[eventId] || 0)
+        : (currentEvent.likes || 0);
+        
+      const newLikesValue = Math.max(currentLikes, newRsvp.yes + newRsvp.maybe);
+      
+      await updateEventLikes(eventId, newLikesValue);
+      console.log(`Successfully updated likes in database for event ${eventId} to ${newLikesValue}`);
+      
+      if (currentEvent.id.startsWith('github-')) {
+        setEventLikes(prev => ({
+          ...prev,
+          [eventId]: newLikesValue
+        }));
+      }
+      
+      setEvents(prevEvents => {
+        return prevEvents.map(event => 
+          event.id === eventId 
+            ? { 
+                ...event, 
+                likes: newLikesValue,
+                rsvp_yes: newRsvp.yes,
+                rsvp_no: newRsvp.no,
+                rsvp_maybe: newRsvp.maybe,
+                rsvp: newRsvp 
+              } 
+            : event
+        );
+      });
     } catch (error) {
       console.error('Error updating RSVP:', error);
+    }
+  };
+
+  const addUserEvent = async (eventData: Omit<Event, 'id'>): Promise<Event> => {
+    try {
+      console.log('Adding new user event to database only:', eventData);
       
-      // Revert the optimistic update
+      const newEvent = await addNewEvent(eventData);
+      console.log('Successfully added new event to database:', newEvent);
+      
       await refreshEvents();
       
-      toast.error('Fehler beim RSVP des Events', {
-        description: 'Bitte versuche es später noch einmal.',
-      });
+      return newEvent;
+    } catch (error) {
+      console.error('Error adding new event:', error);
+      throw error;
     }
-  }, [refreshEvents]);
+  };
 
-  // Add handler for RSVP events from chat
-  const handleRsvpEvent = useCallback(async (eventId: string, status: 'yes' | 'no' | 'maybe') => {
-    await updateRSVP(eventId, status);
-    
-    const statusText = status === 'yes' ? 'teilnehmen' : 
-                      status === 'no' ? 'nicht teilnehmen' : 
-                      'vielleicht teilnehmen';
-    
-    const event = events.find(e => e.id === eventId);
-    if (event) {
-      toast.success(`Du wirst am ${event.title} ${statusText}`, {
-        description: `Deine RSVP wurde für dieses Event gespeichert.`
-      });
-    }
-  }, [events, updateRSVP]);
-
-  // Load events on component mount
   useEffect(() => {
+    console.log('EventProvider: Loading events...');
+    
+    localStorage.removeItem('lastEventsRefresh');
+    
     refreshEvents();
-  }, [refreshEvents]);
+    
+    window.refreshEventsContext = refreshEvents;
+    
+    const refreshInterval = setInterval(() => {
+      console.log('Performing periodic event refresh');
+      refreshEvents();
+    }, 60000); // Refresh every minute
+    
+    return () => {
+      clearInterval(refreshInterval);
+      delete window.refreshEventsContext;
+    };
+  }, []);
 
-  return (
-    <EventContext.Provider
-      value={{
-        events,
-        refreshEvents,
-        addEvent,
-        toggleLike,
-        isLoadingEvents,
-        updateRSVP,
-        // Add new properties
-        eventLikes,
-        newEventIds,
-        filter,
-        topEventsPerDay,
-        handleRsvpEvent
-      }}
-    >
-      {children}
-    </EventContext.Provider>
-  );
+  const value = {
+    events,
+    setEvents,
+    isLoading,
+    selectedDate,
+    setSelectedDate,
+    selectedEvent,
+    setSelectedEvent,
+    filter,
+    setFilter,
+    eventLikes,
+    handleLikeEvent,
+    handleRsvpEvent,
+    showFavorites,
+    setShowFavorites,
+    refreshEvents,
+    newEventIds,
+    topEventsPerDay,
+    addUserEvent,
+  };
+
+  return <EventContext.Provider value={value}>{children}</EventContext.Provider>;
+};
+
+export const useEventContext = () => {
+  const context = useContext(EventContext);
+  if (context === undefined) {
+    throw new Error('useEventContext must be used within an EventProvider');
+  }
+  return context;
 };

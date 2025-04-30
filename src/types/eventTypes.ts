@@ -1,3 +1,4 @@
+
 // Shared type definitions for events and calendar
 export interface Event {
   id: string;
@@ -25,8 +26,6 @@ export interface Event {
   payment_link?: string | null;
   // Event listing fields
   listing_expires_at?: string;
-  // Origin field to track where the event comes from
-  origin?: 'database' | 'github' | string;
 }
 
 export interface GitHubEvent {

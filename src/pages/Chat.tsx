@@ -21,13 +21,6 @@ import {
 import EventCalendar from '@/components/EventCalendar';
 import EventForm from '@/components/EventForm';
 
-// UUIDs for the chat groups from the database
-const GROUP_ID_MAPPING = {
-  'ausgehen': '97a8062d-6225-4dac-b3c2-0680365c1e10',
-  'sport': '6a7ed75f-4033-44a7-a478-b5703a19a7a9',
-  'kreativität': '9f20c6c6-a23c-4d12-983c-63889a916ba1'
-};
-
 const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
   const [activeCommunityGroup, setActiveCommunityGroup] = useState<string>('ausgehen');
@@ -89,11 +82,6 @@ const ChatPage = () => {
     
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
-
-  // Get the actual UUID for the selected group
-  const getGroupUuid = (groupName: string) => {
-    return GROUP_ID_MAPPING[groupName as keyof typeof GROUP_ID_MAPPING] || '';
-  };
 
   return (
     <Layout hideFooter={true}>
@@ -187,7 +175,7 @@ const ChatPage = () => {
                     className="h-full"
                   >
                     <ChatGroup 
-                      groupId={getGroupUuid(activeCommunityGroup)} 
+                      groupId={activeCommunityGroup} 
                       groupName={activeCommunityGroup === 'ausgehen' ? 'Ausgehen' : 
                                  activeCommunityGroup === 'sport' ? 'Sport' : 
                                  activeCommunityGroup === 'kreativität' ? 'Kreativität' : 

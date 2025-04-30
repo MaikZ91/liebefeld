@@ -18,31 +18,21 @@ import { Loader2 } from "lucide-react";
 
 interface EventFormProps {
   onSuccess?: () => void;
-  selectedDate?: Date;
 }
 
-const EventForm: React.FC<EventFormProps> = ({ onSuccess, selectedDate }) => {
-  const { events, addEvent, refreshEvents } = useEventContext();
+const EventForm: React.FC<EventFormProps> = ({ onSuccess }) => {
+  const { addEvent } = useEventContext();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    date: selectedDate ? format(selectedDate, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
+    date: format(new Date(), "yyyy-MM-dd"),
     time: "18:00",
     location: "",
     organizer: "",
     category: "Sonstiges",
     link: "",
   });
-
-  useEffect(() => {
-    if (selectedDate) {
-      setFormData(prev => ({
-        ...prev,
-        date: format(selectedDate, "yyyy-MM-dd")
-      }));
-    }
-  }, [selectedDate]);
 
   const categories = [
     "Konzert",
@@ -76,40 +66,31 @@ const EventForm: React.FC<EventFormProps> = ({ onSuccess, selectedDate }) => {
 
     try {
       // Add event to context (which will save to database)
-      if (addEvent) {
-        await addEvent({
-          ...formData,
-          date: formData.date,
-          time: formData.time,
-        });
+      await addEvent({
+        ...formData,
+        date: formData.date,
+        time: formData.time,
+      });
 
-        toast.success("Event erfolgreich erstellt!", {
-          description: `${formData.title} wurde zum Kalender hinzugefügt.`,
-        });
+      toast.success("Event erfolgreich erstellt!", {
+        description: `${formData.title} wurde zum Kalender hinzugefügt.`,
+      });
 
-        // Reset form
-        setFormData({
-          title: "",
-          description: "",
-          date: selectedDate ? format(selectedDate, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
-          time: "18:00",
-          location: "",
-          organizer: "",
-          category: "Sonstiges",
-          link: "",
-        });
+      // Reset form
+      setFormData({
+        title: "",
+        description: "",
+        date: format(new Date(), "yyyy-MM-dd"),
+        time: "18:00",
+        location: "",
+        organizer: "",
+        category: "Sonstiges",
+        link: "",
+      });
 
-        // Refresh events
-        if (refreshEvents) {
-          refreshEvents();
-        }
-
-        // Call success callback if provided
-        if (onSuccess) {
-          onSuccess();
-        }
-      } else {
-        throw new Error("Event context is not fully initialized");
+      // Call success callback if provided
+      if (onSuccess) {
+        onSuccess();
       }
     } catch (error) {
       console.error("Error adding event:", error);
