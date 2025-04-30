@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, RefreshCw, Paperclip, Calendar } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,7 @@ interface Message {
   user_name: string;
   user_avatar: string;
   group_id: string;
-  read_by?: string[]; // Added read_by as optional property
+  read_by?: string[];
 }
 
 const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
@@ -106,7 +107,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
           user_name: msg.sender,
           user_avatar: msg.avatar || '',
           group_id: msg.group_id,
-          read_by: msg.read_by || []  // Add read_by property
+          read_by: msg.read_by || []
         }));
         
         setMessages(formattedMessages);
@@ -168,7 +169,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
             user_name: msg.sender,
             user_avatar: msg.avatar || '',
             group_id: msg.group_id,
-            read_by: msg.read_by || []  // Add read_by property
+            read_by: msg.read_by || []
           };
           
           // Don't add duplicate messages
@@ -298,7 +299,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
         user_name: msg.sender,
         user_avatar: msg.avatar || '',
         group_id: msg.group_id,
-        read_by: msg.read_by || []  // Add read_by property
+        read_by: msg.read_by || []
       }));
       
       setMessages(formattedMessages);
@@ -390,7 +391,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
         user_name: username,
         user_avatar: localStorage.getItem(AVATAR_KEY) || '',
         group_id: groupId,
-        read_by: [username]  // Add read_by property
+        read_by: [username]
       };
       
       // Add optimistic message immediately
@@ -449,39 +450,29 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
         setIsTyping(false);
       }
       
-      setIsEventSelectOpen(false);
-    } catch (err: any) {
-      console.error('Error sending message:', err);
-      
-      // Show error toast
+    } catch (error) {
+      console.error('Error sending message:', error);
       toast({
-        title: "Error sending message",
-        description: err.message || "Your message couldn't be sent",
+        title: "Fehler beim Senden",
+        description: "Die Nachricht konnte nicht gesendet werden.",
         variant: "destructive"
       });
-      
-      // Remove optimistic message if it failed
-      setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')));
     } finally {
       setIsSending(false);
     }
   };
   
-  // Handle input change and typing indicators
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  // Handle typing
+  const handleTyping = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);
     
-    // Update typing status
-    const isCurrentlyTyping = e.target.value.trim().length > 0;
-    
-    if (!isTyping && isCurrentlyTyping) {
-      // Typing begins
+    if (!isTyping && e.target.value.trim()) {
       setIsTyping(true);
       
       // Create a new channel for typing updates
       const typingUpdateChannel = supabase.channel(`typing:${groupId}`);
       
-      // Subscribe and send typing update (fixed the then() chain with async/await)
+      // Subscribe and send typing update
       typingUpdateChannel.subscribe();
       
       // After subscription, send the message
@@ -510,7 +501,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
         // Create a new channel for typing updates
         const typingUpdateChannel = supabase.channel(`typing:${groupId}`);
         
-        // Subscribe and send typing update (fixed the then() chain)
+        // Subscribe and send typing update
         typingUpdateChannel.subscribe();
         
         // After subscription, send the message
@@ -532,187 +523,202 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
     }, 2000);
   };
   
-  // Handle keydown (enter to submit)
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
     }
   };
   
-  // Handle file upload
-  const handleFileUpload = () => {
-    fileInputRef.current?.click();
-  };
-  
-  // Handle event sharing
-  const handleShareEvent = () => {
-    setIsEventSelectOpen(true);
-    setEventSearchQuery('');
-  };
-  
-  // Handle event selection
-  const handleEventSelect = (eventId: string) => {
-    const selectedEvent = events.find(event => event.id === eventId);
-    if (selectedEvent) {
-      handleSubmit(undefined, selectedEvent);
-    }
-  };
-  
-  // Filter events based on search query
+  // Filter events for sharing based on search query
   const filteredEvents = events.filter(event => {
-    if (!eventSearchQuery.trim()) return true;
+    if (!eventSearchQuery) return true;
     
     const query = eventSearchQuery.toLowerCase();
     return (
-      event.title.toLowerCase().includes(query) ||
-      (event.description && event.description.toLowerCase().includes(query)) ||
-      (event.location && event.location.toLowerCase().includes(query)) ||
-      (event.category && event.category.toLowerCase().includes(query)) ||
-      (event.date && event.date.toLowerCase().includes(query))
+      event.title?.toLowerCase().includes(query) || 
+      event.description?.toLowerCase().includes(query) ||
+      event.location?.toLowerCase().includes(query) ||
+      event.category?.toLowerCase().includes(query)
     );
   });
   
-  // Group events by date
-  const groupedEvents = groupFutureEventsByDate(filteredEvents);
-  
+  const handleShareEvent = (event: any) => {
+    const eventData = {
+      title: event.title,
+      date: event.date,
+      time: event.time,
+      location: event.location,
+      category: event.category
+    };
+    
+    setIsEventSelectOpen(false);
+    handleSubmit(undefined, eventData);
+  };
+
   return (
-    <div className="flex flex-col h-full w-full">
-      <ChatHeader 
-        groupName={groupName}
-        isReconnecting={isReconnecting}
-        handleReconnect={handleReconnect}
-        isGroup={isGroup}
-      />
+    <div className="flex flex-col h-full bg-[#111827]">
+      <div className="border-b border-gray-700 bg-[#1A1F2C] py-3 px-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="w-10 h-10 rounded-full bg-[#9b87f5] flex items-center justify-center mr-3">
+              <span className="text-white font-bold">{groupName.slice(0, 1).toUpperCase()}</span>
+            </div>
+            <div>
+              <h3 className="font-semibold text-white">{groupName}</h3>
+              <p className="text-sm text-gray-400">{messages.length} Nachrichten</p>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 rounded-full p-0"
+            onClick={handleReconnect}
+            disabled={isReconnecting}
+          >
+            <RefreshCw className={`h-4 w-4 ${isReconnecting ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
+      </div>
       
-      <MessageList 
-        messages={messages}
-        loading={loading}
-        error={error}
-        username={username}
-        typingUsers={typingUsers}
-        formatTime={formatTime}
-        isGroup={isGroup}
-        groupType={groupType as any}
-        chatBottomRef={chatBottomRef}
-      />
-      
-      <div className={`${isGroup ? 'bg-[#1A1F2C]' : 'bg-gray-900'} p-4 border-t ${isGroup ? 'border-gray-800' : 'border-gray-700'}`}>
-        <div className="w-full space-y-2">
-          <div className="flex items-center gap-2">
-            <Textarea 
-              placeholder="Schreibe eine Nachricht..." 
-              value={newMessage}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              className="min-h-[50px] flex-grow resize-none"
-            />
-            <div className="flex flex-col gap-2">
-              <Button 
-                onClick={handleFileUpload} 
-                variant="outline"
-                size="icon"
-                type="button"
-                className="rounded-full"
-                title="Bild anhängen"
-              >
-                <Paperclip className="h-4 w-4" />
-              </Button>
-              <Popover 
-                open={isEventSelectOpen} 
-                onOpenChange={setIsEventSelectOpen}
-              >
-                <PopoverTrigger asChild>
-                  <Button 
-                    onClick={handleShareEvent} 
-                    variant="outline"
-                    size="icon"
-                    type="button"
-                    className="rounded-full"
-                    title="Event teilen"
-                  >
-                    <Calendar className="h-4 w-4" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent 
-                  className="w-80 p-0 max-h-[400px] overflow-y-auto" 
-                  side="top" 
-                  align="end"
-                  sideOffset={5}
-                >
-                  <div className="p-3 bg-muted border-b">
-                    <h3 className="font-medium mb-2">Event auswählen</h3>
-                    <div className="relative">
-                      <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Nach Events suchen..."
-                        value={eventSearchQuery}
-                        onChange={(e) => setEventSearchQuery(e.target.value)}
-                        className="pl-8 bg-background"
-                      />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto p-4 bg-[#111827]">
+          {loading && (
+            <div className="flex items-center justify-center h-full">
+              <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-[#9b87f5] rounded-full"></div>
+            </div>
+          )}
+          
+          {error && !loading && (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <p className="text-red-500 mb-4">{error}</p>
+                <Button variant="outline" onClick={handleReconnect}>
+                  <RefreshCw className="h-4 w-4 mr-2" /> Reconnect
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          {!loading && !error && (
+            <div className="flex flex-col space-y-4">
+              {messages.map((message, index) => {
+                const isConsecutive = index > 0 && messages[index - 1].user_name === message.user_name;
+                const timeAgo = formatTime(message.created_at);
+                
+                return (
+                  <div key={message.id} className="w-full">
+                    {!isConsecutive && (
+                      <div className="flex items-center mb-1">
+                        <Avatar className="h-8 w-8 mr-2">
+                          <AvatarImage src={message.user_avatar} alt={message.user_name} />
+                          <AvatarFallback className="bg-[#9b87f5]">{getInitials(message.user_name)}</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium text-white">{message.user_name}</span>
+                        <span className="text-xs text-gray-400 ml-2">{timeAgo}</span>
+                      </div>
+                    )}
+                    <div className={`ml-10 pl-2 border-l-2 border-[#9b87f5] ${isConsecutive ? 'mt-1' : 'mt-0'}`}>
+                      <div className="bg-[#1A1F2C] rounded-md p-2 text-white break-words">
+                        {message.content}
+                      </div>
                     </div>
                   </div>
-                  <ScrollArea className="max-h-[320px]">
-                    <div className="p-2">
-                      {Object.keys(groupedEvents).length === 0 ? (
-                        <div className="py-3 px-2 text-center text-muted-foreground text-sm">
-                          Keine Events gefunden
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {Object.keys(groupedEvents).sort().map(dateStr => {
-                            const date = parseISO(dateStr);
-                            return (
-                              <div key={dateStr} className="mb-2">
-                                <div className="sticky top-0 bg-primary text-white py-1.5 px-3 text-sm font-semibold rounded-md mb-1.5 shadow-sm">
-                                  {format(date, 'EEEE, d. MMMM', { locale: de })}
-                                </div>
-                                <div className="space-y-1 pl-2">
-                                  {groupedEvents[dateStr].map(event => (
-                                    <Button
-                                      key={event.id}
-                                      variant="ghost"
-                                      className="w-full justify-start text-left px-2 py-1.5 h-auto"
-                                      onClick={() => handleEventSelect(event.id)}
-                                    >
-                                      <div>
-                                        <div className="font-medium line-clamp-1">{event.title}</div>
-                                        <div className="text-xs text-muted-foreground">
-                                          {event.time} • {event.category}
-                                        </div>
-                                      </div>
-                                    </Button>
-                                  ))}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
+                );
+              })}
+              
+              {typingUsers.length > 0 && (
+                <div className="ml-10 pl-2">
+                  <div className="text-gray-400 text-sm flex items-center">
+                    {typingUsers.length === 1 ? (
+                      <>{typingUsers[0].username} schreibt...</>
+                    ) : (
+                      <>{typingUsers.length} Personen schreiben...</>
+                    )}
+                    <div className="flex ml-2">
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-1 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-1 animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                     </div>
-                  </ScrollArea>
-                </PopoverContent>
-              </Popover>
-            </div>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              accept="image/*"
-              onChange={() => {}}
-            />
-            <Button 
-              onClick={() => handleSubmit()} 
-              disabled={isSending || (!newMessage.trim() && !fileInputRef.current?.files?.length)}
-              className="rounded-full min-w-[40px]"
-            >
-              {isSending ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
+                  </div>
+                </div>
               )}
+              
+              <div ref={chatBottomRef}></div>
+            </div>
+          )}
+        </div>
+        
+        <div className="p-3 bg-[#1A1F2C] border-t border-gray-700">
+          <form onSubmit={handleSubmit} className="flex items-end gap-2">
+            <div className="flex-1 bg-[#111827] rounded-lg relative">
+              <Textarea
+                value={newMessage}
+                onChange={handleTyping}
+                onKeyDown={handleKeyPress}
+                placeholder="Schreibe eine Nachricht..."
+                className="min-h-[44px] max-h-24 resize-none bg-[#111827] border-gray-700 focus:ring-[#9b87f5] focus:border-[#9b87f5] placeholder-gray-500 text-white pr-12"
+              />
+              <div className="absolute right-2 bottom-2 flex items-center gap-1">
+                <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                      <Calendar className="h-5 w-5 text-gray-400" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[300px] p-0 max-h-[400px]" side="top">
+                    <div className="p-2 border-b border-gray-700">
+                      <div className="flex items-center gap-2">
+                        <Search className="h-5 w-5 text-gray-400" />
+                        <Input
+                          value={eventSearchQuery}
+                          onChange={(e) => setEventSearchQuery(e.target.value)}
+                          placeholder="Event suchen..."
+                          className="bg-[#111827] border-gray-700"
+                        />
+                      </div>
+                    </div>
+                    <ScrollArea className="h-[350px]">
+                      <div className="p-2 space-y-2">
+                        {filteredEvents.length === 0 ? (
+                          <p className="text-gray-400 text-center py-4">Keine Events gefunden</p>
+                        ) : (
+                          filteredEvents.map((event) => (
+                            <div 
+                              key={event.id} 
+                              className="p-2 bg-[#1A1F2C] rounded-md hover:bg-[#262f45] cursor-pointer"
+                              onClick={() => handleShareEvent(event)}
+                            >
+                              <p className="font-medium text-white">{event.title}</p>
+                              <p className="text-sm text-gray-400">
+                                {event.date} um {event.time} • {event.category}
+                              </p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </ScrollArea>
+                  </PopoverContent>
+                </Popover>
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => fileInputRef.current?.click()}>
+                  <Paperclip className="h-5 w-5 text-gray-400" />
+                </Button>
+              </div>
+            </div>
+            <Button 
+              type="submit" 
+              disabled={!newMessage.trim() || isSending}
+              className="bg-[#9b87f5] hover:bg-[#8a76e5] text-white rounded-lg h-10 px-4"
+            >
+              <Send className="h-5 w-5" />
             </Button>
-          </div>
+          </form>
+          <input 
+            type="file"
+            ref={fileInputRef}
+            accept="image/*"
+            className="hidden"
+          />
         </div>
       </div>
     </div>

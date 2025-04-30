@@ -1,3 +1,4 @@
+
 import React from "react"
 import { Link, useLocation } from "react-router-dom"
 
@@ -15,9 +16,10 @@ import { PlusCircle } from "lucide-react"
 
 interface LayoutProps {
   children: React.ReactNode
+  hideFooter?: boolean
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, hideFooter = false }) => {
   const { pathname } = useLocation()
 
   const [isAddEventModalOpen, setIsAddEventModalOpen] = React.useState(false);
@@ -64,29 +66,31 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <main>
         {children}
       </main>
-      <footer className="border-t border-gray-800 bg-black">
-        <div className="container flex flex-col items-center justify-between gap-4 py-10 md:h-24 md:flex-row md:py-0">
-          <div className="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
-            <a href="/" className="flex items-center space-x-2">
-              <span className="font-bold inline-block">LIEBEFELD</span>
-            </a>
-            <p className="text-center text-sm leading-loose md:text-left">
-              &copy; {new Date().getFullYear()} Liebefeld. All rights reserved.
-            </p>
+      {!hideFooter && (
+        <footer className="border-t border-gray-800 bg-black">
+          <div className="container flex flex-col items-center justify-between gap-4 py-10 md:h-24 md:flex-row md:py-0">
+            <div className="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
+              <a href="/" className="flex items-center space-x-2">
+                <span className="font-bold inline-block">LIEBEFELD</span>
+              </a>
+              <p className="text-center text-sm leading-loose md:text-left">
+                &copy; {new Date().getFullYear()} Liebefeld. All rights reserved.
+              </p>
+            </div>
+            <div className="flex gap-4">
+              <a href="/impressum" className="text-sm font-medium">
+                Impressum
+              </a>
+              <a href="/privacy" className="text-sm font-medium">
+                Datenschutz
+              </a>
+              <a href="/about" className="text-sm font-medium">
+                Über uns
+              </a>
+            </div>
           </div>
-          <div className="flex gap-4">
-            <a href="/impressum" className="text-sm font-medium">
-              Impressum
-            </a>
-            <a href="/privacy" className="text-sm font-medium">
-              Datenschutz
-            </a>
-            <a href="/about" className="text-sm font-medium">
-              Über uns
-            </a>
-          </div>
-        </div>
-      </footer>
+        </footer>
+      )}
     </>
   )
 }

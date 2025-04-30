@@ -14,6 +14,7 @@ import {
 } from '@/utils/chatUtils';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
 
 interface ChatMessage {
   id: string;
@@ -37,6 +38,13 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Example prompts that users can click on
+  const examplePrompts = [
+    "Welche Events gibt es heute?",
+    "Was kann ich am Wochenende machen?",
+    "Gibt es Konzerte im Lokschuppen?"
+  ];
 
   useEffect(() => {
     // Initialize the chat bot after a delay
@@ -129,6 +137,14 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
     }, 800);
   };
 
+  const handleExamplePromptClick = (prompt: string) => {
+    setInput(prompt);
+    // Optional: auto-send after a short delay
+    setTimeout(() => {
+      handleSendMessage(prompt);
+    }, 300);
+  };
+
   const handleExternalQuery = (query: string) => {
     if (!isChatOpen) {
       setIsChatOpen(true);
@@ -207,6 +223,30 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
                 </div>
               </div>
             )}
+            
+            {messages.length === 1 && (
+              <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30 mt-4">
+                <p className="text-sm text-red-200 mb-2">
+                  Ich bin dein persönlicher Assistent für alle Liebefeld Events.
+                </p>
+                <p className="text-sm text-red-200 mb-2">
+                  Frag mich zum Beispiel:
+                </p>
+                <div className="flex flex-col gap-2">
+                  {examplePrompts.map((prompt, index) => (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      className="text-left justify-start bg-red-900/20 hover:bg-red-900/30 text-red-200 border-red-500/30"
+                      onClick={() => handleExamplePromptClick(prompt)}
+                    >
+                      "{prompt}"
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
@@ -290,6 +330,31 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
                   </div>
                 </div>
               )}
+              
+              {messages.length === 1 && (
+                <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30 mt-4">
+                  <p className="text-sm text-red-200 mb-2">
+                    Ich bin dein persönlicher Assistent für alle Liebefeld Events.
+                  </p>
+                  <p className="text-sm text-red-200 mb-2">
+                    Frag mich zum Beispiel:
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {examplePrompts.map((prompt, index) => (
+                      <Button
+                        key={index}
+                        variant="outline"
+                        size="sm"
+                        className="text-left justify-start bg-red-900/20 hover:bg-red-900/30 text-red-200 border-red-500/30 text-xs"
+                        onClick={() => handleExamplePromptClick(prompt)}
+                      >
+                        "{prompt}"
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
               <div ref={messagesEndRef} />
             </div>
           </ScrollArea>

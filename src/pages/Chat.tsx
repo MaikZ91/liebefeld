@@ -1,24 +1,35 @@
+
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
 import ChatGroup from '@/components/chat/ChatGroup';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MessageCircle, Users } from 'lucide-react';
+import { PlusCircle, MessageCircle, Users, List, Calendar } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { USERNAME_KEY } from '@/types/chatTypes';
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetDescription, 
+  SheetHeader, 
+  SheetTitle,
+  SheetTrigger
+} from '@/components/ui/sheet';
+import EventCalendar from '@/components/EventCalendar';
+import EventForm from '@/components/EventForm';
 
 const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
   const [activeCommunityGroup, setActiveCommunityGroup] = useState<string>('ausgehen');
+  const [isAddEventSheetOpen, setIsAddEventSheetOpen] = useState(false);
+  const [isEventListSheetOpen, setIsEventListSheetOpen] = useState(false);
   
   // Function to show add event modal
   const handleAddEvent = () => {
-    if (typeof window !== 'undefined' && window.triggerAddEvent) {
-      window.triggerAddEvent();
-    }
+    setIsAddEventSheetOpen(true);
   };
 
   // Get username from localStorage for chat
@@ -73,12 +84,13 @@ const ChatPage = () => {
   }, []);
 
   return (
-    <Layout>
-      <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-120px)]">
+    <Layout hideFooter={true}>
+      <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-red-500">Liebefield Chat</h1>
           
           <div className="flex gap-2">
+            {/* Add Event Button */}
             <Button 
               variant="outline" 
               size="sm"
@@ -87,6 +99,17 @@ const ChatPage = () => {
             >
               <PlusCircle className="h-4 w-4" />
               <span className="hidden md:inline">Event hinzufügen</span>
+            </Button>
+            
+            {/* View Events Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEventListSheetOpen(true)}
+              className="flex items-center gap-1"
+            >
+              <List className="h-4 w-4" />
+              <span className="hidden md:inline">Events anzeigen</span>
             </Button>
           </div>
         </div>
@@ -165,6 +188,36 @@ const ChatPage = () => {
           </Tabs>
         </div>
       </div>
+      
+      {/* Add Event Sheet */}
+      <Sheet open={isAddEventSheetOpen} onOpenChange={setIsAddEventSheetOpen}>
+        <SheetContent className="sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle>Event hinzufügen</SheetTitle>
+            <SheetDescription>
+              Erstelle ein neues Event für die Community.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-4 overflow-y-auto max-h-[80vh]">
+            <EventForm onSuccess={() => setIsAddEventSheetOpen(false)} />
+          </div>
+        </SheetContent>
+      </Sheet>
+      
+      {/* Event List Sheet */}
+      <Sheet open={isEventListSheetOpen} onOpenChange={setIsEventListSheetOpen}>
+        <SheetContent className="sm:max-w-lg overflow-hidden">
+          <SheetHeader>
+            <SheetTitle>Aktuelle Events</SheetTitle>
+            <SheetDescription>
+              Die aktuellen Events in deiner Region.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-4 overflow-y-auto max-h-[80vh]">
+            <EventCalendar defaultView="list" />
+          </div>
+        </SheetContent>
+      </Sheet>
     </Layout>
   );
 };

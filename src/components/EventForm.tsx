@@ -1,363 +1,225 @@
-import React, { useState, useEffect } from 'react';
-import { format } from 'date-fns';
-import { toast } from '@/components/ui/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { processEventImage } from '@/utils/imageAnalysis';
-import { type Event } from '@/types/eventTypes';
 
-// Import our new components
-import ImageUploader from './event-form/ImageUploader';
-import EventFormFields from './event-form/EventFormFields';
-import PaymentDialog from './event-form/PaymentDialog';
-import FormHeader from './event-form/FormHeader';
-import FormFooter from './event-form/FormFooter';
+import React, { useState, useEffect } from "react";
+import { useEventContext } from "@/contexts/EventContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import { Loader2 } from "lucide-react";
 
 interface EventFormProps {
-  selectedDate: Date;
-  onAddEvent: (event: Omit<Event, 'id'>) => void;
-  onCancel?: () => void;
+  onSuccess?: () => void;
 }
 
-const eventCategories = [
-  'Konzert',
-  'Party',
-  'Ausstellung',
-  'Sport',
-  'Workshop',
-  'Kultur',
-  'Sonstiges'
-];
+const EventForm: React.FC<EventFormProps> = ({ onSuccess }) => {
+  const { addEvent } = useEventContext();
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    date: format(new Date(), "yyyy-MM-dd"),
+    time: "18:00",
+    location: "",
+    organizer: "",
+    category: "Sonstiges",
+    link: "",
+  });
 
-const EventForm: React.FC<EventFormProps> = ({ selectedDate, onAddEvent, onCancel }) => {
-  const [date, setDate] = useState<Date>(selectedDate);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [time, setTime] = useState('19:00');
-  const [location, setLocation] = useState('');
-  const [organizer, setOrganizer] = useState('');
-  const [category, setCategory] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [images, setImages] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [url, setUrl] = useState('');
-  
-  const [isPaid, setIsPaid] = useState(false);
-  const [paypalLink, setPaypalLink] = useState('');
-  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
-  const [bucketExists, setBucketExists] = useState(false);
-  
-  useEffect(() => {
-    const checkBucket = async () => {
-      try {
-        const { data, error } = await supabase.storage.getBucket('event-images');
-        if (error) {
-          console.error('Error checking bucket:', error);
-          setBucketExists(false);
-        } else {
-          console.log('Bucket exists:', data);
-          setBucketExists(true);
-        }
-      } catch (err) {
-        console.error('Error checking storage bucket:', err);
-        setBucketExists(false);
-      }
-    };
-    
-    checkBucket();
-  }, []);
-  
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const newFiles = Array.from(e.target.files);
-      
-      setImages(prev => [...prev, ...newFiles]);
-      
-      const newPreviewUrls = newFiles.map(file => URL.createObjectURL(file));
-      setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
-      
-      e.target.value = '';
-      
-      if (newFiles.length > 0 && title === '' && description === '') {
-        await analyzeImageForEventData(newFiles[0]);
-      }
-    }
+  const categories = [
+    "Konzert",
+    "Party",
+    "Ausstellung",
+    "Workshop",
+    "Sport",
+    "Theater",
+    "Film",
+    "Sonstiges",
+  ];
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
-  
-  const analyzeImageForEventData = async (imageFile: File) => {
-    setIsAnalyzing(true);
-    try {
-      const extractedData = await processEventImage(imageFile);
-      
-      if (extractedData.title) setTitle(extractedData.title);
-      if (extractedData.description) setDescription(extractedData.description);
-      if (extractedData.location) setLocation(extractedData.location);
-      if (extractedData.organizer) setOrganizer(extractedData.organizer);
-      if (extractedData.category) setCategory(extractedData.category);
-      
-      if (extractedData.date) {
-        try {
-          const extractedDate = new Date(extractedData.date);
-          if (!isNaN(extractedDate.getTime())) {
-            setDate(extractedDate);
-          }
-        } catch (err) {
-          console.error('Error parsing extracted date:', err);
-        }
-      }
-      
-      if (extractedData.time) {
-        setTime(extractedData.time);
-      }
-      
-      if (Object.keys(extractedData).length > 0) {
-        toast({
-          title: "Eventdaten erkannt",
-          description: "Die Formularfelder wurden mit erkannten Daten aus dem Bild gefüllt.",
-        });
-      } else {
-        toast({
-          title: "Keine Eventdaten erkannt",
-          description: "Das Bild konnte nicht analysiert werden. Bitte füllen Sie das Formular manuell aus.",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error('Error analyzing image:', error);
-      toast({
-        title: "Fehler bei der Analyse",
-        description: "Das Bild konnte nicht verarbeitet werden. Bitte versuchen Sie es erneut oder füllen Sie das Formular manuell aus.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsAnalyzing(false);
-    }
+
+  const handleCategoryChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      category: value
+    }));
   };
-  
-  const handleAnalyzeImage = async () => {
-    if (images.length === 0) {
-      toast({
-        title: "Kein Bild vorhanden",
-        description: "Bitte laden Sie zuerst ein Bild hoch.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    await analyzeImageForEventData(images[0]);
-  };
-  
-  const removeImage = (index: number) => {
-    URL.revokeObjectURL(previewUrls[index]);
-    setImages(images.filter((_, i) => i !== index));
-    setPreviewUrls(previewUrls.filter((_, i) => i !== index));
-  };
-  
-  const uploadImagesToSupabase = async (eventId: string): Promise<string[]> => {
-    if (!bucketExists) {
-      console.error('Storage bucket "event-images" does not exist');
-      toast({
-        title: "Fehler beim Bildupload",
-        description: "Der Speicherbereich für Bilder ist nicht konfiguriert. Bilder werden nicht gespeichert.",
-        variant: "destructive"
-      });
-      return [];
-    }
-    
-    const imageUrls: string[] = [];
-    
-    for (let i = 0; i < images.length; i++) {
-      const file = images[i];
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${eventId}-${i}.${fileExt}`;
-      const filePath = `event-images/${fileName}`;
-      
-      try {
-        const { data, error } = await supabase.storage
-          .from('event-images')
-          .upload(filePath, file);
-        
-        if (error) {
-          console.error('Error uploading image:', error);
-          toast({
-            title: "Bildupload fehlgeschlagen",
-            description: `Bild ${i+1} konnte nicht hochgeladen werden: ${error.message}`,
-            variant: "destructive"
-          });
-          continue;
-        }
-        
-        const { data: publicUrlData } = supabase.storage
-          .from('event-images')
-          .getPublicUrl(filePath);
-        
-        imageUrls.push(publicUrlData.publicUrl);
-      } catch (error) {
-        console.error('Unexpected error during upload:', error);
-      }
-    }
-    
-    return imageUrls;
-  };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    
-    if (!title || !date || !time) {
-      setError('Bitte fülle alle Pflichtfelder aus (Titel, Datum und Uhrzeit)');
-      return;
-    }
-    
-    if (isPaid) {
-      setShowPaymentDialog(true);
-      return;
-    }
-    
-    submitEvent(false);
-  };
-  
-  const submitEvent = async (isPaidAndProcessed: boolean = false) => {
-    setIsSubmitting(true);
-    
+    setIsLoading(true);
+
     try {
-      const formattedDate = format(date, 'yyyy-MM-dd');
-      console.log('Selected date:', date);
-      console.log('Formatted date for DB:', formattedDate);
-      
-      const newEvent: Omit<Event, 'id'> = {
-        title,
-        description,
-        date: formattedDate,
-        time,
-        location,
-        organizer,
-        category: category || 'Sonstiges',
-        link: url || undefined
-      };
-      
-      if (isPaid && isPaidAndProcessed) {
-        toast({
-          title: "Kostenpflichtiges Event erstellt",
-          description: `"${title}" wurde erfolgreich als kostenpflichtiges Event für 10€ hinzugefügt.`
-        });
-        
-        onAddEvent(newEvent);
-        resetForm();
-        
-        if (onCancel) onCancel();
-        setIsSubmitting(false);
-        setShowPaymentDialog(false);
-        return;
-      }
-      
-      onAddEvent(newEvent);
-      
-      toast({
-        title: "Event erstellt",
-        description: `"${newEvent.title}" wurde erfolgreich zum Kalender hinzugefügt.`
+      // Add event to context (which will save to database)
+      await addEvent({
+        ...formData,
+        date: formData.date,
+        time: formData.time,
       });
-      
-      resetForm();
-      
-      if (onCancel) onCancel();
-    } catch (err) {
-      console.error('Error adding event:', err);
-      
-      let errorMessage = "Das Event konnte nicht in der Datenbank gespeichert werden.";
-      if (err instanceof Error) {
-        errorMessage = errorMessage + " Fehler: " + err.message;
+
+      toast.success("Event erfolgreich erstellt!", {
+        description: `${formData.title} wurde zum Kalender hinzugefügt.`,
+      });
+
+      // Reset form
+      setFormData({
+        title: "",
+        description: "",
+        date: format(new Date(), "yyyy-MM-dd"),
+        time: "18:00",
+        location: "",
+        organizer: "",
+        category: "Sonstiges",
+        link: "",
+      });
+
+      // Call success callback if provided
+      if (onSuccess) {
+        onSuccess();
       }
-      
-      toast({
-        title: "Fehler beim Hinzufügen des Events",
-        description: errorMessage,
-        variant: "destructive"
+    } catch (error) {
+      console.error("Error adding event:", error);
+      toast.error("Fehler beim Erstellen des Events", {
+        description: "Bitte versuche es später noch einmal.",
       });
     } finally {
-      setIsSubmitting(false);
-      setShowPaymentDialog(false);
+      setIsLoading(false);
     }
   };
-  
-  const resetForm = () => {
-    setTitle('');
-    setDescription('');
-    setTime('19:00');
-    setLocation('');
-    setOrganizer('');
-    setCategory('');
-    setImages([]);
-    setPreviewUrls([]);
-    setIsPaid(false);
-    setPaypalLink('');
-    setUrl('');
-  };
-  
-  const handlePaymentSubmit = () => {
-    toast({
-      title: "Event wird erstellt",
-      description: "Dein kostenpflichtiges Event wird erstellt. Wir werden dich bezüglich der Zahlung kontaktieren.",
-    });
-    
-    submitEvent(true);
-  };
-  
+
   return (
-    <form onSubmit={handleSubmit}>
-      <FormHeader onCancel={onCancel} />
-      
-      <p className="text-muted-foreground mb-6">
-        Füge ein neues Event zum Liebefeld Community Kalender hinzu.
-      </p>
-      
-      <ImageUploader 
-        images={images}
-        previewUrls={previewUrls}
-        isAnalyzing={isAnalyzing}
-        onFileChange={handleFileChange}
-        onAnalyzeImage={handleAnalyzeImage}
-        onRemoveImage={removeImage}
-      />
-      
-      <EventFormFields 
-        title={title}
-        setTitle={setTitle}
-        description={description}
-        setDescription={setDescription}
-        date={date}
-        setDate={setDate}
-        time={time}
-        setTime={setTime}
-        location={location}
-        setLocation={setLocation}
-        organizer={organizer}
-        setOrganizer={setOrganizer}
-        category={category}
-        setCategory={setCategory}
-        isPaid={isPaid}
-        setIsPaid={setIsPaid}
-        paypalLink={paypalLink}
-        setPaypalLink={setPaypalLink}
-        eventCategories={eventCategories}
-        error={error}
-        url={url}
-        setUrl={setUrl}
-      />
-      
-      <FormFooter 
-        onCancel={onCancel}
-        isSubmitting={isSubmitting}
-        isPaid={isPaid}
-      />
-      
-      <PaymentDialog 
-        open={showPaymentDialog}
-        onOpenChange={setShowPaymentDialog}
-        onSubmitPayment={handlePaymentSubmit}
-        contactEmail="maik.z@gmx.de"
-      />
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="title">Titel *</Label>
+        <Input
+          id="title"
+          name="title"
+          value={formData.title}
+          onChange={handleChange}
+          placeholder="Eventname"
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description">Beschreibung</Label>
+        <Textarea
+          id="description"
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          placeholder="Beschreibe das Event"
+          rows={3}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="date">Datum *</Label>
+          <Input
+            id="date"
+            name="date"
+            type="date"
+            value={formData.date}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="time">Uhrzeit *</Label>
+          <Input
+            id="time"
+            name="time"
+            type="time"
+            value={formData.time}
+            onChange={handleChange}
+            required
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="location">Ort</Label>
+        <Input
+          id="location"
+          name="location"
+          value={formData.location}
+          onChange={handleChange}
+          placeholder="Veranstaltungsort"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="organizer">Veranstalter</Label>
+        <Input
+          id="organizer"
+          name="organizer"
+          value={formData.organizer}
+          onChange={handleChange}
+          placeholder="Wer organisiert das Event?"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="category">Kategorie *</Label>
+        <Select
+          value={formData.category}
+          onValueChange={handleCategoryChange}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Kategorie auswählen" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map((category) => (
+              <SelectItem key={category} value={category}>
+                {category}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="link">Link</Label>
+        <Input
+          id="link"
+          name="link"
+          type="url"
+          value={formData.link}
+          onChange={handleChange}
+          placeholder="https://..."
+        />
+      </div>
+
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Wird gespeichert...
+          </>
+        ) : (
+          "Event erstellen"
+        )}
+      </Button>
     </form>
   );
 };
