@@ -32,7 +32,7 @@ import {
   SheetTrigger,
   SheetClose,
 } from '@/components/ui/sheet';
-import { Event } from '@/contexts/EventContext';
+import { Event } from '@/types/eventTypes';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import EventForm from './EventForm';
@@ -90,7 +90,7 @@ function EventCalendar({ defaultView = "calendar" }: EventCalendarProps) {
   }, [updateRSVP]);
 
   // Group events by date for list view
-  const eventsByDate = groupEventsByDate(events);
+  const eventsByDate = groupEventsByDate(events as any[]);
 
   // Get events for selected date in calendar view
   const eventsForSelectedDate = events.filter(event => {
@@ -117,16 +117,18 @@ function EventCalendar({ defaultView = "calendar" }: EventCalendarProps) {
     );
   }, [hasEvents]);
 
-  // Custom calendar styles
-  const dayClassNames = useCallback((date: Date) => {
+  // Fix: Use className instead of dayClassName
+  const getDayClassName = useCallback((date: Date) => {
     const isWeekend = [0, 6].includes(getDay(date));
     const hasEventsOnDay = hasEvents(date);
     
-    return {
-      'bg-muted hover:bg-accent': isWeekend,
-      'font-bold': hasEventsOnDay,
-      'hover:bg-accent hover:text-accent-foreground': true,
-    };
+    let classNames = "";
+    
+    if (isWeekend) classNames += "bg-muted hover:bg-accent ";
+    if (hasEventsOnDay) classNames += "font-bold ";
+    classNames += "hover:bg-accent hover:text-accent-foreground";
+    
+    return classNames;
   }, [hasEvents]);
 
   return (
@@ -176,7 +178,12 @@ function EventCalendar({ defaultView = "calendar" }: EventCalendarProps) {
                   locale={de}
                   weekStartsOn={1}
                   disabled={() => false}
-                  dayClassName={dayClassNames}
+                  modifiers={{
+                    hasEvent: (date) => hasEvents(date)
+                  }}
+                  modifiersClassNames={{
+                    hasEvent: "font-bold"
+                  }}
                   renderDay={renderDay}
                 />
 

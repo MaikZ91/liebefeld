@@ -3,24 +3,10 @@ import React, { createContext, useState, useContext, useEffect, useCallback } fr
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { eventService } from '@/services/eventService';
+import { Event as EventType } from '@/types/eventTypes';
 
-export interface Event {
-  id: string;
-  title: string;
-  date: string;
-  time: string;
-  description?: string;
-  location?: string;
-  category: string;
-  organizer?: string;
-  link?: string;
-  likes?: number;
-  rsvp_yes?: number;
-  rsvp_no?: number;
-  rsvp_maybe?: number;
-  created_at?: string;
-  origin?: 'github' | 'database';
-}
+// Use the Event type from types/eventTypes.ts for consistency
+export type Event = EventType;
 
 export interface EventContextProps {
   events: Event[];
@@ -29,6 +15,12 @@ export interface EventContextProps {
   toggleLike: (eventId: string) => Promise<void>;
   isLoadingEvents: boolean;
   updateRSVP: (eventId: string, status: 'yes' | 'no' | 'maybe') => Promise<void>;
+  // Add missing properties needed by components
+  eventLikes: Record<string, number>;
+  newEventIds: Set<string>;
+  filter: string | null;
+  topEventsPerDay: Record<string, string>;
+  handleRsvpEvent: (eventId: string, status: 'yes' | 'no' | 'maybe') => Promise<void>;
 }
 
 const EventContext = createContext<EventContextProps>({
@@ -38,6 +30,12 @@ const EventContext = createContext<EventContextProps>({
   toggleLike: async () => {},
   isLoadingEvents: false,
   updateRSVP: async () => {},
+  // Initialize new properties
+  eventLikes: {},
+  newEventIds: new Set<string>(),
+  filter: null,
+  topEventsPerDay: {},
+  handleRsvpEvent: async () => {}
 });
 
 export const useEventContext = () => useContext(EventContext);
@@ -45,12 +43,43 @@ export const useEventContext = () => useContext(EventContext);
 export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
+  // Add new states for the additional properties
+  const [eventLikes, setEventLikes] = useState<Record<string, number>>({});
+  const [newEventIds] = useState<Set<string>>(new Set());
+  const [filter, setFilter] = useState<string | null>(null);
+  const [topEventsPerDay, setTopEventsPerDay] = useState<Record<string, string>>({});
 
   const refreshEvents = useCallback(async () => {
     try {
       setIsLoadingEvents(true);
       const fetchedEvents = await eventService.getAllEvents();
       setEvents(fetchedEvents);
+      
+      // Calculate top events per day
+      const topEventsByDay: Record<string, string> = {};
+      fetchedEvents.forEach(event => {
+        if (!event.date) return;
+        
+        const currentTopEvent = topEventsByDay[event.date];
+        const currentTopEventLikes = currentTopEvent ? 
+          fetchedEvents.find(e => e.id === currentTopEvent)?.likes || 0 : 0;
+        
+        if (!currentTopEvent || (event.likes || 0) > currentTopEventLikes) {
+          topEventsByDay[event.date] = event.id;
+        }
+      });
+      
+      setTopEventsPerDay(topEventsByDay);
+      
+      // Extract event likes for GitHub events
+      const likes: Record<string, number> = {};
+      fetchedEvents.forEach(event => {
+        if (event.id.startsWith('github-')) {
+          likes[event.id] = event.likes || 0;
+        }
+      });
+      
+      setEventLikes(likes);
     } catch (error) {
       console.error('Error fetching events:', error);
       toast.error('Fehler beim Laden der Events', {
@@ -104,12 +133,15 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       setEvents(prevEvents => [...prevEvents, newEvent]);
       
+      // Add to new events set
+      newEventIds.add(data.id);
+      
       return;
     } catch (error) {
       console.error('Error adding event:', error);
       throw error;
     }
-  }, []);
+  }, [newEventIds]);
 
   const toggleLike = useCallback(async (eventId: string) => {
     try {
@@ -126,6 +158,14 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           return event;
         })
       );
+
+      // Also update eventLikes for GitHub events
+      if (eventId.startsWith('github-')) {
+        setEventLikes(prev => ({
+          ...prev,
+          [eventId]: (prev[eventId] || 0) + 1
+        }));
+      }
 
       // Update likes in database
       if (eventId.startsWith('github-')) {
@@ -188,6 +228,22 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [refreshEvents]);
 
+  // Add handler for RSVP events from chat
+  const handleRsvpEvent = useCallback(async (eventId: string, status: 'yes' | 'no' | 'maybe') => {
+    await updateRSVP(eventId, status);
+    
+    const statusText = status === 'yes' ? 'teilnehmen' : 
+                      status === 'no' ? 'nicht teilnehmen' : 
+                      'vielleicht teilnehmen';
+    
+    const event = events.find(e => e.id === eventId);
+    if (event) {
+      toast.success(`Du wirst am ${event.title} ${statusText}`, {
+        description: `Deine RSVP wurde für dieses Event gespeichert.`
+      });
+    }
+  }, [events, updateRSVP]);
+
   // Load events on component mount
   useEffect(() => {
     refreshEvents();
@@ -202,6 +258,12 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         toggleLike,
         isLoadingEvents,
         updateRSVP,
+        // Add new properties
+        eventLikes,
+        newEventIds,
+        filter,
+        topEventsPerDay,
+        handleRsvpEvent
       }}
     >
       {children}

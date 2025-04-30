@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Event, GitHubEvent } from "../types/eventTypes";
 import { transformGitHubEvents } from "../utils/eventUtils";
@@ -29,6 +30,174 @@ export const bielefeldEvents: Event[] = [
     category: "Sonstiges"
   }
 ];
+
+// Create an eventService object that contains all the methods
+export const eventService = {
+  // Fetch all events from all sources
+  getAllEvents: async (): Promise<Event[]> => {
+    try {
+      // Get database events
+      const dbEvents = await fetchSupabaseEvents();
+      
+      // Get GitHub event likes
+      const githubLikes = await fetchGitHubLikes();
+      
+      // Fetch external events from GitHub
+      const externalEvents = await fetchExternalEvents(githubLikes);
+      
+      // Combine all events
+      const allEvents = [...dbEvents, ...externalEvents];
+      
+      // Log today's events for debugging
+      logTodaysEvents(allEvents);
+      
+      return allEvents;
+    } catch (error) {
+      console.error('Error fetching all events:', error);
+      return [];
+    }
+  },
+  
+  // Update database event likes
+  updateDatabaseEventLikes: async (eventId: string): Promise<void> => {
+    try {
+      // Get current likes
+      const { data: currentEvent, error: fetchError } = await supabase
+        .from('community_events')
+        .select('likes')
+        .eq('id', eventId)
+        .single();
+        
+      if (fetchError) {
+        console.error('Error fetching current likes:', fetchError);
+        return;
+      }
+      
+      const currentLikes = currentEvent?.likes || 0;
+      const newLikes = currentLikes + 1;
+      
+      // Update likes in database
+      await updateEventLikes(eventId, newLikes);
+    } catch (error) {
+      console.error('Error updating database event likes:', error);
+    }
+  },
+  
+  // Update GitHub event likes
+  updateGithubEventLikes: async (githubEventId: string): Promise<void> => {
+    try {
+      // Add "github-" prefix if not already present
+      const fullEventId = githubEventId.startsWith('github-') ? 
+        githubEventId : 
+        `github-${githubEventId}`;
+        
+      // Get current likes
+      const { data: currentEvent, error: fetchError } = await supabase
+        .from('github_event_likes')
+        .select('likes')
+        .eq('event_id', fullEventId)
+        .single();
+        
+      if (fetchError) {
+        // If event doesn't exist, create it with 1 like
+        if (fetchError.code === 'PGRST116') {
+          await updateEventLikes(fullEventId, 1);
+          return;
+        }
+        
+        console.error('Error fetching current GitHub likes:', fetchError);
+        return;
+      }
+      
+      const currentLikes = currentEvent?.likes || 0;
+      const newLikes = currentLikes + 1;
+      
+      // Update likes in database
+      await updateEventLikes(fullEventId, newLikes);
+    } catch (error) {
+      console.error('Error updating GitHub event likes:', error);
+    }
+  },
+  
+  // Update database event RSVP
+  updateDatabaseEventRSVP: async (eventId: string, status: 'yes' | 'no' | 'maybe'): Promise<void> => {
+    try {
+      // Get current RSVP counts
+      const { data: currentEvent, error: fetchError } = await supabase
+        .from('community_events')
+        .select('rsvp_yes, rsvp_no, rsvp_maybe')
+        .eq('id', eventId)
+        .single();
+        
+      if (fetchError) {
+        console.error('Error fetching current RSVP counts:', fetchError);
+        return;
+      }
+      
+      const rsvpData = {
+        yes: currentEvent?.rsvp_yes || 0,
+        no: currentEvent?.rsvp_no || 0,
+        maybe: currentEvent?.rsvp_maybe || 0
+      };
+      
+      // Increment the selected status
+      rsvpData[status] += 1;
+      
+      // Update RSVP in database
+      await updateEventRsvp(eventId, rsvpData);
+    } catch (error) {
+      console.error('Error updating database event RSVP:', error);
+    }
+  },
+  
+  // Update GitHub event RSVP
+  updateGithubEventRSVP: async (githubEventId: string, status: 'yes' | 'no' | 'maybe'): Promise<void> => {
+    try {
+      // Add "github-" prefix if not already present
+      const fullEventId = githubEventId.startsWith('github-') ? 
+        githubEventId : 
+        `github-${githubEventId}`;
+        
+      // Get current RSVP counts
+      const { data: currentEvent, error: fetchError } = await supabase
+        .from('github_event_likes')
+        .select('rsvp_yes, rsvp_no, rsvp_maybe')
+        .eq('event_id', fullEventId)
+        .single();
+        
+      if (fetchError) {
+        // If event doesn't exist, create it with 1 for the selected status
+        if (fetchError.code === 'PGRST116') {
+          const rsvpData = {
+            yes: status === 'yes' ? 1 : 0,
+            no: status === 'no' ? 1 : 0,
+            maybe: status === 'maybe' ? 1 : 0
+          };
+          
+          await updateEventRsvp(fullEventId, rsvpData);
+          return;
+        }
+        
+        console.error('Error fetching current GitHub RSVP counts:', fetchError);
+        return;
+      }
+      
+      const rsvpData = {
+        yes: currentEvent?.rsvp_yes || 0,
+        no: currentEvent?.rsvp_no || 0,
+        maybe: currentEvent?.rsvp_maybe || 0
+      };
+      
+      // Increment the selected status
+      rsvpData[status] += 1;
+      
+      // Update RSVP in database
+      await updateEventRsvp(fullEventId, rsvpData);
+    } catch (error) {
+      console.error('Error updating GitHub event RSVP:', error);
+    }
+  }
+};
 
 // Fetch events from Supabase
 export const fetchSupabaseEvents = async (): Promise<Event[]> => {
