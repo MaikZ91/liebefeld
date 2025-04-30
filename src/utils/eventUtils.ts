@@ -134,7 +134,7 @@ export const transformGitHubEvents = (
       rsvp_yes: eventData.rsvp_yes || 0,
       rsvp_no: eventData.rsvp_no || 0,
       rsvp_maybe: eventData.rsvp_maybe || 0,
-      origin: 'github' as 'github',
+      origin: 'github',
     };
   });
 };
