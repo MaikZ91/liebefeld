@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { format, isSameDay, parseISO, getDay } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -36,7 +35,7 @@ import { Event } from '@/types/eventTypes';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import EventForm from './EventForm';
-import { groupEventsByDate } from '@/utils/eventUtils';
+import { groupEventsByDate, hasEventsOnDay } from '@/utils/eventUtils';
 import { toast } from 'sonner';
 
 interface EventCalendarProps {
@@ -100,22 +99,8 @@ function EventCalendar({ defaultView = "calendar" }: EventCalendarProps) {
 
   // Function to determine if a date has events
   const hasEvents = useCallback((date: Date) => {
-    return events.some(event => {
-      const eventDate = typeof event.date === 'string' ? parseISO(event.date) : event.date;
-      return isSameDay(eventDate, date);
-    });
+    return hasEventsOnDay(events, date);
   }, [events]);
-
-  // Custom day render for calendar
-  const renderDay = useCallback((day: Date) => {
-    const hasEventsOnDay = hasEvents(day);
-    return (
-      <div className={`relative p-2 ${hasEventsOnDay ? 'font-bold' : ''}`}>
-        {hasEventsOnDay && <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-red-500 rounded-full" />}
-        {day.getDate()}
-      </div>
-    );
-  }, [hasEvents]);
 
   // Fix: Use className instead of dayClassName
   const getDayClassName = useCallback((date: Date) => {
@@ -174,7 +159,7 @@ function EventCalendar({ defaultView = "calendar" }: EventCalendarProps) {
                   mode="single"
                   selected={selectedDate}
                   onSelect={handleDateSelect}
-                  className="rounded-md border shadow"
+                  className="rounded-md border shadow pointer-events-auto"
                   locale={de}
                   weekStartsOn={1}
                   disabled={() => false}
@@ -184,7 +169,6 @@ function EventCalendar({ defaultView = "calendar" }: EventCalendarProps) {
                   modifiersClassNames={{
                     hasEvent: "font-bold"
                   }}
-                  renderDay={renderDay}
                 />
 
                 <div className="mt-4">

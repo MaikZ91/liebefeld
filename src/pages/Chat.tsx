@@ -21,7 +21,7 @@ import {
 import EventCalendar from '@/components/EventCalendar';
 import EventForm from '@/components/EventForm';
 
-// We need to map group names to actual UUIDs from the database
+// UUIDs for the chat groups from the database
 const GROUP_ID_MAPPING = {
   'ausgehen': '97a8062d-6225-4dac-b3c2-0680365c1e10',
   'sport': '6a7ed75f-4033-44a7-a478-b5703a19a7a9',

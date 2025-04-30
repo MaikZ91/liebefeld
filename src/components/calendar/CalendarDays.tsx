@@ -4,8 +4,7 @@ import { format, isSameDay, isToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Event } from '@/types/eventTypes';
 import { parseAndNormalizeDate } from '@/utils/dateUtils';
-import { getEventCountForDay, hasEventsOnDay } from '@/utils/eventUtils';
-import { isTribeEvent } from '../EventCalendar';
+import { getEventCountForDay, hasEventsOnDay, isTribeEvent } from '@/utils/eventUtils';
 
 interface CalendarDaysProps {
   daysInMonth: Date[];
@@ -23,20 +22,6 @@ const CalendarDays: React.FC<CalendarDaysProps> = ({
   // Create a ref for the current day element
   const todayRef = useRef<HTMLButtonElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  
-  // Checks if a day has tribe events
-  const hasTribeEventOnDay = (day: Date): boolean => {
-    return events.some(event => {
-      try {
-        if (!event.date) return false;
-        const eventDate = parseAndNormalizeDate(event.date);
-        return isSameDay(eventDate, day) && isTribeEvent(event.title);
-      } catch (error) {
-        console.error(`Error in hasTribeEventOnDay for ${day.toISOString()}:`, error);
-        return false;
-      }
-    });
-  };
   
   // Scroll to today's element when component mounts, but wait for animations to complete
   useEffect(() => {
@@ -93,7 +78,16 @@ const CalendarDays: React.FC<CalendarDaysProps> = ({
             const isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
             const dayHasEvents = hasEventsOnDay(events, day);
             const eventCount = getEventCountForDay(events, day);
-            const dayHasTribeEvents = hasTribeEventOnDay(day);
+            const dayHasTribeEvents = events.some(event => {
+              try {
+                if (!event.date) return false;
+                const eventDate = parseAndNormalizeDate(event.date);
+                return isSameDay(eventDate, day) && isTribeEvent(event.title);
+              } catch (error) {
+                console.error(`Error in checking tribe events for ${day.toISOString()}:`, error);
+                return false;
+              }
+            });
             
             return (
               <button

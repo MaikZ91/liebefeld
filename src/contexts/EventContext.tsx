@@ -127,7 +127,6 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         rsvp_yes: 0,
         rsvp_no: 0,
         rsvp_maybe: 0,
-        created_at: data.created_at,
         origin: 'database',
       };
 

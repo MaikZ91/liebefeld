@@ -1,6 +1,6 @@
 
 import { Event } from '@/types/eventTypes';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isAfter, isSameDay } from 'date-fns';
 
 // Group events by their date
 export const groupEventsByDate = (events: Event[]): Record<string, Event[]> => {
@@ -31,6 +31,66 @@ export const groupEventsByDate = (events: Event[]): Record<string, Event[]> => {
   return Object.fromEntries(
     Object.entries(eventsByDate)
       .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+  );
+};
+
+// Get future events - events occurring today or later
+export const getFutureEvents = (events: Event[]): Event[] => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Reset time to start of day
+  
+  return events.filter(event => {
+    try {
+      if (!event.date) return false;
+      
+      const eventDate = typeof event.date === 'string' ? parseISO(event.date) : event.date;
+      return isAfter(eventDate, today) || isSameDay(eventDate, today);
+    } catch (error) {
+      console.error('Error filtering future events:', error, event);
+      return false;
+    }
+  });
+};
+
+// Alias for groupEventsByDate but filtering for future events
+export const groupFutureEventsByDate = (events: Event[]): Record<string, Event[]> => {
+  const futureEvents = getFutureEvents(events);
+  return groupEventsByDate(futureEvents);
+};
+
+// Check if a day has any events
+export const hasEventsOnDay = (events: Event[], day: Date): boolean => {
+  return events.some(event => {
+    try {
+      if (!event.date) return false;
+      const eventDate = typeof event.date === 'string' ? parseISO(event.date) : event.date;
+      return isSameDay(eventDate, day);
+    } catch (error) {
+      console.error('Error checking events on day:', error, event);
+      return false;
+    }
+  });
+};
+
+// Get event count for a specific day
+export const getEventCountForDay = (events: Event[], day: Date): number => {
+  return events.filter(event => {
+    try {
+      if (!event.date) return false;
+      const eventDate = typeof event.date === 'string' ? parseISO(event.date) : event.date;
+      return isSameDay(eventDate, day);
+    } catch (error) {
+      console.error('Error counting events for day:', error, event);
+      return false;
+    }
+  }).length;
+};
+
+// Function to check if an event is a Tribe event
+export const isTribeEvent = (title: string): boolean => {
+  const tribeKeywords = ['tribe', 'tuesday run', 'kennenlernabend', 'creatives circle'];
+  return tribeKeywords.some(keyword => 
+    title.toLowerCase().includes(keyword.toLowerCase())
   );
 };
 
@@ -77,14 +137,6 @@ export const transformGitHubEvents = (
       origin: 'github' as 'github',
     };
   });
-};
-
-// Function to check if an event is a Tribe event
-export const isTribeEvent = (title: string): boolean => {
-  const tribeKeywords = ['tribe', 'tuesday run', 'kennenlernabend', 'creatives circle'];
-  return tribeKeywords.some(keyword => 
-    title.toLowerCase().includes(keyword.toLowerCase())
-  );
 };
 
 // Helper function to identify event category based on its title
