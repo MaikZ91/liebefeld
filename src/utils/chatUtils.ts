@@ -81,7 +81,7 @@ export const formatEvents = (events: any[]) => {
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke-width="2"/>
                   <circle cx="12" cy="10" r="3" stroke-width="2"/>
                 </svg>
-                <span class="truncate">${event.location}</span>
+                <span class="truncate">${event.location || 'Unbekannt'}</span>
               </div>
             </div>
           </div>
@@ -135,6 +135,12 @@ export const generateResponse = async (query: string, events: any[]) => {
     const nextWeekEndStr = format(nextWeekEnd, 'yyyy-MM-dd');
     console.log(`Next week range: ${nextWeekStartStr} (Montag) bis ${nextWeekEndStr} (Sonntag)`);
     
+    // Berechne Datum für morgen
+    const tomorrow = new Date(currentDate);
+    tomorrow.setDate(currentDate.getDate() + 1);
+    const tomorrowStr = format(tomorrow, 'yyyy-MM-dd');
+    console.log(`Tomorrow date: ${tomorrowStr}`);
+    
     // Log a sample of events being sent to check if GitHub events are included
     const sampleEvents = events.slice(0, 2);
     const githubEventsCount = events.filter(e => e.id.startsWith('github-')).length;
@@ -146,6 +152,13 @@ export const generateResponse = async (query: string, events: any[]) => {
     console.log(`Events specifically for today (${formattedDate}): ${todayEvents.length}`);
     if (todayEvents.length > 0) {
       console.log('First few today events:', todayEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
+    }
+    
+    // Morgen-Events für Debugging
+    const tomorrowEvents = events.filter(e => e.date === tomorrowStr);
+    console.log(`Events specifically for tomorrow (${tomorrowStr}): ${tomorrowEvents.length}`);
+    if (tomorrowEvents.length > 0) {
+      console.log('First few tomorrow events:', tomorrowEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
     }
     
     // Events für nächste Woche für Debugging

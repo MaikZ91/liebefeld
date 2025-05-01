@@ -66,6 +66,16 @@ serve(async (req) => {
       console.log('First few next week events:', nextWeekEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
     }
     
+    // Add more logging to check for events tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowDate = tomorrow.toISOString().split('T')[0];
+    const tomorrowEvents = events.filter(event => event.date === tomorrowDate);
+    console.log(`Events specifically for tomorrow (${tomorrowDate}): ${tomorrowEvents.length}`);
+    if (tomorrowEvents.length > 0) {
+      console.log('First few tomorrow events:', tomorrowEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
+    }
+
     // Format events data for the AI
     const formattedEvents = events.map(event => `
       Event: ${event.title}
@@ -84,7 +94,7 @@ serve(async (req) => {
       : '';
 
     const systemMessage = `Du bist ein hilfreicher Event-Assistent für Liebefeld. 
-    Aktueller Tag: ${today} (Format: YYYY-MM-DD)
+    Aktueller Tag: ${currentDate} (Format: YYYY-MM-DD)
     Aktuelle Tageszeit: ${timeOfDay}
     Aktuelles Wetter: ${weather}
     
@@ -93,20 +103,20 @@ serve(async (req) => {
     
     Beantworte Fragen zu den Events präzise und freundlich auf Deutsch. 
     Berücksichtige dabei:
-    1. Wenn der Nutzer nach "heute" fragt, beziehe dich auf Events mit Datum ${today}
-    2. Wenn der Nutzer nach "nächster Woche" fragt, beziehe dich auf Events vom ${nextWeekStart} (Montag) bis ${nextWeekEnd} (Sonntag)
-    3. Die Woche beginnt immer am Montag und endet am Sonntag
-    4. Die aktuelle Tageszeit und das Wetter
-    5. Die spezifischen Interessen in der Anfrage
-    6. Gib relevante Events mit allen Details an, zeige IMMER MEHRERE passende Events (mindestens 3-5 Events wenn verfügbar)
-    7. Wenn keine passenden Events gefunden wurden, mache alternative Vorschläge
-    8. Berücksichtige ALLE Events, auch die aus externen Quellen (mit 'Quelle: Externe Veranstaltung' gekennzeichnet)
-    9. Verwende das Datum-Format YYYY-MM-DD für Vergleiche
-    10. Mache den Titel eines Events immer klickbar, wenn ein Link vorhanden ist
-    11. Erwähne KEINE "Quelle: Externe Veranstaltung" oder "Quelle: Community Event" Angaben in deinen Antworten
-    12. WICHTIG: Zeige MEHRERE Events an, nicht nur eines, mindestens 5-8 Events wenn möglich
-    13. Gruppiere Events nach Datum wenn möglich
-    14. Formatiere deine Antworten wie die Event-Liste mit den gleichen visuellen Elementen
+    1. Wenn der Nutzer nach "heute" fragt, beziehe dich auf Events mit Datum ${currentDate}
+    2. Wenn der Nutzer nach "morgen" fragt, beziehe dich auf Events mit Datum ${tomorrowDate} 
+    3. Wenn der Nutzer nach "nächster Woche" fragt, beziehe dich auf Events vom ${nextWeekStart} (Montag) bis ${nextWeekEnd} (Sonntag)
+    4. Die Woche beginnt immer am Montag und endet am Sonntag
+    5. Die aktuelle Tageszeit und das Wetter
+    6. Die spezifischen Interessen in der Anfrage
+    7. Gib relevante Events mit allen Details an, zeige IMMER MEHRERE passende Events (mindestens 3-5 Events wenn verfügbar)
+    8. Wenn keine passenden Events gefunden wurden, mache alternative Vorschläge
+    9. Berücksichtige ALLE Events, auch die aus externen Quellen (mit 'Quelle: Externe Veranstaltung' gekennzeichnet)
+    10. Verwende das Datum-Format YYYY-MM-DD für Vergleiche
+    11. Mache den Titel eines Events immer klickbar, wenn ein Link vorhanden ist
+    12. Erwähne KEINE "Quelle: Externe Veranstaltung" oder "Quelle: Community Event" Angaben in deinen Antworten
+    13. WICHTIG: Zeige IMMER MEHRERE Events an, nicht nur eines, mindestens 5-8 Events wenn möglich
+    14. Gruppiere Events nach Datum mit dem vorgegebenen HTML-Code
     15. KEINE Textformatierung zwischen den Event-Karten (keine Datumsüberschriften als Markdown-Text)
     16. WICHTIG: Benutze NUR die HTML-Vorlage unten für die Darstellung von Events - KEINE eigenen Formatierungen!
     17. KEINE Markdown-Überschriften, Fettdruck oder andere Textformatierungen - NUR die HTML-Vorlage verwenden!
@@ -174,11 +184,13 @@ serve(async (req) => {
     1. Die Event-Karten kompakt und übersichtlich sind
     2. Alle Links im Text korrekt verlinkt sind
     3. Die Formatierung dem Event Panel Design im Chat entspricht
-    4. Zeige IMMER MEHRERE Events, mindestens 5-8 wenn verfügbar, nicht nur ein einzelnes Event
+    4. Zeige IMMER MEHRERE Events an, mindestens 5-8 wenn verfügbar, nicht nur ein einzelnes Event
     5. Verwende KEINE zusätzlichen Textformatierungen um die HTML-Elemente herum
     6. Gruppiere Events nach Datum mit dem vorgegebenen HTML-Code
     7. KEINE eigene Textformatierung verwenden, NUR die vorgegebenen HTML-Elemente
     8. Erwähne KEINE Quellenangaben in deinen Antworten
+    9. Denke daran, dass "morgen" das Datum ${tomorrowDate} ist!
+    10. ALLE weiteren Infos gehören in die Event-Karten, nicht als Text dazwischen oder davor/danach
     ${additionalInstructions}
     `;
 
@@ -198,7 +210,7 @@ serve(async (req) => {
           { role: 'system', content: systemMessage },
           { role: 'user', content: query }
         ],
-        temperature: 0.5,
+        temperature: 0.3, // Lower temperature for more consistent formatting
         max_tokens: 1024
       })
     });
