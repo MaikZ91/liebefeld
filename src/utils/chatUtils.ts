@@ -40,6 +40,26 @@ const makeLinksClickable = (text: string): string => {
   });
 };
 
+// Fix for proper title display when an event has a link
+const fixTitleDisplayWithLink = (html: string): string => {
+  // Look for incorrectly formatted links where the URL is shown instead of the title
+  const incorrectLinkRegex = /<a href="([^"]+)"[^>]*>https?:\/\/[^<]+<\/a>/g;
+  
+  // Replace with proper format where we use the title instead of showing the URL
+  return html.replace(incorrectLinkRegex, (match, href) => {
+    // Extract event title from nearby context if possible
+    const titleRegex = new RegExp(`<h4[^>]*>[^<]*<a href="${href}"[^>]*>([^<]+)<\/a>`, 'g');
+    const titleMatch = titleRegex.exec(html);
+    
+    if (titleMatch && titleMatch[1]) {
+      return `<a href="${href}" target="_blank" rel="noopener noreferrer">${titleMatch[1]}</a>`;
+    } else {
+      // Fallback to a generic title if we can't extract it
+      return `<a href="${href}" target="_blank" rel="noopener noreferrer">Event Details</a>`;
+    }
+  });
+};
+
 export const formatEvents = (events: any[]) => {
   if (!events || events.length === 0) {
     return '<div class="bg-gray-900/20 border border-gray-700/30 rounded-lg p-2 text-sm">Keine Events gefunden.</div>';
@@ -208,7 +228,7 @@ export const generateResponse = async (query: string, events: any[]) => {
         currentDate: formattedDate,
         weather: await fetchWeather(),
         allEvents: events,
-        formatInstructions: "Stelle MEHRERE Events im kompakten EventCard Design dar. Zeige MINDESTENS 5-10 Events an, gruppiere nach Datum. Mache Titel klickbar wenn Link vorhanden ist."
+        formatInstructions: "Stelle MEHRERE Events im kompakten EventCard Design dar. Zeige MINDESTENS 5-10 Events an, gruppiere nach Datum. Mache Titel klickbar wenn Link vorhanden ist. Zeige IMMER das Herz-Icon bei jedem Event."
       }),
       signal: controller.signal
     });
@@ -220,8 +240,12 @@ export const generateResponse = async (query: string, events: any[]) => {
     }
 
     const data = await response.json();
-    // Process the AI response to make links clickable
-    const processedResponse = makeLinksClickable(data.response);
+    
+    // Fix the formatting issues - correct links displaying URLs instead of titles
+    let processedResponse = fixTitleDisplayWithLink(data.response);
+    
+    // Also process to make any plain text links clickable
+    processedResponse = makeLinksClickable(processedResponse);
     
     // Return the processed response with links made clickable
     return createResponseHeader("KI-Antwort") + processedResponse;

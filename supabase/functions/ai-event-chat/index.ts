@@ -143,7 +143,8 @@ serve(async (req) => {
     10. Das Datum-Format YYYY-MM-DD für Vergleiche
     11. WICHTIG: Zeige IMMER MEHRERE Events an, nicht nur eines
     
-    Verwende dieses HTML-Format für Events und stelle viele Events dar, gruppiert nach Datum:
+    KORREKTES HTML-FORMAT FÜR EVENT-KARTEN:
+    Verwende dieses exakte HTML-Format für Events und stelle viele Events dar, gruppiert nach Datum:
     
     <div class="text-xs text-red-500 font-medium mt-2 mb-1">DATUM</div>
     
@@ -152,10 +153,13 @@ serve(async (req) => {
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-1 flex-wrap">
             <h4 class="font-medium text-sm text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1">
+              <!-- Wenn ein Link vorhanden ist, verwende diese Form: -->
               <a href="EVENT_LINK" target="_blank" rel="noopener noreferrer">EVENT_TITEL</a>
               <svg class="w-2 h-2 inline-flex flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path d="M7 17L17 7M17 7H8M17 7V16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
+              <!-- Wenn kein Link vorhanden ist, nur den Titel anzeigen: -->
+              <!-- EVENT_TITEL -->
             </h4>
           </div>
           
@@ -187,6 +191,12 @@ serve(async (req) => {
             </svg>
             EVENT_KATEGORIE
           </div>
+          
+          <div class="flex items-center gap-0.5">
+            <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke-width="2"/>
+            </svg>
+          </div>
         </div>
       </div>
     </div>
@@ -194,35 +204,117 @@ serve(async (req) => {
     WICHTIGE REGELN:
     1. IMMER MEHRERE Events anzeigen (5-10 minimum wenn verfügbar)
     2. Das HTML-Format genau wie oben angegeben verwenden
-    3. Bei Links immer das <a> Tag verwenden
+    3. Bei Links den Eventtitel in den <a> Tag einbetten, nicht den Link selbst anzeigen
     4. Wenn der Benutzer nach "übermorgen" fragt, nutze explizit das Datum ${formattedDayAfterTomorrow}
     5. Wenn der Benutzer nach "morgen" fragt, nutze explizit das Datum ${formattedTomorrow}
     6. Zeige ALLE relevanten Events, nicht nur eine Auswahl
     7. Schreibe deinen Text als normale Antwort, aber stelle die Events im angegebenen HTML-Format dar
     8. Achte besonders auf das korrekte Datumsformat bei Datumsbegriffen wie "morgen", "übermorgen", "nächste Woche"
+    9. STELLE SICHER, dass bei Events mit Links der TITLE im a-Tag angezeigt wird, NICHT der Link selbst
+    10. STELLE SICHER, dass du das Heart-Icon bei jedem Event anzeigst 
     ${additionalInstructions}
     
-    BEISPIEL FÜR EINE ANTWORT MIT MEHREREN EVENTS:
+    BEISPIEL FÜR EINE KORREKTE ANTWORT MIT MEHREREN EVENTS:
+    
     Hier sind einige Events für morgen (${formattedTomorrow}):
     
     <div class="text-xs text-red-500 font-medium mt-2 mb-1">${formattedTomorrow}</div>
     
     <div class="dark-glass-card rounded-lg p-1.5 mb-0.5 w-full">
-      <!-- Event 1 details -->
+      <div class="flex justify-between items-start gap-1">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-1 flex-wrap">
+            <h4 class="font-medium text-sm text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1">
+              <a href="https://example.com/event1" target="_blank" rel="noopener noreferrer">Konzert im Park</a>
+              <svg class="w-2 h-2 inline-flex flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M7 17L17 7M17 7H8M17 7V16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </h4>
+          </div>
+          
+          <div class="flex flex-wrap items-center gap-1 mt-0.5 text-xs text-white">
+            <div class="flex items-center">
+              <svg class="w-3 h-3 mr-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                <polyline points="12 6 12 12 16 14" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span>19:30 Uhr</span>
+            </div>
+            <div class="flex items-center max-w-[120px] overflow-hidden">
+              <svg class="w-3 h-3 mr-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke-width="2"/>
+                <circle cx="12" cy="10" r="3" stroke-width="2"/>
+              </svg>
+              <span class="truncate">Stadtpark</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <div class="flex-shrink-0 flex items-center gap-0.5 text-xs font-medium whitespace-nowrap px-1 py-0 h-5 bg-black text-red-500 rounded">
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"/>
+              <line x1="16" y1="2" x2="16" y2="6" stroke-width="2" stroke-linecap="round"/>
+              <line x1="8" y1="2" x2="8" y2="6" stroke-width="2" stroke-linecap="round"/>
+              <line x1="3" y1="10" x2="21" y2="10" stroke-width="2"/>
+            </svg>
+            Musik
+          </div>
+          
+          <div class="flex items-center gap-0.5">
+            <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke-width="2"/>
+            </svg>
+          </div>
+        </div>
+      </div>
     </div>
     
     <div class="dark-glass-card rounded-lg p-1.5 mb-0.5 w-full">
-      <!-- Event 2 details -->
-    </div>
-    
-    <div class="dark-glass-card rounded-lg p-1.5 mb-0.5 w-full">
-      <!-- Event 3 details -->
-    </div>
-    
-    <div class="text-xs text-red-500 font-medium mt-2 mb-1">${formattedDayAfterTomorrow}</div>
-    
-    <div class="dark-glass-card rounded-lg p-1.5 mb-0.5 w-full">
-      <!-- Another event details -->
+      <div class="flex justify-between items-start gap-1">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-1 flex-wrap">
+            <h4 class="font-medium text-sm text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1">
+              Theater Aufführung
+            </h4>
+          </div>
+          
+          <div class="flex flex-wrap items-center gap-1 mt-0.5 text-xs text-white">
+            <div class="flex items-center">
+              <svg class="w-3 h-3 mr-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                <polyline points="12 6 12 12 16 14" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span>20:00 Uhr</span>
+            </div>
+            <div class="flex items-center max-w-[120px] overflow-hidden">
+              <svg class="w-3 h-3 mr-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke-width="2"/>
+                <circle cx="12" cy="10" r="3" stroke-width="2"/>
+              </svg>
+              <span class="truncate">Stadttheater</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <div class="flex-shrink-0 flex items-center gap-0.5 text-xs font-medium whitespace-nowrap px-1 py-0 h-5 bg-black text-red-500 rounded">
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"/>
+              <line x1="16" y1="2" x2="16" y2="6" stroke-width="2" stroke-linecap="round"/>
+              <line x1="8" y1="2" x2="8" y2="6" stroke-width="2" stroke-linecap="round"/>
+              <line x1="3" y1="10" x2="21" y2="10" stroke-width="2"/>
+            </svg>
+            Kultur
+          </div>
+          
+          <div class="flex items-center gap-0.5">
+            <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke-width="2"/>
+            </svg>
+          </div>
+        </div>
+      </div>
     </div>
     `;
 
