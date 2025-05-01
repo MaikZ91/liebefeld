@@ -1,3 +1,4 @@
+
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { fetchWeather } from './weatherUtils';
@@ -24,6 +25,19 @@ const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' => {
   return 'evening';
 };
 
+// Helper function to convert text URLs to clickable links
+const makeLinksClickable = (text: string): string => {
+  if (!text) return '';
+  
+  // Regular expression to find URLs in text
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  
+  // Replace URLs with anchor tags
+  return text.replace(urlRegex, (url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-red-500 hover:underline">${url}</a>`;
+  });
+};
+
 export const formatEvents = (events: any[]) => {
   if (!events || events.length === 0) {
     return '<div class="bg-gray-900/20 border border-gray-700/30 rounded-lg p-2 text-sm">Keine Events gefunden.</div>';
@@ -32,6 +46,10 @@ export const formatEvents = (events: any[]) => {
   let eventsHtml = '';
   events.forEach(event => {
     const isGitHubEvent = event.id.startsWith('github-');
+    
+    // Process description to make links clickable
+    const processedDescription = event.description ? makeLinksClickable(event.description) : '';
+    
     eventsHtml += `
       <div class="mb-2 p-2 rounded-md ${isGitHubEvent ? 'bg-blue-900/20 border border-blue-700/30' : 'bg-gray-900/20 border border-gray-700/30'} hover:bg-opacity-30 transition-all">
         <div class="flex items-center justify-between">
@@ -45,7 +63,7 @@ export const formatEvents = (events: any[]) => {
               </a>` : 
               `<h5 class="font-medium text-red-500">${event.title}</h5>`
             }
-            <p class="text-[10px] text-gray-400">${isGitHubEvent ? 'Externe Veranstaltung' : 'Community Event'}</p>
+            <!-- Removed the source info line -->
           </div>
           <div class="text-xs bg-black text-red-500 px-2 py-0.5 rounded-full">${event.category}</div>
         </div>
@@ -76,7 +94,7 @@ export const formatEvents = (events: any[]) => {
             ${event.location}
           </div>
         </div>
-        ${event.description ? `<p class="text-xs mt-1 text-gray-300">${event.description}</p>` : ''}
+        ${processedDescription ? `<p class="text-xs mt-1 text-gray-300">${processedDescription}</p>` : ''}
       </div>
     `;
   });
@@ -146,7 +164,8 @@ export const generateResponse = async (query: string, events: any[]) => {
         nextWeekStart: nextWeekStartStr,
         nextWeekEnd: nextWeekEndStr,
         weather: await fetchWeather(),
-        allEvents: events
+        allEvents: events,
+        formatInstructions: "Mach alle URLs klickbar und zeige KEINE Quellenangaben (wie 'Quelle: Externe Veranstaltung') in deiner Antwort."
       }),
       signal: controller.signal
     });
@@ -158,7 +177,11 @@ export const generateResponse = async (query: string, events: any[]) => {
     }
 
     const data = await response.json();
-    return createResponseHeader("KI-Antwort") + data.response;
+    // Process the AI response to make links clickable
+    const processedResponse = makeLinksClickable(data.response);
+    
+    // We return the processed response with links made clickable
+    return createResponseHeader("KI-Antwort") + processedResponse;
   } catch (error) {
     console.error('Error generating AI response:', error);
     

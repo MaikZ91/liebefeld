@@ -19,7 +19,16 @@ serve(async (req) => {
 
   try {
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
-    const { query, timeOfDay, weather, allEvents, currentDate, nextWeekStart, nextWeekEnd } = await req.json();
+    const { 
+      query, 
+      timeOfDay, 
+      weather, 
+      allEvents, 
+      currentDate, 
+      nextWeekStart, 
+      nextWeekEnd,
+      formatInstructions 
+    } = await req.json();
     
     // Log date info
     const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
@@ -68,6 +77,11 @@ serve(async (req) => {
       ${event.id.startsWith('github-') ? 'Quelle: Externe Veranstaltung' : 'Quelle: Community Event'}
     `).join('\n\n');
 
+    // Add custom formatting instructions if provided
+    const additionalInstructions = formatInstructions 
+      ? `\n\nWichtig: ${formatInstructions}`
+      : '';
+
     const systemMessage = `Du bist ein hilfreicher Event-Assistent für Liebefeld. 
     Aktueller Tag: ${today} (Format: YYYY-MM-DD)
     Aktuelle Tageszeit: ${timeOfDay}
@@ -87,6 +101,8 @@ serve(async (req) => {
     7. Wenn keine passenden Events gefunden wurden, mache alternative Vorschläge
     8. Berücksichtige ALLE Events, auch die aus externen Quellen (mit 'Quelle: Externe Veranstaltung' gekennzeichnet)
     9. Verwende das Datum-Format YYYY-MM-DD für Vergleiche
+    10. Mache Links direkt klickbar, wenn möglich
+    11. Erwähne KEINE "Quelle: Externe Veranstaltung" oder "Quelle: Community Event" Angaben in deinen Antworten
     
     Format deine Antworten klar und übersichtlich in HTML mit diesen Klassen:
     - Verwende bg-gray-900/20 border border-gray-700/30 für normale Event-Container
@@ -94,6 +110,8 @@ serve(async (req) => {
     - Nutze text-red-500 für Überschriften
     - Nutze text-sm für normalen Text
     - Nutze rounded-lg p-3 mb-3 für Container-Padding
+    - Füge URLs als <a href="URL" target="_blank" rel="noopener noreferrer" class="text-red-500 hover:underline">URL</a> ein
+    ${additionalInstructions}
     `;
 
     console.log('Sending request to Open Router API with Gemini model...');
