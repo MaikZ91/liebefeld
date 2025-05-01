@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useEventContext } from "@/contexts/EventContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,15 +18,23 @@ import { Loader2 } from "lucide-react";
 
 interface EventFormProps {
   onSuccess?: () => void;
+  selectedDate?: Date;
+  onAddEvent?: (event: any) => Promise<void>;
+  onCancel?: () => void;
 }
 
-const EventForm: React.FC<EventFormProps> = ({ onSuccess }) => {
-  const { addEvent } = useEventContext();
+const EventForm: React.FC<EventFormProps> = ({ 
+  onSuccess, 
+  selectedDate,
+  onAddEvent,
+  onCancel 
+}) => {
+  const { addUserEvent } = useEventContext();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    date: format(new Date(), "yyyy-MM-dd"),
+    date: format(selectedDate || new Date(), "yyyy-MM-dd"),
     time: "18:00",
     location: "",
     organizer: "",
@@ -65,12 +73,21 @@ const EventForm: React.FC<EventFormProps> = ({ onSuccess }) => {
     setIsLoading(true);
 
     try {
-      // Add event to context (which will save to database)
-      await addEvent({
-        ...formData,
-        date: formData.date,
-        time: formData.time,
-      });
+      // If onAddEvent was provided, use it, otherwise use addUserEvent from context
+      if (onAddEvent) {
+        await onAddEvent({
+          ...formData,
+          date: formData.date,
+          time: formData.time,
+        });
+      } else {
+        // Add event to context (which will save to database)
+        await addUserEvent({
+          ...formData,
+          date: formData.date,
+          time: formData.time,
+        });
+      }
 
       toast.success("Event erfolgreich erstellt!", {
         description: `${formData.title} wurde zum Kalender hinzugefügt.`,
@@ -80,7 +97,7 @@ const EventForm: React.FC<EventFormProps> = ({ onSuccess }) => {
       setFormData({
         title: "",
         description: "",
-        date: format(new Date(), "yyyy-MM-dd"),
+        date: format(selectedDate || new Date(), "yyyy-MM-dd"),
         time: "18:00",
         location: "",
         organizer: "",
@@ -207,19 +224,32 @@ const EventForm: React.FC<EventFormProps> = ({ onSuccess }) => {
         />
       </div>
 
-      <Button
-        type="submit"
-        className="w-full"
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Wird gespeichert...
-          </>
-        ) : (
-          "Event erstellen"
+      <div className="flex flex-col sm:flex-row gap-3 justify-between">
+        <Button
+          type="submit"
+          className="flex-1"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Wird gespeichert...
+            </>
+          ) : (
+            "Event erstellen"
+          )}
+        </Button>
+        
+        {onCancel && (
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onCancel}
+            className="flex-1"
+          >
+            Abbrechen
+          </Button>
         )}
-      </Button>
+      </div>
     </form>
   );
 };
