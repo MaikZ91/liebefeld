@@ -74,6 +74,7 @@ serve(async (req) => {
       Kategorie: ${event.category}
       ${event.location ? `Ort: ${event.location}` : ''}
       ${event.description ? `Beschreibung: ${event.description}` : ''}
+      ${event.link ? `Link: ${event.link}` : ''}
       ${event.id.startsWith('github-') ? 'Quelle: Externe Veranstaltung' : 'Quelle: Community Event'}
     `).join('\n\n');
 
@@ -101,7 +102,7 @@ serve(async (req) => {
     7. Wenn keine passenden Events gefunden wurden, mache alternative Vorschläge
     8. Berücksichtige ALLE Events, auch die aus externen Quellen (mit 'Quelle: Externe Veranstaltung' gekennzeichnet)
     9. Verwende das Datum-Format YYYY-MM-DD für Vergleiche
-    10. Mache Links direkt klickbar, wenn möglich
+    10. Mache den Titel eines Events immer klickbar, wenn ein Link vorhanden ist
     11. Erwähne KEINE "Quelle: Externe Veranstaltung" oder "Quelle: Community Event" Angaben in deinen Antworten
     
     Format deine Antworten klar und übersichtlich in HTML mit diesen Klassen:
@@ -110,7 +111,8 @@ serve(async (req) => {
     - Nutze text-red-500 für Überschriften
     - Nutze text-sm für normalen Text
     - Nutze rounded-lg p-3 mb-3 für Container-Padding
-    - Füge URLs als <a href="URL" target="_blank" rel="noopener noreferrer" class="text-red-500 hover:underline">URL</a> ein
+    - Wenn ein Event einen Link hat, formatiere den Titel als <a href="LINK" target="_blank" rel="noopener noreferrer" class="text-red-500 hover:underline">TITEL</a>
+    - Füge sonstige URLs im Text als <a href="URL" target="_blank" rel="noopener noreferrer" class="text-red-500 hover:underline">URL</a> ein
     ${additionalInstructions}
     `;
 

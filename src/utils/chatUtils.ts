@@ -50,20 +50,21 @@ export const formatEvents = (events: any[]) => {
     // Process description to make links clickable
     const processedDescription = event.description ? makeLinksClickable(event.description) : '';
     
+    // Format title - make it clickable if there's a link
+    const titleHtml = event.link 
+      ? `<a href="${event.link}" target="_blank" rel="noopener noreferrer" class="font-medium text-red-500 hover:underline flex items-center gap-1">
+          ${event.title}
+          <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M7 17L17 7M17 7H8M17 7V16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>` 
+      : `<h5 class="font-medium text-red-500">${event.title}</h5>`;
+    
     eventsHtml += `
       <div class="mb-2 p-2 rounded-md ${isGitHubEvent ? 'bg-blue-900/20 border border-blue-700/30' : 'bg-gray-900/20 border border-gray-700/30'} hover:bg-opacity-30 transition-all">
         <div class="flex items-center justify-between">
           <div class="flex-1">
-            ${event.link ? 
-              `<a href="${event.link}" target="_blank" rel="noopener noreferrer" class="font-medium text-red-500 hover:underline flex items-center gap-1">
-                ${event.title}
-                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M7 17L17 7M17 7H8M17 7V16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </a>` : 
-              `<h5 class="font-medium text-red-500">${event.title}</h5>`
-            }
-            <!-- Removed the source info line -->
+            ${titleHtml}
           </div>
           <div class="text-xs bg-black text-red-500 px-2 py-0.5 rounded-full">${event.category}</div>
         </div>
@@ -165,7 +166,7 @@ export const generateResponse = async (query: string, events: any[]) => {
         nextWeekEnd: nextWeekEndStr,
         weather: await fetchWeather(),
         allEvents: events,
-        formatInstructions: "Mach alle URLs klickbar und zeige KEINE Quellenangaben (wie 'Quelle: Externe Veranstaltung') in deiner Antwort."
+        formatInstructions: "Mach alle Eventtitel und URLs klickbar und zeige KEINE Quellenangaben (wie 'Quelle: Externe Veranstaltung') in deiner Antwort."
       }),
       signal: controller.signal
     });
