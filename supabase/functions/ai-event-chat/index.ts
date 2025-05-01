@@ -98,12 +98,15 @@ serve(async (req) => {
     3. Die Woche beginnt immer am Montag und endet am Sonntag
     4. Die aktuelle Tageszeit und das Wetter
     5. Die spezifischen Interessen in der Anfrage
-    6. Gib relevante Events mit allen Details an
+    6. Gib relevante Events mit allen Details an, zeige MEHRERE passende Events
     7. Wenn keine passenden Events gefunden wurden, mache alternative Vorschläge
     8. Berücksichtige ALLE Events, auch die aus externen Quellen (mit 'Quelle: Externe Veranstaltung' gekennzeichnet)
     9. Verwende das Datum-Format YYYY-MM-DD für Vergleiche
     10. Mache den Titel eines Events immer klickbar, wenn ein Link vorhanden ist
     11. Erwähne KEINE "Quelle: Externe Veranstaltung" oder "Quelle: Community Event" Angaben in deinen Antworten
+    12. WICHTIG: Zeige MEHRERE Events an, nicht nur eines
+    13. Gruppiere Events nach Datum wenn möglich
+    14. Formatiere deine Antworten wie die Event-Liste mit den gleichen visuellen Elementen
     
     Formatiere deine Antworten kompakt im Stil der Event-Liste, indem du für jedes Event folgendes HTML-Format verwendest:
     
@@ -165,7 +168,8 @@ serve(async (req) => {
     1. Die Event-Karten kompakt und übersichtlich sind
     2. Alle Links im Text korrekt verlinkt sind
     3. Die Formatierung dem Event Panel Design im Chat entspricht
-    4. Erwähne KEINE Quellenangaben in deinen Antworten
+    4. Zeige IMMER MEHRERE Events, nicht nur ein einzelnes Event
+    5. Erwähne KEINE Quellenangaben in deinen Antworten
     ${additionalInstructions}
     `;
 

@@ -45,7 +45,7 @@ export const formatEvents = (events: any[]) => {
     return '<div class="bg-gray-900/20 border border-gray-700/30 rounded-lg p-2 text-sm">Keine Events gefunden.</div>';
   }
 
-  let eventsHtml = '';
+  let eventsHtml = '<div class="space-y-2">';
   events.forEach(event => {
     // Process description to make links clickable
     const processedDescription = event.description ? makeLinksClickable(event.description) : '';
@@ -108,7 +108,8 @@ export const formatEvents = (events: any[]) => {
       ${processedDescription ? `<div class="pl-2 pb-2 text-xs text-gray-300">${processedDescription}</div>` : ''}
     `;
   });
-
+  
+  eventsHtml += '</div>';
   return eventsHtml;
 };
 
@@ -175,7 +176,7 @@ export const generateResponse = async (query: string, events: any[]) => {
         nextWeekEnd: nextWeekEndStr,
         weather: await fetchWeather(),
         allEvents: events,
-        formatInstructions: "Stelle die Events im kompakten EventCard Design dar, mache Titel klickbar wenn Link vorhanden ist, und zeige KEINE Quellenangaben in deinen Antworten."
+        formatInstructions: "Stelle mehrere Events im kompakten EventCard Design dar (wie in der Event Panel Liste), mache Titel klickbar wenn Link vorhanden ist. Zeige maximal 10 Events an, gruppiere sie nach Datum und zeige KEINE Quellenangaben in deinen Antworten."
       }),
       signal: controller.signal
     });

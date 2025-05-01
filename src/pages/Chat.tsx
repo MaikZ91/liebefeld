@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
@@ -90,26 +91,26 @@ const ChatPage = () => {
           <h1 className="text-2xl font-bold text-red-500">Liebefield Chat</h1>
           
           <div className="flex gap-2">
-            {/* Add Event Button */}
+            {/* Add Event Button - Updated with red styling */}
             <Button 
-              variant="outline" 
+              variant="default" 
               size="sm"
               onClick={handleAddEvent}
-              className="flex items-center gap-1"
+              className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white"
             >
               <PlusCircle className="h-4 w-4" />
-              <span className="hidden md:inline">Event hinzufügen</span>
+              <span className="block">Event hinzufügen</span>
             </Button>
             
-            {/* View Events Button */}
+            {/* View Events Button - Updated with red styling */}
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
               onClick={() => setIsEventListSheetOpen(true)}
-              className="flex items-center gap-1"
+              className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white"
             >
-              <List className="h-4 w-4" />
-              <span className="hidden md:inline">Events anzeigen</span>
+              <Calendar className="h-4 w-4" />
+              <span className="block">Events anzeigen</span>
             </Button>
           </div>
         </div>
