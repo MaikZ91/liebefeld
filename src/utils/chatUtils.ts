@@ -7,13 +7,6 @@ export const getWelcomeMessage = () => {
   return `
     <div class="bg-green-900/10 border border-green-700/30 rounded-lg p-2 text-sm">
       Ich bin dein persönlicher Assistent für alle Liebefeld Events.
-      <br /><br />
-      Frag mich zum Beispiel:
-      <ul class="list-disc pl-4 mt-1 space-y-1">
-        <li>"Welche Events gibt es heute?"</li>
-        <li>"Was kann ich am Wochenende machen?"</li>
-        <li>"Gibt es Konzerte im Lokschuppen?"</li>
-      </ul>
     </div>
   `;
 };

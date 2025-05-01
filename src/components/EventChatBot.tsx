@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEventContext } from '@/contexts/EventContext';
@@ -225,11 +226,9 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
               </div>
             )}
             
-            {messages.length === 1 && (
+            {/* Only show example prompts when there are messages but don't add the welcome message box again */}
+            {messages.length > 0 && !messages.some(msg => msg.id !== 'welcome') && (
               <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30 mt-4">
-                <p className="text-sm text-red-200 mb-2">
-                  Ich bin dein persönlicher Assistent für alle Liebefeld Events.
-                </p>
                 <p className="text-sm text-red-200 mb-2">
                   Frag mich zum Beispiel:
                 </p>
@@ -332,11 +331,9 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
                 </div>
               )}
               
-              {messages.length === 1 && (
+              {/* Only show example prompts when there are messages but don't add the welcome message box again */}
+              {messages.length > 0 && !messages.some(msg => msg.id !== 'welcome') && (
                 <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30 mt-4">
-                  <p className="text-sm text-red-200 mb-2">
-                    Ich bin dein persönlicher Assistent für alle Liebefeld Events.
-                  </p>
                   <p className="text-sm text-red-200 mb-2">
                     Frag mich zum Beispiel:
                   </p>
