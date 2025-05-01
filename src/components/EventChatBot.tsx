@@ -9,7 +9,6 @@ import {
 import { 
   generateResponse, 
   getWelcomeMessage,
-  formatEvents,
   createResponseHeader
 } from '@/utils/chatUtils';
 import { cn } from '@/lib/utils';
@@ -43,8 +42,9 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
   // Example prompts that users can click on
   const examplePrompts = [
     "Welche Events gibt es heute?",
-    "Was kann ich am Wochenende machen?",
-    "Gibt es Konzerte im Lokschuppen?"
+    "Was kann ich morgen machen?",
+    "Was ist am Wochenende los?",
+    "Zeige mir Events für nächste Woche"
   ];
 
   useEffect(() => {
@@ -90,7 +90,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
     }
   };
 
-  const handleSendMessage = (customInput?: string) => {
+  const handleSendMessage = async (customInput?: string) => {
     const message = customInput || input;
     if (!message.trim()) return;
     
@@ -104,44 +104,58 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
     setInput('');
     setIsTyping(true);
     
-    // Process with small delay to show typing indicator
-    setTimeout(async () => {
-      try {
-        console.log(`Processing user query: "${message}" with ${events.length} events`);
-        // Fix: Await the response from generateResponse since it's async
-        const responseHtml = await generateResponse(message, events);
-        
-        const botMessage: ChatMessage = {
-          id: `bot-${Date.now()}`,
-          isUser: false,
-          text: 'Hier sind die Events, die ich gefunden habe.',
-          html: responseHtml
-        };
-        
-        setMessages(prev => [...prev, botMessage]);
-      } catch (error) {
-        console.error('Error generating response:', error);
-        
-        const errorMessage: ChatMessage = {
-          id: `error-${Date.now()}`,
-          isUser: false,
-          text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
-          html: `${createResponseHeader("Fehler")}
-          <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
-            Es ist ein Fehler aufgetreten. Bitte versuche es später noch einmal.
-          </div>`
-        };
-        
-        setMessages(prev => [...prev, errorMessage]);
-      } finally {
-        setIsTyping(false);
-      }
-    }, 800);
+    try {
+      console.log(`Processing user query: "${message}" with ${events.length} events`);
+      // Get events from context and filter out past events
+      const currentDate = new Date().toISOString().split('T')[0];
+      
+      // Process with small delay to show typing indicator
+      setTimeout(async () => {
+        try {
+          // await the response from generateResponse since it's async
+          const responseHtml = await generateResponse(message, events);
+          
+          const botMessage: ChatMessage = {
+            id: `bot-${Date.now()}`,
+            isUser: false,
+            text: 'Hier sind die Events, die ich gefunden habe.',
+            html: responseHtml
+          };
+          
+          setMessages(prev => [...prev, botMessage]);
+        } catch (error) {
+          console.error('Error generating response:', error);
+          
+          const errorMessage: ChatMessage = {
+            id: `error-${Date.now()}`,
+            isUser: false,
+            text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
+            html: `${createResponseHeader("Fehler")}
+            <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
+              Es ist ein Fehler aufgetreten. Bitte versuche es später noch einmal.
+            </div>`
+          };
+          
+          setMessages(prev => [...prev, errorMessage]);
+        } finally {
+          setIsTyping(false);
+        }
+      }, 800);
+    } catch (error) {
+      console.error('Error in handleSendMessage:', error);
+      setIsTyping(false);
+      
+      toast({
+        title: "Fehler",
+        description: "Es ist ein Fehler aufgetreten. Bitte versuche es später noch einmal.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleExamplePromptClick = (prompt: string) => {
     setInput(prompt);
-    // Optional: auto-send after a short delay
+    // Auto-send after a short delay
     setTimeout(() => {
       handleSendMessage(prompt);
     }, 300);
@@ -226,8 +240,8 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
               </div>
             )}
             
-            {/* Only show example prompts when there are messages but don't add the welcome message box again */}
-            {messages.length > 0 && !messages.some(msg => msg.id !== 'welcome') && (
+            {/* Only show example prompts when there are messages but they only contain the welcome message */}
+            {messages.length > 0 && messages.length === 1 && messages[0].id === 'welcome' && (
               <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30 mt-4">
                 <p className="text-sm text-red-200 mb-2">
                   Frag mich zum Beispiel:
@@ -331,8 +345,8 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
                 </div>
               )}
               
-              {/* Only show example prompts when there are messages but don't add the welcome message box again */}
-              {messages.length > 0 && !messages.some(msg => msg.id !== 'welcome') && (
+              {/* Show example prompts when only the welcome message is shown */}
+              {messages.length > 0 && messages.length === 1 && messages[0].id === 'welcome' && (
                 <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30 mt-4">
                   <p className="text-sm text-red-200 mb-2">
                     Frag mich zum Beispiel:

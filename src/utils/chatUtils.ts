@@ -45,68 +45,88 @@ export const formatEvents = (events: any[]) => {
     return '<div class="bg-gray-900/20 border border-gray-700/30 rounded-lg p-2 text-sm">Keine Events gefunden.</div>';
   }
 
-  let eventsHtml = '<div class="space-y-2">';
+  // Group events by date
+  const eventsByDate: Record<string, any[]> = {};
   events.forEach(event => {
-    // Process description to make links clickable
-    const processedDescription = event.description ? makeLinksClickable(event.description) : '';
-    
-    // Format title as clickable if there's a link
-    const titleHtml = event.link 
-      ? `<a href="${event.link}" target="_blank" rel="noopener noreferrer">${event.title}</a>
-          <svg class="w-2 h-2 inline-flex flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M7 17L17 7M17 7H8M17 7V16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>` 
-      : event.title;
+    const date = event.date;
+    if (!eventsByDate[date]) {
+      eventsByDate[date] = [];
+    }
+    eventsByDate[date].push(event);
+  });
 
-    eventsHtml += `
-      <div class="dark-glass-card rounded-lg p-1.5 mb-0.5 w-full">
-        <div class="flex justify-between items-start gap-1">
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-1 flex-wrap">
-              <h4 class="font-medium text-sm text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1">
-                ${titleHtml}
-              </h4>
+  let eventsHtml = '<div class="space-y-2">';
+  
+  // Sort dates in ascending order
+  const sortedDates = Object.keys(eventsByDate).sort();
+  
+  sortedDates.forEach(date => {
+    // Add date header
+    eventsHtml += `<div class="text-xs text-red-500 font-medium mt-2 mb-1">${date}</div>`;
+    
+    // Add events for this date
+    eventsByDate[date].forEach(event => {
+      // Process description to make links clickable
+      const processedDescription = event.description ? makeLinksClickable(event.description) : '';
+      
+      // Format title as clickable if there's a link
+      const titleHtml = event.link 
+        ? `<a href="${event.link}" target="_blank" rel="noopener noreferrer">${event.title}</a>
+            <svg class="w-2 h-2 inline-flex flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M7 17L17 7M17 7H8M17 7V16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>` 
+        : event.title;
+
+      eventsHtml += `
+        <div class="dark-glass-card rounded-lg p-1.5 mb-0.5 w-full">
+          <div class="flex justify-between items-start gap-1">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1 flex-wrap">
+                <h4 class="font-medium text-sm text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1">
+                  ${titleHtml}
+                </h4>
+              </div>
+              
+              <div class="flex flex-wrap items-center gap-1 mt-0.5 text-xs text-white">
+                <div class="flex items-center">
+                  <svg class="w-3 h-3 mr-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                    <polyline points="12 6 12 12 16 14" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span>${event.time} Uhr</span>
+                </div>
+                <div class="flex items-center max-w-[120px] overflow-hidden">
+                  <svg class="w-3 h-3 mr-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke-width="2"/>
+                    <circle cx="12" cy="10" r="3" stroke-width="2"/>
+                  </svg>
+                  <span class="truncate">${event.location || 'Unbekannt'}</span>
+                </div>
+              </div>
             </div>
             
-            <div class="flex flex-wrap items-center gap-1 mt-0.5 text-xs text-white">
-              <div class="flex items-center">
-                <svg class="w-3 h-3 mr-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle cx="12" cy="12" r="10" stroke-width="2"/>
-                  <polyline points="12 6 12 12 16 14" stroke-width="2" stroke-linecap="round"/>
+            <div class="flex items-center gap-2">
+              <div class="flex-shrink-0 flex items-center gap-0.5 text-xs font-medium whitespace-nowrap px-1 py-0 h-5 bg-black text-red-500 rounded">
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="8" y1="2" x2="8" y2="6" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="3" y1="10" x2="21" y2="10" stroke-width="2"/>
                 </svg>
-                <span>${event.time} Uhr</span>
+                ${event.category}
               </div>
-              <div class="flex items-center max-w-[120px] overflow-hidden">
-                <svg class="w-3 h-3 mr-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke-width="2"/>
-                  <circle cx="12" cy="10" r="3" stroke-width="2"/>
+              
+              <div class="flex items-center gap-0.5">
+                <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke-width="2"/>
                 </svg>
-                <span class="truncate">${event.location || 'Unbekannt'}</span>
               </div>
-            </div>
-          </div>
-          
-          <div class="flex items-center gap-2">
-            <div class="flex-shrink-0 flex items-center gap-0.5 text-xs font-medium whitespace-nowrap px-1 py-0 h-5 bg-black text-red-500 rounded">
-              <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"/>
-                <line x1="16" y1="2" x2="16" y2="6" stroke-width="2" stroke-linecap="round"/>
-                <line x1="8" y1="2" x2="8" y2="6" stroke-width="2" stroke-linecap="round"/>
-                <line x1="3" y1="10" x2="21" y2="10" stroke-width="2"/>
-              </svg>
-              ${event.category}
-            </div>
-            
-            <div class="flex items-center gap-0.5">
-              <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke-width="2"/>
-              </svg>
             </div>
           </div>
         </div>
-      </div>
-      ${processedDescription ? `<div class="pl-2 pb-2 text-xs text-gray-300">${processedDescription}</div>` : ''}
-    `;
+        ${processedDescription ? `<div class="pl-2 pb-2 text-xs text-gray-300">${processedDescription}</div>` : ''}
+      `;
+    });
   });
   
   eventsHtml += '</div>';
@@ -117,63 +137,64 @@ export const generateResponse = async (query: string, events: any[]) => {
   try {
     console.log(`Generating AI response for query: "${query}" with ${events.length} events`);
     
-    // Aktuelle Datum für Debugging und Kontext für AI
+    // Current date for debugging and AI context
     const currentDate = new Date();
     const formattedDate = format(currentDate, 'yyyy-MM-dd');
     console.log(`Current date being sent to AI: ${formattedDate}`);
     
-    // Berechne Daten für nächste Woche
-    const nextWeekStart = new Date(currentDate);
-    // Setze auf nächsten Montag
-    const dayOfWeek = currentDate.getDay(); // 0 = Sonntag, 1 = Montag, ..., 6 = Samstag
-    const daysToAdd = dayOfWeek === 0 ? 1 : (8 - dayOfWeek); // Wenn heute Sonntag ist, +1 für Montag, sonst (8 - aktueller Tag)
-    nextWeekStart.setDate(currentDate.getDate() + daysToAdd);
-    const nextWeekEnd = new Date(nextWeekStart);
-    nextWeekEnd.setDate(nextWeekStart.getDate() + 6); // Montag bis Sonntag = 7 Tage
-    
-    const nextWeekStartStr = format(nextWeekStart, 'yyyy-MM-dd');
-    const nextWeekEndStr = format(nextWeekEnd, 'yyyy-MM-dd');
-    console.log(`Next week range: ${nextWeekStartStr} (Montag) bis ${nextWeekEndStr} (Sonntag)`);
-    
-    // Berechne Datum für morgen
+    // Calculate tomorrow's date
     const tomorrow = new Date(currentDate);
     tomorrow.setDate(currentDate.getDate() + 1);
     const tomorrowStr = format(tomorrow, 'yyyy-MM-dd');
-    console.log(`Tomorrow date: ${tomorrowStr}`);
+    console.log(`Tomorrow's date: ${tomorrowStr}`);
     
-    // Log a sample of events being sent to check if GitHub events are included
-    const sampleEvents = events.slice(0, 2);
-    const githubEventsCount = events.filter(e => e.id.startsWith('github-')).length;
-    console.log(`Sample of events being sent to AI: ${JSON.stringify(sampleEvents)}`);
-    console.log(`Total events: ${events.length}, GitHub events: ${githubEventsCount}`);
+    // Calculate day after tomorrow's date
+    const dayAfterTomorrow = new Date(currentDate);
+    dayAfterTomorrow.setDate(currentDate.getDate() + 2);
+    const dayAfterTomorrowStr = format(dayAfterTomorrow, 'yyyy-MM-dd');
+    console.log(`Day after tomorrow's date: ${dayAfterTomorrowStr}`);
     
-    // Heute-Events für Debugging
+    // Calculate next week's date range
+    const currentDay = currentDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const daysToAdd = currentDay === 0 ? 1 : (8 - currentDay); // If today is Sunday, add 1 for Monday, otherwise calculate days until next Monday
+    
+    const nextWeekStart = new Date(currentDate);
+    nextWeekStart.setDate(currentDate.getDate() + daysToAdd);
+    const nextWeekEnd = new Date(nextWeekStart);
+    nextWeekEnd.setDate(nextWeekStart.getDate() + 6); // Monday to Sunday = 7 days
+    
+    const nextWeekStartStr = format(nextWeekStart, 'yyyy-MM-dd');
+    const nextWeekEndStr = format(nextWeekEnd, 'yyyy-MM-dd');
+    console.log(`Next week range: ${nextWeekStartStr} (Monday) to ${nextWeekEndStr} (Sunday)`);
+    
+    // Log statistics about events for each time period
     const todayEvents = events.filter(e => e.date === formattedDate);
     console.log(`Events specifically for today (${formattedDate}): ${todayEvents.length}`);
     if (todayEvents.length > 0) {
       console.log('First few today events:', todayEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
     }
     
-    // Morgen-Events für Debugging
     const tomorrowEvents = events.filter(e => e.date === tomorrowStr);
     console.log(`Events specifically for tomorrow (${tomorrowStr}): ${tomorrowEvents.length}`);
     if (tomorrowEvents.length > 0) {
       console.log('First few tomorrow events:', tomorrowEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
     }
     
-    // Events für nächste Woche für Debugging
-    const nextWeekEvents = events.filter(e => {
-      const eventDate = e.date;
-      return eventDate >= nextWeekStartStr && eventDate <= nextWeekEndStr;
-    });
+    const dayAfterTomorrowEvents = events.filter(e => e.date === dayAfterTomorrowStr);
+    console.log(`Events specifically for day after tomorrow (${dayAfterTomorrowStr}): ${dayAfterTomorrowEvents.length}`);
+    if (dayAfterTomorrowEvents.length > 0) {
+      console.log('First few day after tomorrow events:', dayAfterTomorrowEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
+    }
+    
+    const nextWeekEvents = events.filter(e => e.date >= nextWeekStartStr && e.date <= nextWeekEndStr);
     console.log(`Events for next week (${nextWeekStartStr} to ${nextWeekEndStr}): ${nextWeekEvents.length}`);
     if (nextWeekEvents.length > 0) {
       console.log('First few next week events:', nextWeekEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
     }
     
-    // Timeout für die Anfrage setzen
+    // Set timeout for the request
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 Sekunden Timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds timeout
     
     const response = await fetch('https://ykleosfvtqcmqxqihnod.supabase.co/functions/v1/ai-event-chat', {
       method: 'POST',
@@ -185,11 +206,9 @@ export const generateResponse = async (query: string, events: any[]) => {
         query,
         timeOfDay: getTimeOfDay(),
         currentDate: formattedDate,
-        nextWeekStart: nextWeekStartStr,
-        nextWeekEnd: nextWeekEndStr,
         weather: await fetchWeather(),
         allEvents: events,
-        formatInstructions: "Stelle mehrere Events im kompakten EventCard Design dar (wie in der Event Panel Liste), mache Titel klickbar wenn Link vorhanden ist. Zeige maximal 10 Events an, gruppiere sie nach Datum und zeige KEINE Quellenangaben in deinen Antworten."
+        formatInstructions: "Stelle MEHRERE Events im kompakten EventCard Design dar. Zeige MINDESTENS 5-10 Events an, gruppiere nach Datum. Mache Titel klickbar wenn Link vorhanden ist."
       }),
       signal: controller.signal
     });
@@ -197,19 +216,19 @@ export const generateResponse = async (query: string, events: any[]) => {
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      throw new Error('Failed to get AI response');
+      throw new Error(`Error with AI response: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
     // Process the AI response to make links clickable
     const processedResponse = makeLinksClickable(data.response);
     
-    // We return the processed response with links made clickable
+    // Return the processed response with links made clickable
     return createResponseHeader("KI-Antwort") + processedResponse;
   } catch (error) {
     console.error('Error generating AI response:', error);
     
-    // Bei Timeout oder anderen Fehlern, einfache Event-Liste als Fallback anzeigen
+    // Show the events list as a fallback in case of timeout or other errors
     return createResponseHeader("Fehler") + `
       <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm mb-3">
         Entschuldigung, ich konnte keine KI-Antwort generieren. Hier sind die verfügbaren Events:
