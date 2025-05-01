@@ -105,15 +105,67 @@ serve(async (req) => {
     10. Mache den Titel eines Events immer klickbar, wenn ein Link vorhanden ist
     11. Erwähne KEINE "Quelle: Externe Veranstaltung" oder "Quelle: Community Event" Angaben in deinen Antworten
     
-    Format deine Antworten klar und übersichtlich in HTML mit diesen Klassen:
-    - Verwende bg-gray-900/20 border border-gray-700/30 für normale Event-Container
-    - Verwende bg-blue-900/20 border border-blue-700/30 für externe Event-Container
-    - Nutze text-red-500 für Überschriften
-    - Nutze text-sm für normalen Text
-    - Nutze rounded-lg p-3 mb-3 für Container-Padding
-    - Wenn ein Event einen Link hat, formatiere den Titel als klickbaren Link mit: <a href="LINK_URL" target="_blank" rel="noopener noreferrer" class="text-red-500 hover:underline">TITEL</a>
-    - Füge URLs im Text als klickbare Links ein mit: <a href="URL" target="_blank" rel="noopener noreferrer" class="text-red-500 hover:underline">URL</a>
-    - Achte darauf, dass die HTML-Tags korrekt geschlossen werden und keine Formatierungsfehler auftreten
+    Formatiere deine Antworten kompakt im Stil der Event-Liste, indem du für jedes Event folgendes HTML-Format verwendest:
+    
+    <div class="dark-glass-card rounded-lg p-1.5 mb-0.5 w-full">
+      <div class="flex justify-between items-start gap-1">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-1 flex-wrap">
+            [FALLS LINK VORHANDEN] <h4 class="font-medium text-sm text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1">
+              <a href="EVENT_LINK" target="_blank" rel="noopener noreferrer">EVENT_TITEL</a>
+              <svg class="w-2 h-2 inline-flex flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M7 17L17 7M17 7H8M17 7V16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </h4>
+            [SONST] <h4 class="font-medium text-sm text-white break-words line-clamp-1 text-left">EVENT_TITEL</h4>
+          </div>
+          
+          <div class="flex flex-wrap items-center gap-1 mt-0.5 text-xs text-white">
+            <div class="flex items-center">
+              <svg class="w-3 h-3 mr-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                <polyline points="12 6 12 12 16 14" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span>EVENT_ZEIT</span>
+            </div>
+            <div class="flex items-center max-w-[120px] overflow-hidden">
+              <svg class="w-3 h-3 mr-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke-width="2"/>
+                <circle cx="12" cy="10" r="3" stroke-width="2"/>
+              </svg>
+              <span class="truncate">EVENT_ORT</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <div class="flex-shrink-0 flex items-center gap-0.5 text-xs font-medium whitespace-nowrap px-1 py-0 h-5 bg-black text-red-500 rounded">
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"/>
+              <line x1="16" y1="2" x2="16" y2="6" stroke-width="2" stroke-linecap="round"/>
+              <line x1="8" y1="2" x2="8" y2="6" stroke-width="2" stroke-linecap="round"/>
+              <line x1="3" y1="10" x2="21" y2="10" stroke-width="2"/>
+            </svg>
+            EVENT_KATEGORIE
+          </div>
+          
+          <div class="flex items-center gap-0.5">
+            <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke-width="2"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    Füge für Veranstaltungsbeschreibungen diesen Code nach dem Event-Card hinzu:
+    <div class="pl-2 pb-2 text-xs text-gray-300">EVENT_BESCHREIBUNG</div>
+    
+    Stelle sicher, dass:
+    1. Die Event-Karten kompakt und übersichtlich sind
+    2. Alle Links im Text korrekt verlinkt sind
+    3. Die Formatierung dem Event Panel Design im Chat entspricht
+    4. Erwähne KEINE Quellenangaben in deinen Antworten
     ${additionalInstructions}
     `;
 
