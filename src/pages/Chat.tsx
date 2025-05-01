@@ -1,10 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
-import ChatGroup from '@/components/chat/ChatGroup';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MessageCircle, Users, List, Calendar } from 'lucide-react';
+import { PlusCircle, MessageCircle, MessageSquare, List, Calendar, Link } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,7 +21,6 @@ import EventForm from '@/components/EventForm';
 
 const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
-  const [activeCommunityGroup, setActiveCommunityGroup] = useState<string>('ausgehen');
   const [isAddEventSheetOpen, setIsAddEventSheetOpen] = useState(false);
   const [isEventListSheetOpen, setIsEventListSheetOpen] = useState(false);
   
@@ -36,6 +33,9 @@ const ChatPage = () => {
   const [username, setUsername] = useState<string>(() => 
     typeof window !== 'undefined' ? localStorage.getItem(USERNAME_KEY) || 'Gast' : 'Gast'
   );
+
+  // WhatsApp community link - Replace with your actual WhatsApp community link
+  const whatsAppLink = "https://chat.whatsapp.com/your-community-link";
 
   // Enable realtime messaging when component mounts
   useEffect(() => {
@@ -132,7 +132,7 @@ const ChatPage = () => {
                   className="flex-1 data-[state=active]:bg-black/50 data-[state=active]:text-[#9b87f5]"
                 >
                   <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
+                    <MessageSquare className="h-4 w-4" />
                     <span>Community</span>
                   </div>
                 </TabsTrigger>
@@ -146,43 +146,21 @@ const ChatPage = () => {
             </TabsContent>
             
             <TabsContent value="community" className="flex-grow overflow-hidden flex flex-col mt-0 pt-0">
-              <div className="border-b border-gray-800 bg-gray-900/20">
-                <div className="flex overflow-x-auto py-2 px-4">
-                  {['ausgehen', 'sport', 'kreativität'].map((group) => (
-                    <Button
-                      key={group}
-                      variant={activeCommunityGroup === group ? "secondary" : "ghost"}
-                      size="sm"
-                      onClick={() => setActiveCommunityGroup(group)}
-                      className={`mx-1 ${activeCommunityGroup === group ? 'bg-[#9b87f5] text-white' : ''}`}
-                    >
-                      {group === 'ausgehen' ? 'Ausgehen' : 
-                       group === 'sport' ? 'Sport' : 
-                       group === 'kreativität' ? 'Kreativität' : 
-                       group}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex-grow overflow-hidden">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeCommunityGroup}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="h-full"
+              <div className="flex-grow flex flex-col items-center justify-center p-6 text-center">
+                <div className="w-full max-w-md bg-gray-900/30 border border-gray-800 rounded-lg p-8">
+                  <MessageSquare className="h-12 w-12 text-[#9b87f5] mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-white mb-2">Verbinde dich mit unserer WhatsApp Community</h3>
+                  <p className="text-gray-400 mb-6">
+                    Tausche dich mit anderen Nutzern aus, teile Events und bleibe immer auf dem Laufenden.
+                  </p>
+                  <Button 
+                    className="w-full bg-green-600 hover:bg-green-700 gap-2"
+                    onClick={() => window.open(whatsAppLink, '_blank')}
                   >
-                    <ChatGroup 
-                      groupId={activeCommunityGroup} 
-                      groupName={activeCommunityGroup === 'ausgehen' ? 'Ausgehen' : 
-                                 activeCommunityGroup === 'sport' ? 'Sport' : 
-                                 activeCommunityGroup === 'kreativität' ? 'Kreativität' : 
-                                 'Ausgehen'}
-                    />
-                  </motion.div>
-                </AnimatePresence>
+                    <Link className="h-4 w-4" />
+                    WhatsApp Community beitreten
+                  </Button>
+                </div>
               </div>
             </TabsContent>
           </Tabs>
