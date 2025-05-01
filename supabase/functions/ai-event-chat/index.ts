@@ -98,17 +98,20 @@ serve(async (req) => {
     3. Die Woche beginnt immer am Montag und endet am Sonntag
     4. Die aktuelle Tageszeit und das Wetter
     5. Die spezifischen Interessen in der Anfrage
-    6. Gib relevante Events mit allen Details an, zeige MEHRERE passende Events
+    6. Gib relevante Events mit allen Details an, zeige IMMER MEHRERE passende Events (mindestens 3-5 Events wenn verfügbar)
     7. Wenn keine passenden Events gefunden wurden, mache alternative Vorschläge
     8. Berücksichtige ALLE Events, auch die aus externen Quellen (mit 'Quelle: Externe Veranstaltung' gekennzeichnet)
     9. Verwende das Datum-Format YYYY-MM-DD für Vergleiche
     10. Mache den Titel eines Events immer klickbar, wenn ein Link vorhanden ist
     11. Erwähne KEINE "Quelle: Externe Veranstaltung" oder "Quelle: Community Event" Angaben in deinen Antworten
-    12. WICHTIG: Zeige MEHRERE Events an, nicht nur eines
+    12. WICHTIG: Zeige MEHRERE Events an, nicht nur eines, mindestens 5-8 Events wenn möglich
     13. Gruppiere Events nach Datum wenn möglich
     14. Formatiere deine Antworten wie die Event-Liste mit den gleichen visuellen Elementen
+    15. KEINE Textformatierung zwischen den Event-Karten (keine Datumsüberschriften als Markdown-Text)
+    16. WICHTIG: Benutze NUR die HTML-Vorlage unten für die Darstellung von Events - KEINE eigenen Formatierungen!
+    17. KEINE Markdown-Überschriften, Fettdruck oder andere Textformatierungen - NUR die HTML-Vorlage verwenden!
     
-    Formatiere deine Antworten kompakt im Stil der Event-Liste, indem du für jedes Event folgendes HTML-Format verwendest:
+    Stelle jedes Event AUSSCHLIESSLICH im folgenden HTML-Format dar und KEINE Textblöcke dazwischen:
     
     <div class="dark-glass-card rounded-lg p-1.5 mb-0.5 w-full">
       <div class="flex justify-between items-start gap-1">
@@ -129,7 +132,7 @@ serve(async (req) => {
                 <circle cx="12" cy="12" r="10" stroke-width="2"/>
                 <polyline points="12 6 12 12 16 14" stroke-width="2" stroke-linecap="round"/>
               </svg>
-              <span>EVENT_ZEIT</span>
+              <span>EVENT_ZEIT Uhr</span>
             </div>
             <div class="flex items-center max-w-[120px] overflow-hidden">
               <svg class="w-3 h-3 mr-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -161,15 +164,21 @@ serve(async (req) => {
       </div>
     </div>
     
-    Füge für Veranstaltungsbeschreibungen diesen Code nach dem Event-Card hinzu:
+    Für Veranstaltungsbeschreibungen verwende diesen Code DIREKT nach dem Event-Card (OHNE Leerzeilen dazwischen):
     <div class="pl-2 pb-2 text-xs text-gray-300">EVENT_BESCHREIBUNG</div>
+    
+    Du kannst für die Gruppierung nach Datum dieses HTML verwenden (aber KEINE Markdown-Formatierung):
+    <div class="text-xs text-red-500 font-medium mt-2 mb-1">DATUM</div>
     
     Stelle sicher, dass:
     1. Die Event-Karten kompakt und übersichtlich sind
     2. Alle Links im Text korrekt verlinkt sind
     3. Die Formatierung dem Event Panel Design im Chat entspricht
-    4. Zeige IMMER MEHRERE Events, nicht nur ein einzelnes Event
-    5. Erwähne KEINE Quellenangaben in deinen Antworten
+    4. Zeige IMMER MEHRERE Events, mindestens 5-8 wenn verfügbar, nicht nur ein einzelnes Event
+    5. Verwende KEINE zusätzlichen Textformatierungen um die HTML-Elemente herum
+    6. Gruppiere Events nach Datum mit dem vorgegebenen HTML-Code
+    7. KEINE eigene Textformatierung verwenden, NUR die vorgegebenen HTML-Elemente
+    8. Erwähne KEINE Quellenangaben in deinen Antworten
     ${additionalInstructions}
     `;
 
@@ -189,7 +198,7 @@ serve(async (req) => {
           { role: 'system', content: systemMessage },
           { role: 'user', content: query }
         ],
-        temperature: 0.7,
+        temperature: 0.5,
         max_tokens: 1024
       })
     });
