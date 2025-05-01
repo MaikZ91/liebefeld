@@ -34,6 +34,8 @@ const makeLinksClickable = (text: string): string => {
   
   // Replace URLs with anchor tags
   return text.replace(urlRegex, (url) => {
+    // Ensure URL doesn't already have HTML tags
+    if (url.includes('<a href=')) return url;
     return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-red-500 hover:underline">${url}</a>`;
   });
 };

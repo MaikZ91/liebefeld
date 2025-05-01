@@ -111,8 +111,9 @@ serve(async (req) => {
     - Nutze text-red-500 für Überschriften
     - Nutze text-sm für normalen Text
     - Nutze rounded-lg p-3 mb-3 für Container-Padding
-    - Wenn ein Event einen Link hat, formatiere den Titel als <a href="LINK" target="_blank" rel="noopener noreferrer" class="text-red-500 hover:underline">TITEL</a>
-    - Füge sonstige URLs im Text als <a href="URL" target="_blank" rel="noopener noreferrer" class="text-red-500 hover:underline">URL</a> ein
+    - Wenn ein Event einen Link hat, formatiere den Titel als klickbaren Link mit: <a href="LINK_URL" target="_blank" rel="noopener noreferrer" class="text-red-500 hover:underline">TITEL</a>
+    - Füge URLs im Text als klickbare Links ein mit: <a href="URL" target="_blank" rel="noopener noreferrer" class="text-red-500 hover:underline">URL</a>
+    - Achte darauf, dass die HTML-Tags korrekt geschlossen werden und keine Formatierungsfehler auftreten
     ${additionalInstructions}
     `;
 
