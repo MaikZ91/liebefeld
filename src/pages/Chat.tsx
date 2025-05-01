@@ -34,8 +34,8 @@ const ChatPage = () => {
     typeof window !== 'undefined' ? localStorage.getItem(USERNAME_KEY) || 'Gast' : 'Gast'
   );
 
-  // WhatsApp community link - Replace with your actual WhatsApp community link
-  const whatsAppLink = "https://chat.whatsapp.com/your-community-link";
+  // WhatsApp community link - Updated with the actual WhatsApp community link
+  const whatsAppLink = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
 
   // Enable realtime messaging when component mounts
   useEffect(() => {
