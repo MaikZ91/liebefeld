@@ -9,7 +9,7 @@ export const getWelcomeMessage = () => {
       Ich bin dein persönlicher Assistent für alle Liebefeld Events.
       <br /><br />
       Frag mich zum Beispiel:
-      <ul>
+      <ul class="list-disc pl-4 mt-1 space-y-1">
         <li>"Welche Events gibt es heute?"</li>
         <li>"Was kann ich am Wochenende machen?"</li>
         <li>"Gibt es Konzerte im Lokschuppen?"</li>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEventContext } from '@/contexts/EventContext';
@@ -38,6 +37,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const welcomeMessageShownRef = useRef(false);
 
   // Example prompts that users can click on
   const examplePrompts = [
@@ -57,7 +57,8 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
 
   useEffect(() => {
     // Add welcome message when chat is opened for the first time
-    if (isChatOpen && messages.length === 0) {
+    if (isChatOpen && messages.length === 0 && !welcomeMessageShownRef.current) {
+      welcomeMessageShownRef.current = true;
       setMessages([
         {
           id: 'welcome',
