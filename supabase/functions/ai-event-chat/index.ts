@@ -21,7 +21,7 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
     const { query, timeOfDay, weather, allEvents, currentDate, nextWeekStart, nextWeekEnd } = await req.json();
     
-    // Log date info
+    // Log date info for debugging
     const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
     console.log(`Server current date: ${today}`);
     console.log(`Received currentDate from client: ${currentDate}`);
@@ -68,6 +68,7 @@ serve(async (req) => {
       ${event.id.startsWith('github-') ? 'Quelle: Externe Veranstaltung' : 'Quelle: Community Event'}
     `).join('\n\n');
 
+    // Improve system prompt to better handle German queries
     const systemMessage = `Du bist ein hilfreicher Event-Assistent für Liebefeld. 
     Aktueller Tag: ${today} (Format: YYYY-MM-DD)
     Aktuelle Tageszeit: ${timeOfDay}
@@ -78,7 +79,7 @@ serve(async (req) => {
     
     Beantworte Fragen zu den Events präzise und freundlich auf Deutsch. 
     Berücksichtige dabei:
-    1. Wenn der Nutzer nach "heute" fragt, beziehe dich auf Events mit Datum ${today}
+    1. Wenn der Nutzer nach "heute" oder "jetzt" fragt, beziehe dich NUR auf Events mit Datum ${today}
     2. Wenn der Nutzer nach "nächster Woche" fragt, beziehe dich auf Events vom ${nextWeekStart} (Montag) bis ${nextWeekEnd} (Sonntag)
     3. Die Woche beginnt immer am Montag und endet am Sonntag
     4. Die aktuelle Tageszeit und das Wetter
