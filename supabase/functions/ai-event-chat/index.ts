@@ -321,10 +321,31 @@ serve(async (req) => {
     }
 
     // Nun ist es sicher, auf message.content zuzugreifen
-    const aiContent: string = choice.message?.content ?? 
+    let aiContent: string = choice.message?.content ?? 
       (choice.message?.function_call ? JSON.stringify(choice.message.function_call) : "Keine Antwort erhalten");
-
-    // Füge einen Hinweis zum verwendeten Modell und zur Anzahl der gefilterten Events hinzu
+    
+    // Hier den Text transformieren: Umwandeln von Markdown-Listen in HTML-Listen
+    // Ersetze Listen-Formatierungen wie "* Item" oder "- Item" in HTML <ul><li> Format
+    aiContent = aiContent.replace(/\n[\*\-]\s+(.*?)(?=\n[\*\-]|\n\n|$)/g, (match, item) => {
+      return `\n<li>${item}</li>`;
+    });
+    
+    // Füge <ul> Tags um die Liste
+    if (aiContent.includes('<li>')) {
+      aiContent = aiContent.replace(/<li>/, '<ul class="list-disc pl-5 space-y-1"><li>');
+      aiContent = aiContent.replace(/([^>])$/, '$1</ul>');
+      
+      // Stelle sicher, dass die Liste korrekt schließt
+      if (!aiContent.endsWith('</ul>')) {
+        aiContent += '</ul>';
+      }
+    }
+    
+    // Generell Markdown-Bold in HTML-Bold umwandeln
+    aiContent = aiContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    aiContent = aiContent.replace(/__(.*?)__/g, '<strong>$1</strong>');
+    
+    // Füge eine Hinweis zum verwendeten Modell und zur Anzahl der gefilterten Events hinzu
     const modelInfo = parsed?.model ? `<p class="text-xs text-gray-400 mt-2">Powered by ${parsed.model} • ${filteredEvents.length} relevante Events aus ${dbEvents.length} analysiert</p>` : '';
     const finalHtml = `${aiContent}${modelInfo}${debugHtml}`;
 
