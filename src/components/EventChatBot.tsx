@@ -15,6 +15,7 @@ import {
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
+import { format } from 'date-fns';
 
 interface ChatMessage {
   id: string;
@@ -140,6 +141,12 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
     }, 800);
   };
 
+  const handleDateSelect = (date: string) => {
+    const formattedDate = date; // date is already formatted as YYYY-MM-DD
+    const prompt = `Welche Events gibt es am ${formattedDate}?`;
+    handleSendMessage(prompt);
+  };
+
   const handleExamplePromptClick = (prompt: string) => {
     setInput(prompt);
     // Optional: auto-send after a short delay
@@ -183,6 +190,34 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
 
   if (!isVisible) return null;
 
+  // Render the message list
+  const renderMessages = () => {
+    return messages.map((message) => (
+      <div
+        key={message.id}
+        className={cn(
+          "max-w-[85%] rounded-lg",
+          message.isUser
+            ? "bg-red-500/10 dark:bg-red-950/30 border border-red-500/20 ml-auto"
+            : "bg-zinc-900/50 dark:bg-zinc-800/50 border border-zinc-700/30"
+        )}
+      >
+        {message.html ? (
+          <div 
+            dangerouslySetInnerHTML={{ __html: message.html }} 
+            className="p-3"
+          />
+        ) : (
+          <ChatMessage 
+            message={message.text} 
+            isGroup={false} 
+            onDateSelect={handleDateSelect}
+          />
+        )}
+      </div>
+    ));
+  };
+
   // If we're in fullPage mode, render a different UI
   if (fullPage) {
     return (
@@ -196,26 +231,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
         
         <ScrollArea className="flex-1 p-3 overflow-y-auto max-h-[calc(100vh-240px)]">
           <div className="space-y-3 pb-2">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={cn(
-                  "max-w-[85%] rounded-lg",
-                  message.isUser
-                    ? "bg-red-500/10 dark:bg-red-950/30 border border-red-500/20 ml-auto"
-                    : "bg-zinc-900/50 dark:bg-zinc-800/50 border border-zinc-700/30"
-                )}
-              >
-                {message.html ? (
-                  <div 
-                    dangerouslySetInnerHTML={{ __html: message.html }} 
-                    className="p-3"
-                  />
-                ) : (
-                  <p className="p-3 text-red-200">{message.text}</p>
-                )}
-              </div>
-            ))}
+            {renderMessages()}
             
             {isTyping && (
               <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30">
@@ -301,26 +317,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
           
           <ScrollArea className="flex-1 p-3 overflow-y-auto max-h-[350px]">
             <div className="space-y-3 pb-2">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={cn(
-                    "max-w-[85%] rounded-lg",
-                    message.isUser
-                      ? "bg-red-500/10 dark:bg-red-950/30 border border-red-500/20 ml-auto"
-                      : "bg-zinc-900/50 dark:bg-zinc-800/50 border border-zinc-700/30"
-                  )}
-                >
-                  {message.html ? (
-                    <div 
-                      dangerouslySetInnerHTML={{ __html: message.html }} 
-                      className="p-3"
-                    />
-                  ) : (
-                    <p className="p-3 text-red-200">{message.text}</p>
-                  )}
-                </div>
-              ))}
+              {renderMessages()}
               
               {isTyping && (
                 <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30">
