@@ -1,3 +1,4 @@
+
 export interface ChatMessage {
   id: string;
   group_id: string;
@@ -68,7 +69,7 @@ export interface UserProfile {
   last_online: string;
 }
 
-// Private Nachrichtentyp
+// Private Nachrichtentyp - updated to match database schema
 export interface PrivateMessage {
   id: string;
   sender: string;

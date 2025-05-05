@@ -65,9 +65,11 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
       const userProfiles: UserProfile[] = Array.from(uniqueUsers).map(([username, avatar]) => ({
         id: username, // Using username as ID for simplicity
         username,
-        avatar,
-        isOnline: true, // Assuming all users who have sent messages are "online"
-        lastSeen: new Date().toISOString()
+        avatar: avatar || null,
+        interests: ['Sport', 'Events', 'Kreativität'], // Default interests
+        hobbies: ['Tanzen', 'Musik', 'Kochen'], // Default hobbies
+        created_at: new Date().toISOString(),
+        last_online: new Date().toISOString()
       }));
 
       setUsers(userProfiles);
@@ -117,7 +119,7 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
                   >
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10 border border-gray-800">
-                        <AvatarImage src={user.avatar} alt={user.username} />
+                        <AvatarImage src={user.avatar || ''} alt={user.username} />
                         <AvatarFallback className="bg-red-500">{getInitials(user.username)}</AvatarFallback>
                       </Avatar>
                       <div>

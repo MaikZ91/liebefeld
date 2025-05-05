@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { getInitials } from '@/utils/chatUIUtils';
-import { UserProfile } from '@/types/chatTypes';
+import { UserProfile, PrivateMessage } from '@/types/chatTypes';
 import { Send, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -15,15 +15,6 @@ interface PrivateChatProps {
   onOpenChange: (open: boolean) => void;
   currentUser?: string;
   otherUser: UserProfile | null;
-}
-
-interface PrivateMessage {
-  id: string;
-  sender: string;
-  recipient: string;
-  content: string;
-  created_at: string;
-  read: boolean;
 }
 
 const PrivateChat: React.FC<PrivateChatProps> = ({
@@ -61,14 +52,14 @@ const PrivateChat: React.FC<PrivateChatProps> = ({
         const unreadMessages = data?.filter(msg => 
           msg.recipient === currentUser && 
           msg.sender === otherUser.username && 
-          !msg.read
+          !msg.read_at
         ) || [];
         
         if (unreadMessages.length > 0) {
           for (const msg of unreadMessages) {
             await supabase
               .from('private_messages')
-              .update({ read: true })
+              .update({ read_at: new Date().toISOString() })
               .eq('id', msg.id);
           }
         }
@@ -119,7 +110,7 @@ const PrivateChat: React.FC<PrivateChatProps> = ({
             // Mark as read
             supabase
               .from('private_messages')
-              .update({ read: true })
+              .update({ read_at: new Date().toISOString() })
               .eq('id', payload.new.id);
           }
         })
@@ -150,8 +141,7 @@ const PrivateChat: React.FC<PrivateChatProps> = ({
         .insert({
           sender: currentUser,
           recipient: otherUser.username,
-          content: newMessage.trim(),
-          read: false
+          content: newMessage.trim()
         });
 
       if (error) throw error;
@@ -192,7 +182,7 @@ const PrivateChat: React.FC<PrivateChatProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={otherUser.avatar} alt={otherUser.username} />
+                    <AvatarImage src={otherUser.avatar || ''} alt={otherUser.username} />
                     <AvatarFallback className="bg-red-500">{getInitials(otherUser.username)}</AvatarFallback>
                   </Avatar>
                   <SheetTitle className="text-white">{otherUser.username}</SheetTitle>
