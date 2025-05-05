@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MessageCircle, MessageSquare, List, Calendar, Link } from 'lucide-react';
+import { PlusCircle, MessageCircle, MessageSquare, List, Calendar, Link, Users } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,11 +25,17 @@ const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
   const [isAddEventSheetOpen, setIsAddEventSheetOpen] = useState(false);
   const [isEventListSheetOpen, setIsEventListSheetOpen] = useState(false);
+  const [isCommunityOpen, setIsCommunityOpen] = useState(false);
   const { events } = useEventContext();
   
   // Function to show add event modal
   const handleAddEvent = () => {
     setIsAddEventSheetOpen(true);
+  };
+
+  // Function to toggle community view
+  const handleToggleCommunity = () => {
+    setActiveView('community');
   };
 
   // Get username from localStorage for chat
@@ -137,7 +144,7 @@ const ChatPage = () => {
             
             <TabsContent value="ai" className="flex-grow overflow-hidden flex flex-col mt-0 pt-0">
               <div className="flex-grow relative">
-                <EventChatBot fullPage={true} onAddEvent={handleAddEvent} />
+                <EventChatBot fullPage={true} onAddEvent={handleAddEvent} onToggleCommunity={handleToggleCommunity} />
               </div>
             </TabsContent>
             

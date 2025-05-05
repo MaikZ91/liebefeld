@@ -3,7 +3,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useEventContext } from '@/contexts/EventContext';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  MessageCircle, X, Send, ChevronDown, Download, Trash2, History, PlusCircle
+  MessageCircle, X, Send, ChevronDown, Download, Trash2, History, PlusCircle, Users
 } from 'lucide-react';
 import { 
   generateResponse, 
@@ -30,14 +30,15 @@ interface ChatMessage {
 
 interface EventChatBotProps {
   fullPage?: boolean;
-  onAddEvent?: () => void; // Add this prop for the add event functionality
+  onAddEvent?: () => void;
+  onToggleCommunity?: () => void; // New prop for toggling to community view
 }
 
 // Local storage keys
 const CHAT_HISTORY_KEY = 'event-chat-history';
 const CHAT_QUERIES_KEY = 'event-chat-queries';
 
-const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEvent }) => {
+const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEvent, onToggleCommunity }) => {
   const isMobile = useIsMobile();
   const { events } = useEventContext();
   const { toast } = useToast();
@@ -557,26 +558,42 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
           
           <div className="flex items-center relative">
             <div className="absolute left-2 flex items-center gap-1 z-10">
+              {/* History button for recent queries */}
               {globalQueries.length > 0 && (
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={toggleRecentQueries}
                   className="h-8 w-8 text-red-400"
+                  title="Community Anfragen"
                 >
                   <History className="h-4 w-4" />
                 </Button>
               )}
               
-              {/* Add Event Button next to History button */}
+              {/* Add Event Button */}
               {onAddEvent && (
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={onAddEvent}
                   className="h-8 w-8 text-red-400"
+                  title="Event hinzufügen"
                 >
                   <PlusCircle className="h-4 w-4" />
+                </Button>
+              )}
+              
+              {/* Community Button */}
+              {onToggleCommunity && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onToggleCommunity}
+                  className="h-8 w-8 text-[#9b87f5]"
+                  title="Community"
+                >
+                  <Users className="h-4 w-4" />
                 </Button>
               )}
             </div>
@@ -588,7 +605,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Frage nach Events..."
-              className={`flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 ${(globalQueries.length > 0 || onAddEvent) ? 'pl-20' : ''}`}
+              className={`flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 ${(globalQueries.length > 0 || onAddEvent || onToggleCommunity) ? 'pl-28' : ''}`}
             />
             <button
               onClick={() => handleSendMessage()}
@@ -693,26 +710,42 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
             
             <div className="flex items-center relative">
               <div className="absolute left-2 flex items-center gap-1 z-10">
+                {/* History button for recent queries */}
                 {globalQueries.length > 0 && (
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={toggleRecentQueries}
                     className="h-6 w-6 text-red-400"
+                    title="Community Anfragen"
                   >
                     <History className="h-3 w-3" />
                   </Button>
                 )}
                 
-                {/* Add Event Button next to History button in popup mode as well */}
+                {/* Add Event Button */}
                 {onAddEvent && (
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={onAddEvent}
                     className="h-6 w-6 text-red-400"
+                    title="Event hinzufügen"
                   >
                     <PlusCircle className="h-3 w-3" />
+                  </Button>
+                )}
+                
+                {/* Community Button */}
+                {onToggleCommunity && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onToggleCommunity}
+                    className="h-6 w-6 text-[#9b87f5]"
+                    title="Community"
+                  >
+                    <Users className="h-3 w-3" />
                   </Button>
                 )}
               </div>
@@ -724,7 +757,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Frage nach Events..."
-                className={`flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 ${(globalQueries.length > 0 || onAddEvent) ? 'pl-16' : ''}`}
+                className={`flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 ${(globalQueries.length > 0 || onAddEvent || onToggleCommunity) ? 'pl-24' : ''}`}
               />
               <button
                 onClick={() => handleSendMessage()}
