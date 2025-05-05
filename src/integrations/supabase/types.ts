@@ -215,6 +215,63 @@ export type Database = {
         }
         Relationships: []
       }
+      private_messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          read_at: string | null
+          recipient: string
+          sender: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          read_at?: string | null
+          recipient: string
+          sender: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          read_at?: string | null
+          recipient?: string
+          sender?: string
+        }
+        Relationships: []
+      }
+      user_profiles: {
+        Row: {
+          avatar: string | null
+          created_at: string | null
+          hobbies: string[] | null
+          id: string
+          interests: string[] | null
+          last_online: string | null
+          username: string
+        }
+        Insert: {
+          avatar?: string | null
+          created_at?: string | null
+          hobbies?: string[] | null
+          id?: string
+          interests?: string[] | null
+          last_online?: string | null
+          username: string
+        }
+        Update: {
+          avatar?: string | null
+          created_at?: string | null
+          hobbies?: string[] | null
+          id?: string
+          interests?: string[] | null
+          last_online?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

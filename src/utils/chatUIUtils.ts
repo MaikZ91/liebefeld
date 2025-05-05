@@ -1,107 +1,24 @@
 
 /**
- * Get initials from a name string
+ * Generiert Initialen aus einem Benutzernamen
  */
 export const getInitials = (name: string): string => {
   if (!name) return '?';
   
-  return name
-    .split(' ')
-    .map((part) => part.charAt(0))
-    .join('')
-    .toUpperCase();
-};
-
-/**
- * Generate a random avatar URL
- */
-export const getRandomAvatar = (): string => {
-  const avatarStyles = ['adventurer', 'adventurer-neutral', 'avataaars', 'big-smile', 'bottts', 'croodles', 'fun-emoji'];
-  const randomStyle = avatarStyles[Math.floor(Math.random() * avatarStyles.length)];
-  const randomSeed = Math.floor(Math.random() * 1000).toString();
+  // Bei mehrteiligen Namen die ersten Buchstaben jedes Worts nehmen
+  const parts = name.split(/\s+/).filter(Boolean);
   
-  return `https://api.dicebear.com/7.x/${randomStyle}/svg?seed=${randomSeed}`;
-};
-
-/**
- * Get activity suggestions based on time of day, interest, and weather
- */
-export const getActivitySuggestions = async (
-  timeOfDay: 'morning' | 'afternoon' | 'evening',
-  interest: string,
-  weather: string
-): Promise<Array<{ activity: string; link?: string | null }>> => {
-  try {
-    // Fetch a limited set (max 4) of suggestions from the suggestion utils
-    const { fetchSuggestions } = await import('@/utils/suggestionUtils');
-    const allSuggestions = await fetchSuggestions(timeOfDay, interest, weather);
-    
-    // Return max 4 suggestions
-    return allSuggestions.slice(0, 4);
-  } catch (error) {
-    console.error('Error getting activity suggestions:', error);
-    return [];
-  }
-};
-
-/**
- * Get all suggestions for a category
- */
-export const getAllSuggestionsByCategory = async (
-  timeOfDay: 'morning' | 'afternoon' | 'evening',
-  interest: string,
-  weather: string
-): Promise<Array<{ activity: string; link?: string | null }>> => {
-  try {
-    // Fetch all suggestions for the category from the suggestion utils
-    const { fetchAllSuggestionsByCategory } = await import('@/utils/suggestionUtils');
-    return await fetchAllSuggestionsByCategory(timeOfDay, interest, weather);
-  } catch (error) {
-    console.error('Error getting all suggestions:', error);
-    return [];
-  }
-};
-
-/**
- * Generate perfect day response
- */
-export const generatePerfectDayResponse = async (
-  timeOfDay: 'morning' | 'afternoon' | 'evening',
-  weather: string,
-  interests: string[]
-): Promise<string> => {
-  try {
-    // Create a tailored response based on time of day, weather and interests
-    const timeText = timeOfDay === 'morning' ? 'Morgen' : 
-                    timeOfDay === 'afternoon' ? 'Nachmittag' : 'Abend';
-    
-    const weatherText = weather === 'sunny' ? 'sonnigen' :
-                       weather === 'cloudy' ? 'bewölkten' : 'wechselhaften';
-    
-    const activities = [];
-    
-    // Generate one activity suggestion for each interest
-    for (const interest of interests) {
-      const suggestions = await getActivitySuggestions(timeOfDay, interest, weather);
-      if (suggestions.length > 0) {
-        const randomIndex = Math.floor(Math.random() * suggestions.length);
-        activities.push({
-          category: interest,
-          suggestion: suggestions[randomIndex].activity
-        });
-      }
+  if (parts.length === 0) return '?';
+  
+  if (parts.length === 1) {
+    // Bei einzeiligen Namen die ersten beiden Buchstaben oder nur den ersten
+    const namePart = parts[0];
+    if (namePart.length >= 2) {
+      return namePart.substring(0, 2).toUpperCase();
     }
-    
-    // Create the perfect day response
-    let response = `Für einen perfekten ${timeText} bei ${weatherText} Wetter empfehle ich dir:\n\n`;
-    
-    activities.forEach(activity => {
-      response += `- ${activity.category}: ${activity.suggestion}\n`;
-    });
-    
-    return response;
-  } catch (error) {
-    console.error('Error generating perfect day response:', error);
-    return 'Ich konnte leider keinen perfekten Tag für dich zusammenstellen. Bitte versuche es später noch einmal.';
+    return namePart.substring(0, 1).toUpperCase();
   }
+  
+  // Bei mehrteiligen Namen die Initialen der ersten beiden Teile
+  return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
 };

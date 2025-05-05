@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, RefreshCw, Paperclip, Calendar } from 'lucide-react';
+import { Send, RefreshCw, Paperclip, Calendar, Users } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -22,6 +21,7 @@ import MessageList from './MessageList';
 interface ChatGroupProps {
   groupId: string;
   groupName: string;
+  onOpenUserDirectory?: () => void;
 }
 
 interface Message {
@@ -34,7 +34,11 @@ interface Message {
   read_by?: string[];
 }
 
-const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
+const ChatGroup: React.FC<ChatGroupProps> = ({ 
+  groupId, 
+  groupName, 
+  onOpenUserDirectory 
+}) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -569,15 +573,30 @@ const ChatGroup: React.FC<ChatGroupProps> = ({ groupId, groupName }) => {
               <p className="text-sm text-gray-400">{messages.length} Nachrichten</p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 rounded-full p-0"
-            onClick={handleReconnect}
-            disabled={isReconnecting}
-          >
-            <RefreshCw className={`h-4 w-4 ${isReconnecting ? 'animate-spin' : ''}`} />
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Benutzerverzeichnis-Button */}
+            {onOpenUserDirectory && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 rounded-full p-0 px-2 text-purple-300 hover:text-purple-200 hover:bg-purple-900/20"
+                onClick={onOpenUserDirectory}
+              >
+                <Users className="h-4 w-4 mr-1" />
+                <span className="text-xs">Benutzer</span>
+              </Button>
+            )}
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 rounded-full p-0"
+              onClick={handleReconnect}
+              disabled={isReconnecting}
+            >
+              <RefreshCw className={`h-4 w-4 ${isReconnecting ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
         </div>
       </div>
       

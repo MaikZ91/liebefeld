@@ -1,4 +1,3 @@
-
 export interface ChatMessage {
   id: string;
   group_id: string;
@@ -57,3 +56,24 @@ export const GROUP_CATEGORIES = [
   { id: 'sport', name: 'Sport' },
   { id: 'ausgehen', name: 'Ausgehen' },
 ];
+
+// Benutzerprofiltyp
+export interface UserProfile {
+  id: string;
+  username: string;
+  avatar: string | null;
+  interests: string[] | null;
+  hobbies: string[] | null;
+  created_at: string;
+  last_online: string;
+}
+
+// Private Nachrichtentyp
+export interface PrivateMessage {
+  id: string;
+  sender: string;
+  recipient: string;
+  content: string;
+  created_at: string;
+  read_at: string | null;
+}
