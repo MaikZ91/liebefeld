@@ -210,8 +210,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
         ) : (
           <ChatMessage 
             message={message.text} 
-            isGroup={false}
-            isUser={message.isUser} 
+            isGroup={false} 
             onDateSelect={handleDateSelect}
           />
         )}
