@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
@@ -12,11 +13,11 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import EventCalendar from '@/components/EventCalendar';
 import EventForm from '@/components/EventForm';
 import LiveTicker from '@/components/LiveTicker';
+
 const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
   const [isAddEventSheetOpen, setIsAddEventSheetOpen] = useState(false);
   const [isEventListSheetOpen, setIsEventListSheetOpen] = useState(false);
-  const [isCommunityOpen, setIsCommunityOpen] = useState(false);
   const {
     events
   } = useEventContext();
@@ -75,6 +76,7 @@ const ChatPage = () => {
     window.addEventListener('resize', checkIsMobile);
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
+
   return <Layout hideFooter={true}>
       <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
         {/* Add LiveTicker above chat header */}
@@ -84,7 +86,27 @@ const ChatPage = () => {
         
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-red-500">
-        </h1>
+            <div className="flex space-x-2">
+              <Button 
+                variant={activeView === 'ai' ? "default" : "outline"} 
+                size="sm" 
+                onClick={() => setActiveView('ai')}
+                className={`flex items-center gap-2 ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}
+              >
+                <Calendar className="h-4 w-4" />
+                Event Assistent
+              </Button>
+              <Button 
+                variant={activeView === 'community' ? "default" : "outline"} 
+                size="sm" 
+                onClick={() => setActiveView('community')}
+                className={`flex items-center gap-2 ${activeView === 'community' ? 'bg-[#9b87f5] hover:bg-[#8a76e5]' : ''}`}
+              >
+                <Users className="h-4 w-4" />
+                Community
+              </Button>
+            </div>
+          </h1>
           
           <div className="flex gap-2">
             {/* View Events Button */}
@@ -97,7 +119,13 @@ const ChatPage = () => {
         
         <div className="flex-grow rounded-lg overflow-hidden border border-gray-800 flex flex-col bg-black">
           <div className="flex-grow relative">
-            <EventChatBot fullPage={true} onAddEvent={handleAddEvent} onToggleCommunity={handleToggleCommunity} />
+            <EventChatBot 
+              fullPage={true} 
+              onAddEvent={handleAddEvent} 
+              onToggleCommunity={handleToggleCommunity} 
+              activeChatMode={activeView} 
+              setActiveChatMode={setActiveView}
+            />
           </div>
         </div>
       </div>
@@ -133,4 +161,5 @@ const ChatPage = () => {
       </Sheet>
     </Layout>;
 };
+
 export default ChatPage;

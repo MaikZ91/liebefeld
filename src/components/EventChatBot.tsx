@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEventContext } from '@/contexts/EventContext';
@@ -34,13 +33,21 @@ interface EventChatBotProps {
   fullPage?: boolean;
   onAddEvent?: () => void;
   onToggleCommunity?: () => void; // New prop for toggling to community view
+  activeChatMode?: 'ai' | 'community';
+  setActiveChatMode?: (mode: 'ai' | 'community') => void;
 }
 
 // Local storage keys
 const CHAT_HISTORY_KEY = 'event-chat-history';
 const CHAT_QUERIES_KEY = 'event-chat-queries';
 
-const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEvent, onToggleCommunity }) => {
+const EventChatBot: React.FC<EventChatBotProps> = ({ 
+  fullPage = false, 
+  onAddEvent, 
+  onToggleCommunity,
+  activeChatMode,
+  setActiveChatMode
+}) => {
   const isMobile = useIsMobile();
   const { events } = useEventContext();
   const { toast } = useToast();
@@ -52,7 +59,11 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
   const [recentQueries, setRecentQueries] = useState<string[]>([]);
   const [globalQueries, setGlobalQueries] = useState<string[]>([]);
   const [showRecentQueries, setShowRecentQueries] = useState(false);
-  const [activeChatMode, setActiveChatMode] = useState<'ai' | 'community'>('ai');
+  // Use the prop value if provided, otherwise use internal state
+  const [internalActiveChatMode, setInternalActiveChatMode] = useState<'ai' | 'community'>('ai');
+  const activeChatModeValue = activeChatMode !== undefined ? activeChatMode : internalActiveChatMode;
+  const setActiveChatModeValue = setActiveChatMode || setInternalActiveChatMode;
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const welcomeMessageShownRef = useRef(false);
@@ -122,7 +133,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
 
   useEffect(() => {
     // Add welcome message when chat is opened for the first time
-    if (isChatOpen && messages.length === 0 && !welcomeMessageShownRef.current && activeChatMode === 'ai') {
+    if (isChatOpen && messages.length === 0 && !welcomeMessageShownRef.current && activeChatModeValue === 'ai') {
       welcomeMessageShownRef.current = true;
       setMessages([
         {
@@ -134,7 +145,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
         }
       ]);
     }
-  }, [isChatOpen, messages.length, activeChatMode]);
+  }, [isChatOpen, messages.length, activeChatModeValue]);
 
   useEffect(() => {
     // Scroll to bottom when new messages are added
@@ -290,10 +301,11 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
   };
 
   const handleToggleChatMode = () => {
-    setActiveChatMode(activeChatMode === 'ai' ? 'community' : 'ai');
+    const newMode = activeChatModeValue === 'ai' ? 'community' : 'ai';
+    setActiveChatModeValue(newMode);
     
     // If switching to community mode and there's a parent toggle function, call it
-    if (activeChatMode === 'ai' && onToggleCommunity) {
+    if (activeChatModeValue === 'ai' && onToggleCommunity) {
       onToggleCommunity();
     }
   };
@@ -498,87 +510,58 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
   if (fullPage) {
     return (
       <div className="h-full flex flex-col">
-        <div className="flex items-center justify-between p-3 border-b border-red-500/20 bg-red-950/30 rounded-t-lg">
-          <div className="flex items-center">
-            <MessageCircle className="h-5 w-5 text-red-500 mr-2" />
-            <h3 className="font-medium text-red-500">
-              {activeChatMode === 'ai' ? 'Event-Assistent' : 'Community-Chat'}
-            </h3>
-          </div>
-          <div className="flex items-center space-x-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 bg-gray-800 text-white hover:bg-gray-700">
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-gray-800 border-gray-700 text-white">
-                <DropdownMenuLabel>Chat-Verlauf</DropdownMenuLabel>
-                <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={exportChatHistory} className="cursor-pointer">
-                    <Download className="mr-2 h-4 w-4" />
-                    <span>Exportieren</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={clearChatHistory} className="cursor-pointer text-red-400">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    <span>Löschen</span>
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-        
-        <ScrollArea className="flex-1 p-3 overflow-y-auto max-h-[calc(100vh-240px)]">
-          {activeChatMode === 'ai' ? (
-            <div className="space-y-3 pb-2">
-              {renderMessages()}
-              
-              {isTyping && (
-                <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30">
-                  <div className="flex space-x-2 items-center">
-                    <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+        <div className="flex-1 p-3 overflow-y-auto max-h-[calc(100vh-240px)]">
+          {activeChatModeValue === 'ai' ? (
+            <ScrollArea className="h-full">
+              <div className="space-y-3 pb-2">
+                {renderMessages()}
+                
+                {isTyping && (
+                  <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30">
+                    <div className="flex space-x-2 items-center">
+                      <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              {/* Display example prompts only if there's just the welcome message */}
-              {messages.length === 1 && messages[0].id === 'welcome' && (
-                <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30 mt-4">
-                  <p className="text-sm text-red-200 mb-2">
-                    Frag mich zum Beispiel:
-                  </p>
-                  <div className="flex flex-col gap-2">
-                    {examplePrompts.map((prompt, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        className="text-left justify-start bg-red-900/20 hover:bg-red-900/30 text-red-200 border-red-500/30"
-                        onClick={() => handleExamplePromptClick(prompt)}
-                      >
-                        "{prompt}"
-                      </Button>
-                    ))}
+                )}
+                
+                {/* Display example prompts only if there's just the welcome message */}
+                {messages.length === 1 && messages[0].id === 'welcome' && (
+                  <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30 mt-4">
+                    <p className="text-sm text-red-200 mb-2">
+                      Frag mich zum Beispiel:
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      {examplePrompts.map((prompt, index) => (
+                        <Button
+                          key={index}
+                          variant="outline"
+                          className="text-left justify-start bg-red-900/20 hover:bg-red-900/30 text-red-200 border-red-500/30"
+                          onClick={() => handleExamplePromptClick(prompt)}
+                        >
+                          "{prompt}"
+                        </Button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              <div ref={messagesEndRef} />
-            </div>
+                )}
+                
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
           ) : (
             <GroupChat compact={false} groupId={communityGroupId} groupName="Allgemein" />
           )}
-        </ScrollArea>
+        </div>
         
-        <div className="p-3 border-t border-red-500/20 relative">
+        <div className="p-3 border-t border-red-500/20 relative mt-auto">
           {renderRecentQueries()}
           
           <div className="flex items-center relative">
             <div className="absolute left-2 flex items-center gap-1 z-10">
               {/* History button for recent queries */}
-              {globalQueries.length > 0 && (
+              {globalQueries.length > 0 && activeChatModeValue === 'ai' && (
                 <Button
                   variant="ghost"
                   size="icon"
@@ -602,21 +585,9 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
                   <PlusCircle className="h-4 w-4" />
                 </Button>
               )}
-              
-              {/* Community Button */}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleToggleChatMode}
-                className="h-8 w-8 text-[#9b87f5]"
-                title="Community"
-              >
-                <Users className="h-4 w-4" />
-                <span className="sr-only">Community</span>
-              </Button>
             </div>
             
-            {activeChatMode === 'ai' ? (
+            {activeChatModeValue === 'ai' ? (
               <>
                 <input
                   ref={inputRef}
@@ -656,7 +627,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
             <div className="flex items-center">
               <MessageCircle className="h-5 w-5 text-red-500 mr-2" />
               <h3 className="font-medium text-red-500">
-                {activeChatMode === 'ai' ? 'Event-Assistent' : 'Community-Chat'}
+                {activeChatModeValue === 'ai' ? 'Event-Assistent' : 'Community-Chat'}
               </h3>
             </div>
             <div className="flex items-center space-x-1">
@@ -690,7 +661,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
           </div>
           
           <ScrollArea className="flex-1 p-3 overflow-y-auto max-h-[350px]">
-            {activeChatMode === 'ai' ? (
+            {activeChatModeValue === 'ai' ? (
               <div className="space-y-3 pb-2">
                 {renderMessages()}
                 
@@ -777,7 +748,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
                 </Button>
               </div>
               
-              {activeChatMode === 'ai' ? (
+              {activeChatModeValue === 'ai' ? (
                 <>
                   <input
                     ref={inputRef}
