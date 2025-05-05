@@ -111,70 +111,100 @@ const About = () => {
             </div>
           </section>
           
-          {/* Assistant & Community - 2 Spalten nebeneinander */}
-          <section className="mb-16 grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Event Assistent Panel */}
-            <div className="bg-black/40 p-4 rounded-xl border border-red-500/10 shadow-lg">
-              <span className="inline-block py-1 px-2 rounded-full bg-red-500/20 text-red-400 text-xs font-medium mb-2">KI-Event-Assistent</span>
-              <h2 className="text-xl font-bold mb-3">Finde deine Events</h2>
+          {/* Combined Event Calendar & AI Assistant Section */}
+          <section className="mb-16">
+            <div className="bg-black/40 p-6 rounded-xl border border-red-500/10 shadow-lg">
+              <span className="inline-block py-1 px-2 rounded-full bg-red-500/20 text-red-400 text-xs font-medium mb-2">KI-Event-Plattform</span>
+              <h2 className="text-xl font-bold mb-3">Dein persönlicher Event-Assistent</h2>
               <p className="text-sm text-muted-foreground mb-4">
-                Unser KI-Assistent hilft dir, Events zu finden, die zu dir passen. Frag einfach nach!
+                Mit der Kombination aus Event-Kalender und KI-Assistent findest du genau die Events, die zu dir passen
               </p>
               
-              <div className="space-y-2 mb-4">
-                <div className="bg-zinc-900/80 max-w-[95%] rounded-lg p-2 border border-zinc-700/30">
-                  <p className="text-xs">
-                    Welche Konzerte gibt es diese Woche in Bielefeld?
-                  </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                {/* Left: Calendar Preview */}
+                <div className="relative h-48 bg-black/40 rounded-lg overflow-hidden border border-red-500/10">
+                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-transparent to-black/60">
+                    <Calendar className="h-20 w-20 text-red-500/20 absolute" />
+                    <div className="relative z-10 text-center p-3">
+                      <h4 className="font-medium text-sm mb-1">Event-Kalender</h4>
+                      <p className="text-xs text-red-300/70">Alle lokalen Events auf einen Blick</p>
+                      <div className="mt-3 flex flex-wrap gap-1 justify-center">
+                        <span className="text-[8px] bg-red-500/10 px-1 py-0.5 rounded">Electric Circle Vol.3</span>
+                        <span className="text-[8px] bg-red-500/10 px-1 py-0.5 rounded">Tribe Stammtisch</span>
+                        <span className="text-[8px] bg-red-500/10 px-1 py-0.5 rounded">+15 mehr</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 
-                <div className="bg-red-500/10 dark:bg-red-950/30 border border-red-500/20 rounded-lg p-2 ml-auto max-w-[95%]">
-                  <div className="text-xs space-y-1">
-                    <p className="mb-1">
-                      Hier sind die Konzerte diese Woche:
+                {/* Right: Chat Preview */}
+                <div className="space-y-2">
+                  <div className="bg-zinc-900/80 max-w-[95%] rounded-lg p-2 border border-zinc-700/30">
+                    <p className="text-xs">
+                      Welche Konzerte gibt es diese Woche in Bielefeld?
                     </p>
-                    <div className="p-1 bg-black/30 rounded border border-red-500/10">
-                      <div className="font-medium">Electric Circle Vol.3</div>
-                      <div className="text-[10px] text-red-400">Fr, 20:00 | Lokschuppen</div>
+                  </div>
+                  
+                  <div className="bg-red-500/10 dark:bg-red-950/30 border border-red-500/20 rounded-lg p-2 ml-auto max-w-[95%]">
+                    <div className="text-xs space-y-1">
+                      <p className="mb-1">
+                        Hier sind die Konzerte diese Woche:
+                      </p>
+                      <div className="p-1 bg-black/30 rounded border border-red-500/10">
+                        <div className="font-medium">Electric Circle Vol.3</div>
+                        <div className="text-[10px] text-red-400">Fr, 20:00 | Lokschuppen</div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
               
-              <Button 
-                className="w-full mt-2 rounded-full px-4 py-1 text-xs bg-red-500 hover:bg-red-600"
-                onClick={() => {
-                  if (typeof window !== 'undefined' && window.chatbotQuery) {
-                    window.chatbotQuery('Welche Konzerte gibt es diese Woche?');
-                    navigate('/chat');
-                  } else {
-                    navigate('/chat');
-                  }
-                }}
-              >
-                <MessageSquare className="mr-1 h-3 w-3" />
-                Assistent testen
-              </Button>
+              <div className="mt-4 flex justify-center gap-3">
+                <Button 
+                  className="w-full md:w-auto rounded-full px-4 py-1 text-xs bg-red-500 hover:bg-red-600"
+                  onClick={() => navigate('/chat')}
+                >
+                  <Calendar className="mr-1 h-3 w-3" />
+                  Events entdecken
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full md:w-auto rounded-full px-4 py-1 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10"
+                  onClick={() => {
+                    if (typeof window !== 'undefined' && window.chatbotQuery) {
+                      window.chatbotQuery('Welche Konzerte gibt es diese Woche?');
+                      navigate('/chat');
+                    } else {
+                      navigate('/chat');
+                    }
+                  }}
+                >
+                  <MessageSquare className="mr-1 h-3 w-3" />
+                  AI-Assistent fragen
+                </Button>
+              </div>
             </div>
-            
-            {/* Community Panel */}
-            <div className="bg-black/40 p-4 rounded-xl border border-red-500/10 shadow-lg">
+          </section>
+          
+          {/* Community Section */}
+          <section className="mb-16">
+            <div className="bg-black/40 p-6 rounded-xl border border-red-500/10 shadow-lg">
               <span className="inline-block py-1 px-2 rounded-full bg-red-500/20 text-red-400 text-xs font-medium mb-2">Community</span>
-              <h2 className="text-xl font-bold mb-3">Verbinde dich lokal</h2>
+              <h2 className="text-xl font-bold mb-3">Verbinde dich mit Gleichgesinnten</h2>
               <p className="text-sm text-muted-foreground mb-4">
                 Tausche dich mit Menschen aus Bielefeld aus, die deine Interessen teilen
               </p>
               
-              <div className="h-32 rounded-lg overflow-hidden mb-4">
-                <img 
-                  src="/lovable-uploads/2653c557-0afe-4690-9d23-0b523cb09e3e.png" 
-                  alt="Community gathering" 
-                  className="w-full h-full object-cover"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+                {communityImages.slice(0, 3).map((img, index) => (
+                  <div key={index} className="h-32 rounded-lg overflow-hidden">
+                    <img src={img.src} alt={img.alt} className="w-full h-full object-cover" />
+                  </div>
+                ))}
               </div>
               
-              <div className="flex space-x-1 mb-4">
-                {communityFeatures.slice(0, 2).map((feature, i) => (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
+                {communityFeatures.slice(0, 4).map((feature, i) => (
                   <div key={i} className="flex items-start">
                     <div className="mr-1 h-4 w-4 rounded-full bg-red-500/20 flex items-center justify-center text-red-400">
                       <feature.icon className="h-2 w-2" />
@@ -185,7 +215,7 @@ const About = () => {
               </div>
               
               <Button 
-                className="w-full mt-2 rounded-full px-4 py-1 text-xs bg-red-500 hover:bg-red-600"
+                className="w-full mt-4 rounded-full px-4 py-1 text-xs bg-red-500 hover:bg-red-600"
                 onClick={() => navigate('/chat')}
               >
                 <Users className="mr-1 h-3 w-3" />
