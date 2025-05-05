@@ -8,7 +8,7 @@ import TypingIndicator from './TypingIndicator';
 import { Message, TypingUser, EventShare } from '@/types/chatTypes';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
-import { Link } from 'lucide-react';
+import { Link, ChevronDown } from 'lucide-react';
 
 interface MessageListProps {
   messages: Message[];
@@ -20,6 +20,9 @@ interface MessageListProps {
   isGroup: boolean;
   groupType: 'ausgehen' | 'sport' | 'kreativität';
   chatBottomRef: React.RefObject<HTMLDivElement>;
+  isUserScrolling?: boolean;
+  isAtBottom?: boolean;
+  scrollToBottom?: () => void;
 }
 
 const MessageList: React.FC<MessageListProps> = ({
@@ -31,7 +34,10 @@ const MessageList: React.FC<MessageListProps> = ({
   formatTime,
   isGroup,
   groupType,
-  chatBottomRef
+  chatBottomRef,
+  isUserScrolling = false,
+  isAtBottom = true,
+  scrollToBottom = () => {}
 }) => {
   const isMobile = useIsMobile();
   const whatsAppLink = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
@@ -72,13 +78,25 @@ const MessageList: React.FC<MessageListProps> = ({
   };
 
   return (
-    <div className={`flex-grow p-4 ${isGroup ? 'bg-black' : 'bg-black'} overflow-y-auto w-full max-w-full h-full flex flex-col`}>
+    <div className={`flex-grow p-4 ${isGroup ? 'bg-black' : 'bg-black'} overflow-y-auto w-full max-w-full h-full flex flex-col relative`}>
       {loading && (
         <div className="text-center text-gray-500 text-lg font-semibold py-4">Loading messages...</div>
       )}
       
       {error && (
         <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>
+      )}
+
+      {/* Scroll to bottom button - shown when user has scrolled up */}
+      {isUserScrolling && !isAtBottom && scrollToBottom && (
+        <Button
+          onClick={scrollToBottom}
+          className="absolute bottom-4 right-4 z-50 bg-red-500 hover:bg-red-600 rounded-full shadow-md flex items-center gap-1 p-2"
+          size="sm"
+        >
+          <ChevronDown className="h-4 w-4" />
+          <span className="sr-only md:not-sr-only md:inline-block">Zum Ende</span>
+        </Button>
       )}
 
       <ScrollArea className="h-full w-full pr-2 flex-grow" type={isMobile ? "always" : "hover"}>
