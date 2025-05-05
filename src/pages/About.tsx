@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import { Button } from '@/components/ui/button';
@@ -54,8 +53,8 @@ const About = () => {
                   className="rounded-full px-6 py-2 text-sm bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20"
                   onClick={() => navigate('/chat')}
                 >
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Events entdecken
+                  <Users className="mr-2 h-4 w-4" />
+                  Community beitreten
                 </Button>
                 <Button 
                   variant="outline"
@@ -82,7 +81,7 @@ const About = () => {
                     </div>
                   ))}
                 </div>
-                <p className="text-white/70 text-xs">+500 Community-Mitglieder</p>
+                <p className="text-white/70 text-xs">+100 Community-Mitglieder</p>
               </div>
             </div>
           </section>
