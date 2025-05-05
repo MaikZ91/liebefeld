@@ -94,9 +94,13 @@ serve(async (req) => {
     - Nutze text-red-500 für Überschriften
     - Nutze text-sm für normalen Text
     - Nutze rounded-lg p-3 mb-3 für Container-Padding
+    
+    WICHTIG: Zeige immer ALLE gefundenen Events an, die zum Datum oder zur Anfrage passen.
+    Formatiere jedes Event mit einem Herz-Symbol (❤️) am Anfang des Titels.
+    Wenn ein Event einen clickbaren Titel haben soll, verwende <a href="URL" target="_blank" rel="noopener noreferrer">TITEL</a> und stelle sicher, dass der Titel korrekt angezeigt wird.
     `;
 
-    console.log('Sending request to Open Router API with Gemini model...');
+    console.log('Sending request to Open Router API with Llama 4 Scout model...');
     
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -107,7 +111,7 @@ serve(async (req) => {
         'X-Title': 'Lovable Chat'
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-exp:free',
+        model: 'meta-llama/llama-4-scout:free',
         messages: [
           { role: 'system', content: systemMessage },
           { role: 'user', content: query }
