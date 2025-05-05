@@ -99,7 +99,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
       </div>
       
       <div className={cn(
-        "flex-grow transition-all duration-300 overflow-hidden",
+        "flex-grow transition-all duration-300 overflow-hidden flex flex-col",
         activeMobileView === 'chat' ? 'block' : 'hidden'
       )}>
         {username ? (
@@ -128,7 +128,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
             </div>
             
             {activeGroup && (
-              <div className="h-[calc(100vh-280px)] min-h-[400px] border border-gray-700 rounded-lg overflow-hidden">
+              <div className="h-[calc(100vh-280px)] min-h-[400px] border border-gray-700 rounded-lg overflow-hidden flex-grow flex flex-col">
                 <GroupChat 
                   compact={false} 
                   groupId={activeGroup} 

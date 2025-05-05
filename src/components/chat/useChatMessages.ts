@@ -8,6 +8,7 @@ import { useReconnection } from '@/hooks/chat/useReconnection';
 import { useScrollManagement } from '@/hooks/chat/useScrollManagement';
 import { chatService } from '@/services/chatService';
 import { messageService } from '@/services/messageService';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const useChatMessages = (groupId: string, username: string) => {
   // Use a valid UUID for groupId, default to general if not provided
@@ -16,6 +17,7 @@ export const useChatMessages = (groupId: string, username: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [lastSeen, setLastSeen] = useState<Date>(new Date());
   const messagesRef = useRef<Message[]>(messages);
+  const isMobile = useIsMobile();
   
   const { fetchMessages, loading, error, setError } = useMessageFetching(validGroupId);
   
@@ -82,9 +84,20 @@ export const useChatMessages = (groupId: string, username: string) => {
   // Reconnection handling
   const { isReconnecting, handleReconnect } = useReconnection(fetchAndSetMessages);
   
-  // Scroll management
+  // Scroll management with mobile awareness
   const { chatBottomRef, chatContainerRef, initializeScrollPosition } = 
     useScrollManagement(messages, typingUsers);
+  
+  // Force scroll to bottom after the component mounts on mobile
+  useEffect(() => {
+    if (isMobile) {
+      const timer = setTimeout(() => {
+        initializeScrollPosition();
+      }, 500); // Longer delay for mobile
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isMobile, initializeScrollPosition]);
 
   return {
     messages,

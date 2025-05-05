@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { getInitials } from '@/utils/chatUIUtils';
 import ChatMessage from './ChatMessage';
 import TypingIndicator from './TypingIndicator';
 import { Message, TypingUser, EventShare } from '@/types/chatTypes';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MessageListProps {
   messages: Message[];
@@ -30,6 +31,17 @@ const MessageList: React.FC<MessageListProps> = ({
   groupType,
   chatBottomRef
 }) => {
+  const isMobile = useIsMobile();
+  
+  // Force scroll to bottom on initial render for mobile
+  useEffect(() => {
+    if (isMobile && chatBottomRef.current) {
+      setTimeout(() => {
+        chatBottomRef.current.scrollIntoView({ behavior: 'auto' });
+      }, 300);
+    }
+  }, [isMobile]);
+
   // Parse event data from message content if available
   const parseEventData = (message: Message): EventShare | undefined => {
     try {
@@ -57,7 +69,7 @@ const MessageList: React.FC<MessageListProps> = ({
   };
 
   return (
-    <div className={`flex-grow p-4 ${isGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto w-full max-w-full`}>
+    <div className={`flex-grow p-4 ${isGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto w-full max-w-full h-full`}>
       {loading && (
         <div className="text-center text-gray-500 text-lg font-semibold py-4">Loading messages...</div>
       )}
@@ -66,8 +78,8 @@ const MessageList: React.FC<MessageListProps> = ({
         <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>
       )}
 
-      <ScrollArea className="h-full w-full">
-        <div className="flex flex-col space-y-3 w-full max-w-full">
+      <ScrollArea className="h-full w-full pr-2" type={isMobile ? "always" : "hover"}>
+        <div className="flex flex-col space-y-3 w-full max-w-full pb-4">
           {messages.length === 0 && !loading && !error && (
             <div className="text-center text-gray-400 py-4">No messages yet. Start the conversation!</div>
           )}

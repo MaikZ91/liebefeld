@@ -1,11 +1,13 @@
 
 import { useRef, useEffect } from 'react';
 import { Message } from '@/types/chatTypes';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const useScrollManagement = (messages: Message[], typingUsers: any[]) => {
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const messagesLengthRef = useRef<number>(0);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     console.log(`Message count changed: ${messages.length}, previous: ${messagesLengthRef.current}`);
@@ -28,13 +30,23 @@ export const useScrollManagement = (messages: Message[], typingUsers: any[]) => 
     }
   }, [typingUsers]);
 
+  // Add an effect to ensure initial scroll position is set correctly on mobile
+  useEffect(() => {
+    if (isMobile) {
+      // Use a slightly longer delay for mobile to ensure DOM is fully rendered
+      setTimeout(() => {
+        initializeScrollPosition();
+      }, 300);
+    }
+  }, [isMobile]);
+
   const initializeScrollPosition = () => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
     
     if (chatBottomRef.current) {
-      chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
+      chatBottomRef.current.scrollIntoView({ behavior: isMobile ? 'auto' : 'smooth' });
     }
   };
 
