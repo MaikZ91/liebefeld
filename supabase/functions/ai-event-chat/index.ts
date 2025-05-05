@@ -98,55 +98,157 @@ serve(async (req) => {
 
     console.log('Sending request to Open Router API with Gemini model...');
     
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://github.com/lovable-chat', 
-        'X-Title': 'Lovable Chat'
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-exp:free',
-        messages: [
-          { role: 'system', content: systemMessage },
-          { role: 'user', content: query }
-        ],
-        temperature: 0.7,
-        max_tokens: 1024
-      })
-    });
+    // Define backup models in case the primary model fails
+    const models = [
+      'google/gemini-2.0-flash-exp:free',
+      'anthropic/claude-3-sonnet:beta',
+      'openai/gpt-4o-mini'
+    ];
 
-    // Log full response for debugging
-    const responseStatus = response.status;
-    const responseStatusText = response.statusText;
-    console.log(`OpenRouter API response status: ${responseStatus} ${responseStatusText}`);
-
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error(`OpenRouter API error response: ${errorBody}`);
-      throw new Error(`OpenRouter API error: ${responseStatus} ${responseStatusText} - ${errorBody}`);
+    let response = null;
+    let modelUsed = '';
+    let errorDetails = '';
+    
+    // Try primary model first
+    try {
+      response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://github.com/lovable-chat', 
+          'X-Title': 'Lovable Chat'
+        },
+        body: JSON.stringify({
+          model: models[0],
+          messages: [
+            { role: 'system', content: systemMessage },
+            { role: 'user', content: query }
+          ],
+          temperature: 0.7,
+          max_tokens: 1024
+        })
+      });
+      
+      modelUsed = models[0];
+      
+      // Log full response for debugging
+      const responseStatus = response.status;
+      const responseStatusText = response.statusText;
+      console.log(`OpenRouter API response status: ${responseStatus} ${responseStatusText}`);
+      
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.error(`OpenRouter API error response: ${errorBody}`);
+        errorDetails = `${responseStatus} ${responseStatusText} - ${errorBody}`;
+        throw new Error(`OpenRouter API error: ${errorDetails}`);
+      }
+    } catch (primaryError) {
+      console.error('Primary model error:', primaryError.message);
+      
+      // Try fallback models sequentially
+      for (let i = 1; i < models.length; i++) {
+        try {
+          console.log(`Trying fallback model: ${models[i]}`);
+          response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': 'https://github.com/lovable-chat', 
+              'X-Title': 'Lovable Chat'
+            },
+            body: JSON.stringify({
+              model: models[i],
+              messages: [
+                { role: 'system', content: systemMessage },
+                { role: 'user', content: query }
+              ],
+              temperature: 0.7,
+              max_tokens: 1024
+            })
+          });
+          
+          modelUsed = models[i];
+          
+          if (response.ok) {
+            console.log(`Successfully switched to fallback model: ${models[i]}`);
+            break;
+          } else {
+            const errorBody = await response.text();
+            console.error(`Fallback model ${models[i]} error: ${errorBody}`);
+          }
+        } catch (fallbackError) {
+          console.error(`Fallback model ${models[i]} error:`, fallbackError.message);
+        }
+      }
+      
+      // If all models failed
+      if (!response || !response.ok) {
+        throw new Error(`All API models failed. Primary error: ${primaryError.message}`);
+      }
     }
 
-    const data = await response.json();
-    console.log('OpenRouter API response received successfully');
+    // Parse and handle the response carefully
+    let data = null;
+    let aiResponse = '';
+    let modelInfo = {};
     
-    // Check if the response has the expected structure
-    if (!data || !data.choices || !data.choices[0] || !data.choices[0].message) {
-      console.error('Unexpected response structure from OpenRouter API:', JSON.stringify(data));
-      throw new Error('Invalid response structure from OpenRouter API');
+    try {
+      data = await response.json();
+      console.log('OpenRouter API response received successfully');
+      
+      // Try to extract response text using different possible formats
+      if (data.choices && data.choices[0] && data.choices[0].message) {
+        aiResponse = data.choices[0].message.content;
+        console.log('Found response in standard OpenAI format');
+      } else if (data.content) {
+        aiResponse = data.content;
+        console.log('Found response in alternative format 1');
+      } else if (data.response) {
+        aiResponse = data.response;
+        console.log('Found response in alternative format 2');
+      } else if (data.message && data.message.content) {
+        aiResponse = data.message.content;
+        console.log('Found response in alternative format 3');
+      } else if (data.generation) {
+        aiResponse = data.generation;
+        console.log('Found response in alternative format 4');
+      } else {
+        console.error('Could not find response text in any expected format');
+        console.error('Response structure:', JSON.stringify(data));
+        throw new Error('Unable to parse AI response from unexpected format');
+      }
+      
+      // Create model info object
+      modelInfo = {
+        model: modelUsed || data.model || 'AI Model',
+        promptTokens: data.usage?.prompt_tokens || 'N/A',
+        completionTokens: data.usage?.completion_tokens || 'N/A',
+        totalTokens: data.usage?.total_tokens || 'N/A'
+      };
+      
+      console.log(`Model used: ${modelInfo.model}`);
+      console.log(`Token usage - Prompt: ${modelInfo.promptTokens}, Completion: ${modelInfo.completionTokens}, Total: ${modelInfo.totalTokens}`);
+    } catch (parsingError) {
+      console.error('Error parsing API response:', parsingError);
+      console.error('Raw response data:', data);
+      
+      // Create a basic error response
+      aiResponse = `
+        <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
+          <h5 class="font-medium text-sm text-red-600 dark:text-red-400">Fehler beim Parsen der API-Antwort</h5>
+          <p class="text-sm mt-2">
+            Es gab ein Problem bei der Verarbeitung der Antwort vom KI-Modell.
+          </p>
+        </div>
+      `;
+      
+      modelInfo = {
+        model: modelUsed || 'Unknown Model',
+        error: parsingError.message
+      };
     }
-    
-    const aiResponse = data.choices[0].message.content;
-    const modelInfo = {
-      model: data.model || 'google/gemini-2.0-flash-exp:free',
-      promptTokens: data.usage?.prompt_tokens || 'N/A',
-      completionTokens: data.usage?.completion_tokens || 'N/A',
-      totalTokens: data.usage?.total_tokens || 'N/A'
-    };
-    
-    console.log(`Model used: ${modelInfo.model}`);
-    console.log(`Token usage - Prompt: ${modelInfo.promptTokens}, Completion: ${modelInfo.completionTokens}, Total: ${modelInfo.totalTokens}`);
 
     return new Response(JSON.stringify({ 
       response: aiResponse,
