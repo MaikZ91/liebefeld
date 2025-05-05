@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEventContext } from '@/contexts/EventContext';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  MessageCircle, X, Send, ChevronDown, Download, Trash2, History
+  MessageCircle, X, Send, ChevronDown, Download, Trash2, History, PlusCircle
 } from 'lucide-react';
 import { 
   generateResponse, 
@@ -31,13 +30,14 @@ interface ChatMessage {
 
 interface EventChatBotProps {
   fullPage?: boolean;
+  onAddEvent?: () => void; // Add this prop for the add event functionality
 }
 
 // Local storage keys
 const CHAT_HISTORY_KEY = 'event-chat-history';
 const CHAT_QUERIES_KEY = 'event-chat-queries';
 
-const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
+const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEvent }) => {
   const isMobile = useIsMobile();
   const { events } = useEventContext();
   const { toast } = useToast();
@@ -556,16 +556,30 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
           {renderRecentQueries()}
           
           <div className="flex items-center relative">
-            {globalQueries.length > 0 && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleRecentQueries}
-                className="absolute left-2 top-1/2 transform -translate-y-1/2 h-8 w-8 text-red-400 z-10"
-              >
-                <History className="h-4 w-4" />
-              </Button>
-            )}
+            <div className="absolute left-2 flex items-center gap-1 z-10">
+              {globalQueries.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleRecentQueries}
+                  className="h-8 w-8 text-red-400"
+                >
+                  <History className="h-4 w-4" />
+                </Button>
+              )}
+              
+              {/* Add Event Button next to History button */}
+              {onAddEvent && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onAddEvent}
+                  className="h-8 w-8 text-red-400"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
             
             <input
               ref={inputRef}
@@ -574,7 +588,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Frage nach Events..."
-              className={`flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 ${globalQueries.length > 0 ? 'pl-10' : ''}`}
+              className={`flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 ${(globalQueries.length > 0 || onAddEvent) ? 'pl-20' : ''}`}
             />
             <button
               onClick={() => handleSendMessage()}
@@ -678,16 +692,30 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
             {renderRecentQueries()}
             
             <div className="flex items-center relative">
-              {globalQueries.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleRecentQueries}
-                  className="absolute left-2 top-1/2 transform -translate-y-1/2 h-6 w-6 text-red-400 z-10"
-                >
-                  <History className="h-3 w-3" />
-                </Button>
-              )}
+              <div className="absolute left-2 flex items-center gap-1 z-10">
+                {globalQueries.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleRecentQueries}
+                    className="h-6 w-6 text-red-400"
+                  >
+                    <History className="h-3 w-3" />
+                  </Button>
+                )}
+                
+                {/* Add Event Button next to History button in popup mode as well */}
+                {onAddEvent && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onAddEvent}
+                    className="h-6 w-6 text-red-400"
+                  >
+                    <PlusCircle className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
               
               <input
                 ref={inputRef}
@@ -696,7 +724,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Frage nach Events..."
-                className={`flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 ${globalQueries.length > 0 ? 'pl-10' : ''}`}
+                className={`flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 ${(globalQueries.length > 0 || onAddEvent) ? 'pl-16' : ''}`}
               />
               <button
                 onClick={() => handleSendMessage()}

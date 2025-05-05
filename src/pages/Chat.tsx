@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
@@ -138,7 +137,7 @@ const ChatPage = () => {
             
             <TabsContent value="ai" className="flex-grow overflow-hidden flex flex-col mt-0 pt-0">
               <div className="flex-grow relative">
-                <EventChatBot fullPage={true} />
+                <EventChatBot fullPage={true} onAddEvent={handleAddEvent} />
               </div>
             </TabsContent>
             
@@ -157,15 +156,6 @@ const ChatPage = () => {
                     >
                       <Link className="h-4 w-4" />
                       WhatsApp Community beitreten
-                    </Button>
-                    
-                    {/* Add Event Button - Moved next to the Community button */}
-                    <Button 
-                      className="bg-red-600 hover:bg-red-700 gap-2"
-                      onClick={handleAddEvent}
-                    >
-                      <PlusCircle className="h-4 w-4" />
-                      Event hinzufügen
                     </Button>
                   </div>
                 </div>
