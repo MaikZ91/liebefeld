@@ -1,13 +1,17 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, MessageSquare, Users, Heart, Link as LinkIcon, Globe, Star, Award, PartyPopper } from 'lucide-react';
+import { Calendar, MessageSquare, Users, Heart, Link as LinkIcon, Globe, Star, Award, PartyPopper, TestTube } from 'lucide-react';
 import ImageCarousel from '@/components/ImageCarousel';
 import { Link, useNavigate } from 'react-router-dom';
+import CommunityTest from '@/components/CommunityTest';
 
 const About = () => {
   const navigate = useNavigate();
+  const [testModalOpen, setTestModalOpen] = useState(false);
+  const WHATSAPP_URL = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
   
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -51,7 +55,7 @@ const About = () => {
               <div className="flex flex-wrap justify-center gap-3">
                 <Button 
                   className="rounded-full px-6 py-2 text-sm bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20"
-                  onClick={() => navigate('/chat')}
+                  onClick={() => setTestModalOpen(true)}
                 >
                   <Users className="mr-2 h-4 w-4" />
                   Community beitreten
@@ -116,7 +120,7 @@ const About = () => {
               
               <Button 
                 className="w-full mt-4 rounded-full px-4 py-1 text-xs bg-red-500 hover:bg-red-600"
-                onClick={() => navigate('/chat')}
+                onClick={() => setTestModalOpen(true)}
               >
                 <Users className="mr-1 h-3 w-3" />
                 Community beitreten
@@ -289,6 +293,121 @@ const About = () => {
               </div>
             </div>
           </section>
+
+          {/* Social Tides Section */}
+          <section className="mb-16">
+            <div className="bg-black/40 p-6 rounded-xl border border-red-500/10 shadow-lg">
+              <span className="inline-block py-1 px-2 rounded-full bg-red-500/20 text-red-400 text-xs font-medium mb-2">Social Tides</span>
+              <h2 className="text-xl font-bold mb-3">Soziale Initiativen unterstützen</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Gemeinsam können wir Bielefeld zu einem besseren Ort machen
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="bg-black/40 rounded-lg overflow-hidden border border-red-500/10 p-4">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="h-10 w-10 rounded-full bg-red-500/20 flex items-center justify-center">
+                      <Heart className="h-5 w-5 text-red-500" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-sm">Gemeinnützige Veranstaltungen</h3>
+                      <p className="text-xs text-gray-400">Unterstütze lokale Initiativen</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Entdecke Veranstaltungen, die lokale Initiativen unterstützen und einen positiven Einfluss auf die Gemeinschaft haben.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    className="w-full rounded-full text-xs border-red-500/30 text-red-400 hover:bg-red-500/10"
+                    onClick={() => navigate('/chat')}
+                  >
+                    Initiativen entdecken
+                  </Button>
+                </div>
+                
+                <div className="bg-black/40 rounded-lg overflow-hidden border border-red-500/10 p-4">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="h-10 w-10 rounded-full bg-red-500/20 flex items-center justify-center">
+                      <TestTube className="h-5 w-5 text-red-500" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-sm">Nachhaltige Projekte</h3>
+                      <p className="text-xs text-gray-400">Für ein zukunftsfähiges Bielefeld</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Beteilige dich an Projekten, die sich für Nachhaltigkeit und Umweltschutz in Bielefeld einsetzen.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    className="w-full rounded-full text-xs border-red-500/30 text-red-400 hover:bg-red-500/10"
+                    onClick={() => navigate('/chat')}
+                  >
+                    Projekte anschauen
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </section>
+          
+          {/* Werde Partner Section */}
+          <section className="mb-16">
+            <div className="bg-black/40 p-6 rounded-xl border border-red-500/10 shadow-lg">
+              <span className="inline-block py-1 px-2 rounded-full bg-red-500/20 text-red-400 text-xs font-medium mb-2">Werde Partner</span>
+              <h2 className="text-xl font-bold mb-3">Unterstütze lokale Events</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Als Partner kannst du die lokale Eventszene mitgestalten und deine Reichweite ausbauen
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div className="bg-black/40 rounded-lg overflow-hidden border border-red-500/10 p-4">
+                  <div className="flex items-center justify-center mb-3">
+                    <div className="h-12 w-12 rounded-full bg-red-500/20 flex items-center justify-center">
+                      <Calendar className="h-6 w-6 text-red-500" />
+                    </div>
+                  </div>
+                  <h3 className="font-bold text-sm text-center mb-2">Event-Sponsoring</h3>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Unterstütze lokale Events und erhöhe deine Sichtbarkeit in der Community.
+                  </p>
+                </div>
+                
+                <div className="bg-black/40 rounded-lg overflow-hidden border border-red-500/10 p-4">
+                  <div className="flex items-center justify-center mb-3">
+                    <div className="h-12 w-12 rounded-full bg-red-500/20 flex items-center justify-center">
+                      <Globe className="h-6 w-6 text-red-500" />
+                    </div>
+                  </div>
+                  <h3 className="font-bold text-sm text-center mb-2">Venue-Partnerschaften</h3>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Als Veranstaltungsort erreichst du eine engagierte Zielgruppe in Bielefeld.
+                  </p>
+                </div>
+                
+                <div className="bg-black/40 rounded-lg overflow-hidden border border-red-500/10 p-4">
+                  <div className="flex items-center justify-center mb-3">
+                    <div className="h-12 w-12 rounded-full bg-red-500/20 flex items-center justify-center">
+                      <LinkIcon className="h-6 w-6 text-red-500" />
+                    </div>
+                  </div>
+                  <h3 className="font-bold text-sm text-center mb-2">Kooperationen</h3>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Erschließe neue Zielgruppen durch Partnerschaften mit lokalen Initiativen.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="text-center mt-6">
+                <Button 
+                  className="rounded-full px-6 py-2 text-sm bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20"
+                  onClick={() => navigate('/chat')}
+                >
+                  Partner werden
+                </Button>
+              </div>
+            </div>
+          </section>
           
           {/* Features Section - Kompaktere Karten */}
           <section className="mb-16">
@@ -337,6 +456,12 @@ const About = () => {
           </section>
         </div>
       </main>
+
+      <CommunityTest 
+        open={testModalOpen} 
+        onOpenChange={setTestModalOpen} 
+        whatsappUrl={WHATSAPP_URL} 
+      />
     </div>
   );
 };
