@@ -90,7 +90,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
     }
   };
 
-  const handleSendMessage = (customInput?: string) => {
+  const handleSendMessage = async (customInput?: string) => {
     const message = customInput || input;
     if (!message.trim()) return;
     
@@ -128,7 +128,8 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
           text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
           html: `${createResponseHeader("Fehler")}
           <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
-            Es ist ein Fehler aufgetreten. Bitte versuche es später noch einmal.
+            Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. 
+            Bitte versuche es später noch einmal oder formuliere deine Anfrage anders.
           </div>`
         };
         
@@ -226,8 +227,8 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
               </div>
             )}
             
-            {/* Only show example prompts when there are messages but don't add the welcome message box again */}
-            {messages.length > 0 && !messages.some(msg => msg.id !== 'welcome') && (
+            {/* Nur die Beispielanfragen anzeigen, wenn es nur die Begrüßungsnachricht gibt */}
+            {messages.length === 1 && messages[0].id === 'welcome' && (
               <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30 mt-4">
                 <p className="text-sm text-red-200 mb-2">
                   Frag mich zum Beispiel:
@@ -331,8 +332,8 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
                 </div>
               )}
               
-              {/* Only show example prompts when there are messages but don't add the welcome message box again */}
-              {messages.length > 0 && !messages.some(msg => msg.id !== 'welcome') && (
+              {/* Nur die Beispielanfragen anzeigen, wenn es nur die Begrüßungsnachricht gibt */}
+              {messages.length === 1 && messages[0].id === 'welcome' && (
                 <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30 mt-4">
                   <p className="text-sm text-red-200 mb-2">
                     Frag mich zum Beispiel:

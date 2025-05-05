@@ -1,3 +1,4 @@
+
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { fetchWeather } from './weatherUtils';
@@ -129,43 +130,61 @@ export const generateResponse = async (query: string, events: any[]) => {
       console.log('First few next week events:', nextWeekEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
     }
     
-    // Timeout für die Anfrage setzen
+    // Timeout für die Anfrage setzen - erhöht auf 30 Sekunden
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 Sekunden Timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 Sekunden Timeout
     
-    const response = await fetch('https://ykleosfvtqcmqxqihnod.supabase.co/functions/v1/ai-event-chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrbGVvc2Z2dHFjbXF4cWlobm9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA5MzQ0NjIsImV4cCI6MjA1NjUxMDQ2Mn0.70wsZ-c7poYFnbTyXbKrG0b6YPSe-BonMN6kjZ2a2Wo`
-      },
-      body: JSON.stringify({
-        query,
-        timeOfDay: getTimeOfDay(),
-        currentDate: formattedDate,
-        nextWeekStart: nextWeekStartStr,
-        nextWeekEnd: nextWeekEndStr,
-        weather: await fetchWeather(),
-        allEvents: events
-      }),
-      signal: controller.signal
-    });
+    try {
+      const response = await fetch('https://ykleosfvtqcmqxqihnod.supabase.co/functions/v1/ai-event-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrbGVvc2Z2dHFjbXF4cWlobm9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA5MzQ0NjIsImV4cCI6MjA1NjUxMDQ2Mn0.70wsZ-c7poYFnbTyXbKrG0b6YPSe-BonMN6kjZ2a2Wo`
+        },
+        body: JSON.stringify({
+          query,
+          timeOfDay: getTimeOfDay(),
+          currentDate: formattedDate,
+          nextWeekStart: nextWeekStartStr,
+          nextWeekEnd: nextWeekEndStr,
+          weather: await fetchWeather(),
+          allEvents: events
+        }),
+        signal: controller.signal
+      });
 
-    clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      throw new Error('Failed to get AI response');
+      if (!response.ok) {
+        throw new Error(`API-Fehler: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return createResponseHeader("KI-Antwort") + data.response;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('Error in fetch operation:', errorMessage);
+      
+      // Spezifischere Fehlermeldung
+      let userFriendlyError = 'Serverfehler. Bitte versuche es später erneut.';
+      
+      if (errorMessage.includes('abort') || error instanceof DOMException && error.name === 'AbortError') {
+        userFriendlyError = 'Die Anfrage hat zu lange gedauert und wurde abgebrochen.';
+      } else if (errorMessage.includes('NetworkError') || errorMessage.includes('network')) {
+        userFriendlyError = 'Netzwerkfehler. Bitte überprüfe deine Internetverbindung.';
+      } else if (errorMessage.includes('JSON')) {
+        userFriendlyError = 'Fehler beim Parsen der Serverantwort.';
+      } 
+      
+      throw new Error(userFriendlyError);
     }
-
-    const data = await response.json();
-    return createResponseHeader("KI-Antwort") + data.response;
   } catch (error) {
     console.error('Error generating AI response:', error);
     
     // Bei Timeout oder anderen Fehlern, einfache Event-Liste als Fallback anzeigen
     return createResponseHeader("Fehler") + `
       <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm mb-3">
-        Entschuldigung, ich konnte keine KI-Antwort generieren. Hier sind die verfügbaren Events:
+        Entschuldigung, ich konnte keine KI-Antwort generieren: ${error instanceof Error ? error.message : String(error)}. Hier sind die verfügbaren Events:
       </div>
       ${formatEvents(events)}`;
   }
