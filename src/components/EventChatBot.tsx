@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEventContext } from '@/contexts/EventContext';
@@ -16,6 +17,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import ChatMessage from '@/components/chat/ChatMessage';
+import GroupChat from '@/components/GroupChat';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { ChatQuery, USERNAME_KEY } from '@/types/chatTypes';
@@ -50,9 +52,11 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
   const [recentQueries, setRecentQueries] = useState<string[]>([]);
   const [globalQueries, setGlobalQueries] = useState<string[]>([]);
   const [showRecentQueries, setShowRecentQueries] = useState(false);
+  const [activeChatMode, setActiveChatMode] = useState<'ai' | 'community'>('ai');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const welcomeMessageShownRef = useRef(false);
+  const [communityGroupId, setCommunityGroupId] = useState('general');  // Default group ID
 
   // Example prompts that users can click on
   const examplePrompts = [
@@ -118,7 +122,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
 
   useEffect(() => {
     // Add welcome message when chat is opened for the first time
-    if (isChatOpen && messages.length === 0 && !welcomeMessageShownRef.current) {
+    if (isChatOpen && messages.length === 0 && !welcomeMessageShownRef.current && activeChatMode === 'ai') {
       welcomeMessageShownRef.current = true;
       setMessages([
         {
@@ -130,7 +134,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
         }
       ]);
     }
-  }, [isChatOpen, messages.length]);
+  }, [isChatOpen, messages.length, activeChatMode]);
 
   useEffect(() => {
     // Scroll to bottom when new messages are added
@@ -283,6 +287,15 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
         setIsTyping(false);
       }
     }, 800);
+  };
+
+  const handleToggleChatMode = () => {
+    setActiveChatMode(activeChatMode === 'ai' ? 'community' : 'ai');
+    
+    // If switching to community mode and there's a parent toggle function, call it
+    if (activeChatMode === 'ai' && onToggleCommunity) {
+      onToggleCommunity();
+    }
   };
 
   const handleDateSelect = (date: string) => {
@@ -488,7 +501,9 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
         <div className="flex items-center justify-between p-3 border-b border-red-500/20 bg-red-950/30 rounded-t-lg">
           <div className="flex items-center">
             <MessageCircle className="h-5 w-5 text-red-500 mr-2" />
-            <h3 className="font-medium text-red-500">Event-Assistent</h3>
+            <h3 className="font-medium text-red-500">
+              {activeChatMode === 'ai' ? 'Event-Assistent' : 'Community-Chat'}
+            </h3>
           </div>
           <div className="flex items-center space-x-2">
             <DropdownMenu>
@@ -515,112 +530,116 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
         </div>
         
         <ScrollArea className="flex-1 p-3 overflow-y-auto max-h-[calc(100vh-240px)]">
-          <div className="space-y-3 pb-2">
-            {renderMessages()}
-            
-            {isTyping && (
-              <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30">
-                <div className="flex space-x-2 items-center">
-                  <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+          {activeChatMode === 'ai' ? (
+            <div className="space-y-3 pb-2">
+              {renderMessages()}
+              
+              {isTyping && (
+                <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30">
+                  <div className="flex space-x-2 items-center">
+                    <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  </div>
                 </div>
-              </div>
-            )}
-            
-            {/* Display example prompts only if there's just the welcome message */}
-            {messages.length === 1 && messages[0].id === 'welcome' && (
-              <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30 mt-4">
-                <p className="text-sm text-red-200 mb-2">
-                  Frag mich zum Beispiel:
-                </p>
-                <div className="flex flex-col gap-2">
-                  {examplePrompts.map((prompt, index) => (
-                    <Button
-                      key={index}
-                      variant="outline"
-                      className="text-left justify-start bg-red-900/20 hover:bg-red-900/30 text-red-200 border-red-500/30"
-                      onClick={() => handleExamplePromptClick(prompt)}
-                    >
-                      "{prompt}"
-                    </Button>
-                  ))}
+              )}
+              
+              {/* Display example prompts only if there's just the welcome message */}
+              {messages.length === 1 && messages[0].id === 'welcome' && (
+                <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30 mt-4">
+                  <p className="text-sm text-red-200 mb-2">
+                    Frag mich zum Beispiel:
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {examplePrompts.map((prompt, index) => (
+                      <Button
+                        key={index}
+                        variant="outline"
+                        className="text-left justify-start bg-red-900/20 hover:bg-red-900/30 text-red-200 border-red-500/30"
+                        onClick={() => handleExamplePromptClick(prompt)}
+                      >
+                        "{prompt}"
+                      </Button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-            
-            <div ref={messagesEndRef} />
-          </div>
+              )}
+              
+              <div ref={messagesEndRef} />
+            </div>
+          ) : (
+            <GroupChat compact={false} groupId={communityGroupId} groupName="Allgemein" />
+          )}
         </ScrollArea>
         
-        <div className="p-3 border-t border-red-500/20 relative">
-          {renderRecentQueries()}
-          
-          <div className="flex items-center relative">
-            <div className="absolute left-2 flex items-center gap-1 z-10">
-              {/* History button for recent queries */}
-              {globalQueries.length > 0 && (
+        {activeChatMode === 'ai' && (
+          <div className="p-3 border-t border-red-500/20 relative">
+            {renderRecentQueries()}
+            
+            <div className="flex items-center relative">
+              <div className="absolute left-2 flex items-center gap-1 z-10">
+                {/* History button for recent queries */}
+                {globalQueries.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleRecentQueries}
+                    className="h-8 w-8 text-red-400"
+                    title="Community Anfragen"
+                  >
+                    <History className="h-4 w-4" />
+                  </Button>
+                )}
+                
+                {/* Add Event Button */}
+                {onAddEvent && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onAddEvent}
+                    className="h-8 w-8 text-red-400"
+                    title="Event hinzufügen"
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                  </Button>
+                )}
+                
+                {/* Community Button */}
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={toggleRecentQueries}
-                  className="h-8 w-8 text-red-400"
-                  title="Community Anfragen"
-                >
-                  <History className="h-4 w-4" />
-                </Button>
-              )}
-              
-              {/* Add Event Button */}
-              {onAddEvent && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onAddEvent}
-                  className="h-8 w-8 text-red-400"
-                  title="Event hinzufügen"
-                >
-                  <PlusCircle className="h-4 w-4" />
-                </Button>
-              )}
-              
-              {/* Community Button */}
-              {onToggleCommunity && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onToggleCommunity}
+                  onClick={handleToggleChatMode}
                   className="h-8 w-8 text-[#9b87f5]"
                   title="Community"
                 >
                   <Users className="h-4 w-4" />
                 </Button>
-              )}
+              </div>
+              
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Frage nach Events..."
+                className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 pl-28"
+              />
+              <button
+                onClick={() => handleSendMessage()}
+                disabled={!input.trim() || isTyping}
+                className={cn(
+                  "ml-2 rounded-full p-2",
+                  input.trim() && !isTyping
+                    ? "bg-red-500 hover:bg-red-600 text-white"
+                    : "bg-zinc-800 text-zinc-500"
+                )}
+              >
+                <Send className="h-4 w-4" />
+              </button>
             </div>
-            
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Frage nach Events..."
-              className={`flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 ${(globalQueries.length > 0 || onAddEvent || onToggleCommunity) ? 'pl-28' : ''}`}
-            />
-            <button
-              onClick={() => handleSendMessage()}
-              disabled={!input.trim() || isTyping}
-              className={cn(
-                "ml-2 rounded-full p-2",
-                input.trim() && !isTyping
-                  ? "bg-red-500 hover:bg-red-600 text-white"
-                  : "bg-zinc-800 text-zinc-500"
-              )}
-            >
-              <Send className="h-4 w-4" />
-            </button>
           </div>
-        </div>
+        )}
       </div>
     );
   }
@@ -633,7 +652,9 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
           <div className="flex items-center justify-between p-3 border-b border-red-500/20 bg-red-950/30 rounded-t-lg">
             <div className="flex items-center">
               <MessageCircle className="h-5 w-5 text-red-500 mr-2" />
-              <h3 className="font-medium text-red-500">Event-Assistent</h3>
+              <h3 className="font-medium text-red-500">
+                {activeChatMode === 'ai' ? 'Event-Assistent' : 'Community-Chat'}
+              </h3>
             </div>
             <div className="flex items-center space-x-1">
               <DropdownMenu>
@@ -666,113 +687,117 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
           </div>
           
           <ScrollArea className="flex-1 p-3 overflow-y-auto max-h-[350px]">
-            <div className="space-y-3 pb-2">
-              {renderMessages()}
-              
-              {isTyping && (
-                <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30">
-                  <div className="flex space-x-2 items-center">
-                    <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            {activeChatMode === 'ai' ? (
+              <div className="space-y-3 pb-2">
+                {renderMessages()}
+                
+                {isTyping && (
+                  <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30">
+                    <div className="flex space-x-2 items-center">
+                      <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              {/* Display example prompts only if there's just the welcome message */}
-              {messages.length === 1 && messages[0].id === 'welcome' && (
-                <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30 mt-4">
-                  <p className="text-sm text-red-200 mb-2">
-                    Frag mich zum Beispiel:
-                  </p>
-                  <div className="flex flex-col gap-2">
-                    {examplePrompts.map((prompt, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        size="sm"
-                        className="text-left justify-start bg-red-900/20 hover:bg-red-900/30 text-red-200 border-red-500/30 text-xs"
-                        onClick={() => handleExamplePromptClick(prompt)}
-                      >
-                        "{prompt}"
-                      </Button>
-                    ))}
+                )}
+                
+                {/* Display example prompts only if there's just the welcome message */}
+                {messages.length === 1 && messages[0].id === 'welcome' && (
+                  <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30 mt-4">
+                    <p className="text-sm text-red-200 mb-2">
+                      Frag mich zum Beispiel:
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      {examplePrompts.map((prompt, index) => (
+                        <Button
+                          key={index}
+                          variant="outline"
+                          size="sm"
+                          className="text-left justify-start bg-red-900/20 hover:bg-red-900/30 text-red-200 border-red-500/30 text-xs"
+                          onClick={() => handleExamplePromptClick(prompt)}
+                        >
+                          "{prompt}"
+                        </Button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              <div ref={messagesEndRef} />
-            </div>
+                )}
+                
+                <div ref={messagesEndRef} />
+              </div>
+            ) : (
+              <GroupChat compact groupId={communityGroupId} groupName="Allgemein" />
+            )}
           </ScrollArea>
           
-          <div className="p-3 border-t border-red-500/20 relative">
-            {renderRecentQueries()}
-            
-            <div className="flex items-center relative">
-              <div className="absolute left-2 flex items-center gap-1 z-10">
-                {/* History button for recent queries */}
-                {globalQueries.length > 0 && (
+          {activeChatMode === 'ai' && (
+            <div className="p-3 border-t border-red-500/20 relative">
+              {renderRecentQueries()}
+              
+              <div className="flex items-center relative">
+                <div className="absolute left-2 flex items-center gap-1 z-10">
+                  {/* History button for recent queries */}
+                  {globalQueries.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={toggleRecentQueries}
+                      className="h-6 w-6 text-red-400"
+                      title="Community Anfragen"
+                    >
+                      <History className="h-3 w-3" />
+                    </Button>
+                  )}
+                  
+                  {/* Add Event Button */}
+                  {onAddEvent && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={onAddEvent}
+                      className="h-6 w-6 text-red-400"
+                      title="Event hinzufügen"
+                    >
+                      <PlusCircle className="h-3 w-3" />
+                    </Button>
+                  )}
+                  
+                  {/* Community Button */}
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={toggleRecentQueries}
-                    className="h-6 w-6 text-red-400"
-                    title="Community Anfragen"
-                  >
-                    <History className="h-3 w-3" />
-                  </Button>
-                )}
-                
-                {/* Add Event Button */}
-                {onAddEvent && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={onAddEvent}
-                    className="h-6 w-6 text-red-400"
-                    title="Event hinzufügen"
-                  >
-                    <PlusCircle className="h-3 w-3" />
-                  </Button>
-                )}
-                
-                {/* Community Button */}
-                {onToggleCommunity && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={onToggleCommunity}
+                    onClick={handleToggleChatMode}
                     className="h-6 w-6 text-[#9b87f5]"
                     title="Community"
                   >
                     <Users className="h-3 w-3" />
                   </Button>
-                )}
+                </div>
+                
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Frage nach Events..."
+                  className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 pl-24"
+                />
+                <button
+                  onClick={() => handleSendMessage()}
+                  disabled={!input.trim() || isTyping}
+                  className={cn(
+                    "ml-2 rounded-full p-2",
+                    input.trim() && !isTyping
+                      ? "bg-red-500 hover:bg-red-600 text-white"
+                      : "bg-zinc-800 text-zinc-500"
+                  )}
+                >
+                  <Send className="h-4 w-4" />
+                </button>
               </div>
-              
-              <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Frage nach Events..."
-                className={`flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 ${(globalQueries.length > 0 || onAddEvent || onToggleCommunity) ? 'pl-24' : ''}`}
-              />
-              <button
-                onClick={() => handleSendMessage()}
-                disabled={!input.trim() || isTyping}
-                className={cn(
-                  "ml-2 rounded-full p-2",
-                  input.trim() && !isTyping
-                    ? "bg-red-500 hover:bg-red-600 text-white"
-                    : "bg-zinc-800 text-zinc-500"
-                )}
-              >
-                <Send className="h-4 w-4" />
-              </button>
             </div>
-          </div>
+          )}
         </div>
       )}
       

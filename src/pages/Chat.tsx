@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
@@ -35,7 +34,7 @@ const ChatPage = () => {
 
   // Function to toggle community view
   const handleToggleCommunity = () => {
-    setActiveView('community');
+    setActiveView(prev => prev === 'community' ? 'ai' : 'community');
   };
 
   // Get username from localStorage for chat
@@ -118,57 +117,13 @@ const ChatPage = () => {
         </div>
         
         <div className="flex-grow rounded-lg overflow-hidden border border-gray-800 flex flex-col bg-black">
-          <Tabs defaultValue="ai" className="w-full h-full flex flex-col" onValueChange={(val) => setActiveView(val as 'ai' | 'community')}>
-            <div className="border-b border-gray-800 bg-gray-900/30">
-              <TabsList className="h-12 w-full bg-transparent">
-                <TabsTrigger 
-                  value="ai" 
-                  className="flex-1 data-[state=active]:bg-black/50 data-[state=active]:text-red-500"
-                >
-                  <div className="flex items-center gap-2">
-                    <MessageCircle className="h-4 w-4" />
-                    <span>KI Chat</span>
-                  </div>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="community" 
-                  className="flex-1 data-[state=active]:bg-black/50 data-[state=active]:text-[#9b87f5]"
-                >
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    <span>Community</span>
-                  </div>
-                </TabsTrigger>
-              </TabsList>
-            </div>
-            
-            <TabsContent value="ai" className="flex-grow overflow-hidden flex flex-col mt-0 pt-0">
-              <div className="flex-grow relative">
-                <EventChatBot fullPage={true} onAddEvent={handleAddEvent} onToggleCommunity={handleToggleCommunity} />
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="community" className="flex-grow overflow-hidden flex flex-col mt-0 pt-0">
-              <div className="flex-grow flex flex-col items-center justify-center p-6 text-center">
-                <div className="w-full max-w-md bg-gray-900/30 border border-gray-800 rounded-lg p-8">
-                  <MessageSquare className="h-12 w-12 text-[#9b87f5] mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-white mb-2">Verbinde dich mit unserer WhatsApp Community</h3>
-                  <p className="text-gray-400 mb-6">
-                    Tausche dich mit anderen Nutzern aus, teile Events und bleibe immer auf dem Laufenden.
-                  </p>
-                  <div className="flex gap-2 justify-center">
-                    <Button 
-                      className="bg-green-600 hover:bg-green-700 gap-2"
-                      onClick={() => window.open(whatsAppLink, '_blank')}
-                    >
-                      <Link className="h-4 w-4" />
-                      WhatsApp Community beitreten
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+          <div className="flex-grow relative">
+            <EventChatBot 
+              fullPage={true} 
+              onAddEvent={handleAddEvent} 
+              onToggleCommunity={handleToggleCommunity} 
+            />
+          </div>
         </div>
       </div>
       
