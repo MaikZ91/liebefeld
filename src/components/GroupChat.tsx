@@ -61,7 +61,7 @@ const GroupChat: React.FC<GroupChatProps> = ({
     <div className="flex flex-col h-full">
       {/* Show login button if user is not logged in */}
       {(!currentUser || currentUser === 'Gast') ? (
-        <div className="flex flex-col items-center justify-center h-full p-4 bg-[#111827] rounded-lg">
+        <div className="flex flex-col items-center justify-center h-full p-4 bg-black rounded-lg">
           <p className="text-white text-center mb-4">
             Bitte melde dich an, um am Community-Chat teilzunehmen.
           </p>

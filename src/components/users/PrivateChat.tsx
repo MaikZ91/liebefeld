@@ -1,23 +1,29 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send } from 'lucide-react';
-import { UserProfile, PrivateMessage } from '@/types/chatTypes';
-import { privateMessageService } from '@/services/privateMessageService';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { getInitials } from '@/utils/chatUIUtils';
-import { formatDistanceToNow } from 'date-fns';
-import { de } from 'date-fns/locale';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { UserProfile } from '@/types/chatTypes';
+import { Send, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 interface PrivateChatProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  currentUser: string;
+  currentUser?: string;
   otherUser: UserProfile | null;
+}
+
+interface PrivateMessage {
+  id: string;
+  sender: string;
+  recipient: string;
+  content: string;
+  created_at: string;
+  read: boolean;
 }
 
 const PrivateChat: React.FC<PrivateChatProps> = ({
@@ -29,199 +35,232 @@ const PrivateChat: React.FC<PrivateChatProps> = ({
   const [messages, setMessages] = useState<PrivateMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+  const channelRef = useRef<any>(null);
+
+  // Fetch messages when the chat opens and set up realtime subscription
   useEffect(() => {
-    if (open && otherUser) {
-      fetchMessages();
-      markMessagesAsRead();
-      setupRealtimeSubscription();
-    }
-    
+    if (!open || !currentUser || !otherUser) return;
+
+    const fetchMessages = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('private_messages')
+          .select('*')
+          .or(`sender.eq.${currentUser},recipient.eq.${currentUser}`)
+          .or(`sender.eq.${otherUser.username},recipient.eq.${otherUser.username}`)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        setMessages(data || []);
+        
+        // Mark received messages as read
+        const unreadMessages = data?.filter(msg => 
+          msg.recipient === currentUser && 
+          msg.sender === otherUser.username && 
+          !msg.read
+        ) || [];
+        
+        if (unreadMessages.length > 0) {
+          for (const msg of unreadMessages) {
+            await supabase
+              .from('private_messages')
+              .update({ read: true })
+              .eq('id', msg.id);
+          }
+        }
+      } catch (error: any) {
+        console.error('Error fetching private messages:', error);
+        toast({
+          title: "Error",
+          description: `Could not load messages: ${error.message}`,
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMessages();
+    setupRealtimeSubscription();
+
     return () => {
       cleanupRealtimeSubscription();
     };
-  }, [open, otherUser]);
-  
+  }, [open, currentUser, otherUser]);
+
+  // Scroll to bottom when messages change
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
-  
+
+  // Set up realtime subscription
   const setupRealtimeSubscription = () => {
-    if (!otherUser) return;
-    
-    const channel = supabase
-      .channel(`private_messages:${currentUser}_${otherUser.username}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'private_messages',
-        filter: `sender=eq.${otherUser.username},recipient=eq.${currentUser}`
-      }, (payload) => {
-        console.log('Neue private Nachricht erhalten:', payload);
-        const newMessage = payload.new as PrivateMessage;
-        setMessages(prev => [...prev, newMessage]);
-        markMessagesAsRead();
-      })
-      .subscribe();
-      
-    // Speichern Sie den Kanal in einer Referenz
-    realtimeChannelRef.current = channel;
+    if (!currentUser || !otherUser) return;
+
+    try {
+      // Create channel for realtime updates
+      const channel = supabase
+        .channel('private_messages_changes')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'private_messages',
+          filter: `recipient=eq.${currentUser}`
+        }, (payload) => {
+          if (payload.new && payload.new.sender === otherUser.username) {
+            setMessages(prev => [...prev, payload.new as PrivateMessage]);
+            
+            // Mark as read
+            supabase
+              .from('private_messages')
+              .update({ read: true })
+              .eq('id', payload.new.id);
+          }
+        })
+        .subscribe();
+
+      channelRef.current = channel;
+    } catch (error) {
+      console.error('Error setting up realtime subscription:', error);
+    }
   };
-  
-  const realtimeChannelRef = useRef<any>(null);
-  
+
+  // Clean up realtime subscription
   const cleanupRealtimeSubscription = () => {
-    if (realtimeChannelRef.current) {
-      supabase.removeChannel(realtimeChannelRef.current);
-      realtimeChannelRef.current = null;
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
     }
   };
-  
-  const fetchMessages = async () => {
-    if (!otherUser) return;
-    
-    try {
-      setLoading(true);
-      const fetchedMessages = await privateMessageService.getMessages(
-        currentUser,
-        otherUser.username
-      );
-      setMessages(fetchedMessages);
-    } catch (error) {
-      console.error('Fehler beim Abrufen von Nachrichten:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const markMessagesAsRead = async () => {
-    if (!otherUser) return;
-    
-    try {
-      await privateMessageService.markAsRead(
-        otherUser.username,
-        currentUser
-      );
-    } catch (error) {
-      console.error('Fehler beim Markieren von Nachrichten als gelesen:', error);
-    }
-  };
-  
+
+  // Send a new message
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !otherUser) return;
-    
+    if (!newMessage.trim() || !currentUser || !otherUser) return;
+
+    setSending(true);
     try {
-      const message = await privateMessageService.sendMessage(
-        currentUser,
-        otherUser.username,
-        newMessage.trim()
-      );
-      
-      setMessages(prev => [...prev, message]);
+      const { error } = await supabase
+        .from('private_messages')
+        .insert({
+          sender: currentUser,
+          recipient: otherUser.username,
+          content: newMessage.trim(),
+          read: false
+        });
+
+      if (error) throw error;
+
       setNewMessage('');
-    } catch (error) {
-      console.error('Fehler beim Senden der Nachricht:', error);
+    } catch (error: any) {
+      console.error('Error sending private message:', error);
+      toast({
+        title: "Error",
+        description: `Could not send message: ${error.message}`,
+        variant: "destructive"
+      });
+    } finally {
+      setSending(false);
     }
   };
-  
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+
+  // Handle pressing Enter to send
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
-  
-  const formatTime = (dateString: string) => {
-    try {
-      return formatDistanceToNow(new Date(dateString), {
-        addSuffix: true,
-        locale: de
-      });
-    } catch (error) {
-      return 'unbekannt';
-    }
+
+  // Format time for display
+  const formatMessageTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
-  
-  if (!otherUser) return null;
-  
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="flex flex-col h-full p-0">
-        <SheetHeader className="p-4 border-b">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={otherUser.avatar || undefined} alt={otherUser.username} />
-              <AvatarFallback className="bg-purple-800 text-white">
-                {getInitials(otherUser.username)}
-              </AvatarFallback>
-            </Avatar>
-            <SheetTitle className="m-0">{otherUser.username}</SheetTitle>
-          </div>
-        </SheetHeader>
-        
-        <ScrollArea className="flex-1 p-4">
-          {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-purple-500 rounded-full"></div>
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-center text-muted-foreground">
-              <div>
-                <p>Noch keine Nachrichten</p>
-                <p className="text-sm">Senden Sie die erste Nachricht, um die Konversation zu starten</p>
+      <SheetContent className="w-full sm:max-w-md p-0 flex flex-col bg-black text-white border-l border-gray-800" side="right">
+        {otherUser && (
+          <>
+            <SheetHeader className="p-4 border-b border-gray-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={otherUser.avatar} alt={otherUser.username} />
+                    <AvatarFallback className="bg-red-500">{getInitials(otherUser.username)}</AvatarFallback>
+                  </Avatar>
+                  <SheetTitle className="text-white">{otherUser.username}</SheetTitle>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => onOpenChange(false)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
               </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {messages.map((message) => {
-                const isCurrentUser = message.sender === currentUser;
-                
-                return (
+            </SheetHeader>
+            
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {loading ? (
+                <div className="flex justify-center items-center h-full">
+                  <div className="animate-spin h-6 w-6 border-2 border-red-500 border-t-transparent rounded-full"></div>
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="text-center text-gray-400 py-8">
+                  Keine Nachrichten. Starte die Konversation!
+                </div>
+              ) : (
+                messages.map(message => (
                   <div 
                     key={message.id} 
-                    className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${message.sender === currentUser ? 'justify-end' : 'justify-start'}`}
                   >
                     <div 
                       className={`max-w-[80%] rounded-lg p-3 ${
-                        isCurrentUser 
-                          ? 'bg-purple-600 text-white' 
-                          : 'bg-gray-800 text-white'
+                        message.sender === currentUser 
+                          ? 'bg-red-500 text-white' 
+                          : 'bg-gray-900 text-white'
                       }`}
                     >
-                      <div className="text-sm">{message.content}</div>
-                      <div className="text-xs mt-1 opacity-70 text-right">
-                        {formatTime(message.created_at)}
+                      <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                      <div className={`text-xs mt-1 ${message.sender === currentUser ? 'text-red-200' : 'text-gray-400'}`}>
+                        {formatMessageTime(message.created_at)}
                       </div>
                     </div>
                   </div>
-                );
-              })}
+                ))
+              )}
               <div ref={messagesEndRef} />
             </div>
-          )}
-        </ScrollArea>
-        
-        <div className="p-4 border-t mt-auto">
-          <div className="flex gap-2">
-            <Textarea
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={handleKeyPress}
-              placeholder="Schreiben Sie eine Nachricht..."
-              className="min-h-[44px] max-h-24 resize-none"
-            />
-            <Button 
-              onClick={handleSendMessage} 
-              disabled={!newMessage.trim()}
-              className="rounded-full min-w-[40px]"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+            
+            <div className="p-4 border-t border-gray-800">
+              <div className="flex gap-2">
+                <Textarea
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Schreibe eine Nachricht..."
+                  className="bg-black border-gray-800 focus:ring-red-500 focus:border-red-500 min-h-[60px] resize-none"
+                />
+                <Button 
+                  onClick={handleSendMessage} 
+                  disabled={!newMessage.trim() || sending}
+                  className="bg-red-500 hover:bg-red-600 self-end"
+                >
+                  <Send className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
       </SheetContent>
     </Sheet>
   );

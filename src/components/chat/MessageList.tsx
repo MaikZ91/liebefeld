@@ -72,7 +72,7 @@ const MessageList: React.FC<MessageListProps> = ({
   };
 
   return (
-    <div className={`flex-grow p-4 ${isGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto w-full max-w-full h-full flex flex-col`}>
+    <div className={`flex-grow p-4 ${isGroup ? 'bg-black' : 'bg-black'} overflow-y-auto w-full max-w-full h-full flex flex-col`}>
       {loading && (
         <div className="text-center text-gray-500 text-lg font-semibold py-4">Loading messages...</div>
       )}
@@ -98,7 +98,7 @@ const MessageList: React.FC<MessageListProps> = ({
             
             if (isWhatsAppMessage) {
               return (
-                <div key={message.id} className="my-4 p-4 bg-[#1A1F2C] border border-gray-700 rounded-lg">
+                <div key={message.id} className="my-4 p-4 bg-black border border-gray-800 rounded-lg">
                   <div className="text-white font-medium mb-3">
                     Die Community Interaktion findet derzeit auf WhatsApp statt.
                   </div>
@@ -134,9 +134,9 @@ const MessageList: React.FC<MessageListProps> = ({
               <div key={message.id} className="mb-4 w-full max-w-full overflow-hidden">
                 {!isConsecutive && (
                   <div className="flex items-center mb-2">
-                    <Avatar className={`h-8 w-8 mr-2 flex-shrink-0 ${isGroup ? 'border-[#9b87f5]' : ''}`}>
+                    <Avatar className={`h-8 w-8 mr-2 flex-shrink-0 ${isGroup ? 'border-red-500' : ''}`}>
                       <AvatarImage src={message.user_avatar} alt={message.user_name} />
-                      <AvatarFallback>{getInitials(message.user_name)}</AvatarFallback>
+                      <AvatarFallback className="bg-red-500 text-white">{getInitials(message.user_name)}</AvatarFallback>
                     </Avatar>
                     <div className="text-lg font-medium text-white mr-2">{message.user_name}</div>
                     <span className="text-sm text-gray-400">{timeAgo}</span>
@@ -157,7 +157,7 @@ const MessageList: React.FC<MessageListProps> = ({
           <TypingIndicator typingUsers={typingUsers} />
           
           {/* WhatsApp message at the bottom */}
-          <div className="mt-4 p-4 bg-[#1A1F2C] border border-gray-700 rounded-lg">
+          <div className="mt-4 p-4 bg-black border border-gray-800 rounded-lg">
             <div className="text-white font-medium mb-3">
               Die Community Interaktion findet derzeit auf WhatsApp statt.
             </div>

@@ -19,7 +19,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   compact = false
 }) => {
   return (
-    <div className={`px-4 py-3 ${isGroup ? 'bg-[#1A1F2C]' : 'bg-gray-900'} text-white flex items-center justify-between`}>
+    <div className={`px-4 py-3 ${isGroup ? 'bg-black' : 'bg-black'} text-white flex items-center justify-between border-b border-gray-800`}>
       <h3 className="text-xl font-bold">{groupName}</h3>
       <div className="flex items-center space-x-2">
         {isReconnecting ? (

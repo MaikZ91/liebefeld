@@ -62,7 +62,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
               <PopoverTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-2 w-full sm:w-auto"
+                  className="bg-black hover:bg-gray-900 border-gray-800 flex items-center gap-2 w-full sm:w-auto"
                 >
                   <CalendarIcon className="h-4 w-4" />
                   <span>{date ? format(date, "dd.MM.yyyy") : "Datum wählen"}</span>
@@ -85,7 +85,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                     }
                   }}
                   initialFocus
-                  className={cn("p-3 pointer-events-auto bg-gray-900 text-white")}
+                  className={cn("p-3 pointer-events-auto bg-black text-white")}
                 />
               </PopoverContent>
             </Popover>
@@ -112,7 +112,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   return (
     <div 
       className={`p-3 rounded-lg ${isConsecutive ? 'mt-1' : 'mt-2'} ${
-        isGroup ? 'bg-[#111827] text-white' : 'bg-gray-800 text-white'
+        isGroup ? 'bg-black text-white' : 'bg-black text-white'
       } shadow-md w-full max-w-full overflow-hidden break-words`}
     >
       <div className="w-full max-w-full overflow-hidden break-words">

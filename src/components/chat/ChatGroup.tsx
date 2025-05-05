@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, RefreshCw, Paperclip, Calendar, Users } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const messagesRef = useRef<Message[]>([]);
   const channelsRef = useRef<any[]>([]);
+  const sentMessageIds = useRef<Set<string>>(new Set());
   
   const { events } = useEventContext();
   
@@ -388,6 +390,16 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       
       // Create optimistic message
       const tempId = `temp-${Date.now()}`;
+      
+      // Check if this message was already sent (prevent duplicates)
+      if (sentMessageIds.current.has(tempId)) {
+        console.log('Duplicate submission detected, ignoring');
+        return;
+      }
+      
+      // Track this message ID
+      sentMessageIds.current.add(tempId);
+      
       const optimisticMessage: Message = {
         id: tempId,
         created_at: new Date().toISOString(),
@@ -561,11 +573,11 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#111827]">
-      <div className="border-b border-gray-700 bg-[#1A1F2C] py-3 px-4">
+    <div className="flex flex-col h-full bg-black">
+      <div className="border-b border-gray-800 bg-black py-3 px-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <div className="w-10 h-10 rounded-full bg-[#9b87f5] flex items-center justify-center mr-3">
+            <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center mr-3">
               <span className="text-white font-bold">{groupName.slice(0, 1).toUpperCase()}</span>
             </div>
             <div>
@@ -579,7 +591,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 rounded-full p-0 px-2 text-purple-300 hover:text-purple-200 hover:bg-purple-900/20"
+                className="h-8 rounded-full p-0 px-2 text-red-300 hover:text-red-200 hover:bg-red-900/20"
                 onClick={onOpenUserDirectory}
               >
                 <Users className="h-4 w-4 mr-1" />
@@ -601,10 +613,10 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       </div>
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-4 bg-[#111827]">
+        <div className="flex-1 overflow-y-auto p-4 bg-black">
           {loading && (
             <div className="flex items-center justify-center h-full">
-              <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-[#9b87f5] rounded-full"></div>
+              <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-red-500 rounded-full"></div>
             </div>
           )}
           
@@ -631,14 +643,14 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
                       <div className="flex items-center mb-1">
                         <Avatar className="h-8 w-8 mr-2">
                           <AvatarImage src={message.user_avatar} alt={message.user_name} />
-                          <AvatarFallback className="bg-[#9b87f5]">{getInitials(message.user_name)}</AvatarFallback>
+                          <AvatarFallback className="bg-red-500">{getInitials(message.user_name)}</AvatarFallback>
                         </Avatar>
                         <span className="font-medium text-white">{message.user_name}</span>
                         <span className="text-xs text-gray-400 ml-2">{timeAgo}</span>
                       </div>
                     )}
-                    <div className={`ml-10 pl-2 border-l-2 border-[#9b87f5] ${isConsecutive ? 'mt-1' : 'mt-0'}`}>
-                      <div className="bg-[#1A1F2C] rounded-md p-2 text-white break-words">
+                    <div className={`ml-10 pl-2 border-l-2 border-red-500 ${isConsecutive ? 'mt-1' : 'mt-0'}`}>
+                      <div className="bg-black rounded-md p-2 text-white break-words">
                         {message.content}
                       </div>
                     </div>
@@ -668,15 +680,15 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           )}
         </div>
         
-        <div className="p-3 bg-[#1A1F2C] border-t border-gray-700">
+        <div className="p-3 bg-black border-t border-gray-800">
           <form onSubmit={handleSubmit} className="flex items-end gap-2">
-            <div className="flex-1 bg-[#111827] rounded-lg relative">
+            <div className="flex-1 bg-black rounded-lg relative border border-gray-800">
               <Textarea
                 value={newMessage}
                 onChange={handleTyping}
                 onKeyDown={handleKeyPress}
                 placeholder="Schreibe eine Nachricht..."
-                className="min-h-[44px] max-h-24 resize-none bg-[#111827] border-gray-700 focus:ring-[#9b87f5] focus:border-[#9b87f5] placeholder-gray-500 text-white pr-12"
+                className="min-h-[44px] max-h-24 resize-none bg-black border-gray-800 focus:ring-red-500 focus:border-red-500 placeholder-gray-500 text-white pr-12"
               />
               <div className="absolute right-2 bottom-2 flex items-center gap-1">
                 <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
@@ -686,14 +698,14 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[300px] p-0 max-h-[400px]" side="top">
-                    <div className="p-2 border-b border-gray-700">
+                    <div className="p-2 border-b border-gray-800">
                       <div className="flex items-center gap-2">
                         <Search className="h-5 w-5 text-gray-400" />
                         <Input
                           value={eventSearchQuery}
                           onChange={(e) => setEventSearchQuery(e.target.value)}
                           placeholder="Event suchen..."
-                          className="bg-[#111827] border-gray-700"
+                          className="bg-black border-gray-800"
                         />
                       </div>
                     </div>
@@ -705,7 +717,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
                           filteredEvents.map((event) => (
                             <div 
                               key={event.id} 
-                              className="p-2 bg-[#1A1F2C] rounded-md hover:bg-[#262f45] cursor-pointer"
+                              className="p-2 bg-black rounded-md hover:bg-gray-900 cursor-pointer border border-gray-800"
                               onClick={() => handleShareEvent(event)}
                             >
                               <p className="font-medium text-white">{event.title}</p>
@@ -727,7 +739,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
             <Button 
               type="submit" 
               disabled={!newMessage.trim() || isSending}
-              className="bg-[#9b87f5] hover:bg-[#8a76e5] text-white rounded-lg h-10 px-4"
+              className="bg-red-500 hover:bg-red-600 text-white rounded-lg h-10 px-4"
             >
               <Send className="h-5 w-5" />
             </Button>
