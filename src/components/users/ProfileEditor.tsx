@@ -16,15 +16,9 @@ import { Badge } from "@/components/ui/badge";
 import { X, Plus, Upload, MapPin } from 'lucide-react';
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ProfileEditorProps {
   open: boolean;
@@ -54,6 +48,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
   const [favoriteLocations, setFavoriteLocations] = useState<string[]>([]);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
@@ -153,6 +148,15 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     try {
       setUploading(true);
       
+      // Create storage bucket if it doesn't exist
+      const { error: bucketError } = await supabase.storage.getBucket('avatars');
+      if (bucketError && bucketError.message.includes('not found')) {
+        // Create the bucket
+        await supabase.storage.createBucket('avatars', {
+          public: true
+        });
+      }
+      
       // Generate a unique file name
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
@@ -182,6 +186,19 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     } finally {
       setUploading(false);
     }
+  };
+
+  // Filter locations based on search term
+  const filteredLocations = searchTerm 
+    ? locations.filter(loc => 
+        loc.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : locations;
+
+  // Handle location selection
+  const handleSelectLocation = (location: string) => {
+    setSelectedLocation(location);
+    setPopoverOpen(false);
   };
 
   const onSubmit = async (values: z.infer<typeof profileSchema>) => {
@@ -340,24 +357,28 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0 bg-gray-900 border-gray-700 text-white">
                     <Command>
-                      <CommandInput placeholder="Lokation suchen..." className="h-9 border-gray-700" />
+                      <CommandInput 
+                        placeholder="Lokation suchen..." 
+                        className="h-9 border-gray-700" 
+                        value={searchTerm}
+                        onValueChange={setSearchTerm}
+                      />
                       <CommandList>
                         <CommandEmpty>Keine Ergebnisse gefunden.</CommandEmpty>
-                        <CommandGroup>
-                          {locations.map((location) => (
-                            <CommandItem
-                              key={location}
-                              value={location}
-                              onSelect={() => {
-                                setSelectedLocation(location);
-                                setPopoverOpen(false);
-                              }}
-                              className="cursor-pointer hover:bg-gray-800"
-                            >
-                              {location}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
+                        <ScrollArea className="max-h-[200px]">
+                          <CommandGroup>
+                            {filteredLocations.map((location) => (
+                              <CommandItem
+                                key={location}
+                                value={location}
+                                onSelect={() => handleSelectLocation(location)}
+                                className="cursor-pointer hover:bg-gray-800"
+                              >
+                                {location}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </ScrollArea>
                       </CommandList>
                     </Command>
                   </PopoverContent>

@@ -55,6 +55,13 @@ export const useUserProfile = () => {
     }
   };
   
+  // Benutzerprofil aktualisieren nach Änderungen
+  const refreshUserProfile = async () => {
+    if (currentUser !== 'Gast') {
+      await initializeProfile();
+    }
+  };
+  
   // Online-Status beim Initialisieren und regelmäßig aktualisieren
   useEffect(() => {
     if (currentUser !== 'Gast') {
@@ -72,6 +79,7 @@ export const useUserProfile = () => {
     userProfile,
     loading,
     error,
-    updateLastOnline
+    updateLastOnline,
+    refreshUserProfile
   };
 };

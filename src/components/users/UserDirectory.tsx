@@ -12,6 +12,7 @@ import { Grid2x2, List, Sparkles, Heart, UserCog, MapPin } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import ProfileEditor from './ProfileEditor';
 import { userService } from '@/services/userService';
+import { useUserProfile } from '@/hooks/chat/useUserProfile';
 
 interface UserDirectoryProps {
   open: boolean;
@@ -32,6 +33,7 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
   const [viewMode, setViewMode] = useState<'list' | 'gallery'>('gallery');
   const [profileEditorOpen, setProfileEditorOpen] = useState(false);
   const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
+  const { refreshUserProfile } = useUserProfile();
 
   useEffect(() => {
     if (open) {
@@ -96,6 +98,7 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
   const handleProfileUpdate = () => {
     fetchOnlineUsers();
     fetchCurrentUserProfile();
+    refreshUserProfile();
   };
 
   return (
