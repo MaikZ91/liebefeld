@@ -1,9 +1,8 @@
-
 import React, { useEffect } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, MessageSqule, Users, Heart, Link as LinkIcon, Globe, Star, Award, PartyPopper } from 'lucide-react';
+import { Calendar, MessageSquare, Users, Heart, Link as LinkIcon, Globe, Star, Award, PartyPopper } from 'lucide-react';
 import ImageCarousel from '@/components/ImageCarousel';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -73,7 +72,7 @@ const About = () => {
                     }
                   }}
                 >
-                  <MessageSqule className="mr-2 h-5 w-5" />
+                  <MessageSquare className="mr-2 h-5 w-5" />
                   Event-Assistent fragen
                 </Button>
               </div>
@@ -151,7 +150,7 @@ const About = () => {
                     }
                   }}
                 >
-                  <MessageSqule className="mr-2 h-4 w-4" />
+                  <MessageSquare className="mr-2 h-4 w-4" />
                   Assistent jetzt testen
                 </Button>
               </div>
@@ -311,7 +310,7 @@ const features = [
   {
     title: "KI Event-Assistent",
     description: "Frage unseren Assistenten nach passenden Events und erhalte personalisierte Empfehlungen.",
-    icon: MessageSqule
+    icon: MessageSquare
   },
   {
     title: "Community-Chat",
@@ -344,7 +343,7 @@ const assistantFeatures = [
   {
     title: "Einfache Konversation",
     description: "Frage in natürlicher Sprache nach Events oder bestimmten Kategorien.",
-    icon: MessageSqule
+    icon: MessageSquare
   },
   {
     title: "Aktuelle Informationen",
@@ -367,7 +366,7 @@ const communityFeatures = [
   {
     title: "Gruppenunterhaltungen",
     description: "Diskutiere in thematischen Chatgruppen über Musik, Kunst, Sport und mehr.",
-    icon: MessageSqule
+    icon: MessageSquare
   },
   {
     title: "Event-Planung",
