@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
@@ -18,11 +19,13 @@ import {
 } from '@/components/ui/sheet';
 import EventCalendar from '@/components/EventCalendar';
 import EventForm from '@/components/EventForm';
+import LiveTicker from '@/components/LiveTicker';
 
 const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
   const [isAddEventSheetOpen, setIsAddEventSheetOpen] = useState(false);
   const [isEventListSheetOpen, setIsEventListSheetOpen] = useState(false);
+  const { events } = useEventContext();
   
   // Function to show add event modal
   const handleAddEvent = () => {
@@ -86,6 +89,11 @@ const ChatPage = () => {
   return (
     <Layout hideFooter={true}>
       <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
+        {/* Add LiveTicker above chat header */}
+        <div className="mb-2 border border-gray-800/50 rounded-md overflow-hidden bg-black">
+          <LiveTicker events={events} />
+        </div>
+        
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-red-500">Liebefield Chat</h1>
           

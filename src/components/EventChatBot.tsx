@@ -4,7 +4,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useEventContext } from '@/contexts/EventContext';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  MessageCircle, X, Send, ChevronDown, Download, Trash2
+  MessageCircle, X, Send, ChevronDown, Download, Trash2, History
 } from 'lucide-react';
 import { 
   generateResponse, 
@@ -31,8 +31,9 @@ interface EventChatBotProps {
   fullPage?: boolean;
 }
 
-// Local storage key for chat messages
+// Local storage keys
 const CHAT_HISTORY_KEY = 'event-chat-history';
+const CHAT_QUERIES_KEY = 'event-chat-queries';
 
 const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
   const isMobile = useIsMobile();
@@ -43,6 +44,8 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [recentQueries, setRecentQueries] = useState<string[]>([]);
+  const [showRecentQueries, setShowRecentQueries] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const welcomeMessageShownRef = useRef(false);
@@ -54,7 +57,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
     "Gibt es Konzerte im Lokschuppen?"
   ];
 
-  // Load chat history from localStorage
+  // Load chat history and recent queries from localStorage
   useEffect(() => {
     const savedMessages = localStorage.getItem(CHAT_HISTORY_KEY);
     if (savedMessages) {
@@ -68,6 +71,18 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
         console.error('Error parsing saved chat history:', error);
       }
     }
+    
+    const savedQueries = localStorage.getItem(CHAT_QUERIES_KEY);
+    if (savedQueries) {
+      try {
+        const parsedQueries = JSON.parse(savedQueries);
+        if (Array.isArray(parsedQueries)) {
+          setRecentQueries(parsedQueries.slice(0, 3)); // Only store last 3
+        }
+      } catch (error) {
+        console.error('Error parsing saved queries:', error);
+      }
+    }
   }, []);
 
   // Save chat history to localStorage whenever messages change
@@ -76,6 +91,13 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
       localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
     }
   }, [messages]);
+
+  // Save recent queries to localStorage whenever they change
+  useEffect(() => {
+    if (recentQueries.length > 0) {
+      localStorage.setItem(CHAT_QUERIES_KEY, JSON.stringify(recentQueries));
+    }
+  }, [recentQueries]);
 
   useEffect(() => {
     // Initialize the chat bot after a delay
@@ -121,9 +143,21 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
     }
   };
 
+  const updateRecentQueries = (query: string) => {
+    setRecentQueries(prev => {
+      // Filter out duplicates and add new query at the beginning
+      const filteredQueries = prev.filter(q => q !== query);
+      const newQueries = [query, ...filteredQueries].slice(0, 3);
+      return newQueries;
+    });
+  };
+
   const handleSendMessage = async (customInput?: string) => {
     const message = customInput || input;
     if (!message.trim()) return;
+    
+    // Add to recent queries if it's a new query
+    updateRecentQueries(message);
     
     // Detect if this is a calendar-related query
     const isCalendarQuery = /wann|heute|morgen|datum|kalender|tag|monat|events|veranstaltungen|konzerte|party|festival|welche|was gibt|was ist los|was läuft|was passiert/i.test(message);
@@ -259,6 +293,11 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
     });
   };
   
+  // Toggle recent queries dropdown
+  const toggleRecentQueries = () => {
+    setShowRecentQueries(!showRecentQueries);
+  };
+  
   // Expose the handleExternalQuery function to window for access from other components
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -305,6 +344,42 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
         )}
       </div>
     ));
+  };
+
+  // Render recent queries
+  const renderRecentQueries = () => {
+    if (recentQueries.length === 0) return null;
+    
+    return (
+      <div className={`absolute bottom-[60px] left-0 right-0 bg-gray-900/80 backdrop-blur-sm rounded-t-lg border border-red-500/20 transition-all duration-300 ${showRecentQueries ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
+        <div className="p-3 border-b border-red-500/20">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium text-red-400">Letzte Anfragen</h4>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowRecentQueries(false)}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+        <div className="p-2 max-h-[150px] overflow-y-auto">
+          {recentQueries.map((query, index) => (
+            <Button
+              key={index}
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-left text-sm py-2 text-red-200 hover:bg-red-950/30"
+              onClick={() => handleExamplePromptClick(query)}
+            >
+              {query}
+            </Button>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   // If we're in fullPage mode, render a different UI
@@ -354,7 +429,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
               </div>
             )}
             
-            {/* Nur die Beispielanfragen anzeigen, wenn es nur die Begrüßungsnachricht gibt */}
+            {/* Display example prompts only if there's just the welcome message */}
             {messages.length === 1 && messages[0].id === 'welcome' && (
               <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30 mt-4">
                 <p className="text-sm text-red-200 mb-2">
@@ -379,8 +454,21 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
           </div>
         </ScrollArea>
         
-        <div className="p-3 border-t border-red-500/20">
-          <div className="flex items-center">
+        <div className="p-3 border-t border-red-500/20 relative">
+          {renderRecentQueries()}
+          
+          <div className="flex items-center relative">
+            {recentQueries.length > 0 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleRecentQueries}
+                className="absolute left-2 top-1/2 transform -translate-y-1/2 h-8 w-8 text-red-400 z-10"
+              >
+                <History className="h-4 w-4" />
+              </Button>
+            )}
+            
             <input
               ref={inputRef}
               type="text"
@@ -388,7 +476,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Frage nach Events..."
-              className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50"
+              className={`flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 ${recentQueries.length > 0 ? 'pl-10' : ''}`}
             />
             <button
               onClick={() => handleSendMessage()}
@@ -462,7 +550,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
                 </div>
               )}
               
-              {/* Nur die Beispielanfragen anzeigen, wenn es nur die Begrüßungsnachricht gibt */}
+              {/* Display example prompts only if there's just the welcome message */}
               {messages.length === 1 && messages[0].id === 'welcome' && (
                 <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30 mt-4">
                   <p className="text-sm text-red-200 mb-2">
@@ -488,8 +576,21 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
             </div>
           </ScrollArea>
           
-          <div className="p-3 border-t border-red-500/20">
-            <div className="flex items-center">
+          <div className="p-3 border-t border-red-500/20 relative">
+            {renderRecentQueries()}
+            
+            <div className="flex items-center relative">
+              {recentQueries.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleRecentQueries}
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2 h-6 w-6 text-red-400 z-10"
+                >
+                  <History className="h-3 w-3" />
+                </Button>
+              )}
+              
               <input
                 ref={inputRef}
                 type="text"
@@ -497,7 +598,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Frage nach Events..."
-                className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50"
+                className={`flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 ${recentQueries.length > 0 ? 'pl-10' : ''}`}
               />
               <button
                 onClick={() => handleSendMessage()}
