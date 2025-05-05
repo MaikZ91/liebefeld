@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
 import { UserProfile } from "@/types/chatTypes";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from '@/utils/chatUIUtils';
@@ -14,8 +13,9 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { userService } from '@/services/userService';
 import { Badge } from "@/components/ui/badge";
-import { X, Plus } from 'lucide-react';
+import { X, Plus, Upload } from 'lucide-react';
 import { toast } from "sonner";
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProfileEditorProps {
   open: boolean;
@@ -38,10 +38,9 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
   onProfileUpdate
 }) => {
   const [interests, setInterests] = useState<string[]>([]);
-  const [hobbies, setHobbies] = useState<string[]>([]);
   const [newInterest, setNewInterest] = useState('');
-  const [newHobby, setNewHobby] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
@@ -58,8 +57,12 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         username: currentUser.username,
         avatar: currentUser.avatar || '',
       });
-      setInterests(currentUser.interests || []);
-      setHobbies(currentUser.hobbies || []);
+      // Combine both interests and hobbies into a single array
+      const combinedInterests = [
+        ...(currentUser.interests || []),
+        ...(currentUser.hobbies || [])
+      ];
+      setInterests([...new Set(combinedInterests)]); // Remove duplicates
     }
   }, [currentUser, form]);
 
@@ -70,19 +73,57 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     }
   };
 
-  const handleAddHobby = () => {
-    if (newHobby.trim() && !hobbies.includes(newHobby.trim())) {
-      setHobbies([...hobbies, newHobby.trim()]);
-      setNewHobby('');
-    }
-  };
-
   const handleRemoveInterest = (interest: string) => {
     setInterests(interests.filter(i => i !== interest));
   };
 
-  const handleRemoveHobby = (hobby: string) => {
-    setHobbies(hobbies.filter(h => h !== hobby));
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    // Check file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Das Bild ist zu groß. Maximale Größe: 2MB");
+      return;
+    }
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Nur Bilder können hochgeladen werden");
+      return;
+    }
+    
+    try {
+      setUploading(true);
+      
+      // Generate a unique file name
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+      
+      // Upload to Supabase Storage
+      const { error: uploadError, data } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+        
+      if (uploadError) {
+        throw uploadError;
+      }
+      
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+        
+      // Set the avatar URL in the form
+      form.setValue('avatar', publicUrl);
+      toast.success("Bild erfolgreich hochgeladen");
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error("Fehler beim Hochladen des Bildes");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const onSubmit = async (values: z.infer<typeof profileSchema>) => {
@@ -94,7 +135,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         username: values.username,
         avatar: values.avatar || null,
         interests: interests,
-        hobbies: hobbies
+        hobbies: [] // We're now storing everything in interests
       });
       
       // Update local storage with the new username and avatar
@@ -130,6 +171,22 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
                   {getInitials(form.watch('username'))}
                 </AvatarFallback>
               </Avatar>
+              
+              <div className="flex items-center gap-2 mt-2">
+                <label className="cursor-pointer">
+                  <div className="flex items-center gap-2 px-3 py-2 bg-gray-900 border border-gray-700 rounded-md hover:bg-gray-800 transition-colors">
+                    <Upload size={16} />
+                    <span>{uploading ? "Lädt hoch..." : "Bild hochladen"}</span>
+                  </div>
+                  <input 
+                    type="file" 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    disabled={uploading}
+                  />
+                </label>
+              </div>
             </div>
             
             <FormField
@@ -141,24 +198,6 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
                   <FormControl>
                     <Input
                       placeholder="Benutzername eingeben"
-                      {...field}
-                      className="bg-gray-900 border-gray-700"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="avatar"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Avatar URL</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="URL des Avatarbildes"
                       {...field}
                       className="bg-gray-900 border-gray-700"
                     />
@@ -198,44 +237,6 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
                   type="button" 
                   size="icon" 
                   onClick={handleAddInterest}
-                  variant="outline"
-                  className="border-gray-700 text-white"
-                >
-                  <Plus size={16} />
-                </Button>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Hobbys</Label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {hobbies.map((hobby, index) => (
-                  <Badge 
-                    key={index} 
-                    variant="outline" 
-                    className="bg-gray-800 border-gray-700 flex items-center gap-1"
-                  >
-                    {hobby}
-                    <X 
-                      size={14} 
-                      className="cursor-pointer text-gray-400 hover:text-red-400" 
-                      onClick={() => handleRemoveHobby(hobby)}
-                    />
-                  </Badge>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  value={newHobby}
-                  onChange={(e) => setNewHobby(e.target.value)}
-                  placeholder="Neues Hobby"
-                  className="bg-gray-900 border-gray-700"
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddHobby())}
-                />
-                <Button 
-                  type="button" 
-                  size="icon" 
-                  onClick={handleAddHobby}
                   variant="outline"
                   className="border-gray-700 text-white"
                 >
