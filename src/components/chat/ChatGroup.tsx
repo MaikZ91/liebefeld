@@ -15,7 +15,7 @@ import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { groupFutureEventsByDate } from '@/utils/eventUtils';
 import { toast } from '@/hooks/use-toast';
-import { getInitials } from '@/utils/chatUIUtils';
+import { getInitials, formatRelativeTime } from '@/utils/chatUIUtils';
 import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
 

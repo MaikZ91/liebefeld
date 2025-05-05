@@ -99,3 +99,29 @@ export const generatePerfectDayResponse = async (
   // Antwort generieren
   return `Für einen perfekten Tag in Liebefeld empfehle ich dir: ${selectedActivities.join(', ')}. Genieße deinen Tag!`;
 };
+
+/**
+ * Formatiert eine relative Zeitangabe (z.B. "vor 5 Minuten")
+ */
+export const formatRelativeTime = (isoDateString: string): string => {
+  const date = new Date(isoDateString);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const diffInMinutes = Math.floor(diff / (1000 * 60));
+  const diffInHours = Math.floor(diff / (1000 * 3600));
+  const diffInDays = Math.floor(diff / (1000 * 3600 * 24));
+
+  if (diffInMinutes < 1) {
+    return 'jetzt';
+  } else if (diffInMinutes < 60) {
+    return `vor ${diffInMinutes} ${diffInMinutes === 1 ? 'Minute' : 'Minuten'}`;
+  } else if (diffInHours < 24) {
+    return `vor ${diffInHours} ${diffInHours === 1 ? 'Stunde' : 'Stunden'}`;
+  } else if (diffInDays === 1) {
+    return 'gestern';
+  } else if (diffInDays < 7) {
+    return `vor ${diffInDays} Tagen`;
+  } else {
+    return date.toLocaleDateString('de-DE');
+  }
+};
