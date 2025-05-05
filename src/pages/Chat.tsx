@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
@@ -13,6 +12,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import EventCalendar from '@/components/EventCalendar';
 import EventForm from '@/components/EventForm';
 import LiveTicker from '@/components/LiveTicker';
+import { setupService } from '@/services/setupService';
 
 const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
@@ -38,10 +38,14 @@ const ChatPage = () => {
   // WhatsApp community link - Updated with the actual WhatsApp community link
   const whatsAppLink = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
 
-  // Enable realtime messaging when component mounts
+  // Enable realtime messaging when component mounts and ensure default group exists
   useEffect(() => {
-    const enableRealtime = async () => {
+    const setupDatabase = async () => {
       try {
+        // Ensure the default group exists
+        await setupService.ensureDefaultGroupExists();
+        
+        // Enable realtime for chat_messages table
         console.log('Setting up realtime subscription for chat_messages table');
 
         // Direct approach - create a channel and enable realtime
@@ -63,7 +67,8 @@ const ChatPage = () => {
         console.error('Exception in enabling Realtime:', error);
       }
     };
-    enableRealtime();
+    
+    setupDatabase();
   }, []);
 
   // Check if we're on mobile for responsive design adjustments

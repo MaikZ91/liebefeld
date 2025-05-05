@@ -6,6 +6,7 @@ import { Loader2, Send, Paperclip, Calendar } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { EventShare } from '@/types/chatTypes';
+import { messageService } from '@/services/messageService';
 
 interface MessageInputProps {
   username: string;
@@ -40,6 +41,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Ensure we have a valid UUID for groupId
+  const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
 
   const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (onChange) {
@@ -54,7 +58,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
       if (!isTyping && e.target.value.trim()) {
         setIsTyping(true);
         try {
-          const channel = supabase.channel(`typing:${groupId}`);
+          const channel = supabase.channel(`typing:${validGroupId}`);
           channel.subscribe();
           
           // After subscribing, send the typing status
@@ -81,7 +85,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
       typingTimeoutRef.current = setTimeout(() => {
         if (isTyping) {
           try {
-            const channel = supabase.channel(`typing:${groupId}`);
+            const channel = supabase.channel(`typing:${validGroupId}`);
             channel.subscribe();
             
             // After subscribing, send the typing status

@@ -6,6 +6,9 @@ import { Message } from '@/types/chatTypes';
  * Service for message-related operations
  */
 export const messageService = {
+  // Default group ID to use when no specific group is specified
+  DEFAULT_GROUP_ID: '00000000-0000-4000-8000-000000000000',
+  
   /**
    * Enable Realtime for the chat messages table
    * We're using a direct channel approach instead of RPC
@@ -45,12 +48,15 @@ export const messageService = {
    */
   async fetchMessages(groupId: string): Promise<Message[]> {
     try {
-      console.log(`Fetching messages for group ${groupId}`);
+      // Ensure we have a valid UUID for group_id
+      const validGroupId = groupId === 'general' ? this.DEFAULT_GROUP_ID : groupId;
+      
+      console.log(`Fetching messages for group ${validGroupId}`);
       
       const { data, error } = await supabase
         .from('chat_messages')
         .select('*')
-        .eq('group_id', groupId)
+        .eq('group_id', validGroupId)
         .order('created_at', { ascending: true });
 
       if (error) {
@@ -58,7 +64,7 @@ export const messageService = {
         throw error;
       } 
       
-      console.log(`${data?.length || 0} messages received for group ${groupId}`);
+      console.log(`${data?.length || 0} messages received for group ${validGroupId}`);
       
       // Convert messages to expected format
       const formattedMessages: Message[] = (data || []).map(msg => ({
@@ -83,6 +89,9 @@ export const messageService = {
    */
   async markMessagesAsRead(groupId: string, messageIds: string[], username: string): Promise<void> {
     try {
+      // Ensure we have a valid UUID for group_id
+      const validGroupId = groupId === 'general' ? this.DEFAULT_GROUP_ID : groupId;
+      
       for (const messageId of messageIds) {
         const { data, error } = await supabase
           .from('chat_messages')
@@ -125,13 +134,16 @@ export const messageService = {
     mediaUrl: string | null = null
   ): Promise<string | null> {
     try {
-      console.log(`Sending message to group ${groupId} from ${username}`);
+      // Ensure we have a valid UUID for group_id
+      const validGroupId = groupId === 'general' ? this.DEFAULT_GROUP_ID : groupId;
+      
+      console.log(`Sending message to group ${validGroupId} from ${username}`);
       
       // Remove any event_data related fields to avoid schema issues
       const { data, error } = await supabase
         .from('chat_messages')
         .insert([{
-          group_id: groupId,
+          group_id: validGroupId,
           sender: username,
           text: content,
           avatar: avatar,
@@ -149,7 +161,7 @@ export const messageService = {
       console.log(`Message sent successfully with ID: ${data?.id}`);
       
       // Force a refresh by sending a broadcast to update everyone's view
-      const channel = supabase.channel(`force_refresh:${groupId}`);
+      const channel = supabase.channel(`force_refresh:${validGroupId}`);
       await channel.subscribe();
       await channel.send({
         type: 'broadcast',

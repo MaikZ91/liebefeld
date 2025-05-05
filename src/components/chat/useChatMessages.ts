@@ -7,13 +7,17 @@ import { useTypingIndicator } from '@/hooks/chat/useTypingIndicator';
 import { useReconnection } from '@/hooks/chat/useReconnection';
 import { useScrollManagement } from '@/hooks/chat/useScrollManagement';
 import { chatService } from '@/services/chatService';
+import { messageService } from '@/services/messageService';
 
 export const useChatMessages = (groupId: string, username: string) => {
+  // Use a valid UUID for groupId, default to general if not provided
+  const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
+  
   const [messages, setMessages] = useState<Message[]>([]);
   const [lastSeen, setLastSeen] = useState<Date>(new Date());
   const messagesRef = useRef<Message[]>(messages);
   
-  const { fetchMessages, loading, error, setError } = useMessageFetching(groupId);
+  const { fetchMessages, loading, error, setError } = useMessageFetching(validGroupId);
   
   // Update the messages ref whenever messages change
   useEffect(() => {
@@ -22,11 +26,11 @@ export const useChatMessages = (groupId: string, username: string) => {
   
   // Fetch messages when group changes
   useEffect(() => {
-    if (groupId) {
-      console.log(`Group ID changed, fetching messages for: ${groupId}`);
+    if (validGroupId) {
+      console.log(`Group ID changed, fetching messages for: ${validGroupId}`);
       fetchAndSetMessages();
     }
-  }, [groupId]);
+  }, [validGroupId]);
   
   const fetchAndSetMessages = async () => {
     const fetchedMessages = await fetchMessages();
@@ -41,7 +45,7 @@ export const useChatMessages = (groupId: string, username: string) => {
       
       if (unreadMessages.length > 0) {
         chatService.markMessagesAsRead(
-          groupId,
+          validGroupId,
           unreadMessages.map(msg => msg.id),
           username
         );
@@ -58,7 +62,7 @@ export const useChatMessages = (groupId: string, username: string) => {
       
       // Mark message as read if it's from someone else
       if (newMsg.user_name !== username && username) {
-        chatService.markMessagesAsRead(groupId, [newMsg.id], username);
+        chatService.markMessagesAsRead(validGroupId, [newMsg.id], username);
       }
       
       return [...oldMessages, newMsg];
@@ -69,7 +73,7 @@ export const useChatMessages = (groupId: string, username: string) => {
   
   // Set up the subscription
   const { typingUsers } = useMessageSubscription(
-    groupId, 
+    validGroupId, 
     handleNewMessage, 
     fetchAndSetMessages,
     username

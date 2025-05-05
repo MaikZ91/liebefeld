@@ -1,8 +1,10 @@
+
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { AVATAR_KEY, EventShare } from '@/types/chatTypes';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { realtimeService } from '@/services/realtimeService';
+import { messageService } from '@/services/messageService';
 
 export const useMessageSending = (groupId: string, username: string, addOptimisticMessage: (message: any) => void) => {
   const [newMessage, setNewMessage] = useState('');
@@ -24,7 +26,9 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     setIsSending(true);
 
     try {
-      console.log('Sending message to group:', groupId);
+      // Ensure we have a valid UUID for groupId, default to general if not provided
+      const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
+      console.log('Sending message to group:', validGroupId);
       
       let messageContent = trimmedMessage;
       
@@ -42,7 +46,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         content: messageContent,
         user_name: username,
         user_avatar: localStorage.getItem(AVATAR_KEY) || '',
-        group_id: groupId
+        group_id: validGroupId
       };
       
       // Add optimistic message to local state IMMEDIATELY
@@ -53,7 +57,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       
       // Set typing status to not typing
       if (typing) {
-        const channel = supabase.channel(`typing:${groupId}`);
+        const channel = supabase.channel(`typing:${validGroupId}`);
         channel.subscribe();
         
         // After subscribing, send the typing status
@@ -87,13 +91,12 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       const { data, error } = await supabase
         .from('chat_messages')
         .insert([{
-          group_id: groupId,
+          group_id: validGroupId,
           sender: username,
           text: messageContent,
           avatar: localStorage.getItem(AVATAR_KEY),
           media_url: mediaUrl,
           read_by: [username] // The sending person has already read the message
-          // We're not including event_data here to avoid schema issues
         }])
         .select('id')
         .single();
@@ -106,7 +109,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       console.log('Message sent successfully with ID:', data?.id);
       
       // Broadcast to the specific channel for this group
-      await realtimeService.sendToChannel(`messages:${groupId}`, 'new_message', {
+      await realtimeService.sendToChannel(`messages:${validGroupId}`, 'new_message', {
         message: {
           ...optimisticMessage,
           id: data?.id || optimisticMessage.id
@@ -136,10 +139,13 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     // Update typing status
     const isCurrentlyTyping = e.target.value.trim().length > 0;
     
+    // Ensure we have a valid UUID for groupId
+    const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
+    
     if (!typing && isCurrentlyTyping) {
       // Typing begins
       setTyping(true);
-      const channel = supabase.channel(`typing:${groupId}`);
+      const channel = supabase.channel(`typing:${validGroupId}`);
       channel.subscribe();
       
       // After subscribing, send the typing status
@@ -164,7 +170,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     // Set new timeout
     typingTimeoutRef.current = setTimeout(() => {
       if (typing) {
-        const channel = supabase.channel(`typing:${groupId}`);
+        const channel = supabase.channel(`typing:${validGroupId}`);
         channel.subscribe();
         
         // After subscribing, send the typing status

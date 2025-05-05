@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { groupFutureEventsByDate } from "@/utils/eventUtils";
 import { cn } from "@/lib/utils";
+import { messageService } from "@/services/messageService";
 
 type TypingUser = {
   username: string;
@@ -48,7 +48,7 @@ interface GroupChatProps {
   groupName?: string;
 }
 
-const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
+const GroupChat = ({ compact = false, groupId = 'general', groupName }: GroupChatProps) => {
   const [newMessage, setNewMessage] = useState("");
   const [username, setUsername] = useState<string>(() => {
     return localStorage.getItem(USERNAME_KEY) || "";
@@ -68,6 +68,9 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
   const [whatsAppInitialMessageShown, setWhatsAppInitialMessageShown] = useState(false);
   
   const { events, handleRsvpEvent } = useEventContext();
+  
+  // Use valid group ID
+  const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
 
   // WhatsApp community link
   const whatsAppLink = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
@@ -85,15 +88,13 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
       }
     }
     
-    if (!groupId) return;
-
     const fetchMessages = async () => {
       try {
         setIsLoading(true);
         const { data, error } = await supabase
           .from('chat_messages')
           .select('*')
-          .eq('group_id', groupId)
+          .eq('group_id', validGroupId)
           .order('created_at', { ascending: true });
         
         if (error) {
@@ -153,7 +154,7 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
         event: 'INSERT',
         schema: 'public',
         table: 'chat_messages',
-        filter: `group_id=eq.${groupId}`
+        filter: `group_id=eq.${validGroupId}`
       }, (payload) => {
         const newMessage = payload.new as ChatMessage;
         
@@ -171,7 +172,7 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
         event: 'UPDATE',
         schema: 'public',
         table: 'chat_messages',
-        filter: `group_id=eq.${groupId}`
+        filter: `group_id=eq.${validGroupId}`
       }, (payload) => {
         const updatedMessage = payload.new as ChatMessage;
         setMessages(prev => {
@@ -186,7 +187,7 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
       .subscribe();
 
     const typingChannel = supabase
-      .channel(`typing:${groupId}`)
+      .channel(`typing:${validGroupId}`)
       .on('broadcast', { event: 'typing' }, (payload) => {
         const { username, avatar, isTyping } = payload;
         
@@ -239,30 +240,24 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
       supabase.removeChannel(typingChannel);
       clearInterval(typingInterval);
     };
-  }, [groupId, username, whatsAppInitialMessageShown]);
+  }, [validGroupId, username, whatsAppInitialMessageShown]);
 
   // Add WhatsApp community message
-  const addWhatsAppMessage = async () => {
+  const addWhatsAppMessage = () => {
     try {
       setWhatsAppInitialMessageShown(true);
       
       // Create a system message about WhatsApp community
-      const whatsAppMessage = {
-        group_id: groupId || 'general',
+      // Use a temporary ID for the client-side message that won't be sent to the server
+      const systemMessage: ChatMessage = {
+        id: `whatsapp-info-${Date.now()}`,
+        created_at: new Date().toISOString(),
+        group_id: validGroupId,
         sender: 'System',
         text: `Die Community Interaktion findet derzeit auf WhatsApp statt. Bitte treten Sie unserer WhatsApp-Community bei: ${whatsAppLink}`,
         avatar: '',
         read_by: [username || 'System'],
         reactions: []
-      };
-
-      // Only add to UI, don't persist this message
-      const systemMessage: ChatMessage = {
-        id: `whatsapp-info-${Date.now()}`,
-        created_at: new Date().toISOString(),
-        ...whatsAppMessage,
-        reactions: [],
-        read_by: [username || 'System'],
       };
 
       setMessages(prev => ([...prev, systemMessage]));
@@ -292,16 +287,13 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
     try {
       setIsSending(true);
       
-      // Ensure we have a groupId, default to 'general' if not provided
-      const targetGroupId = groupId || 'general';
-      
       let mediaUrl = undefined;
       
       if (fileInputRef.current?.files?.length) {
         const file = fileInputRef.current.files[0];
         const fileExt = file.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-        const filePath = `${targetGroupId}/${fileName}`;
+        const filePath = `${validGroupId}/${fileName}`;
         
         try {
           const { error: uploadError } = await supabase
@@ -332,9 +324,9 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
         messageText = `🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${newMessage}`;
       }
 
-      console.log('Sending message to group:', targetGroupId);
+      console.log('Sending message to group:', validGroupId);
       const newChatMessage = {
-        group_id: targetGroupId,
+        group_id: validGroupId,
         sender: username,
         text: messageText,
         avatar: localStorage.getItem(AVATAR_KEY) || getRandomAvatar(),
@@ -383,7 +375,7 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
       // Send typing status update
       try {
         await supabase
-          .channel(`typing:${targetGroupId}`)
+          .channel(`typing:${validGroupId}`)
           .send({
             type: 'broadcast',
             event: 'typing',
@@ -424,7 +416,7 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
     if (!isTyping && e.target.value.trim()) {
       setIsTyping(true);
       supabase
-        .channel(`typing:${groupId}`)
+        .channel(`typing:${validGroupId}`)
         .send({
           type: 'broadcast',
           event: 'typing',
@@ -443,7 +435,7 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
     typingTimeoutRef.current = setTimeout(() => {
       if (isTyping) {
         supabase
-          .channel(`typing:${groupId}`)
+          .channel(`typing:${validGroupId}`)
           .send({
             type: 'broadcast',
             event: 'typing',
