@@ -98,17 +98,6 @@ const ChatPage = () => {
           <h1 className="text-2xl font-bold text-red-500">Liebefield Chat</h1>
           
           <div className="flex gap-2">
-            {/* Add Event Button */}
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleAddEvent}
-              className="flex items-center gap-1"
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span className="hidden md:inline">Event hinzufügen</span>
-            </Button>
-            
             {/* View Events Button */}
             <Button
               variant="outline"
@@ -118,6 +107,17 @@ const ChatPage = () => {
             >
               <List className="h-4 w-4" />
               <span className="hidden md:inline">Events anzeigen</span>
+            </Button>
+            
+            {/* Add Event Button - Moved next to the other button */}
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleAddEvent}
+              className="flex items-center gap-1"
+            >
+              <PlusCircle className="h-4 w-4" />
+              <span className="hidden md:inline">Event hinzufügen</span>
             </Button>
           </div>
         </div>
