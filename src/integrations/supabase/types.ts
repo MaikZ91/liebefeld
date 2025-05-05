@@ -246,6 +246,7 @@ export type Database = {
         Row: {
           avatar: string | null
           created_at: string | null
+          favorite_locations: string[] | null
           hobbies: string[] | null
           id: string
           interests: string[] | null
@@ -255,6 +256,7 @@ export type Database = {
         Insert: {
           avatar?: string | null
           created_at?: string | null
+          favorite_locations?: string[] | null
           hobbies?: string[] | null
           id?: string
           interests?: string[] | null
@@ -264,6 +266,7 @@ export type Database = {
         Update: {
           avatar?: string | null
           created_at?: string | null
+          favorite_locations?: string[] | null
           hobbies?: string[] | null
           id?: string
           interests?: string[] | null
@@ -274,7 +277,12 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      unique_locations: {
+        Row: {
+          location: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

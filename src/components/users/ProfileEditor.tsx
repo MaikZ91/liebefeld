@@ -13,9 +13,18 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { userService } from '@/services/userService';
 import { Badge } from "@/components/ui/badge";
-import { X, Plus, Upload } from 'lucide-react';
+import { X, Plus, Upload, MapPin } from 'lucide-react';
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface ProfileEditorProps {
   open: boolean;
@@ -41,6 +50,10 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
   const [newInterest, setNewInterest] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [locations, setLocations] = useState<string[]>([]);
+  const [favoriteLocations, setFavoriteLocations] = useState<string[]>([]);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState('');
 
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
@@ -49,6 +62,35 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       avatar: currentUser?.avatar || '',
     },
   });
+
+  // Fetch locations from the database
+  useEffect(() => {
+    async function fetchLocations() {
+      try {
+        const { data, error } = await supabase
+          .from('unique_locations')
+          .select('location');
+          
+        if (error) {
+          console.error('Error fetching locations:', error);
+          return;
+        }
+        
+        // Extract locations from the data
+        const locationList = data
+          .map(item => item.location)
+          .filter(Boolean) as string[];
+          
+        setLocations(locationList);
+      } catch (error) {
+        console.error('Failed to fetch locations:', error);
+      }
+    }
+    
+    if (open) {
+      fetchLocations();
+    }
+  }, [open]);
 
   // Update form when currentUser changes
   useEffect(() => {
@@ -63,6 +105,9 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         ...(currentUser.hobbies || [])
       ];
       setInterests([...new Set(combinedInterests)]); // Remove duplicates
+      
+      // Set favorite locations
+      setFavoriteLocations(currentUser.favorite_locations || []);
     }
   }, [currentUser, form]);
 
@@ -75,6 +120,18 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
 
   const handleRemoveInterest = (interest: string) => {
     setInterests(interests.filter(i => i !== interest));
+  };
+
+  const handleAddLocation = () => {
+    if (selectedLocation && !favoriteLocations.includes(selectedLocation)) {
+      setFavoriteLocations([...favoriteLocations, selectedLocation]);
+      setPopoverOpen(false);
+      setSelectedLocation('');
+    }
+  };
+
+  const handleRemoveLocation = (location: string) => {
+    setFavoriteLocations(favoriteLocations.filter(loc => loc !== location));
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,7 +193,8 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         username: values.username,
         avatar: values.avatar || null,
         interests: interests,
-        hobbies: [] // We now store everything in interests
+        hobbies: [], // We now store everything in interests
+        favorite_locations: favoriteLocations
       });
       
       // Update local storage with the new username and avatar
@@ -240,6 +298,77 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
                   onClick={handleAddInterest}
                   variant="outline"
                   className="border-gray-700 text-white"
+                >
+                  <Plus size={16} />
+                </Button>
+              </div>
+            </div>
+            
+            {/* Lieblingslokationen */}
+            <div className="space-y-2">
+              <Label>Lieblingslokationen</Label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {favoriteLocations.map((location, index) => (
+                  <Badge 
+                    key={index} 
+                    variant="outline" 
+                    className="bg-gray-800 border-gray-700 flex items-center gap-1"
+                  >
+                    {location}
+                    <X 
+                      size={14} 
+                      className="cursor-pointer text-gray-400 hover:text-red-400" 
+                      onClick={() => handleRemoveLocation(location)}
+                    />
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={popoverOpen}
+                      className="w-full justify-between bg-gray-900 border-gray-700 text-white"
+                    >
+                      <div className="flex items-center gap-2">
+                        <MapPin size={16} />
+                        {selectedLocation || "Lokation auswählen"}
+                      </div>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0 bg-gray-900 border-gray-700 text-white">
+                    <Command>
+                      <CommandInput placeholder="Lokation suchen..." className="h-9 border-gray-700" />
+                      <CommandList>
+                        <CommandEmpty>Keine Ergebnisse gefunden.</CommandEmpty>
+                        <CommandGroup>
+                          {locations.map((location) => (
+                            <CommandItem
+                              key={location}
+                              value={location}
+                              onSelect={() => {
+                                setSelectedLocation(location);
+                                setPopoverOpen(false);
+                              }}
+                              className="cursor-pointer hover:bg-gray-800"
+                            >
+                              {location}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <Button 
+                  type="button" 
+                  size="icon" 
+                  onClick={handleAddLocation}
+                  variant="outline"
+                  className="border-gray-700 text-white"
+                  disabled={!selectedLocation}
                 >
                   <Plus size={16} />
                 </Button>

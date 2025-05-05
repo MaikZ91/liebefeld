@@ -4,7 +4,7 @@ import { UserProfile } from "@/types/chatTypes";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from '@/utils/chatUIUtils';
 import { Button } from "@/components/ui/button";
-import { Sparkles, Heart } from 'lucide-react';
+import { Sparkles, Heart, MapPin } from 'lucide-react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 
@@ -80,6 +80,28 @@ const UserGallery: React.FC<UserGalleryProps> = ({
                   {user.hobbies.length > 2 && (
                     <Badge variant="outline" className="text-xs bg-gray-800/50 border-gray-700">
                       +{user.hobbies.length - 2}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {/* Favorite Locations Section */}
+            {user.favorite_locations && user.favorite_locations.length > 0 && (
+              <div className="w-full mb-2">
+                <div className="flex items-center gap-1 mb-1 text-xs text-gray-300">
+                  <MapPin className="h-3 w-3 text-blue-500" />
+                  <span>Lieblingsorte:</span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {user.favorite_locations.slice(0, 2).map((location, index) => (
+                    <Badge key={index} variant="outline" className="text-xs bg-gray-800/50 border-gray-700">
+                      {location}
+                    </Badge>
+                  ))}
+                  {user.favorite_locations.length > 2 && (
+                    <Badge variant="outline" className="text-xs bg-gray-800/50 border-gray-700">
+                      +{user.favorite_locations.length - 2}
                     </Badge>
                   )}
                 </div>

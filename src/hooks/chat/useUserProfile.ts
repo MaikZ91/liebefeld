@@ -31,7 +31,8 @@ export const useUserProfile = () => {
         avatar: avatar || null,
         // Standardwerte für Interessen und Hobbys
         interests: ['Sport', 'Events', 'Kreativität'],
-        hobbies: ['Tanzen', 'Musik', 'Kochen']
+        hobbies: ['Tanzen', 'Musik', 'Kochen'],
+        favorite_locations: []
       });
       
       setUserProfile(profile);

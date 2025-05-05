@@ -65,6 +65,7 @@ export interface UserProfile {
   avatar: string | null;
   interests: string[] | null;
   hobbies: string[] | null;
+  favorite_locations: string[] | null;
   created_at: string;
   last_online: string;
 }

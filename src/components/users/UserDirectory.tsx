@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "@/types/chatTypes";
 import { getInitials } from '@/utils/chatUIUtils';
 import UserGallery from './UserGallery';
-import { Grid2x2, List, Sparkles, Heart, UserCog } from 'lucide-react';
+import { Grid2x2, List, Sparkles, Heart, UserCog, MapPin } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import ProfileEditor from './ProfileEditor';
 import { userService } from '@/services/userService';
@@ -201,7 +201,7 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
                           
                           {/* Hobbies */}
                           {user.hobbies && user.hobbies.length > 0 && (
-                            <div>
+                            <div className="mb-1">
                               <div className="flex items-center gap-1 text-xs text-gray-300">
                                 <Heart className="h-3 w-3 text-red-500" />
                                 <span>Hobbys:</span>
@@ -209,6 +209,23 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
                                   {user.hobbies.map((hobby, index) => (
                                     <Badge key={index} variant="outline" className="text-xs bg-gray-800/50 border-gray-700">
                                       {hobby}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Favorite Locations */}
+                          {user.favorite_locations && user.favorite_locations.length > 0 && (
+                            <div>
+                              <div className="flex items-center gap-1 text-xs text-gray-300">
+                                <MapPin className="h-3 w-3 text-blue-500" />
+                                <span>Lieblingsorte:</span>
+                                <div className="flex flex-wrap gap-1">
+                                  {user.favorite_locations.map((location, index) => (
+                                    <Badge key={index} variant="outline" className="text-xs bg-gray-800/50 border-gray-700">
+                                      {location}
                                     </Badge>
                                   ))}
                                 </div>
