@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEventContext } from '@/contexts/EventContext';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  MessageCircle, X, Send, ChevronDown
+  MessageCircle, X, Send, ChevronDown, Download, Trash2
 } from 'lucide-react';
 import { 
   generateResponse, 
@@ -15,25 +16,30 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
-import ChatMessage from '@/components/chat/ChatMessage'; // Import the ChatMessage component
+import ChatMessage from '@/components/chat/ChatMessage';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface ChatMessage {
   id: string;
   isUser: boolean;
   text: string;
   html?: string;
+  timestamp?: string; // For storing the creation time
 }
 
 interface EventChatBotProps {
   fullPage?: boolean;
 }
 
+// Local storage key for chat messages
+const CHAT_HISTORY_KEY = 'event-chat-history';
+
 const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
   const isMobile = useIsMobile();
   const { events } = useEventContext();
   const { toast } = useToast();
   const [isVisible, setIsVisible] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(fullPage); // Auto open in full page mode
+  const [isChatOpen, setIsChatOpen] = useState(fullPage);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -47,6 +53,29 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
     "Was kann ich am Wochenende machen?",
     "Gibt es Konzerte im Lokschuppen?"
   ];
+
+  // Load chat history from localStorage
+  useEffect(() => {
+    const savedMessages = localStorage.getItem(CHAT_HISTORY_KEY);
+    if (savedMessages) {
+      try {
+        const parsedMessages = JSON.parse(savedMessages);
+        if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
+          setMessages(parsedMessages);
+          welcomeMessageShownRef.current = true; // Skip welcome message if we loaded history
+        }
+      } catch (error) {
+        console.error('Error parsing saved chat history:', error);
+      }
+    }
+  }, []);
+
+  // Save chat history to localStorage whenever messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
+    }
+  }, [messages]);
 
   useEffect(() => {
     // Initialize the chat bot after a delay
@@ -66,7 +95,8 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
           id: 'welcome',
           isUser: false,
           text: 'Willkommen beim Liebefeld Event-Assistent!',
-          html: getWelcomeMessage()
+          html: getWelcomeMessage(),
+          timestamp: new Date().toISOString()
         }
       ]);
     }
@@ -101,7 +131,8 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       isUser: true,
-      text: message
+      text: message,
+      timestamp: new Date().toISOString()
     };
     
     setMessages(prev => [...prev, userMessage]);
@@ -119,7 +150,8 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
           id: `bot-${Date.now()}`,
           isUser: false,
           text: 'Hier sind die Events, die ich gefunden habe.',
-          html: responseHtml
+          html: responseHtml,
+          timestamp: new Date().toISOString()
         };
         
         setMessages(prev => [...prev, botMessage]);
@@ -134,7 +166,8 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
           <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
             Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. 
             Bitte versuche es später noch einmal oder formuliere deine Anfrage anders.
-          </div>`
+          </div>`,
+          timestamp: new Date().toISOString()
         };
         
         setMessages(prev => [...prev, errorMessage]);
@@ -172,6 +205,58 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
     if (e.key === 'Enter') {
       handleSendMessage();
     }
+  };
+  
+  // Clear chat history
+  const clearChatHistory = () => {
+    // Ask for confirmation
+    if (window.confirm("Möchten Sie wirklich den gesamten Chat-Verlauf löschen?")) {
+      localStorage.removeItem(CHAT_HISTORY_KEY);
+      setMessages([]);
+      welcomeMessageShownRef.current = false;
+      // Re-add welcome message
+      setMessages([
+        {
+          id: 'welcome',
+          isUser: false,
+          text: 'Willkommen beim Liebefeld Event-Assistent!',
+          html: getWelcomeMessage(),
+          timestamp: new Date().toISOString()
+        }
+      ]);
+      toast({
+        title: "Chat-Verlauf gelöscht",
+        description: "Der Chat-Verlauf wurde erfolgreich gelöscht.",
+      });
+    }
+  };
+
+  // Export chat history as JSON file
+  const exportChatHistory = () => {
+    if (messages.length === 0) {
+      toast({
+        title: "Keine Nachrichten",
+        description: "Es gibt keine Nachrichten zum Exportieren.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const chatHistoryData = JSON.stringify(messages, null, 2);
+    const blob = new Blob([chatHistoryData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat-history-${format(new Date(), 'yyyy-MM-dd')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Chat-Verlauf exportiert",
+      description: "Der Chat-Verlauf wurde erfolgreich exportiert.",
+    });
   };
   
   // Expose the handleExternalQuery function to window for access from other components
@@ -230,6 +315,28 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
           <div className="flex items-center">
             <MessageCircle className="h-5 w-5 text-red-500 mr-2" />
             <h3 className="font-medium text-red-500">Event-Assistent</h3>
+          </div>
+          <div className="flex items-center space-x-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 bg-gray-800 text-white hover:bg-gray-700">
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-gray-800 border-gray-700 text-white">
+                <DropdownMenuLabel>Chat-Verlauf</DropdownMenuLabel>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem onClick={exportChatHistory} className="cursor-pointer">
+                    <Download className="mr-2 h-4 w-4" />
+                    <span>Exportieren</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={clearChatHistory} className="cursor-pointer text-red-400">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    <span>Löschen</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         
@@ -311,12 +418,34 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
               <MessageCircle className="h-5 w-5 text-red-500 mr-2" />
               <h3 className="font-medium text-red-500">Event-Assistent</h3>
             </div>
-            <button
-              onClick={handleToggleChat}
-              className="text-red-400 hover:text-red-300 transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <div className="flex items-center space-x-1">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 bg-gray-800 text-white hover:bg-gray-700 p-1">
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-gray-800 border-gray-700 text-white">
+                  <DropdownMenuLabel>Chat-Verlauf</DropdownMenuLabel>
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem onClick={exportChatHistory} className="cursor-pointer">
+                      <Download className="mr-2 h-4 w-4" />
+                      <span>Exportieren</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={clearChatHistory} className="cursor-pointer text-red-400">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      <span>Löschen</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button
+                onClick={handleToggleChat}
+                className="h-6 w-6 p-1 text-red-400 hover:text-red-300 transition-colors bg-transparent hover:bg-transparent"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
           
           <ScrollArea className="flex-1 p-3 overflow-y-auto max-h-[350px]">
