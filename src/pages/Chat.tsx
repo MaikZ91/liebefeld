@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
@@ -18,11 +19,13 @@ import {
 } from '@/components/ui/sheet';
 import EventCalendar from '@/components/EventCalendar';
 import EventForm from '@/components/EventForm';
+import LiveTicker from '@/components/LiveTicker';
 
 const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
   const [isAddEventSheetOpen, setIsAddEventSheetOpen] = useState(false);
   const [isEventListSheetOpen, setIsEventListSheetOpen] = useState(false);
+  const { events } = useEventContext();
   
   // Function to show add event modal
   const handleAddEvent = () => {
@@ -112,6 +115,11 @@ const ChatPage = () => {
               <span className="hidden md:inline">Events anzeigen</span>
             </Button>
           </div>
+        </div>
+        
+        {/* Live Ticker */}
+        <div className="mb-4">
+          <LiveTicker events={events} />
         </div>
         
         <div className="flex-grow rounded-lg overflow-hidden border border-gray-800 flex flex-col bg-black">
