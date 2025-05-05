@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { EventShare } from '@/types/chatTypes';
-import EventMessageFormatter from './EventMessageFormatter';
 
 interface ChatMessageProps {
   message: string;
@@ -21,9 +20,16 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     if (eventData) {
       return (
         <div className="space-y-2">
-          <EventMessageFormatter event={eventData} />
+          <div className="p-3 bg-primary/10 rounded-md border border-primary/20">
+            <div className="font-semibold text-sm">{eventData.title}</div>
+            <div className="text-xs mt-1">
+              <div>Datum: {eventData.date} um {eventData.time}</div>
+              {eventData.location && <div>Ort: {eventData.location}</div>}
+              <div>Kategorie: {eventData.category}</div>
+            </div>
+          </div>
           {message && message.trim() !== '' && (
-            <div className="whitespace-pre-wrap mt-2">{message}</div>
+            <div className="whitespace-pre-wrap">{message}</div>
           )}
         </div>
       );

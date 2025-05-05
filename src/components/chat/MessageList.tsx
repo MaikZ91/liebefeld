@@ -35,7 +35,7 @@ const MessageList: React.FC<MessageListProps> = ({
     try {
       if (typeof message.content === 'string' && message.content.includes('🗓️ **Event:')) {
         // Extract event data from formatted message content
-        const eventRegex = /🗓️ \*\*Event: (.*?)\*\*\nDatum: (.*?) um (.*?)\nOrt: (.*?)\nKategorie: (.*?)(?:\nLink: (.*?))?(\n\n|$)/;
+        const eventRegex = /🗓️ \*\*Event: (.*?)\*\*\nDatum: (.*?) um (.*?)\nOrt: (.*?)\nKategorie: (.*?)(\n\n|$)/;
         const match = message.content.match(eventRegex);
         
         if (match) {
@@ -44,8 +44,7 @@ const MessageList: React.FC<MessageListProps> = ({
             date: match[2],
             time: match[3],
             location: match[4],
-            category: match[5],
-            link: match[6] // Extract the link if available
+            category: match[5]
           };
         }
       }
