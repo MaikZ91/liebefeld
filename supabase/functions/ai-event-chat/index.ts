@@ -96,7 +96,7 @@ serve(async (req) => {
     - Nutze rounded-lg p-3 mb-3 für Container-Padding
     `;
 
-    console.log('Sending request to Open Router API with Llama 4 Scout model...');
+    console.log('Sending request to Open Router API with Mistral Small model...');
     
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -107,7 +107,7 @@ serve(async (req) => {
         'X-Title': 'Lovable Chat'
       },
       body: JSON.stringify({
-        model: 'meta-llama/llama-4-scout:free',
+        model: 'mistralai/mistral-small-3.1-24b-instruct:free',
         messages: [
           { role: 'system', content: systemMessage },
           { role: 'user', content: query }
