@@ -73,6 +73,22 @@ serve(async (req) => {
       filteredEvents = filteredEvents.filter(e => e.date === currentDate);
       console.log(`Nach Filterung für "heute": ${filteredEvents.length} Events übrig`);
     }
+    // Filter für "morgen" / "tomorrow"
+    else if (
+      lowercaseQuery.includes("morgen") ||
+      lowercaseQuery.includes("tomorrow") ||
+      lowercaseQuery.includes("nächster tag") ||
+      lowercaseQuery.includes("next day")
+    ) {
+      // Berechne das Datum für morgen
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+      
+      console.log(`Anfrage nach Events für morgen (${tomorrowStr}) erkannt`);
+      filteredEvents = filteredEvents.filter(e => e.date === tomorrowStr);
+      console.log(`Nach Filterung für "morgen": ${filteredEvents.length} Events übrig`);
+    }
     // Filter für "diese Woche" / "this week"
     else if (
       lowercaseQuery.includes("diese woche") ||
