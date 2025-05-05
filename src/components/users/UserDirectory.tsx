@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -6,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "@/types/chatTypes";
 import { getInitials } from '@/utils/chatUIUtils';
+import UserGallery from './UserGallery';
+import { Grid2x2, List } from 'lucide-react';
 
 interface UserDirectoryProps {
   open: boolean;
@@ -23,6 +26,7 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'gallery'>('gallery');
 
   useEffect(() => {
     if (open) {
@@ -87,11 +91,23 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
     onOpenChange(false);
   };
 
+  const toggleViewMode = () => {
+    setViewMode(prev => prev === 'list' ? 'gallery' : 'list');
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-black text-white border border-gray-800">
-        <DialogHeader>
+        <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle className="text-white">Online Benutzer</DialogTitle>
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={toggleViewMode}
+            className="h-8 w-8 border-gray-700 text-white hover:text-red-400 hover:border-red-500"
+          >
+            {viewMode === 'list' ? <Grid2x2 className="h-4 w-4" /> : <List className="h-4 w-4" />}
+          </Button>
         </DialogHeader>
         <div className="py-4">
           {loading ? (
@@ -106,6 +122,12 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
             <div className="text-gray-400 py-4 text-center">
               Keine Benutzer online
             </div>
+          ) : viewMode === 'gallery' ? (
+            <UserGallery 
+              users={users} 
+              currentUsername={currentUsername} 
+              onSelectUser={handleSelectUser} 
+            />
           ) : (
             <ScrollArea className="max-h-[60vh]">
               <div className="space-y-2">
