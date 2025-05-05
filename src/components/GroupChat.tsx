@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -72,6 +73,18 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
   const whatsAppLink = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
 
   useEffect(() => {
+    // Set default username if not already set
+    if (!username) {
+      const randomUsername = `User_${Math.floor(Math.random() * 10000)}`;
+      setUsername(randomUsername);
+      localStorage.setItem(USERNAME_KEY, randomUsername);
+      
+      // Generate and store random avatar if not already set
+      if (!localStorage.getItem(AVATAR_KEY)) {
+        localStorage.setItem(AVATAR_KEY, getRandomAvatar());
+      }
+    }
+    
     if (!groupId) return;
 
     const fetchMessages = async () => {
@@ -274,10 +287,13 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
   };
 
   const handleSendMessage = async (eventData?: any) => {
-    if ((!newMessage.trim() && !fileInputRef.current?.files?.length && !eventData) || !username || !groupId) return;
+    if ((!newMessage.trim() && !fileInputRef.current?.files?.length && !eventData) || !username) return;
 
     try {
       setIsSending(true);
+      
+      // Ensure we have a groupId, default to 'general' if not provided
+      const targetGroupId = groupId || 'general';
       
       let mediaUrl = undefined;
       
@@ -285,23 +301,29 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
         const file = fileInputRef.current.files[0];
         const fileExt = file.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-        const filePath = `${groupId}/${fileName}`;
+        const filePath = `${targetGroupId}/${fileName}`;
         
-        const { error: uploadError } = await supabase
-          .storage
-          .from('chat_media')
-          .upload(filePath, file);
+        try {
+          const { error: uploadError } = await supabase
+            .storage
+            .from('chat_media')
+            .upload(filePath, file);
+            
+          if (uploadError) {
+            console.error('File upload error:', uploadError);
+            throw uploadError;
+          }
           
-        if (uploadError) {
-          throw uploadError;
+          const { data: urlData } = supabase
+            .storage
+            .from('chat_media')
+            .getPublicUrl(filePath);
+            
+          mediaUrl = urlData.publicUrl;
+        } catch (uploadErr) {
+          console.error('File upload failed:', uploadErr);
+          // Continue without the file if upload fails
         }
-        
-        const { data: urlData } = supabase
-          .storage
-          .from('chat_media')
-          .getPublicUrl(filePath);
-          
-        mediaUrl = urlData.publicUrl;
       }
       
       let messageText = newMessage;
@@ -310,27 +332,47 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
         messageText = `🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${newMessage}`;
       }
 
+      console.log('Sending message to group:', targetGroupId);
       const newChatMessage = {
-        group_id: groupId,
+        group_id: targetGroupId,
         sender: username,
         text: messageText,
         avatar: localStorage.getItem(AVATAR_KEY) || getRandomAvatar(),
         media_url: mediaUrl,
-        read_by: [username],
-        reactions: []
+        read_by: [username]
       };
 
+      // Add optimistic message to UI first
+      const tempMessage: ChatMessage = {
+        id: `temp-${Date.now()}`,
+        created_at: new Date().toISOString(),
+        ...newChatMessage,
+        reactions: [],
+        read_by: [username],
+      };
+      
+      setMessages(prev => [...prev, tempMessage]);
+      setNewMessage("");
+      
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+
+      // Send to database
       const { error } = await supabase
         .from('chat_messages')
         .insert(newChatMessage);
 
       if (error) {
-        throw error;
-      }
-
-      setNewMessage("");
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        console.error('Error sending message to database:', error);
+        toast({
+          title: "Fehler beim Senden",
+          description: error.message || "Deine Nachricht konnte nicht gesendet werden.",
+          variant: "destructive"
+        });
+        
+        // Remove the optimistic message on error
+        setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
       }
       
       if (typingTimeoutRef.current) {
@@ -338,17 +380,22 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
         typingTimeoutRef.current = null;
       }
       
-      await supabase
-        .channel(`typing:${groupId}`)
-        .send({
-          type: 'broadcast',
-          event: 'typing',
-          payload: {
-            username,
-            avatar: localStorage.getItem(AVATAR_KEY),
-            isTyping: false
-          }
-        });
+      // Send typing status update
+      try {
+        await supabase
+          .channel(`typing:${targetGroupId}`)
+          .send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: {
+              username,
+              avatar: localStorage.getItem(AVATAR_KEY),
+              isTyping: false
+            }
+          });
+      } catch (typingError) {
+        console.error('Error updating typing status:', typingError);
+      }
         
       setIsTyping(false);
       setIsEventSelectOpen(false);

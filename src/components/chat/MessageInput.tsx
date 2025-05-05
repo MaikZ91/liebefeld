@@ -49,41 +49,60 @@ const MessageInput: React.FC<MessageInputProps> = ({
     
     setNewMessage(e.target.value);
     
-    if (!isTyping && e.target.value.trim()) {
-      setIsTyping(true);
-      supabase
-        .channel(`typing:${groupId}`)
-        .send({
-          type: 'broadcast',
-          event: 'typing',
-          payload: {
-            username,
-            avatar: localStorage.getItem('community_chat_avatar'),
-            isTyping: true
-          }
-        });
-    }
-    
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-    
-    typingTimeoutRef.current = setTimeout(() => {
-      if (isTyping) {
-        supabase
-          .channel(`typing:${groupId}`)
-          .send({
-            type: 'broadcast',
-            event: 'typing',
-            payload: {
-              username,
-              avatar: localStorage.getItem('community_chat_avatar'),
-              isTyping: false
-            }
-          });
-        setIsTyping(false);
+    // Only broadcast typing status if we have a username and groupId
+    if (username && groupId) {
+      if (!isTyping && e.target.value.trim()) {
+        setIsTyping(true);
+        try {
+          const channel = supabase.channel(`typing:${groupId}`);
+          channel.subscribe();
+          
+          // After subscribing, send the typing status
+          setTimeout(() => {
+            channel.send({
+              type: 'broadcast',
+              event: 'typing',
+              payload: {
+                username,
+                avatar: localStorage.getItem('community_chat_avatar'),
+                isTyping: true
+              }
+            });
+          }, 100);
+        } catch (error) {
+          console.error('Error sending typing status:', error);
+        }
       }
-    }, 2000);
+      
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      
+      typingTimeoutRef.current = setTimeout(() => {
+        if (isTyping) {
+          try {
+            const channel = supabase.channel(`typing:${groupId}`);
+            channel.subscribe();
+            
+            // After subscribing, send the typing status
+            setTimeout(() => {
+              channel.send({
+                type: 'broadcast',
+                event: 'typing',
+                payload: {
+                  username,
+                  avatar: localStorage.getItem('community_chat_avatar'),
+                  isTyping: false
+                }
+              });
+            }, 100);
+          } catch (error) {
+            console.error('Error sending typing status:', error);
+          }
+          setIsTyping(false);
+        }
+      }, 2000);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -100,10 +119,14 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
   const handleSubmit = async () => {
     const messageToSend = value !== undefined ? value : newMessage;
-    if (messageToSend.trim() || fileInputRef.current?.files?.length) {
-      await handleSendMessage();
-      if (value === undefined) {
-        setNewMessage("");
+    if ((messageToSend.trim() || fileInputRef.current?.files?.length) && !isSending) {
+      try {
+        await handleSendMessage();
+        if (value === undefined) {
+          setNewMessage("");
+        }
+      } catch (error) {
+        console.error('Error in message submission:', error);
       }
     }
   };
