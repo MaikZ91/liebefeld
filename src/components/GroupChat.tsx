@@ -8,7 +8,7 @@ import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { Button } from '@/components/ui/button';
 import UsernameDialog from './chat/UsernameDialog';
 import { toast } from '@/hooks/use-toast';
-import { UserCircle } from 'lucide-react';
+import { UserCircle, LogIn } from 'lucide-react';
 
 interface GroupChatProps {
   groupId: string;
@@ -57,42 +57,47 @@ const GroupChat: React.FC<GroupChatProps> = ({
     });
   };
 
-  // Anmeldebutton anzeigen, wenn der Benutzer nicht angemeldet ist
-  if (!currentUser || currentUser === 'Gast') {
-    return (
-      <div className="flex flex-col items-center justify-center h-full p-4">
-        <p className="text-white text-center mb-4">
-          Bitte melde dich an, um am Community-Chat teilzunehmen.
-        </p>
-        <Button 
-          onClick={() => setIsUsernameModalOpen(true)} 
-          className="bg-red-500 hover:bg-red-600 text-white"
-        >
-          Anmelden
-        </Button>
-        
-        {/* Benutzernamen-Dialog */}
-        <UsernameDialog
-          isOpen={isUsernameModalOpen}
-          onOpenChange={setIsUsernameModalOpen}
-          onUsernameSet={handleUsernameSet}
-        />
-      </div>
-    );
-  }
-
   return (
     <>
-      <ChatGroup 
-        groupId={validGroupId} 
-        groupName={groupName}
-        onOpenUserDirectory={handleOpenUserDirectory} 
-      />
+      {/* Anmeldebutton anzeigen, wenn der Benutzer nicht angemeldet ist */}
+      {(!currentUser || currentUser === 'Gast') ? (
+        <div className="flex flex-col items-center justify-center h-full p-4">
+          <p className="text-white text-center mb-4">
+            Bitte melde dich an, um am Community-Chat teilzunehmen.
+          </p>
+          <Button 
+            onClick={() => setIsUsernameModalOpen(true)} 
+            className="bg-red-500 hover:bg-red-600 text-white flex items-center gap-2"
+          >
+            <LogIn className="h-4 w-4" />
+            Anmelden
+          </Button>
+        </div>
+      ) : (
+        <ChatGroup 
+          groupId={validGroupId} 
+          groupName={groupName}
+          onOpenUserDirectory={handleOpenUserDirectory} 
+        />
+      )}
 
       {/* Login-Status anzeigen */}
       <div className="fixed bottom-4 right-4 bg-purple-900/80 text-white rounded-full px-3 py-1 text-sm flex items-center shadow-lg">
         <UserCircle className="w-4 h-4 mr-1" />
-        <span>{loading ? "Verbinden..." : `Angemeldet als ${currentUser}`}</span>
+        <span>{loading ? "Verbinden..." : 
+          currentUser && currentUser !== 'Gast' ? 
+          `Angemeldet als ${currentUser}` : 
+          "Nicht angemeldet"}</span>
+        {(!currentUser || currentUser === 'Gast') && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="ml-2 text-xs py-1 px-2 h-auto" 
+            onClick={() => setIsUsernameModalOpen(true)}
+          >
+            Anmelden
+          </Button>
+        )}
       </div>
 
       {/* Benutzerverzeichnis-Dialog */}

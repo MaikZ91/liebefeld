@@ -10,6 +10,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
   const [typing, setTyping] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sentMessageIds = useRef<Set<string>>(new Set());
 
   const handleSubmit = async (event?: React.FormEvent) => {
     if (event) {
@@ -27,6 +28,14 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       console.log('Sending message to group:', groupId);
       
       const tempId = `temp-${Date.now()}`;
+      
+      // Track this temporary ID to prevent duplicate optimistic updates
+      if (sentMessageIds.current.has(tempId)) {
+        console.log('Duplicate message submission detected, ignoring');
+        return;
+      }
+      sentMessageIds.current.add(tempId);
+      
       const optimisticMessage = {
         id: tempId,
         created_at: new Date().toISOString(),

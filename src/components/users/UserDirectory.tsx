@@ -46,7 +46,13 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
       setLoading(true);
       const fetchedUsers = await userService.getUsers();
       setUsers(fetchedUsers);
-      setFilteredUsers(fetchedUsers.filter(user => user.username !== currentUsername));
+      // Changed: Show all users except the current user when searching
+      setFilteredUsers(fetchedUsers.filter(user => 
+        searchQuery.trim() ? 
+          (user.username.toLowerCase().includes(searchQuery.toLowerCase()) && 
+           user.username !== currentUsername) : 
+          user.username !== currentUsername
+      ));
     } catch (error) {
       console.error('Fehler beim Abrufen der Benutzer:', error);
     } finally {
