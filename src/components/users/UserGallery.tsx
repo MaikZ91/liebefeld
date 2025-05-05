@@ -4,8 +4,9 @@ import { UserProfile } from "@/types/chatTypes";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from '@/utils/chatUIUtils';
 import { Button } from "@/components/ui/button";
-import { Users } from 'lucide-react';
+import { Sparkles, Heart } from 'lucide-react';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 
 interface UserGalleryProps {
   users: UserProfile[];
@@ -40,6 +41,50 @@ const UserGallery: React.FC<UserGalleryProps> = ({
               <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
               <span className="text-xs text-gray-400">Online</span>
             </div>
+            
+            {/* Interests Section */}
+            {user.interests && user.interests.length > 0 && (
+              <div className="w-full mb-2">
+                <div className="flex items-center gap-1 mb-1 text-xs text-gray-300">
+                  <Sparkles className="h-3 w-3 text-yellow-500" />
+                  <span>Interessen:</span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {user.interests.slice(0, 2).map((interest, index) => (
+                    <Badge key={index} variant="outline" className="text-xs bg-gray-800/50 border-gray-700">
+                      {interest}
+                    </Badge>
+                  ))}
+                  {user.interests.length > 2 && (
+                    <Badge variant="outline" className="text-xs bg-gray-800/50 border-gray-700">
+                      +{user.interests.length - 2}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {/* Hobbies Section */}
+            {user.hobbies && user.hobbies.length > 0 && (
+              <div className="w-full mb-2">
+                <div className="flex items-center gap-1 mb-1 text-xs text-gray-300">
+                  <Heart className="h-3 w-3 text-red-500" />
+                  <span>Hobbys:</span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {user.hobbies.slice(0, 2).map((hobby, index) => (
+                    <Badge key={index} variant="outline" className="text-xs bg-gray-800/50 border-gray-700">
+                      {hobby}
+                    </Badge>
+                  ))}
+                  {user.hobbies.length > 2 && (
+                    <Badge variant="outline" className="text-xs bg-gray-800/50 border-gray-700">
+                      +{user.hobbies.length - 2}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
             
             {user.username !== currentUsername ? (
               <Button 
