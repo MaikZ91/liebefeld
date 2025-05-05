@@ -7,6 +7,8 @@ import ChatMessage from './ChatMessage';
 import TypingIndicator from './TypingIndicator';
 import { Message, TypingUser, EventShare } from '@/types/chatTypes';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Button } from '@/components/ui/button';
+import { Link } from 'lucide-react';
 
 interface MessageListProps {
   messages: Message[];
@@ -32,15 +34,16 @@ const MessageList: React.FC<MessageListProps> = ({
   chatBottomRef
 }) => {
   const isMobile = useIsMobile();
+  const whatsAppLink = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
   
   // Force scroll to bottom on initial render for mobile
   useEffect(() => {
     if (isMobile && chatBottomRef.current) {
       setTimeout(() => {
         chatBottomRef.current.scrollIntoView({ behavior: 'auto' });
-      }, 300);
+      }, 500);
     }
-  }, [isMobile]);
+  }, [isMobile, chatBottomRef]);
 
   // Parse event data from message content if available
   const parseEventData = (message: Message): EventShare | undefined => {
@@ -69,7 +72,7 @@ const MessageList: React.FC<MessageListProps> = ({
   };
 
   return (
-    <div className={`flex-grow p-4 ${isGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto w-full max-w-full h-full`}>
+    <div className={`flex-grow p-4 ${isGroup ? 'bg-[#1A1F2C]' : 'bg-black'} overflow-y-auto w-full max-w-full h-full flex flex-col`}>
       {loading && (
         <div className="text-center text-gray-500 text-lg font-semibold py-4">Loading messages...</div>
       )}
@@ -78,7 +81,7 @@ const MessageList: React.FC<MessageListProps> = ({
         <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>
       )}
 
-      <ScrollArea className="h-full w-full pr-2" type={isMobile ? "always" : "hover"}>
+      <ScrollArea className="h-full w-full pr-2 flex-grow" type={isMobile ? "always" : "hover"}>
         <div className="flex flex-col space-y-3 w-full max-w-full pb-4">
           {messages.length === 0 && !loading && !error && (
             <div className="text-center text-gray-400 py-4">No messages yet. Start the conversation!</div>
@@ -87,6 +90,30 @@ const MessageList: React.FC<MessageListProps> = ({
           {messages.map((message, index) => {
             const isConsecutive = index > 0 && messages[index - 1].user_name === message.user_name;
             const timeAgo = formatTime(message.created_at);
+            
+            // Check if this is a system message about WhatsApp
+            const isWhatsAppMessage = message.user_name === 'System' && 
+                                      message.content && 
+                                      message.content.includes('WhatsApp');
+            
+            if (isWhatsAppMessage) {
+              return (
+                <div key={message.id} className="my-4 p-4 bg-[#1A1F2C] border border-gray-700 rounded-lg">
+                  <div className="text-white font-medium mb-3">
+                    Die Community Interaktion findet derzeit auf WhatsApp statt.
+                  </div>
+                  <a 
+                    href={whatsAppLink}
+                    target="_blank"
+                    rel="noopener noreferrer" 
+                    className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors"
+                  >
+                    <Link className="h-4 w-4" />
+                    WhatsApp Community beitreten
+                  </a>
+                </div>
+              );
+            }
             
             // Parse event data
             let eventData: EventShare | undefined;
@@ -128,6 +155,23 @@ const MessageList: React.FC<MessageListProps> = ({
           })}
           
           <TypingIndicator typingUsers={typingUsers} />
+          
+          {/* WhatsApp message at the bottom */}
+          <div className="mt-4 p-4 bg-[#1A1F2C] border border-gray-700 rounded-lg">
+            <div className="text-white font-medium mb-3">
+              Die Community Interaktion findet derzeit auf WhatsApp statt.
+            </div>
+            <a 
+              href={whatsAppLink}
+              target="_blank"
+              rel="noopener noreferrer" 
+              className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors"
+            >
+              <Link className="h-4 w-4" />
+              WhatsApp Community beitreten
+            </a>
+          </div>
+          
           <div ref={chatBottomRef} />
         </div>
       </ScrollArea>

@@ -18,6 +18,7 @@ export const useChatMessages = (groupId: string, username: string) => {
   const [lastSeen, setLastSeen] = useState<Date>(new Date());
   const messagesRef = useRef<Message[]>(messages);
   const isMobile = useIsMobile();
+  const [whatsAppMessageAdded, setWhatsAppMessageAdded] = useState(false);
   
   const { fetchMessages, loading, error, setError } = useMessageFetching(validGroupId);
   
@@ -53,6 +54,28 @@ export const useChatMessages = (groupId: string, username: string) => {
         );
       }
     }
+    
+    // Add WhatsApp community message if no messages exist
+    if (fetchedMessages.length === 0 && !whatsAppMessageAdded) {
+      addWhatsAppCommunityMessage();
+    }
+  };
+  
+  // Add WhatsApp community message
+  const addWhatsAppCommunityMessage = () => {
+    const whatsAppLink = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
+    const systemMessage: Message = {
+      id: `whatsapp-info-${Date.now()}`,
+      created_at: new Date().toISOString(),
+      content: `Die Community Interaktion findet derzeit auf WhatsApp statt. Bitte treten Sie unserer WhatsApp-Community bei: ${whatsAppLink}`,
+      user_name: 'System',
+      user_avatar: '',
+      group_id: validGroupId,
+      read_by: username ? [username] : []
+    };
+    
+    setMessages(prev => [...prev, systemMessage]);
+    setWhatsAppMessageAdded(true);
   };
   
   // Handle new messages from subscription
@@ -93,7 +116,7 @@ export const useChatMessages = (groupId: string, username: string) => {
     if (isMobile) {
       const timer = setTimeout(() => {
         initializeScrollPosition();
-      }, 500); // Longer delay for mobile
+      }, 800); // Longer delay for mobile
       
       return () => clearTimeout(timer);
     }
@@ -110,6 +133,7 @@ export const useChatMessages = (groupId: string, username: string) => {
     handleReconnect,
     chatBottomRef,
     chatContainerRef,
-    initializeScrollPosition
+    initializeScrollPosition,
+    addWhatsAppCommunityMessage
   };
 };

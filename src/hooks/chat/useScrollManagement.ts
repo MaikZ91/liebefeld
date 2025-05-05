@@ -36,7 +36,7 @@ export const useScrollManagement = (messages: Message[], typingUsers: any[]) => 
       // Use a slightly longer delay for mobile to ensure DOM is fully rendered
       setTimeout(() => {
         initializeScrollPosition();
-      }, 300);
+      }, 500); // Increased from 300 to 500 for better mobile rendering
     }
   }, [isMobile]);
 
