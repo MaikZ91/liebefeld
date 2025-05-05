@@ -294,8 +294,32 @@ const About = () => {
             </div>
           </section>
 
-          {/* Werde Partner Section - Shortened version */}
+          {/* Features Section - More compact version */}
           <section className="mb-12">
+            <div className="text-center mb-4">
+              <h2 className="text-xl font-bold mb-1">Was THE TRIBE bietet</h2>
+              <p className="text-sm text-muted-foreground">
+                Alles was du für ein lebendiges Bielefeld brauchst
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              {features.map((feature, index) => (
+                <div key={index} className="bg-black/40 p-3 rounded-lg border border-red-500/10 flex items-start">
+                  <div className="h-8 w-8 rounded-full bg-red-500/10 flex items-center justify-center mr-3 flex-shrink-0">
+                    <feature.icon className="h-4 w-4 text-red-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium mb-0.5">{feature.title}</h3>
+                    <p className="text-xs text-muted-foreground">{feature.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Werde Partner Section - Shortened version */}
+          <section className="mb-8">
             <div className="bg-black/40 p-6 rounded-xl border border-red-500/10 shadow-lg">
               <span className="inline-block py-1 px-2 rounded-full bg-red-500/20 text-red-400 text-xs font-medium mb-2">Werde Partner</span>
               <h2 className="text-xl font-bold mb-3">Unterstütze lokale Events</h2>
@@ -339,7 +363,7 @@ const About = () => {
           
           {/* Social Tides Section - Shortened version */}
           <section className="mb-12">
-            <div className="bg-black/40 p-6 rounded-xl border border-red-500/10 shadow-lg">
+            <div className="bg-black/40 p-6 rounded-xl border border-purple-500/10 shadow-lg">
               <span className="inline-block py-1 px-2 rounded-full bg-purple-500/20 text-purple-400 text-xs font-medium mb-2">Social Tides</span>
               <h2 className="text-xl font-bold mb-3">Soziale Initiativen unterstützen</h2>
               
@@ -364,30 +388,6 @@ const About = () => {
                   <p className="text-xs text-gray-400">Beteilige dich an Projekten für ein zukunftsfähiges Bielefeld.</p>
                 </div>
               </div>
-            </div>
-          </section>
-          
-          {/* Features Section - Kompaktere Karten */}
-          <section className="mb-16">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl md:text-3xl font-bold mb-3">Was THE TRIBE bietet</h2>
-              <p className="text-base text-muted-foreground max-w-2xl mx-auto">
-                Alles was du für ein lebendiges Bielefeld brauchst
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {features.map((feature, index) => (
-                <Card key={index} className="hover-scale transition-all duration-300 hover:shadow-md hover:shadow-red-500/10 border-red-500/10">
-                  <CardContent className="p-4">
-                    <div className="h-10 w-10 rounded-full bg-red-500/10 flex items-center justify-center mb-3">
-                      <feature.icon className="h-5 w-5 text-red-500" />
-                    </div>
-                    <h3 className="text-base font-bold mb-1">{feature.title}</h3>
-                    <p className="text-xs text-muted-foreground">{feature.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
             </div>
           </section>
           
