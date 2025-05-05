@@ -15,6 +15,7 @@ interface ChatMessageProps {
   isGroup?: boolean;
   eventData?: EventShare;
   onDateSelect?: (date: string) => void;
+  showDateSelector?: boolean;
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ 
@@ -22,9 +23,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   isConsecutive = false, 
   isGroup = false,
   eventData,
-  onDateSelect
+  onDateSelect,
+  showDateSelector = false
 }) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [calendarOpen, setCalendarOpen] = useState(false);
   
   // Format message content - extract event data if present
   const formatContent = () => {
@@ -32,24 +35,27 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       return <EventMessageFormatter event={eventData} />;
     }
     
-    // Check if message contains a date selection prompt
+    // Check if message contains a date selection prompt or if showDateSelector is true
     const hasDatePrompt = message.toLowerCase().includes('events gibt es heute') || 
-                          message.toLowerCase().includes('events für heute');
+                          message.toLowerCase().includes('events für heute') ||
+                          message.toLowerCase().includes('events am') ||
+                          message.toLowerCase().includes('veranstaltungen') ||
+                          showDateSelector;
     
     if (hasDatePrompt && onDateSelect) {
       return (
         <div className="space-y-2">
           <div className="whitespace-pre-wrap">{message}</div>
           
-          <div className="flex items-center gap-2 mt-2">
-            <Popover>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-3">
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
               <PopoverTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-2"
+                  className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-2 w-full sm:w-auto"
                 >
                   <CalendarIcon className="h-4 w-4" />
-                  <span>{date ? format(date, "yyyy-MM-dd") : "Datum wählen"}</span>
+                  <span>{date ? format(date, "dd.MM.yyyy") : "Datum wählen"}</span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -59,7 +65,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                   onSelect={(newDate) => {
                     if (newDate) {
                       setDate(newDate);
-                      onDateSelect(format(newDate, "yyyy-MM-dd"));
+                      const formattedDate = format(newDate, "yyyy-MM-dd");
+                      setCalendarOpen(false);
+                      setTimeout(() => onDateSelect(formattedDate), 300);
                     }
                   }}
                   initialFocus
@@ -70,14 +78,14 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
             
             <Button 
               variant="default" 
-              className="bg-red-500 hover:bg-red-600"
+              className="bg-red-500 hover:bg-red-600 w-full sm:w-auto"
               onClick={() => {
                 if (date) {
                   onDateSelect(format(date, "yyyy-MM-dd"));
                 }
               }}
             >
-              Für dieses Datum suchen
+              Events anzeigen
             </Button>
           </div>
         </div>

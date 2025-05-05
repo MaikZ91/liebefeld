@@ -212,6 +212,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
             message={message.text} 
             isGroup={false} 
             onDateSelect={handleDateSelect}
+            showDateSelector={message.isUser && message.text.toLowerCase().includes('event')}
           />
         )}
       </div>
