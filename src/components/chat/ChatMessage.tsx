@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { EventShare } from '@/types/chatTypes';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -29,18 +29,28 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
   
+  // Auto-detect if the message looks like a calendar request
+  const detectCalendarRequest = () => {
+    if (!message) return false;
+    
+    const lowerMessage = message.toLowerCase();
+    const dateKeywords = [
+      'wann', 'heute', 'morgen', 'datum', 'kalender', 'tag', 'monat',
+      'events', 'veranstaltungen', 'konzerte', 'party', 'festival',
+      'events gibt es', 'events am', 'events für', 'veranstaltungen am',
+      'welche', 'was gibt', 'was ist los', 'was läuft', 'was passiert'
+    ];
+    
+    return dateKeywords.some(keyword => lowerMessage.includes(keyword)) || showDateSelector;
+  };
+  
   // Format message content - extract event data if present
   const formatContent = () => {
     if (eventData) {
       return <EventMessageFormatter event={eventData} />;
     }
     
-    // Check if message contains a date selection prompt or if showDateSelector is true
-    const hasDatePrompt = message.toLowerCase().includes('events gibt es heute') || 
-                          message.toLowerCase().includes('events für heute') ||
-                          message.toLowerCase().includes('events am') ||
-                          message.toLowerCase().includes('veranstaltungen') ||
-                          showDateSelector;
+    const hasDatePrompt = detectCalendarRequest();
     
     if (hasDatePrompt && onDateSelect) {
       return (
@@ -66,7 +76,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                     if (newDate) {
                       setDate(newDate);
                       const formattedDate = format(newDate, "yyyy-MM-dd");
+                      
+                      // Close the calendar and submit with a small delay
                       setCalendarOpen(false);
+                      
+                      // Auto-submit after date selection
                       setTimeout(() => onDateSelect(formattedDate), 300);
                     }
                   }}

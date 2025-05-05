@@ -95,6 +95,9 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
     const message = customInput || input;
     if (!message.trim()) return;
     
+    // Detect if this is a calendar-related query
+    const isCalendarQuery = /wann|heute|morgen|datum|kalender|tag|monat|events|veranstaltungen|konzerte|party|festival|welche|was gibt|was ist los|was läuft|was passiert/i.test(message);
+    
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       isUser: true,
