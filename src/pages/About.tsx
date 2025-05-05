@@ -281,14 +281,9 @@ const About = () => {
 // Features für die Feature-Section
 const features = [
   {
-    title: "Event-Kalender",
-    description: "Alle lokalen Veranstaltungen übersichtlich im Community-Kalender.",
+    title: "Event-Kalender & KI-Assistent",
+    description: "Entdecke lokale Events und erhalte personalisierte Empfehlungen.",
     icon: Calendar
-  },
-  {
-    title: "KI-Assistent",
-    description: "Erhalte personalisierte Event-Empfehlungen auf Anfrage.",
-    icon: MessageSquare
   },
   {
     title: "Community",
