@@ -217,6 +217,7 @@ serve(async (req) => {
           `Zeit: ${e.time}`,
           `Kategorie: ${e.category}`,
           e.location ? `Ort: ${e.location}` : "",
+          e.link ? `Link: ${e.link}` : "",
         ].filter(Boolean).join("\n")
       )
       .join("\n\n");
@@ -328,10 +329,10 @@ serve(async (req) => {
     // Ersetze Listen-Formatierungen wie "* Item" oder "- Item" in HTML <ul><li> Format
     aiContent = aiContent.replace(/\n[\*\-]\s+(.*?)(?=\n[\*\-]|\n\n|$)/g, (match, item) => {
       // Extract event information if available
-      const titleMatch = item.match(/(.*?) um (.*?) (?:in|bei|im) (.*?) \(Kategorie: (.*?)\)/i);
+      const titleMatch = item.match(/(.*?) um (.*?) (?:in|bei|im) (.*?) \(Kategorie: (.*?)\)(?:\s*\[(.*?)\])?/i);
       if (titleMatch) {
-        const [_, title, time, location, category] = titleMatch;
-        // Format as event card similar to EventCard component
+        const [_, title, time, location, category, link] = titleMatch;
+        // Format as event card similar to EventCard component with link
         return `
           <li class="dark-glass-card rounded-lg p-2 mb-2 hover-scale">
             <div class="flex justify-between items-start gap-1">
@@ -346,6 +347,11 @@ serve(async (req) => {
                     <svg class="w-3 h-3 mr-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
                     <span class="truncate">${location}</span>
                   </div>
+                  ${link ? `
+                  <div class="flex items-center text-blue-400 hover:text-blue-300 max-w-[120px] overflow-hidden">
+                    <svg class="w-3 h-3 mr-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    <a href="${link}" target="_blank" rel="noopener noreferrer" class="truncate underline">Link</a>
+                  </div>` : ''}
                 </div>
               </div>
               <div class="flex items-center gap-2">
@@ -399,4 +405,3 @@ serve(async (req) => {
     });
   }
 });
-

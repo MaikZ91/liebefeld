@@ -28,6 +28,7 @@ export interface EventShare {
   time: string;
   location?: string;
   category: string;
+  link?: string; // Link zur Veranstaltung hinzugefügt
 }
 
 // Message interface used across the application
