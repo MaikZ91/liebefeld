@@ -1,3 +1,4 @@
+
 export const USERNAME_KEY = 'username';
 export const AVATAR_KEY = 'avatar';
 
@@ -27,6 +28,7 @@ export type EventShare = {
   time: string;
   location: string;
   category?: string;
+  link?: string;
 };
 
 // Message interface used across the application

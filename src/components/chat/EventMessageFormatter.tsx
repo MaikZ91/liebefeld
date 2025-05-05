@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { EventShare } from '@/types/chatTypes';
-import { Calendar, Clock, MapPin, Heart } from 'lucide-react';
+import { Calendar, Clock, MapPin, Heart, ExternalLink } from 'lucide-react';
 
 export const EventMessageFormatter: React.FC<{ event: EventShare }> = ({ event }) => {
   return (
@@ -25,6 +25,20 @@ export const EventMessageFormatter: React.FC<{ event: EventShare }> = ({ event }
           <div className="flex items-center text-sm text-gray-300">
             <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
             <span className="break-words overflow-hidden">{event.location}</span>
+          </div>
+        )}
+        
+        {event.link && (
+          <div className="flex items-center text-sm text-blue-400 hover:text-blue-300 mt-1">
+            <ExternalLink className="h-4 w-4 mr-1 flex-shrink-0" />
+            <a 
+              href={event.link} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="break-words overflow-hidden underline"
+            >
+              Event-Link
+            </a>
           </div>
         )}
       </div>

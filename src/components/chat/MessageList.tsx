@@ -51,14 +51,15 @@ const MessageList: React.FC<MessageListProps> = ({
             date: '', // Extract from broader context if needed
             time: eventDiv.getAttribute('data-time') || '',
             location: eventDiv.getAttribute('data-location') || '',
-            category: eventDiv.getAttribute('data-category') || ''
+            category: eventDiv.getAttribute('data-category') || '',
+            link: eventDiv.getAttribute('data-link') || ''
           };
         }
         
         // Legacy pattern for older messages
         if (message.content.includes('🗓️ **Event:')) {
           // Extract event data from formatted message content
-          const eventRegex = /🗓️ \*\*Event: (.*?)\*\*\nDatum: (.*?) um (.*?)\nOrt: (.*?)\nKategorie: (.*?)(\n\n|$)/;
+          const eventRegex = /🗓️ \*\*Event: (.*?)\*\*\nDatum: (.*?) um (.*?)\nOrt: (.*?)\nKategorie: (.*?)(?:\nLink: (.*?))?(\n\n|$)/;
           const match = message.content.match(eventRegex);
           
           if (match) {
@@ -67,7 +68,8 @@ const MessageList: React.FC<MessageListProps> = ({
               date: match[2],
               time: match[3],
               location: match[4],
-              category: match[5]
+              category: match[5],
+              link: match[6] || ''
             };
           }
         }
