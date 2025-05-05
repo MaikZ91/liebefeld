@@ -12,7 +12,7 @@ const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-// Definition der Function-Calling-Spezifikation
+// Function-Calling-Spezifikation definieren
 const functions = [
   {
     name: 'render_event_panel',
@@ -52,28 +52,30 @@ serve(async (req) => {
 
   try {
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
-    const { query, timeOfDay, weather, allEvents, currentDate, nextWeekStart, nextWeekEnd } = await req.json();
+    const { query, timeOfDay, weather, allEvents, nextWeekStart, nextWeekEnd } = await req.json();
     const today = new Date().toISOString().split('T')[0];
 
-    // Datenbank-Events abrufen
+    // Events aus der Datenbank laden
     const { data: dbEvents, error: eventsError } = await supabase
       .from('community_events')
       .select('*')
       .order('date', { ascending: true });
     if (eventsError) throw new Error(`Error fetching events: ${eventsError.message}`);
-
     const events = (allEvents && allEvents.length > 0) ? allEvents : dbEvents;
 
-    // Events formatieren für System-Nachricht
+    // Events für Function-Call aufbereiten
     const formattedEvents = events.map(event => ({
       date: event.date,
-      title: { text: event.title, url: event.url || '' },
-      location: event.location || ''
+      title: { text: event.title, url: event.url ?? '' },
+      location: event.location ?? ''
     }));
 
-    const systemMessage = `Du bist ein hilfreicher Event-Assistent für Liebefeld.\nAktueller Tag: ${today} (YYYY-MM-DD)\nTageszeit: ${timeOfDay}\nWetter: ${weather}\n`;
+    // System-Nachricht mit klarer Formatvorgabe
+    const systemMessage = `Du bist ein Event-Assistent für Liebefeld. ` +
+      `Wenn du antwortest, musst du **ausschließlich** die Funktion render_event_panel aufrufen mit den verfügbaren Events als Argument. ` +
+      `Nutze das JSON-Schema genau.`;
 
-    // Anfrage an Mistral mit Function Calling
+    // API-Call an Mistral mit Function Calling
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -84,7 +86,8 @@ serve(async (req) => {
         model: 'mistralai/mistral-small-3.1-24b-instruct:free',
         messages: [
           { role: 'system', content: systemMessage },
-          { role: 'user',   content: query }
+          { role: 'system', content: `Verfügbare Events: ${JSON.stringify(formattedEvents)}` },
+          { role: 'user', content: query }
         ],
         temperature: 0,
         max_tokens: 1024,
@@ -100,11 +103,10 @@ serve(async (req) => {
 
     let output;
     if (choice.function_call) {
-      // Funktion aufgerufen: JSON-Argumente parsen
+      // Funktion wurde aufgerufen: JSON parsen
       const args = JSON.parse(choice.function_call.arguments);
-      output = args.events; // strukturiertes Event-Array
+      output = args.events;
     } else {
-      // Fallback: textuelle Antwort
       output = choice.content;
     }
 
@@ -114,9 +116,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in AI chat function:', error);
-    const errorResponse = `<div class=\"bg-red-900/20 border border-red-700/30 rounded-lg p-3\">` +
-      `<h5 class=\"font-medium text-sm text-red-600 dark:text-red-400\">Fehler bei der Verarbeitung:</h5>` +
-      `<p class=\"text-sm mt-2\">Entschuldigung, ich konnte deine Anfrage nicht verarbeiten.</p></div>`;
+    const errorResponse = `<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-3">` +
+      `<h5 class="font-medium text-sm text-red-600 dark:text-red-400">Fehler bei der Verarbeitung:</h5>` +
+      `<p class="text-sm mt-2">Entschuldigung, ich konnte deine Anfrage nicht verarbeiten.</p></div>`;
     return new Response(JSON.stringify({ response: errorResponse }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
