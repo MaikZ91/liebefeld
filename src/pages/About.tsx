@@ -38,7 +38,7 @@ const About = () => {
       <CalendarNavbar />
       <main className="flex-grow">
         <div className="container mx-auto px-4 py-6 max-w-5xl animate-fade-in">
-          {/* Hero Section - Kompakter */}
+          {/* Hero Section - Updated with CTA content */}
           <section className="py-12 mb-12 relative overflow-hidden rounded-xl">
             <div className="absolute inset-0 bg-gradient-to-b from-purple-900/30 to-black z-0"></div>
             <div className="absolute inset-0 bg-[url('/lovable-uploads/2653c557-0afe-4690-9d23-0b523cb09e3e.png')] bg-cover bg-center opacity-20 z-[-1]"></div>
@@ -46,7 +46,7 @@ const About = () => {
             <div className="relative z-10 text-center max-w-3xl mx-auto px-4">
               <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-purple-500">THE TRIBE.BI</h1>
               <p className="text-lg md:text-xl text-white/80 mb-6 max-w-2xl mx-auto">
-                Entdecke lokale Events, verbinde dich mit der Community und erlebe ein lebendigeres Bielefeld.
+                Erlebe ein lebendigeres Bielefeld. Sei Teil unserer Bewegung! Entdecke Events und triff neue Menschen.
               </p>
               
               <div className="flex flex-wrap justify-center gap-3">
@@ -219,33 +219,6 @@ const About = () => {
                 >
                   <MessageSquare className="mr-1 h-3 w-3" />
                   AI-Assistent fragen
-                </Button>
-              </div>
-            </div>
-          </section>
-          
-          {/* CTA Section - Kompakter */}
-          <section className="mb-12">
-            <div className="rounded-xl p-6 text-center relative overflow-hidden bg-gradient-to-r from-red-950/30 to-purple-950/30">
-              <h2 className="text-2xl font-bold mb-3">Erlebe ein lebendigeres Bielefeld</h2>
-              <p className="text-base text-muted-foreground max-w-xl mx-auto mb-4">
-                Sei Teil unserer Bewegung! Entdecke Events und triff neue Menschen.
-              </p>
-              <div className="flex flex-wrap justify-center gap-3">
-                <Button 
-                  className="rounded-full shadow-md hover:shadow-lg transition-all bg-red-500 hover:bg-red-600 px-6"
-                  onClick={() => navigate('/chat')}
-                >
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Events entdecken
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="rounded-full border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 px-6"
-                  onClick={() => navigate('/chat')}
-                >
-                  <Users className="mr-2 h-4 w-4" />
-                  Community beitreten
                 </Button>
               </div>
             </div>
