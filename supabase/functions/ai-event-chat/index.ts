@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
@@ -231,12 +230,9 @@ serve(async (req) => {
       )
       .join("\n\n");
 
-    // Informationen über die Gesamtanzahl der Events und die Filtermethode hinzufügen
-    const totalEventsInfo = `Es gibt insgesamt ${dbEvents.length} Events in der Datenbank. Ich habe dir die ${filteredEvents.length} relevantesten basierend auf deiner Anfrage ausgewählt.`;
-    
+    // Informationen über die Gesamtanzahl der Events ohne Details für die Filtermethode
     const systemMessage =
       `Du bist ein Event‑Assistent für Liebefeld. Aktuelles Datum: ${today}.\n` +
-      `${totalEventsInfo}\n` +
       `Hier die Events:\n${formattedEvents}`;
 
     /***************************
@@ -334,8 +330,8 @@ serve(async (req) => {
     const aiContent: string = choice.message?.content ?? 
       (choice.message?.function_call ? JSON.stringify(choice.message.function_call) : "Keine Antwort erhalten");
 
-    // Füge einen Hinweis zum verwendeten Modell und zur Anzahl der gefilterten Events hinzu
-    const modelInfo = parsed?.model ? `<p class="text-xs text-gray-400 mt-2">Powered by ${parsed.model} • ${filteredEvents.length} relevante Events aus ${dbEvents.length} analysiert</p>` : '';
+    // Füge nur einen Hinweis zum verwendeten Modell hinzu, ohne die Anzahl der Events zu nennen
+    const modelInfo = parsed?.model ? `<p class="text-xs text-gray-400 mt-2">Powered by ${parsed.model}</p>` : '';
     const finalHtml = `${aiContent}${modelInfo}${debugHtml}`;
 
     return new Response(JSON.stringify({ response: finalHtml }), {
