@@ -1,4 +1,3 @@
-
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { fetchWeather } from './weatherUtils';
@@ -78,9 +77,6 @@ export const formatEvents = (events: any[]) => {
           </div>
         </div>
         ${event.description ? `<p class="text-xs mt-1 text-gray-300">${event.description}</p>` : ''}
-        <div class="mt-1">
-          <span class="text-xs text-red-500">❤️ ${event.likes || 0}</span>
-        </div>
       </div>
     `;
   });
