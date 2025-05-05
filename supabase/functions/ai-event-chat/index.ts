@@ -17,7 +17,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
+  try {  
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
     const { query, timeOfDay, weather, allEvents, currentDate, nextWeekStart, nextWeekEnd } = await req.json();
     
@@ -107,7 +107,7 @@ serve(async (req) => {
         'X-Title': 'Lovable Chat'
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-exp:free',
+        model: 'meta-llama/llama-4-scout:free',
         messages: [
           { role: 'system', content: systemMessage },
           { role: 'user', content: query }
