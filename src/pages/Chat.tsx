@@ -89,6 +89,11 @@ const ChatPage = () => {
   return (
     <Layout hideFooter={true}>
       <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
+        {/* Live Ticker - Moved above the title */}
+        <div className="mb-4">
+          <LiveTicker events={events} />
+        </div>
+        
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-red-500">Liebefield Chat</h1>
           
@@ -115,11 +120,6 @@ const ChatPage = () => {
               <span className="hidden md:inline">Events anzeigen</span>
             </Button>
           </div>
-        </div>
-        
-        {/* Live Ticker */}
-        <div className="mb-4">
-          <LiveTicker events={events} />
         </div>
         
         <div className="flex-grow rounded-lg overflow-hidden border border-gray-800 flex flex-col bg-black">
