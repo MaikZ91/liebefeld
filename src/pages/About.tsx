@@ -125,31 +125,7 @@ const About = () => {
             </div>
           </section>
           
-          {/* Features Section - Kompaktere Karten */}
-          <section className="mb-16">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl md:text-3xl font-bold mb-3">Was THE TRIBE bietet</h2>
-              <p className="text-base text-muted-foreground max-w-2xl mx-auto">
-                Alles was du für ein lebendiges Bielefeld brauchst
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {features.map((feature, index) => (
-                <Card key={index} className="hover-scale transition-all duration-300 hover:shadow-md hover:shadow-red-500/10 border-red-500/10">
-                  <CardContent className="p-4">
-                    <div className="h-10 w-10 rounded-full bg-red-500/10 flex items-center justify-center mb-3">
-                      <feature.icon className="h-5 w-5 text-red-500" />
-                    </div>
-                    <h3 className="text-base font-bold mb-1">{feature.title}</h3>
-                    <p className="text-xs text-muted-foreground">{feature.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
-          
-          {/* Combined Event Calendar & AI Assistant Section */}
+          {/* KI-Event-Plattform Section - Improved calendar and chat display, moved after Community */}
           <section className="mb-16">
             <div className="bg-black/40 p-6 rounded-xl border border-red-500/10 shadow-lg">
               <span className="inline-block py-1 px-2 rounded-full bg-red-500/20 text-red-400 text-xs font-medium mb-2">KI-Event-Plattform</span>
@@ -159,39 +135,130 @@ const About = () => {
               </p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                {/* Left: Calendar Preview */}
-                <div className="relative h-48 bg-black/40 rounded-lg overflow-hidden border border-red-500/10">
-                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-transparent to-black/60">
-                    <Calendar className="h-20 w-20 text-red-500/20 absolute" />
-                    <div className="relative z-10 text-center p-3">
-                      <h4 className="font-medium text-sm mb-1">Event-Kalender</h4>
-                      <p className="text-xs text-red-300/70">Alle lokalen Events auf einen Blick</p>
-                      <div className="mt-3 flex flex-wrap gap-1 justify-center">
-                        <span className="text-[8px] bg-red-500/10 px-1 py-0.5 rounded">Electric Circle Vol.3</span>
-                        <span className="text-[8px] bg-red-500/10 px-1 py-0.5 rounded">Tribe Stammtisch</span>
-                        <span className="text-[8px] bg-red-500/10 px-1 py-0.5 rounded">+15 mehr</span>
+                {/* Left: Enhanced Calendar Preview */}
+                <div className="relative bg-black/40 rounded-lg overflow-hidden border border-red-500/10 p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <h4 className="font-medium text-sm text-white">Event-Kalender</h4>
+                    <span className="text-xs bg-red-500/20 px-2 py-0.5 rounded-full text-red-400">Mai 2025</span>
+                  </div>
+                  
+                  {/* Calendar Grid */}
+                  <div className="grid grid-cols-7 gap-1 mb-2">
+                    {/* Day headers */}
+                    {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day) => (
+                      <div key={day} className="text-center text-xs text-gray-400 p-1">{day}</div>
+                    ))}
+                    
+                    {/* Calendar days (first row) */}
+                    {[null, null, 1, 2, 3, 4, 5].map((day, i) => (
+                      <div key={`week1-${i}`} className={`text-center p-1 text-xs rounded-full ${day === 3 ? 'bg-red-500 text-white' : day ? 'hover:bg-gray-800' : ''}`}>
+                        {day}
                       </div>
+                    ))}
+                    
+                    {/* Calendar days (second row) */}
+                    {[6, 7, 8, 9, 10, 11, 12].map((day, i) => (
+                      <div key={`week2-${i}`} className={`text-center p-1 text-xs rounded-full ${day === 10 ? 'bg-red-500/20 text-red-400 ring-1 ring-red-500/30' : 'hover:bg-gray-800'}`}>
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Event Cards */}
+                  <div className="space-y-2">
+                    <div className="bg-red-950/30 border border-red-500/30 rounded-lg p-2 hover-scale transition-all">
+                      <div className="flex justify-between items-center">
+                        <h5 className="font-medium text-xs text-white">Electric Circle Vol.3</h5>
+                        <span className="bg-black text-red-500 text-[10px] px-1.5 rounded">Konzert</span>
+                      </div>
+                      <div className="flex items-center mt-0.5 text-[10px] text-gray-300">
+                        <Calendar className="w-2.5 h-2.5 mr-1" />
+                        <span>Fr, 20:00 | Lokschuppen</span>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gray-900/40 border border-gray-700/30 rounded-lg p-2 hover-scale transition-all">
+                      <div className="flex justify-between items-center">
+                        <h5 className="font-medium text-xs text-white">Tribe Stammtisch</h5>
+                        <span className="bg-black text-blue-400 text-[10px] px-1.5 rounded">Community</span>
+                      </div>
+                      <div className="flex items-center mt-0.5 text-[10px] text-gray-300">
+                        <Calendar className="w-2.5 h-2.5 mr-1" />
+                        <span>Di, 19:00 | Café Barina</span>
+                      </div>
+                    </div>
+                    
+                    <div className="text-center text-xs text-red-400 hover:underline cursor-pointer">
+                      +15 weitere Events anzeigen
                     </div>
                   </div>
                 </div>
                 
-                {/* Right: Chat Preview */}
-                <div className="space-y-2">
-                  <div className="bg-zinc-900/80 max-w-[95%] rounded-lg p-2 border border-zinc-700/30">
-                    <p className="text-xs">
-                      Welche Konzerte gibt es diese Woche in Bielefeld?
-                    </p>
+                {/* Right: Enhanced Chat Preview */}
+                <div className="bg-black/40 rounded-lg overflow-hidden border border-red-500/10 p-3">
+                  <div className="mb-2 flex items-center">
+                    <MessageSquare className="w-4 h-4 mr-2 text-red-500" />
+                    <h4 className="font-medium text-sm text-white">KI-Assistent</h4>
                   </div>
                   
-                  <div className="bg-red-500/10 dark:bg-red-950/30 border border-red-500/20 rounded-lg p-2 ml-auto max-w-[95%]">
-                    <div className="text-xs space-y-1">
-                      <p className="mb-1">
-                        Hier sind die Konzerte diese Woche:
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                    <div className="bg-zinc-900/80 max-w-[90%] rounded-lg p-2 border border-zinc-700/30">
+                      <p className="text-xs">
+                        Welche Konzerte gibt es diese Woche in Bielefeld?
                       </p>
-                      <div className="p-1 bg-black/30 rounded border border-red-500/10">
-                        <div className="font-medium">Electric Circle Vol.3</div>
-                        <div className="text-[10px] text-red-400">Fr, 20:00 | Lokschuppen</div>
+                    </div>
+                    
+                    <div className="bg-red-500/10 dark:bg-red-950/30 border border-red-500/20 rounded-lg p-2 ml-auto max-w-[90%]">
+                      <div className="text-xs">
+                        <p className="mb-1">
+                          Hier sind die Konzerte diese Woche:
+                        </p>
+                        <div className="space-y-2">
+                          <div className="p-2 bg-black/50 rounded-lg border border-red-500/10">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <div className="font-medium text-white">Electric Circle Vol.3</div>
+                                <div className="text-[10px] text-red-400 flex items-center">
+                                  <Calendar className="w-2.5 h-2.5 mr-1" />
+                                  Fr, 20:00 | Lokschuppen
+                                </div>
+                              </div>
+                              <span className="bg-black text-red-500 text-[10px] px-1.5 rounded">Konzert</span>
+                            </div>
+                          </div>
+                          
+                          <div className="p-2 bg-black/50 rounded-lg border border-red-500/10">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <div className="font-medium text-white">Jazz im Bunker</div>
+                                <div className="text-[10px] text-red-400 flex items-center">
+                                  <Calendar className="w-2.5 h-2.5 mr-1" />
+                                  Sa, 21:00 | Bunker Ulmenwall
+                                </div>
+                              </div>
+                              <span className="bg-black text-red-500 text-[10px] px-1.5 rounded">Konzert</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
+                    </div>
+                    
+                    <div className="bg-zinc-900/80 max-w-[90%] rounded-lg p-2 border border-zinc-700/30">
+                      <p className="text-xs">
+                        Was für Bands spielen beim Electric Circle?
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-3 relative">
+                    <div className="flex items-center bg-black/30 rounded-full border border-gray-700/50 px-3 py-1">
+                      <input 
+                        type="text" 
+                        placeholder="Frage den KI-Assistenten..." 
+                        className="bg-transparent text-xs w-full border-none focus:outline-none text-white"
+                        readOnly
+                      />
+                      <MessageSquare className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
                     </div>
                   </div>
                 </div>
@@ -221,6 +288,30 @@ const About = () => {
                   AI-Assistent fragen
                 </Button>
               </div>
+            </div>
+          </section>
+          
+          {/* Features Section - Kompaktere Karten */}
+          <section className="mb-16">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl md:text-3xl font-bold mb-3">Was THE TRIBE bietet</h2>
+              <p className="text-base text-muted-foreground max-w-2xl mx-auto">
+                Alles was du für ein lebendiges Bielefeld brauchst
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {features.map((feature, index) => (
+                <Card key={index} className="hover-scale transition-all duration-300 hover:shadow-md hover:shadow-red-500/10 border-red-500/10">
+                  <CardContent className="p-4">
+                    <div className="h-10 w-10 rounded-full bg-red-500/10 flex items-center justify-center mb-3">
+                      <feature.icon className="h-5 w-5 text-red-500" />
+                    </div>
+                    <h3 className="text-base font-bold mb-1">{feature.title}</h3>
+                    <p className="text-xs text-muted-foreground">{feature.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </section>
           
