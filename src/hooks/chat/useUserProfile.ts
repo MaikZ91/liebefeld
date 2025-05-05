@@ -31,18 +31,11 @@ export const useUserProfile = () => {
       try {
         profile = await userService.getUserByUsername(currentUser);
         console.log('Found existing user profile:', profile);
-        
-        // If we successfully found a profile, set it and return early
-        if (profile) {
-          setUserProfile(profile);
-          setLoading(false);
-          return;
-        }
       } catch (err) {
         console.log('User does not exist yet, will create new profile');
       }
       
-      // Only try to create/update if we're not a guest and didn't find a profile
+      // Only try to create/update if we're not a guest
       if (currentUser !== 'Gast') {
         try {
           // Benutzerprofil erstellen oder aktualisieren
@@ -66,30 +59,28 @@ export const useUserProfile = () => {
               if (profile) {
                 console.log('Retrieved profile after RLS error:', profile);
                 setUserProfile(profile);
-                return; // Early return if we successfully get the profile
               }
             } catch (getErr) {
               console.error('Failed to retrieve profile after RLS error:', getErr);
-              // Continue to error handling below
+              throw err; // Rethrow the original error
             }
-          }
-          
-          setError(err.message || 'Ein Fehler ist aufgetreten');
-          
-          // Only show toast if it's not an RLS policy error since that's often a normal condition
-          // when security policies are in place
-          if (!err.message || !err.message.includes('row-level security policy')) {
-            toast({
-              title: "Fehler",
-              description: "Benutzerprofil konnte nicht erstellt werden. Bitte später erneut versuchen.",
-              variant: "destructive"
-            });
+          } else {
+            throw err;
           }
         }
       }
     } catch (err: any) {
       console.error('Fehler beim Initialisieren des Benutzerprofils:', err);
       setError(err.message || 'Ein Fehler ist aufgetreten');
+      
+      // Only show toast if it's not an RLS policy error since we handle that specially
+      if (!err.message || !err.message.includes('row-level security policy')) {
+        toast({
+          title: "Fehler",
+          description: "Benutzerprofil konnte nicht erstellt werden. Bitte später erneut versuchen.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setLoading(false);
     }

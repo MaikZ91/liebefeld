@@ -220,16 +220,9 @@ export const useChatMessages = (groupId: string, username: string) => {
   // Reconnection handling
   const { isReconnecting, handleReconnect } = useReconnection(fetchAndSetMessages);
   
-  // Scroll management with fixed auto-scrolling behavior
-  const scrollManagement = useScrollManagement(messages, typingUsers);
-  const { 
-    chatBottomRef, 
-    chatContainerRef, 
-    initializeScrollPosition,
-    scrollToBottom,
-    isUserScrolling,
-    isAtBottom 
-  } = scrollManagement;
+  // Scroll management
+  const { chatBottomRef, chatContainerRef, initializeScrollPosition } = 
+    useScrollManagement(messages, typingUsers);
   
   // Clean up all timeouts and channels on unmount
   useEffect(() => {
@@ -272,9 +265,6 @@ export const useChatMessages = (groupId: string, username: string) => {
     chatBottomRef,
     chatContainerRef,
     initializeScrollPosition,
-    scrollToBottom,
-    isUserScrolling,
-    isAtBottom,
     fetchAndSetMessages,
     addOptimisticMessage
   };

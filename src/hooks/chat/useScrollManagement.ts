@@ -15,7 +15,6 @@ export const useScrollManagement = (messages: Message[], typingUsers: any[]) => 
   const [isAtBottom, setIsAtBottom] = useState(true);
   const userScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const scrollPositionsRef = useRef<number[]>([]);
-  const lastAutoScrollTimestampRef = useRef<number>(0);
 
   // Check if new messages were added and handle auto-scrolling appropriately
   useEffect(() => {
@@ -25,22 +24,13 @@ export const useScrollManagement = (messages: Message[], typingUsers: any[]) => 
       console.log('New messages added, checking if auto-scroll is needed');
       
       // Only auto-scroll if user is at the bottom or not actively scrolling
-      // AND we haven't auto-scrolled in the last second (prevents scroll jumping)
-      const now = Date.now();
-      const timeSinceLastScroll = now - lastAutoScrollTimestampRef.current;
-      
-      if (isAtBottom && !isUserScrolling && timeSinceLastScroll > 1000) {
+      if (isAtBottom && !isUserScrolling) {
         console.log('Auto-scrolling because user is at bottom or not actively scrolling');
-        lastAutoScrollTimestampRef.current = now;
         setTimeout(() => {
           initializeScrollPosition();
         }, 100);
       } else {
-        console.log('Not auto-scrolling because user has scrolled up', { 
-          isAtBottom, 
-          isUserScrolling,
-          timeSinceLastScroll
-        });
+        console.log('Not auto-scrolling because user has scrolled up', { isAtBottom, isUserScrolling });
       }
     }
     
@@ -50,17 +40,10 @@ export const useScrollManagement = (messages: Message[], typingUsers: any[]) => 
   // Handle typing indicators
   useEffect(() => {
     if (typingUsers.length > 0 && isAtBottom && !isUserScrolling) {
-      // Only auto-scroll for typing indicators if user hasn't manually scrolled recently
-      const now = Date.now();
-      const timeSinceLastScroll = now - lastAutoScrollTimestampRef.current;
-      
-      if (timeSinceLastScroll > 1000) {
-        console.log('Scrolling to show typing indicators');
-        lastAutoScrollTimestampRef.current = now;
-        setTimeout(() => {
-          initializeScrollPosition();
-        }, 100);
-      }
+      console.log('Scrolling to show typing indicators');
+      setTimeout(() => {
+        initializeScrollPosition();
+      }, 100);
     }
   }, [typingUsers, isUserScrolling, isAtBottom]);
 
@@ -85,12 +68,8 @@ export const useScrollManagement = (messages: Message[], typingUsers: any[]) => 
         
       // Detect if scroll is near bottom
       const scrollBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
-      const newIsAtBottom = scrollBottom < 100; // Increased threshold a bit
-      
-      if (newIsAtBottom !== isAtBottom) {
-        console.log(`Scroll position changed - is at bottom: ${newIsAtBottom}`);
-        setIsAtBottom(newIsAtBottom);
-      }
+      const newIsAtBottom = scrollBottom < 50;
+      setIsAtBottom(newIsAtBottom);
       
       // If scrolling up, prevent auto-scrolling
       if (isScrollingUp) {
@@ -107,10 +86,8 @@ export const useScrollManagement = (messages: Message[], typingUsers: any[]) => 
           if (newIsAtBottom) {
             console.log('Re-enabling auto-scroll after timeout');
             setIsUserScrolling(false);
-          } else {
-            console.log('Keeping auto-scroll disabled as user is still not at bottom');
           }
-        }, 15000); // Increased to 15 seconds - much longer timeout before re-enabling auto-scroll
+        }, 8000); // Increased from 5 to 8 seconds
       }
       
       // If scrolled back to bottom, re-enable auto-scrolling immediately
@@ -140,20 +117,17 @@ export const useScrollManagement = (messages: Message[], typingUsers: any[]) => 
         clearTimeout(userScrollTimeoutRef.current);
       }
     };
-  }, [isUserScrolling, isAtBottom]);
+  }, [isUserScrolling]);
 
-  // Initial scroll position setup on mobile - never auto-scroll on initial load in community chat
+  // Initial scroll position setup on mobile
   useEffect(() => {
-    if (isMobile && messages.length > 0) {
+    if (isMobile) {
       // Use a slightly longer delay for mobile to ensure DOM is fully rendered
       setTimeout(() => {
-        // Don't force scroll if user is already scrolling
-        if (!isUserScrolling) {
-          initializeScrollPosition();
-        }
-      }, 800);
+        initializeScrollPosition();
+      }, 500);
     }
-  }, [isMobile, messages.length, isUserScrolling]);
+  }, [isMobile]);
 
   const initializeScrollPosition = () => {
     const container = chatContainerRef.current;
@@ -172,7 +146,6 @@ export const useScrollManagement = (messages: Message[], typingUsers: any[]) => 
     setIsUserScrolling(false);
     setIsAtBottom(true);
     setTimeout(() => {
-      lastAutoScrollTimestampRef.current = Date.now();
       initializeScrollPosition();
     }, 50);
   };
