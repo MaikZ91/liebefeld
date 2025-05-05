@@ -8,25 +8,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { USERNAME_KEY } from '@/types/chatTypes';
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetDescription, 
-  SheetHeader, 
-  SheetTitle,
-  SheetTrigger
-} from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import EventCalendar from '@/components/EventCalendar';
 import EventForm from '@/components/EventForm';
 import LiveTicker from '@/components/LiveTicker';
-
 const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
   const [isAddEventSheetOpen, setIsAddEventSheetOpen] = useState(false);
   const [isEventListSheetOpen, setIsEventListSheetOpen] = useState(false);
   const [isCommunityOpen, setIsCommunityOpen] = useState(false);
-  const { events } = useEventContext();
-  
+  const {
+    events
+  } = useEventContext();
+
   // Function to show add event modal
   const handleAddEvent = () => {
     setIsAddEventSheetOpen(true);
@@ -38,9 +32,7 @@ const ChatPage = () => {
   };
 
   // Get username from localStorage for chat
-  const [username, setUsername] = useState<string>(() => 
-    typeof window !== 'undefined' ? localStorage.getItem(USERNAME_KEY) || 'Gast' : 'Gast'
-  );
+  const [username, setUsername] = useState<string>(() => typeof window !== 'undefined' ? localStorage.getItem(USERNAME_KEY) || 'Gast' : 'Gast');
 
   // WhatsApp community link - Updated with the actual WhatsApp community link
   const whatsAppLink = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
@@ -50,31 +42,26 @@ const ChatPage = () => {
     const enableRealtime = async () => {
       try {
         console.log('Setting up realtime subscription for chat_messages table');
-        
+
         // Direct approach - create a channel and enable realtime
-        const channel = supabase
-          .channel('realtime_setup')
-          .on('postgres_changes', {
-            event: '*',
-            schema: 'public',
-            table: 'chat_messages'
-          }, () => {
-            // Empty callback - we just want to ensure the channel is created
-          })
-          .subscribe();
-        
+        const channel = supabase.channel('realtime_setup').on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'chat_messages'
+        }, () => {
+          // Empty callback - we just want to ensure the channel is created
+        }).subscribe();
+
         // Keep the channel open for a moment to ensure subscription is registered
         await new Promise(resolve => setTimeout(resolve, 500));
-        
+
         // Then remove it to avoid having too many open channels
         supabase.removeChannel(channel);
-        
         console.log('Realtime subscription initialized');
       } catch (error) {
         console.error('Exception in enabling Realtime:', error);
       }
     };
-
     enableRealtime();
   }, []);
 
@@ -84,15 +71,11 @@ const ChatPage = () => {
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
     checkIsMobile();
     window.addEventListener('resize', checkIsMobile);
-    
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
-
-  return (
-    <Layout hideFooter={true}>
+  return <Layout hideFooter={true}>
       <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
         {/* Add LiveTicker above chat header */}
         <div className="mb-2 border border-gray-800/50 rounded-md overflow-hidden bg-black">
@@ -100,16 +83,12 @@ const ChatPage = () => {
         </div>
         
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-red-500">Liebefield Chat</h1>
+          <h1 className="text-2xl font-bold text-red-500">
+        </h1>
           
           <div className="flex gap-2">
             {/* View Events Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEventListSheetOpen(true)}
-              className="flex items-center gap-1"
-            >
+            <Button variant="outline" size="sm" onClick={() => setIsEventListSheetOpen(true)} className="flex items-center gap-1">
               <List className="h-4 w-4" />
               <span className="hidden md:inline">Events anzeigen</span>
             </Button>
@@ -118,11 +97,7 @@ const ChatPage = () => {
         
         <div className="flex-grow rounded-lg overflow-hidden border border-gray-800 flex flex-col bg-black">
           <div className="flex-grow relative">
-            <EventChatBot 
-              fullPage={true} 
-              onAddEvent={handleAddEvent} 
-              onToggleCommunity={handleToggleCommunity} 
-            />
+            <EventChatBot fullPage={true} onAddEvent={handleAddEvent} onToggleCommunity={handleToggleCommunity} />
           </div>
         </div>
       </div>
@@ -156,8 +131,6 @@ const ChatPage = () => {
           </div>
         </SheetContent>
       </Sheet>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default ChatPage;
