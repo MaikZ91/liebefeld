@@ -31,4 +31,3 @@ export const fetchWeather = async (city: string = 'Bielefeld') => {
     return 'partly_cloudy'; // fallback
   }
 };
-

@@ -117,14 +117,41 @@ serve(async (req) => {
       })
     });
 
+    // Log full response for debugging
+    const responseStatus = response.status;
+    const responseStatusText = response.statusText;
+    console.log(`OpenRouter API response status: ${responseStatus} ${responseStatusText}`);
+
     if (!response.ok) {
-      throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
+      const errorBody = await response.text();
+      console.error(`OpenRouter API error response: ${errorBody}`);
+      throw new Error(`OpenRouter API error: ${responseStatus} ${responseStatusText} - ${errorBody}`);
     }
 
     const data = await response.json();
+    console.log('OpenRouter API response received successfully');
+    
+    // Check if the response has the expected structure
+    if (!data || !data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error('Unexpected response structure from OpenRouter API:', JSON.stringify(data));
+      throw new Error('Invalid response structure from OpenRouter API');
+    }
+    
     const aiResponse = data.choices[0].message.content;
+    const modelInfo = {
+      model: data.model || 'google/gemini-2.0-flash-exp:free',
+      promptTokens: data.usage?.prompt_tokens || 'N/A',
+      completionTokens: data.usage?.completion_tokens || 'N/A',
+      totalTokens: data.usage?.total_tokens || 'N/A'
+    };
+    
+    console.log(`Model used: ${modelInfo.model}`);
+    console.log(`Token usage - Prompt: ${modelInfo.promptTokens}, Completion: ${modelInfo.completionTokens}, Total: ${modelInfo.totalTokens}`);
 
-    return new Response(JSON.stringify({ response: aiResponse }), {
+    return new Response(JSON.stringify({ 
+      response: aiResponse,
+      modelInfo: modelInfo 
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
@@ -143,10 +170,14 @@ serve(async (req) => {
           <li>Frage nach Events für heute oder diese Woche</li>
           <li>Suche nach einer bestimmten Kategorie, wie "Konzerte" oder "Sport"</li>
         </ul>
+        <p class="text-xs mt-2 text-red-400">Fehlerdetails: ${error.message}</p>
       </div>
     `;
     
-    return new Response(JSON.stringify({ response: errorResponse }), {
+    return new Response(JSON.stringify({ 
+      response: errorResponse,
+      error: error.message
+    }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
