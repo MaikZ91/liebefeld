@@ -15,6 +15,7 @@ interface ChatMessageProps {
   isGroup?: boolean;
   eventData?: EventShare;
   onDateSelect?: (date: string) => void;
+  isUser?: boolean;
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ 
@@ -22,7 +23,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   isConsecutive = false, 
   isGroup = false,
   eventData,
-  onDateSelect
+  onDateSelect,
+  isUser = false
 }) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   
@@ -32,54 +34,53 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       return <EventMessageFormatter event={eventData} />;
     }
     
-    // Check if message contains a date selection prompt
-    const hasDatePrompt = message.toLowerCase().includes('events gibt es heute') || 
-                          message.toLowerCase().includes('events für heute');
-    
-    if (hasDatePrompt && onDateSelect) {
+    // Show date selector for user messages in the EventChatBot when onDateSelect is provided
+    if (onDateSelect) {
       return (
         <div className="space-y-2">
           <div className="whitespace-pre-wrap">{message}</div>
           
-          <div className="flex items-center gap-2 mt-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-2"
-                >
-                  <CalendarIcon className="h-4 w-4" />
-                  <span>{date ? format(date, "yyyy-MM-dd") : "Datum wählen"}</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={(newDate) => {
-                    if (newDate) {
-                      setDate(newDate);
-                      onDateSelect(format(newDate, "yyyy-MM-dd"));
-                    }
-                  }}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto bg-gray-900 text-white")}
-                />
-              </PopoverContent>
-            </Popover>
-            
-            <Button 
-              variant="default" 
-              className="bg-red-500 hover:bg-red-600"
-              onClick={() => {
-                if (date) {
-                  onDateSelect(format(date, "yyyy-MM-dd"));
-                }
-              }}
-            >
-              Für dieses Datum suchen
-            </Button>
-          </div>
+          {isUser && (
+            <div className="flex items-center gap-2 mt-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="bg-gray-800 hover:bg-gray-700 border-gray-700 flex items-center gap-2"
+                  >
+                    <CalendarIcon className="h-4 w-4" />
+                    <span>{date ? format(date, "yyyy-MM-dd") : "Datum wählen"}</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={(newDate) => {
+                      if (newDate) {
+                        setDate(newDate);
+                        onDateSelect(format(newDate, "yyyy-MM-dd"));
+                      }
+                    }}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto bg-gray-900 text-white")}
+                  />
+                </PopoverContent>
+              </Popover>
+              
+              <Button 
+                variant="default" 
+                className="bg-red-500 hover:bg-red-600"
+                onClick={() => {
+                  if (date) {
+                    onDateSelect(format(date, "yyyy-MM-dd"));
+                  }
+                }}
+              >
+                Für dieses Datum suchen
+              </Button>
+            </div>
+          )}
         </div>
       );
     }
