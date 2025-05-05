@@ -6,7 +6,6 @@ import { getInitials } from '@/utils/chatUIUtils';
 import ChatMessage from './ChatMessage';
 import TypingIndicator from './TypingIndicator';
 import { Message, TypingUser, EventShare } from '@/types/chatTypes';
-import { EventMessageFormatter } from './EventMessageFormatter';
 
 interface MessageListProps {
   messages: Message[];
@@ -34,44 +33,19 @@ const MessageList: React.FC<MessageListProps> = ({
   // Parse event data from message content if available
   const parseEventData = (message: Message): EventShare | undefined => {
     try {
-      // First check if event_data is already present in the message
-      if (message.event_data) {
-        return message.event_data;
-      }
-      
-      // Then check for the event-data div pattern from the edge function
-      if (typeof message.content === 'string') {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(message.content, 'text/html');
-        const eventDiv = doc.querySelector('.event-data');
+      if (typeof message.content === 'string' && message.content.includes('🗓️ **Event:')) {
+        // Extract event data from formatted message content
+        const eventRegex = /🗓️ \*\*Event: (.*?)\*\*\nDatum: (.*?) um (.*?)\nOrt: (.*?)\nKategorie: (.*?)(\n\n|$)/;
+        const match = message.content.match(eventRegex);
         
-        if (eventDiv) {
+        if (match) {
           return {
-            title: eventDiv.getAttribute('data-title') || '',
-            date: '', // Extract from broader context if needed
-            time: eventDiv.getAttribute('data-time') || '',
-            location: eventDiv.getAttribute('data-location') || '',
-            category: eventDiv.getAttribute('data-category') || '',
-            link: eventDiv.getAttribute('data-link') || ''
+            title: match[1],
+            date: match[2],
+            time: match[3],
+            location: match[4],
+            category: match[5]
           };
-        }
-        
-        // Legacy pattern for older messages
-        if (message.content.includes('🗓️ **Event:')) {
-          // Extract event data from formatted message content
-          const eventRegex = /🗓️ \*\*Event: (.*?)\*\*\nDatum: (.*?) um (.*?)\nOrt: (.*?)\nKategorie: (.*?)(?:\nLink: (.*?))?(\n\n|$)/;
-          const match = message.content.match(eventRegex);
-          
-          if (match) {
-            return {
-              title: match[1],
-              date: match[2],
-              time: match[3],
-              location: match[4],
-              category: match[5],
-              link: match[6] || ''
-            };
-          }
         }
       }
       
@@ -110,20 +84,8 @@ const MessageList: React.FC<MessageListProps> = ({
               eventData = parseEventData(message);
               
               // Remove event data from message content if present
-              if (eventData && typeof message.content === 'string') {
-                // For the old pattern
-                if (message.content.includes('🗓️ **Event:')) {
-                  messageContent = message.content.replace(/🗓️ \*\*Event:.*?\n\n/s, '').trim();
-                }
-                
-                // For the new pattern, remove the event-data div
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = message.content;
-                const eventDivs = tempDiv.querySelectorAll('.event-data');
-                eventDivs.forEach(div => div.remove());
-                if (eventDivs.length > 0) {
-                  messageContent = tempDiv.innerHTML;
-                }
+              if (eventData && typeof message.content === 'string' && message.content.includes('🗓️ **Event:')) {
+                messageContent = message.content.replace(/🗓️ \*\*Event:.*?\n\n/s, '').trim();
               }
             } catch (error) {
               console.error("Failed to parse event data:", error);
@@ -142,15 +104,12 @@ const MessageList: React.FC<MessageListProps> = ({
                   </div>
                 )}
                 <div className="w-full max-w-full overflow-hidden break-words">
-                  {eventData ? (
-                    <EventMessageFormatter event={eventData} />
-                  ) : (
-                    <ChatMessage 
-                      message={messageContent} 
-                      isConsecutive={isConsecutive}
-                      isGroup={isGroup}
-                    />
-                  )}
+                  <ChatMessage 
+                    message={messageContent} 
+                    isConsecutive={isConsecutive}
+                    isGroup={isGroup}
+                    eventData={eventData}
+                  />
                 </div>
               </div>
             );

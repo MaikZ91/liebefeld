@@ -22,14 +22,13 @@ export const GROUP_CATEGORIES = [
 ];
 
 // Define shared event display format for chats
-export type EventShare = {
+export interface EventShare {
   title: string;
   date: string;
   time: string;
-  location: string;
-  category?: string;
-  link?: string;
-};
+  location?: string;
+  category: string;
+}
 
 // Message interface used across the application
 export interface Message {

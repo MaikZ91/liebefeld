@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
@@ -326,45 +327,12 @@ serve(async (req) => {
     // Hier den Text transformieren: Umwandeln von Markdown-Listen in HTML-Listen
     // Ersetze Listen-Formatierungen wie "* Item" oder "- Item" in HTML <ul><li> Format
     aiContent = aiContent.replace(/\n[\*\-]\s+(.*?)(?=\n[\*\-]|\n\n|$)/g, (match, item) => {
-      // Extract event information if available
-      const titleMatch = item.match(/(.*?) (?:um|at) (.*?) (?:in|bei|im|in|at) (.*?)(?: \(Kategorie: (.*?)\))?$/i);
-      if (titleMatch) {
-        const [_, title, time, location, category] = titleMatch;
-        // Format as event card similar to EventCard component
-        return `
-          <div class="event-data" data-title="${title}" data-time="${time}" data-location="${location}" data-category="${category || 'Event'}">
-            <div class="bg-gray-800 rounded-lg p-3 border border-red-500/30 w-full max-w-full overflow-hidden break-words mb-3">
-              <div class="text-lg font-semibold text-white mb-1">Geteiltes Event</div>
-              <div class="text-xl font-bold text-white break-words">${title}</div>
-              <div class="flex flex-col gap-1 mt-2">
-                <div class="flex items-center text-sm text-gray-300">
-                  <svg class="h-4 w-4 mr-1 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                  <span class="break-words overflow-hidden">${time}</span>
-                </div>
-                <div class="flex items-center text-sm text-gray-300">
-                  <svg class="h-4 w-4 mr-1 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                  <span class="break-words overflow-hidden">${location}</span>
-                </div>
-              </div>
-              <div class="flex justify-between items-center mt-2">
-                <div class="text-sm bg-red-500 text-white inline-block px-2 py-0.5 rounded">
-                  ${category || "Event"}
-                </div>
-                <div class="flex items-center">
-                  <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-                </div>
-              </div>
-            </div>
-          </div>`;
-      }
-      
-      // Default list item if not an event
-      return `<li class="mb-1">${item}</li>`;
+      return `\n<li>${item}</li>`;
     });
     
     // Füge <ul> Tags um die Liste
     if (aiContent.includes('<li>')) {
-      aiContent = aiContent.replace(/<li>/, '<ul class="space-y-2 my-3"><li>');
+      aiContent = aiContent.replace(/<li>/, '<ul class="list-disc pl-5 space-y-1"><li>');
       aiContent = aiContent.replace(/([^>])$/, '$1</ul>');
       
       // Stelle sicher, dass die Liste korrekt schließt
@@ -374,8 +342,8 @@ serve(async (req) => {
     }
     
     // Generell Markdown-Bold in HTML-Bold umwandeln
-    aiContent = aiContent.replace(/\*\*(.*?)\*\*/g, '<strong class="text-red-500">$1</strong>');
-    aiContent = aiContent.replace(/__(.*?)__/g, '<strong class="text-red-500">$1</strong>');
+    aiContent = aiContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    aiContent = aiContent.replace(/__(.*?)__/g, '<strong>$1</strong>');
     
     // Füge eine Hinweis zum verwendeten Modell und zur Anzahl der gefilterten Events hinzu
     const modelInfo = parsed?.model ? `<p class="text-xs text-gray-400 mt-2">Powered by ${parsed.model} • ${filteredEvents.length} relevante Events aus ${dbEvents.length} analysiert</p>` : '';
