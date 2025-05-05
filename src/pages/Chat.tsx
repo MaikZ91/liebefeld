@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
@@ -109,7 +108,7 @@ const ChatPage = () => {
               <span className="hidden md:inline">Event hinzufügen</span>
             </Button>
             
-            {/* View Events Button */}
+            {/* View Events Button - Updated button text */}
             <Button
               variant="outline"
               size="sm"
@@ -117,7 +116,7 @@ const ChatPage = () => {
               className="flex items-center gap-1"
             >
               <List className="h-4 w-4" />
-              <span className="hidden md:inline">Events anzeigen</span>
+              <span className="hidden md:inline">Event Kalender</span>
             </Button>
           </div>
         </div>
