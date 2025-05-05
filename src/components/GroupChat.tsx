@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Send, Users, User, Clock, Loader2, Image, ThumbsUp, ThumbsDown, HelpCircle, Smile, Paperclip, MessageSquare, Check, CheckCheck, Calendar, Search, MapPin, X } from 'lucide-react';
+import { Send, Users, User, Clock, Loader2, Image, ThumbsUp, ThumbsDown, HelpCircle, Smile, Paperclip, MessageSquare, Check, CheckCheck, Calendar, Search, MapPin, X, Link as LinkIcon } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase, type ChatMessage, type MessageReaction } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -65,8 +64,12 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
   const [eventSearchQuery, setEventSearchQuery] = useState('');
+  const [whatsAppInitialMessageShown, setWhatsAppInitialMessageShown] = useState(false);
   
   const { events, handleRsvpEvent } = useEventContext();
+
+  // WhatsApp community link
+  const whatsAppLink = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
 
   useEffect(() => {
     if (!groupId) return;
@@ -109,9 +112,21 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
           }));
 
           setMessages(typedMessages);
+          
+          // If there are no messages or user hasn't seen the WhatsApp message, show it
+          if (data.length === 0 && !whatsAppInitialMessageShown) {
+            addWhatsAppMessage();
+          }
+        } else if (!whatsAppInitialMessageShown) {
+          // If no data returned, show the WhatsApp message
+          addWhatsAppMessage();
         }
       } catch (error) {
         console.error('Error fetching messages:', error);
+        // If there's an error fetching messages, still show the WhatsApp message
+        if (!whatsAppInitialMessageShown) {
+          addWhatsAppMessage();
+        }
       } finally {
         setIsLoading(false);
       }
@@ -211,7 +226,37 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
       supabase.removeChannel(typingChannel);
       clearInterval(typingInterval);
     };
-  }, [groupId, username]);
+  }, [groupId, username, whatsAppInitialMessageShown]);
+
+  // Add WhatsApp community message
+  const addWhatsAppMessage = async () => {
+    try {
+      setWhatsAppInitialMessageShown(true);
+      
+      // Create a system message about WhatsApp community
+      const whatsAppMessage = {
+        group_id: groupId || 'general',
+        sender: 'System',
+        text: `Die Community Interaktion findet derzeit auf WhatsApp statt. Bitte treten Sie unserer WhatsApp-Community bei: ${whatsAppLink}`,
+        avatar: '',
+        read_by: [username || 'System'],
+        reactions: []
+      };
+
+      // Only add to UI, don't persist this message
+      const systemMessage: ChatMessage = {
+        id: `whatsapp-info-${Date.now()}`,
+        created_at: new Date().toISOString(),
+        ...whatsAppMessage,
+        reactions: [],
+        read_by: [username || 'System'],
+      };
+
+      setMessages(prev => ([...prev, systemMessage]));
+    } catch (error) {
+      console.error('Error adding WhatsApp message:', error);
+    }
+  };
 
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -571,7 +616,22 @@ const GroupChat = ({ compact = false, groupId, groupName }: GroupChatProps) => {
                       </div>
                     </div>
                     
-                    {message.text.includes('🗓️ **Event:') ? (
+                    {message.sender === "System" && message.text.includes('WhatsApp') ? (
+                      <div className="text-sm whitespace-pre-wrap text-white break-words">
+                        <p>Die Community Interaktion findet derzeit auf WhatsApp statt.</p>
+                        <div className="mt-2">
+                          <a 
+                            href={whatsAppLink}
+                            target="_blank"
+                            rel="noopener noreferrer" 
+                            className="inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md transition-colors"
+                          >
+                            <LinkIcon className="h-4 w-4" />
+                            <span>WhatsApp Community beitreten</span>
+                          </a>
+                        </div>
+                      </div>
+                    ) : message.text.includes('🗓️ **Event:') ? (
                       (() => {
                         const eventTitleMatch = message.text.match(/🗓️ \*\*Event: (.*?)\*\*/);
                         const eventTitle = eventTitleMatch ? eventTitleMatch[1] : '';
