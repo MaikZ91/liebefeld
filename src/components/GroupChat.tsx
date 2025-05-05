@@ -30,9 +30,9 @@ const GroupChat: React.FC<GroupChatProps> = ({
   // Ensure we have a valid UUID for the groupId
   const validGroupId = groupId === 'general' ? '00000000-0000-4000-8000-000000000000' : groupId;
 
-  // Benutzerverzeichnis öffnen
+  // Open user directory
   const handleOpenUserDirectory = () => {
-    // Überprüfen, ob der Benutzer angemeldet ist
+    // Check if user is logged in
     if (!currentUser || currentUser === 'Gast') {
       setIsUsernameModalOpen(true);
       return;
@@ -41,14 +41,14 @@ const GroupChat: React.FC<GroupChatProps> = ({
     setIsUserDirectoryOpen(true);
   };
 
-  // Benutzer für privaten Chat auswählen
+  // Select user for private chat
   const handleSelectUser = (user: UserProfile) => {
     setSelectedUser(user);
     setIsUserDirectoryOpen(false);
     setIsPrivateChatOpen(true);
   };
 
-  // Benutzernamen setzen
+  // Set username
   const handleUsernameSet = (username: string) => {
     toast({
       title: "Willkommen " + username + "!",
@@ -58,10 +58,10 @@ const GroupChat: React.FC<GroupChatProps> = ({
   };
 
   return (
-    <>
-      {/* Anmeldebutton anzeigen, wenn der Benutzer nicht angemeldet ist */}
+    <div className="flex flex-col h-full">
+      {/* Show login button if user is not logged in */}
       {(!currentUser || currentUser === 'Gast') ? (
-        <div className="flex flex-col items-center justify-center h-full p-4">
+        <div className="flex flex-col items-center justify-center h-full p-4 bg-[#111827] rounded-lg">
           <p className="text-white text-center mb-4">
             Bitte melde dich an, um am Community-Chat teilzunehmen.
           </p>
@@ -81,8 +81,8 @@ const GroupChat: React.FC<GroupChatProps> = ({
         />
       )}
 
-      {/* Login-Status anzeigen */}
-      <div className="fixed bottom-4 right-4 bg-purple-900/80 text-white rounded-full px-3 py-1 text-sm flex items-center shadow-lg">
+      {/* Login Status */}
+      <div className="fixed bottom-4 right-4 bg-red-500/80 text-white rounded-full px-3 py-1 text-sm flex items-center shadow-lg z-50">
         <UserCircle className="w-4 h-4 mr-1" />
         <span>{loading ? "Verbinden..." : 
           currentUser && currentUser !== 'Gast' ? 
@@ -92,7 +92,7 @@ const GroupChat: React.FC<GroupChatProps> = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            className="ml-2 text-xs py-1 px-2 h-auto" 
+            className="ml-2 text-xs py-1 px-2 h-auto text-white hover:bg-red-600/50" 
             onClick={() => setIsUsernameModalOpen(true)}
           >
             Anmelden
@@ -100,7 +100,7 @@ const GroupChat: React.FC<GroupChatProps> = ({
         )}
       </div>
 
-      {/* Benutzerverzeichnis-Dialog */}
+      {/* User directory dialog */}
       <UserDirectory
         open={isUserDirectoryOpen}
         onOpenChange={setIsUserDirectoryOpen}
@@ -108,7 +108,7 @@ const GroupChat: React.FC<GroupChatProps> = ({
         currentUsername={currentUser}
       />
 
-      {/* Privater Chat */}
+      {/* Private chat */}
       <PrivateChat
         open={isPrivateChatOpen}
         onOpenChange={setIsPrivateChatOpen}
@@ -116,13 +116,13 @@ const GroupChat: React.FC<GroupChatProps> = ({
         otherUser={selectedUser}
       />
       
-      {/* Benutzernamen-Dialog */}
+      {/* Username dialog */}
       <UsernameDialog
         isOpen={isUsernameModalOpen}
         onOpenChange={setIsUsernameModalOpen}
         onUsernameSet={handleUsernameSet}
       />
-    </>
+    </div>
   );
 };
 

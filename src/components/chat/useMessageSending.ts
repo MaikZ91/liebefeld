@@ -62,7 +62,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       if (error) {
         console.error('Error sending message:', error);
         toast({
-          title: "Error sending message",
+          title: "Fehler beim Senden",
           description: error.message,
           variant: "destructive"
         });
@@ -81,7 +81,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     } catch (err: any) {
       console.error('Error sending message:', err);
       toast({
-        title: "Error sending message",
+        title: "Fehler beim Senden",
         description: err.message,
         variant: "destructive"
       });

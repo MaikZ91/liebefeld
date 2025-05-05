@@ -70,6 +70,12 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				community: {
+					primary: '#9b87f5',
+					hover: '#8a76e5',
+					light: '#e5deff',
+					dark: '#1A1F2C'
 				}
 			},
 			borderRadius: {

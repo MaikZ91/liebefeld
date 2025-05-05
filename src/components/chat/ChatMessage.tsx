@@ -112,7 +112,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   return (
     <div 
       className={`p-3 rounded-lg ${isConsecutive ? 'mt-1' : 'mt-2'} ${
-        isGroup ? 'bg-[#222632] text-white' : 'bg-gray-800 text-white'
+        isGroup ? 'bg-[#111827] text-white' : 'bg-gray-800 text-white'
       } shadow-md w-full max-w-full overflow-hidden break-words`}
     >
       <div className="w-full max-w-full overflow-hidden break-words">

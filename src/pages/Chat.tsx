@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
@@ -82,7 +83,8 @@ const ChatPage = () => {
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
 
-  return <Layout hideFooter={true}>
+  return (
+    <Layout hideFooter={true}>
       <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
         {/* Add LiveTicker above chat header */}
         <div className="mb-2 border border-gray-800/50 rounded-md overflow-hidden bg-black">
@@ -105,7 +107,7 @@ const ChatPage = () => {
                 variant={activeView === 'community' ? "default" : "outline"} 
                 size="sm" 
                 onClick={() => setActiveView('community')}
-                className={`flex items-center gap-2 ${activeView === 'community' ? 'bg-[#9b87f5] hover:bg-[#8a76e5]' : ''}`}
+                className={`flex items-center gap-2 ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}
               >
                 <Users className="h-4 w-4" />
                 Community
@@ -164,7 +166,8 @@ const ChatPage = () => {
           </div>
         </SheetContent>
       </Sheet>
-    </Layout>;
+    </Layout>
+  );
 };
 
 export default ChatPage;
