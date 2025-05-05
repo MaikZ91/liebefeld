@@ -572,74 +572,77 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
           )}
         </ScrollArea>
         
-        {activeChatMode === 'ai' && (
-          <div className="p-3 border-t border-red-500/20 relative">
-            {renderRecentQueries()}
-            
-            <div className="flex items-center relative">
-              <div className="absolute left-2 flex items-center gap-1 z-10">
-                {/* History button for recent queries */}
-                {globalQueries.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={toggleRecentQueries}
-                    className="h-8 w-8 text-red-400"
-                    title="Community Anfragen"
-                  >
-                    <History className="h-4 w-4" />
-                  </Button>
-                )}
-                
-                {/* Add Event Button */}
-                {onAddEvent && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={onAddEvent}
-                    className="h-8 w-8 text-red-400"
-                    title="Event hinzufügen"
-                  >
-                    <PlusCircle className="h-4 w-4" />
-                  </Button>
-                )}
-                
-                {/* Community Button */}
+        <div className="p-3 border-t border-red-500/20 relative">
+          {renderRecentQueries()}
+          
+          <div className="flex items-center relative">
+            <div className="absolute left-2 flex items-center gap-1 z-10">
+              {/* History button for recent queries */}
+              {globalQueries.length > 0 && (
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={handleToggleChatMode}
-                  className="h-8 w-8 text-[#9b87f5]"
-                  title="Community"
+                  onClick={toggleRecentQueries}
+                  className="h-8 w-8 text-red-400"
+                  title="Community Anfragen"
                 >
-                  <Users className="h-4 w-4" />
+                  <History className="h-4 w-4" />
                 </Button>
-              </div>
+              )}
               
-              <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Frage nach Events..."
-                className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 pl-28"
-              />
-              <button
-                onClick={() => handleSendMessage()}
-                disabled={!input.trim() || isTyping}
-                className={cn(
-                  "ml-2 rounded-full p-2",
-                  input.trim() && !isTyping
-                    ? "bg-red-500 hover:bg-red-600 text-white"
-                    : "bg-zinc-800 text-zinc-500"
-                )}
+              {/* Add Event Button */}
+              {onAddEvent && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onAddEvent}
+                  className="h-8 w-8 text-red-400"
+                  title="Event hinzufügen"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                </Button>
+              )}
+              
+              {/* Community Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleToggleChatMode}
+                className="h-8 w-8 text-[#9b87f5]"
+                title="Community"
               >
-                <Send className="h-4 w-4" />
-              </button>
+                <Users className="h-4 w-4" />
+                <span className="sr-only">Community</span>
+              </Button>
             </div>
+            
+            {activeChatMode === 'ai' ? (
+              <>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Frage nach Events..."
+                  className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 pl-28"
+                />
+                <button
+                  onClick={() => handleSendMessage()}
+                  disabled={!input.trim() || isTyping}
+                  className={cn(
+                    "ml-2 rounded-full p-2",
+                    input.trim() && !isTyping
+                      ? "bg-red-500 hover:bg-red-600 text-white"
+                      : "bg-zinc-800 text-zinc-500"
+                  )}
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              </>
+            ) : null}
           </div>
-        )}
+        </div>
       </div>
     );
   }
@@ -730,74 +733,77 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false, onAddEven
             )}
           </ScrollArea>
           
-          {activeChatMode === 'ai' && (
-            <div className="p-3 border-t border-red-500/20 relative">
-              {renderRecentQueries()}
-              
-              <div className="flex items-center relative">
-                <div className="absolute left-2 flex items-center gap-1 z-10">
-                  {/* History button for recent queries */}
-                  {globalQueries.length > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={toggleRecentQueries}
-                      className="h-6 w-6 text-red-400"
-                      title="Community Anfragen"
-                    >
-                      <History className="h-3 w-3" />
-                    </Button>
-                  )}
-                  
-                  {/* Add Event Button */}
-                  {onAddEvent && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={onAddEvent}
-                      className="h-6 w-6 text-red-400"
-                      title="Event hinzufügen"
-                    >
-                      <PlusCircle className="h-3 w-3" />
-                    </Button>
-                  )}
-                  
-                  {/* Community Button */}
+          <div className="p-3 border-t border-red-500/20 relative">
+            {renderRecentQueries()}
+            
+            <div className="flex items-center relative">
+              <div className="absolute left-2 flex items-center gap-1 z-10">
+                {/* History button for recent queries */}
+                {globalQueries.length > 0 && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={handleToggleChatMode}
-                    className="h-6 w-6 text-[#9b87f5]"
-                    title="Community"
+                    onClick={toggleRecentQueries}
+                    className="h-6 w-6 text-red-400"
+                    title="Community Anfragen"
                   >
-                    <Users className="h-3 w-3" />
+                    <History className="h-3 w-3" />
                   </Button>
-                </div>
+                )}
                 
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Frage nach Events..."
-                  className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 pl-24"
-                />
-                <button
-                  onClick={() => handleSendMessage()}
-                  disabled={!input.trim() || isTyping}
-                  className={cn(
-                    "ml-2 rounded-full p-2",
-                    input.trim() && !isTyping
-                      ? "bg-red-500 hover:bg-red-600 text-white"
-                      : "bg-zinc-800 text-zinc-500"
-                  )}
+                {/* Add Event Button */}
+                {onAddEvent && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onAddEvent}
+                    className="h-6 w-6 text-red-400"
+                    title="Event hinzufügen"
+                  >
+                    <PlusCircle className="h-3 w-3" />
+                  </Button>
+                )}
+                
+                {/* Community Button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleToggleChatMode}
+                  className="h-6 w-6 text-[#9b87f5]"
+                  title="Community"
                 >
-                  <Send className="h-4 w-4" />
-                </button>
+                  <Users className="h-3 w-3" />
+                  <span className="sr-only">Community</span>
+                </Button>
               </div>
+              
+              {activeChatMode === 'ai' ? (
+                <>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Frage nach Events..."
+                    className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 pl-24"
+                  />
+                  <button
+                    onClick={() => handleSendMessage()}
+                    disabled={!input.trim() || isTyping}
+                    className={cn(
+                      "ml-2 rounded-full p-2",
+                      input.trim() && !isTyping
+                        ? "bg-red-500 hover:bg-red-600 text-white"
+                        : "bg-zinc-800 text-zinc-500"
+                    )}
+                  >
+                    <Send className="h-4 w-4" />
+                  </button>
+                </>
+              ) : null}
             </div>
-          )}
+          </div>
         </div>
       )}
       
