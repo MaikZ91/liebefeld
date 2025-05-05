@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
@@ -20,94 +19,36 @@ serve(async (req) => {
   try {
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
     const { query, timeOfDay, weather, allEvents, currentDate, nextWeekStart, nextWeekEnd } = await req.json();
-    
-    // Log date info
-    const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-    console.log(`Server current date: ${today}`);
-    console.log(`Received currentDate from client: ${currentDate}`);
-    console.log(`Received next week range: ${nextWeekStart} to ${nextWeekEnd}`);
-    
-    // Fetch all events from the database for backup/fallback
+    const today = new Date().toISOString().split('T')[0];
+
+    // Log basic date info
+    console.log('Server current date:', today);
+    console.log('Received currentDate:', currentDate, 'nextWeekRange:', nextWeekStart, nextWeekEnd);
+
+    // Fetch events
     const { data: dbEvents, error: eventsError } = await supabase
       .from('community_events')
       .select('*')
       .order('date', { ascending: true });
+    if (eventsError) throw new Error(`Error fetching events: ${eventsError.message}`);
+    const events = (allEvents && allEvents.length > 0) ? allEvents : dbEvents;
+    console.log('Number of events:', events.length);
 
-    if (eventsError) {
-      throw new Error(`Error fetching events: ${eventsError.message}`);
-    }
-
-    const events = allEvents && allEvents.length > 0 ? allEvents : dbEvents;
-    
-    console.log(`Processing ${events.length} events for AI response (${allEvents ? allEvents.length : 0} provided from frontend)`);
-    
-    // Log statistics
-    const todayEvents = events.filter(event => event.date === today);
-    console.log(`Events specifically for today (${today}): ${todayEvents.length}`);
-    if (todayEvents.length > 0) {
-      console.log('First few today events:', todayEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
-    }
-    
-    // Log next week events
-    const nextWeekEvents = events.filter(event => 
-      event.date >= nextWeekStart && event.date <= nextWeekEnd
-    );
-    console.log(`Events for next week (${nextWeekStart} to ${nextWeekEnd}): ${nextWeekEvents.length}`);
-    if (nextWeekEvents.length > 0) {
-      console.log('First few next week events:', nextWeekEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
-    }
-    
-    // Format events data for the AI
+    // Prepare events for context
     const formattedEvents = events.map(event => `
-      Event: ${event.title}
-      Datum: ${event.date}
-      Zeit: ${event.time}
-      Kategorie: ${event.category}
-      ${event.location ? `Ort: ${event.location}` : ''}
-      ${event.description ? `Beschreibung: ${event.description}` : ''}
-      ${event.id.startsWith('github-') ? 'Quelle: Externe Veranstaltung' : 'Quelle: Community Event'}
-    `).join('\n\n');
+      Event: ${event.title}\n      Datum: ${event.date}\n      Zeit: ${event.time}\n      Kategorie: ${event.category}\n      ${event.location ? `Ort: ${event.location}` : ''}\n    `).join('\n');
 
-    const systemMessage = `Du bist ein hilfreicher Event-Assistent für Liebefeld. 
-    Aktueller Tag: ${today} (Format: YYYY-MM-DD)
-    Aktuelle Tageszeit: ${timeOfDay}
-    Aktuelles Wetter: ${weather}
-    
-    Hier sind die verfügbaren Events:
-    ${formattedEvents}
-    
-    Beantworte Fragen zu den Events präzise und freundlich auf Deutsch. 
-    Berücksichtige dabei:
-    1. Wenn der Nutzer nach "heute" fragt, beziehe dich auf Events mit Datum ${today}
-    2. Wenn der Nutzer nach "nächster Woche" fragt, beziehe dich auf Events vom ${nextWeekStart} (Montag) bis ${nextWeekEnd} (Sonntag)
-    3. Die Woche beginnt immer am Montag und endet am Sonntag
-    4. Die aktuelle Tageszeit und das Wetter
-    5. Die spezifischen Interessen in der Anfrage
-    6. Gib relevante Events mit allen Details an
-    7. Wenn keine passenden Events gefunden wurden, mache alternative Vorschläge
-    8. Berücksichtige ALLE Events, auch die aus externen Quellen (mit 'Quelle: Externe Veranstaltung' gekennzeichnet)
-    9. Verwende das Datum-Format YYYY-MM-DD für Vergleiche
-    
-    Format deine Antworten klar und übersichtlich in HTML mit diesen Klassen:
-    - Verwende bg-gray-900/20 border border-gray-700/30 für normale Event-Container
-    - Verwende bg-blue-900/20 border border-blue-700/30 für externe Event-Container
-    - Nutze text-red-500 für Überschriften
-    - Nutze text-sm für normalen Text
-    - Nutze rounded-lg p-3 mb-3 für Container-Padding
-    `;
+    const systemMessage = `Du bist ein Event-Assistent für Liebefeld. Aktuelles Datum: ${today}. Hier die Events:\n${formattedEvents}`;
 
-    console.log('Sending request to Open Router API with Gemini model...');
-    
+    console.log('Sending request to OpenRouter API...');
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://github.com/lovable-chat', 
-        'X-Title': 'Lovable Chat'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-exp:free',
+        model: 'google/gemini-2.0-flash-lite-001',
         messages: [
           { role: 'system', content: systemMessage },
           { role: 'user', content: query }
@@ -117,38 +58,54 @@ serve(async (req) => {
       })
     });
 
-    if (!response.ok) {
-      throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
+    const status = response.status;
+    const statusText = response.statusText;
+    const headersObj = Object.fromEntries(response.headers.entries());
+    const raw = await response.text();
+
+    console.log('OpenRouter HTTP Status:', status, statusText);
+    console.log('OpenRouter Response Headers:', headersObj);
+    console.log('OpenRouter Raw Body:', raw);
+
+    let data;
+    try {
+      data = JSON.parse(raw);
+      console.log('OpenRouter Parsed JSON:', data);
+    } catch (err) {
+      console.error('Failed to parse JSON from OpenRouter:', err);
+      throw new Error('Invalid JSON response from OpenRouter API');
     }
 
-    const data = await response.json();
-    const aiResponse = data.choices[0].message.content;
+    // Validate structure
+    if (!data.choices || !Array.isArray(data.choices) || data.choices.length === 0) {
+      console.error('Invalid response structure, missing choices:', data);
+      throw new Error('Invalid response structure from OpenRouter API');
+    }
+    const message = data.choices[0].message;
+    if (!message) {
+      console.error('Invalid response structure, missing message:', data);
+      throw new Error('Invalid response structure from OpenRouter API');
+    }
 
-    return new Response(JSON.stringify({ response: aiResponse }), {
+    const aiContent = message.content ?? JSON.stringify(message.function_call);
+    console.log('Extracted AI content:', aiContent);
+
+    return new Response(JSON.stringify({ response: aiContent }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
-    console.error('Error in AI chat function:', error);
-    
-    const errorResponse = `
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const userErrorHtml = `
       <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
         <h5 class="font-medium text-sm text-red-600 dark:text-red-400">Fehler bei der Verarbeitung:</h5>
-        <p class="text-sm mt-2">
-          Entschuldigung, ich konnte deine Anfrage nicht verarbeiten. 
-          Hier sind einige Möglichkeiten, wie du weitermachen kannst:
-        </p>
-        <ul class="list-disc list-inside mt-1 text-sm space-y-1">
-          <li>Stelle deine Frage anders</li>
-          <li>Frage nach Events für heute oder diese Woche</li>
-          <li>Suche nach einer bestimmten Kategorie, wie "Konzerte" oder "Sport"</li>
-        </ul>
+        <p class="text-sm mt-2">${errorMessage}</p>
       </div>
     `;
-    
-    return new Response(JSON.stringify({ response: errorResponse }), {
+    return new Response(JSON.stringify({ response: userErrorHtml }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
+  });
   }
 });
