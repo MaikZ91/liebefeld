@@ -88,12 +88,7 @@ serve(async (req) => {
     8. Berücksichtige ALLE Events, auch die aus externen Quellen (mit 'Quelle: Externe Veranstaltung' gekennzeichnet)
     9. Verwende das Datum-Format YYYY-MM-DD für Vergleiche
     
-    Format deine Antworten klar und übersichtlich in HTML mit diesen Klassen:
-    - Verwende bg-gray-900/20 border border-gray-700/30 für normale Event-Container
-    - Verwende bg-blue-900/20 border border-blue-700/30 für externe Event-Container
-    - Nutze text-red-500 für Überschriften
-    - Nutze text-sm für normalen Text
-    - Nutze rounded-lg p-3 mb-3 für Container-Padding
+    Für die Anzeige von Event-Listen MUSST du ausschließlich die Funktion render_event_panel aufrufen, und darin die passenden Events als JSON-Array zurückgeben.
     `;
 
     console.log('Sending request to Open Router API with Mistral Small model...');
@@ -112,6 +107,37 @@ serve(async (req) => {
           { role: 'system', content: systemMessage },
           { role: 'user', content: query }
         ],
+        functions: [
+          {
+            name: "render_event_panel",
+            description: "Gibt eine Liste von Events als JSON-Array mit Datum, klickbarem Titel (mit URL) und Ort zurück",
+            parameters: {
+              type: "object",
+              properties: {
+                events: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      date: { type: "string", format: "date" },
+                      title: { 
+                        type: "object",
+                        properties: {
+                          text: { type: "string" },
+                          url: { type: "string", format: "uri" }
+                        },
+                        required: ["text", "url"]
+                      },
+                      location: { type: "string" }
+                    },
+                    required: ["date", "title", "location"]
+                  }
+                }
+              },
+              required: ["events"]
+            }
+          }
+        ],
         temperature: 0.7,
         max_tokens: 1024
       })
@@ -122,7 +148,51 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const aiResponse = data.choices[0].message.content;
+    
+    let aiResponse = '';
+    
+    // Check if function was called and process the function call
+    if (data.choices[0].message.function_call) {
+      console.log('Function was called by the AI');
+      
+      try {
+        const functionName = data.choices[0].message.function_call.name;
+        const functionArgs = JSON.parse(data.choices[0].message.function_call.arguments);
+        
+        if (functionName === 'render_event_panel' && functionArgs.events && Array.isArray(functionArgs.events)) {
+          console.log(`Rendering ${functionArgs.events.length} events via function call`);
+          
+          // Convert function call response to HTML
+          aiResponse = `
+            <div class="space-y-3">
+              ${functionArgs.events.map(event => `
+                <div class="bg-gray-900/20 border border-gray-700/30 rounded-lg p-3 mb-3">
+                  <div class="text-sm text-gray-400">${event.date}</div>
+                  <a href="${event.title.url}" class="font-medium text-red-500 hover:underline">
+                    ${event.title.text}
+                  </a>
+                  <div class="text-sm">
+                    <svg class="inline-block w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke-width="2"/>
+                      <circle cx="12" cy="10" r="3" stroke-width="2"/>
+                    </svg>
+                    ${event.location}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        } else {
+          aiResponse = data.choices[0].message.content || 'Keine passenden Events gefunden.';
+        }
+      } catch (error) {
+        console.error('Error processing function call:', error);
+        aiResponse = data.choices[0].message.content || 'Fehler bei der Verarbeitung der Events.';
+      }
+    } else {
+      // If no function call, use the regular content
+      aiResponse = data.choices[0].message.content;
+    }
 
     return new Response(JSON.stringify({ response: aiResponse }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
