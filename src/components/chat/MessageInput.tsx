@@ -15,6 +15,11 @@ interface MessageInputProps {
   setIsEventSelectOpen: (open: boolean) => void;
   eventSelectContent: React.ReactNode;
   isSending: boolean;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  placeholder?: string;
+  mode?: 'ai' | 'community';
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({ 
@@ -24,7 +29,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
   isEventSelectOpen, 
   setIsEventSelectOpen,
   eventSelectContent,
-  isSending 
+  isSending,
+  value,
+  onChange,
+  onKeyDown,
+  placeholder = "Schreibe eine Nachricht...",
+  mode = 'community'
 }) => {
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -32,6 +42,11 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (onChange) {
+      onChange(e);
+      return;
+    }
+    
     setNewMessage(e.target.value);
     
     if (!isTyping && e.target.value.trim()) {
@@ -72,6 +87,11 @@ const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (onKeyDown) {
+      onKeyDown(e);
+      return;
+    }
+    
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
@@ -79,9 +99,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   const handleSubmit = async () => {
-    if (newMessage.trim() || fileInputRef.current?.files?.length) {
+    const messageToSend = value !== undefined ? value : newMessage;
+    if (messageToSend.trim() || fileInputRef.current?.files?.length) {
       await handleSendMessage();
-      setNewMessage("");
+      if (value === undefined) {
+        setNewMessage("");
+      }
     }
   };
 
@@ -105,8 +128,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
     <div className="w-full space-y-2">
       <div className="flex items-center gap-2">
         <Textarea 
-          placeholder="Schreibe eine Nachricht..." 
-          value={newMessage}
+          placeholder={placeholder}
+          value={value !== undefined ? value : newMessage}
           onChange={handleMessageChange}
           onKeyDown={handleKeyDown}
           className="min-h-[50px] flex-grow resize-none"
@@ -157,7 +180,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         />
         <Button 
           onClick={handleSubmit} 
-          disabled={isSending || (!newMessage.trim() && !fileInputRef.current?.files?.length)}
+          disabled={isSending || (!value?.trim() && !newMessage.trim() && !fileInputRef.current?.files?.length)}
           className="rounded-full min-w-[40px]"
         >
           {isSending ? (
