@@ -107,6 +107,24 @@ export type Database = {
           },
         ]
       }
+      chat_queries: {
+        Row: {
+          created_at: string
+          id: string
+          query: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          query: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          query?: string
+        }
+        Relationships: []
+      }
       community_events: {
         Row: {
           category: string

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEventContext } from '@/contexts/EventContext';
@@ -18,6 +19,7 @@ import { format } from 'date-fns';
 import ChatMessage from '@/components/chat/ChatMessage';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
+import { ChatQuery, USERNAME_KEY } from '@/types/chatTypes';
 
 interface ChatMessage {
   id: string;
@@ -175,7 +177,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
   const saveGlobalQuery = async (query: string) => {
     try {
       // First check if this query already exists to avoid duplicates
-      const { data, error: checkError } = await supabase
+      const { data: existingData, error: checkError } = await supabase
         .from('chat_queries')
         .select('id')
         .eq('query', query)
@@ -186,17 +188,17 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
         return;
       }
       
-      if (data && data.length > 0) {
+      if (existingData && existingData.length > 0) {
         // Query already exists, update its timestamp
         await supabase
           .from('chat_queries')
           .update({ created_at: new Date().toISOString() })
-          .eq('id', data[0].id);
+          .eq('id', existingData[0].id);
       } else {
         // Insert new query
         const { error: insertError } = await supabase
           .from('chat_queries')
-          .insert({ query });
+          .insert({ query: query });
           
         if (insertError) {
           console.error('Error saving global query:', insertError);
