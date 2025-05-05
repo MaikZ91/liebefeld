@@ -99,14 +99,15 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       // Generate a unique file name
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      const filePath = `${fileName}`;
       
       // Upload to Supabase Storage
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file);
         
       if (uploadError) {
+        console.error('Upload error:', uploadError);
         throw uploadError;
       }
       
@@ -135,7 +136,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         username: values.username,
         avatar: values.avatar || null,
         interests: interests,
-        hobbies: [] // We're now storing everything in interests
+        hobbies: [] // We now store everything in interests
       });
       
       // Update local storage with the new username and avatar
