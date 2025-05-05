@@ -3,11 +3,11 @@ import React, { useState, useEffect } from 'react';
 import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
+import { useMessageSending } from './useMessageSending';
 import { useChatMessages } from '@/hooks/chat/useChatMessages';
+import { formatRelativeTime } from '@/utils/chatUIUtils';
 import { useTypingIndicator } from '@/hooks/chat/useTypingIndicator';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useMessageSending } from '@/hooks/chat/useMessageSending';
-import { EventShare } from '@/types/chatTypes';
 
 interface ChatGroupProps {
   groupId: string;
@@ -24,7 +24,9 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const username = localStorage.getItem('liebefeld-username') || 'Gast';
-  const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const { sendMessage, sending } = useMessageSending();
+  const { setTypingStatus } = useTypingIndicator();
   
   const {
     messages,
@@ -36,8 +38,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     scrollToBottom,
     isUserScrolling,
     isAtBottom,
-    isReconnecting,
-    handleReconnect
+    addOptimisticMessage
   } = useChatMessages(groupId, username);
 
   // Determine the group type for styling
@@ -50,62 +51,57 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   
   const groupType = groupTypeMap[groupName] || 'ausgehen';
 
-  // Set up message sending functionality
-  const {
-    newMessage,
-    isSending,
-    handleSubmit,
-    handleInputChange,
-    handleKeyDown,
-    setNewMessage
-  } = useMessageSending(groupId, username, (message) => {
-    // This is the addOptimisticMessage function
-    const messages = document.querySelectorAll('.chat-message');
-    if (messages.length > 0) {
-      messages[messages.length - 1].scrollIntoView({ behavior: 'smooth' });
-    }
-  });
+  useEffect(() => {
+    // Reset message when changing groups
+    setMessage('');
+  }, [groupId]);
+
+  const handleSendMessage = async () => {
+    if (!message.trim() || sending) return;
+    
+    const timestamp = new Date().toISOString();
+    const messageId = `temp-${Date.now()}`;
+    
+    // Create optimistic message
+    const optimisticMessage = {
+      id: messageId,
+      content: message.trim(),
+      created_at: timestamp,
+      user_name: username,
+      user_avatar: localStorage.getItem('liebefeld-avatar') || '',
+      group_id: groupId,
+      read_by: [username]
+    };
+    
+    // Add optimistic message to list
+    addOptimisticMessage(optimisticMessage);
+    
+    // Clear input
+    setMessage('');
+    
+    // Send message to server
+    await sendMessage({
+      content: message.trim(),
+      groupId: groupId,
+      username: username,
+      tempId: messageId
+    });
+    
+    // Scroll to bottom
+    scrollToBottom();
+  };
 
   // Format timestamps
   const formatTime = (isoDateString: string) => {
-    const date = new Date(isoDateString);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    
-    // Less than a minute
-    if (diff < 60000) {
-      return 'gerade eben';
-    }
-    
-    // Less than an hour
-    if (diff < 3600000) {
-      const minutes = Math.floor(diff / 60000);
-      return `vor ${minutes} Min.`;
-    }
-    
-    // Less than a day
-    if (diff < 86400000) {
-      const hours = Math.floor(diff / 3600000);
-      return `vor ${hours} Std.`;
-    }
-    
-    // Format as date
-    return new Intl.DateTimeFormat('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
+    return formatRelativeTime(isoDateString);
   };
 
   return (
     <div className="flex flex-col h-full bg-black overflow-hidden" ref={chatContainerRef}>
       <ChatHeader 
-        groupName={groupName}
-        isReconnecting={isReconnecting}
-        handleReconnect={handleReconnect}
+        groupName={groupName} 
+        onlineCount={5}
         onOpenUserDirectory={onOpenUserDirectory}
-        isGroup={true}
       />
 
       <MessageList
@@ -124,18 +120,14 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       />
 
       <MessageInput
+        message={message}
+        setMessage={setMessage}
+        onSendMessage={handleSendMessage}
+        sending={sending}
+        groupId={groupId} 
         username={username}
-        groupId={groupId}
-        handleSendMessage={handleSubmit}
-        isEventSelectOpen={isEventSelectOpen}
-        setIsEventSelectOpen={setIsEventSelectOpen}
-        eventSelectContent={<div className="p-2">Keine Events verfügbar</div>}
-        isSending={isSending}
-        value={newMessage}
-        onChange={handleInputChange}
-        onKeyDown={handleKeyDown}
-        placeholder="Schreibe eine Nachricht..."
-        mode="community"
+        onTyping={(isTyping) => setTypingStatus(groupId, username, isTyping)}
+        compact={compact}
       />
     </div>
   );
