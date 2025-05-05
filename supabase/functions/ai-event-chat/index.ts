@@ -198,26 +198,67 @@ serve(async (req) => {
       data = await response.json();
       console.log('OpenRouter API response received successfully');
       
+      // Enhanced debugging for response structure
+      console.log('Response structure type:', typeof data);
+      if (typeof data === 'object') {
+        console.log('Response has keys:', Object.keys(data));
+        
+        // Log the first layer of response structure
+        Object.keys(data).forEach(key => {
+          const value = data[key];
+          console.log(`Key: ${key}, Type: ${typeof value}, Value:`, 
+            typeof value === 'object' ? 'Object/Array' : 
+            typeof value === 'string' && value.length > 100 ? value.substring(0, 100) + '...' : value);
+        });
+        
+        // Specifically check for choices structure
+        if (data.choices && Array.isArray(data.choices)) {
+          console.log('Choices array length:', data.choices.length);
+          if (data.choices.length > 0) {
+            console.log('First choice keys:', Object.keys(data.choices[0]));
+          }
+        }
+      }
+      
       // Try to extract response text using different possible formats
       if (data.choices && data.choices[0] && data.choices[0].message) {
         aiResponse = data.choices[0].message.content;
         console.log('Found response in standard OpenAI format');
+      } else if (data.choices && data.choices[0] && data.choices[0].text) {
+        aiResponse = data.choices[0].text;
+        console.log('Found response in alternative format with choices.text');
       } else if (data.content) {
         aiResponse = data.content;
-        console.log('Found response in alternative format 1');
+        console.log('Found response in alternative format with content property');
       } else if (data.response) {
         aiResponse = data.response;
-        console.log('Found response in alternative format 2');
+        console.log('Found response in alternative format with response property');
       } else if (data.message && data.message.content) {
         aiResponse = data.message.content;
-        console.log('Found response in alternative format 3');
+        console.log('Found response in alternative format with message.content');
       } else if (data.generation) {
         aiResponse = data.generation;
-        console.log('Found response in alternative format 4');
+        console.log('Found response in alternative format with generation property');
+      } else if (typeof data === 'string') {
+        // Direct string response
+        aiResponse = data;
+        console.log('Found direct string response');
       } else {
-        console.error('Could not find response text in any expected format');
-        console.error('Response structure:', JSON.stringify(data));
-        throw new Error('Unable to parse AI response from unexpected format');
+        // Last resort: try to find any string field that could be the response
+        const stringFields = Object.entries(data)
+          .filter(([_, value]) => typeof value === 'string' && value.length > 20)
+          .map(([key, value]) => ({ key, value }));
+        
+        if (stringFields.length > 0) {
+          // Use the longest string as probable response
+          const mostLikelyResponse = stringFields.sort((a, b) => b.value.length - a.value.length)[0];
+          console.log(`Using field "${mostLikelyResponse.key}" as probable response`);
+          aiResponse = mostLikelyResponse.value;
+        } else {
+          console.error('Could not find response text in any expected format');
+          console.error('Response structure:', JSON.stringify(data));
+          throw new Error('Unable to parse AI response from unexpected format');
+        }
       }
       
       // Create model info object
@@ -234,15 +275,34 @@ serve(async (req) => {
       console.error('Error parsing API response:', parsingError);
       console.error('Raw response data:', data);
       
-      // Create a basic error response
-      aiResponse = `
-        <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
-          <h5 class="font-medium text-sm text-red-600 dark:text-red-400">Fehler beim Parsen der API-Antwort</h5>
-          <p class="text-sm mt-2">
-            Es gab ein Problem bei der Verarbeitung der Antwort vom KI-Modell.
-          </p>
-        </div>
-      `;
+      // Try to parse the raw response as text
+      try {
+        // If we have the raw response body, try again as text
+        const responseText = await response.text();
+        console.log('Raw response body:', responseText && responseText.length > 200 ? 
+          responseText.substring(0, 200) + '...' : responseText);
+        
+        if (responseText && responseText.trim()) {
+          aiResponse = `<p>${responseText}</p>`;
+          console.log('Using raw response text as fallback');
+        } else {
+          throw new Error('Raw response is empty');
+        }
+      } catch (textParseError) {
+        console.error('Failed to parse response as text:', textParseError);
+        
+        // Create a basic error response
+        aiResponse = `
+          <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
+            <h5 class="font-medium text-sm text-red-600 dark:text-red-400">Fehler beim Parsen der API-Antwort</h5>
+            <p class="text-sm mt-2">
+              Es gab ein Problem bei der Verarbeitung der Antwort vom KI-Modell. 
+              Bitte probiere es mit einer anderen Frage oder später noch einmal.
+            </p>
+            <p class="text-xs mt-2 text-red-400">Details: ${parsingError.message}</p>
+          </div>
+        `;
+      }
       
       modelInfo = {
         model: modelUsed || 'Unknown Model',
