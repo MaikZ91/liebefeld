@@ -93,6 +93,15 @@ serve(async (req) => {
 
     console.log('Sending request to Open Router API with Mistral Small model...');
     
+    // Check if API key is available
+    if (!OPENROUTER_API_KEY) {
+      console.error('OPENROUTER_API_KEY is not defined');
+      throw new Error('OpenRouter API key is missing. Please provide OPENROUTER_API_KEY in the environment variables.');
+    }
+    
+    console.log(`API Key check: ${OPENROUTER_API_KEY ? 'API key is available' : 'API key is missing'}`);
+    
+    // Updated to use tools instead of functions (which are deprecated)
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -107,34 +116,37 @@ serve(async (req) => {
           { role: 'system', content: systemMessage },
           { role: 'user', content: query }
         ],
-        functions: [
+        tools: [
           {
-            name: "render_event_panel",
-            description: "Gibt eine Liste von Events als JSON-Array mit Datum, klickbarem Titel (mit URL) und Ort zurück",
-            parameters: {
-              type: "object",
-              properties: {
-                events: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      date: { type: "string", format: "date" },
-                      title: { 
-                        type: "object",
-                        properties: {
-                          text: { type: "string" },
-                          url: { type: "string", format: "uri" }
+            type: "function",
+            function: {
+              name: "render_event_panel",
+              description: "Gibt eine Liste von Events als JSON-Array mit Datum, klickbarem Titel (mit URL) und Ort zurück",
+              parameters: {
+                type: "object",
+                properties: {
+                  events: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        date: { type: "string", format: "date" },
+                        title: { 
+                          type: "object",
+                          properties: {
+                            text: { type: "string" },
+                            url: { type: "string", format: "uri" }
+                          },
+                          required: ["text", "url"]
                         },
-                        required: ["text", "url"]
+                        location: { type: "string" }
                       },
-                      location: { type: "string" }
-                    },
-                    required: ["date", "title", "location"]
+                      required: ["date", "title", "location"]
+                    }
                   }
-                }
-              },
-              required: ["events"]
+                },
+                required: ["events"]
+              }
             }
           }
         ],
@@ -144,6 +156,8 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`OpenRouter API error: ${response.status} ${response.statusText} - ${errorText}`);
       throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
     }
 
@@ -152,19 +166,22 @@ serve(async (req) => {
     
     let aiResponse = '';
     
-    // Check if function was called and process the function call
+    // Handle tool calls (updated from function_call)
     if (data.choices && 
         data.choices[0] && 
         data.choices[0].message && 
-        data.choices[0].message.function_call) {
-      console.log('Function was called by the AI');
+        data.choices[0].message.tool_calls && 
+        data.choices[0].message.tool_calls.length > 0) {
+      
+      console.log('Tool was called by the AI');
       
       try {
-        const functionName = data.choices[0].message.function_call.name;
-        const functionArgs = JSON.parse(data.choices[0].message.function_call.arguments);
+        const toolCall = data.choices[0].message.tool_calls[0];
+        const functionName = toolCall.function.name;
+        const functionArgs = JSON.parse(toolCall.function.arguments);
         
         if (functionName === 'render_event_panel' && functionArgs.events && Array.isArray(functionArgs.events)) {
-          console.log(`Rendering ${functionArgs.events.length} events via function call`);
+          console.log(`Rendering ${functionArgs.events.length} events via tool call`);
           
           // Convert function call response to HTML
           aiResponse = `
@@ -190,14 +207,14 @@ serve(async (req) => {
           aiResponse = data.choices[0].message.content || 'Keine passenden Events gefunden.';
         }
       } catch (error) {
-        console.error('Error processing function call:', error);
+        console.error('Error processing tool call:', error);
         aiResponse = data.choices[0].message.content || 'Fehler bei der Verarbeitung der Events.';
       }
     } else if (data.choices && 
               data.choices[0] && 
               data.choices[0].message &&
               data.choices[0].message.content) {
-      // If no function call, use the regular content
+      // If no tool call, use the regular content
       aiResponse = data.choices[0].message.content;
     } else {
       // Handle unexpected response structure
