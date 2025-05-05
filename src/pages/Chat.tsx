@@ -160,8 +160,7 @@ const ChatPage = () => {
           <SheetHeader>
             <SheetTitle>Aktuelle Events</SheetTitle>
             <SheetDescription>
-              Die aktuellen Events in deiner Region.
-            </SheetDescription>
+          </SheetDescription>
           </SheetHeader>
           <div className="mt-4 overflow-y-auto max-h-[80vh]">
             <EventCalendar defaultView="list" />
