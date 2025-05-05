@@ -66,6 +66,7 @@ serve(async (req) => {
       ${event.location ? `Ort: ${event.location}` : ''}
       ${event.description ? `Beschreibung: ${event.description}` : ''}
       ${event.id.startsWith('github-') ? 'Quelle: Externe Veranstaltung' : 'Quelle: Community Event'}
+      ${event.link ? `Link: ${event.link}` : ''}
     `).join('\n\n');
 
     const systemMessage = `Du bist ein hilfreicher Event-Assistent für Liebefeld. 
@@ -83,7 +84,7 @@ serve(async (req) => {
     3. Die Woche beginnt immer am Montag und endet am Sonntag
     4. Die aktuelle Tageszeit und das Wetter
     5. Die spezifischen Interessen in der Anfrage
-    6. Gib relevante Events mit allen Details an
+    6. Zeige IMMER ALLE relevanten Events mit allen Details an, nicht nur ein einzelnes Event
     7. Wenn keine passenden Events gefunden wurden, mache alternative Vorschläge
     8. Berücksichtige ALLE Events, auch die aus externen Quellen (mit 'Quelle: Externe Veranstaltung' gekennzeichnet)
     9. Verwende das Datum-Format YYYY-MM-DD für Vergleiche
@@ -94,9 +95,19 @@ serve(async (req) => {
     - Nutze text-red-500 für Überschriften
     - Nutze text-sm für normalen Text
     - Nutze rounded-lg p-3 mb-3 für Container-Padding
+    - SEHR WICHTIG: Zeige bei jedem Event einen Link mit dem Titel an, wenn 'link' verfügbar ist. Beispiel: 
+      <a href="https://example.com" target="_blank" rel="noopener noreferrer" class="font-medium text-red-500 hover:underline flex items-center gap-1">
+        Event Titel
+        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M7 17L17 7M17 7H8M17 7V16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    - Gruppiere die Events nach Datum
+    - Zeige bei jedem Event ein Herz-Symbol für "Likes" an: 
+      <span class="text-xs text-red-500">❤️ ${event.likes || 0}</span>
     `;
 
-    console.log('Sending request to Open Router API with Gemini model...');
+    console.log('Sending request to Open Router API with Llama 4 Scout model...');
     
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -107,7 +118,7 @@ serve(async (req) => {
         'X-Title': 'Lovable Chat'
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-exp:free',
+        model: 'meta-llama/llama-4-scout:free',
         messages: [
           { role: 'system', content: systemMessage },
           { role: 'user', content: query }

@@ -6,3 +6,6 @@ verify_jwt = false
 
 [functions.send-partner-email]
 verify_jwt = false
+
+[functions.analyze-event-text]
+verify_jwt = false
