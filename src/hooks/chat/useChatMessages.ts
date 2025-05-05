@@ -8,6 +8,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { realtimeService } from '@/services/realtimeService';
 
 export const useChatMessages = (groupId: string, username: string) => {
+  // Use a valid UUID for groupId, default to general if not provided
+  const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
+  
   const [messages, setMessages] = useState<Message[]>([]);
   const [lastSeen, setLastSeen] = useState<Date>(new Date());
   const [typingUsers, setTypingUsers] = useState<any[]>([]);
@@ -15,7 +18,7 @@ export const useChatMessages = (groupId: string, username: string) => {
   const channelsRef = useRef<any[]>([]);
   const timeoutsRef = useRef<{[key: string]: NodeJS.Timeout}>({});
   
-  const { fetchMessages, loading, error, setError } = useMessageFetching(groupId);
+  const { fetchMessages, loading, error, setError } = useMessageFetching(validGroupId);
   
   // Update the messages ref whenever messages change
   useEffect(() => {
@@ -37,7 +40,7 @@ export const useChatMessages = (groupId: string, username: string) => {
       
       // Mark message as read if from someone else
       if (newMsg.user_name !== username && username) {
-        messageService.markMessagesAsRead(groupId, [newMsg.id], username);
+        messageService.markMessagesAsRead(validGroupId, [newMsg.id], username);
       }
       
       // Process and parse event data before adding to messages
@@ -54,16 +57,16 @@ export const useChatMessages = (groupId: string, username: string) => {
     });
     
     setLastSeen(new Date());
-  }, [groupId, username]);
+  }, [validGroupId, username]);
   
   // Setup typing indicators
   useEffect(() => {
-    if (!groupId || !username) return;
+    if (!validGroupId || !username) return;
     
-    console.log('Setting up typing indicator for group:', groupId);
+    console.log('Setting up typing indicator for group:', validGroupId);
     
     const typingChannel = supabase
-      .channel(`typing:${groupId}`)
+      .channel(`typing:${validGroupId}`)
       .on('broadcast', { event: 'typing' }, (payload) => {
         console.log('Typing status update received:', payload);
         
@@ -122,19 +125,19 @@ export const useChatMessages = (groupId: string, username: string) => {
         supabase.removeChannel(typingChannel);
       }
     };
-  }, [groupId, username]);
+  }, [validGroupId, username]);
   
   // Setup message listener
   useEffect(() => {
-    if (!groupId || !username) {
+    if (!validGroupId || !username) {
       console.log('No group ID or username, skipping message subscription');
       return;
     }
     
-    console.log('Setting up message listener for group:', groupId);
+    console.log('Setting up message listener for group:', validGroupId);
     
     // Set up message listener using the realtimeService
-    const channels = realtimeService.setupMessageListener(groupId, handleNewMessage);
+    const channels = realtimeService.setupMessageListener(validGroupId, handleNewMessage);
     channelsRef.current = [...channelsRef.current, ...channels];
     
     return () => {
@@ -149,22 +152,22 @@ export const useChatMessages = (groupId: string, username: string) => {
         }
       });
     };
-  }, [groupId, username, handleNewMessage]);
+  }, [validGroupId, username, handleNewMessage]);
   
   // Fetch messages when group changes
   useEffect(() => {
-    if (groupId) {
-      console.log(`Group ID changed, fetching messages for: ${groupId}`);
+    if (validGroupId) {
+      console.log(`Group ID changed, fetching messages for: ${validGroupId}`);
       fetchAndSetMessages();
     }
-  }, [groupId]);
+  }, [validGroupId]);
   
   const fetchAndSetMessages = useCallback(async () => {
-    if (!groupId) return;
+    if (!validGroupId) return;
     
     try {
-      console.log(`Fetching messages for group: ${groupId}`);
-      const fetchedMessages = await messageService.fetchMessages(groupId);
+      console.log(`Fetching messages for group: ${validGroupId}`);
+      const fetchedMessages = await messageService.fetchMessages(validGroupId);
       console.log(`Fetched ${fetchedMessages.length} messages`);
       
       // Process messages to parse event data from content if needed
@@ -184,7 +187,7 @@ export const useChatMessages = (groupId: string, username: string) => {
         
         if (unreadMessages.length > 0) {
           messageService.markMessagesAsRead(
-            groupId,
+            validGroupId,
             unreadMessages.map(msg => msg.id),
             username
           );
@@ -193,7 +196,7 @@ export const useChatMessages = (groupId: string, username: string) => {
     } catch (err) {
       console.error('Error fetching messages:', err);
     }
-  }, [groupId, username, fetchMessages]);
+  }, [validGroupId, username, fetchMessages]);
   
   // Reconnection handling
   const { isReconnecting, handleReconnect } = useReconnection(fetchAndSetMessages);

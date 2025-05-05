@@ -7,8 +7,11 @@ export const useMessageFetching = (groupId: string) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Ensure we have a valid UUID for groupId
+  const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
+
   const fetchMessages = useCallback(async () => {
-    if (!groupId) {
+    if (!validGroupId) {
       setError("Keine Gruppen-ID angegeben");
       setLoading(false);
       return [];
@@ -16,8 +19,8 @@ export const useMessageFetching = (groupId: string) => {
     
     setLoading(true);
     try {
-      console.log(`Nachrichten für Gruppe abrufen: ${groupId}`);
-      const messages = await messageService.fetchMessages(groupId);
+      console.log(`Nachrichten für Gruppe abrufen: ${validGroupId}`);
+      const messages = await messageService.fetchMessages(validGroupId);
       console.log(`${messages.length} Nachrichten empfangen`);
       setError(null);
       return messages;
@@ -28,7 +31,7 @@ export const useMessageFetching = (groupId: string) => {
     } finally {
       setLoading(false);
     }
-  }, [groupId]);
+  }, [validGroupId]);
 
   return {
     fetchMessages,

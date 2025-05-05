@@ -8,6 +8,7 @@ import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { Button } from '@/components/ui/button';
 import UsernameDialog from './chat/UsernameDialog';
 import { toast } from '@/hooks/use-toast';
+import { UserCircle } from 'lucide-react';
 
 interface GroupChatProps {
   groupId: string;
@@ -23,8 +24,11 @@ const GroupChat: React.FC<GroupChatProps> = ({
   const [isUserDirectoryOpen, setIsUserDirectoryOpen] = useState(false);
   const [isPrivateChatOpen, setIsPrivateChatOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const { currentUser, updateLastOnline } = useUserProfile();
+  const { currentUser, userProfile, loading } = useUserProfile();
   const [isUsernameModalOpen, setIsUsernameModalOpen] = useState(false);
+
+  // Ensure we have a valid UUID for the groupId
+  const validGroupId = groupId === 'general' ? '00000000-0000-4000-8000-000000000000' : groupId;
 
   // Benutzerverzeichnis öffnen
   const handleOpenUserDirectory = () => {
@@ -34,7 +38,6 @@ const GroupChat: React.FC<GroupChatProps> = ({
       return;
     }
     
-    updateLastOnline();
     setIsUserDirectoryOpen(true);
   };
 
@@ -81,10 +84,16 @@ const GroupChat: React.FC<GroupChatProps> = ({
   return (
     <>
       <ChatGroup 
-        groupId={groupId} 
+        groupId={validGroupId} 
         groupName={groupName}
         onOpenUserDirectory={handleOpenUserDirectory} 
       />
+
+      {/* Login-Status anzeigen */}
+      <div className="fixed bottom-4 right-4 bg-purple-900/80 text-white rounded-full px-3 py-1 text-sm flex items-center shadow-lg">
+        <UserCircle className="w-4 h-4 mr-1" />
+        <span>{loading ? "Verbinden..." : `Angemeldet als ${currentUser}`}</span>
+      </div>
 
       {/* Benutzerverzeichnis-Dialog */}
       <UserDirectory
