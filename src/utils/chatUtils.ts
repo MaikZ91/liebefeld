@@ -1,4 +1,3 @@
-
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { fetchWeather } from './weatherUtils';
@@ -85,14 +84,6 @@ export const formatEvents = (events: any[]) => {
   return eventsHtml;
 };
 
-interface ModelInfo {
-  model: string;
-  promptTokens: string | number;
-  completionTokens: string | number;
-  totalTokens: string | number;
-  error?: string;
-}
-
 export const generateResponse = async (query: string, events: any[]) => {
   try {
     console.log(`Generating AI response for query: "${query}" with ${events.length} events`);
@@ -140,9 +131,8 @@ export const generateResponse = async (query: string, events: any[]) => {
     
     // Timeout für die Anfrage setzen
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 Sekunden Timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 Sekunden Timeout
     
-    const weatherInfo = await fetchWeather();
     const response = await fetch('https://ykleosfvtqcmqxqihnod.supabase.co/functions/v1/ai-event-chat', {
       method: 'POST',
       headers: {
@@ -155,7 +145,7 @@ export const generateResponse = async (query: string, events: any[]) => {
         currentDate: formattedDate,
         nextWeekStart: nextWeekStartStr,
         nextWeekEnd: nextWeekEndStr,
-        weather: weatherInfo,
+        weather: await fetchWeather(),
         allEvents: events
       }),
       signal: controller.signal
@@ -164,82 +154,18 @@ export const generateResponse = async (query: string, events: any[]) => {
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      console.error('Error response from AI endpoint:', response.status, response.statusText);
-      try {
-        const errorText = await response.text();
-        console.error('Error response body:', errorText);
-        throw new Error(`Failed to get AI response: ${response.status} ${response.statusText} - ${errorText}`);
-      } catch (textError) {
-        throw new Error(`Failed to get AI response: ${response.status} ${response.statusText}`);
-      }
+      throw new Error('Failed to get AI response');
     }
 
-    let data;
-    try {
-      data = await response.json();
-      console.log('AI response data received:', Object.keys(data));
-    } catch (jsonError) {
-      console.error('Failed to parse response as JSON:', jsonError);
-      const textResponse = await response.text();
-      console.error('Raw response:', textResponse.substring(0, 200) + (textResponse.length > 200 ? '...' : ''));
-      throw new Error('Invalid JSON response from AI endpoint');
-    }
-    
-    // Extrahiere Model-Information falls vorhanden
-    let modelInfoHtml = '';
-    if (data.modelInfo) {
-      const modelInfo: ModelInfo = data.modelInfo;
-      
-      if (modelInfo.error) {
-        console.warn('Model reported error:', modelInfo.error);
-      }
-      
-      // Get the model name without provider prefix (e.g., "google/gemini-2.0-flash-lite-001" -> "gemini-2.0-flash-lite-001")
-      const modelName = (modelInfo.model && typeof modelInfo.model === 'string') 
-        ? modelInfo.model.split('/')[1] || modelInfo.model
-        : 'AI Model';
-      
-      // Simplify model name for display - shortcuts for common models
-      let displayModelName = modelName;
-      if (modelName.includes('gemini-2.0')) {
-        displayModelName = 'Gemini 2.0';
-      } else if (modelName.includes('claude-3')) {
-        displayModelName = 'Claude 3';
-      } else if (modelName.includes('gpt-4o')) {
-        displayModelName = 'GPT-4o';
-      }
-      
-      modelInfoHtml = `
-        <div class="mt-2 text-xs text-gray-500">
-          <p>Powered by ${displayModelName}</p>
-        </div>`;
-    }
-    
-    if (!data.response && data.error) {
-      console.error('Error returned in successful response:', data.error);
-      return createResponseHeader("Fehler") + `
-        <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm mb-3">
-          Entschuldigung, es gab einen Fehler: ${data.error}
-        </div>
-      ` + modelInfoHtml;
-    } else if (!data.response) {
-      console.error('Missing response in AI data:', data);
-      return createResponseHeader("Fehler") + `
-        <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm mb-3">
-          Entschuldigung, die KI hat keine lesbare Antwort zurückgegeben. Bitte versuche es erneut.
-        </div>
-      ` + modelInfoHtml;
-    }
-    
-    return createResponseHeader("KI-Antwort") + data.response + modelInfoHtml;
+    const data = await response.json();
+    return createResponseHeader("KI-Antwort") + data.response;
   } catch (error) {
     console.error('Error generating AI response:', error);
     
     // Bei Timeout oder anderen Fehlern, einfache Event-Liste als Fallback anzeigen
     return createResponseHeader("Fehler") + `
       <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm mb-3">
-        Entschuldigung, ich konnte keine KI-Antwort generieren: ${error.message}
-        <br/>Hier sind die verfügbaren Events:
+        Entschuldigung, ich konnte keine KI-Antwort generieren. Hier sind die verfügbaren Events:
       </div>
       ${formatEvents(events)}`;
   }

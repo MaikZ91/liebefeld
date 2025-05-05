@@ -98,222 +98,33 @@ serve(async (req) => {
 
     console.log('Sending request to Open Router API with Gemini model...');
     
-    // Define backup models in case the primary model fails
-    const models = [
-      'google/gemini-2.0-flash-exp:free',
-      'anthropic/claude-3-sonnet:beta',
-      'openai/gpt-4o-mini'
-    ];
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://github.com/lovable-chat', 
+        'X-Title': 'Lovable Chat'
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.0-flash-exp:free',
+        messages: [
+          { role: 'system', content: systemMessage },
+          { role: 'user', content: query }
+        ],
+        temperature: 0.7,
+        max_tokens: 1024
+      })
+    });
 
-    let response = null;
-    let modelUsed = '';
-    let errorDetails = '';
-    
-    // Try primary model first
-    try {
-      response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://github.com/lovable-chat', 
-          'X-Title': 'Lovable Chat'
-        },
-        body: JSON.stringify({
-          model: models[0],
-          messages: [
-            { role: 'system', content: systemMessage },
-            { role: 'user', content: query }
-          ],
-          temperature: 0.7,
-          max_tokens: 1024
-        })
-      });
-      
-      modelUsed = models[0];
-      
-      // Log full response for debugging
-      const responseStatus = response.status;
-      const responseStatusText = response.statusText;
-      console.log(`OpenRouter API response status: ${responseStatus} ${responseStatusText}`);
-      
-      if (!response.ok) {
-        const errorBody = await response.text();
-        console.error(`OpenRouter API error response: ${errorBody}`);
-        errorDetails = `${responseStatus} ${responseStatusText} - ${errorBody}`;
-        throw new Error(`OpenRouter API error: ${errorDetails}`);
-      }
-    } catch (primaryError) {
-      console.error('Primary model error:', primaryError.message);
-      
-      // Try fallback models sequentially
-      for (let i = 1; i < models.length; i++) {
-        try {
-          console.log(`Trying fallback model: ${models[i]}`);
-          response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-              'Content-Type': 'application/json',
-              'HTTP-Referer': 'https://github.com/lovable-chat', 
-              'X-Title': 'Lovable Chat'
-            },
-            body: JSON.stringify({
-              model: models[i],
-              messages: [
-                { role: 'system', content: systemMessage },
-                { role: 'user', content: query }
-              ],
-              temperature: 0.7,
-              max_tokens: 1024
-            })
-          });
-          
-          modelUsed = models[i];
-          
-          if (response.ok) {
-            console.log(`Successfully switched to fallback model: ${models[i]}`);
-            break;
-          } else {
-            const errorBody = await response.text();
-            console.error(`Fallback model ${models[i]} error: ${errorBody}`);
-          }
-        } catch (fallbackError) {
-          console.error(`Fallback model ${models[i]} error:`, fallbackError.message);
-        }
-      }
-      
-      // If all models failed
-      if (!response || !response.ok) {
-        throw new Error(`All API models failed. Primary error: ${primaryError.message}`);
-      }
+    if (!response.ok) {
+      throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
     }
 
-    // Parse and handle the response carefully
-    let data = null;
-    let aiResponse = '';
-    let modelInfo = {};
-    
-    try {
-      data = await response.json();
-      console.log('OpenRouter API response received successfully');
-      
-      // Enhanced debugging for response structure
-      console.log('Response structure type:', typeof data);
-      if (typeof data === 'object') {
-        console.log('Response has keys:', Object.keys(data));
-        
-        // Log the first layer of response structure
-        Object.keys(data).forEach(key => {
-          const value = data[key];
-          console.log(`Key: ${key}, Type: ${typeof value}, Value:`, 
-            typeof value === 'object' ? 'Object/Array' : 
-            typeof value === 'string' && value.length > 100 ? value.substring(0, 100) + '...' : value);
-        });
-        
-        // Specifically check for choices structure
-        if (data.choices && Array.isArray(data.choices)) {
-          console.log('Choices array length:', data.choices.length);
-          if (data.choices.length > 0) {
-            console.log('First choice keys:', Object.keys(data.choices[0]));
-          }
-        }
-      }
-      
-      // Try to extract response text using different possible formats
-      if (data.choices && data.choices[0] && data.choices[0].message) {
-        aiResponse = data.choices[0].message.content;
-        console.log('Found response in standard OpenAI format');
-      } else if (data.choices && data.choices[0] && data.choices[0].text) {
-        aiResponse = data.choices[0].text;
-        console.log('Found response in alternative format with choices.text');
-      } else if (data.content) {
-        aiResponse = data.content;
-        console.log('Found response in alternative format with content property');
-      } else if (data.response) {
-        aiResponse = data.response;
-        console.log('Found response in alternative format with response property');
-      } else if (data.message && data.message.content) {
-        aiResponse = data.message.content;
-        console.log('Found response in alternative format with message.content');
-      } else if (data.generation) {
-        aiResponse = data.generation;
-        console.log('Found response in alternative format with generation property');
-      } else if (typeof data === 'string') {
-        // Direct string response
-        aiResponse = data;
-        console.log('Found direct string response');
-      } else {
-        // Last resort: try to find any string field that could be the response
-        const stringFields = Object.entries(data)
-          .filter(([_, value]) => typeof value === 'string' && value.length > 20)
-          .map(([key, value]) => ({ key, value }));
-        
-        if (stringFields.length > 0) {
-          // Use the longest string as probable response
-          const mostLikelyResponse = stringFields.sort((a, b) => b.value.length - a.value.length)[0];
-          console.log(`Using field "${mostLikelyResponse.key}" as probable response`);
-          aiResponse = mostLikelyResponse.value;
-        } else {
-          console.error('Could not find response text in any expected format');
-          console.error('Response structure:', JSON.stringify(data));
-          throw new Error('Unable to parse AI response from unexpected format');
-        }
-      }
-      
-      // Create model info object
-      modelInfo = {
-        model: modelUsed || data.model || 'AI Model',
-        promptTokens: data.usage?.prompt_tokens || 'N/A',
-        completionTokens: data.usage?.completion_tokens || 'N/A',
-        totalTokens: data.usage?.total_tokens || 'N/A'
-      };
-      
-      console.log(`Model used: ${modelInfo.model}`);
-      console.log(`Token usage - Prompt: ${modelInfo.promptTokens}, Completion: ${modelInfo.completionTokens}, Total: ${modelInfo.totalTokens}`);
-    } catch (parsingError) {
-      console.error('Error parsing API response:', parsingError);
-      console.error('Raw response data:', data);
-      
-      // Try to parse the raw response as text
-      try {
-        // If we have the raw response body, try again as text
-        const responseText = await response.text();
-        console.log('Raw response body:', responseText && responseText.length > 200 ? 
-          responseText.substring(0, 200) + '...' : responseText);
-        
-        if (responseText && responseText.trim()) {
-          aiResponse = `<p>${responseText}</p>`;
-          console.log('Using raw response text as fallback');
-        } else {
-          throw new Error('Raw response is empty');
-        }
-      } catch (textParseError) {
-        console.error('Failed to parse response as text:', textParseError);
-        
-        // Create a basic error response
-        aiResponse = `
-          <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
-            <h5 class="font-medium text-sm text-red-600 dark:text-red-400">Fehler beim Parsen der API-Antwort</h5>
-            <p class="text-sm mt-2">
-              Es gab ein Problem bei der Verarbeitung der Antwort vom KI-Modell. 
-              Bitte probiere es mit einer anderen Frage oder später noch einmal.
-            </p>
-            <p class="text-xs mt-2 text-red-400">Details: ${parsingError.message}</p>
-          </div>
-        `;
-      }
-      
-      modelInfo = {
-        model: modelUsed || 'Unknown Model',
-        error: parsingError.message
-      };
-    }
+    const data = await response.json();
+    const aiResponse = data.choices[0].message.content;
 
-    return new Response(JSON.stringify({ 
-      response: aiResponse,
-      modelInfo: modelInfo 
-    }), {
+    return new Response(JSON.stringify({ response: aiResponse }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
@@ -332,14 +143,10 @@ serve(async (req) => {
           <li>Frage nach Events für heute oder diese Woche</li>
           <li>Suche nach einer bestimmten Kategorie, wie "Konzerte" oder "Sport"</li>
         </ul>
-        <p class="text-xs mt-2 text-red-400">Fehlerdetails: ${error.message}</p>
       </div>
     `;
     
-    return new Response(JSON.stringify({ 
-      response: errorResponse,
-      error: error.message
-    }), {
+    return new Response(JSON.stringify({ response: errorResponse }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
