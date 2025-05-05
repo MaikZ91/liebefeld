@@ -39,13 +39,13 @@ serve(async (req) => {
     console.log(`Server current date: ${currentDate}`);
     console.log(`Received currentDate from client: ${currentDate}`);
     console.log(`Received next week range: ${nextWeekStart} to ${nextWeekEnd}`);
-    console.log(`Processing ${allEvents?.length} events for AI response (${allEvents?.length} provided from frontend)`);
 
     const today = new Date().toISOString().split("T")[0];
 
     /***************************
-     * EVENT RETRIEVAL
+     * EVENT RETRIEVAL AND FILTERING
      ***************************/
+    // Fetche immer alle Events aus der Datenbank, damit wir darauf filtern können
     const { data: dbEvents, error: eventsError } = await supabase
       .from("community_events")
       .select("*")
@@ -55,29 +55,155 @@ serve(async (req) => {
       throw new Error(`Datenbank‑Fehler: ${eventsError.message}`);
     }
 
-    const events = allEvents?.length ? allEvents : dbEvents;
-
-    // Log some debug information about events
-    if (currentDate) {
-      const todayEvents = events.filter(e => e.date === currentDate);
-      console.log(`Events specifically for today (${currentDate}): ${todayEvents.length}`);
-      if (todayEvents.length > 0) {
-        console.log('First few today events:', todayEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
+    // Verwende ein Array für die gefilterten Events, die wir an das KI-Modell senden werden
+    let filteredEvents = allEvents?.length ? allEvents : dbEvents;
+    
+    // Analyse der Benutzeranfrage für die Filterung
+    const lowercaseQuery = query.toLowerCase();
+    
+    // Filter für "heute" / "today" / "aktuell" etc.
+    if (
+      lowercaseQuery.includes("heute") ||
+      lowercaseQuery.includes("today") ||
+      lowercaseQuery.includes("aktuell") || 
+      lowercaseQuery.includes("jetzt") ||
+      lowercaseQuery.includes("this day")
+    ) {
+      console.log(`Anfrage nach Events für heute (${currentDate}) erkannt`);
+      filteredEvents = filteredEvents.filter(e => e.date === currentDate);
+      console.log(`Nach Filterung für "heute": ${filteredEvents.length} Events übrig`);
+    }
+    // Filter für "diese Woche" / "this week"
+    else if (
+      lowercaseQuery.includes("diese woche") ||
+      lowercaseQuery.includes("this week") ||
+      lowercaseQuery.includes("aktuelle woche") ||
+      lowercaseQuery.includes("current week")
+    ) {
+      const startOfWeek = new Date(currentDate);
+      // Setze auf Montag zurück
+      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1);
+      const startDate = startOfWeek.toISOString().split('T')[0];
+      
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(endOfWeek.getDate() + 6); // Sonntag
+      const endDate = endOfWeek.toISOString().split('T')[0];
+      
+      console.log(`Anfrage nach Events dieser Woche (${startDate} bis ${endDate}) erkannt`);
+      filteredEvents = filteredEvents.filter(e => e.date >= startDate && e.date <= endDate);
+      console.log(`Nach Filterung für "diese Woche": ${filteredEvents.length} Events übrig`);
+    }
+    // Filter für "nächste Woche" / "next week"
+    else if (
+      lowercaseQuery.includes("nächste woche") ||
+      lowercaseQuery.includes("next week") ||
+      lowercaseQuery.includes("kommende woche")
+    ) {
+      console.log(`Anfrage nach Events für nächste Woche (${nextWeekStart} bis ${nextWeekEnd}) erkannt`);
+      filteredEvents = filteredEvents.filter(e => e.date >= nextWeekStart && e.date <= nextWeekEnd);
+      console.log(`Nach Filterung für "nächste Woche": ${filteredEvents.length} Events übrig`);
+    }
+    // Filter für "wochenende" / "weekend"
+    else if (
+      lowercaseQuery.includes("wochenende") ||
+      lowercaseQuery.includes("weekend") ||
+      lowercaseQuery.includes("samstag") ||
+      lowercaseQuery.includes("sonntag") ||
+      lowercaseQuery.includes("saturday") ||
+      lowercaseQuery.includes("sunday")
+    ) {
+      const today = new Date(currentDate);
+      const dayOfWeek = today.getDay();
+      
+      const daysUntilSaturday = dayOfWeek === 6 ? 7 : 6 - dayOfWeek;
+      const saturday = new Date(today);
+      saturday.setDate(today.getDate() + daysUntilSaturday);
+      const saturdayStr = saturday.toISOString().split('T')[0];
+      
+      const sunday = new Date(saturday);
+      sunday.setDate(saturday.getDate() + 1);
+      const sundayStr = sunday.toISOString().split('T')[0];
+      
+      console.log(`Anfrage nach Events fürs Wochenende (${saturdayStr} und ${sundayStr}) erkannt`);
+      filteredEvents = filteredEvents.filter(e => e.date === saturdayStr || e.date === sundayStr);
+      console.log(`Nach Filterung für "Wochenende": ${filteredEvents.length} Events übrig`);
+    }
+    // Filter für Kategorien
+    const categoryMapping = {
+      konzert: "Konzert",
+      concert: "Konzert",
+      musik: "Konzert",
+      music: "Konzert",
+      party: "Party",
+      feier: "Party",
+      festival: "Festival",
+      ausstellung: "Ausstellung",
+      exhibition: "Ausstellung",
+      kunst: "Ausstellung",
+      art: "Ausstellung",
+      sport: "Sport",
+      sports: "Sport",
+      workshop: "Workshop",
+      kultur: "Kultur",
+      culture: "Kultur",
+      theater: "Theater",
+      kino: "Kino",
+      cinema: "Kino",
+      film: "Kino",
+      lesung: "Lesung",
+      reading: "Lesung",
+      literatur: "Lesung",
+      literature: "Lesung"
+    };
+    
+    let categoryFilter = null;
+    for (const [keyword, category] of Object.entries(categoryMapping)) {
+      if (lowercaseQuery.includes(keyword)) {
+        categoryFilter = category;
+        break;
       }
     }
     
-    if (nextWeekStart && nextWeekEnd) {
-      const nextWeekEvents = events.filter(e => {
-        const eventDate = e.date;
-        return eventDate >= nextWeekStart && eventDate <= nextWeekEnd;
-      });
-      console.log(`Events for next week (${nextWeekStart} to ${nextWeekEnd}): ${nextWeekEvents.length}`);
-      if (nextWeekEvents.length > 0) {
-        console.log('First few next week events:', nextWeekEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
-      }
+    if (categoryFilter) {
+      console.log(`Anfrage nach Events der Kategorie "${categoryFilter}" erkannt`);
+      const beforeCount = filteredEvents.length;
+      filteredEvents = filteredEvents.filter(e => 
+        e.category && e.category.toLowerCase() === categoryFilter.toLowerCase()
+      );
+      console.log(`Nach Filterung für Kategorie "${categoryFilter}": ${filteredEvents.length} von ${beforeCount} Events übrig`);
+    }
+    
+    // Falls die Filterung zu streng war und keine Events übrig sind, nehmen wir die letzten 20 Events
+    if (filteredEvents.length === 0) {
+      console.log("Keine Events nach Filterung übrig, verwende die nächsten 20 anstehenden Events");
+      filteredEvents = dbEvents
+        .filter(e => e.date >= currentDate)
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .slice(0, 20);
+    }
+    
+    // Begrenze die Anzahl der Events, die wir an das KI-Modell senden
+    // Wenn wir mehr als 30 Events haben, nehmen wir die 30 relevantesten (basierend auf Datum)
+    const MAX_EVENTS = 30;
+    if (filteredEvents.length > MAX_EVENTS) {
+      console.log(`Zu viele Events (${filteredEvents.length}), begrenze auf ${MAX_EVENTS}`);
+      filteredEvents = filteredEvents
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .slice(0, MAX_EVENTS);
     }
 
-    const formattedEvents = events
+    console.log(`Sende ${filteredEvents.length} gefilterte Events an das KI-Modell`);
+    
+    // Log some debug information about events
+    if (currentDate) {
+      const todayEvents = filteredEvents.filter(e => e.date === currentDate);
+      console.log(`Events für heute (${currentDate}) nach Filterung: ${todayEvents.length}`);
+      if (todayEvents.length > 0) {
+        console.log('Erste Events für heute:', todayEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
+      }
+    }
+    
+    const formattedEvents = filteredEvents
       .map((e) =>
         [
           `Event: ${e.title}`,
@@ -89,8 +215,12 @@ serve(async (req) => {
       )
       .join("\n\n");
 
+    // Informationen über die Gesamtanzahl der Events und die Filtermethode hinzufügen
+    const totalEventsInfo = `Es gibt insgesamt ${dbEvents.length} Events in der Datenbank. Ich habe dir die ${filteredEvents.length} relevantesten basierend auf deiner Anfrage ausgewählt.`;
+    
     const systemMessage =
       `Du bist ein Event‑Assistent für Liebefeld. Aktuelles Datum: ${today}.\n` +
+      `${totalEventsInfo}\n` +
       `Hier die Events:\n${formattedEvents}`;
 
     /***************************
@@ -188,8 +318,8 @@ serve(async (req) => {
     const aiContent: string = choice.message?.content ?? 
       (choice.message?.function_call ? JSON.stringify(choice.message.function_call) : "Keine Antwort erhalten");
 
-    // Füge einen Hinweis zum verwendeten Modell hinzu
-    const modelInfo = parsed?.model ? `<p class="text-xs text-gray-400 mt-2">Powered by ${parsed.model}</p>` : '';
+    // Füge einen Hinweis zum verwendeten Modell und zur Anzahl der gefilterten Events hinzu
+    const modelInfo = parsed?.model ? `<p class="text-xs text-gray-400 mt-2">Powered by ${parsed.model} • ${filteredEvents.length} relevante Events aus ${dbEvents.length} analysiert</p>` : '';
     const finalHtml = `${aiContent}${modelInfo}${debugHtml}`;
 
     return new Response(JSON.stringify({ response: finalHtml }), {
