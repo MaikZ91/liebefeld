@@ -87,6 +87,44 @@ const About = () => {
             </div>
           </section>
           
+          {/* Community Section - Moved up from original position */}
+          <section className="mb-16">
+            <div className="bg-black/40 p-6 rounded-xl border border-red-500/10 shadow-lg">
+              <span className="inline-block py-1 px-2 rounded-full bg-red-500/20 text-red-400 text-xs font-medium mb-2">Community</span>
+              <h2 className="text-xl font-bold mb-3">Verbinde dich mit Gleichgesinnten</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Tausche dich mit Menschen aus Bielefeld aus, die deine Interessen teilen
+              </p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+                {communityImages.slice(0, 3).map((img, index) => (
+                  <div key={index} className="h-32 rounded-lg overflow-hidden">
+                    <img src={img.src} alt={img.alt} className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
+                {communityFeatures.slice(0, 4).map((feature, i) => (
+                  <div key={i} className="flex items-start">
+                    <div className="mr-1 h-4 w-4 rounded-full bg-red-500/20 flex items-center justify-center text-red-400">
+                      <feature.icon className="h-2 w-2" />
+                    </div>
+                    <div className="text-xs">{feature.title}</div>
+                  </div>
+                ))}
+              </div>
+              
+              <Button 
+                className="w-full mt-4 rounded-full px-4 py-1 text-xs bg-red-500 hover:bg-red-600"
+                onClick={() => navigate('/chat')}
+              >
+                <Users className="mr-1 h-3 w-3" />
+                Community beitreten
+              </Button>
+            </div>
+          </section>
+          
           {/* Features Section - Kompaktere Karten */}
           <section className="mb-16">
             <div className="text-center mb-8">
@@ -186,44 +224,6 @@ const About = () => {
             </div>
           </section>
           
-          {/* Community Section */}
-          <section className="mb-16">
-            <div className="bg-black/40 p-6 rounded-xl border border-red-500/10 shadow-lg">
-              <span className="inline-block py-1 px-2 rounded-full bg-red-500/20 text-red-400 text-xs font-medium mb-2">Community</span>
-              <h2 className="text-xl font-bold mb-3">Verbinde dich mit Gleichgesinnten</h2>
-              <p className="text-sm text-muted-foreground mb-4">
-                Tausche dich mit Menschen aus Bielefeld aus, die deine Interessen teilen
-              </p>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
-                {communityImages.slice(0, 3).map((img, index) => (
-                  <div key={index} className="h-32 rounded-lg overflow-hidden">
-                    <img src={img.src} alt={img.alt} className="w-full h-full object-cover" />
-                  </div>
-                ))}
-              </div>
-              
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
-                {communityFeatures.slice(0, 4).map((feature, i) => (
-                  <div key={i} className="flex items-start">
-                    <div className="mr-1 h-4 w-4 rounded-full bg-red-500/20 flex items-center justify-center text-red-400">
-                      <feature.icon className="h-2 w-2" />
-                    </div>
-                    <div className="text-xs">{feature.title}</div>
-                  </div>
-                ))}
-              </div>
-              
-              <Button 
-                className="w-full mt-4 rounded-full px-4 py-1 text-xs bg-red-500 hover:bg-red-600"
-                onClick={() => navigate('/chat')}
-              >
-                <Users className="mr-1 h-3 w-3" />
-                Community beitreten
-              </Button>
-            </div>
-          </section>
-          
           {/* CTA Section - Kompakter */}
           <section className="mb-12">
             <div className="rounded-xl p-6 text-center relative overflow-hidden bg-gradient-to-r from-red-950/30 to-purple-950/30">
@@ -287,13 +287,8 @@ const features = [
   },
   {
     title: "Community",
-    description: "Verbinde dich mit anderen Bielefeldern in Echtzeit.",
+    description: "Verbinde dich mit anderen Bielefeldern und werde Teil einer wachsenden lokalen Community.",
     icon: Users
-  },
-  {
-    title: "Gemeinschaft",
-    description: "Werde Teil einer wachsenden lokalen Community.",
-    icon: Heart
   },
   {
     title: "Events erstellen",
