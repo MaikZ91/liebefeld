@@ -108,17 +108,6 @@ const ChatPage = () => {
               <List className="h-4 w-4" />
               <span className="hidden md:inline">Events anzeigen</span>
             </Button>
-            
-            {/* Add Event Button - Moved next to the other button */}
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleAddEvent}
-              className="flex items-center gap-1"
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span className="hidden md:inline">Event hinzufügen</span>
-            </Button>
           </div>
         </div>
         
@@ -161,13 +150,24 @@ const ChatPage = () => {
                   <p className="text-gray-400 mb-6">
                     Tausche dich mit anderen Nutzern aus, teile Events und bleibe immer auf dem Laufenden.
                   </p>
-                  <Button 
-                    className="w-full bg-green-600 hover:bg-green-700 gap-2"
-                    onClick={() => window.open(whatsAppLink, '_blank')}
-                  >
-                    <Link className="h-4 w-4" />
-                    WhatsApp Community beitreten
-                  </Button>
+                  <div className="flex gap-2 justify-center">
+                    <Button 
+                      className="bg-green-600 hover:bg-green-700 gap-2"
+                      onClick={() => window.open(whatsAppLink, '_blank')}
+                    >
+                      <Link className="h-4 w-4" />
+                      WhatsApp Community beitreten
+                    </Button>
+                    
+                    {/* Add Event Button - Moved next to the Community button */}
+                    <Button 
+                      className="bg-red-600 hover:bg-red-700 gap-2"
+                      onClick={handleAddEvent}
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                      Event hinzufügen
+                    </Button>
+                  </div>
                 </div>
               </div>
             </TabsContent>
