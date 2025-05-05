@@ -102,7 +102,7 @@ const ChatPage = () => {
                 <TabsTrigger value="ai" className="flex-1 data-[state=active]:bg-black/50 data-[state=active]:text-red-500">
                   <div className="flex items-center gap-2">
                     <MessageCircle className="h-4 w-4" />
-                    <span>KI Chat</span>
+                    <span>Event Assistent</span>
                   </div>
                 </TabsTrigger>
                 <TabsTrigger value="community" className="flex-1 data-[state=active]:bg-black/50 data-[state=active]:text-[#9b87f5]">
