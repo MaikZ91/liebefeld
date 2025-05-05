@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -117,11 +117,12 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     setInterests(interests.filter(i => i !== interest));
   };
 
+  // Fix for adding locations
   const handleAddLocation = () => {
     if (selectedLocation && !favoriteLocations.includes(selectedLocation)) {
-      setFavoriteLocations([...favoriteLocations, selectedLocation]);
-      setPopoverOpen(false);
+      setFavoriteLocations(prev => [...prev, selectedLocation]);
       setSelectedLocation('');
+      setPopoverOpen(false);
     }
   };
 
@@ -129,6 +130,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     setFavoriteLocations(favoriteLocations.filter(loc => loc !== location));
   };
 
+  // Fix for image upload
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -148,10 +150,13 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     try {
       setUploading(true);
       
+      // Check if the avatars bucket exists
+      const { data: bucketList } = await supabase.storage.listBuckets();
+      const avatarBucketExists = bucketList?.some(bucket => bucket.name === 'avatars');
+      
       // Create storage bucket if it doesn't exist
-      const { error: bucketError } = await supabase.storage.getBucket('avatars');
-      if (bucketError && bucketError.message.includes('not found')) {
-        // Create the bucket
+      if (!avatarBucketExists) {
+        console.log('Creating avatars bucket');
         await supabase.storage.createBucket('avatars', {
           public: true
         });
@@ -188,17 +193,10 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     }
   };
 
-  // Filter locations based on search term
-  const filteredLocations = searchTerm 
-    ? locations.filter(loc => 
-        loc.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : locations;
-
-  // Handle location selection
+  // Fix for handling location selection
   const handleSelectLocation = (location: string) => {
     setSelectedLocation(location);
-    setPopoverOpen(false);
+    // Don't close popup automatically to allow immediate adding
   };
 
   const onSubmit = async (values: z.infer<typeof profileSchema>) => {
@@ -236,6 +234,9 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       <DialogContent className="bg-black text-white border border-gray-800 sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-white">Profil bearbeiten</DialogTitle>
+          <DialogDescription className="text-gray-400">
+            Hier kannst du dein Profil anpassen.
+          </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
@@ -321,7 +322,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
               </div>
             </div>
             
-            {/* Lieblingslokationen */}
+            {/* Lieblingslokationen - Improved */}
             <div className="space-y-2">
               <Label>Lieblingslokationen</Label>
               <div className="flex flex-wrap gap-2 mb-2">
@@ -365,8 +366,8 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
                       />
                       <CommandList>
                         <CommandEmpty>Keine Ergebnisse gefunden.</CommandEmpty>
-                        <ScrollArea className="max-h-[200px]">
-                          <CommandGroup>
+                        <CommandGroup>
+                          <ScrollArea className="max-h-48 overflow-auto">
                             {filteredLocations.map((location) => (
                               <CommandItem
                                 key={location}
@@ -377,8 +378,8 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
                                 {location}
                               </CommandItem>
                             ))}
-                          </CommandGroup>
-                        </ScrollArea>
+                          </ScrollArea>
+                        </CommandGroup>
                       </CommandList>
                     </Command>
                   </PopoverContent>

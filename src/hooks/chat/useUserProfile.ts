@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { userService } from '@/services/userService';
 import { UserProfile } from '@/types/chatTypes';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
+import { toast } from '@/hooks/use-toast';
 
 export const useUserProfile = () => {
   const [currentUser, setCurrentUser] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || 'Gast');
@@ -25,20 +26,33 @@ export const useUserProfile = () => {
       
       const avatar = localStorage.getItem(AVATAR_KEY);
       
+      // Check if user exists before trying to create/update
+      let profile;
+      try {
+        profile = await userService.getUserByUsername(currentUser);
+      } catch (err) {
+        console.log('User does not exist yet, will create new profile');
+      }
+      
       // Benutzerprofil erstellen oder aktualisieren
-      const profile = await userService.createOrUpdateProfile({
+      profile = await userService.createOrUpdateProfile({
         username: currentUser,
         avatar: avatar || null,
         // Standardwerte für Interessen und Hobbys
         interests: ['Sport', 'Events', 'Kreativität'],
         hobbies: ['Tanzen', 'Musik', 'Kochen'],
-        favorite_locations: []
+        favorite_locations: profile?.favorite_locations || []
       });
       
       setUserProfile(profile);
     } catch (err: any) {
       console.error('Fehler beim Initialisieren des Benutzerprofils:', err);
       setError(err.message || 'Ein Fehler ist aufgetreten');
+      toast({
+        title: "Fehler",
+        description: "Benutzerprofil konnte nicht erstellt werden. Bitte später erneut versuchen.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
