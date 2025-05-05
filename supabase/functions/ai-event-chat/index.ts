@@ -96,7 +96,7 @@ serve(async (req) => {
     - Nutze rounded-lg p-3 mb-3 für Container-Padding
     `;
 
-    console.log('Sending request to Open Router API with Gemini model...');
+    console.log('Sending request to Open Router API with Llama 4 Scout model...');
     
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -107,7 +107,7 @@ serve(async (req) => {
         'X-Title': 'Lovable Chat'
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-exp:free',
+        model: 'meta-llama/llama-4-scout:free',
         messages: [
           { role: 'system', content: systemMessage },
           { role: 'user', content: query }
