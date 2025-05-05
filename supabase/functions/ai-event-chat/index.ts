@@ -148,11 +148,15 @@ serve(async (req) => {
     }
 
     const data = await response.json();
+    console.log('Received response from OpenRouter API:', JSON.stringify(data, null, 2));
     
     let aiResponse = '';
     
     // Check if function was called and process the function call
-    if (data.choices[0].message.function_call) {
+    if (data.choices && 
+        data.choices[0] && 
+        data.choices[0].message && 
+        data.choices[0].message.function_call) {
       console.log('Function was called by the AI');
       
       try {
@@ -189,9 +193,16 @@ serve(async (req) => {
         console.error('Error processing function call:', error);
         aiResponse = data.choices[0].message.content || 'Fehler bei der Verarbeitung der Events.';
       }
-    } else {
+    } else if (data.choices && 
+              data.choices[0] && 
+              data.choices[0].message &&
+              data.choices[0].message.content) {
       // If no function call, use the regular content
       aiResponse = data.choices[0].message.content;
+    } else {
+      // Handle unexpected response structure
+      console.error('Unexpected response structure from OpenRouter API:', data);
+      aiResponse = 'Fehler: Unerwartete Antwort vom AI-Service.';
     }
 
     return new Response(JSON.stringify({ response: aiResponse }), {
