@@ -86,7 +86,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }, 2000);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (onKeyDown) {
       onKeyDown(e);
       return;
