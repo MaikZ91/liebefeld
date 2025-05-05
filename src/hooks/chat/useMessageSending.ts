@@ -6,12 +6,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { realtimeService } from '@/services/realtimeService';
 import { messageService } from '@/services/messageService';
 
-export const useMessageSending = (groupId: string, username: string, addOptimisticMessage: (message: any) => void) => {
+export const useMessageSending = (
+  groupId: string, 
+  username: string, 
+  addOptimisticMessage: (message: any) => void
+) => {
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [typing, setTyping] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = useCallback(async (event?: React.FormEvent, eventData?: EventShare) => {
     if (event) {
@@ -198,29 +202,13 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
   }, [handleSubmit]);
 
   // Cleanup on unmount
-  const cleanup = useCallback(() => {
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-    
-    if (typing) {
-      const channel = supabase.channel(`typing:${groupId}`);
-      channel.subscribe();
-      
-      // After subscribing, send the typing status
-      setTimeout(() => {
-        channel.send({
-          type: 'broadcast',
-          event: 'typing',
-          payload: {
-            username,
-            avatar: localStorage.getItem(AVATAR_KEY),
-            isTyping: false
-          }
-        });
-      }, 100);
-    }
-  }, [groupId, username, typing]);
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return {
     newMessage,
@@ -231,6 +219,6 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     handleKeyDown,
     setNewMessage,
     typing,
-    cleanup
+    typingTimeoutRef
   };
 };

@@ -152,13 +152,13 @@ const MessageInput: React.FC<MessageInputProps> = ({
   }, []);
 
   return (
-    <div className="w-full space-y-2">
+    <div className="w-full space-y-2 p-4">
       <div className="flex items-center gap-2">
         <Textarea 
           placeholder={placeholder}
           value={value !== undefined ? value : newMessage}
-          onChange={handleMessageChange}
-          onKeyDown={handleKeyDown}
+          onChange={onChange || handleMessageChange}
+          onKeyDown={onKeyDown || handleKeyDown}
           className="min-h-[50px] flex-grow resize-none"
         />
         <div className="flex flex-col gap-2">
