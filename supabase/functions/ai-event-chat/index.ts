@@ -21,7 +21,7 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
     const { query, timeOfDay, weather, allEvents, currentDate, nextWeekStart, nextWeekEnd } = await req.json();
     
-    // Log date info for debugging
+    // Log date info
     const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
     console.log(`Server current date: ${today}`);
     console.log(`Received currentDate from client: ${currentDate}`);
@@ -68,7 +68,6 @@ serve(async (req) => {
       ${event.id.startsWith('github-') ? 'Quelle: Externe Veranstaltung' : 'Quelle: Community Event'}
     `).join('\n\n');
 
-    // Improve system prompt to better handle German queries
     const systemMessage = `Du bist ein hilfreicher Event-Assistent für Liebefeld. 
     Aktueller Tag: ${today} (Format: YYYY-MM-DD)
     Aktuelle Tageszeit: ${timeOfDay}
@@ -79,7 +78,7 @@ serve(async (req) => {
     
     Beantworte Fragen zu den Events präzise und freundlich auf Deutsch. 
     Berücksichtige dabei:
-    1. Wenn der Nutzer nach "heute" oder "jetzt" fragt, beziehe dich NUR auf Events mit Datum ${today}
+    1. Wenn der Nutzer nach "heute" fragt, beziehe dich auf Events mit Datum ${today}
     2. Wenn der Nutzer nach "nächster Woche" fragt, beziehe dich auf Events vom ${nextWeekStart} (Montag) bis ${nextWeekEnd} (Sonntag)
     3. Die Woche beginnt immer am Montag und endet am Sonntag
     4. Die aktuelle Tageszeit und das Wetter
@@ -89,20 +88,16 @@ serve(async (req) => {
     8. Berücksichtige ALLE Events, auch die aus externen Quellen (mit 'Quelle: Externe Veranstaltung' gekennzeichnet)
     9. Verwende das Datum-Format YYYY-MM-DD für Vergleiche
     
-    Für die Anzeige von Event-Listen MUSST du ausschließlich die Funktion render_event_panel aufrufen, und darin die passenden Events als JSON-Array zurückgeben.
+    Format deine Antworten klar und übersichtlich in HTML mit diesen Klassen:
+    - Verwende bg-gray-900/20 border border-gray-700/30 für normale Event-Container
+    - Verwende bg-blue-900/20 border border-blue-700/30 für externe Event-Container
+    - Nutze text-red-500 für Überschriften
+    - Nutze text-sm für normalen Text
+    - Nutze rounded-lg p-3 mb-3 für Container-Padding
     `;
 
-    console.log('Sending request to Open Router API with Mistral Small model...');
+    console.log('Sending request to Open Router API with Gemini model...');
     
-    // Check if API key is available
-    if (!OPENROUTER_API_KEY) {
-      console.error('OPENROUTER_API_KEY is not defined');
-      throw new Error('OpenRouter API key is missing. Please provide OPENROUTER_API_KEY in the environment variables.');
-    }
-    
-    console.log(`API Key check: ${OPENROUTER_API_KEY ? 'API key is available' : 'API key is missing'}`);
-    
-    // Updated to use tools instead of functions (which are deprecated)
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -112,44 +107,10 @@ serve(async (req) => {
         'X-Title': 'Lovable Chat'
       },
       body: JSON.stringify({
-        model: 'mistralai/mistral-small-3.1-24b-instruct:free',
+        model: 'google/gemini-2.0-flash-exp:free',
         messages: [
           { role: 'system', content: systemMessage },
           { role: 'user', content: query }
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "render_event_panel",
-              description: "Gibt eine Liste von Events als JSON-Array mit Datum, klickbarem Titel (mit URL) und Ort zurück",
-              parameters: {
-                type: "object",
-                properties: {
-                  events: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        date: { type: "string", format: "date" },
-                        title: { 
-                          type: "object",
-                          properties: {
-                            text: { type: "string" },
-                            url: { type: "string", format: "uri" }
-                          },
-                          required: ["text", "url"]
-                        },
-                        location: { type: "string" }
-                      },
-                      required: ["date", "title", "location"]
-                    }
-                  }
-                },
-                required: ["events"]
-              }
-            }
-          }
         ],
         temperature: 0.7,
         max_tokens: 1024
@@ -157,71 +118,11 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`OpenRouter API error: ${response.status} ${response.statusText} - ${errorText}`);
       throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log('Received response from OpenRouter API:', JSON.stringify(data, null, 2));
-    
-    let aiResponse = '';
-    
-    // Handle tool calls (updated from function_call)
-    if (data.choices && 
-        data.choices[0] && 
-        data.choices[0].message && 
-        data.choices[0].message.tool_calls && 
-        data.choices[0].message.tool_calls.length > 0) {
-      
-      console.log('Tool was called by the AI');
-      
-      try {
-        const toolCall = data.choices[0].message.tool_calls[0];
-        const functionName = toolCall.function.name;
-        const functionArgs = JSON.parse(toolCall.function.arguments);
-        
-        if (functionName === 'render_event_panel' && functionArgs.events && Array.isArray(functionArgs.events)) {
-          console.log(`Rendering ${functionArgs.events.length} events via tool call`);
-          
-          // Convert function call response to HTML
-          aiResponse = `
-            <div class="space-y-3">
-              ${functionArgs.events.map(event => `
-                <div class="bg-gray-900/20 border border-gray-700/30 rounded-lg p-3 mb-3">
-                  <div class="text-sm text-gray-400">${event.date}</div>
-                  <a href="${event.title.url}" class="font-medium text-red-500 hover:underline">
-                    ${event.title.text}
-                  </a>
-                  <div class="text-sm">
-                    <svg class="inline-block w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke-width="2"/>
-                      <circle cx="12" cy="10" r="3" stroke-width="2"/>
-                    </svg>
-                    ${event.location}
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-          `;
-        } else {
-          aiResponse = data.choices[0].message.content || 'Keine passenden Events gefunden.';
-        }
-      } catch (error) {
-        console.error('Error processing tool call:', error);
-        aiResponse = data.choices[0].message.content || 'Fehler bei der Verarbeitung der Events.';
-      }
-    } else if (data.choices && 
-              data.choices[0] && 
-              data.choices[0].message &&
-              data.choices[0].message.content) {
-      // If no tool call, use the regular content
-      aiResponse = data.choices[0].message.content;
-    } else {
-      // Handle unexpected response structure
-      console.error('Unexpected response structure from OpenRouter API:', data);
-      aiResponse = 'Fehler: Unerwartete Antwort vom AI-Service.';
-    }
+    const aiResponse = data.choices[0].message.content;
 
     return new Response(JSON.stringify({ response: aiResponse }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
