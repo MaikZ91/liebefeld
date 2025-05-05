@@ -5,7 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Link as LinkIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import EventMessageFormatter from './EventMessageFormatter';
 
@@ -44,6 +44,43 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     return dateKeywords.some(keyword => lowerMessage.includes(keyword)) || showDateSelector;
   };
   
+  // Function to convert URLs to clickable links
+  const renderMessageWithLinks = (text: string) => {
+    // URL regex pattern - improved to better match URLs
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    
+    if (!text.match(urlRegex)) {
+      return text;
+    }
+    
+    const parts = text.split(urlRegex);
+    const matches = text.match(urlRegex) || [];
+    
+    return (
+      <>
+        {parts.map((part, i) => (
+          <React.Fragment key={i}>
+            {part}
+            {matches[i] && (
+              <a 
+                href={matches[i]} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-red-400 hover:text-red-300 underline break-all flex items-center"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
+              >
+                {matches[i]}
+                <LinkIcon className="h-3 w-3 ml-1 inline" />
+              </a>
+            )}
+          </React.Fragment>
+        ))}
+      </>
+    );
+  };
+  
   // Format message content - extract event data if present
   const formatContent = () => {
     if (eventData) {
@@ -55,7 +92,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     if (hasDatePrompt && onDateSelect) {
       return (
         <div className="space-y-2">
-          <div className="whitespace-pre-wrap">{message}</div>
+          <div className="whitespace-pre-wrap">
+            {typeof message === 'string' ? renderMessageWithLinks(message) : message}
+          </div>
           
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-3">
             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
@@ -106,7 +145,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       );
     }
     
-    return <div className="whitespace-pre-wrap">{message}</div>;
+    // For regular messages, render with links if it's a string
+    return (
+      <div className="whitespace-pre-wrap">
+        {typeof message === 'string' ? renderMessageWithLinks(message) : message}
+      </div>
+    );
   };
   
   return (
