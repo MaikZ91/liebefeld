@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEventContext } from '@/contexts/EventContext';
@@ -18,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import ChatMessage from '@/components/chat/ChatMessage';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ChatMessage {
   id: string;
@@ -45,6 +45,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [recentQueries, setRecentQueries] = useState<string[]>([]);
+  const [globalQueries, setGlobalQueries] = useState<string[]>([]);
   const [showRecentQueries, setShowRecentQueries] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -72,6 +73,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
       }
     }
     
+    // Load local recent queries too (keeping for backup)
     const savedQueries = localStorage.getItem(CHAT_QUERIES_KEY);
     if (savedQueries) {
       try {
@@ -83,6 +85,9 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
         console.error('Error parsing saved queries:', error);
       }
     }
+    
+    // Fetch global queries from Supabase
+    fetchGlobalQueries();
   }, []);
 
   // Save chat history to localStorage whenever messages change
@@ -142,14 +147,80 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
       }, 300);
     }
   };
+  
+  // Fetch global queries from Supabase
+  const fetchGlobalQueries = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('chat_queries')
+        .select('query')
+        .order('created_at', { ascending: false })
+        .limit(3);
+        
+      if (error) {
+        console.error('Error fetching global queries:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        const queries = data.map(item => item.query);
+        setGlobalQueries(queries);
+      }
+    } catch (error) {
+      console.error('Exception fetching global queries:', error);
+    }
+  };
+  
+  // Save a query to Supabase
+  const saveGlobalQuery = async (query: string) => {
+    try {
+      // First check if this query already exists to avoid duplicates
+      const { data, error: checkError } = await supabase
+        .from('chat_queries')
+        .select('id')
+        .eq('query', query)
+        .limit(1);
+        
+      if (checkError) {
+        console.error('Error checking for existing query:', checkError);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        // Query already exists, update its timestamp
+        await supabase
+          .from('chat_queries')
+          .update({ created_at: new Date().toISOString() })
+          .eq('id', data[0].id);
+      } else {
+        // Insert new query
+        const { error: insertError } = await supabase
+          .from('chat_queries')
+          .insert({ query });
+          
+        if (insertError) {
+          console.error('Error saving global query:', insertError);
+        }
+      }
+      
+      // Refresh the global queries list
+      fetchGlobalQueries();
+    } catch (error) {
+      console.error('Exception saving global query:', error);
+    }
+  };
 
   const updateRecentQueries = (query: string) => {
+    // Still maintain local user queries as backup
     setRecentQueries(prev => {
       // Filter out duplicates and add new query at the beginning
       const filteredQueries = prev.filter(q => q !== query);
       const newQueries = [query, ...filteredQueries].slice(0, 3);
       return newQueries;
     });
+    
+    // Also save to global queries in Supabase
+    saveGlobalQuery(query);
   };
 
   const handleSendMessage = async (customInput?: string) => {
@@ -315,6 +386,28 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
     };
   }, []);
 
+  // Subscribe to real-time updates for chat_queries table
+  useEffect(() => {
+    const channel = supabase
+      .channel('chat_queries_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'chat_queries' 
+        }, 
+        () => {
+          // Refetch global queries when there's a change
+          fetchGlobalQueries();
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   if (!isVisible) return null;
 
   // Render the message list
@@ -348,13 +441,16 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
 
   // Render recent queries
   const renderRecentQueries = () => {
-    if (recentQueries.length === 0) return null;
+    // Use global queries from Supabase instead of local queries
+    const queriesToRender = globalQueries.length > 0 ? globalQueries : recentQueries;
+    
+    if (queriesToRender.length === 0) return null;
     
     return (
       <div className={`absolute bottom-[60px] left-0 right-0 bg-gray-900/80 backdrop-blur-sm rounded-t-lg border border-red-500/20 transition-all duration-300 ${showRecentQueries ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
         <div className="p-3 border-b border-red-500/20">
           <div className="flex items-center justify-between">
-            <h4 className="text-sm font-medium text-red-400">Letzte Anfragen</h4>
+            <h4 className="text-sm font-medium text-red-400">Letzte Community-Anfragen</h4>
             <Button
               variant="ghost"
               size="sm"
@@ -366,7 +462,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
           </div>
         </div>
         <div className="p-2 max-h-[150px] overflow-y-auto">
-          {recentQueries.map((query, index) => (
+          {queriesToRender.map((query, index) => (
             <Button
               key={index}
               variant="ghost"
@@ -458,7 +554,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
           {renderRecentQueries()}
           
           <div className="flex items-center relative">
-            {recentQueries.length > 0 && (
+            {globalQueries.length > 0 && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -476,7 +572,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Frage nach Events..."
-              className={`flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 ${recentQueries.length > 0 ? 'pl-10' : ''}`}
+              className={`flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 ${globalQueries.length > 0 ? 'pl-10' : ''}`}
             />
             <button
               onClick={() => handleSendMessage()}
@@ -580,7 +676,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
             {renderRecentQueries()}
             
             <div className="flex items-center relative">
-              {recentQueries.length > 0 && (
+              {globalQueries.length > 0 && (
                 <Button
                   variant="ghost"
                   size="icon"
@@ -598,7 +694,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({ fullPage = false }) => {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Frage nach Events..."
-                className={`flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 ${recentQueries.length > 0 ? 'pl-10' : ''}`}
+                className={`flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 ${globalQueries.length > 0 ? 'pl-10' : ''}`}
               />
               <button
                 onClick={() => handleSendMessage()}
