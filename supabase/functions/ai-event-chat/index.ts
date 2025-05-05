@@ -107,7 +107,7 @@ serve(async (req) => {
         'X-Title': 'Lovable Chat'
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-exp:free',
+        model: 'google/gemini-2.0-flash-lite-001',
         messages: [
           { role: 'system', content: systemMessage },
           { role: 'user', content: query }
