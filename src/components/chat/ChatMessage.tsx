@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import EventMessageFormatter from './EventMessageFormatter';
 
 interface ChatMessageProps {
-  message: string;
+  message: string | React.ReactNode;
   isConsecutive?: boolean;
   isGroup?: boolean;
   eventData?: EventShare;
@@ -31,7 +31,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   
   // Auto-detect if the message looks like a calendar request
   const detectCalendarRequest = () => {
-    if (!message) return false;
+    if (typeof message !== 'string') return false;
     
     const lowerMessage = message.toLowerCase();
     const dateKeywords = [
@@ -50,7 +50,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       return <EventMessageFormatter event={eventData} />;
     }
     
-    const hasDatePrompt = detectCalendarRequest();
+    const hasDatePrompt = typeof message === 'string' && detectCalendarRequest();
     
     if (hasDatePrompt && onDateSelect) {
       return (

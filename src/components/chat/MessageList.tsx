@@ -45,6 +45,39 @@ const MessageList: React.FC<MessageListProps> = ({
     }
   }, [isMobile, chatBottomRef]);
 
+  // Function to convert URLs in text to clickable links
+  const convertLinksToAnchors = (text: string): React.ReactNode => {
+    // URL regex pattern
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    
+    if (!text.match(urlRegex)) {
+      return text;
+    }
+    
+    const parts = text.split(urlRegex);
+    const matches = text.match(urlRegex) || [];
+    
+    return parts.reduce((result: React.ReactNode[], part, i) => {
+      result.push(part);
+      
+      if (matches[i]) {
+        result.push(
+          <a 
+            key={i} 
+            href={matches[i]} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="text-red-400 hover:text-red-300 underline break-all"
+          >
+            {matches[i]}
+          </a>
+        );
+      }
+      
+      return result;
+    }, []);
+  };
+
   // Parse event data from message content if available
   const parseEventData = (message: Message): EventShare | undefined => {
     try {
@@ -130,6 +163,11 @@ const MessageList: React.FC<MessageListProps> = ({
               console.error("Failed to parse event data:", error);
             }
 
+            // Convert string content to React node with links
+            const contentWithLinks = typeof messageContent === 'string' 
+              ? convertLinksToAnchors(messageContent) 
+              : messageContent;
+
             return (
               <div key={message.id} className="mb-4 w-full max-w-full overflow-hidden">
                 {!isConsecutive && (
@@ -144,7 +182,7 @@ const MessageList: React.FC<MessageListProps> = ({
                 )}
                 <div className="w-full max-w-full overflow-hidden break-words">
                   <ChatMessage 
-                    message={messageContent} 
+                    message={contentWithLinks} 
                     isConsecutive={isConsecutive}
                     isGroup={isGroup}
                     eventData={eventData}
