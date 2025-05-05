@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEventContext } from '@/contexts/EventContext';
@@ -16,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
+import ChatMessage from '@/components/chat/ChatMessage'; // Import the ChatMessage component
 
 interface ChatMessage {
   id: string;
