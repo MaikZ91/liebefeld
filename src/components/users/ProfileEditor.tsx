@@ -50,6 +50,11 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
   const [selectedLocation, setSelectedLocation] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Add the missing filteredLocations computed property
+  const filteredLocations = locations.filter(location => 
+    location.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
