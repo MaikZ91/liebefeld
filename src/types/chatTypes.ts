@@ -1,4 +1,3 @@
-
 export const USERNAME_KEY = 'username';
 export const AVATAR_KEY = 'avatar';
 
@@ -22,13 +21,13 @@ export const GROUP_CATEGORIES = [
 ];
 
 // Define shared event display format for chats
-export interface EventShare {
+export type EventShare = {
   title: string;
   date: string;
   time: string;
-  location?: string;
-  category: string;
-}
+  location: string;
+  category?: string;
+};
 
 // Message interface used across the application
 export interface Message {

@@ -6,6 +6,7 @@ import { getInitials } from '@/utils/chatUIUtils';
 import ChatMessage from './ChatMessage';
 import TypingIndicator from './TypingIndicator';
 import { Message, TypingUser, EventShare } from '@/types/chatTypes';
+import { EventMessageFormatter } from './EventMessageFormatter';
 
 interface MessageListProps {
   messages: Message[];
@@ -104,12 +105,15 @@ const MessageList: React.FC<MessageListProps> = ({
                   </div>
                 )}
                 <div className="w-full max-w-full overflow-hidden break-words">
-                  <ChatMessage 
-                    message={messageContent} 
-                    isConsecutive={isConsecutive}
-                    isGroup={isGroup}
-                    eventData={eventData}
-                  />
+                  {eventData ? (
+                    <EventMessageFormatter event={eventData} />
+                  ) : (
+                    <ChatMessage 
+                      message={messageContent} 
+                      isConsecutive={isConsecutive}
+                      isGroup={isGroup}
+                    />
+                  )}
                 </div>
               </div>
             );
