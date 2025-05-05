@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
@@ -328,37 +327,35 @@ serve(async (req) => {
     // Ersetze Listen-Formatierungen wie "* Item" oder "- Item" in HTML <ul><li> Format
     aiContent = aiContent.replace(/\n[\*\-]\s+(.*?)(?=\n[\*\-]|\n\n|$)/g, (match, item) => {
       // Extract event information if available
-      const titleMatch = item.match(/(.*?) um (.*?) (?:in|bei|im) (.*?) \(Kategorie: (.*?)\)/i);
+      const titleMatch = item.match(/(.*?) (?:um|at) (.*?) (?:in|bei|im|in|at) (.*?)(?: \(Kategorie: (.*?)\))?$/i);
       if (titleMatch) {
         const [_, title, time, location, category] = titleMatch;
         // Format as event card similar to EventCard component
         return `
-          <li class="dark-glass-card rounded-lg p-2 mb-2 hover-scale">
-            <div class="flex justify-between items-start gap-1">
-              <div class="flex-1 min-w-0">
-                <h4 class="font-medium text-sm text-white break-words">${title}</h4>
-                <div class="flex flex-wrap items-center gap-1 mt-0.5 text-xs text-white">
-                  <div class="flex items-center">
-                    <svg class="w-3 h-3 mr-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    <span>${time} Uhr</span>
-                  </div>
-                  <div class="flex items-center max-w-[120px] overflow-hidden">
-                    <svg class="w-3 h-3 mr-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                    <span class="truncate">${location}</span>
-                  </div>
+          <div class="event-data" data-title="${title}" data-time="${time}" data-location="${location}" data-category="${category || 'Event'}">
+            <div class="bg-gray-800 rounded-lg p-3 border border-red-500/30 w-full max-w-full overflow-hidden break-words mb-3">
+              <div class="text-lg font-semibold text-white mb-1">Geteiltes Event</div>
+              <div class="text-xl font-bold text-white break-words">${title}</div>
+              <div class="flex flex-col gap-1 mt-2">
+                <div class="flex items-center text-sm text-gray-300">
+                  <svg class="h-4 w-4 mr-1 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <span class="break-words overflow-hidden">${time}</span>
+                </div>
+                <div class="flex items-center text-sm text-gray-300">
+                  <svg class="h-4 w-4 mr-1 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  <span class="break-words overflow-hidden">${location}</span>
                 </div>
               </div>
-              <div class="flex items-center gap-2">
-                <span class="bg-black text-red-500 dark:bg-black dark:text-red-500 flex-shrink-0 flex items-center gap-0.5 text-xs font-medium whitespace-nowrap px-1.5 py-0.5 rounded-md">
-                  <svg class="w-3 h-3 mr-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                  ${category}
-                </span>
+              <div class="flex justify-between items-center mt-2">
+                <div class="text-sm bg-red-500 text-white inline-block px-2 py-0.5 rounded">
+                  ${category || "Event"}
+                </div>
                 <div class="flex items-center">
-                  <svg class="w-3 h-3 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                  <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
                 </div>
               </div>
             </div>
-          </li>`;
+          </div>`;
       }
       
       // Default list item if not an event
@@ -399,4 +396,3 @@ serve(async (req) => {
     });
   }
 });
-
