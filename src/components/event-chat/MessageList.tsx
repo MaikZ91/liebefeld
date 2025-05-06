@@ -44,8 +44,9 @@ const MessageList: React.FC<MessageListProps> = ({
 
   return (
     <ScrollArea className="h-full">
-      {/* Add custom CSS to fix the event list bullet points layout */}
-      <style jsx global>{`
+      {/* Add style tag properly for TypeScript */}
+      <style>
+        {`
         .event-list-container ul li {
           display: flex !important;
           flex-direction: row !important;
@@ -76,7 +77,8 @@ const MessageList: React.FC<MessageListProps> = ({
           display: block !important;
           margin-bottom: 0.25rem !important;
         }
-      `}</style>
+        `}
+      </style>
       
       <div className="space-y-3 pb-2">
         {renderMessages()}
