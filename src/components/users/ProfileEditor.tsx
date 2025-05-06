@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -19,6 +18,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
 
 interface ProfileEditorProps {
   open: boolean;
@@ -64,25 +64,39 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     },
   });
 
-  // Ensure the storage bucket exists
+  // Initialize component data from current user
   useEffect(() => {
-    async function ensureStorageBucket() {
-      if (!open) return;
+    if (currentUser) {
+      console.log('Loading current user data into form:', currentUser);
       
-      try {
-        await userService.ensureAvatarBucket();
-        console.log('Avatar storage bucket ensured');
-      } catch (err) {
-        console.error('Error ensuring bucket exists:', err);
-      }
+      form.reset({
+        username: currentUser.username,
+        avatar: currentUser.avatar || '',
+      });
+      
+      // Reset uploadedImage when currentUser changes
+      setUploadedImage(null);
+      
+      // Set interests from currentUser
+      setInterests(currentUser.interests || []);
+      
+      // Set favorite locations
+      setFavoriteLocations(currentUser.favorite_locations || []);
+      
+      console.log('Form initialized with:',  {
+        username: currentUser.username,
+        avatar: currentUser.avatar,
+        interests: currentUser.interests || [],
+        favorite_locations: currentUser.favorite_locations || []
+      });
     }
-    
-    ensureStorageBucket();
-  }, [open]);
+  }, [currentUser, form]);
 
   // Fetch locations from the database
   useEffect(() => {
     async function fetchLocations() {
+      if (!open) return;
+      
       try {
         const { data, error } = await supabase
           .from('unique_locations')
@@ -110,60 +124,29 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     }
   }, [open]);
 
-  // Update form when currentUser changes
-  useEffect(() => {
-    if (currentUser) {
-      form.reset({
-        username: currentUser.username,
-        avatar: currentUser.avatar || '',
-      });
-      
-      // Reset uploadedImage when currentUser changes
-      setUploadedImage(null);
-      
-      // Set interests from currentUser
-      setInterests(currentUser.interests || []);
-      console.log('Set interests from current user:', currentUser.interests);
-      
-      // Set favorite locations
-      setFavoriteLocations(currentUser.favorite_locations || []);
-      console.log('Set favorite locations from current user:', currentUser.favorite_locations);
-      
-      console.log('Loaded current user data:', {
-        username: currentUser.username,
-        avatar: currentUser.avatar,
-        interests: currentUser.interests,
-        favorite_locations: currentUser.favorite_locations
-      });
-    }
-  }, [currentUser, form]);
-
+  // Interest handling functions
   const handleAddInterest = () => {
     if (newInterest.trim() && !interests.includes(newInterest.trim())) {
       setInterests(prev => [...prev, newInterest.trim()]);
       setNewInterest('');
-      console.log('Added interest:', newInterest.trim());
     }
   };
 
   const handleRemoveInterest = (interest: string) => {
     setInterests(interests.filter(i => i !== interest));
-    console.log('Removed interest:', interest);
   };
 
-  // Fix for adding locations
+  // Location handling functions
   const handleAddLocation = () => {
     if (selectedLocation && !favoriteLocations.includes(selectedLocation)) {
       setFavoriteLocations(prev => [...prev, selectedLocation]);
       setSelectedLocation('');
       setPopoverOpen(false);
-      console.log('Added location:', selectedLocation);
     }
   };
 
   const handleRemoveLocation = (location: string) => {
     setFavoriteLocations(favoriteLocations.filter(loc => loc !== location));
-    console.log('Removed location:', location);
   };
 
   // Handle location selection
@@ -171,7 +154,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     setSelectedLocation(location);
   };
 
-  // Fix for image upload
+  // Verbesserte Bildupload-Funktion
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -200,9 +183,9 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       setUploading(true);
       console.log('Uploading file:', file.name);
       
-      // Use our improved upload service
+      // Upload image using service
       const publicUrl = await userService.uploadProfileImage(file);
-        
+      
       // Set the avatar URL in the form
       form.setValue('avatar', publicUrl);
       
@@ -216,11 +199,15 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         description: "Bild erfolgreich hochgeladen",
         variant: "success"
       });
+      
+      // Save to localStorage immediately
+      localStorage.setItem(AVATAR_KEY, publicUrl);
+      
     } catch (error) {
       console.error('Error uploading image:', error);
       toast({
         title: "Fehler",
-        description: "Fehler beim Hochladen des Bildes",
+        description: "Fehler beim Hochladen des Bildes, fallback verwendet",
         variant: "destructive"
       });
     } finally {
@@ -228,8 +215,9 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     }
   };
 
+  // Verbesserte Speicherfunktion
   const onSubmit = async (values: z.infer<typeof profileSchema>) => {
-    if (!currentUser) return;
+    if (!values.username) return;
     
     console.log("Submit button clicked with values:", values);
     setIsSubmitting(true);
@@ -256,9 +244,9 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       console.log("Profile updated successfully:", updatedProfile);
       
       // Update local storage with the new username and avatar
-      localStorage.setItem('community_chat_username', values.username);
+      localStorage.setItem(USERNAME_KEY, values.username);
       if (avatarUrl) {
-        localStorage.setItem('community_chat_avatar', avatarUrl);
+        localStorage.setItem(AVATAR_KEY, avatarUrl);
       }
       
       toast({

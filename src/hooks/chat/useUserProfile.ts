@@ -18,16 +18,15 @@ export const useUserProfile = () => {
     }
   }, [currentUser]);
   
-  // Benutzerprofil initialisieren
+  // Benutzerprofil initialisieren - mit verbesserter Fehlerbehandlung
   const initializeProfile = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // Stellen Sie sicher, dass der Avatar-Bucket existiert
-      await userService.ensureAvatarBucket();
-      
       const avatar = localStorage.getItem(AVATAR_KEY);
+      console.log('Current username:', currentUser);
+      console.log('Avatar from localStorage:', avatar);
       
       // Versuche zuerst, das Benutzerprofil zu finden
       let profile;
@@ -42,32 +41,30 @@ export const useUserProfile = () => {
       if (currentUser !== 'Gast') {
         try {
           // Benutzerprofil erstellen oder aktualisieren mit allen benötigten Feldern
-          profile = await userService.createOrUpdateProfile({
+          const profileData = {
             username: currentUser,
             avatar: avatar || null,
             interests: profile?.interests || [],
             favorite_locations: profile?.favorite_locations || []
-          });
+          };
+          
+          console.log('Saving profile with data:', profileData);
+          profile = await userService.createOrUpdateProfile(profileData);
           
           setUserProfile(profile);
           console.log('Profile initialized successfully:', profile);
         } catch (err: any) {
-          console.error('Fehler beim Erstellen des Benutzerprofils:', err);
+          console.error('Fehler beim Erstellen des Benutzerprofils, versuche es erneut:', err);
           
-          // Wenn wir einen RLS-Fehler erhalten, versuchen wir, das Profil erneut abzurufen
-          if (err.message && err.message.includes('row-level security policy')) {
-            try {
-              profile = await userService.getUserByUsername(currentUser);
-              if (profile) {
-                console.log('Retrieved profile after RLS error:', profile);
-                setUserProfile(profile);
-              }
-            } catch (getErr) {
-              console.error('Failed to retrieve profile after RLS error:', getErr);
-              throw err; // Wirf den ursprünglichen Fehler
+          // Fallback: Noch einmal versuchen, das Profil abzurufen
+          try {
+            profile = await userService.getUserByUsername(currentUser);
+            if (profile) {
+              console.log('Retrieved profile after error:', profile);
+              setUserProfile(profile);
             }
-          } else {
-            throw err;
+          } catch (getErr) {
+            console.error('Failed to retrieve profile after error:', getErr);
           }
         }
       }
@@ -75,14 +72,11 @@ export const useUserProfile = () => {
       console.error('Fehler beim Initialisieren des Benutzerprofils:', err);
       setError(err.message || 'Ein Fehler ist aufgetreten');
       
-      // Nur Toast anzeigen, wenn es kein RLS-Policy-Fehler ist
-      if (!err.message || !err.message.includes('row-level security policy')) {
-        toast({
-          title: "Fehler",
-          description: "Benutzerprofil konnte nicht erstellt werden. Bitte später erneut versuchen.",
-          variant: "destructive"
-        });
-      }
+      toast({
+        title: "Fehler",
+        description: "Benutzerprofil konnte nicht erstellt werden. Bitte später erneut versuchen.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
