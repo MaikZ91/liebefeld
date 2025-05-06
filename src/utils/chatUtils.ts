@@ -22,9 +22,15 @@ export const formatEvents = (events: any[]) => {
     return '<p>Keine Events gefunden.</p>';
   }
 
-  let eventList = '<ul class="list-disc pl-5">';
+  let eventList = '<ul class="event-list">';
   events.forEach(event => {
-    eventList += `<li>${event.title} - ${event.date}</li>`;
+    eventList += `
+      <li class="mb-2">
+        <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-2">
+          <div class="font-bold">${event.title}</div>
+          <div class="text-sm">${event.date}</div>
+        </div>
+      </li>`;
   });
   eventList += '</ul>';
 
@@ -204,23 +210,26 @@ export const formatEventListItem = (event: any) => {
   const category = event.category || 'Sonstiges';
   
   return `
-    <div>
-      <span class="event-title">${title}</span>
-      <div class="flex items-center text-xs opacity-80">
-        <span class="inline-flex items-center mr-2">
+    <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-2 mb-2">
+      <span class="font-bold block">${title}</span>
+      <div class="flex flex-col text-xs space-y-1 mt-1">
+        <div class="flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
             <circle cx="12" cy="12" r="10"></circle>
             <polyline points="12 6 12 12 16 14"></polyline>
           </svg>
-          ${time}
-        </span>
-        <span class="inline-flex items-center">
+          <span>${time}</span>
+        </div>
+        <div class="flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
             <circle cx="12" cy="10" r="3"></circle>
           </svg>
-          ${location}
-        </span>
+          <span>${location}</span>
+        </div>
+        <div class="bg-red-500/70 text-white text-xs px-2 py-0.5 rounded inline-block w-fit">
+          ${category}
+        </div>
       </div>
     </div>
   `;
@@ -231,12 +240,12 @@ export const createEventListHTML = (events: any[], title: string) => {
     return `<p>Keine Events gefunden</p>`;
   }
   
-  let html = `<h3 class="font-bold text-white mb-2">${title}</h3><ul class="space-y-2">`;
+  let html = `<h3 class="font-bold text-white mb-2">${title}</h3><div class="space-y-1">`;
   
   for (const event of events) {
-    html += `<li>${formatEventListItem(event)}</li>`;
+    html += formatEventListItem(event);
   }
   
-  html += `</ul>`;
+  html += `</div>`;
   return html;
 };

@@ -44,6 +44,14 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     return dateKeywords.some(keyword => lowerMessage.includes(keyword)) || showDateSelector;
   };
   
+  // Check if message contains event information
+  const containsEventInfo = (text: string): boolean => {
+    if (!text) return false;
+    const eventKeywords = ['um', 'uhr', 'findet', 'statt', 'kategorie', 'veranstaltung', 'event'];
+    const lowerText = text.toLowerCase();
+    return eventKeywords.some(keyword => lowerText.includes(keyword));
+  };
+  
   // Function to convert URLs to clickable links
   const renderMessageWithLinks = (text: string) => {
     // URL regex pattern - improved to better match URLs
@@ -79,6 +87,49 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         ))}
       </>
     );
+  };
+
+  // Format event-like text into styled event cards
+  const formatEventText = (text: string) => {
+    if (!containsEventInfo(text)) return text;
+
+    // Try to detect and format event-like information
+    const lines = text.split("\n");
+    let formattedContent = "";
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      
+      // Check if this line looks like an event description
+      if (containsEventInfo(line)) {
+        let title = '';
+        let details = line;
+
+        // Check if the line has a title format with asterisks or colon
+        if (line.includes(":") && line.split(":")[0].length < 30) {
+          const parts = line.split(":");
+          title = parts[0].trim().replace(/\*/g, '');
+          details = parts.slice(1).join(":").trim();
+        } else if (line.includes("*")) {
+          const titleMatch = line.match(/\*([^*]+)\*/);
+          if (titleMatch) {
+            title = titleMatch[1].trim();
+            details = line.replace(/\*([^*]+)\*/, '').trim();
+          }
+        }
+
+        formattedContent += `
+          <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-2 mb-2">
+            ${title ? `<div class="font-bold">${title}</div>` : ''}
+            <div>${details}</div>
+          </div>
+        `;
+      } else {
+        formattedContent += `<p>${line}</p>`;
+      }
+    }
+    
+    return formattedContent;
   };
   
   // Format message content - extract event data if present
@@ -146,9 +197,26 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     }
     
     // For regular messages, render with links if it's a string
+    if (typeof message === 'string') {
+      if (containsEventInfo(message)) {
+        return (
+          <div 
+            className="whitespace-pre-wrap" 
+            dangerouslySetInnerHTML={{ __html: formatEventText(message) }} 
+          />
+        );
+      }
+      return (
+        <div className="whitespace-pre-wrap">
+          {renderMessageWithLinks(message)}
+        </div>
+      );
+    }
+    
+    // For React node messages
     return (
       <div className="whitespace-pre-wrap">
-        {typeof message === 'string' ? renderMessageWithLinks(message) : message}
+        {message}
       </div>
     );
   };
