@@ -26,7 +26,18 @@ export const useMessageFetching = (groupId: string) => {
     
     try {
       console.log(`Nachrichten für Gruppe abrufen: ${validGroupId}`);
-      const messages = await messageService.fetchMessages(validGroupId);
+      
+      // Set a timeout to prevent too long loading states
+      const timeoutPromise = new Promise<Message[]>((_, reject) => {
+        setTimeout(() => reject(new Error("Zeitüberschreitung beim Abrufen der Nachrichten")), 10000);
+      });
+      
+      // Actual fetch operation
+      const fetchPromise = messageService.fetchMessages(validGroupId);
+      
+      // Race between timeout and actual fetch
+      const messages = await Promise.race([fetchPromise, timeoutPromise]);
+      
       console.log(`${messages.length} Nachrichten empfangen`);
       setError(null);
       return messages;

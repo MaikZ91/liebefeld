@@ -1,3 +1,4 @@
+
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -48,13 +49,21 @@ export const generateResponse = async (query: string, events: any[], isHeartMode
     const nextWeekEnd = nextWeekEndDate.toISOString().split('T')[0];
     
     // Get user interests and preferred locations from localStorage
-    const userInterests = localStorage.getItem('user_interests') 
+    let userInterests = localStorage.getItem('user_interests') 
       ? JSON.parse(localStorage.getItem('user_interests') || '[]') 
-      : null;
+      : [];
       
-    const userLocations = localStorage.getItem('user_locations') 
+    let userLocations = localStorage.getItem('user_locations') 
       ? JSON.parse(localStorage.getItem('user_locations') || '[]') 
-      : null;
+      : [];
+    
+    // Ensure we have arrays even if localStorage returned null or invalid data
+    if (!Array.isArray(userInterests)) userInterests = [];
+    if (!Array.isArray(userLocations)) userLocations = [];
+    
+    console.log('Heart mode active:', isHeartMode);
+    console.log('User interests to filter with:', userInterests);
+    console.log('User locations to filter with:', userLocations);
     
     // Check if we're in a browser environment
     if (typeof window !== 'undefined') {
@@ -67,8 +76,15 @@ export const generateResponse = async (query: string, events: any[], isHeartMode
       if (hour < 12) timeOfDay = 'morning';
       else if (hour >= 18) timeOfDay = 'evening';
       
+      // Always send user interests with personalized requests
+      const interestsToSend = isHeartMode || query.includes('zu mir passen') || 
+                            query.includes('persönlich') ? userInterests : null;
+      
       // Only send location filter if heart mode is active
-      const locationsToUse = isHeartMode ? userLocations : null;
+      const locationsToSend = isHeartMode ? userLocations : null;
+      
+      console.log('Sending interests to edge function:', interestsToSend);
+      console.log('Sending locations to edge function:', locationsToSend);
       
       // Call the edge function using the supabase client instead of direct fetch
       const { data, error } = await supabase.functions.invoke('ai-event-chat', {
@@ -80,8 +96,8 @@ export const generateResponse = async (query: string, events: any[], isHeartMode
           currentDate,
           nextWeekStart,
           nextWeekEnd,
-          userInterests,
-          userLocations: locationsToUse // Only send if heart mode is active
+          userInterests: interestsToSend,
+          userLocations: locationsToSend
         }
       });
       
@@ -107,32 +123,34 @@ export const generateResponse = async (query: string, events: any[], isHeartMode
 };
 
 export const generatePersonalizedPrompt = (interests?: string[], locations?: string[]) => {
+  // Ensure we have arrays even if parameters are undefined
+  const userInterests = interests || [];
+  const userLocations = locations || [];
+  
   // Base query for heart mode
   let prompt = "";
   
-  // If we have specific locations, create a prompt to find events at those locations
-  if (locations && locations.length > 0) {
+  // If we have specific interests, create a personalized prompt
+  if (userInterests.length > 0) {
     // Add heart emoji to indicate heart mode
-    prompt = `❤️ Zeige mir Events an meinen bevorzugten Orten: ${locations.join(', ')}`;
+    prompt = `❤️ Zeige mir Events, die zu meinen Interessen passen: ${userInterests.join(', ')}`;
     
-    // Add interests context if available
-    if (interests && interests.length > 0) {
-      prompt += `. Ich interessiere mich besonders für: ${interests.join(', ')}`;
+    // Add locations context if available
+    if (userLocations.length > 0) {
+      prompt += `. Bevorzugte Orte: ${userLocations.join(', ')}`;
     }
-  } else {
-    // Fallback to general personalized prompt
+  } 
+  // If we only have locations but no interests
+  else if (userLocations.length > 0) {
+    prompt = `❤️ Zeige mir Events an meinen bevorzugten Orten: ${userLocations.join(', ')}`;
+  }
+  // Fallback if we have neither
+  else {
     prompt = "Finde Events, die zu mir passen";
-    
-    if (interests && interests.length > 0) {
-      prompt += `. Meine Interessen sind: ${interests.join(', ')}`;
-    }
-    
-    if (locations && locations.length > 0) {
-      prompt += `. Meine bevorzugten Orte sind: ${locations.join(', ')}`;
-    }
-    
-    prompt += ". Zeige mir eine personalisierte Auswahl von Events.";
   }
   
+  prompt += ". Zeige mir eine personalisierte Auswahl von Events.";
+  
+  console.log('Generated personalized prompt:', prompt);
   return prompt;
 };

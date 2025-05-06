@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
@@ -41,12 +42,17 @@ serve(async (req) => {
     console.log(`Received currentDate from client: ${currentDate}`);
     console.log(`Received next week range: ${nextWeekStart} to ${nextWeekEnd}`);
     
+    // Explicitly log user interests and locations for debugging
     if (userInterests) {
-      console.log(`User interests: ${userInterests.join(', ')}`);
+      console.log(`User interests received: ${JSON.stringify(userInterests)}`);
+    } else {
+      console.log('No user interests received');
     }
     
     if (userLocations) {
-      console.log(`User preferred locations: ${userLocations.join(', ')}`);
+      console.log(`User preferred locations received: ${JSON.stringify(userLocations)}`);
+    } else {
+      console.log('No user locations received');
     }
 
     const today = new Date().toISOString().split("T")[0];
@@ -73,7 +79,8 @@ serve(async (req) => {
     // Check if this is a personalized request
     const isPersonalRequest = lowercaseQuery.includes("zu mir passen") || 
                               lowercaseQuery.includes("meine interessen") || 
-                              lowercaseQuery.includes("persönlich");
+                              lowercaseQuery.includes("persönlich") ||
+                              query.includes("❤️"); // Check for heart emoji indicator
 
     // Apply filters for date-specific queries
     // Filter für "heute" / "today" / "aktuell" etc.
@@ -161,15 +168,17 @@ serve(async (req) => {
     }
     
     // Apply additional filters for personalized requests or heart mode
-    // Only apply location filtering if userLocations are provided and heart mode is active
+    // Only apply location filtering if userLocations are provided
     if (userLocations && userLocations.length > 0) {
       console.log("Applying location filtering with user locations:", userLocations);
       
       // Convert locations to lowercase for case-insensitive matching
       const lowerLocations = userLocations.map(location => location.toLowerCase());
       
-      // Find events at user's preferred locations
+      // Count events before filtering
       const beforeLocationFilter = filteredEvents.length;
+      
+      // Find events at user's preferred locations
       const locationFilteredEvents = filteredEvents.filter(event => 
         event.location && lowerLocations.some(loc => 
           event.location.toLowerCase().includes(loc)
@@ -186,16 +195,23 @@ serve(async (req) => {
     }
     
     // Additional filtering logic for personalized requests or interests
-    if ((isPersonalRequest || lowercaseQuery.includes("herz")) && userInterests && userInterests.length > 0) {
+    if ((isPersonalRequest || query.includes("❤️")) && userInterests && userInterests.length > 0) {
       console.log("Applying personalized interest filtering");
       
       // Convert interests to lowercase for case-insensitive matching
       const lowerInterests = userInterests.map(interest => interest.toLowerCase());
+      console.log("Lowercase interests for filtering:", lowerInterests);
+      
+      // Count events before filtering
+      const beforeInterestFilter = filteredEvents.length;
       
       // Filter events that match user interests
       const interestFilteredEvents = filteredEvents.filter(event => {
         // Check category first
-        if (event.category && lowerInterests.some(interest => event.category.toLowerCase().includes(interest))) {
+        if (event.category && lowerInterests.some(interest => 
+          event.category.toLowerCase().includes(interest.toLowerCase())
+        )) {
+          console.log(`Event ${event.title} matches interest by category ${event.category}`);
           return true;
         }
         
@@ -203,15 +219,22 @@ serve(async (req) => {
         const lowerTitle = (event.title || "").toLowerCase();
         const lowerDescription = (event.description || "").toLowerCase();
         
-        return lowerInterests.some(interest => 
-          lowerTitle.includes(interest) || lowerDescription.includes(interest)
-        );
+        for (const interest of lowerInterests) {
+          if (lowerTitle.includes(interest) || lowerDescription.includes(interest)) {
+            console.log(`Event ${event.title} matches interest "${interest}" in title/description`);
+            return true;
+          }
+        }
+        
+        return false;
       });
       
       // If we found events matching interests, use them, otherwise keep original filter
       if (interestFilteredEvents.length > 0) {
         filteredEvents = interestFilteredEvents;
-        console.log(`Found ${interestFilteredEvents.length} events matching user interests`);
+        console.log(`Found ${interestFilteredEvents.length} events matching user interests (from ${beforeInterestFilter})`);
+      } else {
+        console.log(`No events found matching user interests from ${beforeInterestFilter} events`);
       }
     }
 
@@ -230,6 +253,8 @@ serve(async (req) => {
       art: "Ausstellung",
       sport: "Sport",
       sports: "Sport",
+      wandern: "Wandern",
+      hiking: "Wandern", 
       workshop: "Workshop",
       kultur: "Kultur",
       culture: "Kultur",
@@ -298,7 +323,7 @@ serve(async (req) => {
     // Enhanced system message for personalized requests
     let systemMessage = `Du bist ein Event‑Assistent für Liebefeld. Aktuelles Datum: ${today}.\n${totalEventsInfo}\n`;
     
-    if (isPersonalRequest || userLocations?.length > 0) {
+    if (isPersonalRequest || userInterests?.length > 0 || userLocations?.length > 0) {
       systemMessage += `Dies ist eine personalisierte Anfrage. `;
       
       if (userInterests && userInterests.length > 0) {
@@ -310,11 +335,12 @@ serve(async (req) => {
       }
       
       systemMessage += `Berücksichtige diese Vorlieben in deiner Antwort und empfehle passende Events. `;
-      systemMessage += `Erkläre, warum du diese Events empfiehlst (z.B. "Weil du dich für Musik interessierst..."). `;
+      systemMessage += `Erkläre, warum du diese Events empfiehlst (z.B. "Weil du dich für ${userInterests?.join(', ') || 'spezifische Themen'} interessierst..."). `;
       
-      // If heart mode or location filter is active
-      if (userLocations?.length > 0) {
-        systemMessage += `Diese Ergebnisse sind NUR auf deine bevorzugten Orte gefiltert. Erwähne das in deiner Antwort (zum Beispiel: "Ich zeige dir nur Events an den von dir bevorzugten Orten"). `;
+      // If filtering has been applied based on interests
+      if (isPersonalRequest && userInterests?.length > 0) {
+        systemMessage += `Ich habe die Ergebnisse nach deinen Interessen gefiltert. `;
+        systemMessage += `Erwähne explizit, dass du nach dem Interesse "${userInterests.join(', ')}" gefiltert hast. `;
       }
     }
     
@@ -367,6 +393,8 @@ serve(async (req) => {
         <pre class="mt-2 whitespace-pre-wrap">Gesendetes Prompt:\n${JSON.stringify(payload, null, 2)}\n\n` +
       `HTTP‑Status: ${orRes.status} ${orRes.statusText}\n\n` +
       `Modell: ${parsed?.model || "Unbekannt"}\n\n` +
+      `Benutzerinteressen: ${JSON.stringify(userInterests)}\n\n` +
+      `Bevorzugte Orte: ${JSON.stringify(userLocations)}\n\n` +
       `Rohantwort:\n${rawBody}</pre>
       </details>`;
 
@@ -470,6 +498,35 @@ serve(async (req) => {
     // Generell Markdown-Bold in HTML-Bold umwandeln
     aiContent = aiContent.replace(/\*\*(.*?)\*\*/g, '<strong class="text-red-500">$1</strong>');
     aiContent = aiContent.replace(/__(.*?)__/g, '<strong class="text-red-500">$1</strong>');
+    
+    // Highlight personalized content
+    if (isPersonalRequest || userInterests?.length > 0) {
+      // Make interest keywords bold in the text
+      if (userInterests && userInterests.length > 0) {
+        userInterests.forEach(interest => {
+          const interestRegex = new RegExp(`\\b(${interest})\\b`, 'gi');
+          aiContent = aiContent.replace(interestRegex, '<strong class="text-yellow-500">$1</strong>');
+        });
+      }
+      
+      // Add a personalization badge at the top
+      const interestsLabel = userInterests && userInterests.length > 0 
+        ? `basierend auf deinem Interesse für ${userInterests.join(', ')}` 
+        : 'basierend auf deinen Vorlieben';
+        
+      const personalizationBadge = `
+        <div class="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-2 mb-3">
+          <p class="text-sm flex items-center gap-1">
+            <svg class="w-4 h-4 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+            </svg>
+            <span>Personalisierte Vorschläge ${interestsLabel}</span>
+          </p>
+        </div>
+      `;
+      
+      aiContent = personalizationBadge + aiContent;
+    }
     
     // Füge eine Hinweis zum verwendeten Modell und zur Anzahl der gefilterten Events hinzu
     const modelInfo = parsed?.model ? `<p class="text-xs text-gray-400 mt-2">Powered by ${parsed.model} • ${filteredEvents.length} relevante Events aus ${dbEvents.length} analysiert</p>` : '';

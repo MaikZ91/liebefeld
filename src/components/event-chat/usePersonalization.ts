@@ -32,8 +32,11 @@ export const usePersonalization = (
       } else if (currentUser !== 'Gast') {
         // If we have a username but no profile loaded yet, try to fetch it
         try {
+          console.log('Fetching user profile for personalization...');
           const profile = await userService.getUserByUsername(currentUser);
+          
           if (profile) {
+            console.log('Profile fetched:', profile);
             userInterests = profile.interests || [];
             userLocations = profile.favorite_locations || [];
             
@@ -51,22 +54,32 @@ export const usePersonalization = (
         }
       } else {
         // Fallback to localStorage if no profile is available
-        userInterests = localStorage.getItem('user_interests')
-          ? JSON.parse(localStorage.getItem('user_interests') || '[]')
-          : [];
+        try {
+          const storedInterests = localStorage.getItem('user_interests');
+          userInterests = storedInterests ? JSON.parse(storedInterests) : [];
           
-        userLocations = localStorage.getItem('user_locations')
-          ? JSON.parse(localStorage.getItem('user_locations') || '[]')
-          : [];
+          const storedLocations = localStorage.getItem('user_locations');
+          userLocations = storedLocations ? JSON.parse(storedLocations) : [];
+        } catch (err) {
+          console.error('Error parsing stored preferences:', err);
+          userInterests = [];
+          userLocations = [];
+        }
       }
+      
+      // Log actual values that will be used
+      console.log('Using interests for personalization:', userInterests);
+      console.log('Using locations for personalization:', userLocations);
       
       // If we still don't have interests or locations, use fallbacks
-      if (userInterests.length === 0) {
+      if (!Array.isArray(userInterests) || userInterests.length === 0) {
         userInterests = ['Musik', 'Sport', 'Kultur'];
+        console.log('Using fallback interests:', userInterests);
       }
       
-      if (userLocations.length === 0) {
+      if (!Array.isArray(userLocations) || userLocations.length === 0) {
         userLocations = ['Liebefeld', 'Bern'];
+        console.log('Using fallback locations:', userLocations);
       }
       
       // Generate personalized prompt
