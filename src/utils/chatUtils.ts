@@ -55,7 +55,7 @@ export const generateResponse = async (query: string, events: any[]) => {
     nextWeekEndDate.setDate(nextWeekEndDate.getDate() + 6);
     const nextWeekEnd = nextWeekEndDate.toISOString().split('T')[0];
     
-    // Get user interests and preferred locations if available
+    // Get user interests and preferred locations from localStorage
     const userInterests = localStorage.getItem('user_interests') 
       ? JSON.parse(localStorage.getItem('user_interests') || '[]') 
       : null;
@@ -74,6 +74,9 @@ export const generateResponse = async (query: string, events: any[]) => {
       let timeOfDay = 'afternoon';
       if (hour < 12) timeOfDay = 'morning';
       else if (hour >= 18) timeOfDay = 'evening';
+      
+      // Check if this is a heart mode query
+      const isHeartMode = query.toLowerCase().includes('herz');
       
       // Call the edge function using the supabase client instead of direct fetch
       const { data, error } = await supabase.functions.invoke('ai-event-chat', {
@@ -112,16 +115,32 @@ export const generateResponse = async (query: string, events: any[]) => {
 };
 
 export const generatePersonalizedPrompt = (interests?: string[], locations?: string[]) => {
-  let prompt = "Finde Events, die zu mir passen";
+  // Base query for heart mode
+  let prompt = "";
   
-  if (interests && interests.length > 0) {
-    prompt += `. Meine Interessen sind: ${interests.join(', ')}`;
-  }
-  
+  // If we have specific locations, create a prompt to find events at those locations
   if (locations && locations.length > 0) {
-    prompt += `. Meine bevorzugten Orte sind: ${locations.join(', ')}`;
+    // Add heart emoji to indicate heart mode
+    prompt = `❤️ Zeige mir Events an meinen bevorzugten Orten: ${locations.join(', ')}`;
+    
+    // Add interests context if available
+    if (interests && interests.length > 0) {
+      prompt += `. Ich interessiere mich besonders für: ${interests.join(', ')}`;
+    }
+  } else {
+    // Fallback to general personalized prompt
+    prompt = "Finde Events, die zu mir passen";
+    
+    if (interests && interests.length > 0) {
+      prompt += `. Meine Interessen sind: ${interests.join(', ')}`;
+    }
+    
+    if (locations && locations.length > 0) {
+      prompt += `. Meine bevorzugten Orte sind: ${locations.join(', ')}`;
+    }
+    
+    prompt += ". Zeige mir eine personalisierte Auswahl von Events.";
   }
   
-  prompt += ". Zeige mir eine personalisierte Auswahl von Events.";
   return prompt;
 };

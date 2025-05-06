@@ -159,8 +159,34 @@ serve(async (req) => {
       filteredEvents = filteredEvents.filter(e => e.date === saturdayStr || e.date === sundayStr);
       console.log(`Nach Filterung für "Wochenende": ${filteredEvents.length} Events übrig`);
     }
-    // Additional filtering logic for personalized requests
-    if (isPersonalRequest && userInterests && userInterests.length > 0) {
+    
+    // Apply additional filters for personalized requests or heart mode
+    // Always filter by location if userLocations are provided - important for heart mode!
+    if (userLocations && userLocations.length > 0) {
+      console.log("Applying location filtering with user locations:", userLocations);
+      
+      // Convert locations to lowercase for case-insensitive matching
+      const lowerLocations = userLocations.map(location => location.toLowerCase());
+      
+      // Find events at user's preferred locations
+      const beforeLocationFilter = filteredEvents.length;
+      const locationFilteredEvents = filteredEvents.filter(event => 
+        event.location && lowerLocations.some(loc => 
+          event.location.toLowerCase().includes(loc)
+        )
+      );
+      
+      // If we found events matching locations, use them, otherwise keep current filter
+      if (locationFilteredEvents.length > 0) {
+        filteredEvents = locationFilteredEvents;
+        console.log(`Found ${locationFilteredEvents.length} events matching user locations (from ${beforeLocationFilter})`);
+      } else {
+        console.log(`No events found matching user locations from ${beforeLocationFilter} events`);
+      }
+    }
+    
+    // Additional filtering logic for personalized requests or interests
+    if ((isPersonalRequest || lowercaseQuery.includes("herz")) && userInterests && userInterests.length > 0) {
       console.log("Applying personalized interest filtering");
       
       // Convert interests to lowercase for case-insensitive matching
@@ -169,7 +195,7 @@ serve(async (req) => {
       // Filter events that match user interests
       const interestFilteredEvents = filteredEvents.filter(event => {
         // Check category first
-        if (event.category && lowerInterests.includes(event.category.toLowerCase())) {
+        if (event.category && lowerInterests.some(interest => event.category.toLowerCase().includes(interest))) {
           return true;
         }
         
@@ -186,27 +212,6 @@ serve(async (req) => {
       if (interestFilteredEvents.length > 0) {
         filteredEvents = interestFilteredEvents;
         console.log(`Found ${interestFilteredEvents.length} events matching user interests`);
-      }
-    }
-    
-    // Location filtering for personalized requests
-    if (isPersonalRequest && userLocations && userLocations.length > 0) {
-      console.log("Applying personalized location filtering");
-      
-      // Convert locations to lowercase for case-insensitive matching
-      const lowerLocations = userLocations.map(location => location.toLowerCase());
-      
-      // Find events at user's preferred locations
-      const locationFilteredEvents = filteredEvents.filter(event => 
-        event.location && lowerLocations.some(loc => 
-          event.location.toLowerCase().includes(loc)
-        )
-      );
-      
-      // If we found events matching locations, use them, otherwise keep current filter
-      if (locationFilteredEvents.length > 0) {
-        filteredEvents = locationFilteredEvents;
-        console.log(`Found ${locationFilteredEvents.length} events matching user locations`);
       }
     }
 
@@ -293,7 +298,7 @@ serve(async (req) => {
     // Enhanced system message for personalized requests
     let systemMessage = `Du bist ein Event‑Assistent für Liebefeld. Aktuelles Datum: ${today}.\n${totalEventsInfo}\n`;
     
-    if (isPersonalRequest) {
+    if (isPersonalRequest || userLocations?.length > 0) {
       systemMessage += `Dies ist eine personalisierte Anfrage. `;
       
       if (userInterests && userInterests.length > 0) {
@@ -306,6 +311,11 @@ serve(async (req) => {
       
       systemMessage += `Berücksichtige diese Vorlieben in deiner Antwort und empfehle passende Events. `;
       systemMessage += `Erkläre, warum du diese Events empfiehlst (z.B. "Weil du dich für Musik interessierst..."). `;
+      
+      // If heart mode or location filter is active
+      if (userLocations?.length > 0) {
+        systemMessage += `Diese Ergebnisse sind NUR auf deine bevorzugten Orte gefiltert. Erwähne das in deiner Antwort (zum Beispiel: "Ich zeige dir nur Events an den von dir bevorzugten Orten"). `;
+      }
     }
     
     systemMessage += `Hier die Events:\n${formattedEvents}`;
