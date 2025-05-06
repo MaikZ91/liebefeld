@@ -26,6 +26,9 @@ const GroupChat: React.FC<GroupChatProps> = ({
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const { currentUser, userProfile, loading, refetchProfile } = useUserProfile();
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
+  
+  // Add state to track if we've tried to refresh the profile after an edit
+  const [hasRefreshedAfterEdit, setHasRefreshedAfterEdit] = useState(false);
 
   // Ensure we have a valid UUID for the groupId
   const validGroupId = groupId === 'general' ? '00000000-0000-4000-8000-000000000000' : groupId;
@@ -49,14 +52,26 @@ const GroupChat: React.FC<GroupChatProps> = ({
   };
 
   // Handle profile update
-  const handleProfileUpdate = () => {
-    refetchProfile();
-    toast({
-      title: "Profil aktualisiert",
-      description: "Du kannst jetzt in den Gruppen chatten.",
-      variant: "success"
-    });
+  const handleProfileUpdate = async () => {
+    const updatedProfile = await refetchProfile();
+    setHasRefreshedAfterEdit(true);
+    
+    if (updatedProfile) {
+      toast({
+        title: "Profil aktualisiert",
+        description: "Du kannst jetzt in den Gruppen chatten.",
+        variant: "success"
+      });
+    }
   };
+  
+  // Effect to force refresh profile when component mounts
+  useEffect(() => {
+    if (!hasRefreshedAfterEdit) {
+      refetchProfile();
+      setHasRefreshedAfterEdit(true);
+    }
+  }, [refetchProfile, hasRefreshedAfterEdit]);
 
   return (
     <div className="flex flex-col h-full">

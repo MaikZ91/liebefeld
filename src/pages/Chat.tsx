@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
@@ -39,12 +38,13 @@ const ChatPage = () => {
     setActiveView(prev => prev === 'community' ? 'ai' : 'community');
   };
 
-  // Get username from localStorage for chat
   // Updated function for profile completion
-  const handleProfileUpdate = () => {
+  const handleProfileUpdate = async () => {
+    // Refresh the profile immediately to ensure we have the latest data
+    await refetchProfile();
+    
     if (userProfile) {
       setUsername(userProfile.username);
-      refetchProfile();
       toast({
         title: "Willkommen " + userProfile.username + "!",
         description: "Du kannst jetzt in den Gruppen chatten.",
@@ -107,7 +107,7 @@ const ChatPage = () => {
     };
     
     setupDatabase();
-  }, []);
+  }, [refetchProfile]);
 
   // Check if we're on mobile for responsive design adjustments
   const [isMobile, setIsMobile] = useState(false);
@@ -117,8 +117,12 @@ const ChatPage = () => {
     };
     checkIsMobile();
     window.addEventListener('resize', checkIsMobile);
+    
+    // Check if we need to refresh the profile when the component mounts
+    refetchProfile();
+    
     return () => window.removeEventListener('resize', checkIsMobile);
-  }, []);
+  }, [refetchProfile]);
 
   // Show loading state while initializing
   if (!isPageLoaded) {

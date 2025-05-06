@@ -14,19 +14,36 @@ export const useUserProfile = () => {
     try {
       const profile = await userService.getUserByUsername(username);
       setUserProfile(profile);
+      return profile;
     } catch (err) {
       console.error('Error fetching user profile:', err);
       setError(err instanceof Error ? err : new Error('Failed to fetch user profile'));
+      return null;
     }
   };
 
   const refetchProfile = async () => {
     setLoading(true);
     try {
-      if (currentUser && currentUser !== 'Gast') {
-        await fetchProfile(currentUser);
+      // Get the latest username from localStorage
+      let usernameToFetch = currentUser;
+      
+      try {
+        const storedUsername = localStorage.getItem(USERNAME_KEY);
+        if (storedUsername && storedUsername !== currentUser) {
+          setCurrentUser(storedUsername);
+          usernameToFetch = storedUsername;
+        }
+      } catch (err) {
+        console.error('Error accessing localStorage:', err);
+      }
+      
+      if (usernameToFetch && usernameToFetch !== 'Gast') {
+        const profile = await fetchProfile(usernameToFetch);
+        return profile;
       } else {
         setUserProfile(null);
+        return null;
       }
     } finally {
       setLoading(false);

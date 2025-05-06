@@ -163,8 +163,13 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         variant: "success"
       });
       
-      onProfileUpdate();
+      // Close the dialog first to avoid rendering issues
       onOpenChange(false);
+      
+      // Then trigger the profile update callback
+      setTimeout(() => {
+        if (onProfileUpdate) onProfileUpdate();
+      }, 100);
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({
