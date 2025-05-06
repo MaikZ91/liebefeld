@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
@@ -15,16 +14,19 @@ import EventForm from '@/components/EventForm';
 import LiveTicker from '@/components/LiveTicker';
 import { setupService } from '@/services/setupService';
 import { toast } from '@/hooks/use-toast';
+import UsernameDialog from '@/components/chat/UsernameDialog';
+import ProfileEditor from '@/components/users/ProfileEditor';
 
 const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
   const [isAddEventSheetOpen, setIsAddEventSheetOpen] = useState(false);
   const [isEventListSheetOpen, setIsEventListSheetOpen] = useState(false);
   const [isPageLoaded, setIsPageLoaded] = useState(false);
-  const {
-    events
-  } = useEventContext();
-
+  const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
+  const [username, setUsername] = useState<string>('');
+  const { events, refetchEvents } = useEventContext();
+  const { currentUser, userProfile, refetchProfile } = useUserProfile();
+  
   // Function to show add event modal
   const handleAddEvent = () => {
     setIsAddEventSheetOpen(true);
@@ -36,7 +38,18 @@ const ChatPage = () => {
   };
 
   // Get username from localStorage for chat
-  const [username, setUsername] = useState<string>('Gast');
+  // Updated function for profile completion
+  const handleProfileUpdate = () => {
+    if (userProfile) {
+      setUsername(userProfile.username);
+      refetchProfile();
+      toast({
+        title: "Willkommen " + userProfile.username + "!",
+        description: "Du kannst jetzt in den Gruppen chatten.",
+        variant: "success"
+      });
+    }
+  };
 
   // WhatsApp community link - Updated with the actual WhatsApp community link
   const whatsAppLink = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
@@ -208,6 +221,14 @@ const ChatPage = () => {
           </div>
         </SheetContent>
       </Sheet>
+      
+      {/* Replace UsernameDialog with ProfileEditor */}
+      <ProfileEditor 
+        isOpen={isProfileEditorOpen} 
+        onOpenChange={setIsProfileEditorOpen} 
+        currentUser={userProfile}
+        onProfileUpdate={handleProfileUpdate} 
+      />
     </Layout>
   );
 };

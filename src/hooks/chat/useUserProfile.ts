@@ -1,119 +1,66 @@
-
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { UserProfile, USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
 import { userService } from '@/services/userService';
-import { UserProfile } from '@/types/chatTypes';
-import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
-import { toast } from '@/hooks/use-toast';
 
 export const useUserProfile = () => {
-  const [currentUser, setCurrentUser] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || 'Gast');
+  const [currentUser, setCurrentUser] = useState<string | null>('Gast');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Benutzerprofil erstellen oder aktualisieren, wenn der Benutzername bekannt ist
-  useEffect(() => {
-    if (currentUser !== 'Gast') {
-      initializeProfile();
-    }
-  }, [currentUser]);
-  
-  // Benutzerprofil initialisieren mit besserer Fehlerbehandlung
-  const initializeProfile = async () => {
-    if (currentUser === 'Gast') return;
-    
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchProfile = async (username: string) => {
     try {
-      setLoading(true);
-      setError(null);
-      
-      const avatar = localStorage.getItem(AVATAR_KEY);
-      console.log('Current username:', currentUser);
-      console.log('Avatar from localStorage:', avatar);
-      
-      // Versuche das Profil zu holen oder zu erstellen
-      try {
-        // Erst versuchen das Profil zu holen
-        let profile = await userService.getUserByUsername(currentUser);
-        
-        // Wenn kein Profil gefunden wurde oder es aktualisiert werden muss
-        if (!profile) {
-          console.log('User does not exist yet, creating new profile');
-          
-          const profileData = {
-            username: currentUser,
-            avatar: avatar || null,
-            interests: [] as string[],
-            favorite_locations: [] as string[]
-          };
-          
-          profile = await userService.createOrUpdateProfile(profileData);
-          console.log('Created new profile:', profile);
-        } else if (avatar && profile.avatar !== avatar) {
-          // Avatar im Profil aktualisieren, wenn er sich geändert hat
-          console.log('Updating existing profile with new avatar');
-          profile = await userService.createOrUpdateProfile({
-            ...profile,
-            username: currentUser,
-            avatar
-          });
-          console.log('Updated profile with new avatar:', profile);
-        } else {
-          console.log('Found existing profile:', profile);
-        }
-        
-        setUserProfile(profile);
-        console.log('Profile initialized successfully:', profile);
-      } catch (err: any) {
-        console.error('Fehler beim Initialisieren des Benutzerprofils:', err);
-        setError('Profilinitialisierung fehlgeschlagen');
-        
-        toast({
-          title: "Fehler",
-          description: "Benutzerprofil konnte nicht initialisiert werden.",
-          variant: "destructive"
-        });
+      const profile = await userService.getUserByUsername(username);
+      setUserProfile(profile);
+    } catch (err) {
+      console.error('Error fetching user profile:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch user profile'));
+    }
+  };
+
+  const refetchProfile = async () => {
+    setLoading(true);
+    try {
+      if (currentUser && currentUser !== 'Gast') {
+        await fetchProfile(currentUser);
+      } else {
+        setUserProfile(null);
       }
     } finally {
       setLoading(false);
     }
   };
-  
-  // Online-Status aktualisieren
-  const updateLastOnline = async () => {
-    if (currentUser !== 'Gast') {
-      try {
-        await userService.updateLastOnline(currentUser);
-      } catch (err) {
-        console.error('Fehler beim Aktualisieren der letzten Online-Zeit:', err);
-      }
-    }
-  };
-  
-  // Benutzerprofil aktualisieren nach Änderungen
-  const refreshUserProfile = async () => {
-    if (currentUser !== 'Gast') {
-      await initializeProfile();
-    }
-  };
-  
-  // Online-Status beim Initialisieren und regelmäßig aktualisieren
+
   useEffect(() => {
-    if (currentUser !== 'Gast') {
-      updateLastOnline();
-      
-      // Online-Status alle 5 Minuten aktualisieren
-      const interval = setInterval(updateLastOnline, 5 * 60 * 1000);
-      
-      return () => clearInterval(interval);
-    }
-  }, [currentUser]);
-  
-  return {
-    currentUser,
-    userProfile,
-    loading,
-    error,
-    updateLastOnline,
-    refreshUserProfile
-  };
+    const getSession = async () => {
+      setLoading(true);
+      try {
+        // Safely access localStorage
+        let storedUsername = null;
+        try {
+          storedUsername = localStorage.getItem(USERNAME_KEY);
+        } catch (localStorageError) {
+          console.error("Error accessing localStorage:", localStorageError);
+        }
+
+        if (storedUsername) {
+          setCurrentUser(storedUsername);
+          await fetchProfile(storedUsername);
+        } else {
+          setCurrentUser('Gast');
+          setUserProfile(null);
+        }
+      } catch (err) {
+        console.error('Error during session initialization:', err);
+        setError(err instanceof Error ? err : new Error('Failed to initialize session'));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getSession();
+  }, []);
+
+  return { currentUser, userProfile, loading, error, refetchProfile };
 };

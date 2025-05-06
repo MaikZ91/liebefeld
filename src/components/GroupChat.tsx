@@ -6,7 +6,7 @@ import UserDirectory from './users/UserDirectory';
 import PrivateChat from './users/PrivateChat';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { Button } from '@/components/ui/button';
-import UsernameDialog from './chat/UsernameDialog';
+import ProfileEditor from './users/ProfileEditor';
 import { toast } from '@/hooks/use-toast';
 import { UserCircle, LogIn } from 'lucide-react';
 
@@ -24,8 +24,8 @@ const GroupChat: React.FC<GroupChatProps> = ({
   const [isUserDirectoryOpen, setIsUserDirectoryOpen] = useState(false);
   const [isPrivateChatOpen, setIsPrivateChatOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const { currentUser, userProfile, loading } = useUserProfile();
-  const [isUsernameModalOpen, setIsUsernameModalOpen] = useState(false);
+  const { currentUser, userProfile, loading, refetchProfile } = useUserProfile();
+  const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
 
   // Ensure we have a valid UUID for the groupId
   const validGroupId = groupId === 'general' ? '00000000-0000-4000-8000-000000000000' : groupId;
@@ -34,7 +34,7 @@ const GroupChat: React.FC<GroupChatProps> = ({
   const handleOpenUserDirectory = () => {
     // Check if user is logged in
     if (!currentUser || currentUser === 'Gast') {
-      setIsUsernameModalOpen(true);
+      setIsProfileEditorOpen(true);
       return;
     }
     
@@ -48,10 +48,11 @@ const GroupChat: React.FC<GroupChatProps> = ({
     setIsPrivateChatOpen(true);
   };
 
-  // Set username
-  const handleUsernameSet = (username: string) => {
+  // Handle profile update
+  const handleProfileUpdate = () => {
+    refetchProfile();
     toast({
-      title: "Willkommen " + username + "!",
+      title: "Profil aktualisiert",
       description: "Du kannst jetzt in den Gruppen chatten.",
       variant: "success"
     });
@@ -66,7 +67,7 @@ const GroupChat: React.FC<GroupChatProps> = ({
             Bitte melde dich an, um am Community-Chat teilzunehmen.
           </p>
           <Button 
-            onClick={() => setIsUsernameModalOpen(true)} 
+            onClick={() => setIsProfileEditorOpen(true)} 
             className="bg-red-500 hover:bg-red-600 text-white flex items-center gap-2"
           >
             <LogIn className="h-4 w-4" />
@@ -93,7 +94,7 @@ const GroupChat: React.FC<GroupChatProps> = ({
             variant="ghost" 
             size="sm" 
             className="ml-2 text-xs py-1 px-2 h-auto text-white hover:bg-red-600/50" 
-            onClick={() => setIsUsernameModalOpen(true)}
+            onClick={() => setIsProfileEditorOpen(true)}
           >
             Anmelden
           </Button>
@@ -116,11 +117,12 @@ const GroupChat: React.FC<GroupChatProps> = ({
         otherUser={selectedUser}
       />
       
-      {/* Username dialog */}
-      <UsernameDialog
-        isOpen={isUsernameModalOpen}
-        onOpenChange={setIsUsernameModalOpen}
-        onUsernameSet={handleUsernameSet}
+      {/* Profile Editor dialog instead of Username dialog */}
+      <ProfileEditor
+        open={isProfileEditorOpen}
+        onOpenChange={setIsProfileEditorOpen}
+        currentUser={userProfile}
+        onProfileUpdate={handleProfileUpdate}
       />
     </div>
   );

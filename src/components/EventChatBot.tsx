@@ -24,6 +24,8 @@ import { ChatQuery, USERNAME_KEY } from '@/types/chatTypes';
 import { toast } from 'sonner';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { userService } from '@/services/userService';
+import UsernameDialog from './chat/UsernameDialog';
+import ProfileEditor from './users/ProfileEditor';
 
 interface ChatMessage {
   id: string;
@@ -76,7 +78,8 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const welcomeMessageShownRef = useRef(false);
   const [communityGroupId, setCommunityGroupId] = useState('general');  // Default group ID
-
+  const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
+  
   // Example prompts that users can click on
   const examplePrompts = [
     "Welche Events gibt es heute?",
@@ -901,6 +904,14 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
           <MessageCircle className="h-6 w-6" />
         </button>
       )}
+      
+      {/* Replace UsernameDialog with ProfileEditor */}
+      <ProfileEditor
+        open={isProfileEditorOpen}
+        onOpenChange={setIsProfileEditorOpen}
+        currentUser={userProfile}
+        onProfileUpdate={handleProfileUpdate}
+      />
     </div>
   );
 };
