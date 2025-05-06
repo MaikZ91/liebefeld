@@ -118,13 +118,18 @@ export const userService = {
       }
 
       // RLS Policies für den Bucket überprüfen und anpassen
-      const { error: policyError } = await supabase.rpc(
-        'ensure_avatar_policies'
-      );
-      
-      if (policyError) {
-        console.warn('Fehler beim Überprüfen der Storage-Policies:', policyError);
-        // Wir versuchen trotzdem mit dem Upload fortzufahren
+      try {
+        const { error: policyError } = await supabase.rpc(
+          'ensure_avatar_policies'
+        );
+        
+        if (policyError) {
+          console.warn('Fehler beim Überprüfen der Storage-Policies:', policyError);
+          // Wir versuchen trotzdem mit dem Upload fortzufahren
+        }
+      } catch (policyErr) {
+        console.warn('Fehler bei RPC-Aufruf:', policyErr);
+        // Fahre fort, auch wenn der RPC-Aufruf fehlschlägt
       }
 
       // Eindeutigen Dateinamen generieren
