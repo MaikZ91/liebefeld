@@ -62,8 +62,8 @@ export const generateResponse = async (query: string, events: any[], isHeartMode
     if (!Array.isArray(userLocations)) userLocations = [];
     
     console.log('Heart mode active:', isHeartMode);
-    console.log('User interests to filter with:', userInterests);
-    console.log('User locations to filter with:', userLocations);
+    console.log('User interests to filter with:', JSON.stringify(userInterests));
+    console.log('User locations to filter with:', JSON.stringify(userLocations));
     
     // Check if we're in a browser environment
     if (typeof window !== 'undefined') {
@@ -85,8 +85,8 @@ export const generateResponse = async (query: string, events: any[], isHeartMode
       // Only send location filter if heart mode is active
       const locationsToSend = isHeartMode ? userLocations : null;
       
-      console.log('Sending interests to edge function:', interestsToSend);
-      console.log('Sending locations to edge function:', locationsToSend);
+      console.log('Sending interests to edge function:', JSON.stringify(interestsToSend));
+      console.log('Sending locations to edge function:', JSON.stringify(locationsToSend));
       
       // Call the edge function using the supabase client instead of direct fetch
       const { data, error } = await supabase.functions.invoke('ai-event-chat', {
@@ -129,8 +129,8 @@ export const generatePersonalizedPrompt = (interests?: string[], locations?: str
   const userInterests = interests?.length ? interests : [];
   const userLocations = locations?.length ? locations : [];
   
-  console.log('Generating personalized prompt with interests:', userInterests);
-  console.log('Generating personalized prompt with locations:', userLocations);
+  console.log('Generating personalized prompt with interests:', JSON.stringify(userInterests));
+  console.log('Generating personalized prompt with locations:', JSON.stringify(userLocations));
   
   // Base query for heart mode
   let prompt = "";

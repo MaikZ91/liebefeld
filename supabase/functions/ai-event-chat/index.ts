@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
@@ -172,17 +173,17 @@ serve(async (req) => {
     // Apply additional filters for personalized requests or heart mode
     // First apply location filtering if userLocations are provided
     if (userLocations && userLocations.length > 0) {
-      console.log("Applying location filtering with user locations:", userLocations);
+      console.log("Applying location filtering with user locations:", JSON.stringify(userLocations));
       
       // Convert locations to lowercase for case-insensitive matching
-      const lowerLocations = userLocations.map(location => location.toLowerCase());
+      const lowerLocations = userLocations.map((location: string) => location.toLowerCase());
       
       // Count events before filtering
       const beforeLocationFilter = filteredEvents.length;
       
       // Find events at user's preferred locations
-      const locationFilteredEvents = filteredEvents.filter(event => 
-        event.location && lowerLocations.some(loc => 
+      const locationFilteredEvents = filteredEvents.filter((event: any) => 
+        event.location && lowerLocations.some((loc: string) => 
           event.location.toLowerCase().includes(loc)
         )
       );
@@ -201,16 +202,16 @@ serve(async (req) => {
       console.log("Applying personalized interest filtering");
       
       // Convert interests to lowercase for case-insensitive matching
-      const lowerInterests = userInterests.map(interest => interest.toLowerCase());
-      console.log("Lowercase interests for filtering:", lowerInterests);
+      const lowerInterests = userInterests.map((interest: string) => interest.toLowerCase());
+      console.log("Lowercase interests for filtering:", JSON.stringify(lowerInterests));
       
       // Count events before filtering
       const beforeInterestFilter = filteredEvents.length;
       
       // Filter events that match user interests
-      const interestFilteredEvents = filteredEvents.filter(event => {
+      const interestFilteredEvents = filteredEvents.filter((event: any) => {
         // Check category first
-        if (event.category && lowerInterests.some(interest => 
+        if (event.category && lowerInterests.some((interest: string) => 
           event.category.toLowerCase().includes(interest.toLowerCase())
         )) {
           console.log(`Event ${event.title} matches interest by category ${event.category}`);
@@ -281,8 +282,8 @@ serve(async (req) => {
     if (categoryFilter) {
       console.log(`Anfrage nach Events der Kategorie "${categoryFilter}" erkannt`);
       const beforeCount = filteredEvents.length;
-      filteredEvents = filteredEvents.filter(e => 
-        e.category && e.category.toLowerCase() === categoryFilter.toLowerCase()
+      filteredEvents = filteredEvents.filter((e: any) => 
+        e.category && e.category.toLowerCase() === categoryFilter!.toLowerCase()
       );
       console.log(`Nach Filterung für Kategorie "${categoryFilter}": ${filteredEvents.length} von ${beforeCount} Events übrig`);
     }
@@ -291,8 +292,8 @@ serve(async (req) => {
     if (filteredEvents.length === 0) {
       console.log("Keine Events nach Filterung übrig, verwende die nächsten 20 anstehenden Events");
       filteredEvents = dbEvents
-        .filter(e => e.date >= currentDate)
-        .sort((a, b) => a.date.localeCompare(b.date))
+        .filter((e: any) => e.date >= currentDate)
+        .sort((a: any, b: any) => a.date.localeCompare(b.date))
         .slice(0, 20);
     }
 
@@ -300,15 +301,15 @@ serve(async (req) => {
     
     // Log some debug information about events
     if (currentDate) {
-      const todayEvents = filteredEvents.filter(e => e.date === currentDate);
+      const todayEvents = filteredEvents.filter((e: any) => e.date === currentDate);
       console.log(`Events für heute (${currentDate}) nach Filterung: ${todayEvents.length}`);
       if (todayEvents.length > 0) {
-        console.log('Erste Events für heute:', todayEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
+        console.log('Erste Events für heute:', todayEvents.slice(0, 3).map((e: any) => `${e.title} (${e.date})`));
       }
     }
     
     const formattedEvents = filteredEvents
-      .map((e) =>
+      .map((e: any) =>
         [
           `Event: ${e.title}`,
           `Datum: ${e.date}`,
@@ -353,6 +354,7 @@ serve(async (req) => {
      ***************************/
     // Log that we're about to send the request
     console.log("Sending request to Open Router API with Gemini model...");
+    console.log("System message being sent:", systemMessage);
     
     const payload = {
       model: "google/gemini-2.0-flash-lite-001", // gemini-2.0-flash-lite is more reliable
@@ -363,6 +365,8 @@ serve(async (req) => {
       temperature: 0.7,
       max_tokens: 1024,
     };
+
+    console.log("Full payload being sent:", JSON.stringify(payload));
 
     const orRes = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
@@ -505,7 +509,7 @@ serve(async (req) => {
     if (isPersonalRequest || userInterests?.length > 0) {
       // Make interest keywords bold in the text
       if (userInterests && userInterests.length > 0) {
-        userInterests.forEach(interest => {
+        userInterests.forEach((interest: string) => {
           const interestRegex = new RegExp(`\\b(${interest})\\b`, 'gi');
           aiContent = aiContent.replace(interestRegex, '<strong class="text-yellow-500">$1</strong>');
         });

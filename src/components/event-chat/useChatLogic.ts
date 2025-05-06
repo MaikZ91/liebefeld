@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { ChatMessage, CHAT_HISTORY_KEY, CHAT_QUERIES_KEY } from './types';
 import { supabase } from '@/integrations/supabase/client';
@@ -202,9 +203,7 @@ export const useChatLogic = (
     // Add to recent queries if it's a new query
     updateRecentQueries(message);
     
-    // Detect if this is a calendar-related query
-    const isCalendarQuery = /wann|heute|morgen|datum|kalender|tag|monat|events|veranstaltungen|konzerte|party|festival|welche|was gibt|was ist los|was läuft|was passiert/i.test(message);
-    
+    // Create the user message
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       isUser: true,
@@ -220,6 +219,8 @@ export const useChatLogic = (
     setTimeout(async () => {
       try {
         console.log(`Processing user query: "${message}" with ${events.length} events`);
+        console.log(`Heart mode active: ${isHeartActive}`);
+        
         // Pass the heart mode state to the generateResponse function
         const responseHtml = await generateResponse(message, events, isHeartActive);
         
@@ -323,13 +324,16 @@ export const useChatLogic = (
     };
   }, []);
   
-  // Modified function to handle heart button click
-  const handleHeartClick = () => {
-    // Toggle the heart state
-    setIsHeartActive(prev => !prev);
+  // Handle heart button click
+  const handleHeartClick = async () => {
+    // Toggle the heart state 
+    const newHeartState = !isHeartActive;
+    setIsHeartActive(newHeartState);
+    
+    console.log(`Heart mode ${newHeartState ? 'activated' : 'deactivated'}`);
     
     // Show a toast notification about the mode change
-    if (!isHeartActive) {
+    if (newHeartState) {
       toast.success("Personalisierter Modus aktiviert! Deine Vorlieben werden nun berücksichtigt.");
     } else {
       toast.info("Standardmodus aktiviert. Alle Events werden angezeigt.");

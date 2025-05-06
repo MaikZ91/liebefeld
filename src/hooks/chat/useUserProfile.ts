@@ -12,8 +12,19 @@ export const useUserProfile = () => {
 
   const fetchProfile = async (username: string) => {
     try {
+      console.log(`Fetching profile for username: ${username}`);
       const profile = await userService.getUserByUsername(username);
-      setUserProfile(profile);
+      
+      if (profile) {
+        console.log('Profile fetched successfully:', profile);
+        console.log('Interests:', profile.interests);
+        console.log('Favorite locations:', profile.favorite_locations);
+        setUserProfile(profile);
+      } else {
+        console.log('No profile found for username:', username);
+        setUserProfile(null);
+      }
+      
       return profile;
     } catch (err) {
       console.error('Error fetching user profile:', err);
@@ -31,6 +42,7 @@ export const useUserProfile = () => {
       try {
         const storedUsername = localStorage.getItem(USERNAME_KEY);
         if (storedUsername && storedUsername !== currentUser) {
+          console.log(`Updating current user from ${currentUser} to ${storedUsername}`);
           setCurrentUser(storedUsername);
           usernameToFetch = storedUsername;
         }
@@ -39,9 +51,11 @@ export const useUserProfile = () => {
       }
       
       if (usernameToFetch && usernameToFetch !== 'Gast') {
+        console.log(`Fetching profile for user: ${usernameToFetch}`);
         const profile = await fetchProfile(usernameToFetch);
         return profile;
       } else {
+        console.log('No username to fetch profile for, setting profile to null');
         setUserProfile(null);
         return null;
       }
@@ -61,14 +75,17 @@ export const useUserProfile = () => {
         let storedUsername = null;
         try {
           storedUsername = localStorage.getItem(USERNAME_KEY);
+          console.log('Initial username from localStorage:', storedUsername);
         } catch (localStorageError) {
           console.error("Error accessing localStorage:", localStorageError);
         }
 
         if (storedUsername) {
+          console.log(`Setting current user to: ${storedUsername}`);
           setCurrentUser(storedUsername);
           await fetchProfile(storedUsername);
         } else {
+          console.log('No stored username found, setting user to Guest');
           setCurrentUser('Gast');
           setUserProfile(null);
         }
