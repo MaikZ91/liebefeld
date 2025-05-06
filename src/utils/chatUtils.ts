@@ -206,25 +206,27 @@ export const formatEventListItem = (event: any) => {
   const date = cleanTextContent(event.date || '');
   
   return `
-    <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-2 mb-2">
-      <span class="font-bold block">${title}</span>
-      <div class="flex flex-col text-xs space-y-1 mt-1">
-        <div class="flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+    <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-3 mb-2">
+      <div class="font-bold text-base mb-1">${title}</div>
+      <div class="flex flex-col gap-1">
+        <div class="flex items-center text-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1 flex-shrink-0">
             <circle cx="12" cy="12" r="10"></circle>
             <polyline points="12 6 12 12 16 14"></polyline>
           </svg>
           <span>${date ? date + ' ' : ''}${time}</span>
         </div>
-        <div class="flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+        <div class="flex items-center text-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1 flex-shrink-0">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
             <circle cx="12" cy="10" r="3"></circle>
           </svg>
           <span>${location}</span>
         </div>
-        <div class="bg-red-500/70 text-white text-xs px-2 py-0.5 rounded inline-block w-fit">
-          ${category}
+        <div class="mt-1">
+          <span class="bg-red-500/70 text-white text-xs px-2 py-0.5 rounded inline-block">
+            ${category}
+          </span>
         </div>
       </div>
     </div>
@@ -238,6 +240,9 @@ const cleanTextContent = (text: string): string => {
   return text
     .replace(/^[•\-*]\s*/g, '') // Remove leading bullet points
     .replace(/\s*[•\-*]\s*/g, ' ') // Replace mid-string bullet points with spaces
+    .replace(/^[-–—•*]\s*/mg, '') // Remove bullets at start of any line
+    .replace(/[*_]{1,2}([^*_]+)[*_]{1,2}/g, '$1') // Remove markdown-style emphasis
+    .replace(/^\s*[\d]+[.)]\s*/mg, '') // Remove numbered lists
     .trim();
 };
 
@@ -246,7 +251,7 @@ export const createEventListHTML = (events: any[], title: string) => {
     return `<p>Keine Events gefunden</p>`;
   }
   
-  let html = `<h3 class="font-bold text-white mb-2">${title}</h3><div class="space-y-2">`;
+  let html = `<div class="space-y-3 event-list-container"><h3 class="font-bold text-white mb-2">${title}</h3>`;
   
   for (const event of events) {
     html += formatEventListItem(event);
