@@ -50,6 +50,7 @@ export const useUserProfile = () => {
           });
           
           setUserProfile(profile);
+          console.log('Profile initialized successfully:', profile);
         } catch (err: any) {
           console.error('Fehler beim Erstellen des Benutzerprofils:', err);
           

@@ -115,6 +115,13 @@ export const userService = {
           fileSizeLimit: 1024 * 1024 * 2
         });
       }
+      
+      // Rufen Sie die SQL-Funktion auf, um Bucket-Richtlinien festzulegen
+      const { error: functionError } = await supabase.rpc('ensure_avatar_policies');
+      if (functionError) {
+        console.error('Error ensuring avatar policies:', functionError);
+        // Kein Throw hier, da dies nicht kritisch ist und die Funktion möglicherweise nicht existiert
+      }
     } catch (err) {
       console.error('Error ensuring avatar bucket exists:', err);
       throw err;
@@ -133,6 +140,8 @@ export const userService = {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       const filePath = fileName;
+
+      console.log('Uploading file to avatars bucket:', filePath);
 
       // Datei hochladen
       const { error: uploadError } = await supabase.storage

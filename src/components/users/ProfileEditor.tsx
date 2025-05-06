@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -70,6 +71,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       
       try {
         await userService.ensureAvatarBucket();
+        console.log('Avatar storage bucket ensured');
       } catch (err) {
         console.error('Error ensuring bucket exists:', err);
       }
@@ -97,6 +99,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
           .filter(Boolean) as string[];
           
         setLocations(locationList);
+        console.log('Fetched locations:', locationList.length);
       } catch (error) {
         console.error('Failed to fetch locations:', error);
       }
@@ -120,9 +123,11 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       
       // Set interests from currentUser
       setInterests(currentUser.interests || []);
+      console.log('Set interests from current user:', currentUser.interests);
       
       // Set favorite locations
       setFavoriteLocations(currentUser.favorite_locations || []);
+      console.log('Set favorite locations from current user:', currentUser.favorite_locations);
       
       console.log('Loaded current user data:', {
         username: currentUser.username,
@@ -137,11 +142,13 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     if (newInterest.trim() && !interests.includes(newInterest.trim())) {
       setInterests(prev => [...prev, newInterest.trim()]);
       setNewInterest('');
+      console.log('Added interest:', newInterest.trim());
     }
   };
 
   const handleRemoveInterest = (interest: string) => {
     setInterests(interests.filter(i => i !== interest));
+    console.log('Removed interest:', interest);
   };
 
   // Fix for adding locations
@@ -150,11 +157,13 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       setFavoriteLocations(prev => [...prev, selectedLocation]);
       setSelectedLocation('');
       setPopoverOpen(false);
+      console.log('Added location:', selectedLocation);
     }
   };
 
   const handleRemoveLocation = (location: string) => {
     setFavoriteLocations(favoriteLocations.filter(loc => loc !== location));
+    console.log('Removed location:', location);
   };
 
   // Handle location selection
@@ -189,6 +198,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     
     try {
       setUploading(true);
+      console.log('Uploading file:', file.name);
       
       // Use our improved upload service
       const publicUrl = await userService.uploadProfileImage(file);
@@ -198,6 +208,8 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       
       // Save the uploaded image URL
       setUploadedImage(publicUrl);
+      
+      console.log('Image uploaded successfully:', publicUrl);
       
       toast({
         title: "Erfolg",
