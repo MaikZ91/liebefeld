@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEventContext } from '@/contexts/EventContext';
@@ -447,10 +448,21 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
   // Add a new state for tracking when the heart is clicked
   const [isHeartActive, setIsHeartActive] = useState(false);
   
-  // Add a new function to handle heart button click
-  const handleHeartClick = async () => {
+  // Modified function to handle heart button click - removing auto-query
+  const handleHeartClick = () => {
+    // Simply toggle the heart state without sending a query
     setIsHeartActive(prev => !prev);
     
+    // Show a toast notification about the mode change
+    if (!isHeartActive) {
+      toast.success("Personalisierter Modus aktiviert! Deine Vorlieben werden nun berücksichtigt.");
+    } else {
+      toast.info("Standardmodus aktiviert. Alle Events werden angezeigt.");
+    }
+  };
+  
+  // Add a function to manually send personalized query
+  const sendPersonalizedQuery = async () => {
     try {
       // Get user interests and locations from the user profile
       let userInterests: string[] = [];
@@ -661,16 +673,29 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
           
           <div className="flex items-center relative">
             <div className="absolute left-2 flex items-center gap-1 z-10">
-              {/* Heart button for personalized recommendations */}
+              {/* Heart button for toggling personalized mode */}
               {activeChatModeValue === 'ai' && (
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={handleHeartClick}
                   className={`h-8 w-8 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`}
-                  title="Persönliche Empfehlungen"
+                  title={isHeartActive ? "Personalisierter Modus aktiv" : "Standard-Modus aktiv"}
                 >
                   <Heart className={`h-4 w-4 ${isHeartActive ? 'fill-red-500' : ''}`} />
+                </Button>
+              )}
+              
+              {/* Add a new button to send personalized query when in heart mode */}
+              {isHeartActive && activeChatModeValue === 'ai' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={sendPersonalizedQuery}
+                  className="h-8 text-red-400"
+                  title="Persönliche Empfehlungen anzeigen"
+                >
+                  <span className="text-xs">Persönliche Events suchen</span>
                 </Button>
               )}
               
@@ -732,7 +757,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
     );
   }
 
-  // For the floating chatbot UI, also modify to include the heart button
+  // For the floating chatbot UI, also update to match the changes
   return (
     <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end">
       {isChatOpen && (
@@ -830,9 +855,22 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
                     size="icon"
                     onClick={handleHeartClick}
                     className={`h-8 w-8 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`}
-                    title="Persönliche Empfehlungen"
+                    title={isHeartActive ? "Personalisierter Modus aktiv" : "Standard-Modus aktiv"}
                   >
                     <Heart className={`h-4 w-4 ${isHeartActive ? 'fill-red-500' : ''}`} />
+                  </Button>
+                )}
+                
+                {/* Add button to send personalized query */}
+                {isHeartActive && activeChatModeValue === 'ai' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={sendPersonalizedQuery}
+                    className="h-7 text-red-400"
+                    title="Persönliche Empfehlungen anzeigen"
+                  >
+                    <span className="text-xs">Events suchen</span>
                   </Button>
                 )}
                 
