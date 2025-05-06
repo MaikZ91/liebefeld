@@ -46,52 +46,45 @@ export const userService = {
    * Benutzerprofil erstellen oder aktualisieren
    */
   async createOrUpdateProfile(profile: Partial<UserProfile> & { username: string }): Promise<UserProfile> {
-    try {
-      // Prüfen, ob der Benutzer bereits existiert
-      const existingUser = await this.getUserByUsername(profile.username);
-      
-      let data;
-      let error;
-      
-      if (existingUser) {
-        // Benutzer aktualisieren
-        const response = await supabase
-          .from('user_profiles')
-          .update({
-            ...profile,
-            last_online: new Date().toISOString()
-          })
-          .eq('username', profile.username)
-          .select()
-          .single();
-          
-        data = response.data;
-        error = response.error;
-      } else {
-        // Neuen Benutzer erstellen
-        const response = await supabase
-          .from('user_profiles')
-          .insert({
-            ...profile,
-            created_at: new Date().toISOString(),
-            last_online: new Date().toISOString()
-          })
-          .select()
-          .single();
-          
-        data = response.data;
-        error = response.error;
-      }
-      
+    // Prüfen, ob der Benutzer bereits existiert
+    const existingUser = await this.getUserByUsername(profile.username);
+    
+    if (existingUser) {
+      // Benutzer aktualisieren
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .update({
+          ...profile,
+          last_online: new Date().toISOString()
+        })
+        .eq('username', profile.username)
+        .select()
+        .single();
+        
       if (error) {
-        console.error('Fehler bei der Profilaktualisierung:', error);
+        console.error('Fehler beim Aktualisieren des Benutzerprofils:', error);
         throw error;
       }
       
       return data;
-    } catch (err) {
-      console.error('Fehler bei der Profilaktualisierung:', err);
-      throw err;
+    } else {
+      // Neuen Benutzer erstellen
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .insert({
+          ...profile,
+          created_at: new Date().toISOString(),
+          last_online: new Date().toISOString()
+        })
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Fehler beim Erstellen des Benutzerprofils:', error);
+        throw error;
+      }
+      
+      return data;
     }
   },
   
@@ -115,29 +108,32 @@ export const userService = {
    */
   async uploadProfileImage(file: File): Promise<string> {
     try {
-      // Sicherstellen, dass der Bucket existiert
+      // Prüfen ob der Bucket existiert und ggf. erstellen
       const { data: buckets } = await supabase.storage.listBuckets();
-      const avatarBucket = buckets?.find(bucket => bucket.name === 'avatars');
-      
-      if (!avatarBucket) {
-        // Bucket existiert nicht, erstellen
-        const { data, error } = await supabase.storage.createBucket('avatars', {
+      if (!buckets?.find(bucket => bucket.name === 'avatars')) {
+        // Bucket nicht gefunden, versuche ihn zu erstellen
+        await supabase.storage.createBucket('avatars', {
           public: true
         });
-        
-        if (error) {
-          console.error('Fehler beim Erstellen des Avatars-Buckets:', error);
-          throw error;
-        }
       }
+
+      // RLS Policies für den Bucket überprüfen und anpassen
+      const { error: policyError } = await supabase.rpc(
+        'ensure_avatar_policies'
+      );
       
+      if (policyError) {
+        console.warn('Fehler beim Überprüfen der Storage-Policies:', policyError);
+        // Wir versuchen trotzdem mit dem Upload fortzufahren
+      }
+
       // Eindeutigen Dateinamen generieren
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       const filePath = fileName;
 
       // Datei hochladen
-      const { data, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, {
           cacheControl: '3600',
@@ -145,7 +141,7 @@ export const userService = {
         });
 
       if (uploadError) {
-        console.error('Upload Fehler:', uploadError);
+        console.error('Upload error:', uploadError);
         throw uploadError;
       }
 
@@ -156,7 +152,7 @@ export const userService = {
 
       return publicUrlData.publicUrl;
     } catch (error) {
-      console.error('Fehler beim Hochladen des Bildes:', error);
+      console.error('Error uploading image:', error);
       throw error;
     }
   }

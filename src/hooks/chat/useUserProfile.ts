@@ -12,6 +12,21 @@ export const useUserProfile = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  // Check if storage bucket exists and create it if needed
+  const ensureStorageBucket = async () => {
+    try {
+      const { data: buckets } = await supabase.storage.listBuckets();
+      if (!buckets?.find(bucket => bucket.name === 'avatars')) {
+        console.log('Creating avatars bucket');
+        await supabase.storage.createBucket('avatars', {
+          public: true
+        });
+      }
+    } catch (err) {
+      console.error('Error ensuring storage bucket exists:', err);
+    }
+  };
+  
   // Benutzerprofil erstellen oder aktualisieren, wenn der Benutzername bekannt ist
   useEffect(() => {
     if (currentUser !== 'Gast') {
@@ -25,51 +40,66 @@ export const useUserProfile = () => {
       setLoading(true);
       setError(null);
       
+      // Ensure storage bucket exists for avatar uploads
+      await ensureStorageBucket();
+      
       const avatar = localStorage.getItem(AVATAR_KEY);
       
-      // Check if user profile already exists
-      let profile = await userService.getUserByUsername(currentUser);
+      // Try to get the user first
+      let profile;
+      try {
+        profile = await userService.getUserByUsername(currentUser);
+        console.log('Found existing user profile:', profile);
+      } catch (err) {
+        console.log('User does not exist yet, will create new profile');
+      }
       
+      // Only try to create/update if we're not a guest
       if (currentUser !== 'Gast') {
         try {
           // Benutzerprofil erstellen oder aktualisieren
-          const profileData = {
+          profile = await userService.createOrUpdateProfile({
             username: currentUser,
             avatar: avatar || null,
-            interests: profile?.interests || ['Sport', 'Events', 'Kreativität'],
-            hobbies: profile?.hobbies || ['Tanzen', 'Musik', 'Kochen'],
+            // Standardwerte für Interessen und Hobbys
+            interests: ['Sport', 'Events', 'Kreativität'],
+            hobbies: ['Tanzen', 'Musik', 'Kochen'],
             favorite_locations: profile?.favorite_locations || []
-          };
+          });
           
-          profile = await userService.createOrUpdateProfile(profileData);
           setUserProfile(profile);
-          
         } catch (err: any) {
           console.error('Fehler beim Erstellen des Benutzerprofils:', err);
           
-          // Try to fetch profile again if creation failed, in case it exists
-          if (!profile) {
+          // If we get a RLS error, try to get the profile again instead
+          if (err.message && err.message.includes('row-level security policy')) {
             try {
               profile = await userService.getUserByUsername(currentUser);
               if (profile) {
+                console.log('Retrieved profile after RLS error:', profile);
                 setUserProfile(profile);
               }
             } catch (getErr) {
-              console.error('Fehler beim erneuten Abrufen des Profils:', getErr);
+              console.error('Failed to retrieve profile after RLS error:', getErr);
+              throw err; // Rethrow the original error
             }
+          } else {
+            throw err;
           }
-          
-          setError(err.message || 'Ein Fehler ist aufgetreten');
-          toast({
-            title: "Fehler", 
-            description: "Benutzerprofil konnte nicht erstellt werden. Bitte später erneut versuchen.",
-            variant: "destructive"
-          });
         }
       }
     } catch (err: any) {
       console.error('Fehler beim Initialisieren des Benutzerprofils:', err);
       setError(err.message || 'Ein Fehler ist aufgetreten');
+      
+      // Only show toast if it's not an RLS policy error since we handle that specially
+      if (!err.message || !err.message.includes('row-level security policy')) {
+        toast({
+          title: "Fehler",
+          description: "Benutzerprofil konnte nicht erstellt werden. Bitte später erneut versuchen.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setLoading(false);
     }
