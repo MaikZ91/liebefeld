@@ -7,8 +7,9 @@ import PrivateChat from './users/PrivateChat';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { Button } from '@/components/ui/button';
 import ProfileEditor from './users/ProfileEditor';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { UserCircle, LogIn } from 'lucide-react';
+import ChatLoadingSkeleton from './chat/ChatLoadingSkeleton';
 
 interface GroupChatProps {
   groupId: string;
@@ -26,6 +27,8 @@ const GroupChat: React.FC<GroupChatProps> = ({
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const { currentUser, userProfile, loading, refetchProfile } = useUserProfile();
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const { toast } = useToast();
   
   // Add state to track if we've tried to refresh the profile after an edit
   const [hasRefreshedAfterEdit, setHasRefreshedAfterEdit] = useState(false);
@@ -71,7 +74,19 @@ const GroupChat: React.FC<GroupChatProps> = ({
       refetchProfile();
       setHasRefreshedAfterEdit(true);
     }
+    
+    // Set a timeout to ensure we don't show loading state for too long
+    const timer = setTimeout(() => {
+      setIsInitializing(false);
+    }, 1500);
+    
+    return () => clearTimeout(timer);
   }, [refetchProfile, hasRefreshedAfterEdit]);
+  
+  // Show loading skeleton during initialization
+  if (isInitializing && loading) {
+    return <ChatLoadingSkeleton />;
+  }
 
   return (
     <div className="flex flex-col h-full">

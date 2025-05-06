@@ -14,8 +14,9 @@ export const useMessageSubscription = (
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const channelsRef = useRef<RealtimeChannel[]>([]);
   const timeoutsRef = useRef<{[key: string]: NodeJS.Timeout}>({});
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
-  // Update typing users callback
+  // Update typing users callback - memoized for better performance
   const handleTypingUpdate = useCallback((newTypingUser: TypingUser[]) => {
     setTypingUsers(prev => {
       // Clone current typing list
@@ -61,33 +62,41 @@ export const useMessageSubscription = (
       return;
     }
     
-    console.log(`Setting up subscription for group: ${groupId}`);
+    // Add a small delay to prevent too many simultaneous connections
+    const setupDelay = setTimeout(() => {
+      console.log(`Setting up subscription for group: ${groupId}`);
+      setIsSubscribed(false);
 
-    // Ensure Realtime is enabled for the table by making a simple query
-    supabase.from('chat_messages').select('id').limit(1);
-    
-    // Create message channels - this now returns an array of channels
-    const messageChannels = chatService.createMessageSubscription(
-      groupId,
-      onNewMessage,
-      onForceRefresh,
-      username
-    );
-    
-    // Create typing channel
-    const typingChannel = chatService.createTypingSubscription(
-      groupId,
-      username,
-      handleTypingUpdate
-    );
-    
-    // Save all channels - now handling an array or a single channel
-    channelsRef.current = Array.isArray(messageChannels) 
-      ? [...messageChannels, typingChannel] 
-      : [messageChannels, typingChannel];
+      // Ensure Realtime is enabled for the table by making a simple query
+      try {
+        supabase.from('chat_messages').select('id').limit(1);
+        
+        // Create message channel - using the optimized version that returns a single channel
+        const messageChannel = chatService.createMessageSubscription(
+          groupId,
+          onNewMessage,
+          onForceRefresh,
+          username
+        );
+        
+        // Create typing channel
+        const typingChannel = chatService.createTypingSubscription(
+          groupId,
+          username,
+          handleTypingUpdate
+        );
+        
+        // Save all channels
+        channelsRef.current = [messageChannel, typingChannel].filter(Boolean);
+        setIsSubscribed(true);
+      } catch (error) {
+        console.error('Error setting up subscriptions:', error);
+      }
+    }, 300);
     
     // Cleanup on component unmount
     return () => {
+      clearTimeout(setupDelay);
       console.log(`Ending subscription for group: ${groupId}`);
       
       // Clear all active timeouts
@@ -112,5 +121,5 @@ export const useMessageSubscription = (
     };
   }, [groupId, username, onNewMessage, onForceRefresh, handleTypingUpdate]);
 
-  return { typingUsers };
+  return { typingUsers, isSubscribed };
 };

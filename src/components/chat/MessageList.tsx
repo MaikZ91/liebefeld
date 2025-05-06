@@ -9,6 +9,7 @@ import { Message, TypingUser, EventShare } from '@/types/chatTypes';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Link } from 'lucide-react';
+import ChatLoadingSkeleton from './ChatLoadingSkeleton';
 
 interface MessageListProps {
   messages: Message[];
@@ -71,12 +72,13 @@ const MessageList: React.FC<MessageListProps> = ({
     }
   };
 
+  // Show loading skeleton during initial load
+  if (loading) {
+    return <ChatLoadingSkeleton />;
+  }
+
   return (
     <div className={`flex-grow p-4 ${isGroup ? 'bg-black' : 'bg-black'} overflow-y-auto w-full max-w-full h-full flex flex-col`}>
-      {loading && (
-        <div className="text-center text-gray-500 text-lg font-semibold py-4">Loading messages...</div>
-      )}
-      
       {error && (
         <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>
       )}

@@ -6,6 +6,7 @@ import { messageService } from '@/services/messageService';
 export const useMessageFetching = (groupId: string) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // Ensure we have a valid UUID for groupId
   const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
@@ -14,10 +15,15 @@ export const useMessageFetching = (groupId: string) => {
     if (!validGroupId) {
       setError("Keine Gruppen-ID angegeben");
       setLoading(false);
+      setIsInitialLoad(false);
       return [];
     }
     
-    setLoading(true);
+    // Don't show loading indicator for subsequent fetches
+    if (isInitialLoad) {
+      setLoading(true);
+    }
+    
     try {
       console.log(`Nachrichten für Gruppe abrufen: ${validGroupId}`);
       const messages = await messageService.fetchMessages(validGroupId);
@@ -30,13 +36,15 @@ export const useMessageFetching = (groupId: string) => {
       return [];
     } finally {
       setLoading(false);
+      setIsInitialLoad(false);
     }
-  }, [validGroupId]);
+  }, [validGroupId, isInitialLoad]);
 
   return {
     fetchMessages,
     loading,
     error,
-    setError
+    setError,
+    isInitialLoad
   };
 };

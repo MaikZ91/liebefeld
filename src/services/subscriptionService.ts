@@ -8,6 +8,7 @@ import { Message, TypingUser } from '@/types/chatTypes';
 export const subscriptionService = {
   /**
    * Create channel subscriptions for real-time updates
+   * Optimized to reduce unnecessary operations
    */
   createMessageSubscription(
     groupId: string, 
@@ -17,7 +18,7 @@ export const subscriptionService = {
   ) {
     console.log(`Creating message subscription for group ${groupId}`);
     
-    // Set up a subscription for real-time message updates
+    // Set up a subscription for real-time message updates with specific filter
     const messageChannel = supabase
       .channel(`group_chat:${groupId}`)
       .on('postgres_changes', { 
@@ -29,6 +30,7 @@ export const subscriptionService = {
         console.log('Received message via postgres changes:', payload);
         if (payload.new) {
           const newPayload = payload.new as any;
+          // Only process if this message belongs to our group
           if (newPayload && newPayload.group_id === groupId) {            
             const newMsg: Message = {
               id: newPayload.id,
@@ -52,34 +54,8 @@ export const subscriptionService = {
         console.log('Subscription status for messages:', status);
       });
 
-    // Set up a subscription to monitor table changes directly
-    const tableChangesChannel = supabase
-      .channel('public:chat_messages')
-      .on('postgres_changes', { 
-        event: 'INSERT',
-        schema: 'public',
-        table: 'chat_messages',
-      }, (payload) => {
-        console.log('Table INSERT received:', payload);
-        if (payload.new && (payload.new as any).group_id === groupId) {
-          const newMsg: Message = {
-            id: (payload.new as any).id,
-            created_at: (payload.new as any).created_at,
-            content: (payload.new as any).text,
-            user_name: (payload.new as any).sender,
-            user_avatar: (payload.new as any).avatar || '',
-            group_id: (payload.new as any).group_id,
-          };
-          
-          console.log('Inserted message via table changes:', newMsg);
-          onNewMessage(newMsg);
-        }
-      })
-      .subscribe((status) => {
-        console.log('Table changes subscription status:', status);
-      });
-
-    return [messageChannel, tableChangesChannel];
+    // We'll only use the direct table subscription for better performance
+    return messageChannel;
   },
 
   /**
