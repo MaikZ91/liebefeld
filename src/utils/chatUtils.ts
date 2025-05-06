@@ -1,4 +1,3 @@
-
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -172,4 +171,24 @@ export const generatePersonalizedPrompt = (interests?: string[], locations?: str
   
   console.log('[chatUtils] Generated personalized prompt:', prompt);
   return prompt;
+};
+
+// Extract all unique locations from events
+export const extractAllLocations = (events: any[]): string[] => {
+  if (!events || !Array.isArray(events) || events.length === 0) {
+    console.log('[chatUtils] No events to extract locations from');
+    return [];
+  }
+  
+  const locationSet = new Set<string>();
+  
+  events.forEach(event => {
+    if (event.location && typeof event.location === 'string' && event.location.trim() !== '') {
+      locationSet.add(event.location.trim());
+    }
+  });
+  
+  const locationArray = Array.from(locationSet);
+  console.log(`[chatUtils] Extracted ${locationArray.length} unique locations from ${events.length} events`);
+  return locationArray;
 };

@@ -13,6 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { extractAllLocations } from '@/utils/chatUtils';
+import { useEventContext } from '@/contexts/EventContext';
 
 interface LocationSelectorProps {
   locations: string[];
@@ -21,16 +23,42 @@ interface LocationSelectorProps {
 }
 
 const LocationSelector: React.FC<LocationSelectorProps> = ({
-  locations,
+  locations: providedLocations,
   favoriteLocations,
   onLocationsChange
 }) => {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { events } = useEventContext();
+  const [allLocations, setAllLocations] = useState<string[]>([]);
+  
+  // Use both provided locations and extract from events
+  useEffect(() => {
+    // Start with provided locations
+    const combinedLocations = [...providedLocations];
+    
+    // Extract locations from events if available
+    if (events && events.length > 0) {
+      const eventLocations = extractAllLocations(events);
+      
+      // Add event locations that aren't already in the list
+      eventLocations.forEach(location => {
+        if (!combinedLocations.includes(location)) {
+          combinedLocations.push(location);
+        }
+      });
+    }
+    
+    // Sort alphabetically
+    const sortedLocations = combinedLocations.sort((a, b) => a.localeCompare(b));
+    
+    setAllLocations(sortedLocations);
+    console.log(`[LocationSelector] Combined ${providedLocations.length} provided locations with locations from events for a total of ${sortedLocations.length} unique locations`);
+  }, [providedLocations, events]);
   
   // Computed property for filtered locations
-  const filteredLocations = locations.filter(location => 
+  const filteredLocations = allLocations.filter(location => 
     location.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -193,7 +221,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
             <SelectValue placeholder="Lokation auswählen" />
           </SelectTrigger>
           <SelectContent className="bg-gray-900 border-gray-700 text-white max-h-72">
-            {locations.map((location) => (
+            {allLocations.map((location) => (
               <SelectItem key={location} value={location}>
                 {location}
               </SelectItem>

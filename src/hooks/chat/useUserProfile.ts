@@ -29,12 +29,20 @@ export const useUserProfile = () => {
         if (profile.favorite_locations && profile.favorite_locations.length > 0) {
           localStorage.setItem('user_locations', JSON.stringify(profile.favorite_locations));
           console.log('[useUserProfile] Stored locations in localStorage:', profile.favorite_locations);
+        } else {
+          // Clear locations if there are none to avoid old data
+          localStorage.removeItem('user_locations');
+          console.log('[useUserProfile] No locations in profile, cleared localStorage');
         }
         
         setUserProfile(profile);
       } else {
         console.log('[useUserProfile] No profile found for username:', username);
         setUserProfile(null);
+        
+        // Clear interests and locations if no profile found
+        localStorage.removeItem('user_interests');
+        localStorage.removeItem('user_locations');
       }
       
       return profile;
