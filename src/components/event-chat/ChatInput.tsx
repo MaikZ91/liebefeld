@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           </Button>}
       </div>
       
-      <input ref={inputRef} type="text" value={input} onChange={e => setInput(e.target.value)} onKeyPress={handleKeyPress} placeholder="Frage nach Events..." className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 pl-16 pr-10 px-[65px]" />
+      <input ref={inputRef} type="text" value={input} onChange={e => setInput(e.target.value)} onKeyPress={handleKeyPress} placeholder="Frage nach Events..." className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-xs text-red-200 placeholder-red-200/50 pl-16 pr-10 px-[65px]" />
       <button onClick={() => handleSendMessage()} disabled={!input.trim() || isTyping} className={cn("absolute right-1 rounded-full p-2", input.trim() && !isTyping ? "bg-red-500 hover:bg-red-600 text-white" : "bg-zinc-800 text-zinc-500")}>
         <Send className="h-4 w-4" />
       </button>

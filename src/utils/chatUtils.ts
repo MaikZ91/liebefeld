@@ -1,4 +1,3 @@
-
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -196,4 +195,48 @@ export const extractAllLocations = (events: any[]): string[] => {
   const locationArray = Array.from(locationSet);
   console.log(`[chatUtils] Extracted ${locationArray.length} unique locations from ${events.length} events`);
   return locationArray;
+};
+
+export const formatEventListItem = (event: any) => {
+  const title = event.title || 'Unbekanntes Event';
+  const time = event.time || 'Zeit nicht angegeben';
+  const location = event.location || 'Ort nicht angegeben';
+  const category = event.category || 'Sonstiges';
+  
+  return `
+    <div>
+      <span class="event-title">${title}</span>
+      <div class="flex items-center text-xs opacity-80">
+        <span class="inline-flex items-center mr-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          ${time}
+        </span>
+        <span class="inline-flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          ${location}
+        </span>
+      </div>
+    </div>
+  `;
+};
+
+export const createEventListHTML = (events: any[], title: string) => {
+  if (!events || events.length === 0) {
+    return `<p>Keine Events gefunden</p>`;
+  }
+  
+  let html = `<h3 class="font-bold text-white mb-2">${title}</h3><ul class="space-y-2">`;
+  
+  for (const event of events) {
+    html += `<li>${formatEventListItem(event)}</li>`;
+  }
+  
+  html += `</ul>`;
+  return html;
 };

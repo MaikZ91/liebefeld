@@ -28,7 +28,7 @@ const MessageList: React.FC<MessageListProps> = ({
         {message.html ? (
           <div 
             dangerouslySetInnerHTML={{ __html: message.html }} 
-            className="p-3"
+            className="p-3 event-list-container"
           />
         ) : (
           <ChatMessage 
@@ -44,6 +44,40 @@ const MessageList: React.FC<MessageListProps> = ({
 
   return (
     <ScrollArea className="h-full">
+      {/* Add custom CSS to fix the event list bullet points layout */}
+      <style jsx global>{`
+        .event-list-container ul li {
+          display: flex !important;
+          flex-direction: row !important;
+          align-items: flex-start !important;
+          margin-bottom: 0.5rem !important;
+        }
+        
+        .event-list-container ul li::before {
+          content: "•";
+          display: inline-block;
+          margin-right: 0.5rem;
+          color: #ff5252;
+          font-size: 1.25rem;
+          line-height: 1.5rem;
+        }
+        
+        .event-list-container ul {
+          list-style-type: none !important;
+          padding-left: 0.5rem !important;
+        }
+        
+        .event-list-container ul li span {
+          display: inline-block !important;
+        }
+        
+        .event-list-container ul li .event-title {
+          font-weight: 600 !important;
+          display: block !important;
+          margin-bottom: 0.25rem !important;
+        }
+      `}</style>
+      
       <div className="space-y-3 pb-2">
         {renderMessages()}
         
