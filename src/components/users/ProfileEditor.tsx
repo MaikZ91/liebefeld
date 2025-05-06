@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -147,13 +146,21 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     
     // Check file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
-      toast.error("Das Bild ist zu groß. Maximale Größe: 2MB");
+      toast({
+        title: "Fehler",
+        description: "Das Bild ist zu groß. Maximale Größe: 2MB",
+        variant: "destructive"
+      });
       return;
     }
     
     // Check file type
     if (!file.type.startsWith('image/')) {
-      toast.error("Nur Bilder können hochgeladen werden");
+      toast({
+        title: "Fehler",
+        description: "Nur Bilder können hochgeladen werden",
+        variant: "destructive"
+      });
       return;
     }
     
@@ -166,10 +173,18 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       // Set the avatar URL in the form
       form.setValue('avatar', publicUrl);
       
-      toast.success("Bild erfolgreich hochgeladen");
+      toast({
+        title: "Erfolg",
+        description: "Bild erfolgreich hochgeladen",
+        variant: "success"
+      });
     } catch (error) {
       console.error('Error uploading image:', error);
-      toast.error("Fehler beim Hochladen des Bildes");
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Hochladen des Bildes",
+        variant: "destructive"
+      });
     } finally {
       setUploading(false);
     }
@@ -182,7 +197,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     setIsSubmitting(true);
     
     try {
-      console.log("Saving profile:", {
+      console.log("Saving profile with data:", {
         username: values.username,
         avatar: values.avatar,
         interests: interests,
@@ -205,13 +220,21 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         localStorage.setItem('community_chat_avatar', values.avatar);
       }
       
-      toast.success("Profil erfolgreich aktualisiert!");
+      toast({
+        title: "Erfolg",
+        description: "Profil erfolgreich aktualisiert!",
+        variant: "success"
+      });
       
       onProfileUpdate();
       onOpenChange(false);
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error("Fehler beim Aktualisieren des Profils");
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Aktualisieren des Profils",
+        variant: "destructive"
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -398,9 +421,6 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
                 type="submit" 
                 className="bg-red-500 hover:bg-red-600 text-white"
                 disabled={isSubmitting}
-                onClick={() => {
-                  console.log("Save button clicked, form valid:", form.formState.isValid);
-                }}
               >
                 {isSubmitting ? 'Speichern...' : 'Speichern'}
               </Button>
