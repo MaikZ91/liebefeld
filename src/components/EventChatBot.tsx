@@ -54,7 +54,8 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
   const { events } = useEventContext();
   const { toast } = useToast();
   const [isVisible, setIsVisible] = useState(false);
-  const [isChatOpen, setIsChatOpen] = fullPage;
+  // Fix: Changed from "fullPage" to either default state or fullPage based on fullPage prop
+  const [isChatOpen, setIsChatOpen] = useState(fullPage);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
