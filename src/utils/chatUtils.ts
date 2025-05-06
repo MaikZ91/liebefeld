@@ -1,3 +1,4 @@
+
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -39,12 +40,16 @@ export const generateResponse = async (query: string, events: any[], isHeartMode
   try {
     // Get current date and calculate next week's range
     const currentDate = new Date().toISOString().split('T')[0];
+    
+    // Calculate next week start (next Monday) and end (Sunday after that)
     const nextWeekStartDate = new Date();
-    nextWeekStartDate.setDate(nextWeekStartDate.getDate() + 7 - nextWeekStartDate.getDay() + 1);
+    const currentDay = nextWeekStartDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const daysUntilNextMonday = currentDay === 0 ? 1 : 8 - currentDay; // If today is Sunday, next Monday is tomorrow
+    nextWeekStartDate.setDate(nextWeekStartDate.getDate() + daysUntilNextMonday);
     const nextWeekStart = nextWeekStartDate.toISOString().split('T')[0];
     
     const nextWeekEndDate = new Date(nextWeekStartDate);
-    nextWeekEndDate.setDate(nextWeekEndDate.getDate() + 6);
+    nextWeekEndDate.setDate(nextWeekEndDate.getDate() + 6); // Sunday after next Monday
     const nextWeekEnd = nextWeekEndDate.toISOString().split('T')[0];
     
     // Get user interests and preferred locations from localStorage

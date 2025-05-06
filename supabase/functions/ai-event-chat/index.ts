@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
@@ -84,6 +85,19 @@ serve(async (req) => {
 
     console.log(`[ai-event-chat] Is this a personalized request? ${isPersonalRequest}`);
 
+    // Prepare for date-related filtering
+    const currentDateObj = new Date(currentDate);
+    
+    // Get the current month and year
+    const currentMonth = currentDateObj.getMonth();
+    const currentYear = currentDateObj.getFullYear();
+    
+    // Calculate first and last day of current month
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1).toISOString().split('T')[0];
+    const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).toISOString().split('T')[0];
+    
+    console.log(`[ai-event-chat] Current month range: ${firstDayOfMonth} to ${lastDayOfMonth}`);
+
     // Apply filters for date-specific queries
     // Filter für "heute" / "today" / "aktuell" etc.
     if (
@@ -96,6 +110,20 @@ serve(async (req) => {
       console.log(`[ai-event-chat] Anfrage nach Events für heute (${currentDate}) erkannt`);
       filteredEvents = filteredEvents.filter(e => e.date === currentDate);
       console.log(`[ai-event-chat] Nach Filterung für "heute": ${filteredEvents.length} Events übrig`);
+    }
+    // Filter for "this month" / "in diesem monat" / etc.
+    else if (
+      lowercaseQuery.includes("in diesem monat") ||
+      lowercaseQuery.includes("diesen monat") ||
+      lowercaseQuery.includes("this month") ||
+      lowercaseQuery.includes("im mai") ||
+      lowercaseQuery.includes("in may") ||
+      lowercaseQuery.includes("aktueller monat") ||
+      lowercaseQuery.includes("current month")
+    ) {
+      console.log(`[ai-event-chat] Anfrage nach Events für diesen Monat erkannt (${firstDayOfMonth} bis ${lastDayOfMonth})`);
+      filteredEvents = filteredEvents.filter(e => e.date >= firstDayOfMonth && e.date <= lastDayOfMonth);
+      console.log(`[ai-event-chat] Nach Filterung für "diesen Monat": ${filteredEvents.length} Events übrig`);
     }
     // Filter für "morgen" / "tomorrow"
     else if (
@@ -286,15 +314,22 @@ serve(async (req) => {
       );
       console.log(`[ai-event-chat] Nach Filterung für Kategorie "${categoryFilter}": ${filteredEvents.length} von ${beforeCount} Events übrig`);
     }
+
+    // Make sure we're only showing future events (or today's events)
+    filteredEvents = filteredEvents.filter((e: any) => e.date >= today);
+    console.log(`[ai-event-chat] Nach Filterung für zukünftige Events: ${filteredEvents.length} Events übrig`);
     
     // Falls die Filterung zu streng war und keine Events übrig sind, nehmen wir die letzten 20 Events
     if (filteredEvents.length === 0) {
       console.log("Keine Events nach Filterung übrig, verwende die nächsten 20 anstehenden Events");
       filteredEvents = dbEvents
-        .filter((e: any) => e.date >= currentDate)
+        .filter((e: any) => e.date >= today)
         .sort((a: any, b: any) => a.date.localeCompare(b.date))
         .slice(0, 20);
     }
+
+    // Sort all filtered events by date
+    filteredEvents = filteredEvents.sort((a: any, b: any) => a.date.localeCompare(b.date));
 
     console.log(`[ai-event-chat] Sende ${filteredEvents.length} gefilterte Events an das KI-Modell`);
     
@@ -305,6 +340,14 @@ serve(async (req) => {
       if (todayEvents.length > 0) {
         console.log('[ai-event-chat] Erste Events für heute:', todayEvents.slice(0, 3).map((e: any) => `${e.title} (${e.date})`));
       }
+    }
+
+    // Log events in the current month
+    const thisMonthEvents = filteredEvents.filter((e: any) => e.date >= firstDayOfMonth && e.date <= lastDayOfMonth);
+    console.log(`[ai-event-chat] Events für diesen Monat (${firstDayOfMonth} bis ${lastDayOfMonth}): ${thisMonthEvents.length}`);
+    if (thisMonthEvents.length > 0) {
+      console.log('[ai-event-chat] Beispiele für Events diesen Monat:', 
+        thisMonthEvents.slice(0, 3).map((e: any) => `${e.title} (${e.date})`));
     }
     
     const formattedEvents = filteredEvents
@@ -343,6 +386,28 @@ serve(async (req) => {
       if (isPersonalRequest && userInterests?.length > 0) {
         systemMessage += `Ich habe die Ergebnisse nach deinen Interessen gefiltert. `;
         systemMessage += `Erwähne explizit, dass du nach dem Interesse "${userInterests.join(', ')}" gefiltert hast. `;
+      }
+    }
+
+    // Add specific month context
+    if (
+      lowercaseQuery.includes("in diesem monat") ||
+      lowercaseQuery.includes("diesen monat") ||
+      lowercaseQuery.includes("this month") ||
+      lowercaseQuery.includes("im mai") ||
+      lowercaseQuery.includes("in may") ||
+      lowercaseQuery.includes("aktueller monat") ||
+      lowercaseQuery.includes("current month")
+    ) {
+      const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", 
+                         "Juli", "August", "September", "Oktober", "November", "Dezember"];
+      const germanMonthName = monthNames[currentMonth];
+      
+      systemMessage += `Der Nutzer hat nach Events in diesem Monat (${germanMonthName} ${currentYear}) gefragt. `;
+      systemMessage += `Stelle sicher, dass du nur Events vom ${firstDayOfMonth} bis ${lastDayOfMonth} erwähnst. `;
+      
+      if (thisMonthEvents.length === 0) {
+        systemMessage += `Es wurden keine Events für diesen Monat gefunden. Informiere den Nutzer, dass keine Events für ${germanMonthName} ${currentYear} verfügbar sind und schlage vor, es mit einem anderen Zeitraum zu versuchen. `;
       }
     }
     
