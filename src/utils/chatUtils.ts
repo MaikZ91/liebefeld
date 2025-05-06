@@ -1,4 +1,3 @@
-
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,22 +22,11 @@ export const formatEvents = (events: any[]) => {
     return '<p>Keine Events gefunden.</p>';
   }
 
-  let eventList = '<ul class="event-list">';
+  let eventList = '<div class="event-list space-y-2">';
   events.forEach(event => {
-    // Remove any bullet points from the title
-    const cleanTitle = event.title.replace(/^[•\-*]\s*/, '');
-    // Also clean the date/location fields
-    const cleanDate = event.date ? event.date.replace(/^[•\-*]\s*/, '') : '';
-    
-    eventList += `
-      <li class="mb-2">
-        <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-2">
-          <div class="font-bold">${cleanTitle}</div>
-          <div class="text-sm">${cleanDate}</div>
-        </div>
-      </li>`;
+    eventList += formatEventListItem(event);
   });
-  eventList += '</ul>';
+  eventList += '</div>';
 
   return eventList;
 };
@@ -210,23 +198,23 @@ export const extractAllLocations = (events: any[]): string[] => {
 };
 
 export const formatEventListItem = (event: any) => {
-  const title = event.title || 'Unbekanntes Event';
-  // Remove any bullet points from the title
-  const cleanTitle = title.replace(/^[•\-*]\s*/, '');
-  const time = event.time ? event.time.replace(/^[•\-*]\s*/, '') : 'Zeit nicht angegeben';
-  const location = event.location ? event.location.replace(/^[•\-*]\s*/, '') : 'Ort nicht angegeben';
-  const category = event.category ? event.category.replace(/^[•\-*]\s*/, '') : 'Sonstiges';
+  // Clean all event data to remove bullet points
+  const title = cleanTextContent(event.title || 'Unbekanntes Event');
+  const time = cleanTextContent(event.time || 'Zeit nicht angegeben');
+  const location = cleanTextContent(event.location || 'Ort nicht angegeben');
+  const category = cleanTextContent(event.category || 'Sonstiges');
+  const date = cleanTextContent(event.date || '');
   
   return `
     <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-2 mb-2">
-      <span class="font-bold block">${cleanTitle}</span>
+      <span class="font-bold block">${title}</span>
       <div class="flex flex-col text-xs space-y-1 mt-1">
         <div class="flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
             <circle cx="12" cy="12" r="10"></circle>
             <polyline points="12 6 12 12 16 14"></polyline>
           </svg>
-          <span>${time}</span>
+          <span>${date ? date + ' ' : ''}${time}</span>
         </div>
         <div class="flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
@@ -243,12 +231,22 @@ export const formatEventListItem = (event: any) => {
   `;
 };
 
+// Helper function to clean text content by removing bullet points, asterisks, etc.
+const cleanTextContent = (text: string): string => {
+  if (!text) return '';
+  
+  return text
+    .replace(/^[•\-*]\s*/g, '') // Remove leading bullet points
+    .replace(/\s*[•\-*]\s*/g, ' ') // Replace mid-string bullet points with spaces
+    .trim();
+};
+
 export const createEventListHTML = (events: any[], title: string) => {
   if (!events || events.length === 0) {
     return `<p>Keine Events gefunden</p>`;
   }
   
-  let html = `<h3 class="font-bold text-white mb-2">${title}</h3><div class="space-y-1">`;
+  let html = `<h3 class="font-bold text-white mb-2">${title}</h3><div class="space-y-2">`;
   
   for (const event of events) {
     html += formatEventListItem(event);

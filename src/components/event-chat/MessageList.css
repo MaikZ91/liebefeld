@@ -1,6 +1,6 @@
 
 .event-list-container .bg-red-900\/20 {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .event-list-container p {
@@ -13,7 +13,8 @@
 }
 
 /* Remove bullet points and improve spacing */
-.event-list-container ul {
+.event-list-container ul,
+.event-list-container .event-list {
   list-style-type: none;
   padding: 0;
   margin: 0;
@@ -24,7 +25,20 @@
   margin: 0;
 }
 
-/* Additional fixes for bullet points in location lines */
-.event-list-container div.text-sm {
+/* Fix spacing in location and time lines */
+.event-list-container div.text-sm,
+.event-list-container .flex.items-center {
   margin-top: 0.25rem;
+}
+
+/* Ensure consistent spacing in event cards */
+.event-list-container .space-y-2 > * {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Fix any remaining bullet points in HTML content */
+.event-list-container ul li::before,
+.event-list-container li::before {
+  content: none !important;
 }
