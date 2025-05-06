@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { EventShare } from '@/types/chatTypes';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -129,8 +128,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 
         formattedContent += `
           <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-2 mb-2">
-            ${title ? `<div class="font-bold">${title}</div>` : ''}
-            <div>${details}</div>
+            ${title ? `<div class="font-bold event-title" style="color: black !important">${title}</div>` : ''}
+            <div style="color: white !important">${details}</div>
           </div>
         `;
       } else {

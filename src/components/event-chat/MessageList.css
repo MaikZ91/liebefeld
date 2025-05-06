@@ -97,3 +97,12 @@
 .event-list-container .bg-red-900\/20 a:not(.font-bold):not(.event-title) {
   color: white !important;
 }
+
+/* Additional overrides for the EventPanel component */
+.event-title {
+  color: black !important;
+}
+
+div.event-title {
+  color: black !important;
+}
