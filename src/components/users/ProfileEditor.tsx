@@ -83,7 +83,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       // Set favorite locations
       setFavoriteLocations(currentUser.favorite_locations || []);
       
-      console.log('Form initialized with:',  {
+      console.log('Form initialized with:', {
         username: currentUser.username,
         avatar: currentUser.avatar,
         interests: currentUser.interests || [],
@@ -194,15 +194,14 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       
       console.log('Image uploaded successfully:', publicUrl);
       
+      // Save to localStorage immediately to ensure it's available
+      localStorage.setItem(AVATAR_KEY, publicUrl);
+      
       toast({
         title: "Erfolg",
         description: "Bild erfolgreich hochgeladen",
         variant: "success"
       });
-      
-      // Save to localStorage immediately
-      localStorage.setItem(AVATAR_KEY, publicUrl);
-      
     } catch (error) {
       console.error('Error uploading image:', error);
       toast({
@@ -233,6 +232,14 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         favorite_locations: favoriteLocations
       });
       
+      // Speichere den Benutzernamen im localStorage
+      localStorage.setItem(USERNAME_KEY, values.username);
+      
+      // Speichere den Avatar im localStorage, unabhängig davon, ob er geändert wurde oder nicht
+      if (avatarUrl) {
+        localStorage.setItem(AVATAR_KEY, avatarUrl);
+      }
+      
       // Speichere alle vier benötigten Felder
       const updatedProfile = await userService.createOrUpdateProfile({
         username: values.username,
@@ -242,12 +249,6 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       });
       
       console.log("Profile updated successfully:", updatedProfile);
-      
-      // Update local storage with the new username and avatar
-      localStorage.setItem(USERNAME_KEY, values.username);
-      if (avatarUrl) {
-        localStorage.setItem(AVATAR_KEY, avatarUrl);
-      }
       
       toast({
         title: "Erfolg",
@@ -261,7 +262,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       console.error('Error updating profile:', error);
       toast({
         title: "Fehler",
-        description: "Fehler beim Aktualisieren des Profils",
+        description: "Fehler beim Aktualisieren des Profils. Bitte versuche es erneut.",
         variant: "destructive"
       });
     } finally {

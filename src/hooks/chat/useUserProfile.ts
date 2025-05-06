@@ -18,8 +18,10 @@ export const useUserProfile = () => {
     }
   }, [currentUser]);
   
-  // Benutzerprofil initialisieren - mit verbesserter Fehlerbehandlung
+  // Benutzerprofil initialisieren mit besserer Fehlerbehandlung
   const initializeProfile = async () => {
+    if (currentUser === 'Gast') return;
+    
     try {
       setLoading(true);
       setError(null);
@@ -28,55 +30,36 @@ export const useUserProfile = () => {
       console.log('Current username:', currentUser);
       console.log('Avatar from localStorage:', avatar);
       
-      // Versuche zuerst, das Benutzerprofil zu finden
-      let profile;
+      // Versuche das Profil zu holen oder zu erstellen
       try {
-        profile = await userService.getUserByUsername(currentUser);
-        console.log('Found existing user profile:', profile);
-      } catch (err) {
-        console.log('User does not exist yet, will create new profile');
-      }
-      
-      // Nur versuchen zu erstellen/aktualisieren, wenn wir kein Gast sind
-      if (currentUser !== 'Gast') {
-        try {
-          // Benutzerprofil erstellen oder aktualisieren mit allen benötigten Feldern
-          const profileData = {
-            username: currentUser,
-            avatar: avatar || null,
-            interests: profile?.interests || [],
-            favorite_locations: profile?.favorite_locations || []
-          };
-          
-          console.log('Saving profile with data:', profileData);
+        const profileData = {
+          username: currentUser,
+          avatar: avatar || null,
+          interests: [] as string[],
+          favorite_locations: [] as string[]
+        };
+        
+        let profile = await userService.getUserByUsername(currentUser);
+        
+        if (!profile) {
+          console.log('User does not exist yet, creating new profile');
           profile = await userService.createOrUpdateProfile(profileData);
-          
-          setUserProfile(profile);
-          console.log('Profile initialized successfully:', profile);
-        } catch (err: any) {
-          console.error('Fehler beim Erstellen des Benutzerprofils, versuche es erneut:', err);
-          
-          // Fallback: Noch einmal versuchen, das Profil abzurufen
-          try {
-            profile = await userService.getUserByUsername(currentUser);
-            if (profile) {
-              console.log('Retrieved profile after error:', profile);
-              setUserProfile(profile);
-            }
-          } catch (getErr) {
-            console.error('Failed to retrieve profile after error:', getErr);
-          }
+        } else {
+          console.log('Found existing profile:', profile);
         }
+        
+        setUserProfile(profile);
+        console.log('Profile initialized successfully:', profile);
+      } catch (err: any) {
+        console.error('Fehler beim Initialisieren des Benutzerprofils:', err);
+        setError('Profilinitialisierung fehlgeschlagen');
+        
+        toast({
+          title: "Fehler",
+          description: "Benutzerprofil konnte nicht initialisiert werden.",
+          variant: "destructive"
+        });
       }
-    } catch (err: any) {
-      console.error('Fehler beim Initialisieren des Benutzerprofils:', err);
-      setError(err.message || 'Ein Fehler ist aufgetreten');
-      
-      toast({
-        title: "Fehler",
-        description: "Benutzerprofil konnte nicht erstellt werden. Bitte später erneut versuchen.",
-        variant: "destructive"
-      });
     } finally {
       setLoading(false);
     }
