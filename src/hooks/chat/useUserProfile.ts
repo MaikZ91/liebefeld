@@ -32,18 +32,31 @@ export const useUserProfile = () => {
       
       // Versuche das Profil zu holen oder zu erstellen
       try {
-        const profileData = {
-          username: currentUser,
-          avatar: avatar || null,
-          interests: [] as string[],
-          favorite_locations: [] as string[]
-        };
-        
+        // Erst versuchen das Profil zu holen
         let profile = await userService.getUserByUsername(currentUser);
         
+        // Wenn kein Profil gefunden wurde oder es aktualisiert werden muss
         if (!profile) {
           console.log('User does not exist yet, creating new profile');
+          
+          const profileData = {
+            username: currentUser,
+            avatar: avatar || null,
+            interests: [] as string[],
+            favorite_locations: [] as string[]
+          };
+          
           profile = await userService.createOrUpdateProfile(profileData);
+          console.log('Created new profile:', profile);
+        } else if (avatar && profile.avatar !== avatar) {
+          // Avatar im Profil aktualisieren, wenn er sich geändert hat
+          console.log('Updating existing profile with new avatar');
+          profile = await userService.createOrUpdateProfile({
+            ...profile,
+            username: currentUser,
+            avatar
+          });
+          console.log('Updated profile with new avatar:', profile);
         } else {
           console.log('Found existing profile:', profile);
         }

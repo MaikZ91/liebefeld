@@ -21,82 +21,52 @@ export const userService = {
   },
   
   /**
-   * Ein einzelnes Benutzerprofil abrufen
+   * Ein einzelnes Benutzerprofil abrufen über Edge Function
    */
   async getUserByUsername(username: string): Promise<UserProfile | null> {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('username', username)
-      .maybeSingle();
+    try {
+      const { data, error } = await supabase.functions.invoke('manage_user_profile', {
+        body: { action: 'getProfile', profile: { username } }
+      });
+
+      if (error) throw error;
       
-    if (error) {
+      return data?.profile || null;
+    } catch (error) {
       console.error('Fehler beim Abrufen des Benutzerprofils:', error);
-      throw error;
+      
+      // Fallback to direct DB query if edge function fails
+      const { data, error: dbError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('username', username)
+        .maybeSingle();
+        
+      if (dbError) throw dbError;
+      
+      return data;
     }
-    
-    return data;
   },
   
   /**
-   * Benutzerprofil erstellen oder aktualisieren - ohne Abhängigkeit von Policies
+   * Benutzerprofil erstellen oder aktualisieren über Edge Function
    */
   async createOrUpdateProfile(profile: Partial<UserProfile> & { username: string }): Promise<UserProfile> {
     try {
       console.log('Creating or updating profile with data:', profile);
       
-      // Prüfen ob der Benutzer bereits existiert
-      const { data: existingProfile } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('username', profile.username)
-        .maybeSingle();
-      
-      let result;
-      
-      if (existingProfile) {
-        // Profil aktualisieren
-        console.log('Updating existing profile with ID:', existingProfile.id);
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .update({
-            avatar: profile.avatar,
-            interests: profile.interests || [],
-            favorite_locations: profile.favorite_locations || [],
-            last_online: new Date().toISOString()
-          })
-          .eq('username', profile.username)
-          .select()
-          .single();
-          
-        if (error) {
-          console.error('Fehler beim Aktualisieren des Profils:', error);
-          throw error;
-        }
-        
-        result = data;
-      } else {
-        // Neues Profil erstellen
-        console.log('Creating new profile');
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .insert({
-            username: profile.username,
-            avatar: profile.avatar || null,
-            interests: profile.interests || [],
-            favorite_locations: profile.favorite_locations || [],
-            last_online: new Date().toISOString()
-          })
-          .select()
-          .single();
-          
-        if (error) {
-          console.error('Fehler beim Erstellen des Profils:', error);
-          throw error;
-        }
-        
-        result = data;
+      const { data, error } = await supabase.functions.invoke('manage_user_profile', {
+        body: { action: 'createOrUpdateProfile', profile }
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
       }
+
+      const result = data?.profile;
+      
+      if (!result) throw new Error('No profile data returned');
       
       console.log('Profile saved successfully:', result);
       return result as UserProfile;
@@ -107,22 +77,21 @@ export const userService = {
   },
   
   /**
-   * Letzte Online-Zeit aktualisieren
+   * Letzte Online-Zeit aktualisieren über Edge Function
    */
   async updateLastOnline(username: string): Promise<void> {
-    const { error } = await supabase
-      .from('user_profiles')
-      .update({ last_online: new Date().toISOString() })
-      .eq('username', username);
-      
-    if (error) {
+    try {
+      await supabase.functions.invoke('manage_user_profile', {
+        body: { action: 'updateLastOnline', profile: { username } }
+      });
+    } catch (error) {
       console.error('Fehler beim Aktualisieren der letzten Online-Zeit:', error);
-      throw error;
+      // Silent fallback
     }
   },
 
   /**
-   * Bild direkt hochladen ohne Bucket-Policies
+   * Bild direkt hochladen 
    */
   async uploadProfileImage(file: File): Promise<string> {
     try {
@@ -135,7 +104,7 @@ export const userService = {
       
       console.log('Attempting to upload file with path:', filePath);
       
-      // Direkter Upload mit Service-Key
+      // Direkter Upload
       try {
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('avatars')
