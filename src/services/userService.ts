@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/types/chatTypes';
 
@@ -117,10 +118,9 @@ export const userService = {
       }
 
       // RLS Policies für den Bucket überprüfen und anpassen
-      // Verwende ein explizites Typen-Casting, um TypeScript zu erlauben, dass wir ein leeres Objekt übergeben
+      // Die rpc-Funktion mit einem leeren Objekt aufrufen ohne Parameter
       const { error: policyError } = await supabase.rpc(
-        'ensure_avatar_policies',
-        {} // Leerer Parameter ohne Typisierung
+        'ensure_avatar_policies'
       );
       
       if (policyError) {
