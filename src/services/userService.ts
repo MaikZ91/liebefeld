@@ -118,7 +118,11 @@ export const userService = {
       }
 
       // RLS Policies für den Bucket überprüfen und anpassen
-      const { error: policyError } = await supabase.rpc('ensure_avatar_policies');
+      const { error: policyError } = await supabase.rpc(
+        'ensure_avatar_policies', 
+        {} // Leeres Objekt als zweiten Parameter übergeben
+      );
+      
       if (policyError) {
         console.warn('Fehler beim Überprüfen der Storage-Policies:', policyError);
         // Wir versuchen trotzdem mit dem Upload fortzufahren
