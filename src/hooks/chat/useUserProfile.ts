@@ -4,28 +4,12 @@ import { userService } from '@/services/userService';
 import { UserProfile } from '@/types/chatTypes';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
 import { toast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 
 export const useUserProfile = () => {
   const [currentUser, setCurrentUser] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || 'Gast');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // Check if storage bucket exists and create it if needed
-  const ensureStorageBucket = async () => {
-    try {
-      const { data: buckets } = await supabase.storage.listBuckets();
-      if (!buckets?.find(bucket => bucket.name === 'avatars')) {
-        console.log('Creating avatars bucket');
-        await supabase.storage.createBucket('avatars', {
-          public: true
-        });
-      }
-    } catch (err) {
-      console.error('Error ensuring storage bucket exists:', err);
-    }
-  };
   
   // Benutzerprofil erstellen oder aktualisieren, wenn der Benutzername bekannt ist
   useEffect(() => {
@@ -40,12 +24,12 @@ export const useUserProfile = () => {
       setLoading(true);
       setError(null);
       
-      // Ensure storage bucket exists for avatar uploads
-      await ensureStorageBucket();
+      // Stellen Sie sicher, dass der Avatar-Bucket existiert
+      await userService.ensureAvatarBucket();
       
       const avatar = localStorage.getItem(AVATAR_KEY);
       
-      // Try to get the user first
+      // Versuche zuerst, das Benutzerprofil zu finden
       let profile;
       try {
         profile = await userService.getUserByUsername(currentUser);
@@ -54,16 +38,14 @@ export const useUserProfile = () => {
         console.log('User does not exist yet, will create new profile');
       }
       
-      // Only try to create/update if we're not a guest
+      // Nur versuchen zu erstellen/aktualisieren, wenn wir kein Gast sind
       if (currentUser !== 'Gast') {
         try {
-          // Benutzerprofil erstellen oder aktualisieren
+          // Benutzerprofil erstellen oder aktualisieren mit allen benötigten Feldern
           profile = await userService.createOrUpdateProfile({
             username: currentUser,
             avatar: avatar || null,
-            // Standardwerte für Interessen und Hobbys - hier korrigiert: leere Arrays statt strings in Array
             interests: profile?.interests || [],
-            hobbies: profile?.hobbies || [],
             favorite_locations: profile?.favorite_locations || []
           });
           
@@ -71,7 +53,7 @@ export const useUserProfile = () => {
         } catch (err: any) {
           console.error('Fehler beim Erstellen des Benutzerprofils:', err);
           
-          // If we get a RLS error, try to get the profile again instead
+          // Wenn wir einen RLS-Fehler erhalten, versuchen wir, das Profil erneut abzurufen
           if (err.message && err.message.includes('row-level security policy')) {
             try {
               profile = await userService.getUserByUsername(currentUser);
@@ -81,7 +63,7 @@ export const useUserProfile = () => {
               }
             } catch (getErr) {
               console.error('Failed to retrieve profile after RLS error:', getErr);
-              throw err; // Rethrow the original error
+              throw err; // Wirf den ursprünglichen Fehler
             }
           } else {
             throw err;
@@ -92,7 +74,7 @@ export const useUserProfile = () => {
       console.error('Fehler beim Initialisieren des Benutzerprofils:', err);
       setError(err.message || 'Ein Fehler ist aufgetreten');
       
-      // Only show toast if it's not an RLS policy error since we handle that specially
+      // Nur Toast anzeigen, wenn es kein RLS-Policy-Fehler ist
       if (!err.message || !err.message.includes('row-level security policy')) {
         toast({
           title: "Fehler",

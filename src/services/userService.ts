@@ -43,13 +43,19 @@ export const userService = {
    */
   async createOrUpdateProfile(profile: Partial<UserProfile> & { username: string }): Promise<UserProfile> {
     try {
-      console.log('Creating or updating profile:', profile);
+      console.log('Creating or updating profile with data:', profile);
+      
+      // Stellen wir sicher, dass der Avatar-Bucket existiert
+      await this.ensureAvatarBucket();
 
-      // Vereinfachte Methode mit upsert - erstellt oder aktualisiert je nach vorhandenem Eintrag
+      // Vereinfachter Upsert mit vollem Profil
       const { data, error } = await supabase
         .from('user_profiles')
         .upsert({
-          ...profile,
+          username: profile.username,
+          avatar: profile.avatar || null,
+          interests: profile.interests || [],
+          favorite_locations: profile.favorite_locations || [],
           last_online: new Date().toISOString()
         })
         .select()
@@ -84,26 +90,44 @@ export const userService = {
   },
 
   /**
-   * Bild zum Storage hochladen
+   * Stellen Sie sicher, dass der Avatar-Bucket existiert und öffentlich ist
    */
-  async uploadProfileImage(file: File): Promise<string> {
+  async ensureAvatarBucket(): Promise<void> {
     try {
-      // Prüfen ob der Bucket existiert und ggf. erstellen
+      // Prüfen ob der Bucket existiert
       const { data: buckets } = await supabase.storage.listBuckets();
       if (!buckets?.find(bucket => bucket.name === 'avatars')) {
-        // Bucket nicht gefunden, versuche ihn zu erstellen
+        // Bucket nicht gefunden, erstelle ihn
         console.log('Creating avatars bucket');
-        const { data: newBucket, error: bucketError } = await supabase.storage.createBucket('avatars', {
-          public: true
+        const { error: bucketError } = await supabase.storage.createBucket('avatars', {
+          public: true,
+          fileSizeLimit: 1024 * 1024 * 2 // 2MB limit
         });
         
         if (bucketError) {
           console.error('Error creating bucket:', bucketError);
           throw bucketError;
         }
-        
-        console.log('Created new bucket:', newBucket);
+      } else {
+        // Ensure bucket is public
+        await supabase.storage.updateBucket('avatars', {
+          public: true,
+          fileSizeLimit: 1024 * 1024 * 2
+        });
       }
+    } catch (err) {
+      console.error('Error ensuring avatar bucket exists:', err);
+      throw err;
+    }
+  },
+
+  /**
+   * Bild zum Storage hochladen
+   */
+  async uploadProfileImage(file: File): Promise<string> {
+    try {
+      // Ensure the avatars bucket exists
+      await this.ensureAvatarBucket();
 
       // Eindeutigen Dateinamen generieren
       const fileExt = file.name.split('.').pop();

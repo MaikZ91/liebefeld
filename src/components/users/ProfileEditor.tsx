@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -70,13 +69,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       if (!open) return;
       
       try {
-        const { data: buckets } = await supabase.storage.listBuckets();
-        if (!buckets?.find(bucket => bucket.name === 'avatars')) {
-          console.log('Creating avatars bucket from ProfileEditor');
-          await supabase.storage.createBucket('avatars', {
-            public: true
-          });
-        }
+        await userService.ensureAvatarBucket();
       } catch (err) {
         console.error('Error ensuring bucket exists:', err);
       }
@@ -125,21 +118,24 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       // Reset uploadedImage when currentUser changes
       setUploadedImage(null);
       
-      // Combine both interests and hobbies into a single array
-      const combinedInterests = [
-        ...(currentUser.interests || []),
-        ...(currentUser.hobbies || [])
-      ];
-      setInterests([...new Set(combinedInterests)]); // Remove duplicates
+      // Set interests from currentUser
+      setInterests(currentUser.interests || []);
       
       // Set favorite locations
       setFavoriteLocations(currentUser.favorite_locations || []);
+      
+      console.log('Loaded current user data:', {
+        username: currentUser.username,
+        avatar: currentUser.avatar,
+        interests: currentUser.interests,
+        favorite_locations: currentUser.favorite_locations
+      });
     }
   }, [currentUser, form]);
 
   const handleAddInterest = () => {
     if (newInterest.trim() && !interests.includes(newInterest.trim())) {
-      setInterests([...interests, newInterest.trim()]);
+      setInterests(prev => [...prev, newInterest.trim()]);
       setNewInterest('');
     }
   };
@@ -237,11 +233,11 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         favorite_locations: favoriteLocations
       });
       
+      // Speichere alle vier benötigten Felder
       const updatedProfile = await userService.createOrUpdateProfile({
         username: values.username,
         avatar: avatarUrl || null,
         interests: interests,
-        hobbies: [], // We now store everything in interests
         favorite_locations: favoriteLocations
       });
       
@@ -366,7 +362,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
               </div>
             </div>
             
-            {/* Lieblingslokationen - Improved */}
+            {/* Lieblingslokationen */}
             <div className="space-y-2">
               <Label>Lieblingslokationen</Label>
               <div className="flex flex-wrap gap-2 mb-2">
