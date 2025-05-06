@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEventContext } from '@/contexts/EventContext';
@@ -275,8 +274,8 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
     setTimeout(async () => {
       try {
         console.log(`Processing user query: "${message}" with ${events.length} events`);
-        // Fix: Await the response from generateResponse since it's async
-        const responseHtml = await generateResponse(message, events);
+        // Pass the heart mode state to the generateResponse function
+        const responseHtml = await generateResponse(message, events, isHeartActive);
         
         const botMessage: ChatMessage = {
           id: `bot-${Date.now()}`,

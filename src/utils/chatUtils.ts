@@ -43,7 +43,7 @@ export const createResponseHeader = (title: string) => {
   return `<h4 class="font-medium text-sm text-red-600 dark:text-red-400">${title}</h4>`;
 };
 
-export const generateResponse = async (query: string, events: any[]) => {
+export const generateResponse = async (query: string, events: any[], isHeartMode = false) => {
   try {
     // Get current date and calculate next week's range
     const currentDate = new Date().toISOString().split('T')[0];
@@ -75,8 +75,8 @@ export const generateResponse = async (query: string, events: any[]) => {
       if (hour < 12) timeOfDay = 'morning';
       else if (hour >= 18) timeOfDay = 'evening';
       
-      // Check if this is a heart mode query
-      const isHeartMode = query.toLowerCase().includes('herz');
+      // Only send location filter if heart mode is active
+      const locationsToUse = isHeartMode ? userLocations : null;
       
       // Call the edge function using the supabase client instead of direct fetch
       const { data, error } = await supabase.functions.invoke('ai-event-chat', {
@@ -89,7 +89,7 @@ export const generateResponse = async (query: string, events: any[]) => {
           nextWeekStart,
           nextWeekEnd,
           userInterests,
-          userLocations
+          userLocations: locationsToUse // Only send if heart mode is active
         }
       });
       

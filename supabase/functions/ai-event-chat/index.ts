@@ -161,7 +161,7 @@ serve(async (req) => {
     }
     
     // Apply additional filters for personalized requests or heart mode
-    // Always filter by location if userLocations are provided - important for heart mode!
+    // Only apply location filtering if userLocations are provided and heart mode is active
     if (userLocations && userLocations.length > 0) {
       console.log("Applying location filtering with user locations:", userLocations);
       
