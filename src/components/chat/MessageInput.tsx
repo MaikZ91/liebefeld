@@ -152,26 +152,25 @@ const MessageInput: React.FC<MessageInputProps> = ({
   }, []);
 
   return (
-    <div className="w-full bg-[#f0f2f5] dark:bg-[#202c33] p-2 border-t border-gray-200 dark:border-gray-800">
-      <div className="flex items-end gap-2 bg-white dark:bg-[#2a3942] rounded-full p-1 pl-3">
+    <div className="w-full space-y-2">
+      <div className="flex items-center gap-2">
         <Textarea 
           placeholder={placeholder}
           value={value !== undefined ? value : newMessage}
           onChange={handleMessageChange}
           onKeyDown={handleKeyDown}
-          className="min-h-[40px] flex-grow resize-none bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 p-1 text-gray-800 dark:text-white"
-          rows={1}
+          className="min-h-[50px] flex-grow resize-none"
         />
-        <div className="flex items-center gap-1">
+        <div className="flex flex-col gap-2">
           <Button 
             onClick={handleFileUpload} 
-            variant="ghost"
+            variant="outline"
             size="icon"
             type="button"
-            className="rounded-full h-9 w-9 text-gray-600 dark:text-gray-300"
+            className="rounded-full"
             title="Bild anhängen"
           >
-            <Paperclip className="h-5 w-5" />
+            <Paperclip className="h-4 w-4" />
           </Button>
           <Popover 
             open={isEventSelectOpen} 
@@ -180,13 +179,13 @@ const MessageInput: React.FC<MessageInputProps> = ({
             <PopoverTrigger asChild>
               <Button 
                 onClick={handleShareEvent} 
-                variant="ghost"
+                variant="outline"
                 size="icon"
                 type="button"
-                className="rounded-full h-9 w-9 text-gray-600 dark:text-gray-300"
+                className="rounded-full"
                 title="Event teilen"
               >
-                <Calendar className="h-5 w-5" />
+                <Calendar className="h-4 w-4" />
               </Button>
             </PopoverTrigger>
             <PopoverContent 
@@ -209,12 +208,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
         <Button 
           onClick={handleSubmit} 
           disabled={isSending || (!value?.trim() && !newMessage.trim() && !fileInputRef.current?.files?.length)}
-          className="rounded-full h-10 w-10 bg-[#25D366] hover:bg-[#1fb855] min-w-[40px] flex items-center justify-center"
+          className="rounded-full min-w-[40px]"
         >
           {isSending ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <Send className="h-5 w-5" />
+            <Send className="h-4 w-4" />
           )}
         </Button>
       </div>

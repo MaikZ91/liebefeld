@@ -85,22 +85,20 @@ const ChatPage = () => {
 
   return (
     <Layout hideFooter={true}>
-      <div className="container mx-auto px-0 sm:px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
+      <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
         {/* Add LiveTicker above chat header */}
         <div className="mb-2 border border-gray-800/50 rounded-md overflow-hidden bg-black">
           <LiveTicker events={events} />
         </div>
         
-        <div className={`flex items-center justify-between mb-4 px-2 sm:px-0 ${isMobile ? 'py-2' : 'py-0'}`}>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold text-red-500">
             <div className="flex space-x-2">
               <Button 
                 variant={activeView === 'ai' ? "default" : "outline"} 
                 size="sm" 
                 onClick={() => setActiveView('ai')}
-                className={`flex items-center gap-2 ${activeView === 'ai' 
-                  ? 'bg-[#25D366] hover:bg-[#1fb855] text-white' 
-                  : 'text-gray-800 dark:text-gray-200'}`}
+                className={`flex items-center gap-2 ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}
               >
                 <Calendar className="h-4 w-4" />
                 Event Assistent
@@ -109,9 +107,7 @@ const ChatPage = () => {
                 variant={activeView === 'community' ? "default" : "outline"} 
                 size="sm" 
                 onClick={() => setActiveView('community')}
-                className={`flex items-center gap-2 ${activeView === 'community' 
-                  ? 'bg-[#25D366] hover:bg-[#1fb855] text-white' 
-                  : 'text-gray-800 dark:text-gray-200'}`}
+                className={`flex items-center gap-2 ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}
               >
                 <Users className="h-4 w-4" />
                 Community
@@ -128,7 +124,7 @@ const ChatPage = () => {
           </div>
         </div>
         
-        <div className="flex-grow rounded-lg overflow-hidden border border-gray-300 dark:border-gray-700 flex flex-col bg-[#efeae2] dark:bg-[#111b21]">
+        <div className="flex-grow rounded-lg overflow-hidden border border-gray-800 flex flex-col bg-black">
           <div className="flex-grow relative">
             <EventChatBot 
               fullPage={true} 
