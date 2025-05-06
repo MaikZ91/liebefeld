@@ -1,21 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { Badge } from "@/components/ui/badge";
-import { X, MapPin, Search } from 'lucide-react';
+import { X, MapPin } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
 import { extractAllLocations } from '@/utils/chatUtils';
 import { useEventContext } from '@/contexts/EventContext';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList
-} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface LocationSelectorProps {
   locations: string[];
@@ -28,7 +21,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   favoriteLocations,
   onLocationsChange
 }) => {
-  const [commandOpen, setCommandOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const { events } = useEventContext();
   const [allLocations, setAllLocations] = useState<string[]>([]);
@@ -57,7 +50,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
     console.log(`[LocationSelector] Combined ${providedLocations.length} provided locations with locations from events for a total of ${sortedLocations.length} unique locations`);
   }, [providedLocations, events]);
   
-  // Computed property for filtered locations
+  // Filtered locations based on search term
   const filteredLocations = allLocations.filter(location => 
     location.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -76,7 +69,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         console.error('[LocationSelector] Error saving to localStorage:', err);
       }
     }
-    setCommandOpen(false);
+    setIsOpen(false);
   };
 
   const handleRemoveLocation = (location: string) => {
@@ -91,24 +84,6 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       console.error('[LocationSelector] Error updating localStorage:', err);
     }
   };
-  
-  // Synchronize the component with localStorage on mount
-  useEffect(() => {
-    try {
-      const storedLocations = localStorage.getItem('user_locations');
-      if (storedLocations) {
-        const parsedLocations = JSON.parse(storedLocations);
-        console.log('[LocationSelector] Retrieved locations from localStorage:', parsedLocations);
-        
-        // Only update if different from current state to avoid loops
-        if (JSON.stringify(parsedLocations) !== JSON.stringify(favoriteLocations)) {
-          onLocationsChange(parsedLocations);
-        }
-      }
-    } catch (err) {
-      console.error('[LocationSelector] Error reading from localStorage:', err);
-    }
-  }, []);
   
   return (
     <div className="space-y-2">
@@ -130,8 +105,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         ))}
       </div>
       
-      {/* Completely redesigned dropdown for better scrolling */}
-      <Popover open={commandOpen} onOpenChange={setCommandOpen}>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -142,44 +116,46 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
               <MapPin size={16} />
               <span className="line-clamp-1 text-left">{searchTerm || "Lokation suchen..."}</span>
             </div>
-            <Search className="h-4 w-4 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-[300px] p-0 bg-gray-900 border border-gray-700"
-          side="bottom"
+          className="w-[300px] p-4 bg-gray-900 border border-gray-700"
           align="start"
+          side="bottom"
           sideOffset={5}
-          style={{ zIndex: 9999 }}
+          style={{ zIndex: 50 }}
         >
-          <Command className="rounded-lg border-0 bg-transparent">
-            <CommandInput 
+          <div className="space-y-4">
+            <Input 
+              type="text" 
               placeholder="Lokation suchen..." 
-              className="h-9 text-white"
               value={searchTerm}
-              onValueChange={setSearchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-gray-800 border-gray-700 text-white"
             />
-            <CommandList>
-              <CommandEmpty className="py-6 text-center text-sm text-gray-400">
-                Keine Lokationen gefunden
-              </CommandEmpty>
-              <CommandGroup>
-                <ScrollArea className="h-[200px]" orientation="vertical">
+            
+            <ScrollArea className="h-[200px] rounded-md border border-gray-800">
+              {filteredLocations.length === 0 ? (
+                <div className="py-6 text-center text-sm text-gray-400">
+                  Keine Lokationen gefunden
+                </div>
+              ) : (
+                <div className="space-y-1 p-2">
                   {filteredLocations.map((location) => (
-                    <CommandItem
+                    <Button
                       key={location}
-                      value={location}
-                      onSelect={() => handleLocationSelect(location)}
-                      className="flex items-center gap-2 cursor-pointer text-white hover:bg-gray-800"
+                      variant="ghost"
+                      onClick={() => handleLocationSelect(location)}
+                      className="w-full justify-start text-white hover:bg-gray-800 flex items-center gap-2"
                     >
                       <MapPin size={14} className="text-gray-400" />
                       <span>{location}</span>
-                    </CommandItem>
+                    </Button>
                   ))}
-                </ScrollArea>
-              </CommandGroup>
-            </CommandList>
-          </Command>
+                </div>
+              )}
+            </ScrollArea>
+          </div>
         </PopoverContent>
       </Popover>
     </div>
