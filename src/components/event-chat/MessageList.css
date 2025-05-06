@@ -10,7 +10,7 @@
 .event-list-container .font-bold {
   margin-bottom: 0.25rem;
   display: block;
-  color: white !important; /* Ensure title is white */
+  color: black !important; /* Changed to black */
 }
 
 /* Text color fix for all event content */
@@ -70,22 +70,29 @@
   display: none !important;
 }
 
-/* Boost title specificity to ensure it's always white */
+/* Boost title specificity to ensure it's always black */
 .event-list-container .bg-red-900\/20 .font-bold.text-base,
 .event-list-container .font-bold {
-  color: white !important;
-  text-shadow: 0 0 1px rgba(255,255,255,0.2);
+  color: black !important;
+  text-shadow: none;
 }
 
-/* Make event titles white with higher specificity */
+/* Make event titles black with higher specificity */
 .event-list-container div.font-bold,
 .event-list-container div .font-bold {
+  color: black !important;
+}
+
+/* Ensure text is white in all spans and divs except titles */
+.event-list-container .bg-red-900\/20 * {
   color: white !important;
 }
 
-/* Ensure text is white in all spans and divs */
-.event-list-container .bg-red-900\/20 * {
-  color: white !important;
+/* Event title specific override */
+.event-list-container .bg-red-900\/20 .font-bold.text-base,
+.event-list-container .bg-red-900\/20 div.font-bold,
+.event-list-container div.font-bold.text-base {
+  color: black !important;
 }
 
 /* Fix for specific event titles like "Karaoke" */
@@ -93,19 +100,19 @@
 .event-list-container .bg-red-900\/20 div[class*="font-bold"],
 .event-list-container .text-base,
 .event-list-container .bg-red-900\/20 .text-base {
-  color: white !important;
+  color: black !important;
 }
 
-/* Force important on ALL text elements in event cards */
-.event-list-container .bg-red-900\/20 div,
+/* Force important on ALL text elements in event cards except title */
+.event-list-container .bg-red-900\/20 div:not(.font-bold),
 .event-list-container .bg-red-900\/20 span,
 .event-list-container .bg-red-900\/20 p,
-.event-list-container .bg-red-900\/20 h1,
-.event-list-container .bg-red-900\/20 h2,
-.event-list-container .bg-red-900\/20 h3,
-.event-list-container .bg-red-900\/20 h4,
-.event-list-container .bg-red-900\/20 h5,
-.event-list-container .bg-red-900\/20 h6,
-.event-list-container .bg-red-900\/20 a {
+.event-list-container .bg-red-900\/20 h1:not(.font-bold),
+.event-list-container .bg-red-900\/20 h2:not(.font-bold),
+.event-list-container .bg-red-900\/20 h3:not(.font-bold),
+.event-list-container .bg-red-900\/20 h4:not(.font-bold),
+.event-list-container .bg-red-900\/20 h5:not(.font-bold),
+.event-list-container .bg-red-900\/20 h6:not(.font-bold),
+.event-list-container .bg-red-900\/20 a:not(.font-bold) {
   color: white !important;
 }
