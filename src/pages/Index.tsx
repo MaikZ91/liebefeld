@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
@@ -269,7 +268,7 @@ const Index = () => {
             </div>
           
             <EventProvider>
-              <CalendarWithChat defaultView="list" />
+              <CalendarWithChat />
             </EventProvider>
           </div>
         </div>
