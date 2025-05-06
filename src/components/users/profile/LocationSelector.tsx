@@ -7,13 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { extractAllLocations } from '@/utils/chatUtils';
 import { useEventContext } from '@/contexts/EventContext';
 import { 
@@ -39,7 +32,6 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [commandOpen, setCommandOpen] = useState(false);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { events } = useEventContext();
   const [allLocations, setAllLocations] = useState<string[]>([]);
   
@@ -85,12 +77,8 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       } catch (err) {
         console.error('[LocationSelector] Error saving to localStorage:', err);
       }
-      
-      // Clear search term after selection
-      setSearchTerm('');
-      setCommandOpen(false);
     }
-    setPopoverOpen(false);
+    setCommandOpen(false);
   };
 
   const handleRemoveLocation = (location: string) => {
@@ -103,22 +91,6 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       console.log('[LocationSelector] Updated locations in localStorage after removal:', updatedLocations);
     } catch (err) {
       console.error('[LocationSelector] Error updating localStorage:', err);
-    }
-  };
-
-  // Alternative approach using Select component for smaller screens
-  const handleSelectChange = (value: string) => {
-    if (value && !favoriteLocations.includes(value)) {
-      const updatedLocations = [...favoriteLocations, value];
-      onLocationsChange(updatedLocations);
-      
-      // Save to localStorage for immediate use in personalization
-      try {
-        localStorage.setItem('user_locations', JSON.stringify(updatedLocations));
-        console.log('[LocationSelector] Saved locations to localStorage from select:', updatedLocations);
-      } catch (err) {
-        console.error('[LocationSelector] Error saving to localStorage:', err);
-      }
     }
   };
   
@@ -140,16 +112,6 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
     }
   }, []);
   
-  // Focus the search input when the popover opens
-  useEffect(() => {
-    if (popoverOpen) {
-      const searchInput = document.querySelector('.location-search-input') as HTMLInputElement;
-      if (searchInput) {
-        setTimeout(() => searchInput.focus(), 100);
-      }
-    }
-  }, [popoverOpen]);
-  
   return (
     <div className="space-y-2">
       <Label>Lieblingslokationen</Label>
@@ -170,7 +132,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         ))}
       </div>
       
-      {/* Modern Command Menu for location search on all screen sizes */}
+      {/* Modern Command Menu for location search and selection */}
       <Popover open={commandOpen} onOpenChange={setCommandOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -180,7 +142,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
           >
             <div className="flex items-center gap-2">
               <MapPin size={16} />
-              <span>{searchTerm || "Lokation suchen..."}</span>
+              <span className="line-clamp-1 text-left">{searchTerm || "Lokation suchen..."}</span>
             </div>
             <Search className="h-4 w-4 opacity-50" />
           </Button>
@@ -190,6 +152,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
           side="bottom"
           align="start"
           sideOffset={5}
+          style={{ zIndex: 9999 }}
         >
           <Command className="rounded-lg border-0 bg-transparent">
             <CommandInput 
@@ -198,22 +161,24 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
               value={searchTerm}
               onValueChange={setSearchTerm}
             />
-            <CommandList>
+            <CommandList className="max-h-[300px] overflow-y-auto">
               <CommandEmpty className="py-6 text-center text-sm text-gray-400">
                 Keine Lokationen gefunden
               </CommandEmpty>
-              <CommandGroup className="max-h-[300px] overflow-auto">
-                {filteredLocations.map((location) => (
-                  <CommandItem
-                    key={location}
-                    value={location}
-                    onSelect={() => handleLocationSelect(location)}
-                    className="flex items-center gap-2 cursor-pointer text-white hover:bg-gray-800"
-                  >
-                    <MapPin size={14} className="text-gray-400" />
-                    <span>{location}</span>
-                  </CommandItem>
-                ))}
+              <CommandGroup>
+                <div className="max-h-[250px] overflow-y-auto">
+                  {filteredLocations.map((location) => (
+                    <CommandItem
+                      key={location}
+                      value={location}
+                      onSelect={() => handleLocationSelect(location)}
+                      className="flex items-center gap-2 cursor-pointer text-white hover:bg-gray-800"
+                    >
+                      <MapPin size={14} className="text-gray-400" />
+                      <span>{location}</span>
+                    </CommandItem>
+                  ))}
+                </div>
               </CommandGroup>
             </CommandList>
           </Command>
