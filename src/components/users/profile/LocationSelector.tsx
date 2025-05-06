@@ -1,12 +1,10 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Badge } from "@/components/ui/badge";
-import { X, MapPin, ChevronDown, Search } from 'lucide-react';
+import { X, MapPin, Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
 import { extractAllLocations } from '@/utils/chatUtils';
 import { useEventContext } from '@/contexts/EventContext';
 import { 
@@ -29,9 +27,8 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   favoriteLocations,
   onLocationsChange
 }) => {
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
   const [commandOpen, setCommandOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const { events } = useEventContext();
   const [allLocations, setAllLocations] = useState<string[]>([]);
   
@@ -132,7 +129,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         ))}
       </div>
       
-      {/* Modern Command Menu for location search and selection */}
+      {/* Improved Command Menu for location search and selection */}
       <Popover open={commandOpen} onOpenChange={setCommandOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -161,12 +158,12 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
               value={searchTerm}
               onValueChange={setSearchTerm}
             />
-            <CommandList className="max-h-[300px] overflow-y-auto">
+            <CommandList className="overflow-hidden">
               <CommandEmpty className="py-6 text-center text-sm text-gray-400">
                 Keine Lokationen gefunden
               </CommandEmpty>
               <CommandGroup>
-                <div className="max-h-[250px] overflow-y-auto">
+                <div className="max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
                   {filteredLocations.map((location) => (
                     <CommandItem
                       key={location}
