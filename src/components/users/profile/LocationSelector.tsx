@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { extractAllLocations } from '@/utils/chatUtils';
 import { useEventContext } from '@/contexts/EventContext';
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Command,
   CommandEmpty,
@@ -129,7 +130,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         ))}
       </div>
       
-      {/* Improved Command Menu for location search and selection */}
+      {/* Completely redesigned dropdown for better scrolling */}
       <Popover open={commandOpen} onOpenChange={setCommandOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -158,12 +159,12 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
               value={searchTerm}
               onValueChange={setSearchTerm}
             />
-            <CommandList className="overflow-hidden">
+            <CommandList>
               <CommandEmpty className="py-6 text-center text-sm text-gray-400">
                 Keine Lokationen gefunden
               </CommandEmpty>
               <CommandGroup>
-                <div className="max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+                <ScrollArea className="h-[200px]" orientation="vertical">
                   {filteredLocations.map((location) => (
                     <CommandItem
                       key={location}
@@ -175,7 +176,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
                       <span>{location}</span>
                     </CommandItem>
                   ))}
-                </div>
+                </ScrollArea>
               </CommandGroup>
             </CommandList>
           </Command>
