@@ -325,7 +325,7 @@ export const useChatLogic = (
   
   // Modified function to handle heart button click
   const handleHeartClick = () => {
-    // Simply toggle the heart state without sending a query
+    // Toggle the heart state
     setIsHeartActive(prev => !prev);
     
     // Show a toast notification about the mode change

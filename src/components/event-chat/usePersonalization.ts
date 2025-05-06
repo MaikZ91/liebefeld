@@ -40,7 +40,7 @@ export const usePersonalization = (
           const profile = await userService.getUserByUsername(currentUser);
           
           if (profile) {
-            console.log('Profile fetched:', profile);
+            console.log('Profile fetched successfully:', profile);
             userInterests = profile.interests || [];
             userLocations = profile.favorite_locations || [];
             
