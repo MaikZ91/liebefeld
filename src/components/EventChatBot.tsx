@@ -446,24 +446,42 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
   const handleHeartClick = async () => {
     setIsHeartActive(prev => !prev);
     
-    // Get user preferences from local storage or another source
-    // For now, we'll use placeholder data
-    const userInterests = localStorage.getItem('user_interests')
-      ? JSON.parse(localStorage.getItem('user_interests') || '[]')
-      : ['Musik', 'Sport', 'Kultur'];
+    try {
+      // Get user preferences from local storage or another source
+      const userInterests = localStorage.getItem('user_interests')
+        ? JSON.parse(localStorage.getItem('user_interests') || '[]')
+        : ['Musik', 'Sport', 'Kultur'];
+        
+      const userLocations = localStorage.getItem('user_locations')
+        ? JSON.parse(localStorage.getItem('user_locations') || '[]')
+        : ['Liebefeld', 'Bern'];
       
-    const userLocations = localStorage.getItem('user_locations')
-      ? JSON.parse(localStorage.getItem('user_locations') || '[]')
-      : ['Liebefeld', 'Bern'];
-    
-    // Generate personalized prompt
-    const personalizedPrompt = generatePersonalizedPrompt(userInterests, userLocations);
-    
-    // Show a toast notification
-    toast.success("Suche passende Events für dich...");
-    
-    // Send the personalized prompt to the chat
-    handleSendMessage(personalizedPrompt);
+      // Generate personalized prompt
+      const personalizedPrompt = generatePersonalizedPrompt(userInterests, userLocations);
+      
+      // Show a toast notification
+      toast.success("Suche passende Events für dich...");
+      
+      // Send the personalized prompt to the chat
+      await handleSendMessage(personalizedPrompt);
+    } catch (error) {
+      console.error('Error in personalized recommendations:', error);
+      toast.error("Konnte keine personalisierten Empfehlungen laden");
+      
+      const errorMessage: ChatMessage = {
+        id: `error-${Date.now()}`,
+        isUser: false,
+        text: 'Es tut mir leid, ich konnte keine personalisierten Empfehlungen laden.',
+        html: `${createResponseHeader("Fehler")}
+        <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
+          Ein Fehler ist aufgetreten beim Laden personalisierter Empfehlungen. 
+          Bitte versuche es später noch einmal.
+        </div>`,
+        timestamp: new Date().toISOString()
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+    }
   };
 
   if (!isVisible) return null;

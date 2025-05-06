@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 
 export const getWelcomeMessage = () => {
   const today = format(new Date(), 'EEEE, d. MMMM', { locale: require('date-fns/locale/de') });
@@ -73,13 +74,9 @@ export const generateResponse = async (query: string, events: any[]) => {
       if (hour < 12) timeOfDay = 'morning';
       else if (hour >= 18) timeOfDay = 'evening';
       
-      // Call the edge function
-      const response = await fetch('/api/ai-event-chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // Call the edge function using the supabase client instead of direct fetch
+      const { data, error } = await supabase.functions.invoke('ai-event-chat', {
+        body: {
           query,
           timeOfDay,
           weather,
@@ -87,17 +84,16 @@ export const generateResponse = async (query: string, events: any[]) => {
           currentDate,
           nextWeekStart,
           nextWeekEnd,
-          userInterests,  // Add user interests
-          userLocations,  // Add user locations
-        }),
+          userInterests,
+          userLocations
+        }
       });
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Edge function error: ${response.status} ${errorText}`);
+      if (error) {
+        console.error('Edge function error details:', error);
+        throw new Error(`Edge function error: ${error.message}`);
       }
       
-      const data = await response.json();
       return data.response;
     } else {
       // For SSR or testing environments
