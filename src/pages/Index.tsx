@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
@@ -252,6 +253,21 @@ const Index = () => {
                 onAskChatbot={handleChatbotQuery}
               />
             </EventProvider>
+          </div>
+        </div>
+
+        {/* LiveTicker addition after Event-Assistant section */}
+        <div className="bg-black py-2">
+          <div className="container mx-auto">
+            <div className="py-4 text-center">
+              <h2 className="text-2xl font-bold mb-1 font-serif">Dein persönlicher Event-Assistent</h2>
+              <p className="text-gray-400 mb-4">Mit der Kombination aus Event-Kalender und KI-Assistent findest du genau die Events, die zu dir passen</p>
+            </div>
+            <div className="py-2">
+              <EventProvider>
+                <LiveTicker events={events} />
+              </EventProvider>
+            </div>
           </div>
         </div>
         
