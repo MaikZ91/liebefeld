@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { userService } from '@/services/userService';
 import { Badge } from "@/components/ui/badge";
-import { X, Plus, Upload, MapPin } from 'lucide-react';
+import { X, Plus, Upload, MapPin, Check, ChevronDown } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -137,9 +138,9 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
   };
 
   // Location handling functions
-  const handleAddLocation = () => {
-    if (selectedLocation && !favoriteLocations.includes(selectedLocation)) {
-      setFavoriteLocations(prev => [...prev, selectedLocation]);
+  const handleLocationSelect = (location: string) => {
+    if (location && !favoriteLocations.includes(location)) {
+      setFavoriteLocations(prev => [...prev, location]);
       setSelectedLocation('');
       setPopoverOpen(false);
     }
@@ -147,11 +148,6 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
 
   const handleRemoveLocation = (location: string) => {
     setFavoriteLocations(favoriteLocations.filter(loc => loc !== location));
-  };
-
-  // Handle location selection
-  const handleSelectLocation = (location: string) => {
-    setSelectedLocation(location);
   };
 
   // Verbesserte Bildupload-Funktion
@@ -363,7 +359,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
               </div>
             </div>
             
-            {/* Lieblingslokationen */}
+            {/* Completely rebuilt Lieblingslokationen section */}
             <div className="space-y-2">
               <Label>Lieblingslokationen</Label>
               <div className="flex flex-wrap gap-2 mb-2">
@@ -382,60 +378,56 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
                   </Badge>
                 ))}
               </div>
-              <div className="flex gap-2">
-                <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={popoverOpen}
-                      className="w-full justify-between bg-gray-900 border-gray-700 text-white"
-                    >
-                      <div className="flex items-center gap-2">
-                        <MapPin size={16} />
-                        {selectedLocation || "Lokation auswählen"}
-                      </div>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0 bg-gray-900 border-gray-700 text-white">
-                    <Command>
-                      <CommandInput 
-                        placeholder="Lokation suchen..." 
-                        className="h-9 border-gray-700" 
-                        value={searchTerm}
-                        onValueChange={setSearchTerm}
-                      />
-                      <CommandList>
-                        <CommandEmpty>Keine Ergebnisse gefunden.</CommandEmpty>
-                        <CommandGroup>
-                          <ScrollArea className="max-h-48 overflow-auto">
-                            {filteredLocations.map((location) => (
-                              <CommandItem
-                                key={location}
-                                value={location}
-                                onSelect={() => handleSelectLocation(location)}
-                                className="cursor-pointer hover:bg-gray-800"
-                              >
-                                {location}
-                              </CommandItem>
-                            ))}
-                          </ScrollArea>
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                <Button 
-                  type="button" 
-                  size="icon" 
-                  onClick={handleAddLocation}
-                  variant="outline"
-                  className="border-gray-700 text-white"
-                  disabled={!selectedLocation}
+              
+              {/* New location selector with improved scrolling */}
+              <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className="w-full justify-between bg-gray-900 border-gray-700 text-white"
+                  >
+                    <div className="flex items-center gap-2">
+                      <MapPin size={16} />
+                      <span>{selectedLocation || "Lokation auswählen"}</span>
+                    </div>
+                    <ChevronDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-[300px] p-0 bg-gray-900 border border-gray-700"
+                  align="start"
                 >
-                  <Plus size={16} />
-                </Button>
-              </div>
+                  <Command className="rounded-lg border-none bg-transparent">
+                    <CommandInput 
+                      placeholder="Lokation suchen..." 
+                      className="h-9 border-b border-gray-700" 
+                      value={searchTerm}
+                      onValueChange={setSearchTerm}
+                    />
+                    <CommandList>
+                      <CommandEmpty className="py-6 text-center text-sm">
+                        Keine Lokationen gefunden
+                      </CommandEmpty>
+                      <CommandGroup>
+                        <ScrollArea className="h-52 rounded-md">
+                          {filteredLocations.map((location) => (
+                            <CommandItem
+                              key={location}
+                              value={location}
+                              onSelect={() => handleLocationSelect(location)}
+                              className="flex items-center gap-2 px-4 py-2 cursor-pointer hover:bg-gray-800"
+                            >
+                              <MapPin size={14} />
+                              <span>{location}</span>
+                            </CommandItem>
+                          ))}
+                        </ScrollArea>
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             
             <DialogFooter className="sm:justify-end">
