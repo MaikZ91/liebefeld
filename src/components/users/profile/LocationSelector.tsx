@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Badge } from "@/components/ui/badge";
-import { X, MapPin, ChevronDown } from 'lucide-react';
+import { X, MapPin, ChevronDown, Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
 import { 
   Select,
   SelectContent,
@@ -15,6 +16,14 @@ import {
 } from "@/components/ui/select";
 import { extractAllLocations } from '@/utils/chatUtils';
 import { useEventContext } from '@/contexts/EventContext';
+import { 
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList
+} from "@/components/ui/command";
 
 interface LocationSelectorProps {
   locations: string[];
@@ -29,6 +38,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
 }) => {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [commandOpen, setCommandOpen] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { events } = useEventContext();
   const [allLocations, setAllLocations] = useState<string[]>([]);
@@ -78,6 +88,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       
       // Clear search term after selection
       setSearchTerm('');
+      setCommandOpen(false);
     }
     setPopoverOpen(false);
   };
@@ -159,76 +170,55 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         ))}
       </div>
       
-      {/* For larger screens: Popover with ScrollArea */}
-      <div className="hidden md:block">
-        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              className="w-full justify-between bg-gray-900 border-gray-700 text-white"
-            >
-              <div className="flex items-center gap-2">
-                <MapPin size={16} />
-                <span>{"Lokation auswählen"}</span>
-              </div>
-              <ChevronDown className="h-4 w-4 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent
-            className="w-[300px] p-0 bg-gray-900 border border-gray-700"
-            align="start"
+      {/* Modern Command Menu for location search on all screen sizes */}
+      <Popover open={commandOpen} onOpenChange={setCommandOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            className="w-full justify-between bg-gray-900 border-gray-700 text-white relative"
           >
-            <div className="flex items-center border-b border-gray-700 px-3">
-              <MapPin className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-              <input
-                className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-gray-400 focus:outline-none location-search-input"
-                placeholder="Lokation suchen..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+            <div className="flex items-center gap-2">
+              <MapPin size={16} />
+              <span>{searchTerm || "Lokation suchen..."}</span>
             </div>
-            
-            {filteredLocations.length === 0 ? (
-              <div className="py-6 text-center text-sm text-gray-400">
+            <Search className="h-4 w-4 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-[300px] p-0 bg-gray-900 border border-gray-700"
+          side="bottom"
+          align="start"
+          sideOffset={5}
+        >
+          <Command className="rounded-lg border-0 bg-transparent">
+            <CommandInput 
+              placeholder="Lokation suchen..." 
+              className="h-9 text-white"
+              value={searchTerm}
+              onValueChange={setSearchTerm}
+            />
+            <CommandList>
+              <CommandEmpty className="py-6 text-center text-sm text-gray-400">
                 Keine Lokationen gefunden
-              </div>
-            ) : (
-              <ScrollArea className="h-72 rounded-md" ref={scrollAreaRef}>
-                <div className="p-1">
-                  {filteredLocations.map((location) => (
-                    <button
-                      key={location}
-                      className="flex w-full items-center gap-2 px-4 py-2 cursor-pointer hover:bg-gray-800 rounded-sm text-sm text-left"
-                      onClick={() => handleLocationSelect(location)}
-                      type="button"
-                    >
-                      <MapPin size={14} />
-                      <span>{location}</span>
-                    </button>
-                  ))}
-                </div>
-              </ScrollArea>
-            )}
-          </PopoverContent>
-        </Popover>
-      </div>
-      
-      {/* For smaller screens: Simple Select component */}
-      <div className="block md:hidden">
-        <Select onValueChange={handleSelectChange}>
-          <SelectTrigger className="w-full bg-gray-900 border-gray-700 text-white">
-            <SelectValue placeholder="Lokation auswählen" />
-          </SelectTrigger>
-          <SelectContent className="bg-gray-900 border-gray-700 text-white max-h-72">
-            {allLocations.map((location) => (
-              <SelectItem key={location} value={location}>
-                {location}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+              </CommandEmpty>
+              <CommandGroup className="max-h-[300px] overflow-auto">
+                {filteredLocations.map((location) => (
+                  <CommandItem
+                    key={location}
+                    value={location}
+                    onSelect={() => handleLocationSelect(location)}
+                    className="flex items-center gap-2 cursor-pointer text-white hover:bg-gray-800"
+                  >
+                    <MapPin size={14} className="text-gray-400" />
+                    <span>{location}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 };
