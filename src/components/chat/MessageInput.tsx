@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -153,15 +152,15 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
   return (
     <div className="w-full space-y-2">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 relative">
         <Textarea 
           placeholder={placeholder}
           value={value !== undefined ? value : newMessage}
           onChange={handleMessageChange}
           onKeyDown={handleKeyDown}
-          className="min-h-[50px] flex-grow resize-none"
+          className="min-h-[50px] flex-grow resize-none pr-14"
         />
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 absolute right-16 top-1">
           <Button 
             onClick={handleFileUpload} 
             variant="outline"
@@ -208,7 +207,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         <Button 
           onClick={handleSubmit} 
           disabled={isSending || (!value?.trim() && !newMessage.trim() && !fileInputRef.current?.files?.length)}
-          className="rounded-full min-w-[40px]"
+          className="rounded-full min-w-[40px] absolute right-1 top-1"
         >
           {isSending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
