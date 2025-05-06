@@ -1,0 +1,13 @@
+
+.event-list-container .bg-red-900\/20 {
+  margin-bottom: 0.5rem;
+}
+
+.event-list-container p {
+  margin: 0.25rem 0;
+}
+
+.event-list-container .font-bold {
+  margin-bottom: 0.25rem;
+  display: block;
+}
