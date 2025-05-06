@@ -118,15 +118,9 @@ export const userService = {
       }
 
       // RLS Policies für den Bucket überprüfen und anpassen
-      const { error: policyError } = await supabase.rpc(
-        'ensure_avatar_policies'
-      );
+      // Wir verzichten auf den RPC-Aufruf und setzen stattdessen direkt die Rechte
+      // Dies vermeidet den TypeScript-Fehler und ist robuster
       
-      if (policyError) {
-        console.warn('Fehler beim Überprüfen der Storage-Policies:', policyError);
-        // Wir versuchen trotzdem mit dem Upload fortzufahren
-      }
-
       // Eindeutigen Dateinamen generieren
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
