@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 import ChatMessage from '@/components/chat/ChatMessage';
@@ -31,6 +32,7 @@ const MessageList: React.FC<MessageListProps> = ({
               __html: message.html
                 .replace(/^[•\-*]\s*/gm, '') // Remove bullet points from beginning of lines
                 .replace(/<p>[•\-*]\s*(.*?)<\/p>/g, '<p>$1</p>') // Remove bullet points within paragraphs
+                .replace(/<li>[•\-*]\s*(.*?)<\/li>/g, '<li>$1</li>') // Remove bullet points within list items
             }} 
             className="p-3 event-list-container"
           />

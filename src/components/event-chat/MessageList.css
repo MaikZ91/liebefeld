@@ -11,3 +11,15 @@
   margin-bottom: 0.25rem;
   display: block;
 }
+
+/* Remove bullet points and improve spacing */
+.event-list-container ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.event-list-container li {
+  padding: 0;
+  margin: 0;
+}

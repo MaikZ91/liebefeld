@@ -1,3 +1,4 @@
+
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,10 +25,12 @@ export const formatEvents = (events: any[]) => {
 
   let eventList = '<ul class="event-list">';
   events.forEach(event => {
+    // Remove any bullet points from the title
+    const cleanTitle = event.title.replace(/^[•\-*]\s*/, '');
     eventList += `
       <li class="mb-2">
         <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-2">
-          <div class="font-bold">${event.title}</div>
+          <div class="font-bold">${cleanTitle}</div>
           <div class="text-sm">${event.date}</div>
         </div>
       </li>`;
