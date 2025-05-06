@@ -829,3 +829,21 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
                 </>
               ) : null}
             </div>
+          </div>
+        </div>
+      )}
+      
+      {!fullPage && !isChatOpen && (
+        <button
+          onClick={handleToggleChat}
+          className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 shadow-lg transform transition-transform hover:scale-105"
+          aria-label="Öffne Event-Assistent"
+        >
+          <MessageCircle className="h-6 w-6" />
+        </button>
+      )}
+    </div>
+  );
+};
+
+export default EventChatBot;
