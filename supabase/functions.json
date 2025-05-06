@@ -1,0 +1,9 @@
+
+{
+  "functions": [
+    {
+      "name": "ensure_avatar_policies",
+      "verify_jwt": false
+    }
+  ]
+}

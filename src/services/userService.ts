@@ -117,6 +117,13 @@ export const userService = {
         });
       }
 
+      // RLS Policies für den Bucket überprüfen und anpassen
+      const { error: policyError } = await supabase.rpc('ensure_avatar_policies');
+      if (policyError) {
+        console.warn('Fehler beim Überprüfen der Storage-Policies:', policyError);
+        // Wir versuchen trotzdem mit dem Upload fortzufahren
+      }
+
       // Eindeutigen Dateinamen generieren
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
@@ -127,7 +134,7 @@ export const userService = {
         .from('avatars')
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: false
+          upsert: true // Überschreibe Dateien mit dem gleichen Namen
         });
 
       if (uploadError) {
