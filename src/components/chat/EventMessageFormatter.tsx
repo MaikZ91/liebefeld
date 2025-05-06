@@ -7,7 +7,12 @@ export const EventMessageFormatter: React.FC<{ event: EventShare }> = ({ event }
   return (
     <div className="bg-gray-800 rounded-lg p-4 border border-red-500/30 w-full max-w-full overflow-hidden break-words">
       <div className="text-lg font-semibold text-white mb-1">Geteiltes Event</div>
-      <div className="text-2xl font-bold event-title" style={{color: 'black !important'}}>
+      <div className="text-2xl font-bold event-title" style={{
+        color: 'black !important', 
+        opacity: '1 !important',
+        mixBlendMode: 'normal',
+        isolation: 'isolate'
+      }}>
         {event.title}
       </div>
       <div className="flex flex-col gap-1 mt-2">

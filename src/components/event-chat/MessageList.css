@@ -82,6 +82,9 @@
 .event-list-container div.font-bold.text-base,
 .event-title {
   color: black !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+  isolation: isolate !important;
 }
 
 /* White text for everything EXCEPT event titles */
@@ -101,8 +104,27 @@
 /* Additional overrides for the EventPanel component */
 .event-title {
   color: black !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+  isolation: isolate !important;
 }
 
 div.event-title {
   color: black !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+  isolation: isolate !important;
+}
+
+/* Add a high isolation layer to force black text */
+[class*="event-title"],
+div[class*="event-title"],
+.font-bold.text-base {
+  color: black !important;
+  background-color: transparent !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+  isolation: isolate !important;
+  z-index: 10 !important;
+  position: relative !important;
 }
