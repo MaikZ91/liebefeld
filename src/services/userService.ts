@@ -118,7 +118,6 @@ export const userService = {
       }
 
       // RLS Policies für den Bucket überprüfen und anpassen
-      // Die rpc-Funktion mit einem leeren Objekt aufrufen ohne Parameter
       const { error: policyError } = await supabase.rpc(
         'ensure_avatar_policies'
       );
