@@ -1,6 +1,7 @@
+
 import { serve } from 'std/server';
 import { createClient } from '@supabase/supabase-js';
-import { OpenAI } from "openai";
+import { OpenAI } from "https://esm.sh/openai@4.16.1";
 
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
