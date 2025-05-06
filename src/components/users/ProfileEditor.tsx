@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -153,9 +154,11 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     
     try {
       setUploading(true);
+      console.log('Starting image upload...');
       
       // Use our improved upload service
       const publicUrl = await userService.uploadProfileImage(file);
+      console.log('Upload successful, URL:', publicUrl);
         
       // Set the avatar URL in the form
       form.setValue('avatar', publicUrl);
@@ -168,24 +171,29 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     }
   };
 
-  // Fix for handling location selection
-  const handleSelectLocation = (location: string) => {
-    setSelectedLocation(location);
-    // Don't close popup automatically to allow immediate adding
-  };
-
   const onSubmit = async (values: z.infer<typeof profileSchema>) => {
     if (!currentUser) return;
     
+    console.log('Submitting profile update:', values);
     setIsSubmitting(true);
+    
     try {
-      await userService.createOrUpdateProfile({
+      console.log('Profile data being sent:', {
+        username: values.username,
+        avatar: values.avatar,
+        interests,
+        favorite_locations: favoriteLocations
+      });
+      
+      const updatedProfile = await userService.createOrUpdateProfile({
         username: values.username,
         avatar: values.avatar || null,
         interests: interests,
         hobbies: [], // We now store everything in interests
         favorite_locations: favoriteLocations
       });
+      
+      console.log('Profile updated successfully:', updatedProfile);
       
       // Update local storage with the new username and avatar
       localStorage.setItem('community_chat_username', values.username);
