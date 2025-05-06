@@ -1,5 +1,6 @@
 
-import { format, de } from 'date-fns';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 
 export const getWelcomeMessage = () => {
