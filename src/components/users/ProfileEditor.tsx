@@ -14,7 +14,7 @@ import * as z from 'zod';
 import { userService } from '@/services/userService';
 import { Badge } from "@/components/ui/badge";
 import { X, Plus, Upload, MapPin } from 'lucide-react';
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -122,6 +122,12 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     setInterests(interests.filter(i => i !== interest));
   };
 
+  // Add the missing handleSelectLocation function
+  const handleSelectLocation = (location: string) => {
+    setSelectedLocation(location);
+    setPopoverOpen(false);
+  };
+
   // Fix for adding locations
   const handleAddLocation = () => {
     if (selectedLocation && !favoriteLocations.includes(selectedLocation)) {
@@ -142,13 +148,21 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     
     // Check file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
-      toast.error("Das Bild ist zu groß. Maximale Größe: 2MB");
+      toast({
+        title: "Fehler",
+        description: "Das Bild ist zu groß. Maximale Größe: 2MB",
+        variant: "destructive"
+      });
       return;
     }
     
     // Check file type
     if (!file.type.startsWith('image/')) {
-      toast.error("Nur Bilder können hochgeladen werden");
+      toast({
+        title: "Fehler",
+        description: "Nur Bilder können hochgeladen werden",
+        variant: "destructive"
+      });
       return;
     }
     
@@ -162,10 +176,17 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         
       // Set the avatar URL in the form
       form.setValue('avatar', publicUrl);
-      toast.success("Bild erfolgreich hochgeladen");
+      toast({
+        title: "Erfolg",
+        description: "Bild erfolgreich hochgeladen"
+      });
     } catch (error) {
       console.error('Error uploading image:', error);
-      toast.error("Fehler beim Hochladen des Bildes");
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Hochladen des Bildes",
+        variant: "destructive"
+      });
     } finally {
       setUploading(false);
     }
@@ -201,12 +222,20 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         localStorage.setItem('community_chat_avatar', values.avatar);
       }
       
-      toast.success("Profil erfolgreich aktualisiert!");
+      toast({
+        title: "Erfolg",
+        description: "Profil erfolgreich aktualisiert!"
+      });
+      
       onProfileUpdate();
       onOpenChange(false);
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error("Fehler beim Aktualisieren des Profils");
+      toast({
+        title: "Fehler",
+        description: "Fehler beim Aktualisieren des Profils",
+        variant: "destructive"
+      });
     } finally {
       setIsSubmitting(false);
     }

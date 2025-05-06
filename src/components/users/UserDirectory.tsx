@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import ProfileEditor from './ProfileEditor';
 import { userService } from '@/services/userService';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
+import { toast } from "@/hooks/use-toast";
 
 interface UserDirectoryProps {
   open: boolean;
