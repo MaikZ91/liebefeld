@@ -1,5 +1,4 @@
 
-
 .event-list-container .bg-red-900\/20 {
   margin-bottom: 0.75rem;
 }
@@ -89,3 +88,24 @@
   color: white !important;
 }
 
+/* Fix for specific event titles like "Karaoke" */
+.event-list-container div[class*="font-bold"], 
+.event-list-container .bg-red-900\/20 div[class*="font-bold"],
+.event-list-container .text-base,
+.event-list-container .bg-red-900\/20 .text-base {
+  color: white !important;
+}
+
+/* Force important on ALL text elements in event cards */
+.event-list-container .bg-red-900\/20 div,
+.event-list-container .bg-red-900\/20 span,
+.event-list-container .bg-red-900\/20 p,
+.event-list-container .bg-red-900\/20 h1,
+.event-list-container .bg-red-900\/20 h2,
+.event-list-container .bg-red-900\/20 h3,
+.event-list-container .bg-red-900\/20 h4,
+.event-list-container .bg-red-900\/20 h5,
+.event-list-container .bg-red-900\/20 h6,
+.event-list-container .bg-red-900\/20 a {
+  color: white !important;
+}
