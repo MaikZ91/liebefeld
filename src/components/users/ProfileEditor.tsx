@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -155,37 +154,8 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     try {
       setUploading(true);
       
-      // Check if the avatars bucket exists
-      const { data: bucketList } = await supabase.storage.listBuckets();
-      const avatarBucketExists = bucketList?.some(bucket => bucket.name === 'avatars');
-      
-      // Create storage bucket if it doesn't exist
-      if (!avatarBucketExists) {
-        console.log('Creating avatars bucket');
-        await supabase.storage.createBucket('avatars', {
-          public: true
-        });
-      }
-      
-      // Generate a unique file name
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
-      
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file);
-        
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw uploadError;
-      }
-      
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
+      // Use our improved upload service
+      const publicUrl = await userService.uploadProfileImage(file);
         
       // Set the avatar URL in the form
       form.setValue('avatar', publicUrl);

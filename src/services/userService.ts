@@ -101,5 +101,49 @@ export const userService = {
       console.error('Fehler beim Aktualisieren der letzten Online-Zeit:', error);
       throw error;
     }
+  },
+
+  /**
+   * Bild zum Storage hochladen
+   */
+  async uploadProfileImage(file: File): Promise<string> {
+    try {
+      // Prüfen ob der Bucket existiert und ggf. erstellen
+      const { data: buckets } = await supabase.storage.listBuckets();
+      if (!buckets?.find(bucket => bucket.name === 'avatars')) {
+        // Bucket nicht gefunden, versuche ihn zu erstellen
+        await supabase.storage.createBucket('avatars', {
+          public: true
+        });
+      }
+
+      // Eindeutigen Dateinamen generieren
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = fileName;
+
+      // Datei hochladen
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+
+      // Öffentliche URL abrufen
+      const { data: publicUrlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      return publicUrlData.publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw error;
+    }
   }
 };

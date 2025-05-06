@@ -4,12 +4,28 @@ import { userService } from '@/services/userService';
 import { UserProfile } from '@/types/chatTypes';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useUserProfile = () => {
   const [currentUser, setCurrentUser] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || 'Gast');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Check if storage bucket exists and create it if needed
+  const ensureStorageBucket = async () => {
+    try {
+      const { data: buckets } = await supabase.storage.listBuckets();
+      if (!buckets?.find(bucket => bucket.name === 'avatars')) {
+        console.log('Creating avatars bucket');
+        await supabase.storage.createBucket('avatars', {
+          public: true
+        });
+      }
+    } catch (err) {
+      console.error('Error ensuring storage bucket exists:', err);
+    }
+  };
   
   // Benutzerprofil erstellen oder aktualisieren, wenn der Benutzername bekannt ist
   useEffect(() => {
@@ -23,6 +39,9 @@ export const useUserProfile = () => {
     try {
       setLoading(true);
       setError(null);
+      
+      // Ensure storage bucket exists for avatar uploads
+      await ensureStorageBucket();
       
       const avatar = localStorage.getItem(AVATAR_KEY);
       
