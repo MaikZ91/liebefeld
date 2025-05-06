@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
@@ -265,7 +264,7 @@ const Index = () => {
             </div>
             <div className="py-2">
               <EventProvider>
-                <LiveTicker events={events} />
+                <LiveTickerConsumer />
               </EventProvider>
             </div>
           </div>
@@ -294,6 +293,12 @@ const Index = () => {
       />
     </div>
   );
+};
+
+// Create a consumer component to access events from context
+const LiveTickerConsumer = () => {
+  const { events } = useEventContext();
+  return <LiveTicker events={events} />;
 };
 
 export default Index;
