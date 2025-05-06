@@ -207,7 +207,7 @@ export const formatEventListItem = (event: any) => {
   
   return `
     <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-3 mb-2">
-      <div class="font-bold text-base mb-1 text-white">${title}</div>
+      <div class="font-bold text-base mb-1 text-white !important" style="color: white !important;">${title}</div>
       <div class="flex flex-col gap-1">
         <div class="flex items-center text-sm text-white">
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1 flex-shrink-0">
