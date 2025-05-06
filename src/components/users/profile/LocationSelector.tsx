@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { extractAllLocations } from '@/utils/chatUtils';
 import { useEventContext } from '@/contexts/EventContext';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface LocationSelectorProps {
   locations: string[];
@@ -70,6 +69,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       }
     }
     setIsOpen(false);
+    setSearchTerm('');
   };
 
   const handleRemoveLocation = (location: string) => {
@@ -105,59 +105,61 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         ))}
       </div>
       
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            className="w-full justify-between bg-gray-900 border-gray-700 text-white relative"
-          >
-            <div className="flex items-center gap-2">
-              <MapPin size={16} />
-              <span className="line-clamp-1 text-left">{searchTerm || "Lokation suchen..."}</span>
-            </div>
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent
-          className="w-[300px] p-4 bg-gray-900 border border-gray-700"
-          align="start"
-          side="bottom"
-          sideOffset={5}
-          style={{ zIndex: 50 }}
+      <div className="relative">
+        {/* Location selector button */}
+        <Button
+          variant="outline"
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full justify-between bg-gray-900 border-gray-700 text-white relative"
         >
-          <div className="space-y-4">
-            <Input 
-              type="text" 
-              placeholder="Lokation suchen..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-gray-800 border-gray-700 text-white"
-            />
-            
-            <ScrollArea className="h-[200px] rounded-md border border-gray-800">
-              {filteredLocations.length === 0 ? (
-                <div className="py-6 text-center text-sm text-gray-400">
-                  Keine Lokationen gefunden
-                </div>
-              ) : (
-                <div className="space-y-1 p-2">
-                  {filteredLocations.map((location) => (
-                    <Button
-                      key={location}
-                      variant="ghost"
-                      onClick={() => handleLocationSelect(location)}
-                      className="w-full justify-start text-white hover:bg-gray-800 flex items-center gap-2"
-                    >
-                      <MapPin size={14} className="text-gray-400" />
-                      <span>{location}</span>
-                    </Button>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
+          <div className="flex items-center gap-2">
+            <MapPin size={16} />
+            <span className="line-clamp-1 text-left">Lokation suchen...</span>
           </div>
-        </PopoverContent>
-      </Popover>
+        </Button>
+        
+        {/* Dropdown content */}
+        {isOpen && (
+          <div 
+            className="absolute z-50 w-full mt-1 bg-gray-900 border border-gray-700 rounded-md shadow-lg"
+            style={{ maxHeight: "300px" }}
+          >
+            <div className="p-2">
+              <Input 
+                type="text" 
+                placeholder="Lokation suchen..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-gray-800 border-gray-700 text-white mb-2"
+                autoFocus
+              />
+              
+              <ScrollArea className="h-[200px]">
+                {filteredLocations.length === 0 ? (
+                  <div className="py-6 text-center text-sm text-gray-400">
+                    Keine Lokationen gefunden
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {filteredLocations.map((location) => (
+                      <Button
+                        key={location}
+                        variant="ghost"
+                        onClick={() => handleLocationSelect(location)}
+                        className="w-full justify-start text-white hover:bg-gray-800 flex items-center gap-2"
+                      >
+                        <MapPin size={14} className="text-gray-400" />
+                        <span>{location}</span>
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
