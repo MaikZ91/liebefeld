@@ -27,11 +27,14 @@ export const formatEvents = (events: any[]) => {
   events.forEach(event => {
     // Remove any bullet points from the title
     const cleanTitle = event.title.replace(/^[•\-*]\s*/, '');
+    // Also clean the date/location fields
+    const cleanDate = event.date ? event.date.replace(/^[•\-*]\s*/, '') : '';
+    
     eventList += `
       <li class="mb-2">
         <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-2">
           <div class="font-bold">${cleanTitle}</div>
-          <div class="text-sm">${event.date}</div>
+          <div class="text-sm">${cleanDate}</div>
         </div>
       </li>`;
   });
@@ -210,9 +213,9 @@ export const formatEventListItem = (event: any) => {
   const title = event.title || 'Unbekanntes Event';
   // Remove any bullet points from the title
   const cleanTitle = title.replace(/^[•\-*]\s*/, '');
-  const time = event.time || 'Zeit nicht angegeben';
-  const location = event.location || 'Ort nicht angegeben';
-  const category = event.category || 'Sonstiges';
+  const time = event.time ? event.time.replace(/^[•\-*]\s*/, '') : 'Zeit nicht angegeben';
+  const location = event.location ? event.location.replace(/^[•\-*]\s*/, '') : 'Ort nicht angegeben';
+  const category = event.category ? event.category.replace(/^[•\-*]\s*/, '') : 'Sonstiges';
   
   return `
     <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-2 mb-2">

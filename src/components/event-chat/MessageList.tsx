@@ -33,6 +33,8 @@ const MessageList: React.FC<MessageListProps> = ({
                 .replace(/^[•\-*]\s*/gm, '') // Remove bullet points from beginning of lines
                 .replace(/<p>[•\-*]\s*(.*?)<\/p>/g, '<p>$1</p>') // Remove bullet points within paragraphs
                 .replace(/<li>[•\-*]\s*(.*?)<\/li>/g, '<li>$1</li>') // Remove bullet points within list items
+                .replace(/(19:00 Uhr|19:00)<br>[•\-*]\s*/g, '$1<br>') // Remove bullet points after time
+                .replace(/(<br>|<br\/>)[•\-*]\s*/g, '$1') // Remove bullet points after any line breaks
             }} 
             className="p-3 event-list-container"
           />

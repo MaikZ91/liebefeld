@@ -23,3 +23,8 @@
   padding: 0;
   margin: 0;
 }
+
+/* Additional fixes for bullet points in location lines */
+.event-list-container div.text-sm {
+  margin-top: 0.25rem;
+}
