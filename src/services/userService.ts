@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/types/chatTypes';
 
@@ -121,7 +120,7 @@ export const userService = {
       // Verwende ein explizites Typen-Casting, um TypeScript zu erlauben, dass wir ein leeres Objekt übergeben
       const { error: policyError } = await supabase.rpc(
         'ensure_avatar_policies',
-        {} as Record<string, never> // Korrekte Typisierung als leeres Record-Objekt
+        {} // Leerer Parameter ohne Typisierung
       );
       
       if (policyError) {
