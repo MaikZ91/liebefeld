@@ -14,16 +14,29 @@ export const usePersonalization = (
   // Function to ensure we have the latest user profile data
   const refreshUserData = async () => {
     if (!currentUser || currentUser === 'Gast') {
+      console.log('[usePersonalization] No current user, returning null');
       return null;
     }
     
     try {
-      console.log(`Explicitly fetching latest profile data for user: ${currentUser}`);
+      console.log(`[usePersonalization] Explicitly fetching latest profile data for user: ${currentUser}`);
       const profile = await userService.getUserByUsername(currentUser);
-      console.log('Latest profile data fetched:', profile);
+      console.log('[usePersonalization] Latest profile data fetched:', profile);
+      
+      // Store in localStorage for backup
+      if (profile?.interests && profile.interests.length > 0) {
+        localStorage.setItem('user_interests', JSON.stringify(profile.interests));
+        console.log('[usePersonalization] Stored interests in localStorage:', profile.interests);
+      }
+      
+      if (profile?.favorite_locations && profile.favorite_locations.length > 0) {
+        localStorage.setItem('user_locations', JSON.stringify(profile.favorite_locations));
+        console.log('[usePersonalization] Stored locations in localStorage:', profile.favorite_locations);
+      }
+      
       return profile;
     } catch (err) {
-      console.error('Error fetching latest user data:', err);
+      console.error('[usePersonalization] Error fetching latest user data:', err);
       return null;
     }
   };
@@ -43,23 +56,23 @@ export const usePersonalization = (
         userInterests = freshProfile.interests || [];
         userLocations = freshProfile.favorite_locations || [];
         
-        console.log('Using freshly fetched profile interests:', userInterests);
-        console.log('Using freshly fetched profile locations:', userLocations);
+        console.log('[usePersonalization] Using freshly fetched profile interests:', userInterests);
+        console.log('[usePersonalization] Using freshly fetched profile locations:', userLocations);
       } else if (userProfile) {
         // Fall back to the profile from props if fresh fetch failed
         userInterests = userProfile.interests || [];
         userLocations = userProfile.favorite_locations || [];
         
-        console.log('Using props profile interests:', userInterests);
-        console.log('Using props profile locations:', userLocations);
+        console.log('[usePersonalization] Using props profile interests:', userInterests);
+        console.log('[usePersonalization] Using props profile locations:', userLocations);
       } else if (currentUser !== 'Gast') {
         // If we have a username but no profile loaded yet, try to fetch it
         try {
-          console.log('Fetching user profile for personalization...');
+          console.log('[usePersonalization] Fetching user profile for personalization...');
           const profile = await userService.getUserByUsername(currentUser);
           
           if (profile) {
-            console.log('Profile fetched successfully:', profile);
+            console.log('[usePersonalization] Profile fetched successfully:', profile);
             userInterests = profile.interests || [];
             userLocations = profile.favorite_locations || [];
             
@@ -73,7 +86,7 @@ export const usePersonalization = (
             }
           }
         } catch (err) {
-          console.error('Error fetching user profile for personalization:', err);
+          console.error('[usePersonalization] Error fetching user profile for personalization:', err);
         }
       } else {
         // Fallback to localStorage if no profile is available
@@ -84,10 +97,10 @@ export const usePersonalization = (
           const storedLocations = localStorage.getItem('user_locations');
           userLocations = storedLocations ? JSON.parse(storedLocations) : [];
           
-          console.log('Using localStorage interests:', userInterests);
-          console.log('Using localStorage locations:', userLocations);
+          console.log('[usePersonalization] Using localStorage interests:', userInterests);
+          console.log('[usePersonalization] Using localStorage locations:', userLocations);
         } catch (err) {
-          console.error('Error parsing stored preferences:', err);
+          console.error('[usePersonalization] Error parsing stored preferences:', err);
           userInterests = [];
           userLocations = [];
         }
@@ -96,18 +109,18 @@ export const usePersonalization = (
       // If we still don't have interests or locations, use fallbacks
       if (!Array.isArray(userInterests) || userInterests.length === 0) {
         userInterests = ['Musik', 'Sport', 'Kultur'];
-        console.log('Using fallback interests:', userInterests);
+        console.log('[usePersonalization] Using fallback interests:', userInterests);
       }
       
       if (!Array.isArray(userLocations) || userLocations.length === 0) {
         userLocations = ['Liebefeld', 'Bern'];
-        console.log('Using fallback locations:', userLocations);
+        console.log('[usePersonalization] Using fallback locations:', userLocations);
       }
       
       // Validate data before sending
-      console.log('FINAL DATA BEING SENT:');
-      console.log('User interests:', JSON.stringify(userInterests));
-      console.log('User locations:', JSON.stringify(userLocations));
+      console.log('[usePersonalization] FINAL DATA BEING SENT:');
+      console.log('[usePersonalization] User interests:', JSON.stringify(userInterests));
+      console.log('[usePersonalization] User locations:', JSON.stringify(userLocations));
       
       // Generate personalized prompt
       const personalizedPrompt = generatePersonalizedPrompt(userInterests, userLocations);
@@ -118,7 +131,7 @@ export const usePersonalization = (
       // Send the personalized prompt to the chat
       await handleSendMessage(personalizedPrompt);
     } catch (error) {
-      console.error('Error in personalized recommendations:', error);
+      console.error('[usePersonalization] Error in personalized recommendations:', error);
       toast.error("Konnte keine personalisierten Empfehlungen laden");
     } finally {
       setIsLoading(false);

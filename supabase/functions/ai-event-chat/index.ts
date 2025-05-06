@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
@@ -39,21 +38,21 @@ serve(async (req) => {
     } = await req.json();
 
     // Log the received parameters for debugging
-    console.log(`Received query: ${query}`);
-    console.log(`Received currentDate: ${currentDate}`);
-    console.log(`Received next week range: ${nextWeekStart} to ${nextWeekEnd}`);
+    console.log(`[ai-event-chat] Received query: ${query}`);
+    console.log(`[ai-event-chat] Received currentDate: ${currentDate}`);
+    console.log(`[ai-event-chat] Received next week range: ${nextWeekStart} to ${nextWeekEnd}`);
     
     // Explicitly log user interests and locations for debugging
     if (userInterests) {
-      console.log(`User interests received: ${JSON.stringify(userInterests)}`);
+      console.log(`[ai-event-chat] User interests received: ${JSON.stringify(userInterests)}`);
     } else {
-      console.log('No user interests received');
+      console.log('[ai-event-chat] No user interests received');
     }
     
     if (userLocations) {
-      console.log(`User preferred locations received: ${JSON.stringify(userLocations)}`);
+      console.log(`[ai-event-chat] User preferred locations received: ${JSON.stringify(userLocations)}`);
     } else {
-      console.log('No user locations received');
+      console.log('[ai-event-chat] No user locations received');
     }
 
     const today = new Date().toISOString().split("T")[0];
@@ -68,7 +67,7 @@ serve(async (req) => {
       .order("date", { ascending: true });
 
     if (eventsError) {
-      throw new Error(`Datenbank‑Fehler: ${eventsError.message}`);
+      throw new Error(`[ai-event-chat] Datenbank‑Fehler: ${eventsError.message}`);
     }
 
     // Verwende ein Array für die gefilterten Events, die wir an das KI-Modell senden werden
@@ -79,11 +78,11 @@ serve(async (req) => {
     
     // Check if this is a personalized request
     const isPersonalRequest = query.toLowerCase().includes("zu mir passen") || 
-                              query.toLowerCase().includes("meine interessen") || 
-                              query.toLowerCase().includes("persönlich") ||
-                              query.includes("❤️"); // Check for heart emoji indicator
+                             query.toLowerCase().includes("meine interessen") || 
+                             query.toLowerCase().includes("persönlich") ||
+                             query.includes("❤️"); // Check for heart emoji indicator
 
-    console.log(`Is this a personalized request? ${isPersonalRequest}`);
+    console.log(`[ai-event-chat] Is this a personalized request? ${isPersonalRequest}`);
 
     // Apply filters for date-specific queries
     // Filter für "heute" / "today" / "aktuell" etc.
@@ -94,9 +93,9 @@ serve(async (req) => {
       lowercaseQuery.includes("jetzt") ||
       lowercaseQuery.includes("this day")
     ) {
-      console.log(`Anfrage nach Events für heute (${currentDate}) erkannt`);
+      console.log(`[ai-event-chat] Anfrage nach Events für heute (${currentDate}) erkannt`);
       filteredEvents = filteredEvents.filter(e => e.date === currentDate);
-      console.log(`Nach Filterung für "heute": ${filteredEvents.length} Events übrig`);
+      console.log(`[ai-event-chat] Nach Filterung für "heute": ${filteredEvents.length} Events übrig`);
     }
     // Filter für "morgen" / "tomorrow"
     else if (
@@ -110,9 +109,9 @@ serve(async (req) => {
       tomorrow.setDate(tomorrow.getDate() + 1);
       const tomorrowStr = tomorrow.toISOString().split('T')[0];
       
-      console.log(`Anfrage nach Events für morgen (${tomorrowStr}) erkannt`);
+      console.log(`[ai-event-chat] Anfrage nach Events für morgen (${tomorrowStr}) erkannt`);
       filteredEvents = filteredEvents.filter(e => e.date === tomorrowStr);
-      console.log(`Nach Filterung für "morgen": ${filteredEvents.length} Events übrig`);
+      console.log(`[ai-event-chat] Nach Filterung für "morgen": ${filteredEvents.length} Events übrig`);
     }
     // Filter für "diese Woche" / "this week"
     else if (
@@ -130,9 +129,9 @@ serve(async (req) => {
       endOfWeek.setDate(endOfWeek.getDate() + 6); // Sonntag
       const endDate = endOfWeek.toISOString().split('T')[0];
       
-      console.log(`Anfrage nach Events dieser Woche (${startDate} bis ${endDate}) erkannt`);
+      console.log(`[ai-event-chat] Anfrage nach Events dieser Woche (${startDate} bis ${endDate}) erkannt`);
       filteredEvents = filteredEvents.filter(e => e.date >= startDate && e.date <= endDate);
-      console.log(`Nach Filterung für "diese Woche": ${filteredEvents.length} Events übrig`);
+      console.log(`[ai-event-chat] Nach Filterung für "diese Woche": ${filteredEvents.length} Events übrig`);
     }
     // Filter für "nächste Woche" / "next week"
     else if (
@@ -140,9 +139,9 @@ serve(async (req) => {
       lowercaseQuery.includes("next week") ||
       lowercaseQuery.includes("kommende woche")
     ) {
-      console.log(`Anfrage nach Events für nächste Woche (${nextWeekStart} bis ${nextWeekEnd}) erkannt`);
+      console.log(`[ai-event-chat] Anfrage nach Events für nächste Woche (${nextWeekStart} bis ${nextWeekEnd}) erkannt`);
       filteredEvents = filteredEvents.filter(e => e.date >= nextWeekStart && e.date <= nextWeekEnd);
-      console.log(`Nach Filterung für "nächste Woche": ${filteredEvents.length} Events übrig`);
+      console.log(`[ai-event-chat] Nach Filterung für "nächste Woche": ${filteredEvents.length} Events übrig`);
     }
     // Filter für "wochenende" / "weekend"
     else if (
@@ -165,15 +164,15 @@ serve(async (req) => {
       sunday.setDate(saturday.getDate() + 1);
       const sundayStr = sunday.toISOString().split('T')[0];
       
-      console.log(`Anfrage nach Events fürs Wochenende (${saturdayStr} und ${sundayStr}) erkannt`);
+      console.log(`[ai-event-chat] Anfrage nach Events fürs Wochenende (${saturdayStr} und ${sundayStr}) erkannt`);
       filteredEvents = filteredEvents.filter(e => e.date === saturdayStr || e.date === sundayStr);
-      console.log(`Nach Filterung für "Wochenende": ${filteredEvents.length} Events übrig`);
+      console.log(`[ai-event-chat] Nach Filterung für "Wochenende": ${filteredEvents.length} Events übrig`);
     }
     
     // Apply additional filters for personalized requests or heart mode
     // First apply location filtering if userLocations are provided
     if (userLocations && userLocations.length > 0) {
-      console.log("Applying location filtering with user locations:", JSON.stringify(userLocations));
+      console.log("[ai-event-chat] Applying location filtering with user locations:", JSON.stringify(userLocations));
       
       // Convert locations to lowercase for case-insensitive matching
       const lowerLocations = userLocations.map((location: string) => location.toLowerCase());
@@ -191,19 +190,19 @@ serve(async (req) => {
       // If we found events matching locations, use them, otherwise keep current filter
       if (locationFilteredEvents.length > 0) {
         filteredEvents = locationFilteredEvents;
-        console.log(`Found ${locationFilteredEvents.length} events matching user locations (from ${beforeLocationFilter})`);
+        console.log(`[ai-event-chat] Found ${locationFilteredEvents.length} events matching user locations (from ${beforeLocationFilter})`);
       } else {
-        console.log(`No events found matching user locations from ${beforeLocationFilter} events`);
+        console.log(`[ai-event-chat] No events found matching user locations from ${beforeLocationFilter} events`);
       }
     }
     
     // Additional filtering logic for personalized requests or interests
     if ((isPersonalRequest || query.includes("❤️")) && userInterests && userInterests.length > 0) {
-      console.log("Applying personalized interest filtering");
+      console.log("[ai-event-chat] Applying personalized interest filtering");
       
       // Convert interests to lowercase for case-insensitive matching
       const lowerInterests = userInterests.map((interest: string) => interest.toLowerCase());
-      console.log("Lowercase interests for filtering:", JSON.stringify(lowerInterests));
+      console.log("[ai-event-chat] Lowercase interests for filtering:", JSON.stringify(lowerInterests));
       
       // Count events before filtering
       const beforeInterestFilter = filteredEvents.length;
@@ -214,7 +213,7 @@ serve(async (req) => {
         if (event.category && lowerInterests.some((interest: string) => 
           event.category.toLowerCase().includes(interest.toLowerCase())
         )) {
-          console.log(`Event ${event.title} matches interest by category ${event.category}`);
+          console.log(`[ai-event-chat] Event ${event.title} matches interest by category ${event.category}`);
           return true;
         }
         
@@ -224,7 +223,7 @@ serve(async (req) => {
         
         for (const interest of lowerInterests) {
           if (lowerTitle.includes(interest) || lowerDescription.includes(interest)) {
-            console.log(`Event ${event.title} matches interest "${interest}" in title/description`);
+            console.log(`[ai-event-chat] Event ${event.title} matches interest "${interest}" in title/description`);
             return true;
           }
         }
@@ -235,9 +234,9 @@ serve(async (req) => {
       // If we found events matching interests, use them, otherwise keep original filter
       if (interestFilteredEvents.length > 0) {
         filteredEvents = interestFilteredEvents;
-        console.log(`Found ${interestFilteredEvents.length} events matching user interests (from ${beforeInterestFilter})`);
+        console.log(`[ai-event-chat] Found ${interestFilteredEvents.length} events matching user interests (from ${beforeInterestFilter})`);
       } else {
-        console.log(`No events found matching user interests from ${beforeInterestFilter} events`);
+        console.log(`[ai-event-chat] No events found matching user interests from ${beforeInterestFilter} events`);
       }
     }
 
@@ -280,12 +279,12 @@ serve(async (req) => {
     }
     
     if (categoryFilter) {
-      console.log(`Anfrage nach Events der Kategorie "${categoryFilter}" erkannt`);
+      console.log(`[ai-event-chat] Anfrage nach Events der Kategorie "${categoryFilter}" erkannt`);
       const beforeCount = filteredEvents.length;
       filteredEvents = filteredEvents.filter((e: any) => 
         e.category && e.category.toLowerCase() === categoryFilter!.toLowerCase()
       );
-      console.log(`Nach Filterung für Kategorie "${categoryFilter}": ${filteredEvents.length} von ${beforeCount} Events übrig`);
+      console.log(`[ai-event-chat] Nach Filterung für Kategorie "${categoryFilter}": ${filteredEvents.length} von ${beforeCount} Events übrig`);
     }
     
     // Falls die Filterung zu streng war und keine Events übrig sind, nehmen wir die letzten 20 Events
@@ -297,14 +296,14 @@ serve(async (req) => {
         .slice(0, 20);
     }
 
-    console.log(`Sende ${filteredEvents.length} gefilterte Events an das KI-Modell`);
+    console.log(`[ai-event-chat] Sende ${filteredEvents.length} gefilterte Events an das KI-Modell`);
     
     // Log some debug information about events
     if (currentDate) {
       const todayEvents = filteredEvents.filter((e: any) => e.date === currentDate);
-      console.log(`Events für heute (${currentDate}) nach Filterung: ${todayEvents.length}`);
+      console.log(`[ai-event-chat] Events für heute (${currentDate}) nach Filterung: ${todayEvents.length}`);
       if (todayEvents.length > 0) {
-        console.log('Erste Events für heute:', todayEvents.slice(0, 3).map((e: any) => `${e.title} (${e.date})`));
+        console.log('[ai-event-chat] Erste Events für heute:', todayEvents.slice(0, 3).map((e: any) => `${e.title} (${e.date})`));
       }
     }
     
@@ -353,8 +352,8 @@ serve(async (req) => {
      * CALL OPENROUTER
      ***************************/
     // Log that we're about to send the request
-    console.log("Sending request to Open Router API with Gemini model...");
-    console.log("System message being sent:", systemMessage);
+    console.log("[ai-event-chat] Sending request to Open Router API with Gemini model...");
+    console.log("[ai-event-chat] System message being sent:", systemMessage);
     
     const payload = {
       model: "google/gemini-2.0-flash-lite-001", // gemini-2.0-flash-lite is more reliable
@@ -366,7 +365,7 @@ serve(async (req) => {
       max_tokens: 1024,
     };
 
-    console.log("Full payload being sent:", JSON.stringify(payload));
+    console.log("[ai-event-chat] Full payload being sent:", JSON.stringify(payload));
 
     const orRes = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
@@ -385,8 +384,8 @@ serve(async (req) => {
     try {
       parsed = JSON.parse(rawBody);
     } catch (parseError) {
-      console.error("Error parsing Open Router API response:", parseError);
-      console.error("Raw response:", rawBody);
+      console.error("[ai-event-chat] Error parsing Open Router API response:", parseError);
+      console.error("[ai-event-chat] Raw response:", rawBody);
       throw new Error(`Fehler beim Parsen der API-Antwort: ${parseError.message}`);
     }
 
@@ -542,7 +541,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error in AI chat function:", error);
+    console.error("[ai-event-chat] Error in AI chat function:", error);
     const html = `
       <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
         <h5 class="font-medium text-sm text-red-600 dark:text-red-400">Unbekannter Fehler</h5>

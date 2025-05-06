@@ -13,7 +13,7 @@ export const userService = {
       .order('last_online', { ascending: false });
       
     if (error) {
-      console.error('Fehler beim Abrufen von Benutzerprofilen:', error);
+      console.error('[userService] Fehler beim Abrufen von Benutzerprofilen:', error);
       throw error;
     }
     
@@ -25,11 +25,11 @@ export const userService = {
    */
   async getUserByUsername(username: string): Promise<UserProfile | null> {
     if (!username) {
-      console.error('Username is required to fetch profile');
+      console.error('[userService] Username is required to fetch profile');
       return null;
     }
     
-    console.log(`Fetching profile for username: ${username}`);
+    console.log(`[userService] Fetching profile for username: ${username}`);
     
     try {
       const { data, error } = await supabase.functions.invoke('manage_user_profile', {
@@ -37,24 +37,24 @@ export const userService = {
       });
 
       if (error) {
-        console.error('Edge function error:', error);
+        console.error('[userService] Edge function error:', error);
         throw error;
       }
       
       if (data?.profile) {
-        console.log('Profile received from edge function:', data.profile);
-        console.log('Interests:', data.profile.interests);
-        console.log('Favorite locations:', data.profile.favorite_locations);
+        console.log('[userService] Profile received from edge function:', data.profile);
+        console.log('[userService] Interests:', data.profile.interests || []);
+        console.log('[userService] Favorite locations:', data.profile.favorite_locations || []);
       } else {
-        console.log('No profile found for user:', username);
+        console.log('[userService] No profile found for user:', username);
       }
       
       return data?.profile || null;
     } catch (error) {
-      console.error('Fehler beim Abrufen des Benutzerprofils:', error);
+      console.error('[userService] Fehler beim Abrufen des Benutzerprofils:', error);
       
       // Fallback to direct DB query if edge function fails
-      console.log('Attempting direct DB query as fallback');
+      console.log('[userService] Attempting direct DB query as fallback');
       const { data, error: dbError } = await supabase
         .from('user_profiles')
         .select('*')
@@ -62,14 +62,14 @@ export const userService = {
         .maybeSingle();
         
       if (dbError) {
-        console.error('DB fallback query error:', dbError);
+        console.error('[userService] DB fallback query error:', dbError);
         throw dbError;
       }
       
       if (data) {
-        console.log('Profile found via direct DB query:', data);
-        console.log('Interests:', data.interests);
-        console.log('Favorite locations:', data.favorite_locations);
+        console.log('[userService] Profile found via direct DB query:', data);
+        console.log('[userService] Interests:', data.interests || []);
+        console.log('[userService] Favorite locations:', data.favorite_locations || []);
       }
       
       return data;

@@ -25,11 +25,11 @@ export const useMessageFetching = (groupId: string) => {
     }
     
     try {
-      console.log(`Nachrichten für Gruppe abrufen: ${validGroupId}`);
+      console.log(`[useMessageFetching] Nachrichten für Gruppe abrufen: ${validGroupId}`);
       
       // Set a timeout to prevent too long loading states
       const timeoutPromise = new Promise<Message[]>((_, reject) => {
-        setTimeout(() => reject(new Error("Zeitüberschreitung beim Abrufen der Nachrichten")), 15000); // Increased timeout to 15 seconds
+        setTimeout(() => reject(new Error("Zeitüberschreitung beim Abrufen der Nachrichten")), 15000); // 15 second timeout
       });
       
       // Actual fetch operation
@@ -38,11 +38,11 @@ export const useMessageFetching = (groupId: string) => {
       // Race between timeout and actual fetch
       const messages = await Promise.race([fetchPromise, timeoutPromise]);
       
-      console.log(`${messages.length} Nachrichten empfangen`);
+      console.log(`[useMessageFetching] ${messages.length} Nachrichten empfangen`);
       setError(null);
       return messages;
     } catch (err: any) {
-      console.error('Fehler in fetchMessages:', err);
+      console.error('[useMessageFetching] Fehler in fetchMessages:', err);
       setError(err.message || "Fehler beim Abrufen der Nachrichten");
       return [];
     } finally {

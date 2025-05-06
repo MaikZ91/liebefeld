@@ -49,21 +49,28 @@ export const generateResponse = async (query: string, events: any[], isHeartMode
     const nextWeekEnd = nextWeekEndDate.toISOString().split('T')[0];
     
     // Get user interests and preferred locations from localStorage
-    let userInterests = localStorage.getItem('user_interests') 
-      ? JSON.parse(localStorage.getItem('user_interests') || '[]') 
-      : [];
+    let userInterests: string[] = [];
+    let userLocations: string[] = [];
+    
+    try {
+      const storedInterests = localStorage.getItem('user_interests');
+      userInterests = storedInterests ? JSON.parse(storedInterests) : [];
       
-    let userLocations = localStorage.getItem('user_locations') 
-      ? JSON.parse(localStorage.getItem('user_locations') || '[]') 
-      : [];
-    
-    // Ensure we have arrays even if localStorage returned null or invalid data
-    if (!Array.isArray(userInterests)) userInterests = [];
-    if (!Array.isArray(userLocations)) userLocations = [];
-    
-    console.log('Heart mode active:', isHeartMode);
-    console.log('User interests to filter with:', JSON.stringify(userInterests));
-    console.log('User locations to filter with:', JSON.stringify(userLocations));
+      const storedLocations = localStorage.getItem('user_locations');
+      userLocations = storedLocations ? JSON.parse(storedLocations) : [];
+      
+      // Ensure we have arrays even if localStorage returned invalid data
+      if (!Array.isArray(userInterests)) userInterests = [];
+      if (!Array.isArray(userLocations)) userLocations = [];
+      
+      console.log('[chatUtils] Heart mode active:', isHeartMode);
+      console.log('[chatUtils] User interests from localStorage:', JSON.stringify(userInterests));
+      console.log('[chatUtils] User locations from localStorage:', JSON.stringify(userLocations));
+    } catch (err) {
+      console.error('[chatUtils] Error getting data from localStorage:', err);
+      userInterests = [];
+      userLocations = [];
+    }
     
     // Check if we're in a browser environment
     if (typeof window !== 'undefined') {
@@ -76,17 +83,20 @@ export const generateResponse = async (query: string, events: any[], isHeartMode
       if (hour < 12) timeOfDay = 'morning';
       else if (hour >= 18) timeOfDay = 'evening';
       
-      // Always send user interests with personalized requests
-      // Modified to always send interests if heart mode is active
+      // Always send user interests with personalized requests or in heart mode
       const interestsToSend = isHeartMode ? userInterests : 
                             (query.includes('zu mir passen') || 
-                            query.includes('persönlich') ? userInterests : null);
+                            query.includes('persönlich') || 
+                            query.includes('❤️') ? userInterests : null);
       
-      // Only send location filter if heart mode is active
-      const locationsToSend = isHeartMode ? userLocations : null;
+      // Only send location filter if heart mode is active or personalized query
+      const locationsToSend = isHeartMode || 
+                            query.includes('zu mir passen') || 
+                            query.includes('persönlich') || 
+                            query.includes('❤️') ? userLocations : null;
       
-      console.log('Sending interests to edge function:', JSON.stringify(interestsToSend));
-      console.log('Sending locations to edge function:', JSON.stringify(locationsToSend));
+      console.log('[chatUtils] Sending interests to edge function:', JSON.stringify(interestsToSend));
+      console.log('[chatUtils] Sending locations to edge function:', JSON.stringify(locationsToSend));
       
       // Call the edge function using the supabase client instead of direct fetch
       const { data, error } = await supabase.functions.invoke('ai-event-chat', {
@@ -104,7 +114,7 @@ export const generateResponse = async (query: string, events: any[], isHeartMode
       });
       
       if (error) {
-        console.error('Edge function error details:', error);
+        console.error('[chatUtils] Edge function error details:', error);
         throw new Error(`Edge function error: ${error.message}`);
       }
       
@@ -115,7 +125,7 @@ export const generateResponse = async (query: string, events: any[], isHeartMode
         `<p>Ich konnte keine Events finden, die zu deiner Anfrage passen.</p>`;
     }
   } catch (error) {
-    console.error('Error generating response:', error);
+    console.error('[chatUtils] Error generating response:', error);
     return createResponseHeader('Fehler') +
       `<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
         Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. 
@@ -129,8 +139,8 @@ export const generatePersonalizedPrompt = (interests?: string[], locations?: str
   const userInterests = interests?.length ? interests : [];
   const userLocations = locations?.length ? locations : [];
   
-  console.log('Generating personalized prompt with interests:', JSON.stringify(userInterests));
-  console.log('Generating personalized prompt with locations:', JSON.stringify(userLocations));
+  console.log('[chatUtils] Generating personalized prompt with interests:', JSON.stringify(userInterests));
+  console.log('[chatUtils] Generating personalized prompt with locations:', JSON.stringify(userLocations));
   
   // Base query for heart mode
   let prompt = "";
@@ -156,6 +166,6 @@ export const generatePersonalizedPrompt = (interests?: string[], locations?: str
   
   prompt += ". Zeige mir eine personalisierte Auswahl von Events.";
   
-  console.log('Generated personalized prompt:', prompt);
+  console.log('[chatUtils] Generated personalized prompt:', prompt);
   return prompt;
 };

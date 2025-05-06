@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { ChatMessage, CHAT_HISTORY_KEY, CHAT_QUERIES_KEY } from './types';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,7 +41,7 @@ export const useChatLogic = (
           welcomeMessageShownRef.current = true; // Skip welcome message if we loaded history
         }
       } catch (error) {
-        console.error('Error parsing saved chat history:', error);
+        console.error('[useChatLogic] Error parsing saved chat history:', error);
       }
     }
     
@@ -55,8 +54,17 @@ export const useChatLogic = (
           setRecentQueries(parsedQueries.slice(0, 3)); // Only store last 3
         }
       } catch (error) {
-        console.error('Error parsing saved queries:', error);
+        console.error('[useChatLogic] Error parsing saved queries:', error);
       }
+    }
+    
+    // Also load heart mode state from localStorage
+    try {
+      const heartModeActive = localStorage.getItem('heart_mode_active') === 'true';
+      setIsHeartActive(heartModeActive);
+      console.log('[useChatLogic] Heart mode loaded from localStorage:', heartModeActive);
+    } catch (error) {
+      console.error('[useChatLogic] Error loading heart mode state:', error);
     }
     
     // Fetch global queries from Supabase
@@ -76,6 +84,16 @@ export const useChatLogic = (
       localStorage.setItem(CHAT_QUERIES_KEY, JSON.stringify(recentQueries));
     }
   }, [recentQueries]);
+  
+  // Save heart mode state to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('heart_mode_active', isHeartActive ? 'true' : 'false');
+      console.log('[useChatLogic] Heart mode saved to localStorage:', isHeartActive);
+    } catch (error) {
+      console.error('[useChatLogic] Error saving heart mode state:', error);
+    }
+  }, [isHeartActive]);
 
   useEffect(() => {
     // Initialize the chat bot after a delay
@@ -131,7 +149,7 @@ export const useChatLogic = (
         .limit(3);
         
       if (error) {
-        console.error('Error fetching global queries:', error);
+        console.error('[useChatLogic] Error fetching global queries:', error);
         return;
       }
       
@@ -140,7 +158,7 @@ export const useChatLogic = (
         setGlobalQueries(queries);
       }
     } catch (error) {
-      console.error('Exception fetching global queries:', error);
+      console.error('[useChatLogic] Exception fetching global queries:', error);
     }
   };
   
@@ -155,7 +173,7 @@ export const useChatLogic = (
         .limit(1);
         
       if (checkError) {
-        console.error('Error checking for existing query:', checkError);
+        console.error('[useChatLogic] Error checking for existing query:', checkError);
         return;
       }
       
@@ -172,14 +190,14 @@ export const useChatLogic = (
           .insert({ query: query });
           
         if (insertError) {
-          console.error('Error saving global query:', insertError);
+          console.error('[useChatLogic] Error saving global query:', insertError);
         }
       }
       
       // Refresh the global queries list
       fetchGlobalQueries();
     } catch (error) {
-      console.error('Exception saving global query:', error);
+      console.error('[useChatLogic] Exception saving global query:', error);
     }
   };
 
@@ -218,8 +236,8 @@ export const useChatLogic = (
     // Process with small delay to show typing indicator
     setTimeout(async () => {
       try {
-        console.log(`Processing user query: "${message}" with ${events.length} events`);
-        console.log(`Heart mode active: ${isHeartActive}`);
+        console.log(`[useChatLogic] Processing user query: "${message}" with ${events.length} events`);
+        console.log(`[useChatLogic] Heart mode active: ${isHeartActive}`);
         
         // Pass the heart mode state to the generateResponse function
         const responseHtml = await generateResponse(message, events, isHeartActive);
@@ -234,7 +252,7 @@ export const useChatLogic = (
         
         setMessages(prev => [...prev, botMessage]);
       } catch (error) {
-        console.error('Error generating response:', error);
+        console.error('[useChatLogic] Error generating response:', error);
         
         const errorMessage: ChatMessage = {
           id: `error-${Date.now()}`,
@@ -290,7 +308,7 @@ export const useChatLogic = (
     if (typeof window !== 'undefined') {
       // @ts-ignore - We're explicitly adding a custom property
       window.chatbotQuery = handleExternalQuery;
-      console.log("Registered window.chatbotQuery function");
+      console.log("[useChatLogic] Registered window.chatbotQuery function");
     }
     
     return () => {
@@ -330,7 +348,7 @@ export const useChatLogic = (
     const newHeartState = !isHeartActive;
     setIsHeartActive(newHeartState);
     
-    console.log(`Heart mode ${newHeartState ? 'activated' : 'deactivated'}`);
+    console.log(`[useChatLogic] Heart mode ${newHeartState ? 'activated' : 'deactivated'}`);
     
     // Show a toast notification about the mode change
     if (newHeartState) {
