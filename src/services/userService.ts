@@ -44,52 +44,24 @@ export const userService = {
   async createOrUpdateProfile(profile: Partial<UserProfile> & { username: string }): Promise<UserProfile> {
     try {
       console.log('Creating or updating profile:', profile);
+
+      // Vereinfachte Methode mit upsert - erstellt oder aktualisiert je nach vorhandenem Eintrag
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .upsert({
+          ...profile,
+          last_online: new Date().toISOString()
+        })
+        .select()
+        .single();
       
-      // Prüfen, ob der Benutzer bereits existiert
-      const existingUser = await this.getUserByUsername(profile.username);
-      
-      // Da wir RLS deaktiviert haben, können wir direkt aktualisieren oder einfügen
-      if (existingUser) {
-        // Benutzer aktualisieren
-        console.log('Updating existing user profile');
-        
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .update({
-            ...profile,
-            last_online: new Date().toISOString()
-          })
-          .eq('username', profile.username)
-          .select()
-          .single();
-          
-        if (error) {
-          console.error('Fehler beim Aktualisieren des Benutzerprofils:', error);
-          throw error;
-        }
-        
-        return data;
-      } else {
-        // Neuen Benutzer erstellen
-        console.log('Creating new user profile');
-        
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .insert({
-            ...profile,
-            created_at: new Date().toISOString(),
-            last_online: new Date().toISOString()
-          })
-          .select()
-          .single();
-        
-        if (error) {
-          console.error('Fehler beim Erstellen des Benutzerprofils:', error);
-          throw error;
-        }
-        
-        return data;
+      if (error) {
+        console.error('Fehler beim Erstellen/Aktualisieren des Benutzerprofils:', error);
+        throw error;
       }
+      
+      console.log('Profile saved successfully:', data);
+      return data;
     } catch (error) {
       console.error('Fehler in createOrUpdateProfile:', error);
       throw error;
@@ -120,9 +92,17 @@ export const userService = {
       const { data: buckets } = await supabase.storage.listBuckets();
       if (!buckets?.find(bucket => bucket.name === 'avatars')) {
         // Bucket nicht gefunden, versuche ihn zu erstellen
-        await supabase.storage.createBucket('avatars', {
+        console.log('Creating avatars bucket');
+        const { data: newBucket, error: bucketError } = await supabase.storage.createBucket('avatars', {
           public: true
         });
+        
+        if (bucketError) {
+          console.error('Error creating bucket:', bucketError);
+          throw bucketError;
+        }
+        
+        console.log('Created new bucket:', newBucket);
       }
 
       // Eindeutigen Dateinamen generieren
@@ -148,6 +128,7 @@ export const userService = {
         .from('avatars')
         .getPublicUrl(filePath);
 
+      console.log('File uploaded successfully. Public URL:', publicUrlData.publicUrl);
       return publicUrlData.publicUrl;
     } catch (error) {
       console.error('Error uploading image:', error);

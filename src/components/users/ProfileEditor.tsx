@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
 
   // Add the missing filteredLocations computed property
   const filteredLocations = locations.filter(location => 
@@ -61,6 +63,27 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       avatar: currentUser?.avatar || '',
     },
   });
+
+  // Ensure the storage bucket exists
+  useEffect(() => {
+    async function ensureStorageBucket() {
+      if (!open) return;
+      
+      try {
+        const { data: buckets } = await supabase.storage.listBuckets();
+        if (!buckets?.find(bucket => bucket.name === 'avatars')) {
+          console.log('Creating avatars bucket from ProfileEditor');
+          await supabase.storage.createBucket('avatars', {
+            public: true
+          });
+        }
+      } catch (err) {
+        console.error('Error ensuring bucket exists:', err);
+      }
+    }
+    
+    ensureStorageBucket();
+  }, [open]);
 
   // Fetch locations from the database
   useEffect(() => {
@@ -98,6 +121,10 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         username: currentUser.username,
         avatar: currentUser.avatar || '',
       });
+      
+      // Reset uploadedImage when currentUser changes
+      setUploadedImage(null);
+      
       // Combine both interests and hobbies into a single array
       const combinedInterests = [
         ...(currentUser.interests || []),
@@ -167,25 +194,14 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     try {
       setUploading(true);
       
-      // Ensure that the storage bucket exists before upload
-      try {
-        const { data: buckets } = await supabase.storage.listBuckets();
-        if (!buckets?.find(bucket => bucket.name === 'avatars')) {
-          console.log('Creating avatars bucket');
-          await supabase.storage.createBucket('avatars', {
-            public: true
-          });
-        }
-      } catch (err) {
-        console.error('Error checking/creating bucket:', err);
-        // Continue with upload attempt even if this fails
-      }
-      
       // Use our improved upload service
       const publicUrl = await userService.uploadProfileImage(file);
         
       // Set the avatar URL in the form
       form.setValue('avatar', publicUrl);
+      
+      // Save the uploaded image URL
+      setUploadedImage(publicUrl);
       
       toast({
         title: "Erfolg",
@@ -211,16 +227,19 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     setIsSubmitting(true);
     
     try {
+      // Verwende die tatsächliche Avatar-URL (entweder die neu hochgeladene oder die existierende)
+      const avatarUrl = uploadedImage || values.avatar;
+      
       console.log("Saving profile with data:", {
         username: values.username,
-        avatar: values.avatar,
+        avatar: avatarUrl,
         interests: interests,
         favorite_locations: favoriteLocations
       });
       
       const updatedProfile = await userService.createOrUpdateProfile({
         username: values.username,
-        avatar: values.avatar || null,
+        avatar: avatarUrl || null,
         interests: interests,
         hobbies: [], // We now store everything in interests
         favorite_locations: favoriteLocations
@@ -230,8 +249,8 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       
       // Update local storage with the new username and avatar
       localStorage.setItem('community_chat_username', values.username);
-      if (values.avatar) {
-        localStorage.setItem('community_chat_avatar', values.avatar);
+      if (avatarUrl) {
+        localStorage.setItem('community_chat_avatar', avatarUrl);
       }
       
       toast({
@@ -268,7 +287,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="flex flex-col items-center mb-4">
               <Avatar className="h-24 w-24 mb-3 border-2 border-red-500/50">
-                <AvatarImage src={form.watch('avatar') || ''} alt={form.watch('username')} />
+                <AvatarImage src={uploadedImage || form.watch('avatar') || ''} alt={form.watch('username')} />
                 <AvatarFallback className="bg-red-500 text-2xl">
                   {getInitials(form.watch('username'))}
                 </AvatarFallback>

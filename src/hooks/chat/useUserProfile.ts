@@ -61,9 +61,9 @@ export const useUserProfile = () => {
           profile = await userService.createOrUpdateProfile({
             username: currentUser,
             avatar: avatar || null,
-            // Standardwerte für Interessen und Hobbys
-            interests: ['Sport', 'Events', 'Kreativität'],
-            hobbies: ['Tanzen', 'Musik', 'Kochen'],
+            // Standardwerte für Interessen und Hobbys - hier korrigiert: leere Arrays statt strings in Array
+            interests: profile?.interests || [],
+            hobbies: profile?.hobbies || [],
             favorite_locations: profile?.favorite_locations || []
           });
           
