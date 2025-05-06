@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import * as z from 'zod';
 import { userService } from '@/services/userService';
 import { Badge } from "@/components/ui/badge";
 import { X, Plus, Upload, MapPin } from 'lucide-react';
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -134,6 +135,11 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     setFavoriteLocations(favoriteLocations.filter(loc => loc !== location));
   };
 
+  // Handle location selection
+  const handleSelectLocation = (location: string) => {
+    setSelectedLocation(location);
+  };
+
   // Fix for image upload
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -141,13 +147,21 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     
     // Check file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
-      toast.error("Das Bild ist zu groß. Maximale Größe: 2MB");
+      toast({
+        title: "Error",
+        description: "Das Bild ist zu groß. Maximale Größe: 2MB",
+        variant: "destructive"
+      });
       return;
     }
     
     // Check file type
     if (!file.type.startsWith('image/')) {
-      toast.error("Nur Bilder können hochgeladen werden");
+      toast({
+        title: "Error",
+        description: "Nur Bilder können hochgeladen werden",
+        variant: "destructive"
+      });
       return;
     }
     
@@ -159,26 +173,37 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         
       // Set the avatar URL in the form
       form.setValue('avatar', publicUrl);
-      toast.success("Bild erfolgreich hochgeladen");
+      
+      toast({
+        title: "Erfolg",
+        description: "Bild erfolgreich hochgeladen",
+        variant: "success"
+      });
     } catch (error) {
       console.error('Error uploading image:', error);
-      toast.error("Fehler beim Hochladen des Bildes");
+      toast({
+        title: "Error",
+        description: "Fehler beim Hochladen des Bildes",
+        variant: "destructive"
+      });
     } finally {
       setUploading(false);
     }
-  };
-
-  // Fix for handling location selection
-  const handleSelectLocation = (location: string) => {
-    setSelectedLocation(location);
-    // Don't close popup automatically to allow immediate adding
   };
 
   const onSubmit = async (values: z.infer<typeof profileSchema>) => {
     if (!currentUser) return;
     
     setIsSubmitting(true);
+    
     try {
+      console.log("Saving profile:", {
+        username: values.username,
+        avatar: values.avatar,
+        interests: interests,
+        favorite_locations: favoriteLocations
+      });
+      
       await userService.createOrUpdateProfile({
         username: values.username,
         avatar: values.avatar || null,
@@ -193,12 +218,21 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         localStorage.setItem('community_chat_avatar', values.avatar);
       }
       
-      toast.success("Profil erfolgreich aktualisiert!");
+      toast({
+        title: "Erfolg",
+        description: "Profil erfolgreich aktualisiert!",
+        variant: "success"
+      });
+      
       onProfileUpdate();
       onOpenChange(false);
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error("Fehler beim Aktualisieren des Profils");
+      toast({
+        title: "Error",
+        description: "Fehler beim Aktualisieren des Profils",
+        variant: "destructive"
+      });
     } finally {
       setIsSubmitting(false);
     }
