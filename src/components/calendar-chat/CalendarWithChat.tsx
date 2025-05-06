@@ -30,22 +30,39 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
   const [activeGroup, setActiveGroup] = useState<string>("");
   const [groups, setGroups] = useState<ExtendedChatGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [username, setUsername] = useState<string>(() => {
-    return localStorage.getItem(USERNAME_KEY) || "";
-  });
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [username, setUsername] = useState<string>("");
   const [isUsernameModalOpen, setIsUsernameModalOpen] = useState(false);
   const [newMessages, setNewMessages] = useState(0);
   const [newEvents, setNewEvents] = useState(0);
   const lastCheckedMessages = useRef(new Date());
   const lastCheckedEvents = useRef(new Date());
 
+  // Initialize username from localStorage safely
   useEffect(() => {
-    if (!username) {
-      setIsUsernameModalOpen(true);
-    } else if (!localStorage.getItem(AVATAR_KEY)) {
-      localStorage.setItem(AVATAR_KEY, getInitials(username));
+    try {
+      if (typeof window !== 'undefined') {
+        const storedUsername = localStorage.getItem(USERNAME_KEY);
+        setUsername(storedUsername || "");
+        setIsInitialized(true);
+      }
+    } catch (error) {
+      console.error("Error reading username from localStorage:", error);
+      setIsInitialized(true); // Still mark as initialized to avoid blocking UI
     }
-  }, [username]);
+  }, []);
+
+  useEffect(() => {
+    if (isInitialized && !username) {
+      setIsUsernameModalOpen(true);
+    } else if (isInitialized && username && !localStorage.getItem(AVATAR_KEY)) {
+      try {
+        localStorage.setItem(AVATAR_KEY, getInitials(username));
+      } catch (error) {
+        console.error("Error setting avatar in localStorage:", error);
+      }
+    }
+  }, [username, isInitialized]);
 
   useEffect(() => {
     if (events.length > 0) {
@@ -187,7 +204,8 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
   const activeGroupObj = groups.find(g => g.id === activeGroup);
   const activeGroupName = activeGroupObj ? (activeGroupObj.displayName || activeGroupObj.name) : "Gruppe wählen";
   
-  if (isLoading) {
+  // If still loading and not initialized, show loading state
+  if (isLoading && !isInitialized) {
     return <LoadingState />;
   }
   

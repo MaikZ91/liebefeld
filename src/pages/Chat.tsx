@@ -14,11 +14,13 @@ import EventCalendar from '@/components/EventCalendar';
 import EventForm from '@/components/EventForm';
 import LiveTicker from '@/components/LiveTicker';
 import { setupService } from '@/services/setupService';
+import { toast } from '@/hooks/use-toast';
 
 const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
   const [isAddEventSheetOpen, setIsAddEventSheetOpen] = useState(false);
   const [isEventListSheetOpen, setIsEventListSheetOpen] = useState(false);
+  const [isPageLoaded, setIsPageLoaded] = useState(false);
   const {
     events
   } = useEventContext();
@@ -34,13 +36,25 @@ const ChatPage = () => {
   };
 
   // Get username from localStorage for chat
-  const [username, setUsername] = useState<string>(() => typeof window !== 'undefined' ? localStorage.getItem(USERNAME_KEY) || 'Gast' : 'Gast');
+  const [username, setUsername] = useState<string>('Gast');
 
   // WhatsApp community link - Updated with the actual WhatsApp community link
   const whatsAppLink = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
 
   // Enable realtime messaging when component mounts and ensure default group exists
   useEffect(() => {
+    // Handle username initialization safely
+    try {
+      if (typeof window !== 'undefined') {
+        const storedUsername = localStorage.getItem(USERNAME_KEY);
+        if (storedUsername) {
+          setUsername(storedUsername);
+        }
+      }
+    } catch (error) {
+      console.error('Error accessing localStorage:', error);
+    }
+
     const setupDatabase = async () => {
       try {
         // Ensure the default group exists
@@ -66,6 +80,14 @@ const ChatPage = () => {
         console.log('Realtime subscription initialized');
       } catch (error) {
         console.error('Exception in enabling Realtime:', error);
+        toast({
+          title: "Verbindungsfehler",
+          description: "Es konnte keine Verbindung zum Chat hergestellt werden.",
+          variant: "destructive"
+        });
+      } finally {
+        // Mark page as loaded even if there were errors
+        setIsPageLoaded(true);
       }
     };
     
@@ -82,6 +104,20 @@ const ChatPage = () => {
     window.addEventListener('resize', checkIsMobile);
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
+
+  // Show loading state while initializing
+  if (!isPageLoaded) {
+    return (
+      <Layout hideFooter={true}>
+        <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)] items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-red-500 border-t-transparent"></div>
+            <p className="text-lg font-medium">Lade Chat...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout hideFooter={true}>
