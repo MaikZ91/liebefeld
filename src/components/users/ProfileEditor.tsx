@@ -167,6 +167,20 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     try {
       setUploading(true);
       
+      // Ensure that the storage bucket exists before upload
+      try {
+        const { data: buckets } = await supabase.storage.listBuckets();
+        if (!buckets?.find(bucket => bucket.name === 'avatars')) {
+          console.log('Creating avatars bucket');
+          await supabase.storage.createBucket('avatars', {
+            public: true
+          });
+        }
+      } catch (err) {
+        console.error('Error checking/creating bucket:', err);
+        // Continue with upload attempt even if this fails
+      }
+      
       // Use our improved upload service
       const publicUrl = await userService.uploadProfileImage(file);
         
