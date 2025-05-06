@@ -72,7 +72,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
   const setActiveChatModeValue = setActiveChatMode || setInternalActiveChatMode;
   
   // Add user profile hook to get the current user's profile data
-  const { currentUser, userProfile } = useUserProfile();
+  const { currentUser, userProfile, refetchProfile } = useUserProfile();
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -551,6 +551,18 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
     }
   };
 
+  // Handle profile update
+  const handleProfileUpdate = () => {
+    if (userProfile) {
+      refetchProfile();
+      toast({
+        title: "Willkommen " + userProfile.username + "!",
+        description: "Du kannst jetzt in den Gruppen chatten.",
+        variant: "success"
+      });
+    }
+  };
+
   if (!isVisible) return null;
 
   // Render the message list
@@ -804,116 +816,4 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
                           key={index}
                           variant="outline"
                           size="sm"
-                          className="text-left justify-start bg-red-900/20 hover:bg-red-900/30 text-red-200 border-red-500/30 text-xs"
-                          onClick={() => handleExamplePromptClick(prompt)}
-                        >
-                          "{prompt}"
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                <div ref={messagesEndRef} />
-              </div>
-            ) : (
-              <GroupChat compact groupId={communityGroupId} groupName="Allgemein" />
-            )}
-          </ScrollArea>
-          
-          <div className="p-3 border-t border-red-500/20 relative">
-            {renderRecentQueries()}
-            
-            <div className="flex items-center relative">
-              <div className="absolute left-2 flex items-center gap-1 z-10">
-                {/* Heart button for personalized recommendations */}
-                {activeChatModeValue === 'ai' && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleHeartClick}
-                    className={`h-6 w-6 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`}
-                    title={isHeartActive ? "Personalisierter Modus aktiv" : "Standard-Modus aktiv"}
-                  >
-                    <Heart className={`h-3 w-3 ${isHeartActive ? 'fill-red-500' : ''}`} />
-                  </Button>
-                )}
-                
-                {/* History button for recent queries */}
-                {globalQueries.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={toggleRecentQueries}
-                    className="h-6 w-6 text-red-400"
-                    title="Community Anfragen"
-                  >
-                    <History className="h-3 w-3" />
-                  </Button>
-                )}
-                
-                {/* Community Button */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleToggleChatMode}
-                  className="h-6 w-6 text-[#9b87f5]"
-                  title="Community"
-                >
-                  <Users className="h-3 w-3" />
-                  <span className="sr-only">Community</span>
-                </Button>
-              </div>
-              
-              {activeChatModeValue === 'ai' ? (
-                <>
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Frage nach Events..."
-                    className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-2 py-1 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 pl-16 pr-10 w-[85%]"
-                  />
-                  <button
-                    onClick={() => handleSendMessage()}
-                    disabled={!input.trim() || isTyping}
-                    className={cn(
-                      "absolute right-1 rounded-full p-2",  // Changed p-1 to p-2
-                      input.trim() && !isTyping
-                        ? "bg-red-500 hover:bg-red-600 text-white"
-                        : "bg-zinc-800 text-zinc-500"
-                    )}
-                  >
-                    <Send className="h-4 w-4" />  {/* Changed from h-3 w-3 to h-4 w-4 */}
-                  </button>
-                </>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {!fullPage && !isChatOpen && (
-        <button
-          onClick={handleToggleChat}
-          className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 shadow-lg transform transition-transform hover:scale-105"
-          aria-label="Öffne Event-Assistent"
-        >
-          <MessageCircle className="h-6 w-6" />
-        </button>
-      )}
-      
-      {/* Replace UsernameDialog with ProfileEditor */}
-      <ProfileEditor
-        open={isProfileEditorOpen}
-        onOpenChange={setIsProfileEditorOpen}
-        currentUser={userProfile}
-        onProfileUpdate={handleProfileUpdate}
-      />
-    </div>
-  );
-};
-
-export default EventChatBot;
+                          className="text-left justify-start bg-red-900/20 hover:bg-red-90

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile, USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
@@ -32,6 +33,9 @@ export const useUserProfile = () => {
     }
   };
 
+  // Add an alias for refetchProfile to maintain compatibility
+  const refreshUserProfile = refetchProfile;
+
   useEffect(() => {
     const getSession = async () => {
       setLoading(true);
@@ -62,5 +66,5 @@ export const useUserProfile = () => {
     getSession();
   }, []);
 
-  return { currentUser, userProfile, loading, error, refetchProfile };
+  return { currentUser, userProfile, loading, error, refetchProfile, refreshUserProfile };
 };

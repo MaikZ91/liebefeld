@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
@@ -16,6 +17,7 @@ import { setupService } from '@/services/setupService';
 import { toast } from '@/hooks/use-toast';
 import UsernameDialog from '@/components/chat/UsernameDialog';
 import ProfileEditor from '@/components/users/ProfileEditor';
+import { useUserProfile } from '@/hooks/chat/useUserProfile';
 
 const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
@@ -24,7 +26,7 @@ const ChatPage = () => {
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   const [username, setUsername] = useState<string>('');
-  const { events, refetchEvents } = useEventContext();
+  const { events } = useEventContext();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   
   // Function to show add event modal
@@ -224,7 +226,7 @@ const ChatPage = () => {
       
       {/* Replace UsernameDialog with ProfileEditor */}
       <ProfileEditor 
-        isOpen={isProfileEditorOpen} 
+        open={isProfileEditorOpen} 
         onOpenChange={setIsProfileEditorOpen} 
         currentUser={userProfile}
         onProfileUpdate={handleProfileUpdate} 

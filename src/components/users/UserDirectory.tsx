@@ -32,7 +32,7 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
   const [viewMode, setViewMode] = useState<'list' | 'gallery'>('gallery');
   const [profileEditorOpen, setProfileEditorOpen] = useState(false);
   const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
-  const { refreshUserProfile } = useUserProfile();
+  const { refetchProfile } = useUserProfile();
 
   useEffect(() => {
     if (open) {
@@ -97,7 +97,7 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
   const handleProfileUpdate = () => {
     fetchOnlineUsers();
     fetchCurrentUserProfile();
-    refreshUserProfile();
+    refetchProfile();
   };
 
   return (
