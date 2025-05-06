@@ -210,18 +210,18 @@ export const formatEventListItem = (event: any) => {
       <div class="font-bold text-base mb-1 text-white">${title}</div>
       <div class="flex flex-col gap-1">
         <div class="flex items-center text-sm text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1 flex-shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1 flex-shrink-0">
             <circle cx="12" cy="12" r="10"></circle>
             <polyline points="12 6 12 12 16 14"></polyline>
           </svg>
-          <span>${date ? date + ' ' : ''}${time}</span>
+          <span style="color: white !important;">${date ? date + ' ' : ''}${time}</span>
         </div>
         <div class="flex items-center text-sm text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1 flex-shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1 flex-shrink-0">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
             <circle cx="12" cy="10" r="3"></circle>
           </svg>
-          <span>${location}</span>
+          <span style="color: white !important;">${location}</span>
         </div>
         <div class="mt-1">
           <span class="bg-red-500/70 text-white text-xs px-2 py-0.5 rounded inline-block">
