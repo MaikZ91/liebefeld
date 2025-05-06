@@ -14,7 +14,7 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({ typingUsers }) => {
   }
 
   return (
-    <div className="flex items-start gap-2 mt-2 ml-2">
+    <div className="flex items-start gap-2 mt-2 ml-2 animate-fade-in">
       <Avatar className="h-6 w-6">
         <AvatarImage 
           src={typingUsers[0].avatar || undefined} 
@@ -22,6 +22,7 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({ typingUsers }) => {
         />
         <AvatarFallback>{getInitials(typingUsers[0].username)}</AvatarFallback>
       </Avatar>
+      
       <div className="bg-gray-700/70 p-2 rounded-full text-xs">
         <div className="flex space-x-1">
           <div className="w-1.5 h-1.5 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '0ms' }}></div>
@@ -29,6 +30,7 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({ typingUsers }) => {
           <div className="w-1.5 h-1.5 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '300ms' }}></div>
         </div>
       </div>
+      
       {typingUsers.length > 1 && (
         <span className="text-xs text-gray-400">+{typingUsers.length - 1} more typing...</span>
       )}
