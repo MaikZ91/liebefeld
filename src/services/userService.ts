@@ -43,34 +43,53 @@ export const userService = {
    */
   async createOrUpdateProfile(profile: Partial<UserProfile> & { username: string }): Promise<UserProfile> {
     try {
-      console.log('Creating or updating profile (simplified):', profile);
+      console.log('Creating or updating profile:', profile);
       
-      // Direktes Einfügen/Aktualisieren ohne vorherige Prüfungen
-      // RLS ist deaktiviert, also sollte dies funktionieren
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .upsert({
-          username: profile.username,
-          avatar: profile.avatar,
-          interests: profile.interests || [],
-          hobbies: profile.hobbies || [],
-          favorite_locations: profile.favorite_locations || [],
-          last_online: new Date().toISOString()
-        }, { 
-          onConflict: 'username',
-          ignoreDuplicates: false
-        })
-        .select()
-        .single();
+      // Prüfen, ob der Benutzer bereits existiert
+      const existingUser = await this.getUserByUsername(profile.username);
+      
+      // Da wir RLS deaktiviert haben, können wir direkt aktualisieren oder einfügen
+      if (existingUser) {
+        // Benutzer aktualisieren
+        console.log('Updating existing user profile');
+        
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .update({
+            ...profile,
+            last_online: new Date().toISOString()
+          })
+          .eq('username', profile.username)
+          .select()
+          .single();
           
-      if (error) {
-        console.error('Fehler beim Erstellen/Aktualisieren des Benutzerprofils:', error);
-        throw error;
+        if (error) {
+          console.error('Fehler beim Aktualisieren des Benutzerprofils:', error);
+          throw error;
+        }
+        
+        return data;
+      } else {
+        // Neuen Benutzer erstellen
+        console.log('Creating new user profile');
+        
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .insert({
+            ...profile,
+            created_at: new Date().toISOString(),
+            last_online: new Date().toISOString()
+          })
+          .select()
+          .single();
+        
+        if (error) {
+          console.error('Fehler beim Erstellen des Benutzerprofils:', error);
+          throw error;
+        }
+        
+        return data;
       }
-      
-      console.log('Successfully saved profile:', data);
-      return data;
-      
     } catch (error) {
       console.error('Fehler in createOrUpdateProfile:', error);
       throw error;
@@ -97,17 +116,22 @@ export const userService = {
    */
   async uploadProfileImage(file: File): Promise<string> {
     try {
-      console.log('Starting profile image upload');
-      
+      // Prüfen ob der Bucket existiert und ggf. erstellen
+      const { data: buckets } = await supabase.storage.listBuckets();
+      if (!buckets?.find(bucket => bucket.name === 'avatars')) {
+        // Bucket nicht gefunden, versuche ihn zu erstellen
+        await supabase.storage.createBucket('avatars', {
+          public: true
+        });
+      }
+
       // Eindeutigen Dateinamen generieren
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       const filePath = fileName;
 
-      console.log('Uploading to avatars bucket with path:', filePath);
-      
       // Datei hochladen
-      const { error: uploadError, data: uploadData } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, {
           cacheControl: '3600',
@@ -118,15 +142,11 @@ export const userService = {
         console.error('Upload error:', uploadError);
         throw uploadError;
       }
-      
-      console.log('Upload successful:', uploadData);
 
       // Öffentliche URL abrufen
       const { data: publicUrlData } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
-      
-      console.log('Generated public URL:', publicUrlData.publicUrl);
 
       return publicUrlData.publicUrl;
     } catch (error) {

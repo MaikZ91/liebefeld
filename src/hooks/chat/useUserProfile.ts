@@ -15,37 +15,12 @@ export const useUserProfile = () => {
   // Check if storage bucket exists and create it if needed
   const ensureStorageBucket = async () => {
     try {
-      // Prüfen, ob der Bucket existiert
       const { data: buckets } = await supabase.storage.listBuckets();
-      
-      // Wenn der Bucket nicht existiert, erstellen
       if (!buckets?.find(bucket => bucket.name === 'avatars')) {
         console.log('Creating avatars bucket');
         await supabase.storage.createBucket('avatars', {
-          public: true,
-          fileSizeLimit: 5242880 // 5MB limit
+          public: true
         });
-        console.log('Bucket created successfully');
-      } else {
-        console.log('Avatars bucket already exists');
-      }
-      
-      // Immer die Policy setzen, um sicherzustellen, dass der Bucket öffentlich ist
-      const { error: policyError } = await supabase.storage
-        .from('avatars')
-        .createSignedUrl('test.txt', 1); // Just to check if policies are working
-      
-      if (policyError) {
-        console.log('Setting public access policy for avatars bucket');
-        
-        // Setze explizit öffentlichen Zugriff auf alle Dateien
-        try {
-          await supabase.rpc('ensure_avatar_policies');
-          console.log('Public access policy set for avatars bucket');
-        } catch (err) {
-          console.log('Error setting public policy, but continuing:', err);
-          // Fahre trotzdem fort
-        }
       }
     } catch (err) {
       console.error('Error ensuring storage bucket exists:', err);
@@ -69,38 +44,62 @@ export const useUserProfile = () => {
       await ensureStorageBucket();
       
       const avatar = localStorage.getItem(AVATAR_KEY);
-      console.log('Current stored avatar:', avatar);
       
+      // Try to get the user first
+      let profile;
       try {
-        console.log('Creating or updating profile for username:', currentUser);
-        const profile = await userService.createOrUpdateProfile({
-          username: currentUser,
-          avatar: avatar || null,
-          interests: ['Sport', 'Events', 'Kreativität'],
-          hobbies: ['Tanzen', 'Musik', 'Kochen'],
-          favorite_locations: []
-        });
-        
-        console.log('Profile created/updated successfully:', profile);
-        setUserProfile(profile);
-      } catch (err: any) {
-        console.error('Fehler beim Erstellen des Benutzerprofils:', err);
-        toast({
-          title: "Fehler",
-          description: "Benutzerprofil konnte nicht erstellt werden: " + (err.message || 'Unbekannter Fehler'),
-          variant: "destructive"
-        });
-        throw err;
+        profile = await userService.getUserByUsername(currentUser);
+        console.log('Found existing user profile:', profile);
+      } catch (err) {
+        console.log('User does not exist yet, will create new profile');
+      }
+      
+      // Only try to create/update if we're not a guest
+      if (currentUser !== 'Gast') {
+        try {
+          // Benutzerprofil erstellen oder aktualisieren
+          profile = await userService.createOrUpdateProfile({
+            username: currentUser,
+            avatar: avatar || null,
+            // Standardwerte für Interessen und Hobbys
+            interests: ['Sport', 'Events', 'Kreativität'],
+            hobbies: ['Tanzen', 'Musik', 'Kochen'],
+            favorite_locations: profile?.favorite_locations || []
+          });
+          
+          setUserProfile(profile);
+        } catch (err: any) {
+          console.error('Fehler beim Erstellen des Benutzerprofils:', err);
+          
+          // If we get a RLS error, try to get the profile again instead
+          if (err.message && err.message.includes('row-level security policy')) {
+            try {
+              profile = await userService.getUserByUsername(currentUser);
+              if (profile) {
+                console.log('Retrieved profile after RLS error:', profile);
+                setUserProfile(profile);
+              }
+            } catch (getErr) {
+              console.error('Failed to retrieve profile after RLS error:', getErr);
+              throw err; // Rethrow the original error
+            }
+          } else {
+            throw err;
+          }
+        }
       }
     } catch (err: any) {
       console.error('Fehler beim Initialisieren des Benutzerprofils:', err);
       setError(err.message || 'Ein Fehler ist aufgetreten');
       
-      toast({
-        title: "Fehler",
-        description: "Benutzerprofil konnte nicht initialisiert werden. Bitte später erneut versuchen.",
-        variant: "destructive"
-      });
+      // Only show toast if it's not an RLS policy error since we handle that specially
+      if (!err.message || !err.message.includes('row-level security policy')) {
+        toast({
+          title: "Fehler",
+          description: "Benutzerprofil konnte nicht erstellt werden. Bitte später erneut versuchen.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setLoading(false);
     }
