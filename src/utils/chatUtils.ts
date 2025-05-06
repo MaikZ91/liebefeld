@@ -1,4 +1,3 @@
-
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,14 +13,6 @@ export const getWelcomeMessage = () => {
       <p class="mt-2">
         Aktuelles Datum: <strong>${today}</strong>
       </p>
-      <p class="mt-2">
-        Frag mich zum Beispiel:
-      </p>
-      <ul class="list-disc pl-5 mt-2">
-        <li>"Welche Events gibt es heute?"</li>
-        <li>"Was kann ich am Wochenende machen?"</li>
-        <li>"Gibt es Konzerte im Lokschuppen?"</li>
-      </ul>
     </div>
   `;
 };
