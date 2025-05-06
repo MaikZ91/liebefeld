@@ -24,6 +24,12 @@ const EventList: React.FC<EventListProps> = ({ events, title }) => {
     <div className="space-y-2">
       {title && <h3 className="font-medium text-sm text-red-600 dark:text-red-400 mb-2">{title}</h3>}
       <div className="event-list-container">
+        <style jsx>{`
+          .event-title {
+            color: black !important;
+            font-weight: bold;
+          }
+        `}</style>
         {events.map((event, index) => (
           <EventPanel key={index} event={event} />
         ))}
