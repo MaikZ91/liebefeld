@@ -66,7 +66,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                 href={matches[i]} 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="text-red-400 hover:text-red-300 underline break-all flex items-center"
+                className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline break-all flex items-center"
                 onClick={(e) => {
                   e.stopPropagation();
                 }}
@@ -101,7 +101,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
               <PopoverTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="bg-black hover:bg-gray-900 border-gray-800 flex items-center gap-2 w-full sm:w-auto"
+                  className="flex items-center gap-2 w-full sm:w-auto"
                 >
                   <CalendarIcon className="h-4 w-4" />
                   <span>{date ? format(date, "dd.MM.yyyy") : "Datum wählen"}</span>
@@ -124,14 +124,13 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                     }
                   }}
                   initialFocus
-                  className={cn("p-3 pointer-events-auto bg-black text-white")}
                 />
               </PopoverContent>
             </Popover>
             
             <Button 
               variant="default" 
-              className="bg-red-500 hover:bg-red-600 w-full sm:w-auto"
+              className="bg-[#25D366] hover:bg-[#1fb855] w-full sm:w-auto"
               onClick={() => {
                 if (date) {
                   onDateSelect(format(date, "yyyy-MM-dd"));
@@ -154,14 +153,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   };
   
   return (
-    <div 
-      className={`p-3 rounded-lg ${isConsecutive ? 'mt-1' : 'mt-2'} ${
-        isGroup ? 'bg-black text-white' : 'bg-black text-white'
-      } shadow-md w-full max-w-full overflow-hidden break-words`}
-    >
-      <div className="w-full max-w-full overflow-hidden break-words">
-        {formatContent()}
-      </div>
+    <div className="w-full max-w-full overflow-hidden break-words">
+      {formatContent()}
     </div>
   );
 };
