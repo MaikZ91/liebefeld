@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
@@ -34,12 +33,13 @@ serve(async (req) => {
       currentDate,
       nextWeekStart,
       nextWeekEnd,
-      userInterests, // Add user interests parameter
-      userLocations, // Add user locations parameter
+      userInterests, // User interests parameter
+      userLocations, // User locations parameter
     } = await req.json();
 
-    console.log(`Server current date: ${currentDate}`);
-    console.log(`Received currentDate from client: ${currentDate}`);
+    // Log the received parameters for debugging
+    console.log(`Received query: ${query}`);
+    console.log(`Received currentDate: ${currentDate}`);
     console.log(`Received next week range: ${nextWeekStart} to ${nextWeekEnd}`);
     
     // Explicitly log user interests and locations for debugging
@@ -77,10 +77,12 @@ serve(async (req) => {
     const lowercaseQuery = query.toLowerCase();
     
     // Check if this is a personalized request
-    const isPersonalRequest = lowercaseQuery.includes("zu mir passen") || 
-                              lowercaseQuery.includes("meine interessen") || 
-                              lowercaseQuery.includes("persönlich") ||
+    const isPersonalRequest = query.toLowerCase().includes("zu mir passen") || 
+                              query.toLowerCase().includes("meine interessen") || 
+                              query.toLowerCase().includes("persönlich") ||
                               query.includes("❤️"); // Check for heart emoji indicator
+
+    console.log(`Is this a personalized request? ${isPersonalRequest}`);
 
     // Apply filters for date-specific queries
     // Filter für "heute" / "today" / "aktuell" etc.
@@ -168,7 +170,7 @@ serve(async (req) => {
     }
     
     // Apply additional filters for personalized requests or heart mode
-    // Only apply location filtering if userLocations are provided
+    // First apply location filtering if userLocations are provided
     if (userLocations && userLocations.length > 0) {
       console.log("Applying location filtering with user locations:", userLocations);
       

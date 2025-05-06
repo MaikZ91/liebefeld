@@ -21,6 +21,10 @@ export const usePersonalization = (
         userInterests = userProfile.interests || [];
         userLocations = userProfile.favorite_locations || [];
         
+        // Log the actual interests we're using
+        console.log('Using profile interests:', userInterests);
+        console.log('Using profile locations:', userLocations);
+        
         // Save to localStorage for future use
         if (userInterests.length > 0) {
           localStorage.setItem('user_interests', JSON.stringify(userInterests));
@@ -60,16 +64,15 @@ export const usePersonalization = (
           
           const storedLocations = localStorage.getItem('user_locations');
           userLocations = storedLocations ? JSON.parse(storedLocations) : [];
+          
+          console.log('Using localStorage interests:', userInterests);
+          console.log('Using localStorage locations:', userLocations);
         } catch (err) {
           console.error('Error parsing stored preferences:', err);
           userInterests = [];
           userLocations = [];
         }
       }
-      
-      // Log actual values that will be used
-      console.log('Using interests for personalization:', userInterests);
-      console.log('Using locations for personalization:', userLocations);
       
       // If we still don't have interests or locations, use fallbacks
       if (!Array.isArray(userInterests) || userInterests.length === 0) {

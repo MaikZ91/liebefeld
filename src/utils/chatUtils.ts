@@ -1,4 +1,3 @@
-
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -77,8 +76,10 @@ export const generateResponse = async (query: string, events: any[], isHeartMode
       else if (hour >= 18) timeOfDay = 'evening';
       
       // Always send user interests with personalized requests
-      const interestsToSend = isHeartMode || query.includes('zu mir passen') || 
-                            query.includes('persönlich') ? userInterests : null;
+      // Modified to always send interests if heart mode is active
+      const interestsToSend = isHeartMode ? userInterests : 
+                            (query.includes('zu mir passen') || 
+                            query.includes('persönlich') ? userInterests : null);
       
       // Only send location filter if heart mode is active
       const locationsToSend = isHeartMode ? userLocations : null;
@@ -124,8 +125,11 @@ export const generateResponse = async (query: string, events: any[], isHeartMode
 
 export const generatePersonalizedPrompt = (interests?: string[], locations?: string[]) => {
   // Ensure we have arrays even if parameters are undefined
-  const userInterests = interests || [];
-  const userLocations = locations || [];
+  const userInterests = interests?.length ? interests : [];
+  const userLocations = locations?.length ? locations : [];
+  
+  console.log('Generating personalized prompt with interests:', userInterests);
+  console.log('Generating personalized prompt with locations:', userLocations);
   
   // Base query for heart mode
   let prompt = "";
@@ -146,7 +150,7 @@ export const generatePersonalizedPrompt = (interests?: string[], locations?: str
   }
   // Fallback if we have neither
   else {
-    prompt = "Finde Events, die zu mir passen";
+    prompt = "❤️ Finde Events, die zu mir passen";
   }
   
   prompt += ". Zeige mir eine personalisierte Auswahl von Events.";

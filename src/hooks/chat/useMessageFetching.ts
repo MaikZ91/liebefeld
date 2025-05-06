@@ -29,7 +29,7 @@ export const useMessageFetching = (groupId: string) => {
       
       // Set a timeout to prevent too long loading states
       const timeoutPromise = new Promise<Message[]>((_, reject) => {
-        setTimeout(() => reject(new Error("Zeitüberschreitung beim Abrufen der Nachrichten")), 10000);
+        setTimeout(() => reject(new Error("Zeitüberschreitung beim Abrufen der Nachrichten")), 15000); // Increased timeout to 15 seconds
       });
       
       // Actual fetch operation
