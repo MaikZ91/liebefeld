@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -158,15 +159,15 @@ const MessageInput: React.FC<MessageInputProps> = ({
           value={value !== undefined ? value : newMessage}
           onChange={handleMessageChange}
           onKeyDown={handleKeyDown}
-          className="min-h-[50px] flex-grow resize-none pr-16"
+          className="min-h-[50px] flex-grow resize-none pr-14"
         />
-        <div className="flex flex-col gap-2 absolute right-12 top-1">
+        <div className="flex flex-col gap-2 absolute right-10 top-1">
           <Button 
             onClick={handleFileUpload} 
             variant="outline"
             size="icon"
             type="button"
-            className="rounded-full h-7 w-7"
+            className="rounded-full h-6 w-6"
             title="Bild anhängen"
           >
             <Paperclip className="h-3 w-3" />
@@ -181,7 +182,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
                 variant="outline"
                 size="icon"
                 type="button"
-                className="rounded-full h-7 w-7"
+                className="rounded-full h-6 w-6"
                 title="Event teilen"
               >
                 <Calendar className="h-3 w-3" />
@@ -207,12 +208,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
         <Button 
           onClick={handleSubmit} 
           disabled={isSending || (!value?.trim() && !newMessage.trim() && !fileInputRef.current?.files?.length)}
-          className="rounded-full min-w-[32px] h-8 w-8 absolute right-1 top-1 p-0"
+          className="rounded-full min-w-[28px] h-7 w-7 absolute right-1 top-1 p-0"
         >
           {isSending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <Send className="h-4 w-4" />
+            <Send className="h-3 w-3" />
           )}
         </Button>
       </div>

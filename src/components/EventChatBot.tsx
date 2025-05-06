@@ -840,10 +840,10 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
                     variant="ghost"
                     size="icon"
                     onClick={handleHeartClick}
-                    className={`h-8 w-8 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`}
+                    className={`h-6 w-6 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`}
                     title={isHeartActive ? "Personalisierter Modus aktiv" : "Standard-Modus aktiv"}
                   >
-                    <Heart className={`h-4 w-4 ${isHeartActive ? 'fill-red-500' : ''}`} />
+                    <Heart className={`h-3 w-3 ${isHeartActive ? 'fill-red-500' : ''}`} />
                   </Button>
                 )}
                 
@@ -853,7 +853,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
                     variant="ghost"
                     size="icon"
                     onClick={toggleRecentQueries}
-                    className="h-8 w-8 text-red-400"
+                    className="h-6 w-6 text-red-400"
                     title="Community Anfragen"
                   >
                     <History className="h-3 w-3" />
@@ -895,19 +895,19 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
                     onChange={(e) => setInput(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="Frage nach Events..."
-                    className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-2 py-1 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 pl-24 pr-12 w-[95%]"
+                    className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-2 py-1 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 pl-20 pr-8 w-[90%]"
                   />
                   <button
                     onClick={() => handleSendMessage()}
                     disabled={!input.trim() || isTyping}
                     className={cn(
-                      "absolute right-2 rounded-full p-1",
+                      "absolute right-1 rounded-full p-1",
                       input.trim() && !isTyping
                         ? "bg-red-500 hover:bg-red-600 text-white"
                         : "bg-zinc-800 text-zinc-500"
                     )}
                   >
-                    <Send className="h-4 w-4" />
+                    <Send className="h-3 w-3" />
                   </button>
                 </>
               ) : null}
