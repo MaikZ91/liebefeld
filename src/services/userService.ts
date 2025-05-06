@@ -118,9 +118,10 @@ export const userService = {
       }
 
       // RLS Policies für den Bucket überprüfen und anpassen
+      // Verwende ein explizites Typen-Casting, um TypeScript zu erlauben, dass wir ein leeres Objekt übergeben
       const { error: policyError } = await supabase.rpc(
         'ensure_avatar_policies',
-        {} // Leeres Objekt als zweiten Parameter übergeben, korrekt typisiert
+        {} as Record<string, never> // Korrekte Typisierung als leeres Record-Objekt
       );
       
       if (policyError) {
