@@ -117,10 +117,17 @@ export const userService = {
       }
       
       // Rufen Sie die SQL-Funktion auf, um Bucket-Richtlinien festzulegen
-      const { error: functionError } = await supabase.rpc('ensure_avatar_policies');
-      if (functionError) {
-        console.error('Error ensuring avatar policies:', functionError);
-        // Kein Throw hier, da dies nicht kritisch ist und die Funktion möglicherweise nicht existiert
+      // Da ensure_avatar_policies keine typisierten Parameter erwartet, verwenden wir eine allgemeine Methode
+      try {
+        // @ts-ignore - Ignore type checking for this specific RPC call
+        const { error: functionError } = await supabase.rpc('ensure_avatar_policies');
+        if (functionError) {
+          console.error('Error ensuring avatar policies:', functionError);
+          // Kein Throw hier, da dies nicht kritisch ist und die Funktion möglicherweise nicht existiert
+        }
+      } catch (rpcErr) {
+        console.error('Error calling ensure_avatar_policies RPC:', rpcErr);
+        // Wir werfen den Fehler nicht, da dies nicht kritisch für die Funktionalität ist
       }
     } catch (err) {
       console.error('Error ensuring avatar bucket exists:', err);
