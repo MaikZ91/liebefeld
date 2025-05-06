@@ -158,18 +158,18 @@ const MessageInput: React.FC<MessageInputProps> = ({
           value={value !== undefined ? value : newMessage}
           onChange={handleMessageChange}
           onKeyDown={handleKeyDown}
-          className="min-h-[50px] flex-grow resize-none pr-14"
+          className="min-h-[50px] flex-grow resize-none pr-16"
         />
-        <div className="flex flex-col gap-2 absolute right-16 top-1">
+        <div className="flex flex-col gap-2 absolute right-12 top-1">
           <Button 
             onClick={handleFileUpload} 
             variant="outline"
             size="icon"
             type="button"
-            className="rounded-full"
+            className="rounded-full h-7 w-7"
             title="Bild anhängen"
           >
-            <Paperclip className="h-4 w-4" />
+            <Paperclip className="h-3 w-3" />
           </Button>
           <Popover 
             open={isEventSelectOpen} 
@@ -181,10 +181,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
                 variant="outline"
                 size="icon"
                 type="button"
-                className="rounded-full"
+                className="rounded-full h-7 w-7"
                 title="Event teilen"
               >
-                <Calendar className="h-4 w-4" />
+                <Calendar className="h-3 w-3" />
               </Button>
             </PopoverTrigger>
             <PopoverContent 
@@ -207,7 +207,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         <Button 
           onClick={handleSubmit} 
           disabled={isSending || (!value?.trim() && !newMessage.trim() && !fileInputRef.current?.files?.length)}
-          className="rounded-full min-w-[40px] absolute right-1 top-1"
+          className="rounded-full min-w-[32px] h-8 w-8 absolute right-1 top-1 p-0"
         >
           {isSending ? (
             <Loader2 className="h-4 w-4 animate-spin" />

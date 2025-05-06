@@ -895,13 +895,13 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
                     onChange={(e) => setInput(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="Frage nach Events..."
-                    className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 pl-24 pr-10"
+                    className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full px-2 py-1 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm text-red-200 placeholder-red-200/50 pl-24 pr-12 w-[95%]"
                   />
                   <button
                     onClick={() => handleSendMessage()}
                     disabled={!input.trim() || isTyping}
                     className={cn(
-                      "absolute right-1 rounded-full p-2",
+                      "absolute right-2 rounded-full p-1",
                       input.trim() && !isTyping
                         ? "bg-red-500 hover:bg-red-600 text-white"
                         : "bg-zinc-800 text-zinc-500"
