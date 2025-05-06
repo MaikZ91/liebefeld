@@ -152,6 +152,12 @@ const ChatPage = () => {
           </h1>
           
           <div className="flex gap-2">
+            {/* Add Event Button - Moved here */}
+            <Button variant="outline" size="sm" onClick={handleAddEvent} className="flex items-center gap-1">
+              <PlusCircle className="h-4 w-4" />
+              <span className="hidden md:inline">Event hinzufügen</span>
+            </Button>
+            
             {/* View Events Button */}
             <Button variant="outline" size="sm" onClick={() => setIsEventListSheetOpen(true)} className="flex items-center gap-1">
               <List className="h-4 w-4" />
