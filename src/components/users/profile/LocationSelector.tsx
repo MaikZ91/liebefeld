@@ -37,7 +37,17 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   const handleLocationSelect = (location: string) => {
     console.log('Location selected:', location);
     if (location && !favoriteLocations.includes(location)) {
-      onLocationsChange([...favoriteLocations, location]);
+      const updatedLocations = [...favoriteLocations, location];
+      onLocationsChange(updatedLocations);
+      
+      // Save to localStorage for immediate use in personalization
+      try {
+        localStorage.setItem('user_locations', JSON.stringify(updatedLocations));
+        console.log('[LocationSelector] Saved locations to localStorage:', updatedLocations);
+      } catch (err) {
+        console.error('[LocationSelector] Error saving to localStorage:', err);
+      }
+      
       // Clear search term after selection
       setSearchTerm('');
     }
@@ -45,15 +55,51 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   };
 
   const handleRemoveLocation = (location: string) => {
-    onLocationsChange(favoriteLocations.filter(loc => loc !== location));
+    const updatedLocations = favoriteLocations.filter(loc => loc !== location);
+    onLocationsChange(updatedLocations);
+    
+    // Update localStorage when removing a location
+    try {
+      localStorage.setItem('user_locations', JSON.stringify(updatedLocations));
+      console.log('[LocationSelector] Updated locations in localStorage after removal:', updatedLocations);
+    } catch (err) {
+      console.error('[LocationSelector] Error updating localStorage:', err);
+    }
   };
 
   // Alternative approach using Select component for smaller screens
   const handleSelectChange = (value: string) => {
     if (value && !favoriteLocations.includes(value)) {
-      onLocationsChange([...favoriteLocations, value]);
+      const updatedLocations = [...favoriteLocations, value];
+      onLocationsChange(updatedLocations);
+      
+      // Save to localStorage for immediate use in personalization
+      try {
+        localStorage.setItem('user_locations', JSON.stringify(updatedLocations));
+        console.log('[LocationSelector] Saved locations to localStorage from select:', updatedLocations);
+      } catch (err) {
+        console.error('[LocationSelector] Error saving to localStorage:', err);
+      }
     }
   };
+  
+  // Synchronize the component with localStorage on mount
+  useEffect(() => {
+    try {
+      const storedLocations = localStorage.getItem('user_locations');
+      if (storedLocations) {
+        const parsedLocations = JSON.parse(storedLocations);
+        console.log('[LocationSelector] Retrieved locations from localStorage:', parsedLocations);
+        
+        // Only update if different from current state to avoid loops
+        if (JSON.stringify(parsedLocations) !== JSON.stringify(favoriteLocations)) {
+          onLocationsChange(parsedLocations);
+        }
+      }
+    } catch (err) {
+      console.error('[LocationSelector] Error reading from localStorage:', err);
+    }
+  }, []);
   
   // Focus the search input when the popover opens
   useEffect(() => {

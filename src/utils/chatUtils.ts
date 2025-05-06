@@ -98,19 +98,23 @@ export const generateResponse = async (query: string, events: any[], isHeartMode
       console.log('[chatUtils] Sending interests to edge function:', JSON.stringify(interestsToSend));
       console.log('[chatUtils] Sending locations to edge function:', JSON.stringify(locationsToSend));
       
+      // Double-check what will be sent to the edge function
+      const payload = {
+        query,
+        timeOfDay,
+        weather,
+        allEvents: events,
+        currentDate,
+        nextWeekStart,
+        nextWeekEnd,
+        userInterests: interestsToSend,
+        userLocations: locationsToSend
+      };
+      console.log('[chatUtils] Full payload being sent to edge function:', JSON.stringify(payload));
+      
       // Call the edge function using the supabase client instead of direct fetch
       const { data, error } = await supabase.functions.invoke('ai-event-chat', {
-        body: {
-          query,
-          timeOfDay,
-          weather,
-          allEvents: events,
-          currentDate,
-          nextWeekStart,
-          nextWeekEnd,
-          userInterests: interestsToSend,
-          userLocations: locationsToSend
-        }
+        body: payload
       });
       
       if (error) {

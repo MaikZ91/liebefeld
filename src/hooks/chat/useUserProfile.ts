@@ -23,10 +23,12 @@ export const useUserProfile = () => {
         // Store in localStorage as backup
         if (profile.interests && profile.interests.length > 0) {
           localStorage.setItem('user_interests', JSON.stringify(profile.interests));
+          console.log('[useUserProfile] Stored interests in localStorage:', profile.interests);
         }
         
         if (profile.favorite_locations && profile.favorite_locations.length > 0) {
           localStorage.setItem('user_locations', JSON.stringify(profile.favorite_locations));
+          console.log('[useUserProfile] Stored locations in localStorage:', profile.favorite_locations);
         }
         
         setUserProfile(profile);

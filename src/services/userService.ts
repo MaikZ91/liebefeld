@@ -45,6 +45,16 @@ export const userService = {
         console.log('[userService] Profile received from edge function:', data.profile);
         console.log('[userService] Interests:', data.profile.interests || []);
         console.log('[userService] Favorite locations:', data.profile.favorite_locations || []);
+        
+        // Ensure favorite_locations is an array (important fix)
+        if (data.profile.favorite_locations === null) {
+          data.profile.favorite_locations = [];
+        }
+        
+        // Ensure interests is an array (important fix)
+        if (data.profile.interests === null) {
+          data.profile.interests = [];
+        }
       } else {
         console.log('[userService] No profile found for user:', username);
       }
@@ -70,6 +80,16 @@ export const userService = {
         console.log('[userService] Profile found via direct DB query:', data);
         console.log('[userService] Interests:', data.interests || []);
         console.log('[userService] Favorite locations:', data.favorite_locations || []);
+        
+        // Ensure favorite_locations is an array (important fix) 
+        if (data.favorite_locations === null) {
+          data.favorite_locations = [];
+        }
+        
+        // Ensure interests is an array (important fix)
+        if (data.interests === null) {
+          data.interests = [];
+        }
       }
       
       return data;
@@ -82,6 +102,16 @@ export const userService = {
   async createOrUpdateProfile(profile: Partial<UserProfile> & { username: string }): Promise<UserProfile> {
     try {
       console.log('Creating or updating profile with data:', profile);
+      
+      // Ensure favorite_locations is an array before sending
+      if (!Array.isArray(profile.favorite_locations)) {
+        profile.favorite_locations = profile.favorite_locations || [];
+      }
+      
+      // Ensure interests is an array before sending
+      if (!Array.isArray(profile.interests)) {
+        profile.interests = profile.interests || [];
+      }
       
       const { data, error } = await supabase.functions.invoke('manage_user_profile', {
         body: { action: 'createOrUpdateProfile', profile }
