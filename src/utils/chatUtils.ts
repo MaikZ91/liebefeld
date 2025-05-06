@@ -89,7 +89,8 @@ export const generateResponse = async (query: string, events: any[], isHeartMode
           nextWeekStart,
           nextWeekEnd,
           userInterests,
-          userLocations: locationsToUse // Only send if heart mode is active
+          userLocations: locationsToUse, // Only send if heart mode is active
+          isHeartMode // Add this flag to indicate whether heart mode is active
         }
       });
       
