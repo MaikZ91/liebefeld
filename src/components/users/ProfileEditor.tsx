@@ -48,11 +48,10 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
   const [locations, setLocations] = useState<string[]>([]);
   const [favoriteLocations, setFavoriteLocations] = useState<string[]>([]);
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
 
-  // Add the missing filteredLocations computed property
+  // Computed property for filtered locations
   const filteredLocations = locations.filter(location => 
     location.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -139,18 +138,18 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
 
   // Location handling functions
   const handleLocationSelect = (location: string) => {
+    console.log('Location selected:', location);
     if (location && !favoriteLocations.includes(location)) {
       setFavoriteLocations(prev => [...prev, location]);
-      setSelectedLocation('');
-      setPopoverOpen(false);
     }
+    setPopoverOpen(false);
   };
 
   const handleRemoveLocation = (location: string) => {
     setFavoriteLocations(favoriteLocations.filter(loc => loc !== location));
   };
 
-  // Verbesserte Bildupload-Funktion
+  // Image upload function
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -210,7 +209,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     }
   };
 
-  // Verbesserte Speicherfunktion
+  // Save function
   const onSubmit = async (values: z.infer<typeof profileSchema>) => {
     if (!values.username) return;
     
@@ -218,7 +217,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     setIsSubmitting(true);
     
     try {
-      // Verwende die tatsächliche Avatar-URL (entweder die neu hochgeladene oder die existierende)
+      // Use actual Avatar URL
       const avatarUrl = uploadedImage || values.avatar;
       
       console.log("Saving profile with data:", {
@@ -228,15 +227,15 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         favorite_locations: favoriteLocations
       });
       
-      // Speichere den Benutzernamen im localStorage
+      // Save username in localStorage
       localStorage.setItem(USERNAME_KEY, values.username);
       
-      // Speichere den Avatar im localStorage, unabhängig davon, ob er geändert wurde oder nicht
+      // Save avatar in localStorage
       if (avatarUrl) {
         localStorage.setItem(AVATAR_KEY, avatarUrl);
       }
       
-      // Speichere alle vier benötigten Felder
+      // Save all four required fields
       const updatedProfile = await userService.createOrUpdateProfile({
         username: values.username,
         avatar: avatarUrl || null,
@@ -379,7 +378,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
                 ))}
               </div>
               
-              {/* New location selector with improved scrolling */}
+              {/* Completely redesigned location selector with fixed scrolling */}
               <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -389,7 +388,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
                   >
                     <div className="flex items-center gap-2">
                       <MapPin size={16} />
-                      <span>{selectedLocation || "Lokation auswählen"}</span>
+                      <span>{"Lokation auswählen"}</span>
                     </div>
                     <ChevronDown className="h-4 w-4 opacity-50" />
                   </Button>
@@ -398,34 +397,36 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
                   className="w-[300px] p-0 bg-gray-900 border border-gray-700"
                   align="start"
                 >
-                  <Command className="rounded-lg border-none bg-transparent">
-                    <CommandInput 
-                      placeholder="Lokation suchen..." 
-                      className="h-9 border-b border-gray-700" 
+                  <div className="flex items-center border-b border-gray-700 px-3">
+                    <MapPin className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                    <input
+                      className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-gray-400 focus:outline-none"
+                      placeholder="Lokation suchen..."
                       value={searchTerm}
-                      onValueChange={setSearchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                     />
-                    <CommandList>
-                      <CommandEmpty className="py-6 text-center text-sm">
-                        Keine Lokationen gefunden
-                      </CommandEmpty>
-                      <CommandGroup>
-                        <ScrollArea className="h-52 rounded-md">
-                          {filteredLocations.map((location) => (
-                            <CommandItem
-                              key={location}
-                              value={location}
-                              onSelect={() => handleLocationSelect(location)}
-                              className="flex items-center gap-2 px-4 py-2 cursor-pointer hover:bg-gray-800"
-                            >
-                              <MapPin size={14} />
-                              <span>{location}</span>
-                            </CommandItem>
-                          ))}
-                        </ScrollArea>
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
+                  </div>
+                  
+                  {filteredLocations.length === 0 ? (
+                    <div className="py-6 text-center text-sm text-gray-400">
+                      Keine Lokationen gefunden
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-72 overflow-auto">
+                      <div className="p-1">
+                        {filteredLocations.map((location) => (
+                          <div
+                            key={location}
+                            className="flex items-center gap-2 px-4 py-2 cursor-pointer hover:bg-gray-800 rounded-sm text-sm"
+                            onClick={() => handleLocationSelect(location)}
+                          >
+                            <MapPin size={14} />
+                            <span>{location}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  )}
                 </PopoverContent>
               </Popover>
             </div>
