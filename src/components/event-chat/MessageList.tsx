@@ -27,7 +27,9 @@ const MessageList: React.FC<MessageListProps> = ({
       >
         {message.html ? (
           <div 
-            dangerouslySetInnerHTML={{ __html: message.html }} 
+            dangerouslySetInnerHTML={{ 
+              __html: message.html.replace(/^[•\-*]\s*/gm, '') // Remove bullet points from the beginning of each line
+            }} 
             className="p-3 event-list-container"
           />
         ) : (

@@ -98,7 +98,16 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     let formattedContent = "";
     
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
+      let line = lines[i].trim();
+      
+      // Skip empty lines
+      if (!line) {
+        formattedContent += "<p></p>";
+        continue;
+      }
+      
+      // Remove bullet points from the beginning of lines
+      line = line.replace(/^[•\-*]\s*/, '');
       
       // Check if this line looks like an event description
       if (containsEventInfo(line)) {
@@ -125,6 +134,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           </div>
         `;
       } else {
+        // Remove bullet points for regular lines as well
         formattedContent += `<p>${line}</p>`;
       }
     }

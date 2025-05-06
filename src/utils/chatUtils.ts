@@ -205,13 +205,15 @@ export const extractAllLocations = (events: any[]): string[] => {
 
 export const formatEventListItem = (event: any) => {
   const title = event.title || 'Unbekanntes Event';
+  // Remove any bullet points from the title
+  const cleanTitle = title.replace(/^[•\-*]\s*/, '');
   const time = event.time || 'Zeit nicht angegeben';
   const location = event.location || 'Ort nicht angegeben';
   const category = event.category || 'Sonstiges';
   
   return `
     <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-2 mb-2">
-      <span class="font-bold block">${title}</span>
+      <span class="font-bold block">${cleanTitle}</span>
       <div class="flex flex-col text-xs space-y-1 mt-1">
         <div class="flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
