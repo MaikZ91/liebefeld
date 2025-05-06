@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -208,12 +207,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
         <Button 
           onClick={handleSubmit} 
           disabled={isSending || (!value?.trim() && !newMessage.trim() && !fileInputRef.current?.files?.length)}
-          className="rounded-full min-w-[28px] h-7 w-7 absolute right-1 top-1 p-0"
+          className="rounded-full min-w-[32px] h-8 w-8 absolute right-1 top-1 p-0"
         >
           {isSending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <Send className="h-3 w-3" />
+            <Send className="h-4 w-4" />
           )}
         </Button>
       </div>
