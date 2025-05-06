@@ -147,21 +147,13 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     
     // Check file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
-      toast({
-        title: "Error",
-        description: "Das Bild ist zu groß. Maximale Größe: 2MB",
-        variant: "destructive"
-      });
+      toast.error("Das Bild ist zu groß. Maximale Größe: 2MB");
       return;
     }
     
     // Check file type
     if (!file.type.startsWith('image/')) {
-      toast({
-        title: "Error",
-        description: "Nur Bilder können hochgeladen werden",
-        variant: "destructive"
-      });
+      toast.error("Nur Bilder können hochgeladen werden");
       return;
     }
     
@@ -174,18 +166,10 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       // Set the avatar URL in the form
       form.setValue('avatar', publicUrl);
       
-      toast({
-        title: "Erfolg",
-        description: "Bild erfolgreich hochgeladen",
-        variant: "success"
-      });
+      toast.success("Bild erfolgreich hochgeladen");
     } catch (error) {
       console.error('Error uploading image:', error);
-      toast({
-        title: "Error",
-        description: "Fehler beim Hochladen des Bildes",
-        variant: "destructive"
-      });
+      toast.error("Fehler beim Hochladen des Bildes");
     } finally {
       setUploading(false);
     }
@@ -194,6 +178,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
   const onSubmit = async (values: z.infer<typeof profileSchema>) => {
     if (!currentUser) return;
     
+    console.log("Submit button clicked with values:", values);
     setIsSubmitting(true);
     
     try {
@@ -204,7 +189,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         favorite_locations: favoriteLocations
       });
       
-      await userService.createOrUpdateProfile({
+      const updatedProfile = await userService.createOrUpdateProfile({
         username: values.username,
         avatar: values.avatar || null,
         interests: interests,
@@ -212,27 +197,21 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         favorite_locations: favoriteLocations
       });
       
+      console.log("Profile updated successfully:", updatedProfile);
+      
       // Update local storage with the new username and avatar
       localStorage.setItem('community_chat_username', values.username);
       if (values.avatar) {
         localStorage.setItem('community_chat_avatar', values.avatar);
       }
       
-      toast({
-        title: "Erfolg",
-        description: "Profil erfolgreich aktualisiert!",
-        variant: "success"
-      });
+      toast.success("Profil erfolgreich aktualisiert!");
       
       onProfileUpdate();
       onOpenChange(false);
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast({
-        title: "Error",
-        description: "Fehler beim Aktualisieren des Profils",
-        variant: "destructive"
-      });
+      toast.error("Fehler beim Aktualisieren des Profils");
     } finally {
       setIsSubmitting(false);
     }
@@ -419,6 +398,9 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
                 type="submit" 
                 className="bg-red-500 hover:bg-red-600 text-white"
                 disabled={isSubmitting}
+                onClick={() => {
+                  console.log("Save button clicked, form valid:", form.formState.isValid);
+                }}
               >
                 {isSubmitting ? 'Speichern...' : 'Speichern'}
               </Button>

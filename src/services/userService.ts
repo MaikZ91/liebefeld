@@ -46,45 +46,62 @@ export const userService = {
    * Benutzerprofil erstellen oder aktualisieren
    */
   async createOrUpdateProfile(profile: Partial<UserProfile> & { username: string }): Promise<UserProfile> {
-    // Prüfen, ob der Benutzer bereits existiert
-    const existingUser = await this.getUserByUsername(profile.username);
-    
-    if (existingUser) {
-      // Benutzer aktualisieren
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .update({
-          ...profile,
-          last_online: new Date().toISOString()
-        })
-        .eq('username', profile.username)
-        .select()
-        .single();
-        
-      if (error) {
-        console.error('Fehler beim Aktualisieren des Benutzerprofils:', error);
-        throw error;
-      }
+    try {
+      console.log('Creating or updating profile:', profile);
       
-      return data;
-    } else {
-      // Neuen Benutzer erstellen
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .insert({
-          ...profile,
-          created_at: new Date().toISOString(),
-          last_online: new Date().toISOString()
-        })
-        .select()
-        .single();
-        
-      if (error) {
-        console.error('Fehler beim Erstellen des Benutzerprofils:', error);
-        throw error;
-      }
+      // Prüfen, ob der Benutzer bereits existiert
+      const existingUser = await this.getUserByUsername(profile.username);
       
-      return data;
+      if (existingUser) {
+        // Benutzer aktualisieren
+        console.log('Updating existing user profile');
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .update({
+            ...profile,
+            last_online: new Date().toISOString()
+          })
+          .eq('username', profile.username)
+          .select()
+          .maybeSingle();
+          
+        if (error) {
+          console.error('Fehler beim Aktualisieren des Benutzerprofils:', error);
+          throw error;
+        }
+        
+        if (!data) {
+          throw new Error('Fehler: Kein Benutzerprofil nach Update gefunden');
+        }
+        
+        return data;
+      } else {
+        // Neuen Benutzer erstellen
+        console.log('Creating new user profile');
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .insert({
+            ...profile,
+            created_at: new Date().toISOString(),
+            last_online: new Date().toISOString()
+          })
+          .select()
+          .maybeSingle();
+          
+        if (error) {
+          console.error('Fehler beim Erstellen des Benutzerprofils:', error);
+          throw error;
+        }
+        
+        if (!data) {
+          throw new Error('Fehler: Kein Benutzerprofil nach Erstellung gefunden');
+        }
+        
+        return data;
+      }
+    } catch (error) {
+      console.error('Fehler in createOrUpdateProfile:', error);
+      throw error;
     }
   },
   
