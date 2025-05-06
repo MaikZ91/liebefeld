@@ -72,7 +72,7 @@ const FloatingChatBot: React.FC<FloatingChatBotProps> = ({
       
       <ScrollArea className="flex-1 p-3 overflow-y-auto max-h-[350px]">
         {activeChatModeValue === 'ai' ? (
-          <div className="space-y-3 pb-2">
+          <div className="space-y-3 pb-2 text-sm">
             <MessageList
               messages={messages}
               isTyping={isTyping}

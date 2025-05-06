@@ -43,14 +43,16 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     <div className="h-full flex flex-col">
       <div className="flex-1 p-3 overflow-y-auto max-h-[calc(100vh-240px)]">
         {activeChatModeValue === 'ai' ? (
-          <MessageList
-            messages={messages}
-            isTyping={isTyping}
-            handleDateSelect={handleDateSelect}
-            messagesEndRef={messagesEndRef}
-            examplePrompts={examplePrompts}
-            handleExamplePromptClick={handleExamplePromptClick}
-          />
+          <div className="text-sm">
+            <MessageList
+              messages={messages}
+              isTyping={isTyping}
+              handleDateSelect={handleDateSelect}
+              messagesEndRef={messagesEndRef}
+              examplePrompts={examplePrompts}
+              handleExamplePromptClick={handleExamplePromptClick}
+            />
+          </div>
         ) : (
           <GroupChat compact={false} groupId={communityGroupId} groupName="Allgemein" />
         )}

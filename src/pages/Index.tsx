@@ -1,10 +1,11 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
 import EventChatBot from '@/components/EventChatBot';
 import InstagramFeed from '@/components/InstagramFeed';
 import CommunityTest from '@/components/CommunityTest';
-import CalendarWithChat from '@/components/CalendarWithChat';
+import { CalendarWithChat } from '@/components/calendar-chat';
 import BetaTesterBanner from '@/components/BetaTesterBanner';
 import PerfectDayPanel from '@/components/PerfectDayPanel';
 import { Button } from '@/components/ui/button';
@@ -146,6 +147,11 @@ const Index = () => {
               animationDelay: '1s'
             }}
           />
+          
+          {/* LiveTicker at the top */}
+          <div className="w-full bg-black/80 backdrop-blur-sm absolute top-0 left-0">
+            <LiveTickerWrapper />
+          </div>
           
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4 pt-2">
             <div className="absolute left-3 top-3 flex items-center gap-1 z-20">
