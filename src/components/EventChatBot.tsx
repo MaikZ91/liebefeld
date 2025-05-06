@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEventContext } from '@/contexts/EventContext';
@@ -22,6 +23,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
 import { supabase } from "@/integrations/supabase/client";
 import { ChatQuery, USERNAME_KEY } from '@/types/chatTypes';
 import { toast } from 'sonner';
+import { useUserProfile } from '@/hooks/chat/useUserProfile';
+import { userService } from '@/services/userService';
 
 interface ChatMessage {
   id: string;
@@ -66,6 +69,9 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
   const [internalActiveChatMode, setInternalActiveChatMode] = useState<'ai' | 'community'>('ai');
   const activeChatModeValue = activeChatMode !== undefined ? activeChatMode : internalActiveChatMode;
   const setActiveChatModeValue = setActiveChatMode || setInternalActiveChatMode;
+  
+  // Add user profile hook to get the current user's profile data
+  const { currentUser, userProfile } = useUserProfile();
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -447,14 +453,62 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
     setIsHeartActive(prev => !prev);
     
     try {
-      // Get user preferences from local storage or another source
-      const userInterests = localStorage.getItem('user_interests')
-        ? JSON.parse(localStorage.getItem('user_interests') || '[]')
-        : ['Musik', 'Sport', 'Kultur'];
+      // Get user interests and locations from the user profile
+      let userInterests: string[] = [];
+      let userLocations: string[] = [];
+      
+      if (userProfile) {
+        // If we have a user profile, use those interests and locations
+        userInterests = userProfile.interests || [];
+        userLocations = userProfile.favorite_locations || [];
         
-      const userLocations = localStorage.getItem('user_locations')
-        ? JSON.parse(localStorage.getItem('user_locations') || '[]')
-        : ['Liebefeld', 'Bern'];
+        // Save to localStorage for future use
+        if (userInterests.length > 0) {
+          localStorage.setItem('user_interests', JSON.stringify(userInterests));
+        }
+        
+        if (userLocations.length > 0) {
+          localStorage.setItem('user_locations', JSON.stringify(userLocations));
+        }
+      } else if (currentUser !== 'Gast') {
+        // If we have a username but no profile loaded yet, try to fetch it
+        try {
+          const profile = await userService.getUserByUsername(currentUser);
+          if (profile) {
+            userInterests = profile.interests || [];
+            userLocations = profile.favorite_locations || [];
+            
+            // Save to localStorage
+            if (userInterests.length > 0) {
+              localStorage.setItem('user_interests', JSON.stringify(userInterests));
+            }
+            
+            if (userLocations.length > 0) {
+              localStorage.setItem('user_locations', JSON.stringify(userLocations));
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching user profile for personalization:', err);
+        }
+      } else {
+        // Fallback to localStorage if no profile is available
+        userInterests = localStorage.getItem('user_interests')
+          ? JSON.parse(localStorage.getItem('user_interests') || '[]')
+          : [];
+          
+        userLocations = localStorage.getItem('user_locations')
+          ? JSON.parse(localStorage.getItem('user_locations') || '[]')
+          : [];
+      }
+      
+      // If we still don't have interests or locations, use fallbacks
+      if (userInterests.length === 0) {
+        userInterests = ['Musik', 'Sport', 'Kultur'];
+      }
+      
+      if (userLocations.length === 0) {
+        userLocations = ['Liebefeld', 'Bern'];
+      }
       
       // Generate personalized prompt
       const personalizedPrompt = generatePersonalizedPrompt(userInterests, userLocations);
