@@ -1,9 +1,9 @@
 
-import { format } from 'date-fns';
+import { format, de } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 
 export const getWelcomeMessage = () => {
-  const today = format(new Date(), 'EEEE, d. MMMM', { locale: require('date-fns/locale/de') });
+  const today = format(new Date(), 'EEEE, d. MMMM', { locale: de });
   return `
     <div class="rounded-lg p-3 text-sm">
       <p>
