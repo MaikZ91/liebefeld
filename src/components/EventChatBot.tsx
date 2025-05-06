@@ -3,13 +3,14 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useEventContext } from '@/contexts/EventContext';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  MessageCircle, X, Send, ChevronDown, Download, Trash2, History, PlusCircle, Users
+  MessageCircle, X, Send, ChevronDown, Download, Trash2, History, PlusCircle, Users, Heart
 } from 'lucide-react';
 import { 
   generateResponse, 
   getWelcomeMessage,
   formatEvents,
-  createResponseHeader
+  createResponseHeader,
+  generatePersonalizedPrompt
 } from '@/utils/chatUtils';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -18,8 +19,9 @@ import { format } from 'date-fns';
 import ChatMessage from '@/components/chat/ChatMessage';
 import GroupChat from '@/components/GroupChat';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
 import { ChatQuery, USERNAME_KEY } from '@/types/chatTypes';
+import { toast } from 'sonner';
 
 interface ChatMessage {
   id: string;
@@ -52,7 +54,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
   const { events } = useEventContext();
   const { toast } = useToast();
   const [isVisible, setIsVisible] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(fullPage);
+  const [isChatOpen, setIsChatOpen] = fullPage;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -436,6 +438,33 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
     };
   }, []);
 
+  // Add a new state for tracking when the heart is clicked
+  const [isHeartActive, setIsHeartActive] = useState(false);
+  
+  // Add a new function to handle heart button click
+  const handleHeartClick = async () => {
+    setIsHeartActive(prev => !prev);
+    
+    // Get user preferences from local storage or another source
+    // For now, we'll use placeholder data
+    const userInterests = localStorage.getItem('user_interests')
+      ? JSON.parse(localStorage.getItem('user_interests') || '[]')
+      : ['Musik', 'Sport', 'Kultur'];
+      
+    const userLocations = localStorage.getItem('user_locations')
+      ? JSON.parse(localStorage.getItem('user_locations') || '[]')
+      : ['Liebefeld', 'Bern'];
+    
+    // Generate personalized prompt
+    const personalizedPrompt = generatePersonalizedPrompt(userInterests, userLocations);
+    
+    // Show a toast notification
+    toast.success("Suche passende Events für dich...");
+    
+    // Send the personalized prompt to the chat
+    handleSendMessage(personalizedPrompt);
+  };
+
   if (!isVisible) return null;
 
   // Render the message list
@@ -560,6 +589,19 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
           
           <div className="flex items-center relative">
             <div className="absolute left-2 flex items-center gap-1 z-10">
+              {/* Heart button for personalized recommendations */}
+              {activeChatModeValue === 'ai' && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleHeartClick}
+                  className={`h-8 w-8 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`}
+                  title="Persönliche Empfehlungen"
+                >
+                  <Heart className={`h-4 w-4 ${isHeartActive ? 'fill-red-500' : ''}`} />
+                </Button>
+              )}
+              
               {/* History button for recent queries */}
               {globalQueries.length > 0 && activeChatModeValue === 'ai' && (
                 <Button
@@ -618,7 +660,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
     );
   }
 
-  // Original UI for floating chatbot
+  // For the floating chatbot UI, also modify to include the heart button
   return (
     <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end">
       {isChatOpen && (
@@ -709,13 +751,26 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
             
             <div className="flex items-center relative">
               <div className="absolute left-2 flex items-center gap-1 z-10">
+                {/* Heart button for personalized recommendations */}
+                {activeChatModeValue === 'ai' && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleHeartClick}
+                    className={`h-8 w-8 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`}
+                    title="Persönliche Empfehlungen"
+                  >
+                    <Heart className={`h-4 w-4 ${isHeartActive ? 'fill-red-500' : ''}`} />
+                  </Button>
+                )}
+                
                 {/* History button for recent queries */}
                 {globalQueries.length > 0 && (
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={toggleRecentQueries}
-                    className="h-6 w-6 text-red-400"
+                    className="h-8 w-8 text-red-400"
                     title="Community Anfragen"
                   >
                     <History className="h-3 w-3" />
@@ -774,25 +829,3 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
                 </>
               ) : null}
             </div>
-          </div>
-        </div>
-      )}
-      
-      <button
-        onClick={handleToggleChat}
-        className={cn(
-          "bg-red-500 hover:bg-red-600 text-white rounded-full p-3 shadow-lg transition-all duration-300",
-          isChatOpen && "rotate-90"
-        )}
-      >
-        {isChatOpen ? (
-          <ChevronDown className="h-6 w-6" />
-        ) : (
-          <MessageCircle className="h-6 w-6" />
-        )}
-      </button>
-    </div>
-  );
-};
-
-export default EventChatBot;

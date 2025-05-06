@@ -1,191 +1,130 @@
-
 import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
-import { fetchWeather } from './weatherUtils';
-import { supabase } from '@/integrations/supabase/client';
 
 export const getWelcomeMessage = () => {
+  const today = format(new Date(), 'EEEE, d. MMMM', { locale: require('date-fns/locale/de') });
   return `
-    <div class="bg-green-900/10 border border-green-700/30 rounded-lg p-2 text-sm">
-      Ich bin dein persönlicher Assistent für alle Liebefeld Events.
+    <div class="rounded-lg p-3 text-sm">
+      <p>
+        Hallo! Ich bin dein persönlicher Event-Assistent für Liebefeld. 
+        Ich helfe dir, die besten Veranstaltungen in deiner Nähe zu finden.
+      </p>
+      <p class="mt-2">
+        Aktuelles Datum: <strong>${today}</strong>
+      </p>
+      <p class="mt-2">
+        Frag mich zum Beispiel:
+      </p>
+      <ul class="list-disc pl-5 mt-2">
+        <li>"Welche Events gibt es heute?"</li>
+        <li>"Was kann ich am Wochenende machen?"</li>
+        <li>"Gibt es Konzerte im Lokschuppen?"</li>
+      </ul>
     </div>
   `;
 };
 
-export const createResponseHeader = (title: string) => {
-  return `
-    <h4 class="font-medium text-md mb-2">${title}</h4>
-  `;
-};
-
-const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' => {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'morning';
-  if (hour < 18) return 'afternoon';
-  return 'evening';
-};
-
 export const formatEvents = (events: any[]) => {
   if (!events || events.length === 0) {
-    return '<div class="bg-gray-900/20 border border-gray-700/30 rounded-lg p-2 text-sm">Keine Events gefunden.</div>';
+    return '<p>Keine Events gefunden.</p>';
   }
 
-  let eventsHtml = '';
+  let eventList = '<ul class="list-disc pl-5">';
   events.forEach(event => {
-    const isGitHubEvent = event.id.startsWith('github-');
-    eventsHtml += `
-      <div class="mb-2 p-2 rounded-md ${isGitHubEvent ? 'bg-blue-900/20 border border-blue-700/30' : 'bg-gray-900/20 border border-gray-700/30'} hover:bg-opacity-30 transition-all">
-        <div class="flex items-center justify-between">
-          <div class="flex-1">
-            ${event.link ? 
-              `<a href="${event.link}" target="_blank" rel="noopener noreferrer" class="font-medium text-red-500 hover:underline flex items-center gap-1">
-                ${event.title}
-                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M7 17L17 7M17 7H8M17 7V16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </a>` : 
-              `<h5 class="font-medium text-red-500">${event.title}</h5>`
-            }
-            <p class="text-[10px] text-gray-400">${isGitHubEvent ? 'Externe Veranstaltung' : 'Community Event'}</p>
-          </div>
-          <div class="text-xs bg-black text-red-500 px-2 py-0.5 rounded-full">${event.category}</div>
-        </div>
-        <div class="mt-1 text-xs text-white">
-          <div class="flex items-center gap-2">
-            <div class="flex items-center">
-              <svg class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"/>
-                <line x1="16" y1="2" x2="16" y2="6" stroke-width="2" stroke-linecap="round"/>
-                <line x1="8" y1="2" x2="8" y2="6" stroke-width="2" stroke-linecap="round"/>
-                <line x1="3" y1="10" x2="21" y2="10" stroke-width="2"/>
-              </svg>
-              ${format(new Date(event.date), 'EEEE, d. MMMM yyyy', { locale: de })}
-            </div>
-            <div class="flex items-center">
-              <svg class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="12" cy="12" r="10" stroke-width="2"/>
-                <polyline points="12 6 12 12 16 14" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              ${event.time} Uhr
-            </div>
-          </div>
-          <div class="flex items-center mt-0.5">
-            <svg class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke-width="2"/>
-              <circle cx="12" cy="10" r="3" stroke-width="2"/>
-            </svg>
-            ${event.location}
-          </div>
-        </div>
-        ${event.description ? `<p class="text-xs mt-1 text-gray-300">${event.description}</p>` : ''}
-      </div>
-    `;
+    eventList += `<li>${event.title} - ${event.date}</li>`;
   });
+  eventList += '</ul>';
 
-  return eventsHtml;
+  return eventList;
+};
+
+export const createResponseHeader = (title: string) => {
+  return `<h4 class="font-medium text-sm text-red-600 dark:text-red-400">${title}</h4>`;
 };
 
 export const generateResponse = async (query: string, events: any[]) => {
   try {
-    console.log(`Generating AI response for query: "${query}" with ${events.length} events`);
+    // Get current date and calculate next week's range
+    const currentDate = new Date().toISOString().split('T')[0];
+    const nextWeekStartDate = new Date();
+    nextWeekStartDate.setDate(nextWeekStartDate.getDate() + 7 - nextWeekStartDate.getDay() + 1);
+    const nextWeekStart = nextWeekStartDate.toISOString().split('T')[0];
     
-    // Aktuelle Datum für Debugging und Kontext für AI
-    const currentDate = new Date();
-    const formattedDate = format(currentDate, 'yyyy-MM-dd');
-    console.log(`Current date being sent to AI: ${formattedDate}`);
+    const nextWeekEndDate = new Date(nextWeekStartDate);
+    nextWeekEndDate.setDate(nextWeekEndDate.getDate() + 6);
+    const nextWeekEnd = nextWeekEndDate.toISOString().split('T')[0];
     
-    // Berechne Daten für nächste Woche
-    const nextWeekStart = new Date(currentDate);
-    // Setze auf nächsten Montag
-    const dayOfWeek = currentDate.getDay(); // 0 = Sonntag, 1 = Montag, ..., 6 = Samstag
-    const daysToAdd = dayOfWeek === 0 ? 1 : (8 - dayOfWeek); // Wenn heute Sonntag ist, +1 für Montag, sonst (8 - aktueller Tag)
-    nextWeekStart.setDate(currentDate.getDate() + daysToAdd);
-    const nextWeekEnd = new Date(nextWeekStart);
-    nextWeekEnd.setDate(nextWeekStart.getDate() + 6); // Montag bis Sonntag = 7 Tage
+    // Get user interests and preferred locations if available
+    const userInterests = localStorage.getItem('user_interests') 
+      ? JSON.parse(localStorage.getItem('user_interests') || '[]') 
+      : null;
+      
+    const userLocations = localStorage.getItem('user_locations') 
+      ? JSON.parse(localStorage.getItem('user_locations') || '[]') 
+      : null;
     
-    const nextWeekStartStr = format(nextWeekStart, 'yyyy-MM-dd');
-    const nextWeekEndStr = format(nextWeekEnd, 'yyyy-MM-dd');
-    console.log(`Next week range: ${nextWeekStartStr} (Montag) bis ${nextWeekEndStr} (Sonntag)`);
-    
-    // Log a sample of events being sent to check if GitHub events are included
-    const sampleEvents = events.slice(0, 2);
-    const githubEventsCount = events.filter(e => e.id.startsWith('github-')).length;
-    console.log(`Sample of events being sent to AI: ${JSON.stringify(sampleEvents)}`);
-    console.log(`Total events: ${events.length}, GitHub events: ${githubEventsCount}`);
-    
-    // Heute-Events für Debugging
-    const todayEvents = events.filter(e => e.date === formattedDate);
-    console.log(`Events specifically for today (${formattedDate}): ${todayEvents.length}`);
-    if (todayEvents.length > 0) {
-      console.log('First few today events:', todayEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
-    }
-    
-    // Events für nächste Woche für Debugging
-    const nextWeekEvents = events.filter(e => {
-      const eventDate = e.date;
-      return eventDate >= nextWeekStartStr && eventDate <= nextWeekEndStr;
-    });
-    console.log(`Events for next week (${nextWeekStartStr} to ${nextWeekEndStr}): ${nextWeekEvents.length}`);
-    if (nextWeekEvents.length > 0) {
-      console.log('First few next week events:', nextWeekEvents.slice(0, 3).map(e => `${e.title} (${e.date})`));
-    }
-    
-    // Timeout für die Anfrage setzen - erhöht auf 30 Sekunden
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 Sekunden Timeout
-    
-    try {
-      const response = await fetch('https://ykleosfvtqcmqxqihnod.supabase.co/functions/v1/ai-event-chat', {
+    // Check if we're in a browser environment
+    if (typeof window !== 'undefined') {
+      // Fetch the weather once per session if needed
+      const weather = sessionStorage.getItem('weather') || 'partly_cloudy';
+      
+      // Get time of day
+      const hour = new Date().getHours();
+      let timeOfDay = 'afternoon';
+      if (hour < 12) timeOfDay = 'morning';
+      else if (hour >= 18) timeOfDay = 'evening';
+      
+      // Call the edge function
+      const response = await fetch('/api/ai-event-chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrbGVvc2Z2dHFjbXF4cWlobm9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA5MzQ0NjIsImV4cCI6MjA1NjUxMDQ2Mn0.70wsZ-c7poYFnbTyXbKrG0b6YPSe-BonMN6kjZ2a2Wo`
         },
         body: JSON.stringify({
           query,
-          timeOfDay: getTimeOfDay(),
-          currentDate: formattedDate,
-          nextWeekStart: nextWeekStartStr,
-          nextWeekEnd: nextWeekEndStr,
-          weather: await fetchWeather(),
-          allEvents: events
+          timeOfDay,
+          weather,
+          allEvents: events,
+          currentDate,
+          nextWeekStart,
+          nextWeekEnd,
+          userInterests,  // Add user interests
+          userLocations,  // Add user locations
         }),
-        signal: controller.signal
       });
-
-      clearTimeout(timeoutId);
-
+      
       if (!response.ok) {
-        throw new Error(`API-Fehler: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`Edge function error: ${response.status} ${errorText}`);
       }
-
+      
       const data = await response.json();
-      return createResponseHeader("KI-Antwort") + data.response;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('Error in fetch operation:', errorMessage);
-      
-      // Spezifischere Fehlermeldung
-      let userFriendlyError = 'Serverfehler. Bitte versuche es später erneut.';
-      
-      if (errorMessage.includes('abort') || error instanceof DOMException && error.name === 'AbortError') {
-        userFriendlyError = 'Die Anfrage hat zu lange gedauert und wurde abgebrochen.';
-      } else if (errorMessage.includes('NetworkError') || errorMessage.includes('network')) {
-        userFriendlyError = 'Netzwerkfehler. Bitte überprüfe deine Internetverbindung.';
-      } else if (errorMessage.includes('JSON')) {
-        userFriendlyError = 'Fehler beim Parsen der Serverantwort.';
-      } 
-      
-      throw new Error(userFriendlyError);
+      return data.response;
+    } else {
+      // For SSR or testing environments
+      return createResponseHeader('Keine Events gefunden') +
+        `<p>Ich konnte keine Events finden, die zu deiner Anfrage passen.</p>`;
     }
   } catch (error) {
-    console.error('Error generating AI response:', error);
-    
-    // Bei Timeout oder anderen Fehlern, einfache Event-Liste als Fallback anzeigen
-    return createResponseHeader("Fehler") + `
-      <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm mb-3">
-        Entschuldigung, ich konnte keine KI-Antwort generieren: ${error instanceof Error ? error.message : String(error)}. Hier sind die verfügbaren Events:
-      </div>
-      ${formatEvents(events)}`;
+    console.error('Error generating response:', error);
+    return createResponseHeader('Fehler') +
+      `<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
+        Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. 
+        Bitte versuche es später noch einmal.
+      </div>`;
   }
+};
+
+export const generatePersonalizedPrompt = (interests?: string[], locations?: string[]) => {
+  let prompt = "Finde Events, die zu mir passen";
+  
+  if (interests && interests.length > 0) {
+    prompt += `. Meine Interessen sind: ${interests.join(', ')}`;
+  }
+  
+  if (locations && locations.length > 0) {
+    prompt += `. Meine bevorzugten Orte sind: ${locations.join(', ')}`;
+  }
+  
+  prompt += ". Zeige mir eine personalisierte Auswahl von Events.";
+  return prompt;
 };

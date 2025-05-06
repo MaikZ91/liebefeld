@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
@@ -34,11 +33,21 @@ serve(async (req) => {
       currentDate,
       nextWeekStart,
       nextWeekEnd,
+      userInterests, // Add user interests parameter
+      userLocations, // Add user locations parameter
     } = await req.json();
 
     console.log(`Server current date: ${currentDate}`);
     console.log(`Received currentDate from client: ${currentDate}`);
     console.log(`Received next week range: ${nextWeekStart} to ${nextWeekEnd}`);
+    
+    if (userInterests) {
+      console.log(`User interests: ${userInterests.join(', ')}`);
+    }
+    
+    if (userLocations) {
+      console.log(`User preferred locations: ${userLocations.join(', ')}`);
+    }
 
     const today = new Date().toISOString().split("T")[0];
 
@@ -61,6 +70,12 @@ serve(async (req) => {
     // Analyse der Benutzeranfrage für die Filterung
     const lowercaseQuery = query.toLowerCase();
     
+    // Check if this is a personalized request
+    const isPersonalRequest = lowercaseQuery.includes("zu mir passen") || 
+                              lowercaseQuery.includes("meine interessen") || 
+                              lowercaseQuery.includes("persönlich");
+
+    // Apply filters for date-specific queries
     // Filter für "heute" / "today" / "aktuell" etc.
     if (
       lowercaseQuery.includes("heute") ||
@@ -144,7 +159,58 @@ serve(async (req) => {
       filteredEvents = filteredEvents.filter(e => e.date === saturdayStr || e.date === sundayStr);
       console.log(`Nach Filterung für "Wochenende": ${filteredEvents.length} Events übrig`);
     }
-    // Filter für Kategorien
+    // Additional filtering logic for personalized requests
+    if (isPersonalRequest && userInterests && userInterests.length > 0) {
+      console.log("Applying personalized interest filtering");
+      
+      // Convert interests to lowercase for case-insensitive matching
+      const lowerInterests = userInterests.map(interest => interest.toLowerCase());
+      
+      // Filter events that match user interests
+      const interestFilteredEvents = filteredEvents.filter(event => {
+        // Check category first
+        if (event.category && lowerInterests.includes(event.category.toLowerCase())) {
+          return true;
+        }
+        
+        // Check title and description for interest keywords
+        const lowerTitle = (event.title || "").toLowerCase();
+        const lowerDescription = (event.description || "").toLowerCase();
+        
+        return lowerInterests.some(interest => 
+          lowerTitle.includes(interest) || lowerDescription.includes(interest)
+        );
+      });
+      
+      // If we found events matching interests, use them, otherwise keep original filter
+      if (interestFilteredEvents.length > 0) {
+        filteredEvents = interestFilteredEvents;
+        console.log(`Found ${interestFilteredEvents.length} events matching user interests`);
+      }
+    }
+    
+    // Location filtering for personalized requests
+    if (isPersonalRequest && userLocations && userLocations.length > 0) {
+      console.log("Applying personalized location filtering");
+      
+      // Convert locations to lowercase for case-insensitive matching
+      const lowerLocations = userLocations.map(location => location.toLowerCase());
+      
+      // Find events at user's preferred locations
+      const locationFilteredEvents = filteredEvents.filter(event => 
+        event.location && lowerLocations.some(loc => 
+          event.location.toLowerCase().includes(loc)
+        )
+      );
+      
+      // If we found events matching locations, use them, otherwise keep current filter
+      if (locationFilteredEvents.length > 0) {
+        filteredEvents = locationFilteredEvents;
+        console.log(`Found ${locationFilteredEvents.length} events matching user locations`);
+      }
+    }
+
+    // Filter for categories
     const categoryMapping = {
       konzert: "Konzert",
       concert: "Konzert",
@@ -224,10 +290,25 @@ serve(async (req) => {
     // Informationen über die Gesamtanzahl der Events hinzufügen
     const totalEventsInfo = `Es gibt insgesamt ${dbEvents.length} Events in der Datenbank. Ich habe dir die ${filteredEvents.length} relevantesten basierend auf deiner Anfrage ausgewählt.`;
     
-    const systemMessage =
-      `Du bist ein Event‑Assistent für Liebefeld. Aktuelles Datum: ${today}.\n` +
-      `${totalEventsInfo}\n` +
-      `Hier die Events:\n${formattedEvents}`;
+    // Enhanced system message for personalized requests
+    let systemMessage = `Du bist ein Event‑Assistent für Liebefeld. Aktuelles Datum: ${today}.\n${totalEventsInfo}\n`;
+    
+    if (isPersonalRequest) {
+      systemMessage += `Dies ist eine personalisierte Anfrage. `;
+      
+      if (userInterests && userInterests.length > 0) {
+        systemMessage += `Der Nutzer interessiert sich für: ${userInterests.join(', ')}. `;
+      }
+      
+      if (userLocations && userLocations.length > 0) {
+        systemMessage += `Der Nutzer bevorzugt folgende Orte: ${userLocations.join(', ')}. `;
+      }
+      
+      systemMessage += `Berücksichtige diese Vorlieben in deiner Antwort und empfehle passende Events. `;
+      systemMessage += `Erkläre, warum du diese Events empfiehlst (z.B. "Weil du dich für Musik interessierst..."). `;
+    }
+    
+    systemMessage += `Hier die Events:\n${formattedEvents}`;
 
     /***************************
      * CALL OPENROUTER
@@ -399,4 +480,3 @@ serve(async (req) => {
     });
   }
 });
-
