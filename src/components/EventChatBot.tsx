@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEventContext } from '@/contexts/EventContext';
@@ -686,19 +685,6 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
                 </Button>
               )}
               
-              {/* Add a new button to send personalized query when in heart mode */}
-              {isHeartActive && activeChatModeValue === 'ai' && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={sendPersonalizedQuery}
-                  className="h-8 text-red-400"
-                  title="Persönliche Empfehlungen anzeigen"
-                >
-                  <span className="text-xs">Persönliche Events suchen</span>
-                </Button>
-              )}
-              
               {/* History button for recent queries */}
               {globalQueries.length > 0 && activeChatModeValue === 'ai' && (
                 <Button
@@ -858,19 +844,6 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
                     title={isHeartActive ? "Personalisierter Modus aktiv" : "Standard-Modus aktiv"}
                   >
                     <Heart className={`h-4 w-4 ${isHeartActive ? 'fill-red-500' : ''}`} />
-                  </Button>
-                )}
-                
-                {/* Add button to send personalized query */}
-                {isHeartActive && activeChatModeValue === 'ai' && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={sendPersonalizedQuery}
-                    className="h-7 text-red-400"
-                    title="Persönliche Empfehlungen anzeigen"
-                  >
-                    <span className="text-xs">Events suchen</span>
                   </Button>
                 )}
                 
