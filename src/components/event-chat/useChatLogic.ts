@@ -358,21 +358,14 @@ export const useChatLogic = (
           timestamp: new Date().toISOString()
         }
       ]);
-      toast({
-        title: "Chat-Verlauf gelöscht",
-        description: "Der Chat-Verlauf wurde erfolgreich gelöscht.",
-      });
+      toast.success("Chat-Verlauf gelöscht");
     }
   };
 
   // Export chat history as JSON file
   const exportChatHistory = () => {
     if (messages.length === 0) {
-      toast({
-        title: "Keine Nachrichten",
-        description: "Es gibt keine Nachrichten zum Exportieren.",
-        variant: "destructive"
-      });
+      toast.error("Es gibt keine Nachrichten zum Exportieren.");
       return;
     }
 
@@ -387,10 +380,7 @@ export const useChatLogic = (
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    toast({
-      title: "Chat-Verlauf exportiert",
-      description: "Der Chat-Verlauf wurde erfolgreich exportiert.",
-    });
+    toast.success("Chat-Verlauf exportiert");
   };
   
   return {
