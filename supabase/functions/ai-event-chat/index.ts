@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
@@ -580,8 +579,12 @@ serve(async (req) => {
     // Look for patterns that might represent event titles and wrap them with links if available
     filteredEvents.forEach((event: any) => {
       if (event.title && event.link) {
+        // Fix: Replace the problematic regex that was causing the error
+        // Create a safer regex that handles special characters properly
+        let safeTitle = event.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape special characters
+        
         // Create a regex that will match the event title but not if it's already in an HTML tag
-        const titleRegex = new RegExp(`(?<!<[^>]*)(${event.title})(?![^<]*>)`, 'g');
+        const titleRegex = new RegExp(`(?<![<])${safeTitle}(?![^<]*>)`, 'g');
         
         // Replace occurrences of the title with a linked version
         aiContent = aiContent.replace(titleRegex, (match) => {
