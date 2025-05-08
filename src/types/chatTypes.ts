@@ -1,4 +1,3 @@
-
 export interface ChatMessage {
   id: string;
   group_id: string;
@@ -21,9 +20,10 @@ export interface TypingUser {
 export interface EventShare {
   title: string;
   date: string;
-  time: string;
-  location: string;
-  category: string;
+  time?: string;
+  location?: string;
+  category?: string;
+  link?: string;
 }
 
 export const USERNAME_KEY = 'community_chat_username';

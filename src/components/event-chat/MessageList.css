@@ -128,3 +128,25 @@ div[class*="event-title"],
   z-index: 10 !important;
   position: relative !important;
 }
+
+/* Link styling for event titles */
+.event-title-link,
+a.event-title,
+a[class*="event-title"] {
+  color: black !important;
+  text-decoration: none;
+  transition: color 0.2s ease, text-decoration 0.2s ease;
+}
+
+.event-title-link:hover,
+a.event-title:hover,
+a[class*="event-title"]:hover {
+  color: #ef4444 !important; /* red-500 */
+  text-decoration: underline;
+}
+
+.event-title-link:active,
+a.event-title:active,
+a[class*="event-title"]:active {
+  color: #b91c1c !important; /* red-700 */
+}

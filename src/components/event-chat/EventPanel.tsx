@@ -7,6 +7,7 @@ interface Event {
   time?: string;
   location?: string;
   category?: string;
+  link?: string;
 }
 
 interface EventPanelProps {
@@ -14,8 +15,28 @@ interface EventPanelProps {
 }
 
 const EventPanel: React.FC<EventPanelProps> = ({ event }) => {
-  return (
-    <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3 mb-3">
+  const renderTitle = () => {
+    if (event.link) {
+      return (
+        <a 
+          href={event.link} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="font-bold text-base mb-1 event-title"
+          style={{
+            color: 'black',
+            opacity: '1 !important',
+            mixBlendMode: 'normal',
+            isolation: 'isolate',
+            textDecoration: 'none'
+          }}
+        >
+          {event.title}
+        </a>
+      );
+    }
+    
+    return (
       <div 
         className="font-bold text-base mb-1 event-title" 
         style={{
@@ -27,6 +48,12 @@ const EventPanel: React.FC<EventPanelProps> = ({ event }) => {
       >
         {event.title}
       </div>
+    );
+  };
+  
+  return (
+    <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3 mb-3">
+      {renderTitle()}
       <div className="flex flex-col gap-1">
         {(event.date || event.time) && (
           <div className="flex items-center text-sm">

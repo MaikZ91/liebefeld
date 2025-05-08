@@ -350,16 +350,22 @@ serve(async (req) => {
         thisMonthEvents.slice(0, 3).map((e: any) => `${e.title} (${e.date})`));
     }
     
+    // Updated to include link information and format titles as links when available
     const formattedEvents = filteredEvents
-      .map((e: any) =>
-        [
-          `Event: ${e.title}`,
+      .map((e: any) => {
+        const titleWithLink = e.link 
+          ? `Event: <a href="${e.link}" target="_blank" rel="noopener noreferrer" class="event-title-link" style="color: black !important; text-decoration: none; font-weight: bold;">${e.title}</a>`
+          : `Event: ${e.title}`;
+        
+        return [
+          titleWithLink,
           `Datum: ${e.date}`,
           `Zeit: ${e.time}`,
           `Kategorie: ${e.category}`,
           e.location ? `Ort: ${e.location}` : "",
-        ].filter(Boolean).join("\n")
-      )
+          e.link ? `Link: ${e.link}` : ""
+        ].filter(Boolean).join("\n");
+      })
       .join("\n\n");
 
     // Informationen über die Gesamtanzahl der Events hinzufügen
@@ -410,6 +416,10 @@ serve(async (req) => {
         systemMessage += `Es wurden keine Events für diesen Monat gefunden. Informiere den Nutzer, dass keine Events für ${germanMonthName} ${currentYear} verfügbar sind und schlage vor, es mit einem anderen Zeitraum zu versuchen. `;
       }
     }
+    
+    // Add special instructions for displaying clickable event links
+    systemMessage += `Wichtig für die Formatierung: Wenn ein Event einen Link hat, stelle den Titel als klickbaren Link mit einer span-Klasse "event-title" dar. `;
+    systemMessage += `Achte darauf, dass alle Event-Titel in schwarzer Farbe (style="color: black !important;") angezeigt werden, unabhängig davon, ob sie Links sind oder nicht. `;
     
     systemMessage += `Hier die Events:\n${formattedEvents}`;
 
@@ -520,12 +530,24 @@ serve(async (req) => {
       const titleMatch = item.match(/(.*?) um (.*?) (?:in|bei|im) (.*?) \(Kategorie: (.*?)\)/i);
       if (titleMatch) {
         const [_, title, time, location, category] = titleMatch;
-        // Format as event card similar to EventCard component
+        
+        // Extract event information to check for links
+        const eventInfo = filteredEvents.find((e: any) => 
+          e.title === title && 
+          e.location && e.location.includes(location) &&
+          e.category === category
+        );
+        
+        // Format as event card similar to EventCard component, now with link if available
+        const eventTitle = eventInfo && eventInfo.link 
+          ? `<a href="${eventInfo.link}" target="_blank" rel="noopener noreferrer" class="event-title" style="color: black !important; text-decoration: none;">${title}</a>`
+          : title;
+          
         return `
           <li class="dark-glass-card rounded-lg p-2 mb-2 hover-scale">
             <div class="flex justify-between items-start gap-1">
               <div class="flex-1 min-w-0">
-                <h4 class="font-medium text-sm text-white break-words">${title}</h4>
+                <h4 class="font-medium text-sm event-title" style="color: black !important;">${eventTitle}</h4>
                 <div class="flex flex-wrap items-center gap-1 mt-0.5 text-xs text-white">
                   <div class="flex items-center">
                     <svg class="w-3 h-3 mr-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -554,6 +576,20 @@ serve(async (req) => {
       return `<li class="mb-1">${item}</li>`;
     });
     
+    // Process inline event mentions that might not be in list format
+    // Look for patterns that might represent event titles and wrap them with links if available
+    filteredEvents.forEach((event: any) => {
+      if (event.title && event.link) {
+        // Create a regex that will match the event title but not if it's already in an HTML tag
+        const titleRegex = new RegExp(`(?<!<[^>]*)(${event.title})(?![^<]*>)`, 'g');
+        
+        // Replace occurrences of the title with a linked version
+        aiContent = aiContent.replace(titleRegex, (match) => {
+          return `<a href="${event.link}" target="_blank" rel="noopener noreferrer" class="event-title-link" style="color: black !important; text-decoration: none; font-weight: bold;">${match}</a>`;
+        });
+      }
+    });
+    
     // Füge <ul> Tags um die Liste
     if (aiContent.includes('<li>')) {
       aiContent = aiContent.replace(/<li>/, '<ul class="space-y-2 my-3"><li>');
@@ -564,6 +600,27 @@ serve(async (req) => {
         aiContent += '</ul>';
       }
     }
+    
+    // CSS für event-title-link hinzufügen
+    const linkStyles = `
+    <style>
+    .event-title-link {
+      color: black !important; 
+      text-decoration: none;
+      position: relative;
+      font-weight: bold;
+      transition: color 0.2s;
+    }
+    .event-title-link:hover {
+      color: #ef4444 !important;
+      text-decoration: underline;
+    }
+    .event-title-link:active {
+      color: #b91c1c !important;
+    }
+    </style>
+    `;
+    aiContent = linkStyles + aiContent;
     
     // Generell Markdown-Bold in HTML-Bold umwandeln
     aiContent = aiContent.replace(/\*\*(.*?)\*\*/g, '<strong class="text-red-500">$1</strong>');
