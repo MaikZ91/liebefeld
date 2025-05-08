@@ -10,7 +10,7 @@
 .event-list-container .font-bold {
   margin-bottom: 0.25rem;
   display: block;
-  color: black !important; /* Title in black */
+  color: red !important; /* Title in black */
 }
 
 /* Text color fix for all event content */
