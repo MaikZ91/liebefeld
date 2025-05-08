@@ -11,6 +11,7 @@ import { USERNAME_KEY } from '@/types/chatTypes';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import EventCalendar from '@/components/EventCalendar';
 import EventForm from '@/components/EventForm';
+import LiveTicker from '@/components/LiveTicker';
 import { setupService } from '@/services/setupService';
 import { toast } from '@/hooks/use-toast';
 import UsernameDialog from '@/components/chat/UsernameDialog';
@@ -140,7 +141,10 @@ const ChatPage = () => {
   return (
     <Layout hideFooter={true}>
       <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
-        {/* LiveTicker has been removed from here */}
+        {/* Add LiveTicker above chat header */}
+        <div className="mb-2 border border-gray-800/50 rounded-md overflow-hidden bg-black">
+          <LiveTicker events={events} />
+        </div>
         
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-red-500">

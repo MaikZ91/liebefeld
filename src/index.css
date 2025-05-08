@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -200,35 +201,8 @@
     @apply pb-4 px-0;
   }
 
-  .event-list-container ul li {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: flex-start !important;
-    margin-bottom: 0.5rem !important;
-  }
-
-  .event-list-container ul li::before {
-    content: "•";
-    display: inline-block;
-    margin-right: 0.5rem;
-    color: #ff5252;
-    font-size: 1.25rem;
-    line-height: 1.5rem;
-  }
-
-  .event-list-container ul {
-    list-style-type: none !important;
-    padding-left: 0.5rem !important;
-  }
-
-  .event-list-container ul li span {
-    display: inline-block !important;
-  }
-
-  .event-list-container ul li .event-title {
-    font-weight: 600 !important;
-    display: block !important;
-    margin-bottom: 0.25rem !important;
+  .event-list-day {
+    @apply sticky top-0 bg-[#F1F0FB]/90 dark:bg-[#3A1E1E]/90 backdrop-blur-md py-2 z-10 border-b border-red-500/20 mb-2 text-red-800 dark:text-red-200;
   }
 
   /* Event date headers in group chat */
