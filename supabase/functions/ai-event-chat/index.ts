@@ -356,7 +356,7 @@ serve(async (req) => {
           `Event: ${e.title}`,
           `Datum: ${e.date}`,
           `Zeit: ${e.time}`,
-          #`Link: ${e.link}`,
+          `Link: ${e.link}`,
           `Kategorie: ${e.category}`,
           e.location ? `Ort: ${e.location}` : "",
         ].filter(Boolean).join("\n")
