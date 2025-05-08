@@ -356,7 +356,6 @@ serve(async (req) => {
           `Event: ${e.title}`,
           `Datum: ${e.date}`,
           `Zeit: ${e.time}`,
-          `Link: ${e.link}`,
           `Kategorie: ${e.category}`,
           e.location ? `Ort: ${e.location}` : "",
         ].filter(Boolean).join("\n")
@@ -368,8 +367,7 @@ serve(async (req) => {
     
     // Enhanced system message for personalized requests
     let systemMessage = `Du bist ein Event‑Assistent für Liebefeld. Aktuelles Datum: ${today}.\n${totalEventsInfo}\n`;
-        systemMessage += `Wichtig für die Formatierung: Wenn ein Event einen Link hat, stelle den Titel als klickbaren Link mit <a href="link">title</a> dar.`;
-
+    
     if (isPersonalRequest || userInterests?.length > 0 || userLocations?.length > 0) {
       systemMessage += `Dies ist eine personalisierte Anfrage. `;
       
@@ -387,6 +385,7 @@ serve(async (req) => {
       // If filtering has been applied based on interests
       if (isPersonalRequest && userInterests?.length > 0) {
         systemMessage += `Ich habe die Ergebnisse nach deinen Interessen gefiltert. `;
+        systemMessage += `Erwähne explizit, dass du nach dem Interesse "${userInterests.join(', ')}" gefiltert hast. `;
       }
     }
 
