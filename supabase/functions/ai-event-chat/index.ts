@@ -418,8 +418,8 @@ serve(async (req) => {
     
     // Add special instructions for displaying clickable event links
     systemMessage += `Wichtig für die Formatierung: Wenn ein Event einen Link hat, stelle den Titel als klickbaren Link mit einer span-Klasse "event-title" dar. `;
-    systemMessage += `Achte darauf, dass alle Event-Titel in schwarzer Farbe (style="color: red !important;") angezeigt werden, unabhängig davon, ob sie Links sind oder nicht. `;
-    systemMessage += `Stelle alle Events dann als übersichtliche Liste da`;
+    systemMessage += `Achte darauf, dass alle Event-Titel in roter Farbe (style="color: red !important;") angezeigt werden, unabhängig davon, ob sie Links sind oder nicht. `;
+    systemMessage += `Wichtig: Stelle alle Events dann als übersichtliche Liste da!`;
     systemMessage += `Hier die Events:\n${formattedEvents}`;
 
     /***************************
