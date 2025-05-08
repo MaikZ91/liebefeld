@@ -7,7 +7,6 @@ interface Event {
   time?: string;
   location?: string;
   category?: string;
-  link?: string;
 }
 
 interface EventPanelProps {
@@ -15,34 +14,10 @@ interface EventPanelProps {
 }
 
 const EventPanel: React.FC<EventPanelProps> = ({ event }) => {
-  const renderTitle = () => {
-    if (event.link) {
-      return (
-        <a 
-          href={event.link} 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className="font-bold text-base mb-1 hover:underline flex items-center gap-1"
-          style={{
-            color: '#ef4444', // red-500
-            opacity: '1 !important',
-            mixBlendMode: 'normal',
-            isolation: 'isolate'
-          }}
-        >
-          {event.title}
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1 flex-shrink-0">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-            <polyline points="15 3 21 3 21 9"></polyline>
-            <line x1="10" y1="14" x2="21" y2="3"></line>
-          </svg>
-        </a>
-      );
-    }
-    
-    return (
+  return (
+    <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3 mb-3">
       <div 
-        className="font-bold text-base mb-1" 
+        className="font-bold text-base mb-1 event-title" 
         style={{
           color: 'black',
           opacity: '1 !important',
@@ -52,12 +27,6 @@ const EventPanel: React.FC<EventPanelProps> = ({ event }) => {
       >
         {event.title}
       </div>
-    );
-  };
-  
-  return (
-    <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3 mb-3 hover:bg-red-900/30 transition-colors">
-      {renderTitle()}
       <div className="flex flex-col gap-1">
         {(event.date || event.time) && (
           <div className="flex items-center text-sm">

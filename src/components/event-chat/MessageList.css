@@ -10,6 +10,7 @@
 .event-list-container .font-bold {
   margin-bottom: 0.25rem;
   display: block;
+  color: black !important; /* Title in black */
 }
 
 /* Text color fix for all event content */
@@ -25,24 +26,10 @@
   color: white !important;
 }
 
-/* Only exclude category labels and titles */
+/* Only exclude category labels */
 .event-list-container .bg-red-500,
-.event-list-container .bg-red-500\/70,
-.event-list-container .font-bold,
-.event-list-container a[href] {
-  color: #ef4444 !important; /* Use red for links instead of black */
-}
-
-/* Links should always be red and have hover effect */
-.event-list-container a[href] {
-  color: #ef4444 !important;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.event-list-container a[href]:hover {
-  color: #dc2626 !important;
-  text-decoration: underline;
+.event-list-container .bg-red-500\/70 {
+  color: white !important;
 }
 
 /* Remove ALL bullet points and list styling */
@@ -83,8 +70,61 @@
   display: none !important;
 }
 
-/* Style for the link icon */
-.event-list-container a svg {
-  display: inline;
-  vertical-align: middle;
+/* STRONG OVERRIDE FOR BLACK EVENT TITLES */
+.event-list-container .font-bold,
+.event-list-container div.font-bold,
+.event-list-container .bg-red-900\/20 .font-bold,
+.event-list-container .bg-red-900\/20 div.font-bold,
+.event-list-container div[class*="font-bold"], 
+.event-list-container .text-base,
+.event-list-container .bg-red-900\/20 .text-base,
+.event-list-container .bg-red-900\/20 .font-bold.text-base,
+.event-list-container div.font-bold.text-base,
+.event-title {
+  color: black !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+  isolation: isolate !important;
+}
+
+/* White text for everything EXCEPT event titles */
+.event-list-container .bg-red-900\/20 div:not(.font-bold):not([class*="font-bold"]):not(.event-title),
+.event-list-container .bg-red-900\/20 span:not(.bg-red-500\/70),
+.event-list-container .bg-red-900\/20 p,
+.event-list-container .bg-red-900\/20 h1:not(.font-bold):not(.event-title),
+.event-list-container .bg-red-900\/20 h2:not(.font-bold):not(.event-title),
+.event-list-container .bg-red-900\/20 h3:not(.font-bold):not(.event-title),
+.event-list-container .bg-red-900\/20 h4:not(.font-bold):not(.event-title),
+.event-list-container .bg-red-900\/20 h5:not(.font-bold):not(.event-title),
+.event-list-container .bg-red-900\/20 h6:not(.font-bold):not(.event-title),
+.event-list-container .bg-red-900\/20 a:not(.font-bold):not(.event-title) {
+  color: white !important;
+}
+
+/* Additional overrides for the EventPanel component */
+.event-title {
+  color: black !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+  isolation: isolate !important;
+}
+
+div.event-title {
+  color: black !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+  isolation: isolate !important;
+}
+
+/* Add a high isolation layer to force black text */
+[class*="event-title"],
+div[class*="event-title"],
+.font-bold.text-base {
+  color: black !important;
+  background-color: transparent !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+  isolation: isolate !important;
+  z-index: 10 !important;
+  position: relative !important;
 }
