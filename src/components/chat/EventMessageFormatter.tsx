@@ -9,20 +9,20 @@ export const EventMessageFormatter: React.FC<{ event: EventShare }> = ({ event }
       <div className="text-lg font-semibold text-white mb-1">Geteiltes Event</div>
       <div className="text-2xl font-bold text-white !opacity-100 break-words">{event.title}</div>
       <div className="flex flex-col gap-1 mt-2">
-        <div className="flex items-center text-sm text-white">
+        <div className="flex items-center text-sm text-gray-300">
           <Calendar className="h-4 w-4 mr-1 flex-shrink-0" />
           <span className="break-words overflow-hidden">{event.date}</span>
         </div>
         
         {event.time && (
-          <div className="flex items-center text-sm text-white">
+          <div className="flex items-center text-sm text-gray-300">
             <Clock className="h-4 w-4 mr-1 flex-shrink-0" />
             <span className="break-words overflow-hidden">{event.time}</span>
           </div>
         )}
         
         {event.location && (
-          <div className="flex items-center text-sm text-white">
+          <div className="flex items-center text-sm text-gray-300">
             <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
             <span className="break-words overflow-hidden">{event.location}</span>
           </div>
