@@ -22,13 +22,12 @@ const EventPanel: React.FC<EventPanelProps> = ({ event }) => {
           href={event.link} 
           target="_blank" 
           rel="noopener noreferrer" 
-          className="font-bold text-base mb-1 event-title"
+          className="font-bold text-base mb-1 event-title text-red-500 hover:text-red-600"
           style={{
-            color: 'black',
             opacity: '1 !important',
             mixBlendMode: 'normal',
             isolation: 'isolate',
-            textDecoration: 'none'
+            textDecoration: 'underline'
           }}
         >
           {event.title}

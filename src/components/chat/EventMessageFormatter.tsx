@@ -11,13 +11,12 @@ export const EventMessageFormatter: React.FC<{ event: EventShare }> = ({ event }
           href={event.link} 
           target="_blank" 
           rel="noopener noreferrer" 
-          className="text-2xl font-bold event-title" 
+          className="text-2xl font-bold event-title text-red-500 hover:text-red-600" 
           style={{
-            color: 'black !important', 
             opacity: '1 !important',
             mixBlendMode: 'normal',
             isolation: 'isolate',
-            textDecoration: 'none'
+            textDecoration: 'underline'
           }}
         >
           {event.title}

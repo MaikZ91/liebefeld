@@ -133,15 +133,15 @@ div[class*="event-title"],
 .event-title-link,
 a.event-title,
 a[class*="event-title"] {
-  color: black !important;
-  text-decoration: none;
+  color: #ef4444 !important; /* red-500 */
+  text-decoration: underline;
   transition: color 0.2s ease, text-decoration 0.2s ease;
 }
 
 .event-title-link:hover,
 a.event-title:hover,
 a[class*="event-title"]:hover {
-  color: #ef4444 !important; /* red-500 */
+  color: #dc2626 !important; /* red-600 */
   text-decoration: underline;
 }
 
