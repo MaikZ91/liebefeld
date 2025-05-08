@@ -380,7 +380,13 @@ serve(async (req) => {
       }
       
       systemMessage += `Berücksichtige diese Vorlieben in deiner Antwort und empfehle passende Events. `;
-  
+      systemMessage += `Erkläre, warum du diese Events empfiehlst (z.B. "Weil du dich für ${userInterests?.join(', ') || 'spezifische Themen'} interessierst..."). `;
+      
+      // If filtering has been applied based on interests
+      if (isPersonalRequest && userInterests?.length > 0) {
+        systemMessage += `Ich habe die Ergebnisse nach deinen Interessen gefiltert. `;
+        systemMessage += `Erwähne explizit, dass du nach dem Interesse "${userInterests.join(', ')}" gefiltert hast. `;
+      }
     }
 
     // Add specific month context

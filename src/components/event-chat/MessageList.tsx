@@ -5,7 +5,6 @@ import ChatMessage from '@/components/chat/ChatMessage';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { MessageListProps } from './types';
-import './MessageList.css';
 
 const MessageList: React.FC<MessageListProps> = ({
   messages,
@@ -29,7 +28,7 @@ const MessageList: React.FC<MessageListProps> = ({
         {message.html ? (
           <div 
             dangerouslySetInnerHTML={{ __html: message.html }} 
-            className="p-3 event-list-container"
+            className="p-3"
           />
         ) : (
           <ChatMessage 
