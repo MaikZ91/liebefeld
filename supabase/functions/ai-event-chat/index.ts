@@ -368,7 +368,8 @@ serve(async (req) => {
     
     // Enhanced system message for personalized requests
     let systemMessage = `Du bist ein Event‑Assistent für Liebefeld. Aktuelles Datum: ${today}.\n${totalEventsInfo}\n`;
-    
+        systemMessage += `Wichtig für die Formatierung: Wenn ein Event einen Link hat, stelle den Titel als klickbaren Link mit <a href="link">title</a> dar.`;
+
     if (isPersonalRequest || userInterests?.length > 0 || userLocations?.length > 0) {
       systemMessage += `Dies ist eine personalisierte Anfrage. `;
       
