@@ -356,6 +356,7 @@ serve(async (req) => {
           `Event: ${e.title}`,
           `Datum: ${e.date}`,
           `Zeit: ${e.time}`,
+          `Link: ${e.link}`,
           `Kategorie: ${e.category}`,
           e.location ? `Ort: ${e.location}` : "",
         ].filter(Boolean).join("\n")
@@ -385,7 +386,6 @@ serve(async (req) => {
       // If filtering has been applied based on interests
       if (isPersonalRequest && userInterests?.length > 0) {
         systemMessage += `Ich habe die Ergebnisse nach deinen Interessen gefiltert. `;
-        systemMessage += `Erwähne explizit, dass du nach dem Interesse "${userInterests.join(', ')}" gefiltert hast. `;
       }
     }
 
