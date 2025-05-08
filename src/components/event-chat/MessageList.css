@@ -129,7 +129,7 @@ div[class*="event-title"],
   position: relative !important;
 }
 
-/* Link styling for event titles */
+/* Link styling for event titles - UPDATED TO ENSURE RED COLOR */
 .event-title-link,
 a.event-title,
 a[class*="event-title"] {

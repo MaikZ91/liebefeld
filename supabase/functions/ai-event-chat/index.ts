@@ -539,7 +539,7 @@ serve(async (req) => {
         
         // Format as event card similar to EventCard component, now with link if available
         const eventTitle = eventInfo && eventInfo.link 
-          ? `<a href="${eventInfo.link}" target="_blank" rel="noopener noreferrer" class="event-title" style="color: black !important; text-decoration: none;">${title}</a>`
+          ? `<a href="${eventInfo.link}" target="_blank" rel="noopener noreferrer" class="event-title" style="color: black !important;">${title}</a>`
           : title;
           
         return `
@@ -588,7 +588,7 @@ serve(async (req) => {
         
         // Replace occurrences of the title with a linked version
         aiContent = aiContent.replace(titleRegex, (match) => {
-          return `<a href="${event.link}" target="_blank" rel="noopener noreferrer" class="event-title-link" style="color: black !important; text-decoration: none; font-weight: bold;">${match}</a>`;
+          return `<a href="${event.link}" target="_blank" rel="noopener noreferrer" class="event-title-link" style="color: #ef4444 !important; text-decoration: underline; font-weight: bold;">${match}</a>`;
         });
       }
     });
@@ -608,14 +608,14 @@ serve(async (req) => {
     const linkStyles = `
     <style>
     .event-title-link {
-      color: black !important; 
-      text-decoration: none;
+      color: #ef4444 !important; 
+      text-decoration: underline;
       position: relative;
       font-weight: bold;
       transition: color 0.2s;
     }
     .event-title-link:hover {
-      color: #ef4444 !important;
+      color: #dc2626 !important;
       text-decoration: underline;
     }
     .event-title-link:active {
