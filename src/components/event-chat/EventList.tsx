@@ -8,6 +8,7 @@ interface Event {
   time?: string;
   location?: string;
   category?: string;
+  link?: string;
 }
 
 interface EventListProps {
@@ -23,7 +24,7 @@ const EventList: React.FC<EventListProps> = ({ events, title }) => {
   return (
     <div className="space-y-2">
       {title && <h3 className="font-medium text-sm text-red-600 dark:text-red-400 mb-2">{title}</h3>}
-      <div className="event-list-container">
+      <div className="grid grid-cols-1 gap-2">
         {events.map((event, index) => (
           <EventPanel key={index} event={event} />
         ))}
