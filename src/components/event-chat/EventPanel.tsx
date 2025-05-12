@@ -15,7 +15,7 @@ interface EventPanelProps {
 
 const EventPanel: React.FC<EventPanelProps> = ({ event }) => {
   return (
-    <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3 mb-3">
+    <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3 mb-3 relative">
       <div className="font-bold text-base mb-1 text-white !important" style={{color: 'white !important'}}>
         {event.title}
       </div>
@@ -40,8 +40,18 @@ const EventPanel: React.FC<EventPanelProps> = ({ event }) => {
           </div>
         )}
         
+        {/* Action buttons positioned higher up, before category badge */}
+        <div className="flex justify-end mt-1 mb-1">
+          <button className="bg-red-800/50 hover:bg-red-700/60 text-white text-xs px-2 py-1 rounded mr-1">
+            Share
+          </button>
+          <button className="bg-red-800/50 hover:bg-red-700/60 text-white text-xs px-2 py-1 rounded">
+            Add
+          </button>
+        </div>
+        
         {event.category && (
-          <div className="mt-1">
+          <div>
             <span className="bg-red-500/70 text-white text-xs px-2 py-0.5 rounded inline-block">
               {event.category}
             </span>
