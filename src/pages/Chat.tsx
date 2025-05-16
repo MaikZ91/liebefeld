@@ -16,7 +16,6 @@ import { toast } from '@/hooks/use-toast';
 import UsernameDialog from '@/components/chat/UsernameDialog';
 import ProfileEditor from '@/components/users/ProfileEditor';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
-
 const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
   const [isAddEventSheetOpen, setIsAddEventSheetOpen] = useState(false);
@@ -24,9 +23,15 @@ const ChatPage = () => {
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   const [username, setUsername] = useState<string>('');
-  const { events } = useEventContext();
-  const { currentUser, userProfile, refetchProfile } = useUserProfile();
-  
+  const {
+    events
+  } = useEventContext();
+  const {
+    currentUser,
+    userProfile,
+    refetchProfile
+  } = useUserProfile();
+
   // Function to show add event modal
   const handleAddEvent = () => {
     setIsAddEventSheetOpen(true);
@@ -41,7 +46,6 @@ const ChatPage = () => {
   const handleProfileUpdate = async () => {
     // Refresh the profile immediately to ensure we have the latest data
     await refetchProfile();
-    
     if (userProfile) {
       setUsername(userProfile.username);
       toast({
@@ -68,12 +72,11 @@ const ChatPage = () => {
     } catch (error) {
       console.error('Error accessing localStorage:', error);
     }
-
     const setupDatabase = async () => {
       try {
         // Ensure the default group exists
         await setupService.ensureDefaultGroupExists();
-        
+
         // Enable realtime for chat_messages table
         console.log('Setting up realtime subscription for chat_messages table');
 
@@ -104,7 +107,6 @@ const ChatPage = () => {
         setIsPageLoaded(true);
       }
     };
-    
     setupDatabase();
   }, [refetchProfile]);
 
@@ -116,50 +118,35 @@ const ChatPage = () => {
     };
     checkIsMobile();
     window.addEventListener('resize', checkIsMobile);
-    
+
     // Check if we need to refresh the profile when the component mounts
     refetchProfile();
-    
     return () => window.removeEventListener('resize', checkIsMobile);
   }, [refetchProfile]);
 
   // Show loading state while initializing
   if (!isPageLoaded) {
-    return (
-      <Layout hideFooter={true}>
+    return <Layout hideFooter={true}>
         <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)] items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-red-500 border-t-transparent"></div>
             <p className="text-lg font-medium">Lade Chat...</p>
           </div>
         </div>
-      </Layout>
-    );
+      </Layout>;
   }
-
-  return (
-    <Layout hideFooter={true}>
+  return <Layout hideFooter={true}>
       <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
         {/* LiveTicker has been removed from here */}
         
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-red-500">
             <div className="flex space-x-2">
-              <Button 
-                variant={activeView === 'ai' ? "default" : "outline"} 
-                size="sm" 
-                onClick={() => setActiveView('ai')}
-                className={`flex items-center gap-2 ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}
-              >
+              <Button variant={activeView === 'ai' ? "default" : "outline"} size="sm" onClick={() => setActiveView('ai')} className={`flex items-center gap-2 ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}>
                 <Calendar className="h-4 w-4" />
                 Event Assistent
               </Button>
-              <Button 
-                variant={activeView === 'community' ? "default" : "outline"} 
-                size="sm" 
-                onClick={() => setActiveView('community')}
-                className={`flex items-center gap-2 ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}
-              >
+              <Button variant={activeView === 'community' ? "default" : "outline"} size="sm" onClick={() => setActiveView('community')} className={`flex items-center gap-2 ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}>
                 <Users className="h-4 w-4" />
                 Community
               </Button>
@@ -183,13 +170,7 @@ const ChatPage = () => {
         
         <div className="flex-grow rounded-lg overflow-hidden border border-gray-800 flex flex-col bg-black">
           <div className="flex-grow relative">
-            <EventChatBot 
-              fullPage={true} 
-              onAddEvent={handleAddEvent} 
-              onToggleCommunity={handleToggleCommunity} 
-              activeChatMode={activeView} 
-              setActiveChatMode={setActiveView}
-            />
+            <EventChatBot fullPage={true} onAddEvent={handleAddEvent} onToggleCommunity={handleToggleCommunity} activeChatMode={activeView} setActiveChatMode={setActiveView} />
           </div>
         </div>
       </div>
@@ -215,8 +196,7 @@ const ChatPage = () => {
           <SheetHeader>
             <SheetTitle>Aktuelle Events</SheetTitle>
             <SheetDescription>
-              Die aktuellen Events in deiner Region.
-            </SheetDescription>
+          </SheetDescription>
           </SheetHeader>
           <div className="mt-4 overflow-y-auto max-h-[80vh]">
             <EventCalendar defaultView="list" />
@@ -225,14 +205,7 @@ const ChatPage = () => {
       </Sheet>
       
       {/* Replace UsernameDialog with ProfileEditor */}
-      <ProfileEditor 
-        open={isProfileEditorOpen} 
-        onOpenChange={setIsProfileEditorOpen} 
-        currentUser={userProfile}
-        onProfileUpdate={handleProfileUpdate} 
-      />
-    </Layout>
-  );
+      <ProfileEditor open={isProfileEditorOpen} onOpenChange={setIsProfileEditorOpen} currentUser={userProfile} onProfileUpdate={handleProfileUpdate} />
+    </Layout>;
 };
-
 export default ChatPage;
