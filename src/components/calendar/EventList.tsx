@@ -160,7 +160,7 @@ const EventList: React.FC<EventListProps> = ({
 
   return (
     <div className="dark-glass-card rounded-xl p-3 overflow-hidden w-full max-w-full">
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-1">
         <h3 className="text-xl font-medium text-white">
           {showFavorites 
             ? "Top Events" 
@@ -181,7 +181,7 @@ const EventList: React.FC<EventListProps> = ({
       
       <div ref={listRef} className="overflow-y-auto max-h-[650px] pr-1 scrollbar-thin w-full">
         {Object.keys(eventsByDate).length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-2 gap-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-2 gap-y-1">
             {Object.keys(eventsByDate).sort().map(dateStr => {
               const date = parseISO(dateStr);
               const isCurrentDay = isToday(date);
@@ -195,7 +195,7 @@ const EventList: React.FC<EventListProps> = ({
                   className={`w-full ${isCurrentDay ? 'scroll-mt-12' : ''}`}
                   id={isCurrentDay ? "today-section" : undefined}
                 >
-                  <h4 className="text-sm font-medium mb-1 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-1 z-10 rounded-md flex items-center w-full">
+                  <h4 className="text-sm font-medium mb-0.5 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-0.5 z-10 rounded-md flex items-center w-full">
                     {format(date, 'EEEE, d. MMMM', { locale: de })}
                     {hasNewEvents && (
                       <span className="ml-1 text-[10px] bg-green-600 text-white px-1 py-0.5 rounded-full flex items-center gap-0.5">

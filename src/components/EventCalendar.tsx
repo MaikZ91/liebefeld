@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -161,8 +162,8 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   }, [filter]);
 
   return (
-    <div className="container mx-auto px-2 py-6 max-w-[1280px] animate-fade-in">
-      <div className="flex flex-col space-y-4">
+    <div className="container mx-auto px-2 py-4 max-w-[1280px] animate-fade-in">
+      <div className="flex flex-col space-y-2">
         <CalendarHeader 
           currentDate={currentDate}
           prevMonth={prevMonth}
@@ -184,7 +185,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
         />
 
         {showEventForm && (
-          <div className="w-full mt-3 mb-3 dark-glass-card rounded-xl p-4 animate-fade-down animate-duration-300">
+          <div className="w-full mt-2 mb-2 dark-glass-card rounded-xl p-4 animate-fade-down animate-duration-300">
             <EventForm 
               selectedDate={selectedDate ? selectedDate : new Date()} 
               onAddEvent={handleAddEvent}
