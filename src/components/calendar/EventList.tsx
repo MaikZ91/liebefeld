@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -180,7 +181,7 @@ const EventList: React.FC<EventListProps> = ({
       
       <div ref={listRef} className="overflow-y-auto max-h-[650px] pr-1 scrollbar-thin w-full">
         {Object.keys(eventsByDate).length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-2 gap-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-2 gap-y-2">
             {Object.keys(eventsByDate).sort().map(dateStr => {
               const date = parseISO(dateStr);
               const isCurrentDay = isToday(date);
@@ -202,7 +203,7 @@ const EventList: React.FC<EventListProps> = ({
                       </span>
                     )}
                   </h4>
-                  <div className="space-y-1 w-full">
+                  <div className="space-y-0.5 w-full">
                     {eventsByDate[dateStr].map((event, eventIndex) => {
                       const isTopEvent = isCurrentDay && topTodayEvent && event.id === topTodayEvent.id;
                       const isNewEvent = newEventIds.has(event.id);

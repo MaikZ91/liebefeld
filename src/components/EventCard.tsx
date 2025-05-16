@@ -135,11 +135,12 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               )}
             </div>
             
-            <div className="flex flex-wrap items-center gap-1 mt-0.5 text-[8px] text-white">
+            <div className="flex items-center gap-1 mt-0.5 text-[8px] text-white">
               <div className="flex items-center">
                 <Clock className="w-2 h-2 mr-0.5 flex-shrink-0" />
                 <span>{event.time}</span>
               </div>
+              <span className="mx-0.5">•</span>
               <div className="flex items-center max-w-[120px] overflow-hidden">
                 <MapPin className="w-2 h-2 mr-0.5 flex-shrink-0" />
                 <span className="truncate">{event.location}</span>
@@ -272,14 +273,14 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
         </div>
       </div>
       
-      <div className="space-y-2 text-sm text-white">
+      <div className="flex items-center gap-2 text-sm text-white">
         <div className="flex items-center">
-          <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
+          <Clock className="w-4 h-4 mr-1 flex-shrink-0" />
           <span>{event.time} Uhr</span>
         </div>
-        
+        <span className="mx-1">•</span>
         <div className="flex items-center overflow-hidden">
-          <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+          <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
           <span className="break-words">{event.location}</span>
         </div>
       </div>
