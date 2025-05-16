@@ -16,6 +16,7 @@ import { toast } from '@/hooks/use-toast';
 import UsernameDialog from '@/components/chat/UsernameDialog';
 import ProfileEditor from '@/components/users/ProfileEditor';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
+
 const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
   const [isAddEventSheetOpen, setIsAddEventSheetOpen] = useState(false);
@@ -208,4 +209,5 @@ const ChatPage = () => {
       <ProfileEditor open={isProfileEditorOpen} onOpenChange={setIsProfileEditorOpen} currentUser={userProfile} onProfileUpdate={handleProfileUpdate} />
     </Layout>;
 };
+
 export default ChatPage;
