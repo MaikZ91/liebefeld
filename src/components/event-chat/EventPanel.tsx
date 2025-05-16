@@ -16,7 +16,7 @@ interface EventPanelProps {
 const EventPanel: React.FC<EventPanelProps> = ({ event }) => {
   return (
     <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-2 mb-2 relative">
-      <div className="font-bold text-base mb-1 text-white !important" style={{color: 'white !important'}}>
+      <div className="font-bold text-sm mb-1 text-white !important" style={{color: 'white !important'}}>
         {event.title}
       </div>
       <div className="flex flex-col gap-1">

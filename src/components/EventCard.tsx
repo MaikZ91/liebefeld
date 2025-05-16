@@ -117,7 +117,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
               {event.link ? (
                 <h4 
                   className={cn(
-                    "font-medium text-sm text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1",
+                    "font-medium text-xs text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1",
                     isTribe && "text-purple-300"
                   )}
                   onClick={handleLinkClick}
@@ -127,7 +127,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
                 </h4>
               ) : (
                 <h4 className={cn(
-                  "font-medium text-sm text-white break-words line-clamp-1 text-left",
+                  "font-medium text-xs text-white break-words line-clamp-1 text-left",
                   isTribe && "text-purple-300"
                 )}>
                   {event.title}
@@ -220,7 +220,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
           {event.link ? (
             <h4 
               className={cn(
-                "font-medium text-2xl text-white break-words hover:underline cursor-pointer flex items-center gap-1",
+                "font-medium text-xl text-white break-words hover:underline cursor-pointer flex items-center gap-1",
                 isTribe && "text-purple-300"
               )}
               onClick={handleLinkClick}
@@ -230,7 +230,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
             </h4>
           ) : (
             <h4 className={cn(
-              "font-medium text-2xl text-white break-words",
+              "font-medium text-xl text-white break-words",
               isTribe && "text-purple-300"
             )}>
               {event.title}
