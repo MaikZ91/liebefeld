@@ -4,13 +4,11 @@ import GroupChat from '@/components/GroupChat';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
 import RecentQueries from './RecentQueries';
-
 interface FullPageChatBotProps {
   chatLogic: any;
   activeChatModeValue: 'ai' | 'community';
   communityGroupId: string;
 }
-
 const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   chatLogic,
   activeChatModeValue,
@@ -38,55 +36,22 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   // Determine which queries to render
   const queriesToRender = globalQueries.length > 0 ? globalQueries : [];
-  
-  return (
-    <div className="h-full flex flex-col">
-      <div className="flex-1 p-3 overflow-y-auto">
-        {activeChatModeValue === 'ai' ? (
-          <div className="text-sm">
-            <MessageList 
-              messages={messages} 
-              isTyping={isTyping} 
-              handleDateSelect={handleDateSelect} 
-              messagesEndRef={messagesEndRef} 
-              examplePrompts={examplePrompts} 
-              handleExamplePromptClick={handleExamplePromptClick} 
-            />
-          </div>
-        ) : (
-          <GroupChat compact={false} groupId={communityGroupId} groupName="Allgemein" />
-        )}
+  return <div className="h-full flex flex-col">
+      {/* ChatInput section moved above the messages area with fixed position styling */}
+      <div className="p-3 border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-[18px]">
+        <RecentQueries showRecentQueries={showRecentQueries} setShowRecentQueries={setShowRecentQueries} queriesToRender={queriesToRender} handleExamplePromptClick={handleExamplePromptClick} />
+        
+        <div className="flex items-center relative">
+          {/* Heart button for toggling personalized mode */}
+          {activeChatModeValue === 'ai' && <ChatInput input={input} setInput={setInput} handleSendMessage={handleSendMessage} isTyping={isTyping} handleKeyPress={handleKeyPress} isHeartActive={isHeartActive} handleHeartClick={handleHeartClick} globalQueries={globalQueries} toggleRecentQueries={toggleRecentQueries} inputRef={inputRef} />}
+        </div>
       </div>
       
-      {/* ChatInput section at the bottom with fixed position styling */}
-      <div className="p-3 border-t border-red-500/20 bg-black px-[13px] py-[18px] relative z-20">
-        {activeChatModeValue === 'ai' && (
-          <div className="flex items-center relative">
-            <div className="relative w-full">
-              <RecentQueries 
-                showRecentQueries={showRecentQueries} 
-                setShowRecentQueries={setShowRecentQueries} 
-                queriesToRender={queriesToRender} 
-                handleExamplePromptClick={handleExamplePromptClick} 
-              />
-              <ChatInput 
-                input={input} 
-                setInput={setInput} 
-                handleSendMessage={handleSendMessage} 
-                isTyping={isTyping} 
-                handleKeyPress={handleKeyPress} 
-                isHeartActive={isHeartActive} 
-                handleHeartClick={handleHeartClick} 
-                globalQueries={globalQueries} 
-                toggleRecentQueries={toggleRecentQueries} 
-                inputRef={inputRef} 
-              />
-            </div>
-          </div>
-        )}
+      <div className="flex-1 p-3 overflow-y-auto max-h-[calc(100vh-240px)]">
+        {activeChatModeValue === 'ai' ? <div className="text-sm">
+            <MessageList messages={messages} isTyping={isTyping} handleDateSelect={handleDateSelect} messagesEndRef={messagesEndRef} examplePrompts={examplePrompts} handleExamplePromptClick={handleExamplePromptClick} />
+          </div> : <GroupChat compact={false} groupId={communityGroupId} groupName="Allgemein" />}
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default FullPageChatBot;

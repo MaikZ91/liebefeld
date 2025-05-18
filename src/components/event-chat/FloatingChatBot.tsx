@@ -87,29 +87,27 @@ const FloatingChatBot: React.FC<FloatingChatBotProps> = ({
         )}
       </ScrollArea>
       
-      <div className="p-3 border-t border-red-500/20 relative z-20">
+      <div className="p-3 border-t border-red-500/20 relative">
+        <RecentQueries
+          showRecentQueries={showRecentQueries}
+          setShowRecentQueries={setShowRecentQueries}
+          queriesToRender={queriesToRender}
+          handleExamplePromptClick={handleExamplePromptClick}
+        />
+        
         {activeChatModeValue === 'ai' && (
-          <div className="relative w-full">
-            <RecentQueries
-              showRecentQueries={showRecentQueries}
-              setShowRecentQueries={setShowRecentQueries}
-              queriesToRender={queriesToRender}
-              handleExamplePromptClick={handleExamplePromptClick}
-            />
-            
-            <ChatInput
-              input={input}
-              setInput={setInput}
-              handleSendMessage={handleSendMessage}
-              isTyping={isTyping}
-              handleKeyPress={handleKeyPress}
-              isHeartActive={isHeartActive}
-              handleHeartClick={handleHeartClick}
-              globalQueries={globalQueries}
-              toggleRecentQueries={toggleRecentQueries}
-              inputRef={inputRef}
-            />
-          </div>
+          <ChatInput
+            input={input}
+            setInput={setInput}
+            handleSendMessage={handleSendMessage}
+            isTyping={isTyping}
+            handleKeyPress={handleKeyPress}
+            isHeartActive={isHeartActive}
+            handleHeartClick={handleHeartClick}
+            globalQueries={globalQueries}
+            toggleRecentQueries={toggleRecentQueries}
+            inputRef={inputRef}
+          />
         )}
       </div>
     </div>

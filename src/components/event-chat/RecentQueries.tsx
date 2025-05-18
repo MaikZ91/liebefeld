@@ -13,8 +13,8 @@ const RecentQueries: React.FC<RecentQueriesProps> = ({
   if (queriesToRender.length === 0) return null;
   
   return (
-    <div className={`absolute top-0 transform -translate-y-[calc(100%+8px)] left-0 right-0 bg-gray-900/90 backdrop-blur-sm rounded-lg border border-red-500/20 transition-all duration-300 shadow-lg max-h-[200px] overflow-hidden z-50 ${showRecentQueries ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
-      <div className="p-2 border-b border-red-500/20">
+    <div className={`absolute bottom-[60px] left-0 right-0 bg-gray-900/80 backdrop-blur-sm rounded-t-lg border border-red-500/20 transition-all duration-300 ${showRecentQueries ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
+      <div className="p-3 border-b border-red-500/20">
         <div className="flex items-center justify-between">
           <h4 className="text-sm font-medium text-red-400">Letzte Community-Anfragen</h4>
           <Button
