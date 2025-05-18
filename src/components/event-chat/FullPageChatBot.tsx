@@ -41,38 +41,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   
   return (
     <div className="h-full flex flex-col">
-      {/* ChatInput section moved above the messages area with fixed position styling */}
-      <div className="p-3 border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-[18px]">
-        <div className="flex items-center relative">
-          {/* Heart button for toggling personalized mode */}
-          {activeChatModeValue === 'ai' && (
-            <>
-              <div className="relative w-full">
-                <RecentQueries 
-                  showRecentQueries={showRecentQueries} 
-                  setShowRecentQueries={setShowRecentQueries} 
-                  queriesToRender={queriesToRender} 
-                  handleExamplePromptClick={handleExamplePromptClick} 
-                />
-                <ChatInput 
-                  input={input} 
-                  setInput={setInput} 
-                  handleSendMessage={handleSendMessage} 
-                  isTyping={isTyping} 
-                  handleKeyPress={handleKeyPress} 
-                  isHeartActive={isHeartActive} 
-                  handleHeartClick={handleHeartClick} 
-                  globalQueries={globalQueries} 
-                  toggleRecentQueries={toggleRecentQueries} 
-                  inputRef={inputRef} 
-                />
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-      
-      <div className="flex-1 p-3 overflow-y-auto max-h-[calc(100vh-240px)]">
+      <div className="flex-1 p-3 overflow-y-auto">
         {activeChatModeValue === 'ai' ? (
           <div className="text-sm">
             <MessageList 
@@ -86,6 +55,34 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
           </div>
         ) : (
           <GroupChat compact={false} groupId={communityGroupId} groupName="Allgemein" />
+        )}
+      </div>
+      
+      {/* ChatInput section at the bottom with fixed position styling */}
+      <div className="p-3 border-t border-red-500/20 bg-black px-[13px] py-[18px] relative z-20">
+        {activeChatModeValue === 'ai' && (
+          <div className="flex items-center relative">
+            <div className="relative w-full">
+              <RecentQueries 
+                showRecentQueries={showRecentQueries} 
+                setShowRecentQueries={setShowRecentQueries} 
+                queriesToRender={queriesToRender} 
+                handleExamplePromptClick={handleExamplePromptClick} 
+              />
+              <ChatInput 
+                input={input} 
+                setInput={setInput} 
+                handleSendMessage={handleSendMessage} 
+                isTyping={isTyping} 
+                handleKeyPress={handleKeyPress} 
+                isHeartActive={isHeartActive} 
+                handleHeartClick={handleHeartClick} 
+                globalQueries={globalQueries} 
+                toggleRecentQueries={toggleRecentQueries} 
+                inputRef={inputRef} 
+              />
+            </div>
+          </div>
         )}
       </div>
     </div>

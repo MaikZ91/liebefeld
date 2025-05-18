@@ -87,16 +87,16 @@ const FloatingChatBot: React.FC<FloatingChatBotProps> = ({
         )}
       </ScrollArea>
       
-      <div className="p-3 border-t border-red-500/20 relative">
-        <div className="relative w-full">
-          <RecentQueries
-            showRecentQueries={showRecentQueries}
-            setShowRecentQueries={setShowRecentQueries}
-            queriesToRender={queriesToRender}
-            handleExamplePromptClick={handleExamplePromptClick}
-          />
-          
-          {activeChatModeValue === 'ai' && (
+      <div className="p-3 border-t border-red-500/20 relative z-20">
+        {activeChatModeValue === 'ai' && (
+          <div className="relative w-full">
+            <RecentQueries
+              showRecentQueries={showRecentQueries}
+              setShowRecentQueries={setShowRecentQueries}
+              queriesToRender={queriesToRender}
+              handleExamplePromptClick={handleExamplePromptClick}
+            />
+            
             <ChatInput
               input={input}
               setInput={setInput}
@@ -109,8 +109,8 @@ const FloatingChatBot: React.FC<FloatingChatBotProps> = ({
               toggleRecentQueries={toggleRecentQueries}
               inputRef={inputRef}
             />
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
