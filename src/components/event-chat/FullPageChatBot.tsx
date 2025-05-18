@@ -47,25 +47,24 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
           {/* Heart button for toggling personalized mode */}
           {activeChatModeValue === 'ai' && (
             <>
-              <ChatInput 
-                input={input} 
-                setInput={setInput} 
-                handleSendMessage={handleSendMessage} 
-                isTyping={isTyping} 
-                handleKeyPress={handleKeyPress} 
-                isHeartActive={isHeartActive} 
-                handleHeartClick={handleHeartClick} 
-                globalQueries={globalQueries} 
-                toggleRecentQueries={toggleRecentQueries} 
-                inputRef={inputRef} 
-              />
-              
               <div className="relative w-full">
                 <RecentQueries 
                   showRecentQueries={showRecentQueries} 
                   setShowRecentQueries={setShowRecentQueries} 
                   queriesToRender={queriesToRender} 
                   handleExamplePromptClick={handleExamplePromptClick} 
+                />
+                <ChatInput 
+                  input={input} 
+                  setInput={setInput} 
+                  handleSendMessage={handleSendMessage} 
+                  isTyping={isTyping} 
+                  handleKeyPress={handleKeyPress} 
+                  isHeartActive={isHeartActive} 
+                  handleHeartClick={handleHeartClick} 
+                  globalQueries={globalQueries} 
+                  toggleRecentQueries={toggleRecentQueries} 
+                  inputRef={inputRef} 
                 />
               </div>
             </>

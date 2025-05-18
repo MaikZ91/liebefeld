@@ -95,22 +95,22 @@ const FloatingChatBot: React.FC<FloatingChatBotProps> = ({
             queriesToRender={queriesToRender}
             handleExamplePromptClick={handleExamplePromptClick}
           />
+          
+          {activeChatModeValue === 'ai' && (
+            <ChatInput
+              input={input}
+              setInput={setInput}
+              handleSendMessage={handleSendMessage}
+              isTyping={isTyping}
+              handleKeyPress={handleKeyPress}
+              isHeartActive={isHeartActive}
+              handleHeartClick={handleHeartClick}
+              globalQueries={globalQueries}
+              toggleRecentQueries={toggleRecentQueries}
+              inputRef={inputRef}
+            />
+          )}
         </div>
-        
-        {activeChatModeValue === 'ai' && (
-          <ChatInput
-            input={input}
-            setInput={setInput}
-            handleSendMessage={handleSendMessage}
-            isTyping={isTyping}
-            handleKeyPress={handleKeyPress}
-            isHeartActive={isHeartActive}
-            handleHeartClick={handleHeartClick}
-            globalQueries={globalQueries}
-            toggleRecentQueries={toggleRecentQueries}
-            inputRef={inputRef}
-          />
-        )}
       </div>
     </div>
   );
