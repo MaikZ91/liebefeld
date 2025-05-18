@@ -15,21 +15,19 @@ const THEME_COLOR_KEY = 'app-theme-color';
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [themeColor, setThemeColorState] = useState<ThemeColor>('red');
   
+  // Load saved theme on initial render
   useEffect(() => {
-    // Load saved theme on initial render
     const savedTheme = localStorage.getItem(THEME_COLOR_KEY) as ThemeColor;
     if (savedTheme) {
       setThemeColorState(savedTheme);
+      applyThemeColor(savedTheme);
     }
   }, []);
 
   const setThemeColor = (color: ThemeColor) => {
     setThemeColorState(color);
     localStorage.setItem(THEME_COLOR_KEY, color);
-    
-    // Apply theme color to CSS variables
-    document.documentElement.style.setProperty('--theme-color', getColorValue(color));
-    document.documentElement.style.setProperty('--theme-color-hover', getColorHoverValue(color));
+    applyThemeColor(color);
   };
 
   // Helper functions to get color values
@@ -55,10 +53,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const applyThemeColor = (color: ThemeColor) => {
+    document.documentElement.style.setProperty('--theme-color', getColorValue(color));
+    document.documentElement.style.setProperty('--theme-color-hover', getColorHoverValue(color));
+  };
+
   // Set initial theme on first render
   useEffect(() => {
-    document.documentElement.style.setProperty('--theme-color', getColorValue(themeColor));
-    document.documentElement.style.setProperty('--theme-color-hover', getColorHoverValue(themeColor));
+    applyThemeColor(themeColor);
   }, []);
 
   return (

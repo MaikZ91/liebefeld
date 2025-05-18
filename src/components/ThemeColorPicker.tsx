@@ -8,6 +8,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
 
 interface ThemeColorPickerProps {
   compact?: boolean;
@@ -24,6 +25,15 @@ const ThemeColorPicker: React.FC<ThemeColorPickerProps> = ({ compact = false }) 
     { name: 'orange', label: 'Orange', value: '#f97316' },
   ];
 
+  const handleColorChange = (colorName: string) => {
+    setThemeColor(colorName as any);
+    toast({
+      title: "Farbschema geändert",
+      description: `Das Farbschema wurde auf ${colors.find(c => c.name === colorName)?.label || colorName} geändert.`,
+      variant: "default",
+    });
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -32,6 +42,10 @@ const ThemeColorPicker: React.FC<ThemeColorPickerProps> = ({ compact = false }) 
           size={compact ? "sm" : "default"}
           className="flex items-center gap-2"
         >
+          <div 
+            className="w-3 h-3 rounded-full" 
+            style={{ backgroundColor: colors.find(c => c.name === themeColor)?.value || '#ea384c' }}
+          />
           <Palette className="h-4 w-4" />
           {!compact && "Farbschema"}
         </Button>
@@ -42,9 +56,12 @@ const ThemeColorPicker: React.FC<ThemeColorPickerProps> = ({ compact = false }) 
           {colors.map((color) => (
             <button
               key={color.name}
-              onClick={() => setThemeColor(color.name as any)}
-              className={`h-8 w-8 rounded-full ${themeColor === color.name ? 'ring-2 ring-offset-2' : ''}`}
-              style={{ backgroundColor: color.value }}
+              onClick={() => handleColorChange(color.name)}
+              className={`h-8 w-8 rounded-full transition-all ${themeColor === color.name ? 'ring-2 ring-offset-2 scale-110' : 'hover:scale-105'}`}
+              style={{ 
+                backgroundColor: color.value,
+                ringColor: color.value
+              }}
               title={color.label}
               aria-label={`Theme color ${color.label}`}
             />
