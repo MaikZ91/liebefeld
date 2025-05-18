@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
@@ -17,7 +16,6 @@ import { toast } from '@/hooks/use-toast';
 import UsernameDialog from '@/components/chat/UsernameDialog';
 import ProfileEditor from '@/components/users/ProfileEditor';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
-import ThemeColorPicker from '@/components/ThemeColorPicker';
 
 const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
@@ -132,7 +130,7 @@ const ChatPage = () => {
     return <Layout hideFooter={true}>
         <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)] items-center justify-center">
           <div className="flex flex-col items-center gap-4">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-theme border-t-transparent"></div>
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-red-500 border-t-transparent"></div>
             <p className="text-lg font-medium">Lade Chat...</p>
           </div>
         </div>
@@ -143,13 +141,13 @@ const ChatPage = () => {
         {/* LiveTicker has been removed from here */}
         
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-theme">
+          <h1 className="text-2xl font-bold text-red-500">
             <div className="flex space-x-2">
-              <Button variant={activeView === 'ai' ? "default" : "outline"} size="sm" onClick={() => setActiveView('ai')} className={`flex items-center gap-2 ${activeView === 'ai' ? 'bg-theme hover:bg-theme-hover' : ''}`}>
+              <Button variant={activeView === 'ai' ? "default" : "outline"} size="sm" onClick={() => setActiveView('ai')} className={`flex items-center gap-2 ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}>
                 <Calendar className="h-4 w-4" />
                 Event Assistent
               </Button>
-              <Button variant={activeView === 'community' ? "default" : "outline"} size="sm" onClick={() => setActiveView('community')} className={`flex items-center gap-2 ${activeView === 'community' ? 'bg-theme hover:bg-theme-hover' : ''}`}>
+              <Button variant={activeView === 'community' ? "default" : "outline"} size="sm" onClick={() => setActiveView('community')} className={`flex items-center gap-2 ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}>
                 <Users className="h-4 w-4" />
                 Community
               </Button>
@@ -157,10 +155,7 @@ const ChatPage = () => {
           </h1>
           
           <div className="flex gap-2">
-            {/* Theme Color Picker */}
-            <ThemeColorPicker compact={isMobile} />
-            
-            {/* Add Event Button */}
+            {/* Add Event Button - Moved here */}
             <Button variant="outline" size="sm" onClick={handleAddEvent} className="flex items-center gap-1">
               <PlusCircle className="h-4 w-4" />
               <span className="hidden md:inline">Event hinzufügen</span>
