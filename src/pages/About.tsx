@@ -36,33 +36,6 @@ const About = () => {
     <div className="min-h-screen bg-black text-white">
       <CalendarNavbar />
       
-      {/* App Download Banner */}
-      <div className="w-full bg-gradient-to-r from-[#1A1F2C] to-[#9b87f5] py-6 shadow-lg">
-        <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold mb-2 font-serif">Erlebe den Community Kalender als App</h2>
-            <p className="text-gray-100 mb-4">Entdecke Events, bleibe verbunden und verpasse nie wieder ein Highlight in deiner Umgebung.</p>
-          </div>
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <Button
-              onClick={() => window.open(PLAY_STORE_URL, '_blank')}
-              className="bg-[#F97316] hover:bg-orange-600 text-white rounded-lg px-6 py-6 flex items-center justify-center shadow-xl hover:shadow-2xl transition-all gap-2 min-w-48"
-              size="lg"
-            >
-              <Download className="h-5 w-5" />
-              <span className="font-bold">App herunterladen</span>
-            </Button>
-            <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="block transform hover:scale-105 transition-transform">
-              <img
-                src="/lovable-uploads/8413f0b2-fdba-4473-a257-bb471b29ea95.png"
-                alt="Get it on Google Play"
-                className="h-14 shadow-md rounded"
-              />
-            </a>
-          </div>
-        </div>
-      </div>
-
       <div className="container mx-auto px-4 py-6 max-w-5xl animate-fade-in">
         {/* Hero Section - Updated with CTA content */}
         <section className="py-12 mb-12 relative overflow-hidden rounded-xl">
@@ -98,6 +71,25 @@ const About = () => {
                 <MessageSquare className="mr-2 h-4 w-4" />
                 AI-Assistent
               </Button>
+            </div>
+            
+            {/* App Download Buttons - Added underneath the AI Assistant */}
+            <div className="flex flex-col md:flex-row items-center justify-center gap-3 mt-4">
+              <Button
+                onClick={() => window.open(PLAY_STORE_URL, '_blank')}
+                className="bg-[#F97316] hover:bg-orange-600 text-white rounded-lg px-6 py-2 flex items-center justify-center shadow-xl hover:shadow-2xl transition-all gap-2"
+                size="sm"
+              >
+                <Download className="h-4 w-4" />
+                <span className="font-bold">App herunterladen</span>
+              </Button>
+              <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="block transform hover:scale-105 transition-transform">
+                <img
+                  src="/lovable-uploads/8413f0b2-fdba-4473-a257-bb471b29ea95.png"
+                  alt="Get it on Google Play"
+                  className="h-10 shadow-md rounded"
+                />
+              </a>
             </div>
             
             <div className="mt-8 flex items-center justify-center space-x-4">
