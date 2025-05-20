@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
@@ -9,7 +10,7 @@ import BetaTesterBanner from '@/components/BetaTesterBanner';
 import PerfectDayPanel from '@/components/PerfectDayPanel';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { QrCode } from 'lucide-react';
+import { QrCode, Smartphone } from 'lucide-react';
 import { EventProvider, useEventContext } from '@/contexts/EventContext';
 
 const LiveTickerWrapper = () => {
@@ -108,6 +109,7 @@ const Index = () => {
   const [showSubtitle, setShowSubtitle] = useState(true);
   const [titleAnimating, setTitleAnimating] = useState(true);
   const WHATSAPP_URL = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
+  const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=co.median.android.yadezx";
   const chatbotRef = useRef<any>(null);
   
   useEffect(() => {
@@ -136,6 +138,79 @@ const Index = () => {
       <CalendarNavbar />
       <BetaTesterBanner />
       <main className="flex-grow relative">
+        {/* App Download Hero Section */}
+        <div className="relative w-full bg-gradient-to-b from-gray-900 to-black py-10 px-4 flex flex-col items-center justify-center overflow-hidden">
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute inset-y-0 left-1/4 w-1/2 bg-gradient-radial from-red-500/20 via-transparent to-transparent blur-3xl"></div>
+            <div className="absolute inset-y-0 right-1/4 w-1/2 bg-gradient-radial from-blue-500/20 via-transparent to-transparent blur-3xl"></div>
+          </div>
+          
+          <div className="relative z-10 max-w-5xl w-full mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="flex-1 text-center md:text-left">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 font-serif">Neu in <span className="text-red-500">Liebefeld?</span></h2>
+              <p className="text-lg md:text-xl mb-6 text-gray-300">Entdecke Events und verbinde dich mit Menschen aus deiner Stadt mit unserer mobilen App!</p>
+              
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <a 
+                  href={PLAY_STORE_URL}
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto"
+                >
+                  <Button 
+                    className="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white rounded-full py-6 flex items-center justify-center shadow-lg hover:shadow-xl transition-all gap-3 border-2 border-white/30 group"
+                    size="lg"
+                  >
+                    <Smartphone className="h-6 w-6 group-hover:animate-bounce" />
+                    <span className="text-base font-bold">Jetzt App herunterladen</span>
+                  </Button>
+                </a>
+                
+                <a 
+                  href={WHATSAPP_URL}
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto"
+                >
+                  <Button 
+                    className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white rounded-full py-6 flex items-center justify-center shadow-lg hover:shadow-xl transition-all gap-3"
+                    size="lg"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" className="h-6 w-6">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                    </svg>
+                    <span className="text-base font-bold">Community beitreten</span>
+                  </Button>
+                </a>
+              </div>
+            </div>
+            
+            <div className="relative w-48 md:w-56">
+              <div className="absolute inset-0 bg-gradient-radial from-blue-500/30 via-transparent to-transparent blur-xl"></div>
+              <div className="relative">
+                <img 
+                  src="/lovable-uploads/17a53d1b-c2f3-4d94-95f0-6db9bd9a210b.png" 
+                  alt="Smartphone mit Liebefeld App" 
+                  className="w-full h-auto drop-shadow-2xl"
+                />
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
+                  <a 
+                    href={PLAY_STORE_URL}
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    <img 
+                      src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" 
+                      alt="Get it on Google Play" 
+                      className="h-14 w-auto"
+                    />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="relative w-full h-[50vh] overflow-hidden bg-black">
           <img 
             src="/lovable-uploads/e3d0a85b-9935-450a-bba8-5693570597a3.png" 
