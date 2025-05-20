@@ -1,23 +1,9 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import CalendarNavbar from '@/components/CalendarNavbar';
-import { 
-  Download, 
-  Calendar, 
-  Users, 
-  MessageSquare, 
-  Globe, 
-  LinkIcon, 
-  Heart, 
-  TestTube, 
-  Star,
-  Award,
-  PartyPopper
-} from 'lucide-react';
+import { Download, Calendar, Users, MessageSquare, Globe, LinkIcon, Heart, TestTube, Star, Award, PartyPopper } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import CommunityTest from '@/components/CommunityTest';
-
 const About = () => {
   const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=co.median.android.yadezx";
   const WHATSAPP_URL = "https://chat.whatsapp.com/invite/yourlinkhere"; // Replace with your actual WhatsApp URL
@@ -25,15 +11,20 @@ const About = () => {
   const navigate = useNavigate();
 
   // Sample community images for the demo
-  const communityImages = [
-    { src: "/lovable-uploads/e3d0a85b-9935-450a-bba8-5693570597a3.png", alt: "Community event 1" },
-    { src: "/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png", alt: "Community event 2" },
-    { src: "/lovable-uploads/8562fff2-2b62-4552-902b-cc62457a3402.png", alt: "Community event 3" },
-    { src: "/lovable-uploads/764c9b33-5d7d-4134-b503-c77e23c469f9.png", alt: "Community event 4" },
-  ];
-
-  return (
-    <div className="min-h-screen bg-black text-white">
+  const communityImages = [{
+    src: "/lovable-uploads/e3d0a85b-9935-450a-bba8-5693570597a3.png",
+    alt: "Community event 1"
+  }, {
+    src: "/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png",
+    alt: "Community event 2"
+  }, {
+    src: "/lovable-uploads/8562fff2-2b62-4552-902b-cc62457a3402.png",
+    alt: "Community event 3"
+  }, {
+    src: "/lovable-uploads/764c9b33-5d7d-4134-b503-c77e23c469f9.png",
+    alt: "Community event 4"
+  }];
+  return <div className="min-h-screen bg-black text-white">
       <CalendarNavbar />
       
       <div className="container mx-auto px-4 py-6 max-w-5xl animate-fade-in">
@@ -49,25 +40,18 @@ const About = () => {
             </p>
             
             <div className="flex flex-wrap justify-center gap-3">
-              <Button 
-                className="rounded-full px-6 py-2 text-sm bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20"
-                onClick={() => setTestModalOpen(true)}
-              >
+              <Button className="rounded-full px-6 py-2 text-sm bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20" onClick={() => setTestModalOpen(true)}>
                 <Users className="mr-2 h-4 w-4" />
                 Community beitreten
               </Button>
-              <Button 
-                variant="outline"
-                className="rounded-full px-6 py-2 text-sm border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
-                onClick={() => {
-                  if (typeof window !== 'undefined' && window.chatbotQuery) {
-                    window.chatbotQuery('Was für Events gibt es heute?');
-                    navigate('/chat');
-                  } else {
-                    navigate('/chat');
-                  }
-                }}
-              >
+              <Button variant="outline" className="rounded-full px-6 py-2 text-sm border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300" onClick={() => {
+              if (typeof window !== 'undefined' && window.chatbotQuery) {
+                window.chatbotQuery('Was für Events gibt es heute?');
+                navigate('/chat');
+              } else {
+                navigate('/chat');
+              }
+            }}>
                 <MessageSquare className="mr-2 h-4 w-4" />
                 AI-Assistent
               </Button>
@@ -75,30 +59,20 @@ const About = () => {
             
             {/* App Download Buttons - Added underneath the AI Assistant */}
             <div className="flex flex-col md:flex-row items-center justify-center gap-3 mt-4">
-              <Button
-                onClick={() => window.open(PLAY_STORE_URL, '_blank')}
-                className="bg-[#F97316] hover:bg-orange-600 text-white rounded-lg px-6 py-2 flex items-center justify-center shadow-xl hover:shadow-2xl transition-all gap-2"
-                size="sm"
-              >
+              <Button onClick={() => window.open(PLAY_STORE_URL, '_blank')} size="sm" className="text-white rounded-lg px-6 py-2 flex items-center justify-center shadow-xl hover:shadow-2xl transition-all gap-2 bg-red-600 hover:bg-red-500">
                 <Download className="h-4 w-4" />
                 <span className="font-bold">App herunterladen</span>
               </Button>
               <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="block transform hover:scale-105 transition-transform">
-                <img
-                  src="/lovable-uploads/8413f0b2-fdba-4473-a257-bb471b29ea95.png"
-                  alt="Get it on Google Play"
-                  className="h-10 shadow-md rounded"
-                />
+                <img src="/lovable-uploads/8413f0b2-fdba-4473-a257-bb471b29ea95.png" alt="Get it on Google Play" className="h-10 shadow-md rounded" />
               </a>
             </div>
             
             <div className="mt-8 flex items-center justify-center space-x-4">
               <div className="flex -space-x-3">
-                {communityImages.slice(0, 3).map((img, index) => (
-                  <div key={index} className="w-8 h-8 rounded-full border-2 border-black overflow-hidden">
+                {communityImages.slice(0, 3).map((img, index) => <div key={index} className="w-8 h-8 rounded-full border-2 border-black overflow-hidden">
                     <img src={img.src} alt={img.alt} className="w-full h-full object-cover" />
-                  </div>
-                ))}
+                  </div>)}
               </div>
               <p className="text-white/70 text-xs">+100 Community-Mitglieder</p>
             </div>
@@ -115,28 +89,21 @@ const About = () => {
             </p>
             
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
-              {communityImages.slice(0, 3).map((img, index) => (
-                <div key={index} className="h-32 rounded-lg overflow-hidden">
+              {communityImages.slice(0, 3).map((img, index) => <div key={index} className="h-32 rounded-lg overflow-hidden">
                   <img src={img.src} alt={img.alt} className="w-full h-full object-cover" />
-                </div>
-              ))}
+                </div>)}
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
-              {communityFeatures.slice(0, 4).map((feature, i) => (
-                <div key={i} className="flex items-start">
+              {communityFeatures.slice(0, 4).map((feature, i) => <div key={i} className="flex items-start">
                   <div className="mr-1 h-4 w-4 rounded-full bg-red-500/20 flex items-center justify-center text-red-400">
                     <feature.icon className="h-2 w-2" />
                   </div>
                   <div className="text-xs">{feature.title}</div>
-                </div>
-              ))}
+                </div>)}
             </div>
             
-            <Button 
-              className="w-full mt-4 rounded-full px-4 py-1 text-xs bg-red-500 hover:bg-red-600"
-              onClick={() => setTestModalOpen(true)}
-            >
+            <Button className="w-full mt-4 rounded-full px-4 py-1 text-xs bg-red-500 hover:bg-red-600" onClick={() => setTestModalOpen(true)}>
               <Users className="mr-1 h-3 w-3" />
               Community beitreten
             </Button>
@@ -163,23 +130,17 @@ const About = () => {
                 {/* Calendar Grid */}
                 <div className="grid grid-cols-7 gap-1 mb-2">
                   {/* Day headers */}
-                  {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day) => (
-                    <div key={day} className="text-center text-xs text-gray-400 p-1">{day}</div>
-                  ))}
+                  {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(day => <div key={day} className="text-center text-xs text-gray-400 p-1">{day}</div>)}
                   
                   {/* Calendar days (first row) */}
-                  {[null, null, 1, 2, 3, 4, 5].map((day, i) => (
-                    <div key={`week1-${i}`} className={`text-center p-1 text-xs rounded-full ${day === 3 ? 'bg-red-500 text-white' : day ? 'hover:bg-gray-800' : ''}`}>
+                  {[null, null, 1, 2, 3, 4, 5].map((day, i) => <div key={`week1-${i}`} className={`text-center p-1 text-xs rounded-full ${day === 3 ? 'bg-red-500 text-white' : day ? 'hover:bg-gray-800' : ''}`}>
                       {day}
-                    </div>
-                  ))}
+                    </div>)}
                   
                   {/* Calendar days (second row) */}
-                  {[6, 7, 8, 9, 10, 11, 12].map((day, i) => (
-                    <div key={`week2-${i}`} className={`text-center p-1 text-xs rounded-full ${day === 10 ? 'bg-red-500/20 text-red-400 ring-1 ring-red-500/30' : 'hover:bg-gray-800'}`}>
+                  {[6, 7, 8, 9, 10, 11, 12].map((day, i) => <div key={`week2-${i}`} className={`text-center p-1 text-xs rounded-full ${day === 10 ? 'bg-red-500/20 text-red-400 ring-1 ring-red-500/30' : 'hover:bg-gray-800'}`}>
                       {day}
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
                 
                 {/* Event Cards */}
@@ -270,12 +231,7 @@ const About = () => {
                 
                 <div className="mt-3 relative">
                   <div className="flex items-center bg-black/30 rounded-full border border-gray-700/50 px-3 py-1">
-                    <input 
-                      type="text" 
-                      placeholder="Frage den KI-Assistenten..." 
-                      className="bg-transparent text-xs w-full border-none focus:outline-none text-white"
-                      readOnly
-                    />
+                    <input type="text" placeholder="Frage den KI-Assistenten..." className="bg-transparent text-xs w-full border-none focus:outline-none text-white" readOnly />
                     <MessageSquare className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
                   </div>
                 </div>
@@ -283,25 +239,18 @@ const About = () => {
             </div>
             
             <div className="mt-4 flex justify-center gap-3">
-              <Button 
-                className="w-full md:w-auto rounded-full px-4 py-1 text-xs bg-red-500 hover:bg-red-600"
-                onClick={() => navigate('/chat')}
-              >
+              <Button className="w-full md:w-auto rounded-full px-4 py-1 text-xs bg-red-500 hover:bg-red-600" onClick={() => navigate('/chat')}>
                 <Calendar className="mr-1 h-3 w-3" />
                 Events entdecken
               </Button>
-              <Button 
-                variant="outline" 
-                className="w-full md:w-auto rounded-full px-4 py-1 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10"
-                onClick={() => {
-                  if (typeof window !== 'undefined' && window.chatbotQuery) {
-                    window.chatbotQuery('Welche Konzerte gibt es diese Woche?');
-                    navigate('/chat');
-                  } else {
-                    navigate('/chat');
-                  }
-                }}
-              >
+              <Button variant="outline" className="w-full md:w-auto rounded-full px-4 py-1 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10" onClick={() => {
+              if (typeof window !== 'undefined' && window.chatbotQuery) {
+                window.chatbotQuery('Welche Konzerte gibt es diese Woche?');
+                navigate('/chat');
+              } else {
+                navigate('/chat');
+              }
+            }}>
                 <MessageSquare className="mr-1 h-3 w-3" />
                 AI-Assistent fragen
               </Button>
@@ -319,8 +268,7 @@ const About = () => {
           </div>
           
           <div className="grid grid-cols-2 gap-3">
-            {features.map((feature, index) => (
-              <div key={index} className="bg-black/40 p-3 rounded-lg border border-red-500/10 flex items-start">
+            {features.map((feature, index) => <div key={index} className="bg-black/40 p-3 rounded-lg border border-red-500/10 flex items-start">
                 <div className="h-8 w-8 rounded-full bg-red-500/10 flex items-center justify-center mr-3 flex-shrink-0">
                   <feature.icon className="h-4 w-4 text-red-500" />
                 </div>
@@ -328,8 +276,7 @@ const About = () => {
                   <h3 className="text-sm font-medium mb-0.5">{feature.title}</h3>
                   <p className="text-xs text-muted-foreground">{feature.description}</p>
                 </div>
-              </div>
-            ))}
+              </div>)}
           </div>
         </section>
 
@@ -366,10 +313,7 @@ const About = () => {
             </div>
             
             <div className="text-center mt-4">
-              <Button 
-                className="rounded-full px-4 py-1 text-xs bg-red-500 hover:bg-red-600"
-                onClick={() => navigate('/chat')}
-              >
+              <Button className="rounded-full px-4 py-1 text-xs bg-red-500 hover:bg-red-600" onClick={() => navigate('/chat')}>
                 Partner werden
               </Button>
             </div>
@@ -429,85 +373,64 @@ const About = () => {
         </section>
       </div>
       
-      <CommunityTest 
-        open={testModalOpen} 
-        onOpenChange={setTestModalOpen} 
-        whatsappUrl={WHATSAPP_URL} 
-      />
-    </div>
-  );
+      <CommunityTest open={testModalOpen} onOpenChange={setTestModalOpen} whatsappUrl={WHATSAPP_URL} />
+    </div>;
 };
 
 // Features für die Feature-Section
-const features = [
-  {
-    title: "Event-Kalender & KI-Assistent",
-    description: "Entdecke lokale Events und erhalte personalisierte Empfehlungen.",
-    icon: Calendar
-  },
-  {
-    title: "Community",
-    description: "Verbinde dich mit anderen Bielefeldern und werde Teil einer wachsenden lokalen Community.",
-    icon: Users
-  },
-  {
-    title: "Events erstellen",
-    description: "Teile deine eigenen Veranstaltungen mit der Community.",
-    icon: Calendar
-  },
-  {
-    title: "Lokale Kontakte",
-    description: "Knüpfe neue Kontakte zu Menschen in deiner Nähe.",
-    icon: Globe
-  }
-];
+const features = [{
+  title: "Event-Kalender & KI-Assistent",
+  description: "Entdecke lokale Events und erhalte personalisierte Empfehlungen.",
+  icon: Calendar
+}, {
+  title: "Community",
+  description: "Verbinde dich mit anderen Bielefeldern und werde Teil einer wachsenden lokalen Community.",
+  icon: Users
+}, {
+  title: "Events erstellen",
+  description: "Teile deine eigenen Veranstaltungen mit der Community.",
+  icon: Calendar
+}, {
+  title: "Lokale Kontakte",
+  description: "Knüpfe neue Kontakte zu Menschen in deiner Nähe.",
+  icon: Globe
+}];
 
 // Features für die Assistant-Features
-const assistantFeatures = [
-  {
-    title: "Personalisierte Empfehlungen",
-    description: "Erhalte Event-Vorschläge basierend auf deinen Interessen.",
-    icon: Star
-  },
-  {
-    title: "Einfache Konversation",
-    description: "Frage in natürlicher Sprache nach Events oder Kategorien.",
-    icon: MessageSquare
-  },
-  {
-    title: "Aktuelle Informationen",
-    description: "Immer auf dem neuesten Stand mit aktuellen Event-Daten.",
-    icon: Globe
-  },
-  {
-    title: "Detaillierte Antworten",
-    description: "Erhalte alle wichtigen Informationen zu Events auf einen Blick.",
-    icon: Award
-  }
-];
+const assistantFeatures = [{
+  title: "Personalisierte Empfehlungen",
+  description: "Erhalte Event-Vorschläge basierend auf deinen Interessen.",
+  icon: Star
+}, {
+  title: "Einfache Konversation",
+  description: "Frage in natürlicher Sprache nach Events oder Kategorien.",
+  icon: MessageSquare
+}, {
+  title: "Aktuelle Informationen",
+  description: "Immer auf dem neuesten Stand mit aktuellen Event-Daten.",
+  icon: Globe
+}, {
+  title: "Detaillierte Antworten",
+  description: "Erhalte alle wichtigen Informationen zu Events auf einen Blick.",
+  icon: Award
+}];
 
 // Features für die Community-Features
-const communityFeatures = [
-  {
-    title: "Echte Verbindungen",
-    description: "Lerne Menschen kennen, die deine Interessen teilen.",
-    icon: Users
-  },
-  {
-    title: "Gruppen-Chats",
-    description: "Diskutiere in thematischen Chatgruppen über gemeinsame Interessen.",
-    icon: MessageSquare
-  },
-  {
-    title: "Event-Planung",
-    description: "Organisiere spontane Treffen oder plane gemeinsame Teilnahmen.",
-    icon: Calendar
-  },
-  {
-    title: "Community-Events",
-    description: "Nimm an regelmäßigen Community-Events und Stammtischen teil.",
-    icon: PartyPopper
-  }
-];
-
+const communityFeatures = [{
+  title: "Echte Verbindungen",
+  description: "Lerne Menschen kennen, die deine Interessen teilen.",
+  icon: Users
+}, {
+  title: "Gruppen-Chats",
+  description: "Diskutiere in thematischen Chatgruppen über gemeinsame Interessen.",
+  icon: MessageSquare
+}, {
+  title: "Event-Planung",
+  description: "Organisiere spontane Treffen oder plane gemeinsame Teilnahmen.",
+  icon: Calendar
+}, {
+  title: "Community-Events",
+  description: "Nimm an regelmäßigen Community-Events und Stammtischen teil.",
+  icon: PartyPopper
+}];
 export default About;
