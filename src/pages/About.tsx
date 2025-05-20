@@ -81,7 +81,7 @@ const About = () => {
         
         {/* Community Section - Moved up from original position */}
         <section className="mb-16">
-          <div className="bg-black/40 p-6 rounded-xl border border-red-500/10 shadow-lg">
+          <div className="bg-black/40 p-6 rounded-xl border border-red-500/10 shadow-lg py-0">
             <span className="inline-block py-1 px-2 rounded-full bg-red-500/20 text-red-400 text-xs font-medium mb-2">Community</span>
             <h2 className="text-xl font-bold mb-3">Verbinde dich mit Gleichgesinnten</h2>
             <p className="text-sm text-muted-foreground mb-4">
