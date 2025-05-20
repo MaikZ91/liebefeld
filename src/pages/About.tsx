@@ -1,10 +1,36 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import CalendarNavbar from '@/components/CalendarNavbar';
-import { Download } from 'lucide-react';
+import { 
+  Download, 
+  Calendar, 
+  Users, 
+  MessageSquare, 
+  Globe, 
+  LinkIcon, 
+  Heart, 
+  TestTube, 
+  Star,
+  Award,
+  PartyPopper
+} from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import CommunityTest from '@/components/CommunityTest';
 
 const About = () => {
   const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=co.median.android.yadezx";
+  const WHATSAPP_URL = "https://chat.whatsapp.com/invite/yourlinkhere"; // Replace with your actual WhatsApp URL
+  const [testModalOpen, setTestModalOpen] = useState(false);
+  const navigate = useNavigate();
+
+  // Sample community images for the demo
+  const communityImages = [
+    { src: "/lovable-uploads/e3d0a85b-9935-450a-bba8-5693570597a3.png", alt: "Community event 1" },
+    { src: "/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png", alt: "Community event 2" },
+    { src: "/lovable-uploads/8562fff2-2b62-4552-902b-cc62457a3402.png", alt: "Community event 3" },
+    { src: "/lovable-uploads/764c9b33-5d7d-4134-b503-c77e23c469f9.png", alt: "Community event 4" },
+  ];
 
   return (
     <div className="min-h-screen bg-black text-white">
