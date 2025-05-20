@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import CommunityTest from '@/components/CommunityTest';
 const About = () => {
   const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=co.median.android.yadezx";
-  const WHATSAPP_URL = "https://chat.whatsapp.com/invite/yourlinkhere"; // Replace with your actual WhatsApp URL
+  const WHATSAPP_URL = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK"; // Replace with your actual WhatsApp URL
   const [testModalOpen, setTestModalOpen] = useState(false);
   const navigate = useNavigate();
 
