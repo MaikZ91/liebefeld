@@ -10,7 +10,7 @@ import BetaTesterBanner from '@/components/BetaTesterBanner';
 import PerfectDayPanel from '@/components/PerfectDayPanel';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { QrCode, Smartphone } from 'lucide-react';
+import { QrCode, Smartphone, Download } from 'lucide-react';
 import { EventProvider, useEventContext } from '@/contexts/EventContext';
 
 const LiveTickerWrapper = () => {
