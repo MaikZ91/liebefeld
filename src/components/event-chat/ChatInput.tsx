@@ -66,7 +66,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         onChange={e => setInput(e.target.value)} 
         onKeyPress={handleKeyPress} 
         placeholder="Frage nach Events..." 
-        className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-xs text-red-200 placeholder-red-200/50 pl-16 pr-10" 
+        className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-xs text-red-200 placeholder-red-200/50 pl-24 pr-10" 
       />
       
       <button 
