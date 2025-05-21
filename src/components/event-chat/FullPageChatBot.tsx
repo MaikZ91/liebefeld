@@ -8,11 +8,13 @@ interface FullPageChatBotProps {
   chatLogic: any;
   activeChatModeValue: 'ai' | 'community';
   communityGroupId: string;
+  onAddEvent?: () => void;
 }
 const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   chatLogic,
   activeChatModeValue,
-  communityGroupId
+  communityGroupId,
+  onAddEvent
 }) => {
   const {
     messages,
@@ -43,7 +45,19 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
         
         <div className="flex items-center relative">
           {/* Heart button for toggling personalized mode */}
-          {activeChatModeValue === 'ai' && <ChatInput input={input} setInput={setInput} handleSendMessage={handleSendMessage} isTyping={isTyping} handleKeyPress={handleKeyPress} isHeartActive={isHeartActive} handleHeartClick={handleHeartClick} globalQueries={globalQueries} toggleRecentQueries={toggleRecentQueries} inputRef={inputRef} />}
+          {activeChatModeValue === 'ai' && <ChatInput 
+            input={input} 
+            setInput={setInput} 
+            handleSendMessage={handleSendMessage} 
+            isTyping={isTyping} 
+            handleKeyPress={handleKeyPress} 
+            isHeartActive={isHeartActive} 
+            handleHeartClick={handleHeartClick} 
+            globalQueries={globalQueries} 
+            toggleRecentQueries={toggleRecentQueries} 
+            inputRef={inputRef}
+            onAddEvent={onAddEvent}
+          />}
         </div>
       </div>
       

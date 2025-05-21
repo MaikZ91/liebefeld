@@ -1,4 +1,4 @@
-
+import { RefObject } from 'react';
 import { UserProfile } from '@/types/chatTypes';
 
 export interface ChatMessage {
@@ -32,7 +32,7 @@ export interface MessageListProps {
 
 export interface ChatInputProps {
   input: string;
-  setInput: (value: string) => void;
+  setInput: (input: string) => void;
   handleSendMessage: () => void;
   isTyping: boolean;
   handleKeyPress: (e: React.KeyboardEvent<HTMLInputElement>) => void;
@@ -40,7 +40,8 @@ export interface ChatInputProps {
   handleHeartClick: () => void;
   globalQueries: string[];
   toggleRecentQueries: () => void;
-  inputRef: React.RefObject<HTMLInputElement>;
+  inputRef: RefObject<HTMLInputElement>;
+  onAddEvent?: () => void;
 }
 
 export interface RecentQueriesProps {

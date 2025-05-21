@@ -2,7 +2,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Heart, History, Send } from 'lucide-react';
+import { Heart, History, Send, Calendar } from 'lucide-react';
 import { ChatInputProps } from './types';
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -15,7 +15,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
   handleHeartClick,
   globalQueries,
   toggleRecentQueries,
-  inputRef
+  inputRef,
+  onAddEvent
 }) => {
   return (
     <div className="flex items-center relative">
@@ -41,6 +42,19 @@ const ChatInput: React.FC<ChatInputProps> = ({
             title="Community Anfragen"
           >
             <History className="h-3 w-3" />
+          </Button>
+        )}
+
+        {/* Add Event button */}
+        {onAddEvent && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onAddEvent}
+            className="h-6 w-6 text-red-400"
+            title="Event hinzufügen"
+          >
+            <Calendar className="h-3 w-3" />
           </Button>
         )}
       </div>

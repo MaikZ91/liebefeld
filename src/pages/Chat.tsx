@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
@@ -171,7 +172,13 @@ const ChatPage = () => {
         
         <div className="flex-grow rounded-lg overflow-hidden border border-gray-800 flex flex-col bg-black">
           <div className="flex-grow relative">
-            <EventChatBot fullPage={true} onAddEvent={handleAddEvent} onToggleCommunity={handleToggleCommunity} activeChatMode={activeView} setActiveChatMode={setActiveView} />
+            <EventChatBot 
+              fullPage={true} 
+              onAddEvent={handleAddEvent} 
+              onToggleCommunity={handleToggleCommunity} 
+              activeChatMode={activeView} 
+              setActiveChatMode={setActiveView} 
+            />
           </div>
         </div>
       </div>

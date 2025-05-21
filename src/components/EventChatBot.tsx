@@ -69,6 +69,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
         chatLogic={chatLogic}
         activeChatModeValue={activeChatModeValue}
         communityGroupId={communityGroupId}
+        onAddEvent={onAddEvent}
       />
     );
   }
@@ -84,6 +85,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
           activeChatModeValue={activeChatModeValue}
           communityGroupId={communityGroupId}
           fullPage={fullPage}
+          onAddEvent={onAddEvent}
         />
       ) : (
         <button

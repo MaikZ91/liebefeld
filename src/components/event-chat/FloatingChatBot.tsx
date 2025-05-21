@@ -23,7 +23,8 @@ const FloatingChatBot: React.FC<FloatingChatBotProps> = ({
   handleToggleChat,
   chatLogic,
   activeChatModeValue,
-  communityGroupId
+  communityGroupId,
+  onAddEvent
 }) => {
   const {
     messages,
@@ -107,6 +108,7 @@ const FloatingChatBot: React.FC<FloatingChatBotProps> = ({
             globalQueries={globalQueries}
             toggleRecentQueries={toggleRecentQueries}
             inputRef={inputRef}
+            onAddEvent={onAddEvent}
           />
         )}
       </div>
