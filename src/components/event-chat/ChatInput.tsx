@@ -2,7 +2,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Heart, History, Send, Calendar } from 'lucide-react';
+import { Heart, History, CalendarPlus, Send } from 'lucide-react';
 import { ChatInputProps } from './types';
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -45,7 +45,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           </Button>
         )}
 
-        {/* Add Event button */}
+        {/* Add Event button with calendar icon */}
         {onAddEvent && (
           <Button
             variant="ghost"
@@ -54,7 +54,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             className="h-6 w-6 text-red-400"
             title="Event hinzufügen"
           >
-            <Calendar className="h-3 w-3" />
+            <CalendarPlus className="h-3 w-3" />
           </Button>
         )}
       </div>
@@ -66,7 +66,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         onChange={e => setInput(e.target.value)} 
         onKeyPress={handleKeyPress} 
         placeholder="Frage nach Events..." 
-        className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-xs text-red-200 placeholder-red-200/50 pl-16 pr-10 px-[65px]" 
+        className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/20 rounded-full py-2 focus:outline-none focus:ring-2 focus:ring-red-500 text-xs text-red-200 placeholder-red-200/50 pl-16 pr-10" 
       />
       
       <button 

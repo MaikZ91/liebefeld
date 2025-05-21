@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MessageCircle, MessageSquare, List, Calendar, Link, Users } from 'lucide-react';
+import { MessageCircle, MessageSquare, List, Calendar, Link, Users } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -156,12 +155,6 @@ const ChatPage = () => {
           </h1>
           
           <div className="flex gap-2">
-            {/* Add Event Button - Moved here */}
-            <Button variant="outline" size="sm" onClick={handleAddEvent} className="flex items-center gap-1">
-              <PlusCircle className="h-4 w-4" />
-              <span className="hidden md:inline">Event hinzufügen</span>
-            </Button>
-            
             {/* View Events Button */}
             <Button variant="outline" size="sm" onClick={() => setIsEventListSheetOpen(true)} className="flex items-center gap-1">
               <List className="h-4 w-4" />
