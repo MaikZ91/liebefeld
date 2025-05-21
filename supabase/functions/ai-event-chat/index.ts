@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
@@ -501,7 +500,6 @@ serve(async (req) => {
         <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
           <h5 class="font-medium text-sm text-red-600 dark:text-red-400">Fehler beim Parsen der API-Antwort</h5>
           <p class="text-sm mt-2">Es gab ein Problem bei der Verarbeitung der Antwort vom KI-Modell.</p>
-          <p class="text-xs mt-1 text-gray-400">Powered by ${parsed?.model || "Gemini 2.0"}</p>
         </div>
         ${debugHtml}`;
       return new Response(JSON.stringify({ response: html }), {
@@ -598,9 +596,7 @@ serve(async (req) => {
       aiContent = personalizationBadge + aiContent;
     }
     
-    // Füge eine Hinweis zum verwendeten Modell und zur Anzahl der gefilterten Events hinzu
-    const modelInfo = parsed?.model ? `<p class="text-xs text-gray-400 mt-2">Powered by ${parsed.model} • ${filteredEvents.length} relevante Events aus ${dbEvents.length} analysiert</p>` : '';
-    const finalHtml = `${aiContent}${modelInfo}${debugHtml}`;
+    const finalHtml = `${aiContent}${debugHtml}`;
 
     return new Response(JSON.stringify({ response: finalHtml }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
