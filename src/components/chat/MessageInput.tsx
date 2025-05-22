@@ -158,7 +158,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
           value={value !== undefined ? value : newMessage}
           onChange={handleMessageChange}
           onKeyDown={handleKeyDown}
-          className="min-h-[50px] flex-grow resize-none pr-14 border-2 border-red-500/40 focus:border-red-500 focus:ring-2 focus:ring-red-500 shadow-md shadow-red-500/10 transition-all duration-200"
+          className="min-h-[50px] flex-grow resize-none pr-14 border-2 border-red-500 focus:border-red-600 focus:ring-2 focus:ring-red-500 shadow-md shadow-red-500/10 transition-all duration-200 placeholder-red-500"
         />
         <div className="flex flex-col gap-2 absolute right-10 top-1">
           <Button 
