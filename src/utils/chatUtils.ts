@@ -1,3 +1,4 @@
+
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,9 +7,11 @@ export const getWelcomeMessage = () => {
   const today = format(new Date(), 'EEEE, d. MMMM', { locale: de });
   return `
     <div class="rounded-lg p-3 text-sm">
+      <h2 class="text-2xl font-bold text-red-500 mb-2">Hallo Liebefeld!</h2>
       <p>
-        Hallo! Ich bin dein persönlicher Event-Assistent für Liebefeld. 
+        Ich bin dein persönlicher Event-Assistent für Liebefeld. 
         Ich helfe dir, die besten Veranstaltungen in deiner Nähe zu finden.
+        Für persönliche Empfehlungen erstelle dir dein Profil in der Community.
       </p>
       <p class="mt-2">
         Aktuelles Datum: <strong>${today}</strong>
