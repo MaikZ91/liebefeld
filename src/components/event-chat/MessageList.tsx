@@ -1,11 +1,18 @@
 
-import React from 'react';
-import { cn } from '@/lib/utils';
-import ChatMessage from '@/components/chat/ChatMessage';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import React, { useEffect, useRef } from 'react';
+import { ChevronDown, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { MessageListProps } from './types';
-import './MessageList.css';
+import parse from 'html-react-parser';
+import "./MessageList.css";
+
+interface MessageListProps {
+  messages: { id: string; content: string; type: 'user' | 'bot' }[];
+  isTyping: boolean;
+  handleDateSelect?: (date: string) => void;
+  messagesEndRef?: React.RefObject<HTMLDivElement>;
+  examplePrompts?: string[];
+  handleExamplePromptClick?: (prompt: string) => void;
+}
 
 const MessageList: React.FC<MessageListProps> = ({
   messages,
@@ -15,73 +22,133 @@ const MessageList: React.FC<MessageListProps> = ({
   examplePrompts,
   handleExamplePromptClick
 }) => {
-  const renderMessages = () => {
-    return messages.map((message) => (
-      <div
-        key={message.id}
-        className={cn(
-          "max-w-[85%] rounded-lg",
-          message.isUser
-            ? "bg-red-500/10 dark:bg-red-950/30 border border-red-500/20 ml-auto"
-            : "bg-zinc-900/50 dark:bg-zinc-800/50 border border-zinc-700/30"
-        )}
-      >
-        {message.html ? (
-          <div 
-            dangerouslySetInnerHTML={{ __html: message.html }} 
-            className="p-3 event-list-container"
-          />
-        ) : (
-          <ChatMessage 
-            message={message.text} 
-            isGroup={false} 
-            onDateSelect={handleDateSelect}
-            showDateSelector={message.isUser && message.text.toLowerCase().includes('event')}
-          />
-        )}
-      </div>
-    ));
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef?.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, messagesEndRef]);
+
+  // Detect dates in the message content
+  const detectDates = (content: string) => {
+    const dateRegex = /\b\d{4}-\d{2}-\d{2}\b/g;
+    const hasDate = dateRegex.test(content);
+    if (hasDate && handleDateSelect) {
+      return content.replace(dateRegex, (match) => {
+        return `<span class="date-link" data-date="${match}">${match}</span>`;
+      });
+    }
+    return content;
   };
 
-  return (
-    <ScrollArea className="h-full">
-      <div className="space-y-3 pb-2">
-        {renderMessages()}
-        
-        {isTyping && (
-          <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30">
-            <div className="flex space-x-2 items-center">
-              <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-              <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-              <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+  // Handle click on a date in the message
+  const handleDateClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (
+      e.target instanceof HTMLElement && 
+      e.target.classList.contains('date-link') && 
+      e.target.dataset.date && 
+      handleDateSelect
+    ) {
+      handleDateSelect(e.target.dataset.date);
+    }
+  };
+
+  // Sanitize HTML content including links
+  const sanitizeContent = (content: string) => {
+    try {
+      // Ensure pure HTML content is recognized
+      if (content.startsWith('<div') || content.startsWith('<h')) {
+        return content;
+      }
+      
+      // Process markdown-style links
+      content = content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-red-500 hover:text-red-600 underline">$1</a>');
+      
+      // Process explicit HTML links
+      content = content.replace(/<a /g, '<a target="_blank" rel="noopener noreferrer" class="text-red-500 hover:text-red-600 underline" ');
+      
+      // Process dates for clickability
+      content = detectDates(content);
+      
+      return content;
+    } catch (error) {
+      console.error('Error sanitizing content:', error);
+      return content;
+    }
+  };
+
+  // If there are no messages, display the welcome message or example prompts
+  if (messages.length === 0) {
+    return (
+      <div className="flex flex-col space-y-4 p-4">
+        <div 
+          className="bot-message"
+          onClick={handleDateClick}
+        >
+          {parse(sanitizeContent(`
+            <div class="rounded-lg p-3 text-sm">
+              <h2 class="text-2xl font-bold text-red-500 mb-2">Hallo Liebefeld!</h2>
+              <p>
+                Ich bin dein persönlicher Event-Assistent für Liebefeld. 
+                Ich helfe dir, die besten Veranstaltungen in deiner Nähe zu finden.
+                Für persönliche Empfehlungen erstelle dir dein Profil in der Community.
+              </p>
+              <p class="mt-2">
+                Aktuelles Datum: <strong>${new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}</strong>
+              </p>
             </div>
-          </div>
-        )}
+          `))}
+        </div>
         
-        {/* Display example prompts only if there's just the welcome message */}
-        {messages.length === 1 && messages[0].id === 'welcome' && (
-          <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30 mt-4">
-            <p className="text-sm text-red-200 mb-2">
-              Frag mich zum Beispiel:
-            </p>
-            <div className="flex flex-col gap-2">
+        {examplePrompts && examplePrompts.length > 0 && (
+          <div className="example-prompts mt-4">
+            <h4 className="text-sm font-medium mb-2 text-red-400">Beispiele:</h4>
+            <div className="flex flex-wrap gap-2 mb-4">
               {examplePrompts.map((prompt, index) => (
-                <Button
+                <button
                   key={index}
-                  variant="outline"
-                  className="text-left justify-start bg-red-900/20 hover:bg-red-900/30 text-red-200 border-red-500/30"
-                  onClick={() => handleExamplePromptClick(prompt)}
+                  onClick={() => handleExamplePromptClick && handleExamplePromptClick(prompt)}
+                  className="px-3 py-1 bg-red-900/30 hover:bg-red-900/40 border border-red-500/20 rounded-full text-xs"
                 >
-                  "{prompt}"
-                </Button>
+                  {prompt}
+                </button>
               ))}
             </div>
           </div>
         )}
         
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef}></div>
       </div>
-    </ScrollArea>
+    );
+  }
+
+  // Render the actual message list
+  return (
+    <div className="flex flex-col space-y-2 pb-2">
+      {messages.map((message) => (
+        <div
+          key={message.id}
+          className={`${message.type === 'user' ? 'user-message' : 'bot-message'}`}
+          onClick={message.type === 'bot' ? handleDateClick : undefined}
+        >
+          {message.type === 'bot' 
+            ? parse(sanitizeContent(message.content)) 
+            : message.content}
+        </div>
+      ))}
+      
+      {isTyping && (
+        <div className="bot-message">
+          <div className="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      )}
+      
+      <div ref={messagesEndRef}></div>
+    </div>
   );
 };
 

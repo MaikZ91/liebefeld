@@ -1,410 +1,166 @@
-import { useState, useEffect, useRef } from 'react';
-import { ChatMessage, CHAT_HISTORY_KEY, CHAT_QUERIES_KEY } from './types';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { generateResponse } from '@/utils/chatUtils';
 import { supabase } from '@/integrations/supabase/client';
-import { generateResponse, getWelcomeMessage, createResponseHeader } from '@/utils/chatUtils';
-import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
+import { EventShare, Message } from './types';
 
-export const useChatLogic = (
-  events: any[],
-  fullPage: boolean = false,
-  activeChatModeValue: 'ai' | 'community' = 'ai'
-) => {
-  const [isVisible, setIsVisible] = useState(false);
+export const useChatLogic = (events: any[], fullPage = false, activeChatMode = 'ai') => {
+  const [isVisible, setIsVisible] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(fullPage);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [recentQueries, setRecentQueries] = useState<string[]>([]);
   const [globalQueries, setGlobalQueries] = useState<string[]>([]);
   const [showRecentQueries, setShowRecentQueries] = useState(false);
   const [isHeartActive, setIsHeartActive] = useState(false);
-  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const welcomeMessageShownRef = useRef(false);
-  
-  // Example prompts that users can click on
+  const [isFirstRun, setIsFirstRun] = useState(true);
+  const { toast } = useToast();
+
   const examplePrompts = [
-    "Welche Events gibt es heute?",
-    "Was kann ich am Wochenende machen?",
-    "Gibt es Konzerte im Lokschuppen?"
+    "Was gibt es heute in Liebefeld?",
+    "Welche Events sind diese Woche?",
+    "Veranstaltungen für Familien",
+    "Konzerte am Wochenende",
+    "❤️ Finde Events, die zu meinen Interessen passen"
   ];
 
-  // Load chat history and recent queries from localStorage
-  useEffect(() => {
-    const savedMessages = localStorage.getItem(CHAT_HISTORY_KEY);
-    if (savedMessages) {
-      try {
-        const parsedMessages = JSON.parse(savedMessages);
-        if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
-          setMessages(parsedMessages);
-          welcomeMessageShownRef.current = true; // Skip welcome message if we loaded history
-        }
-      } catch (error) {
-        console.error('[useChatLogic] Error parsing saved chat history:', error);
-      }
-    }
-    
-    // Load local recent queries too (keeping for backup)
-    const savedQueries = localStorage.getItem(CHAT_QUERIES_KEY);
-    if (savedQueries) {
-      try {
-        const parsedQueries = JSON.parse(savedQueries);
-        if (Array.isArray(parsedQueries)) {
-          setRecentQueries(parsedQueries.slice(0, 3)); // Only store last 3
-        }
-      } catch (error) {
-        console.error('[useChatLogic] Error parsing saved queries:', error);
-      }
-    }
-    
-    // Also load heart mode state from localStorage
-    try {
-      const heartModeActive = localStorage.getItem('heart_mode_active') === 'true';
-      setIsHeartActive(heartModeActive);
-      console.log('[useChatLogic] Heart mode loaded from localStorage:', heartModeActive);
-    } catch (error) {
-      console.error('[useChatLogic] Error loading heart mode state:', error);
-    }
-    
-    // Fetch global queries from Supabase
-    fetchGlobalQueries();
-  }, []);
+  // Function to handle sending messages
+  const handleSendMessage = useCallback(async (overrideInput?: string) => {
+    const messageToSend = overrideInput !== undefined ? overrideInput : input;
+    if (!messageToSend.trim()) return;
 
-  // Save chat history to localStorage whenever messages change
-  useEffect(() => {
-    if (messages.length > 0) {
-      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
-    }
-  }, [messages]);
-
-  // Save recent queries to localStorage whenever they change
-  useEffect(() => {
-    if (recentQueries.length > 0) {
-      localStorage.setItem(CHAT_QUERIES_KEY, JSON.stringify(recentQueries));
-    }
-  }, [recentQueries]);
-  
-  // Save heart mode state to localStorage whenever it changes
-  useEffect(() => {
-    try {
-      localStorage.setItem('heart_mode_active', isHeartActive ? 'true' : 'false');
-      console.log('[useChatLogic] Heart mode saved to localStorage:', isHeartActive);
-    } catch (error) {
-      console.error('[useChatLogic] Error saving heart mode state:', error);
-    }
-  }, [isHeartActive]);
-
-  useEffect(() => {
-    // Initialize the chat bot after a delay
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, fullPage ? 0 : 5000); // No delay in fullPage mode
-
-    return () => clearTimeout(timer);
-  }, [fullPage]);
-
-  useEffect(() => {
-    // Add welcome message when chat is opened for the first time
-    if (isChatOpen && messages.length === 0 && !welcomeMessageShownRef.current && activeChatModeValue === 'ai') {
-      welcomeMessageShownRef.current = true;
-      setMessages([
-        {
-          id: 'welcome',
-          isUser: false,
-          text: 'Willkommen beim Liebefeld Event-Assistent!',
-          html: getWelcomeMessage(),
-          timestamp: new Date().toISOString()
-        }
-      ]);
-    }
-  }, [isChatOpen, messages.length, activeChatModeValue]);
-
-  useEffect(() => {
-    // Scroll to bottom when new messages are added
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
-
-  const handleToggleChat = () => {
-    setIsChatOpen(!isChatOpen);
-    // Focus on input field when opening chat
-    if (!isChatOpen) {
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-      }, 300);
-    }
-  };
-  
-  // Fetch global queries from Supabase
-  const fetchGlobalQueries = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('chat_queries')
-        .select('query')
-        .order('created_at', { ascending: false })
-        .limit(3);
-        
-      if (error) {
-        console.error('[useChatLogic] Error fetching global queries:', error);
-        return;
-      }
-      
-      if (data && data.length > 0) {
-        const queries = data.map(item => item.query);
-        setGlobalQueries(queries);
-      }
-    } catch (error) {
-      console.error('[useChatLogic] Exception fetching global queries:', error);
-    }
-  };
-  
-  // Save a query to Supabase
-  const saveGlobalQuery = async (query: string) => {
-    try {
-      // First check if this query already exists to avoid duplicates
-      const { data: existingData, error: checkError } = await supabase
-        .from('chat_queries')
-        .select('id')
-        .eq('query', query)
-        .limit(1);
-        
-      if (checkError) {
-        console.error('[useChatLogic] Error checking for existing query:', checkError);
-        return;
-      }
-      
-      if (existingData && existingData.length > 0) {
-        // Query already exists, update its timestamp
-        await supabase
-          .from('chat_queries')
-          .update({ created_at: new Date().toISOString() })
-          .eq('id', existingData[0].id);
-      } else {
-        // Insert new query
-        const { error: insertError } = await supabase
-          .from('chat_queries')
-          .insert({ query: query });
-          
-        if (insertError) {
-          console.error('[useChatLogic] Error saving global query:', insertError);
-        }
-      }
-      
-      // Refresh the global queries list
-      fetchGlobalQueries();
-    } catch (error) {
-      console.error('[useChatLogic] Exception saving global query:', error);
-    }
-  };
-
-  const updateRecentQueries = (query: string) => {
-    // Still maintain local user queries as backup
-    setRecentQueries(prev => {
-      // Filter out duplicates and add new query at the beginning
-      const filteredQueries = prev.filter(q => q !== query);
-      const newQueries = [query, ...filteredQueries].slice(0, 3);
-      return newQueries;
-    });
-    
-    // Also save to global queries in Supabase
-    saveGlobalQuery(query);
-  };
-
-  const handleSendMessage = async (customInput?: string) => {
-    const message = customInput || input;
-    if (!message.trim()) return;
-    
-    // Add to recent queries if it's a new query
-    updateRecentQueries(message);
-    
-    // Create the user message
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      isUser: true,
-      text: message,
-      timestamp: new Date().toISOString()
+    // Add user message to chat
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: messageToSend,
+      type: 'user'
     };
-    
-    setMessages(prev => [...prev, userMessage]);
+    setMessages(prevMessages => [...prevMessages, userMessage]);
     setInput('');
+
     setIsTyping(true);
-    
-    // Process with small delay to show typing indicator
-    setTimeout(async () => {
-      try {
-        console.log(`[useChatLogic] Processing user query: "${message}" with ${events.length} events`);
-        console.log(`[useChatLogic] Heart mode active: ${isHeartActive}`);
-        
-        // Pass the heart mode state to the generateResponse function
-        const responseHtml = await generateResponse(message, events, isHeartActive);
-        
-        const botMessage: ChatMessage = {
-          id: `bot-${Date.now()}`,
-          isUser: false,
-          text: 'Hier sind die Events, die ich gefunden habe.',
-          html: responseHtml,
-          timestamp: new Date().toISOString()
+    try {
+      const response = await generateResponse(messageToSend, events, isHeartActive);
+      if (response) {
+        // Add bot response to chat
+        const botMessage: Message = {
+          id: Date.now().toString(),
+          content: response,
+          type: 'bot'
         };
-        
-        setMessages(prev => [...prev, botMessage]);
-      } catch (error) {
-        console.error('[useChatLogic] Error generating response:', error);
-        
-        const errorMessage: ChatMessage = {
-          id: `error-${Date.now()}`,
-          isUser: false,
-          text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
-          html: `${createResponseHeader("Fehler")}
-          <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
-            Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. 
-            Bitte versuche es später noch einmal oder formuliere deine Anfrage anders.
-          </div>`,
-          timestamp: new Date().toISOString()
-        };
-        
-        setMessages(prev => [...prev, errorMessage]);
-      } finally {
-        setIsTyping(false);
+        setMessages(prevMessages => [...prevMessages, botMessage]);
+
+        // Save the query to recent queries
+        setGlobalQueries(prevQueries => {
+          const newQueries = [messageToSend, ...prevQueries.filter(q => q !== messageToSend)].slice(0, 5);
+          return newQueries;
+        });
       }
-    }, 800);
-  };
+    } catch (error: any) {
+      console.error("Error generating response:", error);
+      toast({
+        title: "Fehler",
+        description: "Es ist ein Fehler aufgetreten. Bitte versuche es später noch einmal.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsTyping(false);
+    }
+  }, [events, input, isHeartActive, toast]);
 
+  // Function to handle date selection
   const handleDateSelect = (date: string) => {
-    const formattedDate = date; // date is already formatted as YYYY-MM-DD
-    const prompt = `Welche Events gibt es am ${formattedDate}?`;
-    handleSendMessage(prompt);
+    const formattedDate = format(new Date(date), 'EEEE, d. MMMM', { locale: de });
+    setInput(`Veranstaltungen am ${formattedDate}`);
+    if (inputRef.current) {
+      inputRef.current?.focus();
+    }
   };
 
+  // Function to handle example prompt click
   const handleExamplePromptClick = (prompt: string) => {
     setInput(prompt);
-    // Optional: auto-send after a short delay
-    setTimeout(() => {
-      handleSendMessage(prompt);
-    }, 300);
-  };
-
-  const handleExternalQuery = (query: string) => {
-    if (!isChatOpen) {
-      setIsChatOpen(true);
+    if (inputRef.current) {
+      inputRef.current?.focus();
     }
-    
-    setTimeout(() => {
-      handleSendMessage(query);
-    }, 500);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+  // Function to handle key press (Enter to send)
+  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
       handleSendMessage();
     }
   };
 
-  // Register external query handler
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // @ts-ignore - We're explicitly adding a custom property
-      window.chatbotQuery = handleExternalQuery;
-      console.log("[useChatLogic] Registered window.chatbotQuery function");
-    }
-    
-    return () => {
-      // Clean up when component unmounts
-      if (typeof window !== 'undefined') {
-        // @ts-ignore - we're explicitly removing the property
-        window.chatbotQuery = undefined;
-      }
-    };
-  }, []);
-
-  // Subscribe to real-time updates for chat_queries table
-  useEffect(() => {
-    const channel = supabase
-      .channel('chat_queries_changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'chat_queries' 
-        }, 
-        () => {
-          // Refetch global queries when there's a change
-          fetchGlobalQueries();
-        }
-      )
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-  
-  // Handle heart button click
-  const handleHeartClick = async () => {
-    // Toggle the heart state 
-    const newHeartState = !isHeartActive;
-    setIsHeartActive(newHeartState);
-    
-    console.log(`[useChatLogic] Heart mode ${newHeartState ? 'activated' : 'deactivated'}`);
-    
-    // Show a toast notification about the mode change
-    if (newHeartState) {
-      toast.success("Personalisierter Modus aktiviert! Deine Vorlieben werden nun berücksichtigt.");
-    } else {
-      toast.info("Standardmodus aktiviert. Alle Events werden angezeigt.");
-    }
+  // Function to toggle chat visibility
+  const handleToggleChat = () => {
+    setIsChatOpen(!isChatOpen);
   };
-  
-  // Toggle recent queries dropdown
+
+  // Function to toggle heart mode
+  const handleHeartClick = () => {
+    setIsHeartActive(!isHeartActive);
+  };
+
+  // Function to toggle recent queries visibility
   const toggleRecentQueries = () => {
     setShowRecentQueries(!showRecentQueries);
   };
-  
-  // Clear chat history
+
+  // Function to clear chat history
   const clearChatHistory = () => {
-    // Ask for confirmation
-    if (window.confirm("Möchten Sie wirklich den gesamten Chat-Verlauf löschen?")) {
-      localStorage.removeItem(CHAT_HISTORY_KEY);
-      setMessages([]);
-      welcomeMessageShownRef.current = false;
-      // Re-add welcome message
-      setMessages([
-        {
-          id: 'welcome',
-          isUser: false,
-          text: 'Willkommen beim Liebefeld Event-Assistent!',
-          html: getWelcomeMessage(),
-          timestamp: new Date().toISOString()
-        }
-      ]);
-      toast.success("Chat-Verlauf gelöscht");
-    }
+    setMessages([]);
+    localStorage.removeItem('chat_messages');
+    toast({
+      title: "Chat gelöscht",
+      description: "Der Chatverlauf wurde erfolgreich gelöscht.",
+    });
   };
 
-  // Export chat history as JSON file
+  // Function to export chat history
   const exportChatHistory = () => {
-    if (messages.length === 0) {
-      toast.error("Es gibt keine Nachrichten zum Exportieren.");
-      return;
-    }
-
-    const chatHistoryData = JSON.stringify(messages, null, 2);
-    const blob = new Blob([chatHistoryData], { type: 'application/json' });
+    const chatHistory = messages.map(message => `${message.type === 'user' ? 'Du' : 'Bot'}: ${message.content}`).join('\n');
+    const blob = new Blob([chatHistory], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `chat-history-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'chatverlauf.txt';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    
-    toast.success("Chat-Verlauf exportiert");
   };
-  
+
+  // Initialize messages with no welcome message as we're handling it in the MessageList component now
+  useEffect(() => {
+    if (isFirstRun) {
+      setIsFirstRun(false);
+      
+      // Don't add a welcome message here anymore, as it's handled in MessageList.tsx
+      // when there are no messages
+      
+      // Load saved messages from localStorage
+      try {
+        const savedMessages = localStorage.getItem('chat_messages');
+        if (savedMessages) {
+          setMessages(JSON.parse(savedMessages));
+        }
+      } catch (error) {
+        console.error('Error loading saved messages:', error);
+      }
+    }
+  }, [isFirstRun]);
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('chat_messages', JSON.stringify(messages));
+  }, [messages]);
+
   return {
     isVisible,
     isChatOpen,
@@ -412,20 +168,18 @@ export const useChatLogic = (
     input,
     setInput,
     isTyping,
-    recentQueries,
     globalQueries,
     showRecentQueries,
     setShowRecentQueries,
     messagesEndRef,
     inputRef,
     examplePrompts,
-    isHeartActive,
-    handleToggleChat,
+    isHeartActive, 
     handleSendMessage,
     handleDateSelect,
     handleExamplePromptClick,
-    handleExternalQuery,
     handleKeyPress,
+    handleToggleChat,
     handleHeartClick,
     toggleRecentQueries,
     clearChatHistory,
