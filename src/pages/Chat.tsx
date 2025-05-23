@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
+import LiveTicker from '@/components/LiveTicker';
 import { Button } from '@/components/ui/button';
 import { Calendar, MessageSquare, List, Users } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
@@ -138,7 +139,10 @@ const ChatPage = () => {
   }
   return <Layout hideFooter={true}>
       <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
-        {/* LiveTicker has been removed from here */}
+        {/* LiveTicker ganz oben */}
+        <div className="w-full bg-black mb-4">
+          <LiveTicker events={events} />
+        </div>
         
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-red-500">
