@@ -2,7 +2,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Heart, History, CalendarPlus, Send, Users, MessageSquare } from 'lucide-react';
+import { Heart, History, CalendarPlus, Send } from 'lucide-react';
 import { ChatInputProps } from './types';
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -16,43 +16,24 @@ const ChatInput: React.FC<ChatInputProps> = ({
   globalQueries,
   toggleRecentQueries,
   inputRef,
-  onAddEvent,
-  activeChatMode,
-  onToggleChatMode
+  onAddEvent
 }) => {
   return (
     <div className="flex items-center relative">
       <div className="absolute left-2 flex items-center gap-1 z-10">
-        {/* Toggle button for AI/Community chat */}
+        {/* Heart button for toggling personalized mode */}
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={onToggleChatMode} 
-          className={`h-6 w-6 ${activeChatMode === 'community' ? 'text-red-500' : 'text-red-400'}`} 
-          title={activeChatMode === 'community' ? "Community Chat aktiv" : "AI Chat aktiv"}
+          onClick={handleHeartClick} 
+          className={`h-6 w-6 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`} 
+          title={isHeartActive ? "Personalisierter Modus aktiv" : "Standard-Modus aktiv"}
         >
-          {activeChatMode === 'community' ? (
-            <Users className="h-3 w-3 fill-red-500" />
-          ) : (
-            <MessageSquare className="h-3 w-3" />
-          )}
+          <Heart className={`h-3 w-3 ${isHeartActive ? 'fill-red-500' : ''}`} />
         </Button>
-
-        {/* Heart button for toggling personalized mode - only in AI mode */}
-        {activeChatMode === 'ai' && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={handleHeartClick} 
-            className={`h-6 w-6 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`} 
-            title={isHeartActive ? "Personalisierter Modus aktiv" : "Standard-Modus aktiv"}
-          >
-            <Heart className={`h-3 w-3 ${isHeartActive ? 'fill-red-500' : ''}`} />
-          </Button>
-        )}
         
-        {/* History button for recent queries - only in AI mode */}
-        {activeChatMode === 'ai' && globalQueries.length > 0 && (
+        {/* History button for recent queries */}
+        {globalQueries.length > 0 && (
           <Button 
             variant="ghost" 
             size="icon" 
@@ -64,8 +45,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
           </Button>
         )}
 
-        {/* Add Event button with calendar icon - only in AI mode */}
-        {activeChatMode === 'ai' && onAddEvent && (
+        {/* Add Event button with calendar icon */}
+        {onAddEvent && (
           <Button
             variant="ghost"
             size="icon"
@@ -84,8 +65,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
         value={input} 
         onChange={e => setInput(e.target.value)} 
         onKeyPress={handleKeyPress} 
-        placeholder={activeChatMode === 'community' ? "Schreibe in der Community..." : "Frage nach Events..."} 
-        className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pl-28 pr-10 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600" 
+        placeholder="Frage nach Events..." 
+        className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pl-24 pr-10 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600" 
       />
       
       <button 
