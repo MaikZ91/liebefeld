@@ -128,95 +128,107 @@ const ChatPage = () => {
 
   // Show loading state while initializing
   if (!isPageLoaded) {
-    return <Layout hideFooter={true}>
-        <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)] items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-red-500 border-t-transparent"></div>
-            <p className="text-lg font-medium">Lade Chat...</p>
-          </div>
-        </div>
-      </Layout>;
-  }
-  return <Layout hideFooter={true}>
-      <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
-        {/* LiveTicker ganz oben */}
-        <div className="w-full bg-black mb-4">
+    return (
+      <>
+        {/* LiveTicker ganz oben, über dem Header */}
+        <div className="w-full bg-black">
           <LiveTicker events={events} />
         </div>
-        
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-red-500">
-            <div className="flex space-x-2">
-              <Button variant={activeView === 'ai' ? "default" : "outline"} size="sm" onClick={() => setActiveView('ai')} className={`flex items-center gap-2 ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}>
+        <Layout hideFooter={true}>
+          <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)] items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-red-500 border-t-transparent"></div>
+              <p className="text-lg font-medium">Lade Chat...</p>
+            </div>
+          </div>
+        </Layout>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {/* LiveTicker ganz oben, über dem Header */}
+      <div className="w-full bg-black">
+        <LiveTicker events={events} />
+      </div>
+      <Layout hideFooter={true}>
+        <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-2xl font-bold text-red-500">
+              <div className="flex space-x-2">
+                <Button variant={activeView === 'ai' ? "default" : "outline"} size="sm" onClick={() => setActiveView('ai')} className={`flex items-center gap-2 ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}>
+                  <Calendar className="h-4 w-4" />
+                  Event Assistent
+                </Button>
+                <Button variant={activeView === 'community' ? "default" : "outline"} size="sm" onClick={() => setActiveView('community')} className={`flex items-center gap-2 ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}>
+                  <Users className="h-4 w-4" />
+                  Community
+                </Button>
+              </div>
+            </h1>
+            
+            <div className="flex gap-2">
+              {/* Calendar Events Button - Made more dominant with calendar icon and red color */}
+              <Button 
+                variant="default" 
+                size="sm" 
+                onClick={() => setIsEventListSheetOpen(true)} 
+                className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white"
+              >
                 <Calendar className="h-4 w-4" />
-                Event Assistent
-              </Button>
-              <Button variant={activeView === 'community' ? "default" : "outline"} size="sm" onClick={() => setActiveView('community')} className={`flex items-center gap-2 ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}>
-                <Users className="h-4 w-4" />
-                Community
+                <span className="hidden md:inline">Events anzeigen</span>
               </Button>
             </div>
-          </h1>
+          </div>
           
-          <div className="flex gap-2">
-            {/* Calendar Events Button - Made more dominant with calendar icon and red color */}
-            <Button 
-              variant="default" 
-              size="sm" 
-              onClick={() => setIsEventListSheetOpen(true)} 
-              className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white"
-            >
-              <Calendar className="h-4 w-4" />
-              <span className="hidden md:inline">Events anzeigen</span>
-            </Button>
+          <div className="flex-grow rounded-lg overflow-hidden border border-gray-800 flex flex-col bg-black">
+            <div className="flex-grow relative">
+              <EventChatBot 
+                fullPage={true} 
+                onAddEvent={handleAddEvent} 
+                onToggleCommunity={handleToggleCommunity} 
+                activeChatMode={activeView} 
+                setActiveChatMode={setActiveView} 
+              />
+            </div>
           </div>
         </div>
         
-        <div className="flex-grow rounded-lg overflow-hidden border border-gray-800 flex flex-col bg-black">
-          <div className="flex-grow relative">
-            <EventChatBot 
-              fullPage={true} 
-              onAddEvent={handleAddEvent} 
-              onToggleCommunity={handleToggleCommunity} 
-              activeChatMode={activeView} 
-              setActiveChatMode={setActiveView} 
-            />
-          </div>
-        </div>
-      </div>
-      
-      {/* Add Event Sheet */}
-      <Sheet open={isAddEventSheetOpen} onOpenChange={setIsAddEventSheetOpen}>
-        <SheetContent className="sm:max-w-lg">
-          <SheetHeader>
-            <SheetTitle>Event hinzufügen</SheetTitle>
-            <SheetDescription>
-              Erstelle ein neues Event für die Community.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="mt-4 overflow-y-auto max-h-[80vh]">
-            <EventForm onSuccess={() => setIsAddEventSheetOpen(false)} />
-          </div>
-        </SheetContent>
-      </Sheet>
-      
-      {/* Event List Sheet */}
-      <Sheet open={isEventListSheetOpen} onOpenChange={setIsEventListSheetOpen}>
-        <SheetContent className="sm:max-w-lg overflow-hidden">
-          <SheetHeader>
-            <SheetTitle>Aktuelle Events</SheetTitle>
-            <SheetDescription>
-          </SheetDescription>
-          </SheetHeader>
-          <div className="mt-4 overflow-y-auto max-h-[80vh]">
-            <EventCalendar defaultView="list" />
-          </div>
-        </SheetContent>
-      </Sheet>
-      
-      {/* Replace UsernameDialog with ProfileEditor */}
-      <ProfileEditor open={isProfileEditorOpen} onOpenChange={setIsProfileEditorOpen} currentUser={userProfile} onProfileUpdate={handleProfileUpdate} />
-    </Layout>;
+        {/* Add Event Sheet */}
+        <Sheet open={isAddEventSheetOpen} onOpenChange={setIsAddEventSheetOpen}>
+          <SheetContent className="sm:max-w-lg">
+            <SheetHeader>
+              <SheetTitle>Event hinzufügen</SheetTitle>
+              <SheetDescription>
+                Erstelle ein neues Event für die Community.
+              </SheetDescription>
+            </SheetHeader>
+            <div className="mt-4 overflow-y-auto max-h-[80vh]">
+              <EventForm onSuccess={() => setIsAddEventSheetOpen(false)} />
+            </div>
+          </SheetContent>
+        </Sheet>
+        
+        {/* Event List Sheet */}
+        <Sheet open={isEventListSheetOpen} onOpenChange={setIsEventListSheetOpen}>
+          <SheetContent className="sm:max-w-lg overflow-hidden">
+            <SheetHeader>
+              <SheetTitle>Aktuelle Events</SheetTitle>
+              <SheetDescription>
+              </SheetDescription>
+            </SheetHeader>
+            <div className="mt-4 overflow-y-auto max-h-[80vh]">
+              <EventCalendar defaultView="list" />
+            </div>
+          </SheetContent>
+        </Sheet>
+        
+        {/* Replace UsernameDialog with ProfileEditor */}
+        <ProfileEditor open={isProfileEditorOpen} onOpenChange={setIsProfileEditorOpen} currentUser={userProfile} onProfileUpdate={handleProfileUpdate} />
+      </Layout>
+    </>
+  );
 };
 
 export default ChatPage;
