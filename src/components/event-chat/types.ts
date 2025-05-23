@@ -40,5 +40,25 @@ export interface EventChatBotProps {
   setActiveChatMode?: (mode: 'ai' | 'community') => void;
 }
 
+export interface ChatHeaderProps {
+  activeChatModeValue: 'ai' | 'community';
+  handleToggleChat: () => void;
+  exportChatHistory: () => void;
+  clearChatHistory: () => void;
+}
+
+export interface RecentQueriesProps {
+  showRecentQueries: boolean;
+  setShowRecentQueries: (show: boolean) => void;
+  queriesToRender: string[];
+  handleExamplePromptClick: (prompt: string) => void;
+}
+
+export interface PersonalizationOptions {
+  userProfile: any;
+  currentUser: string;
+  userService: any;
+}
+
 export const CHAT_HISTORY_KEY = 'chatHistory';
 export const CHAT_QUERIES_KEY = 'chatQueries';
