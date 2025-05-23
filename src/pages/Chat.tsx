@@ -153,35 +153,48 @@ const ChatPage = () => {
         <LiveTicker events={events} />
       </div>
       <Layout hideFooter={true}>
-        <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-red-500">
+        {/* Header mit allen Navigation-Buttons */}
+        <div className="w-full bg-black border-b border-gray-800 px-4 py-3">
+          <div className="container mx-auto flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <h1 className="font-serif text-xl font-bold tracking-tight text-white">THE TRIBE.BI</h1>
+              
               <div className="flex space-x-2">
-                <Button variant={activeView === 'ai' ? "default" : "outline"} size="sm" onClick={() => setActiveView('ai')} className={`flex items-center gap-2 ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}>
-                  <Calendar className="h-4 w-4" />
+                <Button 
+                  variant={activeView === 'ai' ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={() => setActiveView('ai')} 
+                  className={`flex items-center gap-2 ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}
+                >
+                  <MessageSquare className="h-4 w-4" />
                   Event Assistent
                 </Button>
-                <Button variant={activeView === 'community' ? "default" : "outline"} size="sm" onClick={() => setActiveView('community')} className={`flex items-center gap-2 ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}>
+                
+                <Button 
+                  variant={activeView === 'community' ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={() => setActiveView('community')} 
+                  className={`flex items-center gap-2 ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}
+                >
                   <Users className="h-4 w-4" />
                   Community
                 </Button>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setIsEventListSheetOpen(true)} 
+                  className="flex items-center gap-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                >
+                  <Calendar className="h-4 w-4" />
+                  <span className="hidden md:inline">Kalender</span>
+                </Button>
               </div>
-            </h1>
-            
-            <div className="flex gap-2">
-              {/* Calendar Events Button - Made more dominant with calendar icon and red color */}
-              <Button 
-                variant="default" 
-                size="sm" 
-                onClick={() => setIsEventListSheetOpen(true)} 
-                className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white"
-              >
-                <Calendar className="h-4 w-4" />
-                <span className="hidden md:inline">Events anzeigen</span>
-              </Button>
             </div>
           </div>
-          
+        </div>
+
+        <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-120px)]">
           <div className="flex-grow rounded-lg overflow-hidden border border-gray-800 flex flex-col bg-black">
             <div className="flex-grow relative">
               <EventChatBot 
