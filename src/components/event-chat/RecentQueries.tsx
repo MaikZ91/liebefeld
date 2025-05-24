@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { RecentQueriesProps } from './types';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const RecentQueries: React.FC<RecentQueriesProps> = ({
   showRecentQueries,
@@ -27,19 +28,21 @@ const RecentQueries: React.FC<RecentQueriesProps> = ({
           </Button>
         </div>
       </div>
-      <div className="p-2 max-h-[150px] overflow-y-auto">
-        {queriesToRender.map((query, index) => (
-          <Button
-            key={index}
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-left text-sm py-2 text-red-200 hover:bg-red-950/30"
-            onClick={() => handleExamplePromptClick(query)}
-          >
-            {query}
-          </Button>
-        ))}
-      </div>
+      <ScrollArea className="max-h-[200px]">
+        <div className="p-2">
+          {queriesToRender.map((query, index) => (
+            <Button
+              key={index}
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-left text-sm py-2 text-red-200 hover:bg-red-950/30 mb-1"
+              onClick={() => handleExamplePromptClick(query)}
+            >
+              {query}
+            </Button>
+          ))}
+        </div>
+      </ScrollArea>
     </div>
   );
 };
