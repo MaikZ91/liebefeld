@@ -2,7 +2,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { History, CalendarPlus, Send, User } from 'lucide-react';
+import { Heart, History, CalendarPlus, Send } from 'lucide-react';
 import { ChatInputProps } from './types';
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -21,15 +21,15 @@ const ChatInput: React.FC<ChatInputProps> = ({
   return (
     <div className="flex items-center relative max-w-full">
       <div className="absolute left-2 flex items-center gap-1 z-10">
-        {/* User profile button */}
+        {/* Heart button for toggling personalized mode */}
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={handleHeartClick} 
-          className="h-6 w-6 text-red-400 hover:text-red-500" 
-          title="Benutzerprofil bearbeiten"
+          className={`h-6 w-6 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`} 
+          title={isHeartActive ? "Personalisierter Modus aktiv" : "Standard-Modus aktiv"}
         >
-          <User className="h-3 w-3" />
+          <Heart className={`h-3 w-3 ${isHeartActive ? 'fill-red-500' : ''}`} />
         </Button>
         
         {/* History button for recent queries */}
