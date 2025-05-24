@@ -19,7 +19,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onAddEvent
 }) => {
   return (
-    <div className="flex items-center relative">
+    <div className="flex items-center relative max-w-full">
       <div className="absolute left-2 flex items-center gap-1 z-10">
         {/* Heart button for toggling personalized mode */}
         <Button 
@@ -66,14 +66,14 @@ const ChatInput: React.FC<ChatInputProps> = ({
         onChange={e => setInput(e.target.value)} 
         onKeyPress={handleKeyPress} 
         placeholder="Frage nach Events..." 
-        className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pl-24 pr-10 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600" 
+        className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pl-24 pr-14 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 min-w-0" 
       />
       
       <button 
         onClick={() => handleSendMessage()} 
         disabled={!input.trim() || isTyping} 
         className={cn(
-          "absolute right-1 rounded-full p-2", 
+          "absolute right-2 rounded-full p-2 flex-shrink-0", 
           input.trim() && !isTyping 
             ? "bg-red-500 hover:bg-red-600 text-white" 
             : "bg-zinc-800 text-zinc-500"
