@@ -6,7 +6,6 @@ import RecentQueries from './RecentQueries';
 import { useChatMessages } from '@/hooks/chat/useChatMessages';
 import { useMessageSending } from '@/hooks/chat/useMessageSending';
 import { AVATAR_KEY, USERNAME_KEY } from '@/types/chatTypes';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/chatUIUtils';
 import TypingIndicator from '@/components/chat/TypingIndicator';
@@ -92,7 +91,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   };
 
-  // Unified input change handler - properly handle string input for ChatInput
+  // Unified input change handler
   const handleUnifiedInputChange = (value: string) => {
     if (activeChatModeValue === 'ai') {
       setInput(value);
@@ -165,7 +164,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {communityError}</div>
             )}
 
-            <ScrollArea className="flex-1 px-4">
+            <div className="flex-1 overflow-y-auto px-4" ref={chatContainerRef}>
               <div className="space-y-4 py-4">
                 {communityMessages.length === 0 && !communityLoading && !communityError && (
                   <div className="text-center text-gray-400 py-4">Noch keine Nachrichten. Starte die Unterhaltung!</div>
@@ -201,7 +200,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                 <TypingIndicator typingUsers={typingUsers} />
                 <div ref={chatBottomRef} />
               </div>
-            </ScrollArea>
+            </div>
           </div>
         )}
       </div>

@@ -2,7 +2,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import ChatMessage from '@/components/chat/ChatMessage';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { MessageListProps } from './types';
 import './MessageList.css';
@@ -44,8 +43,8 @@ const MessageList: React.FC<MessageListProps> = ({
   };
 
   return (
-    <ScrollArea className="h-full">
-      <div className="space-y-3 pb-2">
+    <div className="h-full overflow-y-auto">
+      <div className="space-y-3 pb-2 px-1">
         {renderMessages()}
         
         {isTyping && (
@@ -81,7 +80,7 @@ const MessageList: React.FC<MessageListProps> = ({
         
         <div ref={messagesEndRef} />
       </div>
-    </ScrollArea>
+    </div>
   );
 };
 
