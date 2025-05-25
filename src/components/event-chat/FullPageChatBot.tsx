@@ -92,20 +92,20 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   };
 
-  // Unified input change handler
+  // Unified input change handler - fixed TypeScript error
   const handleUnifiedInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (activeChatModeValue === 'ai') {
       setInput(e.target.value);
     } else {
-      // Convert input event to textarea event for community
-      const textareaEvent = {
+      // Create a synthetic textarea event for community chat
+      const syntheticEvent = {
         ...e,
         target: {
           ...e.target,
           value: e.target.value
-        }
+        } as EventTarget & HTMLTextAreaElement
       } as React.ChangeEvent<HTMLTextAreaElement>;
-      communityInputChange(textareaEvent);
+      communityInputChange(syntheticEvent);
     }
   };
 
@@ -114,7 +114,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     if (activeChatModeValue === 'ai') {
       handleKeyPress(e);
     } else {
-      // Convert to textarea key event for community
+      // Handle community chat key press
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         communitySendMessage();
@@ -141,7 +141,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
         
         <ChatInput 
           input={currentInputValue} 
-          setInput={activeChatModeValue === 'ai' ? setInput : setCommunityInput}
+          setInput={handleUnifiedInputChange}
           handleSendMessage={handleUnifiedSendMessage} 
           isTyping={currentIsTyping} 
           handleKeyPress={handleUnifiedKeyPress} 
@@ -171,7 +171,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
           </div>
         ) : (
           <div className="h-full">
-            <div ref={chatContainerRef} className="flex-grow p-4 bg-black overflow-y-auto w-full max-w-full h-full flex flex-col">
+            <div ref={chatContainerRef} className="flex-grow p-4 bg-black overflow-hidden w-full max-w-full h-full flex flex-col">
               {communityError && (
                 <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {communityError}</div>
               )}

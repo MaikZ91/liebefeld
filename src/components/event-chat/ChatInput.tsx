@@ -22,11 +22,18 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (typeof setInput === 'function') {
       // Check if setInput expects just the value or the full event
-      try {
-        setInput(e.target.value);
-      } catch (error) {
-        // If it fails, try passing the event
-        setInput(e as any);
+      const arity = setInput.length;
+      if (arity === 0 || arity === 1) {
+        // Try passing the event first, then fall back to value
+        try {
+          setInput(e);
+        } catch (error) {
+          // If it fails, try passing just the value
+          (setInput as any)(e.target.value);
+        }
+      } else {
+        // Default to passing the value
+        (setInput as any)(e.target.value);
       }
     }
   };
