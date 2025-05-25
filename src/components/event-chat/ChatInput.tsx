@@ -18,6 +18,19 @@ const ChatInput: React.FC<ChatInputProps> = ({
   inputRef,
   onAddEvent
 }) => {
+  // Handle input change to work with both string setters and event handlers
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (typeof setInput === 'function') {
+      // Check if setInput expects just the value or the full event
+      try {
+        setInput(e.target.value);
+      } catch (error) {
+        // If it fails, try passing the event
+        setInput(e as any);
+      }
+    }
+  };
+
   return (
     <div className="flex items-center relative max-w-full">
       <div className="absolute left-2 flex items-center gap-1 z-10">
@@ -63,7 +76,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         ref={inputRef} 
         type="text" 
         value={input} 
-        onChange={e => setInput(e.target.value)} 
+        onChange={handleInputChange} 
         onKeyPress={handleKeyPress} 
         placeholder="Frage nach Events..." 
         className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pl-24 pr-14 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 min-w-0" 
