@@ -39,7 +39,7 @@ const ChatPage = () => {
     setIsAddEventSheetOpen(true);
   };
 
-  // Function to toggle community view
+  // Function to toggle community view - this switches the mode in the same window
   const handleToggleCommunity = () => {
     setActiveView(prev => prev === 'community' ? 'ai' : 'community');
   };
@@ -157,11 +157,21 @@ const ChatPage = () => {
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold text-red-500">
               <div className="flex space-x-2">
-                <Button variant={activeView === 'ai' ? "default" : "outline"} size="sm" onClick={() => setActiveView('ai')} className={`flex items-center gap-2 ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}>
+                <Button 
+                  variant={activeView === 'ai' ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={() => setActiveView('ai')} 
+                  className={`flex items-center gap-2 ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}
+                >
                   <Calendar className="h-4 w-4" />
                   Event Assistent
                 </Button>
-                <Button variant={activeView === 'community' ? "default" : "outline"} size="sm" onClick={() => setActiveView('community')} className={`flex items-center gap-2 ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}>
+                <Button 
+                  variant={activeView === 'community' ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={() => setActiveView('community')} 
+                  className={`flex items-center gap-2 ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}
+                >
                   <Users className="h-4 w-4" />
                   Community
                 </Button>
