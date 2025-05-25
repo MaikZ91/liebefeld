@@ -18,24 +18,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
   inputRef,
   onAddEvent
 }) => {
-  // Handle input change to work with both string setters and event handlers
+  // Handle input change - always expect setInput to accept string
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (typeof setInput === 'function') {
-      // Check if setInput expects just the value or the full event
-      const arity = setInput.length;
-      if (arity === 0 || arity === 1) {
-        // Try passing the event first, then fall back to value
-        try {
-          setInput(e);
-        } catch (error) {
-          // If it fails, try passing just the value
-          (setInput as any)(e.target.value);
-        }
-      } else {
-        // Default to passing the value
-        (setInput as any)(e.target.value);
-      }
-    }
+    setInput(e.target.value);
   };
 
   return (

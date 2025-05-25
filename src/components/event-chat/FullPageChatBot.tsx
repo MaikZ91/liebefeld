@@ -92,20 +92,12 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   };
 
-  // Unified input change handler - fixed TypeScript error
-  const handleUnifiedInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Unified input change handler - properly handle string input for ChatInput
+  const handleUnifiedInputChange = (value: string) => {
     if (activeChatModeValue === 'ai') {
-      setInput(e.target.value);
+      setInput(value);
     } else {
-      // Create a synthetic textarea event for community chat
-      const syntheticEvent = {
-        ...e,
-        target: {
-          ...e.target,
-          value: e.target.value
-        } as EventTarget & HTMLTextAreaElement
-      } as React.ChangeEvent<HTMLTextAreaElement>;
-      communityInputChange(syntheticEvent);
+      setCommunityInput(value);
     }
   };
 
@@ -157,63 +149,59 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       {/* Main content area - switches between AI chat and Community chat */}
       <div className="flex-1 overflow-hidden">
         {activeChatModeValue === 'ai' ? (
-          <div className="h-full p-3 overflow-y-auto">
-            <div className="text-sm">
-              <MessageList 
-                messages={aiMessages} 
-                isTyping={aiTyping} 
-                handleDateSelect={handleDateSelect} 
-                messagesEndRef={messagesEndRef} 
-                examplePrompts={examplePrompts} 
-                handleExamplePromptClick={handleExamplePromptClick} 
-              />
-            </div>
+          <div className="h-full p-3">
+            <MessageList 
+              messages={aiMessages} 
+              isTyping={aiTyping} 
+              handleDateSelect={handleDateSelect} 
+              messagesEndRef={messagesEndRef} 
+              examplePrompts={examplePrompts} 
+              handleExamplePromptClick={handleExamplePromptClick} 
+            />
           </div>
         ) : (
-          <div className="h-full">
-            <div ref={chatContainerRef} className="flex-grow p-4 bg-black overflow-hidden w-full max-w-full h-full flex flex-col">
-              {communityError && (
-                <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {communityError}</div>
-              )}
+          <div className="h-full flex flex-col">
+            {communityError && (
+              <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {communityError}</div>
+            )}
 
-              <ScrollArea className="h-full w-full pr-2 flex-grow" type="hover">
-                <div className="flex flex-col space-y-3 w-full max-w-full pb-4">
-                  {communityMessages.length === 0 && !communityLoading && !communityError && (
-                    <div className="text-center text-gray-400 py-4">Noch keine Nachrichten. Starte die Unterhaltung!</div>
-                  )}
+            <ScrollArea className="flex-1 px-4">
+              <div className="space-y-4 py-4">
+                {communityMessages.length === 0 && !communityLoading && !communityError && (
+                  <div className="text-center text-gray-400 py-4">Noch keine Nachrichten. Starte die Unterhaltung!</div>
+                )}
+                
+                {communityMessages.map((message, index) => {
+                  const isConsecutive = index > 0 && communityMessages[index - 1].user_name === message.user_name;
+                  const timeAgo = formatTime(message.created_at);
                   
-                  {communityMessages.map((message, index) => {
-                    const isConsecutive = index > 0 && communityMessages[index - 1].user_name === message.user_name;
-                    const timeAgo = formatTime(message.created_at);
-                    
-                    return (
-                      <div key={message.id} className="mb-4 w-full max-w-full overflow-hidden">
-                        {!isConsecutive && (
-                          <div className="flex items-center mb-2">
-                            <Avatar className="h-8 w-8 mr-2 flex-shrink-0 border-red-500">
-                              <AvatarImage src={message.user_avatar} alt={message.user_name} />
-                              <AvatarFallback className="bg-red-500 text-white">{getInitials(message.user_name)}</AvatarFallback>
-                            </Avatar>
-                            <div className="text-lg font-medium text-white mr-2">{message.user_name}</div>
-                            <span className="text-sm text-gray-400">{timeAgo}</span>
-                          </div>
-                        )}
-                        <div className="w-full max-w-full overflow-hidden break-words">
-                          <ChatMessage 
-                            message={message.content} 
-                            isConsecutive={isConsecutive}
-                            isGroup={true}
-                          />
+                  return (
+                    <div key={message.id} className="w-full">
+                      {!isConsecutive && (
+                        <div className="flex items-center mb-2">
+                          <Avatar className="h-8 w-8 mr-2 flex-shrink-0 border-red-500">
+                            <AvatarImage src={message.user_avatar} alt={message.user_name} />
+                            <AvatarFallback className="bg-red-500 text-white">{getInitials(message.user_name)}</AvatarFallback>
+                          </Avatar>
+                          <div className="text-lg font-medium text-white mr-2">{message.user_name}</div>
+                          <span className="text-sm text-gray-400">{timeAgo}</span>
                         </div>
+                      )}
+                      <div className="break-words">
+                        <ChatMessage 
+                          message={message.content} 
+                          isConsecutive={isConsecutive}
+                          isGroup={true}
+                        />
                       </div>
-                    );
-                  })}
-                  
-                  <TypingIndicator typingUsers={typingUsers} />
-                  <div ref={chatBottomRef} />
-                </div>
-              </ScrollArea>
-            </div>
+                    </div>
+                  );
+                })}
+                
+                <TypingIndicator typingUsers={typingUsers} />
+                <div ref={chatBottomRef} />
+              </div>
+            </ScrollArea>
           </div>
         )}
       </div>

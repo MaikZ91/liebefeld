@@ -32,7 +32,7 @@ export interface MessageListProps {
 
 export interface ChatInputProps {
   input: string;
-  setInput: (input: string) => void;
+  setInput: (value: string) => void;
   handleSendMessage: () => void;
   isTyping: boolean;
   handleKeyPress: (e: React.KeyboardEvent<HTMLInputElement>) => void;
@@ -40,7 +40,7 @@ export interface ChatInputProps {
   handleHeartClick: () => void;
   globalQueries: string[];
   toggleRecentQueries: () => void;
-  inputRef: RefObject<HTMLInputElement>;
+  inputRef: React.RefObject<HTMLInputElement>;
   onAddEvent?: () => void;
 }
 
