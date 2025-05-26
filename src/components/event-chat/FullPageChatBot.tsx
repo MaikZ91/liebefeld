@@ -10,6 +10,12 @@ import { getInitials } from '@/utils/chatUIUtils';
 import TypingIndicator from '@/components/chat/TypingIndicator';
 import ChatMessage from '@/components/chat/ChatMessage';
 
+/**
+ * Hinweis: Für die unsichtbaren Scrollleisten wird das Tailwind-Plugin
+ * `tailwind-scrollbar-hide` (oder gleichwertig) erwartet. 
+ * Damit genügt die Utility-Klasse `scrollbar-none`.
+ */
+
 interface FullPageChatBotProps {
   chatLogic: any;
   activeChatModeValue: 'ai' | 'community';
@@ -17,12 +23,6 @@ interface FullPageChatBotProps {
   onAddEvent?: () => void;
 }
 
-/**
- * Full‑page chat component – AI & Community.
- * ‑ Sticky header
- * ‑ Single scroll container below header
- * ‑ **Jump** to latest message (no smooth animation)
- */
 const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   chatLogic,
   activeChatModeValue,
@@ -84,7 +84,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const formatTime = (isoDateString: string) => {
     const date = new Date(isoDateString);
     const now = new Date();
-    const diff = Math.floor((now.getTime() - date.getTime()) / 60000); // minutes
+    const diff = Math.floor((now.getTime() - date.getTime()) / 60000);
 
     if (diff < 1) return 'gerade eben';
     if (diff < 60) return `vor ${diff}m`;
@@ -113,16 +113,14 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending;
 
   /* ------------------------------------------------------------------ */
-  /* Jump‑scroll behaviour                                              */
+  /* Auto-jump to bottom                                                */
   /* ------------------------------------------------------------------ */
-  // Jump to bottom in AI chat
   useEffect(() => {
     if (activeChatModeValue === 'ai' && messagesEndRef?.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
     }
   }, [aiMessages, aiTyping, activeChatModeValue, messagesEndRef]);
 
-  // Jump to bottom in Community chat
   useEffect(() => {
     if (activeChatModeValue === 'community' && chatBottomRef?.current) {
       chatBottomRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
@@ -134,7 +132,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   /* ------------------------------------------------------------------ */
   return (
     <div className="flex flex-col h-screen min-h-0">
-      {/* sticky header */}
+      {/* Sticky Header */}
       <div className="border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-[18px]">
         {activeChatModeValue === 'ai' && (
           <RecentQueries
@@ -160,8 +158,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
         />
       </div>
 
-      {/* single scroll container below header */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      {/* Main scroll container */}
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
         {activeChatModeValue === 'ai' ? (
           <div className="p-3">
             <MessageList
@@ -172,7 +170,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               examplePrompts={examplePrompts}
               handleExamplePromptClick={handleExamplePromptClick}
             />
-            {/* bottom marker */}
             <div ref={messagesEndRef} />
           </div>
         ) : (
@@ -183,7 +180,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               </div>
             )}
 
-            <div ref={chatContainerRef} className="flex-1 min-h-0 overflow-y-auto px-4">
+            <div
+              ref={chatContainerRef}
+              className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4"
+            >
               <div className="space-y-4 py-4">
                 {communityMessages.length === 0 && !communityLoading && !communityError && (
                   <div className="text-center text-gray-400 py-4">
@@ -213,14 +213,17 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                         </div>
                       )}
                       <div className="break-words">
-                        <ChatMessage message={message.content} isConsecutive={isConsecutive} isGroup />
+                        <ChatMessage
+                          message={message.content}
+                          isConsecutive={isConsecutive}
+                          isGroup
+                        />
                       </div>
                     </div>
                   );
                 })}
 
                 <TypingIndicator typingUsers={typingUsers} />
-                {/* bottom marker */}
                 <div ref={chatBottomRef} />
               </div>
             </div>
