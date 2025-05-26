@@ -290,6 +290,10 @@ export const transformGitHubEvents = (
       formattedDate = format(eventDate, 'yyyy-MM-dd');
     }
     
+    // Use time from JSON if available, otherwise fall back to default
+    const eventTime = githubEvent.time || "19:00";
+    console.log(`Event ${title}: Using time ${eventTime} (from JSON: ${githubEvent.time ? 'yes' : 'no'})`);
+    
     // Erstelle eine stabile ID basierend auf Titel, Datum und Link
     const eventId = createStableEventId(title, formattedDate, githubEvent.link);
     
@@ -303,7 +307,7 @@ export const transformGitHubEvents = (
       title: title,
       description: `Mehr Informationen unter: ${githubEvent.link}`,
       date: formattedDate,
-      time: "19:00", // Default time for events without time
+      time: eventTime,
       location: location,
       organizer: "Liebefeld Community Bielefeld",
       category: category,
