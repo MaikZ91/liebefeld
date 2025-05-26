@@ -43,44 +43,42 @@ const MessageList: React.FC<MessageListProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0">
-      <div className="flex-1 overflow-y-auto min-h-0">
-        <div className="space-y-3 pb-2 px-1">
-          {renderMessages()}
-          
-          {isTyping && (
-            <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30">
-              <div className="flex space-x-2 items-center">
-                <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-              </div>
+    <div className="h-full overflow-y-auto">
+      <div className="space-y-3 pb-2 px-1">
+        {renderMessages()}
+        
+        {isTyping && (
+          <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30">
+            <div className="flex space-x-2 items-center">
+              <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+              <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+              <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
             </div>
-          )}
-          
-          {/* Display example prompts only if there's just the welcome message */}
-          {messages.length === 1 && messages[0].id === 'welcome' && (
-            <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30 mt-4">
-              <p className="text-sm text-red-200 mb-2">
-                Frag mich zum Beispiel:
-              </p>
-              <div className="flex flex-col gap-2">
-                {examplePrompts.map((prompt, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    className="text-left justify-start bg-red-900/20 hover:bg-red-900/30 text-red-200 border-red-500/30"
-                    onClick={() => handleExamplePromptClick(prompt)}
-                  >
-                    "{prompt}"
-                  </Button>
-                ))}
-              </div>
+          </div>
+        )}
+        
+        {/* Display example prompts only if there's just the welcome message */}
+        {messages.length === 1 && messages[0].id === 'welcome' && (
+          <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-zinc-700/30 mt-4">
+            <p className="text-sm text-red-200 mb-2">
+              Frag mich zum Beispiel:
+            </p>
+            <div className="flex flex-col gap-2">
+              {examplePrompts.map((prompt, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  className="text-left justify-start bg-red-900/20 hover:bg-red-900/30 text-red-200 border-red-500/30"
+                  onClick={() => handleExamplePromptClick(prompt)}
+                >
+                  "{prompt}"
+                </Button>
+              ))}
             </div>
-          )}
-          
-          <div ref={messagesEndRef} />
-        </div>
+          </div>
+        )}
+        
+        <div ref={messagesEndRef} />
       </div>
     </div>
   );
