@@ -146,7 +146,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       </div>
       
       {/* Main content area - switches between AI chat and Community chat */}
-      <div className="flex-1 overflow-hidden">
+      <div className="overflow-y-auto">
         {activeChatModeValue === 'ai' ? (
           <div className="h-full p-3">
             <MessageList 
