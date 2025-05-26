@@ -18,10 +18,10 @@ interface FullPageChatBotProps {
 }
 
 /**
- * Full‑page chat component that toggles between AI bot and community chat.
+ * Full‑page chat component – AI & Community.
  * ‑ Sticky header
  * ‑ Single scroll container below header
- * ‑ Auto‑scroll to newest message in both modes
+ * ‑ **Jump** to latest message (no smooth animation)
  */
 const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   chatLogic,
@@ -113,19 +113,19 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending;
 
   /* ------------------------------------------------------------------ */
-  /* Auto‑scroll behaviour                                              */
+  /* Jump‑scroll behaviour                                              */
   /* ------------------------------------------------------------------ */
-  // AI chat → scroll when aiMessages change
+  // Jump to bottom in AI chat
   useEffect(() => {
     if (activeChatModeValue === 'ai' && messagesEndRef?.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
     }
   }, [aiMessages, aiTyping, activeChatModeValue, messagesEndRef]);
 
-  // Community chat → scroll when communityMessages change
+  // Jump to bottom in Community chat
   useEffect(() => {
     if (activeChatModeValue === 'community' && chatBottomRef?.current) {
-      chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
+      chatBottomRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
     }
   }, [communityMessages, communitySending, activeChatModeValue, chatBottomRef]);
 
@@ -160,7 +160,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
         />
       </div>
 
-      {/* single scroll container directly under the header */}
+      {/* single scroll container below header */}
       <div className="flex-1 min-h-0 overflow-y-auto">
         {activeChatModeValue === 'ai' ? (
           <div className="p-3">
@@ -172,7 +172,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               examplePrompts={examplePrompts}
               handleExamplePromptClick={handleExamplePromptClick}
             />
-            {/* invisible marker for scrolling */}
+            {/* bottom marker */}
             <div ref={messagesEndRef} />
           </div>
         ) : (
@@ -220,7 +220,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                 })}
 
                 <TypingIndicator typingUsers={typingUsers} />
-                {/* invisible marker for scrolling */}
+                {/* bottom marker */}
                 <div ref={chatBottomRef} />
               </div>
             </div>
