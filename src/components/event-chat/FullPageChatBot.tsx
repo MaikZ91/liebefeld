@@ -17,6 +17,12 @@ interface FullPageChatBotProps {
   onAddEvent?: () => void;
 }
 
+/**
+ * Full‑page chat component that toggles between AI bot and community chat.
+ * Key: we need a *single* scroll container that sits directly under the sticky header.
+ * In a flex column layout that scroll container (flex‑1) **must** have `min-h-0` — otherwise
+ * its height never collapses and the browser can’t create overflow.
+ */
 const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   chatLogic,
   activeChatModeValue,
@@ -43,6 +49,9 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     toggleRecentQueries
   } = chatLogic;
 
+  /* ------------------------------------------------------------------ */
+  /* community chat hooks                                               */
+  /* ------------------------------------------------------------------ */
   const username =
     typeof window !== 'undefined'
       ? localStorage.getItem(USERNAME_KEY) || 'Anonymous'
@@ -69,33 +78,26 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   const queriesToRender = globalQueries.length > 0 ? globalQueries : [];
 
+  /* ------------------------------------------------------------------ */
+  /* helpers                                                            */
+  /* ------------------------------------------------------------------ */
   const formatTime = (isoDateString: string) => {
     const date = new Date(isoDateString);
     const now = new Date();
-    const diffInMinutes = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60)
-    );
+    const diff = Math.floor((now.getTime() - date.getTime()) / 60000); // minutes
 
-    if (diffInMinutes < 1) return 'gerade eben';
-    if (diffInMinutes < 60) return `vor ${diffInMinutes}m`;
-    if (diffInMinutes < 1440) return `vor ${Math.floor(diffInMinutes / 60)}h`;
-    return `vor ${Math.floor(diffInMinutes / 1440)}d`;
+    if (diff < 1) return 'gerade eben';
+    if (diff < 60) return `vor ${diff}m`;
+    if (diff < 24 * 60) return `vor ${Math.floor(diff / 60)}h`;
+    return `vor ${Math.floor(diff / 1440)}d`;
   };
 
   const handleUnifiedSendMessage = async () => {
-    if (activeChatModeValue === 'ai') {
-      await aiSendMessage();
-    } else {
-      await communitySendMessage();
-    }
+    activeChatModeValue === 'ai' ? await aiSendMessage() : await communitySendMessage();
   };
 
   const handleUnifiedInputChange = (value: string) => {
-    if (activeChatModeValue === 'ai') {
-      setInput(value);
-    } else {
-      setCommunityInput(value);
-    }
+    activeChatModeValue === 'ai' ? setInput(value) : setCommunityInput(value);
   };
 
   const handleUnifiedKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -107,15 +109,16 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   };
 
-  const currentInputValue =
-    activeChatModeValue === 'ai' ? input : communityInput;
-  const currentIsTyping =
-    activeChatModeValue === 'ai' ? aiTyping : communitySending;
+  const currentInputValue = activeChatModeValue === 'ai' ? input : communityInput;
+  const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending;
 
+  /* ------------------------------------------------------------------ */
+  /* render                                                             */
+  /* ------------------------------------------------------------------ */
   return (
-    <div className="h-full flex flex-col">
-      {/* ChatInput section for both modes */}
-      <div className="p-3 border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-[18px]">
+    <div className="h-full min-h-0 flex flex-col">
+      {/* sticky header */}
+      <div className="border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-[18px]">
         {activeChatModeValue === 'ai' && (
           <RecentQueries
             showRecentQueries={showRecentQueries}
@@ -140,10 +143,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
         />
       </div>
 
-      {/* Main content area - switches between AI chat and Community chat */}
-      <div className="flex-1 overflow-y-auto">
+      {/* single scroll container directly under the header */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {activeChatModeValue === 'ai' ? (
-          <div className="h-full p-3 overflow-y-auto">
+          <div className="p-3">
             <MessageList
               messages={aiMessages}
               isTyping={aiTyping}
@@ -154,31 +157,24 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
             />
           </div>
         ) : (
-          <div className="h-full flex flex-col">
+          <div className="h-full min-h-0 flex flex-col">
             {communityError && (
               <div className="text-center text-red-500 text-lg font-semibold py-4">
                 Error: {communityError}
               </div>
             )}
 
-            <div
-              className="flex-1 overflow-y-auto px-4"
-              ref={chatContainerRef}
-            >
+            <div ref={chatContainerRef} className="flex-1 min-h-0 overflow-y-auto px-4">
               <div className="space-y-4 py-4">
-                {communityMessages.length === 0 &&
-                  !communityLoading &&
-                  !communityError && (
-                    <div className="text-center text-gray-400 py-4">
-                      Noch keine Nachrichten. Starte die Unterhaltung!
-                    </div>
-                  )}
+                {communityMessages.length === 0 && !communityLoading && !communityError && (
+                  <div className="text-center text-gray-400 py-4">
+                    Noch keine Nachrichten. Starte die Unterhaltung!
+                  </div>
+                )}
 
                 {communityMessages.map((message, index) => {
                   const isConsecutive =
-                    index > 0 &&
-                    communityMessages[index - 1].user_name ===
-                      message.user_name;
+                    index > 0 && communityMessages[index - 1].user_name === message.user_name;
                   const timeAgo = formatTime(message.created_at);
 
                   return (
@@ -186,10 +182,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                       {!isConsecutive && (
                         <div className="flex items-center mb-2">
                           <Avatar className="h-8 w-8 mr-2 flex-shrink-0 border-red-500">
-                            <AvatarImage
-                              src={message.user_avatar}
-                              alt={message.user_name}
-                            />
+                            <AvatarImage src={message.user_avatar} alt={message.user_name} />
                             <AvatarFallback className="bg-red-500 text-white">
                               {getInitials(message.user_name)}
                             </AvatarFallback>
@@ -197,17 +190,11 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                           <div className="text-lg font-medium text-white mr-2">
                             {message.user_name}
                           </div>
-                          <span className="text-sm text-gray-400">
-                            {timeAgo}
-                          </span>
+                          <span className="text-sm text-gray-400">{timeAgo}</span>
                         </div>
                       )}
                       <div className="break-words">
-                        <ChatMessage
-                          message={message.content}
-                          isConsecutive={isConsecutive}
-                          isGroup
-                        />
+                        <ChatMessage message={message.content} isConsecutive={isConsecutive} isGroup />
                       </div>
                     </div>
                   );
