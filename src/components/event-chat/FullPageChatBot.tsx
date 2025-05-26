@@ -118,9 +118,9 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending;
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col min-h-0">
       {/* ChatInput section for both modes */}
-      <div className="p-3 border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-[18px]">
+      <div className="p-3 border-b border-red-500/20 flex-shrink-0 bg-black px-[13px] py-[18px]">
         {activeChatModeValue === 'ai' && (
           <RecentQueries 
             showRecentQueries={showRecentQueries} 
@@ -146,9 +146,9 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       </div>
       
       {/* Main content area - switches between AI chat and Community chat */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden min-h-0">
         {activeChatModeValue === 'ai' ? (
-          <div className="h-full p-3">
+          <div className="h-full p-3 flex flex-col min-h-0">
             <MessageList 
               messages={aiMessages} 
               isTyping={aiTyping} 
@@ -159,12 +159,12 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
             />
           </div>
         ) : (
-          <div className="h-full flex flex-col">
+          <div className="h-full flex flex-col min-h-0">
             {communityError && (
-              <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {communityError}</div>
+              <div className="text-center text-red-500 text-lg font-semibold py-4 flex-shrink-0">Error: {communityError}</div>
             )}
 
-            <div className="flex-1 overflow-y-auto px-4" ref={chatContainerRef}>
+            <div className="flex-1 overflow-y-auto px-4 min-h-0" ref={chatContainerRef}>
               <div className="space-y-4 py-4">
                 {communityMessages.length === 0 && !communityLoading && !communityError && (
                   <div className="text-center text-gray-400 py-4">Noch keine Nachrichten. Starte die Unterhaltung!</div>
