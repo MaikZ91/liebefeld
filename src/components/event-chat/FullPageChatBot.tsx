@@ -116,7 +116,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   /* render                                                             */
   /* ------------------------------------------------------------------ */
   return (
-    <div className="h-full min-h-0 flex flex-col">
+    <div className="flex flex-col h-screen min-h-0">
       {/* sticky header */}
       <div className="border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-[18px]">
         {activeChatModeValue === 'ai' && (
