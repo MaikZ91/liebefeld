@@ -17,18 +17,16 @@ export const usePerfectDaySubscription = (username: string) => {
     if (!username || username === 'Anonymous') return;
 
     try {
+      // Since we don't have auth, we'll disable RLS for this query
       const { data, error } = await supabase
-        .from('perfect_day_subscriptions')
-        .select('is_active')
-        .eq('username', username)
-        .single();
+        .rpc('check_perfect_day_subscription', { p_username: username });
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error checking subscription:', error);
         return;
       }
 
-      setIsSubscribed(data?.is_active || false);
+      setIsSubscribed(data || false);
     } catch (error) {
       console.error('Exception checking subscription:', error);
     }
@@ -47,38 +45,27 @@ export const usePerfectDaySubscription = (username: string) => {
     setLoading(true);
 
     try {
-      if (isSubscribed) {
-        // Unsubscribe
-        const { error } = await supabase
-          .from('perfect_day_subscriptions')
-          .update({ is_active: false })
-          .eq('username', username);
+      const { data, error } = await supabase
+        .rpc('toggle_perfect_day_subscription', { 
+          p_username: username,
+          p_subscribe: !isSubscribed 
+        });
 
-        if (error) throw error;
+      if (error) throw error;
 
-        setIsSubscribed(false);
+      setIsSubscribed(!isSubscribed);
+      
+      if (!isSubscribed) {
+        toast({
+          title: "Abonniert!",
+          description: "Du erhältst ab sofort täglich um 8:00 Uhr Perfect Day Vorschläge.",
+          variant: "default"
+        });
+      } else {
         toast({
           title: "Abbestellt",
           description: "Du erhältst keine täglichen Perfect Day Nachrichten mehr.",
           variant: "default"
-        });
-      } else {
-        // Subscribe
-        const { error } = await supabase
-          .from('perfect_day_subscriptions')
-          .upsert({
-            username: username,
-            user_id: '00000000-0000-0000-0000-000000000000', // Placeholder for now
-            is_active: true
-          });
-
-        if (error) throw error;
-
-        setIsSubscribed(true);
-        toast({
-          title: "Abonniert!",
-          description: "Du erhältst ab sofort täglich um 8:00 Uhr Perfect Day Vorschläge.",
-          variant: "success"
         });
       }
     } catch (error) {
