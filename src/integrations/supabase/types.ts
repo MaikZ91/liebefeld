@@ -215,6 +215,33 @@ export type Database = {
         }
         Relationships: []
       }
+      perfect_day_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          last_sent_at: string | null
+          user_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_sent_at?: string | null
+          user_id: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_sent_at?: string | null
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
       private_messages: {
         Row: {
           content: string
@@ -285,7 +312,10 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      generate_daily_perfect_day_messages: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

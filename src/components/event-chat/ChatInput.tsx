@@ -2,8 +2,9 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Heart, History, CalendarPlus, Send } from 'lucide-react';
+import { Heart, History, CalendarPlus, Send, Bell } from 'lucide-react';
 import { ChatInputProps } from './types';
+import { usePerfectDaySubscription } from '@/hooks/chat/usePerfectDaySubscription';
 
 const ChatInput: React.FC<ChatInputProps> = ({
   input,
@@ -18,6 +19,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
   inputRef,
   onAddEvent
 }) => {
+  // Get username from localStorage for subscription
+  const username = typeof window !== 'undefined' 
+    ? localStorage.getItem('community_chat_username') || 'Anonymous'
+    : 'Anonymous';
+
+  const { isSubscribed, loading, toggleSubscription } = usePerfectDaySubscription(username);
+
   // Handle input change - always expect setInput to accept string
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
@@ -50,6 +58,18 @@ const ChatInput: React.FC<ChatInputProps> = ({
           </Button>
         )}
 
+        {/* Perfect Day subscription bell */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSubscription}
+          disabled={loading}
+          className={`h-6 w-6 ${isSubscribed ? 'text-yellow-500' : 'text-red-400'}`}
+          title={isSubscribed ? "Perfect Day Nachrichten abbestellen" : "Tägliche Perfect Day Nachrichten abonnieren"}
+        >
+          <Bell className={`h-3 w-3 ${isSubscribed ? 'fill-yellow-500' : ''} ${loading ? 'animate-pulse' : ''}`} />
+        </Button>
+
         {/* Add Event button with calendar icon */}
         {onAddEvent && (
           <Button
@@ -71,7 +91,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         onChange={handleInputChange} 
         onKeyPress={handleKeyPress} 
         placeholder="Frage nach Events..." 
-        className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pl-24 pr-14 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 min-w-0" 
+        className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pl-32 pr-14 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 min-w-0" 
       />
       
       <button 
