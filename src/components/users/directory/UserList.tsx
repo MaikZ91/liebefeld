@@ -20,8 +20,8 @@ const UserList: React.FC<UserListProps> = ({
   onSelectUser
 }) => {
   return (
-    <ScrollArea className="max-h-[60vh]">
-      <div className="space-y-2">
+    <ScrollArea className="h-[60vh]">
+      <div className="space-y-2 pr-4">
         {users.map(user => (
           <div
             key={user.id}
