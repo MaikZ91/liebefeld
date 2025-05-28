@@ -17,7 +17,7 @@ export const usePerfectDaySubscription = (username: string) => {
     if (!username || username === 'Anonymous') return;
 
     try {
-      // Since we don't have auth, we'll disable RLS for this query
+      // Use the new SQL function to check subscription
       const { data, error } = await supabase
         .rpc('check_perfect_day_subscription', { p_username: username });
 
@@ -45,6 +45,7 @@ export const usePerfectDaySubscription = (username: string) => {
     setLoading(true);
 
     try {
+      // Use the new SQL function to toggle subscription
       const { data, error } = await supabase
         .rpc('toggle_perfect_day_subscription', { 
           p_username: username,

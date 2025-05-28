@@ -312,9 +312,17 @@ export type Database = {
       }
     }
     Functions: {
+      check_perfect_day_subscription: {
+        Args: { p_username: string }
+        Returns: boolean
+      }
       generate_daily_perfect_day_messages: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      toggle_perfect_day_subscription: {
+        Args: { p_username: string; p_subscribe: boolean }
+        Returns: boolean
       }
     }
     Enums: {
