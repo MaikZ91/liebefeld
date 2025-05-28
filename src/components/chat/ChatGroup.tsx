@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, RefreshCw, Paperclip, Calendar, Users, Smile } from 'lucide-react';
+import { Send, RefreshCw, Paperclip, Calendar, Users } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -16,7 +16,6 @@ import { de } from 'date-fns/locale';
 import { groupFutureEventsByDate } from '@/utils/eventUtils';
 import { toast } from '@/hooks/use-toast';
 import { getInitials, formatRelativeTime } from '@/utils/chatUIUtils';
-import { reactionService } from '@/services/reactionService';
 import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
 
@@ -33,12 +32,8 @@ interface Message {
   user_name: string;
   user_avatar: string;
   group_id: string;
-  reactions?: { emoji: string; users: string[] }[];
   read_by?: string[];
 }
-
-// Emoji reactions that users can select
-const EMOJI_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '😡', '🔥', '🎉'];
 
 const ChatGroup: React.FC<ChatGroupProps> = ({ 
   groupId, 
@@ -118,7 +113,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           user_name: msg.sender,
           user_avatar: msg.avatar || '',
           group_id: msg.group_id,
-          reactions: msg.reactions || [],
           read_by: msg.read_by || []
         }));
         
@@ -181,15 +175,12 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
             user_name: msg.sender,
             user_avatar: msg.avatar || '',
             group_id: msg.group_id,
-            reactions: msg.reactions || [],
             read_by: msg.read_by || []
           };
           
-          // Prevent duplicate messages by checking if message already exists
+          // Don't add duplicate messages
           setMessages(prevMessages => {
-            const messageExists = prevMessages.some(m => m.id === newMessage.id);
-            if (messageExists) {
-              console.log('Message already exists, skipping duplicate:', newMessage.id);
+            if (prevMessages.some(m => m.id === newMessage.id)) {
               return prevMessages;
             }
             return [...prevMessages, newMessage];
@@ -204,25 +195,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
               })
               .eq('id', msg.id);
           }
-        }
-      })
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'chat_messages',
-        filter: `group_id=eq.${groupId}`
-      }, (payload) => {
-        console.log('Message updated (likely reactions):', payload);
-        
-        if (payload.new) {
-          const updatedMsg = payload.new as any;
-          setMessages(prevMessages => 
-            prevMessages.map(msg => 
-              msg.id === updatedMsg.id 
-                ? { ...msg, reactions: updatedMsg.reactions || [] }
-                : msg
-            )
-          );
         }
       })
       .subscribe();
@@ -333,7 +305,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         user_name: msg.sender,
         user_avatar: msg.avatar || '',
         group_id: msg.group_id,
-        reactions: msg.reactions || [],
         read_by: msg.read_by || []
       }));
       
@@ -377,9 +348,9 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     if (diffInMinutes < 1) {
       return 'jetzt';
     } else if (diffInMinutes < 60) {
-      return `vor ${diffInMinutes} Min`;
+      return `vor ${diffInMinutes} Minuten`;
     } else if (diffInHours < 24) {
-      return `vor ${diffInHours} Std`;
+      return `vor ${diffInHours} Stunden`;
     } else if (diffInDays === 1) {
       return 'gestern';
     } else if (diffInDays < 7) {
@@ -399,19 +370,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       return;
     }
     
-    // Prevent duplicate submissions
-    const messageId = `${Date.now()}-${username}`;
-    if (sentMessageIds.current.has(messageId)) {
-      console.log('Duplicate submission detected, ignoring');
-      return;
-    }
-    sentMessageIds.current.add(messageId);
-    
-    // Clear the message ID after a timeout to allow future messages
-    setTimeout(() => {
-      sentMessageIds.current.delete(messageId);
-    }, 1000);
-    
     try {
       setIsSending(true);
       
@@ -430,7 +388,32 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         messageText = `🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${messageText}`;
       }
       
-      // Clear input immediately
+      // Create optimistic message
+      const tempId = `temp-${Date.now()}`;
+      
+      // Check if this message was already sent (prevent duplicates)
+      if (sentMessageIds.current.has(tempId)) {
+        console.log('Duplicate submission detected, ignoring');
+        return;
+      }
+      
+      // Track this message ID
+      sentMessageIds.current.add(tempId);
+      
+      const optimisticMessage: Message = {
+        id: tempId,
+        created_at: new Date().toISOString(),
+        content: messageText,
+        user_name: username,
+        user_avatar: localStorage.getItem(AVATAR_KEY) || '',
+        group_id: groupId,
+        read_by: [username]
+      };
+      
+      // Add optimistic message immediately
+      setMessages(prev => [...prev, optimisticMessage]);
+      
+      // Clear input 
       setNewMessage('');
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -589,43 +572,29 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     handleSubmit(undefined, eventData);
   };
 
-  // Handle emoji reaction
-  const handleReaction = async (messageId: string, emoji: string) => {
-    try {
-      await reactionService.toggleReaction(messageId, emoji, username);
-    } catch (error) {
-      console.error('Error adding reaction:', error);
-      toast({
-        title: "Fehler",
-        description: "Reaktion konnte nicht hinzugefügt werden.",
-        variant: "destructive"
-      });
-    }
-  };
-
   return (
     <div className="flex flex-col h-full bg-black">
-      <div className="border-b border-gray-800 bg-black py-2 px-3">
+      <div className="border-b border-gray-800 bg-black py-3 px-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center mr-2">
-              <span className="text-white font-bold text-sm">{groupName.slice(0, 1).toUpperCase()}</span>
+            <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center mr-3">
+              <span className="text-white font-bold">{groupName.slice(0, 1).toUpperCase()}</span>
             </div>
             <div>
-              <h3 className="font-semibold text-white text-sm">{groupName}</h3>
-              <p className="text-xs text-gray-400">{messages.length} Nachrichten</p>
+              <h3 className="font-semibold text-white">{groupName}</h3>
+              <p className="text-sm text-gray-400">{messages.length} Nachrichten</p>
             </div>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             {/* Benutzerverzeichnis-Button */}
             {onOpenUserDirectory && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 rounded-full p-0 px-2 text-red-300 hover:text-red-200 hover:bg-red-900/20"
+                className="h-8 rounded-full p-0 px-2 text-red-300 hover:text-red-200 hover:bg-red-900/20"
                 onClick={onOpenUserDirectory}
               >
-                <Users className="h-3 w-3 mr-1" />
+                <Users className="h-4 w-4 mr-1" />
                 <span className="text-xs">Benutzer</span>
               </Button>
             )}
@@ -633,21 +602,21 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 w-7 rounded-full p-0"
+              className="h-8 w-8 rounded-full p-0"
               onClick={handleReconnect}
               disabled={isReconnecting}
             >
-              <RefreshCw className={`h-3 w-3 ${isReconnecting ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${isReconnecting ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </div>
       </div>
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-2 bg-black">
+        <div className="flex-1 overflow-y-auto p-4 bg-black">
           {loading && (
             <div className="flex items-center justify-center h-full">
-              <div className="animate-spin h-6 w-6 border-t-2 border-b-2 border-red-500 rounded-full"></div>
+              <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-red-500 rounded-full"></div>
             </div>
           )}
           
@@ -663,70 +632,26 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           )}
           
           {!loading && !error && (
-            <div className="flex flex-col space-y-1">
+            <div className="flex flex-col space-y-4">
               {messages.map((message, index) => {
                 const isConsecutive = index > 0 && messages[index - 1].user_name === message.user_name;
                 const timeAgo = formatTime(message.created_at);
                 
                 return (
-                  <div key={message.id} className="w-full group hover:bg-gray-900/30 rounded-lg p-1 transition-colors">
+                  <div key={message.id} className="w-full">
                     {!isConsecutive && (
                       <div className="flex items-center mb-1">
-                        <Avatar className="h-6 w-6 mr-2">
+                        <Avatar className="h-8 w-8 mr-2">
                           <AvatarImage src={message.user_avatar} alt={message.user_name} />
-                          <AvatarFallback className="bg-red-500 text-xs">{getInitials(message.user_name)}</AvatarFallback>
+                          <AvatarFallback className="bg-red-500">{getInitials(message.user_name)}</AvatarFallback>
                         </Avatar>
-                        <span className="font-medium text-white text-sm">{message.user_name}</span>
+                        <span className="font-medium text-white">{message.user_name}</span>
                         <span className="text-xs text-gray-400 ml-2">{timeAgo}</span>
                       </div>
                     )}
-                    <div className={`ml-8 ${isConsecutive ? 'mt-0' : 'mt-1'}`}>
-                      <div className="bg-gray-900/50 rounded-lg p-2 text-white text-sm break-words relative">
+                    <div className={`ml-10 pl-2 border-l-2 border-red-500 ${isConsecutive ? 'mt-1' : 'mt-0'}`}>
+                      <div className="bg-black rounded-md p-2 text-white break-words">
                         {message.content}
-                        
-                        {/* Emoji reactions display */}
-                        {message.reactions && message.reactions.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {message.reactions.map((reaction, idx) => (
-                              <button
-                                key={idx}
-                                onClick={() => handleReaction(message.id, reaction.emoji)}
-                                className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs border transition-colors ${
-                                  reaction.users.includes(username)
-                                    ? 'bg-red-500/20 border-red-500/50 text-red-300'
-                                    : 'bg-gray-800/50 border-gray-700 text-gray-300 hover:bg-gray-700/50'
-                                }`}
-                              >
-                                <span>{reaction.emoji}</span>
-                                <span>{reaction.users.length}</span>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                        
-                        {/* Emoji reaction selector - appears on hover */}
-                        <div className="absolute top-0 right-0 transform translate-x-full -translate-y-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-6 w-6 bg-gray-800 hover:bg-gray-700">
-                                <Smile className="h-3 w-3" />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-2 bg-gray-800 border-gray-700">
-                              <div className="flex gap-1">
-                                {EMOJI_REACTIONS.map((emoji) => (
-                                  <button
-                                    key={emoji}
-                                    onClick={() => handleReaction(message.id, emoji)}
-                                    className="p-2 rounded hover:bg-gray-700 transition-colors text-lg"
-                                  >
-                                    {emoji}
-                                  </button>
-                                ))}
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -734,17 +659,17 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
               })}
               
               {typingUsers.length > 0 && (
-                <div className="ml-8">
-                  <div className="text-gray-400 text-xs flex items-center">
+                <div className="ml-10 pl-2">
+                  <div className="text-gray-400 text-sm flex items-center">
                     {typingUsers.length === 1 ? (
                       <>{typingUsers[0].username} schreibt...</>
                     ) : (
                       <>{typingUsers.length} Personen schreiben...</>
                     )}
                     <div className="flex ml-2">
-                      <div className="w-1 h-1 bg-gray-400 rounded-full mr-1 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-1 h-1 bg-gray-400 rounded-full mr-1 animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-1 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-1 animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                     </div>
                   </div>
                 </div>
@@ -755,39 +680,39 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           )}
         </div>
         
-        <div className="p-2 bg-black border-t border-gray-800">
+        <div className="p-3 bg-black border-t border-gray-800">
           <form onSubmit={handleSubmit} className="flex items-end gap-2">
-            <div className="flex-1 bg-gray-900 rounded-lg relative border border-gray-800">
+            <div className="flex-1 bg-black rounded-lg relative border border-gray-800">
               <Textarea
                 value={newMessage}
                 onChange={handleTyping}
                 onKeyDown={handleKeyPress}
                 placeholder="Schreibe eine Nachricht..."
-                className="min-h-[36px] max-h-20 resize-none bg-gray-900 border-0 focus:ring-red-500 focus:border-red-500 placeholder-gray-500 text-white pr-20 text-sm"
+                className="min-h-[44px] max-h-24 resize-none bg-black border-gray-800 focus:ring-red-500 focus:border-red-500 placeholder-gray-500 text-white pr-12"
               />
-              <div className="absolute right-1 bottom-1 flex items-center gap-1">
+              <div className="absolute right-2 bottom-2 flex items-center gap-1">
                 <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
                   <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full">
-                      <Calendar className="h-4 w-4 text-gray-400" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                      <Calendar className="h-5 w-5 text-gray-400" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[300px] p-0 max-h-[400px]" side="top">
                     <div className="p-2 border-b border-gray-800">
                       <div className="flex items-center gap-2">
-                        <Search className="h-4 w-4 text-gray-400" />
+                        <Search className="h-5 w-5 text-gray-400" />
                         <Input
                           value={eventSearchQuery}
                           onChange={(e) => setEventSearchQuery(e.target.value)}
                           placeholder="Event suchen..."
-                          className="bg-black border-gray-800 text-sm"
+                          className="bg-black border-gray-800"
                         />
                       </div>
                     </div>
                     <ScrollArea className="h-[350px]">
                       <div className="p-2 space-y-2">
                         {filteredEvents.length === 0 ? (
-                          <p className="text-gray-400 text-center py-4 text-sm">Keine Events gefunden</p>
+                          <p className="text-gray-400 text-center py-4">Keine Events gefunden</p>
                         ) : (
                           filteredEvents.map((event) => (
                             <div 
@@ -795,8 +720,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
                               className="p-2 bg-black rounded-md hover:bg-gray-900 cursor-pointer border border-gray-800"
                               onClick={() => handleShareEvent(event)}
                             >
-                              <p className="font-medium text-white text-sm">{event.title}</p>
-                              <p className="text-xs text-gray-400">
+                              <p className="font-medium text-white">{event.title}</p>
+                              <p className="text-sm text-gray-400">
                                 {event.date} um {event.time} • {event.category}
                               </p>
                             </div>
@@ -806,17 +731,17 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
                     </ScrollArea>
                   </PopoverContent>
                 </Popover>
-                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 rounded-full" onClick={() => fileInputRef.current?.click()}>
-                  <Paperclip className="h-4 w-4 text-gray-400" />
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => fileInputRef.current?.click()}>
+                  <Paperclip className="h-5 w-5 text-gray-400" />
                 </Button>
               </div>
             </div>
             <Button 
               type="submit" 
               disabled={!newMessage.trim() || isSending}
-              className="bg-red-500 hover:bg-red-600 text-white rounded-lg h-9 px-3"
+              className="bg-red-500 hover:bg-red-600 text-white rounded-lg h-10 px-4"
             >
-              <Send className="h-4 w-4" />
+              <Send className="h-5 w-5" />
             </Button>
           </form>
           <input 
