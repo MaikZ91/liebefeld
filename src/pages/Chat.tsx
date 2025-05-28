@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
 import LiveTicker from '@/components/LiveTicker';
 import { Button } from '@/components/ui/button';
-import { Calendar, MessageSquare, List, Users } from 'lucide-react';
+import { Calendar, MessageSquare, List, Users, User } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,12 +15,14 @@ import { setupService } from '@/services/setupService';
 import { toast } from '@/hooks/use-toast';
 import UsernameDialog from '@/components/chat/UsernameDialog';
 import ProfileEditor from '@/components/users/ProfileEditor';
+import UserDirectory from '@/components/users/UserDirectory';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 
 const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
   const [isAddEventSheetOpen, setIsAddEventSheetOpen] = useState(false);
   const [isEventListSheetOpen, setIsEventListSheetOpen] = useState(false);
+  const [isUserDirectoryOpen, setIsUserDirectoryOpen] = useState(false);
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   const [username, setUsername] = useState<string>('');
@@ -42,6 +43,11 @@ const ChatPage = () => {
   // Function to toggle community view - this switches the mode in the same window
   const handleToggleCommunity = () => {
     setActiveView(prev => prev === 'community' ? 'ai' : 'community');
+  };
+
+  // Function to open user directory
+  const handleOpenUserDirectory = () => {
+    setIsUserDirectoryOpen(true);
   };
 
   // Updated function for profile completion
@@ -179,6 +185,17 @@ const ChatPage = () => {
             </h1>
             
             <div className="flex gap-2">
+              {/* User Directory Button - Between Community and Calendar */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleOpenUserDirectory} 
+                className="flex items-center gap-2"
+              >
+                <User className="h-4 w-4" />
+                <span className="hidden md:inline">Benutzer</span>
+              </Button>
+              
               {/* Calendar Events Button - Made more dominant with calendar icon and red color */}
               <Button 
                 variant="default" 
@@ -230,6 +247,21 @@ const ChatPage = () => {
             </SheetHeader>
             <div className="mt-4 overflow-y-auto max-h-[80vh]">
               <EventCalendar defaultView="list" />
+            </div>
+          </SheetContent>
+        </Sheet>
+        
+        {/* User Directory Sheet */}
+        <Sheet open={isUserDirectoryOpen} onOpenChange={setIsUserDirectoryOpen}>
+          <SheetContent className="sm:max-w-lg overflow-hidden">
+            <SheetHeader>
+              <SheetTitle>Benutzer</SheetTitle>
+              <SheetDescription>
+                Entdecke andere Community-Mitglieder
+              </SheetDescription>
+            </SheetHeader>
+            <div className="mt-4 overflow-y-auto max-h-[80vh]">
+              <UserDirectory />
             </div>
           </SheetContent>
         </Sheet>
