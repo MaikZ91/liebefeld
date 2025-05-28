@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
@@ -48,6 +49,12 @@ const ChatPage = () => {
   // Function to open user directory
   const handleOpenUserDirectory = () => {
     setIsUserDirectoryOpen(true);
+  };
+
+  // Function to handle user selection from directory
+  const handleSelectUser = (user: any) => {
+    // For now, just close the directory - can be extended later
+    setIsUserDirectoryOpen(false);
   };
 
   // Updated function for profile completion
@@ -261,7 +268,12 @@ const ChatPage = () => {
               </SheetDescription>
             </SheetHeader>
             <div className="mt-4 overflow-y-auto max-h-[80vh]">
-              <UserDirectory />
+              <UserDirectory 
+                open={isUserDirectoryOpen}
+                onOpenChange={setIsUserDirectoryOpen}
+                onSelectUser={handleSelectUser}
+                currentUsername={username}
+              />
             </div>
           </SheetContent>
         </Sheet>
