@@ -1,5 +1,6 @@
+
 import { Event, GitHubEvent } from '../types/eventTypes';
-import { format, startOfWeek, endOfWeek, addDays, parseISO, isToday } from 'date-fns';
+import { format, startOfWeek, endOfWeek, addDays, parseISO, isToday, isSameDay } from 'date-fns';
 import { de } from 'date-fns/locale';
 
 // Transform GitHub events to our Event format
@@ -9,7 +10,7 @@ export const transformGitHubEvents = (
   currentYear: number = new Date().getFullYear()
 ): Event[] => {
   return githubEvents.map((githubEvent) => {
-    const eventId = `github-${githubEvent.hash}`;
+    const eventId = `github-${githubEvent.hash || githubEvent.event}`;
     const likesData = eventLikes[eventId] || {};
     
     // Extract category from the GitHub event data
@@ -167,4 +168,22 @@ export const formatEventDate = (dateString: string): string => {
     console.error('Error formatting date:', error);
     return dateString;
   }
+};
+
+// Add missing functions that are used in other components
+export const getFutureEvents = (events: Event[]): Event[] => {
+  const today = format(new Date(), 'yyyy-MM-dd');
+  return events
+    .filter(event => event.date >= today)
+    .sort((a, b) => a.date.localeCompare(b.date));
+};
+
+export const hasEventsOnDay = (events: Event[], day: Date): boolean => {
+  const targetDate = format(day, 'yyyy-MM-dd');
+  return events.some(event => event.date === targetDate);
+};
+
+export const getEventCountForDay = (events: Event[], day: Date): number => {
+  const targetDate = format(day, 'yyyy-MM-dd');
+  return events.filter(event => event.date === targetDate).length;
 };

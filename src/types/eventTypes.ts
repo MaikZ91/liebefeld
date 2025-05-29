@@ -1,3 +1,4 @@
+
 // Shared type definitions for events and calendar
 export interface Event {
   id: string;
@@ -28,10 +29,18 @@ export interface Event {
 }
 
 export interface GitHubEvent {
+  hash?: string; // Add hash property
   date: string; // Format: "Fri, 04.04"
   event: string;
   link: string;
   time?: string; // Optional time field from JSON
+  description?: string; // Add description property
+  location?: string; // Add location property
+  organizer?: string; // Add organizer property
+  category?: string; // Add category property
+  genre?: string; // Add genre property
+  type?: string; // Add type property
+  image_urls?: string[]; // Add image_urls property
 }
 
 export interface EventCalendarProps {
