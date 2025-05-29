@@ -7,6 +7,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -19,125 +21,130 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    // Get request data
+    const requestData = await req.json();
+    const { username, events, userProfile, date } = requestData;
+
+    console.log(`Generating Perfect Day for user: ${username} with ${events?.length || 0} events`);
+
     // Get current weather (simplified for now)
     const currentWeather = 'sunny'; // In real implementation, fetch from weather API
     
-    // Get all active subscriptions
-    const { data: subscriptions, error: subError } = await supabase
-      .from('perfect_day_subscriptions')
-      .select('*')
-      .eq('is_active', true)
-      .or(`last_sent_at.is.null,last_sent_at.lt.${new Date().toISOString().split('T')[0]}`)
+    // Format events for the AI prompt
+    const eventsText = events?.map(event => 
+      `- ${event.title} (${event.time}) at ${event.location || 'N/A'} - ${event.category}`
+    ).join('\n') || 'Keine Events für heute gefunden.';
 
-    if (subError) {
-      console.error('Error fetching subscriptions:', subError)
-      throw subError
+    // Format user interests and locations
+    const userInterests = userProfile?.interests?.join(', ') || 'Keine Interessen angegeben';
+    const userLocations = userProfile?.favorite_locations?.join(', ') || 'Keine bevorzugten Orte angegeben';
+
+    // Create comprehensive prompt for Gemini
+    const aiPrompt = `Als Event Marketing Manager erstelle eine ausführliche Tageszusammenfassung für ${username} für den ${date}.
+
+**Verfügbare Events heute:**
+${eventsText}
+
+**Nutzerprofil:**
+- Interessen: ${userInterests}
+- Bevorzugte Orte: ${userLocations}
+
+**Wetter:** ${currentWeather === 'sunny' ? '☀️ Sonnig' : '🌧️ Regnerisch'}
+
+Erstelle eine personalisierte Tageszusammenfassung mit folgender Struktur:
+
+🌅 **Vormittag (9:00-12:00):**
+[Empfehlungen basierend auf Events, Interessen und Wetter]
+
+🌞 **Nachmittag (12:00-18:00):**
+[Empfehlungen basierend auf Events, Interessen und Wetter]
+
+🌙 **Abend (18:00-23:00):**
+[Empfehlungen basierend auf Events, Interessen und Wetter]
+
+Berücksichtige dabei:
+- Die verfügbaren Events und deren Zeiten
+- Die Nutzerinteressen (${userInterests})
+- Die bevorzugten Orte (${userLocations})
+- Das aktuelle Wetter
+- Gebe konkrete Empfehlungen mit Zeiten
+- Erwähne spezifische Events aus der Liste wenn passend
+- Füge 2-3 alternative Aktivitäten pro Tageszeit hinzu falls keine passenden Events verfügbar sind
+
+Sei enthusiastisch und persönlich in deinem Ton!`;
+
+    console.log('Sending prompt to AI:', aiPrompt.substring(0, 200) + '...');
+
+    // Call Gemini via OpenRouter
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openRouterApiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://your-site.com',
+        'X-Title': 'Liebefeld Events App',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-flash-1.5',
+        messages: [
+          {
+            role: 'system',
+            content: 'Du bist ein enthusiastischer Event Marketing Manager für Liebefeld/Bern. Deine Aufgabe ist es, personalisierte Tageszusammenfassungen zu erstellen, die Events, Nutzerinteressen und Wetter berücksichtigen. Antworte immer auf Deutsch.'
+          },
+          {
+            role: 'user',
+            content: aiPrompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 1000
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`AI API error: ${response.status}`);
     }
 
-    console.log(`Found ${subscriptions?.length || 0} active subscriptions`)
+    const aiResponse = await response.json();
+    const perfectDayContent = aiResponse.choices[0]?.message?.content || 'Fehler beim Generieren der Perfect Day Nachricht.';
 
-    // Process each subscription
-    for (const subscription of subscriptions || []) {
-      try {
-        // Get user profile
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('username', subscription.username)
-          .single()
+    console.log('AI response received, length:', perfectDayContent.length);
 
-        // Get today's events
-        const today = new Date().toISOString().split('T')[0]
-        const { data: events } = await supabase
-          .from('community_events')
-          .select('*')
-          .eq('date', today)
-          .limit(10)
+    // Create a comprehensive message
+    const finalMessage = `🌟 **Dein Perfect Day in Liebefeld - ${date}** 🌟\n\n${perfectDayContent}\n\n💫 *Erstellt basierend auf ${events?.length || 0} verfügbaren Events und deinen persönlichen Vorlieben.*`;
 
-        // Get activity suggestions based on weather
-        const { data: activities } = await supabase
-          .from('activity_suggestions')
-          .select('*')
-          .eq('weather', currentWeather)
-          .limit(6)
+    // Store the perfect day message in the AI chat context (not community chat)
+    // We'll store it as a special message that can be retrieved by the AI chat
+    const { error: insertError } = await supabase
+      .from('chat_messages')
+      .insert({
+        group_id: '00000000-0000-4000-8000-000000000001', // Special AI chat group ID
+        sender: 'Perfect Day Assistant',
+        text: finalMessage,
+        avatar: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png',
+        created_at: new Date().toISOString()
+      })
 
-        // Generate personalized suggestions
-        const morningActivities = activities?.filter(a => a.time_of_day === 'morning') || []
-        const afternoonActivities = activities?.filter(a => a.time_of_day === 'afternoon') || []
-        const eveningActivities = activities?.filter(a => a.time_of_day === 'evening') || []
+    if (insertError) {
+      console.error('Error storing perfect day message:', insertError)
+    } else {
+      console.log('Perfect day message stored successfully for AI chat')
+    }
 
-        // Create message content
-        let messageContent = `🌟 **Dein perfekter Tag in Liebefeld!** 🌟\n\n`
-        
-        messageContent += `🌅 **Vormittag**\n`
-        if (morningActivities.length > 0) {
-          messageContent += `• ${morningActivities[0].activity}\n`
-        } else {
-          messageContent += `• Starte mit einem entspannten Kaffee\n`
-        }
-        
-        messageContent += `\n🌞 **Nachmittag**\n`
-        if (events && events.length > 0) {
-          const afternoonEvent = events.find(e => {
-            const hour = parseInt(e.time.split(':')[0])
-            return hour >= 12 && hour < 18
-          })
-          if (afternoonEvent) {
-            messageContent += `• ${afternoonEvent.title} um ${afternoonEvent.time} (${afternoonEvent.location})\n`
-          }
-        }
-        if (afternoonActivities.length > 0) {
-          messageContent += `• ${afternoonActivities[0].activity}\n`
-        }
-        
-        messageContent += `\n🌙 **Abend**\n`
-        if (events && events.length > 0) {
-          const eveningEvent = events.find(e => {
-            const hour = parseInt(e.time.split(':')[0])
-            return hour >= 18
-          })
-          if (eveningEvent) {
-            messageContent += `• ${eveningEvent.title} um ${eveningEvent.time} (${eveningEvent.location})\n`
-          }
-        }
-        if (eveningActivities.length > 0) {
-          messageContent += `• ${eveningActivities[0].activity}\n`
-        }
-        
-        messageContent += `\nWetter heute: ${currentWeather === 'sunny' ? '☀️ Sonnig' : '🌧️ Regnerisch'}\n\nViel Spaß bei deinem perfekten Tag! 💫`
-
-        // Insert message into chat
-        const { error: insertError } = await supabase
-          .from('chat_messages')
-          .insert({
-            group_id: '00000000-0000-4000-8000-000000000000',
-            sender: 'Perfect Day Bot',
-            text: messageContent,
-            avatar: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png',
-            created_at: new Date().toISOString()
-          })
-
-        if (insertError) {
-          console.error('Error inserting message:', insertError)
-          continue
-        }
-
-        // Update last_sent_at
-        await supabase
-          .from('perfect_day_subscriptions')
-          .update({ last_sent_at: new Date().toISOString().split('T')[0] })
-          .eq('id', subscription.id)
-
-        console.log(`Sent perfect day message to ${subscription.username}`)
-
-      } catch (error) {
-        console.error(`Error processing subscription for ${subscription.username}:`, error)
-        continue
-      }
+    // Also update subscription if this was a scheduled run
+    if (requestData.isScheduled) {
+      await supabase
+        .from('perfect_day_subscriptions')
+        .update({ last_sent_at: new Date().toISOString().split('T')[0] })
+        .eq('username', username)
     }
 
     return new Response(
-      JSON.stringify({ success: true, processed: subscriptions?.length || 0 }),
+      JSON.stringify({ 
+        success: true, 
+        message: finalMessage,
+        eventsCount: events?.length || 0
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
