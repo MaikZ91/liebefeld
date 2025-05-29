@@ -104,41 +104,31 @@ export const fetchGitHubLikes = async (): Promise<Record<string, any>> => {
 // Fetch external events from GitHub
 export const fetchExternalEvents = async (eventLikes: Record<string, number>): Promise<Event[]> => {
   try {
-    console.log(`Attempting to fetch events from: ${EXTERNAL_EVENTS_URL}`);
+    console.log(`[fetchExternalEvents] Attempting to fetch events from: ${EXTERNAL_EVENTS_URL}`);
     
     // Add cache-busting parameter to avoid caching issues
     const cacheBuster = `?t=${new Date().getTime()}`;
     const response = await fetch(`${EXTERNAL_EVENTS_URL}${cacheBuster}`);
     
     if (!response.ok) {
-      console.log(`Fehler beim Laden von ${EXTERNAL_EVENTS_URL}: ${response.status}`);
+      console.log(`[fetchExternalEvents] Fehler beim Laden von ${EXTERNAL_EVENTS_URL}: ${response.status}`);
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
     
     const githubEvents: GitHubEvent[] = await response.json();
-    console.log(`Successfully loaded ${githubEvents.length} events from ${EXTERNAL_EVENTS_URL}`);
+    console.log(`[fetchExternalEvents] Successfully loaded ${githubEvents.length} events from ${EXTERNAL_EVENTS_URL}`);
     
-    // Log all titles to help debug missing events
-    githubEvents.forEach((event, index) => {
-      console.log(`GitHub event ${index}: ${event.event}`);
-    });
-    
-    // Check specifically for "James Leg" event
-    const jamesLegEvent = githubEvents.find(e => e.event.includes("James Leg"));
-    if (jamesLegEvent) {
-      console.log("Found James Leg event in GitHub data:", jamesLegEvent);
-    } else {
-      console.log("James Leg event NOT found in GitHub data");
-    }
+    // Log first few events to debug
+    console.log('[fetchExternalEvents] First 3 GitHub events:', githubEvents.slice(0, 3));
     
     // Transform GitHub events to our format and pass eventLikes to ensure likes are applied
     const transformedEvents = transformGitHubEvents(githubEvents, eventLikes, new Date().getFullYear());
-    console.log(`Transformed ${transformedEvents.length} GitHub events with likes:`, 
-      transformedEvents.map(e => `${e.id}: ${e.likes || 0} likes`).join(', '));
+    console.log(`[fetchExternalEvents] Transformed ${transformedEvents.length} GitHub events`);
+    console.log('[fetchExternalEvents] First 3 transformed events:', transformedEvents.slice(0, 3));
     
     return transformedEvents;
   } catch (error) {
-    console.error(`Fehler beim Laden von ${EXTERNAL_EVENTS_URL}:`, error);
+    console.error(`[fetchExternalEvents] Fehler beim Laden von ${EXTERNAL_EVENTS_URL}:`, error);
     return [];
   }
 };

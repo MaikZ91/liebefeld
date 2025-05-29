@@ -1,4 +1,3 @@
-
 import { Event, GitHubEvent } from '../types/eventTypes';
 import { format, startOfWeek, endOfWeek, addDays, parseISO, isToday, isSameDay } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -9,25 +8,31 @@ export const transformGitHubEvents = (
   eventLikes: Record<string, any> = {},
   currentYear: number = new Date().getFullYear()
 ): Event[] => {
-  return githubEvents.map((githubEvent) => {
-    const eventId = `github-${githubEvent.hash || githubEvent.event}`;
+  console.log(`[transformGitHubEvents] Processing ${githubEvents.length} GitHub events`);
+  
+  return githubEvents.map((githubEvent, index) => {
+    console.log(`[transformGitHubEvents] Processing event ${index}:`, githubEvent);
+    
+    const eventId = `github-${githubEvent.hash || githubEvent.event || index}`;
     const likesData = eventLikes[eventId] || {};
     
     // Extract category from the GitHub event data
-    // Look for category in various possible fields
     let category = 'Sonstiges'; // Default fallback
     
-    // Check if category is directly provided
+    // Check if category is directly provided in the GitHub event
     if (githubEvent.category) {
       category = githubEvent.category;
+      console.log(`[transformGitHubEvents] Found direct category: ${category}`);
     }
     // Check if there's a genre field (some events use this)
     else if (githubEvent.genre) {
       category = githubEvent.genre;
+      console.log(`[transformGitHubEvents] Found genre category: ${category}`);
     }
     // Check if there's a type field
     else if (githubEvent.type) {
       category = githubEvent.type;
+      console.log(`[transformGitHubEvents] Found type category: ${category}`);
     }
     // Try to infer category from event name/description
     else {
@@ -52,19 +57,47 @@ export const transformGitHubEvents = (
       } else if (eventText.includes('lesung') || eventText.includes('literatur')) {
         category = 'Lesung';
       }
+      
+      console.log(`[transformGitHubEvents] Inferred category from text: ${category}`);
     }
 
-    console.log(`GitHub event ${githubEvent.event}: extracted category "${category}"`);
-    
-    return {
+    // Parse the date - handle different formats
+    let eventDate = '';
+    try {
+      // Handle formats like "Thu, 29.05.2025" or "Th, 29.05"
+      const dateStr = githubEvent.date;
+      console.log(`[transformGitHubEvents] Original date string: ${dateStr}`);
+      
+      if (dateStr.includes('.')) {
+        // Extract day and month from formats like "Thu, 29.05.2025" or "Th, 29.05"
+        const dateMatch = dateStr.match(/(\d{1,2})\.(\d{1,2})(?:\.(\d{4}))?/);
+        if (dateMatch) {
+          const day = dateMatch[1].padStart(2, '0');
+          const month = dateMatch[2].padStart(2, '0');
+          const year = dateMatch[3] || currentYear.toString();
+          eventDate = `${year}-${month}-${day}`;
+          console.log(`[transformGitHubEvents] Parsed date: ${eventDate}`);
+        }
+      }
+      
+      if (!eventDate) {
+        console.warn(`[transformGitHubEvents] Could not parse date: ${dateStr}, using today`);
+        eventDate = format(new Date(), 'yyyy-MM-dd');
+      }
+    } catch (error) {
+      console.error(`[transformGitHubEvents] Error parsing date for event ${githubEvent.event}:`, error);
+      eventDate = format(new Date(), 'yyyy-MM-dd');
+    }
+
+    const transformedEvent: Event = {
       id: eventId,
-      title: githubEvent.event,
+      title: githubEvent.event || 'Unnamed Event',
       description: githubEvent.description || '',
-      date: githubEvent.date,
+      date: eventDate,
       time: githubEvent.time || '00:00',
       location: githubEvent.location || '',
       organizer: githubEvent.organizer || 'Unbekannt',
-      category: category, // Use the extracted/inferred category
+      category: category,
       likes: likesData.likes || 0,
       rsvp: {
         yes: likesData.rsvp_yes || 0,
@@ -74,6 +107,9 @@ export const transformGitHubEvents = (
       link: githubEvent.link || null,
       image_urls: githubEvent.image_urls || null
     };
+    
+    console.log(`[transformGitHubEvents] Transformed event:`, transformedEvent);
+    return transformedEvent;
   });
 };
 
