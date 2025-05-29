@@ -33,16 +33,14 @@ serve(async (req) => {
       currentDate,
       nextWeekStart,
       nextWeekEnd,
-      userInterests, // User interests parameter
-      userLocations, // User locations parameter
+      userInterests,
+      userLocations,
     } = await req.json();
 
-    // Log the received parameters for debugging
     console.log(`[ai-event-chat] Received query: ${query}`);
     console.log(`[ai-event-chat] Received currentDate: ${currentDate}`);
     console.log(`[ai-event-chat] Received next week range: ${nextWeekStart} to ${nextWeekEnd}`);
     
-    // Explicitly log user interests and locations for debugging
     if (userInterests) {
       console.log(`[ai-event-chat] User interests received: ${JSON.stringify(userInterests)}`);
     } else {
@@ -60,7 +58,6 @@ serve(async (req) => {
     /***************************
      * EVENT RETRIEVAL AND FILTERING
      ***************************/
-    // Fetche immer alle Events aus der Datenbank, damit wir darauf filtern können
     const { data: dbEvents, error: eventsError } = await supabase
       .from("community_events")
       .select("*")
@@ -70,34 +67,26 @@ serve(async (req) => {
       throw new Error(`[ai-event-chat] Datenbank‑Fehler: ${eventsError.message}`);
     }
 
-    // Verwende ein Array für die gefilterten Events, die wir an das KI-Modell senden werden
     let filteredEvents = allEvents?.length ? allEvents : dbEvents;
     
-    // Analyse der Benutzeranfrage für die Filterung
     const lowercaseQuery = query.toLowerCase();
     
-    // Check if this is a personalized request
     const isPersonalRequest = query.toLowerCase().includes("zu mir passen") || 
                              query.toLowerCase().includes("meine interessen") || 
                              query.toLowerCase().includes("persönlich") ||
-                             query.includes("❤️"); // Check for heart emoji indicator
+                             query.includes("❤️");
 
     console.log(`[ai-event-chat] Is this a personalized request? ${isPersonalRequest}`);
 
-    // Prepare for date-related filtering
     const currentDateObj = new Date(currentDate);
-    
-    // Get the current month and year
     const currentMonth = currentDateObj.getMonth();
     const currentYear = currentDateObj.getFullYear();
-    
-    // Calculate first and last day of current month
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1).toISOString().split('T')[0];
     const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).toISOString().split('T')[0];
     
     console.log(`[ai-event-chat] Current month range: ${firstDayOfMonth} to ${lastDayOfMonth}`);
 
-    // Apply filters for date-specific queries
+    // Filter for date-specific queries
     // Filter für "heute" / "today" / "aktuell" etc.
     if (
       lowercaseQuery.includes("heute") ||
@@ -219,7 +208,7 @@ serve(async (req) => {
         filteredEvents = locationFilteredEvents;
         console.log(`[ai-event-chat] Found ${locationFilteredEvents.length} events matching user locations (from ${beforeLocationFilter})`);
       } else {
-        console.log(`[ai-event-chat] No events found matching user locations from ${beforeLocationFilter} events`);
+        console.log(`[ai-event-event-chat] No events found matching user locations from ${beforeLocationFilter} events`);
       }
     }
     
@@ -267,10 +256,10 @@ serve(async (req) => {
       }
     }
 
-    // Filter for categories
+    // Filter for categories - use actual category values instead of 'Sonstiges'
     const categoryMapping = {
       konzert: "Konzert",
-      concert: "Konzert",
+      concert: "Konzert", 
       musik: "Konzert",
       music: "Konzert",
       party: "Party",
@@ -349,22 +338,25 @@ serve(async (req) => {
         thisMonthEvents.slice(0, 3).map((e: any) => `${e.title} (${e.date})`));
     }
     
+    // Format events with actual categories
     const formattedEvents = filteredEvents
-      .map((e: any) =>
-        [
+      .map((e: any) => {
+        // Use the actual category from the event, don't default to 'Sonstiges'
+        const actualCategory = e.category || 'Unbekannt';
+        console.log(`[ai-event-chat] Event "${e.title}" has category: ${actualCategory}`);
+        
+        return [
           `Event: ${e.title}`,
           `Datum: ${e.date}`,
           `Zeit: ${e.time}`,
-          `Kategorie: ${e.category}`,
+          `Kategorie: ${actualCategory}`, // Use the actual category
           e.location ? `Ort: ${e.location}` : "",
-        ].filter(Boolean).join("\n")
-      )
+        ].filter(Boolean).join("\n");
+      })
       .join("\n\n");
 
-    // Informationen über die Gesamtanzahl der Events hinzufügen
     const totalEventsInfo = `Es gibt insgesamt ${dbEvents.length} Events in der Datenbank. Ich habe dir die ${filteredEvents.length} relevantesten basierend auf deiner Anfrage ausgewählt.`;
     
-    // Enhanced system message for personalized requests
     let systemMessage = `Du bist ein Event‑Assistent für Liebefeld. Aktuelles Datum: ${today}.\n${totalEventsInfo}\n`;
     
     if (isPersonalRequest || userInterests?.length > 0 || userLocations?.length > 0) {
@@ -417,7 +409,7 @@ serve(async (req) => {
      ***************************/
     // Log that we're about to send the request
     console.log("[ai-event-chat] Sending request to Open Router API with Gemini model...");
-    console.log("[ai-event-chat] System message being sent:", systemMessage);
+    console.log("[ai-event-chat] Categories being sent:", filteredEvents.map((e: any) => `${e.title}: ${e.category}`));
     
     const payload = {
       model: "google/gemini-2.0-flash-lite-001", // gemini-2.0-flash-lite is more reliable

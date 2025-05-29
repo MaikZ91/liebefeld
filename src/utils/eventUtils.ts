@@ -1,373 +1,170 @@
 import { Event, GitHubEvent } from '../types/eventTypes';
-import { parseAndNormalizeDate, debugDate } from './dateUtils';
-import { format, isSameDay, isSameMonth, startOfDay, isAfter, isBefore, differenceInDays, parseISO, compareAsc } from 'date-fns';
+import { format, startOfWeek, endOfWeek, addDays, parseISO, isToday } from 'date-fns';
+import { de } from 'date-fns/locale';
 
-// Determine event category based on keywords in title
-export const determineEventCategory = (title: string): string => {
-  if (title.includes("konzert") || title.includes("festival") || title.includes("musik") || 
-      title.includes("band") || title.includes("jazz") || title.includes("chor")) {
-    return "Konzert";
-  } else if (title.includes("party") || title.includes("feier") || title.includes("disco") || 
-             title.includes("club") || title.includes("tanz")) {
-    return "Party";
-  } else if (title.includes("ausstellung") || title.includes("galerie") || title.includes("kunst") || 
-             title.includes("museum") || title.includes("vernissage")) {
-    return "Ausstellung";
-  } else if (title.includes("sport") || title.includes("fußball") || title.includes("lauf") || 
-             title.includes("turnier") || title.includes("fitness")) {
-    return "Sport";
-  } else if (title.includes("workshop") || title.includes("kurs")) {
-    return "Workshop";
-  } else if (title.includes("theater") || title.includes("film") || title.includes("kino")) {
-    return "Kultur";
-  } else {
-    return "Sonstiges";
-  }
-};
-
-// Check if an event is a Hochschulsport event
-export const isHochschulsportEvent = (event: Event): boolean => {
-  const titleLower = event.title.toLowerCase();
-  const organizerLower = event.organizer?.toLowerCase() || '';
-  
-  return titleLower.includes('hochschulsport') || 
-         organizerLower.includes('hochschulsport') ||
-         titleLower.includes('@hochschulsport_bielefeld') ||
-         organizerLower.includes('@hochschulsport_bielefeld');
-};
-
-// Get events for a specific day
-export const getEventsForDay = (events: Event[], day: Date, filter: string | null = null): Event[] => {
-  console.log(`Checking events for day: ${day.toISOString()}`);
-  
-  const result = events.filter(event => {
-    try {
-      if (!event.date) return false;
-      const eventDate = parseAndNormalizeDate(event.date);
-      const normalizedDay = startOfDay(day);
-      
-      // For debugging
-      debugDate(eventDate, `Event date for ${event.title}`);
-      debugDate(normalizedDay, "Target day");
-      
-      // Check if dates are the same day
-      const sameDay = isSameDay(eventDate, normalizedDay);
-      console.log(`${event.title}: Same day? ${sameDay ? 'YES' : 'NO'}`);
-      
-      // Apply category filter if present
-      return filter ? (sameDay && event.category === filter) : sameDay;
-    } catch (error) {
-      console.error(`Error filtering events for day ${day.toISOString()}:`, error);
-      return false;
-    }
-  });
-  
-  console.log(`Found ${result.length} events for ${day.toISOString()}`);
-  return result;
-};
-
-// Check if a day has events
-export const hasEventsOnDay = (events: Event[], day: Date): boolean => {
-  return events.some(event => {
-    try {
-      if (!event.date) return false;
-      const eventDate = parseAndNormalizeDate(event.date);
-      return isSameDay(eventDate, day);
-    } catch (error) {
-      console.error(`Error in hasEvents for day ${day.toISOString()}:`, error);
-      return false;
-    }
-  });
-};
-
-// Count events for a specific day
-export const getEventCountForDay = (events: Event[], day: Date): number => {
-  return getEventsForDay(events, day).length;
-};
-
-// Get all events for the current month or favorites
-export const getMonthOrFavoriteEvents = (
-  events: Event[], 
-  currentDate: Date, 
-  showFavorites: boolean, 
-  eventLikes: Record<string, number>
-): Event[] => {
-  const today = startOfDay(new Date());
-  
-  return events
-    .filter(event => {
-      try {
-        // If viewing favorites, only show favorites regardless of month
-        if (showFavorites) {
-          // For GitHub events
-          if (event.id.startsWith('github-')) {
-            return eventLikes[event.id] && eventLikes[event.id] > 0;
-          }
-          // For regular events
-          return event.likes && event.likes > 0;
-        }
-        
-        // Check if the event date is valid
-        if (!event.date) return false;
-        const eventDate = parseAndNormalizeDate(event.date);
-        if (isNaN(eventDate.getTime())) return false;
-        
-        // Otherwise filter by current month
-        return isSameMonth(eventDate, currentDate);
-      } catch (error) {
-        console.error(`Error filtering events for month:`, error);
-        return false;
-      }
-    })
-    .sort((a, b) => {
-      try {
-        const dateA = parseAndNormalizeDate(a.date);
-        const dateB = parseAndNormalizeDate(b.date);
-        
-        // First group: today and future events (sorted by proximity to today)
-        // Second group: past events (sorted by most recent first)
-        const isABeforeToday = isBefore(dateA, today);
-        const isBBeforeToday = isBefore(dateB, today);
-        
-        if (isABeforeToday && !isBBeforeToday) {
-          return 1; // B comes first (it's not in the past)
-        } else if (!isABeforeToday && isBBeforeToday) {
-          return -1; // A comes first (it's not in the past)
-        } else if (!isABeforeToday && !isBBeforeToday) {
-          // Both are today or future, sort by proximity to today
-          return differenceInDays(dateA, today) - differenceInDays(dateB, today);
-        } else {
-          // Both are past, sort by most recent first
-          return dateB.getTime() - dateA.getTime();
-        }
-      } catch (error) {
-        console.error(`Error sorting events by date:`, error);
-        
-        // If there's a likes difference, fall back to that
-        const likesA = a.likes || 0;
-        const likesB = b.likes || 0;
-        
-        // If likes are equal, use id for stable sorting
-        if (likesB === likesA) {
-          return a.id.localeCompare(b.id);
-        }
-        
-        return likesB - likesA;
-      }
-    });
-};
-
-// Group events by date for list view
-export const groupEventsByDate = (events: Event[]): Record<string, Event[]> => {
-  const groupedEvents = events.reduce((acc, event) => {
-    try {
-      const dateStr = event.date;
-      if (!dateStr) return acc;
-      
-      if (!acc[dateStr]) {
-        acc[dateStr] = [];
-      }
-      acc[dateStr].push(event);
-    } catch (error) {
-      console.error(`Error grouping events by date:`, error);
-    }
-    return acc;
-  }, {} as Record<string, Event[]>);
-  
-  // No need to sort here as we'll do this in the component
-  return groupedEvents;
-};
-
-// Get future events (starting from today) sorted by date
-export const getFutureEvents = (events: Event[]): Event[] => {
-  const today = startOfDay(new Date());
-  
-  return events
-    .filter(event => {
-      try {
-        if (!event.date) return false;
-        const eventDate = parseAndNormalizeDate(event.date);
-        return isAfter(eventDate, today) || isSameDay(eventDate, today);
-      } catch (error) {
-        console.error(`Error filtering future events:`, error);
-        return false;
-      }
-    })
-    .sort((a, b) => {
-      try {
-        const dateA = parseISO(a.date);
-        const dateB = parseISO(b.date);
-        return compareAsc(dateA, dateB);
-      } catch (error) {
-        console.error(`Error sorting future events:`, error);
-        return 0;
-      }
-    });
-};
-
-// Group future events by date (starting from today)
-export const groupFutureEventsByDate = (events: Event[]): Record<string, Event[]> => {
-  const futureEvents = getFutureEvents(events);
-  return groupEventsByDate(futureEvents);
-};
-
-// Erstellt eine stabile ID basierend auf Event-Eigenschaften
-export const createStableEventId = (title: string, date: string, link?: string): string => {
-  // Kombiniere die Event-Eigenschaften zu einem String
-  const baseString = `${title}-${date}${link ? `-${link}` : ''}`.toLowerCase();
-  
-  // Erstelle einen einfachen Hash aus dem String
-  let hash = 0;
-  for (let i = 0; i < baseString.length; i++) {
-    const char = baseString.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Konvertiere zu 32bit Integer
-  }
-  
-  // Wandle Hash in Hexadezimal um und nehme die letzten 8 Zeichen
-  const hashHex = Math.abs(hash).toString(16).padStart(8, '0').slice(-8);
-  
-  // Präfix für GitHub Events
-  return `github-${hashHex}`;
-};
-
-// Transform GitHub events to our format
+// Transform GitHub events to our Event format
 export const transformGitHubEvents = (
   githubEvents: GitHubEvent[], 
-  eventLikes: Record<string, number>,
-  currentYear: number
+  eventLikes: Record<string, any> = {},
+  currentYear: number = new Date().getFullYear()
 ): Event[] => {
-  console.log(`Transforming ${githubEvents.length} GitHub events, current year: ${currentYear}`);
-  console.log('Using likes data:', eventLikes);
-  
   return githubEvents.map((githubEvent) => {
-    // Extract location from event title (if available)
-    let title = githubEvent.event;
-    let location = "Bielefeld";
-    let category = determineEventCategory(githubEvent.event.toLowerCase());
+    const eventId = `github-${githubEvent.hash}`;
+    const likesData = eventLikes[eventId] || {};
     
-    // Check if there's a location in parentheses
-    const locationMatch = githubEvent.event.match(/\(@([^)]+)\)/);
-    if (locationMatch) {
-      // Remove the location from the title
-      title = githubEvent.event.replace(/\s*\(@[^)]+\)/, '');
-      location = locationMatch[1];
+    // Extract category from the GitHub event data
+    // Look for category in various possible fields
+    let category = 'Sonstiges'; // Default fallback
+    
+    // Check if category is directly provided
+    if (githubEvent.category) {
+      category = githubEvent.category;
     }
-    
-    // Parse the date (Format: "Fri, 04.04" or similar)
-    let eventDate;
-    let formattedDate = "";
-    try {
-      // Extract the day of week and date part
-      const dateParts = githubEvent.date.split(', ');
-      if (dateParts.length < 2) {
-        throw new Error(`Invalid date format: ${githubEvent.date}`);
-      }
-      
-      const dateNumbers = dateParts[1].split('.'); // e.g., ["04", "04"]
-      if (dateNumbers.length < 2) {
-        throw new Error(`Invalid date format: ${dateParts[1]}`);
-      }
-      
-      // Parse day and month numbers
-      const day = parseInt(dateNumbers[0], 10);
-      const month = parseInt(dateNumbers[1], 10) - 1; // JavaScript months are 0-indexed
-      
-      // Create date with current year
-      const now = new Date();
-      const thisMonth = now.getMonth();
-      const isMonthInPast = month < thisMonth;
-      
-      // If the month is in the past, we should probably use next year
-      // otherwise use current year
-      const yearToUse = isMonthInPast ? currentYear + 1 : currentYear;
-      eventDate = new Date(Date.UTC(yearToUse, month, day));
-      formattedDate = format(eventDate, 'yyyy-MM-dd');
-    } catch (err) {
-      console.warn(`Konnte Datum nicht parsen: ${githubEvent.date}`, err);
-      // Fallback to today's date
-      eventDate = new Date();
-      formattedDate = format(eventDate, 'yyyy-MM-dd');
+    // Check if there's a genre field (some events use this)
+    else if (githubEvent.genre) {
+      category = githubEvent.genre;
     }
+    // Check if there's a type field
+    else if (githubEvent.type) {
+      category = githubEvent.type;
+    }
+    // Try to infer category from event name/description
+    else {
+      const eventText = (githubEvent.event + ' ' + (githubEvent.description || '')).toLowerCase();
+      
+      if (eventText.includes('konzert') || eventText.includes('concert') || eventText.includes('musik') || eventText.includes('band')) {
+        category = 'Konzert';
+      } else if (eventText.includes('party') || eventText.includes('club') || eventText.includes('dj')) {
+        category = 'Party';
+      } else if (eventText.includes('festival')) {
+        category = 'Festival';
+      } else if (eventText.includes('ausstellung') || eventText.includes('exhibition') || eventText.includes('kunst')) {
+        category = 'Ausstellung';
+      } else if (eventText.includes('sport') || eventText.includes('fitness') || eventText.includes('lauf')) {
+        category = 'Sport';
+      } else if (eventText.includes('workshop') || eventText.includes('kurs')) {
+        category = 'Workshop';
+      } else if (eventText.includes('theater') || eventText.includes('schauspiel')) {
+        category = 'Theater';
+      } else if (eventText.includes('kino') || eventText.includes('film')) {
+        category = 'Kino';
+      } else if (eventText.includes('lesung') || eventText.includes('literatur')) {
+        category = 'Lesung';
+      }
+    }
+
+    console.log(`GitHub event ${githubEvent.event}: extracted category "${category}"`);
     
-    // Use time from JSON if available, otherwise fall back to default
-    const eventTime = githubEvent.time || "19:00";
-    console.log(`Event ${title}: Using time ${eventTime} (from JSON: ${githubEvent.time ? 'yes' : 'no'})`);
-    
-    // Erstelle eine stabile ID basierend auf Titel, Datum und Link
-    const eventId = createStableEventId(title, formattedDate, githubEvent.link);
-    
-    // Get likes from the provided eventLikes map, defaulting to 0 if not found
-    const likesCount = eventLikes[eventId] || 0;
-    console.log(`Event ${eventId} (${title}) has ${likesCount} likes from database`);
-    
-    // Create and return the event object
     return {
       id: eventId,
-      title: title,
-      description: `Mehr Informationen unter: ${githubEvent.link}`,
-      date: formattedDate,
-      time: eventTime,
-      location: location,
-      organizer: "Liebefeld Community Bielefeld",
-      category: category,
-      likes: likesCount,
-      link: githubEvent.link
-    } as Event;
+      title: githubEvent.event,
+      description: githubEvent.description || '',
+      date: githubEvent.date,
+      time: githubEvent.time || '00:00',
+      location: githubEvent.location || '',
+      organizer: githubEvent.organizer || 'Unbekannt',
+      category: category, // Use the extracted/inferred category
+      likes: likesData.likes || 0,
+      rsvp: {
+        yes: likesData.rsvp_yes || 0,
+        no: likesData.rsvp_no || 0,
+        maybe: likesData.rsvp_maybe || 0
+      },
+      link: githubEvent.link || null,
+      image_urls: githubEvent.image_urls || null
+    };
   });
 };
 
-// Helper to log today's events in console
-export const logTodaysEvents = (events: Event[]) => {
-  const today = format(new Date(), 'yyyy-MM-dd');
-  console.log('===== TODAY\'S EVENTS =====');
+// Function to group events by date
+export const groupEventsByDate = (events: Event[]): { [key: string]: Event[] } => {
+  return events.reduce((groups: { [key: string]: Event[] }, event) => {
+    const date = event.date;
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(event);
+    return groups;
+  }, {});
+};
+
+// Function to sort events by date
+export const sortEventsByDate = (events: Event[]): Event[] => {
+  return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+};
+
+// Function to get the start and end of the week
+export const getWeekRange = (currentDate: Date): [Date, Date] => {
+  const start = startOfWeek(currentDate, { weekStartsOn: 1 }); // Assuming Monday is the first day of the week
+  const end = endOfWeek(currentDate, { weekStartsOn: 1 });
+  return [start, end];
+};
+
+// Function to format a date range
+export const formatDateRange = (startDate: Date, endDate: Date): string => {
+  const startFormatted = format(startDate, 'd. MMMM', { locale: de });
+  const endFormatted = format(endDate, 'd. MMMM', { locale: de });
+  return `${startFormatted} - ${endFormatted}`;
+};
+
+export const getEventsForDay = (events: Event[], selectedDate: Date | null, filter: string | null = null): Event[] => {
+  if (!selectedDate) return [];
   
-  const todaysEvents = events.filter(event => event.date === today);
+  const targetDate = format(selectedDate, 'yyyy-MM-dd');
+  console.log(`Getting events for date: ${targetDate}`);
   
-  if (todaysEvents.length === 0) {
-    console.log('No events found for today');
-    return;
+  let filteredEvents = events.filter(event => {
+    const eventMatches = event.date === targetDate;
+    console.log(`Event ${event.title} (${event.date}) matches ${targetDate}: ${eventMatches}`);
+    return eventMatches;
+  });
+  
+  if (filter) {
+    filteredEvents = filteredEvents.filter(event => event.category === filter);
   }
   
-  // Sort by likes (highest first)
-  const sortedEvents = [...todaysEvents].sort((a, b) => {
-    const likesA = a.likes || 0;
-    const likesB = b.likes || 0;
-    
-    if (likesB !== likesA) {
-      return likesB - likesA;
-    }
-    
-    return a.id.localeCompare(b.id);
-  });
-  
-  console.log(`Found ${sortedEvents.length} events for today (${today}):`);
-  
-  sortedEvents.forEach((event, index) => {
-    console.log(`${index + 1}. ${event.title} (ID: ${event.id})`);
-    console.log(`   Category: ${event.category}, Likes: ${event.likes || 0}`);
-    console.log(`   RSVP: yes=${event.rsvp?.yes || event.rsvp_yes || 0}, no=${event.rsvp?.no || event.rsvp_no || 0}, maybe=${event.rsvp?.maybe || event.rsvp_maybe || 0}`);
-    console.log(`   Origin: ${event.id.startsWith('github-') ? 'GitHub' : (event.id.startsWith('temp-') ? 'Temporary' : 'Database')}`);
-  });
-  
-  console.log('=========================');
+  console.log(`Found ${filteredEvents.length} events for ${targetDate}${filter ? ` with filter ${filter}` : ''}`);
+  return filteredEvents;
 };
 
-// Expose function to window for easy access in browser console
-if (typeof window !== 'undefined') {
-  (window as any).logTodaysEvents = (events?: Event[]) => {
-    if (!events) {
-      // Try to get events from context if available
-      try {
-        const contextModule = require('../contexts/EventContext');
-        const context = contextModule.useEventContext();
-        logTodaysEvents(context.events);
-      } catch (error) {
-        console.error('Could not access events from context. Please provide events as parameter.');
-        console.log('Usage: window.logTodaysEvents(events)');
+export const getMonthOrFavoriteEvents = (events: Event[], currentDate: Date, showFavorites: boolean = false, eventLikes: Record<string, number> = {}): Event[] => {
+  if (showFavorites) {
+    return events.filter(event => (event.likes || 0) > 0);
+  }
+  
+  const monthStart = format(startOfWeek(currentDate), 'yyyy-MM-dd');
+  const monthEnd = format(endOfWeek(addDays(currentDate, 30)), 'yyyy-MM-dd');
+  
+  return events.filter(event => {
+    return event.date >= monthStart && event.date <= monthEnd;
+  });
+};
+
+export const groupFutureEventsByDate = (events: Event[]): Record<string, Event[]> => {
+  const today = format(new Date(), 'yyyy-MM-dd');
+  
+  return events
+    .filter(event => event.date >= today)
+    .reduce((groups: Record<string, Event[]>, event) => {
+      if (!groups[event.date]) {
+        groups[event.date] = [];
       }
-    } else {
-      logTodaysEvents(events);
+      groups[event.date].push(event);
+      return groups;
+    }, {});
+};
+
+export const formatEventDate = (dateString: string): string => {
+  try {
+    const date = parseISO(dateString);
+    
+    if (isToday(date)) {
+      return 'Heute';
     }
-  };
-}
+    
+    return format(date, 'EEEE, d. MMMM yyyy', { locale: de });
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return dateString;
+  }
+};
