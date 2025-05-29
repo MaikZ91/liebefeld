@@ -1,23 +1,10 @@
 
-import React, { useState } from 'react';
-import { Input } from '@/components/ui/input';
+import React from 'react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Send, Heart, HistoryIcon } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-
-interface ChatInputProps {
-  input: string;
-  setInput: (value: string) => void;
-  handleSendMessage: () => void;
-  isTyping: boolean;
-  handleKeyPress: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  isHeartActive: boolean;
-  handleHeartClick: () => void;
-  globalQueries: string[];
-  toggleRecentQueries: () => void;
-  inputRef: React.RefObject<HTMLInputElement>;
-  onAddEvent?: () => void;
-}
+import { Heart, History, CalendarPlus, Send, Bell } from 'lucide-react';
+import { ChatInputProps } from './types';
+import { usePerfectDaySubscription } from '@/hooks/chat/usePerfectDaySubscription';
 
 const ChatInput: React.FC<ChatInputProps> = ({
   input,
@@ -32,74 +19,93 @@ const ChatInput: React.FC<ChatInputProps> = ({
   inputRef,
   onAddEvent
 }) => {
+  // Get username from localStorage for subscription
+  const username = typeof window !== 'undefined' 
+    ? localStorage.getItem('community_chat_username') || 'Anonymous'
+    : 'Anonymous';
+
+  const { isSubscribed, loading, toggleSubscription } = usePerfectDaySubscription(username);
+
+  // Handle input change - always expect setInput to accept string
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+  };
+
   return (
-    <div className="p-3 border-t border-red-500/20 relative">
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1">
-          <Input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder={isTyping ? "KI denkt nach..." : "Frage nach Events..."}
-            disabled={isTyping}
-            className="pr-20 border-red-500 focus:border-red-600 focus:ring-red-500"
-          />
-          
-          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
-            {/* Recent Queries Button */}
-            <Button
-              onClick={toggleRecentQueries}
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0 text-gray-400 hover:text-gray-300 hover:bg-gray-700"
-              title="Letzte Anfragen anzeigen"
-            >
-              <HistoryIcon className="h-3 w-3" />
-            </Button>
-            
-            {/* Heart Button */}
-            <Button
-              onClick={handleHeartClick}
-              variant="ghost"
-              size="sm"
-              className={`h-6 w-6 p-0 transition-colors ${
-                isHeartActive 
-                  ? 'text-red-500 hover:text-red-400' 
-                  : 'text-gray-400 hover:text-red-500'
-              }`}
-              title={isHeartActive ? "Personalisierung deaktivieren" : "Personalisierung aktivieren"}
-            >
-              <Heart className={`h-3 w-3 ${isHeartActive ? 'fill-current' : ''}`} />
-            </Button>
-            
-            {/* Send Button */}
-            <Button
-              onClick={handleSendMessage}
-              disabled={!input.trim() || isTyping}
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0 text-red-500 hover:text-red-400 hover:bg-red-500/10"
-            >
-              <Send className="h-3 w-3" />
-            </Button>
-          </div>
-        </div>
+    <div className="flex items-center relative max-w-full">
+      <div className="absolute left-2 flex items-center gap-1 z-10">
+        {/* Heart button for toggling personalized mode */}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={handleHeartClick} 
+          className={`h-6 w-6 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`} 
+          title={isHeartActive ? "Personalisierter Modus aktiv" : "Standard-Modus aktiv"}
+        >
+          <Heart className={`h-3 w-3 ${isHeartActive ? 'fill-red-500' : ''}`} />
+        </Button>
+        
+        {/* History button for recent queries */}
+        {globalQueries.length > 0 && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleRecentQueries} 
+            className="h-6 w-6 text-red-400" 
+            title="Community Anfragen"
+          >
+            <History className="h-3 w-3" />
+          </Button>
+        )}
+
+        {/* Perfect Day subscription bell */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSubscription}
+          disabled={loading}
+          className={`h-6 w-6 ${isSubscribed ? 'text-yellow-500' : 'text-red-400'}`}
+          title={isSubscribed ? "Perfect Day Nachrichten abbestellen" : "Tägliche Perfect Day Nachrichten abonnieren"}
+        >
+          <Bell className={`h-3 w-3 ${isSubscribed ? 'fill-yellow-500' : ''} ${loading ? 'animate-pulse' : ''}`} />
+        </Button>
+
+        {/* Add Event button with calendar icon */}
+        {onAddEvent && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onAddEvent}
+            className="h-6 w-6 text-red-400"
+            title="Event hinzufügen"
+          >
+            <CalendarPlus className="h-3 w-3" />
+          </Button>
+        )}
       </div>
       
-      {/* Add Event Button */}
-      {onAddEvent && (
-        <div className="mt-2">
-          <Button
-            onClick={onAddEvent}
-            variant="outline"
-            size="sm"
-            className="text-xs border-red-500/30 text-red-400 hover:bg-red-500/10"
-          >
-            + Event hinzufügen
-          </Button>
-        </div>
-      )}
+      <input 
+        ref={inputRef} 
+        type="text" 
+        value={input} 
+        onChange={handleInputChange} 
+        onKeyPress={handleKeyPress} 
+        placeholder="Frage nach Events..." 
+        className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pl-32 pr-14 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 min-w-0" 
+      />
+      
+      <button 
+        onClick={() => handleSendMessage()} 
+        disabled={!input.trim() || isTyping} 
+        className={cn(
+          "absolute right-2 rounded-full p-2 flex-shrink-0", 
+          input.trim() && !isTyping 
+            ? "bg-red-500 hover:bg-red-600 text-white" 
+            : "bg-zinc-800 text-zinc-500"
+        )}
+      >
+        <Send className="h-4 w-4" />
+      </button>
     </div>
   );
 };
