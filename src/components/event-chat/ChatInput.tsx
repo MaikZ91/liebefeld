@@ -2,10 +2,8 @@
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Send, Heart, HistoryIcon, Bell } from 'lucide-react';
+import { Send, Heart, HistoryIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useUserProfile } from '@/hooks/chat/useUserProfile';
-import { usePerfectDaySubscription } from '@/hooks/chat/usePerfectDaySubscription';
 
 interface ChatInputProps {
   input: string;
@@ -34,13 +32,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
   inputRef,
   onAddEvent
 }) => {
-  const { currentUser } = useUserProfile();
-  const { generatePerfectDayMessage, loading: perfectDayLoading } = usePerfectDaySubscription(currentUser || 'Anonymous');
-
-  const handlePerfectDayClick = async () => {
-    await generatePerfectDayMessage();
-  };
-
   return (
     <div className="p-3 border-t border-red-500/20 relative">
       <div className="flex items-center gap-2">
@@ -52,22 +43,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
             onKeyPress={handleKeyPress}
             placeholder={isTyping ? "KI denkt nach..." : "Frage nach Events..."}
             disabled={isTyping}
-            className="pr-32 border-red-500 focus:border-red-600 focus:ring-red-500"
+            className="pr-20 border-red-500 focus:border-red-600 focus:ring-red-500"
           />
           
           <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
-            {/* Perfect Day Bell Button */}
-            <Button
-              onClick={handlePerfectDayClick}
-              disabled={perfectDayLoading || !currentUser || currentUser === 'Anonymous'}
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0 text-yellow-500 hover:text-yellow-600 hover:bg-yellow-500/10"
-              title="Perfect Day Zusammenfassung erstellen"
-            >
-              <Bell className={`h-3 w-3 ${perfectDayLoading ? 'animate-pulse' : ''}`} />
-            </Button>
-            
             {/* Recent Queries Button */}
             <Button
               onClick={toggleRecentQueries}

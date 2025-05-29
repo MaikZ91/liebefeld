@@ -21,28 +21,44 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Get request data
+    // Get request data - this can be called from subscription or manually
     const requestData = await req.json();
-    const { username, events, userProfile, date } = requestData;
+    const { username, isScheduled = false } = requestData;
 
-    console.log(`Generating Perfect Day for user: ${username} with ${events?.length || 0} events`);
+    console.log(`Generating Perfect Day for user: ${username}, scheduled: ${isScheduled}`);
+
+    // Get user profile for personalization
+    const { data: userProfile } = await supabase
+      .from('user_profiles')
+      .select('interests, favorite_locations')
+      .eq('username', username)
+      .single();
+
+    // Get today's events from community_events table
+    const today = new Date().toISOString().split('T')[0];
+    const { data: todaysEvents } = await supabase
+      .from('community_events')
+      .select('*')
+      .eq('date', today);
+
+    console.log(`Found ${todaysEvents?.length || 0} events for today`);
 
     // Get current weather (simplified for now)
     const currentWeather = 'sunny'; // In real implementation, fetch from weather API
     
     // Format events for the AI prompt
-    const eventsText = events?.map(event => 
-      `- ${event.title} (${event.time}) at ${event.location || 'N/A'} - ${event.category}`
-    ).join('\n') || 'Keine Events für heute gefunden.';
+    const eventsText = todaysEvents?.map(event => 
+      `- ${event.title} (${event.time}) in ${event.location || 'Liebefeld'} - Kategorie: ${event.category}${event.description ? ` - ${event.description}` : ''}`
+    ).join('\n') || 'Keine Events für heute in der Datenbank gefunden.';
 
     // Format user interests and locations
     const userInterests = userProfile?.interests?.join(', ') || 'Keine Interessen angegeben';
     const userLocations = userProfile?.favorite_locations?.join(', ') || 'Keine bevorzugten Orte angegeben';
 
     // Create comprehensive prompt for Gemini
-    const aiPrompt = `Als Event Marketing Manager erstelle eine ausführliche Tageszusammenfassung für ${username} für den ${date}.
+    const aiPrompt = `Als Event Marketing Manager erstelle eine ausführliche Tageszusammenfassung für ${username} für den ${today}.
 
-**Verfügbare Events heute:**
+**Verfügbare Events heute aus der Datenbank:**
 ${eventsText}
 
 **Nutzerprofil:**
@@ -54,26 +70,26 @@ ${eventsText}
 Erstelle eine personalisierte Tageszusammenfassung mit folgender Struktur:
 
 🌅 **Vormittag (9:00-12:00):**
-[Empfehlungen basierend auf Events, Interessen und Wetter]
+[Empfehlungen basierend auf Events aus der Datenbank, Interessen und Wetter]
 
 🌞 **Nachmittag (12:00-18:00):**
-[Empfehlungen basierend auf Events, Interessen und Wetter]
+[Empfehlungen basierend auf Events aus der Datenbank, Interessen und Wetter]
 
 🌙 **Abend (18:00-23:00):**
-[Empfehlungen basierend auf Events, Interessen und Wetter]
+[Empfehlungen basierend auf Events aus der Datenbank, Interessen und Wetter]
 
 Berücksichtige dabei:
-- Die verfügbaren Events und deren Zeiten
-- Die Nutzerinteressen (${userInterests})
+- Die verfügbaren Events aus der Datenbank und deren genaue Zeiten
+- Die Nutzerinteressen (${userInteresses})
 - Die bevorzugten Orte (${userLocations})
 - Das aktuelle Wetter
-- Gebe konkrete Empfehlungen mit Zeiten
-- Erwähne spezifische Events aus der Liste wenn passend
+- Gib konkrete Empfehlungen mit Zeiten
+- Erwähne spezifische Events aus der Datenbank wenn passend
 - Füge 2-3 alternative Aktivitäten pro Tageszeit hinzu falls keine passenden Events verfügbar sind
 
 Sei enthusiastisch und persönlich in deinem Ton!`;
 
-    console.log('Sending prompt to AI:', aiPrompt.substring(0, 200) + '...');
+    console.log('Sending prompt to Gemini via OpenRouter...');
 
     // Call Gemini via OpenRouter
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -89,7 +105,7 @@ Sei enthusiastisch und persönlich in deinem Ton!`;
         messages: [
           {
             role: 'system',
-            content: 'Du bist ein enthusiastischer Event Marketing Manager für Liebefeld/Bern. Deine Aufgabe ist es, personalisierte Tageszusammenfassungen zu erstellen, die Events, Nutzerinteressen und Wetter berücksichtigen. Antworte immer auf Deutsch.'
+            content: 'Du bist ein enthusiastischer Event Marketing Manager für Liebefeld/Bern. Deine Aufgabe ist es, personalisierte Tageszusammenfassungen zu erstellen, die Events aus der Datenbank, Nutzerinteressen und Wetter berücksichtigen. Antworte immer auf Deutsch.'
           },
           {
             role: 'user',
@@ -111,10 +127,9 @@ Sei enthusiastisch und persönlich in deinem Ton!`;
     console.log('AI response received, length:', perfectDayContent.length);
 
     // Create a comprehensive message
-    const finalMessage = `🌟 **Dein Perfect Day in Liebefeld - ${date}** 🌟\n\n${perfectDayContent}\n\n💫 *Erstellt basierend auf ${events?.length || 0} verfügbaren Events und deinen persönlichen Vorlieben.*`;
+    const finalMessage = `🌟 **Dein Perfect Day in Liebefeld - ${today}** 🌟\n\n${perfectDayContent}\n\n💫 *Erstellt basierend auf ${todaysEvents?.length || 0} verfügbaren Events aus der Datenbank und deinen persönlichen Vorlieben.*`;
 
-    // Store the perfect day message in the AI chat context (not community chat)
-    // We'll store it as a special message that can be retrieved by the AI chat
+    // Store the perfect day message in the AI chat context (special group ID for AI chat)
     const { error: insertError } = await supabase
       .from('chat_messages')
       .insert({
@@ -131,8 +146,8 @@ Sei enthusiastisch und persönlich in deinem Ton!`;
       console.log('Perfect day message stored successfully for AI chat')
     }
 
-    // Also update subscription if this was a scheduled run
-    if (requestData.isScheduled) {
+    // Update subscription if this was a scheduled run
+    if (isScheduled) {
       await supabase
         .from('perfect_day_subscriptions')
         .update({ last_sent_at: new Date().toISOString().split('T')[0] })
@@ -143,7 +158,7 @@ Sei enthusiastisch und persönlich in deinem Ton!`;
       JSON.stringify({ 
         success: true, 
         message: finalMessage,
-        eventsCount: events?.length || 0
+        eventsCount: todaysEvents?.length || 0
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
