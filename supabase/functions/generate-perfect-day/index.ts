@@ -106,32 +106,21 @@ serve(async (req) => {
         
         messageContent += `\nWetter heute: ${currentWeather === 'sunny' ? '☀️ Sonnig' : '🌧️ Regnerisch'}\n\nViel Spaß bei deinem perfekten Tag! 💫`
 
-        // Insert message into AI chat - using broadcast to send to AI chat
-        const channel = supabase.channel(`ai-chat-${subscription.username}`)
-        
-        await channel.subscribe()
-        
-        // Send message via broadcast to AI chat
-        const message = {
-          id: `perfect-day-${Date.now()}`,
-          isUser: false,
-          text: 'Hier ist dein perfekter Tag!',
-          html: `<div class="perfect-day-message">${messageContent.replace(/\n/g, '<br>')}</div>`,
-          timestamp: new Date().toISOString(),
-          sender: 'Perfect Day Bot',
-          avatar: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png'
+        // Insert message into chat
+        const { error: insertError } = await supabase
+          .from('chat_messages')
+          .insert({
+            group_id: '00000000-0000-4000-8000-000000000000',
+            sender: 'Perfect Day Bot',
+            text: messageContent,
+            avatar: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png',
+            created_at: new Date().toISOString()
+          })
+
+        if (insertError) {
+          console.error('Error inserting message:', insertError)
+          continue
         }
-
-        await channel.send({
-          type: 'broadcast',
-          event: 'perfect-day-message',
-          payload: { message, username: subscription.username }
-        })
-
-        // Clean up channel
-        setTimeout(() => {
-          supabase.removeChannel(channel)
-        }, 1000)
 
         // Update last_sent_at
         await supabase
