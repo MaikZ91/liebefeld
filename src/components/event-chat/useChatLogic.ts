@@ -71,6 +71,42 @@ export const useChatLogic = (
     fetchGlobalQueries();
   }, []);
 
+  // Setup Perfect Day message listener
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const username = localStorage.getItem('community_chat_username') || 'Anonymous';
+    if (username === 'Anonymous') return;
+
+    console.log('Setting up Perfect Day listener for:', username);
+    
+    const channel = supabase.channel(`ai-chat-${username}`)
+      .on('broadcast', { event: 'perfect-day-message' }, (payload) => {
+        console.log('Received Perfect Day message:', payload);
+        
+        if (payload.payload?.message && payload.payload?.username === username) {
+          const perfectDayMessage: ChatMessage = {
+            id: payload.payload.message.id,
+            isUser: false,
+            text: payload.payload.message.text,
+            html: payload.payload.message.html,
+            timestamp: payload.payload.message.timestamp
+          };
+          
+          setMessages(prev => [...prev, perfectDayMessage]);
+          
+          toast.success("Perfect Day Nachricht erhalten!", {
+            description: "Dein personalisierter Tagesplan ist da!"
+          });
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   // Save chat history to localStorage whenever messages change
   useEffect(() => {
     if (messages.length > 0) {
