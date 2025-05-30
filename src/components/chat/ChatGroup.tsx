@@ -32,6 +32,7 @@ interface Message {
   user_avatar: string;
   group_id: string;
   read_by?: string[];
+  isOptimistic?: boolean;
 }
 
 const ChatGroup: React.FC<ChatGroupProps> = ({ 
@@ -58,6 +59,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   const messagesRef = useRef<Message[]>([]);
   const channelsRef = useRef<any[]>([]);
   const processedMessageIds = useRef<Set<string>>(new Set());
+  const optimisticMessageIds = useRef<Set<string>>(new Set());
   
   const { events } = useEventContext();
   
@@ -79,7 +81,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     messagesRef.current = messages;
   }, [messages]);
   
-  // Function to add message with duplicate prevention
+  // Improved function to add message with better duplicate prevention
   const addMessageSafely = (newMessage: Message) => {
     if (processedMessageIds.current.has(newMessage.id)) {
       console.log('Duplicate message detected, skipping:', newMessage.id);
@@ -89,11 +91,31 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     processedMessageIds.current.add(newMessage.id);
     
     setMessages(prev => {
-      // Double-check for duplicates in state
+      // Check for duplicates by ID
       if (prev.some(msg => msg.id === newMessage.id)) {
         console.log('Message already exists in state:', newMessage.id);
         return prev;
       }
+      
+      // If this is a real message and we have optimistic messages from the same user with similar content,
+      // remove the optimistic ones
+      if (!newMessage.isOptimistic) {
+        const filteredMessages = prev.filter(msg => {
+          if (msg.isOptimistic && 
+              msg.user_name === newMessage.user_name && 
+              msg.content === newMessage.content &&
+              Math.abs(new Date(msg.created_at).getTime() - new Date(newMessage.created_at).getTime()) < 30000) {
+            console.log('Removing optimistic message as real message arrived:', msg.id);
+            optimisticMessageIds.current.delete(msg.id);
+            processedMessageIds.current.delete(msg.id);
+            return false;
+          }
+          return true;
+        });
+        
+        return [...filteredMessages, newMessage];
+      }
+      
       return [...prev, newMessage];
     });
   };
@@ -106,7 +128,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       try {
         setLoading(true);
         setError(null);
-        processedMessageIds.current.clear(); // Clear processed IDs when fetching fresh
+        processedMessageIds.current.clear();
+        optimisticMessageIds.current.clear();
         
         console.log(`Fetching messages for group: ${groupId}`);
         
@@ -134,7 +157,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
             user_name: msg.sender,
             user_avatar: msg.avatar || '',
             group_id: msg.group_id,
-            read_by: msg.read_by || []
+            read_by: msg.read_by || [],
+            isOptimistic: false
           };
         });
         
@@ -197,10 +221,16 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
             user_name: msg.sender,
             user_avatar: msg.avatar || '',
             group_id: msg.group_id,
-            read_by: msg.read_by || []
+            read_by: msg.read_by || [],
+            isOptimistic: false
           };
           
-          // Use safe add function to prevent duplicates
+          // Don't add our own messages from realtime if we just sent them
+          if (msg.sender === username) {
+            console.log('Skipping own message from realtime to prevent duplicate');
+            return;
+          }
+          
           addMessageSafely(newMessage);
           
           // Mark message as read if it's from someone else
@@ -322,7 +352,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         user_name: msg.sender,
         user_avatar: msg.avatar || '',
         group_id: msg.group_id,
-        read_by: msg.read_by || []
+        read_by: msg.read_by || [],
+        isOptimistic: false
       }));
       
       setMessages(formattedMessages);
@@ -405,29 +436,13 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         messageText = `🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${messageText}`;
       }
       
-      // Create optimistic message
-      const tempId = `temp-${Date.now()}`;
-      
-      const optimisticMessage: Message = {
-        id: tempId,
-        created_at: new Date().toISOString(),
-        content: messageText,
-        user_name: username,
-        user_avatar: localStorage.getItem(AVATAR_KEY) || '',
-        group_id: groupId,
-        read_by: [username]
-      };
-      
-      // Add optimistic message using safe method
-      addMessageSafely(optimisticMessage);
-      
-      // Clear input 
+      // Clear input immediately for better UX
       setNewMessage('');
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
       
-      // Send message to database
+      // Send message to database directly - NO optimistic update
       const { data, error } = await supabase
         .from('chat_messages')
         .insert({
@@ -438,11 +453,27 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           media_url: mediaUrl,
           read_by: [username]
         })
-        .select('id');
+        .select('*')
+        .single();
       
       if (error) {
         console.error('Error sending message:', error);
         throw error;
+      }
+      
+      // Add the message immediately to our state for instant feedback
+      if (data) {
+        const newMsg: Message = {
+          id: data.id,
+          created_at: data.created_at,
+          content: data.text,
+          user_name: data.sender,
+          user_avatar: data.avatar || '',
+          group_id: data.group_id,
+          read_by: data.read_by || [],
+          isOptimistic: false
+        };
+        addMessageSafely(newMsg);
       }
       
       // Reset typing state
@@ -641,10 +672,11 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
                         </Avatar>
                         <span className="font-medium text-white">{message.user_name}</span>
                         <span className="text-xs text-gray-400 ml-2">{timeAgo}</span>
+                        {message.isOptimistic && <span className="text-xs text-gray-500 ml-2">Sende...</span>}
                       </div>
                     )}
                     <div className={`ml-10 pl-2 border-l-2 border-red-500 ${isConsecutive ? 'mt-1' : 'mt-0'}`}>
-                      <div className="bg-black rounded-md p-2 text-white break-words">
+                      <div className={`bg-black rounded-md p-2 text-white break-words ${message.isOptimistic ? 'opacity-70' : ''}`}>
                         {message.content}
                       </div>
                     </div>
