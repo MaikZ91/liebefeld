@@ -8,12 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search } from 'lucide-react';
-import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
+import { supabase } from '@/integrations/supabase/client';
+import { USERNAME_KEY, AVATAR_KEY, TypingUser } from '@/types/chatTypes';
 import { useEventContext } from '@/contexts/EventContext';
-import { messageService } from '@/services/messageService';
+import { format, parseISO } from 'date-fns';
+import { de } from 'date-fns/locale';
+import { groupFutureEventsByDate } from '@/utils/eventUtils';
 import { toast } from '@/hooks/use-toast';
-import { getInitials } from '@/utils/chatUIUtils';
-import { useChatMessages } from '@/hooks/chat/useChatMessages';
+import { getInitials, formatRelativeTime } from '@/utils/chatUIUtils';
+import ChatHeader from './ChatHeader';
+import MessageList from './MessageList';
 
 interface ChatGroupProps {
   groupId: string;
@@ -21,47 +25,316 @@ interface ChatGroupProps {
   onOpenUserDirectory?: () => void;
 }
 
+interface Message {
+  id: string;
+  created_at: string;
+  content: string;
+  user_name: string;
+  user_avatar: string;
+  group_id: string;
+  read_by?: string[];
+}
+
 const ChatGroup: React.FC<ChatGroupProps> = ({ 
   groupId, 
   groupName, 
   onOpenUserDirectory 
 }) => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isReconnecting, setIsReconnecting] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
+  const [isTyping, setIsTyping] = useState(false);
   const [username, setUsername] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || 'Gast');
   const [avatar, setAvatar] = useState<string | null>(() => localStorage.getItem(AVATAR_KEY));
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
   const [eventSearchQuery, setEventSearchQuery] = useState('');
   
+  const chatBottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const messagesRef = useRef<Message[]>([]);
+  const channelsRef = useRef<any[]>([]);
+  const sentMessageIds = useRef<Set<string>>(new Set());
   
   const { events } = useEventContext();
   
-  // Use the simplified chat messages hook
-  const {
-    messages,
-    loading,
-    error,
-    typingUsers,
-    isReconnecting,
-    handleReconnect,
-    chatBottomRef,
-    chatContainerRef
-  } = useChatMessages(groupId, username);
+  // Detect the group type based on name
+  const isAusgehenGroup = groupName.toLowerCase() === 'ausgehen';
+  const isSportGroup = groupName.toLowerCase() === 'sport';
+  const isKreativitätGroup = groupName.toLowerCase() === 'kreativität';
   
-  // Update username when it changes in localStorage
+  const isGroup = isAusgehenGroup || isSportGroup || isKreativitätGroup;
+  
+  // Get the group type
+  const groupType = isAusgehenGroup ? 'ausgehen' : 
+                   isSportGroup ? 'sport' : 
+                   isKreativitätGroup ? 'kreativität' : 
+                   'ausgehen';
+  
+  // Update messages ref when messages change
   useEffect(() => {
-    const handleStorageChange = () => {
-      const newUsername = localStorage.getItem(USERNAME_KEY) || 'Gast';
-      const newAvatar = localStorage.getItem(AVATAR_KEY);
-      setUsername(newUsername);
-      setAvatar(newAvatar);
+    messagesRef.current = messages;
+  }, [messages]);
+  
+  // Fetch messages on component mount and when group changes
+  useEffect(() => {
+    if (!groupId) return;
+    
+    const fetchMessages = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        console.log(`Fetching messages for group: ${groupId}`);
+        
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .eq('group_id', groupId)
+          .order('created_at', { ascending: true });
+          
+        if (error) {
+          console.error('Error fetching messages:', error);
+          setError(`Could not load messages: ${error.message}`);
+          return;
+        }
+        
+        console.log(`Fetched ${data?.length || 0} messages`);
+        
+        // Convert messages to expected format
+        const formattedMessages: Message[] = (data || []).map(msg => ({
+          id: msg.id,
+          created_at: msg.created_at,
+          content: msg.text,
+          user_name: msg.sender,
+          user_avatar: msg.avatar || '',
+          group_id: msg.group_id,
+          read_by: msg.read_by || []
+        }));
+        
+        setMessages(formattedMessages);
+        
+        // Mark messages as read
+        if (username && formattedMessages.length > 0) {
+          const unreadMessages = formattedMessages.filter(msg => msg.user_name !== username);
+          
+          if (unreadMessages.length > 0) {
+            for (const msg of unreadMessages) {
+              await supabase
+                .from('chat_messages')
+                .update({ 
+                  read_by: [...(msg.read_by || []), username]
+                })
+                .eq('id', msg.id);
+            }
+          }
+        }
+      } catch (err: any) {
+        console.error('Error in fetchMessages:', err);
+        setError(`An error occurred: ${err.message}`);
+      } finally {
+        setLoading(false);
+      }
     };
     
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+    fetchMessages();
+    setupRealtimeSubscriptions();
+    
+    return () => {
+      cleanupRealtimeSubscriptions();
+    };
+  }, [groupId, username]);
+  
+  // Setup realtime subscriptions
+  const setupRealtimeSubscriptions = () => {
+    if (!groupId) return;
+    
+    console.log(`Setting up realtime subscriptions for group: ${groupId}`);
+    
+    // Message subscription (table changes)
+    const messageChannel = supabase
+      .channel(`messages:${groupId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `group_id=eq.${groupId}`
+      }, (payload) => {
+        console.log('New message received:', payload);
+        
+        if (payload.new) {
+          const msg = payload.new as any;
+          const newMessage: Message = {
+            id: msg.id,
+            created_at: msg.created_at,
+            content: msg.text,
+            user_name: msg.sender,
+            user_avatar: msg.avatar || '',
+            group_id: msg.group_id,
+            read_by: msg.read_by || []
+          };
+          
+          // Don't add duplicate messages
+          setMessages(prevMessages => {
+            if (prevMessages.some(m => m.id === newMessage.id)) {
+              return prevMessages;
+            }
+            return [...prevMessages, newMessage];
+          });
+          
+          // Mark message as read if it's from someone else
+          if (msg.sender !== username && username) {
+            supabase
+              .from('chat_messages')
+              .update({ 
+                read_by: [...(msg.read_by || []), username]
+              })
+              .eq('id', msg.id);
+          }
+        }
+      })
+      .subscribe();
+    
+    // Typing subscription
+    const typingChannel = supabase
+      .channel(`typing:${groupId}`)
+      .on('broadcast', { event: 'typing' }, (payload) => {
+        if (payload.payload && payload.payload.username !== username) {
+          const typingUser = payload.payload;
+          
+          setTypingUsers(prev => {
+            // Clone current typing list
+            const currentUsers = [...prev];
+            
+            // Find existing user
+            const existingIndex = currentUsers.findIndex(u => u.username === typingUser.username);
+            
+            if (typingUser.isTyping) {
+              // Update or add user
+              const user = {
+                username: typingUser.username,
+                avatar: typingUser.avatar,
+                isTyping: true,
+                lastTyped: new Date()
+              };
+              
+              if (existingIndex >= 0) {
+                currentUsers[existingIndex] = user;
+              } else {
+                currentUsers.push(user);
+              }
+            } else {
+              // Remove user from list
+              if (existingIndex >= 0) {
+                currentUsers.splice(existingIndex, 1);
+              }
+            }
+            
+            return currentUsers;
+          });
+        }
+      })
+      .subscribe();
+    
+    channelsRef.current.push(messageChannel, typingChannel);
+    
+    // Interval to clean up typing indicators that have been inactive
+    const typingInterval = setInterval(() => {
+      setTypingUsers(prev => {
+        const now = new Date();
+        return prev.filter(user => {
+          return user.lastTyped && now.getTime() - user.lastTyped.getTime() < 3000;
+        });
+      });
+    }, 1000);
+    
+    // Store the interval ID for cleanup
+    const intervalId = typingInterval;
+    channelsRef.current.push({ isInterval: true, id: intervalId });
+  };
+  
+  // Cleanup subscriptions
+  const cleanupRealtimeSubscriptions = () => {
+    console.log('Cleaning up subscriptions');
+    
+    channelsRef.current.forEach(channel => {
+      if (channel.isInterval) {
+        clearInterval(channel.id);
+      } else if (channel) {
+        supabase.removeChannel(channel);
+      }
+    });
+    
+    channelsRef.current = [];
+    
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+  };
+  
+  // Handle manual reconnection
+  const handleReconnect = async () => {
+    console.log('Manual reconnection triggered');
+    setIsReconnecting(true);
+    
+    try {
+      cleanupRealtimeSubscriptions();
+      
+      // Wait a moment before reconnecting
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Re-fetch messages and setup subscriptions
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('group_id', groupId)
+        .order('created_at', { ascending: true });
+        
+      if (error) {
+        throw error;
+      }
+      
+      const formattedMessages: Message[] = (data || []).map(msg => ({
+        id: msg.id,
+        created_at: msg.created_at,
+        content: msg.text,
+        user_name: msg.sender,
+        user_avatar: msg.avatar || '',
+        group_id: msg.group_id,
+        read_by: msg.read_by || []
+      }));
+      
+      setMessages(formattedMessages);
+      setupRealtimeSubscriptions();
+      
+      toast({
+        title: "Reconnected",
+        description: "Chat connection restored successfully",
+      });
+    } catch (err) {
+      console.error('Reconnection failed:', err);
+      setError('Reconnection failed. Please try again.');
+      
+      toast({
+        title: "Reconnection failed",
+        description: "Failed to restore chat connection. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsReconnecting(false);
+    }
+  };
+  
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (chatBottomRef.current) {
+      chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, typingUsers]);
   
   // Format time for display
   const formatTime = (isoDateString: string): string => {
@@ -87,18 +360,26 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     }
   };
   
-  // Handle sending messages - simplified
+  // Handle sending messages
   const handleSubmit = async (e?: React.FormEvent, eventData?: any) => {
     if (e) {
       e.preventDefault();
     }
     
-    if ((!newMessage.trim() && !eventData) || !username || !groupId) {
+    if ((!newMessage.trim() && !fileInputRef.current?.files?.length && !eventData) || !username || !groupId) {
       return;
     }
     
     try {
       setIsSending(true);
+      
+      // Handle file upload
+      let mediaUrl = undefined;
+      if (fileInputRef.current?.files?.length) {
+        const file = fileInputRef.current.files[0];
+        // File upload logic would go here
+        // This is a placeholder for now
+      }
       
       // Format message with event data if present
       let messageText = newMessage.trim();
@@ -107,32 +388,86 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         messageText = `🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${messageText}`;
       }
       
-      // Clear input immediately for better UX
-      setNewMessage('');
+      // Create optimistic message
+      const tempId = `temp-${Date.now()}`;
       
-      // Send message to database - that's it! No optimistic updates
-      const messageId = await messageService.sendMessage(
-        groupId,
-        username,
-        messageText,
-        avatar
-      );
-      
-      if (!messageId) {
-        throw new Error('Failed to send message');
+      // Check if this message was already sent (prevent duplicates)
+      if (sentMessageIds.current.has(tempId)) {
+        console.log('Duplicate submission detected, ignoring');
+        return;
       }
       
-      console.log('Message sent successfully to database:', messageId);
+      // Track this message ID
+      sentMessageIds.current.add(tempId);
       
-      // Stop typing indicator
+      const optimisticMessage: Message = {
+        id: tempId,
+        created_at: new Date().toISOString(),
+        content: messageText,
+        user_name: username,
+        user_avatar: localStorage.getItem(AVATAR_KEY) || '',
+        group_id: groupId,
+        read_by: [username]
+      };
+      
+      // Add optimistic message immediately
+      setMessages(prev => [...prev, optimisticMessage]);
+      
+      // Clear input 
+      setNewMessage('');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
+      // Send message to database
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .insert({
+          group_id: groupId,
+          sender: username,
+          text: messageText,
+          avatar: localStorage.getItem(AVATAR_KEY),
+          media_url: mediaUrl,
+          read_by: [username]
+        })
+        .select('id');
+      
+      if (error) {
+        console.error('Error sending message:', error);
+        throw error;
+      }
+      
+      // Reset typing state
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
       
+      if (isTyping) {
+        // Create a new channel for typing updates
+        const typingUpdateChannel = supabase.channel(`typing:${groupId}`);
+        
+        // Subscribe to the channel
+        typingUpdateChannel.subscribe();
+        
+        // Send the typing update
+        typingUpdateChannel.send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: {
+            username,
+            avatar: localStorage.getItem(AVATAR_KEY),
+            isTyping: false
+          }
+        });
+        
+        // Remove the channel after sending
+        supabase.removeChannel(typingUpdateChannel);
+        
+        setIsTyping(false);
+      }
+      
     } catch (error) {
       console.error('Error sending message:', error);
-      // Restore message text on error
-      setNewMessage(messageText || newMessage);
       toast({
         title: "Fehler beim Senden",
         description: "Die Nachricht konnte nicht gesendet werden.",
@@ -143,17 +478,64 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     }
   };
   
-  // Handle typing - simplified
+  // Handle typing
   const handleTyping = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);
     
-    // Simple typing indicator without complex state management
+    if (!isTyping && e.target.value.trim()) {
+      setIsTyping(true);
+      
+      // Create a new channel for typing updates
+      const typingUpdateChannel = supabase.channel(`typing:${groupId}`);
+      
+      // Subscribe and send typing update
+      typingUpdateChannel.subscribe();
+      
+      // After subscription, send the message
+      typingUpdateChannel.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: {
+          username,
+          avatar: localStorage.getItem(AVATAR_KEY),
+          isTyping: true
+        }
+      });
+      
+      // Remove the channel after sending
+      supabase.removeChannel(typingUpdateChannel);
+    }
+    
+    // Clear existing timeout
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
     
+    // Set timeout to stop typing after 2 seconds of inactivity
     typingTimeoutRef.current = setTimeout(() => {
-      // Typing stopped
+      if (isTyping) {
+        // Create a new channel for typing updates
+        const typingUpdateChannel = supabase.channel(`typing:${groupId}`);
+        
+        // Subscribe and send typing update
+        typingUpdateChannel.subscribe();
+        
+        // After subscription, send the message
+        typingUpdateChannel.send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: {
+            username,
+            avatar: localStorage.getItem(AVATAR_KEY),
+            isTyping: false
+          }
+        });
+        
+        // Remove the channel after sending
+        supabase.removeChannel(typingUpdateChannel);
+        
+        setIsTyping(false);
+      }
     }, 2000);
   };
   
@@ -164,7 +546,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     }
   };
   
-  // Filter events for sharing
+  // Filter events for sharing based on search query
   const filteredEvents = events.filter(event => {
     if (!eventSearchQuery) return true;
     
@@ -192,7 +574,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-black">
-      {/* Header */}
       <div className="border-b border-gray-800 bg-black py-3 px-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
@@ -205,6 +586,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* Benutzerverzeichnis-Button */}
             {onOpenUserDirectory && (
               <Button
                 variant="ghost"
@@ -230,9 +612,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         </div>
       </div>
       
-      {/* Messages */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 bg-black">
+        <div className="flex-1 overflow-y-auto p-4 bg-black">
           {loading && (
             <div className="flex items-center justify-center h-full">
               <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-red-500 rounded-full"></div>
@@ -299,7 +680,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           )}
         </div>
         
-        {/* Input */}
         <div className="p-3 bg-black border-t border-gray-800">
           <form onSubmit={handleSubmit} className="flex items-end gap-2">
             <div className="flex-1 bg-black rounded-lg relative border border-gray-800">

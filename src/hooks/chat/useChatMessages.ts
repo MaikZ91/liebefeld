@@ -6,6 +6,7 @@ import { useReconnection } from '@/hooks/chat/useReconnection';
 import { useScrollManagement } from '@/hooks/chat/useScrollManagement';
 import { messageService } from '@/services/messageService';
 import { supabase } from '@/integrations/supabase/client';
+import { realtimeService } from '@/services/realtimeService';
 
 export const useChatMessages = (groupId: string, username: string) => {
   // Use a valid UUID for groupId, default to general if not provided
@@ -17,6 +18,7 @@ export const useChatMessages = (groupId: string, username: string) => {
   const messagesRef = useRef<Message[]>(messages);
   const channelsRef = useRef<any[]>([]);
   const timeoutsRef = useRef<{[key: string]: NodeJS.Timeout}>({});
+  const processedMessageIds = useRef<Set<string>>(new Set());
   
   const { fetchMessages, loading, error, setError } = useMessageFetching(validGroupId);
   
@@ -25,14 +27,23 @@ export const useChatMessages = (groupId: string, username: string) => {
     messagesRef.current = messages;
   }, [messages]);
   
-  // Handle new message with simple approach - only add if not already exists
+  // Handle new message
   const handleNewMessage = useCallback((newMsg: Message) => {
-    console.log('New message received via Realtime:', newMsg);
+    console.log('New message received:', newMsg);
+    
+    // Check if this message has already been processed
+    if (processedMessageIds.current.has(newMsg.id)) {
+      console.log('Duplicate message detected, skipping:', newMsg.id);
+      return;
+    }
+    
+    // Add the message ID to the processed set
+    processedMessageIds.current.add(newMsg.id);
     
     setMessages((oldMessages) => {
-      // Simple check: if message ID already exists, don't add it
+      // Double check if this message already exists to avoid duplicates
       if (oldMessages.some(msg => msg.id === newMsg.id)) {
-        console.log('Message already exists, skipping:', newMsg.id);
+        console.log('Duplicate message detected in state, skipping:', newMsg.id);
         return oldMessages;
       }
       
@@ -43,7 +54,17 @@ export const useChatMessages = (groupId: string, username: string) => {
         messageService.markMessagesAsRead(validGroupId, [newMsg.id], username);
       }
       
-      return [...oldMessages, newMsg];
+      // Process and parse event data before adding to messages
+      try {
+        const processedMsg = {
+          ...newMsg,
+          // We'll parse event data from content in the MessageList component
+        };
+        return [...oldMessages, processedMsg];
+      } catch (error) {
+        console.error('Error processing message:', error);
+        return [...oldMessages, newMsg];
+      }
     });
     
     setLastSeen(new Date());
@@ -58,22 +79,30 @@ export const useChatMessages = (groupId: string, username: string) => {
     const typingChannel = supabase
       .channel(`typing:${validGroupId}`)
       .on('broadcast', { event: 'typing' }, (payload) => {
+        console.log('Typing status update received:', payload);
+        
         if (payload.payload && payload.payload.username !== username) {
           const { username: typingUsername, avatar, isTyping } = payload.payload;
           
           setTypingUsers(prev => {
+            // Clone current typing list
             const currentUsers = [...prev];
+            
+            // Find existing user
             const existingIndex = currentUsers.findIndex(u => u.username === typingUsername);
             
             if (isTyping) {
+              // If a timeout exists for this user, clear it
               if (timeoutsRef.current[typingUsername]) {
                 clearTimeout(timeoutsRef.current[typingUsername]);
               }
               
+              // Set new timeout to remove user after 3 seconds
               timeoutsRef.current[typingUsername] = setTimeout(() => {
                 setTypingUsers(prev => prev.filter(u => u.username !== typingUsername));
               }, 3000);
               
+              // Update or add user
               const user = {
                 username: typingUsername,
                 avatar: avatar,
@@ -86,6 +115,7 @@ export const useChatMessages = (groupId: string, username: string) => {
                 currentUsers.push(user);
               }
             } else {
+              // Remove user from list
               if (existingIndex >= 0) {
                 currentUsers.splice(existingIndex, 1);
               }
@@ -95,7 +125,9 @@ export const useChatMessages = (groupId: string, username: string) => {
           });
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Typing channel subscription status:', status);
+      });
       
     channelsRef.current.push(typingChannel);
     
@@ -106,53 +138,37 @@ export const useChatMessages = (groupId: string, username: string) => {
     };
   }, [validGroupId, username]);
   
-  // Setup message listener - only one subscription
+  // Setup message listener
   useEffect(() => {
     if (!validGroupId || !username) {
       console.log('No group ID or username, skipping message subscription');
       return;
     }
     
-    console.log('Setting up message subscription for group:', validGroupId);
+    console.log('Setting up message listener for group:', validGroupId);
     
-    // Only listen to database changes, no local messages
-    const messageChannel = supabase
-      .channel(`messages:${validGroupId}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'chat_messages',
-        filter: `group_id=eq.${validGroupId}`
-      }, (payload) => {
-        console.log('New message from database:', payload);
-        
-        if (payload.new) {
-          const msg = payload.new as any;
-          const newMessage: Message = {
-            id: msg.id,
-            created_at: msg.created_at,
-            content: msg.text,
-            user_name: msg.sender,
-            user_avatar: msg.avatar || '',
-            group_id: msg.group_id,
-          };
-          
-          handleNewMessage(newMessage);
-        }
-      })
-      .subscribe();
+    // Clear the set of processed message IDs when changing groups
+    processedMessageIds.current.clear();
     
-    channelsRef.current.push(messageChannel);
+    // Set up message listener using the realtimeService
+    const channels = realtimeService.setupMessageListener(validGroupId, handleNewMessage);
+    channelsRef.current = [...channelsRef.current, ...channels];
     
     return () => {
       console.log('Cleaning up message subscription');
-      if (messageChannel) {
-        supabase.removeChannel(messageChannel);
-      }
+      channels.forEach(channel => {
+        if (channel) {
+          try {
+            supabase.removeChannel(channel);
+          } catch (e) {
+            console.error('Error removing channel:', e);
+          }
+        }
+      });
     };
   }, [validGroupId, username, handleNewMessage]);
   
-  // Initial fetch when group changes
+  // Fetch messages when group changes
   useEffect(() => {
     if (validGroupId) {
       console.log(`Group ID changed, fetching messages for: ${validGroupId}`);
@@ -165,12 +181,21 @@ export const useChatMessages = (groupId: string, username: string) => {
     
     try {
       console.log(`Fetching messages for group: ${validGroupId}`);
-      
       const fetchedMessages = await messageService.fetchMessages(validGroupId);
       console.log(`Fetched ${fetchedMessages.length} messages`);
       
-      // Clear everything and set fresh messages
-      setMessages(fetchedMessages);
+      // Process messages to parse event data from content if needed
+      const processedMessages = fetchedMessages.map(msg => ({
+        ...msg,
+        // We'll parse event data from content in the MessageList component
+      }));
+
+      // Add all fetched message IDs to the processed set
+      fetchedMessages.forEach(msg => {
+        processedMessageIds.current.add(msg.id);
+      });
+      
+      setMessages(processedMessages);
       setLastSeen(new Date());
       
       // Mark messages as read
@@ -195,15 +220,19 @@ export const useChatMessages = (groupId: string, username: string) => {
   // Reconnection handling
   const { isReconnecting, handleReconnect } = useReconnection(fetchAndSetMessages);
   
+  // Scroll management
   const { chatBottomRef, chatContainerRef, initializeScrollPosition } = 
     useScrollManagement(messages, typingUsers);
   
+  // Clean up all timeouts and channels on unmount
   useEffect(() => {
     return () => {
+      // Clear all timeouts
       Object.values(timeoutsRef.current).forEach(timeout => {
         clearTimeout(timeout);
       });
       
+      // Remove all channels
       channelsRef.current.forEach(channel => {
         if (channel) {
           try {
@@ -214,6 +243,14 @@ export const useChatMessages = (groupId: string, username: string) => {
         }
       });
     };
+  }, []);
+
+  // Function to add optimistic messages
+  const addOptimisticMessage = useCallback((message: Message) => {
+    console.log('Adding optimistic message:', message);
+    // Add the message ID to the processed set to prevent duplication
+    processedMessageIds.current.add(message.id);
+    setMessages(prev => [...prev, message]);
   }, []);
 
   return {
@@ -228,6 +265,7 @@ export const useChatMessages = (groupId: string, username: string) => {
     chatBottomRef,
     chatContainerRef,
     initializeScrollPosition,
-    fetchAndSetMessages
+    fetchAndSetMessages,
+    addOptimisticMessage
   };
 };
