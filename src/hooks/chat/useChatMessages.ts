@@ -27,7 +27,7 @@ export const useChatMessages = (groupId: string, username: string) => {
     messagesRef.current = messages;
   }, [messages]);
   
-  // Handle new message
+  // Handle new message with duplicate prevention
   const handleNewMessage = useCallback((newMsg: Message) => {
     console.log('New message received:', newMsg);
     
@@ -85,24 +85,18 @@ export const useChatMessages = (groupId: string, username: string) => {
           const { username: typingUsername, avatar, isTyping } = payload.payload;
           
           setTypingUsers(prev => {
-            // Clone current typing list
             const currentUsers = [...prev];
-            
-            // Find existing user
             const existingIndex = currentUsers.findIndex(u => u.username === typingUsername);
             
             if (isTyping) {
-              // If a timeout exists for this user, clear it
               if (timeoutsRef.current[typingUsername]) {
                 clearTimeout(timeoutsRef.current[typingUsername]);
               }
               
-              // Set new timeout to remove user after 3 seconds
               timeoutsRef.current[typingUsername] = setTimeout(() => {
                 setTypingUsers(prev => prev.filter(u => u.username !== typingUsername));
               }, 3000);
               
-              // Update or add user
               const user = {
                 username: typingUsername,
                 avatar: avatar,
@@ -115,7 +109,6 @@ export const useChatMessages = (groupId: string, username: string) => {
                 currentUsers.push(user);
               }
             } else {
-              // Remove user from list
               if (existingIndex >= 0) {
                 currentUsers.splice(existingIndex, 1);
               }
@@ -138,7 +131,6 @@ export const useChatMessages = (groupId: string, username: string) => {
     };
   }, [validGroupId, username]);
   
-  // Setup message listener
   useEffect(() => {
     if (!validGroupId || !username) {
       console.log('No group ID or username, skipping message subscription');
@@ -181,18 +173,21 @@ export const useChatMessages = (groupId: string, username: string) => {
     
     try {
       console.log(`Fetching messages for group: ${validGroupId}`);
+      
+      // Clear processed message IDs before fetching
+      processedMessageIds.current.clear();
+      
       const fetchedMessages = await messageService.fetchMessages(validGroupId);
       console.log(`Fetched ${fetchedMessages.length} messages`);
       
       // Process messages to parse event data from content if needed
-      const processedMessages = fetchedMessages.map(msg => ({
-        ...msg,
-        // We'll parse event data from content in the MessageList component
-      }));
-
-      // Add all fetched message IDs to the processed set
-      fetchedMessages.forEach(msg => {
+      const processedMessages = fetchedMessages.map(msg => {
+        // Add all fetched message IDs to the processed set
         processedMessageIds.current.add(msg.id);
+        return {
+          ...msg,
+          // We'll parse event data from content in the MessageList component
+        };
       });
       
       setMessages(processedMessages);
@@ -220,19 +215,15 @@ export const useChatMessages = (groupId: string, username: string) => {
   // Reconnection handling
   const { isReconnecting, handleReconnect } = useReconnection(fetchAndSetMessages);
   
-  // Scroll management
   const { chatBottomRef, chatContainerRef, initializeScrollPosition } = 
     useScrollManagement(messages, typingUsers);
   
-  // Clean up all timeouts and channels on unmount
   useEffect(() => {
     return () => {
-      // Clear all timeouts
       Object.values(timeoutsRef.current).forEach(timeout => {
         clearTimeout(timeout);
       });
       
-      // Remove all channels
       channelsRef.current.forEach(channel => {
         if (channel) {
           try {
@@ -245,12 +236,27 @@ export const useChatMessages = (groupId: string, username: string) => {
     };
   }, []);
 
-  // Function to add optimistic messages
+  // Function to add optimistic messages with duplicate prevention
   const addOptimisticMessage = useCallback((message: Message) => {
     console.log('Adding optimistic message:', message);
+    
+    // Check for duplicates before adding
+    if (processedMessageIds.current.has(message.id)) {
+      console.log('Optimistic message already processed:', message.id);
+      return;
+    }
+    
     // Add the message ID to the processed set to prevent duplication
     processedMessageIds.current.add(message.id);
-    setMessages(prev => [...prev, message]);
+    
+    setMessages(prev => {
+      // Double-check for duplicates in current state
+      if (prev.some(msg => msg.id === message.id)) {
+        console.log('Optimistic message already in state:', message.id);
+        return prev;
+      }
+      return [...prev, message];
+    });
   }, []);
 
   return {

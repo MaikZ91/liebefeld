@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, RefreshCw, Paperclip, Calendar, Users } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -58,7 +57,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const messagesRef = useRef<Message[]>([]);
   const channelsRef = useRef<any[]>([]);
-  const sentMessageIds = useRef<Set<string>>(new Set());
+  const processedMessageIds = useRef<Set<string>>(new Set());
   
   const { events } = useEventContext();
   
@@ -80,6 +79,25 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     messagesRef.current = messages;
   }, [messages]);
   
+  // Function to add message with duplicate prevention
+  const addMessageSafely = (newMessage: Message) => {
+    if (processedMessageIds.current.has(newMessage.id)) {
+      console.log('Duplicate message detected, skipping:', newMessage.id);
+      return;
+    }
+    
+    processedMessageIds.current.add(newMessage.id);
+    
+    setMessages(prev => {
+      // Double-check for duplicates in state
+      if (prev.some(msg => msg.id === newMessage.id)) {
+        console.log('Message already exists in state:', newMessage.id);
+        return prev;
+      }
+      return [...prev, newMessage];
+    });
+  };
+  
   // Fetch messages on component mount and when group changes
   useEffect(() => {
     if (!groupId) return;
@@ -88,6 +106,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       try {
         setLoading(true);
         setError(null);
+        processedMessageIds.current.clear(); // Clear processed IDs when fetching fresh
         
         console.log(`Fetching messages for group: ${groupId}`);
         
@@ -105,16 +124,19 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         
         console.log(`Fetched ${data?.length || 0} messages`);
         
-        // Convert messages to expected format
-        const formattedMessages: Message[] = (data || []).map(msg => ({
-          id: msg.id,
-          created_at: msg.created_at,
-          content: msg.text,
-          user_name: msg.sender,
-          user_avatar: msg.avatar || '',
-          group_id: msg.group_id,
-          read_by: msg.read_by || []
-        }));
+        // Convert messages to expected format and track IDs
+        const formattedMessages: Message[] = (data || []).map(msg => {
+          processedMessageIds.current.add(msg.id);
+          return {
+            id: msg.id,
+            created_at: msg.created_at,
+            content: msg.text,
+            user_name: msg.sender,
+            user_avatar: msg.avatar || '',
+            group_id: msg.group_id,
+            read_by: msg.read_by || []
+          };
+        });
         
         setMessages(formattedMessages);
         
@@ -178,13 +200,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
             read_by: msg.read_by || []
           };
           
-          // Don't add duplicate messages
-          setMessages(prevMessages => {
-            if (prevMessages.some(m => m.id === newMessage.id)) {
-              return prevMessages;
-            }
-            return [...prevMessages, newMessage];
-          });
+          // Use safe add function to prevent duplicates
+          addMessageSafely(newMessage);
           
           // Mark message as read if it's from someone else
           if (msg.sender !== username && username) {
@@ -391,15 +408,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       // Create optimistic message
       const tempId = `temp-${Date.now()}`;
       
-      // Check if this message was already sent (prevent duplicates)
-      if (sentMessageIds.current.has(tempId)) {
-        console.log('Duplicate submission detected, ignoring');
-        return;
-      }
-      
-      // Track this message ID
-      sentMessageIds.current.add(tempId);
-      
       const optimisticMessage: Message = {
         id: tempId,
         created_at: new Date().toISOString(),
@@ -410,8 +418,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         read_by: [username]
       };
       
-      // Add optimistic message immediately
-      setMessages(prev => [...prev, optimisticMessage]);
+      // Add optimistic message using safe method
+      addMessageSafely(optimisticMessage);
       
       // Clear input 
       setNewMessage('');
@@ -443,13 +451,10 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       }
       
       if (isTyping) {
-        // Create a new channel for typing updates
         const typingUpdateChannel = supabase.channel(`typing:${groupId}`);
         
-        // Subscribe to the channel
         typingUpdateChannel.subscribe();
         
-        // Send the typing update
         typingUpdateChannel.send({
           type: 'broadcast',
           event: 'typing',
@@ -460,7 +465,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           }
         });
         
-        // Remove the channel after sending
         supabase.removeChannel(typingUpdateChannel);
         
         setIsTyping(false);
@@ -485,13 +489,10 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     if (!isTyping && e.target.value.trim()) {
       setIsTyping(true);
       
-      // Create a new channel for typing updates
       const typingUpdateChannel = supabase.channel(`typing:${groupId}`);
       
-      // Subscribe and send typing update
       typingUpdateChannel.subscribe();
       
-      // After subscription, send the message
       typingUpdateChannel.send({
         type: 'broadcast',
         event: 'typing',
@@ -502,25 +503,19 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         }
       });
       
-      // Remove the channel after sending
       supabase.removeChannel(typingUpdateChannel);
     }
     
-    // Clear existing timeout
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
     
-    // Set timeout to stop typing after 2 seconds of inactivity
     typingTimeoutRef.current = setTimeout(() => {
       if (isTyping) {
-        // Create a new channel for typing updates
         const typingUpdateChannel = supabase.channel(`typing:${groupId}`);
         
-        // Subscribe and send typing update
         typingUpdateChannel.subscribe();
         
-        // After subscription, send the message
         typingUpdateChannel.send({
           type: 'broadcast',
           event: 'typing',
@@ -531,7 +526,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           }
         });
         
-        // Remove the channel after sending
         supabase.removeChannel(typingUpdateChannel);
         
         setIsTyping(false);
