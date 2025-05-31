@@ -1,3 +1,4 @@
+
 import { Event, GitHubEvent } from '../types/eventTypes';
 import { format, startOfWeek, endOfWeek, addDays, parseISO, isToday, isSameDay } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -15,6 +16,18 @@ export const transformGitHubEvents = (
     
     const eventId = `github-${githubEvent.hash || githubEvent.event || index}`;
     const likesData = eventLikes[eventId] || {};
+    
+    // Extract location and clean title from event name
+    let title = githubEvent.event || 'Unnamed Event';
+    let location = githubEvent.location || '';
+    
+    // Check if the title contains location in format "Event Name (@Location)"
+    const locationMatch = title.match(/^(.+?)\s*\(@([^)]+)\)$/);
+    if (locationMatch) {
+      title = locationMatch[1].trim(); // Extract the event name without location
+      location = locationMatch[2].trim(); // Extract the location from parentheses
+      console.log(`[transformGitHubEvents] Extracted title: "${title}" and location: "${location}"`);
+    }
     
     // Extract category from the GitHub event data
     let category = 'Sonstiges'; // Default fallback
@@ -36,7 +49,7 @@ export const transformGitHubEvents = (
     }
     // Try to infer category from event name/description
     else {
-      const eventText = (githubEvent.event + ' ' + (githubEvent.description || '')).toLowerCase();
+      const eventText = (title + ' ' + (githubEvent.description || '')).toLowerCase();
       
       if (eventText.includes('konzert') || eventText.includes('concert') || eventText.includes('musik') || eventText.includes('band')) {
         category = 'Konzert';
@@ -85,17 +98,17 @@ export const transformGitHubEvents = (
         eventDate = format(new Date(), 'yyyy-MM-dd');
       }
     } catch (error) {
-      console.error(`[transformGitHubEvents] Error parsing date for event ${githubEvent.event}:`, error);
+      console.error(`[transformGitHubEvents] Error parsing date for event ${title}:`, error);
       eventDate = format(new Date(), 'yyyy-MM-dd');
     }
 
     const transformedEvent: Event = {
       id: eventId,
-      title: githubEvent.event || 'Unnamed Event',
+      title: title,
       description: githubEvent.description || '',
       date: eventDate,
       time: githubEvent.time || '00:00',
-      location: githubEvent.location || '',
+      location: location,
       organizer: githubEvent.organizer || 'Unbekannt',
       category: category,
       likes: likesData.likes || 0,
