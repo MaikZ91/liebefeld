@@ -53,6 +53,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [pendingLikes, setPendingLikes] = useState<Set<string>>(new Set());
   const [newEventIds, setNewEventIds] = useState<Set<string>>(new Set());
   const [topEventsPerDay, setTopEventsPerDay] = useState<Record<string, string>>({});
+  const [currentEventLikes, setCurrentEventLikes] = useState<Record<string, number>>({});
 
   const refreshEvents = async () => {
     setIsLoading(true);
@@ -66,20 +67,28 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const githubLikes = await fetchGitHubLikes();
       console.log('Fetched GitHub likes:', githubLikes);
       
-      const likesMap: Record<string, number> = {};
+      // Merge database likes with current session likes
+      const mergedLikes: Record<string, number> = {};
       Object.keys(githubLikes).forEach(eventId => {
-        if (typeof githubLikes[eventId].likes === 'number') {
-          likesMap[eventId] = githubLikes[eventId].likes;
+        const dbLikes = typeof githubLikes[eventId].likes === 'number' ? githubLikes[eventId].likes : 0;
+        const currentLikes = currentEventLikes[eventId] || 0;
+        mergedLikes[eventId] = Math.max(dbLikes, currentLikes);
+      });
+      
+      // Also include any current session likes for events not in database yet
+      Object.keys(currentEventLikes).forEach(eventId => {
+        if (!mergedLikes[eventId]) {
+          mergedLikes[eventId] = currentEventLikes[eventId];
         }
       });
       
-      setEventLikes(likesMap);
-      console.log('Updated event likes state directly from database:', likesMap);
+      setEventLikes(mergedLikes);
+      console.log('Updated event likes state with merged values:', mergedLikes);
       
       const supabaseEvents = await fetchSupabaseEvents();
       console.log(`Loaded ${supabaseEvents.length} events from Supabase`);
       
-      const externalEvents = await fetchExternalEvents(likesMap);
+      const externalEvents = await fetchExternalEvents(mergedLikes);
       console.log(`Loaded ${externalEvents.length} external events`);
       
       await syncGitHubEvents(externalEvents);
@@ -92,9 +101,11 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       externalEvents.forEach(extEvent => {
         if (!eventMap.has(extEvent.id)) {
+          // Use merged likes for GitHub events to preserve session changes
+          const eventLikes = mergedLikes[extEvent.id] || 0;
           eventMap.set(extEvent.id, {
             ...extEvent,
-            likes: likesMap[extEvent.id] || 0,
+            likes: eventLikes,
             rsvp_yes: githubLikes[extEvent.id]?.rsvp_yes || 0,
             rsvp_no: githubLikes[extEvent.id]?.rsvp_no || 0,
             rsvp_maybe: githubLikes[extEvent.id]?.rsvp_maybe || 0
@@ -123,9 +134,10 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       } else {
         const eventsWithSyncedRsvp = combinedEvents.map(event => {
           if (event.id.startsWith('github-') && githubLikes[event.id]) {
+            const eventLikes = mergedLikes[event.id] || 0;
             return {
               ...event,
-              likes: githubLikes[event.id]?.likes || 0,
+              likes: eventLikes,
               rsvp_yes: githubLikes[event.id]?.rsvp_yes || 0,
               rsvp_no: githubLikes[event.id]?.rsvp_no || 0,
               rsvp_maybe: githubLikes[event.id]?.rsvp_maybe || 0,
@@ -220,8 +232,12 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       console.log(`Increasing likes for ${eventId} from ${currentLikes} to ${newLikesValue}`);
       
-      // Immediate UI update for faster response
+      // Update current session likes for GitHub events
       if (currentEvent.id.startsWith('github-')) {
+        setCurrentEventLikes(prev => ({
+          ...prev,
+          [eventId]: newLikesValue
+        }));
         setEventLikes(prev => ({
           ...prev,
           [eventId]: newLikesValue
@@ -304,6 +320,11 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         console.error('Database update failed:', error);
         // Revert optimistic update on error
         if (currentEvent.id.startsWith('github-')) {
+          setCurrentEventLikes(prev => {
+            const updated = { ...prev };
+            delete updated[eventId];
+            return updated;
+          });
           setEventLikes(prev => ({
             ...prev,
             [eventId]: currentLikes
@@ -367,6 +388,10 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       console.log(`Successfully updated likes in database for event ${eventId} to ${newLikesValue}`);
       
       if (currentEvent.id.startsWith('github-')) {
+        setCurrentEventLikes(prev => ({
+          ...prev,
+          [eventId]: newLikesValue
+        }));
         setEventLikes(prev => ({
           ...prev,
           [eventId]: newLikesValue
@@ -441,12 +466,88 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     eventLikes,
     handleLikeEvent,
     handleRsvpEvent,
+    handleRsvpEvent: async (eventId: string, option: RsvpOption) => {
+      try {
+        console.log(`RSVP for event with ID: ${eventId}, option: ${option}`);
+        const currentEvent = events.find(event => event.id === eventId);
+        if (!currentEvent) {
+          console.error(`Event with ID ${eventId} not found`);
+          return;
+        }
+        
+        const currentRsvp = {
+          yes: currentEvent.rsvp_yes ?? currentEvent.rsvp?.yes ?? 0,
+          no: currentEvent.rsvp_no ?? currentEvent.rsvp?.no ?? 0,
+          maybe: currentEvent.rsvp_maybe ?? currentEvent.rsvp?.maybe ?? 0
+        };
+        
+        const newRsvp = { ...currentRsvp };
+        
+        newRsvp[option] += 1;
+        
+        console.log(`Updating RSVP for ${eventId} to:`, newRsvp);
+        
+        await updateEventRsvp(eventId, newRsvp);
+        console.log(`Successfully updated RSVP in database for event ${eventId}`);
+        
+        const currentLikes = currentEvent.id.startsWith('github-')
+          ? (eventLikes[eventId] || 0)
+          : (currentEvent.likes || 0);
+          
+        const newLikesValue = Math.max(currentLikes, newRsvp.yes + newRsvp.maybe);
+        
+        await updateEventLikes(eventId, newLikesValue);
+        console.log(`Successfully updated likes in database for event ${eventId} to ${newLikesValue}`);
+        
+        if (currentEvent.id.startsWith('github-')) {
+          setCurrentEventLikes(prev => ({
+            ...prev,
+            [eventId]: newLikesValue
+          }));
+          setEventLikes(prev => ({
+            ...prev,
+            [eventId]: newLikesValue
+          }));
+        }
+        
+        setEvents(prevEvents => {
+          return prevEvents.map(event => 
+            event.id === eventId 
+              ? { 
+                  ...event, 
+                  likes: newLikesValue,
+                  rsvp_yes: newRsvp.yes,
+                  rsvp_no: newRsvp.no,
+                  rsvp_maybe: newRsvp.maybe,
+                  rsvp: newRsvp 
+                } 
+              : event
+          );
+        });
+      } catch (error) {
+        console.error('Error updating RSVP:', error);
+      }
+    },
     showFavorites,
     setShowFavorites,
     refreshEvents,
     newEventIds,
     topEventsPerDay,
-    addUserEvent,
+    addUserEvent: async (eventData: Omit<Event, 'id'>): Promise<Event> => {
+      try {
+        console.log('Adding new user event to database only:', eventData);
+        
+        const newEvent = await addNewEvent(eventData);
+        console.log('Successfully added new event to database:', newEvent);
+        
+        await refreshEvents();
+        
+        return newEvent;
+      } catch (error) {
+        console.error('Error adding new event:', error);
+        throw error;
+      }
+    },
   };
 
   return <EventContext.Provider value={value}>{children}</EventContext.Provider>;
