@@ -466,88 +466,12 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     eventLikes,
     handleLikeEvent,
     handleRsvpEvent,
-    handleRsvpEvent: async (eventId: string, option: RsvpOption) => {
-      try {
-        console.log(`RSVP for event with ID: ${eventId}, option: ${option}`);
-        const currentEvent = events.find(event => event.id === eventId);
-        if (!currentEvent) {
-          console.error(`Event with ID ${eventId} not found`);
-          return;
-        }
-        
-        const currentRsvp = {
-          yes: currentEvent.rsvp_yes ?? currentEvent.rsvp?.yes ?? 0,
-          no: currentEvent.rsvp_no ?? currentEvent.rsvp?.no ?? 0,
-          maybe: currentEvent.rsvp_maybe ?? currentEvent.rsvp?.maybe ?? 0
-        };
-        
-        const newRsvp = { ...currentRsvp };
-        
-        newRsvp[option] += 1;
-        
-        console.log(`Updating RSVP for ${eventId} to:`, newRsvp);
-        
-        await updateEventRsvp(eventId, newRsvp);
-        console.log(`Successfully updated RSVP in database for event ${eventId}`);
-        
-        const currentLikes = currentEvent.id.startsWith('github-')
-          ? (eventLikes[eventId] || 0)
-          : (currentEvent.likes || 0);
-          
-        const newLikesValue = Math.max(currentLikes, newRsvp.yes + newRsvp.maybe);
-        
-        await updateEventLikes(eventId, newLikesValue);
-        console.log(`Successfully updated likes in database for event ${eventId} to ${newLikesValue}`);
-        
-        if (currentEvent.id.startsWith('github-')) {
-          setCurrentEventLikes(prev => ({
-            ...prev,
-            [eventId]: newLikesValue
-          }));
-          setEventLikes(prev => ({
-            ...prev,
-            [eventId]: newLikesValue
-          }));
-        }
-        
-        setEvents(prevEvents => {
-          return prevEvents.map(event => 
-            event.id === eventId 
-              ? { 
-                  ...event, 
-                  likes: newLikesValue,
-                  rsvp_yes: newRsvp.yes,
-                  rsvp_no: newRsvp.no,
-                  rsvp_maybe: newRsvp.maybe,
-                  rsvp: newRsvp 
-                } 
-              : event
-          );
-        });
-      } catch (error) {
-        console.error('Error updating RSVP:', error);
-      }
-    },
     showFavorites,
     setShowFavorites,
     refreshEvents,
     newEventIds,
     topEventsPerDay,
-    addUserEvent: async (eventData: Omit<Event, 'id'>): Promise<Event> => {
-      try {
-        console.log('Adding new user event to database only:', eventData);
-        
-        const newEvent = await addNewEvent(eventData);
-        console.log('Successfully added new event to database:', newEvent);
-        
-        await refreshEvents();
-        
-        return newEvent;
-      } catch (error) {
-        console.error('Error adding new event:', error);
-        throw error;
-      }
-    },
+    addUserEvent,
   };
 
   return <EventContext.Provider value={value}>{children}</EventContext.Provider>;
