@@ -49,7 +49,7 @@ const MemoizedEventCard = memo(({ event, date, onSelectEvent, onLike, isTopEvent
       />
     </div>
   </div>
-});
+));
 
 MemoizedEventCard.displayName = 'MemoizedEventCard';
 
