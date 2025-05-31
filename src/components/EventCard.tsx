@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -47,7 +46,7 @@ const isTribeEvent = (title: string): boolean => {
   );
 };
 
-const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compact = false, onLike }) => {
+const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, compact = false, onLike }) => {
   const [isLiking, setIsLiking] = useState(false);
   const { newEventIds, eventLikes } = useEventContext();
   
@@ -69,9 +68,10 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
       setIsLiking(true);
       console.log(`Liking event ${event.id} (${event.title}) with current likes: ${displayLikes}`);
       onLike(event.id);
+      // Reset immediately for better UX
       setTimeout(() => {
         setIsLiking(false);
-      }, 300);
+      }, 150); // Reduced from 300ms
     }
   };
 
@@ -286,6 +286,8 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, className, compac
       </div>
     </div>
   );
-};
+});
+
+EventCard.displayName = 'EventCard';
 
 export default EventCard;

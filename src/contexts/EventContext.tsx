@@ -220,6 +220,47 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       console.log(`Increasing likes for ${eventId} from ${currentLikes} to ${newLikesValue}`);
       
+      // Immediate UI update for faster response
+      if (currentEvent.id.startsWith('github-')) {
+        setEventLikes(prev => ({
+          ...prev,
+          [eventId]: newLikesValue
+        }));
+      }
+      
+      // Optimistically update the events state for immediate UI response
+      setEvents(prevEvents => {
+        const updatedEvents = prevEvents.map(event => 
+          event.id === eventId 
+            ? { 
+                ...event, 
+                likes: newLikesValue,
+                rsvp_yes: (event.rsvp_yes ?? event.rsvp?.yes ?? 0) + 1,
+                rsvp: {
+                  yes: (event.rsvp_yes ?? event.rsvp?.yes ?? 0) + 1,
+                  no: event.rsvp_no ?? event.rsvp?.no ?? 0,
+                  maybe: event.rsvp_maybe ?? event.rsvp?.maybe ?? 0
+                }
+              } 
+            : event
+        );
+        
+        // Sort events by date first, then by likes within each date
+        return updatedEvents.sort((a, b) => {
+          // First sort by date
+          const dateComparison = a.date.localeCompare(b.date);
+          if (dateComparison !== 0) return dateComparison;
+          
+          // Then sort by likes (descending) within the same date
+          const likesA = a.likes || 0;
+          const likesB = b.likes || 0;
+          if (likesB !== likesA) return likesB - likesA;
+          
+          // Finally sort by ID for consistent ordering
+          return a.id.localeCompare(b.id);
+        });
+      });
+      
       try {
         const currentRsvp = {
           yes: currentEvent.rsvp_yes ?? currentEvent.rsvp?.yes ?? 0,
@@ -232,6 +273,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           yes: currentRsvp.yes + 1 
         };
         
+        // Database updates in background
         await Promise.all([
           updateEventLikes(eventId, newLikesValue),
           updateEventRsvp(eventId, newRsvp)
@@ -239,34 +281,41 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         
         console.log(`Successfully updated likes (${newLikesValue}) and RSVP in database for event ${eventId}`);
         
+        // Update topEventsPerDay after successful database update
+        setTopEventsPerDay(prev => {
+          const updated = { ...prev };
+          const eventDate = currentEvent.date;
+          if (eventDate) {
+            // Find the event with most likes for this date
+            const eventsForDate = events.filter(e => e.date === eventDate);
+            const sortedByLikes = eventsForDate.sort((a, b) => {
+              const likesA = a.id === eventId ? newLikesValue : (a.likes || 0);
+              const likesB = b.likes || 0;
+              return likesB - likesA;
+            });
+            if (sortedByLikes.length > 0) {
+              updated[eventDate] = sortedByLikes[0].id;
+            }
+          }
+          return updated;
+        });
+        
+      } catch (error) {
+        console.error('Database update failed:', error);
+        // Revert optimistic update on error
         if (currentEvent.id.startsWith('github-')) {
           setEventLikes(prev => ({
             ...prev,
-            [eventId]: newLikesValue
+            [eventId]: currentLikes
           }));
-          console.log(`Updated eventLikes for ${eventId} to:`, newLikesValue);
         }
-        
-        setEvents(prevEvents => {
-          return prevEvents.map(event => 
+        setEvents(prevEvents => 
+          prevEvents.map(event => 
             event.id === eventId 
-              ? { 
-                  ...event, 
-                  likes: newLikesValue,
-                  rsvp_yes: newRsvp.yes,
-                  rsvp_no: newRsvp.no,
-                  rsvp_maybe: newRsvp.maybe,
-                  rsvp: {
-                    yes: newRsvp.yes,
-                    no: newRsvp.no,
-                    maybe: newRsvp.maybe
-                  }
-                } 
+              ? currentEvent 
               : event
-          );
-        });
-      } catch (error) {
-        console.error('Database update failed:', error);
+          )
+        );
       } finally {
         setPendingLikes(prev => {
           const updated = new Set(prev);

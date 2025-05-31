@@ -1,5 +1,4 @@
-
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, memo, useMemo } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
@@ -18,7 +17,43 @@ interface EventListProps {
   onLike: (eventId: string) => void;
 }
 
-const EventList: React.FC<EventListProps> = ({
+// Memoized EventCard component wrapper to prevent unnecessary re-renders
+const MemoizedEventCard = memo(({ event, date, onSelectEvent, onLike, isTopEvent, isNewEvent }: {
+  event: Event;
+  date: Date;
+  onSelectEvent: (event: Event, date: Date) => void;
+  onLike: (eventId: string) => void;
+  isTopEvent: boolean;
+  isNewEvent: boolean;
+}) => (
+  <div key={event.id} className={`relative ${isTopEvent ? 'transform transition-all' : ''} w-full`}>
+    {isTopEvent && (
+      <div className="absolute -left-1 top-0 bottom-0 w-1 bg-gradient-to-b from-[#E53935] to-[#C62828] rounded-full"></div>
+    )}
+    {isNewEvent && !isTopEvent && (
+      <div className="absolute -left-1 top-0 bottom-0 w-1 bg-gradient-to-b from-green-500 to-green-700 rounded-full"></div>
+    )}
+    <div className={`${isTopEvent ? 'bg-gradient-to-r from-[#C62828]/20 to-transparent rounded-lg w-full' : isNewEvent ? 'bg-gradient-to-r from-green-600/10 to-transparent rounded-lg w-full' : 'w-full'}`}>
+      {isTopEvent && (
+        <div className="absolute right-1 top-1 bg-[#E53935] text-white px-1 py-0.5 rounded-full text-[10px] flex items-center z-20">
+          <Star className="w-2 h-2 mr-0.5 fill-white" />
+          <span>Top</span>
+        </div>
+      )}
+      <EventCard 
+        event={event}
+        compact={true}
+        onClick={() => onSelectEvent(event, date)}
+        onLike={onLike}
+        className={`${isTopEvent ? 'border-l-2 border-[#E53935]' : isNewEvent ? 'border-l-2 border-green-500' : ''} relative w-full`}
+      />
+    </div>
+  </div>
+});
+
+MemoizedEventCard.displayName = 'MemoizedEventCard';
+
+const EventList: React.FC<EventListProps> = memo(({
   events,
   showFavorites,
   showNewEvents = false,
@@ -31,30 +66,31 @@ const EventList: React.FC<EventListProps> = ({
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
   const { newEventIds, filter, topEventsPerDay } = useEventContext();
 
-  const hochschulsportEvents = React.useMemo(() => {
-    return events.filter(event => 
+  // Memoize expensive computations
+  const { hochschulsportEvents, regularEvents } = useMemo(() => {
+    const hochschulsport = events.filter(event => 
       event.title.toLowerCase().includes('hochschulsport') || 
       event.organizer?.toLowerCase().includes('hochschulsport') ||
       event.title.toLowerCase().includes('@hochschulsport_bielefeld') ||
       event.organizer?.toLowerCase().includes('@hochschulsport_bielefeld')
     );
-  }, [events]);
-
-  const regularEvents = React.useMemo(() => {
-    return events.filter(event => 
+    
+    const regular = events.filter(event => 
       !event.title.toLowerCase().includes('hochschulsport') && 
       !event.organizer?.toLowerCase().includes('hochschulsport') &&
       !event.title.toLowerCase().includes('@hochschulsport_bielefeld') &&
       !event.organizer?.toLowerCase().includes('@hochschulsport_bielefeld')
     );
+    
+    return { hochschulsportEvents: hochschulsport, regularEvents: regular };
   }, [events]);
 
-  const filteredEvents = React.useMemo(() => {
+  const filteredEvents = useMemo(() => {
     if (!filter) return events;
     return events.filter(event => event.category === filter);
   }, [events, filter]);
 
-  const displayEvents = React.useMemo(() => {
+  const displayEvents = useMemo(() => {
     if (!showFavorites) return filteredEvents;
     
     return filteredEvents.filter(event => {
@@ -63,6 +99,30 @@ const EventList: React.FC<EventListProps> = ({
       return topEventsPerDay[event.date] === event.id && (event.likes && event.likes > 0);
     });
   }, [filteredEvents, showFavorites, topEventsPerDay]);
+
+  const eventsByDate = useMemo(() => {
+    const grouped = groupEventsByDate(regularEvents);
+    
+    // Pre-sort events within each date group
+    Object.keys(grouped).forEach(dateStr => {
+      grouped[dateStr].sort((a, b) => {
+        const likesA = a.likes || 0;
+        const likesB = b.likes || 0;
+        
+        if (likesB !== likesA) {
+          return likesB - likesA;
+        }
+        
+        return a.id.localeCompare(b.id);
+      });
+    });
+    
+    return grouped;
+  }, [regularEvents]);
+  
+  const hochschulsportEventsByDate = useMemo(() => {
+    return groupEventsByDate(hochschulsportEvents);
+  }, [hochschulsportEvents]);
 
   useEffect(() => {
     if (displayEvents.length > 0) {
@@ -95,29 +155,6 @@ const EventList: React.FC<EventListProps> = ({
       }
     }
   }, [displayEvents]);
-
-  const eventsByDate = React.useMemo(() => {
-    const grouped = groupEventsByDate(regularEvents);
-    
-    Object.keys(grouped).forEach(dateStr => {
-      grouped[dateStr].sort((a, b) => {
-        const likesA = a.likes || 0;
-        const likesB = b.likes || 0;
-        
-        if (likesB !== likesA) {
-          return likesB - likesA;
-        }
-        
-        return a.id.localeCompare(b.id);
-      });
-    });
-    
-    return grouped;
-  }, [regularEvents]);
-  
-  const hochschulsportEventsByDate = React.useMemo(() => {
-    return groupEventsByDate(hochschulsportEvents);
-  }, [hochschulsportEvents]);
 
   useEffect(() => {
     if (todayRef.current && listRef.current && !hasScrolledToToday && Object.keys(eventsByDate).length > 0) {
@@ -204,35 +241,20 @@ const EventList: React.FC<EventListProps> = ({
                     )}
                   </h4>
                   <div className="space-y-0.5 w-full">
-                    {eventsByDate[dateStr].map((event, eventIndex) => {
+                    {eventsByDate[dateStr].map((event) => {
                       const isTopEvent = isCurrentDay && topTodayEvent && event.id === topTodayEvent.id;
                       const isNewEvent = newEventIds.has(event.id);
                       
                       return (
-                        <div key={event.id} className={`relative ${isTopEvent ? 'transform transition-all' : ''} w-full`}>
-                          {isTopEvent && (
-                            <div className="absolute -left-1 top-0 bottom-0 w-1 bg-gradient-to-b from-[#E53935] to-[#C62828] rounded-full"></div>
-                          )}
-                          {isNewEvent && !isTopEvent && (
-                            <div className="absolute -left-1 top-0 bottom-0 w-1 bg-gradient-to-b from-green-500 to-green-700 rounded-full"></div>
-                          )}
-                          <div className={`${isTopEvent ? 'bg-gradient-to-r from-[#C62828]/20 to-transparent rounded-lg w-full' : isNewEvent ? 'bg-gradient-to-r from-green-600/10 to-transparent rounded-lg w-full' : 'w-full'}`}>
-                            {isTopEvent && (
-                              <div className="absolute right-1 top-1 bg-[#E53935] text-white px-1 py-0.5 rounded-full text-[10px] flex items-center z-20">
-                                <Star className="w-2 h-2 mr-0.5 fill-white" />
-                                <span>Top</span>
-                              </div>
-                            )}
-                            <EventCard 
-                              key={event.id} 
-                              event={event}
-                              compact={true}
-                              onClick={() => onSelectEvent(event, date)}
-                              onLike={onLike}
-                              className={`${isTopEvent ? 'border-l-2 border-[#E53935]' : isNewEvent ? 'border-l-2 border-green-500' : ''} relative w-full`}
-                            />
-                          </div>
-                        </div>
+                        <MemoizedEventCard
+                          key={event.id}
+                          event={event}
+                          date={date}
+                          onSelectEvent={onSelectEvent}
+                          onLike={onLike}
+                          isTopEvent={isTopEvent}
+                          isNewEvent={isNewEvent}
+                        />
                       );
                     })}
                     
@@ -283,6 +305,8 @@ const EventList: React.FC<EventListProps> = ({
       </div>
     </div>
   );
-};
+});
+
+EventList.displayName = 'EventList';
 
 export default EventList;
