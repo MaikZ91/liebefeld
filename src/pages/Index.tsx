@@ -154,33 +154,42 @@ const Index = () => {
       <CalendarNavbar />
       <BetaTesterBanner />
       <main className="flex-grow relative">
-        {/* Hero Section with enhanced gradient */}
-        <div className="relative w-full h-[50vh] overflow-hidden bg-gradient-to-br from-gray-900 via-black to-purple-900">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900/20 via-black/50 to-black opacity-80"></div>
+        {/* Enhanced Hero Section with premium gradients */}
+        <div className="relative w-full h-[55vh] min-h-[600px] overflow-hidden bg-gradient-to-br from-gray-900 via-black to-purple-900/80">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900/30 via-black/60 to-black opacity-90"></div>
           
-          {/* LiveTicker at the top */}
-          <div className="w-full bg-black/90 backdrop-blur-md absolute top-0 left-0 border-b border-white/10">
+          {/* Premium particle effect overlay */}
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute top-10 left-10 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-32 right-20 w-1 h-1 bg-purple-400 rounded-full animate-ping"></div>
+            <div className="absolute bottom-20 left-32 w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse"></div>
+            <div className="absolute top-40 left-1/3 w-1 h-1 bg-blue-400 rounded-full animate-ping delay-300"></div>
+            <div className="absolute bottom-32 right-1/4 w-2 h-2 bg-white/60 rounded-full animate-pulse delay-700"></div>
+          </div>
+          
+          {/* LiveTicker at the top with enhanced styling */}
+          <div className="w-full bg-black/95 backdrop-blur-lg absolute top-0 left-0 border-b border-white/20 shadow-xl">
             <LiveTickerWrapper />
           </div>
           
-          <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4 pt-2">
-            <div className="absolute left-3 top-3 flex items-center gap-2 z-20">
+          <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4 pt-4">
+            <div className="absolute left-4 top-4 flex items-center gap-3 z-20">
               <InstagramFeed />
               
               <a 
                 href="https://drive.google.com/uc?export=download&id=1Fn3mG9AT4dEPKR37nfVt6IdyIbukeWJr" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="block"
+                className="block group"
               >
                 <Button 
-                  className="bg-[#a4c639] hover:bg-[#8baa30] text-white rounded-full h-10 w-10 p-0 flex items-center justify-center shadow-xl hover:shadow-2xl transition-all hover:scale-110 border border-white/20"
+                  className="bg-gradient-to-r from-[#a4c639] to-[#8baa30] hover:from-[#8baa30] hover:to-[#76951a] text-white rounded-full h-12 w-12 p-0 flex items-center justify-center shadow-2xl hover:shadow-3xl transition-all hover:scale-110 border-2 border-white/30 backdrop-blur-sm group-hover:rotate-6"
                   size="icon"
                 >
                   <img 
                     src="/lovable-uploads/4a08308d-0a6d-4114-b820-f511ce7d7a65.png" 
                     alt="Android App" 
-                    className="h-6 w-6"
+                    className="h-7 w-7 group-hover:scale-110 transition-transform"
                   />
                 </Button>
               </a>
@@ -188,32 +197,32 @@ const Index = () => {
               <Popover>
                 <PopoverTrigger asChild>
                   <Button 
-                    className="bg-[#F97316] hover:bg-orange-600 text-white rounded-full h-10 w-10 p-0 flex items-center justify-center shadow-xl hover:shadow-2xl transition-all hover:scale-110 relative border border-white/20"
+                    className="bg-gradient-to-r from-[#F97316] to-[#ea580c] hover:from-[#ea580c] hover:to-[#dc2626] text-white rounded-full h-12 w-12 p-0 flex items-center justify-center shadow-2xl hover:shadow-3xl transition-all hover:scale-110 relative border-2 border-white/30 backdrop-blur-sm group"
                     size="icon"
                   >
-                    <QrCode className="h-5 w-5" />
-                    <span className="absolute -top-1 -right-1 text-[8px] bg-white text-orange-700 rounded-full px-1 py-0 font-bold animate-pulse">QR</span>
+                    <QrCode className="h-6 w-6 group-hover:rotate-12 transition-transform" />
+                    <span className="absolute -top-2 -right-2 text-[10px] bg-white text-orange-700 rounded-full px-2 py-1 font-bold animate-bounce">QR</span>
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-4 bg-white/95 backdrop-blur-sm border border-gray-200 shadow-2xl">
+                <PopoverContent className="w-auto p-6 bg-white/98 backdrop-blur-md border-2 border-gray-200/50 shadow-2xl rounded-2xl">
                   <div className="flex flex-col items-center">
-                    <div className="bg-white p-2 rounded-xl mb-2 shadow-inner">
+                    <div className="bg-white p-3 rounded-2xl mb-3 shadow-lg border border-gray-100">
                       <img 
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=https://liebefeld.lovable.app/`}
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://liebefeld.lovable.app/`}
                         alt="QR Code für Liebefeld App"
-                        width={140}
-                        height={140}
-                        className="rounded-lg"
+                        width={150}
+                        height={150}
+                        className="rounded-xl"
                       />
                     </div>
-                    <p className="text-sm text-center font-medium text-gray-700">Besuche unsere Webseite</p>
+                    <p className="text-sm text-center font-semibold text-gray-800">Besuche unsere Webseite</p>
                   </div>
                 </PopoverContent>
               </Popover>
             </div>
 
-            <div className="transition-opacity duration-500 ease-in-out mt-16 flex flex-col items-center max-w-4xl mx-auto">
-              <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center font-serif leading-tight">
+            <div className="transition-opacity duration-700 ease-in-out mt-20 flex flex-col items-center max-w-5xl mx-auto">
+              <h1 className="text-6xl md:text-7xl font-bold mb-6 text-center font-serif leading-tight tracking-wide">
                 {titleAnimating ? (
                   <>
                     <AnimatedText text="Entdecke den " delay={0.5} animationType="word" />
@@ -222,7 +231,7 @@ const Index = () => {
                   </>
                 ) : (
                   <span className="relative bg-gradient-to-r from-white via-gray-100 to-white bg-clip-text text-transparent">
-                    Entdecke den <span className="text-red-500 relative inline-block drop-shadow-lg">
+                    Entdecke den <span className="text-red-500 relative inline-block drop-shadow-2xl">
                       Puls
                     </span> der Stadt
                   </span>
@@ -231,43 +240,52 @@ const Index = () => {
               
               {showSubtitle && (
                 <p 
-                  className="text-xl md:text-2xl text-center max-w-2xl mb-8 transition-all duration-700 text-gray-100 leading-relaxed" 
+                  className="text-2xl md:text-3xl text-center max-w-3xl mb-10 transition-all duration-700 text-gray-100 leading-relaxed font-light tracking-wide" 
                   style={{ 
                     opacity: animationComplete ? 1 : 0, 
                     transform: animationComplete ? 'translateY(0)' : 'translateY(20px)'
                   }}
                 >
-                  Verbinde dich mit Events und Menschen aus deiner Stadt #Liebefeld
+                  Verbinde dich mit Events und Menschen aus deiner Stadt <span className="text-red-400 font-semibold">#Liebefeld</span>
                 </p>
               )}
               
-              <div className="flex gap-6 mb-12">
+              <div className="flex gap-8 mb-16">
                 <Button 
                   onClick={() => setTestModalOpen(true)}
-                  className="bg-gradient-to-r from-[#25D366] to-[#128C7E] hover:from-[#128C7E] hover:to-[#0d5d56] text-white rounded-full px-8 py-6 flex items-center justify-center shadow-2xl hover:shadow-3xl transition-all gap-3 animate-bounce-slow border-2 border-white/30 backdrop-blur-sm text-lg font-semibold"
+                  className="bg-gradient-to-r from-[#25D366] via-[#20C65A] to-[#128C7E] hover:from-[#128C7E] hover:to-[#0d5d56] text-white rounded-full px-10 py-8 flex items-center justify-center shadow-2xl hover:shadow-3xl transition-all gap-4 animate-bounce-slow border-3 border-white/40 backdrop-blur-sm text-xl font-bold tracking-wide group"
                   size="lg"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" className="h-6 w-6">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="white" className="h-7 w-7 group-hover:scale-110 transition-transform">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                   </svg>
-                  <span className="font-bold">Community beitreten</span>
+                  <span className="font-black tracking-wider">Community beitreten</span>
                 </Button>
               </div>
             </div>
             
-            <div className="w-full bg-black/90 backdrop-blur-md absolute bottom-0 left-0 border-t border-white/10">
+            <div className="w-full bg-black/95 backdrop-blur-lg absolute bottom-0 left-0 border-t border-white/20 shadow-xl">
               <LiveTickerWrapper />
             </div>
           </div>
         </div>
         
-        {/* Enhanced Community Gallery Section */}
-        <div className="bg-gradient-to-b from-gray-900 to-black py-12">
-          <div className="container mx-auto px-4">
+        {/* Premium Community Gallery Section */}
+        <div className="bg-gradient-to-b from-gray-900 via-black to-gray-800 py-16 border-y border-gray-700/50">
+          <div className="container mx-auto px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 font-serif bg-gradient-to-r from-white via-gray-200 to-white bg-clip-text text-transparent tracking-wide">
+                Unsere Community
+              </h2>
+              <p className="text-gray-300 text-xl max-w-3xl mx-auto leading-relaxed font-light">
+                Entdecke die lebendige Gemeinschaft, die unsere Stadt zum Leben erweckt
+              </p>
+            </div>
+            
             <ImageCarousel 
               images={communityImages}
-              className="w-full max-w-6xl mx-auto"
-              autoSlideInterval={8000}
+              className="w-full max-w-7xl mx-auto"
+              autoSlideInterval={10000}
             />
           </div>
         </div>
