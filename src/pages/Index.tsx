@@ -1,9 +1,11 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
 import EventChatBot from '@/components/EventChatBot';
 import InstagramFeed from '@/components/InstagramFeed';
 import CommunityTest from '@/components/CommunityTest';
+import ImageCarousel from '@/components/ImageCarousel';
 import { CalendarWithChat } from '@/components/calendar-chat';
 import BetaTesterBanner from '@/components/BetaTesterBanner';
 import PerfectDayPanel from '@/components/PerfectDayPanel';
