@@ -21,7 +21,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   compact = false
 }) => {
   return (
-    <div className={`px-4 py-3 ${isGroup ? 'bg-black' : 'bg-black'} text-white flex items-center justify-between border-b border-gray-800`}>
+    <div className={`px-4 py-3 ${isGroup ? 'bg-black' : 'bg-black'} text-white flex items-center justify-between border-b border-black`}>
       <h3 className="text-xl font-bold">{groupName}</h3>
       <div className="flex items-center space-x-2">
         {onOpenUserDirectory && (
@@ -29,7 +29,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             variant="outline" 
             size="icon"
             onClick={onOpenUserDirectory}
-            className="border-gray-700 text-white hover:text-red-400 hover:border-red-500"
+            className="border-black text-white hover:text-red-400 hover:border-red-500"
             title="Benutzerverzeichnis öffnen"
           >
             <Users className="h-5 w-5" />
@@ -46,7 +46,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             size="icon" 
             onClick={handleReconnect} 
             title="Neu verbinden"
-            className="border-gray-700 text-white hover:text-red-400 hover:border-red-500"
+            className="border-black text-white hover:text-red-400 hover:border-red-500"
           >
             <RefreshCw className="h-5 w-5" />
           </Button>

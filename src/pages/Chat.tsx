@@ -216,7 +216,7 @@ const ChatPage = () => {
             </div>
           </div>
           
-          <div className="flex-grow rounded-lg overflow-hidden border border-gray-800 flex flex-col bg-black">
+          <div className="flex-grow rounded-lg overflow-hidden border border-black flex flex-col bg-black">
             <div className="flex-grow relative">
               <EventChatBot 
                 fullPage={true} 

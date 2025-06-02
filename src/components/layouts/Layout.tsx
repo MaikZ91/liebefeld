@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -49,7 +48,7 @@ export const Layout: React.FC<LayoutProps> = ({
         </SheetContent>
       </Sheet>
       
-      <header className="sticky top-0 z-50 w-full bg-black/90 backdrop-blur-sm border-b border-gray-800">
+      <header className="sticky top-0 z-50 w-full bg-black/90 backdrop-blur-sm border-b border-black">
         <div className="container flex h-16 items-center">
           <MainNav />
           {pathname !== '/chat' && (
@@ -65,7 +64,7 @@ export const Layout: React.FC<LayoutProps> = ({
       </main>
       
       {!hideFooter && (
-        <footer className="border-t border-gray-800 bg-black">
+        <footer className="border-t border-black bg-black">
           <div className="container flex flex-col items-center justify-between gap-4 py-10 md:h-24 md:flex-row md:py-0">
             <div className="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
               <a href="/" className="flex items-center space-x-2">

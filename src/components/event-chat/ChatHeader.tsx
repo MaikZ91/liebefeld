@@ -12,7 +12,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   clearChatHistory 
 }) => {
   return (
-    <div className="flex items-center justify-between p-3 border-b border-red-500/20 bg-red-950/30 rounded-t-lg">
+    <div className="flex items-center justify-between p-3 border-b border-black bg-red-950/30 rounded-t-lg">
       <div className="flex items-center">
         <MessageCircle className="h-5 w-5 text-red-500 mr-2" />
         <h3 className="font-medium text-red-500">
@@ -26,7 +26,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
               <ChevronDown className="h-3 w-3" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-gray-800 border-gray-700 text-white">
+          <DropdownMenuContent className="bg-gray-800 border-black text-white">
             <DropdownMenuLabel>Chat-Verlauf</DropdownMenuLabel>
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={exportChatHistory} className="cursor-pointer">
