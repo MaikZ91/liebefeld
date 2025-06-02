@@ -21,8 +21,8 @@ const MessageList: React.FC<MessageListProps> = ({
         className={cn(
           "max-w-[85%] rounded-lg",
           message.isUser
-            ? "bg-red-500/10 dark:bg-red-950/30 border border-black ml-auto"
-            : "bg-zinc-900/50 dark:bg-zinc-800/50 border border-black"
+            ? "bg-black border border-black ml-auto"
+            : "bg-black border border-black"
         )}
       >
         {message.html ? (
@@ -48,7 +48,7 @@ const MessageList: React.FC<MessageListProps> = ({
         {renderMessages()}
         
         {isTyping && (
-          <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-black">
+          <div className="bg-black max-w-[85%] rounded-lg p-3 border border-black">
             <div className="flex space-x-2 items-center">
               <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
               <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
@@ -59,7 +59,7 @@ const MessageList: React.FC<MessageListProps> = ({
         
         {/* Display example prompts only if there's just the welcome message */}
         {messages.length === 1 && messages[0].id === 'welcome' && (
-          <div className="bg-zinc-900/50 dark:bg-zinc-800/50 max-w-[85%] rounded-lg p-3 border border-black mt-4">
+          <div className="bg-black max-w-[85%] rounded-lg p-3 border border-black mt-4">
             <p className="text-sm text-red-200 mb-2">
               Frag mich zum Beispiel:
             </p>
@@ -68,7 +68,7 @@ const MessageList: React.FC<MessageListProps> = ({
                 <Button
                   key={index}
                   variant="outline"
-                  className="text-left justify-start bg-red-900/20 hover:bg-red-900/30 text-red-200 border-black"
+                  className="text-left justify-start bg-black hover:bg-gray-900 text-red-200 border-black"
                   onClick={() => handleExamplePromptClick(prompt)}
                 >
                   "{prompt}"

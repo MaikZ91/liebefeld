@@ -128,7 +128,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         }
 
         formattedContent += `
-          <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-2 mb-2">
+          <div class="bg-black border border-black rounded-lg p-2 mb-2">
             ${title ? `<div class="font-bold">${title}</div>` : ''}
             <div>${details}</div>
           </div>
@@ -162,7 +162,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
               <PopoverTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="bg-black hover:bg-gray-900 border-gray-800 flex items-center gap-2 w-full sm:w-auto"
+                  className="bg-black hover:bg-gray-900 border-black flex items-center gap-2 w-full sm:w-auto"
                 >
                   <CalendarIcon className="h-4 w-4" />
                   <span>{date ? format(date, "dd.MM.yyyy") : "Datum wählen"}</span>
@@ -233,9 +233,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   
   return (
     <div 
-      className={`p-3 rounded-lg ${isConsecutive ? 'mt-1' : 'mt-2'} ${
-        isGroup ? 'bg-black text-white' : 'bg-black text-white'
-      } shadow-md w-full max-w-full overflow-hidden break-words`}
+      className={`p-3 rounded-lg ${isConsecutive ? 'mt-1' : 'mt-2'} bg-black text-white shadow-md w-full max-w-full overflow-hidden break-words`}
     >
       <div className="w-full max-w-full overflow-hidden break-words">
         {formatContent()}
