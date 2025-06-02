@@ -167,51 +167,51 @@ const ChatPage = () => {
       </div>
       <Layout hideFooter={true}>
         <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
-          {/* Header with all buttons */}
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <div className="flex space-x-1 sm:space-x-2">
-              <Button 
-                variant={activeView === 'ai' ? "default" : "outline"} 
-                size="sm" 
-                onClick={() => setActiveView('ai')} 
-                className={`flex items-center gap-1 text-xs sm:text-sm ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}
-              >
-                <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden xs:inline">Event</span>
-                <span className="hidden sm:inline">Assistent</span>
-              </Button>
-              <Button 
-                variant={activeView === 'community' ? "default" : "outline"} 
-                size="sm" 
-                onClick={() => setActiveView('community')} 
-                className={`flex items-center gap-1 text-xs sm:text-sm ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}
-              >
-                <Users className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Community</span>
-              </Button>
-            </div>
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-2xl font-bold text-red-500">
+              <div className="flex space-x-2">
+                <Button 
+                  variant={activeView === 'ai' ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={() => setActiveView('ai')} 
+                  className={`flex items-center gap-2 ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}
+                >
+                  <Calendar className="h-4 w-4" />
+                  Event Assistent
+                </Button>
+                <Button 
+                  variant={activeView === 'community' ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={() => setActiveView('community')} 
+                  className={`flex items-center gap-2 ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}
+                >
+                  <Users className="h-4 w-4" />
+                  Community
+                </Button>
+              </div>
+            </h1>
             
-            <div className="flex gap-1 sm:gap-2">
-              {/* User Directory Button */}
+            <div className="flex gap-2">
+              {/* User Directory Button - Between Community and Calendar */}
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={handleOpenUserDirectory} 
-                className="flex items-center gap-1 text-xs sm:text-sm"
+                className="flex items-center gap-2"
               >
-                <User className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Benutzer</span>
+                <User className="h-4 w-4" />
+                <span className="hidden md:inline">Benutzer</span>
               </Button>
               
-              {/* Calendar Events Button */}
+              {/* Calendar Events Button - Made more dominant with calendar icon and red color */}
               <Button 
                 variant="default" 
                 size="sm" 
                 onClick={() => setIsEventListSheetOpen(true)} 
-                className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white text-xs sm:text-sm"
+                className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white"
               >
-                <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Kalender</span>
+                <Calendar className="h-4 w-4" />
+                <span className="hidden md:inline">Events anzeigen</span>
               </Button>
             </div>
           </div>

@@ -70,7 +70,6 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
         activeChatModeValue={activeChatModeValue}
         communityGroupId={communityGroupId}
         onAddEvent={onAddEvent}
-        hideButtons={true}
       />
     );
   }

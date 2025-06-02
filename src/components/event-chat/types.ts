@@ -1,4 +1,3 @@
-
 import { RefObject } from 'react';
 import { UserProfile } from '@/types/chatTypes';
 
@@ -57,14 +56,6 @@ export interface ChatHeaderProps {
   handleToggleChat: () => void;
   exportChatHistory: () => void;
   clearChatHistory: () => void;
-}
-
-export interface FullPageChatBotProps {
-  chatLogic: any;
-  activeChatModeValue: 'ai' | 'community';
-  communityGroupId: string;
-  onAddEvent?: () => void;
-  hideButtons?: boolean;
 }
 
 export interface PersonalizationOptions {
