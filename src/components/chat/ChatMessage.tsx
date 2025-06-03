@@ -29,21 +29,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
   
-  // Auto-detect if the message looks like a calendar request
-  const detectCalendarRequest = () => {
-    if (typeof message !== 'string') return false;
-    
-    const lowerMessage = message.toLowerCase();
-    const dateKeywords = [
-      'wann', 'heute', 'morgen', 'datum', 'kalender', 'tag', 'monat',
-      'events', 'veranstaltungen', 'konzerte', 'party', 'festival',
-      'events gibt es', 'events am', 'events für', 'veranstaltungen am',
-      'welche', 'was gibt', 'was ist los', 'was läuft', 'was passiert'
-    ];
-    
-    return dateKeywords.some(keyword => lowerMessage.includes(keyword)) || showDateSelector;
-  };
-  
   // Check if message contains event information
   const containsEventInfo = (text: string): boolean => {
     if (!text) return false;
@@ -146,64 +131,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   const formatContent = () => {
     if (eventData) {
       return <EventMessageFormatter event={eventData} />;
-    }
-    
-    const hasDatePrompt = typeof message === 'string' && detectCalendarRequest();
-    
-    if (hasDatePrompt && onDateSelect) {
-      return (
-        <div className="space-y-2">
-          <div className="whitespace-pre-wrap">
-            {typeof message === 'string' ? renderMessageWithLinks(message) : message}
-          </div>
-          
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-3">
-            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  className="bg-black hover:bg-gray-900 border-black flex items-center gap-2 w-full sm:w-auto"
-                >
-                  <CalendarIcon className="h-4 w-4" />
-                  <span>{date ? format(date, "dd.MM.yyyy") : "Datum wählen"}</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={(newDate) => {
-                    if (newDate) {
-                      setDate(newDate);
-                      const formattedDate = format(newDate, "yyyy-MM-dd");
-                      
-                      // Close the calendar and submit with a small delay
-                      setCalendarOpen(false);
-                      
-                      // Auto-submit after date selection
-                      setTimeout(() => onDateSelect(formattedDate), 300);
-                    }
-                  }}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto bg-black text-white")}
-                />
-              </PopoverContent>
-            </Popover>
-            
-            <Button 
-              variant="default" 
-              className="bg-red-500 hover:bg-red-600 w-full sm:w-auto"
-              onClick={() => {
-                if (date) {
-                  onDateSelect(format(date, "yyyy-MM-dd"));
-                }
-              }}
-            >
-              Events anzeigen
-            </Button>
-          </div>
-        </div>
-      );
     }
     
     // For regular messages, render with links if it's a string
