@@ -164,54 +164,15 @@ const ChatPage = () => {
       <div className="w-full bg-black">
         <LiveTicker events={events} />
       </div>
-      <Layout hideFooter={true}>
+      <Layout 
+        hideFooter={true}
+        activeView={activeView}
+        setActiveView={setActiveView}
+        handleOpenUserDirectory={handleOpenUserDirectory}
+        setIsEventListSheetOpen={setIsEventListSheetOpen}
+      >
         <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex space-x-2">
-              <Button 
-                variant={activeView === 'ai' ? "default" : "outline"} 
-                size="sm" 
-                onClick={() => setActiveView('ai')} 
-                className={`flex items-center gap-2 ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}
-              >
-                <Calendar className="h-4 w-4" />
-                <span className="hidden sm:inline">Event Assistent</span>
-              </Button>
-              <Button 
-                variant={activeView === 'community' ? "default" : "outline"} 
-                size="sm" 
-                onClick={() => setActiveView('community')} 
-                className={`flex items-center gap-2 ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}
-              >
-                <Users className="h-4 w-4" />
-                <span className="hidden sm:inline">Community</span>
-              </Button>
-            </div>
-            
-            <div className="flex gap-2">
-              {/* User Directory Button */}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleOpenUserDirectory} 
-                className="flex items-center gap-2"
-              >
-                <User className="h-4 w-4" />
-                <span className="hidden md:inline">Benutzer</span>
-              </Button>
-              
-              {/* Calendar Events Button */}
-              <Button 
-                variant="default" 
-                size="sm" 
-                onClick={() => setIsEventListSheetOpen(true)} 
-                className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white"
-              >
-                <Calendar className="h-4 w-4" />
-                <span className="hidden md:inline">Events anzeigen</span>
-              </Button>
-            </div>
-          </div>
+          {/* Remove the button bar since buttons are now in header */}
           
           <div className="flex-grow rounded-lg overflow-hidden border border-black flex flex-col bg-black">
             <div className="flex-grow relative">
@@ -220,7 +181,8 @@ const ChatPage = () => {
                 onAddEvent={handleAddEvent} 
                 onToggleCommunity={handleToggleCommunity} 
                 activeChatMode={activeView} 
-                setActiveChatMode={setActiveView} 
+                setActiveChatMode={setActiveView}
+                hideButtons={true}
               />
             </div>
           </div>
