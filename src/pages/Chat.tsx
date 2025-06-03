@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
@@ -168,31 +167,29 @@ const ChatPage = () => {
       <Layout hideFooter={true}>
         <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-red-500">
-              <div className="flex space-x-2">
-                <Button 
-                  variant={activeView === 'ai' ? "default" : "outline"} 
-                  size="sm" 
-                  onClick={() => setActiveView('ai')} 
-                  className={`flex items-center gap-2 ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}
-                >
-                  <Calendar className="h-4 w-4" />
-                  Event Assistent
-                </Button>
-                <Button 
-                  variant={activeView === 'community' ? "default" : "outline"} 
-                  size="sm" 
-                  onClick={() => setActiveView('community')} 
-                  className={`flex items-center gap-2 ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}
-                >
-                  <Users className="h-4 w-4" />
-                  Community
-                </Button>
-              </div>
-            </h1>
+            <div className="flex space-x-2">
+              <Button 
+                variant={activeView === 'ai' ? "default" : "outline"} 
+                size="sm" 
+                onClick={() => setActiveView('ai')} 
+                className={`flex items-center gap-2 ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}
+              >
+                <Calendar className="h-4 w-4" />
+                <span className="hidden sm:inline">Event Assistent</span>
+              </Button>
+              <Button 
+                variant={activeView === 'community' ? "default" : "outline"} 
+                size="sm" 
+                onClick={() => setActiveView('community')} 
+                className={`flex items-center gap-2 ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}
+              >
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Community</span>
+              </Button>
+            </div>
             
             <div className="flex gap-2">
-              {/* User Directory Button - Between Community and Calendar */}
+              {/* User Directory Button */}
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -203,7 +200,7 @@ const ChatPage = () => {
                 <span className="hidden md:inline">Benutzer</span>
               </Button>
               
-              {/* Calendar Events Button - Made more dominant with calendar icon and red color */}
+              {/* Calendar Events Button */}
               <Button 
                 variant="default" 
                 size="sm" 

@@ -1,3 +1,4 @@
+
 import { RefObject } from 'react';
 import { UserProfile } from '@/types/chatTypes';
 
@@ -62,4 +63,12 @@ export interface PersonalizationOptions {
   userProfile: UserProfile | null;
   currentUser: string | null;
   userService: any;
+}
+
+export interface FullPageChatBotProps {
+  chatLogic: any;
+  activeChatModeValue: 'ai' | 'community';
+  communityGroupId: string;
+  onAddEvent?: () => void;
+  hideButtons?: boolean;
 }
