@@ -1,4 +1,3 @@
-
 import { RefObject } from 'react';
 import { UserProfile } from '@/types/chatTypes';
 
@@ -16,6 +15,7 @@ export interface EventChatBotProps {
   onToggleCommunity?: () => void; // New prop for toggling to community view
   activeChatMode?: 'ai' | 'community';
   setActiveChatMode?: (mode: 'ai' | 'community') => void;
+  hideButtons?: boolean;
 }
 
 // Local storage keys
