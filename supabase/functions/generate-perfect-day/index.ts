@@ -106,19 +106,17 @@ serve(async (req) => {
         
         messageContent += `\nWetter heute: ${currentWeather === 'sunny' ? '☀️ Sonnig' : '🌧️ Regnerisch'}\n\nViel Spaß bei deinem perfekten Tag! 💫`
 
-        // Insert message into chat
+        // Insert message into AI perfect day messages table instead of chat_messages
         const { error: insertError } = await supabase
-          .from('chat_messages')
+          .from('ai_perfect_day_messages')
           .insert({
-            group_id: '00000000-0000-4000-8000-000000000000',
-            sender: 'Perfect Day Bot',
-            text: messageContent,
-            avatar: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png',
+            username: subscription.username,
+            message: messageContent,
             created_at: new Date().toISOString()
           })
 
         if (insertError) {
-          console.error('Error inserting message:', insertError)
+          console.error('Error inserting AI perfect day message:', insertError)
           continue
         }
 
@@ -128,7 +126,7 @@ serve(async (req) => {
           .update({ last_sent_at: new Date().toISOString().split('T')[0] })
           .eq('id', subscription.id)
 
-        console.log(`Sent perfect day message to ${subscription.username}`)
+        console.log(`Sent perfect day message to AI chat for ${subscription.username}`)
 
       } catch (error) {
         console.error(`Error processing subscription for ${subscription.username}:`, error)
