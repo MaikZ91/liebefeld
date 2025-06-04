@@ -67,3 +67,35 @@ export const generateResponse = async (message: string, events: any[], heartMode
     throw error;
   }
 };
+
+// Generate personalized prompt based on user interests and locations
+export const generatePersonalizedPrompt = (interests: string[], locations: string[]): string => {
+  const interestText = interests.length > 0 ? interests.join(', ') : 'allgemeine Aktivitäten';
+  const locationText = locations.length > 0 ? locations.join(', ') : 'Liebefeld';
+  
+  return `Zeige mir Events und Aktivitäten für meine Interessen: ${interestText} in der Nähe von ${locationText}. Berücksichtige dabei mein Profil für personalisierte Empfehlungen.`;
+};
+
+// Extract all locations from events or other sources
+export const extractAllLocations = (events: any[]): string[] => {
+  const locations = new Set<string>();
+  
+  events.forEach(event => {
+    if (event.location) {
+      locations.add(event.location);
+    }
+    if (event.venue) {
+      locations.add(event.venue);
+    }
+    if (event.address) {
+      locations.add(event.address);
+    }
+  });
+  
+  // Add default locations
+  locations.add('Liebefeld');
+  locations.add('Bern');
+  locations.add('Köniz');
+  
+  return Array.from(locations).filter(Boolean);
+};
