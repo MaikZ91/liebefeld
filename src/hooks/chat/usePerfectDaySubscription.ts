@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-export const usePerfectDaySubscription = (username: string, onNewMessage?: (message: string) => void) => {
+export const usePerfectDaySubscription = (username: string) => {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -12,38 +12,6 @@ export const usePerfectDaySubscription = (username: string, onNewMessage?: (mess
   useEffect(() => {
     checkSubscriptionStatus();
   }, [username]);
-
-  // Listen for Perfect Day messages targeted at this user
-  useEffect(() => {
-    if (!username || username === 'Anonymous' || !onNewMessage) return;
-
-    const channel = supabase
-      .channel('perfect_day_messages')
-      .on('postgres_changes', 
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'ai_perfect_day_messages',
-          filter: `username=eq.${username}`
-        }, 
-        (payload) => {
-          const newMessage = payload.new as any;
-          if (newMessage.message) {
-            onNewMessage(newMessage.message);
-            toast({
-              title: "Perfect Day Nachricht",
-              description: "Du hast eine neue personalisierte Tagesempfehlung erhalten!",
-              variant: "default"
-            });
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [username, onNewMessage, toast]);
 
   const checkSubscriptionStatus = async () => {
     if (!username || username === 'Anonymous') return;
@@ -91,7 +59,7 @@ export const usePerfectDaySubscription = (username: string, onNewMessage?: (mess
       if (!isSubscribed) {
         toast({
           title: "Abonniert!",
-          description: "Du erhältst ab sofort täglich um 8:00 Uhr Perfect Day Vorschläge im AI Chat.",
+          description: "Du erhältst ab sofort täglich um 8:00 Uhr Perfect Day Vorschläge.",
           variant: "default"
         });
       } else {

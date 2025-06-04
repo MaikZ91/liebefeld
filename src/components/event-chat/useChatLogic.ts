@@ -3,13 +3,11 @@ import { ChatMessage, CHAT_HISTORY_KEY, CHAT_QUERIES_KEY } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { generateResponse, getWelcomeMessage, createResponseHeader } from '@/utils/chatUtils';
 import { toast } from 'sonner';
-import { usePerfectDaySubscription } from '@/hooks/chat/usePerfectDaySubscription';
 
 export const useChatLogic = (
   events: any[],
   fullPage: boolean = false,
-  activeChatModeValue: 'ai' | 'community' = 'ai',
-  username?: string
+  activeChatModeValue: 'ai' | 'community' = 'ai'
 ) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(fullPage);
@@ -24,28 +22,6 @@ export const useChatLogic = (
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const welcomeMessageShownRef = useRef(false);
-  
-  // Handle Perfect Day messages
-  const handlePerfectDayMessage = (message: string) => {
-    const perfectDayMessage: ChatMessage = {
-      id: `perfect-day-${Date.now()}`,
-      isUser: false,
-      text: 'Perfect Day Empfehlung',
-      html: `${createResponseHeader("Perfect Day Bot")}
-      <div class="bg-gradient-to-r from-yellow-900/20 to-orange-900/20 border border-yellow-700/30 rounded-lg p-3 text-sm">
-        ${message.replace(/\n/g, '<br/>')}
-      </div>`,
-      timestamp: new Date().toISOString()
-    };
-    
-    setMessages(prev => [...prev, perfectDayMessage]);
-  };
-
-  // Use Perfect Day subscription hook
-  const { isSubscribed, loading, toggleSubscription } = usePerfectDaySubscription(
-    username || 'Anonymous',
-    handlePerfectDayMessage
-  );
   
   // Example prompts that users can click on
   const examplePrompts = [
@@ -453,10 +429,6 @@ export const useChatLogic = (
     handleHeartClick,
     toggleRecentQueries,
     clearChatHistory,
-    exportChatHistory,
-    // Perfect Day subscription functions
-    isSubscribed,
-    loading: loading,
-    toggleSubscription
+    exportChatHistory
   };
 };

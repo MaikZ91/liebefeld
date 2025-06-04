@@ -16,8 +16,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
   onAddEvent, 
   onToggleCommunity,
   activeChatMode,
-  setActiveChatMode,
-  hideButtons = false
+  setActiveChatMode
 }) => {
   // Use the prop value if provided, otherwise use internal state
   const [internalActiveChatMode, setInternalActiveChatMode] = useState<'ai' | 'community'>('ai');
@@ -30,8 +29,8 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
   const [communityGroupId, setCommunityGroupId] = useState('general');  // Default group ID
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
-  // Use the chat logic hook to manage state and functions, passing username for Perfect Day
-  const chatLogic = useChatLogic(events, fullPage, activeChatModeValue, userProfile?.username);
+  // Use the chat logic hook to manage state and functions
+  const chatLogic = useChatLogic(events, fullPage, activeChatModeValue);
   
   // Use personalization hook
   const { sendPersonalizedQuery } = usePersonalization(
@@ -71,7 +70,6 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
         activeChatModeValue={activeChatModeValue}
         communityGroupId={communityGroupId}
         onAddEvent={onAddEvent}
-        hideButtons={hideButtons}
       />
     );
   }
@@ -88,7 +86,6 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
           communityGroupId={communityGroupId}
           fullPage={fullPage}
           onAddEvent={onAddEvent}
-          hideButtons={hideButtons}
         />
       ) : (
         <button
