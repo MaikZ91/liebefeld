@@ -1,9 +1,10 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Calendar, MessageSquare, List, Users, Bot, User } from "lucide-react";
+import { PlusCircle, Calendar, MessageSquare, List, Users, User } from "lucide-react";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -152,8 +153,8 @@ const MainNav: React.FC<MainNavProps> = ({
               onClick={() => setActiveView?.('ai')} 
               className={`flex items-center gap-2 ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}
             >
-              <Bot className="h-4 w-4" />
-              <span className="hidden sm:inline">Event Bot</span>
+              <Calendar className="h-4 w-4" />
+              <span className="hidden sm:inline">Event Assistent</span>
             </Button>
             <Button 
               variant={activeView === 'community' ? "default" : "outline"} 
