@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Calendar, MessageSquare, List, Users, Bot } from "lucide-react";
+import { PlusCircle, Calendar, MessageSquare, List, Users, Bot, User } from "lucide-react";
 
 interface LayoutProps {
   children: React.ReactNode;
