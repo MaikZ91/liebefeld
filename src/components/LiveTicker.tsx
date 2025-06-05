@@ -96,77 +96,101 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef }) => {
   }
 
   return (
-    <div 
-      className="text-white overflow-hidden py-0.5 relative"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-      ref={tickerRef}
-    >
-      <div className="absolute left-0 top-0 bottom-0 flex items-center z-10 bg-red-600 px-2 py-0.5">
-        <Calendar className="w-3.5 h-3.5 mr-1" />
-        <span className="font-bold text-xs whitespace-nowrap">Top Events</span>
-        <ArrowRight className="w-3.5 h-3.5 ml-1" />
-      </div>
-      
-      <div className="absolute left-[100px] top-0 bottom-0 w-8 bg-gradient-to-r from-black to-transparent z-[5]"></div>
-      <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black to-transparent z-[5]"></div>
-      
-      <div className="ml-[120px] mr-2 overflow-hidden">
-        <div 
-          ref={innerTickerRef}
-          className={`whitespace-nowrap inline-block ${isPaused ? 'ticker-paused' : 'ticker-scroll'}`}
-        >
-          {[...tickerEvents, ...tickerEvents].map((event, index) => (
-            <div 
-              key={`${event.id}-${index}`} 
-              className="inline-block mx-3"
-            >
-              <span className="inline-flex items-center">
-                <span className="text-red-500 font-semibold mr-1 text-sm">
-                  {(() => {
-                    try {
-                      const date = parseISO(event.date);
-                      return format(date, 'dd.MM', { locale: de });
-                    } catch (error) {
-                      console.error(`Failed to format date: ${event.date}`, error);
-                      return 'Datum?';
-                    }
-                  })()}:
-                </span>
-                <span className="text-white mr-1 text-sm">{event.title}</span>
-                <span className="text-gray-400 text-xs mr-1">({event.location || 'Keine Ortsangabe'})</span>
-                <span className="text-yellow-500 text-xs flex items-center">
-                  <ThumbsUp className="w-3 h-3 mr-0.5" /> 
-                  {typeof event.likes === 'number' ? event.likes : 0}
-                </span>
-              </span>
-              <span className="mx-2 text-red-500">•</span>
-            </div>
-          ))}
+    <div className="relative">
+      <div 
+        className="text-white overflow-hidden py-0.5 relative"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+        ref={tickerRef}
+      >
+        <div className="absolute left-0 top-0 bottom-0 flex items-center z-10 bg-red-600 px-2 py-0.5">
+          <Calendar className="w-3.5 h-3.5 mr-1" />
+          <ArrowRight className="w-3.5 h-3.5 ml-1" />
         </div>
+        
+        <div className="absolute left-[60px] top-0 bottom-0 w-8 bg-gradient-to-r from-black to-transparent z-[5]"></div>
+        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black to-transparent z-[5]"></div>
+        
+        <div className="ml-[80px] mr-2 overflow-hidden">
+          <div 
+            ref={innerTickerRef}
+            className={`whitespace-nowrap inline-block ${isPaused ? 'ticker-paused' : 'ticker-scroll'}`}
+          >
+            {[...tickerEvents, ...tickerEvents].map((event, index) => (
+              <div 
+                key={`${event.id}-${index}`} 
+                className="inline-block mx-3"
+              >
+                <span className="inline-flex items-center">
+                  <span className="text-red-500 font-semibold mr-1 text-sm">
+                    {(() => {
+                      try {
+                        const date = parseISO(event.date);
+                        return format(date, 'dd.MM', { locale: de });
+                      } catch (error) {
+                        console.error(`Failed to format date: ${event.date}`, error);
+                        return 'Datum?';
+                      }
+                    })()}:
+                  </span>
+                  <span className="text-white mr-1 text-sm">{event.title}</span>
+                  <span className="text-gray-400 text-xs mr-1">({event.location || 'Keine Ortsangabe'})</span>
+                  <span className="text-yellow-500 text-xs flex items-center">
+                    <ThumbsUp className="w-3 h-3 mr-0.5" /> 
+                    {typeof event.likes === 'number' ? event.likes : 0}
+                  </span>
+                </span>
+                <span className="mx-2 text-red-500">•</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <style>
+          {`
+            @keyframes ticker {
+              0% {
+                transform: translateX(0);
+              }
+              100% {
+                transform: translateX(-50%);
+              }
+            }
+            
+            .ticker-scroll {
+              animation: ticker 120s linear infinite;
+            }
+            
+            .ticker-paused {
+              animation: ticker 120s linear infinite;
+              animation-play-state: paused;
+            }
+          `}
+        </style>
       </div>
       
-      <style>
-        {`
-          @keyframes ticker {
-            0% {
-              transform: translateX(0);
+      {/* Animated red line below ticker */}
+      <div className="w-full h-0.5 bg-black relative overflow-hidden">
+        <div className="absolute top-0 left-0 h-full w-full bg-gradient-to-r from-transparent via-red-500 to-transparent animate-pulse"></div>
+        <div className="absolute top-0 left-0 h-full w-8 bg-red-500 animate-bounce"></div>
+        <style>
+          {`
+            @keyframes slide {
+              0% {
+                transform: translateX(-100%);
+              }
+              100% {
+                transform: translateX(100vw);
+              }
             }
-            100% {
-              transform: translateX(-50%);
+            
+            .animate-slide {
+              animation: slide 3s linear infinite;
             }
-          }
-          
-          .ticker-scroll {
-            animation: ticker 120s linear infinite;
-          }
-          
-          .ticker-paused {
-            animation: ticker 120s linear infinite;
-            animation-play-state: paused;
-          }
-        `}
-      </style>
+          `}
+        </style>
+        <div className="absolute top-0 left-0 h-full w-16 bg-gradient-to-r from-red-600 to-red-400 animate-slide"></div>
+      </div>
     </div>
   );
 };
