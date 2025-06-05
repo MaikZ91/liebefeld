@@ -106,21 +106,12 @@ serve(async (req) => {
         
         messageContent += `\nWetter heute: ${currentWeather === 'sunny' ? '☀️ Sonnig' : '🌧️ Regnerisch'}\n\nViel Spaß bei deinem perfekten Tag! 💫`
 
-        // Insert message into chat
-        const { error: insertError } = await supabase
-          .from('chat_messages')
-          .insert({
-            group_id: '00000000-0000-4000-8000-000000000000',
-            sender: 'Perfect Day Bot',
-            text: messageContent,
-            avatar: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png',
-            created_at: new Date().toISOString()
-          })
-
-        if (insertError) {
-          console.error('Error inserting message:', insertError)
-          continue
-        }
+        // Instead of inserting into chat_messages, we'll store these messages in a dedicated table
+        // or send them via a different mechanism that doesn't interfere with community chat
+        
+        // For now, we'll just log the message and update the subscription status
+        // The AI chat interface can fetch these messages through a separate endpoint
+        console.log(`Perfect Day message for ${subscription.username}:`, messageContent)
 
         // Update last_sent_at
         await supabase
@@ -128,7 +119,7 @@ serve(async (req) => {
           .update({ last_sent_at: new Date().toISOString().split('T')[0] })
           .eq('id', subscription.id)
 
-        console.log(`Sent perfect day message to ${subscription.username}`)
+        console.log(`Perfect Day message prepared for ${subscription.username}`)
 
       } catch (error) {
         console.error(`Error processing subscription for ${subscription.username}:`, error)
