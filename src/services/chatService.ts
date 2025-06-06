@@ -1,6 +1,9 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { reactionService } from './reactionService';
+import { messageService } from './messageService';
+import { subscriptionService } from './subscriptionService';
+import { typingService } from './typingService';
 
 export const chatService = {
   async sendMessage(groupId: string, content: string, username: string, avatar?: string) {
@@ -9,9 +12,9 @@ export const chatService = {
         .from('chat_messages')
         .insert({
           group_id: groupId,
-          content,
-          user_name: username,
-          user_avatar: avatar || null,
+          text: content, // Use 'text' instead of 'content'
+          sender: username, // Use 'sender' instead of 'user_name'
+          avatar: avatar || null,
         })
         .select()
         .single();
@@ -43,5 +46,17 @@ export const chatService = {
 
   async toggleReaction(messageId: string, emoji: string, username: string) {
     return await reactionService.toggleReaction(messageId, emoji, username);
-  }
+  },
+
+  // Restore missing methods from other services
+  enableRealtime: messageService.enableRealtime,
+  fetchMessages: messageService.fetchMessages,
+  markMessagesAsRead: messageService.markMessagesAsRead,
+  
+  // Subscription operations
+  createMessageSubscription: subscriptionService.createMessageSubscription,
+  
+  // Typing indicator operations
+  sendTypingStatus: typingService.sendTypingStatus,
+  createTypingSubscription: typingService.createTypingSubscription
 };
