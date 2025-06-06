@@ -177,18 +177,19 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   
   const messageContent = (
     <div 
-      className={`p-3 rounded-lg ${isConsecutive ? 'mt-0.5' : 'mt-1'} bg-black text-white shadow-md w-full max-w-full overflow-hidden break-words`}
+      className={`group p-3 rounded-lg ${isConsecutive ? 'mt-0.5' : 'mt-1'} bg-black text-white shadow-md w-full max-w-full overflow-hidden break-words hover:bg-gray-900/50 transition-colors duration-200`}
     >
       <div className="w-full max-w-full overflow-hidden break-words">
         {formatContent()}
       </div>
-      {reactions && reactions.length > 0 && (
+      {(reactions && reactions.length > 0) || (onReact && messageId && isGroup) ? (
         <MessageReactions
           reactions={reactions}
           onReact={handleReact}
           currentUsername={currentUsername}
+          showAddButton={onReact && messageId && isGroup}
         />
-      )}
+      ) : null}
     </div>
   );
 

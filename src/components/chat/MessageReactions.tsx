@@ -1,39 +1,48 @@
 
 import React from 'react';
-import { Smile, ThumbsUp, Heart, Laugh, Angry } from 'lucide-react';
+import ReactionBar from './ReactionBar';
+import EmojiPicker from './EmojiPicker';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 interface MessageReactionsProps {
   reactions: { emoji: string; users: string[] }[];
   onReact: (emoji: string) => void;
   currentUsername: string;
+  showAddButton?: boolean;
 }
 
 const MessageReactions: React.FC<MessageReactionsProps> = ({
   reactions,
   onReact,
-  currentUsername
+  currentUsername,
+  showAddButton = true
 }) => {
-  if (!reactions || reactions.length === 0) return null;
+  const hasReactions = reactions && reactions.length > 0;
 
   return (
-    <div className="flex flex-wrap gap-1 mt-1">
-      {reactions.map((reaction, index) => {
-        const hasUserReacted = reaction.users.includes(currentUsername);
-        return (
-          <button
-            key={index}
-            onClick={() => onReact(reaction.emoji)}
-            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs border transition-colors ${
-              hasUserReacted
-                ? 'bg-red-500/20 border-red-500 text-red-400'
-                : 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700'
-            }`}
-          >
-            <span>{reaction.emoji}</span>
-            <span>{reaction.users.length}</span>
-          </button>
-        );
-      })}
+    <div className="flex items-start gap-2 mt-1">
+      {hasReactions && (
+        <ReactionBar
+          reactions={reactions}
+          onReact={onReact}
+          currentUsername={currentUsername}
+        />
+      )}
+      {showAddButton && (
+        <EmojiPicker
+          onEmojiSelect={onReact}
+          trigger={
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 opacity-0 group-hover:opacity-100 transition-all duration-200"
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
+          }
+        />
+      )}
     </div>
   );
 };

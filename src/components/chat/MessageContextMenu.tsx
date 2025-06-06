@@ -5,22 +5,17 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
+  ContextMenuSeparator,
 } from '@/components/ui/context-menu';
-import { Smile, ThumbsUp, Heart, Laugh, Angry } from 'lucide-react';
+import EmojiPicker from './EmojiPicker';
+import { Button } from '@/components/ui/button';
 
 interface MessageContextMenuProps {
   children: React.ReactNode;
   onReact: (emoji: string) => void;
 }
 
-const reactionEmojis = [
-  { emoji: '👍', icon: ThumbsUp, label: 'Daumen hoch' },
-  { emoji: '❤️', icon: Heart, label: 'Herz' },
-  { emoji: '😂', icon: Laugh, label: 'Lachen' },
-  { emoji: '😮', icon: Smile, label: 'Überrascht' },
-  { emoji: '😢', icon: Angry, label: 'Traurig' },
-  { emoji: '😡', icon: Angry, label: 'Wütend' },
-];
+const quickReactions = ['👍', '❤️', '😂', '😮', '😢', '😡'];
 
 const MessageContextMenu: React.FC<MessageContextMenuProps> = ({
   children,
@@ -31,21 +26,38 @@ const MessageContextMenu: React.FC<MessageContextMenuProps> = ({
       <ContextMenuTrigger asChild>
         {children}
       </ContextMenuTrigger>
-      <ContextMenuContent className="w-48 bg-black border-gray-700">
-        <div className="p-2">
-          <div className="text-xs text-gray-400 mb-2">Reaktion hinzufügen</div>
-          <div className="grid grid-cols-3 gap-2">
-            {reactionEmojis.map((reaction) => (
-              <ContextMenuItem
-                key={reaction.emoji}
-                onClick={() => onReact(reaction.emoji)}
-                className="flex items-center justify-center p-2 rounded hover:bg-gray-800 cursor-pointer"
+      <ContextMenuContent className="w-64 bg-gray-900 border-gray-700 p-2">
+        <div className="mb-2">
+          <div className="text-xs text-gray-400 mb-2 px-2">Schnelle Reaktionen</div>
+          <div className="flex gap-1 justify-center">
+            {quickReactions.map((emoji) => (
+              <Button
+                key={emoji}
+                variant="ghost"
+                className="h-10 w-10 p-0 text-lg hover:bg-gray-800 transition-colors"
+                onClick={() => onReact(emoji)}
               >
-                <span className="text-lg">{reaction.emoji}</span>
-              </ContextMenuItem>
+                {emoji}
+              </Button>
             ))}
           </div>
         </div>
+        
+        <ContextMenuSeparator className="bg-gray-700" />
+        
+        <ContextMenuItem className="p-0 focus:bg-transparent">
+          <EmojiPicker
+            onEmojiSelect={onReact}
+            trigger={
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-gray-300 hover:bg-gray-800 h-8"
+              >
+                Alle Emojis anzeigen...
+              </Button>
+            }
+          />
+        </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
   );
