@@ -44,6 +44,7 @@ export interface Message {
   group_id: string;
   event_data?: EventShare;
   read_by?: string[];
+  reactions?: { emoji: string; users: string[] }[];
 }
 
 export interface ChatGroup {

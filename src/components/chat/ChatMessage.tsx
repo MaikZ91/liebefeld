@@ -8,6 +8,8 @@ import { format } from "date-fns";
 import { CalendarIcon, Link as LinkIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import EventMessageFormatter from './EventMessageFormatter';
+import MessageContextMenu from './MessageContextMenu';
+import MessageReactions from './MessageReactions';
 
 interface ChatMessageProps {
   message: string | React.ReactNode;
@@ -16,6 +18,10 @@ interface ChatMessageProps {
   eventData?: EventShare;
   onDateSelect?: (date: string) => void;
   showDateSelector?: boolean;
+  reactions?: { emoji: string; users: string[] }[];
+  onReact?: (emoji: string) => void;
+  currentUsername?: string;
+  messageId?: string;
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ 
@@ -24,7 +30,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   isGroup = false,
   eventData,
   onDateSelect,
-  showDateSelector = false
+  showDateSelector = false,
+  reactions = [],
+  onReact,
+  currentUsername = '',
+  messageId
 }) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -157,16 +167,40 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       </div>
     );
   };
+
+  const handleReact = (emoji: string) => {
+    if (onReact && messageId) {
+      onReact(emoji);
+    }
+  };
   
-  return (
+  const messageContent = (
     <div 
       className={`p-3 rounded-lg ${isConsecutive ? 'mt-0.5' : 'mt-1'} bg-black text-white shadow-md w-full max-w-full overflow-hidden break-words`}
     >
       <div className="w-full max-w-full overflow-hidden break-words">
         {formatContent()}
       </div>
+      {reactions.length > 0 && (
+        <MessageReactions
+          reactions={reactions}
+          onReact={handleReact}
+          currentUsername={currentUsername}
+        />
+      )}
     </div>
   );
+
+  // Only wrap in context menu if we have reaction capability
+  if (onReact && messageId) {
+    return (
+      <MessageContextMenu onReact={handleReact}>
+        {messageContent}
+      </MessageContextMenu>
+    );
+  }
+
+  return messageContent;
 };
 
 export default ChatMessage;

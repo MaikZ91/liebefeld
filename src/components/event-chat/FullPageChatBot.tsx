@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
@@ -10,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/chatUIUtils';
 import TypingIndicator from '@/components/chat/TypingIndicator';
 import ChatMessage from '@/components/chat/ChatMessage';
+import { chatService } from '@/services/chatService';
 
 /**
  * Hinweis: Für die unsichtbaren Scrollleisten wird das Tailwind-Plugin
@@ -91,6 +91,15 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     if (diff < 60) return `vor ${diff}m`;
     if (diff < 24 * 60) return `vor ${Math.floor(diff / 60)}h`;
     return `vor ${Math.floor(diff / 1440)}d`;
+  };
+
+  // Handle reaction toggle
+  const handleReaction = async (messageId: string, emoji: string) => {
+    try {
+      await chatService.toggleReaction(messageId, emoji, username);
+    } catch (error) {
+      console.error('Error toggling reaction:', error);
+    }
   };
 
   const handleUnifiedSendMessage = async () => {
@@ -218,6 +227,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                           message={message.content}
                           isConsecutive={isConsecutive}
                           isGroup
+                          messageId={message.id}
+                          reactions={message.reactions || []}
+                          onReact={(emoji) => handleReaction(message.id, emoji)}
+                          currentUsername={username}
                         />
                       </div>
                     </div>

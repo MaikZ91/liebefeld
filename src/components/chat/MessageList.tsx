@@ -8,6 +8,7 @@ import TypingIndicator from './TypingIndicator';
 import { Message, TypingUser, EventShare } from '@/types/chatTypes';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ChatLoadingSkeleton from './ChatLoadingSkeleton';
+import { chatService } from '@/services/chatService';
 
 interface MessageListProps {
   messages: Message[];
@@ -69,6 +70,15 @@ const MessageList: React.FC<MessageListProps> = ({
     }
   };
 
+  // Handle reaction toggle
+  const handleReaction = async (messageId: string, emoji: string) => {
+    try {
+      await chatService.toggleReaction(messageId, emoji, username);
+    } catch (error) {
+      console.error('Error toggling reaction:', error);
+    }
+  };
+
   // Show loading skeleton during initial load
   if (loading) {
     return <ChatLoadingSkeleton />;
@@ -123,6 +133,10 @@ const MessageList: React.FC<MessageListProps> = ({
                     isConsecutive={isConsecutive}
                     isGroup={isGroup}
                     eventData={eventData}
+                    messageId={message.id}
+                    reactions={message.reactions || []}
+                    onReact={(emoji) => handleReaction(message.id, emoji)}
+                    currentUsername={username}
                   />
                 </div>
               </div>
