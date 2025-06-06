@@ -170,6 +170,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 
   const handleReact = (emoji: string) => {
     if (onReact && messageId) {
+      console.log('ChatMessage: handling reaction', emoji, messageId);
       onReact(emoji);
     }
   };
@@ -181,7 +182,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       <div className="w-full max-w-full overflow-hidden break-words">
         {formatContent()}
       </div>
-      {reactions.length > 0 && (
+      {reactions && reactions.length > 0 && (
         <MessageReactions
           reactions={reactions}
           onReact={handleReact}
@@ -191,8 +192,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     </div>
   );
 
-  // Only wrap in context menu if we have reaction capability
-  if (onReact && messageId) {
+  // Only wrap in context menu if we have reaction capability AND we're in group mode
+  if (onReact && messageId && isGroup) {
     return (
       <MessageContextMenu onReact={handleReact}>
         {messageContent}

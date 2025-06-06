@@ -1,28 +1,47 @@
 
-import { messageService } from './messageService';
+import { supabase } from '@/integrations/supabase/client';
 import { reactionService } from './reactionService';
-import { subscriptionService } from './subscriptionService';
-import { typingService } from './typingService';
-import { Message, TypingUser } from '@/types/chatTypes';
 
-/**
- * Central service that exports all chat-related functionality.
- * This is a facade that provides access to the specialized services.
- */
 export const chatService = {
-  // Message operations
-  enableRealtime: messageService.enableRealtime,
-  fetchMessages: messageService.fetchMessages,
-  markMessagesAsRead: messageService.markMessagesAsRead,
-  sendMessage: messageService.sendMessage,
-  
-  // Reaction operations
-  toggleReaction: reactionService?.toggleReaction || (() => Promise.resolve(false)),
-  
-  // Typing indicator operations
-  sendTypingStatus: typingService.sendTypingStatus,
-  createTypingSubscription: typingService.createTypingSubscription,
-  
-  // Subscription operations
-  createMessageSubscription: subscriptionService.createMessageSubscription
+  async sendMessage(groupId: string, content: string, username: string, avatar?: string) {
+    try {
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .insert({
+          group_id: groupId,
+          content,
+          user_name: username,
+          user_avatar: avatar || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error sending message:', error);
+      throw error;
+    }
+  },
+
+  async getMessages(groupId: string, limit = 50) {
+    try {
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('group_id', groupId)
+        .order('created_at', { ascending: true })
+        .limit(limit);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      throw error;
+    }
+  },
+
+  async toggleReaction(messageId: string, emoji: string, username: string) {
+    return await reactionService.toggleReaction(messageId, emoji, username);
+  }
 };

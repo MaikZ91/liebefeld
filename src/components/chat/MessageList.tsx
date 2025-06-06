@@ -73,6 +73,7 @@ const MessageList: React.FC<MessageListProps> = ({
   // Handle reaction toggle
   const handleReaction = async (messageId: string, emoji: string) => {
     try {
+      console.log('Toggling reaction:', messageId, emoji, username);
       await chatService.toggleReaction(messageId, emoji, username);
     } catch (error) {
       console.error('Error toggling reaction:', error);
@@ -116,7 +117,7 @@ const MessageList: React.FC<MessageListProps> = ({
             }
 
             return (
-              <div key={message.id} className="mb-2 w-full max-w-full overflow-hidden">
+              <div key={message.id} className="mb-1 w-full max-w-full overflow-hidden">
                 {!isConsecutive && (
                   <div className="flex items-center mb-1">
                     <Avatar className={`h-8 w-8 mr-2 flex-shrink-0 ${isGroup ? 'border-red-500' : ''}`}>
