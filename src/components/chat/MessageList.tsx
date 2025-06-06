@@ -81,7 +81,7 @@ const MessageList: React.FC<MessageListProps> = ({
       )}
 
       <ScrollArea className="h-full w-full pr-2 flex-grow" type={isMobile ? "always" : "hover"}>
-        <div className="flex flex-col space-y-3 w-full max-w-full pb-4">
+        <div className="flex flex-col space-y-2 w-full max-w-full pb-4">
           {messages.length === 0 && !loading && !error && (
             <div className="text-center text-gray-400 py-4">No messages yet. Start the conversation!</div>
           )}
@@ -106,9 +106,9 @@ const MessageList: React.FC<MessageListProps> = ({
             }
 
             return (
-              <div key={message.id} className="mb-4 w-full max-w-full overflow-hidden">
+              <div key={message.id} className="mb-2 w-full max-w-full overflow-hidden">
                 {!isConsecutive && (
-                  <div className="flex items-center mb-2">
+                  <div className="flex items-center mb-1">
                     <Avatar className={`h-8 w-8 mr-2 flex-shrink-0 ${isGroup ? 'border-red-500' : ''}`}>
                       <AvatarImage src={message.user_avatar} alt={message.user_name} />
                       <AvatarFallback className="bg-red-500 text-white">{getInitials(message.user_name)}</AvatarFallback>

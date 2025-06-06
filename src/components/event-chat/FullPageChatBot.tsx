@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
@@ -184,7 +185,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               ref={chatContainerRef}
               className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4"
             >
-              <div className="space-y-4 py-4">
+              <div className="space-y-2 py-4">
                 {communityMessages.length === 0 && !communityLoading && !communityError && (
                   <div className="text-center text-gray-400 py-4">
                     Noch keine Nachrichten. Starte die Unterhaltung!
@@ -199,7 +200,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                   return (
                     <div key={message.id} className="w-full">
                       {!isConsecutive && (
-                        <div className="flex items-center mb-2">
+                        <div className="flex items-center mb-1">
                           <Avatar className="h-8 w-8 mr-2 flex-shrink-0 border-red-500">
                             <AvatarImage src={message.user_avatar} alt={message.user_name} />
                             <AvatarFallback className="bg-red-500 text-white">
