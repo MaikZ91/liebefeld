@@ -169,9 +169,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   };
 
   const handleReact = (emoji: string) => {
+    console.log('ChatMessage: handling reaction', { emoji, messageId, currentUsername });
     if (onReact && messageId) {
-      console.log('ChatMessage: handling reaction', emoji, messageId);
       onReact(emoji);
+    } else {
+      console.warn('ChatMessage: Missing onReact handler or messageId', { onReact: !!onReact, messageId });
     }
   };
   

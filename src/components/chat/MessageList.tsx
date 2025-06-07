@@ -71,13 +71,20 @@ const MessageList: React.FC<MessageListProps> = ({
   };
 
   // Handle reaction toggle
-  const handleReaction = async (messageId: string, emoji: string) => {
-    try {
-      console.log('Toggling reaction:', messageId, emoji, username);
-      await chatService.toggleReaction(messageId, emoji, username);
-    } catch (error) {
-      console.error('Error toggling reaction:', error);
-    }
+  const handleReaction = async (messageId: string) => {
+    return async (emoji: string) => {
+      try {
+        console.log('MessageList: Toggling reaction:', { messageId, emoji, username });
+        const success = await chatService.toggleReaction(messageId, emoji, username);
+        if (!success) {
+          console.error('Failed to toggle reaction');
+        } else {
+          console.log('Reaction toggled successfully');
+        }
+      } catch (error) {
+        console.error('Error toggling reaction:', error);
+      }
+    };
   };
 
   // Show loading skeleton during initial load
@@ -136,7 +143,7 @@ const MessageList: React.FC<MessageListProps> = ({
                     eventData={eventData}
                     messageId={message.id}
                     reactions={message.reactions || []}
-                    onReact={(emoji) => handleReaction(message.id, emoji)}
+                    onReact={handleReaction(message.id)}
                     currentUsername={username}
                   />
                 </div>

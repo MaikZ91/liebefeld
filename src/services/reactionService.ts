@@ -10,6 +10,8 @@ export const reactionService = {
    */
   async toggleReaction(messageId: string, emoji: string, username: string): Promise<boolean> {
     try {
+      console.log('reactionService: toggleReaction called', { messageId, emoji, username });
+      
       // Get current message
       const { data, error } = await supabase
         .from('chat_messages')
@@ -22,15 +24,17 @@ export const reactionService = {
         return false;
       }
       
+      console.log('Current message data:', data);
+      
       // Update reactions
-      const reactions = data?.reactions as any[] || [];
+      const reactions = Array.isArray(data?.reactions) ? data.reactions : [];
       let updated = false;
       
       const existingReactionIndex = reactions.findIndex((r: any) => r.emoji === emoji);
       
       if (existingReactionIndex >= 0) {
         // Reaction already exists, add or remove user
-        const users = reactions[existingReactionIndex].users;
+        const users = reactions[existingReactionIndex].users || [];
         const userIndex = users.indexOf(username);
         
         if (userIndex >= 0) {
@@ -40,9 +44,11 @@ export const reactionService = {
           if (users.length === 0) {
             reactions.splice(existingReactionIndex, 1);
           }
+          console.log('Removed user from reaction');
         } else {
           // Add user
           users.push(username);
+          console.log('Added user to reaction');
         }
         updated = true;
       } else {
@@ -51,8 +57,11 @@ export const reactionService = {
           emoji,
           users: [username]
         });
+        console.log('Added new reaction');
         updated = true;
       }
+      
+      console.log('Updated reactions:', reactions);
       
       // Save updated reactions
       if (updated) {
@@ -65,6 +74,8 @@ export const reactionService = {
           console.error('Error updating reactions:', updateError);
           return false;
         }
+        
+        console.log('Reactions updated successfully in database');
       }
       
       return true;
