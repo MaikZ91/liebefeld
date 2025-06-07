@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { EventShare } from '@/types/chatTypes';
@@ -38,7 +39,7 @@ export const useChatLogic = (events: any[], fullPage: boolean = false, activeCha
     "Was ist am Wochenende los?",
     "Suche Sport-Events",
     "Finde Konzerte in der Nähe",
-    "Events durchblättern", // Neuer Prompt für Event-Swiper
+    "Events durchblättern",
     "Kulturelle Veranstaltungen",
     "Kostenlose Events"
   ];
@@ -136,22 +137,30 @@ export const useChatLogic = (events: any[], fullPage: boolean = false, activeCha
     setIsTyping(true);
 
     try {
-      // Check if message is about events and should trigger swiper
-      const isEventQuery = input.toLowerCase().includes('event') || 
-                          input.toLowerCase().includes('veranstaltung') ||
-                          input.toLowerCase().includes('durchblättern');
-      
-      let botResponse = "Entschuldigung, ich konnte keine passende Antwort finden.";
-      
-      if (isEventQuery) {
-        botResponse = "Hier sind die aktuellen Events in deiner Umgebung. Du kannst durch sie durchswipen:";
-      } else {
-        // Simulate a bot response
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        botResponse = `Ich habe deine Nachricht erhalten: "${input}".`;
-      }
-
+      // Simulate AI processing time
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Generate AI response based on user input
+      let botResponse = "";
+      const userInput = input.toLowerCase();
+      
+      if (userInput.includes('event') || userInput.includes('veranstaltung')) {
+        botResponse = "Hier sind die aktuellen Events in deiner Umgebung. Du kannst durch sie durchswipen:";
+      } else if (userInput.includes('heute')) {
+        botResponse = "Für heute habe ich folgende Events gefunden:";
+      } else if (userInput.includes('wochenende')) {
+        botResponse = "Am Wochenende sind diese Events geplant:";
+      } else if (userInput.includes('sport')) {
+        botResponse = "Diese Sport-Events könnten dich interessieren:";
+      } else if (userInput.includes('konzert') || userInput.includes('musik')) {
+        botResponse = "Hier sind die aktuellen Musik-Events:";
+      } else if (userInput.includes('kultur')) {
+        botResponse = "Diese kulturellen Veranstaltungen finden statt:";
+      } else if (userInput.includes('kostenlos') || userInput.includes('gratis')) {
+        botResponse = "Diese kostenlosen Events sind verfügbar:";
+      } else {
+        botResponse = `Danke für deine Nachricht: "${input}". Hier sind einige Events, die dich interessieren könnten:`;
+      }
 
       const botMessage = {
         id: (Date.now() + 1).toString(),
@@ -162,6 +171,14 @@ export const useChatLogic = (events: any[], fullPage: boolean = false, activeCha
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
       console.error('Error sending message:', error);
+      
+      const errorMessage = {
+        id: (Date.now() + 1).toString(),
+        text: "Entschuldigung, es gab einen Fehler bei der Verarbeitung deiner Anfrage.",
+        isUser: false,
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsTyping(false);
     }

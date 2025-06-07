@@ -17,12 +17,6 @@ const MessageList: React.FC<MessageListProps> = ({
 }) => {
   const renderMessages = () => {
     return messages.map((message) => {
-      // Check if message should show event swiper
-      const shouldShowEventSwiper = message.text.toLowerCase().includes('event') && 
-                                  (message.text.toLowerCase().includes('zeig') || 
-                                   message.text.toLowerCase().includes('such') ||
-                                   message.text.toLowerCase().includes('find'));
-      
       return (
         <div key={message.id}>
           <div
@@ -48,8 +42,8 @@ const MessageList: React.FC<MessageListProps> = ({
             )}
           </div>
           
-          {/* Show EventSwiper for AI responses about events */}
-          {!message.isUser && shouldShowEventSwiper && (
+          {/* Show EventSwiper after every AI response (non-user messages) */}
+          {!message.isUser && message.id !== 'welcome' && (
             <div className="mt-3 max-w-[85%]">
               <EventSwiperMessage />
             </div>
