@@ -26,6 +26,7 @@ export const useChatLogic = (events: any[], fullPage: boolean = false, activeCha
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [globalQueries, setGlobalQueries] = useState<string[]>([]);
   const [showRecentQueries, setShowRecentQueries] = useState(false);
   const [isHeartActive, setIsHeartActive] = useState(false);
@@ -47,11 +48,15 @@ export const useChatLogic = (events: any[], fullPage: boolean = false, activeCha
   useEffect(() => {
     if (fullPage) {
       setIsVisible(true);
+      setIsChatOpen(true);
     }
   }, [fullPage]);
 
   const handleToggleChat = () => {
-    setIsVisible(!isVisible);
+    setIsChatOpen(!isChatOpen);
+    if (!fullPage) {
+      setIsVisible(!isVisible);
+    }
   };
 
   const addToGlobalQueries = (query: string) => {
@@ -175,6 +180,7 @@ export const useChatLogic = (events: any[], fullPage: boolean = false, activeCha
     setInput,
     isTyping,
     isVisible,
+    isChatOpen,
     handleToggleChat,
     handleSendMessage,
     handleDateSelect,
