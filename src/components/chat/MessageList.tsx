@@ -8,7 +8,7 @@ import TypingIndicator from './TypingIndicator';
 import { Message, TypingUser, EventShare } from '@/types/chatTypes';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ChatLoadingSkeleton from './ChatLoadingSkeleton';
-import { chatService } from '@/services/chatService';
+import { reactionService } from '@/services/reactionService';
 
 interface MessageListProps {
   messages: Message[];
@@ -71,11 +71,11 @@ const MessageList: React.FC<MessageListProps> = ({
   };
 
   // Handle reaction toggle
-  const handleReaction = async (messageId: string) => {
+  const handleReaction = (messageId: string) => {
     return async (emoji: string) => {
       try {
         console.log('MessageList: Toggling reaction:', { messageId, emoji, username });
-        const success = await chatService.toggleReaction(messageId, emoji, username);
+        const success = await reactionService.toggleReaction(messageId, emoji, username);
         if (!success) {
           console.error('Failed to toggle reaction');
         } else {

@@ -34,7 +34,8 @@ export const reactionService = {
       
       if (existingReactionIndex >= 0) {
         // Reaction already exists, add or remove user
-        const users = reactions[existingReactionIndex].users || [];
+        const reaction = reactions[existingReactionIndex] as { emoji: string; users: string[] };
+        const users = reaction.users || [];
         const userIndex = users.indexOf(username);
         
         if (userIndex >= 0) {
