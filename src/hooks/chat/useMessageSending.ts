@@ -1,5 +1,3 @@
-// src/hooks/chat/useMessageSending.ts
-
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { AVATAR_KEY, EventShare } from '@/types/chatTypes';
 import { toast } from '@/hooks/use-toast';
@@ -27,29 +25,41 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     setIsSending(true);
 
     try {
+      // Ensure we have a valid UUID for groupId, default to general if not provided
       const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
       console.log('Sending message to group:', validGroupId);
       
       let messageContent = trimmedMessage;
       
+      // Add event data to message if available
       if (eventData) {
         const { title, date, time, location, category } = eventData;
         messageContent = `🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${trimmedMessage}`;
       }
       
-      // Entfernen Sie die Zeilen für optimistische Updates:
-      // const tempId = `temp-${Date.now()}`;
-      // const optimisticMessage = { /* ... */ };
-      // addOptimisticMessage(optimisticMessage); // DIESE ZEILE ENTFERNEN
-
-      // Setzen Sie das Eingabefeld sofort zurück
+      // Create optimistic message for immediate display
+      const tempId = `temp-${Date.now()}`;
+      const optimisticMessage = {
+        id: tempId,
+        created_at: new Date().toISOString(),
+        content: messageContent,
+        user_name: username,
+        user_avatar: localStorage.getItem(AVATAR_KEY) || '',
+        group_id: validGroupId
+      };
+      
+      // Add optimistic message to local state IMMEDIATELY
+      addOptimisticMessage(optimisticMessage);
+      
+      // Clear the input field immediately
       setNewMessage('');
       
-      // Setzen Sie den Tippstatus zurück
+      // Set typing status to not typing
       if (typing) {
         const channel = supabase.channel(`typing:${validGroupId}`);
         channel.subscribe();
         
+        // After subscribing, send the typing status
         setTimeout(() => {
           channel.send({
             type: 'broadcast',
@@ -64,14 +74,19 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         }, 100);
       }
       
+      // Process file upload if a file is selected
       let mediaUrl = null;
       if (fileInputRef.current?.files?.length) {
         const file = fileInputRef.current.files[0];
-        // Hier wäre die tatsächliche Dateiupload-Logik
-        mediaUrl = URL.createObjectURL(file); // Nur ein Mock-URL für jetzt
+        try {
+          // Create a mock upload response for now
+          mediaUrl = URL.createObjectURL(file);
+        } catch (uploadError) {
+          console.error('Error uploading file:', uploadError);
+        }
       }
       
-      // Senden Sie die Nachricht an die Datenbank
+      // Send message to database - remove event_data to avoid schema issues
       const { data, error } = await supabase
         .from('chat_messages')
         .insert([{
@@ -80,7 +95,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
           text: messageContent,
           avatar: localStorage.getItem(AVATAR_KEY),
           media_url: mediaUrl,
-          read_by: [username]
+          read_by: [username] // The sending person has already read the message
         }])
         .select('id')
         .single();
@@ -92,20 +107,15 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       
       console.log('Message sent successfully with ID:', data?.id);
       
-      // Senden Sie einen Broadcast für die neue Nachricht, um alle Clients zu aktualisieren
-      // Ihr Echtzeit-Abonnement in useChatMessages sollte diese Nachricht aufnehmen und zum State hinzufügen
+      // Broadcast to the specific channel for this group
       await realtimeService.sendToChannel(`messages:${validGroupId}`, 'new_message', {
-        message: { // Senden Sie hier die tatsächliche Nachricht vom Server, falls sie sofort benötigt wird,
-                   // aber die Hauptlogik des Hinzufügens sollte über das `postgres_changes` Abo erfolgen.
-          id: data?.id, // Wichtig: Die echte ID hier übergeben
-          created_at: new Date().toISOString(), // Aktuellen Zeitstempel für die Anzeige
-          content: messageContent,
-          user_name: username,
-          user_avatar: localStorage.getItem(AVATAR_KEY) || '',
-          group_id: validGroupId
+        message: {
+          ...optimisticMessage,
+          id: data?.id || optimisticMessage.id
         }
       });
 
+      // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -120,8 +130,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     } finally {
       setIsSending(false);
     }
-  }, [groupId, username, newMessage, isSending, typing]);
-  // ^^^ HIER WAR DER FEHLERHAFTE KOMMENTAR
+  }, [groupId, username, newMessage, isSending, typing, addOptimisticMessage]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);
@@ -175,7 +184,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
             }
           });
           setTyping(false);
-        }, 2000);
+        }, 100);
       }
     }, 2000);
   }, [groupId, username, typing]);
