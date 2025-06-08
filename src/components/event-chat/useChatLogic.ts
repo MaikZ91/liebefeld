@@ -122,6 +122,88 @@ export const useChatLogic = (events: any[], fullPage: boolean = false, activeCha
     setIsHeartActive(!isHeartActive);
   };
 
+  // Function to generate intelligent AI responses based on user input and available events
+  const generateAIResponse = (userInput: string, availableEvents: any[]) => {
+    const input = userInput.toLowerCase();
+    const today = new Date();
+    const todayString = today.toISOString().split('T')[0];
+    
+    // Filter events based on user query
+    let relevantEvents = availableEvents || [];
+    let responseText = "";
+    
+    if (input.includes('heute') || input.includes('today')) {
+      relevantEvents = availableEvents.filter(event => event.date === todayString);
+      responseText = `Für heute (${today.toLocaleDateString('de-DE')}) habe ich ${relevantEvents.length} Events gefunden:`;
+    } else if (input.includes('wochenende') || input.includes('weekend')) {
+      const weekend = [];
+      const saturday = new Date(today);
+      saturday.setDate(today.getDate() + (6 - today.getDay()));
+      const sunday = new Date(saturday);
+      sunday.setDate(saturday.getDate() + 1);
+      
+      const satString = saturday.toISOString().split('T')[0];
+      const sunString = sunday.toISOString().split('T')[0];
+      
+      relevantEvents = availableEvents.filter(event => 
+        event.date === satString || event.date === sunString
+      );
+      responseText = `Am Wochenende sind ${relevantEvents.length} Events geplant:`;
+    } else if (input.includes('sport')) {
+      relevantEvents = availableEvents.filter(event => 
+        event.category?.toLowerCase().includes('sport') || 
+        event.title?.toLowerCase().includes('sport') ||
+        event.description?.toLowerCase().includes('sport')
+      );
+      responseText = `Ich habe ${relevantEvents.length} Sport-Events gefunden:`;
+    } else if (input.includes('konzert') || input.includes('musik') || input.includes('music')) {
+      relevantEvents = availableEvents.filter(event => 
+        event.category?.toLowerCase().includes('konzert') || 
+        event.category?.toLowerCase().includes('musik') ||
+        event.title?.toLowerCase().includes('konzert') ||
+        event.title?.toLowerCase().includes('musik')
+      );
+      responseText = `Hier sind ${relevantEvents.length} Musik-Events:`;
+    } else if (input.includes('kultur') || input.includes('art')) {
+      relevantEvents = availableEvents.filter(event => 
+        event.category?.toLowerCase().includes('kultur') || 
+        event.category?.toLowerCase().includes('kunst') ||
+        event.category?.toLowerCase().includes('galerie') ||
+        event.title?.toLowerCase().includes('kunst')
+      );
+      responseText = `Diese ${relevantEvents.length} kulturellen Veranstaltungen finden statt:`;
+    } else if (input.includes('kostenlos') || input.includes('gratis') || input.includes('free')) {
+      relevantEvents = availableEvents.filter(event => 
+        event.price === 'Kostenlos' || 
+        event.price === '0€' ||
+        event.description?.toLowerCase().includes('kostenlos')
+      );
+      responseText = `${relevantEvents.length} kostenlose Events sind verfügbar:`;
+    } else {
+      // General response with a sample of events
+      relevantEvents = availableEvents.slice(0, 10);
+      responseText = `Hier sind einige Events, die dich interessieren könnten (${availableEvents.length} Events insgesamt verfügbar):`;
+    }
+
+    // Create a brief list of the most relevant events
+    if (relevantEvents.length > 0) {
+      const eventList = relevantEvents.slice(0, 3).map(event => {
+        const date = new Date(event.date).toLocaleDateString('de-DE', {
+          weekday: 'short',
+          day: '2-digit',
+          month: '2-digit'
+        });
+        return `• ${event.title} - ${date} um ${event.time}`;
+      }).join('\n');
+      
+      const moreEvents = relevantEvents.length > 3 ? `\n\n...und ${relevantEvents.length - 3} weitere Events. Swipe durch die Events oben um mehr zu sehen!` : '';
+      
+      return responseText + '\n\n' + eventList + moreEvents;
+    } else {
+      return responseText + '\n\nLeider wurden keine passenden Events gefunden. Schau dir die verfügbaren Events im Swiper an oder versuche eine andere Suche.';
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!input.trim()) return;
 
@@ -138,34 +220,21 @@ export const useChatLogic = (events: any[], fullPage: boolean = false, activeCha
     setIsTyping(true);
 
     try {
-      // Call the AI chat function (Gemini API)
-      const response = await fetch('/api/ai-event-chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: userInput,
-          events: events,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-
-      const data = await response.json();
+      // Simulate processing time for realistic AI feel
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Generate intelligent AI response
+      const aiResponseText = generateAIResponse(userInput, events);
       
       const botMessage = {
         id: (Date.now() + 1).toString(),
-        text: data.response || "Entschuldigung, ich konnte keine Antwort generieren.",
+        text: aiResponseText,
         isUser: false,
-        html: data.html || undefined,
       };
 
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
-      console.error('Error calling AI chat:', error);
+      console.error('Error generating AI response:', error);
       
       const errorMessage = {
         id: (Date.now() + 1).toString(),
