@@ -133,48 +133,43 @@ export const useChatLogic = (events: any[], fullPage: boolean = false, activeCha
 
     setMessages(prev => [...prev, newMessage]);
     addToGlobalQueries(input.trim());
+    const userInput = input.trim();
     setInput('');
     setIsTyping(true);
 
     try {
-      // Simulate AI processing time
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Generate AI response based on user input
-      let botResponse = "";
-      const userInput = input.toLowerCase();
-      
-      if (userInput.includes('event') || userInput.includes('veranstaltung')) {
-        botResponse = "Hier sind die aktuellen Events in deiner Umgebung. Du kannst durch sie durchswipen:";
-      } else if (userInput.includes('heute')) {
-        botResponse = "Für heute habe ich folgende Events gefunden:";
-      } else if (userInput.includes('wochenende')) {
-        botResponse = "Am Wochenende sind diese Events geplant:";
-      } else if (userInput.includes('sport')) {
-        botResponse = "Diese Sport-Events könnten dich interessieren:";
-      } else if (userInput.includes('konzert') || userInput.includes('musik')) {
-        botResponse = "Hier sind die aktuellen Musik-Events:";
-      } else if (userInput.includes('kultur')) {
-        botResponse = "Diese kulturellen Veranstaltungen finden statt:";
-      } else if (userInput.includes('kostenlos') || userInput.includes('gratis')) {
-        botResponse = "Diese kostenlosen Events sind verfügbar:";
-      } else {
-        botResponse = `Danke für deine Nachricht: "${input}". Hier sind einige Events, die dich interessieren könnten:`;
+      // Call the AI chat function (Gemini API)
+      const response = await fetch('/api/ai-event-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userInput,
+          events: events,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
       }
 
+      const data = await response.json();
+      
       const botMessage = {
         id: (Date.now() + 1).toString(),
-        text: botResponse,
+        text: data.response || "Entschuldigung, ich konnte keine Antwort generieren.",
         isUser: false,
+        html: data.html || undefined,
       };
 
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error calling AI chat:', error);
       
       const errorMessage = {
         id: (Date.now() + 1).toString(),
-        text: "Entschuldigung, es gab einen Fehler bei der Verarbeitung deiner Anfrage.",
+        text: "Entschuldigung, es gab einen Fehler bei der Verarbeitung deiner Anfrage. Bitte versuche es erneut.",
         isUser: false,
       };
       
