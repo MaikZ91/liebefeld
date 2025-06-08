@@ -1,3 +1,4 @@
+// src/components/chat/ChatMessage.tsx
 
 import React, { useState, useEffect } from 'react';
 import { EventShare } from '@/types/chatTypes';
@@ -105,32 +106,22 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       line = line.replace(/^[•\-*]\s*/, '');
       
       // Check if this line looks like an event description
-      if (containsEventInfo(line)) {
-        let title = '';
-        let details = line;
-
-        // Check if the line has a title format with asterisks or colon
-        if (line.includes(":") && line.split(":")[0].length < 30) {
-          const parts = line.split(":");
-          title = parts[0].trim().replace(/\*/g, '');
-          details = parts.slice(1).join(":").trim();
-        } else if (line.includes("*")) {
-          const titleMatch = line.match(/\*([^*]+)\*/);
-          if (titleMatch) {
-            title = titleMatch[1].trim();
-            details = line.replace(/\*([^*]+)\*/, '').trim();
+      if (line.toLowerCase().includes("event:") || line.toLowerCase().includes("datum:")) { // Use a more specific check here
+          const eventRegex = /^(.*?) um (.*?) (?:in|bei|im) (.*?) \(Kategorie: (.*?)\)$/i;
+          const match = line.match(eventRegex);
+          if (match) {
+              const [_, title, time, location, category] = match;
+              formattedContent += `
+                  <div class="bg-black border border-black rounded-lg p-2 mb-2">
+                      <div class="font-bold">${title}</div>
+                      <div>Zeit: ${time}, Ort: ${location}, Kategorie: ${category}</div>
+                  </div>
+              `;
+          } else {
+              formattedContent += `<p>${line}</p>`; // Fallback for other lines that might look like event info but aren't
           }
-        }
-
-        formattedContent += `
-          <div class="bg-black border border-black rounded-lg p-2 mb-2">
-            ${title ? `<div class="font-bold">${title}</div>` : ''}
-            <div>${details}</div>
-          </div>
-        `;
       } else {
-        // Remove bullet points for regular lines as well
-        formattedContent += `<p>${line}</p>`;
+          formattedContent += `<p>${line}</p>`;
       }
     }
     
@@ -179,18 +170,27 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   
   const messageContent = (
     <div 
-      className={`group p-3 rounded-lg ${isConsecutive ? 'mt-0.5' : 'mt-1'} bg-black text-white shadow-md w-full max-w-full overflow-hidden break-words hover:bg-gray-900/50 transition-colors duration-200`}
+      // Changed from flex-col to flex for horizontal alignment
+      className={cn(
+        "group p-3 rounded-lg flex items-center justify-between relative", // Added items-center justify-between relative
+        isConsecutive ? 'mt-0.5' : 'mt-1',
+        "bg-black text-white shadow-md w-full max-w-full overflow-hidden break-words hover:bg-gray-900/50 transition-colors duration-200"
+      )}
     >
       <div className="w-full max-w-full overflow-hidden break-words">
         {formatContent()}
       </div>
+      
+      {/* Absolute positioning for reactions, moved inside the message content div */}
       {(reactions && reactions.length > 0) || (onReact && messageId && isGroup) ? (
-        <MessageReactions
-          reactions={reactions}
-          onReact={handleReact}
-          currentUsername={currentUsername}
-          showAddButton={onReact && messageId && isGroup}
-        />
+        <div className="absolute bottom-1 right-1 flex items-center gap-1"> {/* Adjusted positioning */}
+          <MessageReactions
+            reactions={reactions}
+            onReact={handleReact}
+            currentUsername={currentUsername}
+            showAddButton={onReact && messageId && isGroup}
+          />
+        </div>
       ) : null}
     </div>
   );
