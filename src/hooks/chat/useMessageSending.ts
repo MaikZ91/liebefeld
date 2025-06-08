@@ -120,5 +120,107 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     } finally {
       setIsSending(false);
     }
-  }, [groupId, username, newMessage, isSending, typing]); // `addOptimisticMessage` kann aus Abhängigkeiten entfernt werden
-                                                     // wenn es nicht mehr aufgerufen wird.
+  }, [groupId, username, newMessage, isSending, typing]);
+  // ^^^ HIER WAR DER FEHLERHAFTE KOMMENTAR
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNewMessage(e.target.value);
+    
+    // Update typing status
+    const isCurrentlyTyping = e.target.value.trim().length > 0;
+    
+    // Ensure we have a valid UUID for groupId
+    const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
+    
+    if (!typing && isCurrentlyTyping) {
+      // Typing begins
+      setTyping(true);
+      const channel = supabase.channel(`typing:${validGroupId}`);
+      channel.subscribe();
+      
+      // After subscribing, send the typing status
+      setTimeout(() => {
+        channel.send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: {
+            username,
+            avatar: localStorage.getItem(AVATAR_KEY),
+            isTyping: true
+          }
+        });
+      }, 100);
+    }
+    
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    // Set new timeout
+    typingTimeoutRef.current = setTimeout(() => {
+      if (typing) {
+        const channel = supabase.channel(`typing:${validGroupId}`);
+        channel.subscribe();
+        
+        // After subscribing, send the typing status
+        setTimeout(() => {
+          channel.send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: {
+              username,
+              avatar: localStorage.getItem(AVATAR_KEY),
+              isTyping: false
+            }
+          });
+          setTyping(false);
+        }, 2000);
+      }
+    }, 2000);
+  }, [groupId, username, typing]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  }, [handleSubmit]);
+
+  // Cleanup on unmount
+  const cleanup = useCallback(() => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    if (typing) {
+      const channel = supabase.channel(`typing:${groupId}`);
+      channel.subscribe();
+      
+      // After subscribing, send the typing status
+      setTimeout(() => {
+        channel.send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: {
+            username,
+            avatar: localStorage.getItem(AVATAR_KEY),
+            isTyping: false
+          }
+        });
+      }, 100);
+    }
+  }, [groupId, username, typing]);
+
+  return {
+    newMessage,
+    isSending,
+    fileInputRef,
+    handleSubmit,
+    handleInputChange,
+    handleKeyDown,
+    setNewMessage,
+    typing,
+    cleanup
+  };
+};
