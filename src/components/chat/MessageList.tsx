@@ -99,7 +99,7 @@ const MessageList: React.FC<MessageListProps> = ({
       )}
 
       <ScrollArea className="h-full w-full pr-2 flex-grow" type={isMobile ? "always" : "hover"}>
-        <div className="flex flex-col space-y-2 w-full max-w-full pb-4">
+        <div className="flex flex-col space-y-1 w-full max-w-full pb-4">
           {messages.length === 0 && !loading && !error && (
             <div className="text-center text-gray-400 py-4">No messages yet. Start the conversation!</div>
           )}
