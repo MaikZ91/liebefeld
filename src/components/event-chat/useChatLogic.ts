@@ -123,91 +123,19 @@ export const useChatLogic = (events: any[], fullPage: boolean = false, activeCha
     setIsHeartActive(!isHeartActive);
   };
 
-  // Function to generate intelligent AI responses based on user input and available events
+  // Diese Funktion wird nicht mehr direkt die Events filtern oder formatieren.
+  // Sie dient nur noch als Wrapper für den Aufruf der Edge Function.
   const generateAIResponse = (userInput: string, availableEvents: any[]) => {
-    const input = userInput.toLowerCase();
-    const today = new Date();
-    const todayString = today.toISOString().split('T')[0];
+    // Die eigentliche Logik für die Filterung und Formatierung liegt jetzt in der Edge Function (ai-event-chat/index.ts)
+    // Das Frontend übergibt einfach die gesamte Liste der verfügbaren Events und die Benutzeranfrage an die Edge Function.
+    // Die Edge Function gibt dann den fertig formatierten HTML-Code zurück.
     
-    // Filter events based on user query
-    let relevantEvents = availableEvents || []; // Start with all available events
-    let responseText = "";
-    
-    // Perform initial filtering based on date/time keywords
-    if (input.includes('heute') || input.includes('today')) {
-      relevantEvents = availableEvents.filter(event => event.date === todayString);
-      responseText = `Für heute (${today.toLocaleDateString('de-DE')}) habe ich ${relevantEvents.length} Events gefunden:`;
-    } else if (input.includes('wochenende') || input.includes('weekend')) {
-      const saturday = new Date(today);
-      saturday.setDate(today.getDate() + (6 - today.getDay()));
-      const sunday = new Date(saturday);
-      sunday.setDate(saturday.getDate() + 1);
-      
-      const satString = saturday.toISOString().split('T')[0];
-      const sunString = sunday.toISOString().split('T')[0];
-      
-      relevantEvents = availableEvents.filter(event => 
-        event.date === satString || event.date === sunString
-      );
-      responseText = `Am Wochenende sind ${relevantEvents.length} Events geplant:`;
-    }
-    // ... (bestehende Filterlogik für 'sport', 'konzert', 'kultur', 'kostenlos')
-    else if (input.includes('sport')) {
-      relevantEvents = availableEvents.filter(event => 
-        event.category?.toLowerCase().includes('sport') || 
-        event.title?.toLowerCase().includes('sport') ||
-        event.description?.toLowerCase().includes('sport')
-      );
-      responseText = `Ich habe ${relevantEvents.length} Sport-Events gefunden:`;
-    } else if (input.includes('konzert') || input.includes('musik') || input.includes('music')) {
-      relevantEvents = availableEvents.filter(event => 
-        event.category?.toLowerCase().includes('konzert') || 
-        event.category?.toLowerCase().includes('musik') ||
-        event.title?.toLowerCase().includes('konzert') ||
-        event.title?.toLowerCase().includes('musik')
-      );
-      responseText = `Hier sind ${relevantEvents.length} Musik-Events:`;
-    } else if (input.includes('kultur') || input.includes('art')) {
-      relevantEvents = availableEvents.filter(event => 
-        event.category?.toLowerCase().includes('kultur') || 
-        event.category?.toLowerCase().includes('kunst') ||
-        event.category?.toLowerCase().includes('galerie') ||
-        event.title?.toLowerCase().includes('kunst')
-      );
-      responseText = `Diese ${relevantEvents.length} kulturellen Veranstaltungen finden statt:`;
-    } else if (input.includes('kostenlos') || input.includes('gratis') || input.includes('free')) {
-      relevantEvents = availableEvents.filter(event => 
-        event.price === 'Kostenlos' || 
-        event.price === '0€' ||
-        event.description?.toLowerCase().includes('kostenlos')
-      );
-      responseText = `${relevantEvents.length} kostenlose Events sind verfügbar:`;
-    }
-    else {
-      // If no specific time or category filter is detected, it means the user wants a general list.
-      // In this case, we still don't want to show ALL 381 events directly, but rather a manageable list.
-      // So, if no specific filter keyword is present, default to showing *all available events* that the backend provided.
-      // The previous change already removed the slice(0, 10).
-      relevantEvents = availableEvents; 
-      responseText = `Hier sind einige Events, die dich interessieren könnten (${availableEvents.length} Events insgesamt verfügbar):`;
-    }
-
-    // Pass only the already filtered relevantEvents to the AI for formatting.
-    // The previous changes in `ai-event-chat/index.ts` already assume it gets the relevant list.
-    if (relevantEvents.length > 0) {
-      const eventList = relevantEvents.map(event => { 
-        const date = new Date(event.date).toLocaleDateString('de-DE', {
-          weekday: 'short',
-          day: '2-digit',
-          month: '2-digit'
-        });
-        return `• ${event.title} - ${date} um ${event.time}`;
-      }).join('\n');
-      
-      return responseText + '\n\n' + eventList; 
-    } else {
-      return responseText + '\n\nLeider wurden keine passenden Events gefunden. Schau dir die verfügbaren Events im Swiper an oder versuche eine andere Suche.';
-    }
+    // Wir benötigen hier keine komplexe Logik mehr, da die Edge Function alles übernimmt.
+    // Das 'responseText' und 'relevantEvents' werden im Frontend nicht mehr direkt genutzt,
+    // da die formatierte Antwort direkt von der Edge Function kommt.
+    return userInput; // Der userInput wird einfach an die Edge Function weitergeleitet.
+                      // Die Edge Function nutzt dann ihre eigene Logik, um die Events zu filtern
+                      // und die Antwort zu generieren.
   };
 
   const handleSendMessage = async () => {
@@ -226,15 +154,33 @@ export const useChatLogic = (events: any[], fullPage: boolean = false, activeCha
     setIsTyping(true);
 
     try {
-      // Simulate processing time for realistic AI feel
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // simulate processing time for realistic AI feel (kann hier entfernt werden, da Edge Function real ist)
+      // await new Promise(resolve => setTimeout(resolve, 1500)); 
       
-      // Generate intelligent AI response
-      const aiResponseText = generateAIResponse(userInput, events);
-      
+      // Direkter Aufruf der Edge Function (die die Logik von generateAIResponse enthält)
+      // Der 'aiResponseText' kommt direkt von der Edge Function als HTML
+      const { data, error } = await supabase.functions.invoke('ai-event-chat', {
+          body: {
+            query: userInput,
+            timeOfDay: new Date().getHours() < 12 ? 'morning' : (new Date().getHours() < 18 ? 'afternoon' : 'evening'),
+            weather: 'partly_cloudy', // Dies sollte durch eine echte Wetterabfrage ersetzt werden
+            allEvents: events, // Die komplette Event-Liste an die Edge Function senden
+            currentDate: new Date().toISOString().split('T')[0],
+            nextWeekStart: new Date().toISOString().split('T')[0], // Beispielwerte, anpassen falls benötigt
+            nextWeekEnd: new Date().toISOString().split('T')[0], // Beispielwerte, anpassen falls benötigt
+            userInterests: JSON.parse(localStorage.getItem('user_interests') || '[]'), // Interessen übergeben
+            userLocations: JSON.parse(localStorage.getItem('user_locations') || '[]'), // Orte übergeben
+          }
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(`Edge function error: ${error.message}`);
+      }
+
       const botMessage = {
         id: (Date.now() + 1).toString(),
-        text: aiResponseText,
+        html: data.response, // Die Edge Function liefert direkt HTML
         isUser: false,
       };
 
