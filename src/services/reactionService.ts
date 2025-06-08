@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Service for message reaction operations
+ * Service for message reaction operationsS
  */
 export const reactionService = {
   /**
