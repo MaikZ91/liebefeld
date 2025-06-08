@@ -1,3 +1,4 @@
+// src/components/event-chat/useChatLogic.ts
 
 import { useState, useRef, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -181,13 +182,15 @@ export const useChatLogic = (events: any[], fullPage: boolean = false, activeCha
       responseText = `${relevantEvents.length} kostenlose Events sind verfügbar:`;
     } else {
       // General response with a sample of events
-      relevantEvents = availableEvents.slice(0, 10);
+      // ÄNDERUNG HIER: Zeigt alle relevanten Events anstelle einer Begrenzung auf 10
+      relevantEvents = availableEvents; 
       responseText = `Hier sind einige Events, die dich interessieren könnten (${availableEvents.length} Events insgesamt verfügbar):`;
     }
 
     // Create a brief list of the most relevant events
     if (relevantEvents.length > 0) {
-      const eventList = relevantEvents.slice(0, 3).map(event => {
+      // ÄNDERUNG HIER: Begrenzung auf 3 Elemente entfernt
+      const eventList = relevantEvents.map(event => { 
         const date = new Date(event.date).toLocaleDateString('de-DE', {
           weekday: 'short',
           day: '2-digit',
@@ -196,9 +199,10 @@ export const useChatLogic = (events: any[], fullPage: boolean = false, activeCha
         return `• ${event.title} - ${date} um ${event.time}`;
       }).join('\n');
       
-      const moreEvents = relevantEvents.length > 3 ? `\n\n...und ${relevantEvents.length - 3} weitere Events. Swipe durch die Events oben um mehr zu sehen!` : '';
+      // ÄNDERUNG HIER: Entfernen des "Swipe"-Hinweises
+      // const moreEvents = relevantEvents.length > 3 ? `\n\n...und ${relevantEvents.length - 3} weitere Events. Swipe durch die Events oben um mehr zu sehen!` : '';
       
-      return responseText + '\n\n' + eventList + moreEvents;
+      return responseText + '\n\n' + eventList; 
     } else {
       return responseText + '\n\nLeider wurden keine passenden Events gefunden. Schau dir die verfügbaren Events im Swiper an oder versuche eine andere Suche.';
     }
