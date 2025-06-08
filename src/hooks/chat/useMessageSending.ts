@@ -1,3 +1,5 @@
+// src/hooks/chat/useMessageSending.ts
+
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { AVATAR_KEY, EventShare } from '@/types/chatTypes';
 import { toast } from '@/hooks/use-toast';
@@ -25,41 +27,29 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     setIsSending(true);
 
     try {
-      // Ensure we have a valid UUID for groupId, default to general if not provided
       const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
       console.log('Sending message to group:', validGroupId);
       
       let messageContent = trimmedMessage;
       
-      // Add event data to message if available
       if (eventData) {
         const { title, date, time, location, category } = eventData;
         messageContent = `🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${trimmedMessage}`;
       }
       
-      // Create optimistic message for immediate display
-      const tempId = `temp-${Date.now()}`;
-      const optimisticMessage = {
-        id: tempId,
-        created_at: new Date().toISOString(),
-        content: messageContent,
-        user_name: username,
-        user_avatar: localStorage.getItem(AVATAR_KEY) || '',
-        group_id: validGroupId
-      };
-      
-      // Add optimistic message to local state IMMEDIATELY
-      addOptimisticMessage(optimisticMessage);
-      
-      // Clear the input field immediately
+      // Entfernen Sie die Zeilen für optimistische Updates:
+      // const tempId = `temp-${Date.now()}`;
+      // const optimisticMessage = { /* ... */ };
+      // addOptimisticMessage(optimisticMessage); // DIESE ZEILE ENTFERNEN
+
+      // Setzen Sie das Eingabefeld sofort zurück
       setNewMessage('');
       
-      // Set typing status to not typing
+      // Setzen Sie den Tippstatus zurück
       if (typing) {
         const channel = supabase.channel(`typing:${validGroupId}`);
         channel.subscribe();
         
-        // After subscribing, send the typing status
         setTimeout(() => {
           channel.send({
             type: 'broadcast',
@@ -74,19 +64,14 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         }, 100);
       }
       
-      // Process file upload if a file is selected
       let mediaUrl = null;
       if (fileInputRef.current?.files?.length) {
         const file = fileInputRef.current.files[0];
-        try {
-          // Create a mock upload response for now
-          mediaUrl = URL.createObjectURL(file);
-        } catch (uploadError) {
-          console.error('Error uploading file:', uploadError);
-        }
+        // Hier wäre die tatsächliche Dateiupload-Logik
+        mediaUrl = URL.createObjectURL(file); // Nur ein Mock-URL für jetzt
       }
       
-      // Send message to database - remove event_data to avoid schema issues
+      // Senden Sie die Nachricht an die Datenbank
       const { data, error } = await supabase
         .from('chat_messages')
         .insert([{
@@ -95,7 +80,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
           text: messageContent,
           avatar: localStorage.getItem(AVATAR_KEY),
           media_url: mediaUrl,
-          read_by: [username] // The sending person has already read the message
+          read_by: [username]
         }])
         .select('id')
         .single();
@@ -107,15 +92,20 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       
       console.log('Message sent successfully with ID:', data?.id);
       
-      // Broadcast to the specific channel for this group
+      // Senden Sie einen Broadcast für die neue Nachricht, um alle Clients zu aktualisieren
+      // Ihr Echtzeit-Abonnement in useChatMessages sollte diese Nachricht aufnehmen und zum State hinzufügen
       await realtimeService.sendToChannel(`messages:${validGroupId}`, 'new_message', {
-        message: {
-          ...optimisticMessage,
-          id: data?.id || optimisticMessage.id
+        message: { // Senden Sie hier die tatsächliche Nachricht vom Server, falls sie sofort benötigt wird,
+                   // aber die Hauptlogik des Hinzufügens sollte über das `postgres_changes` Abo erfolgen.
+          id: data?.id, // Wichtig: Die echte ID hier übergeben
+          created_at: new Date().toISOString(), // Aktuellen Zeitstempel für die Anzeige
+          content: messageContent,
+          user_name: username,
+          user_avatar: localStorage.getItem(AVATAR_KEY) || '',
+          group_id: validGroupId
         }
       });
 
-      // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -130,106 +120,5 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     } finally {
       setIsSending(false);
     }
-  }, [groupId, username, newMessage, isSending, typing, addOptimisticMessage]);
-
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setNewMessage(e.target.value);
-    
-    // Update typing status
-    const isCurrentlyTyping = e.target.value.trim().length > 0;
-    
-    // Ensure we have a valid UUID for groupId
-    const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
-    
-    if (!typing && isCurrentlyTyping) {
-      // Typing begins
-      setTyping(true);
-      const channel = supabase.channel(`typing:${validGroupId}`);
-      channel.subscribe();
-      
-      // After subscribing, send the typing status
-      setTimeout(() => {
-        channel.send({
-          type: 'broadcast',
-          event: 'typing',
-          payload: {
-            username,
-            avatar: localStorage.getItem(AVATAR_KEY),
-            isTyping: true
-          }
-        });
-      }, 100);
-    }
-    
-    // Clear existing timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-    
-    // Set new timeout
-    typingTimeoutRef.current = setTimeout(() => {
-      if (typing) {
-        const channel = supabase.channel(`typing:${validGroupId}`);
-        channel.subscribe();
-        
-        // After subscribing, send the typing status
-        setTimeout(() => {
-          channel.send({
-            type: 'broadcast',
-            event: 'typing',
-            payload: {
-              username,
-              avatar: localStorage.getItem(AVATAR_KEY),
-              isTyping: false
-            }
-          });
-          setTyping(false);
-        }, 100);
-      }
-    }, 2000);
-  }, [groupId, username, typing]);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  }, [handleSubmit]);
-
-  // Cleanup on unmount
-  const cleanup = useCallback(() => {
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-    
-    if (typing) {
-      const channel = supabase.channel(`typing:${groupId}`);
-      channel.subscribe();
-      
-      // After subscribing, send the typing status
-      setTimeout(() => {
-        channel.send({
-          type: 'broadcast',
-          event: 'typing',
-          payload: {
-            username,
-            avatar: localStorage.getItem(AVATAR_KEY),
-            isTyping: false
-          }
-        });
-      }, 100);
-    }
-  }, [groupId, username, typing]);
-
-  return {
-    newMessage,
-    isSending,
-    fileInputRef,
-    handleSubmit,
-    handleInputChange,
-    handleKeyDown,
-    setNewMessage,
-    typing,
-    cleanup
-  };
-};
+  }, [groupId, username, newMessage, isSending, typing]); // `addOptimisticMessage` kann aus Abhängigkeiten entfernt werden
+                                                     // wenn es nicht mehr aufgerufen wird.
