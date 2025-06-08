@@ -130,14 +130,14 @@ export const useChatLogic = (events: any[], fullPage: boolean = false, activeCha
     const todayString = today.toISOString().split('T')[0];
     
     // Filter events based on user query
-    let relevantEvents = availableEvents || [];
+    let relevantEvents = availableEvents || []; // Start with all available events
     let responseText = "";
     
+    // Perform initial filtering based on date/time keywords
     if (input.includes('heute') || input.includes('today')) {
       relevantEvents = availableEvents.filter(event => event.date === todayString);
       responseText = `Für heute (${today.toLocaleDateString('de-DE')}) habe ich ${relevantEvents.length} Events gefunden:`;
     } else if (input.includes('wochenende') || input.includes('weekend')) {
-      const weekend = [];
       const saturday = new Date(today);
       saturday.setDate(today.getDate() + (6 - today.getDay()));
       const sunday = new Date(saturday);
@@ -150,7 +150,9 @@ export const useChatLogic = (events: any[], fullPage: boolean = false, activeCha
         event.date === satString || event.date === sunString
       );
       responseText = `Am Wochenende sind ${relevantEvents.length} Events geplant:`;
-    } else if (input.includes('sport')) {
+    }
+    // ... (bestehende Filterlogik für 'sport', 'konzert', 'kultur', 'kostenlos')
+    else if (input.includes('sport')) {
       relevantEvents = availableEvents.filter(event => 
         event.category?.toLowerCase().includes('sport') || 
         event.title?.toLowerCase().includes('sport') ||
@@ -180,16 +182,19 @@ export const useChatLogic = (events: any[], fullPage: boolean = false, activeCha
         event.description?.toLowerCase().includes('kostenlos')
       );
       responseText = `${relevantEvents.length} kostenlose Events sind verfügbar:`;
-    } else {
-      // General response with a sample of events
-      // ÄNDERUNG HIER: Zeigt alle relevanten Events anstelle einer Begrenzung auf 10
+    }
+    else {
+      // If no specific time or category filter is detected, it means the user wants a general list.
+      // In this case, we still don't want to show ALL 381 events directly, but rather a manageable list.
+      // So, if no specific filter keyword is present, default to showing *all available events* that the backend provided.
+      // The previous change already removed the slice(0, 10).
       relevantEvents = availableEvents; 
       responseText = `Hier sind einige Events, die dich interessieren könnten (${availableEvents.length} Events insgesamt verfügbar):`;
     }
 
-    // Create a brief list of the most relevant events
+    // Pass only the already filtered relevantEvents to the AI for formatting.
+    // The previous changes in `ai-event-chat/index.ts` already assume it gets the relevant list.
     if (relevantEvents.length > 0) {
-      // ÄNDERUNG HIER: Begrenzung auf 3 Elemente entfernt
       const eventList = relevantEvents.map(event => { 
         const date = new Date(event.date).toLocaleDateString('de-DE', {
           weekday: 'short',
@@ -198,9 +203,6 @@ export const useChatLogic = (events: any[], fullPage: boolean = false, activeCha
         });
         return `• ${event.title} - ${date} um ${event.time}`;
       }).join('\n');
-      
-      // ÄNDERUNG HIER: Entfernen des "Swipe"-Hinweises
-      // const moreEvents = relevantEvents.length > 3 ? `\n\n...und ${relevantEvents.length - 3} weitere Events. Swipe durch die Events oben um mehr zu sehen!` : '';
       
       return responseText + '\n\n' + eventList; 
     } else {
