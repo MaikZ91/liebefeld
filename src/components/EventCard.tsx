@@ -1,5 +1,3 @@
-
-
 // src/components/EventCard.tsx
 
 import React, { useState, memo } from 'react';
@@ -92,13 +90,13 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     return (
       <div
         className={cn(
-          "dark-glass-card rounded-lg p-1.5 cursor-pointer hover-scale mb-0.5 w-full",
+          "dark-glass-card rounded-lg p-2 cursor-pointer hover-scale mb-0.5 w-full min-w-[280px]",
           isTribe && "border-l-2 border-purple-500 bg-gradient-to-r from-purple-900/20 to-transparent",
           className
         )}
         onClick={onClick}
       >
-        <div className="flex items-start gap-2"> {/* Use flex to align image and text content */}
+        <div className="flex items-start gap-3"> {/* Increased gap from 2 to 3 */}
           {event.image_url && (
             <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden">
               <img
@@ -130,7 +128,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
               {event.link ? (
                 <h4
                   className={cn(
-                    "font-medium text-xs text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1",
+                    "font-medium text-sm text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1",
                     isTribe && "text-purple-300"
                   )}
                   onClick={handleLinkClick}
@@ -140,7 +138,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
                 </h4>
               ) : (
                 <h4 className={cn(
-                  "font-medium text-xs text-white break-words line-clamp-1 text-left",
+                  "font-medium text-sm text-white break-words line-clamp-1 text-left",
                   isTribe && "text-purple-300"
                 )}>
                   {event.title}
@@ -148,20 +146,20 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
               )}
             </div>
 
-            <div className="flex items-center gap-1 mt-0.5 text-[8px] text-white">
+            <div className="flex items-center gap-1 mt-1 text-[10px] text-white">
               <div className="flex items-center">
                 <Clock className="w-2 h-2 mr-0.5 flex-shrink-0" />
                 <span>{event.time}</span>
               </div>
               <span className="mx-0.5">•</span>
-              <div className="flex items-center max-w-[120px] overflow-hidden">
+              <div className="flex items-center max-w-[140px] overflow-hidden">
                 <MapPin className="w-2 h-2 mr-0.5 flex-shrink-0" />
                 <span className="truncate">{event.location}</span>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-1"> {/* Aligned right to position badge and like button */}
+          <div className="flex flex-col items-end gap-1 ml-2"> {/* Added ml-2 for more spacing */}
             <Badge className={cn(
               "flex-shrink-0 flex items-center gap-0.5 text-[8px] font-medium whitespace-nowrap px-1 py-0 h-3",
               event.category in categoryColors
@@ -202,13 +200,13 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
   return (
     <div
       className={cn(
-        "dark-glass-card rounded-xl p-4 cursor-pointer hover-scale w-full",
+        "dark-glass-card rounded-xl p-5 cursor-pointer hover-scale w-full min-w-[350px]",
         isTribe && "border-l-4 border-purple-500 bg-gradient-to-r from-purple-900/20 to-transparent",
         className
       )}
       onClick={onClick}
     >
-      <div className="flex justify-between items-start mb-2 gap-2">
+      <div className="flex justify-between items-start mb-3 gap-3">
         <div className="flex flex-col w-4/5">
           <div className="flex flex-wrap gap-1 mb-1">
             {isNewEvent && (
@@ -262,7 +260,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
           </div>
         )}
 
-        <div className="flex items-center gap-3 w-1/5 justify-end">
+        <div className="flex items-center gap-4 w-1/5 justify-end">
           <Badge className={cn(
             "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
             event.category in categoryColors
@@ -315,4 +313,3 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
 EventCard.displayName = 'EventCard';
 
 export default EventCard;
-
