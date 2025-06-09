@@ -168,7 +168,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         "bg-black text-white shadow-md w-full max-w-full overflow-hidden break-words hover:bg-gray-900/50 transition-colors duration-200"
       )}
     >
-      <div className="w-full max-w-full overflow-hidden break-words">
+      <div className="w-full max-w-full overflow-hidden break-words inline">
         {formatContent()}
         
         {/* Reactions positioned directly after content, inline */}
