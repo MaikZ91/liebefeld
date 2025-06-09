@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -250,26 +251,32 @@
     @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300;
   }
 
-  /* Custom styles for chat messages to keep reactions inline and prevent overflow */
-  .chat-message-content {
-    /* Ensures text wraps within its available space */
-    word-break: break-word;
-    overflow-wrap: break-word;
-    /* Allow it to shrink if needed, but not grow excessively */
-    flex-shrink: 1;
-    min-width: 0; /* Important for flex items to prevent overflow */
+  /* Custom styles for chat messages */
+  .chat-message-bubble {
+    /* This class is applied to the span that contains the actual message text */
+    word-break: break-word; /* Ensure long words break */
+    overflow-wrap: break-word; /* Ensure long words break */
+    display: inline; /* Keep content inline */
   }
 
   .message-reactions-container {
-    display: inline-flex; /* Use inline-flex to group reaction buttons */
-    margin-top: 0; /* Remove any top margin */
-    margin-left: 8px; /* Small gap between text and reactions */
-    vertical-align: middle; /* Align with text baseline */
-    flex-shrink: 0; /* Prevent from shrinking too much */
+    display: flex; /* Use flex to arrange reaction buttons horizontally */
+    flex-wrap: wrap; /* Allow reactions to wrap to the next line if needed */
+    margin-top: 5px; /* Space between message text and reactions */
+    margin-left: -2px; /* Adjust to align with text */
+    /* On small screens, ensure reactions don't overflow */
+    max-width: 100%;
   }
 
   .message-reactions-container .group-hover\:opacity-100 {
     opacity: 1 !important; /* Force always visible to simplify layout for now */
+  }
+
+  /* Adjust for message text overflow */
+  .chat-message-text {
+    display: inline-block; /* allows setting width */
+    max-width: calc(100% - 60px); /* Adjust based on padding/margin/reaction button width */
+    vertical-align: top; /* Align with the top of the flex container */
   }
 
   /* Enhanced animations */
