@@ -431,10 +431,13 @@ WICHTIG FÜR textResponse:
 - Verwende KEINESFALLS HTML-Tags wie <h2>, <p>, <ul>, <li>, <br>, <strong>, etc.
 - Schreibe nur reinen Text ohne jegliche HTML-Formatierung
 - Verwende natürliche Absätze und Zeilenumbrüche für die Struktur
-- STELLE DIE EVENTS NUR ALS STRUKTURIERTE TIMELINE-LISTE DAR: Sortiere Events chronologisch und präsentiere sie als übersichtliche Timeline-Liste
-- Verwende Zeitangaben wie "Um 10:00 Uhr", "Danach um 15:00 Uhr", "Am Abend um 20:00 Uhr" etc.
-- Gruppiere Events nach Tagen und Uhrzeiten für eine übersichtliche Timeline-Darstellung
-- Format: "Timeline für [Zeitraum]: Um 10:00 Uhr - [Event-Name] ([Ort]), Um 15:00 Uhr - [Event-Name] ([Ort])..."
+- VERWENDE AUSSCHLIESSLICH DIESE BULLET-POINT TIMELINE FORMAT:
+  * Gruppiere Events nach Tagen mit klaren Tagesüberschriften (z.B. "Montag, 9. Juni 2025:")
+  * Unter jedem Tag liste Events als Bullet-Points auf: "* [Zeit]: [Event-Name] im/in [Ort]"
+  * Format-Beispiel: "* 16:00 Uhr: Triathlon A/F - Laufen & SchwimmenMo im hochschulsport_bielefeld"
+  * Sortiere Events chronologisch nach Datum und Zeit
+  * Verwende Asterisk (*) für jeden Event-Eintrag
+  * Schreibe "im" vor Ortsangaben oder "in" je nach Kontext
 
 Für panelData: Wähle die TOP 3-5 Events aus den gefilterten Events aus. Verwende passende Unsplash-Bilder für jedes Event basierend auf der Kategorie.
 
