@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChatMessage, CHAT_HISTORY_KEY, CHAT_QUERIES_KEY } from './types';
+import { ChatMessage, CHAT_HISTORY_KEY, CHAT_QUERIES_KEY, PanelEventData, PanelEvent } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { generateResponse, getWelcomeMessage, createResponseHeader } from '@/utils/chatUtils';
 import { toast } from 'sonner';
@@ -29,6 +29,47 @@ export const useChatLogic = (
     "Was kann ich am Wochenende machen?",
     "Gibt es Konzerte im Lokschuppen?"
   ];
+
+  // Create dummy panel data
+  const createDummyPanelData = (): PanelEventData => {
+    const dummyEvents: PanelEvent[] = [
+      {
+        id: 'dummy-1',
+        title: 'Geführter Altstadtrundgang Regensburg',
+        date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE'),
+        time: '14:00',
+        price: '12.00€',
+        location: 'Regensburg Altstadt',
+        image_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop',
+        category: 'Kultur'
+      },
+      {
+        id: 'dummy-2', 
+        title: 'Jazz Konzert im Park',
+        date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE'),
+        time: '20:00',
+        price: '15.00€',
+        location: 'Stadtpark Regensburg',
+        image_url: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop',
+        category: 'Konzert'
+      },
+      {
+        id: 'dummy-3',
+        title: 'Kunstausstellung Modern Art',
+        date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE'),
+        time: '10:00',
+        price: '8.00€',
+        location: 'Kunstmuseum Regensburg',
+        image_url: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=300&fit=crop',
+        category: 'Ausstellung'
+      }
+    ];
+
+    return {
+      events: dummyEvents,
+      currentIndex: 0
+    };
+  };
 
   // Load chat history and recent queries from localStorage
   useEffect(() => {
@@ -233,44 +274,93 @@ export const useChatLogic = (
     setInput('');
     setIsTyping(true);
     
-    // Process with small delay to show typing indicator
-    setTimeout(async () => {
-      try {
-        console.log(`[useChatLogic] Processing user query: "${message}" with ${events.length} events`);
-        console.log(`[useChatLogic] Heart mode active: ${isHeartActive}`);
-        
-        // Pass the heart mode state to the generateResponse function
-        const responseHtml = await generateResponse(message, events, isHeartActive);
-        
-        const botMessage: ChatMessage = {
-          id: `bot-${Date.now()}`,
+    // Check if query should trigger panel display
+    const shouldShowPanel = message.toLowerCase().includes('event') || 
+                           message.toLowerCase().includes('heute') ||
+                           message.toLowerCase().includes('wochenende');
+    
+    if (shouldShowPanel) {
+      // First show panel message
+      setTimeout(() => {
+        const panelMessage: ChatMessage = {
+          id: `panel-${Date.now()}`,
           isUser: false,
-          text: 'Hier sind die Events, die ich gefunden habe.',
-          html: responseHtml,
+          text: 'Hier sind einige Events für dich:',
+          panelData: createDummyPanelData(),
           timestamp: new Date().toISOString()
         };
         
-        setMessages(prev => [...prev, botMessage]);
-      } catch (error) {
-        console.error('[useChatLogic] Error generating response:', error);
+        setMessages(prev => [...prev, panelMessage]);
         
-        const errorMessage: ChatMessage = {
-          id: `error-${Date.now()}`,
-          isUser: false,
-          text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
-          html: `${createResponseHeader("Fehler")}
-          <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
-            Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. 
-            Bitte versuche es später noch einmal oder formuliere deine Anfrage anders.
-          </div>`,
-          timestamp: new Date().toISOString()
-        };
-        
-        setMessages(prev => [...prev, errorMessage]);
-      } finally {
-        setIsTyping(false);
-      }
-    }, 800);
+        // Then show regular response after delay
+        setTimeout(async () => {
+          try {
+            console.log(`[useChatLogic] Processing user query: "${message}" with ${events.length} events`);
+            console.log(`[useChatLogic] Heart mode active: ${isHeartActive}`);
+            
+            const responseHtml = await generateResponse(message, events, isHeartActive);
+            
+            const botMessage: ChatMessage = {
+              id: `bot-${Date.now()}`,
+              isUser: false,
+              text: 'Hier sind weitere Details zu den Events.',
+              html: responseHtml,
+              timestamp: new Date().toISOString()
+            };
+            
+            setMessages(prev => [...prev, botMessage]);
+          } catch (error) {
+            console.error('[useChatLogic] Error generating response:', error);
+            
+            const errorMessage: ChatMessage = {
+              id: `error-${Date.now()}`,
+              isUser: false,
+              text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
+              html: `${createResponseHeader("Fehler")}
+              <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
+                Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. 
+                Bitte versuche es später noch einmal oder formuliere deine Anfrage anders.
+              </div>`,
+              timestamp: new Date().toISOString()
+            };
+            
+            setMessages(prev => [...prev, errorMessage]);
+          } finally {
+            setIsTyping(false);
+          }
+        }, 2000); // 2 second delay for regular response
+      }, 800); // Initial delay for panel
+    } else {
+      // Regular flow without panel
+      setTimeout(async () => {
+        try {
+          const responseHtml = await generateResponse(message, events, isHeartActive);
+          
+          const botMessage: ChatMessage = {
+            id: `bot-${Date.now()}`,
+            isUser: false,
+            text: 'Hier sind die Events, die ich gefunden habe.',
+            html: responseHtml,
+            timestamp: new Date().toISOString()
+          };
+          
+          setMessages(prev => [...prev, botMessage]);
+        } catch (error) {
+          console.error('[useChatLogic] Error generating response:', error);
+          
+          const errorMessage: ChatMessage = {
+            id: `error-${Date.now()}`,
+            isUser: false,
+            text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
+            timestamp: new Date().toISOString()
+          };
+          
+          setMessages(prev => [...prev, errorMessage]);
+        } finally {
+          setIsTyping(false);
+        }
+      }, 800);
+    }
   };
 
   const handleDateSelect = (date: string) => {
