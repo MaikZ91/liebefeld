@@ -109,3 +109,44 @@
 .event-list-container .bg-red-900\/20 a {
   color: white !important;
 }
+
+/* Specific styling for flowing text content */
+.flowing-text-content {
+  line-height: 1.6;
+}
+
+.flowing-text-content h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: white !important;
+}
+
+.flowing-text-content h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: white !important;
+}
+
+.flowing-text-content p {
+  margin-bottom: 0.75rem;
+  color: white !important;
+}
+
+.flowing-text-content ul {
+  margin-bottom: 0.75rem;
+  padding-left: 1rem;
+}
+
+.flowing-text-content li {
+  margin-bottom: 0.25rem;
+  color: white !important;
+  list-style-type: disc !important;
+}
+
+.flowing-text-content b,
+.flowing-text-content strong {
+  font-weight: 700;
+  color: white !important;
+}

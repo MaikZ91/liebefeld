@@ -16,48 +16,58 @@ const MessageList: React.FC<MessageListProps> = ({
   handleExamplePromptClick
 }) => {
   const renderMessages = () => {
-    return messages.map((message) => (
-      <div
-        key={message.id}
-        className={cn(
-          "max-w-[85%] rounded-lg",
-          message.isUser
-            ? "bg-black border border-black ml-auto"
-            : "bg-black border border-black"
-        )}
-      >
-        {/* Render Panel if panelData exists */}
-        {message.panelData && (
-          <div className="p-3">
-            <SwipeableEventPanel 
-              panelData={message.panelData}
-              onEventSelect={(eventId) => {
-                console.log('Event selected:', eventId);
-                // Could trigger additional chat response or navigation
-              }}
-            />
-          </div>
-        )}
-        
-        {/* Render HTML content */}
-        {message.html ? (
-          <div 
-            dangerouslySetInnerHTML={{ __html: message.html }} 
-            className="p-3 event-list-container"
-          />
-        ) : (
-          /* Render regular chat message only if no panel data */
-          !message.panelData && (
+    return messages.map((message) => {
+      console.log('[MessageList] Rendering message:', message.id, {
+        hasPanelData: !!message.panelData,
+        hasHtml: !!message.html,
+        hasText: !!message.text
+      });
+
+      return (
+        <div
+          key={message.id}
+          className={cn(
+            "max-w-[85%] rounded-lg",
+            message.isUser
+              ? "bg-black border border-black ml-auto"
+              : "bg-black border border-black"
+          )}
+        >
+          {/* Render Panel if panelData exists */}
+          {message.panelData && (
+            <div className="p-3 border-b border-gray-700">
+              <SwipeableEventPanel 
+                panelData={message.panelData}
+                onEventSelect={(eventId) => {
+                  console.log('Event selected:', eventId);
+                  // Could trigger additional chat response or navigation
+                }}
+              />
+            </div>
+          )}
+          
+          {/* Render HTML content - ALWAYS show if it exists */}
+          {message.html && (
+            <div className="p-3">
+              <div 
+                dangerouslySetInnerHTML={{ __html: message.html }} 
+                className="event-list-container flowing-text-content"
+              />
+            </div>
+          )}
+          
+          {/* Render regular chat message only if no HTML and no panel data */}
+          {!message.html && !message.panelData && (
             <ChatMessage 
               message={message.text} 
               isGroup={false} 
               onDateSelect={handleDateSelect}
               showDateSelector={message.isUser && message.text.toLowerCase().includes('event')}
             />
-          )
-        )}
-      </div>
-    ));
+          )}
+        </div>
+      );
+    });
   };
 
   return (

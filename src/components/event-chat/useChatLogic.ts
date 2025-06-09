@@ -245,6 +245,7 @@ export const useChatLogic = (
         console.log('[useChatLogic] ✅ Received structured response from API');
         console.log('[useChatLogic] Panel events count:', apiResponse.panelData.events?.length || 0);
         console.log('[useChatLogic] Text response length:', apiResponse.textResponse?.length || 0);
+        console.log('[useChatLogic] Text response preview:', apiResponse.textResponse?.substring(0, 200) + '...');
         
         // Show panel first with real data from API
         const panelMessage: ChatMessage = {
@@ -257,14 +258,21 @@ export const useChatLogic = (
         
         setMessages(prev => [...prev, panelMessage]);
         
-        // Then show the text response
+        // Then show the text response - ensure it has HTML content
         const botMessage: ChatMessage = {
           id: `bot-${Date.now()}`,
           isUser: false,
           text: 'Hier sind weitere Details zu den Events.',
-          html: apiResponse.textResponse,
+          html: apiResponse.textResponse, // This should contain the formatted HTML
           timestamp: new Date().toISOString()
         };
+        
+        console.log('[useChatLogic] Creating bot message with HTML:', {
+          id: botMessage.id,
+          hasHtml: !!botMessage.html,
+          htmlLength: botMessage.html?.length || 0,
+          htmlPreview: botMessage.html?.substring(0, 100) + '...'
+        });
         
         setMessages(prev => [...prev, botMessage]);
       } else {
