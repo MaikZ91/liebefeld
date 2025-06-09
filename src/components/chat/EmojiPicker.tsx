@@ -34,14 +34,14 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ onEmojiSelect, trigger }) => 
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-gray-800"
+            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
           >
             <Smile className="h-4 w-4" />
           </Button>
         )}
       </PopoverTrigger>
-      <PopoverContent 
-        className="w-80 p-3 bg-gray-900 border-gray-700"
+      <PopoverContent
+        className="w-80 p-3 bg-popover border-border"
         side="top"
         align="start"
       >
@@ -50,7 +50,7 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ onEmojiSelect, trigger }) => 
             <Button
               key={reaction.emoji}
               variant="ghost"
-              className="h-10 w-10 p-0 text-lg hover:bg-gray-800 transition-colors"
+              className="h-10 w-10 p-0 text-lg hover:bg-accent transition-colors"
               onClick={() => onEmojiSelect(reaction.emoji)}
               title={reaction.label}
             >
