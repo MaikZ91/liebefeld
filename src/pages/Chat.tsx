@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
@@ -26,9 +27,19 @@ const ChatPage = () => {
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   const [username, setUsername] = useState<string>('');
-  const {
-    events
-  } = useEventContext();
+  
+  // Use a try-catch or conditional approach to handle context access
+  let events = [];
+  let contextError = null;
+  
+  try {
+    const eventContext = useEventContext();
+    events = eventContext.events || [];
+  } catch (error) {
+    contextError = error;
+    console.error('Error accessing EventContext:', error);
+  }
+
   const {
     currentUser,
     userProfile,
@@ -137,6 +148,27 @@ const ChatPage = () => {
     refetchProfile();
     return () => window.removeEventListener('resize', checkIsMobile);
   }, [refetchProfile]);
+
+  // Show error state if context is not available
+  if (contextError) {
+    return (
+      <>
+        {/* LiveTicker ganz oben, über dem Header */}
+        <div className="w-full bg-black">
+          <LiveTicker events={[]} />
+        </div>
+        <Layout hideFooter={true}>
+          <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)] items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-red-500 border-t-transparent"></div>
+              <p className="text-lg font-medium">Event-Context wird initialisiert...</p>
+              <p className="text-sm text-gray-400">Falls das Problem weiterhin besteht, versuche die Seite neu zu laden.</p>
+            </div>
+          </div>
+        </Layout>
+      </>
+    );
+  }
 
   // Show loading state while initializing
   if (!isPageLoaded) {
