@@ -567,11 +567,38 @@ Hier die Events:\n${formattedEvents}`;
     } catch (jsonError) {
       console.log("[ai-event-chat] Failed to parse JSON from AI, creating fallback response");
       
+      // Helper function to get category-based dummy image
+      const getCategoryDummyImage = (category: string) => {
+        const categoryImages = {
+          'Sport': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop',
+          'Konzert': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop',
+          'Party': 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&h=300&fit=crop',
+          'Festival': 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400&h=300&fit=crop',
+          'Ausstellung': 'https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=400&h=300&fit=crop',
+          'Kultur': 'https://images.unsplash.com/photo-1503095396549-807759245b35?w=400&h=300&fit=crop',
+          'Theater': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
+          'Kino': 'https://images.unsplash.com/photo-1489599142379-3c9bd765e6b9?w=400&h=300&fit=crop',
+          'Workshop': 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop',
+          'Wandern': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=400&h=300&fit=crop',
+          'Lesung': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop'
+        };
+        
+        return categoryImages[category] || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';
+      };
+      
       // Create fallback response with top events from our filtering - USE REAL DATA
       const fallbackPanelData = {
         events: topEventsForPanel.map((e: any) => {
-          // Use real image URL or fallback
-          const imageUrl = e.image_url || `https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop`;
+          // Use real image URL or category-based fallback
+          let imageUrl = null;
+          
+          // Check if event has a valid image URL (not null, not 'keine', not empty)
+          if (e.image_url && e.image_url !== 'keine' && e.image_url.trim() !== '') {
+            imageUrl = e.image_url;
+          } else {
+            // Use category-based dummy image
+            imageUrl = getCategoryDummyImage(e.category || 'Event');
+          }
           
           return {
             id: e.id, // Use real event ID
