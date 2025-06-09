@@ -35,11 +35,11 @@ export const useChatLogic = (
     const dummyEvents: PanelEvent[] = [
       {
         id: 'dummy-1',
-        title: 'Geführter Altstadtrundgang Regensburg',
+        title: 'Geführter Altstadtrundgang',
         date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE'),
         time: '14:00',
         price: '12.00€',
-        location: 'Regensburg Altstadt',
+        location: 'Bielefeld',
         image_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop',
         category: 'Kultur'
       },
@@ -49,7 +49,7 @@ export const useChatLogic = (
         date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE'),
         time: '20:00',
         price: '15.00€',
-        location: 'Stadtpark Regensburg',
+        location: 'Bielefeld',
         image_url: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop',
         category: 'Konzert'
       },
@@ -59,7 +59,7 @@ export const useChatLogic = (
         date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE'),
         time: '10:00',
         price: '8.00€',
-        location: 'Kunstmuseum Regensburg',
+        location: 'Bielefeld',
         image_url: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=300&fit=crop',
         category: 'Ausstellung'
       }
