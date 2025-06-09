@@ -5,7 +5,6 @@ import ChatMessage from '@/components/chat/ChatMessage';
 import { Button } from '@/components/ui/button';
 import { MessageListProps } from './types';
 import SwipeableEventPanel from './SwipeableEventPanel';
-import './MessageList.css';
 
 const MessageList: React.FC<MessageListProps> = ({
   messages,
@@ -19,7 +18,6 @@ const MessageList: React.FC<MessageListProps> = ({
     return messages.map((message) => {
       console.log('[MessageList] Rendering message:', message.id, {
         hasPanelData: !!message.panelData,
-        hasHtml: !!message.html,
         hasText: !!message.text
       });
 
@@ -46,24 +44,22 @@ const MessageList: React.FC<MessageListProps> = ({
             </div>
           )}
           
-          {/* Render HTML content with original formatting */}
-          {message.html && (
+          {/* Render plain text content */}
+          {message.text && !message.panelData && (
             <div className="p-3">
-              <div 
-                dangerouslySetInnerHTML={{ __html: message.html }} 
-                className="event-list-container"
-              />
+              <div className="text-white whitespace-pre-wrap">
+                {message.text}
+              </div>
             </div>
           )}
           
-          {/* Render regular chat message only if no HTML and no panel data */}
-          {!message.html && !message.panelData && (
-            <ChatMessage 
-              message={message.text} 
-              isGroup={false} 
-              onDateSelect={handleDateSelect}
-              showDateSelector={message.isUser && message.text.toLowerCase().includes('event')}
-            />
+          {/* If message has both panel and text, show text below panel */}
+          {message.text && message.panelData && (
+            <div className="p-3">
+              <div className="text-white whitespace-pre-wrap">
+                {message.text}
+              </div>
+            </div>
           )}
         </div>
       );

@@ -245,7 +245,6 @@ export const useChatLogic = (
         console.log('[useChatLogic] ✅ Received structured response from API');
         console.log('[useChatLogic] Panel events count:', apiResponse.panelData?.events?.length || 0);
         console.log('[useChatLogic] Text response length:', apiResponse.textResponse?.length || 0);
-        console.log('[useChatLogic] Text response preview:', apiResponse.textResponse?.substring(0, 200) + '...');
         
         // Show panel first with real data from API
         const panelMessage: ChatMessage = {
@@ -258,38 +257,30 @@ export const useChatLogic = (
         
         setMessages(prev => [...prev, panelMessage]);
         
-        // Then show the text response - ensure it has HTML content
+        // Then show the text response as plain text
         const botMessage: ChatMessage = {
           id: `bot-${Date.now()}`,
           isUser: false,
-          text: 'Hier sind weitere Details zu den Events.',
-          html: apiResponse.textResponse, // This should contain the formatted HTML
+          text: apiResponse.textResponse, // Use as plain text, no HTML
           timestamp: new Date().toISOString()
         };
         
-        console.log('[useChatLogic] Creating bot message with HTML:', {
+        console.log('[useChatLogic] Creating bot message with plain text:', {
           id: botMessage.id,
-          hasHtml: !!botMessage.html,
-          htmlLength: botMessage.html?.length || 0,
-          htmlPreview: botMessage.html?.substring(0, 100) + '...'
+          textLength: botMessage.text?.length || 0
         });
         
         setMessages(prev => [...prev, botMessage]);
       } else {
         // Fallback: treat as regular text response
         console.log('[useChatLogic] ⚠️ Using fallback for text-only response');
-        console.log('[useChatLogic] Response structure check:');
-        console.log('[useChatLogic] - Is object:', typeof apiResponse === 'object');
-        console.log('[useChatLogic] - Has panelData:', apiResponse && typeof apiResponse === 'object' && 'panelData' in apiResponse);
-        console.log('[useChatLogic] - Has textResponse:', apiResponse && typeof apiResponse === 'object' && 'textResponse' in apiResponse);
         
         const responseText = typeof apiResponse === 'string' ? apiResponse : JSON.stringify(apiResponse);
         
         const botMessage: ChatMessage = {
           id: `bot-${Date.now()}`,
           isUser: false,
-          text: 'Hier ist meine Antwort.',
-          html: responseText,
+          text: responseText, // Plain text only
           timestamp: new Date().toISOString()
         };
         
@@ -301,12 +292,7 @@ export const useChatLogic = (
       const errorMessage: ChatMessage = {
         id: `error-${Date.now()}`,
         isUser: false,
-        text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
-        html: `${createResponseHeader("Fehler")}
-        <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
-          Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. 
-          Bitte versuche es später noch einmal oder formuliere deine Anfrage anders.
-        </div>`,
+        text: `Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. Bitte versuche es später noch einmal oder formuliere deine Anfrage anders.`,
         timestamp: new Date().toISOString()
       };
       
