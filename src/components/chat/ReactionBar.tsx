@@ -16,7 +16,7 @@ const ReactionBar: React.FC<ReactionBarProps> = ({
   if (!reactions || reactions.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-0.5">
+    <div className="flex flex-wrap gap-0.5"> {/* Changed to flex-wrap */}
       {reactions.map((reaction, index) => {
         const hasUserReacted = reaction.users.includes(currentUsername);
         const count = reaction.users.length;
