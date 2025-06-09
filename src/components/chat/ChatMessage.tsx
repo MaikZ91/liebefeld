@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { EventShare } from '@/types/chatTypes';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -169,19 +170,19 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     >
       <div className="w-full max-w-full overflow-hidden break-words">
         {formatContent()}
+        
+        {/* Reactions positioned directly after content, inline */}
+        {(reactions && reactions.length > 0) || (onReact && messageId && isGroup) ? (
+          <div className="inline-block ml-2">
+            <MessageReactions
+              reactions={reactions}
+              onReact={handleReact}
+              currentUsername={currentUsername}
+              showAddButton={onReact && messageId && isGroup}
+            />
+          </div>
+        ) : null}
       </div>
-      
-      {/* Reactions positioned inline at the bottom right of the message content */}
-      {(reactions && reactions.length > 0) || (onReact && messageId && isGroup) ? (
-        <div className="flex justify-end mt-1">
-          <MessageReactions
-            reactions={reactions}
-            onReact={handleReact}
-            currentUsername={currentUsername}
-            showAddButton={onReact && messageId && isGroup}
-          />
-        </div>
-      ) : null}
     </div>
   );
 
