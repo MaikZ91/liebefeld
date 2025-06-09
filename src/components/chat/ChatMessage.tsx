@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { EventShare } from '@/types/chatTypes';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -39,7 +38,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
 
-  // Check if message contains event information
+  // Diese Funktion wird nicht mehr direkt im Textinhalt verwendet,
+  // da wir die automatische HTML-Umwandlung von Event-Texten entfernen.
+  // Sie kann entfernt oder beibehalten werden, falls sie an anderer Stelle noch benötigt wird.
   const containsEventInfo = (text: string): boolean => {
     if (!text) return false;
     const eventKeywords = ['um', 'uhr', 'findet', 'statt', 'kategorie', 'veranstaltung', 'event'];
@@ -47,7 +48,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     return eventKeywords.some(keyword => lowerText.includes(keyword));
   };
 
-  // Function to convert URLs to clickable links
+  // Diese Funktion wird nun auskommentiert, da klickbare Links nicht mehr benötigt werden.
+  /*
   const renderMessageWithLinks = (text: string) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
 
@@ -82,8 +84,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       </>
     );
   };
-
-  // Format event-like text into styled event cards
+  */
+  
+  // Diese Funktion wird nun auskommentiert, da der Textinhalt nicht mehr in HTML umgewandelt werden soll.
+  /*
   const formatEventText = (text: string) => {
     if (!containsEventInfo(text)) return text;
 
@@ -121,6 +125,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 
     return formattedContent;
   };
+  */
 
   // Format message content - extract event data if present
   const formatContent = () => {
@@ -129,17 +134,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     }
 
     if (typeof message === 'string') {
-      if (containsEventInfo(message)) {
-        return (
-          <div
-            className="whitespace-pre-wrap chat-message-content"
-            dangerouslySetInnerHTML={{ __html: formatEventText(message) }}
-          />
-        );
-      }
+      // Da renderMessageWithLinks jetzt auskommentiert ist,
+      // gib den reinen String zurück.
       return (
         <span className="whitespace-pre-wrap chat-message-content">
-          {renderMessageWithLinks(message)}
+          {message}
         </span>
       );
     }
