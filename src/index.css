@@ -249,7 +249,23 @@
   .badge-sport {
     @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300;
   }
+
+  /* Custom styles for chat messages to keep reactions inline */
+  .chat-message-content {
+    display: inline; /* Keep content inline */
+    margin-right: 8px; /* Small gap between text and reactions */
+  }
+
+  .message-reactions-container {
+    display: inline-flex; /* Use inline-flex to group reaction buttons */
+    margin-top: 0; /* Remove any top margin */
+    vertical-align: middle; /* Align with text baseline */
+  }
   
+  .message-reactions-container .group-hover\:opacity-100 {
+    opacity: 1 !important; /* Force always visible to simplify layout for now */
+  }
+
   /* Enhanced animations */
   @keyframes char-appear {
     0% {
