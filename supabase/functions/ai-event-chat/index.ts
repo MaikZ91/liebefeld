@@ -431,7 +431,10 @@ WICHTIG FÜR textResponse:
 - Verwende KEINESFALLS HTML-Tags wie <h2>, <p>, <ul>, <li>, <br>, <strong>, etc.
 - Schreibe nur reinen Text ohne jegliche HTML-Formatierung
 - Verwende natürliche Absätze und Zeilenumbrüche für die Struktur
-- Beispiel: "Veranstaltungen heute in Liebefeld: Hier sind passende Events für dich..."
+- STELLE DIE EVENTS ALS TIMELINE DAR: Sortiere Events chronologisch und präsentiere sie als zeitlichen Ablauf
+- Verwende Zeitangaben wie "Um 10:00 Uhr", "Danach um 15:00 Uhr", "Am Abend um 20:00 Uhr" etc.
+- Gruppiere Events nach Tagen und Uhrzeiten für eine übersichtliche Timeline-Darstellung
+- Beispiel: "Timeline für heute in Liebefeld: Um 10:00 Uhr startet das Konzert, um 15:00 Uhr folgt der Workshop..."
 
 Für panelData: Wähle die TOP 3-5 Events aus den gefilterten Events aus. Verwende passende Unsplash-Bilder für jedes Event basierend auf der Kategorie.
 
