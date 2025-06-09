@@ -451,9 +451,8 @@ KRITISCH WICHTIG FÜR panelData:
 - Alle anderen Event-Daten (Titel, Datum, Zeit, Ort, Kategorie, Link, Likes) MÜSSEN exakt aus der Datenbank übernommen werden
 
 WICHTIG FÜR textResponse: 
-- Verhalte dich wie ein freundlicher Event Assistent der die Events gut präsentiert, strukturiert als chronologische Timeline mit Uhrzeit, und Eingruppierung in die Kategorien Ausgehen, Sport und Kreativität. 
-- Erzähle auch etwas zu den Events falls du Infos zur Beschreibung hast. 
-- Nenne auch das Event Highlight basieredn auf den Anuahl der Likes
+- Stelle die Daten als chronologische Timeline gerankt nach Uhrzeit, und Eingruppierung in die Kategorien Ausgehen, Sport und Kreativität dar. 
+
 
 Hier die Events:\n${formattedEvents}`;
 
