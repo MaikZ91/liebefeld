@@ -28,6 +28,29 @@ export const getWelcomeMessage = () => {
   `;
 };
 
+export const generatePersonalizedPrompt = (interests: string[], locations: string[]) => {
+  const interestsText = interests.length > 0 ? interests.join(', ') : 'allgemeine Interessen';
+  const locationsText = locations.length > 0 ? locations.join(', ') : 'alle Standorte';
+  
+  return `Zeige mir Events, die zu meinen Interessen passen: ${interestsText}. Bevorzugte Standorte: ${locationsText}. Was empfiehlst du mir für heute und die nächsten Tage?`;
+};
+
+export const extractAllLocations = (events: any[]): string[] => {
+  const locations = new Set<string>();
+  
+  events.forEach(event => {
+    if (event.location && typeof event.location === 'string' && event.location.trim()) {
+      locations.add(event.location.trim());
+    }
+  });
+  
+  // Add some common locations as fallbacks
+  const commonLocations = ['Liebefeld', 'Bern', 'Bielefeld', 'Lokschuppen', 'Museum Osthusschule'];
+  commonLocations.forEach(location => locations.add(location));
+  
+  return Array.from(locations).sort();
+};
+
 export const generateResponse = async (query: string, events: any[], isHeartActive: boolean = false) => {
   try {
     console.log('[chatUtils] Starting AI response generation...');
@@ -88,11 +111,15 @@ export const generateResponse = async (query: string, events: any[], isHeartActi
     }
 
     console.log('[chatUtils] AI response received:', data);
+    console.log('[chatUtils] AI response type:', typeof data);
+    console.log('[chatUtils] AI response has panelData:', !!data?.panelData);
+    console.log('[chatUtils] AI response has textResponse:', !!data?.textResponse);
 
     // Check if we got a structured response with panelData and textResponse
     if (data && typeof data === 'object') {
       if (data.panelData && data.textResponse) {
-        console.log('[chatUtils] Returning structured response');
+        console.log('[chatUtils] Returning structured response with panelData and textResponse');
+        console.log('[chatUtils] PanelData events count:', data.panelData.events?.length || 0);
         return {
           panelData: data.panelData,
           textResponse: data.textResponse

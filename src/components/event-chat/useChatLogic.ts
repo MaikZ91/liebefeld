@@ -242,7 +242,9 @@ export const useChatLogic = (
       
       // Check if response contains both panelData and textResponse
       if (apiResponse && typeof apiResponse === 'object' && apiResponse.panelData && apiResponse.textResponse) {
-        console.log('[useChatLogic] Received structured response from API');
+        console.log('[useChatLogic] ✅ Received structured response from API');
+        console.log('[useChatLogic] Panel events count:', apiResponse.panelData.events?.length || 0);
+        console.log('[useChatLogic] Text response length:', apiResponse.textResponse?.length || 0);
         
         // Show panel first with real data from API
         const panelMessage: ChatMessage = {
@@ -267,7 +269,12 @@ export const useChatLogic = (
         setMessages(prev => [...prev, botMessage]);
       } else {
         // Fallback: treat as regular text response
-        console.log('[useChatLogic] Using fallback for text-only response');
+        console.log('[useChatLogic] ⚠️ Using fallback for text-only response');
+        console.log('[useChatLogic] Response structure check:');
+        console.log('[useChatLogic] - Has panelData:', !!apiResponse?.panelData);
+        console.log('[useChatLogic] - Has textResponse:', !!apiResponse?.textResponse);
+        console.log('[useChatLogic] - Is object:', typeof apiResponse === 'object');
+        
         const responseText = typeof apiResponse === 'string' ? apiResponse : JSON.stringify(apiResponse);
         
         const botMessage: ChatMessage = {
