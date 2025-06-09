@@ -1,3 +1,4 @@
+
 // src/hooks/chat/useMessageSending.ts
 
 import { useState, useRef, useCallback, useEffect } from 'react';
@@ -37,11 +38,6 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         messageContent = `🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${trimmedMessage}`;
       }
       
-      // Entfernen Sie die Zeilen für optimistische Updates:
-      // const tempId = `temp-${Date.now()}`;
-      // const optimisticMessage = { /* ... */ };
-      // addOptimisticMessage(optimisticMessage); // DIESE ZEILE ENTFERNEN
-
       // Setzen Sie das Eingabefeld sofort zurück
       setNewMessage('');
       
@@ -93,12 +89,10 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       console.log('Message sent successfully with ID:', data?.id);
       
       // Senden Sie einen Broadcast für die neue Nachricht, um alle Clients zu aktualisieren
-      // Ihr Echtzeit-Abonnement in useChatMessages sollte diese Nachricht aufnehmen und zum State hinzufügen
       await realtimeService.sendToChannel(`messages:${validGroupId}`, 'new_message', {
-        message: { // Senden Sie hier die tatsächliche Nachricht vom Server, falls sie sofort benötigt wird,
-                   // aber die Hauptlogik des Hinzufügens sollte über das `postgres_changes` Abo erfolgen.
-          id: data?.id, // Wichtig: Die echte ID hier übergeben
-          created_at: new Date().toISOString(), // Aktuellen Zeitstempel für die Anzeige
+        message: {
+          id: data?.id,
+          created_at: new Date().toISOString(),
           content: messageContent,
           user_name: username,
           user_avatar: localStorage.getItem(AVATAR_KEY) || '',
@@ -120,5 +114,65 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     } finally {
       setIsSending(false);
     }
-  }, [groupId, username, newMessage, isSending, typing]); // `addOptimisticMessage` kann aus Abhängigkeiten entfernt werden
-                                                     // wenn es nicht mehr aufgerufen wird.
+  }, [groupId, username, newMessage, isSending, typing]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNewMessage(e.target.value);
+    setTyping(e.target.value.length > 0);
+    
+    if (!typing && e.target.value.trim()) {
+      setTyping(true);
+      supabase
+        .channel(`typing:${groupId}`)
+        .send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: {
+            username,
+            avatar: localStorage.getItem(AVATAR_KEY),
+            isTyping: true
+          }
+        });
+    }
+    
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    typingTimeoutRef.current = setTimeout(() => {
+      if (typing) {
+        supabase
+          .channel(`typing:${groupId}`)
+          .send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: {
+              username,
+              avatar: localStorage.getItem(AVATAR_KEY),
+              isTyping: false
+            }
+          });
+        setTyping(false);
+      }
+    }, 2000);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
+  return {
+    newMessage,
+    isSending,
+    fileInputRef,
+    handleSubmit,
+    handleInputChange,
+    handleKeyDown,
+    setNewMessage,
+    typing,
+    typingTimeoutRef
+  };
+};
