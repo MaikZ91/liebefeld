@@ -6,7 +6,7 @@ import { de } from 'date-fns/locale';
 // Transform GitHub events to our Event format
 export const transformGitHubEvents = (
   githubEvents: GitHubEvent[], 
-  githubLikesMap: Record<string, any> = {},
+  eventLikes: Record<string, any> = {},
   currentYear: number = new Date().getFullYear()
 ): Event[] => {
   console.log(`[transformGitHubEvents] Processing ${githubEvents.length} GitHub events`);
@@ -15,7 +15,7 @@ export const transformGitHubEvents = (
     console.log(`[transformGitHubEvents] Processing event ${index}:`, githubEvent);
     
     const eventId = `github-${githubEvent.hash || githubEvent.event || index}`;
-    const likesData = githubLikesMap[eventId] || {};
+    const likesData = eventLikes[eventId] || {};
     
     // Extract location and clean title from event name
     let title = githubEvent.event || 'Unnamed Event';
@@ -102,11 +102,6 @@ export const transformGitHubEvents = (
       eventDate = format(new Date(), 'yyyy-MM-dd');
     }
 
-    // Get image URLs from database or GitHub event
-    const imageUrls = likesData.image_urls && likesData.image_urls.length > 0 
-      ? likesData.image_urls 
-      : (githubEvent.image_urls || []);
-
     const transformedEvent: Event = {
       id: eventId,
       title: title,
@@ -123,14 +118,10 @@ export const transformGitHubEvents = (
         maybe: likesData.rsvp_maybe || 0
       },
       link: githubEvent.link || null,
-      image_urls: imageUrls.length > 0 ? imageUrls : null
+      image_urls: githubEvent.image_urls || null
     };
     
-    console.log(`[transformGitHubEvents] Transformed event with images:`, { 
-      id: transformedEvent.id, 
-      title: transformedEvent.title, 
-      image_urls: transformedEvent.image_urls 
-    });
+    console.log(`[transformGitHubEvents] Transformed event:`, transformedEvent);
     return transformedEvent;
   });
 };

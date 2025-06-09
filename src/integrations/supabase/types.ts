@@ -187,7 +187,6 @@ export type Database = {
           created_at: string | null
           event_id: string
           id: number
-          image_urls: string[] | null
           likes: number
           rsvp_maybe: number | null
           rsvp_no: number | null
@@ -198,7 +197,6 @@ export type Database = {
           created_at?: string | null
           event_id: string
           id?: number
-          image_urls?: string[] | null
           likes?: number
           rsvp_maybe?: number | null
           rsvp_no?: number | null
@@ -209,7 +207,6 @@ export type Database = {
           created_at?: string | null
           event_id?: string
           id?: number
-          image_urls?: string[] | null
           likes?: number
           rsvp_maybe?: number | null
           rsvp_no?: number | null

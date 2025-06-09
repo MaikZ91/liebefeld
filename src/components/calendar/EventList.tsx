@@ -40,7 +40,6 @@ const MemoizedEventCard = memo(({ event, date, onSelectEvent, onLike, isTopEvent
           <span>Top</span>
         </div>
       )}
-      
       <EventCard 
         event={event}
         compact={true}
@@ -67,6 +66,7 @@ const EventList: React.FC<EventListProps> = memo(({
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
   const { newEventIds, filter, topEventsPerDay } = useEventContext();
 
+  // Memoize expensive computations
   const { hochschulsportEvents, regularEvents } = useMemo(() => {
     const hochschulsport = events.filter(event => 
       event.title.toLowerCase().includes('hochschulsport') || 
@@ -103,6 +103,7 @@ const EventList: React.FC<EventListProps> = memo(({
   const eventsByDate = useMemo(() => {
     const grouped = groupEventsByDate(regularEvents);
     
+    // Pre-sort events within each date group
     Object.keys(grouped).forEach(dateStr => {
       grouped[dateStr].sort((a, b) => {
         const likesA = a.likes || 0;

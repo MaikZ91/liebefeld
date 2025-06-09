@@ -1,6 +1,6 @@
 import React, { useState, memo } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
-import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign, ImageIcon } from 'lucide-react';
+import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -88,69 +88,54 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     return (
       <div 
         className={cn(
-          "dark-glass-card rounded-lg p-1.5 cursor-pointer hover-scale mb-0.5 w-full flex gap-2",
+          "dark-glass-card rounded-lg p-1.5 cursor-pointer hover-scale mb-0.5 w-full",
           isTribe && "border-l-2 border-purple-500 bg-gradient-to-r from-purple-900/20 to-transparent",
           className
         )}
         onClick={onClick}
       >
-        {/* Event Bild - falls vorhanden */}
-        {event.image_urls && event.image_urls.length > 0 && (
-          <div className="flex-shrink-0">
-            <img 
-              src={event.image_urls[0]} 
-              alt={event.title}
-              className="w-12 h-12 object-cover rounded border border-gray-600"
-              onError={(e) => {
-                console.log(`Failed to load image: ${event.image_urls?.[0]}`);
-                e.currentTarget.style.display = 'none';
-              }}
-            />
-          </div>
-        )}
-        
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1 flex-wrap">
-            {isNewEvent && (
-              <Badge className="bg-green-600 text-white text-[10px] flex items-center gap-0.5 h-3 px-1">
-                <BadgePlus className="w-2 h-2" />
-                <span>Neu</span>
-              </Badge>
-            )}
-            {event.is_paid && (
-              <Badge className="bg-amber-500 text-white text-[10px] flex items-center gap-0.5 h-3 px-1">
-                <DollarSign className="w-2 h-2" />
-              </Badge>
-            )}
-            {isTribe && (
-              <Badge className="bg-purple-600 text-white text-[10px] flex items-center gap-0.5 h-3 px-1">
-                <Users className="w-2 h-2" />
-                <span>Tribe</span>
-              </Badge>
-            )}
-            {event.link ? (
-              <h4 
-                className={cn(
-                  "font-medium text-xs text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1",
+        <div className="flex justify-between items-start gap-1">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1 flex-wrap">
+              {isNewEvent && (
+                <Badge className="bg-green-600 text-white text-[10px] flex items-center gap-0.5 h-3 px-1">
+                  <BadgePlus className="w-2 h-2" />
+                  <span>Neu</span>
+                </Badge>
+              )}
+              {event.is_paid && (
+                <Badge className="bg-amber-500 text-white text-[10px] flex items-center gap-0.5 h-3 px-1">
+                  <DollarSign className="w-2 h-2" />
+                </Badge>
+              )}
+              {isTribe && (
+                <Badge className="bg-purple-600 text-white text-[10px] flex items-center gap-0.5 h-3 px-1">
+                  <Users className="w-2 h-2" />
+                  <span>Tribe</span>
+                </Badge>
+              )}
+              {event.link ? (
+                <h4 
+                  className={cn(
+                    "font-medium text-xs text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1",
+                    isTribe && "text-purple-300"
+                  )}
+                  onClick={handleLinkClick}
+                >
+                  {event.title}
+                  <ExternalLink className="w-2 h-2 inline-flex flex-shrink-0" />
+                </h4>
+              ) : (
+                <h4 className={cn(
+                  "font-medium text-xs text-white break-words line-clamp-1 text-left",
                   isTribe && "text-purple-300"
-                )}
-                onClick={handleLinkClick}
-              >
-                {event.title}
-                <ExternalLink className="w-2 h-2 inline-flex flex-shrink-0" />
-              </h4>
-            ) : (
-              <h4 className={cn(
-                "font-medium text-xs text-white break-words line-clamp-1 text-left",
-                isTribe && "text-purple-300"
-              )}>
-                {event.title}
-              </h4>
-            )}
-          </div>
-          
-          <div className="flex items-center justify-between mt-0.5">
-            <div className="flex items-center gap-1 text-[8px] text-white">
+                )}>
+                  {event.title}
+                </h4>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-1 mt-0.5 text-[8px] text-white">
               <div className="flex items-center">
                 <Clock className="w-2 h-2 mr-0.5 flex-shrink-0" />
                 <span>{event.time}</span>
@@ -161,38 +146,38 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
                 <span className="truncate">{event.location}</span>
               </div>
             </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Badge className={cn(
+              "flex-shrink-0 flex items-center gap-0.5 text-[8px] font-medium whitespace-nowrap px-1 py-0 h-3",
+              event.category in categoryColors 
+                ? categoryColors[event.category] 
+                : "bg-orange-400/70 text-orange-50"
+            )}>
+              {icon}
+            </Badge>
             
-            <div className="flex items-center gap-2">
-              <Badge className={cn(
-                "flex-shrink-0 flex items-center gap-0.5 text-[8px] font-medium whitespace-nowrap px-1 py-0 h-3",
-                event.category in categoryColors 
-                  ? categoryColors[event.category] 
-                  : "bg-orange-400/70 text-orange-50"
-              )}>
-                {icon}
-              </Badge>
-              
-              <div className="flex items-center gap-0.5">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className={cn(
-                    "h-4 w-4 rounded-full transition-all p-0", 
-                    isLiking ? "opacity-70" : ""
-                  )}
-                  onClick={handleLike}
-                  disabled={isLiking}
-                >
-                  <Heart className={cn(
-                    "w-2 h-2 transition-transform text-white", 
-                    displayLikes > 0 ? "fill-red-500 text-white" : "",
-                    isLiking ? "scale-125" : ""
-                  )} />
-                </Button>
-                {displayLikes > 0 && (
-                  <span className="text-[8px] text-white">{displayLikes}</span>
+            <div className="flex items-center gap-0.5">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={cn(
+                  "h-4 w-4 rounded-full transition-all p-0", 
+                  isLiking ? "opacity-70" : ""
                 )}
-              </div>
+                onClick={handleLike}
+                disabled={isLiking}
+              >
+                <Heart className={cn(
+                  "w-2 h-2 transition-transform text-white", 
+                  displayLikes > 0 ? "fill-red-500 text-white" : "",
+                  isLiking ? "scale-125" : ""
+                )} />
+              </Button>
+              {displayLikes > 0 && (
+                <span className="text-[8px] text-white">{displayLikes}</span>
+              )}
             </div>
           </div>
         </div>
@@ -229,12 +214,6 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
               <Badge className="bg-purple-600 text-white text-xs flex items-center gap-1 h-5 px-2 self-start">
                 <Users className="w-3 h-3" />
                 <span>Tribe</span>
-              </Badge>
-            )}
-            {event.image_urls && event.image_urls.length > 0 && (
-              <Badge className="bg-blue-600 text-white text-xs flex items-center gap-1 h-5 px-2 self-start">
-                <ImageIcon className="w-3 h-3" />
-                <span>{event.image_urls.length} Bilder</span>
               </Badge>
             )}
           </div>
@@ -293,30 +272,6 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
           </div>
         </div>
       </div>
-      
-      {/* Event Images - Full display */}
-      {event.image_urls && event.image_urls.length > 0 && (
-        <div className="mb-3">
-          <div className="flex gap-2 overflow-x-auto scrollbar-thin">
-            {event.image_urls.slice(0, 4).map((url, index) => (
-              <img 
-                key={index}
-                src={url} 
-                alt={`Event ${index + 1}`}
-                className="w-16 h-16 object-cover rounded flex-shrink-0 border border-gray-600"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            ))}
-            {event.image_urls.length > 4 && (
-              <div className="w-16 h-16 bg-gray-800 border border-gray-600 rounded flex items-center justify-center text-sm text-gray-400">
-                +{event.image_urls.length - 4}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
       
       <div className="flex items-center gap-2 text-sm text-white">
         <div className="flex items-center">

@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, MapPin, Heart, Link, ImageIcon } from 'lucide-react';
+import { CalendarIcon, MapPin, Heart, Link } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
 import EventCard from '@/components/EventCard';
 
@@ -101,34 +101,6 @@ const EventPanel: React.FC<EventPanelProps> = ({
               <MapPin className="h-3 w-3 mr-1" />
               <span className="truncate">{selectedEvent.location}</span>
             </div>
-            
-            {/* Event Images - Compact display */}
-            {selectedEvent.image_urls && selectedEvent.image_urls.length > 0 && (
-              <div className="mb-3">
-                <div className="flex items-center gap-1 mb-1">
-                  <ImageIcon className="h-3 w-3 text-gray-400" />
-                  <span className="text-xs text-gray-400">Bilder</span>
-                </div>
-                <div className="flex gap-1 overflow-x-auto scrollbar-thin">
-                  {selectedEvent.image_urls.slice(0, 3).map((url, index) => (
-                    <img 
-                      key={index}
-                      src={url} 
-                      alt={`Event ${index + 1}`}
-                      className="w-12 h-12 object-cover rounded flex-shrink-0 border border-gray-600"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                  ))}
-                  {selectedEvent.image_urls.length > 3 && (
-                    <div className="w-12 h-12 bg-gray-800 border border-gray-600 rounded flex items-center justify-center text-xs text-gray-400">
-                      +{selectedEvent.image_urls.length - 3}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
             
             <p className="text-gray-300 mb-3 text-xs">{selectedEvent.description}</p>
             

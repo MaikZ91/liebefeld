@@ -86,10 +86,9 @@ export const fetchGitHubLikes = async (): Promise<Record<string, any>> => {
           likes: like.likes || 0,
           rsvp_yes: like.rsvp_yes || 0,
           rsvp_no: like.rsvp_no || 0,
-          rsvp_maybe: like.rsvp_maybe || 0,
-          image_urls: like.image_urls || []
+          rsvp_maybe: like.rsvp_maybe || 0
         };
-        console.log(`Found data for ${like.event_id}: ${like.likes} likes, RSVP: yes=${like.rsvp_yes || 0}, no=${like.rsvp_no || 0}, maybe=${like.rsvp_maybe || 0}, images: ${(like.image_urls || []).length}`);
+        console.log(`Found data for ${like.event_id}: ${like.likes} likes, RSVP: yes=${like.rsvp_yes || 0}, no=${like.rsvp_no || 0}, maybe=${like.rsvp_maybe || 0}`);
       });
     } else {
       console.log('No GitHub likes data found in database');
@@ -103,7 +102,7 @@ export const fetchGitHubLikes = async (): Promise<Record<string, any>> => {
 };
 
 // Fetch external events from GitHub
-export const fetchExternalEvents = async (githubLikesMap: Record<string, any>): Promise<Event[]> => {
+export const fetchExternalEvents = async (eventLikes: Record<string, number>): Promise<Event[]> => {
   try {
     console.log(`[fetchExternalEvents] Attempting to fetch events from: ${EXTERNAL_EVENTS_URL}`);
     
@@ -122,10 +121,10 @@ export const fetchExternalEvents = async (githubLikesMap: Record<string, any>): 
     // Log first few events to debug
     console.log('[fetchExternalEvents] First 3 GitHub events:', githubEvents.slice(0, 3));
     
-    // Transform GitHub events to our format and pass githubLikesMap to ensure likes and images are applied
-    const transformedEvents = transformGitHubEvents(githubEvents, githubLikesMap, new Date().getFullYear());
+    // Transform GitHub events to our format and pass eventLikes to ensure likes are applied
+    const transformedEvents = transformGitHubEvents(githubEvents, eventLikes, new Date().getFullYear());
     console.log(`[fetchExternalEvents] Transformed ${transformedEvents.length} GitHub events`);
-    console.log('[fetchExternalEvents] First 3 transformed events with images:', transformedEvents.slice(0, 3).map(e => ({ id: e.id, title: e.title, image_urls: e.image_urls })));
+    console.log('[fetchExternalEvents] First 3 transformed events:', transformedEvents.slice(0, 3));
     
     return transformedEvents;
   } catch (error) {
@@ -354,14 +353,14 @@ export const addNewEvent = async (newEvent: Omit<Event, 'id'>): Promise<Event> =
   }
 };
 
-// Sync GitHub events with database - now includes image_urls
+// Sync GitHub events with database
 export const syncGitHubEvents = async (githubEvents: Event[]): Promise<void> => {
   try {
     console.log(`Syncing ${githubEvents.length} GitHub events with database`);
     
     const { data: existingEventLikes, error: likesError } = await supabase
       .from('github_event_likes')
-      .select('event_id, image_urls');
+      .select('event_id');
     
     if (likesError) {
       console.error('Error fetching existing GitHub event likes:', likesError);
@@ -373,15 +372,14 @@ export const syncGitHubEvents = async (githubEvents: Event[]): Promise<void> => 
     
     console.log(`Found ${newEvents.length} new GitHub events to sync`);
     
-    // Insert records for new GitHub events with image_urls
+    // Insert records for new GitHub events
     if (newEvents.length > 0) {
       const newEventRecords = newEvents.map(event => ({
         event_id: event.id,
         likes: 0,
         rsvp_yes: 0,
         rsvp_no: 0,
-        rsvp_maybe: 0,
-        image_urls: event.image_urls || []
+        rsvp_maybe: 0
       }));
       
       const { error: insertError } = await supabase
@@ -392,33 +390,6 @@ export const syncGitHubEvents = async (githubEvents: Event[]): Promise<void> => 
         console.error('Error syncing new GitHub events:', insertError);
       } else {
         console.log(`Successfully synced ${newEvents.length} new GitHub events`);
-      }
-    }
-    
-    // Update existing events with image_urls if they have new ones
-    const existingEventMap = new Map(existingEventLikes?.map(e => [e.event_id, e.image_urls]) || []);
-    const eventsToUpdate = githubEvents.filter(event => {
-      if (!existingEventIds.has(event.id)) return false;
-      const existingImageUrls = existingEventMap.get(event.id) || [];
-      const newImageUrls = event.image_urls || [];
-      // Update if there are new image URLs
-      return newImageUrls.length > 0 && JSON.stringify(existingImageUrls) !== JSON.stringify(newImageUrls);
-    });
-    
-    if (eventsToUpdate.length > 0) {
-      console.log(`Updating ${eventsToUpdate.length} existing GitHub events with new image URLs`);
-      
-      for (const event of eventsToUpdate) {
-        const { error: updateError } = await supabase
-          .from('github_event_likes')
-          .update({ image_urls: event.image_urls })
-          .eq('event_id', event.id);
-        
-        if (updateError) {
-          console.error(`Error updating image URLs for event ${event.id}:`, updateError);
-        } else {
-          console.log(`Updated image URLs for event ${event.id}`);
-        }
       }
     }
   } catch (error) {
