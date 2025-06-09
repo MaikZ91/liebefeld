@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { EventShare } from '@/types/chatTypes';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -49,7 +48,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   
   // Function to convert URLs to clickable links
   const renderMessageWithLinks = (text: string) => {
-    // URL regex pattern - improved to better match URLs
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     
     if (!text.match(urlRegex)) {
@@ -88,49 +86,35 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   const formatEventText = (text: string) => {
     if (!containsEventInfo(text)) return text;
 
-    // Try to detect and format event-like information
     const lines = text.split("\n");
     let formattedContent = "";
     
     for (let i = 0; i < lines.length; i++) {
       let line = lines[i].trim();
       
-      // Skip empty lines
       if (!line) {
         formattedContent += "<p></p>";
         continue;
       }
       
-      // Remove bullet points from the beginning of lines
       line = line.replace(/^[•\-*]\s*/, '');
       
-      // Check if this line looks like an event description
-      if (containsEventInfo(line)) {
-        let title = '';
-        let details = line;
-
-        // Check if the line has a title format with asterisks or colon
-        if (line.includes(":") && line.split(":")[0].length < 30) {
-          const parts = line.split(":");
-          title = parts[0].trim().replace(/\*/g, '');
-          details = parts.slice(1).join(":").trim();
-        } else if (line.includes("*")) {
-          const titleMatch = line.match(/\*([^*]+)\*/);
-          if (titleMatch) {
-            title = titleMatch[1].trim();
-            details = line.replace(/\*([^*]+)\*/, '').trim();
+      if (line.toLowerCase().includes("event:") || line.toLowerCase().includes("datum:")) {
+          const eventRegex = /^(.*?) um (.*?) (?:in|bei|im) (.*?) \(Kategorie: (.*?)\)$/i;
+          const match = line.match(eventRegex);
+          if (match) {
+              const [_, title, time, location, category] = match;
+              formattedContent += `
+                  <div class="bg-black border border-black rounded-lg p-2 mb-2">
+                      <div class="font-bold">${title}</div>
+                      <div>Zeit: ${time}, Ort: ${location}, Kategorie: ${category}</div>
+                  </div>
+              `;
+          } else {
+              formattedContent += `<p>${line}</p>`;
           }
-        }
-
-        formattedContent += `
-          <div class="bg-black border border-black rounded-lg p-2 mb-2">
-            ${title ? `<div class="font-bold">${title}</div>` : ''}
-            <div>${details}</div>
-          </div>
-        `;
       } else {
-        // Remove bullet points for regular lines as well
-        formattedContent += `<p>${line}</p>`;
+          formattedContent += `<p>${line}</p>`;
       }
     }
     
@@ -143,7 +127,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       return <EventMessageFormatter event={eventData} />;
     }
     
-    // For regular messages, render with links if it's a string
     if (typeof message === 'string') {
       if (containsEventInfo(message)) {
         return (
@@ -160,7 +143,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       );
     }
     
-    // For React node messages
     return (
       <div className="whitespace-pre-wrap">
         {message}
@@ -179,18 +161,26 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   
   const messageContent = (
     <div 
-      className={`group p-3 rounded-lg ${isConsecutive ? 'mt-0.5' : 'mt-1'} bg-black text-white shadow-md w-full max-w-full overflow-hidden break-words hover:bg-gray-900/50 transition-colors duration-200`}
+      className={cn(
+        "group p-3 rounded-lg relative",
+        isConsecutive ? 'mt-0.5' : 'mt-1',
+        "bg-black text-white shadow-md w-full max-w-full overflow-hidden break-words hover:bg-gray-900/50 transition-colors duration-200"
+      )}
     >
-      <div className="w-full max-w-full overflow-hidden break-words">
+      <div className="w-full max-w-full overflow-hidden break-words mb-1">
         {formatContent()}
       </div>
+      
+      {/* Reactions positioned at the bottom of the message */}
       {(reactions && reactions.length > 0) || (onReact && messageId && isGroup) ? (
-        <MessageReactions
-          reactions={reactions}
-          onReact={handleReact}
-          currentUsername={currentUsername}
-          showAddButton={onReact && messageId && isGroup}
-        />
+        <div className="flex justify-end">
+          <MessageReactions
+            reactions={reactions}
+            onReact={handleReact}
+            currentUsername={currentUsername}
+            showAddButton={onReact && messageId && isGroup}
+          />
+        </div>
       ) : null}
     </div>
   );
