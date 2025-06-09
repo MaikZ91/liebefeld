@@ -4,6 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { generateResponse, getWelcomeMessage, createResponseHeader } from '@/utils/chatUtils';
 import { toast } from 'sonner';
 
+// Importiere deine Event-Typen und Hilfsfunktionen zur Event-Filterung
+import { Event } from '@/types/eventTypes';
+import { getFutureEvents, getEventsForDay, getWeekRange } from '@/utils/eventUtils'; // Importiere getWeekRange
+
+
 export const useChatLogic = (
   events: any[],
   fullPage: boolean = false,
@@ -30,43 +35,21 @@ export const useChatLogic = (
     "Gibt es Konzerte im Lokschuppen?"
   ];
 
-  // Create dummy panel data
-  const createDummyPanelData = (): PanelEventData => {
-    const dummyEvents: PanelEvent[] = [
-      {
-        id: 'dummy-1',
-        title: 'Geführter Altstadtrundgang',
-        date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE'),
-        time: '14:00',
-        price: '12.00€',
-        location: 'Bielefeld',
-        image_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop',
-        category: 'Kultur'
-      },
-      {
-        id: 'dummy-2', 
-        title: 'Jazz Konzert im Park',
-        date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE'),
-        time: '20:00',
-        price: '15.00€',
-        location: 'Bielefeld',
-        image_url: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop',
-        category: 'Konzert'
-      },
-      {
-        id: 'dummy-3',
-        title: 'Kunstausstellung Modern Art',
-        date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE'),
-        time: '10:00',
-        price: '8.00€',
-        location: 'Bielefeld',
-        image_url: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=300&fit=crop',
-        category: 'Ausstellung'
-      }
-    ];
+  // Ersetzte createDummyPanelData durch eine Funktion, die echte Events verwendet
+  const createPanelDataFromEvents = (filteredEvents: Event[]): PanelEventData => {
+    const panelEvents: PanelEvent[] = filteredEvents.slice(0, 3).map(event => ({
+      id: event.id,
+      title: event.title,
+      date: event.date,
+      time: event.time,
+      price: event.is_paid ? "Kostenpflichtig" : "Kostenlos", // Oder den tatsächlichen Preis, wenn vorhanden
+      location: event.location,
+      image_url: event.image_url || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop', // Standardbild, falls keines vorhanden
+      category: event.category
+    }));
 
     return {
-      events: dummyEvents,
+      events: panelEvents,
       currentIndex: 0
     };
   };
@@ -274,22 +257,91 @@ export const useChatLogic = (
     setInput('');
     setIsTyping(true);
     
-    // Show panel immediately
-    const panelMessage: ChatMessage = {
-      id: `panel-${Date.now()}`,
-      isUser: false,
-      text: 'Hier sind einige Events für dich:',
-      panelData: createDummyPanelData(),
-      timestamp: new Date().toISOString()
-    };
-    
-    setMessages(prev => [...prev, panelMessage]);
-    
-    // Generate and show regular response immediately
-    try {
-      console.log(`[useChatLogic] Processing user query: "${message}" with ${events.length} events`);
-      console.log(`[useChatLogic] Heart mode active: ${isHeartActive}`);
+    // Events filtern basierend auf der Abfrage
+    let relevantEvents: Event[] = [];
+    const currentDate = new Date();
+
+    // Beispiel-Logik: Wenn die Anfrage nach "heute" oder "Wochenende" fragt
+    const lowercaseMessage = message.toLowerCase();
+    if (lowercaseMessage.includes('heute') || lowercaseMessage.includes('today')) {
+      relevantEvents = getEventsForDay(events, currentDate);
+    } else if (lowercaseMessage.includes('morgen') || lowercaseMessage.includes('tomorrow')) {
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(currentDate.getDate() + 1);
+      relevantEvents = getEventsForDay(events, tomorrow);
+    }
+     else if (lowercaseMessage.includes('wochenende') || lowercaseMessage.includes('weekend')) {
+      const [startOfWeek, endOfWeek] = getWeekRange(currentDate);
+      // Finde den Samstag und Sonntag dieser oder der nächsten Woche
+      let saturday = new Date(currentDate);
+      let sunday = new Date(currentDate);
+
+      // Finde den nächsten Samstag (falls heute nicht Samstag ist)
+      saturday.setDate(currentDate.getDate() + (6 - currentDate.getDay() + 7) % 7);
+      // Finde den nächsten Sonntag (falls heute nicht Sonntag ist)
+      sunday.setDate(currentDate.getDate() + (0 - currentDate.getDay() + 7) % 7);
+
+      if (saturday < currentDate) { // Wenn Samstag schon vorbei ist, nimm Samstag nächste Woche
+          saturday.setDate(saturday.getDate() + 7);
+      }
+      if (sunday < currentDate) { // Wenn Sonntag schon vorbei ist, nimm Sonntag nächste Woche
+          sunday.setDate(sunday.getDate() + 7);
+      }
       
+      relevantEvents = events.filter(e => 
+        (new Date(e.date).toISOString().split('T')[0] === saturday.toISOString().split('T')[0]) ||
+        (new Date(e.date).toISOString().split('T')[0] === sunday.toISOString().split('T')[0])
+      );
+    }
+     else {
+      // Fallback: Zukünftige Events anzeigen
+      relevantEvents = getFutureEvents(events);
+    }
+    
+    // Filtern nach Kategorien, falls in der Nachricht erwähnt
+    const categoryMapping = {
+      konzert: "Konzert",
+      party: "Party",
+      ausstellung: "Ausstellung",
+      sport: "Sport",
+      workshop: "Workshop",
+      kultur: "Kultur",
+      film: "Film",
+      theater: "Theater",
+      lesung: "Lesung",
+      festival: "Festival"
+    };
+
+    let detectedCategory: string | null = null;
+    for (const [keyword, category] of Object.entries(categoryMapping)) {
+      if (lowercaseMessage.includes(keyword)) {
+        detectedCategory = category;
+        break;
+      }
+    }
+
+    if (detectedCategory) {
+      relevantEvents = relevantEvents.filter(event => event.category && event.category.toLowerCase() === detectedCategory.toLowerCase());
+    }
+
+    // Wenn es keine relevanten Events gibt, Panel nicht anzeigen
+    if (relevantEvents.length > 0) {
+      // Jetzt die Panel-Daten aus den relevanten Events erstellen
+      const panelData = createPanelDataFromEvents(relevantEvents);
+
+      const panelMessage: ChatMessage = {
+        id: `panel-${Date.now()}`,
+        isUser: false,
+        text: 'Hier sind einige Events für dich:',
+        panelData: panelData,
+        timestamp: new Date().toISOString()
+      };
+
+      setMessages(prev => [...prev, panelMessage]);
+    }
+    
+    // Generiere und zeige die reguläre Antwort danach
+    try {
       const responseHtml = await generateResponse(message, events, isHeartActive);
       
       const botMessage: ChatMessage = {
