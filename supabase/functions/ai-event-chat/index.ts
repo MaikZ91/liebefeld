@@ -340,7 +340,7 @@ serve(async (req) => {
         thisMonthEvents.slice(0, 3).map((e: any) => `${e.title} (${e.date})`));
     }
     
-    // Format events for AI processing - INCLUDE ID, IMAGE_URL AND LINK
+    // Format events for AI processing - INCLUDE ID, IMAGE_URL, LINK AND LIKES
     const formattedEvents = filteredEvents
       .map((e: any) => {
         const actualCategory = e.category || 'Unbekannt';
@@ -363,6 +363,7 @@ serve(async (req) => {
           e.location ? `Ort: ${e.location}` : "",
           imageUrl ? `Bild-URL: ${imageUrl}` : "Bild-URL: keine",
           e.link ? `Link: ${e.link}` : "Link: keiner",
+          `Likes: ${e.likes || 0}`,
         ].filter(Boolean).join("\n");
       })
       .join("\n\n");
@@ -431,7 +432,8 @@ Antworte im folgenden JSON-Format:
         "location": "Ort",
         "image_url": "echte-image-url-aus-datenbank-oder-fallback",
         "category": "Kategorie",
-        "link": "event-link-aus-datenbank-oder-null"
+        "link": "event-link-aus-datenbank-oder-null",
+        "likes": "anzahl-der-likes-aus-datenbank"
       }
     ],
     "currentIndex": 0
@@ -443,9 +445,10 @@ KRITISCH WICHTIG FÜR panelData:
 - Verwende IMMER die echten Event-IDs aus den übermittelten Events (z.B. "github-675", nicht "event-1")
 - Verwende die echten Bild-URLs aus der Datenbank wenn vorhanden
 - Verwende die echten Event-Links aus der Datenbank wenn vorhanden, sonst null
+- Verwende die echten Likes-Zahlen aus der Datenbank
 - Falls ein Event keine Bild-URL hat, verwende passende Unsplash-Bilder basierend auf der Kategorie
 - Wähle die TOP 3-5 Events aus den gefilterten Events aus
-- Alle anderen Event-Daten (Titel, Datum, Zeit, Ort, Kategorie, Link) MÜSSEN exakt aus der Datenbank übernommen werden
+- Alle anderen Event-Daten (Titel, Datum, Zeit, Ort, Kategorie, Link, Likes) MÜSSEN exakt aus der Datenbank übernommen werden
 
 WICHTIG FÜR textResponse: 
 - Verwende KEINESFALLS HTML-Tags wie <h2>, <p>, <ul>, <li>, <br>, <strong>, etc.
@@ -609,7 +612,8 @@ Hier die Events:\n${formattedEvents}`;
             location: e.location || 'Ort nicht angegeben',
             image_url: imageUrl,
             category: e.category || 'Event',
-            link: e.link || null // Include the link field
+            link: e.link || null, // Include the link field
+            likes: e.likes || 0 // Include the likes field
           };
         }),
         currentIndex: 0

@@ -25,6 +25,7 @@ export interface PanelEvent {
   image_url: string;
   category: string;
   link?: string; // Added link field
+  likes?: number; // Added likes field
 }
 
 export interface EventChatBotProps {

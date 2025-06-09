@@ -1,9 +1,10 @@
 
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, MapPin, Clock, Euro, ExternalLink } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, Clock, Euro, ExternalLink, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { PanelEventData } from './types';
+import { useEventContext } from '@/contexts/EventContext';
 
 interface SwipeableEventPanelProps {
   panelData: PanelEventData;
@@ -17,6 +18,7 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
   className
 }) => {
   const [currentIndex, setCurrentIndex] = useState(panelData.currentIndex || 0);
+  const { handleEventLike, eventLikes } = useEventContext();
   
   const currentEvent = panelData.events[currentIndex];
   
@@ -24,6 +26,11 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
   const imageUrl = currentEvent.image_url && currentEvent.image_url !== 'keine' 
     ? currentEvent.image_url 
     : 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=400&h=300';
+  
+  // Get current likes count from EventContext or fallback to panel data
+  const currentLikes = currentEvent.id.startsWith('github-')
+    ? (eventLikes[currentEvent.id] || 0)
+    : (currentEvent.likes || 0);
   
   const handlePrevious = () => {
     setCurrentIndex((prev) => 
@@ -45,6 +52,11 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
       // Fallback to internal event selection if no link available
       onEventSelect(currentEvent.id);
     }
+  };
+
+  const handleLike = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleEventLike(currentEvent.id);
   };
 
   if (!currentEvent) return null;
@@ -123,6 +135,24 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
           <div className="flex items-center gap-2 text-gray-300">
             <Euro className="h-4 w-4 text-green-400" />
             <span className="text-sm font-medium text-green-400">{currentEvent.price}</span>
+          </div>
+
+          {/* Likes Display */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 rounded-full transition-all hover:bg-red-500/20"
+              onClick={handleLike}
+            >
+              <Heart className={cn(
+                "h-4 w-4 transition-transform",
+                currentLikes > 0 ? "fill-red-500 text-red-500" : "text-gray-400"
+              )} />
+            </Button>
+            {currentLikes > 0 && (
+              <span className="text-sm text-gray-300">{currentLikes}</span>
+            )}
           </div>
         </div>
         
