@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Event, GitHubEvent } from "../types/eventTypes";
 import { transformGitHubEvents } from "../utils/eventUtils";
@@ -90,7 +89,7 @@ export const fetchGitHubLikes = async (): Promise<Record<string, any>> => {
           rsvp_maybe: like.rsvp_maybe || 0,
           image_urls: like.image_urls || []
         };
-        console.log(`Found data for ${like.event_id}: ${like.likes} likes, RSVP: yes=${like.rsvp_yes || 0}, no=${like.rsvp_no || 0}, maybe=${like.rsvp_maybe || 0}, images: ${like.image_urls?.length || 0}`);
+        console.log(`Found data for ${like.event_id}: ${like.likes} likes, RSVP: yes=${like.rsvp_yes || 0}, no=${like.rsvp_no || 0}, maybe=${like.rsvp_maybe || 0}, images: ${(like.image_urls || []).length}`);
       });
     } else {
       console.log('No GitHub likes data found in database');
@@ -104,7 +103,7 @@ export const fetchGitHubLikes = async (): Promise<Record<string, any>> => {
 };
 
 // Fetch external events from GitHub
-export const fetchExternalEvents = async (eventLikes: Record<string, number>): Promise<Event[]> => {
+export const fetchExternalEvents = async (githubLikesMap: Record<string, any>): Promise<Event[]> => {
   try {
     console.log(`[fetchExternalEvents] Attempting to fetch events from: ${EXTERNAL_EVENTS_URL}`);
     
@@ -123,10 +122,10 @@ export const fetchExternalEvents = async (eventLikes: Record<string, number>): P
     // Log first few events to debug
     console.log('[fetchExternalEvents] First 3 GitHub events:', githubEvents.slice(0, 3));
     
-    // Transform GitHub events to our format and pass eventLikes to ensure likes are applied
-    const transformedEvents = transformGitHubEvents(githubEvents, eventLikes, new Date().getFullYear());
+    // Transform GitHub events to our format and pass githubLikesMap to ensure likes and images are applied
+    const transformedEvents = transformGitHubEvents(githubEvents, githubLikesMap, new Date().getFullYear());
     console.log(`[fetchExternalEvents] Transformed ${transformedEvents.length} GitHub events`);
-    console.log('[fetchExternalEvents] First 3 transformed events:', transformedEvents.slice(0, 3));
+    console.log('[fetchExternalEvents] First 3 transformed events with images:', transformedEvents.slice(0, 3).map(e => ({ id: e.id, title: e.title, image_urls: e.image_urls })));
     
     return transformedEvents;
   } catch (error) {
