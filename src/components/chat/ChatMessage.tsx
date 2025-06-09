@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { EventShare } from '@/types/chatTypes';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -23,9 +24,9 @@ interface ChatMessageProps {
   messageId?: string;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ 
-  message, 
-  isConsecutive = false, 
+const ChatMessage: React.FC<ChatMessageProps> = ({
+  message,
+  isConsecutive = false,
   isGroup = false,
   eventData,
   onDateSelect,
@@ -37,7 +38,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 }) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
-  
+
   // Check if message contains event information
   const containsEventInfo = (text: string): boolean => {
     if (!text) return false;
@@ -45,28 +46,28 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     const lowerText = text.toLowerCase();
     return eventKeywords.some(keyword => lowerText.includes(keyword));
   };
-  
+
   // Function to convert URLs to clickable links
   const renderMessageWithLinks = (text: string) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    
+
     if (!text.match(urlRegex)) {
       return text;
     }
-    
+
     const parts = text.split(urlRegex);
     const matches = text.match(urlRegex) || [];
-    
+
     return (
       <>
         {parts.map((part, i) => (
           <React.Fragment key={i}>
             {part}
             {matches[i] && (
-              <a 
-                href={matches[i]} 
-                target="_blank" 
-                rel="noopener noreferrer" 
+              <a
+                href={matches[i]}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-red-400 hover:text-red-300 underline break-all flex items-center"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -88,17 +89,17 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 
     const lines = text.split("\n");
     let formattedContent = "";
-    
+
     for (let i = 0; i < lines.length; i++) {
       let line = lines[i].trim();
-      
+
       if (!line) {
         formattedContent += "<p></p>";
         continue;
       }
-      
+
       line = line.replace(/^[•\-*]\s*/, '');
-      
+
       if (line.toLowerCase().includes("event:") || line.toLowerCase().includes("datum:")) {
           const eventRegex = /^(.*?) um (.*?) (?:in|bei|im) (.*?) \(Kategorie: (.*?)\)$/i;
           const match = line.match(eventRegex);
@@ -117,36 +118,36 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           formattedContent += `<p>${line}</p>`;
       }
     }
-    
+
     return formattedContent;
   };
-  
+
   // Format message content - extract event data if present
   const formatContent = () => {
     if (eventData) {
       return <EventMessageFormatter event={eventData} />;
     }
-    
+
     if (typeof message === 'string') {
       if (containsEventInfo(message)) {
         return (
-          <div 
-            className="whitespace-pre-wrap" 
-            dangerouslySetInnerHTML={{ __html: formatEventText(message) }} 
+          <div
+            className="whitespace-pre-wrap message-text-content" // Added class for targeting in CSS
+            dangerouslySetInnerHTML={{ __html: formatEventText(message) }}
           />
         );
       }
       return (
-        <div className="whitespace-pre-wrap message-text-content"> {/* Added class for targeting in CSS */}
+        <span className="whitespace-pre-wrap message-text-content inline"> {/* Changed to span and inline */}
           {renderMessageWithLinks(message)}
-        </div>
+        </span>
       );
     }
-    
+
     return (
-      <div className="whitespace-pre-wrap message-text-content"> {/* Added class for targeting in CSS */}
+      <span className="whitespace-pre-wrap message-text-content inline"> {/* Changed to span and inline */}
         {message}
-      </div>
+      </span>
     );
   };
 
@@ -158,20 +159,19 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       console.warn('ChatMessage: Missing onReact handler or messageId', { onReact: !!onReact, messageId });
     }
   };
-  
+
   const messageContent = (
-    <div 
+    <div
       className={cn(
         "group p-3 rounded-lg relative",
         isConsecutive ? 'mt-0.5' : 'mt-1',
         "bg-black text-white shadow-md w-full max-w-full overflow-hidden break-words hover:bg-gray-900/50 transition-colors duration-200"
       )}
     >
-      <div className="w-full max-w-full overflow-hidden break-words flex flex-wrap items-end justify-start"> {/* Adjusted to flex-wrap and justify-start */}
-        <div className="inline-block flex-shrink-0 chat-message-content"> {/* Added class for targeting in CSS */}
-          {formatContent()}
-        </div>
-        
+      {/* Adjusted to flex-wrap and items-end to allow content and reactions to wrap */}
+      <div className="w-full max-w-full overflow-hidden break-words flex flex-wrap items-end justify-start">
+        {formatContent()} {/* No longer wrapped in an extra div. `formatContent` returns `div` or `span` */}
+
         {/* Reactions positioned directly after content, inline-block with margin */}
         {(reactions && reactions.length > 0) || (onReact && messageId && isGroup) ? (
           <div className="inline-flex flex-shrink-0 message-reactions-container"> {/* Added class for targeting in CSS */}
