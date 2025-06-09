@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
@@ -9,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/chatUIUtils';
 import TypingIndicator from '@/components/chat/TypingIndicator';
 import ChatMessage from '@/components/chat/ChatMessage';
+import MessageReactions from '@/components/chat/MessageReactions';
 import { chatService } from '@/services/chatService';
 
 /**
@@ -207,7 +209,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                   const timeAgo = formatTime(message.created_at);
 
                   return (
-                    <div key={message.id} className="w-full">
+                    <div key={message.id} className="w-full group">
                       {!isConsecutive && (
                         <div className="flex items-center mb-1">
                           <Avatar className="h-8 w-8 mr-2 flex-shrink-0 border-red-500">
@@ -231,6 +233,13 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                           reactions={message.reactions || []}
                           onReact={(emoji) => handleReaction(message.id, emoji)}
                           currentUsername={username}
+                          showReactions={false}
+                        />
+                        <MessageReactions
+                          reactions={message.reactions || []}
+                          onReact={(emoji) => handleReaction(message.id, emoji)}
+                          currentUsername={username}
+                          showAddButton={true}
                         />
                       </div>
                     </div>
