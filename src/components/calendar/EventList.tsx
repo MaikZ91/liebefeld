@@ -41,50 +41,13 @@ const MemoizedEventCard = memo(({ event, date, onSelectEvent, onLike, isTopEvent
         </div>
       )}
       
-      {/* Kompakte Event-Anzeige mit Bild */}
-      <div 
-        className={`dark-glass-card rounded-lg p-2 cursor-pointer hover-scale mb-0.5 w-full flex gap-2 ${isTopEvent ? 'border-l-2 border-[#E53935]' : isNewEvent ? 'border-l-2 border-green-500' : ''}`}
+      <EventCard 
+        event={event}
+        compact={true}
         onClick={() => onSelectEvent(event, date)}
-      >
-        {/* Event Bild - falls vorhanden */}
-        {event.image_urls && event.image_urls.length > 0 && (
-          <div className="flex-shrink-0">
-            <img 
-              src={event.image_urls[0]} 
-              alt={event.title}
-              className="w-12 h-12 object-cover rounded border border-gray-600"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
-          </div>
-        )}
-        
-        {/* Event Content */}
-        <div className="flex-1 min-w-0 flex justify-between items-center">
-          <div className="flex-1 min-w-0">
-            <h4 className="font-medium text-sm text-white break-words line-clamp-1 text-left mb-1">
-              {event.title}
-            </h4>
-            
-            <div className="flex items-center gap-2 text-xs text-gray-300">
-              <span>{event.time}</span>
-              <span>•</span>
-              <span className="truncate">{event.location}</span>
-            </div>
-          </div>
-          
-          {/* Likes */}
-          <div className="flex items-center gap-1 ml-2">
-            {(event.likes || 0) > 0 && (
-              <>
-                <span className="text-red-500">♥</span>
-                <span className="text-xs text-white">{event.likes}</span>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
+        onLike={onLike}
+        className={`${isTopEvent ? 'border-l-2 border-[#E53935]' : isNewEvent ? 'border-l-2 border-green-500' : ''} relative w-full`}
+      />
     </div>
   </div>
 ));

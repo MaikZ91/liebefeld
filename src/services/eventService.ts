@@ -88,7 +88,7 @@ export const fetchGitHubLikes = async (): Promise<Record<string, any>> => {
           rsvp_yes: like.rsvp_yes || 0,
           rsvp_no: like.rsvp_no || 0,
           rsvp_maybe: like.rsvp_maybe || 0,
-          image_urls: like.image_urls || null
+          image_urls: like.image_urls || []
         };
         console.log(`Found data for ${like.event_id}: ${like.likes} likes, RSVP: yes=${like.rsvp_yes || 0}, no=${like.rsvp_no || 0}, maybe=${like.rsvp_maybe || 0}, images: ${like.image_urls?.length || 0}`);
       });
@@ -362,7 +362,7 @@ export const syncGitHubEvents = async (githubEvents: Event[]): Promise<void> => 
     
     const { data: existingEventLikes, error: likesError } = await supabase
       .from('github_event_likes')
-      .select('event_id');
+      .select('event_id, image_urls');
     
     if (likesError) {
       console.error('Error fetching existing GitHub event likes:', likesError);
@@ -382,7 +382,7 @@ export const syncGitHubEvents = async (githubEvents: Event[]): Promise<void> => 
         rsvp_yes: 0,
         rsvp_no: 0,
         rsvp_maybe: 0,
-        image_urls: event.image_urls || null
+        image_urls: event.image_urls || []
       }));
       
       const { error: insertError } = await supabase
@@ -396,11 +396,18 @@ export const syncGitHubEvents = async (githubEvents: Event[]): Promise<void> => 
       }
     }
     
-    // Update existing events with image_urls if they don't have them
-    const eventsToUpdate = githubEvents.filter(e => existingEventIds.has(e.id) && e.image_urls && e.image_urls.length > 0);
+    // Update existing events with image_urls if they have new ones
+    const existingEventMap = new Map(existingEventLikes?.map(e => [e.event_id, e.image_urls]) || []);
+    const eventsToUpdate = githubEvents.filter(event => {
+      if (!existingEventIds.has(event.id)) return false;
+      const existingImageUrls = existingEventMap.get(event.id) || [];
+      const newImageUrls = event.image_urls || [];
+      // Update if there are new image URLs
+      return newImageUrls.length > 0 && JSON.stringify(existingImageUrls) !== JSON.stringify(newImageUrls);
+    });
     
     if (eventsToUpdate.length > 0) {
-      console.log(`Updating ${eventsToUpdate.length} existing GitHub events with image URLs`);
+      console.log(`Updating ${eventsToUpdate.length} existing GitHub events with new image URLs`);
       
       for (const event of eventsToUpdate) {
         const { error: updateError } = await supabase
@@ -410,6 +417,8 @@ export const syncGitHubEvents = async (githubEvents: Event[]): Promise<void> => 
         
         if (updateError) {
           console.error(`Error updating image URLs for event ${event.id}:`, updateError);
+        } else {
+          console.log(`Updated image URLs for event ${event.id}`);
         }
       }
     }
