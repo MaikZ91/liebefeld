@@ -1,4 +1,3 @@
-
 import { Event, GitHubEvent } from '../types/eventTypes';
 import { format, startOfWeek, endOfWeek, addDays, parseISO, isToday, isSameDay } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -118,7 +117,7 @@ export const transformGitHubEvents = (
         maybe: likesData.rsvp_maybe || 0
       },
       link: githubEvent.link || null,
-      image_urls: githubEvent.image_urls || null
+      image_url: githubEvent.image_url || null // Use single image_url
     };
     
     console.log(`[transformGitHubEvents] Transformed event:`, transformedEvent);

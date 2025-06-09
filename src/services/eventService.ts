@@ -1,8 +1,10 @@
+
 // src/services/eventService.ts
 
 import { supabase } from "@/integrations/supabase/client";
 import { Event, GitHubEvent } from "../types/eventTypes";
 import { format } from "date-fns";
+import { de } from "date-fns/locale";
 
 // URL to JSON file with events
 const EXTERNAL_EVENTS_URL = "https://raw.githubusercontent.com/MaikZ91/productiontools/master/events.json";
@@ -35,10 +37,10 @@ export const bielefeldEvents: Event[] = [
 export const fetchSupabaseEvents = async (): Promise<Event[]> => {
   try {
     // Fetch all events including GitHub-sourced events
-    // Ensure 'image_url' is selected here
+    // Use image_urls for now until database is updated
     const { data: eventsData, error: eventsError } = await supabase
       .from('community_events')
-      .select('*, image_url'); // Changed from image_urls to image_url
+      .select('*, image_urls'); // Keep using image_urls until database is updated
     
     if (eventsError) {
       throw eventsError;
@@ -56,7 +58,8 @@ export const fetchSupabaseEvents = async (): Promise<Event[]> => {
           no: event.rsvp_no || 0,
           maybe: event.rsvp_maybe || 0
         },
-        image_url: event.image_url || null // Ensure image_url is assigned
+        // Convert image_urls array to single image_url for compatibility
+        image_url: event.image_urls && event.image_urls.length > 0 ? event.image_urls[0] : null
       }));
     }
     
@@ -295,7 +298,7 @@ export const addNewEvent = async (newEvent: Omit<Event, 'id'>): Promise<Event> =
   try {
     console.log('Adding new event to database:', newEvent);
     
-    // Insert the event into Supabase
+    // Insert the event into Supabase - convert single image_url to image_urls array for database
     const { data, error } = await supabase
       .from('community_events')
       .insert({
@@ -311,7 +314,7 @@ export const addNewEvent = async (newEvent: Omit<Event, 'id'>): Promise<Event> =
         rsvp_no: 0,
         rsvp_maybe: 0,
         link: newEvent.link || null,
-        image_url: newEvent.image_url || null // Changed from image_urls to image_url
+        image_urls: newEvent.image_url ? [newEvent.image_url] : null // Convert single URL to array
       })
       .select()
       .single();
@@ -330,11 +333,12 @@ export const addNewEvent = async (newEvent: Omit<Event, 'id'>): Promise<Event> =
     
     console.log('Successfully added event to database:', data);
     
-    // Return the event with the new ID
+    // Return the event with the new ID and convert back to single image_url
     return {
       ...newEvent,
       id: data.id,
       likes: 0,
+      image_url: data.image_urls && data.image_urls.length > 0 ? data.image_urls[0] : null,
       rsvp: {
         yes: 0,
         no: 0,
