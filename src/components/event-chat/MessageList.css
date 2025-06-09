@@ -1,5 +1,5 @@
 
-
+/* Event container styling - ensure proper text color */
 .event-list-container .bg-red-900\/20 {
   margin-bottom: 0.75rem;
 }
@@ -11,10 +11,10 @@
 .event-list-container .font-bold {
   margin-bottom: 0.25rem;
   display: block;
-  color: white !important; /* Ensure title is white */
+  color: white !important;
 }
 
-/* Text color fix for all event content */
+/* Force white text for all event content with high specificity */
 .event-list-container .bg-red-900\/20 div,
 .event-list-container .bg-red-900\/20 span:not(.bg-red-500\/70),
 .event-list-container .bg-red-900\/20 p {
@@ -27,13 +27,37 @@
   color: white !important;
 }
 
-/* Only exclude category labels */
+/* Category labels styling */
 .event-list-container .bg-red-500,
 .event-list-container .bg-red-500\/70 {
   color: white !important;
 }
 
-/* Remove ALL bullet points and list styling */
+/* Event titles with maximum specificity */
+.event-list-container div.font-bold,
+.event-list-container .bg-red-900\/20 .font-bold,
+.event-list-container .font-bold.text-base,
+.event-list-container .bg-red-900\/20 div[class*="font-bold"],
+.event-list-container .text-base {
+  color: white !important;
+  text-shadow: 0 0 1px rgba(255,255,255,0.2);
+}
+
+/* Ensure all text elements are white */
+.event-list-container .bg-red-900\/20 div,
+.event-list-container .bg-red-900\/20 span,
+.event-list-container .bg-red-900\/20 p,
+.event-list-container .bg-red-900\/20 h1,
+.event-list-container .bg-red-900\/20 h2,
+.event-list-container .bg-red-900\/20 h3,
+.event-list-container .bg-red-900\/20 h4,
+.event-list-container .bg-red-900\/20 h5,
+.event-list-container .bg-red-900\/20 h6,
+.event-list-container .bg-red-900\/20 a {
+  color: white !important;
+}
+
+/* Remove all bullet points and list styling */
 .event-list-container ul,
 .event-list-container ol,
 .event-list-container .event-list,
@@ -52,6 +76,13 @@
   margin: 0 !important;
 }
 
+/* Override any browser default styles */
+.event-list-container *::marker,
+.event-list-container li::before {
+  content: none !important;
+  display: none !important;
+}
+
 /* Consistent spacing in event panels */
 .event-list-container .space-y-2 > * {
   margin-top: 0.5rem !important;
@@ -64,54 +95,7 @@
   margin-top: 0.25rem !important;
 }
 
-/* Override any browser default styles */
-.event-list-container *::marker,
-.event-list-container li::before {
-  content: none !important;
-  display: none !important;
-}
-
-/* Boost title specificity to ensure it's always white */
-.event-list-container .bg-red-900\/20 .font-bold.text-base,
-.event-list-container .font-bold {
-  color: white !important;
-  text-shadow: 0 0 1px rgba(255,255,255,0.2);
-}
-
-/* Make event titles white with higher specificity */
-.event-list-container div.font-bold,
-.event-list-container div .font-bold {
-  color: white !important;
-}
-
-/* Ensure text is white in all spans and divs */
-.event-list-container .bg-red-900\/20 * {
-  color: white !important;
-}
-
-/* Fix for specific event titles like "Karaoke" */
-.event-list-container div[class*="font-bold"], 
-.event-list-container .bg-red-900\/20 div[class*="font-bold"],
-.event-list-container .text-base,
-.event-list-container .bg-red-900\/20 .text-base {
-  color: white !important;
-}
-
-/* Force important on ALL text elements in event cards */
-.event-list-container .bg-red-900\/20 div,
-.event-list-container .bg-red-900\/20 span,
-.event-list-container .bg-red-900\/20 p,
-.event-list-container .bg-red-900\/20 h1,
-.event-list-container .bg-red-900\/20 h2,
-.event-list-container .bg-red-900\/20 h3,
-.event-list-container .bg-red-900\/20 h4,
-.event-list-container .bg-red-900\/20 h5,
-.event-list-container .bg-red-900\/20 h6,
-.event-list-container .bg-red-900\/20 a {
-  color: white !important;
-}
-
-/* Original formatting CSS classes */
+/* Original dark glass card styling - kept for compatibility */
 .dark-glass-card {
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(10px);
@@ -127,7 +111,7 @@
   transform: scale(1.02);
 }
 
-/* Allow ChatMessage to handle its own formatting for HTML content */
+/* ChatMessage content formatting */
 .chat-message-content h2 {
   font-size: 1.25rem;
   font-weight: 700;

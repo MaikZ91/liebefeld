@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export const createResponseHeader = (title: string) => {
@@ -127,6 +126,55 @@ export const formatEventContent = (aiContent: string, isHeartActive: boolean = f
   }
 
   return processedContent;
+};
+
+export const formatEventsAsHTML = (events: any[]): string => {
+  if (!events || events.length === 0) {
+    return '<p style="color: white;">Keine Events gefunden.</p>';
+  }
+
+  // Group events by date
+  const eventsByDate = events.reduce((acc, event) => {
+    const date = event.date;
+    if (!acc[date]) {
+      acc[date] = [];
+    }
+    acc[date].push(event);
+    return acc;
+  }, {});
+
+  let html = '';
+
+  // Process each date group
+  Object.entries(eventsByDate).forEach(([date, dayEvents]: [string, any[]]) => {
+    // Format the date
+    const formattedDate = new Date(date).toLocaleDateString('de-DE', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    html += `<h3 style="color: white; margin-bottom: 1rem; font-size: 1.125rem; font-weight: 600;">${formattedDate}</h3>`;
+
+    // Add events for this date
+    dayEvents.forEach((event) => {
+      html += `
+        <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-3 mb-3">
+          <div class="flex flex-col gap-1">
+            <div class="font-bold text-base" style="color: white !important;">${event.title}</div>
+            <div class="flex items-center gap-2 text-sm" style="color: white;">
+              <span>📅 ${event.time || 'Zeit nicht angegeben'}</span>
+              ${event.location ? `<span>📍 ${event.location}</span>` : ''}
+            </div>
+            ${event.category ? `<span class="bg-red-500/70 text-white text-xs px-2 py-0.5 rounded inline-block w-fit">${event.category}</span>` : ''}
+            ${event.description ? `<div class="text-sm mt-2" style="color: white;">${event.description}</div>` : ''}
+          </div>
+        </div>`;
+    });
+  });
+
+  return html;
 };
 
 export const generateResponse = async (query: string, events: any[], isHeartActive: boolean = false) => {
