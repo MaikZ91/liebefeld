@@ -340,7 +340,7 @@ serve(async (req) => {
         thisMonthEvents.slice(0, 3).map((e: any) => `${e.title} (${e.date})`));
     }
     
-    // Format events for AI processing - INCLUDE ID AND IMAGE_URL
+    // Format events for AI processing - INCLUDE ID, IMAGE_URL AND LINK
     const formattedEvents = filteredEvents
       .map((e: any) => {
         const actualCategory = e.category || 'Unbekannt';
@@ -362,6 +362,7 @@ serve(async (req) => {
           `Kategorie: ${actualCategory}`,
           e.location ? `Ort: ${e.location}` : "",
           imageUrl ? `Bild-URL: ${imageUrl}` : "Bild-URL: keine",
+          e.link ? `Link: ${e.link}` : "Link: keiner",
         ].filter(Boolean).join("\n");
       })
       .join("\n\n");
@@ -429,7 +430,8 @@ Antworte im folgenden JSON-Format:
         "price": "Preis oder 'Kostenlos'",
         "location": "Ort",
         "image_url": "echte-image-url-aus-datenbank-oder-fallback",
-        "category": "Kategorie"
+        "category": "Kategorie",
+        "link": "event-link-aus-datenbank-oder-null"
       }
     ],
     "currentIndex": 0
@@ -440,9 +442,10 @@ Antworte im folgenden JSON-Format:
 KRITISCH WICHTIG FÜR panelData:
 - Verwende IMMER die echten Event-IDs aus den übermittelten Events (z.B. "github-675", nicht "event-1")
 - Verwende die echten Bild-URLs aus der Datenbank wenn vorhanden
+- Verwende die echten Event-Links aus der Datenbank wenn vorhanden, sonst null
 - Falls ein Event keine Bild-URL hat, verwende passende Unsplash-Bilder basierend auf der Kategorie
 - Wähle die TOP 3-5 Events aus den gefilterten Events aus
-- Alle anderen Event-Daten (Titel, Datum, Zeit, Ort, Kategorie) MÜSSEN exakt aus der Datenbank übernommen werden
+- Alle anderen Event-Daten (Titel, Datum, Zeit, Ort, Kategorie, Link) MÜSSEN exakt aus der Datenbank übernommen werden
 
 WICHTIG FÜR textResponse: 
 - Verwende KEINESFALLS HTML-Tags wie <h2>, <p>, <ul>, <li>, <br>, <strong>, etc.
@@ -578,7 +581,8 @@ Hier die Events:\n${formattedEvents}`;
             price: e.price || 'Kostenlos',
             location: e.location || 'Ort nicht angegeben',
             image_url: imageUrl,
-            category: e.category || 'Event'
+            category: e.category || 'Event',
+            link: e.link || null // Include the link field
           };
         }),
         currentIndex: 0

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, MapPin, Clock, Euro } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, Clock, Euro, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { PanelEventData } from './types';
@@ -33,7 +33,11 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
   };
   
   const handleEventClick = () => {
-    if (onEventSelect) {
+    if (currentEvent.link) {
+      // Open the external event link
+      window.open(currentEvent.link, '_blank', 'noopener,noreferrer');
+    } else if (onEventSelect) {
+      // Fallback to internal event selection if no link available
       onEventSelect(currentEvent.id);
     }
   };
@@ -120,9 +124,17 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
         {/* Action Button */}
         <Button
           onClick={handleEventClick}
-          className="w-full bg-red-500 hover:bg-red-600 text-white font-medium mt-4"
+          disabled={!currentEvent.link && !onEventSelect}
+          className="w-full bg-red-500 hover:bg-red-600 text-white font-medium mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Event Details anzeigen
+          {currentEvent.link ? (
+            <>
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Zum Event
+            </>
+          ) : (
+            "Event Details anzeigen"
+          )}
         </Button>
       </div>
     </div>
