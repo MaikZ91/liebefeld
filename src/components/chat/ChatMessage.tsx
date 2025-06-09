@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { EventShare } from '@/types/chatTypes';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -168,12 +167,15 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         "bg-black text-white shadow-md w-full max-w-full overflow-hidden break-words hover:bg-gray-900/50 transition-colors duration-200"
       )}
     >
-      <div className="w-full max-w-full overflow-hidden break-words inline">
-        {formatContent()}
+      {/* Changed parent div to flex to keep content and reactions inline */}
+      <div className="w-full max-w-full overflow-hidden break-words flex flex-wrap items-end"> 
+        <div className="inline"> {/* Ensure message content is inline */}
+          {formatContent()}
+        </div>
         
         {/* Reactions positioned directly after content, inline */}
         {(reactions && reactions.length > 0) || (onReact && messageId && isGroup) ? (
-          <div className="inline-block ml-2">
+          <div className="inline-flex ml-2 flex-shrink-0"> {/* Changed to inline-flex to group buttons */}
             <MessageReactions
               reactions={reactions}
               onReact={handleReact}
