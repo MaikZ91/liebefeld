@@ -431,11 +431,10 @@ WICHTIG FÜR textResponse:
 - Verwende KEINESFALLS HTML-Tags wie <h2>, <p>, <ul>, <li>, <br>, <strong>, etc.
 - Schreibe nur reinen Text ohne jegliche HTML-Formatierung
 - Verwende natürliche Absätze und Zeilenumbrüche für die Struktur
-- STELLE DIE EVENTS ALS TIMELINE UND LISTE DAR: Sortiere Events chronologisch und präsentiere sie sowohl als zeitlichen Ablauf als auch als übersichtliche Liste
+- STELLE DIE EVENTS NUR ALS STRUKTURIERTE TIMELINE-LISTE DAR: Sortiere Events chronologisch und präsentiere sie als übersichtliche Timeline-Liste
 - Verwende Zeitangaben wie "Um 10:00 Uhr", "Danach um 15:00 Uhr", "Am Abend um 20:00 Uhr" etc.
 - Gruppiere Events nach Tagen und Uhrzeiten für eine übersichtliche Timeline-Darstellung
-- Erstelle auch eine strukturierte Liste mit Event-Namen, Zeiten und Orten
-- Beispiel: "Timeline für heute in Liebefeld: Um 10:00 Uhr startet das Konzert, um 15:00 Uhr folgt der Workshop..."
+- Format: "Timeline für [Zeitraum]: Um 10:00 Uhr - [Event-Name] ([Ort]), Um 15:00 Uhr - [Event-Name] ([Ort])..."
 
 Für panelData: Wähle die TOP 3-5 Events aus den gefilterten Events aus. Verwende passende Unsplash-Bilder für jedes Event basierend auf der Kategorie.
 
