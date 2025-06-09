@@ -18,7 +18,7 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
   className
 }) => {
   const [currentIndex, setCurrentIndex] = useState(panelData.currentIndex || 0);
-  const { handleEventLike, eventLikes } = useEventContext();
+  const { handleLikeEvent, eventLikes } = useEventContext();
   
   const currentEvent = panelData.events[currentIndex];
   
@@ -54,9 +54,9 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
     }
   };
 
-  const handleLike = (e: React.MouseEvent) => {
+  const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    handleEventLike(currentEvent.id);
+    await handleLikeEvent(currentEvent.id);
   };
 
   if (!currentEvent) return null;
