@@ -451,8 +451,7 @@ KRITISCH WICHTIG FÜR panelData:
 - Alle anderen Event-Daten (Titel, Datum, Zeit, Ort, Kategorie, Link, Likes) MÜSSEN exakt aus der Datenbank übernommen werden
 
 WICHTIG FÜR textResponse: 
-- Stelle die Daten als chronologische Timeline gerankt nach Uhrzeit, und Eingruppierung in die Kategorien Ausgehen, Sport und Kreativität dar. 
-
+- Stelle die Events als Bulletpoint Liste chronologische geordnet nach Uhrzeit sowie und Eingruppierung in die Kategorien Ausgehen, Sport und Kreativität dar
 
 Hier die Events:\n${formattedEvents}`;
 
