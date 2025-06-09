@@ -110,6 +110,16 @@ const EventPanel: React.FC<EventPanelProps> = ({
                 Mehr Informationen
               </a>
             )}
+            
+            {selectedEvent.image_url && (
+              <div className="mb-3">
+                <img
+                  src={selectedEvent.image_url}
+                  alt={selectedEvent.title}
+                  className="w-full h-32 object-cover rounded-lg"
+                />
+              </div>
+            )}
           </div>
           
           <div className="mt-auto flex justify-between items-center">

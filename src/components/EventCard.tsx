@@ -1,3 +1,4 @@
+
 // src/components/EventCard.tsx
 
 import React, { useState, memo } from 'react';
@@ -97,10 +98,10 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
         onClick={onClick}
       >
         <div className="flex items-start gap-2"> {/* Use flex to align image and text content */}
-          {event.image_urls && event.image_urls.length > 0 && (
+          {event.image_url && (
             <div className="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden">
               <img
-                src={event.image_urls[0]}
+                src={event.image_url}
                 alt={event.title}
                 className="w-full h-full object-cover"
               />
@@ -250,10 +251,10 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
         </div>
 
         {/* Image in non-compact view - display if available */}
-        {event.image_urls && event.image_urls.length > 0 && (
+        {event.image_url && (
           <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden ml-auto">
             <img
-              src={event.image_urls[0]}
+              src={event.image_url}
               alt={event.title}
               className="w-full h-full object-cover"
             />

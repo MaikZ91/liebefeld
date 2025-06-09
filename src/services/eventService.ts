@@ -35,10 +35,10 @@ export const bielefeldEvents: Event[] = [
 export const fetchSupabaseEvents = async (): Promise<Event[]> => {
   try {
     // Fetch all events including GitHub-sourced events
-    // Ensure 'image_urls' is selected here
+    // Ensure 'image_url' is selected here
     const { data: eventsData, error: eventsError } = await supabase
       .from('community_events')
-      .select('*, image_urls'); // Explicitly select image_urls
+      .select('*, image_url'); // Changed from image_urls to image_url
     
     if (eventsError) {
       throw eventsError;
@@ -56,7 +56,7 @@ export const fetchSupabaseEvents = async (): Promise<Event[]> => {
           no: event.rsvp_no || 0,
           maybe: event.rsvp_maybe || 0
         },
-        image_urls: event.image_urls || null // Ensure image_urls is assigned
+        image_url: event.image_url || null // Ensure image_url is assigned
       }));
     }
     
@@ -311,7 +311,7 @@ export const addNewEvent = async (newEvent: Omit<Event, 'id'>): Promise<Event> =
         rsvp_no: 0,
         rsvp_maybe: 0,
         link: newEvent.link || null,
-        image_urls: newEvent.image_urls || null // Ensure image_urls is passed on insert
+        image_url: newEvent.image_url || null // Changed from image_urls to image_url
       })
       .select()
       .single();
@@ -471,7 +471,7 @@ export const transformGitHubEvents = (
         maybe: likesData.rsvp_maybe || 0
       },
       link: githubEvent.link || null,
-      image_urls: githubEvent.image_urls || null // **IMPORTANT: Assign image_urls here**
+      image_url: githubEvent.image_url || null // Changed from image_urls to image_url
     };
     
     console.log(`[transformGitHubEvents] Transformed event:`, transformedEvent);
@@ -554,8 +554,8 @@ export const logTodaysEvents = (events: Event[]) => {
     console.log(`   Category: ${event.category}, Likes: ${event.likes || 0}`);
     console.log(`   RSVP: yes=${event.rsvp?.yes || event.rsvp_yes || 0}, no=${event.rsvp?.no || event.rsvp_no || 0}, maybe=${event.rsvp?.maybe || event.rsvp_maybe || 0}`);
     console.log(`   Origin: ${event.id.startsWith('github-') ? 'GitHub' : (event.id.startsWith('local-') ? 'User-added' : 'Database')}`);
-    if (event.image_urls && event.image_urls.length > 0) {
-        console.log(`   Image: ${event.image_urls[0]}`);
+    if (event.image_url) {
+        console.log(`   Image: ${event.image_url}`);
     }
   });
   
@@ -563,18 +563,107 @@ export const logTodaysEvents = (events: Event[]) => {
 };
 
 // Add missing functions that are used in other components (assuming they are correct)
-export const groupEventsByDate = (events: Event[]): { [key: string]: Event[] } => { /* ... existing implementation ... */ return {};};
-export const sortEventsByDate = (events: Event[]): Event[] => { /* ... existing implementation ... */ return []; };
-export const getWeekRange = (currentDate: Date): [Date, Date] => { /* ... existing implementation ... */ return [new Date(), new Date()]; };
-export const formatDateRange = (startDate: Date, endDate: Date): string => { /* ... existing implementation ... */ return ""; };
-export const getEventsForDay = (events: Event[], selectedDate: Date | null, filter: string | null = null): Event[] => { /* ... existing implementation ... */ return []; };
-export const getMonthOrFavoriteEvents = (events: Event[], currentDate: Date, showFavorites: boolean = false, eventLikes: Record<string, number> = {}): Event[] => { /* ... existing implementation ... */ return []; };
-export const groupFutureEventsByDate = (events: Event[]): Record<string, Event[]> => { /* ... existing implementation ... */ return {}; };
-export const formatEventDate = (dateString: string): string => { /* ... existing implementation ... */ return ""; };
-export const getFutureEvents = (events: Event[]): Event[] => { /* ... existing implementation ... */ return []; };
-export const hasEventsOnDay = (events: Event[], day: Date): boolean => { /* ... existing implementation ... */ return false; };
-export const getEventCountForDay = (events: Event[], day: Date): number => { /* ... existing implementation ... */ return 0; };
+export const groupEventsByDate = (events: Event[]): { [key: string]: Event[] } => {
+  return events.reduce((groups: { [key: string]: Event[] }, event: Event) => {
+    const date = event.date;
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(event);
+    return groups;
+  }, {});
+};
+export const sortEventsByDate = (events: Event[]): Event[] => {
+  return [...events].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+};
+export const getWeekRange = (currentDate: Date): [Date, Date] => {
+  const startOfWeek = new Date(currentDate);
+  startOfWeek.setDate(currentDate.getDate() - currentDate.getDay() + (currentDate.getDay() === 0 ? -6 : 1));
+  const endOfWeek = new Date(currentDate);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
 
+  return [startOfWeek, endOfWeek];
+};
+export const formatDateRange = (startDate: Date, endDate: Date): string => {
+  const startFormat = startDate.toLocaleDateString('de-DE', { day: 'numeric', month: 'short' });
+  const endFormat = endDate.toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
+  return `${startFormat} - ${endFormat}`;
+};
+export const getEventsForDay = (events: Event[], selectedDate: Date | null, filter: string | null = null): Event[] => {
+  if (!selectedDate) return [];
+
+  const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+  let filteredEvents = events.filter(event => event.date === formattedDate);
+
+  if (filter) {
+    filteredEvents = filteredEvents.filter(event =>
+      event.category.toLowerCase().includes(filter.toLowerCase())
+    );
+  }
+
+  return filteredEvents;
+};
+export const getMonthOrFavoriteEvents = (events: Event[], currentDate: Date, showFavorites: boolean = false, eventLikes: Record<string, number> = {}): Event[] => {
+  const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+
+  let filteredEvents = events.filter(event => {
+    const eventDate = new Date(event.date);
+    return eventDate >= startOfMonth && eventDate <= endOfMonth;
+  });
+
+  if (showFavorites) {
+    filteredEvents = filteredEvents.filter(event => eventLikes[event.id]);
+  }
+
+  return filteredEvents;
+};
+export const groupFutureEventsByDate = (events: Event[]): Record<string, Event[]> => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return events.reduce((acc: Record<string, Event[]>, event: Event) => {
+    const eventDate = new Date(event.date);
+
+    if (eventDate >= today) {
+      const dateKey = format(eventDate, 'yyyy-MM-dd');
+
+      if (!acc[dateKey]) {
+        acc[dateKey] = [];
+      }
+
+      acc[dateKey].push(event);
+    }
+
+    return acc;
+  }, {});
+};
+export const formatEventDate = (dateString: string): string => {
+  try {
+    const date = new Date(dateString);
+    return format(date, 'dd.MM.yyyy', { locale: de });
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return "Invalid Date";
+  }
+};
+export const getFutureEvents = (events: Event[]): Event[] => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return events.filter(event => {
+    const eventDate = new Date(event.date);
+    return eventDate >= today;
+  });
+};
+export const hasEventsOnDay = (events: Event[], day: Date): boolean => {
+  const formattedDay = format(day, 'yyyy-MM-dd');
+  return events.some(event => event.date === formattedDay);
+};
+export const getEventCountForDay = (events: Event[], day: Date): number => {
+  const formattedDay = format(day, 'yyyy-MM-dd');
+  return events.filter(event => event.date === formattedDay).length;
+};
 
 // Expose function to window for easy access in browser console
 if (typeof window !== 'undefined') {

@@ -11,7 +11,7 @@ export interface Event {
   category: string;
   likes?: number;
   link?: string;
-  image_urls?: string[]; // Added to store URLs of uploaded images
+  image_url?: string; // Changed from image_urls array to single string
   rsvp?: {
     yes: number;
     no: number;
@@ -40,7 +40,7 @@ export interface GitHubEvent {
   category?: string; // Add category property
   genre?: string; // Add genre property
   type?: string; // Add type property
-  image_urls?: string[]; // Add image_urls property
+  image_url?: string; // Changed from image_urls array to single string
 }
 
 export interface EventCalendarProps {
