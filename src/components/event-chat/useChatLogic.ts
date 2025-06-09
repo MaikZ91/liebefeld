@@ -240,10 +240,10 @@ export const useChatLogic = (
       
       const apiResponse = await generateResponse(message, events, isHeartActive);
       
-      // Check if response contains both panelData and textResponse
-      if (apiResponse && typeof apiResponse === 'object' && apiResponse.panelData && apiResponse.textResponse) {
+      // Check if response contains both panelData and textResponse with proper type checking
+      if (apiResponse && typeof apiResponse === 'object' && 'panelData' in apiResponse && 'textResponse' in apiResponse) {
         console.log('[useChatLogic] ✅ Received structured response from API');
-        console.log('[useChatLogic] Panel events count:', apiResponse.panelData.events?.length || 0);
+        console.log('[useChatLogic] Panel events count:', apiResponse.panelData?.events?.length || 0);
         console.log('[useChatLogic] Text response length:', apiResponse.textResponse?.length || 0);
         console.log('[useChatLogic] Text response preview:', apiResponse.textResponse?.substring(0, 200) + '...');
         
@@ -279,9 +279,9 @@ export const useChatLogic = (
         // Fallback: treat as regular text response
         console.log('[useChatLogic] ⚠️ Using fallback for text-only response');
         console.log('[useChatLogic] Response structure check:');
-        console.log('[useChatLogic] - Has panelData:', !!apiResponse?.panelData);
-        console.log('[useChatLogic] - Has textResponse:', !!apiResponse?.textResponse);
         console.log('[useChatLogic] - Is object:', typeof apiResponse === 'object');
+        console.log('[useChatLogic] - Has panelData:', apiResponse && typeof apiResponse === 'object' && 'panelData' in apiResponse);
+        console.log('[useChatLogic] - Has textResponse:', apiResponse && typeof apiResponse === 'object' && 'textResponse' in apiResponse);
         
         const responseText = typeof apiResponse === 'string' ? apiResponse : JSON.stringify(apiResponse);
         
