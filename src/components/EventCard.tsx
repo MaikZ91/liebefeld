@@ -1,6 +1,7 @@
+
 import React, { useState, memo } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
-import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign } from 'lucide-react';
+import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign, ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -114,6 +115,13 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
                   <span>Tribe</span>
                 </Badge>
               )}
+              {/* Image indicator for compact view */}
+              {event.image_urls && event.image_urls.length > 0 && (
+                <Badge className="bg-blue-600 text-white text-[10px] flex items-center gap-0.5 h-3 px-1">
+                  <ImageIcon className="w-2 h-2" />
+                  <span>{event.image_urls.length}</span>
+                </Badge>
+              )}
               {event.link ? (
                 <h4 
                   className={cn(
@@ -216,6 +224,12 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
                 <span>Tribe</span>
               </Badge>
             )}
+            {event.image_urls && event.image_urls.length > 0 && (
+              <Badge className="bg-blue-600 text-white text-xs flex items-center gap-1 h-5 px-2 self-start">
+                <ImageIcon className="w-3 h-3" />
+                <span>{event.image_urls.length} Bilder</span>
+              </Badge>
+            )}
           </div>
           {event.link ? (
             <h4 
@@ -272,6 +286,30 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
           </div>
         </div>
       </div>
+      
+      {/* Event Images - Full display */}
+      {event.image_urls && event.image_urls.length > 0 && (
+        <div className="mb-3">
+          <div className="flex gap-2 overflow-x-auto scrollbar-thin">
+            {event.image_urls.slice(0, 4).map((url, index) => (
+              <img 
+                key={index}
+                src={url} 
+                alt={`Event ${index + 1}`}
+                className="w-16 h-16 object-cover rounded flex-shrink-0 border border-gray-600"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            ))}
+            {event.image_urls.length > 4 && (
+              <div className="w-16 h-16 bg-gray-800 border border-gray-600 rounded flex items-center justify-center text-sm text-gray-400">
+                +{event.image_urls.length - 4}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       
       <div className="flex items-center gap-2 text-sm text-white">
         <div className="flex items-center">

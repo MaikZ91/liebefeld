@@ -118,7 +118,7 @@ export const transformGitHubEvents = (
         maybe: likesData.rsvp_maybe || 0
       },
       link: githubEvent.link || null,
-      image_urls: githubEvent.image_urls || null
+      image_urls: likesData.image_urls || githubEvent.image_urls || null
     };
     
     console.log(`[transformGitHubEvents] Transformed event:`, transformedEvent);
