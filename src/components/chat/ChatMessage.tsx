@@ -167,13 +167,13 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         "bg-black text-white shadow-md w-full max-w-full overflow-hidden break-words hover:bg-gray-900/50 transition-colors duration-200"
       )}
     >
-      <div className="w-full max-w-full overflow-hidden break-words mb-1">
+      <div className="w-full max-w-full overflow-hidden break-words">
         {formatContent()}
       </div>
       
-      {/* Reactions positioned at the bottom of the message */}
+      {/* Reactions positioned inline at the bottom right of the message content */}
       {(reactions && reactions.length > 0) || (onReact && messageId && isGroup) ? (
-        <div className="flex justify-end">
+        <div className="flex justify-end mt-1">
           <MessageReactions
             reactions={reactions}
             onReact={handleReact}
