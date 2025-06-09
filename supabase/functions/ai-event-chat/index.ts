@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
@@ -316,10 +317,12 @@ serve(async (req) => {
         .slice(0, 20);
     }
 
-    // Sort all filtered events by date
+    // Sort all filtered events by date and limit to top 5 for panel
     filteredEvents = filteredEvents.sort((a: any, b: any) => a.date.localeCompare(b.date));
+    const topEventsForPanel = filteredEvents.slice(0, 5);
 
     console.log(`[ai-event-chat] Sende ${filteredEvents.length} gefilterte Events an das KI-Modell`);
+    console.log(`[ai-event-chat] Top ${topEventsForPanel.length} Events für Panel ausgewählt`);
     
     // Log some debug information about events
     if (currentDate) {
@@ -338,10 +341,9 @@ serve(async (req) => {
         thisMonthEvents.slice(0, 3).map((e: any) => `${e.title} (${e.date})`));
     }
     
-    // Format events with actual categories
+    // Format events for AI processing
     const formattedEvents = filteredEvents
       .map((e: any) => {
-        // Use the actual category from the event, don't default to 'Sonstiges'
         const actualCategory = e.category || 'Unbekannt';
         console.log(`[ai-event-chat] Event "${e.title}" has category: ${actualCategory}`);
         
@@ -349,7 +351,7 @@ serve(async (req) => {
           `Event: ${e.title}`,
           `Datum: ${e.date}`,
           `Zeit: ${e.time}`,
-          `Kategorie: ${actualCategory}`, // Use the actual category
+          `Kategorie: ${actualCategory}`,
           e.location ? `Ort: ${e.location}` : "",
         ].filter(Boolean).join("\n");
       })
@@ -402,7 +404,34 @@ serve(async (req) => {
       }
     }
     
-    systemMessage += `Hier die Events:\n${formattedEvents}`;
+    systemMessage += `
+
+WICHTIG: Du musst sowohl strukturierte Daten als auch einen Fließtext liefern. 
+Antworte im folgenden JSON-Format:
+
+{
+  "panelData": {
+    "events": [
+      {
+        "id": "event-id",
+        "title": "Event Titel",
+        "date": "YYYY-MM-DD",
+        "time": "HH:mm",
+        "price": "Preis oder 'Kostenlos'",
+        "location": "Ort",
+        "image_url": "https://images.unsplash.com/...",
+        "category": "Kategorie"
+      }
+    ],
+    "currentIndex": 0
+  },
+  "textResponse": "Hier deine normale HTML-Antwort mit Event-Empfehlungen..."
+}
+
+Für panelData: Wähle die TOP 3-5 Events aus den gefilterten Events aus. Verwende passende Unsplash-Bilder für jedes Event basierend auf der Kategorie.
+Für textResponse: Erstelle eine normale HTML-formatierte Antwort wie gewohnt.
+
+Hier die Events:\n${formattedEvents}`;
 
     /***************************
      * CALL OPENROUTER
@@ -412,13 +441,13 @@ serve(async (req) => {
     console.log("[ai-event-chat] Categories being sent:", filteredEvents.map((e: any) => `${e.title}: ${e.category}`));
     
     const payload = {
-      model: "google/gemini-2.0-flash-lite-001", // gemini-2.0-flash-lite is more reliable
+      model: "google/gemini-2.0-flash-lite-001",
       messages: [
         { role: "system", content: systemMessage },
         { role: "user", content: query },
       ],
       temperature: 0.7,
-      max_tokens: 1024,
+      max_tokens: 2048,
     };
 
     console.log("[ai-event-chat] Full payload being sent:", JSON.stringify(payload));
@@ -503,94 +532,125 @@ serve(async (req) => {
     let aiContent: string = choice.message?.content ?? 
       (choice.message?.function_call ? JSON.stringify(choice.message.function_call) : "Keine Antwort erhalten");
     
-    // Hier den Text transformieren: Umwandeln von Markdown-Listen in HTML-Listen
-    // Ersetze Listen-Formatierungen wie "* Item" oder "- Item" in HTML <ul><li> Format
-    aiContent = aiContent.replace(/\n[\*\-]\s+(.*?)(?=\n[\*\-]|\n\n|$)/g, (match, item) => {
-      // Extract event information if available
-      const titleMatch = item.match(/(.*?) um (.*?) (?:in|bei|im) (.*?) \(Kategorie: (.*?)\)/i);
-      if (titleMatch) {
-        const [_, title, time, location, category] = titleMatch;
-        // Format as event card similar to EventCard component
-        return `
-          <li class="dark-glass-card rounded-lg p-2 mb-2 hover-scale">
-            <div class="flex justify-between items-start gap-1">
-              <div class="flex-1 min-w-0">
-                <h4 class="font-medium text-sm text-white break-words">${title}</h4>
-                <div class="flex flex-wrap items-center gap-1 mt-0.5 text-xs text-white">
-                  <div class="flex items-center">
-                    <svg class="w-3 h-3 mr-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    <span>${time} Uhr</span>
-                  </div>
-                  <div class="flex items-center max-w-[120px] overflow-hidden">
-                    <svg class="w-3 h-3 mr-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                    <span class="truncate">${location}</span>
+    console.log("[ai-event-chat] Raw AI response:", aiContent);
+    
+    // Try to parse JSON response from AI
+    let combinedResponse;
+    try {
+      // Remove any markdown code block formatting
+      const cleanContent = aiContent.replace(/```json\n?|```\n?/g, '').trim();
+      const parsedAiResponse = JSON.parse(cleanContent);
+      
+      if (parsedAiResponse.panelData && parsedAiResponse.textResponse) {
+        console.log("[ai-event-chat] Successfully parsed structured AI response");
+        combinedResponse = {
+          panelData: parsedAiResponse.panelData,
+          textResponse: parsedAiResponse.textResponse + debugHtml
+        };
+      } else {
+        throw new Error("Missing panelData or textResponse in AI response");
+      }
+    } catch (jsonError) {
+      console.log("[ai-event-chat] Failed to parse JSON from AI, creating fallback response");
+      
+      // Create fallback response with top events from our filtering
+      const fallbackPanelData = {
+        events: topEventsForPanel.map((e: any) => ({
+          id: e.id,
+          title: e.title,
+          date: e.date,
+          time: e.time,
+          price: e.price || 'Kostenlos',
+          location: e.location || 'Ort nicht angegeben',
+          image_url: `https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop`,
+          category: e.category || 'Event'
+        })),
+        currentIndex: 0
+      };
+      
+      // Process the text response as before
+      let processedTextResponse = aiContent;
+      
+      // Transform markdown lists to HTML
+      processedTextResponse = processedTextResponse.replace(/\n[\*\-]\s+(.*?)(?=\n[\*\-]|\n\n|$)/g, (match, item) => {
+        const titleMatch = item.match(/(.*?) um (.*?) (?:in|bei|im) (.*?) \(Kategorie: (.*?)\)/i);
+        if (titleMatch) {
+          const [_, title, time, location, category] = titleMatch;
+          return `
+            <li class="dark-glass-card rounded-lg p-2 mb-2 hover-scale">
+              <div class="flex justify-between items-start gap-1">
+                <div class="flex-1 min-w-0">
+                  <h4 class="font-medium text-sm text-white break-words">${title}</h4>
+                  <div class="flex flex-wrap items-center gap-1 mt-0.5 text-xs text-white">
+                    <div class="flex items-center">
+                      <svg class="w-3 h-3 mr-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      <span>${time} Uhr</span>
+                    </div>
+                    <div class="flex items-center max-w-[120px] overflow-hidden">
+                      <svg class="w-3 h-3 mr-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                      <span class="truncate">${location}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="bg-black text-red-500 dark:bg-black dark:text-red-500 flex-shrink-0 flex items-center gap-0.5 text-xs font-medium whitespace-nowrap px-1.5 py-0.5 rounded-md">
-                  <svg class="w-3 h-3 mr-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                  ${category}
-                </span>
-                <div class="flex items-center">
-                  <svg class="w-3 h-3 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                <div class="flex items-center gap-2">
+                  <span class="bg-black text-red-500 dark:bg-black dark:text-red-500 flex-shrink-0 flex items-center gap-0.5 text-xs font-medium whitespace-nowrap px-1.5 py-0.5 rounded-md">
+                    <svg class="w-3 h-3 mr-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    ${category}
+                  </span>
                 </div>
               </div>
-            </div>
-          </li>`;
+            </li>`;
+        }
+        return `<li class="mb-1">${item}</li>`;
+      });
+      
+      // Add <ul> tags around lists
+      if (processedTextResponse.includes('<li>')) {
+        processedTextResponse = processedTextResponse.replace(/<li>/, '<ul class="space-y-2 my-3"><li>');
+        processedTextResponse = processedTextResponse.replace(/([^>])$/, '$1</ul>');
+        if (!processedTextResponse.endsWith('</ul>')) {
+          processedTextResponse += '</ul>';
+        }
       }
       
-      // Default list item if not an event
-      return `<li class="mb-1">${item}</li>`;
-    });
-    
-    // Füge <ul> Tags um die Liste
-    if (aiContent.includes('<li>')) {
-      aiContent = aiContent.replace(/<li>/, '<ul class="space-y-2 my-3"><li>');
-      aiContent = aiContent.replace(/([^>])$/, '$1</ul>');
+      // Transform markdown bold to HTML bold
+      processedTextResponse = processedTextResponse.replace(/\*\*(.*?)\*\*/g, '<strong class="text-red-500">$1</strong>');
+      processedTextResponse = processedTextResponse.replace(/__(.*?)__/g, '<strong class="text-red-500">$1</strong>');
       
-      // Stelle sicher, dass die Liste korrekt schließt
-      if (!aiContent.endsWith('</ul>')) {
-        aiContent += '</ul>';
-      }
-    }
-    
-    // Generell Markdown-Bold in HTML-Bold umwandeln
-    aiContent = aiContent.replace(/\*\*(.*?)\*\*/g, '<strong class="text-red-500">$1</strong>');
-    aiContent = aiContent.replace(/__(.*?)__/g, '<strong class="text-red-500">$1</strong>');
-    
-    // Highlight personalized content
-    if (isPersonalRequest || userInterests?.length > 0) {
-      // Make interest keywords bold in the text
-      if (userInterests && userInterests.length > 0) {
-        userInterests.forEach((interest: string) => {
-          const interestRegex = new RegExp(`\\b(${interest})\\b`, 'gi');
-          aiContent = aiContent.replace(interestRegex, '<strong class="text-yellow-500">$1</strong>');
-        });
-      }
-      
-      // Add a personalization badge at the top
-      const interestsLabel = userInterests && userInterests.length > 0 
-        ? `basierend auf deinem Interesse für ${userInterests.join(', ')}` 
-        : 'basierend auf deinen Vorlieben';
+      // Highlight personalized content
+      if (isPersonalRequest || userInterests?.length > 0) {
+        if (userInterests && userInterests.length > 0) {
+          userInterests.forEach((interest: string) => {
+            const interestRegex = new RegExp(`\\b(${interest})\\b`, 'gi');
+            processedTextResponse = processedTextResponse.replace(interestRegex, '<strong class="text-yellow-500">$1</strong>');
+          });
+        }
         
-      const personalizationBadge = `
-        <div class="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-2 mb-3">
-          <p class="text-sm flex items-center gap-1">
-            <svg class="w-4 h-4 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-            </svg>
-            <span>Personalisierte Vorschläge ${interestsLabel}</span>
-          </p>
-        </div>
-      `;
+        const interestsLabel = userInterests && userInterests.length > 0 
+          ? `basierend auf deinem Interesse für ${userInterests.join(', ')}` 
+          : 'basierend auf deinen Vorlieben';
+          
+        const personalizationBadge = `
+          <div class="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-2 mb-3">
+            <p class="text-sm flex items-center gap-1">
+              <svg class="w-4 h-4 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+              </svg>
+              <span>Personalisierte Vorschläge ${interestsLabel}</span>
+            </p>
+          </div>
+        `;
+        
+        processedTextResponse = personalizationBadge + processedTextResponse;
+      }
       
-      aiContent = personalizationBadge + aiContent;
+      combinedResponse = {
+        panelData: fallbackPanelData,
+        textResponse: processedTextResponse + debugHtml
+      };
     }
-    
-    const finalHtml = `${aiContent}${debugHtml}`;
 
-    return new Response(JSON.stringify({ response: finalHtml }), {
+    return new Response(JSON.stringify(combinedResponse), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
@@ -600,7 +660,7 @@ serve(async (req) => {
         <h5 class="font-medium text-sm text-red-600 dark:text-red-400">Unbekannter Fehler</h5>
         <p class="text-sm mt-2">${error instanceof Error ? error.message : String(error)}</p>
       </div>`;
-    return new Response(JSON.stringify({ response: html }), {
+    return new Response(JSON.stringify({ textResponse: html }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

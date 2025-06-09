@@ -30,47 +30,6 @@ export const useChatLogic = (
     "Gibt es Konzerte im Lokschuppen?"
   ];
 
-  // Create dummy panel data
-  const createDummyPanelData = (): PanelEventData => {
-    const dummyEvents: PanelEvent[] = [
-      {
-        id: 'dummy-1',
-        title: 'Geführter Altstadtrundgang Regensburg',
-        date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE'),
-        time: '14:00',
-        price: '12.00€',
-        location: 'Regensburg Altstadt',
-        image_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop',
-        category: 'Kultur'
-      },
-      {
-        id: 'dummy-2', 
-        title: 'Jazz Konzert im Park',
-        date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE'),
-        time: '20:00',
-        price: '15.00€',
-        location: 'Stadtpark Regensburg',
-        image_url: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop',
-        category: 'Konzert'
-      },
-      {
-        id: 'dummy-3',
-        title: 'Kunstausstellung Modern Art',
-        date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE'),
-        time: '10:00',
-        price: '8.00€',
-        location: 'Kunstmuseum Regensburg',
-        image_url: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=300&fit=crop',
-        category: 'Ausstellung'
-      }
-    ];
-
-    return {
-      events: dummyEvents,
-      currentIndex: 0
-    };
-  };
-
   // Load chat history and recent queries from localStorage
   useEffect(() => {
     const savedMessages = localStorage.getItem(CHAT_HISTORY_KEY);
@@ -274,33 +233,53 @@ export const useChatLogic = (
     setInput('');
     setIsTyping(true);
     
-    // Show panel immediately
-    const panelMessage: ChatMessage = {
-      id: `panel-${Date.now()}`,
-      isUser: false,
-      text: 'Hier sind einige Events für dich:',
-      panelData: createDummyPanelData(),
-      timestamp: new Date().toISOString()
-    };
-    
-    setMessages(prev => [...prev, panelMessage]);
-    
-    // Generate and show regular response immediately
+    // Call API to get combined response (panel data + text)
     try {
       console.log(`[useChatLogic] Processing user query: "${message}" with ${events.length} events`);
       console.log(`[useChatLogic] Heart mode active: ${isHeartActive}`);
       
-      const responseHtml = await generateResponse(message, events, isHeartActive);
+      const apiResponse = await generateResponse(message, events, isHeartActive);
       
-      const botMessage: ChatMessage = {
-        id: `bot-${Date.now()}`,
-        isUser: false,
-        text: 'Hier sind weitere Details zu den Events.',
-        html: responseHtml,
-        timestamp: new Date().toISOString()
-      };
-      
-      setMessages(prev => [...prev, botMessage]);
+      // Check if response contains both panelData and textResponse
+      if (apiResponse && typeof apiResponse === 'object' && apiResponse.panelData && apiResponse.textResponse) {
+        console.log('[useChatLogic] Received structured response from API');
+        
+        // Show panel first with real data from API
+        const panelMessage: ChatMessage = {
+          id: `panel-${Date.now()}`,
+          isUser: false,
+          text: 'Hier sind passende Events für dich:',
+          panelData: apiResponse.panelData,
+          timestamp: new Date().toISOString()
+        };
+        
+        setMessages(prev => [...prev, panelMessage]);
+        
+        // Then show the text response
+        const botMessage: ChatMessage = {
+          id: `bot-${Date.now()}`,
+          isUser: false,
+          text: 'Hier sind weitere Details zu den Events.',
+          html: apiResponse.textResponse,
+          timestamp: new Date().toISOString()
+        };
+        
+        setMessages(prev => [...prev, botMessage]);
+      } else {
+        // Fallback: treat as regular text response
+        console.log('[useChatLogic] Using fallback for text-only response');
+        const responseText = typeof apiResponse === 'string' ? apiResponse : JSON.stringify(apiResponse);
+        
+        const botMessage: ChatMessage = {
+          id: `bot-${Date.now()}`,
+          isUser: false,
+          text: 'Hier ist meine Antwort.',
+          html: responseText,
+          timestamp: new Date().toISOString()
+        };
+        
+        setMessages(prev => [...prev, botMessage]);
+      }
     } catch (error) {
       console.error('[useChatLogic] Error generating response:', error);
       
