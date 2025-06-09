@@ -92,7 +92,7 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     background-color: #000000;
-    background-image: 
+    background-image:
       radial-gradient(circle at 100% 100%, rgba(246, 58, 59, 0.1) 0%, transparent 50%),
       radial-gradient(circle at 0% 0%, rgba(240, 50, 50, 0.1) 0%, transparent 40%);
     background-attachment: fixed;
@@ -250,18 +250,24 @@
     @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300;
   }
 
-  /* Custom styles for chat messages to keep reactions inline */
+  /* Custom styles for chat messages to keep reactions inline and prevent overflow */
   .chat-message-content {
-    display: inline; /* Keep content inline */
-    margin-right: 8px; /* Small gap between text and reactions */
+    /* Ensures text wraps within its available space */
+    word-break: break-word;
+    overflow-wrap: break-word;
+    /* Allow it to shrink if needed, but not grow excessively */
+    flex-shrink: 1;
+    min-width: 0; /* Important for flex items to prevent overflow */
   }
 
   .message-reactions-container {
     display: inline-flex; /* Use inline-flex to group reaction buttons */
     margin-top: 0; /* Remove any top margin */
+    margin-left: 8px; /* Small gap between text and reactions */
     vertical-align: middle; /* Align with text baseline */
+    flex-shrink: 0; /* Prevent from shrinking too much */
   }
-  
+
   .message-reactions-container .group-hover\:opacity-100 {
     opacity: 1 !important; /* Force always visible to simplify layout for now */
   }
