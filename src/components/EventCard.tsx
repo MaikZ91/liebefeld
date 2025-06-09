@@ -100,7 +100,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
       >
         <div className="flex items-start gap-2"> {/* Use flex to align image and text content */}
           {event.image_url && (
-            <div className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden">
+            <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden">
               <img
                 src={event.image_url}
                 alt={event.title}
@@ -198,7 +198,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     );
   }
 
-  // Non-compact version (existing implementation with smaller image)
+  // Non-compact version (existing implementation with smaller round image)
   return (
     <div
       className={cn(
@@ -251,9 +251,9 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
           )}
         </div>
 
-        {/* Image in non-compact view - smaller size */}
+        {/* Image in non-compact view - smaller round size */}
         {event.image_url && (
-          <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden ml-auto">
+          <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden ml-auto">
             <img
               src={event.image_url}
               alt={event.title}
