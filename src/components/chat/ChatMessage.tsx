@@ -132,20 +132,20 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       if (containsEventInfo(message)) {
         return (
           <div
-            className="whitespace-pre-wrap message-text-content" // Added class for targeting in CSS
+            className="whitespace-pre-wrap chat-message-content"
             dangerouslySetInnerHTML={{ __html: formatEventText(message) }}
           />
         );
       }
       return (
-        <span className="whitespace-pre-wrap message-text-content inline"> {/* Changed to span and inline */}
+        <span className="whitespace-pre-wrap chat-message-content">
           {renderMessageWithLinks(message)}
         </span>
       );
     }
 
     return (
-      <span className="whitespace-pre-wrap message-text-content inline"> {/* Changed to span and inline */}
+      <span className="whitespace-pre-wrap chat-message-content">
         {message}
       </span>
     );
@@ -165,16 +165,18 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       className={cn(
         "group p-3 rounded-lg relative",
         isConsecutive ? 'mt-0.5' : 'mt-1',
-        "bg-black text-white shadow-md w-full max-w-full overflow-hidden break-words hover:bg-gray-900/50 transition-colors duration-200"
+        "bg-black text-white shadow-md w-full max-w-full overflow-hidden hover:bg-gray-900/50 transition-colors duration-200"
       )}
     >
-      {/* Adjusted to flex-wrap and items-end to allow content and reactions to wrap */}
-      <div className="w-full max-w-full overflow-hidden break-words flex flex-wrap items-end justify-start">
-        {formatContent()} {/* No longer wrapped in an extra div. `formatContent` returns `div` or `span` */}
+      {/* Outer flex container for text and reactions */}
+      <div className="flex flex-col">
+        <div className="chat-message-bubble">
+          {formatContent()}
+        </div>
 
-        {/* Reactions positioned directly after content, inline-block with margin */}
+        {/* Reactions container, now explicitly below the text content */}
         {(reactions && reactions.length > 0) || (onReact && messageId && isGroup) ? (
-          <div className="inline-flex flex-shrink-0 message-reactions-container"> {/* Added class for targeting in CSS */}
+          <div className="message-reactions-container mt-2">
             <MessageReactions
               reactions={reactions}
               onReact={handleReact}
