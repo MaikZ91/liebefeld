@@ -274,92 +274,51 @@ export const useChatLogic = (
     setInput('');
     setIsTyping(true);
     
-    // Check if query should trigger panel display
-    const shouldShowPanel = message.toLowerCase().includes('event') || 
-                           message.toLowerCase().includes('heute') ||
-                           message.toLowerCase().includes('wochenende');
+    // Show panel immediately
+    const panelMessage: ChatMessage = {
+      id: `panel-${Date.now()}`,
+      isUser: false,
+      text: 'Hier sind einige Events für dich:',
+      panelData: createDummyPanelData(),
+      timestamp: new Date().toISOString()
+    };
     
-    if (shouldShowPanel) {
-      // First show panel message
-      setTimeout(() => {
-        const panelMessage: ChatMessage = {
-          id: `panel-${Date.now()}`,
-          isUser: false,
-          text: 'Hier sind einige Events für dich:',
-          panelData: createDummyPanelData(),
-          timestamp: new Date().toISOString()
-        };
-        
-        setMessages(prev => [...prev, panelMessage]);
-        
-        // Then show regular response after delay
-        setTimeout(async () => {
-          try {
-            console.log(`[useChatLogic] Processing user query: "${message}" with ${events.length} events`);
-            console.log(`[useChatLogic] Heart mode active: ${isHeartActive}`);
-            
-            const responseHtml = await generateResponse(message, events, isHeartActive);
-            
-            const botMessage: ChatMessage = {
-              id: `bot-${Date.now()}`,
-              isUser: false,
-              text: 'Hier sind weitere Details zu den Events.',
-              html: responseHtml,
-              timestamp: new Date().toISOString()
-            };
-            
-            setMessages(prev => [...prev, botMessage]);
-          } catch (error) {
-            console.error('[useChatLogic] Error generating response:', error);
-            
-            const errorMessage: ChatMessage = {
-              id: `error-${Date.now()}`,
-              isUser: false,
-              text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
-              html: `${createResponseHeader("Fehler")}
-              <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
-                Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. 
-                Bitte versuche es später noch einmal oder formuliere deine Anfrage anders.
-              </div>`,
-              timestamp: new Date().toISOString()
-            };
-            
-            setMessages(prev => [...prev, errorMessage]);
-          } finally {
-            setIsTyping(false);
-          }
-        }, 2000); // 2 second delay for regular response
-      }, 800); // Initial delay for panel
-    } else {
-      // Regular flow without panel
-      setTimeout(async () => {
-        try {
-          const responseHtml = await generateResponse(message, events, isHeartActive);
-          
-          const botMessage: ChatMessage = {
-            id: `bot-${Date.now()}`,
-            isUser: false,
-            text: 'Hier sind die Events, die ich gefunden habe.',
-            html: responseHtml,
-            timestamp: new Date().toISOString()
-          };
-          
-          setMessages(prev => [...prev, botMessage]);
-        } catch (error) {
-          console.error('[useChatLogic] Error generating response:', error);
-          
-          const errorMessage: ChatMessage = {
-            id: `error-${Date.now()}`,
-            isUser: false,
-            text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
-            timestamp: new Date().toISOString()
-          };
-          
-          setMessages(prev => [...prev, errorMessage]);
-        } finally {
-          setIsTyping(false);
-        }
-      }, 800);
+    setMessages(prev => [...prev, panelMessage]);
+    
+    // Generate and show regular response immediately
+    try {
+      console.log(`[useChatLogic] Processing user query: "${message}" with ${events.length} events`);
+      console.log(`[useChatLogic] Heart mode active: ${isHeartActive}`);
+      
+      const responseHtml = await generateResponse(message, events, isHeartActive);
+      
+      const botMessage: ChatMessage = {
+        id: `bot-${Date.now()}`,
+        isUser: false,
+        text: 'Hier sind weitere Details zu den Events.',
+        html: responseHtml,
+        timestamp: new Date().toISOString()
+      };
+      
+      setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error('[useChatLogic] Error generating response:', error);
+      
+      const errorMessage: ChatMessage = {
+        id: `error-${Date.now()}`,
+        isUser: false,
+        text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
+        html: `${createResponseHeader("Fehler")}
+        <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
+          Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. 
+          Bitte versuche es später noch einmal oder formuliere deine Anfrage anders.
+        </div>`,
+        timestamp: new Date().toISOString()
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
     }
   };
 
