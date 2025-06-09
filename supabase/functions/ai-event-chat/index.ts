@@ -434,7 +434,7 @@ WICHTIG FÜR textResponse:
 - STELLE DIE EVENTS NUR ALS STRUKTURIERTE TIMELINE-LISTE DAR: Sortiere Events chronologisch und präsentiere sie als übersichtliche Timeline-Liste
 - Verwende Zeitangaben wie "Um 10:00 Uhr", "Danach um 15:00 Uhr", "Am Abend um 20:00 Uhr" etc.
 - Gruppiere Events nach Tagen und Uhrzeiten für eine übersichtliche Timeline-Darstellung
-- Format: "Timeline für [Zeitraum]: Um 10:00 Uhr - [Event-Name] ([Ort]), Um 15:00 Uhr - [Event-Name] ([Ort])..."
+- Format EXAKT wie folgt: "Hier ist eine Liste der Veranstaltungen:\n\n*   [Zeit]: [Event-Name] im/in [Ort]\n*   [Zeit]: [Event-Name] im/in [Ort]\n*   ..."
 
 Für panelData: Wähle die TOP 3-5 Events aus den gefilterten Events aus. Verwende passende Unsplash-Bilder für jedes Event basierend auf der Kategorie.
 
