@@ -137,14 +137,14 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         );
       }
       return (
-        <div className="whitespace-pre-wrap">
+        <div className="whitespace-pre-wrap message-text-content"> {/* Added class for targeting in CSS */}
           {renderMessageWithLinks(message)}
         </div>
       );
     }
     
     return (
-      <div className="whitespace-pre-wrap">
+      <div className="whitespace-pre-wrap message-text-content"> {/* Added class for targeting in CSS */}
         {message}
       </div>
     );
@@ -167,15 +167,14 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         "bg-black text-white shadow-md w-full max-w-full overflow-hidden break-words hover:bg-gray-900/50 transition-colors duration-200"
       )}
     >
-      {/* Changed parent div to flex to keep content and reactions inline */}
-      <div className="w-full max-w-full overflow-hidden break-words flex flex-wrap items-end"> 
-        <div className="inline"> {/* Ensure message content is inline */}
+      <div className="w-full max-w-full overflow-hidden break-words flex flex-wrap items-end justify-start"> {/* Adjusted to flex-wrap and justify-start */}
+        <div className="inline-block flex-shrink-0 chat-message-content"> {/* Added class for targeting in CSS */}
           {formatContent()}
         </div>
         
-        {/* Reactions positioned directly after content, inline */}
+        {/* Reactions positioned directly after content, inline-block with margin */}
         {(reactions && reactions.length > 0) || (onReact && messageId && isGroup) ? (
-          <div className="inline-flex ml-2 flex-shrink-0"> {/* Changed to inline-flex to group buttons */}
+          <div className="inline-flex flex-shrink-0 message-reactions-container"> {/* Added class for targeting in CSS */}
             <MessageReactions
               reactions={reactions}
               onReact={handleReact}
