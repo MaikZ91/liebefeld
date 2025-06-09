@@ -5,7 +5,7 @@ import ChatMessage from '@/components/chat/ChatMessage';
 import { Button } from '@/components/ui/button';
 import { MessageListProps } from './types';
 import './MessageList.css';
-import { motion, AnimatePresence } from 'framer-motion'; // Import motion for animations
+import { motion, AnimatePresence } from 'framer-motion';
 
 const MessageList: React.FC<MessageListProps> = ({
   messages,
@@ -49,15 +49,21 @@ const MessageList: React.FC<MessageListProps> = ({
         {renderMessages()}
         
         <AnimatePresence>
-          {isTyping && ( // Conditionally render the swipable panel directly
+          {isTyping && ( // Conditionally render the animated panel when AI is typing
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ duration: 0.3 }}
-              className="max-w-[85%] rounded-lg ml-auto bg-gray-800 p-3 text-white flex items-center justify-center min-h-[80px] border border-gray-700 shadow-md"
+              initial={{ x: '100%', opacity: 0 }} // Start off-screen to the right
+              animate={{ x: 0, opacity: 1 }}     // Slide in to position
+              exit={{ x: '100%', opacity: 0 }}      // Slide out to the right when no longer typing
+              transition={{ type: "tween", duration: 0.3 }} // Smooth transition
+              className="max-w-[85%] w-fit rounded-lg ml-auto bg-gray-800 p-3 text-white flex flex-col items-center justify-center min-h-[80px] border border-gray-700 shadow-md text-center"
             >
+              <div className="flex items-center justify-center space-x-2 mb-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              </div>
               <span className="text-sm text-gray-300">KI generiert Antwort...</span>
+              <img src="/lovable-uploads/Screenshot_20250607-010309.jpg-7b5000ad-bb12-4e1a-bad2-641f9241a37a" alt="Placeholder AI Panel" className="mt-2 w-full h-auto max-h-[150px] object-contain rounded" />
             </motion.div>
           )}
         </AnimatePresence>
