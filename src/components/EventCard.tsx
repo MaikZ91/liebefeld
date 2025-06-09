@@ -1,3 +1,5 @@
+// src/components/EventCard.tsx
+
 import React, { useState, memo } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign } from 'lucide-react';
@@ -41,7 +43,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
 // Function to check if an event is a Tribe event
 const isTribeEvent = (title: string): boolean => {
   const tribeKeywords = ['tribe', 'tuesday run', 'kennenlernabend', 'creatives circle'];
-  return tribeKeywords.some(keyword => 
+  return tribeKeywords.some(keyword =>
     title.toLowerCase().includes(keyword.toLowerCase())
   );
 };
@@ -49,17 +51,17 @@ const isTribeEvent = (title: string): boolean => {
 const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, compact = false, onLike }) => {
   const [isLiking, setIsLiking] = useState(false);
   const { newEventIds, eventLikes } = useEventContext();
-  
+
   const isNewEvent = newEventIds.has(event.id);
   const isTribe = isTribeEvent(event.title);
-  
+
   // Get likes directly from database sources
-  const displayLikes = event.id.startsWith('github-') 
-    ? (eventLikes[event.id] || 0) 
+  const displayLikes = event.id.startsWith('github-')
+    ? (eventLikes[event.id] || 0)
     : (event.likes || 0);
-  
-  const icon = event.category in categoryIcons 
-    ? categoryIcons[event.category] 
+
+  const icon = event.category in categoryIcons
+    ? categoryIcons[event.category]
     : <Calendar className="w-3 h-3" />;
 
   const handleLike = (e: React.MouseEvent) => {
@@ -86,7 +88,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
 
   if (compact) {
     return (
-      <div 
+      <div
         className={cn(
           "dark-glass-card rounded-lg p-1.5 cursor-pointer hover-scale mb-0.5 w-full",
           isTribe && "border-l-2 border-purple-500 bg-gradient-to-r from-purple-900/20 to-transparent",
@@ -94,8 +96,17 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
         )}
         onClick={onClick}
       >
-        <div className="flex justify-between items-start gap-1">
-          <div className="flex-1 min-w-0">
+        <div className="flex items-start gap-2"> {/* Use flex to align image and text content */}
+          {event.image_urls && event.image_urls.length > 0 && (
+            <div className="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden">
+              <img
+                src={event.image_urls[0]}
+                alt={event.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+          <div className="flex-1 min-w-0"> {/* Allow content to take remaining space */}
             <div className="flex items-center gap-1 flex-wrap">
               {isNewEvent && (
                 <Badge className="bg-green-600 text-white text-[10px] flex items-center gap-0.5 h-3 px-1">
@@ -115,7 +126,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
                 </Badge>
               )}
               {event.link ? (
-                <h4 
+                <h4
                   className={cn(
                     "font-medium text-xs text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1",
                     isTribe && "text-purple-300"
@@ -134,7 +145,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
                 </h4>
               )}
             </div>
-            
+
             <div className="flex items-center gap-1 mt-0.5 text-[8px] text-white">
               <div className="flex items-center">
                 <Clock className="w-2 h-2 mr-0.5 flex-shrink-0" />
@@ -147,30 +158,30 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
               </div>
             </div>
           </div>
-          
-          <div className="flex items-center gap-2">
+
+          <div className="flex flex-col items-end gap-1"> {/* Aligned right to position badge and like button */}
             <Badge className={cn(
               "flex-shrink-0 flex items-center gap-0.5 text-[8px] font-medium whitespace-nowrap px-1 py-0 h-3",
-              event.category in categoryColors 
-                ? categoryColors[event.category] 
+              event.category in categoryColors
+                ? categoryColors[event.category]
                 : "bg-orange-400/70 text-orange-50"
             )}>
               {icon}
             </Badge>
-            
+
             <div className="flex items-center gap-0.5">
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className={cn(
-                  "h-4 w-4 rounded-full transition-all p-0", 
+                  "h-4 w-4 rounded-full transition-all p-0",
                   isLiking ? "opacity-70" : ""
                 )}
                 onClick={handleLike}
                 disabled={isLiking}
               >
                 <Heart className={cn(
-                  "w-2 h-2 transition-transform text-white", 
+                  "w-2 h-2 transition-transform text-white",
                   displayLikes > 0 ? "fill-red-500 text-white" : "",
                   isLiking ? "scale-125" : ""
                 )} />
@@ -185,9 +196,9 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     );
   }
 
-  // Non-compact version
+  // Non-compact version (existing implementation with image support added)
   return (
-    <div 
+    <div
       className={cn(
         "dark-glass-card rounded-xl p-4 cursor-pointer hover-scale w-full",
         isTribe && "border-l-4 border-purple-500 bg-gradient-to-r from-purple-900/20 to-transparent",
@@ -218,7 +229,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
             )}
           </div>
           {event.link ? (
-            <h4 
+            <h4
               className={cn(
                 "font-medium text-xl text-white break-words hover:underline cursor-pointer flex items-center gap-1",
                 isTribe && "text-purple-300"
@@ -237,22 +248,33 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
             </h4>
           )}
         </div>
-        
+
+        {/* Image in non-compact view - display if available */}
+        {event.image_urls && event.image_urls.length > 0 && (
+          <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden ml-auto">
+            <img
+              src={event.image_urls[0]}
+              alt={event.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
         <div className="flex items-center gap-3 w-1/5 justify-end">
           <Badge className={cn(
             "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
-            event.category in categoryColors 
-              ? categoryColors[event.category] 
+            event.category in categoryColors
+              ? categoryColors[event.category]
               : "bg-orange-400/70 text-orange-50"
           )}>
             {icon}
             {event.category}
           </Badge>
-          
+
           <div className="flex items-center">
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className={cn(
                 "h-7 w-7 rounded-full mr-1 transition-all",
                 isLiking ? "opacity-70" : ""
@@ -261,7 +283,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
               disabled={isLiking}
             >
               <Heart className={cn(
-                "w-4 h-4 transition-transform text-white", 
+                "w-4 h-4 transition-transform text-white",
                 displayLikes > 0 ? "fill-red-500 text-white" : "",
                 isLiking ? "scale-125" : ""
               )} />
@@ -272,7 +294,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
           </div>
         </div>
       </div>
-      
+
       <div className="flex items-center gap-2 text-sm text-white">
         <div className="flex items-center">
           <Clock className="w-4 h-4 mr-1 flex-shrink-0" />
