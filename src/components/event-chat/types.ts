@@ -1,26 +1,12 @@
-import { RefObject } from 'react';
-import { UserProfile } from '@/types/chatTypes';
 
 export interface ChatMessage {
   id: string;
   isUser: boolean;
   text: string;
   html?: string;
-  timestamp?: string; // For storing the creation time
+  timestamp: string;
+  showEventSwiper?: boolean;
 }
-
-export interface EventChatBotProps {
-  fullPage?: boolean;
-  onAddEvent?: () => void;
-  onToggleCommunity?: () => void; // New prop for toggling to community view
-  activeChatMode?: 'ai' | 'community';
-  setActiveChatMode?: (mode: 'ai' | 'community') => void;
-  hideButtons?: boolean;
-}
-
-// Local storage keys
-export const CHAT_HISTORY_KEY = 'event-chat-history';
-export const CHAT_QUERIES_KEY = 'event-chat-queries';
 
 export interface MessageListProps {
   messages: ChatMessage[];
@@ -29,6 +15,13 @@ export interface MessageListProps {
   messagesEndRef: React.RefObject<HTMLDivElement>;
   examplePrompts: string[];
   handleExamplePromptClick: (prompt: string) => void;
+}
+
+export interface ChatHeaderProps {
+  activeChatModeValue: 'ai' | 'community';
+  handleToggleChat: () => void;
+  exportChatHistory: () => void;
+  clearChatHistory: () => void;
 }
 
 export interface ChatInputProps {
@@ -45,30 +38,13 @@ export interface ChatInputProps {
   onAddEvent?: () => void;
 }
 
-export interface RecentQueriesProps {
-  showRecentQueries: boolean;
-  setShowRecentQueries: (show: boolean) => void;
-  queriesToRender: string[];
-  handleExamplePromptClick: (query: string) => void;
-}
-
-export interface ChatHeaderProps {
-  activeChatModeValue: 'ai' | 'community';
-  handleToggleChat: () => void;
-  exportChatHistory: () => void;
-  clearChatHistory: () => void;
-}
-
-export interface PersonalizationOptions {
-  userProfile: UserProfile | null;
-  currentUser: string | null;
-  userService: any;
-}
-
-export interface FullPageChatBotProps {
-  chatLogic: any;
-  activeChatModeValue: 'ai' | 'community';
-  communityGroupId: string;
+export interface EventChatBotProps {
+  fullPage?: boolean;
   onAddEvent?: () => void;
-  hideButtons?: boolean;
+  onToggleCommunity?: () => void;
+  activeChatMode?: 'ai' | 'community';
+  setActiveChatMode?: (mode: 'ai' | 'community') => void;
 }
+
+export const CHAT_HISTORY_KEY = 'chat_history';
+export const CHAT_QUERIES_KEY = 'chat_queries';

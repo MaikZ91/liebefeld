@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChatMessage, CHAT_HISTORY_KEY, CHAT_QUERIES_KEY } from './types';
 import { supabase } from '@/integrations/supabase/client';
-import { generateResponse, getWelcomeMessage, createResponseHeader } from '@/utils/chatUtils';
+import { getWelcomeMessage, createResponseHeader } from '@/utils/chatUtils';
 import { toast } from 'sonner';
 
 export const useChatLogic = (
@@ -214,6 +214,32 @@ export const useChatLogic = (
     saveGlobalQuery(query);
   };
 
+  // Generate AI response using Supabase Edge Function
+  const generateAIResponse = async (message: string, events: any[], isHeartActive: boolean) => {
+    try {
+      console.log('[useChatLogic] Calling AI edge function with:', { message, eventCount: events.length, isHeartActive });
+      
+      const { data, error } = await supabase.functions.invoke('ai-event-chat', {
+        body: {
+          message,
+          events,
+          isHeartActive
+        }
+      });
+
+      if (error) {
+        console.error('[useChatLogic] Edge function error:', error);
+        throw new Error(`AI service error: ${error.message}`);
+      }
+
+      console.log('[useChatLogic] AI response received:', data);
+      return data.response || 'Entschuldigung, ich konnte keine passende Antwort generieren.';
+    } catch (error) {
+      console.error('[useChatLogic] Error calling AI service:', error);
+      throw error;
+    }
+  };
+
   const handleSendMessage = async (customInput?: string) => {
     const message = customInput || input;
     if (!message.trim()) return;
@@ -239,35 +265,61 @@ export const useChatLogic = (
         console.log(`[useChatLogic] Processing user query: "${message}" with ${events.length} events`);
         console.log(`[useChatLogic] Heart mode active: ${isHeartActive}`);
         
-        // Pass the heart mode state to the generateResponse function
-        const responseHtml = await generateResponse(message, events, isHeartActive);
-        
-        const botMessage: ChatMessage = {
-          id: `bot-${Date.now()}`,
+        // First, add the EventSwiper panel message
+        const eventPanelMessage: ChatMessage = {
+          id: `panel-${Date.now()}`,
           isUser: false,
-          text: 'Hier sind die Events, die ich gefunden habe.',
-          html: responseHtml,
-          timestamp: new Date().toISOString()
-        };
-        
-        setMessages(prev => [...prev, botMessage]);
-      } catch (error) {
-        console.error('[useChatLogic] Error generating response:', error);
-        
-        const errorMessage: ChatMessage = {
-          id: `error-${Date.now()}`,
-          isUser: false,
-          text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
-          html: `${createResponseHeader("Fehler")}
-          <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
-            Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. 
-            Bitte versuche es später noch einmal oder formuliere deine Anfrage anders.
+          text: 'Hier sind die aktuellen Events:',
+          html: `${createResponseHeader("Events")}
+          <div class="event-swiper-container">
+            <div class="text-center p-4">
+              <p class="text-sm text-gray-400">Event-Panel wird hier angezeigt</p>
+            </div>
           </div>`,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          showEventSwiper: true
         };
         
-        setMessages(prev => [...prev, errorMessage]);
-      } finally {
+        setMessages(prev => [...prev, eventPanelMessage]);
+        
+        // Small delay before adding AI response
+        setTimeout(async () => {
+          try {
+            // Generate AI response
+            const responseHtml = await generateAIResponse(message, events, isHeartActive);
+            
+            const botMessage: ChatMessage = {
+              id: `bot-${Date.now()}`,
+              isUser: false,
+              text: 'Hier ist meine Antwort zu den Events.',
+              html: responseHtml,
+              timestamp: new Date().toISOString()
+            };
+            
+            setMessages(prev => [...prev, botMessage]);
+          } catch (error) {
+            console.error('[useChatLogic] Error generating AI response:', error);
+            
+            const errorMessage: ChatMessage = {
+              id: `error-${Date.now()}`,
+              isUser: false,
+              text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
+              html: `${createResponseHeader("Fehler")}
+              <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
+                Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. 
+                Bitte versuche es später noch einmal oder formuliere deine Anfrage anders.
+              </div>`,
+              timestamp: new Date().toISOString()
+            };
+            
+            setMessages(prev => [...prev, errorMessage]);
+          } finally {
+            setIsTyping(false);
+          }
+        }, 1000);
+        
+      } catch (error) {
+        console.error('[useChatLogic] Error in message processing:', error);
         setIsTyping(false);
       }
     }, 800);
