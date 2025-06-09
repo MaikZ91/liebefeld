@@ -567,16 +567,8 @@ Hier die Events:\n${formattedEvents}`;
       // Create fallback response with top events from our filtering - USE REAL DATA
       const fallbackPanelData = {
         events: topEventsForPanel.map((e: any) => {
-          // Get image URL with fallback
-          let imageUrl = null;
-          if (e.image_url) {
-            imageUrl = e.image_url;
-          } else if (e.image_urls && Array.isArray(e.image_urls) && e.image_urls.length > 0) {
-            imageUrl = e.image_urls[0];
-          } else {
-            // Category-based Unsplash fallback
-            imageUrl = `https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop`;
-          }
+          // Use real image URL or fallback
+          const imageUrl = e.image_url || `https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop`;
           
           return {
             id: e.id, // Use real event ID
