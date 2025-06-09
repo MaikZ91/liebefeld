@@ -20,6 +20,11 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
   
   const currentEvent = panelData.events[currentIndex];
   
+  // Use dummy image if no image_url is available
+  const imageUrl = currentEvent.image_url && currentEvent.image_url !== 'keine' 
+    ? currentEvent.image_url 
+    : 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=400&h=300';
+  
   const handlePrevious = () => {
     setCurrentIndex((prev) => 
       prev === 0 ? panelData.events.length - 1 : prev - 1
@@ -52,7 +57,7 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
       {/* Event Image */}
       <div className="relative h-48 overflow-hidden">
         <img
-          src={currentEvent.image_url}
+          src={imageUrl}
           alt={currentEvent.title}
           className="w-full h-full object-cover"
         />
