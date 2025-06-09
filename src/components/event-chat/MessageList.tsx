@@ -1,10 +1,9 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 import ChatMessage from '@/components/chat/ChatMessage';
 import { Button } from '@/components/ui/button';
 import { MessageListProps } from './types';
-import EventPanel from './EventPanel';
-import { useEventContext } from '@/contexts/EventContext';
 import './MessageList.css';
 
 const MessageList: React.FC<MessageListProps> = ({
@@ -15,41 +14,29 @@ const MessageList: React.FC<MessageListProps> = ({
   examplePrompts,
   handleExamplePromptClick
 }) => {
-  const { events } = useEventContext();
-
   const renderMessages = () => {
     return messages.map((message) => (
-      <div key={message.id} className="mb-4">
-        <div
-          className={cn(
-            "max-w-[85%] rounded-lg",
-            message.isUser
-              ? "bg-black border border-black ml-auto"
-              : "bg-black border border-black"
-          )}
-        >
-          {message.html ? (
-            <div 
-              dangerouslySetInnerHTML={{ __html: message.html }} 
-              className="p-3 event-list-container"
-            />
-          ) : (
-            <ChatMessage 
-              message={message.text} 
-              isGroup={false} 
-              onDateSelect={handleDateSelect}
-              showDateSelector={message.isUser && message.text.toLowerCase().includes('event')}
-            />
-          )}
-        </div>
-        
-        {/* Show EventPanel after non-user messages that have showEventSwiper flag */}
-        {!message.isUser && message.showEventSwiper && (
-          <div className="mt-3 w-full">
-            {events.map((event, index) => (
-              <EventPanel key={index} event={event} />
-            ))}
-          </div>
+      <div
+        key={message.id}
+        className={cn(
+          "max-w-[85%] rounded-lg",
+          message.isUser
+            ? "bg-black border border-black ml-auto"
+            : "bg-black border border-black"
+        )}
+      >
+        {message.html ? (
+          <div 
+            dangerouslySetInnerHTML={{ __html: message.html }} 
+            className="p-3 event-list-container"
+          />
+        ) : (
+          <ChatMessage 
+            message={message.text} 
+            isGroup={false} 
+            onDateSelect={handleDateSelect}
+            showDateSelector={message.isUser && message.text.toLowerCase().includes('event')}
+          />
         )}
       </div>
     ));
