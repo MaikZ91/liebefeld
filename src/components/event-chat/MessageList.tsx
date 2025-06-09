@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import ChatMessage from '@/components/chat/ChatMessage';
 import { Button } from '@/components/ui/button';
 import { MessageListProps } from './types';
+import SwipeableEventPanel from './SwipeableEventPanel';
 import './MessageList.css';
 
 const MessageList: React.FC<MessageListProps> = ({
@@ -25,18 +26,35 @@ const MessageList: React.FC<MessageListProps> = ({
             : "bg-black border border-black"
         )}
       >
+        {/* Render Panel if panelData exists */}
+        {message.panelData && (
+          <div className="p-3">
+            <SwipeableEventPanel 
+              panelData={message.panelData}
+              onEventSelect={(eventId) => {
+                console.log('Event selected:', eventId);
+                // Could trigger additional chat response or navigation
+              }}
+            />
+          </div>
+        )}
+        
+        {/* Render HTML content */}
         {message.html ? (
           <div 
             dangerouslySetInnerHTML={{ __html: message.html }} 
             className="p-3 event-list-container"
           />
         ) : (
-          <ChatMessage 
-            message={message.text} 
-            isGroup={false} 
-            onDateSelect={handleDateSelect}
-            showDateSelector={message.isUser && message.text.toLowerCase().includes('event')}
-          />
+          /* Render regular chat message only if no panel data */
+          !message.panelData && (
+            <ChatMessage 
+              message={message.text} 
+              isGroup={false} 
+              onDateSelect={handleDateSelect}
+              showDateSelector={message.isUser && message.text.toLowerCase().includes('event')}
+            />
+          )
         )}
       </div>
     ));
