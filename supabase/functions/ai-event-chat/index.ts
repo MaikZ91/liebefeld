@@ -340,18 +340,28 @@ serve(async (req) => {
         thisMonthEvents.slice(0, 3).map((e: any) => `${e.title} (${e.date})`));
     }
     
-    // Format events for AI processing
+    // Format events for AI processing - INCLUDE ID AND IMAGE_URL
     const formattedEvents = filteredEvents
       .map((e: any) => {
         const actualCategory = e.category || 'Unbekannt';
         console.log(`[ai-event-chat] Event "${e.title}" has category: ${actualCategory}`);
         
+        // Get image URL (handle both single image_url and array image_urls)
+        let imageUrl = null;
+        if (e.image_url) {
+          imageUrl = e.image_url;
+        } else if (e.image_urls && Array.isArray(e.image_urls) && e.image_urls.length > 0) {
+          imageUrl = e.image_urls[0]; // Take first image from array
+        }
+        
         return [
+          `Event-ID: ${e.id}`,
           `Event: ${e.title}`,
           `Datum: ${e.date}`,
           `Zeit: ${e.time}`,
           `Kategorie: ${actualCategory}`,
           e.location ? `Ort: ${e.location}` : "",
+          imageUrl ? `Bild-URL: ${imageUrl}` : "Bild-URL: keine",
         ].filter(Boolean).join("\n");
       })
       .join("\n\n");
@@ -412,13 +422,13 @@ Antworte im folgenden JSON-Format:
   "panelData": {
     "events": [
       {
-        "id": "event-id",
+        "id": "echte-event-id-aus-datenbank",
         "title": "Event Titel",
         "date": "YYYY-MM-DD",
         "time": "HH:mm",
         "price": "Preis oder 'Kostenlos'",
         "location": "Ort",
-        "image_url": "https://images.unsplash.com/...",
+        "image_url": "echte-image-url-aus-datenbank-oder-fallback",
         "category": "Kategorie"
       }
     ],
@@ -426,6 +436,13 @@ Antworte im folgenden JSON-Format:
   },
   "textResponse": "Hier deine normale Antwort als reiner Fließtext ohne HTML-Formatierung..."
 }
+
+KRITISCH WICHTIG FÜR panelData:
+- Verwende IMMER die echten Event-IDs aus den übermittelten Events (z.B. "github-675", nicht "event-1")
+- Verwende die echten Bild-URLs aus der Datenbank wenn vorhanden
+- Falls ein Event keine Bild-URL hat, verwende passende Unsplash-Bilder basierend auf der Kategorie
+- Wähle die TOP 3-5 Events aus den gefilterten Events aus
+- Alle anderen Event-Daten (Titel, Datum, Zeit, Ort, Kategorie) MÜSSEN exakt aus der Datenbank übernommen werden
 
 WICHTIG FÜR textResponse: 
 - Verwende KEINESFALLS HTML-Tags wie <h2>, <p>, <ul>, <li>, <br>, <strong>, etc.
@@ -438,8 +455,6 @@ WICHTIG FÜR textResponse:
   * Sortiere Events chronologisch nach Datum und Zeit
   * Verwende Asterisk (*) für jeden Event-Eintrag
   * Schreibe "im" vor Ortsangaben oder "in" je nach Kontext
-
-Für panelData: Wähle die TOP 3-5 Events aus den gefilterten Events aus. Verwende passende Unsplash-Bilder für jedes Event basierend auf der Kategorie.
 
 Hier die Events:\n${formattedEvents}`;
 
@@ -549,18 +564,31 @@ Hier die Events:\n${formattedEvents}`;
     } catch (jsonError) {
       console.log("[ai-event-chat] Failed to parse JSON from AI, creating fallback response");
       
-      // Create fallback response with top events from our filtering
+      // Create fallback response with top events from our filtering - USE REAL DATA
       const fallbackPanelData = {
-        events: topEventsForPanel.map((e: any) => ({
-          id: e.id,
-          title: e.title,
-          date: e.date,
-          time: e.time,
-          price: e.price || 'Kostenlos',
-          location: e.location || 'Ort nicht angegeben',
-          image_url: `https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop`,
-          category: e.category || 'Event'
-        })),
+        events: topEventsForPanel.map((e: any) => {
+          // Get image URL with fallback
+          let imageUrl = null;
+          if (e.image_url) {
+            imageUrl = e.image_url;
+          } else if (e.image_urls && Array.isArray(e.image_urls) && e.image_urls.length > 0) {
+            imageUrl = e.image_urls[0];
+          } else {
+            // Category-based Unsplash fallback
+            imageUrl = `https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop`;
+          }
+          
+          return {
+            id: e.id, // Use real event ID
+            title: e.title,
+            date: e.date,
+            time: e.time,
+            price: e.price || 'Kostenlos',
+            location: e.location || 'Ort nicht angegeben',
+            image_url: imageUrl,
+            category: e.category || 'Event'
+          };
+        }),
         currentIndex: 0
       };
       
