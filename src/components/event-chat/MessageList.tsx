@@ -46,12 +46,14 @@ const MessageList: React.FC<MessageListProps> = ({
             </div>
           )}
           
-          {/* Render HTML content - ALWAYS show if it exists */}
+          {/* Render HTML content through ChatMessage for proper formatting */}
           {message.html && (
             <div className="p-3">
-              <div 
-                dangerouslySetInnerHTML={{ __html: message.html }} 
-                className="event-list-container flowing-text-content"
+              <ChatMessage 
+                message={<div dangerouslySetInnerHTML={{ __html: message.html }} />}
+                isGroup={false}
+                onDateSelect={handleDateSelect}
+                showDateSelector={false}
               />
             </div>
           )}

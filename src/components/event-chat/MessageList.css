@@ -1,4 +1,5 @@
 
+
 .event-list-container .bg-red-900\/20 {
   margin-bottom: 0.75rem;
 }
@@ -110,43 +111,40 @@
   color: white !important;
 }
 
-/* Specific styling for flowing text content */
-.flowing-text-content {
-  line-height: 1.6;
-}
-
-.flowing-text-content h2 {
+/* Allow ChatMessage to handle its own formatting for HTML content */
+.chat-message-content h2 {
   font-size: 1.25rem;
   font-weight: 700;
   margin-bottom: 0.75rem;
-  color: white !important;
+  color: white;
 }
 
-.flowing-text-content h3 {
+.chat-message-content h3 {
   font-size: 1.125rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: white !important;
+  color: white;
 }
 
-.flowing-text-content p {
+.chat-message-content p {
   margin-bottom: 0.75rem;
-  color: white !important;
+  color: white;
 }
 
-.flowing-text-content ul {
+.chat-message-content ul {
   margin-bottom: 0.75rem;
   padding-left: 1rem;
+  list-style-type: disc;
 }
 
-.flowing-text-content li {
+.chat-message-content li {
   margin-bottom: 0.25rem;
-  color: white !important;
-  list-style-type: disc !important;
+  color: white;
 }
 
-.flowing-text-content b,
-.flowing-text-content strong {
+.chat-message-content b,
+.chat-message-content strong {
   font-weight: 700;
-  color: white !important;
+  color: white;
 }
+
