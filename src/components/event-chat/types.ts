@@ -7,25 +7,6 @@ export interface ChatMessage {
   text: string;
   html?: string;
   timestamp?: string; // For storing the creation time
-  panelData?: PanelEventData; // New property for panel display
-}
-
-export interface PanelEventData {
-  events: PanelEvent[];
-  currentIndex: number;
-}
-
-export interface PanelEvent {
-  id: string;
-  title: string;
-  date: string;
-  time: string;
-  price: string;
-  location: string;
-  image_url: string;
-  category: string;
-  link?: string; // Added link field
-  likes?: number; // Added likes field
 }
 
 export interface EventChatBotProps {

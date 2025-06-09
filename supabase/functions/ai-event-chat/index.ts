@@ -316,12 +316,10 @@ serve(async (req) => {
         .slice(0, 20);
     }
 
-    // Sort all filtered events by date and limit to top 5 for panel
+    // Sort all filtered events by date
     filteredEvents = filteredEvents.sort((a: any, b: any) => a.date.localeCompare(b.date));
-    const topEventsForPanel = filteredEvents.slice(0, 5);
 
     console.log(`[ai-event-chat] Sende ${filteredEvents.length} gefilterte Events an das KI-Modell`);
-    console.log(`[ai-event-chat] Top ${topEventsForPanel.length} Events für Panel ausgewählt`);
     
     // Log some debug information about events
     if (currentDate) {
@@ -340,30 +338,19 @@ serve(async (req) => {
         thisMonthEvents.slice(0, 3).map((e: any) => `${e.title} (${e.date})`));
     }
     
-    // Format events for AI processing - INCLUDE ID, IMAGE_URL, LINK AND LIKES
+    // Format events with actual categories
     const formattedEvents = filteredEvents
       .map((e: any) => {
+        // Use the actual category from the event, don't default to 'Sonstiges'
         const actualCategory = e.category || 'Unbekannt';
         console.log(`[ai-event-chat] Event "${e.title}" has category: ${actualCategory}`);
         
-        // Get image URL (handle both single image_url and array image_urls)
-        let imageUrl = null;
-        if (e.image_url) {
-          imageUrl = e.image_url;
-        } else if (e.image_urls && Array.isArray(e.image_urls) && e.image_urls.length > 0) {
-          imageUrl = e.image_urls[0]; // Take first image from array
-        }
-        
         return [
-          `Event-ID: ${e.id}`,
           `Event: ${e.title}`,
           `Datum: ${e.date}`,
           `Zeit: ${e.time}`,
-          `Kategorie: ${actualCategory}`,
+          `Kategorie: ${actualCategory}`, // Use the actual category
           e.location ? `Ort: ${e.location}` : "",
-          imageUrl ? `Bild-URL: ${imageUrl}` : "Bild-URL: keine",
-          e.link ? `Link: ${e.link}` : "Link: keiner",
-          `Likes: ${e.likes || 0}`,
         ].filter(Boolean).join("\n");
       })
       .join("\n\n");
@@ -415,45 +402,7 @@ serve(async (req) => {
       }
     }
     
-    systemMessage += `
-
-WICHTIG: Du musst sowohl strukturierte Daten als auch einen Fließtext liefern. 
-Antworte im folgenden JSON-Format:
-
-{
-  "panelData": {
-    "events": [
-      {
-        "id": "echte-event-id-aus-datenbank",
-        "title": "Event Titel",
-        "date": "YYYY-MM-DD",
-        "time": "HH:mm",
-        "price": "Preis oder 'Kostenlos'",
-        "location": "Ort",
-        "image_url": "echte-image-url-aus-datenbank-oder-fallback",
-        "category": "Kategorie",
-        "link": "event-link-aus-datenbank-oder-null",
-        "likes": "anzahl-der-likes-aus-datenbank"
-      }
-    ],
-    "currentIndex": 0
-  },
-  "textResponse": "Hier deine normale Antwort als reiner Fließtext:"
-}
-
-KRITISCH WICHTIG FÜR panelData:
-- Verwende IMMER die echten Event-IDs aus den übermittelten Events (z.B. "github-675", nicht "event-1")
-- Verwende die echten Bild-URLs aus der Datenbank wenn vorhanden
-- Verwende die echten Event-Links aus der Datenbank wenn vorhanden, sonst null
-- Verwende die echten Likes-Zahlen aus der Datenbank
-- Falls ein Event keine Bild-URL hat, verwende passende Unsplash-Bilder basierend auf der Kategorie
-- Wähle die TOP 3-5 Events aus den gefilterten Events aus
-- Alle anderen Event-Daten (Titel, Datum, Zeit, Ort, Kategorie, Link, Likes) MÜSSEN exakt aus der Datenbank übernommen werden
-
-WICHTIG FÜR textResponse: 
-- Stelle die Events als Bulletpoint Liste chronologische geordnet nach Uhrzeit sowie und Eingruppierung in die Kategorien Ausgehen, Sport und Kreativität dar
-
-Hier die Events:\n${formattedEvents}`;
+    systemMessage += `Hier die Events:\n${formattedEvents}`;
 
     /***************************
      * CALL OPENROUTER
@@ -463,13 +412,13 @@ Hier die Events:\n${formattedEvents}`;
     console.log("[ai-event-chat] Categories being sent:", filteredEvents.map((e: any) => `${e.title}: ${e.category}`));
     
     const payload = {
-      model: "google/gemini-2.0-flash-lite-001",
+      model: "google/gemini-2.0-flash-lite-001", // gemini-2.0-flash-lite is more reliable
       messages: [
         { role: "system", content: systemMessage },
         { role: "user", content: query },
       ],
       temperature: 0.7,
-      max_tokens: 2048,
+      max_tokens: 1024,
     };
 
     console.log("[ai-event-chat] Full payload being sent:", JSON.stringify(payload));
@@ -499,13 +448,25 @@ Hier die Events:\n${formattedEvents}`;
     /***************************
      * BUILD RESPONSE FOR CHAT
      ***************************/
+    const debugHtml = `
+      <details class="rounded-lg border border-gray-700/30 bg-gray-900/10 p-3 mt-3 text-sm">
+        <summary class="cursor-pointer font-medium text-red-500">Debug‑Info anzeigen</summary>
+        <pre class="mt-2 whitespace-pre-wrap">Gesendetes Prompt:\n${JSON.stringify(payload, null, 2)}\n\n` +
+      `HTTP‑Status: ${orRes.status} ${orRes.statusText}\n\n` +
+      `Modell: ${parsed?.model || "Unbekannt"}\n\n` +
+      `Benutzerinteressen: ${JSON.stringify(userInterests)}\n\n` +
+      `Bevorzugte Orte: ${JSON.stringify(userLocations)}\n\n` +
+      `Rohantwort:\n${rawBody}</pre>
+      </details>`;
+
     if (!orRes.ok) {
       const errMsg = parsed?.error?.message || `HTTP-Fehler ${orRes.status}`;
       const html = `
         <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
           <h5 class="font-medium text-sm text-red-600 dark:text-red-400">Fehler bei der KI-Antwort</h5>
           <p class="text-sm mt-2">${errMsg}</p>
-        </div>`;
+        </div>
+        ${debugHtml}`;
       return new Response(JSON.stringify({ response: html }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -517,7 +478,8 @@ Hier die Events:\n${formattedEvents}`;
         <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
           <h5 class="font-medium text-sm text-red-600 dark:text-red-400">Fehler bei der Verarbeitung</h5>
           <p class="text-sm mt-2">Ungültige Antwortstruktur von der OpenRouter API.</p>
-        </div>`;
+        </div>
+        ${debugHtml}`;
       return new Response(JSON.stringify({ response: html }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -530,7 +492,8 @@ Hier die Events:\n${formattedEvents}`;
         <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
           <h5 class="font-medium text-sm text-red-600 dark:text-red-400">Fehler beim Parsen der API-Antwort</h5>
           <p class="text-sm mt-2">Es gab ein Problem bei der Verarbeitung der Antwort vom KI-Modell.</p>
-        </div>`;
+        </div>
+        ${debugHtml}`;
       return new Response(JSON.stringify({ response: html }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -540,89 +503,94 @@ Hier die Events:\n${formattedEvents}`;
     let aiContent: string = choice.message?.content ?? 
       (choice.message?.function_call ? JSON.stringify(choice.message.function_call) : "Keine Antwort erhalten");
     
-    console.log("[ai-event-chat] Raw AI response:", aiContent);
-    
-    // Try to parse JSON response from AI
-    let combinedResponse;
-    try {
-      // Remove any markdown code block formatting
-      const cleanContent = aiContent.replace(/```json\n?|```\n?/g, '').trim();
-      const parsedAiResponse = JSON.parse(cleanContent);
-      
-      if (parsedAiResponse.panelData && parsedAiResponse.textResponse) {
-        console.log("[ai-event-chat] Successfully parsed structured AI response");
-        combinedResponse = {
-          panelData: parsedAiResponse.panelData,
-          textResponse: parsedAiResponse.textResponse
-        };
-      } else {
-        throw new Error("Missing panelData or textResponse in AI response");
+    // Hier den Text transformieren: Umwandeln von Markdown-Listen in HTML-Listen
+    // Ersetze Listen-Formatierungen wie "* Item" oder "- Item" in HTML <ul><li> Format
+    aiContent = aiContent.replace(/\n[\*\-]\s+(.*?)(?=\n[\*\-]|\n\n|$)/g, (match, item) => {
+      // Extract event information if available
+      const titleMatch = item.match(/(.*?) um (.*?) (?:in|bei|im) (.*?) \(Kategorie: (.*?)\)/i);
+      if (titleMatch) {
+        const [_, title, time, location, category] = titleMatch;
+        // Format as event card similar to EventCard component
+        return `
+          <li class="dark-glass-card rounded-lg p-2 mb-2 hover-scale">
+            <div class="flex justify-between items-start gap-1">
+              <div class="flex-1 min-w-0">
+                <h4 class="font-medium text-sm text-white break-words">${title}</h4>
+                <div class="flex flex-wrap items-center gap-1 mt-0.5 text-xs text-white">
+                  <div class="flex items-center">
+                    <svg class="w-3 h-3 mr-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span>${time} Uhr</span>
+                  </div>
+                  <div class="flex items-center max-w-[120px] overflow-hidden">
+                    <svg class="w-3 h-3 mr-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span class="truncate">${location}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="bg-black text-red-500 dark:bg-black dark:text-red-500 flex-shrink-0 flex items-center gap-0.5 text-xs font-medium whitespace-nowrap px-1.5 py-0.5 rounded-md">
+                  <svg class="w-3 h-3 mr-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  ${category}
+                </span>
+                <div class="flex items-center">
+                  <svg class="w-3 h-3 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                </div>
+              </div>
+            </div>
+          </li>`;
       }
-    } catch (jsonError) {
-      console.log("[ai-event-chat] Failed to parse JSON from AI, creating fallback response");
       
-      // Helper function to get category-based dummy image
-      const getCategoryDummyImage = (category: string) => {
-        const categoryImages = {
-          'Sport': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop',
-          'Konzert': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop',
-          'Party': 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&h=300&fit=crop',
-          'Festival': 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400&h=300&fit=crop',
-          'Ausstellung': 'https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=400&h=300&fit=crop',
-          'Kultur': 'https://images.unsplash.com/photo-1503095396549-807759245b35?w=400&h=300&fit=crop',
-          'Theater': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
-          'Kino': 'https://images.unsplash.com/photo-1489599142379-3c9bd765e6b9?w=400&h=300&fit=crop',
-          'Workshop': 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop',
-          'Wandern': 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=400&h=300&fit=crop',
-          'Lesung': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop'
-        };
-        
-        return categoryImages[category] || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';
-      };
+      // Default list item if not an event
+      return `<li class="mb-1">${item}</li>`;
+    });
+    
+    // Füge <ul> Tags um die Liste
+    if (aiContent.includes('<li>')) {
+      aiContent = aiContent.replace(/<li>/, '<ul class="space-y-2 my-3"><li>');
+      aiContent = aiContent.replace(/([^>])$/, '$1</ul>');
       
-      // Create fallback response with top events from our filtering - USE REAL DATA
-      const fallbackPanelData = {
-        events: topEventsForPanel.map((e: any) => {
-          // Use real image URL or category-based fallback
-          let imageUrl = null;
-          
-          // Check if event has a valid image URL (not null, not 'keine', not empty)
-          if (e.image_url && e.image_url !== 'keine' && e.image_url.trim() !== '') {
-            imageUrl = e.image_url;
-          } else {
-            // Use category-based dummy image
-            imageUrl = getCategoryDummyImage(e.category || 'Event');
-          }
-          
-          return {
-            id: e.id, // Use real event ID
-            title: e.title,
-            date: e.date,
-            time: e.time,
-            price: e.price || 'Kostenlos',
-            location: e.location || 'Ort nicht angegeben',
-            image_url: imageUrl,
-            category: e.category || 'Event',
-            link: e.link || null, // Include the link field
-            likes: e.likes || 0 // Include the likes field
-          };
-        }),
-        currentIndex: 0
-      };
-      
-      // Use plain text for fallback response
-      let processedTextResponse = aiContent;
-      
-      // Remove any HTML tags that might still be present
-      processedTextResponse = processedTextResponse.replace(/<[^>]*>/g, '');
-      
-      combinedResponse = {
-        panelData: fallbackPanelData,
-        textResponse: processedTextResponse
-      };
+      // Stelle sicher, dass die Liste korrekt schließt
+      if (!aiContent.endsWith('</ul>')) {
+        aiContent += '</ul>';
+      }
     }
+    
+    // Generell Markdown-Bold in HTML-Bold umwandeln
+    aiContent = aiContent.replace(/\*\*(.*?)\*\*/g, '<strong class="text-red-500">$1</strong>');
+    aiContent = aiContent.replace(/__(.*?)__/g, '<strong class="text-red-500">$1</strong>');
+    
+    // Highlight personalized content
+    if (isPersonalRequest || userInterests?.length > 0) {
+      // Make interest keywords bold in the text
+      if (userInterests && userInterests.length > 0) {
+        userInterests.forEach((interest: string) => {
+          const interestRegex = new RegExp(`\\b(${interest})\\b`, 'gi');
+          aiContent = aiContent.replace(interestRegex, '<strong class="text-yellow-500">$1</strong>');
+        });
+      }
+      
+      // Add a personalization badge at the top
+      const interestsLabel = userInterests && userInterests.length > 0 
+        ? `basierend auf deinem Interesse für ${userInterests.join(', ')}` 
+        : 'basierend auf deinen Vorlieben';
+        
+      const personalizationBadge = `
+        <div class="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-2 mb-3">
+          <p class="text-sm flex items-center gap-1">
+            <svg class="w-4 h-4 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+            </svg>
+            <span>Personalisierte Vorschläge ${interestsLabel}</span>
+          </p>
+        </div>
+      `;
+      
+      aiContent = personalizationBadge + aiContent;
+    }
+    
+    const finalHtml = `${aiContent}${debugHtml}`;
 
-    return new Response(JSON.stringify(combinedResponse), {
+    return new Response(JSON.stringify({ response: finalHtml }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
@@ -632,7 +600,7 @@ Hier die Events:\n${formattedEvents}`;
         <h5 class="font-medium text-sm text-red-600 dark:text-red-400">Unbekannter Fehler</h5>
         <p class="text-sm mt-2">${error instanceof Error ? error.message : String(error)}</p>
       </div>`;
-    return new Response(JSON.stringify({ textResponse: html }), {
+    return new Response(JSON.stringify({ response: html }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

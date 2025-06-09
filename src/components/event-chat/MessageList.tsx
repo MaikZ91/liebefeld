@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import ChatMessage from '@/components/chat/ChatMessage';
 import { Button } from '@/components/ui/button';
 import { MessageListProps } from './types';
-import SwipeableEventPanel from './SwipeableEventPanel';
+import './MessageList.css';
 
 const MessageList: React.FC<MessageListProps> = ({
   messages,
@@ -15,55 +15,31 @@ const MessageList: React.FC<MessageListProps> = ({
   handleExamplePromptClick
 }) => {
   const renderMessages = () => {
-    return messages.map((message) => {
-      console.log('[MessageList] Rendering message:', message.id, {
-        hasPanelData: !!message.panelData,
-        hasText: !!message.text
-      });
-
-      return (
-        <div
-          key={message.id}
-          className={cn(
-            "max-w-[85%] rounded-lg",
-            message.isUser
-              ? "bg-black border border-black ml-auto"
-              : "bg-black border border-black"
-          )}
-        >
-          {/* Render Panel if panelData exists */}
-          {message.panelData && (
-            <div className="p-3 border-b border-gray-700">
-              <SwipeableEventPanel 
-                panelData={message.panelData}
-                onEventSelect={(eventId) => {
-                  console.log('Event selected:', eventId);
-                  // Could trigger additional chat response or navigation
-                }}
-              />
-            </div>
-          )}
-          
-          {/* Render plain text content */}
-          {message.text && !message.panelData && (
-            <div className="p-3">
-              <div className="text-white whitespace-pre-wrap">
-                {message.text}
-              </div>
-            </div>
-          )}
-          
-          {/* If message has both panel and text, show text below panel */}
-          {message.text && message.panelData && (
-            <div className="p-3">
-              <div className="text-white whitespace-pre-wrap">
-                {message.text}
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    });
+    return messages.map((message) => (
+      <div
+        key={message.id}
+        className={cn(
+          "max-w-[85%] rounded-lg",
+          message.isUser
+            ? "bg-black border border-black ml-auto"
+            : "bg-black border border-black"
+        )}
+      >
+        {message.html ? (
+          <div 
+            dangerouslySetInnerHTML={{ __html: message.html }} 
+            className="p-3 event-list-container"
+          />
+        ) : (
+          <ChatMessage 
+            message={message.text} 
+            isGroup={false} 
+            onDateSelect={handleDateSelect}
+            showDateSelector={message.isUser && message.text.toLowerCase().includes('event')}
+          />
+        )}
+      </div>
+    ));
   };
 
   return (

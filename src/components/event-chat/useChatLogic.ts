@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChatMessage, CHAT_HISTORY_KEY, CHAT_QUERIES_KEY, PanelEventData, PanelEvent } from './types';
+import { ChatMessage, CHAT_HISTORY_KEY, CHAT_QUERIES_KEY } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { generateResponse, getWelcomeMessage, createResponseHeader } from '@/utils/chatUtils';
 import { toast } from 'sonner';
@@ -233,73 +233,44 @@ export const useChatLogic = (
     setInput('');
     setIsTyping(true);
     
-    // Call API to get combined response (panel data + text)
-    try {
-      console.log(`[useChatLogic] Processing user query: "${message}" with ${events.length} events`);
-      console.log(`[useChatLogic] Heart mode active: ${isHeartActive}`);
-      
-      const apiResponse = await generateResponse(message, events, isHeartActive);
-      
-      // Check if response contains both panelData and textResponse with proper type checking
-      if (apiResponse && typeof apiResponse === 'object' && 'panelData' in apiResponse && 'textResponse' in apiResponse) {
-        console.log('[useChatLogic] ✅ Received structured response from API');
-        console.log('[useChatLogic] Panel events count:', apiResponse.panelData?.events?.length || 0);
-        console.log('[useChatLogic] Text response length:', apiResponse.textResponse?.length || 0);
+    // Process with small delay to show typing indicator
+    setTimeout(async () => {
+      try {
+        console.log(`[useChatLogic] Processing user query: "${message}" with ${events.length} events`);
+        console.log(`[useChatLogic] Heart mode active: ${isHeartActive}`);
         
-        // Show panel first with real data from API
-        const panelMessage: ChatMessage = {
-          id: `panel-${Date.now()}`,
-          isUser: false,
-          text: 'Hier sind passende Events für dich:',
-          panelData: apiResponse.panelData,
-          timestamp: new Date().toISOString()
-        };
-        
-        setMessages(prev => [...prev, panelMessage]);
-        
-        // Then show the text response as plain text
-        const botMessage: ChatMessage = {
-          id: `bot-${Date.now()}`,
-          isUser: false,
-          text: apiResponse.textResponse, // Use as plain text, no HTML
-          timestamp: new Date().toISOString()
-        };
-        
-        console.log('[useChatLogic] Creating bot message with plain text:', {
-          id: botMessage.id,
-          textLength: botMessage.text?.length || 0
-        });
-        
-        setMessages(prev => [...prev, botMessage]);
-      } else {
-        // Fallback: treat as regular text response
-        console.log('[useChatLogic] ⚠️ Using fallback for text-only response');
-        
-        const responseText = typeof apiResponse === 'string' ? apiResponse : JSON.stringify(apiResponse);
+        // Pass the heart mode state to the generateResponse function
+        const responseHtml = await generateResponse(message, events, isHeartActive);
         
         const botMessage: ChatMessage = {
           id: `bot-${Date.now()}`,
           isUser: false,
-          text: responseText, // Plain text only
+          text: 'Hier sind die Events, die ich gefunden habe.',
+          html: responseHtml,
           timestamp: new Date().toISOString()
         };
         
         setMessages(prev => [...prev, botMessage]);
+      } catch (error) {
+        console.error('[useChatLogic] Error generating response:', error);
+        
+        const errorMessage: ChatMessage = {
+          id: `error-${Date.now()}`,
+          isUser: false,
+          text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
+          html: `${createResponseHeader("Fehler")}
+          <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
+            Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. 
+            Bitte versuche es später noch einmal oder formuliere deine Anfrage anders.
+          </div>`,
+          timestamp: new Date().toISOString()
+        };
+        
+        setMessages(prev => [...prev, errorMessage]);
+      } finally {
+        setIsTyping(false);
       }
-    } catch (error) {
-      console.error('[useChatLogic] Error generating response:', error);
-      
-      const errorMessage: ChatMessage = {
-        id: `error-${Date.now()}`,
-        isUser: false,
-        text: `Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. Bitte versuche es später noch einmal oder formuliere deine Anfrage anders.`,
-        timestamp: new Date().toISOString()
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsTyping(false);
-    }
+    }, 800);
   };
 
   const handleDateSelect = (date: string) => {
