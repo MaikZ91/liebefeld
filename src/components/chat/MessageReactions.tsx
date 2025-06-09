@@ -25,7 +25,7 @@ const MessageReactions: React.FC<MessageReactionsProps> = ({
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1"> {/* Flex container for reactions and plus button */}
       {hasReactions && (
         <ReactionBar
           reactions={reactions}
@@ -40,7 +40,7 @@ const MessageReactions: React.FC<MessageReactionsProps> = ({
             <Button
               variant="ghost"
               size="icon"
-              className="h-5 w-5 p-0 text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 opacity-0 group-hover:opacity-100 transition-all duration-200"
+              className="h-5 w-5 p-0 text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 transition-all duration-200" // Opacity removed
             >
               <Plus className="h-3 w-3" />
             </Button>
