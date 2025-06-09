@@ -37,7 +37,7 @@ export const useChatLogic = (
 
   // Ersetzte createDummyPanelData durch eine Funktion, die echte Events verwendet
   const createPanelDataFromEvents = (filteredEvents: Event[]): PanelEventData => {
-    const panelEvents: PanelEvent[] = filteredEvents.slice(0, 3).map(event => ({
+    const panelEvents: PanelEvent[] = filteredEvents.slice(0, 5).map(event => ({
       id: event.id,
       title: event.title,
       date: event.date,
