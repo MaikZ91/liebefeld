@@ -51,6 +51,84 @@ export const extractAllLocations = (events: any[]): string[] => {
   return Array.from(locations).sort();
 };
 
+// Original formatting logic from the edge function
+export const formatEventContent = (aiContent: string, isHeartActive: boolean = false, userInterests: string[] = []) => {
+  let processedContent = aiContent;
+
+  // Transform markdown lists to HTML with original event card formatting
+  processedContent = processedContent.replace(/\n[\*\-]\s+(.*?)(?=\n[\*\-]|\n\n|$)/g, (match, item) => {
+    const titleMatch = item.match(/(.*?) um (.*?) (?:in|bei|im) (.*?) \(Kategorie: (.*?)\)/i);
+    if (titleMatch) {
+      const [_, title, time, location, category] = titleMatch;
+      return `
+        <li class="dark-glass-card rounded-lg p-2 mb-2 hover-scale">
+          <div class="flex justify-between items-start gap-1">
+            <div class="flex-1 min-w-0">
+              <h4 class="font-medium text-sm text-white break-words">${title}</h4>
+              <div class="flex flex-wrap items-center gap-1 mt-0.5 text-xs text-white">
+                <div class="flex items-center">
+                  <svg class="w-3 h-3 mr-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <span>${time} Uhr</span>
+                </div>
+                <div class="flex items-center max-w-[120px] overflow-hidden">
+                  <svg class="w-3 h-3 mr-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  <span class="truncate">${location}</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="bg-black text-red-500 dark:bg-black dark:text-red-500 flex-shrink-0 flex items-center gap-0.5 text-xs font-medium whitespace-nowrap px-1.5 py-0.5 rounded-md">
+                <svg class="w-3 h-3 mr-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                ${category}
+              </span>
+            </div>
+          </div>
+        </li>`;
+    }
+    return `<li class="mb-1">${item}</li>`;
+  });
+  
+  // Add <ul> tags around lists
+  if (processedContent.includes('<li>')) {
+    processedContent = processedContent.replace(/<li>/, '<ul class="space-y-2 my-3"><li>');
+    processedContent = processedContent.replace(/([^>])$/, '$1</ul>');
+    if (!processedContent.endsWith('</ul>')) {
+      processedContent += '</ul>';
+    }
+  }
+  
+  // Transform markdown bold to HTML bold with red color
+  processedContent = processedContent.replace(/\*\*(.*?)\*\*/g, '<strong class="text-red-500">$1</strong>');
+  processedContent = processedContent.replace(/__(.*?)__/g, '<strong class="text-red-500">$1</strong>');
+  
+  // Highlight personalized content if heart mode is active
+  if (isHeartActive && userInterests && userInterests.length > 0) {
+    userInterests.forEach((interest: string) => {
+      const interestRegex = new RegExp(`\\b(${interest})\\b`, 'gi');
+      processedContent = processedContent.replace(interestRegex, '<strong class="text-yellow-500">$1</strong>');
+    });
+    
+    const interestsLabel = userInterests && userInterests.length > 0 
+      ? `basierend auf deinem Interesse für ${userInterests.join(', ')}` 
+      : 'basierend auf deinen Vorlieben';
+      
+    const personalizationBadge = `
+      <div class="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-2 mb-3">
+        <p class="text-sm flex items-center gap-1">
+          <svg class="w-4 h-4 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+          </svg>
+          <span>Personalisierte Vorschläge ${interestsLabel}</span>
+        </p>
+      </div>
+    `;
+    
+    processedContent = personalizationBadge + processedContent;
+  }
+
+  return processedContent;
+};
+
 export const generateResponse = async (query: string, events: any[], isHeartActive: boolean = false) => {
   try {
     console.log('[chatUtils] Starting AI response generation...');
@@ -120,14 +198,19 @@ export const generateResponse = async (query: string, events: any[], isHeartActi
       if (data.panelData && data.textResponse) {
         console.log('[chatUtils] Returning structured response with panelData and textResponse');
         console.log('[chatUtils] PanelData events count:', data.panelData.events?.length || 0);
+        
+        // Apply original formatting to the text response
+        const formattedTextResponse = formatEventContent(data.textResponse, isHeartActive, userInterests);
+        
         return {
           panelData: data.panelData,
-          textResponse: data.textResponse
+          textResponse: formattedTextResponse
         };
       } else if (data.response) {
         // Fallback for old format
         console.log('[chatUtils] Returning text response from old format');
-        return data.response;
+        const formattedResponse = formatEventContent(data.response, isHeartActive, userInterests);
+        return formattedResponse;
       }
     }
 
