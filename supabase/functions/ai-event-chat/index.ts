@@ -481,25 +481,13 @@ Hier die Events:\n${formattedEvents}`;
     /***************************
      * BUILD RESPONSE FOR CHAT
      ***************************/
-    const debugHtml = `
-      <details class="rounded-lg border border-gray-700/30 bg-gray-900/10 p-3 mt-3 text-sm">
-        <summary class="cursor-pointer font-medium text-red-500">Debug‑Info anzeigen</summary>
-        <pre class="mt-2 whitespace-pre-wrap">Gesendetes Prompt:\n${JSON.stringify(payload, null, 2)}\n\n` +
-      `HTTP‑Status: ${orRes.status} ${orRes.statusText}\n\n` +
-      `Modell: ${parsed?.model || "Unbekannt"}\n\n` +
-      `Benutzerinteressen: ${JSON.stringify(userInterests)}\n\n` +
-      `Bevorzugte Orte: ${JSON.stringify(userLocations)}\n\n` +
-      `Rohantwort:\n${rawBody}</pre>
-      </details>`;
-
     if (!orRes.ok) {
       const errMsg = parsed?.error?.message || `HTTP-Fehler ${orRes.status}`;
       const html = `
         <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
           <h5 class="font-medium text-sm text-red-600 dark:text-red-400">Fehler bei der KI-Antwort</h5>
           <p class="text-sm mt-2">${errMsg}</p>
-        </div>
-        ${debugHtml}`;
+        </div>`;
       return new Response(JSON.stringify({ response: html }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -511,8 +499,7 @@ Hier die Events:\n${formattedEvents}`;
         <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
           <h5 class="font-medium text-sm text-red-600 dark:text-red-400">Fehler bei der Verarbeitung</h5>
           <p class="text-sm mt-2">Ungültige Antwortstruktur von der OpenRouter API.</p>
-        </div>
-        ${debugHtml}`;
+        </div>`;
       return new Response(JSON.stringify({ response: html }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -525,8 +512,7 @@ Hier die Events:\n${formattedEvents}`;
         <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
           <h5 class="font-medium text-sm text-red-600 dark:text-red-400">Fehler beim Parsen der API-Antwort</h5>
           <p class="text-sm mt-2">Es gab ein Problem bei der Verarbeitung der Antwort vom KI-Modell.</p>
-        </div>
-        ${debugHtml}`;
+        </div>`;
       return new Response(JSON.stringify({ response: html }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -549,7 +535,7 @@ Hier die Events:\n${formattedEvents}`;
         console.log("[ai-event-chat] Successfully parsed structured AI response");
         combinedResponse = {
           panelData: parsedAiResponse.panelData,
-          textResponse: parsedAiResponse.textResponse + debugHtml
+          textResponse: parsedAiResponse.textResponse
         };
       } else {
         throw new Error("Missing panelData or textResponse in AI response");
@@ -580,7 +566,7 @@ Hier die Events:\n${formattedEvents}`;
       
       combinedResponse = {
         panelData: fallbackPanelData,
-        textResponse: processedTextResponse + debugHtml
+        textResponse: processedTextResponse
       };
     }
 
