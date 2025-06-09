@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 import ChatMessage from '@/components/chat/ChatMessage';
@@ -47,7 +46,9 @@ const MessageList: React.FC<MessageListProps> = ({
         {/* Show EventPanel after non-user messages that have showEventSwiper flag */}
         {!message.isUser && message.showEventSwiper && (
           <div className="mt-3 w-full">
-            <EventPanel events={events} />
+            {events.map((event, index) => (
+              <EventPanel key={index} event={event} />
+            ))}
           </div>
         )}
       </div>
