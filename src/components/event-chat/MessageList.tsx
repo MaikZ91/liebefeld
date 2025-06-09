@@ -1,10 +1,11 @@
-
+// src/components/event-chat/MessageList.tsx
 import React from 'react';
 import { cn } from '@/lib/utils';
 import ChatMessage from '@/components/chat/ChatMessage';
 import { Button } from '@/components/ui/button';
 import { MessageListProps } from './types';
 import './MessageList.css';
+import { motion, AnimatePresence } from 'framer-motion'; // Import motion for animations
 
 const MessageList: React.FC<MessageListProps> = ({
   messages,
@@ -47,15 +48,19 @@ const MessageList: React.FC<MessageListProps> = ({
       <div className="space-y-3 pb-2 px-1">
         {renderMessages()}
         
-        {isTyping && (
-          <div className="bg-black max-w-[85%] rounded-lg p-3 border border-black">
-            <div className="flex space-x-2 items-center">
-              <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-              <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-              <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-            </div>
-          </div>
-        )}
+        <AnimatePresence>
+          {isTyping && ( // Conditionally render the swipable panel directly
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.3 }}
+              className="max-w-[85%] rounded-lg ml-auto bg-gray-800 p-3 text-white flex items-center justify-center min-h-[80px] border border-gray-700 shadow-md"
+            >
+              <span className="text-sm text-gray-300">KI generiert Antwort...</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
         
         {/* Display example prompts only if there's just the welcome message */}
         {messages.length === 1 && messages[0].id === 'welcome' && (
