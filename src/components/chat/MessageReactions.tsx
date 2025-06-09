@@ -20,8 +20,12 @@ const MessageReactions: React.FC<MessageReactionsProps> = ({
 }) => {
   const hasReactions = reactions && reactions.length > 0;
 
+  if (!hasReactions && !showAddButton) {
+    return null;
+  }
+
   return (
-    <div className="flex items-start gap-2 mt-1">
+    <div className="flex items-center gap-1 mt-1">
       {hasReactions && (
         <ReactionBar
           reactions={reactions}
