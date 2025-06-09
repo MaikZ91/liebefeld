@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
@@ -233,13 +232,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                           reactions={message.reactions || []}
                           onReact={(emoji) => handleReaction(message.id, emoji)}
                           currentUsername={username}
-                          showReactions={false}
-                        />
-                        <MessageReactions
-                          reactions={message.reactions || []}
-                          onReact={(emoji) => handleReaction(message.id, emoji)}
-                          currentUsername={username}
-                          showAddButton={true}
                         />
                       </div>
                     </div>
