@@ -357,7 +357,7 @@ serve(async (req) => {
 
     const totalEventsInfo = `Es gibt insgesamt ${dbEvents.length} Events in der Datenbank. Ich habe dir die ${filteredEvents.length} relevantesten basierend auf deiner Anfrage ausgewählt.`;
     
-    let systemMessage = `Du bist ein Event‑Assistent für Liebefeld. Aktuelles Datum: ${today}.\n${totalEventsInfo}\n`;
+    let systemMessage = `Du bist ein Event‑Assistent für Liebefeld. Liste alle Events als chronologische Timeline auf. Gruppiere nach den Kategorien: Ausgehen, Sport und Kreativität. Aktuelles Datum: ${today}.\n${totalEventsInfo}\n`;
     
     if (isPersonalRequest || userInterests?.length > 0 || userLocations?.length > 0) {
       systemMessage += `Dies ist eine personalisierte Anfrage. `;
