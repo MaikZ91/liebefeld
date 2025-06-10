@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 
 import { Event } from '@/types/eventTypes';
 import { getFutureEvents, getEventsForDay, getWeekRange } from '@/utils/eventUtils';
-import { fetchWeather } from '@/utils/weatherUtils'; // Importiere fetchWeather
+import { fetchWeather } from '@/utils/weatherUtils';
 
 export const useChatLogic = (
   events: any[],
@@ -101,8 +101,8 @@ export const useChatLogic = (
     };
   };
 
-  const handleToggleChat = useCallback(() => { // Wrap in useCallback
-    setIsChatOpen(prev => !prev); // Use functional update
+  const handleToggleChat = useCallback(() => {
+    setIsChatOpen(prev => !prev);
     if (!isChatOpen) {
       setTimeout(() => {
         if (inputRef.current) {
@@ -110,9 +110,10 @@ export const useChatLogic = (
         }
       }, 300);
     }
-  }, [isChatOpen]); // Add isChatOpen to dependency array
+  }, [isChatOpen]);
 
-  const fetchGlobalQueries = useCallback(async () => { // Wrap in useCallback
+  // Funktion zum Abrufen globaler Abfragen von Supabase
+  const fetchGlobalQueries = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('chat_queries')
@@ -132,9 +133,10 @@ export const useChatLogic = (
     } catch (error) {
       console.error('[useChatLogic] Exception fetching global queries:', error);
     }
-  }, []); // Empty dependency array as it only depends on supabase and setGlobalQueries
+  }, []);
 
-  const saveGlobalQuery = useCallback(async (query: string) => { // Wrap in useCallback
+  // Funktion zum Speichern einer Abfrage in Supabase
+  const saveGlobalQuery = useCallback(async (query: string) => {
     try {
       const { data: existingData, error: checkError } = await supabase
         .from('chat_queries')
@@ -162,22 +164,22 @@ export const useChatLogic = (
         }
       }
       
-      fetchGlobalQueries();
+      fetchGlobalQueries(); // Globale Abfragen aktualisieren
     } catch (error) {
       console.error('[useChatLogic] Exception saving global query:', error);
     }
-  }, [fetchGlobalQueries]); // Add fetchGlobalQueries to dependency array
+  }, [fetchGlobalQueries]);
 
-
-  const updateRecentQueries = useCallback((query: string) => { // Wrap in useCallback
+  // Funktion zum Aktualisieren der letzten Abfragen des Benutzers
+  const updateRecentQueries = useCallback((query: string) => {
     setRecentQueries(prev => {
       const filteredQueries = prev.filter(q => q !== query);
       const newQueries = [query, ...filteredQueries].slice(0, 3);
       return newQueries;
     });
     
-    saveGlobalQuery(query);
-  }, [saveGlobalQuery]); // Add saveGlobalQuery to dependency array
+    saveGlobalQuery(query); // Abfrage auch global speichern
+  }, [saveGlobalQuery]);
 
 
   const handleSendMessage = async (customInput?: string) => {
@@ -199,25 +201,20 @@ export const useChatLogic = (
 
     const lowercaseMessage = message.toLowerCase().trim();
 
-    // NEU: Spezifische Abfrage für "Perfekter Tag" abfangen
+    // Spezifische Abfrage für "Perfekter Tag" abfangen
     if (lowercaseMessage === "mein perfekter tag in liebefeld") {
       console.log('[useChatLogic] "Mein Perfekter Tag in Liebefeld" Anfrage erkannt.');
       try {
-        const weather = await fetchWeather(); // Wetter abrufen
+        const weather = await fetchWeather();
         const today = new Date().toISOString().split('T')[0];
 
-        // Daten für die Edge Function vorbereiten
-        // Die generate-perfect-day Edge Function ist bereits so angepasst,
-        // dass sie diese Parameter akzeptiert.
         const { data: currentUserProfileData, error: profileError } = await supabase.from('user_profiles')
           .select('interests, favorite_locations')
-          .eq('username', localStorage.getItem('community_chat_username')) // Annahme, dass der Username hier gespeichert ist
+          .eq('username', localStorage.getItem('community_chat_username'))
           .single();
 
         if (profileError) {
           console.error('[useChatLogic] Error fetching user profile:', profileError);
-          // Optional: Handle case where profile is not found or error occurs
-          // For now, it will proceed with empty interests/locations if profile not found
         }
           
         const interests = currentUserProfileData?.interests || [];
@@ -226,9 +223,9 @@ export const useChatLogic = (
         const { data, error } = await supabase.functions.invoke('generate-perfect-day', {
           body: {
             weather: weather,
-            username: localStorage.getItem('community_chat_username'), // Benutzername übergeben
-            interests: interests, // Interessen übergeben
-            favorite_locations: favorite_locations // Lieblingsorte übergeben
+            username: localStorage.getItem('community_chat_username'),
+            interests: interests,
+            favorite_locations: favorite_locations
           }
         });
 
@@ -406,24 +403,98 @@ export const useChatLogic = (
   }, []);
 
   useEffect(() => {
-    const channel = supabase
-      .channel('chat_queries_changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'chat_queries' 
-        }, 
-        () => {
-          fetchGlobalQueries();
+    // Initiales Laden von Chat-Verlauf und Abfragen
+    const savedMessages = localStorage.getItem(CHAT_HISTORY_KEY);
+    if (savedMessages) {
+      try {
+        const parsedMessages = JSON.parse(savedMessages);
+        if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
+          setMessages(parsedMessages);
+          welcomeMessageShownRef.current = true;
         }
-      )
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+      } catch (error) {
+        console.error('[useChatLogic] Error parsing saved chat history:', error);
+      }
+    }
+    
+    const savedQueries = localStorage.getItem(CHAT_QUERIES_KEY);
+    if (savedQueries) {
+      try {
+        const parsedQueries = JSON.parse(savedQueries);
+        if (Array.isArray(parsedQueries)) {
+          setRecentQueries(parsedQueries.slice(0, 3));
+        }
+      } catch (error) {
+        console.error('[useChatLogic] Error parsing saved queries:', error);
+      }
+    }
+    
+    try {
+      const heartModeActive = localStorage.getItem('heart_mode_active') === 'true';
+      setIsHeartActive(heartModeActive);
+      console.log('[useChatLogic] Heart mode loaded from localStorage:', heartModeActive);
+    } catch (error) {
+      console.error('[useChatLogic] Error loading heart mode state:', error);
+    }
+    
+    fetchGlobalQueries(); // Globale Abfragen beim Laden abrufen
+  }, [fetchGlobalQueries]); // fetchGlobalQueries als Abhängigkeit hinzufügen
+
+  // Speichern des Chat-Verlaufs bei Änderungen
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
+    }
+  }, [messages]);
+
+  // Speichern der letzten Abfragen bei Änderungen
+  useEffect(() => {
+    if (recentQueries.length > 0) {
+      localStorage.setItem(CHAT_QUERIES_KEY, JSON.stringify(recentQueries));
+    }
+  }, [recentQueries]);
+  
+  // Speichern des Heart-Modus-Status bei Änderungen
+  useEffect(() => {
+    try {
+      localStorage.setItem('heart_mode_active', isHeartActive ? 'true' : 'false');
+      console.log('[useChatLogic] Heart mode saved to localStorage:', isHeartActive);
+    } catch (error) {
+      console.error('[useChatLogic] Error saving heart mode state:', error);
+    }
+  }, [isHeartActive]);
+
+  // Chatbot nach einer Verzögerung sichtbar machen
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, fullPage ? 0 : 5000);
+
+    return () => clearTimeout(timer);
+  }, [fullPage]);
+
+  // Willkommensnachricht anzeigen, wenn Chat zum ersten Mal geöffnet wird
+  useEffect(() => {
+    if (isChatOpen && messages.length === 0 && !welcomeMessageShownRef.current && activeChatModeValue === 'ai') {
+      welcomeMessageShownRef.current = true;
+      setMessages([
+        {
+          id: 'welcome',
+          isUser: false,
+          text: 'Willkommen beim Liebefeld Event-Assistent!',
+          html: getWelcomeMessage(),
+          timestamp: new Date().toISOString()
+        }
+      ]);
+    }
+  }, [isChatOpen, messages.length, activeChatModeValue]);
+
+  // Zum Ende der Nachrichten scrollen
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
   
   const handleHeartClick = async () => {
     const newHeartState = !isHeartActive;
