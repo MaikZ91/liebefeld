@@ -66,7 +66,7 @@ export const Layout: React.FC<LayoutProps> = ({
             handleOpenUserDirectory={handleOpenUserDirectory}
             setIsEventListSheetOpen={setIsEventListSheetOpen}
           />
-          {(pathname !== '/chat' && pathname !== '/') && ( // Corrected condition here
+          {(pathname !== '/chat' && pathname !== '/') && ( 
             <div className="ml-auto flex items-center space-x-4">
               <ThemeToggleButton />
             </div>
@@ -153,7 +153,7 @@ const MainNav: React.FC<MainNavProps> = ({
               className={`flex items-center gap-2 ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}
             >
               <Calendar className="h-4 w-4" />
-              <span className="hidden sm:inline">Event Assistent</span>
+              <span className="text-xs sm:text-sm">Event Assistent</span>
             </Button>
             <Button 
               variant={activeView === 'community' ? "default" : "outline"} 
@@ -162,7 +162,7 @@ const MainNav: React.FC<MainNavProps> = ({
               className={`flex items-center gap-2 ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}
             >
               <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Community</span>
+              <span className="text-xs sm:text-sm">Community</span>
             </Button>
           </div>
           
