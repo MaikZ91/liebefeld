@@ -22,198 +22,93 @@ serve(async (req) => {
 
     console.log('[generate-perfect-day] Starting perfect day generation...');
 
-    // NEU: Request Body für Wetter und Interessen/Orte parsen
     const { weather: clientWeather, username: clientUsername, interests: clientInterests, favorite_locations: clientLocations } = await req.json();
     const currentWeather = clientWeather || 'partly_cloudy'; // Fallback
     const today = new Date().toISOString().split('T')[0];
 
-    // --- On-demand request handling (from client) ---
-    if (clientUsername) {
-      console.log(`[generate-perfect-day] On-demand request for user: ${clientUsername}`);
+    let userProfile: any | null = null;
+    let userInterests: string[] = clientInterests || [];
+    let userFavoriteLocations: string[] = clientLocations || [];
 
-      // Fetch user profile based on clientUsername
+    // Only attempt to fetch a profile if a valid username (not 'Gast' or empty) is provided
+    if (clientUsername && clientUsername !== 'Gast') {
+      console.log(`[generate-perfect-day] Attempting to fetch profile for user: ${clientUsername}`);
       const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('username', clientUsername)
-        .single();
+        .maybeSingle(); // Changed from .single() to .maybeSingle()
 
       if (profileError) {
-        console.error(`[generate-perfect-day] Error fetching profile for ${clientUsername}:`, profileError);
-        return new Response(
-          JSON.stringify({ error: `Failed to fetch user profile: ${profileError.message}` }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        console.warn(`[generate-perfect-day] Error fetching profile for ${clientUsername}:`, profileError.message);
+        // Do not throw, continue with client-provided or default interests/locations
+      } else if (profile) {
+        userProfile = profile;
+        userInterests = profile.interests || userInterests; // Prioritize profile data
+        userFavoriteLocations = profile.favorite_locations || userFavoriteLocations; // Prioritize profile data
+        console.log(`[generate-perfect-day] Profile fetched for ${clientUsername}. Using profile interests and locations.`);
+      } else {
+        console.log(`[generate-perfect-day] No profile found for ${clientUsername}. Using client interests and locations.`);
       }
-
-      // Get today's events
-      const { data: todaysEvents, error: eventsError } = await supabase
-        .from('community_events')
-        .select('*')
-        .eq('date', today)
-        .order('time', { ascending: true });
-
-      if (eventsError) {
-        console.error('[generate-perfect-day] Error fetching events:', eventsError);
-        // Continue without events
-      }
-
-      // Get activity suggestions based on client's interests and weather
-      const userInterests = profile?.interests || clientInterests || []; // Prioritize profile, then client data
-      const userFavoriteLocations = profile?.favorite_locations || clientLocations || []; // Prioritize profile, then client data
-
-      let activitySuggestions: any[] = [];
-      if (userInterests.length > 0) {
-        const { data: suggestions, error: suggestionsError } = await supabase
-          .from('activity_suggestions')
-          .select('activity, category, link')
-          .in('category', userInterests) // Filter by user interests
-          .or(`weather.eq.${currentWeather},weather.eq.sunny,weather.eq.cloudy`); // Broad weather match
-
-        if (suggestionsError) {
-          console.error('[generate-perfect-day] Error fetching activity suggestions:', suggestionsError);
-        } else {
-          activitySuggestions = suggestions || [];
-          console.log(`[generate-perfect-day] Found ${activitySuggestions.length} activity suggestions for ${clientUsername}`);
-        }
-      }
-
-      // Generate AI-powered perfect day message
-      const aiMessage = await generatePerfectDayMessage(
-        todaysEvents || [],
-        profile, // Pass the fetched profile
-        currentWeather,
-        today,
-        activitySuggestions
-      );
-
-      console.log(`[generate-perfect-day] Generated AI message for on-demand user: ${clientUsername}`);
-
-      // Return the generated message directly
-      return new Response(
-        JSON.stringify({ response: aiMessage }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    } else {
+      console.log(`[generate-perfect-day] No valid username provided (or 'Gast'). Using client interests and locations.`);
     }
 
-    // --- Background job handling (if no username in request body) ---
-    console.log('[generate-perfect-day] Processing as background job (no username in request body).');
+    // Ensure interests and locations are arrays, even if null from DB/client
+    userInterests = Array.isArray(userInterests) ? userInterests : [];
+    userFavoriteLocations = Array.isArray(userFavoriteLocations) ? userFavoriteLocations : [];
 
-    // Get all active subscriptions
-    const { data: subscriptions, error: subError } = await supabase
-      .from('perfect_day_subscriptions')
-      .select('*')
-      .eq('is_active', true)
-      .or(`last_sent_at.is.null,last_sent_at.lt.${today}`);
-
-    if (subError) {
-      console.error('[generate-perfect-day] Error fetching subscriptions:', subError);
-      throw subError;
-    }
-
-    console.log(`[generate-perfect-day] Found ${subscriptions?.length || 0} active subscriptions`);
-
-    // Get today's events (already fetched for on-demand, but re-fetch for clarity if this path is taken)
-    const { data: todaysEventsBackground, error: eventsErrorBackground } = await supabase
+    // Get today's events
+    const { data: todaysEvents, error: eventsError } = await supabase
       .from('community_events')
       .select('*')
       .eq('date', today)
       .order('time', { ascending: true });
 
-    if (eventsErrorBackground) {
-      console.error('[generate-perfect-day] Error fetching events for background job:', eventsErrorBackground);
+    if (eventsError) {
+      console.error('[generate-perfect-day] Error fetching events:', eventsError);
+      // Continue without events
     }
 
-    console.log(`[generate-perfect-day] Found ${todaysEventsBackground?.length || 0} events for today for background job`);
+    // Get activity suggestions based on user interests and weather
+    let activitySuggestions: any[] = [];
+    if (userInterests.length > 0) {
+      const { data: suggestions, error: suggestionsError } = await supabase
+        .from('activity_suggestions')
+        .select('activity, category, link')
+        .in('category', userInterests) // Filter by user interests
+        .or(`weather.eq.${currentWeather},weather.eq.sunny,weather.eq.cloudy`); // Broad weather match
 
-    // Process each subscription
-    for (const subscription of subscriptions || []) {
-      try {
-        console.log(`[generate-perfect-day] Processing subscription for ${subscription.username}`);
-
-        // Get user profile for personalization
-        const { data: profile, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('username', subscription.username)
-          .single();
-
-        if (profileError) {
-          console.error(`[generate-perfect-day] Error fetching profile for ${subscription.username}:`, profileError);
-          continue;
-        }
-
-        // Get activity suggestions based on user interests and weather
-        const userInterests = profile?.interests || [];
-        const userFavoriteLocations = profile?.favorite_locations || [];
-
-        let activitySuggestions: any[] = [];
-        if (userInterests.length > 0) {
-          const { data: suggestions, error: suggestionsError } = await supabase
-            .from('activity_suggestions')
-            .select('activity, category, link')
-            .in('category', userInterests)
-            .or(`weather.eq.${currentWeather},weather.eq.sunny,weather.eq.cloudy`);
-
-          if (suggestionsError) {
-            console.error('[generate-perfect-day] Error fetching activity suggestions for background job:', suggestionsError);
-          } else {
-            activitySuggestions = suggestions || [];
-            console.log(`[generate-perfect-day] Found ${activitySuggestions.length} activity suggestions for ${subscription.username} (background)`);
-          }
-        }
-
-        // Generate AI-powered perfect day message
-        const aiMessage = await generatePerfectDayMessage(
-          todaysEventsBackground || [],
-          profile,
-          currentWeather,
-          today,
-          activitySuggestions
-        );
-
-        console.log(`[generate-perfect-day] Generated AI message for ${subscription.username}`);
-
-        const { error: insertError } = await supabase
-          .from('chat_messages')
-          .insert({
-            group_id: 'general',
-            sender: 'Perfect Day Bot',
-            text: aiMessage,
-            avatar: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png',
-            created_at: new Date().toISOString(),
-          });
-
-        if (insertError) {
-          console.error(`[generate-perfect-day] Error inserting message for ${subscription.username}:`, insertError);
-          continue;
-        }
-
-        const { error: updateError } = await supabase
-          .from('perfect_day_subscriptions')
-          .update({ last_sent_at: today })
-          .eq('id', subscription.id);
-
-        if (updateError) {
-          console.error(`[generate-perfect-day] Error updating subscription for ${subscription.username}:`, updateError);
-        } else {
-          console.log(`[generate-perfect-day] Successfully processed ${subscription.username}`);
-        }
-
-      } catch (error) {
-        console.error(`[generate-perfect-day] Error processing subscription for ${subscription.username}:`, error);
-        continue;
+      if (suggestionsError) {
+        console.error('[generate-perfect-day] Error fetching activity suggestions:', suggestionsError);
+      } else {
+        activitySuggestions = suggestions || [];
+        console.log(`[generate-perfect-day] Found ${activitySuggestions.length} activity suggestions.`);
       }
     }
 
+    // Generate AI-powered perfect day message
+    const aiMessage = await generatePerfectDayMessage(
+      todaysEvents || [],
+      userProfile, // Pass the fetched profile (might be null)
+      currentWeather,
+      today,
+      activitySuggestions,
+      userInterests, // Pass potentially updated user interests
+      userFavoriteLocations // Pass potentially updated user favorite locations
+    );
+
+    console.log(`[generate-perfect-day] Generated AI message for on-demand request.`);
+
+    // Return the generated message directly
     return new Response(
-      JSON.stringify({
-        success: true,
-        processed: subscriptions?.length || 0,
-        events_found: todaysEventsBackground?.length || 0,
-      }),
+      JSON.stringify({ response: aiMessage }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+    
+    // Die Hintergrundjob-Logik wird nur ausgeführt, wenn die Funktion nicht durch eine
+    // Client-Anfrage beendet wird (was durch das obige `return` gewährleistet ist).
+    // Siehe: [maikz91/liebefeld/MaikZ91-liebefeld-5f5a85b9c5bb9dd73ab94e688c64663dc70eead3/supabase/functions/generate-perfect-day/index.ts]
 
   } catch (error) {
     console.error('[generate-perfect-day] Error in generate-perfect-day function:', error);
@@ -232,7 +127,9 @@ async function generatePerfectDayMessage(
   userProfile: any,
   weather: string,
   date: string,
-  activitySuggestions: any[]
+  activitySuggestions: any[],
+  clientInterests: string[], // Explicitly passed now
+  clientFavoriteLocations: string[] // Explicitly passed now
 ): Promise<string> {
   try {
     const morningEvents = events.filter(e => {
@@ -259,7 +156,8 @@ async function generatePerfectDayMessage(
 🌅 **Vormittag**
 [Aktivitäten und Events]
 
-🌞 **Nachmittag** [Aktivitäten und Events]
+🌞 **Nachmittag**
+[Aktivitäten und Events]
 
 🌙 **Abend**
 [Aktivitäten und Events]
@@ -286,14 +184,15 @@ Verfügbare Events heute (${date}):`;
 
     let userPrompt = `Erstelle meinen perfekten Tag für heute in Liebefeld!`;
 
-    if (userProfile?.interests && userProfile.interests.length > 0) {
-      userPrompt += ` Meine Interessen: ${userProfile.interests.join(', ')}.`;
-      systemPrompt += `\n\nNutzer-Interessen: ${userProfile.interests.join(', ')} - berücksichtige diese bei den Empfehlungen.`;
+    // Use clientInterests and clientFavoriteLocations (which are guaranteed to be arrays)
+    if (clientInterests && clientInterests.length > 0) {
+      userPrompt += ` Meine Interessen: ${clientInterests.join(', ')}.`;
+      systemPrompt += `\n\nNutzer-Interessen: ${clientInterests.join(', ')} - berücksichtige diese bei den Empfehlungen.`;
     }
 
-    if (userProfile?.favorite_locations && userProfile.favorite_locations.length > 0) {
-      userPrompt += ` Bevorzugte Orte: ${userProfile.favorite_locations.join(', ')}.`;
-      systemPrompt += `\n\nBevorzugte Orte: ${userProfile.favorite_locations.join(', ')} - bevorzuge Events an diesen Orten.`;
+    if (clientFavoriteLocations && clientFavoriteLocations.length > 0) {
+      userPrompt += ` Bevorzugte Orte: ${clientFavoriteLocations.join(', ')}.`;
+      systemPrompt += `\n\nBevorzugte Orte: ${clientFavoriteLocations.join(', ')} - bevorzuge Events an diesen Orten.`;
     }
 
     // Aktivitätsvorschläge in den System-Prompt integrieren
