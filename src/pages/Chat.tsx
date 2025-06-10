@@ -1,8 +1,7 @@
-// src/pages/Chat.tsx
 import React, { useState, useEffect } from 'react';
-import Layout from '@/components/layouts/Layout'; // Changed import statement
+import Layout from '@/components/layouts/Layout'; // Corrected import
 import EventChatBot from '@/components/EventChatBot';
-import LiveTicker from '@/components/LiveTicker';
+import LiveTickerWrapper from '@/components/LiveTicker'; // Corrected import for LiveTicker
 import { Button } from '@/components/ui/button';
 import { Calendar, MessageSquare, List, Users, User } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
@@ -28,7 +27,7 @@ const ChatPage = () => {
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   const [username, setUsername] = useState<string>('');
   const {
-    events
+    events // events are used by LiveTickerWrapper
   } = useEventContext();
   const {
     currentUser,
@@ -146,7 +145,8 @@ const ChatPage = () => {
       <>
         {/* LiveTicker ganz oben, über dem Header */}
         <div className="w-full bg-black">
-          <LiveTicker events={events} />
+          {/* Using LiveTickerWrapper which internally fetches events */}
+          <LiveTickerWrapper /> 
         </div>
         <Layout hideFooter={true}>
           <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)] items-center justify-center">
@@ -164,7 +164,8 @@ const ChatPage = () => {
     <>
       {/* LiveTicker ganz oben, über dem Header */}
       <div className="w-full bg-black">
-        <LiveTicker events={events} />
+        {/* Using LiveTickerWrapper */}
+        <LiveTickerWrapper /> 
       </div>
       <Layout 
         hideFooter={true}
@@ -174,7 +175,6 @@ const ChatPage = () => {
         setIsEventListSheetOpen={setIsEventListSheetOpen}
       >
         <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
-          {/* Remove the button bar since buttons are now in header */}
           
           <div className="flex-grow rounded-lg overflow-hidden border border-black flex flex-col bg-black">
             <div className="flex-grow relative">
