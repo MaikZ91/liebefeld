@@ -1,4 +1,3 @@
-// src/components/event-chat/useChatLogic.ts
 import { useState, useEffect, useRef } from 'react';
 import { ChatMessage, CHAT_HISTORY_KEY, CHAT_QUERIES_KEY, PanelEventData, PanelEvent, AdEvent } from './types';
 import { supabase } from '@/integrations/supabase/client';
@@ -194,7 +193,7 @@ export const useChatLogic = (
       return; // Beende die Funktion hier, damit die Standard-KI-Antwort nicht ausgelöst wird
     }
 
-    // ... (bestehender Code für Event-Filterung und AI-Antwort)
+    // Standard-KI-Antwortlogik, wenn "Perfekter Tag" nicht erkannt wurde
     let relevantEvents: Event[] = [];
     const currentDate = new Date();
 
@@ -283,7 +282,8 @@ export const useChatLogic = (
         id: `error-${Date.now()}`,
         isUser: false,
         text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
-        html: `${createResponseHeader(\"Fehler\")}\n          <div class=\"bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm\">\n            Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. \n            Bitte versuche es später noch einmal.\n          </div>`,
+        html: `${createResponseHeader("Fehler")}
+          <div class=\"bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm\">\n            Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. \n            Bitte versuche es später noch einmal.\n          </div>`,
         timestamp: new Date().toISOString()
       };
       
@@ -293,5 +293,147 @@ export const useChatLogic = (
     }
   };
 
-  // ... (restlicher Code bleibt unverändert)
-}; // <-- Missing closing brace for useChatLogic function
+  const handleDateSelect = (date: string) => {
+    const formattedDate = date;
+    const prompt = `Welche Events gibt es am ${formattedDate}?`;
+    handleSendMessage(prompt);
+  };
+
+  const handleExamplePromptClick = (prompt: string) => {
+    setInput(prompt);
+    setTimeout(() => {
+      handleSendMessage(prompt);
+    }, 300);
+  };
+
+  const handleExternalQuery = (query: string) => {
+    if (!isChatOpen) {
+      setIsChatOpen(true);
+    }
+    
+    setTimeout(() => {
+      handleSendMessage(query);
+    }, 500);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSendMessage();
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).chatbotQuery = handleExternalQuery;
+      console.log("[useChatLogic] Registered window.chatbotQuery function");
+    }
+    
+    return () => {
+      if (typeof window !== 'undefined') {
+        (window as any).chatbotQuery = undefined;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('chat_queries_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'chat_queries' 
+        }, 
+        () => {
+          fetchGlobalQueries();
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+  
+  const handleHeartClick = async () => {
+    const newHeartState = !isHeartActive;
+    setIsHeartActive(newHeartState);
+    
+    console.log(`[useChatLogic] Heart mode ${newHeartState ? 'activated' : 'deactivated'}`);
+    
+    if (newHeartState) {
+      toast.success("Personalisierter Modus aktiviert! Deine Vorlieben werden nun berücksichtigt.");
+    } else {
+      toast.info("Standardmodus aktiviert. Alle Events werden angezeigt.");
+    }
+  };
+  
+  const toggleRecentQueries = () => {
+    setShowRecentQueries(!showRecentQueries);
+  };
+  
+  const clearChatHistory = () => {
+    if (window.confirm("Möchten Sie wirklich den gesamten Chat-Verlauf löschen?")) {
+      localStorage.removeItem(CHAT_HISTORY_KEY);
+      setMessages([]);
+      welcomeMessageShownRef.current = false;
+      setMessages([
+        {
+          id: 'welcome',
+          isUser: false,
+          text: 'Willkommen beim Liebefeld Event-Assistent!',
+          html: getWelcomeMessage(),
+          timestamp: new Date().toISOString()
+        }
+      ]);
+      toast.success("Chat-Verlauf gelöscht");
+    }
+  };
+
+  const exportChatHistory = () => {
+    if (messages.length === 0) {
+      toast.error("Es gibt keine Nachrichten zum Exportieren.");
+      return;
+    }
+
+    const chatHistoryData = JSON.stringify(messages, null, 2);
+    const blob = new Blob([chatHistoryData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat-history-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast.success("Chat-Verlauf exportiert");
+  };
+  
+  return {
+    isVisible,
+    isChatOpen,
+    messages,
+    input,
+    setInput,
+    isTyping,
+    recentQueries,
+    globalQueries,
+    showRecentQueries,
+    setShowRecentQueries,
+    messagesEndRef,
+    inputRef,
+    examplePrompts,
+    isHeartActive,
+    handleToggleChat,
+    handleSendMessage,
+    handleDateSelect,
+    handleExamplePromptClick,
+    handleExternalQuery,
+    handleKeyPress,
+    handleHeartClick,
+    toggleRecentQueries,
+    clearChatHistory,
+    exportChatHistory
+  };
+};
