@@ -1,7 +1,7 @@
 // src/components/LiveTicker.tsx
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Calendar, ArrowRight, ThumbsUp } from 'lucide-react';
+import { Calendar, ThumbsUp } from 'lucide-react';
 import { format, parseISO, isSameMonth, startOfDay, isAfter, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { type Event } from '../types/eventTypes';
@@ -81,10 +81,6 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef }) => {
         }
       });
       
-      if (sortedTopEvents.length > 0) {
-        console.log(`Top event today: ${sortedTopEvents[0]?.title} with ${sortedTopEvents[0]?.likes || 0} likes`);
-      }
-      
       setTickerEvents(sortedTopEvents);
     } catch (error) {
       console.error("Error processing events for ticker:", error);
@@ -104,21 +100,19 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef }) => {
         onMouseLeave={() => setIsPaused(false)}
         ref={tickerRef}
       >
-        <div className="absolute left-0 top-0 bottom-0 flex items-center z-10 bg-red-600 pr-0 py-0.5">
-          <Calendar className="w-3.5 h-3.5" />
-        </div>
+        {/* Removed the fixed red label div */}
         
-        <div className="absolute left-[60px] top-0 bottom-0 w-8 bg-gradient-to-r from-black to-transparent z-[5]"></div>
+        <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black to-transparent z-[5]"></div>
         <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black to-transparent z-[5]"></div>
         
-        <div className="ml-[60px] mr-2 overflow-hidden">
+        <div className="ml-0 mr-0 overflow-hidden">
           <div 
             ref={innerTickerRef}
             className={`whitespace-nowrap inline-block ${isPaused ? 'ticker-paused' : 'ticker-scroll'}`}
           >
             {[...tickerEvents, ...tickerEvents].map((event, index) => (
               <div 
-                key={`<span class="math-inline">\{event\.id\}\-</span>{index}`} 
+                key={`${event.id}-${index}`} 
                 className="inline-block mx-3"
               >
                 <span className="inline-flex items-center">
