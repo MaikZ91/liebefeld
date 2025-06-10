@@ -24,7 +24,7 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				sans: ['Inter', 'system-ui', 'sans-serif'],
+				sans: ['Roboto', 'sans-serif'],
 				serif: ['Playfair Display', 'serif'],
 			},
 			colors: {
