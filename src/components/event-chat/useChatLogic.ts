@@ -61,10 +61,10 @@ export const useChatLogic = (
     },
     { // Neue Werbeanzeige
       title: 'Ihre Anzeige hier! Erreichen Sie Ihr Zielpublikum.',
-      date: 'Jederzeit verfügbar',
-      location: 'Lokale Präsenz',
-      imageUrl: '/lovable-uploads/placeholder-ad.png', // Annahme: Sie haben ein solches Bild
-      link: "mailto:mschach@googlemail.com", // Beispiel-Link für Kontakt
+      date: 'Maßgeschneiderte Lösungen',
+      location: 'Kontaktieren Sie uns jetzt!',
+      imageUrl: '/lovable-uploads/placeholder-ad.png', // Stellen Sie sicher, dass dieses Bild existiert
+      link: "mailto:mschach@googlemail.com",
       type: "sponsored-ad"
     }
   ];
@@ -104,7 +104,17 @@ export const useChatLogic = (
     };
   };
 
-  // ... (restlicher Code bleibt unverändert)
+  const handleToggleChat = () => {
+    setIsChatOpen(!isChatOpen);
+    if (!isChatOpen) {
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 300);
+    }
+  };
+
   const handleSendMessage = async (customInput?: string) => {
     const message = customInput || input;
     if (!message.trim()) return;
@@ -182,14 +192,11 @@ export const useChatLogic = (
       relevantEvents = relevantEvents.filter(event => event.category && event.category.toLowerCase() === detectedCategory.toLowerCase());
     }
     
-    // Panel immer anzeigen, auch wenn keine Events gefunden wurden, um die Anzeige zu ermöglichen
-    const panelData = createPanelData(relevantEvents); // Nun immer aufrufen
-
     const panelMessage: ChatMessage = {
       id: `panel-${Date.now()}`,
       isUser: false,
       text: 'Hier sind einige Events für dich:',
-      panelData: panelData,
+      panelData: createPanelData(relevantEvents),
       timestamp: new Date().toISOString()
     };
 
