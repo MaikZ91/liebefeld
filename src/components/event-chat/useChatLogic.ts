@@ -138,16 +138,21 @@ export const useChatLogic = (
         const today = new Date().toISOString().split('T')[0];
 
         // Daten für die Edge Function vorbereiten
-        // Hier müsste die Edge Function auch auf die Interessen/Orte zugreifen
         // Die generate-perfect-day Edge Function ist bereits so angepasst,
         // dass sie diese Parameter akzeptiert.
-        const currentUserProfile = await supabase.from('user_profiles')
-          .select('*')
+        const { data: currentUserProfileData, error: profileError } = await supabase.from('user_profiles')
+          .select('interests, favorite_locations')
           .eq('username', localStorage.getItem('community_chat_username')) // Annahme, dass der Username hier gespeichert ist
           .single();
 
-        const interests = currentUserProfile.data?.interests || [];
-        const favorite_locations = currentUserProfile.data?.favorite_locations || [];
+        if (profileError) {
+          console.error('[useChatLogic] Error fetching user profile:', profileError);
+          // Optional: Handle case where profile is not found or error occurs
+          // For now, it will proceed with empty interests/locations if profile not found
+        }
+          
+        const interests = currentUserProfileData?.interests || [];
+        const favorite_locations = currentUserProfileData?.favorite_locations || [];
 
         const { data, error } = await supabase.functions.invoke('generate-perfect-day', {
           body: {
@@ -179,10 +184,7 @@ export const useChatLogic = (
           isUser: false,
           text: 'Es tut mir leid, ich konnte deinen perfekten Tag nicht generieren.',
           html: `${createResponseHeader("Fehler")}
-          <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
-            Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. 
-            Bitte versuche es später noch einmal.
-          </div>`,
+          <div class=\"bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm\">\n            Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. \n            Bitte versuche es später noch einmal.\n          </div>`,
           timestamp: new Date().toISOString()
         };
         setMessages(prev => [...prev, errorMessage]);
@@ -281,11 +283,7 @@ export const useChatLogic = (
         id: `error-${Date.now()}`,
         isUser: false,
         text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
-        html: `${createResponseHeader("Fehler")}
-        <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
-          Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. 
-          Bitte versuche es später noch einmal oder formuliere deine Anfrage anders.
-        </div>`,
+        html: `${createResponseHeader(\"Fehler\")}\n          <div class=\"bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm\">\n            Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. \n            Bitte versuche es später noch einmal.\n          </div>`,
         timestamp: new Date().toISOString()
       };
       
@@ -296,3 +294,4 @@ export const useChatLogic = (
   };
 
   // ... (restlicher Code bleibt unverändert)
+}; // <-- Missing closing brace for useChatLogic function
