@@ -1,3 +1,4 @@
+// src/components/event-chat/MessageList.tsx
 
 import React from 'react';
 import { cn } from '@/lib/utils';
@@ -86,10 +87,10 @@ const MessageList: React.FC<MessageListProps> = ({
                 <Button
                   key={index}
                   variant="outline"
-                  className="text-left justify-start bg-black hover:bg-gray-900 text-red-200 border-black"
+                  className="text-left justify-start bg-black hover:bg-gray-900 text-red-500 border-red-500" // Styled red
                   onClick={() => handleExamplePromptClick(prompt)}
                 >
-                  "{prompt}"
+                  {prompt} {/* Removed quotation marks */}
                 </Button>
               ))}
             </div>
