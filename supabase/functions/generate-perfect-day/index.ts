@@ -37,7 +37,7 @@ serve(async (req) => {
         .from('user_profiles')
         .select('*')
         .eq('username', clientUsername)
-        .maybeSingle(); // Changed from .single() to .maybeSingle()
+        .maybeSingle();
 
       if (profileError) {
         console.warn(`[generate-perfect-day] Error fetching profile for ${clientUsername}:`, profileError.message);
@@ -58,26 +58,45 @@ serve(async (req) => {
     userInterests = Array.isArray(userInterests) ? userInterests : [];
     userFavoriteLocations = Array.isArray(userFavoriteLocations) ? userFavoriteLocations : [];
 
-    // NEU: Events ab heute abrufen, nicht nur Events des genauen Tages
+    // Get today's events - let's fetch all future events and let the AI decide
     const { data: allFutureEvents, error: eventsError } = await supabase
       .from('community_events')
       .select('*')
-      .gte('date', today) // Changed from .eq('date', today) to .gte('date', today)
-      .order('date', { ascending: true }) // Order by date first
-      .order('time', { ascending: true }); // Then by time
+      .gte('date', today)
+      .order('date', { ascending: true })
+      .order('time', { ascending: true });
 
     if (eventsError) {
       console.error('[generate-perfect-day] Error fetching events:', eventsError);
       // Continue without events
     }
     
+    // Get activity suggestions based on user interests and weather
+    let finalActivitySuggestions: any[] = []; // Renamed variable
+    if (userInterests.length > 0) {
+      const { data: suggestions, error: suggestionsError } = await supabase
+        .from('activity_suggestions')
+        .select('activity, category, link')
+        .in('category', userInterests) // Filter by user interests
+        .or(`weather.eq.${currentWeather},weather.eq.sunny,weather.eq.cloudy`); // Broad weather match
+
+      if (suggestionsError) {
+        console.error('[generate-perfect-day] Error fetching activity suggestions:', suggestionsError);
+      } else {
+        finalActivitySuggestions = suggestions || [];
+        console.log(`[generate-perfect-day] Found ${finalActivitySuggestions.length} activity suggestions.`);
+      }
+    }
+    
+    console.log(`[generate-perfect-day] Value of finalActivitySuggestions before call: ${JSON.stringify(finalActivitySuggestions)}`); // Added debug log
+
     // Generate AI-powered perfect day message
     const aiMessage = await generatePerfectDayMessage(
-      allFutureEvents || [], // Pass all fetched events
+      allFutureEvents || [],
       userProfile,
       currentWeather,
       today,
-      activitySuggestions,
+      finalActivitySuggestions, // Use the renamed variable
       userInterests,
       userFavoriteLocations
     );
@@ -90,13 +109,12 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
     
+    /*
     // The background job logic below is for cron jobs, not for user-triggered requests.
     // It should only be executed if the request is not a user-triggered on-demand request.
     // For clarity and to ensure user requests are always handled directly, the background job part could
     // be moved to a separate function/endpoint or explicitly guarded.
     // For now, I'll keep it as-is, but the above "return" ensures it's skipped for client requests.
-
-    /*
     // --- Background job handling (if no username in request body) ---
     console.log('[generate-perfect-day] Processing as background job (no username in request body).');
 
@@ -236,7 +254,7 @@ async function generatePerfectDayMessage(
   userProfile: any,
   weather: string,
   date: string,
-  activitySuggestions: any[],
+  activitySuggestions: any[], // Parametername bleibt hier gleich, da er in diesem Scope definiert ist.
   clientInterests: string[],
   clientFavoriteLocations: string[]
 ): Promise<string> {
