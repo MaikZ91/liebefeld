@@ -1,3 +1,4 @@
+// src/components/event-chat/useChatLogic.ts
 import { useState, useEffect, useRef } from 'react';
 import { ChatMessage, CHAT_HISTORY_KEY, CHAT_QUERIES_KEY, PanelEventData, PanelEvent, AdEvent } from './types';
 import { supabase } from '@/integrations/supabase/client';
@@ -283,7 +284,7 @@ export const useChatLogic = (
         isUser: false,
         text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
         html: `${createResponseHeader("Fehler")}
-          <div class=\"bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm\">\n            Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. \n            Bitte versuche es später noch einmal.\n          </div>`,
+          <div class=\"bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm\">\n            Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. \n            Bitte versuche es später noch einmal oder formuliere deine Anfrage anders.\n          </div>`,
         timestamp: new Date().toISOString()
       };
       
