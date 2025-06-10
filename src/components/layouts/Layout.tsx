@@ -66,7 +66,7 @@ export const Layout: React.FC<LayoutProps> = ({
             handleOpenUserDirectory={handleOpenUserDirectory}
             setIsEventListSheetOpen={setIsEventListSheetOpen}
           />
-          {pathname !== '/chat' && (
+          {(pathname !== '/chat' && pathname !== '/') && ( // Corrected condition here
             <div className="ml-auto flex items-center space-x-4">
               <ThemeToggleButton />
             </div>
