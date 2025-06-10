@@ -357,7 +357,7 @@ serve(async (req) => {
 
     const totalEventsInfo = `Es gibt insgesamt ${dbEvents.length} Events in der Datenbank. Ich habe dir die ${filteredEvents.length} relevantesten basierend auf deiner Anfrage ausgewählt.`;
     
-    let systemMessage = `Du bist ein Event‑Assistent für Liebefeld. Liste alle Events als chronologische Timeline (geordnet nach Uhrzeit) auf. Gruppiere nach den Kategorien: Ausgehen und Sport. Die Kategorie Sonstiges ist immer die Katgeorie Ausgehen. Wenn Improtheater neue Kategeorie "Kreativität" anstelle der angegeben Sport. Beschreibe jedes Event sehr sehr kurz aus der Description oder Kategorie, die du hast. Aktuelles Datum: ${today}.\n${totalEventsInfo}\n`;
+    let systemMessage = `Du bist ein Event‑Assistent für Liebefeld. Liste alle Events als chronologische Timeline (geordnet nach Uhrzeit) auf. Gruppiere immer nach den 3 Kategorien: Ausgehen, Sport und Kreativität. WICHTIG: Events mit der Kategorie "Sonstiges" werden immer der Kategorie "Ausgehen" zugewiesen. WICHTIG, WICHTIG: Wenn Improtheater im Eventname: wird immer der Kategorie "Kreativität" zugewiesen(ignoriere hier die Katgeorie Spor). Beschreibe jedes Event sehr sehr kurz, nimm dafür alle Infos die du hast die du hast für jedes Event. Aktuelles Datum: ${today}.\n${totalEventsInfo}\n`;
     
     if (isPersonalRequest || userInterests?.length > 0 || userLocations?.length > 0) {
       systemMessage += `Dies ist eine personalisierte Anfrage. `;
