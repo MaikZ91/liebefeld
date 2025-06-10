@@ -1,6 +1,6 @@
 // src/pages/Chat.tsx
 import React, { useState, useEffect } from 'react';
-import { Layout } from '@/components/layouts/Layout';
+import Layout from '@/components/layouts/Layout'; // Changed import statement
 import EventChatBot from '@/components/EventChatBot';
 import LiveTicker from '@/components/LiveTicker';
 import { Button } from '@/components/ui/button';
