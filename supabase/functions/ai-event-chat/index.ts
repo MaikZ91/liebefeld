@@ -588,7 +588,7 @@ serve(async (req) => {
       aiContent = personalizationBadge + aiContent;
     }
     
-    const finalHtml = `${aiContent}${debugHtml}`;
+    const finalHtml = `${aiContent}`;
 
     return new Response(JSON.stringify({ response: finalHtml }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
