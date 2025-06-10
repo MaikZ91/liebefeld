@@ -1,3 +1,4 @@
+// src/components/LiveTicker.tsx
 
 import React, { useEffect, useState, useRef } from 'react';
 import { Calendar, ArrowRight, ThumbsUp } from 'lucide-react';
@@ -104,14 +105,13 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef }) => {
         ref={tickerRef}
       >
         <div className="absolute left-0 top-0 bottom-0 flex items-center z-10 bg-red-600 px-2 py-0.5">
-          <Calendar className="w-3.5 h-3.5 mr-1" />
-          <ArrowRight className="w-3.5 h-3.5 ml-1" />
+          <Calendar className="w-3.5 h-3.5" />
         </div>
         
         <div className="absolute left-[60px] top-0 bottom-0 w-8 bg-gradient-to-r from-black to-transparent z-[5]"></div>
         <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black to-transparent z-[5]"></div>
         
-        <div className="ml-[80px] mr-2 overflow-hidden">
+        <div className="ml-[60px] mr-2 overflow-hidden">
           <div 
             ref={innerTickerRef}
             className={`whitespace-nowrap inline-block ${isPaused ? 'ticker-paused' : 'ticker-scroll'}`}
