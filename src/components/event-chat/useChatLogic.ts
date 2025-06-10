@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChatMessage, CHAT_HISTORY_KEY, CHAT_QUERIES_KEY, PanelEventData, PanelEvent, AdEvent } from './types';
 import { supabase } from '@/integrations/supabase/client';
-import { generateResponse, getWelcomeMessage, createResponseHeader } from '@/utils/chatUtils';
+import { generateResponse, getAnimatedWelcomeMessage, createResponseHeader } from '@/utils/chatUtils'; // Geändert: getWelcomeMessage zu getAnimatedWelcomeMessage
 import { toast } from 'sonner';
 
 import { Event } from '@/types/eventTypes';
@@ -488,7 +488,7 @@ export const useChatLogic = (
                     id: 'welcome',
                     isUser: false,
                     text: 'Willkommen beim Liebefeld Event-Assistent!',
-                    html: getWelcomeMessage(),
+                    html: getAnimatedWelcomeMessage(), // Geändert: getWelcomeMessage zu getAnimatedWelcomeMessage
                     timestamp: new Date().toISOString()
                 }
             ]);
@@ -534,7 +534,7 @@ export const useChatLogic = (
           id: 'welcome',
           isUser: false,
           text: 'Willkommen beim Liebefeld Event-Assistent!',
-          html: getWelcomeMessage(),
+          html: getAnimatedWelcomeMessage(), // Geändert: getWelcomeMessage zu getAnimatedWelcomeMessage
           timestamp: new Date().toISOString()
         }
       ]);
