@@ -1,5 +1,5 @@
 // src/components/event-chat/FullPageChatBot.tsx
-import React, { useEffect } from 'react'; // Corrected: Added useEffect import
+import React, { useEffect } from 'react';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
 import RecentQueries from './RecentQueries';
@@ -7,7 +7,7 @@ import { useChatMessages } from '@/hooks/chat/useChatMessages';
 import { useMessageSending } from '@/hooks/chat/useMessageSending';
 import { AVATAR_KEY, USERNAME_KEY } from '@/types/chatTypes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getInitials } => '@/utils/chatUIUtils';
+import { getInitials } from '@/utils/chatUIUtils'; // Corrected import syntax here
 import TypingIndicator from '@/components/chat/TypingIndicator';
 import ChatMessage from '@/components/chat/ChatMessage';
 import MessageReactions from '@/components/chat/MessageReactions';
