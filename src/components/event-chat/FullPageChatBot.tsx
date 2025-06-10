@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
 import RecentQueries from './RecentQueries';
@@ -142,9 +142,9 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   /* render                                                             */
   /* ------------------------------------------------------------------ */
   return (
-    <div className="flex flex-col h-screen min-h-0">
+    <div className="flex flex-col h-screen min-h-0 bg-black">
       {/* Sticky Header */}
-      <div className="border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-[18px]">
+      <div className="border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-2"> {/* Corrected: py-[18px] changed to py-2 */}
         {activeChatModeValue === 'ai' && (
           <RecentQueries
             showRecentQueries={showRecentQueries}
