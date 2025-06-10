@@ -12,11 +12,6 @@ export const getWelcomeMessage = () => {
       <p class="mt-4 text-white">
         Aktuelles Datum: <strong>${today}</strong>
       </p>
-      <ul class="list-disc list-inside space-y-1 ml-4 mt-4 text-white">
-        <li>"Welche Events gibt es heute?"</li>
-        <li>"Was kann ich am Wochenende machen?"</li>
-        <li>"Gibt es Konzerte im Lokschuppen?"</li>
-      </ul>
     </div>
   `;
 };

@@ -473,21 +473,32 @@ export const useChatLogic = (
     return () => clearTimeout(timer);
   }, [fullPage]);
 
-  // Willkommensnachricht anzeigen, wenn Chat zum ersten Mal geöffnet wird
+  // Willkommensnachricht anzeigen, wenn Chat zum ersten Mal geöffnet wird UND ActiveChatMode ist 'ai'
   useEffect(() => {
-    if (isChatOpen && messages.length === 0 && !welcomeMessageShownRef.current && activeChatModeValue === 'ai') {
-      welcomeMessageShownRef.current = true;
-      setMessages([
-        {
-          id: 'welcome',
-          isUser: false,
-          text: 'Willkommen beim Liebefeld Event-Assistent!',
-          html: getWelcomeMessage(),
-          timestamp: new Date().toISOString()
+    // Only show welcome message if it hasn't been shown and if current mode is 'ai'
+    if (!welcomeMessageShownRef.current && activeChatModeValue === 'ai') {
+        const hasMessages = messages.length > 0;
+        const hasSavedMessages = localStorage.getItem(CHAT_HISTORY_KEY) !== null;
+
+        // If no messages and no saved history, add welcome message
+        if (!hasMessages && !hasSavedMessages) {
+            welcomeMessageShownRef.current = true;
+            setMessages([
+                {
+                    id: 'welcome',
+                    isUser: false,
+                    text: 'Willkommen beim Liebefeld Event-Assistent!',
+                    html: getWelcomeMessage(),
+                    timestamp: new Date().toISOString()
+                }
+            ]);
+        } else if (hasSavedMessages) {
+            // If there's saved history, ensure welcomeMessageShownRef is true
+            // to prevent re-adding if user clears history later
+            welcomeMessageShownRef.current = true;
         }
-      ]);
     }
-  }, [isChatOpen, messages.length, activeChatModeValue]);
+  }, [activeChatModeValue, messages.length]); // Depend on activeChatModeValue
 
   // Zum Ende der Nachrichten scrollen
   useEffect(() => {
@@ -517,7 +528,7 @@ export const useChatLogic = (
     if (window.confirm("Möchten Sie wirklich den gesamten Chat-Verlauf löschen?")) {
       localStorage.removeItem(CHAT_HISTORY_KEY);
       setMessages([]);
-      welcomeMessageShownRef.current = false;
+      welcomeMessageShownRef.current = false; // Reset to allow welcome message again
       setMessages([
         {
           id: 'welcome',
