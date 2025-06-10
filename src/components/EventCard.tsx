@@ -1,5 +1,4 @@
 
-
 // src/components/EventCard.tsx
 
 import React, { useState, memo } from 'react';
@@ -57,10 +56,10 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
   const isNewEvent = newEventIds.has(event.id);
   const isTribe = isTribeEvent(event.title);
 
-  // Get likes directly from database sources
-  const displayLikes = event.id.startsWith('github-')
-    ? (eventLikes[event.id] || 0)
-    : (event.likes || 0);
+  // Use database likes from eventLikes state which includes both GitHub and Community event likes
+  const displayLikes = eventLikes[event.id] || event.likes || 0;
+
+  console.log(`[EventCard] Rendering event ${event.title} with displayLikes: ${displayLikes} (eventLikes: ${eventLikes[event.id]}, event.likes: ${event.likes})`);
 
   const icon = event.category in categoryIcons
     ? categoryIcons[event.category]
@@ -70,12 +69,12 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     e.stopPropagation();
     if (onLike && !isLiking) {
       setIsLiking(true);
-      console.log(`Liking event ${event.id} (${event.title}) with current likes: ${displayLikes}`);
+      console.log(`[EventCard] Liking event ${event.id} (${event.title}) with current likes: ${displayLikes}`);
       onLike(event.id);
       // Reset immediately for better UX
       setTimeout(() => {
         setIsLiking(false);
-      }, 150); // Reduced from 300ms
+      }, 150);
     }
   };
 
@@ -315,4 +314,3 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
 EventCard.displayName = 'EventCard';
 
 export default EventCard;
-

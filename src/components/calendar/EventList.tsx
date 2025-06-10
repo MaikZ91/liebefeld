@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState, memo, useMemo } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -64,9 +65,9 @@ const EventList: React.FC<EventListProps> = memo(({
   const todayRef = useRef<HTMLDivElement>(null);
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
-  const { newEventIds, filter, topEventsPerDay } = useEventContext();
+  const { newEventIds, filter, topEventsPerDay, eventLikes } = useEventContext();
 
-  // Memoize expensive computations
+  // Separate hochschulsport events from regular events
   const { hochschulsportEvents, regularEvents } = useMemo(() => {
     const hochschulsport = events.filter(event => 
       event.title.toLowerCase().includes('hochschulsport') || 
@@ -100,30 +101,37 @@ const EventList: React.FC<EventListProps> = memo(({
     });
   }, [filteredEvents, showFavorites, topEventsPerDay]);
 
+  // Group events by date and sort them properly based on combined likes (DB + session)
   const eventsByDate = useMemo(() => {
+    console.log('[EventList] Grouping events by date...');
     const grouped = groupEventsByDate(regularEvents);
     
-    // Pre-sort events within each date group
+    // Sort events within each date group by total likes (including database likes)
     Object.keys(grouped).forEach(dateStr => {
       grouped[dateStr].sort((a, b) => {
-        const likesA = a.likes || 0;
-        const likesB = b.likes || 0;
+        // Get likes from eventLikes (which includes database likes)
+        const likesA = eventLikes[a.id] || a.likes || 0;
+        const likesB = eventLikes[b.id] || b.likes || 0;
+        
+        console.log(`[EventList] Sorting ${dateStr}: ${a.title} (${likesA} likes) vs ${b.title} (${likesB} likes)`);
         
         if (likesB !== likesA) {
-          return likesB - likesA;
+          return likesB - likesA; // Higher likes first
         }
         
-        return a.id.localeCompare(b.id);
+        return a.id.localeCompare(b.id); // Stable sort by ID
       });
     });
     
+    console.log('[EventList] Events grouped and sorted by date');
     return grouped;
-  }, [regularEvents]);
+  }, [regularEvents, eventLikes]);
   
   const hochschulsportEventsByDate = useMemo(() => {
     return groupEventsByDate(hochschulsportEvents);
   }, [hochschulsportEvents]);
 
+  // Calculate top event for today based on database likes
   useEffect(() => {
     if (displayEvents.length > 0) {
       const todayEvents = displayEvents.filter(event => {
@@ -138,9 +146,10 @@ const EventList: React.FC<EventListProps> = memo(({
       });
       
       if (todayEvents.length > 0) {
+        // Sort by database likes + any additional likes
         const popular = [...todayEvents].sort((a, b) => {
-          const likesA = a.likes || 0;
-          const likesB = b.likes || 0;
+          const likesA = eventLikes[a.id] || a.likes || 0;
+          const likesB = eventLikes[b.id] || b.likes || 0;
           
           if (likesB !== likesA) {
             return likesB - likesA;
@@ -149,13 +158,15 @@ const EventList: React.FC<EventListProps> = memo(({
           return a.id.localeCompare(b.id);
         })[0];
         
+        console.log('[EventList] Top today event calculated:', popular.title, 'with', eventLikes[popular.id] || popular.likes || 0, 'likes');
         setTopTodayEvent(popular);
       } else {
         setTopTodayEvent(null);
       }
     }
-  }, [displayEvents]);
+  }, [displayEvents, eventLikes]);
 
+  // Auto-scroll to today section
   useEffect(() => {
     if (todayRef.current && listRef.current && !hasScrolledToToday && Object.keys(eventsByDate).length > 0) {
       console.log('EventList: Waiting for animations to complete before scrolling to today');
