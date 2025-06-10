@@ -1,13 +1,13 @@
 // src/components/event-chat/useChatLogic.ts
 import { useState, useEffect, useRef } from 'react';
-import { ChatMessage, CHAT_HISTORY_KEY, CHAT_QUERIES_KEY, PanelEventData, PanelEvent, AdEvent } from './types'; // Importiere AdEvent
+import { ChatMessage, CHAT_HISTORY_KEY, CHAT_QUERIES_KEY, PanelEventData, PanelEvent, AdEvent } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { generateResponse, getWelcomeMessage, createResponseHeader } from '@/utils/chatUtils';
 import { toast } from 'sonner';
 
 // Importiere deine Event-Typen und Hilfsfunktionen zur Event-Filterung
 import { Event } from '@/types/eventTypes';
-import { getFutureEvents, getEventsForDay, getWeekRange } from '@/utils/eventUtils'; // Importiere getWeekRange
+import { getFutureEvents, getEventsForDay, getWeekRange } from '@/utils/eventUtils';
 
 
 export const useChatLogic = (
@@ -68,29 +68,31 @@ export const useChatLogic = (
   const createPanelData = (filteredEvents: Event[]): PanelEventData => {
     const allItems: (PanelEvent | AdEvent)[] = [];
 
-    // Füge die gefilterten Events hinzu
-    filteredEvents.slice(0, 5).forEach(event => { // Begrenze die Anzahl der angezeigten Events
+    // Füge die gefilterten Events hinzu (max. 5 Events)
+    filteredEvents.slice(0, 5).forEach(event => {
       allItems.push({
         id: event.id,
         title: event.title,
         date: event.date,
         time: event.time,
-        price: event.is_paid ? "Kostenpflichtig" : "Kostenlos", // Oder den tatsächlichen Preis, wenn vorhanden
+        price: event.is_paid ? "Kostenpflichtig" : "Kostenlos",
         location: event.location,
-        image_url: event.image_url || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop', // Standardbild, falls keines vorhanden
+        image_url: event.image_url || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop',
         category: event.category
       });
     });
 
-    // Füge zufällig eine Anzeige hinzu (z.B. 20% Chance)
-    if (Math.random() < 0.3 && adEvents.length > 0) { // 30% Chance, eine Anzeige hinzuzufügen
+    // Füge immer eine zufällige Anzeige hinzu, wenn welche vorhanden sind
+    if (adEvents.length > 0) {
       const randomAd = adEvents[Math.floor(Math.random() * adEvents.length)];
-      allItems.push(randomAd);
-      console.log('Adding random ad to panel:', randomAd.title);
+      
+      // Bestimme die Einfügeposition. Mindestens ab dem 3. Slide, oder am Ende,
+      // wenn weniger als 2 Events vorhanden sind.
+      const insertIndex = allItems.length >= 2 ? Math.floor(Math.random() * (allItems.length - 2 + 1)) + 2 : allItems.length;
+      
+      allItems.splice(insertIndex, 0, randomAd);
+      console.log('Adding random ad to panel at index', insertIndex, ':', randomAd.title);
     }
-
-    // Mische die Liste, um Events und Anzeigen zu vermischen
-    // allItems.sort(() => Math.random() - 0.5); // Optional: Events und Anzeigen mischen
 
     return {
       events: allItems,
@@ -106,27 +108,25 @@ export const useChatLogic = (
         const parsedMessages = JSON.parse(savedMessages);
         if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
           setMessages(parsedMessages);
-          welcomeMessageShownRef.current = true; // Skip welcome message if we loaded history
+          welcomeMessageShownRef.current = true;
         }
       } catch (error) {
         console.error('[useChatLogic] Error parsing saved chat history:', error);
       }
     }
     
-    // Load local recent queries too (keeping for backup)
     const savedQueries = localStorage.getItem(CHAT_QUERIES_KEY);
     if (savedQueries) {
       try {
         const parsedQueries = JSON.parse(savedQueries);
         if (Array.isArray(parsedQueries)) {
-          setRecentQueries(parsedQueries.slice(0, 3)); // Only store last 3
+          setRecentQueries(parsedQueries.slice(0, 3));
         }
       } catch (error) {
         console.error('[useChatLogic] Error parsing saved queries:', error);
       }
     }
     
-    // Also load heart mode state from localStorage
     try {
       const heartModeActive = localStorage.getItem('heart_mode_active') === 'true';
       setIsHeartActive(heartModeActive);
@@ -135,7 +135,6 @@ export const useChatLogic = (
       console.error('[useChatLogic] Error loading heart mode state:', error);
     }
     
-    // Fetch global queries from Supabase
     fetchGlobalQueries();
   }, []);
 
@@ -164,16 +163,14 @@ export const useChatLogic = (
   }, [isHeartActive]);
 
   useEffect(() => {
-    // Initialize the chat bot after a delay
     const timer = setTimeout(() => {
       setIsVisible(true);
-    }, fullPage ? 0 : 5000); // No delay in fullPage mode
+    }, fullPage ? 0 : 5000);
 
     return () => clearTimeout(timer);
   }, [fullPage]);
 
   useEffect(() => {
-    // Add welcome message when chat is opened for the first time
     if (isChatOpen && messages.length === 0 && !welcomeMessageShownRef.current && activeChatModeValue === 'ai') {
       welcomeMessageShownRef.current = true;
       setMessages([
@@ -189,7 +186,6 @@ export const useChatLogic = (
   }, [isChatOpen, messages.length, activeChatModeValue]);
 
   useEffect(() => {
-    // Scroll to bottom when new messages are added
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
@@ -197,7 +193,6 @@ export const useChatLogic = (
 
   const handleToggleChat = () => {
     setIsChatOpen(!isChatOpen);
-    // Focus on input field when opening chat
     if (!isChatOpen) {
       setTimeout(() => {
         if (inputRef.current) {
@@ -207,7 +202,6 @@ export const useChatLogic = (
     }
   };
   
-  // Fetch global queries from Supabase
   const fetchGlobalQueries = async () => {
     try {
       const { data, error } = await supabase
@@ -230,10 +224,8 @@ export const useChatLogic = (
     }
   };
   
-  // Save a query to Supabase
   const saveGlobalQuery = async (query: string) => {
     try {
-      // First check if this query already exists to avoid duplicates
       const { data: existingData, error: checkError } = await supabase
         .from('chat_queries')
         .select('id')
@@ -246,13 +238,11 @@ export const useChatLogic = (
       }
       
       if (existingData && existingData.length > 0) {
-        // Query already exists, update its timestamp
         await supabase
           .from('chat_queries')
           .update({ created_at: new Date().toISOString() })
           .eq('id', existingData[0].id);
       } else {
-        // Insert new query
         const { error: insertError } = await supabase
           .from('chat_queries')
           .insert({ query: query });
@@ -262,7 +252,6 @@ export const useChatLogic = (
         }
       }
       
-      // Refresh the global queries list
       fetchGlobalQueries();
     } catch (error) {
       console.error('[useChatLogic] Exception saving global query:', error);
@@ -270,15 +259,12 @@ export const useChatLogic = (
   };
 
   const updateRecentQueries = (query: string) => {
-    // Still maintain local user queries as backup
     setRecentQueries(prev => {
-      // Filter out duplicates and add new query at the beginning
       const filteredQueries = prev.filter(q => q !== query);
       const newQueries = [query, ...filteredQueries].slice(0, 3);
       return newQueries;
     });
     
-    // Also save to global queries in Supabase
     saveGlobalQuery(query);
   };
 
@@ -286,10 +272,8 @@ export const useChatLogic = (
     const message = customInput || input;
     if (!message.trim()) return;
     
-    // Add to recent queries if it's a new query
     updateRecentQueries(message);
     
-    // Create the user message
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       isUser: true,
@@ -301,11 +285,9 @@ export const useChatLogic = (
     setInput('');
     setIsTyping(true);
     
-    // Events filtern basierend auf der Abfrage
     let relevantEvents: Event[] = [];
     const currentDate = new Date();
 
-    // Beispiel-Logik: Wenn die Anfrage nach "heute" oder "Wochenende" fragt
     const lowercaseMessage = message.toLowerCase();
     if (lowercaseMessage.includes('heute') || lowercaseMessage.includes('today')) {
       relevantEvents = getEventsForDay(events, currentDate);
@@ -316,19 +298,16 @@ export const useChatLogic = (
     }
      else if (lowercaseMessage.includes('wochenende') || lowercaseMessage.includes('weekend')) {
       const [startOfWeek, endOfWeek] = getWeekRange(currentDate);
-      // Finde den Samstag und Sonntag dieser oder der nächsten Woche
       let saturday = new Date(currentDate);
       let sunday = new Date(currentDate);
 
-      // Finde den nächsten Samstag (falls heute nicht Samstag ist)
       saturday.setDate(currentDate.getDate() + (6 - currentDate.getDay() + 7) % 7);
-      // Finde den nächsten Sonntag (falls heute nicht Sonntag ist)
       sunday.setDate(currentDate.getDate() + (0 - currentDate.getDay() + 7) % 7);
 
-      if (saturday < currentDate) { // Wenn Samstag schon vorbei ist, nimm Samstag nächste Woche
+      if (saturday < currentDate) {
           saturday.setDate(saturday.getDate() + 7);
       }
-      if (sunday < currentDate) { // Wenn Sonntag schon vorbei ist, nimm Sonntag nächste Woche
+      if (sunday < currentDate) {
           sunday.setDate(sunday.getDate() + 7);
       }
       
@@ -338,11 +317,9 @@ export const useChatLogic = (
       );
     }
      else {
-      // Fallback: Zukünftige Events anzeigen
       relevantEvents = getFutureEvents(events);
     }
     
-    // Filtern nach Kategorien, falls in der Nachricht erwähnt
     const categoryMapping = {
       konzert: "Konzert",
       party: "Party",
@@ -367,24 +344,20 @@ export const useChatLogic = (
     if (detectedCategory) {
       relevantEvents = relevantEvents.filter(event => event.category && event.category.toLowerCase() === detectedCategory.toLowerCase());
     }
-
-    // Wenn es keine relevanten Events gibt, Panel nicht anzeigen
-    if (relevantEvents.length > 0) {
-      // Jetzt die Panel-Daten aus den relevanten Events erstellen
-      const panelData = createPanelData(relevantEvents); // Hier wird jetzt auch die Anzeige hinzugefügt
-
-      const panelMessage: ChatMessage = {
-        id: `panel-${Date.now()}`,
-        isUser: false,
-        text: 'Hier sind einige Events für dich:',
-        panelData: panelData,
-        timestamp: new Date().toISOString()
-      };
-
-      setMessages(prev => [...prev, panelMessage]);
-    }
     
-    // Generiere und zeige die reguläre Antwort danach
+    // Panel immer anzeigen, auch wenn keine Events gefunden wurden, um die Anzeige zu ermöglichen
+    const panelData = createPanelData(relevantEvents); // Nun immer aufrufen
+
+    const panelMessage: ChatMessage = {
+      id: `panel-${Date.now()}`,
+      isUser: false,
+      text: 'Hier sind einige Events für dich:',
+      panelData: panelData,
+      timestamp: new Date().toISOString()
+    };
+
+    setMessages(prev => [...prev, panelMessage]);
+    
     try {
       const responseHtml = await generateResponse(message, events, isHeartActive);
       
@@ -419,14 +392,13 @@ export const useChatLogic = (
   };
 
   const handleDateSelect = (date: string) => {
-    const formattedDate = date; // date is already formatted as YYYY-MM-DD
+    const formattedDate = date;
     const prompt = `Welche Events gibt es am ${formattedDate}?`;
     handleSendMessage(prompt);
   };
 
   const handleExamplePromptClick = (prompt: string) => {
     setInput(prompt);
-    // Optional: auto-send after a short delay
     setTimeout(() => {
       handleSendMessage(prompt);
     }, 300);
@@ -448,24 +420,19 @@ export const useChatLogic = (
     }
   };
 
-  // Register external query handler
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // @ts-ignore - We're explicitly adding a custom property
-      window.chatbotQuery = handleExternalQuery;
+      (window as any).chatbotQuery = handleExternalQuery;
       console.log("[useChatLogic] Registered window.chatbotQuery function");
     }
     
     return () => {
-      // Clean up when component unmounts
       if (typeof window !== 'undefined') {
-        // @ts-ignore - we're explicitly removing the property
-        window.chatbotQuery = undefined;
+        (window as any).chatbotQuery = undefined;
       }
     };
   }, []);
 
-  // Subscribe to real-time updates for chat_queries table
   useEffect(() => {
     const channel = supabase
       .channel('chat_queries_changes')
@@ -476,7 +443,6 @@ export const useChatLogic = (
           table: 'chat_queries' 
         }, 
         () => {
-          // Refetch global queries when there's a change
           fetchGlobalQueries();
         }
       )
@@ -487,15 +453,12 @@ export const useChatLogic = (
     };
   }, []);
   
-  // Handle heart button click
   const handleHeartClick = async () => {
-    // Toggle the heart state 
     const newHeartState = !isHeartActive;
     setIsHeartActive(newHeartState);
     
     console.log(`[useChatLogic] Heart mode ${newHeartState ? 'activated' : 'deactivated'}`);
     
-    // Show a toast notification about the mode change
     if (newHeartState) {
       toast.success("Personalisierter Modus aktiviert! Deine Vorlieben werden nun berücksichtigt.");
     } else {
@@ -503,19 +466,15 @@ export const useChatLogic = (
     }
   };
   
-  // Toggle recent queries dropdown
   const toggleRecentQueries = () => {
     setShowRecentQueries(!showRecentQueries);
   };
   
-  // Clear chat history
   const clearChatHistory = () => {
-    // Ask for confirmation
     if (window.confirm("Möchten Sie wirklich den gesamten Chat-Verlauf löschen?")) {
       localStorage.removeItem(CHAT_HISTORY_KEY);
       setMessages([]);
       welcomeMessageShownRef.current = false;
-      // Re-add welcome message
       setMessages([
         {
           id: 'welcome',
@@ -529,7 +488,6 @@ export const useChatLogic = (
     }
   };
 
-  // Export chat history as JSON file
   const exportChatHistory = () => {
     if (messages.length === 0) {
       toast.error("Es gibt keine Nachrichten zum Exportieren.");
