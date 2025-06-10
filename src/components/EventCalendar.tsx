@@ -1,4 +1,4 @@
-
+// src/components/EventCalendar.tsx
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -15,7 +15,7 @@ import EventList from './calendar/EventList';
 import EventPanel from './calendar/EventPanel';
 import FavoritesView from './calendar/FavoritesView';
 import EventForm from './EventForm';
-import AdPanel from './AdPanel';
+// import AdPanel from './AdPanel'; // Entfernen Sie diese Zeile
 import PerfectDayPanel from './PerfectDayPanel';
 import { useEventContext } from '@/contexts/EventContext';
 import { toast } from 'sonner';
@@ -214,7 +214,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                 />
               </div>
               <div className="md:col-span-1 space-y-3">
-                <AdPanel className="h-[280px]" />
+                {/* <AdPanel className="h-[280px]" /> */} {/* Entfernen Sie diese Zeile */}
                 <PerfectDayPanel className="w-full" onAskChatbot={triggerChatbotQuery} />
               </div>
             </div>
@@ -261,7 +261,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                   showFavorites={showFavorites}
                 />
                 
-                <AdPanel className="h-[200px]" />
+                {/* <AdPanel className="h-[200px]" /> */} {/* Entfernen Sie diese Zeile */}
                 <PerfectDayPanel 
                   className="w-full h-[280px]" 
                   onAskChatbot={triggerChatbotQuery} 
@@ -276,4 +276,3 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
 };
 
 export default EventCalendar;
-export type { Event };
