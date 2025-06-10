@@ -38,7 +38,7 @@ const App = () => {
           <Sonner position="top-center" />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Chat />} />
+              <Route path="/" element={<About />} />
               <Route path="/index" element={<Index />} />
               <Route path="/about" element={<About />} />
               <Route path="/chat" element={<Chat />} />

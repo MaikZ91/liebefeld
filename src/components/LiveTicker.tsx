@@ -1,4 +1,4 @@
-// src/components/LiveTicker.tsx
+
 import React, { useEffect, useState, useRef } from 'react';
 import { Calendar, ArrowRight, ThumbsUp } from 'lucide-react';
 import { format, parseISO, isSameMonth, startOfDay, isAfter, isToday } from 'date-fns';
@@ -16,10 +16,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef }) => {
   const innerTickerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
-    // Add this check to ensure 'events' is not undefined or null
-    if (!events || events.length === 0) { 
-      return;
-    }
+    if (events.length === 0) return;
     
     try {
       console.log(`LiveTicker: Processing ${events.length} events for ticker`);
@@ -81,8 +78,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef }) => {
           console.error(`Error sorting top events by date: ${a.date}, ${b.date}`, error);
           return 0;
         }
-      }
-      ).filter(Boolean) as Event[]; // Ensure all elements are non-null
+      });
       
       if (sortedTopEvents.length > 0) {
         console.log(`Top event today: ${sortedTopEvents[0]?.title} with ${sortedTopEvents[0]?.likes || 0} likes`);
