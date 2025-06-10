@@ -1,3 +1,4 @@
+// src/components/layouts/Layout.tsx
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -144,29 +145,27 @@ const MainNav: React.FC<MainNavProps> = ({
         </Link>
         
         {/* Chat navigation buttons */}
-        <div className="flex items-center justify-between w-full">
-          <div className="flex space-x-2">
-            <Button 
-              variant={activeView === 'ai' ? "default" : "outline"} 
-              size="sm" 
-              onClick={() => setActiveView?.('ai')} 
-              className={`flex items-center gap-0.5 px-1.5 py-1 ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}
-            >
-              <Calendar className="h-4 w-4" />
-              <span className="text-[10px] px-1">Events</span>
-            </Button>
-            <Button 
-              variant={activeView === 'community' ? "default" : "outline"} 
-              size="sm" 
-              onClick={() => setActiveView?.('community')} 
-              className={`flex items-center gap-0.5 px-1.5 py-1 ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}
-            >
-              <Users className="h-4 w-4" />
-              <span className="text-[10px] px-1">Community</span>
-            </Button>
-          </div>
+        <div className="flex items-center justify-start flex-grow space-x-2"> {/* Changed justify-between to justify-start */}
+          <Button 
+            variant={activeView === 'ai' ? "default" : "outline"} 
+            size="sm" 
+            onClick={() => setActiveView?.('ai')} 
+            className={`flex items-center gap-0.5 px-1.5 py-1 w-24 justify-center ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`} {/* Added w-24 and justify-center */}
+          >
+            <Calendar className="h-4 w-4" />
+            <span className="text-[10px] px-1">Events</span>
+          </Button>
+          <Button 
+            variant={activeView === 'community' ? "default" : "outline"} 
+            size="sm" 
+            onClick={() => setActiveView?.('community')} 
+            className={`flex items-center gap-0.5 px-1.5 py-1 w-24 justify-center ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`} {/* Added w-24 and justify-center */}
+          >
+            <Users className="h-4 w-4" />
+            <span className="text-[10px] px-1">Community</span>
+          </Button>
           
-          <div className="flex gap-2">
+          <div className="flex gap-2 ml-auto"> {/* Added ml-auto to push these buttons to the right */}
             {/* User Directory Button */}
             <Button 
               variant="outline" 
