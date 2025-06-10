@@ -1,5 +1,6 @@
+// src/pages/Chat.tsx
 import React, { useState, useEffect } from 'react';
-import Layout from '@/components/layouts/Layout'; // Corrected import
+import Layout from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
 import LiveTickerWrapper from '@/components/LiveTicker'; // Corrected import for LiveTicker
 import { Button } from '@/components/ui/button';
@@ -22,7 +23,7 @@ const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
   const [isAddEventSheetOpen, setIsAddEventSheetOpen] = useState(false);
   const [isEventListSheetOpen, setIsEventListSheetOpen] = useState(false);
-  const [isUserDirectoryOpen, setIsUserDirectoryOpen] = useState(false);
+  const [isUserDirectoryOpen, setIsUserDirectory] = useState(false);
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   const [username, setUsername] = useState<string>('');
@@ -146,7 +147,7 @@ const ChatPage = () => {
         {/* LiveTicker ganz oben, über dem Header */}
         <div className="w-full bg-black">
           {/* Using LiveTickerWrapper which internally fetches events */}
-          <LiveTickerWrapper /> 
+          <LiveTickerWrapper events={events} /> {/* */}
         </div>
         <Layout hideFooter={true}>
           <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)] items-center justify-center">
@@ -165,7 +166,7 @@ const ChatPage = () => {
       {/* LiveTicker ganz oben, über dem Header */}
       <div className="w-full bg-black">
         {/* Using LiveTickerWrapper */}
-        <LiveTickerWrapper /> 
+        <LiveTickerWrapper events={events} /> {/* */}
       </div>
       <Layout 
         hideFooter={true}
