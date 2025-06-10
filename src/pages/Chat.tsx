@@ -144,11 +144,11 @@ const ChatPage = () => {
     return (
       <>
         {/* LiveTicker fixed at the very top */}
-        <div className="fixed top-0 left-0 w-full z-50 bg-black h-6">
+        <div className="fixed top-0 left-0 w-full z-50 bg-blue-500 h-8">
           <LiveTicker events={events} />
         </div>
         <Layout hideFooter={true}>
-          <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)] mt-6">
+          <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)] mt-8">
             <div className="flex flex-col items-center gap-4">
               <div className="h-10 w-10 animate-spin rounded-full border-4 border-red-500 border-t-transparent"></div>
               <p className="text-lg font-medium">Lade Chat...</p>
@@ -162,7 +162,7 @@ const ChatPage = () => {
   return (
     <>
       {/* LiveTicker fixed at the very top */}
-      <div className="fixed top-0 left-0 w-full z-50 bg-black h-6">
+      <div className="fixed top-0 left-0 w-full z-50 bg-blue-500 h-8">
         <LiveTicker events={events} />
       </div>
       <Layout
@@ -172,7 +172,7 @@ const ChatPage = () => {
         handleOpenUserDirectory={handleOpenUserDirectory}
         setIsEventListSheetOpen={setIsEventListSheetOpen}
       >
-        <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px-24px)] mt-[24px]">
+        <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px-32px)] mt-[32px]">
           {/* Remove the button bar since buttons are now in header */}
           
           <div className="flex-grow rounded-lg overflow-hidden border border-black flex flex-col bg-black">
