@@ -1,9 +1,9 @@
 // src/components/event-chat/SwipeableEventPanel.tsx
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, MapPin, Clock, Euro, UsersRound, Calendar, ExternalLink, Music } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, Clock, Euro, UsersRound, Calendar, ExternalLink, Music } from 'lucide-react'; // Importiere zusätzliche Icons
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { PanelEventData, PanelEvent, AdEvent } from './types';
+import { PanelEventData, PanelEvent, AdEvent } from './types'; // Importiere AdEvent
 
 interface SwipeableEventPanelProps {
   panelData: PanelEventData;
@@ -18,7 +18,7 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(panelData.currentIndex || 0);
   
-  const currentItem = panelData.events[currentIndex];
+  const currentItem = panelData.events[currentIndex]; // currentItem kann nun Event oder Ad sein
   
   const handlePrevious = () => {
     setCurrentIndex((prev) => 
@@ -33,17 +33,18 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
   };
   
   const handleClick = () => {
-    if (!('id' in currentItem) && currentItem.link) { // If it's an Ad and has a link
+    if (!('id' in currentItem) && currentItem.link) { // Wenn es ein Ad ist und einen Link hat
       window.open(currentItem.link, '_blank', 'noopener,noreferrer');
-    } else if ('id' in currentItem && onEventSelect) { // If it's an Event
+    } else if ('id' in currentItem && onEventSelect) { // Wenn es ein Event ist
       onEventSelect(currentItem.id);
     }
   };
 
   if (!currentItem) return null;
 
+  // Bestimme, ob es sich um ein Event oder eine Anzeige handelt
   const isAd = !('id' in currentItem);
-  const itemType = currentItem.type || (isAd ? 'Ad' : 'Event');
+  const itemType = isAd ? (currentItem as AdEvent).type || 'ad' : 'event'; // Nutze den 'type' wenn vorhanden, sonst 'ad' oder 'event'
   const imageUrl = isAd ? (currentItem as AdEvent).imageUrl : (currentItem as PanelEvent).image_url;
   const displayLink = isAd ? (currentItem as AdEvent).link : (currentItem as PanelEvent).link;
 
@@ -128,7 +129,7 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
           </div>
           
           <div className="flex items-center gap-2 text-gray-300">
-            {itemType === 'music' || itemType === 'ad' ? (
+            {itemType === 'music' || itemType === 'ad' || itemType === 'sponsored-ad' ? (
               <UsersRound className="h-4 w-4 text-purple-400" />
             ) : (
               <MapPin className="h-4 w-4 text-red-400" />
