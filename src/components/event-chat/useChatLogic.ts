@@ -1,5 +1,6 @@
+// src/components/event-chat/useChatLogic.ts
 import { useState, useEffect, useRef } from 'react';
-import { ChatMessage, CHAT_HISTORY_KEY, CHAT_QUERIES_KEY, PanelEventData, PanelEvent } from './types';
+import { ChatMessage, CHAT_HISTORY_KEY, CHAT_QUERIES_KEY, PanelEventData, PanelEvent, AdEvent } from './types'; // Importiere AdEvent
 import { supabase } from '@/integrations/supabase/client';
 import { generateResponse, getWelcomeMessage, createResponseHeader } from '@/utils/chatUtils';
 import { toast } from 'sonner';
@@ -35,21 +36,64 @@ export const useChatLogic = (
     "Gibt es Konzerte im Lokschuppen?"
   ];
 
-  // Ersetzte createDummyPanelData durch eine Funktion, die echte Events verwendet
-  const createPanelDataFromEvents = (filteredEvents: Event[]): PanelEventData => {
-    const panelEvents: PanelEvent[] = filteredEvents.slice(0, 10).map(event => ({
-      id: event.id,
-      title: event.title,
-      date: event.date,
-      time: event.time,
-      price: event.is_paid ? "Kostenpflichtig" : "Kostenlos", // Oder den tatsächlichen Preis, wenn vorhanden
-      location: event.location,
-      image_url: event.image_url || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop', // Standardbild, falls keines vorhanden
-      category: event.category
-    }));
+  // Ad Events direkt hier definieren oder importieren (Beispielhaft hier definiert)
+  const adEvents: AdEvent[] = [
+    {
+      title: 'Tribe Creative Circle',
+      date: 'Immer am letzten Freitag im Monat',
+      location: 'Anmeldung in der Community',
+      imageUrl: '/lovable-uploads/83f7c05b-0e56-4f3c-a19c-adeab5429b59.jpg',
+      link: "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK",
+      type: "event" // Hinzugefügt für Typunterscheidung
+    },
+    {
+      title: 'Tribe Kennenlernabend',
+      date: 'Immer am letzten Sonntag im Monat',
+      location: 'Anmeldung in der Community',
+      imageUrl: '/lovable-uploads/8562fff2-2b62-4552-902b-cc62457a3402.png',
+      link: "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK",
+      type: "event" // Hinzugefügt für Typunterscheidung
+    },
+    {
+      title: 'Hör dir die Tribe Playlist an!',
+      date: 'Jederzeit',
+      location: 'Spotify',
+      imageUrl: '/lovable-uploads/e3d0a85b-9935-450a-bba8-5693570597a3.png',
+      link: "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M",
+      type: "music" // Neuer Typ für Musik-Anzeigen
+    }
+  ];
+
+  // Ersetzte createDummyPanelData durch eine Funktion, die echte Events oder Anzeigen verwendet
+  const createPanelData = (filteredEvents: Event[]): PanelEventData => {
+    const allItems: (PanelEvent | AdEvent)[] = [];
+
+    // Füge die gefilterten Events hinzu
+    filteredEvents.slice(0, 5).forEach(event => { // Begrenze die Anzahl der angezeigten Events
+      allItems.push({
+        id: event.id,
+        title: event.title,
+        date: event.date,
+        time: event.time,
+        price: event.is_paid ? "Kostenpflichtig" : "Kostenlos", // Oder den tatsächlichen Preis, wenn vorhanden
+        location: event.location,
+        image_url: event.image_url || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop', // Standardbild, falls keines vorhanden
+        category: event.category
+      });
+    });
+
+    // Füge zufällig eine Anzeige hinzu (z.B. 20% Chance)
+    if (Math.random() < 0.3 && adEvents.length > 0) { // 30% Chance, eine Anzeige hinzuzufügen
+      const randomAd = adEvents[Math.floor(Math.random() * adEvents.length)];
+      allItems.push(randomAd);
+      console.log('Adding random ad to panel:', randomAd.title);
+    }
+
+    // Mische die Liste, um Events und Anzeigen zu vermischen
+    // allItems.sort(() => Math.random() - 0.5); // Optional: Events und Anzeigen mischen
 
     return {
-      events: panelEvents,
+      events: allItems,
       currentIndex: 0
     };
   };
@@ -327,7 +371,7 @@ export const useChatLogic = (
     // Wenn es keine relevanten Events gibt, Panel nicht anzeigen
     if (relevantEvents.length > 0) {
       // Jetzt die Panel-Daten aus den relevanten Events erstellen
-      const panelData = createPanelDataFromEvents(relevantEvents);
+      const panelData = createPanelData(relevantEvents); // Hier wird jetzt auch die Anzeige hinzugefügt
 
       const panelMessage: ChatMessage = {
         id: `panel-${Date.now()}`,
