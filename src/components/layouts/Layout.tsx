@@ -150,7 +150,7 @@ const MainNav: React.FC<MainNavProps> = ({
             variant={activeView === 'ai' ? "default" : "outline"} 
             size="sm" 
             onClick={() => setActiveView?.('ai')} 
-            className={`flex items-center gap-0.5 px-1.5 py-1 w-28 justify-center ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`} {/* Added w-28 and justify-center */}
+            className={`flex items-center gap-0.5 px-1.5 py-1 w-28 justify-center ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}
           >
             <Calendar className="h-4 w-4" />
             <span className="text-[10px] px-1">Events</span>
@@ -159,7 +159,7 @@ const MainNav: React.FC<MainNavProps> = ({
             variant={activeView === 'community' ? "default" : "outline"} 
             size="sm" 
             onClick={() => setActiveView?.('community')} 
-            className={`flex items-center gap-0.5 px-1.5 py-1 w-28 justify-center ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`} {/* Added w-28 and justify-center */}
+            className={`flex items-center gap-0.5 px-1.5 py-1 w-28 justify-center ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}
           >
             <Users className="h-4 w-4" />
             <span className="text-[10px] px-1">Community</span>
