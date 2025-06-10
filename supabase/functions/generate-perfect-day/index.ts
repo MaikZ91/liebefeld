@@ -12,9 +12,129 @@ const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-// Externe URL für GitHub-Events
+// --- Hinzugefügte Typdefinitionen für Events (vereinfacht für Edge Function) ---
+interface GitHubEvent {
+  hash?: string;
+  date: string; // Format: "Thu, 29.05.2025" or "Th, 29.05"
+  event: string;
+  link: string;
+  time?: string;
+  description?: string;
+  location?: string;
+  organizer?: string;
+  category?: string;
+  genre?: string;
+  type?: string;
+  image_url?: string;
+}
+
+interface Event {
+  id: string;
+  title: string;
+  description: string;
+  date: string; // Format: Sachende-MM-DD (after transformation)
+  time: string;
+  location: string;
+  organizer: string;
+  category: string;
+  likes?: number;
+  link?: string;
+  image_url?: string;
+  rsvp?: { yes: number; no: number; maybe: number; };
+  rsvp_yes?: number;
+  rsvp_no?: number;
+  rsvp_maybe?: number;
+}
+
+// --- Replikation der transformGitHubEvents Logik für die Edge Function ---
+const transformGitHubEventsEdge = (
+  githubEvents: GitHubEvent[],
+  currentYear: number = new Date().getFullYear()
+): Event[] => {
+  return githubEvents.map((githubEvent, index) => {
+    const eventId = `github-${githubEvent.hash || githubEvent.event || index}`;
+    // Likes and RSVP are not fetched/synced in this edge function for simplicity/performance
+    // They will default to 0.
+
+    let title = githubEvent.event || 'Unnamed Event';
+    let location = githubEvent.location || '';
+    const locationMatch = title.match(/^(.+?)\s*\(@([^)]+)\)$/);
+    if (locationMatch) {
+      title = locationMatch[1].trim();
+      location = locationMatch[2].trim();
+    }
+    
+    let category = 'Sonstiges';
+    if (githubEvent.category) {
+      category = githubEvent.category;
+    } else if (githubEvent.genre) {
+      category = githubEvent.genre;
+    } else if (githubEvent.type) {
+      category = githubEvent.type;
+    } else {
+      const eventText = (title + ' ' + (githubEvent.description || '')).toLowerCase();
+      if (eventText.includes('konzert') || eventText.includes('concert') || eventText.includes('musik') || eventText.includes('band')) {
+        category = 'Konzert';
+      } else if (eventText.includes('party') || eventText.includes('club') || eventText.includes('dj')) {
+        category = 'Party';
+      } else if (eventText.includes('festival')) {
+        category = 'Festival';
+      } else if (eventText.includes('ausstellung') || eventText.includes('exhibition') || eventText.includes('kunst')) {
+        category = 'Ausstellung';
+      } else if (eventText.includes('sport') || eventText.includes('fitness') || eventText.includes('lauf')) {
+        category = 'Sport';
+      } else if (eventText.includes('workshop') || eventText.includes('kurs')) {
+        category = 'Workshop';
+      } else if (eventText.includes('theater') || eventText.includes('schauspiel')) {
+        category = 'Theater';
+      } else if (eventText.includes('kino') || eventText.includes('film')) {
+        category = 'Kino';
+      } else if (eventText.includes('lesung') || eventText.includes('literatur')) {
+        category = 'Lesung';
+      }
+    }
+
+    let eventDate = '';
+    try {
+      const dateStr = githubEvent.date;
+      if (dateStr.includes('.')) {
+        const dateMatch = dateStr.match(/(\d{1,2})\.(\d{1,2})(?:\.(\d{4}))?/);
+        if (dateMatch) {
+          const day = dateMatch[1].padStart(2, '0');
+          const month = dateMatch[2].padStart(2, '0');
+          const year = dateMatch[3] || currentYear.toString();
+          eventDate = `${year}-${month}-${day}`;
+        }
+      }
+      if (!eventDate) {
+        eventDate = new Date().toISOString().split('T')[0]; // Fallback to today if parsing fails
+      }
+    } catch (error) {
+      eventDate = new Date().toISOString().split('T')[0]; // Fallback on error
+    }
+
+    const transformedEvent: Event = {
+      id: eventId,
+      title: title,
+      description: githubEvent.description || '',
+      date: eventDate,
+      time: githubEvent.time || '00:00',
+      location: location,
+      organizer: githubEvent.organizer || 'Unbekannt',
+      category: category,
+      likes: 0, 
+      rsvp: { yes: 0, no: 0, maybe: 0 }, 
+      link: githubEvent.link || null,
+      image_url: githubEvent.image_url || null
+    };
+    return transformedEvent;
+  });
+};
+
 const EXTERNAL_EVENTS_URL = "https://raw.githubusercontent.com/MaikZ91/productiontools/master/events.json";
 
+
+// --- Hauptfunktion der Edge Function ---
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -22,246 +142,297 @@ serve(async (req) => {
 
   try {
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+    const today = new Date().toISOString().split('T')[0]; // Server's current date
 
-    console.log('[generate-perfect-day] Starting perfect day generation...');
-
-    const { weather: clientWeather, username: clientUsername, interests: clientInterests, favorite_locations: clientLocations } = await req.json();
-    const currentWeather = clientWeather || 'partly_cloudy'; // Fallback
-    const today = new Date().toISOString().split('T')[0];
-    console.log(`[generate-perfect-day] Current server date (today): ${today}`);
-
-    let userProfile: any | null = null;
-    let userInterests: string[] = clientInterests || [];
-    let userFavoriteLocations: string[] = clientLocations || [];
-
-    // Only attempt to fetch a profile if a valid username (not 'Gast' or empty) is provided
-    if (clientUsername && clientUsername !== 'Gast') {
-      console.log(`[generate-perfect-day] Attempting to fetch profile for user: ${clientUsername}`);
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('username', clientUsername)
-        .maybeSingle();
-
-      if (profileError) {
-        console.warn(`[generate-perfect-day] Error fetching profile for ${clientUsername}:`, profileError.message);
-      } else if (profile) {
-        userProfile = profile;
-        userInterests = profile.interests || userInterests;
-        userFavoriteLocations = profile.favorite_locations || userFavoriteLocations;
-        console.log(`[generate-perfect-day] Profile fetched for ${clientUsername}. Using profile interests and locations.`);
-      } else {
-        console.log(`[generate-perfect-day] No profile found for ${clientUsername}. Using client interests and locations.`);
-      }
-    } else {
-      console.log(`[generate-perfect-day] No valid username provided (or 'Gast'). Using client interests and locations.`);
-    }
-
-    userInterests = Array.isArray(userInterests) ? userInterests : [];
-    userFavoriteLocations = Array.isArray(userFavoriteLocations) ? userFavoriteLocations : [];
-
-    // Events aus Supabase abrufen (community_events)
-    const { data: supabaseEvents, error: supabaseEventsError } = await supabase
-      .from('community_events')
-      .select('*, image_urls') // Stellen Sie sicher, dass image_urls ausgewählt werden
-      .gte('date', today)
-      .order('date', { ascending: true })
-      .order('time', { ascending: true });
-
-    if (supabaseEventsError) {
-      console.error('[generate-perfect-day] Error fetching Supabase events:', supabaseEventsError);
-    }
-    console.log(`[generate-perfect-day] Fetched Supabase events count: ${supabaseEvents?.length || 0}`);
-
-
-    // GitHub Event Likes aus Supabase abrufen
-    const { data: githubLikesData, error: githubLikesError } = await supabase
-      .from('github_event_likes')
-      .select('*');
-
-    const githubLikesMap: Record<string, any> = {};
-    if (githubLikesError) {
-      console.warn('[generate-perfect-day] Error fetching GitHub likes:', githubLikesError);
-    } else if (githubLikesData) {
-      githubLikesData.forEach(like => {
-        githubLikesMap[like.event_id] = {
-          likes: like.likes || 0,
-          rsvp_yes: like.rsvp_yes || 0,
-          rsvp_no: like.rsvp_no || 0,
-          rsvp_maybe: like.rsvp_maybe || 0
-        };
-      });
-    }
-    console.log(`[generate-perfect-day] Fetched GitHub likes count: ${Object.keys(githubLikesMap).length}`);
-
-
-    // Externe GitHub Events abrufen und transformieren (Replikation der Logik von transformGitHubEvents)
-    let externalEvents: any[] = [];
-    try {
-      const githubResponse = await fetch(EXTERNAL_EVENTS_URL);
-      if (!githubResponse.ok) {
-        throw new Error(`HTTP error! Status: ${githubResponse.status}`);
-      }
-      const rawGitHubEvents = await githubResponse.json();
+    // Parse request body. Check if 'username' is provided, indicating an on-demand request.
+    const { username: clientUsername, weather: clientWeather, interests: clientInterests, favorite_locations: clientLocations } = await req.json();
+    
+    // --- Determine if this is an on-demand user request or a background job ---
+    if (clientUsername) { // If username is provided, it's a user-triggered request
+      console.log('[generate-perfect-day] Processing as ON-DEMAND user request.');
       
-      externalEvents = rawGitHubEvents.map((githubEvent: any, index: number) => {
-        const eventId = `github-${githubEvent.hash || githubEvent.event || index}`;
-        const likesData = githubLikesMap[eventId] || {};
-        
-        let title = githubEvent.event || 'Unnamed Event';
-        let location = githubEvent.location || '';
-        const locationMatch = title.match(/^(.+?)\s*\(@([^)]+)\)$/);
-        if (locationMatch) {
-          title = locationMatch[1].trim();
-          location = locationMatch[2].trim();
-        }
+      let userProfile: any | null = null;
+      let userInterests: string[] = clientInterests || [];
+      let userFavoriteLocations: string[] = clientLocations || [];
 
-        let category = 'Sonstiges';
-        if (githubEvent.category) {
-          category = githubEvent.category;
-        } else if (githubEvent.genre) {
-          category = githubEvent.genre;
-        } else if (githubEvent.type) {
-          category = githubEvent.type;
+      // Only attempt to fetch a profile if a valid username (not 'Gast' or empty) is provided
+      if (clientUsername && clientUsername !== 'Gast') {
+        console.log(`[generate-perfect-day] Attempting to fetch profile for user: ${clientUsername}`);
+        const { data: profile, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('username', clientUsername)
+          .maybeSingle();
+
+        if (profileError) {
+          console.warn(`[generate-perfect-day] Error fetching profile for ${clientUsername}:`, profileError.message);
+        } else if (profile) {
+          userProfile = profile;
+          userInterests = profile.interests || userInterests;
+          userFavoriteLocations = profile.favorite_locations || userFavoriteLocations;
+          console.log(`[generate-perfect-day] Profile fetched for ${clientUsername}. Using profile interests and locations.`);
         } else {
-          const eventText = (title + ' ' + (githubEvent.description || '')).toLowerCase();
-          if (eventText.includes('konzert') || eventText.includes('concert') || eventText.includes('musik') || eventText.includes('band')) {
-            category = 'Konzert';
-          } else if (eventText.includes('party') || eventText.includes('club') || eventText.includes('dj')) {
-            category = 'Party';
-          } else if (eventText.includes('festival')) {
-            category = 'Festival';
-          } else if (eventText.includes('ausstellung') || eventText.includes('exhibition') || eventText.includes('kunst')) {
-            category = 'Ausstellung';
-          } else if (eventText.includes('sport') || eventText.includes('fitness') || eventText.includes('lauf')) {
-            category = 'Sport';
-          } else if (eventText.includes('workshop') || eventText.includes('kurs')) {
-            category = 'Workshop';
-          } else if (eventText.includes('theater') || eventText.includes('schauspiel')) {
-            category = 'Theater';
-          } else if (eventText.includes('kino') || eventText.includes('film')) {
-            category = 'Kino';
-          } else if (eventText.includes('lesung') || eventText.includes('literatur')) {
-            category = 'Lesung';
-          }
+          console.log(`[generate-perfect-day] No profile found for ${clientUsername}. Using client interests and locations.`);
         }
-        
-        let eventDate = '';
+      } else {
+        console.log(`[generate-perfect-day] No valid username provided (or 'Gast'). Using client interests and locations.`);
+      }
+
+      userInterests = Array.isArray(userInterests) ? userInterests : [];
+      userFavoriteLocations = Array.isArray(userFavoriteLocations) ? userFavoriteLocations : [];
+
+      // --- Events aus Supabase abrufen ---
+      const { data: supabaseEventsData, error: supabaseEventsError } = await supabase
+        .from('community_events')
+        .select('*, image_urls')
+        .gte('date', today)
+        .order('date', { ascending: true })
+        .order('time', { ascending: true });
+
+      if (supabaseEventsError) {
+        console.error('[generate-perfect-day] Error fetching Supabase events:', supabaseEventsError);
+      }
+      const fetchedSupabaseEvents: Event[] = (supabaseEventsData || []).map(event => ({
+          id: event.id.toString(),
+          title: event.title,
+          description: event.description || '',
+          date: event.date,
+          time: event.time,
+          location: event.location || '',
+          organizer: event.organizer || 'Unbekannt',
+          category: event.category,
+          likes: event.likes || 0,
+          rsvp: {
+              yes: event.rsvp_yes || 0,
+              no: event.rsvp_no || 0,
+              maybe: event.rsvp_maybe || 0
+          },
+          link: event.link || null,
+          image_url: event.image_urls && event.image_urls.length > 0 ? event.image_urls[0] : null
+      }));
+      console.log(`[generate-perfect-day] Fetched ${fetchedSupabaseEvents.length} Supabase events.`);
+
+
+      // --- Externe GitHub-Events abrufen ---
+      let githubEvents: Event[] = [];
+      try {
+          const cacheBuster = `?t=${new Date().getTime()}`;
+          const response = await fetch(`${EXTERNAL_EVENTS_URL}${cacheBuster}`);
+          if (!response.ok) {
+              console.warn(`[generate-perfect-day] Failed to fetch external events: ${response.status} ${response.statusText}`);
+          } else {
+              const rawGitHubEvents: GitHubEvent[] = await response.json();
+              githubEvents = transformGitHubEventsEdge(rawGitHubEvents);
+              console.log(`[generate-perfect-day] Fetched ${githubEvents.length} GitHub events.`);
+          }
+      } catch (fetchError) {
+          console.error('[generate-perfect-day] Error fetching external GitHub events:', fetchError);
+      }
+
+      // --- Alle Events zusammenführen ---
+      const allFutureEvents = [...fetchedSupabaseEvents, ...githubEvents];
+      console.log(`[generate-perfect-day] Combined allFutureEvents count: ${allFutureEvents.length}`);
+      if (allFutureEvents.length > 0) {
+        console.log(`[generate-perfect-day] First 3 combined events (id, title, date): ${JSON.stringify(allFutureEvents.slice(0, 3).map(e => ({id: e.id, title: e.title, date: e.date})))}`);
+      }
+      
+      // Get activity suggestions based on user interests and weather
+      let finalActivitySuggestions: any[] = [];
+      if (userInterests.length > 0) {
+        const { data: suggestions, error: suggestionsError } = await supabase
+          .from('activity_suggestions')
+          .select('activity, category, link')
+          .in('category', userInterests)
+          .or(`weather.eq.${clientWeather || 'partly_cloudy'},weather.eq.sunny,weather.eq.cloudy`);
+
+        if (suggestionsError) {
+          console.error('[generate-perfect-day] Error fetching activity suggestions:', suggestionsError);
+        } else {
+          finalActivitySuggestions = suggestions || [];
+          console.log(`[generate-perfect-day] Found ${finalActivitySuggestions.length} activity suggestions.`);
+        }
+      }
+      
+      console.log(`[generate-perfect-day] Value of finalActivitySuggestions before call: ${JSON.stringify(finalActivitySuggestions)}`);
+
+      // Generate AI-powered perfect day message
+      const aiMessage = await generatePerfectDayMessage(
+        allFutureEvents || [],
+        userProfile,
+        clientWeather || 'partly_cloudy',
+        today,
+        finalActivitySuggestions,
+        userInterests,
+        userFavoriteLocations,
+        true // addProfileButton = true for on-demand requests
+      );
+
+      console.log(`[generate-perfect-day] Generated AI message for on-demand request.`);
+
+      return new Response(
+        JSON.stringify({ response: aiMessage }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+
+    } else { // --- Processing as a background job (no username in request body) ---
+      console.log('[generate-perfect-day] Processing as BACKGROUND JOB.');
+
+      // Get all active subscriptions
+      const { data: subscriptions, error: subError } = await supabase
+        .from('perfect_day_subscriptions')
+        .select('*')
+        .eq('is_active', true)
+        .or(`last_sent_at.is.null,last_sent_at.lt.${today}`);
+
+      if (subError) {
+        console.error('[generate-perfect-day] Error fetching subscriptions:', subError);
+        throw subError;
+      }
+
+      console.log(`[generate-perfect-day] Found ${subscriptions?.length || 0} active subscriptions`);
+
+      // Fetch all events (Supabase and GitHub) for background jobs too
+      const { data: supabaseEventsData, error: subSupabaseEventsError } = await supabase
+        .from('community_events')
+        .select('*, image_urls')
+        .gte('date', today)
+        .order('date', { ascending: true })
+        .order('time', { ascending: true });
+
+      if (subSupabaseEventsError) {
+        console.error('[generate-perfect-day] Error fetching Supabase events for background job:', subSupabaseEventsError);
+      }
+      const fetchedSubSupabaseEvents: Event[] = (supabaseEventsData || []).map(event => ({
+          id: event.id.toString(),
+          title: event.title,
+          description: event.description || '',
+          date: event.date,
+          time: event.time,
+          location: event.location || '',
+          organizer: event.organizer || 'Unbekannt',
+          category: event.category,
+          likes: event.likes || 0,
+          rsvp: {
+              yes: event.rsvp_yes || 0,
+              no: event.rsvp_no || 0,
+              maybe: event.rsvp_maybe || 0
+          },
+          link: event.link || null,
+          image_url: event.image_urls && event.image_urls.length > 0 ? event.image_urls[0] : null
+      }));
+
+      let subGithubEvents: Event[] = [];
+      try {
+          const cacheBuster = `?t=${new Date().getTime()}`;
+          const response = await fetch(`${EXTERNAL_EVENTS_URL}${cacheBuster}`);
+          if (!response.ok) {
+              console.warn(`[generate-perfect-day] Failed to fetch external events for background job: ${response.status} ${response.statusText}`);
+          } else {
+              const rawGitHubEvents: GitHubEvent[] = await response.json();
+              subGithubEvents = transformGitHubEventsEdge(rawGitHubEvents);
+          }
+      } catch (fetchError) {
+          console.error('[generate-perfect-day] Error fetching external GitHub events for background job:', fetchError);
+      }
+      const allEventsForBackgroundJob = [...fetchedSubSupabaseEvents, ...subGithubEvents];
+      console.log(`[generate-perfect-day] Combined ${allEventsForBackgroundJob.length} events for background job.`);
+
+
+      // Process each subscription
+      for (const subscription of subscriptions || []) {
         try {
-          const dateStr = githubEvent.date;
-          if (dateStr.includes('.')) {
-            const dateMatch = dateStr.match(/(\d{1,2})\.(\d{1,2})(?:\.(\d{4}))?/);
-            if (dateMatch) {
-              const day = dateMatch[1].padStart(2, '0');
-              const month = dateMatch[2].padStart(2, '0');
-              const year = dateMatch[3] || new Date().getFullYear().toString();
-              eventDate = `${year}-${month}-${day}`;
+          console.log(`[generate-perfect-day] Processing subscription for ${subscription.username}`);
+
+          // Get user profile for personalization
+          const { data: profile, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('username', subscription.username)
+            .maybeSingle(); // Use maybeSingle for robustness
+
+          if (profileError) {
+            console.error(`[generate-perfect-day] Error fetching profile for ${subscription.username}:`, profileError);
+            continue; // Skip this user if profile cannot be fetched
+          }
+          
+          const subUserProfile = profile || null; // Can be null if profile not found
+          const subUserInterests = profile?.interests || [];
+          const subUserFavoriteLocations = profile?.favorite_locations || [];
+
+          let subActivitySuggestions: any[] = [];
+          if (subUserInterests.length > 0) {
+            const { data: suggestions, error: suggestionsError } = await supabase
+              .from('activity_suggestions')
+              .select('activity, category, link')
+              .in('category', subUserInterests)
+              .or(`weather.eq.${clientWeather || 'partly_cloudy'},weather.eq.sunny,weather.eq.cloudy`);
+
+            if (suggestionsError) {
+              console.error('[generate-perfect-day] Error fetching activity suggestions for background job:', suggestionsError);
+            } else {
+              subActivitySuggestions = suggestions || [];
+              console.log(`[generate-perfect-day] Found ${subActivitySuggestions.length} activity suggestions for ${subscription.username} (background)`);
             }
           }
-          if (!eventDate) {
-            eventDate = new Date().toISOString().split('T')[0];
-          }
-        } catch (error) {
-          console.error(`Error parsing date for GitHub event ${title}:`, error);
-          eventDate = new Date().toISOString().split('T')[0];
-        }
 
-        return {
-          id: eventId,
-          title: title,
-          description: githubEvent.description || '',
-          date: eventDate,
-          time: githubEvent.time || '00:00',
-          location: location,
-          organizer: githubEvent.organizer || 'Unbekannt',
-          category: category,
-          likes: likesData.likes || 0,
-          rsvp: {
-            yes: likesData.rsvp_yes || 0,
-            no: likesData.rsvp_no || 0,
-            maybe: likesData.rsvp_maybe || 0
-          },
-          link: githubEvent.link || null,
-          image_url: githubEvent.image_url || null
-        };
-      });
-      console.log(`[generate-perfect-day] Fetched and transformed ${externalEvents.length} external events.`);
-    } catch (githubFetchError) {
-      console.error('[generate-perfect-day] Error fetching external events:', githubFetchError);
-    }
+          // Generate AI-powered perfect day message for each subscriber
+          const aiMessage = await generatePerfectDayMessage(
+            allEventsForBackgroundJob || [], // Pass all combined events
+            subUserProfile,
+            clientWeather || 'partly_cloudy', // Pass weather
+            today,
+            subActivitySuggestions,
+            subUserInterests,
+            subUserFavoriteLocations,
+            false // addProfileButton = false for background jobs
+          );
 
-    // Kombinieren der Events und Sicherstellen der Einzigartigkeit
-    const combinedEventsMap = new Map();
-    (supabaseEvents || []).forEach(event => {
-      // Stellen Sie sicher, dass image_urls in image_url für das Event-Objekt konvertiert wird, falls vorhanden
-      const formattedEvent = {
-        ...event,
-        image_url: event.image_urls && event.image_urls.length > 0 ? event.image_urls[0] : null
-      };
-      combinedEventsMap.set(formattedEvent.id, formattedEvent);
-    });
+          console.log(`[generate-perfect-day] Generated AI message for ${subscription.username}`);
 
-    (externalEvents || []).forEach(event => {
-        // Falls eine GitHub Event ID mit Supabase Events kollidiert, behalten wir die existierende,
-        // aber aktualisieren die Likes/RSVP-Daten, falls der GitHub-Event neuer ist.
-        // Für Einfachheit überschreiben wir erstmal nur.
-        if (combinedEventsMap.has(event.id)) {
-            const existingEvent = combinedEventsMap.get(event.id);
-            combinedEventsMap.set(event.id, {
-                ...existingEvent,
-                // Aktualisiere Likes/RSVP nur wenn im neuen Event vorhanden und höher
-                likes: event.likes !== undefined ? event.likes : existingEvent.likes,
-                rsvp: event.rsvp || existingEvent.rsvp,
-                rsvp_yes: event.rsvp_yes !== undefined ? event.rsvp_yes : existingEvent.rsvp_yes,
-                rsvp_no: event.rsvp_no !== undefined ? event.rsvp_no : existingEvent.rsvp_no,
-                rsvp_maybe: event.rsvp_maybe !== undefined ? event.rsvp_maybe : existingEvent.rsvp_maybe,
+          // Insert message into chat_messages table
+          const { error: insertError } = await supabase
+            .from('chat_messages')
+            .insert({
+              group_id: 'general', // Or a specific Perfect Day group ID
+              sender: 'Perfect Day Bot',
+              text: aiMessage,
+              avatar: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png', // Or a specific bot avatar
+              created_at: new Date().toISOString(),
             });
-        } else {
-            combinedEventsMap.set(event.id, event);
+
+          if (insertError) {
+            console.error(`[generate-perfect-day] Error inserting message for ${subscription.username}:`, insertError);
+            continue;
+          }
+
+          // Update last_sent_at for the subscription
+          const { error: updateError } = await supabase
+            .from('perfect_day_subscriptions')
+            .update({ last_sent_at: today })
+            .eq('id', subscription.id);
+
+          if (updateError) {
+            console.error(`[generate-perfect-day] Error updating subscription for ${subscription.username}:`, updateError);
+          } else {
+            console.log(`[generate-perfect-day] Successfully processed ${subscription.username}`);
+          }
+
+        } catch (error) {
+          console.error(`[generate-perfect-day] Error processing subscription for ${subscription.username}:`, error);
+          continue;
         }
-    });
+      } // End of for loop
 
-    const allCombinedEvents = Array.from(combinedEventsMap.values());
-    console.log(`[generate-perfect-day] Combined total events: ${allCombinedEvents.length}`);
+      return new Response( // Return success response for cron job
+        JSON.stringify({
+          success: true,
+          processed: subscriptions?.length || 0,
+          events_found: allEventsForBackgroundJob.length,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } // Ende des else-Blocks für Hintergrundjobs
 
-
-    // Get activity suggestions based on user interests and weather
-    let finalActivitySuggestions: any[] = [];
-    if (userInterests.length > 0) {
-      const { data: suggestions, error: suggestionsError } = await supabase
-        .from('activity_suggestions')
-        .select('activity, category, link')
-        .in('category', userInterests)
-        .or(`weather.eq.${currentWeather},weather.eq.sunny,weather.eq.cloudy`);
-
-      if (suggestionsError) {
-        console.error('[generate-perfect-day] Error fetching activity suggestions:', suggestionsError);
-      } else {
-        finalActivitySuggestions = suggestions || [];
-        console.log(`[generate-perfect-day] Found ${finalActivitySuggestions.length} activity suggestions.`);
-      }
-    }
-    
-    console.log(`[generate-perfect-day] Value of finalActivitySuggestions before call: ${JSON.stringify(finalActivitySuggestions)}`);
-
-    // Generate AI-powered perfect day message
-    const aiMessage = await generatePerfectDayMessage(
-      allCombinedEvents, // Alle kombinierten Events an die Nachrichten-Generierung übergeben
-      userProfile,
-      currentWeather,
-      today,
-      finalActivitySuggestions,
-      userInterests,
-      userFavoriteLocations
-    );
-
-    console.log(`[generate-perfect-day] Generated AI message for on-demand request.`);
-
-    return new Response(
-      JSON.stringify({ response: aiMessage }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-    
   } catch (error) {
     console.error('[generate-perfect-day] Error in generate-perfect-day function:', error);
     return new Response(
@@ -275,25 +446,21 @@ serve(async (req) => {
 });
 
 async function generatePerfectDayMessage(
-  events: any[], // Enthält nun alle kombinierten Events (Supabase + GitHub)
+  events: any[],
   userProfile: any,
   weather: string,
   date: string,
   activitySuggestions: any[],
   clientInterests: string[],
-  clientFavoriteLocations: string[]
+  clientFavoriteLocations: string[],
+  addProfileButton: boolean // New parameter to control button presence
 ): Promise<string> {
   try {
     // Filtere Events explizit nach dem heutigen Datum und extrahiere den Datums-Teil
     const todaysRelevantEvents = events.filter(e => {
         const eventDatePart = typeof e.date === 'string' ? e.date.split('T')[0] : '';
-        console.log(`[generatePerfectDayMessage] Comparing event date part '${eventDatePart}' with today '${date}'`);
         return eventDatePart === date;
     });
-    console.log(`[generatePerfectDayMessage] Filtered todaysRelevantEvents count: ${todaysRelevantEvents.length}`);
-    if (todaysRelevantEvents.length > 0) {
-      console.log(`[generatePerfectDayMessage] First 3 todaysRelevantEvents: ${JSON.stringify(todaysRelevantEvents.slice(0, 3))}`);
-    }
 
     const morningEvents = todaysRelevantEvents.filter(e => {
       const hour = parseInt(e.time.split(':')[0]);
@@ -369,8 +536,6 @@ Verfügbare Events heute (${date}):`;
     systemPrompt += `\n\nAktuelles Wetter: ${weather}.`;
     systemPrompt += `\n\nWichtig: Integriere die verfügbaren Events in deine Empfehlungen. Ergänze mit allgemeinen Aktivitäten wo keine Events verfügbar sind.`;
 
-    console.log('[generate-perfect-day] Calling OpenRouter API...');
-
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -400,7 +565,19 @@ Verfügbare Events heute (${date}):`;
       throw new Error('Invalid response from OpenRouter API');
     }
 
-    const aiContent = data.choices[0].message.content;
+    let aiContent = data.choices[0].message.content;
+    
+    // --- NEU: Button für Profilpersonalisierung hinzufügen ---
+    if (addProfileButton) {
+        aiContent += `
+        <div class="mt-4 pt-4 border-t border-gray-700/50">
+            <button onclick="window.openProfileEditor()" class="bg-red-500 hover:bg-red-600 text-white rounded-full px-4 py-2 text-sm w-full">
+                Personalisiere deine Perfect Day Nachricht
+            </button>
+        </div>
+        `;
+    }
+
     console.log('[generate-perfect-day] Successfully generated AI content');
     
     return aiContent;
