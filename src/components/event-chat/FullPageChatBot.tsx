@@ -1,3 +1,4 @@
+// src/components/event-chat/FullPageChatBot.tsx
 import React, { useEffect } from 'react'; // Corrected: Added useEffect import
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
@@ -6,7 +7,7 @@ import { useChatMessages } from '@/hooks/chat/useChatMessages';
 import { useMessageSending } from '@/hooks/chat/useMessageSending';
 import { AVATAR_KEY, USERNAME_KEY } from '@/types/chatTypes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getInitials } from '@/utils/chatUIUtils';
+import { getInitials } => '@/utils/chatUIUtils';
 import TypingIndicator from '@/components/chat/TypingIndicator';
 import ChatMessage from '@/components/chat/ChatMessage';
 import MessageReactions from '@/components/chat/MessageReactions';
@@ -172,7 +173,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       {/* Main scroll container */}
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
         {activeChatModeValue === 'ai' ? (
-          <div className="p-3">
+          <div className="pt-32 px-3"> {/* Changed pt-20 to pt-32 for more top padding */}
             <MessageList
               messages={aiMessages}
               isTyping={aiTyping}
