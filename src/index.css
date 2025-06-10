@@ -92,6 +92,7 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Roboto', sans-serif;
     background-color: #000000;
     background-image:
       radial-gradient(circle at 100% 100%, rgba(246, 58, 59, 0.1) 0%, transparent 50%),
