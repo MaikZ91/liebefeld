@@ -1,5 +1,5 @@
 // src/components/event-chat/useChatLogic.ts
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChatMessage, CHAT_HISTORY_KEY, CHAT_QUERIES_KEY, PanelEventData, PanelEvent, AdEvent } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { generateResponse, getWelcomeMessage, createResponseHeader } from '@/utils/chatUtils';
@@ -81,7 +81,8 @@ export const useChatLogic = (
         price: event.is_paid ? "Kostenpflichtig" : "Kostenlos",
         location: event.location,
         image_url: event.image_url || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop',
-        category: event.category
+        category: event.category,
+        link: event.link // Ensure link is also added for events
       });
     });
 
@@ -100,8 +101,8 @@ export const useChatLogic = (
     };
   };
 
-  const handleToggleChat = () => {
-    setIsChatOpen(!isChatOpen);
+  const handleToggleChat = useCallback(() => { // Wrap in useCallback
+    setIsChatOpen(prev => !prev); // Use functional update
     if (!isChatOpen) {
       setTimeout(() => {
         if (inputRef.current) {
@@ -109,7 +110,75 @@ export const useChatLogic = (
         }
       }, 300);
     }
-  };
+  }, [isChatOpen]); // Add isChatOpen to dependency array
+
+  const fetchGlobalQueries = useCallback(async () => { // Wrap in useCallback
+    try {
+      const { data, error } = await supabase
+        .from('chat_queries')
+        .select('query')
+        .order('created_at', { ascending: false })
+        .limit(3);
+        
+      if (error) {
+        console.error('[useChatLogic] Error fetching global queries:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        const queries = data.map(item => item.query);
+        setGlobalQueries(queries);
+      }
+    } catch (error) {
+      console.error('[useChatLogic] Exception fetching global queries:', error);
+    }
+  }, []); // Empty dependency array as it only depends on supabase and setGlobalQueries
+
+  const saveGlobalQuery = useCallback(async (query: string) => { // Wrap in useCallback
+    try {
+      const { data: existingData, error: checkError } = await supabase
+        .from('chat_queries')
+        .select('id')
+        .eq('query', query)
+        .limit(1);
+        
+      if (checkError) {
+        console.error('[useChatLogic] Error checking for existing query:', checkError);
+        return;
+      }
+      
+      if (existingData && existingData.length > 0) {
+        await supabase
+          .from('chat_queries')
+          .update({ created_at: new Date().toISOString() })
+          .eq('id', existingData[0].id);
+      } else {
+        const { error: insertError } = await supabase
+          .from('chat_queries')
+          .insert({ query: query });
+          
+        if (insertError) {
+          console.error('[useChatLogic] Error saving global query:', insertError);
+        }
+      }
+      
+      fetchGlobalQueries();
+    } catch (error) {
+      console.error('[useChatLogic] Exception saving global query:', error);
+    }
+  }, [fetchGlobalQueries]); // Add fetchGlobalQueries to dependency array
+
+
+  const updateRecentQueries = useCallback((query: string) => { // Wrap in useCallback
+    setRecentQueries(prev => {
+      const filteredQueries = prev.filter(q => q !== query);
+      const newQueries = [query, ...filteredQueries].slice(0, 3);
+      return newQueries;
+    });
+    
+    saveGlobalQuery(query);
+  }, [saveGlobalQuery]); // Add saveGlobalQuery to dependency array
+
 
   const handleSendMessage = async (customInput?: string) => {
     const message = customInput || input;
