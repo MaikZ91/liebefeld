@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { generateResponse, getWelcomeMessage, createResponseHeader } from '@/utils/chatUtils';
 import { toast } from 'sonner';
 
+// Importiere deine Event-Typen und Hilfsfunktionen zur Event-Filterung
 import { Event } from '@/types/eventTypes';
 import { getFutureEvents, getEventsForDay, getWeekRange } from '@/utils/eventUtils';
 
@@ -28,12 +29,14 @@ export const useChatLogic = (
   const inputRef = useRef<HTMLInputElement>(null);
   const welcomeMessageShownRef = useRef(false);
   
+  // Example prompts that users can click on
   const examplePrompts = [
     "Welche Events gibt es heute?",
     "Was kann ich am Wochenende machen?",
     "Gibt es Konzerte im Lokschuppen?"
   ];
 
+  // Ad Events direkt hier definieren oder importieren (Beispielhaft hier definiert)
   const adEvents: AdEvent[] = [
     {
       title: 'Tribe Creative Circle',
@@ -41,7 +44,7 @@ export const useChatLogic = (
       location: 'Anmeldung in der Community',
       imageUrl: '/lovable-uploads/83f7c05b-0e56-4f3c-a19c-adeab5429b59.jpg',
       link: "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK",
-      type: "event"
+      type: "event" // Hinzugefügt für Typunterscheidung
     },
     {
       title: 'Tribe Kennenlernabend',
@@ -49,7 +52,7 @@ export const useChatLogic = (
       location: 'Anmeldung in der Community',
       imageUrl: '/lovable-uploads/8562fff2-2b62-4552-902b-cc62457a3402.png',
       link: "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK",
-      type: "event"
+      type: "event" // Hinzugefügt für Typunterscheidung
     },
     {
       title: 'Hör dir die Tribe Playlist an!',
@@ -57,18 +60,11 @@ export const useChatLogic = (
       location: 'Spotify',
       imageUrl: '/lovable-uploads/e3d0a85b-9935-450a-bba8-5693570597a3.png',
       link: "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M",
-      type: "music"
-    },
-    { // Neue Werbeanzeige
-      title: 'Ihre Anzeige hier! Erreichen Sie Ihr Zielpublikum.',
-      date: 'Maßgeschneiderte Lösungen',
-      location: 'Kontaktieren Sie uns jetzt!',
-      imageUrl: '/lovable-uploads/placeholder-ad.png', // Stellen Sie sicher, dass dieses Bild existiert
-      link: "mailto:mschach@googlemail.com",
-      type: "sponsored-ad"
+      type: "music" // Neuer Typ für Musik-Anzeigen
     }
   ];
 
+  // Ersetzte createDummyPanelData durch eine Funktion, die echte Events oder Anzeigen verwendet
   const createPanelData = (filteredEvents: Event[]): PanelEventData => {
     const allItems: (PanelEvent | AdEvent)[] = [];
 
@@ -90,8 +86,8 @@ export const useChatLogic = (
     if (adEvents.length > 0) {
       const randomAd = adEvents[Math.floor(Math.random() * adEvents.length)];
       
-      // Bestimme die Einfügeposition. Mindestens ab dem 3. Slide (Index 2),
-      // oder am Ende, wenn weniger als 2 Events vorhanden sind.
+      // Bestimme die Einfügeposition. Mindestens ab dem 3. Slide, oder am Ende,
+      // wenn weniger als 2 Events vorhanden sind.
       const insertIndex = allItems.length >= 2 ? Math.floor(Math.random() * (allItems.length - 2 + 1)) + 2 : allItems.length;
       
       allItems.splice(insertIndex, 0, randomAd);
@@ -104,6 +100,97 @@ export const useChatLogic = (
     };
   };
 
+  // Load chat history and recent queries from localStorage
+  useEffect(() => {
+    const savedMessages = localStorage.getItem(CHAT_HISTORY_KEY);
+    if (savedMessages) {
+      try {
+        const parsedMessages = JSON.parse(savedMessages);
+        if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
+          setMessages(parsedMessages);
+          welcomeMessageShownRef.current = true;
+        }
+      } catch (error) {
+        console.error('[useChatLogic] Error parsing saved chat history:', error);
+      }
+    }
+    
+    const savedQueries = localStorage.getItem(CHAT_QUERIES_KEY);
+    if (savedQueries) {
+      try {
+        const parsedQueries = JSON.parse(savedQueries);
+        if (Array.isArray(parsedQueries)) {
+          setRecentQueries(parsedQueries.slice(0, 3));
+        }
+      } catch (error) {
+        console.error('[useChatLogic] Error parsing saved queries:', error);
+      }
+    }
+    
+    try {
+      const heartModeActive = localStorage.getItem('heart_mode_active') === 'true';
+      setIsHeartActive(heartModeActive);
+      console.log('[useChatLogic] Heart mode loaded from localStorage:', heartModeActive);
+    } catch (error) {
+      console.error('[useChatLogic] Error loading heart mode state:', error);
+    }
+    
+    fetchGlobalQueries();
+  }, []);
+
+  // Save chat history to localStorage whenever messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
+    }
+  }, [messages]);
+
+  // Save recent queries to localStorage whenever they change
+  useEffect(() => {
+    if (recentQueries.length > 0) {
+      localStorage.setItem(CHAT_QUERIES_KEY, JSON.stringify(recentQueries));
+    }
+  }, [recentQueries]);
+  
+  // Save heart mode state to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('heart_mode_active', isHeartActive ? 'true' : 'false');
+      console.log('[useChatLogic] Heart mode saved to localStorage:', isHeartActive);
+    } catch (error) {
+      console.error('[useChatLogic] Error saving heart mode state:', error);
+    }
+  }, [isHeartActive]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, fullPage ? 0 : 5000);
+
+    return () => clearTimeout(timer);
+  }, [fullPage]);
+
+  useEffect(() => {
+    if (isChatOpen && messages.length === 0 && !welcomeMessageShownRef.current && activeChatModeValue === 'ai') {
+      welcomeMessageShownRef.current = true;
+      setMessages([
+        {
+          id: 'welcome',
+          isUser: false,
+          text: 'Willkommen beim Liebefeld Event-Assistent!',
+          html: getWelcomeMessage(),
+          timestamp: new Date().toISOString()
+        }
+      ]);
+    }
+  }, [isChatOpen, messages.length, activeChatModeValue]);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
   const handleToggleChat = () => {
     setIsChatOpen(!isChatOpen);
     if (!isChatOpen) {
@@ -113,6 +200,72 @@ export const useChatLogic = (
         }
       }, 300);
     }
+  };
+  
+  const fetchGlobalQueries = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('chat_queries')
+        .select('query')
+        .order('created_at', { ascending: false })
+        .limit(3);
+        
+      if (error) {
+        console.error('[useChatLogic] Error fetching global queries:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        const queries = data.map(item => item.query);
+        setGlobalQueries(queries);
+      }
+    } catch (error) {
+      console.error('[useChatLogic] Exception fetching global queries:', error);
+    }
+  };
+  
+  const saveGlobalQuery = async (query: string) => {
+    try {
+      const { data: existingData, error: checkError } = await supabase
+        .from('chat_queries')
+        .select('id')
+        .eq('query', query)
+        .limit(1);
+        
+      if (checkError) {
+        console.error('[useChatLogic] Error checking for existing query:', checkError);
+        return;
+      }
+      
+      if (existingData && existingData.length > 0) {
+        await supabase
+          .from('chat_queries')
+          .update({ created_at: new Date().toISOString() })
+          .eq('id', existingData[0].id);
+      } else {
+        const { error: insertError } = await supabase
+          .from('chat_queries')
+          .insert({ query: query });
+          
+        if (insertError) {
+          console.error('[useChatLogic] Error saving global query:', insertError);
+        }
+      }
+      
+      fetchGlobalQueries();
+    } catch (error) {
+      console.error('[useChatLogic] Exception saving global query:', error);
+    }
+  };
+
+  const updateRecentQueries = (query: string) => {
+    setRecentQueries(prev => {
+      const filteredQueries = prev.filter(q => q !== query);
+      const newQueries = [query, ...filteredQueries].slice(0, 3);
+      return newQueries;
+    });
+    
+    saveGlobalQuery(query);
   };
 
   const handleSendMessage = async (customInput?: string) => {
@@ -192,11 +345,14 @@ export const useChatLogic = (
       relevantEvents = relevantEvents.filter(event => event.category && event.category.toLowerCase() === detectedCategory.toLowerCase());
     }
     
+    // Panel immer anzeigen, auch wenn keine Events gefunden wurden, um die Anzeige zu ermöglichen
+    const panelData = createPanelData(relevantEvents); // Nun immer aufrufen
+
     const panelMessage: ChatMessage = {
       id: `panel-${Date.now()}`,
       isUser: false,
       text: 'Hier sind einige Events für dich:',
-      panelData: createPanelData(relevantEvents),
+      panelData: panelData,
       timestamp: new Date().toISOString()
     };
 
