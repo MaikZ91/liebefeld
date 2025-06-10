@@ -62,6 +62,21 @@ export interface ChatInputProps {
   onAddEvent?: () => void;
 }
 
+export interface AdEvent {
+  title: string;
+  date: string;
+  location: string;
+  imageUrl: string;
+  link?: string;
+  type?: string;
+}
+
+// Update PanelEventData to also include AdEvents
+export interface PanelEventData {
+  events: (PanelEvent | AdEvent)[]; // Allow both event types
+  currentIndex: number;
+}
+
 export interface RecentQueriesProps {
   showRecentQueries: boolean;
   setShowRecentQueries: (show: boolean) => void;
