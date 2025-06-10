@@ -1,4 +1,4 @@
-
+// src/pages/Index.tsx
 import React, { useEffect, useState, useRef } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
@@ -43,7 +43,7 @@ const EventProviderConsumer = ({ tickerRef }: { tickerRef: React.RefObject<HTMLD
 
 type AnimationType = 'char' | 'word' | 'whole';
 
-const AnimatedText = ({ text, delay = 0, className = '', animationType = 'char' as AnimationType }: 
+const AnimatedText = ({ text, delay = 0, className = '', animationType = 'whole' as AnimationType }: 
   { text: string; delay?: number; className?: string; animationType?: AnimationType }) => {
   
   if (animationType === 'whole') {
@@ -253,7 +253,7 @@ const Index = () => {
               <div className="flex gap-8 mb-16">
                 <Button 
                   onClick={() => setTestModalOpen(true)}
-                  className="bg-gradient-to-r from-[#25D366] via-[#20C65A] to-[#128C7E] hover:from-[#128C7E] hover:to-[#0d5d56] text-white rounded-full px-10 py-8 flex items-center justify-center shadow-2xl hover:shadow-3xl transition-all gap-4 animate-bounce-slow border-3 border-white/40 backdrop-blur-sm text-xl font-bold tracking-wide group"
+                  className="bg-gradient-to-r from-[#25D366] via-[#20C65A] to-[#128C7E] hover:from-[#128C7E] hover:to-[#0d5d56] text-white rounded-full px-10 py-8 flex items-center justify-center shadow-2xl hover:shadow-3xl transition-all gap-4 animate-bounce-slow border-3 border-white/40 backdrop-blur-sm text-xl font-bold tracking-wider group"
                   size="lg"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="white" className="h-7 w-7 group-hover:scale-110 transition-transform">
