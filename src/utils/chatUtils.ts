@@ -13,6 +13,18 @@ export const getWelcomeMessage = () => {
   `;
 };
 
+// Neue Funktion für die animierte Willkommensnachricht
+export const getAnimatedWelcomeMessage = () => {
+  return `
+    <div class="rounded-lg p-3 text-sm bg-black text-white">
+      <p class="text-lg font-bold text-white mb-2">
+        <span class="typewriter-animation">Hallo Liebefeld!</span>
+      </p>
+      <p class="text-white">Ich bin dein persönlicher Event-Assistent. Starte mit der Erkundung personalisierter Events und Community-Chats, indem du dein Benutzerprofil anlegst.</p>
+    </div>
+  `;
+};
+
 export const formatEvents = (events: any[]) => {
   if (!events || events.length === 0) {
     return '<p>Keine Events gefunden.</p>';
