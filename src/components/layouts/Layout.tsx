@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -136,8 +135,8 @@ const MainNav: React.FC<MainNavProps> = ({
   setIsEventListSheetOpen 
 }) => {
   
-  // If we're on chat page, show THE TRIBE + chat navigation buttons
-  if (pathname === '/chat') {
+  // If we're on chat page or the root path, show THE TRIBE + chat navigation buttons
+  if (pathname === '/chat' || pathname === '/') {
     return (
       <div className="flex items-center w-full">
         <Link to="/" className="mr-6 flex items-center space-x-2">
