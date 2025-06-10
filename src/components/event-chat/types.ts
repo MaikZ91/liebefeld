@@ -1,6 +1,4 @@
-import { RefObject } from 'react';
-import { UserProfile } from '@/types/chatTypes';
-
+// src/components/event-chat/types.ts
 export interface ChatMessage {
   id: string;
   isUser: boolean;
@@ -11,7 +9,7 @@ export interface ChatMessage {
 }
 
 export interface PanelEventData {
-  events: PanelEvent[];
+  events: (PanelEvent | AdEvent)[]; // Korrigiert: Erlaubt Events und Ads
   currentIndex: number;
 }
 
@@ -24,6 +22,16 @@ export interface PanelEvent {
   location: string;
   image_url: string;
   category: string;
+  link?: string; // Hinzugefügt: Events können auch Links haben
+}
+
+export interface AdEvent {
+  title: string;
+  date: string;
+  location: string;
+  imageUrl: string;
+  link?: string;
+  type?: string; // Hinzugefügt für spezifische Anzeigentypen
 }
 
 export interface EventChatBotProps {
@@ -62,21 +70,6 @@ export interface ChatInputProps {
   onAddEvent?: () => void;
 }
 
-export interface AdEvent {
-  title: string;
-  date: string;
-  location: string;
-  imageUrl: string;
-  link?: string;
-  type?: string;
-}
-
-// Update PanelEventData to also include AdEvents
-export interface PanelEventData {
-  events: (PanelEvent | AdEvent)[]; // Allow both event types
-  currentIndex: number;
-}
-
 export interface RecentQueriesProps {
   showRecentQueries: boolean;
   setShowRecentQueries: (show: boolean) => void;
@@ -92,7 +85,7 @@ export interface ChatHeaderProps {
 }
 
 export interface PersonalizationOptions {
-  userProfile: UserProfile | null;
+  userProfile: any | null; // Typ angepasst, da UserProfile in chatTypes definiert ist
   currentUser: string | null;
   userService: any;
 }
