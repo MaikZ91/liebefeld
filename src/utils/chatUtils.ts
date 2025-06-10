@@ -4,16 +4,15 @@ import { de } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 
 export const getWelcomeMessage = () => {
-  const today = format(new Date(), 'EEEE, d. MMMM yyyy', { locale: de });
+  const today = format(new Date(), 'EEEE, d. MMMM', { locale: de });
   return `
-    <div class="rounded-lg p-3 text-sm">
+    <div class="rounded-lg p-3 text-sm bg-black text-white">
       <p class="text-lg font-bold text-white mb-2">Hallo Liebefeld!</p>
-      <p>Ich bin dein persönlicher Event-Assistent. Starte mit der Erkundung personalisierter Events und Community-Chats, indem du dein Benutzerprofil anlegst.</p>
-      <p class="mt-4">
+      <p class="text-white">Ich bin dein persönlicher Event-Assistent. Starte mit der Erkundung personalisierter Events und Community-Chats, indem du dein Benutzerprofil anlegst.</p>
+      <p class="mt-4 text-white">
         Aktuelles Datum: <strong>${today}</strong>
       </p>
-      <p class="mt-4 text-sm text-red-200 mb-2">Frag mich zum Beispiel:</p>
-      <ul class="list-disc list-inside space-y-1 ml-4 text-white">
+      <ul class="list-disc list-inside space-y-1 ml-4 mt-4 text-white">
         <li>"Welche Events gibt es heute?"</li>
         <li>"Was kann ich am Wochenende machen?"</li>
         <li>"Gibt es Konzerte im Lokschuppen?"</li>
