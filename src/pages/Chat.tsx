@@ -1,3 +1,4 @@
+// src/pages/Chat.tsx
 import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
@@ -47,6 +48,7 @@ const ChatPage = () => {
 
   // Function to open user directory
   const handleOpenUserDirectory = () => {
+    // For now, just close the directory - can be extended later
     setIsUserDirectoryOpen(true);
   };
 
