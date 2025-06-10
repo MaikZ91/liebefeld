@@ -1,3 +1,5 @@
+// src/components/calendar/EventList.tsx
+
 import React, { useRef, useEffect, useState, memo, useMemo } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -106,11 +108,26 @@ const EventList: React.FC<EventListProps> = memo(({
     // Pre-sort events within each date group
     Object.keys(grouped).forEach(dateStr => {
       grouped[dateStr].sort((a, b) => {
+        // Sort by likes (descending) first
         const likesA = a.likes || 0;
         const likesB = b.likes || 0;
         
         if (likesB !== likesA) {
           return likesB - likesA;
+        }
+        
+        // Then sort by time (ascending)
+        const timeA = a.time || '00:00';
+        const timeB = b.time || '00:00';
+        
+        const [hourA, minuteA] = timeA.split(':').map(Number);
+        const [hourB, minuteB] = timeB.split(':').map(Number);
+        
+        if (hourA !== hourB) {
+          return hourA - hourB;
+        }
+        if (minuteA !== minuteB) {
+          return minuteA - minuteB;
         }
         
         return a.id.localeCompare(b.id);
@@ -121,7 +138,27 @@ const EventList: React.FC<EventListProps> = memo(({
   }, [regularEvents]);
   
   const hochschulsportEventsByDate = useMemo(() => {
-    return groupEventsByDate(hochschulsportEvents);
+    // Also sort Hochschulsport events by time
+    const grouped = groupEventsByDate(hochschulsportEvents);
+    Object.keys(grouped).forEach(dateStr => {
+      grouped[dateStr].sort((a, b) => {
+        const timeA = a.time || '00:00';
+        const timeB = b.time || '00:00';
+        
+        const [hourA, minuteA] = timeA.split(':').map(Number);
+        const [hourB, minuteB] = timeB.split(':').map(Number);
+        
+        if (hourA !== hourB) {
+          return hourA - hourB;
+        }
+        if (minuteA !== minuteB) {
+          return minuteA - minuteB;
+        }
+        
+        return a.id.localeCompare(b.id);
+      });
+    });
+    return grouped;
   }, [hochschulsportEvents]);
 
   useEffect(() => {
