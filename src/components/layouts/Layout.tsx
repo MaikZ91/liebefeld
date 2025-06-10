@@ -153,7 +153,7 @@ const MainNav: React.FC<MainNavProps> = ({
               className={`flex items-center gap-2 ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}
             >
               <Calendar className="h-4 w-4" />
-              <span className="text-[10px] px-1">Events</span>
+              <span className="text-[10px] px-1">Event</span>
             </Button>
             <Button 
               variant={activeView === 'community' ? "default" : "outline"} 
