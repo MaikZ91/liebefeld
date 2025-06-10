@@ -9,12 +9,6 @@ export const getWelcomeMessage = () => {
     <div class="rounded-lg p-3 text-sm bg-black text-white">
       <p class="text-lg font-bold text-white mb-2">Hallo Liebefeld!</p>
       <p class="text-white">Ich bin dein persönlicher Event-Assistent. Starte mit der Erkundung personalisierter Events und Community-Chats, indem du dein Benutzerprofil anlegst.</p>
-      {/* Removed the line that displayed the current date as requested */}
-      <ul class="list-disc list-inside space-y-1 ml-4 mt-4 text-white">
-        <li>"Welche Events gibt es heute?"</li>
-        <li>"Was kann ich am Wochenende machen?"</li>
-        <li>"Gibt es Konzerte im Lokschuppen?"</li>
-      </ul>
     </div>
   `;
 };
