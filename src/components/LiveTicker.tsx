@@ -104,7 +104,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef }) => {
         onMouseLeave={() => setIsPaused(false)}
         ref={tickerRef}
       >
-        <div className="absolute left-0 top-0 bottom-0 flex items-center z-10 bg-red-600 px-2 py-0.5">
+        <div className="absolute left-0 top-0 bottom-0 flex items-center z-10 bg-red-600 pr-0 py-0.5">
           <Calendar className="w-3.5 h-3.5" />
         </div>
         
@@ -118,7 +118,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef }) => {
           >
             {[...tickerEvents, ...tickerEvents].map((event, index) => (
               <div 
-                key={`${event.id}-${index}`} 
+                key={`<span class="math-inline">\{event\.id\}\-</span>{index}`} 
                 className="inline-block mx-3"
               >
                 <span className="inline-flex items-center">
