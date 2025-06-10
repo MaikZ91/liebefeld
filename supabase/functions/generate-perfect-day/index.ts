@@ -250,24 +250,27 @@ serve(async (req) => {
 });
 
 async function generatePerfectDayMessage(
-  events: any[],
+  events: any[], // This now contains all future events from today
   userProfile: any,
   weather: string,
-  date: string,
-  activitySuggestions: any[], // Parametername bleibt hier gleich, da er in diesem Scope definiert ist.
+  date: string, // This is 'today' from the calling function
+  activitySuggestions: any[],
   clientInterests: string[],
   clientFavoriteLocations: string[]
 ): Promise<string> {
   try {
-    const morningEvents = events.filter(e => {
+    // NEU: Filtere Events explizit nach dem heutigen Datum
+    const todaysRelevantEvents = events.filter(e => e.date === date);
+
+    const morningEvents = todaysRelevantEvents.filter(e => { // Verwende gefilterte Events
       const hour = parseInt(e.time.split(':')[0]);
       return hour >= 6 && hour < 12;
     });
-    const afternoonEvents = events.filter(e => {
+    const afternoonEvents = todaysRelevantEvents.filter(e => { // Verwende gefilterte Events
       const hour = parseInt(e.time.split(':')[0]);
       return hour >= 12 && hour < 18;
     });
-    const eveningEvents = events.filter(e => {
+    const eveningEvents = todaysRelevantEvents.filter(e => { // Verwende gefilterte Events
       const hour = parseInt(e.time.split(':')[0]);
       return hour >= 18 || hour < 6;
     });
@@ -305,7 +308,8 @@ Verfügbare Events heute (${date}):`;
       systemPrompt += `\n\nAbend-Events:\n${eveningEvents.map(formatEventForPrompt).join('\n')}`;
     }
 
-    if (events.length === 0) {
+    // NEU: Prüfe auf Basis der heute relevanten Events
+    if (todaysRelevantEvents.length === 0) {
       systemPrompt += `\n\nKeine spezifischen Events heute verfügbar - erstelle allgemeine Empfehlungen für Liebefeld.`;
     }
 
