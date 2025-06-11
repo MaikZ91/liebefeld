@@ -1,6 +1,4 @@
 // src/pages/Chat.tsx
-// Changed: Added message counting and new event counting.
-// Passed new counts to Layout component.
 import React, { useState, useEffect, useRef } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
@@ -284,12 +282,12 @@ const ChatPage = () => {
         {/* User Directory Sheet */}
         <Sheet open={isUserDirectoryOpen} onOpenChange={setIsUserDirectoryOpen}>
           <SheetContent className="sm:max-w-lg overflow-hidden">
-            <SheetHeader>
+            <SheetHeader> {/* Corrected: Removed self-closing tag here */}
               <SheetTitle>Benutzer</SheetTitle>
               <SheetDescription>
                 Entdecke andere Community-Mitglieder
               </SheetDescription>
-            </SheetDescription>
+            </SheetHeader> {/* Corrected: Added explicit closing tag here */}
             <div className="mt-4 overflow-y-auto max-h-[80vh]">
               <UserDirectory 
                 open={isUserDirectoryOpen}
