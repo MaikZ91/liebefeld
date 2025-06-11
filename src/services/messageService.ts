@@ -1,4 +1,5 @@
-
+// src/services/messageService.ts
+// Changed: 'content' to 'text'
 import { supabase } from '@/integrations/supabase/client';
 import { Message } from '@/types/chatTypes';
 
@@ -70,7 +71,7 @@ export const messageService = {
       const formattedMessages: Message[] = (data || []).map(msg => ({
         id: msg.id,
         created_at: msg.created_at,
-        content: msg.text,
+        text: msg.text, // Changed from 'content' to 'text'
         user_name: msg.sender,
         user_avatar: msg.avatar || '',
         group_id: msg.group_id,
@@ -129,7 +130,7 @@ export const messageService = {
   async sendMessage(
     groupId: string, 
     username: string, 
-    content: string, 
+    text: string, // Changed from 'content' to 'text'
     avatar: string | null = null,
     mediaUrl: string | null = null
   ): Promise<string | null> {
@@ -145,7 +146,7 @@ export const messageService = {
         .insert([{
           group_id: validGroupId,
           sender: username,
-          text: content,
+          text: text, // Changed from 'content' to 'text'
           avatar: avatar,
           media_url: mediaUrl,
           read_by: [username] // The sending person has already read the message
