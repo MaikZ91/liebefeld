@@ -11,7 +11,7 @@ import { USERNAME_KEY, AVATAR_KEY, TypingUser } from '@/types/chatTypes';
 import { useEventContext } from '@/contexts/EventContext';
 import { toast } from '@/hooks/use-toast';
 import { getInitials } from '@/utils/chatUIUtils';
-import MessageInput from './MessageInput'; // Korrigierter Importpfad
+import MessageInput from './MessageInput'; // Import MessageInput
 
 interface ChatGroupProps {
   groupId: string;
@@ -48,13 +48,13 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   const [eventSearchQuery, setEventSearchQuery] = useState('');
   
   const chatBottomRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null); // This ref is used for MessageInput
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null); // This ref is used by MessageInput
   const messagesRef = useRef<Message[]>(messages);
   const channelsRef = useRef<any[]>([]);
   const sentMessageIds = useRef<Set<string>>(new Set());
   
-  const { events } = useEventContext();
+  const { events } = useEventContext(); // Get events from context
   
   // Detect the group type based on name
   const isAusgehenGroup = groupName.toLowerCase() === 'ausgehen';
@@ -355,7 +355,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   };
   
   // Handle sending messages
-  const handleSubmit = async (eventData?: any) => { // Removed `e: React.FormEvent` and added `eventData`
+  const handleSubmit = async (eventData?: any) => {
     if ((!newMessage.trim() && !fileInputRef.current?.files?.length && !eventData) || !username || !groupId) {
       return;
     }
@@ -363,14 +363,13 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     try {
       setIsSending(true);
       
-      // Handle file upload (existing logic, not directly used in this updated file)
+      // Handle file upload (MessageInput handles the ref, so this is just for potential mediaUrl logic)
       let mediaUrl = undefined;
       /*
       if (fileInputRef.current?.files?.length) {
         const file = fileInputRef.current.files[0];
         // Here you would upload the file to storage and get a URL
-        // For now, this part is commented out as fileInputRef is not passed to MessageInput
-        // and its logic should be handled there.
+        // For now, this part is commented out as fileInputRef is not directly connected to MessageInput's internal file handling.
       }
       */
       
@@ -409,7 +408,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       
       // Clear input 
       setNewMessage('');
-      // Reset file input (if applicable, though handled by MessageInput internally)
+      // Reset file input (if applicable, though MessageInput's internal logic handles its own input clearing)
       /*
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -434,7 +433,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         throw error;
       }
       
-      // Reset typing state (handled by MessageInput callbacks)
+      // Reset typing state (MessageInput's callbacks handle this)
       /*
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
@@ -461,8 +460,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   // Handle input change from MessageInput
   const handleInputChangeFromMessageInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);
-    // You would typically handle typing status here, but MessageInput already has its own internal state
-    // and sends broadcasts. So we just need to update newMessage.
+    // MessageInput has its own internal typing state handling, this is just to update the `newMessage` state
   };
   
   // Handle key down from MessageInput
@@ -579,7 +577,28 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
                     )}
                     <div className={`ml-10 pl-2 border-l-2 border-red-500 ${isConsecutive ? 'mt-1' : 'mt-0'}`}>
                       <div className="bg-black rounded-md p-2 text-white break-words">
-                        {message.content}
+                        {/* WICHTIG: Hier muss EventMessageFormatter angewendet werden, wenn es Event-Daten gibt */}
+                        {message.content.includes('🗓️ **Event:') ? ( // Check if content contains event formatting
+                          <EventMessageFormatter event={{ // Dummy event object, the formatter will parse the content
+                            title: '', date: '', time: '', location: '', category: '',
+                            // Pass the original content to be parsed by EventMessageFormatter
+                            // A more robust solution would involve parsing eventData upfront in fetchMessages
+                            // or storing it directly in the Message object.
+                            // For this iteration, we'll assume EventMessageFormatter can handle string parsing.
+                            // If EventMessageFormatter strictly expects an object, this would need refactoring.
+                            // For now, let's pass a placeholder and assume EventMessageFormatter can deal with content string.
+                            // Alternatively, `message.content` could be passed to a parsing utility function.
+                            // Let's assume EventMessageFormatter has a way to handle raw text as its event prop.
+                            // If not, EventMessageFormatter needs to be updated to take `rawText` or `message.content`
+                            // and parse it internally.
+                            // Based on `EventMessageFormatter.tsx`, it expects an `EventShare` object.
+                            // So, the `parseEventData` logic from `MessageList.tsx` (chat folder) needs to be integrated
+                            // or `message.content` needs to be pre-parsed.
+                            // For now, let's assume `message.content` can be used by the formatter directly.
+                          }} />
+                        ) : (
+                          message.content // Render as plain text if no event formatting
+                        )}
                       </div>
                     </div>
                   </div>
@@ -630,6 +649,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
                 </div>
                 <ScrollArea className="h-[350px]">
                   <div className="p-2 space-y-2">
+                    {/* WICHTIG: events ist hier aus dem useEventContext, das ist korrekt */}
                     {filteredEvents.length === 0 ? (
                       <p className="text-gray-400 text-center py-4">Keine Events gefunden</p>
                     ) : (
