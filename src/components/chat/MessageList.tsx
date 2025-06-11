@@ -1,4 +1,4 @@
-
+// src/components/chat/MessageList.tsx
 import React, { useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -47,10 +47,10 @@ const MessageList: React.FC<MessageListProps> = ({
   // Parse event data from message content if available
   const parseEventData = (message: Message): EventShare | undefined => {
     try {
-      if (typeof message.content === 'string' && message.content.includes('🗓️ **Event:')) {
+      if (typeof message.text === 'string' && message.text.includes('🗓️ **Event:')) {
         // Extract event data from formatted message content
         const eventRegex = /🗓️ \*\*Event: (.*?)\*\*\nDatum: (.*?) um (.*?)\nOrt: (.*?)\nKategorie: (.*?)(\n\n|$)/;
-        const match = message.content.match(eventRegex);
+        const match = message.text.match(eventRegex);
         
         if (match) {
           return {
@@ -74,7 +74,7 @@ const MessageList: React.FC<MessageListProps> = ({
   const handleReaction = (messageId: string) => {
     return async (emoji: string) => {
       try {
-        console.log('MessageList: Toggling reaction:', { messageId, emoji, username });
+        console.log('MessageList: Toggling reaction', { messageId, emoji, username });
         const success = await reactionService.toggleReaction(messageId, emoji, username);
         if (!success) {
           console.error('Failed to toggle reaction');
@@ -110,14 +110,14 @@ const MessageList: React.FC<MessageListProps> = ({
             
             // Parse event data
             let eventData: EventShare | undefined;
-            let messageContent = message.content;
+            let messageContent = message.text; // Changed from message.content
             
             try {
               eventData = parseEventData(message);
               
               // Remove event data from message content if present
-              if (eventData && typeof message.content === 'string' && message.content.includes('🗓️ **Event:')) {
-                messageContent = message.content.replace(/🗓️ \*\*Event:.*?\n\n/s, '').trim();
+              if (eventData && typeof message.text === 'string' && message.text.includes('🗓️ **Event:')) {
+                messageContent = message.text.replace(/🗓️ \*\*Event:.*?\n\n/s, '').trim();
               }
             } catch (error) {
               console.error("Failed to parse event data:", error);

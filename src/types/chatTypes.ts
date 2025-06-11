@@ -1,4 +1,5 @@
-
+// src/types/chatTypes.ts
+// Changed: reactions: { emoji: string; users: string[] }[] | null;
 export interface ChatMessage {
   id: string;
   group_id: string;
@@ -35,16 +36,17 @@ export interface ChatQuery {
   created_at?: string;
 }
 
+// Changed: 'content' to 'text' and added 'reactions'
 export interface Message {
   id: string;
   created_at: string;
-  content: string;
+  text: string; // Changed from 'content' to 'text'
   user_name: string;
   user_avatar: string;
   group_id: string;
   event_data?: EventShare;
   read_by?: string[];
-  reactions?: { emoji: string; users: string[] }[];
+  reactions?: { emoji: string; users: string[] }[]; // Added reactions
 }
 
 export interface ChatGroup {

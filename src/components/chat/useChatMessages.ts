@@ -1,14 +1,13 @@
-
-import { useState, useEffect, useRef } from 'react';
-import { Message, TypingUser } from '@/types/chatTypes';
+// src/hooks/chat/useChatMessages.ts
+// Changed: 'content' to 'text' in message type and 'Message' import
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Message } from '@/types/chatTypes';
 import { useMessageFetching } from '@/hooks/chat/useMessageFetching';
-import { useMessageSubscription } from '@/hooks/chat/useMessageSubscription';
-import { useTypingIndicator } from '@/hooks/chat/useTypingIndicator';
 import { useReconnection } from '@/hooks/chat/useReconnection';
 import { useScrollManagement } from '@/hooks/chat/useScrollManagement';
-import { chatService } from '@/services/chatService';
 import { messageService } from '@/services/messageService';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { supabase } from '@/integrations/supabase/client';
+import { realtimeService } from '@/services/realtimeService';
 
 export const useChatMessages = (groupId: string, username: string) => {
   // Use a valid UUID for groupId, default to general if not provided
@@ -16,9 +15,11 @@ export const useChatMessages = (groupId: string, username: string) => {
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [lastSeen, setLastSeen] = useState<Date>(new Date());
+  const [typingUsers, setTypingUsers] = useState<any[]>([]);
   const messagesRef = useRef<Message[]>(messages);
-  const isMobile = useIsMobile();
-  const [whatsAppMessageAdded, setWhatsAppMessageAdded] = useState(false);
+  const channelsRef = useRef<any[]>([]);
+  const timeoutsRef = useRef<{[key: string]: NodeJS.Timeout}>({});
+  const processedMessageIds = useRef<Set<string>>(new Set());
   
   const { fetchMessages, loading, error, setError } = useMessageFetching(validGroupId);
   
@@ -26,6 +27,147 @@ export const useChatMessages = (groupId: string, username: string) => {
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+  
+  // Handle new message
+  const handleNewMessage = useCallback((newMsg: Message) => {
+    console.log('New message received:', newMsg);
+    
+    // Check if this message has already been processed
+    if (processedMessageIds.current.has(newMsg.id)) {
+      console.log('Duplicate message detected, skipping:', newMsg.id);
+      return;
+    }
+    
+    // Add the message ID to the processed set
+    processedMessageIds.current.add(newMsg.id);
+    
+    setMessages((oldMessages) => {
+      // Double check if this message already exists to avoid duplicates
+      if (oldMessages.some(msg => msg.id === newMsg.id)) {
+        console.log('Duplicate message detected in state, skipping:', newMsg.id);
+        return oldMessages;
+      }
+      
+      console.log('Adding new message to state:', newMsg);
+      
+      // Mark message as read if from someone else
+      if (newMsg.user_name !== username && username) {
+        messageService.markMessagesAsRead(validGroupId, [newMsg.id], username);
+      }
+      
+      // Process and parse event data before adding to messages
+      try {
+        const processedMsg = {
+          ...newMsg,
+          // We'll parse event data from text in the MessageList component
+        };
+        return [...oldMessages, processedMsg];
+      } catch (error) {
+        console.error('Error processing message:', error);
+        return [...oldMessages, newMsg];
+      }
+    });
+    
+    setLastSeen(new Date());
+  }, [validGroupId, username]);
+  
+  // Setup typing indicators
+  useEffect(() => {
+    if (!validGroupId || !username) return;
+    
+    console.log('Setting up typing indicator for group:', validGroupId);
+    
+    const typingChannel = supabase
+      .channel(`typing:${validGroupId}`)
+      .on('broadcast', { event: 'typing' }, (payload) => {
+        console.log('Typing status update received:', payload);
+        
+        if (payload.payload && payload.payload.username !== username) {
+          const { username: typingUsername, avatar, isTyping } = payload.payload;
+          
+          setTypingUsers(prev => {
+            // Clone current typing list
+            const currentUsers = [...prev];
+            
+            // Find existing user
+            const existingIndex = currentUsers.findIndex(u => u.username === typingUsername);
+            
+            if (isTyping) {
+              // If a timeout exists for this user, clear it
+              if (timeoutsRef.current[typingUsername]) {
+                clearTimeout(timeoutsRef.current[typingUsername]);
+              }
+              
+              // Set new timeout to remove user after 3 seconds
+              timeoutsRef.current[typingUsername] = setTimeout(() => {
+                setTypingUsers(prev => prev.filter(u => u.username !== typingUsername));
+              }, 3000);
+              
+              // Update or add user
+              const user = {
+                username: typingUsername,
+                avatar: avatar,
+                lastTyped: new Date()
+              };
+              
+              if (existingIndex >= 0) {
+                currentUsers[existingIndex] = user;
+              } else {
+                currentUsers.push(user);
+              }
+            } else {
+              // Remove user from list
+              if (existingIndex >= 0) {
+                currentUsers.splice(existingIndex, 1);
+              }
+            }
+            
+            return currentUsers;
+          });
+        }
+      })
+      .subscribe((status) => {
+        console.log('Typing channel subscription status:', status);
+      });
+      
+    channelsRef.current.push(typingChannel);
+    
+    return () => {
+      if (typingChannel) {
+        supabase.removeChannel(typingChannel);
+      }
+    };
+  }, [validGroupId, username]);
+  
+  // Setup message listener
+  useEffect(() => {
+    if (!validGroupId || !username) {
+      console.log('No group ID or username, skipping message subscription');
+      return;
+    }
+    
+    console.log('Setting up message listener for group:', validGroupId);
+    
+    // Clear the set of processed message IDs when changing groups
+    processedMessageIds.current.clear();
+    
+    // Set up message listener using the realtimeService
+    const channels = realtimeService.setupMessageListener(validGroupId, handleNewMessage);
+    channelsRef.current = [...channelsRef.current, ...channels];
+    
+    return () => {
+      console.log('Cleaning up message subscription');
+      channels.forEach(channel => {
+        if (channel) {
+          try {
+            supabase.removeChannel(channel);
+          } catch (e) {
+            console.error('Error removing channel:', e);
+          }
+        }
+      });
+    };
+  }, [validGroupId, username, handleNewMessage]);
   
   // Fetch messages when group changes
   useEffect(() => {
@@ -35,92 +177,82 @@ export const useChatMessages = (groupId: string, username: string) => {
     }
   }, [validGroupId]);
   
-  const fetchAndSetMessages = async () => {
-    const fetchedMessages = await fetchMessages();
-    setMessages(fetchedMessages);
-    setLastSeen(new Date());
+  const fetchAndSetMessages = useCallback(async () => {
+    if (!validGroupId) return;
     
-    // Mark messages as read
-    if (fetchedMessages.length > 0 && username) {
-      const unreadMessages = fetchedMessages.filter(
-        msg => msg.user_name !== username
-      );
+    try {
+      console.log(`Fetching messages for group: ${validGroupId}`);
+      const fetchedMessages = await messageService.fetchMessages(validGroupId);
+      console.log(`Fetched ${fetchedMessages.length} messages`);
       
-      if (unreadMessages.length > 0) {
-        chatService.markMessagesAsRead(
-          validGroupId,
-          unreadMessages.map(msg => msg.id),
-          username
+      // Process messages to parse event data from text if needed
+      const processedMessages = fetchedMessages.map(msg => ({
+        ...msg,
+        // We'll parse event data from text in the MessageList component
+      }));
+
+      // Add all fetched message IDs to the processed set
+      fetchedMessages.forEach(msg => {
+        processedMessageIds.current.add(msg.id);
+      });
+      
+      setMessages(processedMessages);
+      setLastSeen(new Date());
+      
+      // Mark messages as read
+      if (fetchedMessages.length > 0 && username) {
+        const unreadMessages = fetchedMessages.filter(
+          msg => msg.user_name !== username
         );
+        
+        if (unreadMessages.length > 0) {
+          messageService.markMessagesAsRead(
+            validGroupId,
+            unreadMessages.map(msg => msg.id),
+            username
+          );
+        }
       }
+    } catch (err) {
+      console.error('Error fetching messages:', err);
     }
-    
-    // Add WhatsApp community message if no messages exist
-    if (fetchedMessages.length === 0 && !whatsAppMessageAdded) {
-      addWhatsAppCommunityMessage();
-    }
-  };
-  
-  // Add WhatsApp community message
-  const addWhatsAppCommunityMessage = () => {
-    const whatsAppLink = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
-    const systemMessage: Message = {
-      id: `whatsapp-info-${Date.now()}`,
-      created_at: new Date().toISOString(),
-      content: `Die Community Interaktion findet derzeit auf WhatsApp statt. Bitte treten Sie unserer WhatsApp-Community bei: ${whatsAppLink}`,
-      user_name: 'System',
-      user_avatar: '',
-      group_id: validGroupId,
-      read_by: username ? [username] : []
-    };
-    
-    setMessages(prev => [...prev, systemMessage]);
-    setWhatsAppMessageAdded(true);
-  };
-  
-  // Handle new messages from subscription
-  const handleNewMessage = (newMsg: Message) => {
-    setMessages((oldMessages) => {
-      if (oldMessages.some(msg => msg.id === newMsg.id)) {
-        return oldMessages;
-      }
-      
-      // Mark message as read if it's from someone else
-      if (newMsg.user_name !== username && username) {
-        chatService.markMessagesAsRead(validGroupId, [newMsg.id], username);
-      }
-      
-      return [...oldMessages, newMsg];
-    });
-    
-    setLastSeen(new Date());
-  };
-  
-  // Set up the subscription
-  const { typingUsers } = useMessageSubscription(
-    validGroupId, 
-    handleNewMessage, 
-    fetchAndSetMessages,
-    username
-  );
+  }, [validGroupId, username, fetchMessages]);
   
   // Reconnection handling
   const { isReconnecting, handleReconnect } = useReconnection(fetchAndSetMessages);
   
-  // Scroll management with mobile awareness
+  // Scroll management
   const { chatBottomRef, chatContainerRef, initializeScrollPosition } = 
     useScrollManagement(messages, typingUsers);
   
-  // Force scroll to bottom after the component mounts on mobile
+  // Clean up all timeouts and channels on unmount
   useEffect(() => {
-    if (isMobile) {
-      const timer = setTimeout(() => {
-        initializeScrollPosition();
-      }, 800); // Longer delay for mobile
+    return () => {
+      // Clear all timeouts
+      Object.values(timeoutsRef.current).forEach(timeout => {
+        clearTimeout(timeout);
+      });
       
-      return () => clearTimeout(timer);
-    }
-  }, [isMobile, initializeScrollPosition]);
+      // Remove all channels
+      channelsRef.current.forEach(channel => {
+        if (channel) {
+          try {
+            supabase.removeChannel(channel);
+          } catch (e) {
+            console.error('Error removing channel:', e);
+          }
+        }
+      });
+    };
+  }, []);
+
+  // Function to add optimistic messages
+  const addOptimisticMessage = useCallback((message: Message) => {
+    console.log('Adding optimistic message:', message);
+    // Add the message ID to the processed set to prevent duplication
+    processedMessageIds.current.add(message.id);
+    setMessages(prev => [...prev, message]);
+  }, []);
 
   return {
     messages,
@@ -134,6 +266,7 @@ export const useChatMessages = (groupId: string, username: string) => {
     chatBottomRef,
     chatContainerRef,
     initializeScrollPosition,
-    addWhatsAppCommunityMessage
+    fetchAndSetMessages,
+    addOptimisticMessage
   };
 };

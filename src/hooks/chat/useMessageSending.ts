@@ -1,7 +1,6 @@
-
 // src/hooks/chat/useMessageSending.ts
-
-import { useState, useRef, useCallback, useEffect } from 'react';
+// Changed: 'content' to 'text' and message payload
+import { useState, useRef, useCallback, useEffect } => 'react';
 import { AVATAR_KEY, EventShare } from '@/types/chatTypes';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,11 +30,11 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
       console.log('Sending message to group:', validGroupId);
       
-      let messageContent = trimmedMessage;
+      let messageText = trimmedMessage; // Changed from messageContent
       
       if (eventData) {
         const { title, date, time, location, category } = eventData;
-        messageContent = `🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${trimmedMessage}`;
+        messageText = `🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${trimmedMessage}`;
       }
       
       // Setzen Sie das Eingabefeld sofort zurück
@@ -73,7 +72,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         .insert([{
           group_id: validGroupId,
           sender: username,
-          text: messageContent,
+          text: messageText, // Changed from messageContent
           avatar: localStorage.getItem(AVATAR_KEY),
           media_url: mediaUrl,
           read_by: [username]
@@ -93,7 +92,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         message: {
           id: data?.id,
           created_at: new Date().toISOString(),
-          content: messageContent,
+          text: messageText, // Changed from content
           user_name: username,
           user_avatar: localStorage.getItem(AVATAR_KEY) || '',
           group_id: validGroupId
