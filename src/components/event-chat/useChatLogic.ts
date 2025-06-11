@@ -512,6 +512,14 @@ export const useChatLogic = (
                     html: getWelcomeMessage(),
                     timestamp: new Date().toISOString()
                 },
+                // NEU: Statische Prompt-Empfehlungen hier einfügen
+                {
+                    id: 'static-prompts', // Eindeutige ID für diese Nachricht
+                    isUser: false,
+                    text: 'Frag mich zum Beispiel:', // Überschrift für die Prompts
+                    examplePrompts: examplePrompts, // Die Prompts selbst
+                    timestamp: new Date().toISOString()
+                },
                 {
                     id: 'landing-slides',
                     isUser: false,
@@ -567,6 +575,14 @@ export const useChatLogic = (
           html: getWelcomeMessage(),
           timestamp: new Date().toISOString()
         },
+        // NEU: Statische Prompt-Empfehlungen auch beim Löschen des Verlaufs hinzufügen
+        {
+            id: 'static-prompts', 
+            isUser: false,
+            text: 'Frag mich zum Beispiel:',
+            examplePrompts: examplePrompts, 
+            timestamp: new Date().toISOString()
+        },
         {
           id: 'landing-slides',
           isUser: false,
@@ -612,7 +628,7 @@ export const useChatLogic = (
     setShowRecentQueries,
     messagesEndRef,
     inputRef,
-    examplePrompts,
+    examplePrompts, // examplePrompts werden weiterhin zurückgegeben, aber nun als Teil der Nachricht im `messages`-Array genutzt
     isHeartActive,
     handleToggleChat,
     handleSendMessage,
@@ -624,6 +640,6 @@ export const useChatLogic = (
     toggleRecentQueries,
     clearChatHistory,
     exportChatHistory,
-    showAnimatedPrompts: false // Hier wird die Animation dauerhaft deaktiviert
+    showAnimatedPrompts: false // Animation im ChatInput bleibt deaktiviert
   };
 };
