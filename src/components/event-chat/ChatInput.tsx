@@ -122,19 +122,21 @@ const ChatInput: React.FC<ChatInputProps> = ({
   return (
     <div className="flex items-center relative max-w-full">
       <div className="absolute left-2 flex items-center gap-1 z-10">
-        {/* Heart button for toggling personalized mode */}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={handleHeartClick} 
-          className={`h-6 w-6 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`} 
-          title={isHeartActive ? "Personalisierter Modus aktiv" : "Standard-Modus aktiv"}
-        >
-          <Heart className={`h-3 w-3 ${isHeartActive ? 'fill-red-500' : ''}`} />
-        </Button>
+        {/* Heart button for toggling personalized mode - nur im AI-Modus sichtbar */}
+        {activeChatModeValue === 'ai' && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleHeartClick} 
+            className={`h-6 w-6 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`} 
+            title={isHeartActive ? "Personalisierter Modus aktiv" : "Standard-Modus aktiv"}
+          >
+            <Heart className={`h-3 w-3 ${isHeartActive ? 'fill-red-500' : ''}`} />
+          </Button>
+        )}
         
-        {/* History button for recent queries */}
-        {globalQueries.length > 0 && (
+        {/* History button for recent queries - nur im AI-Modus sichtbar */}
+        {activeChatModeValue === 'ai' && globalQueries.length > 0 && (
           <Button 
             variant="ghost" 
             size="icon" 
@@ -146,20 +148,22 @@ const ChatInput: React.FC<ChatInputProps> = ({
           </Button>
         )}
 
-        {/* Perfect Day subscription bell */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleSubscription}
-          disabled={loading}
-          className={`h-6 w-6 ${isSubscribed ? 'text-yellow-500' : 'text-red-400'}`}
-          title={isSubscribed ? "Perfect Day Nachrichten abbestellen" : "Tägliche Perfect Day Nachrichten abonnieren"}
-        >
-          <Bell className={`h-3 w-3 ${isSubscribed ? 'fill-yellow-500' : ''} ${loading ? 'animate-pulse' : ''}`} />
-        </Button>
+        {/* Perfect Day subscription bell - nur im AI-Modus sichtbar */}
+        {activeChatModeValue === 'ai' && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSubscription}
+            disabled={loading}
+            className={`h-6 w-6 ${isSubscribed ? 'text-yellow-500' : 'text-red-400'}`}
+            title={isSubscribed ? "Perfect Day Nachrichten abbestellen" : "Tägliche Perfect Day Nachrichten abonnieren"}
+          >
+            <Bell className={`h-3 w-3 ${isSubscribed ? 'fill-yellow-500' : ''} ${loading ? 'animate-pulse' : ''}`} />
+          </Button>
+        )}
 
-        {/* Add Event button with calendar icon */}
-        {onAddEvent && (
+        {/* Add Event button with calendar icon - nur im AI-Modus sichtbar */}
+        {activeChatModeValue === 'ai' && onAddEvent && (
           <Button
             variant="ghost"
             size="icon"
@@ -183,7 +187,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
       />
       
       {/* Clickable overlay for placeholder suggestions */}
-      {showAnimatedPrompts && input.trim() === '' && displayText.trim() !== '' && ( 
+      {activeChatModeValue === 'ai' && showAnimatedPrompts && input.trim() === '' && displayText.trim() !== '' && ( 
         <div 
           className="absolute left-32 right-14 top-3 bottom-3 cursor-pointer z-5"
           onClick={handleSuggestionClick}
