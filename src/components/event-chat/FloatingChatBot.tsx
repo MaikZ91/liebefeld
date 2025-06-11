@@ -1,3 +1,4 @@
+// src/components/event-chat/FloatingChatBot.tsx
 
 import React from 'react';
 import { MessageCircle } from 'lucide-react';
@@ -45,7 +46,8 @@ const FloatingChatBot: React.FC<FloatingChatBotProps> = ({
     handleHeartClick,
     toggleRecentQueries,
     clearChatHistory,
-    exportChatHistory
+    exportChatHistory,
+    showAnimatedPrompts // Prop von chatLogic extrahieren
   } = chatLogic;
 
   // Determine which queries to render
@@ -96,6 +98,7 @@ const FloatingChatBot: React.FC<FloatingChatBotProps> = ({
           handleExamplePromptClick={handleExamplePromptClick}
         />
         
+        {/* Passiere die showAnimatedPrompts und activeChatModeValue Props an ChatInput */}
         {activeChatModeValue === 'ai' && (
           <ChatInput
             input={input}
@@ -109,6 +112,8 @@ const FloatingChatBot: React.FC<FloatingChatBotProps> = ({
             toggleRecentQueries={toggleRecentQueries}
             inputRef={inputRef}
             onAddEvent={onAddEvent}
+            showAnimatedPrompts={showAnimatedPrompts} // HIER HINZUGEFÜGT
+            activeChatModeValue={activeChatModeValue} // HIER HINZUGEFÜGT
           />
         )}
       </div>
