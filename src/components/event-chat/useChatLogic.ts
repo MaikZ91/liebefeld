@@ -10,7 +10,7 @@ import { fetchWeather } from '@/utils/weatherUtils';
 
 // Define a key for localStorage to track if the app has been launched before
 const APP_LAUNCHED_KEY = 'app_launched_before';
-const USER_SENT_FIRST_MESSAGE_KEY = 'user_sent_first_message'; // NEU: Key für erste Nachricht
+const USER_SENT_FIRST_MESSAGE_KEY = 'user_sent_first_message'; 
 
 export const useChatLogic = (
   events: any[],
@@ -26,7 +26,7 @@ export const useChatLogic = (
   const [globalQueries, setGlobalQueries] = useState<string[]>([]);
   const [showRecentQueries, setShowRecentQueries] = useState(false);
   const [isHeartActive, setIsHeartActive] = useState(false);
-  const [hasUserSentFirstMessage, setHasUserSentFirstMessage] = useState(false); // NEU: Zustand für erste Nachricht
+  const [hasUserSentFirstMessage, setHasUserSentFirstMessage] = useState(false); 
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -191,7 +191,7 @@ export const useChatLogic = (
     const message = customInput || input;
     if (!message.trim()) return;
     
-    // NEU: Markiere, dass die erste Nachricht gesendet wurde
+    // Setze `hasUserSentFirstMessage` auf true, sobald eine Nachricht gesendet wird.
     if (!hasUserSentFirstMessage) {
       setHasUserSentFirstMessage(true);
       localStorage.setItem(USER_SENT_FIRST_MESSAGE_KEY, 'true');
@@ -624,6 +624,6 @@ export const useChatLogic = (
     toggleRecentQueries,
     clearChatHistory,
     exportChatHistory,
-    showAnimatedPrompts: !hasUserSentFirstMessage // NEU: Prompts nur anzeigen, wenn noch keine Nachricht gesendet wurde
+    showAnimatedPrompts: false // Hier wird die Animation dauerhaft deaktiviert
   };
 };
