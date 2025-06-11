@@ -7,7 +7,7 @@ import { useChatMessages } from '@/hooks/chat/useChatMessages';
 import { useMessageSending } from '@/hooks/chat/useMessageSending';
 import { AVATAR_KEY, USERNAME_KEY } from '@/types/chatTypes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getInitials } from '@/utils/chatUIUtils'; // Corrected import syntax here
+import { getInitials } from '@/utils/chatUIUtils'; 
 import TypingIndicator from '@/components/chat/TypingIndicator';
 import ChatMessage from '@/components/chat/ChatMessage';
 import MessageReactions from '@/components/chat/MessageReactions';
@@ -24,6 +24,7 @@ interface FullPageChatBotProps {
   activeChatModeValue: 'ai' | 'community';
   communityGroupId: string;
   onAddEvent?: () => void;
+  hideButtons?: boolean;
 }
 
 const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
@@ -49,7 +50,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     handleExamplePromptClick,
     handleKeyPress,
     handleHeartClick,
-    toggleRecentQueries
+    toggleRecentQueries,
+    showAnimatedPrompts 
   } = chatLogic;
 
   /* ------------------------------------------------------------------ */
@@ -145,7 +147,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   return (
     <div className="flex flex-col h-screen min-h-0">
       {/* Sticky Header */}
-      <div className="border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-2"> {/* Corrected: py-[18px] changed to py-2 */}
+      <div className="border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-2"> 
         {activeChatModeValue === 'ai' && (
           <RecentQueries
             showRecentQueries={showRecentQueries}
@@ -167,19 +169,21 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
           toggleRecentQueries={toggleRecentQueries}
           inputRef={inputRef}
           onAddEvent={onAddEvent}
+          showAnimatedPrompts={showAnimatedPrompts}
+          activeChatModeValue={activeChatModeValue} // HIER WIRD activeChatModeValue WEITERGEGEBEN
         />
       </div>
 
       {/* Main scroll container */}
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
         {activeChatModeValue === 'ai' ? (
-          <div className="pt-32 px-3"> {/* Changed pt-20 to pt-32 for more top padding */}
+          <div className="pt-32 px-3"> 
             <MessageList
               messages={aiMessages}
               isTyping={aiTyping}
               handleDateSelect={handleDateSelect}
               messagesEndRef={messagesEndRef}
-              examplePrompts={examplePrompts}
+              examplePrompts={examplePrompts} // examplePrompts weiterhin hier übergeben
               handleExamplePromptClick={handleExamplePromptClick}
             />
             <div ref={messagesEndRef} />
