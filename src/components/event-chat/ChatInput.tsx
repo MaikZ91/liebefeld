@@ -74,6 +74,20 @@ const ChatInput: React.FC<ChatInputProps> = ({
     setInput(e.target.value);
   };
 
+  // Handle suggestion click
+  const handleSuggestionClick = () => {
+    if (input.trim() === '' && displayText.trim() !== '') {
+      const currentSuggestion = suggestions[currentSuggestionIndex];
+      setInput(currentSuggestion);
+      // Focus the input after setting the value
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 0);
+    }
+  };
+
   const placeholderText = input.trim() === '' ? displayText : '';
 
   return (
@@ -138,6 +152,15 @@ const ChatInput: React.FC<ChatInputProps> = ({
         placeholder={placeholderText}
         className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pl-32 pr-14 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 min-w-0" 
       />
+      
+      {/* Clickable overlay for placeholder suggestions */}
+      {input.trim() === '' && displayText.trim() !== '' && (
+        <div 
+          className="absolute left-32 right-14 top-3 bottom-3 cursor-pointer z-5"
+          onClick={handleSuggestionClick}
+          title="Klicken um Vorschlag zu übernehmen"
+        />
+      )}
       
       <button 
         onClick={() => handleSendMessage()} 
