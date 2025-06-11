@@ -1,3 +1,4 @@
+// src/components/chat/MessageInput.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,7 @@ interface MessageInputProps {
   onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   placeholder?: string;
-  mode?: 'ai' | 'community';
+  mode?: 'ai' | 'community'; // Added mode prop
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({ 
@@ -34,7 +35,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   onChange,
   onKeyDown,
   placeholder = "Schreibe eine Nachricht...",
-  mode = 'community'
+  mode = 'community' // Default to community mode
 }) => {
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -161,6 +162,30 @@ const MessageInput: React.FC<MessageInputProps> = ({
           className="min-h-[50px] flex-grow resize-none pr-14 border-2 border-red-500 focus:border-red-600 focus:ring-2 focus:ring-red-500 shadow-md shadow-red-500/10 transition-all duration-200 placeholder-red-500"
         />
         <div className="flex flex-col gap-2 absolute right-10 top-1">
+          {mode === 'community' && ( // Only show in community mode
+            <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
+              <PopoverTrigger asChild>
+                <Button 
+                  onClick={handleShareEvent} 
+                  variant="outline"
+                  size="icon"
+                  type="button"
+                  className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
+                  title="Event teilen"
+                >
+                  <Calendar className="h-3 w-3" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent 
+                className="w-80 p-0 max-h-[400px] overflow-y-auto" 
+                side="top" 
+                align="end"
+                sideOffset={5}
+              >
+                {eventSelectContent}
+              </PopoverContent>
+            </Popover>
+          )}
           <Button 
             onClick={handleFileUpload} 
             variant="outline"
@@ -171,31 +196,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
           >
             <Paperclip className="h-3 w-3" />
           </Button>
-          <Popover 
-            open={isEventSelectOpen} 
-            onOpenChange={setIsEventSelectOpen}
-          >
-            <PopoverTrigger asChild>
-              <Button 
-                onClick={handleShareEvent} 
-                variant="outline"
-                size="icon"
-                type="button"
-                className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
-                title="Event teilen"
-              >
-                <Calendar className="h-3 w-3" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent 
-              className="w-80 p-0 max-h-[400px] overflow-y-auto" 
-              side="top" 
-              align="end"
-              sideOffset={5}
-            >
-              {eventSelectContent}
-            </PopoverContent>
-          </Popover>
         </div>
         <input 
           type="file" 
