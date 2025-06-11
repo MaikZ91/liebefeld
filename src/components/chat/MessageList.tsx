@@ -44,11 +44,11 @@ const MessageList: React.FC<MessageListProps> = ({
     }
   }, [isMobile, chatBottomRef]);
 
-  // Parse event data from message content if available
+  // Parse event data from message text
   const parseEventData = (message: Message): EventShare | undefined => {
     try {
       if (typeof message.text === 'string' && message.text.includes('🗓️ **Event:')) {
-        // Extract event data from formatted message content
+        // Extract event data from formatted message text
         const eventRegex = /🗓️ \*\*Event: (.*?)\*\*\nDatum: (.*?) um (.*?)\nOrt: (.*?)\nKategorie: (.*?)(\n\n|$)/;
         const match = message.text.match(eventRegex);
         
@@ -110,7 +110,7 @@ const MessageList: React.FC<MessageListProps> = ({
             
             // Parse event data
             let eventData: EventShare | undefined;
-            let messageContent = message.text; // Changed from message.content
+            let messageContent = message.text; 
             
             try {
               eventData = parseEventData(message);
@@ -142,7 +142,7 @@ const MessageList: React.FC<MessageListProps> = ({
                     isGroup={isGroup}
                     eventData={eventData}
                     messageId={message.id}
-                    reactions={message.reactions || []}
+                    reactions={message.reactions || []} // Pass reactions directly
                     onReact={handleReaction(message.id)}
                     currentUsername={username}
                   />

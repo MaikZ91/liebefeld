@@ -1,9 +1,12 @@
+// src/components/layouts/Layout.tsx
+// Changed: Added newMessagesCount and newEventsCount to MainNav props
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Calendar, MessageSquare, List, Users, User } from "lucide-react";
+import { Badge } from '@/components/ui/badge'; // Import Badge component
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -13,6 +16,8 @@ interface LayoutProps {
   setActiveView?: (view: 'ai' | 'community') => void;
   handleOpenUserDirectory?: () => void;
   setIsEventListSheetOpen?: (open: boolean) => void;
+  newMessagesCount?: number; // Added newMessagesCount
+  newEventsCount?: number; // Added newEventsCount
 }
 
 export const Layout: React.FC<LayoutProps> = ({
@@ -21,7 +26,9 @@ export const Layout: React.FC<LayoutProps> = ({
   activeView,
   setActiveView,
   handleOpenUserDirectory,
-  setIsEventListSheetOpen
+  setIsEventListSheetOpen,
+  newMessagesCount = 0, // Default to 0
+  newEventsCount = 0 // Default to 0
 }) => {
   const { pathname } = useLocation();
   const [isAddEventModalOpen, setIsAddEventModalOpen] = React.useState(false);
@@ -65,6 +72,8 @@ export const Layout: React.FC<LayoutProps> = ({
             setActiveView={setActiveView}
             handleOpenUserDirectory={handleOpenUserDirectory}
             setIsEventListSheetOpen={setIsEventListSheetOpen}
+            newMessagesCount={newMessagesCount}
+            newEventsCount={newEventsCount}
           />
           {(pathname !== '/chat' && pathname !== '/') && ( 
             <div className="ml-auto flex items-center space-x-4">
@@ -125,6 +134,8 @@ interface MainNavProps {
   setActiveView?: (view: 'ai' | 'community') => void;
   handleOpenUserDirectory?: () => void;
   setIsEventListSheetOpen?: (open: boolean) => void;
+  newMessagesCount: number; // Added
+  newEventsCount: number; // Added
 }
 
 const MainNav: React.FC<MainNavProps> = ({ 
@@ -132,7 +143,9 @@ const MainNav: React.FC<MainNavProps> = ({
   activeView, 
   setActiveView, 
   handleOpenUserDirectory, 
-  setIsEventListSheetOpen 
+  setIsEventListSheetOpen,
+  newMessagesCount, // Destructure
+  newEventsCount // Destructure
 }) => {
   
   // If we're on chat page or the root path, show THE TRIBE + chat navigation buttons
@@ -150,19 +163,29 @@ const MainNav: React.FC<MainNavProps> = ({
               variant={activeView === 'ai' ? "default" : "outline"} 
               size="sm" 
               onClick={() => setActiveView?.('ai')} 
-              className={`flex items-center gap-0.5 px-1.5 py-1 ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}
+              className={`flex items-center gap-0.5 px-1.5 py-1 relative ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}
             >
               <Calendar className="h-4 w-4" />
               <span className="text-[10px] px-1">Events</span>
+              {newEventsCount > 0 && (
+                <Badge className="absolute -top-2 -right-2 bg-green-600 text-white h-4 w-4 flex items-center justify-center rounded-full text-[10px]">
+                  {newEventsCount}
+                </Badge>
+              )}
             </Button>
             <Button 
               variant={activeView === 'community' ? "default" : "outline"} 
               size="sm" 
               onClick={() => setActiveView?.('community')} 
-              className={`flex items-center gap-0.5 px-1.5 py-1 ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}
+              className={`flex items-center gap-0.5 px-1.5 py-1 relative ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}
             >
               <Users className="h-4 w-4" />
               <span className="text-[10px] px-1">Community</span>
+              {newMessagesCount > 0 && (
+                <Badge className="absolute -top-2 -right-2 bg-green-600 text-white h-4 w-4 flex items-center justify-center rounded-full text-[10px]">
+                  {newMessagesCount}
+                </Badge>
+              )}
             </Button>
           </div>
           

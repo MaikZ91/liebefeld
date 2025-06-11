@@ -1,4 +1,5 @@
-
+// src/hooks/chat/useChatMessages.ts
+// Changed: 'content' to 'text' in message type and 'Message' import
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Message } from '@/types/chatTypes';
 import { useMessageFetching } from '@/hooks/chat/useMessageFetching';
@@ -58,7 +59,7 @@ export const useChatMessages = (groupId: string, username: string) => {
       try {
         const processedMsg = {
           ...newMsg,
-          // We'll parse event data from content in the MessageList component
+          // We'll parse event data from text in the MessageList component
         };
         return [...oldMessages, processedMsg];
       } catch (error) {
@@ -184,10 +185,10 @@ export const useChatMessages = (groupId: string, username: string) => {
       const fetchedMessages = await messageService.fetchMessages(validGroupId);
       console.log(`Fetched ${fetchedMessages.length} messages`);
       
-      // Process messages to parse event data from content if needed
+      // Process messages to parse event data from text if needed
       const processedMessages = fetchedMessages.map(msg => ({
         ...msg,
-        // We'll parse event data from content in the MessageList component
+        // We'll parse event data from text in the MessageList component
       }));
 
       // Add all fetched message IDs to the processed set

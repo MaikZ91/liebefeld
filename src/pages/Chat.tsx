@@ -1,5 +1,7 @@
 // src/pages/Chat.tsx
-import React, { useState, useEffect } from 'react';
+// Changed: Added message counting and new event counting.
+// Passed new counts to Layout component.
+import React, { useState, useEffect, useRef } from 'react';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
 import LiveTicker from '@/components/LiveTicker';
@@ -18,6 +20,7 @@ import UsernameDialog from '@/components/chat/UsernameDialog';
 import ProfileEditor from '@/components/users/ProfileEditor';
 import UserDirectory from '@/components/users/UserDirectory';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
+import { messageService } from '@/services/messageService'; // Import messageService
 
 const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
@@ -26,15 +29,22 @@ const ChatPage = () => {
   const [isUserDirectoryOpen, setIsUserDirectoryOpen] = useState(false);
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
-  const [username, setUsername] = useState<string>('');
+  const [username, setUsername] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || ''); // Initialize username from localStorage
+  
   const {
-    events
+    events,
+    newEventIds, // Get newEventIds from EventContext
+    refreshEvents // Get refreshEvents to update event counts
   } = useEventContext();
   const {
     currentUser,
     userProfile,
     refetchProfile
   } = useUserProfile();
+
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+  const lastReadMessageTimestamps = useRef<Map<string, string>>(new Map()); // Map to store last read timestamp per group
+  const messageSubscriptionChannelRef = useRef<any>(null); // Ref for message subscription
 
   // Function to show add event modal
   const handleAddEvent = () => {
@@ -69,6 +79,8 @@ const ChatPage = () => {
         description: "Du kannst jetzt in den Gruppen chatten.",
         variant: "success"
       });
+      // Re-fetch unread messages after username is set/updated
+      fetchUnreadMessageCount();
     }
   };
 
@@ -77,54 +89,102 @@ const ChatPage = () => {
 
   // Enable realtime messaging when component mounts and ensure default group exists
   useEffect(() => {
-    // Handle username initialization safely
-    try {
-      if (typeof window !== 'undefined') {
-        const storedUsername = localStorage.getItem(USERNAME_KEY);
-        if (storedUsername) {
-          setUsername(storedUsername);
-        }
-      }
-    } catch (error) {
-      console.error('Error accessing localStorage:', error);
-    }
     const setupDatabase = async () => {
       try {
-        // Ensure the default group exists
         await setupService.ensureDefaultGroupExists();
+        console.log('Default group ensured.');
 
-        // Enable realtime for chat_messages table
-        console.log('Setting up realtime subscription for chat_messages table');
+        // Fetch initial unread message count
+        await fetchUnreadMessageCount();
 
-        // Direct approach - create a channel and enable realtime
-        const channel = supabase.channel('realtime_setup').on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'chat_messages'
-        }, () => {
-          // Empty callback - we just want to ensure the channel is created
-        }).subscribe();
+        // Setup realtime listener for new messages
+        messageSubscriptionChannelRef.current = supabase
+          .channel('public:chat_messages')
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
+            if (payload.new && payload.new.sender !== username) { // Only count messages from other users
+              // Increment unread message count
+              setUnreadMessageCount(prev => prev + 1);
+            }
+          })
+          .subscribe();
 
-        // Keep the channel open for a moment to ensure subscription is registered
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        // Then remove it to avoid having too many open channels
-        supabase.removeChannel(channel);
-        console.log('Realtime subscription initialized');
+        console.log('Realtime subscription for messages initialized.');
       } catch (error) {
-        console.error('Exception in enabling Realtime:', error);
+        console.error('Exception in enabling Realtime or fetching unread messages:', error);
         toast({
           title: "Verbindungsfehler",
           description: "Es konnte keine Verbindung zum Chat hergestellt werden.",
           variant: "destructive"
         });
       } finally {
-        // Mark page as loaded even if there were errors
         setIsPageLoaded(true);
       }
     };
+
     setupDatabase();
-  }, [refetchProfile]);
+
+    return () => {
+      // Cleanup subscription on unmount
+      if (messageSubscriptionChannelRef.current) {
+        supabase.removeChannel(messageSubscriptionChannelRef.current);
+      }
+    };
+  }, [username]); // Depend on username to re-subscribe if it changes
+
+  const fetchUnreadMessageCount = async () => {
+    if (!username || username === 'Gast') {
+      setUnreadMessageCount(0);
+      return;
+    }
+
+    try {
+      // Get all messages and filter unread ones
+      const allMessages = await messageService.fetchMessages(messageService.DEFAULT_GROUP_ID);
+      const unreadCount = allMessages.filter(msg => 
+        msg.user_name !== username && (!msg.read_by || !msg.read_by.includes(username))
+      ).length;
+      setUnreadMessageCount(unreadCount);
+    } catch (error) {
+      console.error('Error fetching unread message count:', error);
+      setUnreadMessageCount(0);
+    }
+  };
+
+  // Effect to update unread message count when active view changes
+  useEffect(() => {
+    if (activeView === 'community') {
+      setUnreadMessageCount(0); // Reset count when entering community chat
+      // Mark all messages as read for the current user in the default group
+      const markAllAsRead = async () => {
+        if (username && username !== 'Gast') {
+          try {
+            const allMessages = await messageService.fetchMessages(messageService.DEFAULT_GROUP_ID);
+            const unreadMessageIds = allMessages.filter(msg => 
+              msg.user_name !== username && (!msg.read_by || !msg.read_by.includes(username))
+            ).map(msg => msg.id);
+            if (unreadMessageIds.length > 0) {
+              await messageService.markMessagesAsRead(messageService.DEFAULT_GROUP_ID, unreadMessageIds, username);
+            }
+          } catch (error) {
+            console.error('Error marking all messages as read:', error);
+          }
+        }
+      };
+      markAllAsRead();
+    }
+  }, [activeView, username]);
+
+  // Effect to handle new events
+  useEffect(() => {
+    // Mark new events as seen when the EventListSheet is opened
+    if (isEventListSheetOpen) {
+      const allEventIds = events.map(event => event.id);
+      localStorage.setItem('seenEventIds', JSON.stringify(allEventIds));
+      if (refreshEvents) {
+        refreshEvents(); // Trigger a refresh to update newEventIds in context
+      }
+    }
+  }, [isEventListSheetOpen, events, refreshEvents]);
 
   // Check if we're on mobile for responsive design adjustments
   const [isMobile, setIsMobile] = useState(false);
@@ -172,6 +232,8 @@ const ChatPage = () => {
         setActiveView={setActiveView}
         handleOpenUserDirectory={handleOpenUserDirectory}
         setIsEventListSheetOpen={setIsEventListSheetOpen}
+        newMessagesCount={unreadMessageCount} // Pass new messages count
+        newEventsCount={newEventIds.size} // Pass new events count
       >
         <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
           {/* Remove the button bar since buttons are now in header */}
@@ -227,7 +289,7 @@ const ChatPage = () => {
               <SheetDescription>
                 Entdecke andere Community-Mitglieder
               </SheetDescription>
-            </SheetHeader>
+            </SheetDescription>
             <div className="mt-4 overflow-y-auto max-h-[80vh]">
               <UserDirectory 
                 open={isUserDirectoryOpen}

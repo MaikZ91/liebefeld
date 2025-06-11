@@ -1,10 +1,10 @@
 // src/types/chatTypes.ts
-// Changed: reactions: { emoji: string; users: string[] }[] | null;
+// Changed: 'content' to 'text' in message type and added 'reactions'
 export interface ChatMessage {
   id: string;
   group_id: string;
   sender: string;
-  text: string;
+  text: string; // Changed from 'content' to 'text'
   avatar?: string;
   created_at: string;
   media_url?: string | null;
