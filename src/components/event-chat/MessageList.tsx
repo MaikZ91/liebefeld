@@ -6,6 +6,7 @@ import ChatMessage from '@/components/chat/ChatMessage';
 import { Button } from '@/components/ui/button';
 import { MessageListProps } from './types';
 import SwipeableEventPanel from './SwipeableEventPanel';
+import SwipeableLandingPanel from './SwipeableLandingPanel';
 import './MessageList.css';
 
 const MessageList: React.FC<MessageListProps> = ({
@@ -27,6 +28,15 @@ const MessageList: React.FC<MessageListProps> = ({
             : "bg-black border border-black"
         )}
       >
+        {/* Render Landing Slides if slideData exists */}
+        {message.slideData && (
+          <div className="p-3">
+            <SwipeableLandingPanel 
+              slideData={message.slideData}
+            />
+          </div>
+        )}
+        
         {/* Render Panel if panelData exists */}
         {message.panelData && (
           <div className="p-3">
@@ -47,8 +57,8 @@ const MessageList: React.FC<MessageListProps> = ({
             className="p-3 event-list-container"
           />
         ) : (
-          /* Render regular chat message only if no panel data */
-          !message.panelData && (
+          /* Render regular chat message only if no panel data and no slides */
+          !message.panelData && !message.slideData && (
             <ChatMessage 
               message={message.text} 
               isGroup={false} 

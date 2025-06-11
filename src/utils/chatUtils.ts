@@ -2,6 +2,8 @@
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
+import { LandingSlideData } from '@/components/event-chat/SwipeableLandingPanel';
+import { Users, MessageSquare, Calendar, Heart } from 'lucide-react';
 
 export const getWelcomeMessage = () => {
   const today = format(new Date(), 'EEEE, d. MMMM', { locale: de });
@@ -13,6 +15,62 @@ export const getWelcomeMessage = () => {
   `;
 };
 
+// Neue Funktion für Landing-Slide-Daten
+export const createLandingSlideData = (): LandingSlideData => {
+  const slides = [
+    {
+      title: "Verbinde dich mit Gleichgesinnten",
+      description: "Werde Teil unserer lebendigen Community! Treffe andere kreative Köpfe beim monatlichen Stammtisch und knüpfe neue Kontakte.",
+      imageUrl: "/lovable-uploads/8562fff2-2b62-4552-902b-cc62457a3402.png",
+      buttonText: "Community beitreten",
+      buttonAction: () => {
+        window.open("https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK", "_blank");
+      },
+      icon: <Users className="w-5 h-5" />
+    },
+    {
+      title: "Dein persönlicher Event-Assistent",
+      description: "Lass dir von unserer KI personalisierte Event-Empfehlungen geben. Aktiviere den Herz-Modus für Events, die perfekt zu dir passen!",
+      imageUrl: "/lovable-uploads/e3d0a85b-9935-450a-bba8-5693570597a3.png",
+      buttonText: "Chat starten",
+      buttonAction: () => {
+        // Trigger a personalized chat message
+        if (typeof window !== 'undefined' && (window as any).chatbotQuery) {
+          (window as any).chatbotQuery("❤️ Zeige mir Events, die zu mir passen");
+        }
+      },
+      icon: <MessageSquare className="w-5 h-5" />
+    },
+    {
+      title: "Event-Kalender & Entdeckung",
+      description: "Entdecke alle Events in Liebefeld und Umgebung. Von Konzerten über Workshops bis hin zu Community-Events - verpasse nichts!",
+      imageUrl: "/lovable-uploads/764c9b33-5d7d-4134-b503-c77e23c469f9.png",
+      buttonText: "Events entdecken",
+      buttonAction: () => {
+        if (typeof window !== 'undefined' && (window as any).chatbotQuery) {
+          (window as any).chatbotQuery("Welche Events gibt es diese Woche?");
+        }
+      },
+      icon: <Calendar className="w-5 h-5" />
+    },
+    {
+      title: "Partner & Social Impact",
+      description: "Unterstütze lokale Initiativen wie Social Tides und entdecke Events mit positiver gesellschaftlicher Wirkung.",
+      imageUrl: "/lovable-uploads/c38064ee-a32f-4ecc-b148-f9c53c28d472.png",
+      buttonText: "Mehr erfahren",
+      buttonAction: () => {
+        window.open("/about", "_blank");
+      },
+      icon: <Heart className="w-5 h-5" />
+    }
+  ];
+
+  return {
+    slides,
+    currentIndex: 0
+  };
+};
+
 // Neue Funktion für die animierte Willkommensnachricht
 export const getAnimatedWelcomeMessage = () => {
   return `
@@ -20,7 +78,8 @@ export const getAnimatedWelcomeMessage = () => {
       <p class="text-lg font-bold text-white mb-2">
         <span class="typewriter-animation">Hallo Liebefeld!</span>
       </p>
-      <p class="text-white">Ich bin dein persönlicher Event-Assistent. Starte mit der Erkundung personalisierter Events und Community-Chats, indem du dein Benutzerprofil anlegst.</p>
+      <p class="text-white mb-3">Willkommen bei THE TRIBE - deiner Community-Plattform für Events, Networking und lokale Initiativen!</p>
+      <p class="text-sm text-gray-300">Swipe durch die Slides unten, um mehr zu erfahren:</p>
     </div>
   `;
 };

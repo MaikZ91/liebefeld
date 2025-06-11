@@ -1,11 +1,14 @@
 // src/components/event-chat/types.ts
+import { LandingSlideData } from './SwipeableLandingPanel';
+
 export interface ChatMessage {
   id: string;
   isUser: boolean;
   text: string;
   html?: string;
-  timestamp?: string; // For storing the creation time
-  panelData?: PanelEventData; // New property for panel display
+  timestamp: string;
+  panelData?: PanelEventData;
+  slideData?: LandingSlideData; // Neue Eigenschaft für Landing-Slides
 }
 
 export interface PanelEventData {
