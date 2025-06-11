@@ -4,10 +4,13 @@ import { ChatMessage, CHAT_HISTORY_KEY, CHAT_QUERIES_KEY, PanelEventData, PanelE
 import { supabase } from '@/integrations/supabase/client';
 import { generateResponse, getWelcomeMessage, createResponseHeader, createLandingSlideData } from '@/utils/chatUtils';
 import { toast } from 'sonner';
-
 import { Event } from '@/types/eventTypes';
 import { getFutureEvents, getEventsForDay, getWeekRange } from '@/utils/eventUtils';
 import { fetchWeather } from '@/utils/weatherUtils';
+
+// Define a key for localStorage to track if the app has been launched before
+const APP_LAUNCHED_KEY = 'app_launched_before';
+const USER_SENT_FIRST_MESSAGE_KEY = 'user_sent_first_message'; // NEU: Key für erste Nachricht
 
 export const useChatLogic = (
   events: any[],
@@ -23,11 +26,13 @@ export const useChatLogic = (
   const [globalQueries, setGlobalQueries] = useState<string[]>([]);
   const [showRecentQueries, setShowRecentQueries] = useState(false);
   const [isHeartActive, setIsHeartActive] = useState(false);
+  const [hasUserSentFirstMessage, setHasUserSentFirstMessage] = useState(false); // NEU: Zustand für erste Nachricht
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const welcomeMessageShownRef = useRef(false);
-  
+  const appLaunchedBeforeRef = useRef(false); 
+
   const examplePrompts = [
     "Welche Events gibt es heute?",
     "Was kann ich am Wochenende machen?",
@@ -186,6 +191,12 @@ export const useChatLogic = (
     const message = customInput || input;
     if (!message.trim()) return;
     
+    // NEU: Markiere, dass die erste Nachricht gesendet wurde
+    if (!hasUserSentFirstMessage) {
+      setHasUserSentFirstMessage(true);
+      localStorage.setItem(USER_SENT_FIRST_MESSAGE_KEY, 'true');
+    }
+
     updateRecentQueries(message);
     
     const userMessage: ChatMessage = {
@@ -304,8 +315,7 @@ export const useChatLogic = (
       kultur: "Kultur",
       film: "Film",
       theater: "Theater",
-      lesung: "Lesung",
-      festival: "Festival"
+      lesung: "Lesung"
     };
 
     let detectedCategory: string | null = null;
@@ -436,6 +446,11 @@ export const useChatLogic = (
     } catch (error) {
       console.error('[useChatLogic] Error loading heart mode state:', error);
     }
+
+    // NEU: Prüfe, ob die erste Nachricht bereits gesendet wurde
+    if (typeof window !== 'undefined') {
+      setHasUserSentFirstMessage(localStorage.getItem(USER_SENT_FIRST_MESSAGE_KEY) === 'true');
+    }
     
     fetchGlobalQueries(); // Globale Abfragen beim Laden abrufen
   }, [fetchGlobalQueries]); // fetchGlobalQueries als Abhängigkeit hinzufügen
@@ -475,14 +490,20 @@ export const useChatLogic = (
 
   // Willkommensnachricht anzeigen, wenn Chat zum ersten Mal geöffnet wird UND ActiveChatMode ist 'ai'
   useEffect(() => {
+    if (typeof window === 'undefined') return; // Ensure we are in a browser environment
+
+    // Check if the app has been launched before
+    appLaunchedBeforeRef.current = localStorage.getItem(APP_LAUNCHED_KEY) === 'true';
+
     // Only show welcome message if it hasn't been shown and if current mode is 'ai'
     if (!welcomeMessageShownRef.current && activeChatModeValue === 'ai') {
         const hasMessages = messages.length > 0;
         const hasSavedMessages = localStorage.getItem(CHAT_HISTORY_KEY) !== null;
 
-        // If no messages and no saved history, add welcome message
-        if (!hasMessages && !hasSavedMessages) {
+        // If no messages and no saved history, AND it's the first launch, add welcome message and landing slides
+        if (!hasMessages && !hasSavedMessages && !appLaunchedBeforeRef.current) {
             welcomeMessageShownRef.current = true;
+            localStorage.setItem(APP_LAUNCHED_KEY, 'true'); // Mark app as launched
             setMessages([
                 {
                     id: 'welcome',
@@ -499,9 +520,8 @@ export const useChatLogic = (
                     timestamp: new Date().toISOString()
                 }
             ]);
-        } else if (hasSavedMessages) {
-            // If there's saved history, ensure welcomeMessageShownRef is true
-            // to prevent re-adding if user clears history later
+        } else if (hasSavedMessages || appLaunchedBeforeRef.current) {
+            // If there's saved history or it's not the first launch, ensure welcomeMessageShownRef is true
             welcomeMessageShownRef.current = true;
         }
     }
@@ -534,8 +554,11 @@ export const useChatLogic = (
   const clearChatHistory = () => {
     if (window.confirm("Möchten Sie wirklich den gesamten Chat-Verlauf löschen?")) {
       localStorage.removeItem(CHAT_HISTORY_KEY);
+      localStorage.removeItem(APP_LAUNCHED_KEY); // Reset first launch flag
+      localStorage.removeItem(USER_SENT_FIRST_MESSAGE_KEY); // NEU: Reset first message flag
       setMessages([]);
       welcomeMessageShownRef.current = false; // Reset to allow welcome message again
+      // Re-add welcome message and landing slides if chat history is cleared
       setMessages([
         {
           id: 'welcome',
@@ -600,6 +623,7 @@ export const useChatLogic = (
     handleHeartClick,
     toggleRecentQueries,
     clearChatHistory,
-    exportChatHistory
+    exportChatHistory,
+    showAnimatedPrompts: !hasUserSentFirstMessage // NEU: Prompts nur anzeigen, wenn noch keine Nachricht gesendet wurde
   };
 };
