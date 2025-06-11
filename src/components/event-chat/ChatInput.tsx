@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Heart, History, CalendarPlus, Send, Bell } from 'lucide-react';
-import { ChatInputProps } from './types';
+import { ChatInputProps } from './types'; 
 import { usePerfectDaySubscription } from '@/hooks/chat/usePerfectDaySubscription';
 
 // Add a separate AnimatedText component if it's not already defined elsewhere
@@ -27,7 +27,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
   toggleRecentQueries,
   inputRef,
   onAddEvent,
-  showAnimatedPrompts // Empfangen der Prop
+  showAnimatedPrompts,
+  activeChatModeValue // HIER EMPFANGEN
 }) => {
   // Get username from localStorage for subscription
   const username = typeof window !== 'undefined' 
@@ -107,7 +108,16 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
-  const placeholderText = showAnimatedPrompts && input.trim() === '' ? displayText : "Schreibe eine Nachricht..."; 
+  // Dynamischer Placeholder-Text basierend auf dem aktiven Chat-Modus
+  const getDynamicPlaceholder = () => {
+    if (activeChatModeValue === 'ai') {
+      return showAnimatedPrompts && input.trim() === '' ? displayText : "Frage nach Events...";
+    } else { // 'community'
+      return "Verbinde dich mit der Community...";
+    }
+  };
+
+  const placeholderText = getDynamicPlaceholder();
 
   return (
     <div className="flex items-center relative max-w-full">
