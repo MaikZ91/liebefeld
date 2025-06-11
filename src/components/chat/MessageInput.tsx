@@ -151,6 +151,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
     };
   }, []);
 
+  // Determine padding based on mode and number of active left-side buttons
+  const leftPadding = mode === 'community' ? 'pl-[75px]' : 'pl-4'; // Adjusted for 2 buttons on left
+
   return (
     <div className="w-full space-y-2">
       <div className="flex items-center gap-2 relative">
@@ -159,9 +162,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
           value={value !== undefined ? value : newMessage}
           onChange={handleMessageChange}
           onKeyDown={handleKeyDown}
-          className="min-h-[50px] flex-grow resize-none pr-14 border-2 border-red-500 focus:border-red-600 focus:ring-2 focus:ring-red-500 shadow-md shadow-red-500/10 transition-all duration-200 placeholder-red-500"
+          className={`min-h-[50px] flex-grow resize-none pr-14 border-2 border-red-500 focus:border-red-600 focus:ring-2 focus:ring-red-500 shadow-md shadow-red-500/10 transition-all duration-200 placeholder-red-500 ${leftPadding}`}
         />
-        <div className="flex flex-col gap-2 absolute right-10 top-1">
+        {/* Buttons on the left side of the input (absolute positioning) */}
+        <div className="flex flex-col gap-2 absolute left-1 top-1">
           {mode === 'community' && ( // Only show in community mode
             <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
               <PopoverTrigger asChild>
@@ -179,7 +183,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
               <PopoverContent 
                 className="w-80 p-0 max-h-[400px] overflow-y-auto" 
                 side="top" 
-                align="end"
+                align="start" // Changed align to start to keep it left-aligned
                 sideOffset={5}
               >
                 {eventSelectContent}
@@ -204,6 +208,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
           accept="image/*"
           onChange={() => {}}
         />
+        {/* Send button on the right */}
         <Button 
           onClick={handleSubmit} 
           disabled={isSending || (!value?.trim() && !newMessage.trim() && !fileInputRef.current?.files?.length)}
