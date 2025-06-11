@@ -8,11 +8,12 @@ export interface ChatMessage {
   html?: string;
   timestamp: string;
   panelData?: PanelEventData;
-  slideData?: LandingSlideData; // Neue Eigenschaft für Landing-Slides
+  slideData?: LandingSlideData; 
+  examplePrompts?: string[]; 
 }
 
 export interface PanelEventData {
-  events: (PanelEvent | AdEvent)[]; // Korrigiert: Erlaubt Events und Ads
+  events: (PanelEvent | AdEvent)[]; 
   currentIndex: number;
 }
 
@@ -25,7 +26,7 @@ export interface PanelEvent {
   location: string;
   image_url: string;
   category: string;
-  link?: string; // Hinzugefügt: Events können auch Links haben
+  link?: string; 
 }
 
 export interface AdEvent {
@@ -34,13 +35,13 @@ export interface AdEvent {
   location: string;
   imageUrl: string;
   link?: string;
-  type?: string; // Hinzugefügt für spezifische Anzeigentypen
+  type?: string; 
 }
 
 export interface EventChatBotProps {
   fullPage?: boolean;
   onAddEvent?: () => void;
-  onToggleCommunity?: () => void; // New prop for toggling to community view
+  onToggleCommunity?: () => void; 
   activeChatMode?: 'ai' | 'community';
   setActiveChatMode?: (mode: 'ai' | 'community') => void;
   hideButtons?: boolean;
@@ -71,6 +72,8 @@ export interface ChatInputProps {
   toggleRecentQueries: () => void;
   inputRef: React.RefObject<HTMLInputElement>;
   onAddEvent?: () => void;
+  showAnimatedPrompts: boolean;
+  activeChatModeValue: 'ai' | 'community'; // HIER HINZUGEFÜGT
 }
 
 export interface RecentQueriesProps {
@@ -88,7 +91,7 @@ export interface ChatHeaderProps {
 }
 
 export interface PersonalizationOptions {
-  userProfile: any | null; // Typ angepasst, da UserProfile in chatTypes definiert ist
+  userProfile: any | null; 
   currentUser: string | null;
   userService: any;
 }
