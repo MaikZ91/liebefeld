@@ -1,4 +1,5 @@
-
+// src/services/realtimeService.ts
+// Changed: 'content' to 'text'
 import { supabase } from '@/integrations/supabase/client';
 import { Message } from '@/types/chatTypes';
 
@@ -56,7 +57,7 @@ export const realtimeService = {
           const message: Message = {
             id: (payload.new as any).id,
             created_at: (payload.new as any).created_at,
-            content: (payload.new as any).text,
+            text: (payload.new as any).text, // Changed from 'content' to 'text'
             user_name: (payload.new as any).sender,
             user_avatar: (payload.new as any).avatar || '',
             group_id: (payload.new as any).group_id,

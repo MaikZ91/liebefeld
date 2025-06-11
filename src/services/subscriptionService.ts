@@ -1,4 +1,5 @@
-
+// src/services/subscriptionService.ts
+// Changed: 'content' to 'text'
 import { supabase } from '@/integrations/supabase/client';
 import { Message, TypingUser } from '@/types/chatTypes';
 
@@ -35,7 +36,7 @@ export const subscriptionService = {
             const newMsg: Message = {
               id: newPayload.id,
               created_at: newPayload.created_at,
-              content: newPayload.text,
+              text: newPayload.text, // Changed from 'content' to 'text'
               user_name: newPayload.sender,
               user_avatar: newPayload.avatar || '',
               group_id: newPayload.group_id,
