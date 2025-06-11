@@ -11,7 +11,7 @@ export interface LandingSlide {
   imageUrl: string;
   buttonText: string;
   buttonAction: () => void;
-  icon?: React.ReactNode;
+  iconType?: string;
   backgroundColor?: string;
 }
 
@@ -43,6 +43,22 @@ const SwipeableLandingPanel: React.FC<SwipeableLandingPanelProps> = ({
     setCurrentIndex((prev) => 
       prev === slideData.slides.length - 1 ? 0 : prev + 1
     );
+  };
+  
+  // Function to render the appropriate icon based on iconType
+  const renderIcon = (iconType?: string) => {
+    switch (iconType) {
+      case 'users':
+        return <Users className="w-5 h-5" />;
+      case 'message-square':
+        return <MessageSquare className="w-5 h-5" />;
+      case 'calendar':
+        return <Calendar className="w-5 h-5" />;
+      case 'heart':
+        return <Heart className="w-5 h-5" />;
+      default:
+        return null;
+    }
   };
   
   if (!currentSlide) return null;
@@ -107,9 +123,9 @@ const SwipeableLandingPanel: React.FC<SwipeableLandingPanelProps> = ({
       <div className="p-4 space-y-3">
         {/* Icon and Title */}
         <div className="flex items-center gap-3">
-          {currentSlide.icon && (
+          {currentSlide.iconType && (
             <div className="text-red-400">
-              {currentSlide.icon}
+              {renderIcon(currentSlide.iconType)}
             </div>
           )}
           <h3 className="text-lg font-semibold text-white line-clamp-2">

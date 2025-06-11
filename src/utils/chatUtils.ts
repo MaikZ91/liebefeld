@@ -1,9 +1,9 @@
+
 // src/utils/chatUtils.ts
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { LandingSlideData } from '@/components/event-chat/SwipeableLandingPanel';
-import { Users, MessageSquare, Calendar, Heart } from 'lucide-react';
 
 export const getWelcomeMessage = () => {
   const today = format(new Date(), 'EEEE, d. MMMM', { locale: de });
@@ -26,7 +26,7 @@ export const createLandingSlideData = (): LandingSlideData => {
       buttonAction: () => {
         window.open("https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK", "_blank");
       },
-      icon: <Users className="w-5 h-5" />
+      iconType: "users"
     },
     {
       title: "Dein persönlicher Event-Assistent",
@@ -39,7 +39,7 @@ export const createLandingSlideData = (): LandingSlideData => {
           (window as any).chatbotQuery("❤️ Zeige mir Events, die zu mir passen");
         }
       },
-      icon: <MessageSquare className="w-5 h-5" />
+      iconType: "message-square"
     },
     {
       title: "Event-Kalender & Entdeckung",
@@ -51,7 +51,7 @@ export const createLandingSlideData = (): LandingSlideData => {
           (window as any).chatbotQuery("Welche Events gibt es diese Woche?");
         }
       },
-      icon: <Calendar className="w-5 h-5" />
+      iconType: "calendar"
     },
     {
       title: "Partner & Social Impact",
@@ -61,7 +61,7 @@ export const createLandingSlideData = (): LandingSlideData => {
       buttonAction: () => {
         window.open("/about", "_blank");
       },
-      icon: <Heart className="w-5 h-5" />
+      iconType: "heart"
     }
   ];
 
