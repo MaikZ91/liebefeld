@@ -1,9 +1,7 @@
 // src/components/chat/ChatGroup.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, RefreshCw, Paperclip, Calendar, Users } from 'lucide-react';
+import { RefreshCw, Users } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea"; // This import is now redundant as MessageInput uses Textarea internally
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -11,14 +9,9 @@ import { Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { USERNAME_KEY, AVATAR_KEY, TypingUser } from '@/types/chatTypes';
 import { useEventContext } from '@/contexts/EventContext';
-import { format, parseISO } from 'date-fns';
-import { de } from 'date-fns/locale';
-import { groupFutureEventsByDate } from '@/utils/eventUtils'; // This import is not used in the provided code
 import { toast } from '@/hooks/use-toast';
-import { getInitials, formatRelativeTime } from '@/utils/chatUIUtils';
-import ChatHeader from './chat/ChatHeader'; // This import is not used in the provided code
-import MessageList from './chat/MessageList'; // This import is not used in the provided code
-import MessageInput from './chat/MessageInput'; // Import MessageInput
+import { getInitials } from '@/utils/chatUIUtils';
+import MessageInput from './MessageInput'; // Korrigierter Importpfad
 
 interface ChatGroupProps {
   groupId: string;
@@ -36,10 +29,10 @@ interface Message {
   read_by?: string[];
 }
 
-const ChatGroup: React.FC<ChatGroupProps> = ({
-  groupId,
-  groupName,
-  onOpenUserDirectory
+const ChatGroup: React.FC<ChatGroupProps> = ({ 
+  groupId, 
+  groupName, 
+  onOpenUserDirectory 
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,62 +43,62 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [username, setUsername] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || 'Gast');
-  const [avatar, setAvatar] = useState<string | null>(() => localStorage.getItem(AVATAR_KEY)); // This state is not directly used, but the value is
+  const [avatar, setAvatar] = useState<string | null>(() => localStorage.getItem(AVATAR_KEY));
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
   const [eventSearchQuery, setEventSearchQuery] = useState('');
-
+  
   const chatBottomRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null); // This ref is not directly used in this component after integrating MessageInput
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null); // This ref is not directly used in this component after integrating MessageInput
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const messagesRef = useRef<Message[]>(messages);
   const channelsRef = useRef<any[]>([]);
   const sentMessageIds = useRef<Set<string>>(new Set());
-
-  const { events } = useEventContext(); // Get events from context
-
+  
+  const { events } = useEventContext();
+  
   // Detect the group type based on name
   const isAusgehenGroup = groupName.toLowerCase() === 'ausgehen';
   const isSportGroup = groupName.toLowerCase() === 'sport';
   const isKreativitätGroup = groupName.toLowerCase() === 'kreativität';
-
+  
   const isGroup = isAusgehenGroup || isSportGroup || isKreativitätGroup;
-
+  
   // Get the group type
-  const groupType = isAusgehenGroup ? 'ausgehen' :
-                   isSportGroup ? 'sport' :
-                   isKreativitätGroup ? 'kreativität' :
+  const groupType = isAusgehenGroup ? 'ausgehen' : 
+                   isSportGroup ? 'sport' : 
+                   isKreativitätGroup ? 'kreativität' : 
                    'ausgehen';
-
+  
   // Update messages ref when messages change
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
-
+  
   // Fetch messages on component mount and when group changes
   useEffect(() => {
     if (!groupId) return;
-
+    
     const fetchMessages = async () => {
       try {
         setLoading(true);
         setError(null);
-
+        
         console.log(`Fetching messages for group: ${groupId}`);
-
+        
         const { data, error } = await supabase
           .from('chat_messages')
           .select('*')
           .eq('group_id', groupId)
           .order('created_at', { ascending: true });
-
+          
         if (error) {
           console.error('Error fetching messages:', error);
           setError(`Could not load messages: ${error.message}`);
           return;
         }
-
+        
         console.log(`Fetched ${data?.length || 0} messages`);
-
+        
         // Convert messages to expected format
         const formattedMessages: Message[] = (data || []).map(msg => ({
           id: msg.id,
@@ -116,18 +109,18 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           group_id: msg.group_id,
           read_by: msg.read_by || []
         }));
-
+        
         setMessages(formattedMessages);
-
+        
         // Mark messages as read
         if (username && formattedMessages.length > 0) {
           const unreadMessages = formattedMessages.filter(msg => msg.user_name !== username);
-
+          
           if (unreadMessages.length > 0) {
             for (const msg of unreadMessages) {
               await supabase
                 .from('chat_messages')
-                .update({
+                .update({ 
                   read_by: [...(msg.read_by || []), username]
                 })
                 .eq('id', msg.id);
@@ -141,21 +134,21 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         setLoading(false);
       }
     };
-
+    
     fetchMessages();
     setupRealtimeSubscriptions();
-
+    
     return () => {
       cleanupRealtimeSubscriptions();
     };
   }, [groupId, username]);
-
+  
   // Setup realtime subscriptions
   const setupRealtimeSubscriptions = () => {
     if (!groupId) return;
-
+    
     console.log(`Setting up realtime subscriptions for group: ${groupId}`);
-
+    
     // Message subscription (table changes)
     const messageChannel = supabase
       .channel(`messages:${groupId}`)
@@ -166,7 +159,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         filter: `group_id=eq.${groupId}`
       }, (payload) => {
         console.log('New message received:', payload);
-
+        
         if (payload.new) {
           const msg = payload.new as any;
           const newMessage: Message = {
@@ -178,7 +171,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
             group_id: msg.group_id,
             read_by: msg.read_by || []
           };
-
+          
           // Don't add duplicate messages
           setMessages(prevMessages => {
             if (prevMessages.some(m => m.id === newMessage.id)) {
@@ -186,12 +179,12 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
             }
             return [...prevMessages, newMessage];
           });
-
+          
           // Mark message as read if it's from someone else
           if (msg.sender !== username && username) {
             supabase
               .from('chat_messages')
-              .update({
+              .update({ 
                 read_by: [...(msg.read_by || []), username]
               })
               .eq('id', msg.id);
@@ -199,21 +192,21 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         }
       })
       .subscribe();
-
+    
     // Typing subscription
     const typingChannel = supabase
       .channel(`typing:${groupId}`)
       .on('broadcast', { event: 'typing' }, (payload) => {
         if (payload.payload && payload.payload.username !== username) {
           const typingUser = payload.payload;
-
+          
           setTypingUsers(prev => {
             // Clone current typing list
             const currentUsers = [...prev];
-
+            
             // Find existing user
             const existingIndex = currentUsers.findIndex(u => u.username === typingUser.username);
-
+            
             if (typingUser.isTyping) {
               // Update or add user
               const user = {
@@ -222,7 +215,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
                 isTyping: true,
                 lastTyped: new Date()
               };
-
+              
               if (existingIndex >= 0) {
                 currentUsers[existingIndex] = user;
               } else {
@@ -234,15 +227,15 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
                 currentUsers.splice(existingIndex, 1);
               }
             }
-
+            
             return currentUsers;
           });
         }
       })
       .subscribe();
-
+    
     channelsRef.current.push(messageChannel, typingChannel);
-
+    
     // Interval to clean up typing indicators that have been inactive
     const typingInterval = setInterval(() => {
       setTypingUsers(prev => {
@@ -252,16 +245,16 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         });
       });
     }, 1000);
-
+    
     // Store the interval ID for cleanup
     const intervalId = typingInterval;
     channelsRef.current.push({ isInterval: true, id: intervalId });
   };
-
+  
   // Cleanup subscriptions
   const cleanupRealtimeSubscriptions = () => {
     console.log('Cleaning up subscriptions');
-
+    
     channelsRef.current.forEach(channel => {
       if (channel.isInterval) {
         clearInterval(channel.id);
@@ -269,36 +262,36 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         supabase.removeChannel(channel);
       }
     });
-
+    
     channelsRef.current = [];
-
+    
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
   };
-
+  
   // Handle manual reconnection
   const handleReconnect = async () => {
     console.log('Manual reconnection triggered');
     setIsReconnecting(true);
-
+    
     try {
       cleanupRealtimeSubscriptions();
-
+      
       // Wait a moment before reconnecting
       await new Promise(resolve => setTimeout(resolve, 500));
-
+      
       // Re-fetch messages and setup subscriptions
       const { data, error } = await supabase
         .from('chat_messages')
         .select('*')
         .eq('group_id', groupId)
         .order('created_at', { ascending: true });
-
+        
       if (error) {
         throw error;
       }
-
+      
       const formattedMessages: Message[] = (data || []).map(msg => ({
         id: msg.id,
         created_at: msg.created_at,
@@ -308,10 +301,10 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         group_id: msg.group_id,
         read_by: msg.read_by || []
       }));
-
+      
       setMessages(formattedMessages);
       setupRealtimeSubscriptions();
-
+      
       toast({
         title: "Reconnected",
         description: "Chat connection restored successfully",
@@ -319,7 +312,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     } catch (err) {
       console.error('Reconnection failed:', err);
       setError('Reconnection failed. Please try again.');
-
+      
       toast({
         title: "Reconnection failed",
         description: "Failed to restore chat connection. Please try again.",
@@ -329,14 +322,14 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       setIsReconnecting(false);
     }
   };
-
+  
   // Scroll to bottom when messages change
   useEffect(() => {
     if (chatBottomRef.current) {
       chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, typingUsers]);
-
+  
   // Format time for display
   const formatTime = (isoDateString: string): string => {
     const date = new Date(isoDateString);
@@ -360,16 +353,16 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       return date.toLocaleDateString('de-DE');
     }
   };
-
+  
   // Handle sending messages
   const handleSubmit = async (eventData?: any) => { // Removed `e: React.FormEvent` and added `eventData`
     if ((!newMessage.trim() && !fileInputRef.current?.files?.length && !eventData) || !username || !groupId) {
       return;
     }
-
+    
     try {
       setIsSending(true);
-
+      
       // Handle file upload (existing logic, not directly used in this updated file)
       let mediaUrl = undefined;
       /*
@@ -380,7 +373,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         // and its logic should be handled there.
       }
       */
-
+      
       // Format message with event data if present
       let messageText = newMessage.trim();
       if (eventData) {
@@ -388,19 +381,19 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         // Use \\n for line breaks in the string to be parsed correctly by `EventMessageFormatter`
         messageText = `🗓️ **Event: ${title}**\\nDatum: ${date} um ${time}\\nOrt: ${location || 'k.A.'}\\nKategorie: ${category}\\n\\n${messageText}`;
       }
-
+      
       // Create optimistic message
       const tempId = `temp-${Date.now()}`;
-
+      
       // Check if this message was already sent (prevent duplicates)
       if (sentMessageIds.current.has(tempId)) {
         console.log('Duplicate submission detected, ignoring');
         return;
       }
-
+      
       // Track this message ID
       sentMessageIds.current.add(tempId);
-
+      
       const optimisticMessage: Message = {
         id: tempId,
         created_at: new Date().toISOString(),
@@ -410,11 +403,11 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         group_id: groupId,
         read_by: [username]
       };
-
+      
       // Add optimistic message immediately
       setMessages(prev => [...prev, optimisticMessage]);
-
-      // Clear input
+      
+      // Clear input 
       setNewMessage('');
       // Reset file input (if applicable, though handled by MessageInput internally)
       /*
@@ -422,7 +415,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         fileInputRef.current.value = '';
       }
       */
-
+      
       // Send message to database
       const { data, error } = await supabase
         .from('chat_messages')
@@ -435,24 +428,24 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           read_by: [username]
         })
         .select('id');
-
+      
       if (error) {
         console.error('Error sending message:', error);
         throw error;
       }
-
+      
       // Reset typing state (handled by MessageInput callbacks)
       /*
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
-
+      
       if (isTyping) {
         // ... typing broadcast logic ...
         setIsTyping(false);
       }
       */
-
+      
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
@@ -464,14 +457,14 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       setIsSending(false);
     }
   };
-
+  
   // Handle input change from MessageInput
   const handleInputChangeFromMessageInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);
     // You would typically handle typing status here, but MessageInput already has its own internal state
     // and sends broadcasts. So we just need to update newMessage.
   };
-
+  
   // Handle key down from MessageInput
   const handleKeyDownFromMessageInput = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -479,21 +472,21 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       handleSubmit();
     }
   };
-
-
+  
+  
   // Filter events for sharing based on search query
   const filteredEvents = events.filter(event => {
     if (!eventSearchQuery) return true;
-
+    
     const query = eventSearchQuery.toLowerCase();
     return (
-      event.title?.toLowerCase().includes(query) ||
+      event.title?.toLowerCase().includes(query) || 
       event.description?.toLowerCase().includes(query) ||
       event.location?.toLowerCase().includes(query) ||
       event.category?.toLowerCase().includes(query)
     );
   });
-
+  
   const handleSelectEventToShare = (event: any) => {
     const eventData = {
       title: event.title,
@@ -502,11 +495,10 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       location: event.location,
       category: event.category
     };
-
+    
     setIsEventSelectOpen(false);
     handleSubmit(eventData); // Pass eventData to handleSubmit
   };
-
 
   return (
     <div className="flex flex-col h-full bg-black">
@@ -534,7 +526,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
                 <span className="text-xs">Benutzer</span>
               </Button>
             )}
-
+            
             <Button
               variant="ghost"
               size="sm"
@@ -547,7 +539,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           </div>
         </div>
       </div>
-
+      
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto p-4 bg-black">
           {loading && (
@@ -555,7 +547,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
               <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-red-500 rounded-full"></div>
             </div>
           )}
-
+          
           {error && !loading && (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
@@ -566,13 +558,13 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
               </div>
             </div>
           )}
-
+          
           {!loading && !error && (
             <div className="flex flex-col space-y-4">
               {messages.map((message, index) => {
                 const isConsecutive = index > 0 && messages[index - 1].user_name === message.user_name;
                 const timeAgo = formatTime(message.created_at);
-
+                
                 return (
                   <div key={message.id} className="w-full">
                     {!isConsecutive && (
@@ -593,7 +585,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
                   </div>
                 );
               })}
-
+              
               {typingUsers.length > 0 && (
                 <div className="ml-10 pl-2">
                   <div className="text-gray-400 text-sm flex items-center">
@@ -610,14 +602,14 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
                   </div>
                 </div>
               )}
-
+              
               <div ref={chatBottomRef}></div>
             </div>
           )}
         </div>
-
+        
         <div className="p-3 bg-black border-t border-gray-800">
-          <MessageInput
+          <MessageInput 
             username={username}
             groupId={groupId}
             handleSendMessage={handleSubmit}
@@ -642,8 +634,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
                       <p className="text-gray-400 text-center py-4">Keine Events gefunden</p>
                     ) : (
                       filteredEvents.map((event) => (
-                        <div
-                          key={event.id}
+                        <div 
+                          key={event.id} 
                           className="p-2 bg-black rounded-md hover:bg-gray-900 cursor-pointer border border-gray-800"
                           onClick={() => handleSelectEventToShare(event)}
                         >
