@@ -183,8 +183,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
         onChange={handleInputChange} 
         onKeyPress={handleKeyPress} 
         placeholder={placeholderText}
-        // HIER: 'text-left' hinzugefügt, um den Text links auszurichten
-        className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pl-32 pr-14 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 min-w-0 text-left" 
+        // HIER: 'pl-32' durch dynamisches Padding ersetzt
+        className={cn(
+          "flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pr-14 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 min-w-0 text-left",
+          activeChatModeValue === 'ai' ? 'pl-32' : 'pl-4' // Dynamisches Padding
+        )} 
       />
       
       {/* Clickable overlay for placeholder suggestions */}
