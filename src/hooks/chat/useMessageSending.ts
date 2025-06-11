@@ -1,6 +1,6 @@
 // src/hooks/chat/useMessageSending.ts
 // Changed: 'content' to 'text' and message payload
-import { useState, useRef, useCallback, useEffect } => 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { AVATAR_KEY, EventShare } from '@/types/chatTypes';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,7 +34,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       
       if (eventData) {
         const { title, date, time, location, category } = eventData;
-        messageText = `🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${trimmedMessage}`;
+        messageText = `🗓️ **Event: ${title}**\\nDatum: ${date} um ${time}\\nOrt: ${location || 'k.A.'}\\nKategorie: ${category}\\n\\n${trimmedMessage}`;
       }
       
       // Setzen Sie das Eingabefeld sofort zurück
