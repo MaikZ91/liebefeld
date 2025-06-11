@@ -230,7 +230,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                       )}
                       <div className="break-words">
                         <ChatMessage
-                          message={message.content}
+                          message={message.text} // Changed from message.content to message.text
                           isConsecutive={isConsecutive}
                           isGroup
                           messageId={message.id}
