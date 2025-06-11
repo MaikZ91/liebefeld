@@ -1,10 +1,19 @@
-
-import React, { useState, useEffect } from 'react';
+// src/components/event-chat/ChatInput.tsx
+import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Heart, History, CalendarPlus, Send, Bell } from 'lucide-react';
 import { ChatInputProps } from './types';
 import { usePerfectDaySubscription } from '@/hooks/chat/usePerfectDaySubscription';
+
+// Add a separate AnimatedText component if it's not already defined elsewhere
+const AnimatedText = ({ text, className = '' }: { text: string; className?: string }) => {
+  return (
+    <span key={text} className={cn("inline-block whitespace-nowrap overflow-hidden animate-typing", className)}>
+      {text}
+    </span>
+  );
+};
 
 const ChatInput: React.FC<ChatInputProps> = ({
   input,
@@ -17,7 +26,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
   globalQueries,
   toggleRecentQueries,
   inputRef,
-  onAddEvent
+  onAddEvent,
+  showAnimatedPrompts // Empfangen der Prop
 }) => {
   // Get username from localStorage for subscription
   const username = typeof window !== 'undefined' 
@@ -40,8 +50,17 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    // Only animate if input is empty
-    if (input.trim() !== '') return;
+    // Wenn die Animation nicht gezeigt werden soll, displayText zurücksetzen und abbrechen.
+    if (!showAnimatedPrompts) { 
+      setDisplayText('');
+      return;
+    }
+
+    // Nur animieren, wenn das Inputfeld leer ist.
+    if (input.trim() !== '') {
+      setDisplayText(''); // Wichtig: Wenn Input vorhanden, Animation stoppen
+      return;
+    }
 
     const currentSuggestion = suggestions[currentSuggestionIndex];
     
@@ -67,7 +86,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }, isDeleting ? 50 : 100);
 
     return () => clearTimeout(timer);
-  }, [displayText, isDeleting, currentSuggestionIndex, input, suggestions]);
+  }, [displayText, isDeleting, currentSuggestionIndex, input, suggestions, showAnimatedPrompts]);
 
   // Handle input change - always expect setInput to accept string
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,7 +107,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
-  const placeholderText = input.trim() === '' ? displayText : '';
+  const placeholderText = showAnimatedPrompts && input.trim() === '' ? displayText : "Schreibe eine Nachricht..."; 
 
   return (
     <div className="flex items-center relative max-w-full">
@@ -154,7 +173,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
       />
       
       {/* Clickable overlay for placeholder suggestions */}
-      {input.trim() === '' && displayText.trim() !== '' && (
+      {showAnimatedPrompts && input.trim() === '' && displayText.trim() !== '' && ( 
         <div 
           className="absolute left-32 right-14 top-3 bottom-3 cursor-pointer z-5"
           onClick={handleSuggestionClick}
