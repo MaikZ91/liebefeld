@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Heart, History, CalendarPlus, Send, Bell } from 'lucide-react';
@@ -26,10 +26,55 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   const { isSubscribed, loading, toggleSubscription } = usePerfectDaySubscription(username);
 
+  // Animated placeholder suggestions
+  const suggestions = [
+    "Frage nach Events...",
+    "Welche Events gibt es heute?",
+    "Was kann ich am Wochenende machen?",
+    "Gibt es Konzerte im Lokschuppen?",
+    "❤️ Zeige mir Events, die zu mir passen"
+  ];
+
+  const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
+  const [displayText, setDisplayText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    // Only animate if input is empty
+    if (input.trim() !== '') return;
+
+    const currentSuggestion = suggestions[currentSuggestionIndex];
+    
+    const timer = setTimeout(() => {
+      if (!isDeleting) {
+        // Typing animation
+        if (displayText.length < currentSuggestion.length) {
+          setDisplayText(currentSuggestion.slice(0, displayText.length + 1));
+        } else {
+          // Pause before deleting
+          setTimeout(() => setIsDeleting(true), 2000);
+        }
+      } else {
+        // Deleting animation
+        if (displayText.length > 0) {
+          setDisplayText(displayText.slice(0, -1));
+        } else {
+          // Move to next suggestion
+          setIsDeleting(false);
+          setCurrentSuggestionIndex((prev) => (prev + 1) % suggestions.length);
+        }
+      }
+    }, isDeleting ? 50 : 100);
+
+    return () => clearTimeout(timer);
+  }, [displayText, isDeleting, currentSuggestionIndex, input, suggestions]);
+
   // Handle input change - always expect setInput to accept string
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
   };
+
+  const placeholderText = input.trim() === '' ? displayText : '';
 
   return (
     <div className="flex items-center relative max-w-full">
@@ -90,7 +135,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         value={input} 
         onChange={handleInputChange} 
         onKeyPress={handleKeyPress} 
-        placeholder="Frage nach Events..." 
+        placeholder={placeholderText}
         className="flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pl-32 pr-14 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 min-w-0" 
       />
       

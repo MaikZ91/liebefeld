@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChatMessage, CHAT_HISTORY_KEY, CHAT_QUERIES_KEY, PanelEventData, PanelEvent, AdEvent } from './types';
 import { supabase } from '@/integrations/supabase/client';
-import { generateResponse, getAnimatedWelcomeMessage, createResponseHeader, createLandingSlideData } from '@/utils/chatUtils'; // Geändert: getWelcomeMessage zu getAnimatedWelcomeMessage
+import { generateResponse, getWelcomeMessage, createResponseHeader, createLandingSlideData } from '@/utils/chatUtils';
 import { toast } from 'sonner';
 
 import { Event } from '@/types/eventTypes';
@@ -488,7 +488,7 @@ export const useChatLogic = (
                     id: 'welcome',
                     isUser: false,
                     text: 'Willkommen bei THE TRIBE!',
-                    html: getAnimatedWelcomeMessage(),
+                    html: getWelcomeMessage(),
                     timestamp: new Date().toISOString()
                 },
                 {
@@ -541,7 +541,7 @@ export const useChatLogic = (
           id: 'welcome',
           isUser: false,
           text: 'Willkommen bei THE TRIBE!',
-          html: getAnimatedWelcomeMessage(),
+          html: getWelcomeMessage(),
           timestamp: new Date().toISOString()
         },
         {
