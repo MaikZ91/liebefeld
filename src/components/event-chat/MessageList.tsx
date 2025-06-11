@@ -1,5 +1,4 @@
 // src/components/event-chat/MessageList.tsx
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 import ChatMessage from '@/components/chat/ChatMessage';
@@ -7,14 +6,14 @@ import { Button } from '@/components/ui/button';
 import { MessageListProps } from './types';
 import SwipeableEventPanel from './SwipeableEventPanel';
 import SwipeableLandingPanel from './SwipeableLandingPanel';
-import './MessageList.css';
+import './MessageList.css'; 
 
 const MessageList: React.FC<MessageListProps> = ({
   messages,
   isTyping,
   handleDateSelect,
   messagesEndRef,
-  examplePrompts,
+  examplePrompts, // <- Diese Prop wird jetzt wieder direkt hier verwendet
   handleExamplePromptClick
 }) => {
   const renderMessages = () => {
@@ -50,6 +49,12 @@ const MessageList: React.FC<MessageListProps> = ({
           </div>
         )}
         
+        {/*
+          Die statischen Prompts werden jetzt wieder direkt in der MessageList gerendert,
+          wenn die Bedingung erfüllt ist (z.B. messages.length <= X nach Begrüßung)
+          Daher ist die "static-prompts"-Nachricht im `messages`-Array nicht mehr nötig.
+        */}
+        
         {/* Render HTML content */}
         {message.html ? (
           <div 
@@ -57,7 +62,7 @@ const MessageList: React.FC<MessageListProps> = ({
             className="p-3 event-list-container"
           />
         ) : (
-          /* Render regular chat message only if no panel data and no slides */
+          /* Render regular chat message only if no panel data, no slides, and not static prompts */
           !message.panelData && !message.slideData && (
             <ChatMessage 
               message={message.text} 
@@ -86,8 +91,9 @@ const MessageList: React.FC<MessageListProps> = ({
           </div>
         )}
         
-        {/* Display example prompts only if there's just the welcome message */}
-        {messages.length === 1 && messages[0].id === 'welcome' && (
+        {/* NEU: Statische Prompts direkt hier rendern, wenn messages.length 2 ist (Willkommensnachricht + Landing Slides)
+                  und der Benutzer noch keine erste Nachricht gesendet hat */}
+        {messages.length > 0 && messages[0].id === 'welcome' && messages.some(msg => msg.id === 'landing-slides') && messages.filter(msg => msg.isUser).length === 0 && (
           <div className="bg-black max-w-[85%] rounded-lg p-3 border border-black mt-4">
             <p className="text-sm text-red-200 mb-2">
               Frag mich zum Beispiel:
@@ -97,10 +103,10 @@ const MessageList: React.FC<MessageListProps> = ({
                 <Button
                   key={index}
                   variant="outline"
-                  className="text-left justify-start bg-black hover:bg-gray-900 text-red-500 border-red-500" // Styled red
+                  className="text-left justify-start bg-black hover:bg-gray-900 text-red-500 border-red-500" 
                   onClick={() => handleExamplePromptClick(prompt)}
                 >
-                  {prompt} {/* Removed quotation marks */}
+                  {prompt}
                 </Button>
               ))}
             </div>
