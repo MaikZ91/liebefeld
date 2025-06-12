@@ -1,5 +1,4 @@
 
-
 // src/components/EventCard.tsx
 
 import React, { useState, memo } from 'react';
@@ -9,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useEventContext } from '@/contexts/EventContext';
+import { useLikeSync } from '@/hooks/useLikeSync';
 
 interface EventCardProps {
   event: Event;
@@ -52,30 +52,40 @@ const isTribeEvent = (title: string): boolean => {
 
 const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, compact = false, onLike }) => {
   const [isLiking, setIsLiking] = useState(false);
-  const { newEventIds, eventLikes } = useEventContext();
+  const { newEventIds, handleLikeEvent } = useEventContext();
+  const { eventLikes } = useLikeSync(); // Use the sync hook
 
   const isNewEvent = newEventIds.has(event.id);
   const isTribe = isTribeEvent(event.title);
 
-  // Get likes directly from database sources
+  // Get likes with better synchronization - prioritize context over event property
   const displayLikes = event.id.startsWith('github-')
     ? (eventLikes[event.id] || 0)
-    : (event.likes || 0);
+    : Math.max(eventLikes[event.id] || 0, event.likes || 0);
 
   const icon = event.category in categoryIcons
     ? categoryIcons[event.category]
     : <Calendar className="w-3 h-3" />;
 
-  const handleLike = (e: React.MouseEvent) => {
+  const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onLike && !isLiking) {
-      setIsLiking(true);
-      console.log(`Liking event ${event.id} (${event.title}) with current likes: ${displayLikes}`);
-      onLike(event.id);
-      // Reset immediately for better UX
+    if (isLiking) return;
+    
+    setIsLiking(true);
+    console.log(`Liking event ${event.id} (${event.title}) with current likes: ${displayLikes}`);
+    
+    try {
+      if (onLike) {
+        onLike(event.id);
+      } else {
+        await handleLikeEvent(event.id);
+      }
+    } catch (error) {
+      console.error('Error liking event:', error);
+    } finally {
       setTimeout(() => {
         setIsLiking(false);
-      }, 150); // Reduced from 300ms
+      }, 150);
     }
   };
 
@@ -98,7 +108,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
         )}
         onClick={onClick}
       >
-        <div className="flex items-start gap-2"> {/* Use flex to align image and text content */}
+        <div className="flex items-start gap-2">
           {event.image_url && (
             <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden">
               <img
@@ -108,7 +118,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
               />
             </div>
           )}
-          <div className="flex-1 min-w-0"> {/* Allow content to take remaining space */}
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1 flex-wrap">
               {isNewEvent && (
                 <Badge className="bg-green-600 text-white text-[10px] flex items-center gap-0.5 h-3 px-1">
@@ -161,7 +171,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-1"> {/* Aligned right to position badge and like button */}
+          <div className="flex flex-col items-end gap-1">
             <Badge className={cn(
               "flex-shrink-0 flex items-center gap-0.5 text-[8px] font-medium whitespace-nowrap px-1 py-0 h-3",
               event.category in categoryColors
@@ -251,7 +261,6 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
           )}
         </div>
 
-        {/* Image in non-compact view - smaller round size */}
         {event.image_url && (
           <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden ml-auto">
             <img
@@ -315,4 +324,3 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
 EventCard.displayName = 'EventCard';
 
 export default EventCard;
-

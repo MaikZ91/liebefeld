@@ -8,6 +8,7 @@ import EventCard from '@/components/EventCard';
 import { groupEventsByDate } from '@/utils/eventUtils';
 import { Star, ChevronDown, ChevronUp } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
+import { useLikeSync } from '@/hooks/useLikeSync';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
@@ -67,8 +68,9 @@ const EventList: React.FC<EventListProps> = memo(({
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
   const { newEventIds, filter, topEventsPerDay } = useEventContext();
+  const { eventLikes } = useLikeSync(); // Use the sync hook
 
-  // Memoize expensive computations
+  // Memoize expensive computations with better like synchronization
   const { hochschulsportEvents, regularEvents } = useMemo(() => {
     const hochschulsport = events.filter(event => 
       event.title.toLowerCase().includes('hochschulsport') || 
@@ -95,22 +97,31 @@ const EventList: React.FC<EventListProps> = memo(({
   const displayEvents = useMemo(() => {
     if (!showFavorites) return filteredEvents;
     
+    // For favorites, use synced likes data
     return filteredEvents.filter(event => {
       if (!event.date) return false;
       
-      return topEventsPerDay[event.date] === event.id && (event.likes && event.likes > 0);
+      const eventLikesCount = event.id.startsWith('github-')
+        ? (eventLikes[event.id] || 0)
+        : Math.max(eventLikes[event.id] || 0, event.likes || 0);
+      
+      return topEventsPerDay[event.date] === event.id && eventLikesCount > 0;
     });
-  }, [filteredEvents, showFavorites, topEventsPerDay]);
+  }, [filteredEvents, showFavorites, topEventsPerDay, eventLikes]);
 
   const eventsByDate = useMemo(() => {
     const grouped = groupEventsByDate(regularEvents);
     
-    // Pre-sort events within each date group
+    // Pre-sort events within each date group with updated likes
     Object.keys(grouped).forEach(dateStr => {
       grouped[dateStr].sort((a, b) => {
-        // Sort by likes (descending) first
-        const likesA = a.likes || 0;
-        const likesB = b.likes || 0;
+        // Get updated likes for sorting
+        const likesA = a.id.startsWith('github-')
+          ? (eventLikes[a.id] || 0)
+          : Math.max(eventLikes[a.id] || 0, a.likes || 0);
+        const likesB = b.id.startsWith('github-')
+          ? (eventLikes[b.id] || 0)
+          : Math.max(eventLikes[b.id] || 0, b.likes || 0);
         
         if (likesB !== likesA) {
           return likesB - likesA;
@@ -135,7 +146,7 @@ const EventList: React.FC<EventListProps> = memo(({
     });
     
     return grouped;
-  }, [regularEvents]);
+  }, [regularEvents, eventLikes]);
   
   const hochschulsportEventsByDate = useMemo(() => {
     // Also sort Hochschulsport events by time
@@ -176,8 +187,13 @@ const EventList: React.FC<EventListProps> = memo(({
       
       if (todayEvents.length > 0) {
         const popular = [...todayEvents].sort((a, b) => {
-          const likesA = a.likes || 0;
-          const likesB = b.likes || 0;
+          // Use updated likes for determining top event
+          const likesA = a.id.startsWith('github-')
+            ? (eventLikes[a.id] || 0)
+            : Math.max(eventLikes[a.id] || 0, a.likes || 0);
+          const likesB = b.id.startsWith('github-')
+            ? (eventLikes[b.id] || 0)
+            : Math.max(eventLikes[b.id] || 0, b.likes || 0);
           
           if (likesB !== likesA) {
             return likesB - likesA;
@@ -191,7 +207,7 @@ const EventList: React.FC<EventListProps> = memo(({
         setTopTodayEvent(null);
       }
     }
-  }, [displayEvents]);
+  }, [displayEvents, eventLikes]);
 
   useEffect(() => {
     if (todayRef.current && listRef.current && !hasScrolledToToday && Object.keys(eventsByDate).length > 0) {

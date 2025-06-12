@@ -1,9 +1,11 @@
+
 // src/components/event-chat/SwipeableEventPanel.tsx
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, MapPin, Clock, Euro, UsersRound, Calendar, ExternalLink, Music } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, Clock, Euro, UsersRound, Calendar, ExternalLink, Music, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { PanelEventData, PanelEvent, AdEvent } from './types'; // Importiere AdEvent
+import { PanelEventData, PanelEvent, AdEvent } from './types';
+import { useEventContext } from '@/contexts/EventContext';
 
 interface SwipeableEventPanelProps {
   panelData: PanelEventData;
@@ -17,6 +19,8 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
   className
 }) => {
   const [currentIndex, setCurrentIndex] = useState(panelData.currentIndex || 0);
+  const { handleLikeEvent, eventLikes } = useEventContext();
+  const [isLiking, setIsLiking] = useState(false);
   
   const currentItem = panelData.events[currentIndex];
   
@@ -41,15 +45,37 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
     }
   };
 
+  const handleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    // Only handle likes for PanelEvent items with an id
+    if (!('id' in currentItem) || isLiking) return;
+    
+    const eventId = (currentItem as PanelEvent).id;
+    setIsLiking(true);
+    
+    try {
+      await handleLikeEvent(eventId);
+    } catch (error) {
+      console.error('Error liking event:', error);
+    } finally {
+      setTimeout(() => setIsLiking(false), 150);
+    }
+  };
+
   if (!currentItem) return null;
 
   // Determine if it's an AdEvent or PanelEvent
   const isAd = 'imageUrl' in currentItem;
+  const isPanelEvent = 'id' in currentItem;
+  
   // Safely get itemType and link
   const itemType = isAd ? (currentItem as AdEvent).type || 'ad' : (currentItem as PanelEvent).category;
   const imageUrl = isAd ? (currentItem as AdEvent).imageUrl : (currentItem as PanelEvent).image_url;
   const displayLink = isAd ? (currentItem as AdEvent).link : (currentItem as PanelEvent).link;
 
+  // Get likes for PanelEvent items
+  const eventLikesCount = isPanelEvent ? (eventLikes[(currentItem as PanelEvent).id] || 0) : 0;
 
   return (
     <div className={cn(
@@ -72,6 +98,33 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
         {isAd && (
           <div className="absolute top-2 left-2 bg-yellow-500 text-black px-2 py-1 rounded-full text-xs font-semibold z-10">
             Sponsored
+          </div>
+        )}
+
+        {/* Like Button for PanelEvent items */}
+        {isPanelEvent && (
+          <div className="absolute top-2 right-2 z-10">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "h-10 w-10 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm transition-all",
+                isLiking ? "opacity-70" : ""
+              )}
+              onClick={handleLike}
+              disabled={isLiking}
+            >
+              <Heart className={cn(
+                "h-5 w-5 transition-transform text-white",
+                eventLikesCount > 0 ? "fill-red-500 text-red-500" : "",
+                isLiking ? "scale-125" : ""
+              )} />
+            </Button>
+            {eventLikesCount > 0 && (
+              <div className="absolute -bottom-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                {eventLikesCount}
+              </div>
+            )}
           </div>
         )}
 
