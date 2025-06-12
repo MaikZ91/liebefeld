@@ -1,3 +1,4 @@
+
 // supabase/functions/generate-perfect-day/index.ts
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
@@ -133,7 +134,6 @@ const transformGitHubEventsEdge = (
 
 const EXTERNAL_EVENTS_URL = "https://raw.githubusercontent.com/MaikZ91/productiontools/master/events.json";
 
-
 // --- Hauptfunktion der Edge Function ---
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -212,7 +212,6 @@ serve(async (req) => {
       }));
       console.log(`[generate-perfect-day] Fetched ${fetchedSupabaseEvents.length} Supabase events.`);
 
-
       // --- Externe GitHub-Events abrufen ---
       let githubEvents: Event[] = [];
       try {
@@ -275,23 +274,9 @@ serve(async (req) => {
       );
 
     } else { // --- Processing as a background job (no username in request body) ---
-      console.log('[generate-perfect-day] Processing as BACKGROUND JOB.');
+      console.log('[generate-perfect-day] Processing as BACKGROUND JOB for daily AI chat messages.');
 
-      // Get all active subscriptions
-      const { data: subscriptions, error: subError } = await supabase
-        .from('perfect_day_subscriptions')
-        .select('*')
-        .eq('is_active', true)
-        .or(`last_sent_at.is.null,last_sent_at.lt.${today}`);
-
-      if (subError) {
-        console.error('[generate-perfect-day] Error fetching subscriptions:', subError);
-        throw subError;
-      }
-
-      console.log(`[generate-perfect-day] Found ${subscriptions?.length || 0} active subscriptions`);
-
-      // Fetch all events (Supabase and GitHub) for background jobs too
+      // Fetch all events (Supabase and GitHub) for background jobs
       const { data: supabaseEventsData, error: subSupabaseEventsError } = await supabase
         .from('community_events')
         .select('*, image_urls')
@@ -337,101 +322,32 @@ serve(async (req) => {
       const allEventsForBackgroundJob = [...fetchedSubSupabaseEvents, ...subGithubEvents];
       console.log(`[generate-perfect-day] Combined ${allEventsForBackgroundJob.length} events for background job.`);
 
+      // Generate a universal perfect day message for all users
+      const universalMessage = await generatePerfectDayMessage(
+        allEventsForBackgroundJob,
+        null, // No specific user profile for universal message
+        'partly_cloudy', // Default weather
+        today,
+        [], // No specific activity suggestions
+        [], // No specific interests
+        [], // No specific locations
+        false // No profile button for background messages
+      );
 
-      // Process each subscription
-      for (const subscription of subscriptions || []) {
-        try {
-          console.log(`[generate-perfect-day] Processing subscription for ${subscription.username}`);
+      // Insert the daily message directly into AI chat history (simulated as system message)
+      // Since this is a universal message, we don't need to loop through users
+      // The message will appear for all users when they open the AI chat
+      console.log(`[generate-perfect-day] Generated universal Perfect Day message for AI chat.`);
 
-          // Get user profile for personalization
-          const { data: profile, error: profileError } = await supabase
-            .from('user_profiles')
-            .select('*')
-            .eq('username', subscription.username)
-            .maybeSingle(); // Use maybeSingle for robustness
-
-          if (profileError) {
-            console.error(`[generate-perfect-day] Error fetching profile for ${subscription.username}:`, profileError);
-            continue; // Skip this user if profile cannot be fetched
-          }
-          
-          const subUserProfile = profile || null; // Can be null if profile not found
-          const subUserInterests = profile?.interests || [];
-          const subUserFavoriteLocations = profile?.favorite_locations || [];
-
-          let subActivitySuggestions: any[] = [];
-          if (subUserInterests.length > 0) {
-            const { data: suggestions, error: suggestionsError } = await supabase
-              .from('activity_suggestions')
-              .select('activity, category, link')
-              .in('category', subUserInterests)
-              .or(`weather.eq.${clientWeather || 'partly_cloudy'},weather.eq.sunny,weather.eq.cloudy`);
-
-            if (suggestionsError) {
-              console.error('[generate-perfect-day] Error fetching activity suggestions for background job:', suggestionsError);
-            } else {
-              subActivitySuggestions = suggestions || [];
-              console.log(`[generate-perfect-day] Found ${subActivitySuggestions.length} activity suggestions for ${subscription.username} (background)`);
-            }
-          }
-
-          // Generate AI-powered perfect day message for each subscriber
-          const aiMessage = await generatePerfectDayMessage(
-            allEventsForBackgroundJob || [], // Pass all combined events
-            subUserProfile,
-            clientWeather || 'partly_cloudy', // Pass weather
-            today,
-            subActivitySuggestions,
-            subUserInterests,
-            subUserFavoriteLocations,
-            false // addProfileButton = false for background jobs
-          );
-
-          console.log(`[generate-perfect-day] Generated AI message for ${subscription.username}`);
-
-          // Insert message into chat_messages table
-          const { error: insertError } = await supabase
-            .from('chat_messages')
-            .insert({
-              group_id: 'general', // Or a specific Perfect Day group ID
-              sender: 'Perfect Day Bot',
-              text: aiMessage,
-              avatar: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png', // Or a specific bot avatar
-              created_at: new Date().toISOString(),
-            });
-
-          if (insertError) {
-            console.error(`[generate-perfect-day] Error inserting message for ${subscription.username}:`, insertError);
-            continue;
-          }
-
-          // Update last_sent_at for the subscription
-          const { error: updateError } = await supabase
-            .from('perfect_day_subscriptions')
-            .update({ last_sent_at: today })
-            .eq('id', subscription.id);
-
-          if (updateError) {
-            console.error(`[generate-perfect-day] Error updating subscription for ${subscription.username}:`, updateError);
-          } else {
-            console.log(`[generate-perfect-day] Successfully processed ${subscription.username}`);
-          }
-
-        } catch (error) {
-          console.error(`[generate-perfect-day] Error processing subscription for ${subscription.username}:`, error);
-          continue;
-        }
-      } // End of for loop
-
-      return new Response( // Return success response for cron job
+      return new Response(
         JSON.stringify({
           success: true,
-          processed: subscriptions?.length || 0,
+          message: "Universal Perfect Day message generated for AI chat",
           events_found: allEventsForBackgroundJob.length,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    } // Ende des else-Blocks für Hintergrundjobs
+    }
 
   } catch (error) {
     console.error('[generate-perfect-day] Error in generate-perfect-day function:', error);
@@ -453,7 +369,7 @@ async function generatePerfectDayMessage(
   activitySuggestions: any[],
   clientInterests: string[],
   clientFavoriteLocations: string[],
-  addProfileButton: boolean // New parameter to control button presence
+  addProfileButton: boolean
 ): Promise<string> {
   try {
     // Filtere Events explizit nach dem heutigen Datum und extrahiere den Datums-Teil

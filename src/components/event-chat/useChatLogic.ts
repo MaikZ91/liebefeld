@@ -10,6 +10,7 @@ import { fetchWeather } from '@/utils/weatherUtils';
 import { useEventNotifications } from '@/hooks/useEventNotifications';
 import { createEventNotificationMessage, getNewEventsFromIds } from '@/utils/eventNotificationUtils';
 import { useEventContext } from '@/contexts/EventContext';
+import { useDailyPerfectDay } from '@/hooks/useDailyPerfectDay';
 
 // Define a key for localStorage to track if the app has been launched before
 const APP_LAUNCHED_KEY = 'app_launched_before';
@@ -112,6 +113,17 @@ export const useChatLogic = (
   useEventNotifications({
     onNewEvents: handleNewEventNotification,
     isEnabled: fullPage && isChatOpen, // Only enable for full page chat when open
+    activeChatMode: activeChatModeValue
+  });
+
+  // Handle daily Perfect Day messages
+  const handleDailyPerfectDayMessage = useCallback((message: ChatMessage) => {
+    setMessages(prev => [...prev, message]);
+  }, []);
+
+  // Setup daily Perfect Day messages
+  useDailyPerfectDay({
+    onDailyMessage: handleDailyPerfectDayMessage,
     activeChatMode: activeChatModeValue
   });
 

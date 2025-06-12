@@ -1,10 +1,10 @@
+
 // src/components/event-chat/ChatInput.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Heart, History, CalendarPlus, Send, Bell } from 'lucide-react';
-import { ChatInputProps } from './types'; 
-import { usePerfectDaySubscription } from '@/hooks/chat/usePerfectDaySubscription';
+import { Heart, History, CalendarPlus, Send } from 'lucide-react';
+import { ChatInputProps } from './types';
 
 // Add a separate AnimatedText component if it's not already defined elsewhere
 const AnimatedText = ({ text, className = '' }: { text: string; className?: string }) => {
@@ -28,15 +28,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
   inputRef,
   onAddEvent,
   showAnimatedPrompts,
-  activeChatModeValue // HIER EMPFANGEN
+  activeChatModeValue
 }) => {
-  // Get username from localStorage for subscription
-  const username = typeof window !== 'undefined' 
-    ? localStorage.getItem('community_chat_username') || 'Anonymous'
-    : 'Anonymous';
-
-  const { isSubscribed, loading, toggleSubscription } = usePerfectDaySubscription(username);
-
   // Animated placeholder suggestions
   const suggestions = [
     "Frage nach Events...",
@@ -148,20 +141,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
           </Button>
         )}
 
-        {/* Perfect Day subscription bell - nur im AI-Modus sichtbar */}
-        {activeChatModeValue === 'ai' && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSubscription}
-            disabled={loading}
-            className={`h-6 w-6 ${isSubscribed ? 'text-yellow-500' : 'text-red-400'}`}
-            title={isSubscribed ? "Perfect Day Nachrichten abbestellen" : "Tägliche Perfect Day Nachrichten abonnieren"}
-          >
-            <Bell className={`h-3 w-3 ${isSubscribed ? 'fill-yellow-500' : ''} ${loading ? 'animate-pulse' : ''}`} />
-          </Button>
-        )}
-
         {/* Add Event button with calendar icon - nur im AI-Modus sichtbar */}
         {activeChatModeValue === 'ai' && onAddEvent && (
           <Button
@@ -183,17 +162,16 @@ const ChatInput: React.FC<ChatInputProps> = ({
         onChange={handleInputChange} 
         onKeyPress={handleKeyPress} 
         placeholder={placeholderText}
-        // HIER: 'pl-32' durch dynamisches Padding ersetzt
         className={cn(
           "flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pr-14 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 min-w-0 text-left",
-          activeChatModeValue === 'ai' ? 'pl-32' : 'pl-4' // Dynamisches Padding
+          activeChatModeValue === 'ai' ? 'pl-20' : 'pl-4' // Reduziertes Padding da Bell-Button entfernt
         )} 
       />
       
       {/* Clickable overlay for placeholder suggestions */}
       {activeChatModeValue === 'ai' && showAnimatedPrompts && input.trim() === '' && displayText.trim() !== '' && ( 
         <div 
-          className="absolute left-32 right-14 top-3 bottom-3 cursor-pointer z-5"
+          className="absolute left-20 right-14 top-3 bottom-3 cursor-pointer z-5"
           onClick={handleSuggestionClick}
           title="Klicken um Vorschlag zu übernehmen"
         />
