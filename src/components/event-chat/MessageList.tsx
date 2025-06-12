@@ -1,3 +1,4 @@
+
 // src/components/event-chat/MessageList.tsx
 import React from 'react';
 import { cn } from '@/lib/utils';
@@ -13,7 +14,7 @@ const MessageList: React.FC<MessageListProps> = ({
   isTyping,
   handleDateSelect,
   messagesEndRef,
-  examplePrompts, // <- Diese Prop wird jetzt wieder direkt hier verwendet
+  examplePrompts,
   handleExamplePromptClick
 }) => {
   const renderMessages = () => {
@@ -24,7 +25,8 @@ const MessageList: React.FC<MessageListProps> = ({
           "max-w-[85%] rounded-lg",
           message.isUser
             ? "bg-black border border-black ml-auto"
-            : "bg-black border border-black"
+            : "bg-black border border-black",
+          message.isEventNotification && "border-red-500/50 bg-red-900/10" // Special styling for event notifications
         )}
       >
         {/* Render Landing Slides if slideData exists */}
@@ -43,17 +45,10 @@ const MessageList: React.FC<MessageListProps> = ({
               panelData={message.panelData}
               onEventSelect={(eventId) => {
                 console.log('Event selected:', eventId);
-                // Could trigger additional chat response or navigation
               }}
             />
           </div>
         )}
-        
-        {/*
-          Die statischen Prompts werden jetzt wieder direkt in der MessageList gerendert,
-          wenn die Bedingung erfüllt ist (z.B. messages.length <= X nach Begrüßung)
-          Daher ist die "static-prompts"-Nachricht im `messages`-Array nicht mehr nötig.
-        */}
         
         {/* Render HTML content */}
         {message.html ? (
@@ -91,9 +86,11 @@ const MessageList: React.FC<MessageListProps> = ({
           </div>
         )}
         
-        {/* NEU: Statische Prompts direkt hier rendern, wenn messages.length 2 ist (Willkommensnachricht + Landing Slides)
-                  und der Benutzer noch keine erste Nachricht gesendet hat */}
-        {messages.length > 0 && messages[0].id === 'welcome' && messages.some(msg => msg.id === 'landing-slides') && messages.filter(msg => msg.isUser).length === 0 && (
+        {/* Static prompts - only show when conditions are met */}
+        {messages.length > 0 && 
+         messages[0].id === 'welcome' && 
+         messages.some(msg => msg.id === 'landing-slides') && 
+         messages.filter(msg => msg.isUser).length === 0 && (
           <div className="bg-black max-w-[85%] rounded-lg p-3 border border-black mt-4">
             <p className="text-sm text-red-200 mb-2">
               Frag mich zum Beispiel:

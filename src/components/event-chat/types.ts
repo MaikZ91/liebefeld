@@ -1,3 +1,4 @@
+
 // src/components/event-chat/types.ts
 import { LandingSlideData } from './SwipeableLandingPanel';
 
@@ -10,6 +11,7 @@ export interface ChatMessage {
   panelData?: PanelEventData;
   slideData?: LandingSlideData; 
   examplePrompts?: string[]; 
+  isEventNotification?: boolean; // NEW: Flag for event notifications
 }
 
 export interface PanelEventData {
@@ -73,7 +75,7 @@ export interface ChatInputProps {
   inputRef: React.RefObject<HTMLInputElement>;
   onAddEvent?: () => void;
   showAnimatedPrompts: boolean;
-  activeChatModeValue: 'ai' | 'community'; // HIER HINZUGEFÜGT
+  activeChatModeValue: 'ai' | 'community';
 }
 
 export interface RecentQueriesProps {

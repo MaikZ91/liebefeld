@@ -7,6 +7,9 @@ import { toast } from 'sonner';
 import { Event } from '@/types/eventTypes';
 import { getFutureEvents, getEventsForDay, getWeekRange } from '@/utils/eventUtils';
 import { fetchWeather } from '@/utils/weatherUtils';
+import { useEventNotifications } from '@/hooks/useEventNotifications';
+import { createEventNotificationMessage, getNewEventsFromIds } from '@/utils/eventNotificationUtils';
+import { useEventContext } from '@/contexts/EventContext';
 
 // Define a key for localStorage to track if the app has been launched before
 const APP_LAUNCHED_KEY = 'app_launched_before';
@@ -32,6 +35,9 @@ export const useChatLogic = (
   const inputRef = useRef<HTMLInputElement>(null);
   const welcomeMessageShownRef = useRef(false);
   const appLaunchedBeforeRef = useRef(false); 
+
+  // Get event context for notifications
+  const { newEventIds } = useEventContext();
 
   const examplePrompts = [
     "Welche Events gibt es heute?",
@@ -74,6 +80,41 @@ export const useChatLogic = (
     }
   ];
 
+  // Handle new event notifications
+  const handleNewEventNotification = useCallback((eventCount: number) => {
+    console.log('Creating event notification for', eventCount, 'events');
+    
+    // Get the actual new events
+    const newEvents = getNewEventsFromIds(events, newEventIds);
+    
+    if (newEvents.length > 0) {
+      const notificationMessage = createEventNotificationMessage(eventCount, newEvents);
+      
+      setMessages(prev => {
+        // Check if we already have a recent event notification (within last 5 minutes)
+        const recentNotification = prev.find(msg => 
+          msg.isEventNotification && 
+          new Date(msg.timestamp).getTime() > Date.now() - (5 * 60 * 1000)
+        );
+        
+        if (recentNotification) {
+          console.log('Recent event notification exists, skipping');
+          return prev;
+        }
+        
+        console.log('Adding event notification message');
+        return [...prev, notificationMessage];
+      });
+    }
+  }, [events, newEventIds]);
+
+  // Setup event notifications (only for fullPage and AI mode)
+  useEventNotifications({
+    onNewEvents: handleNewEventNotification,
+    isEnabled: fullPage && isChatOpen, // Only enable for full page chat when open
+    activeChatMode: activeChatModeValue
+  });
+
   const createPanelData = (filteredEvents: Event[]): PanelEventData => {
     const allItems: (PanelEvent | AdEvent)[] = [];
 
@@ -87,7 +128,7 @@ export const useChatLogic = (
         location: event.location,
         image_url: event.image_url || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop',
         category: event.category,
-        link: event.link // Ensure link is also added for events
+        link: event.link
       });
     });
 
@@ -169,7 +210,7 @@ export const useChatLogic = (
         }
       }
       
-      fetchGlobalQueries(); // Globale Abfragen aktualisieren
+      fetchGlobalQueries();
     } catch (error) {
       console.error('[useChatLogic] Exception saving global query:', error);
     }
@@ -183,15 +224,13 @@ export const useChatLogic = (
       return newQueries;
     });
     
-    saveGlobalQuery(query); // Abfrage auch global speichern
+    saveGlobalQuery(query);
   }, [saveGlobalQuery]);
-
 
   const handleSendMessage = async (customInput?: string) => {
     const message = customInput || input;
     if (!message.trim()) return;
     
-    // Setze `hasUserSentFirstMessage` auf true, sobald eine Nachricht gesendet wird.
     if (!hasUserSentFirstMessage) {
       setHasUserSentFirstMessage(true);
       localStorage.setItem(USER_SENT_FIRST_MESSAGE_KEY, 'true');
@@ -212,7 +251,6 @@ export const useChatLogic = (
 
     const lowercaseMessage = message.toLowerCase().trim();
 
-    // Spezifische Abfrage für "Perfekter Tag" abfangen
     if (lowercaseMessage === "mein perfekter tag in liebefeld") {
       console.log('[useChatLogic] "Mein Perfekter Tag in Liebefeld" Anfrage erkannt.');
       try {
@@ -268,10 +306,9 @@ export const useChatLogic = (
       } finally {
         setIsTyping(false);
       }
-      return; // Beende die Funktion hier, damit die Standard-KI-Antwort nicht ausgelöst wird
+      return;
     }
 
-    // Standard-KI-Antwortlogik, wenn "Perfekter Tag" nicht erkannt wurde
     let relevantEvents: Event[] = [];
     const currentDate = new Date();
 
@@ -413,7 +450,6 @@ export const useChatLogic = (
   }, []);
 
   useEffect(() => {
-    // Initiales Laden von Chat-Verlauf und Abfragen
     const savedMessages = localStorage.getItem(CHAT_HISTORY_KEY);
     if (savedMessages) {
       try {
@@ -447,29 +483,25 @@ export const useChatLogic = (
       console.error('[useChatLogic] Error loading heart mode state:', error);
     }
 
-    // NEU: Prüfe, ob die erste Nachricht bereits gesendet wurde
     if (typeof window !== 'undefined') {
       setHasUserSentFirstMessage(localStorage.getItem(USER_SENT_FIRST_MESSAGE_KEY) === 'true');
     }
     
-    fetchGlobalQueries(); // Globale Abfragen beim Laden abrufen
-  }, [fetchGlobalQueries]); // fetchGlobalQueries als Abhängigkeit hinzufügen
+    fetchGlobalQueries();
+  }, [fetchGlobalQueries]);
 
-  // Speichern des Chat-Verlaufs bei Änderungen
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
     }
   }, [messages]);
 
-  // Speichern der letzten Abfragen bei Änderungen
   useEffect(() => {
     if (recentQueries.length > 0) {
       localStorage.setItem(CHAT_QUERIES_KEY, JSON.stringify(recentQueries));
     }
   }, [recentQueries]);
   
-  // Speichern des Heart-Modus-Status bei Änderungen
   useEffect(() => {
     try {
       localStorage.setItem('heart_mode_active', isHeartActive ? 'true' : 'false');
@@ -479,7 +511,6 @@ export const useChatLogic = (
     }
   }, [isHeartActive]);
 
-  // Chatbot nach einer Verzögerung sichtbar machen
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(true);
@@ -488,22 +519,18 @@ export const useChatLogic = (
     return () => clearTimeout(timer);
   }, [fullPage]);
 
-  // Willkommensnachricht anzeigen, wenn Chat zum ersten Mal geöffnet wird UND ActiveChatMode ist 'ai'
   useEffect(() => {
-    if (typeof window === 'undefined') return; // Ensure we are in a browser environment
+    if (typeof window === 'undefined') return;
 
-    // Check if the app has been launched before
     appLaunchedBeforeRef.current = localStorage.getItem(APP_LAUNCHED_KEY) === 'true';
 
-    // Only show welcome message if it hasn't been shown and if current mode is 'ai'
     if (!welcomeMessageShownRef.current && activeChatModeValue === 'ai') {
         const hasMessages = messages.length > 0;
         const hasSavedMessages = localStorage.getItem(CHAT_HISTORY_KEY) !== null;
 
-        // If no messages and no saved history, AND it's the first launch, add welcome message and landing slides
         if (!hasMessages && !hasSavedMessages && !appLaunchedBeforeRef.current) {
             welcomeMessageShownRef.current = true;
-            localStorage.setItem(APP_LAUNCHED_KEY, 'true'); // Mark app as launched
+            localStorage.setItem(APP_LAUNCHED_KEY, 'true');
             setMessages([
                 {
                     id: 'welcome',
@@ -512,12 +539,11 @@ export const useChatLogic = (
                     html: getWelcomeMessage(),
                     timestamp: new Date().toISOString()
                 },
-                // NEU: Statische Prompt-Empfehlungen hier einfügen
                 {
-                    id: 'static-prompts', // Eindeutige ID für diese Nachricht
+                    id: 'static-prompts', 
                     isUser: false,
-                    text: 'Frag mich zum Beispiel:', // Überschrift für die Prompts
-                    examplePrompts: examplePrompts, // Die Prompts selbst
+                    text: 'Frag mich zum Beispiel:',
+                    examplePrompts: examplePrompts, 
                     timestamp: new Date().toISOString()
                 },
                 {
@@ -529,13 +555,11 @@ export const useChatLogic = (
                 }
             ]);
         } else if (hasSavedMessages || appLaunchedBeforeRef.current) {
-            // If there's saved history or it's not the first launch, ensure welcomeMessageShownRef is true
             welcomeMessageShownRef.current = true;
         }
     }
-  }, [activeChatModeValue, messages.length]); // Depend on activeChatModeValue
+  }, [activeChatModeValue, messages.length]);
 
-  // Zum Ende der Nachrichten scrollen
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -562,11 +586,10 @@ export const useChatLogic = (
   const clearChatHistory = () => {
     if (window.confirm("Möchten Sie wirklich den gesamten Chat-Verlauf löschen?")) {
       localStorage.removeItem(CHAT_HISTORY_KEY);
-      localStorage.removeItem(APP_LAUNCHED_KEY); // Reset first launch flag
-      localStorage.removeItem(USER_SENT_FIRST_MESSAGE_KEY); // NEU: Reset first message flag
+      localStorage.removeItem(APP_LAUNCHED_KEY);
+      localStorage.removeItem(USER_SENT_FIRST_MESSAGE_KEY);
       setMessages([]);
-      welcomeMessageShownRef.current = false; // Reset to allow welcome message again
-      // Re-add welcome message and landing slides if chat history is cleared
+      welcomeMessageShownRef.current = false;
       setMessages([
         {
           id: 'welcome',
@@ -575,7 +598,6 @@ export const useChatLogic = (
           html: getWelcomeMessage(),
           timestamp: new Date().toISOString()
         },
-        // NEU: Statische Prompt-Empfehlungen auch beim Löschen des Verlaufs hinzufügen
         {
             id: 'static-prompts', 
             isUser: false,
@@ -628,7 +650,7 @@ export const useChatLogic = (
     setShowRecentQueries,
     messagesEndRef,
     inputRef,
-    examplePrompts, // examplePrompts werden weiterhin zurückgegeben, aber nun als Teil der Nachricht im `messages`-Array genutzt
+    examplePrompts,
     isHeartActive,
     handleToggleChat,
     handleSendMessage,
@@ -640,6 +662,6 @@ export const useChatLogic = (
     toggleRecentQueries,
     clearChatHistory,
     exportChatHistory,
-    showAnimatedPrompts: false // Animation im ChatInput bleibt deaktiviert
+    showAnimatedPrompts: false
   };
 };
