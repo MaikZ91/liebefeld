@@ -1,6 +1,3 @@
-
-// src/components/EventCard.tsx
-
 import React, { useState, memo } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign } from 'lucide-react';
@@ -8,7 +5,6 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useEventContext } from '@/contexts/EventContext';
-import { useLikeSync } from '@/hooks/useLikeSync';
 
 interface EventCardProps {
   event: Event;
@@ -17,30 +13,6 @@ interface EventCardProps {
   compact?: boolean;
   onLike?: (id: string) => void;
 }
-
-const categoryColors: Record<string, string> = {
-  'Konzert': 'bg-black text-red-500 dark:bg-black dark:text-red-500',
-  'Party': 'bg-black text-red-500 dark:bg-black dark:text-red-500',
-  'Ausstellung': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
-  'Sport': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
-  'Workshop': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
-  'Kultur': 'bg-red-500/70 text-red-50 dark:bg-red-500/70 dark:text-red-50',
-  'Sonstiges': 'bg-black text-red-500 dark:bg-black dark:text-red-500',
-  'Networking': 'bg-orange-500/70 text-orange-50 dark:bg-orange-500/70 dark:text-orange-50',
-  'Meeting': 'bg-orange-400/70 text-orange-50 dark:bg-orange-400/70 dark:text-orange-50',
-};
-
-const categoryIcons: Record<string, React.ReactNode> = {
-  'Konzert': <Music className="w-3 h-3" />,
-  'Party': <PartyPopper className="w-3 h-3" />,
-  'Ausstellung': <Image className="w-3 h-3" />,
-  'Sport': <Dumbbell className="w-3 h-3" />,
-  'Workshop': <Users className="w-3 h-3" />,
-  'Kultur': <Landmark className="w-3 h-3" />,
-  'Sonstiges': <Calendar className="w-3 h-3" />,
-  'Networking': <Users className="w-3 h-3" />,
-  'Meeting': <Users className="w-3 h-3" />,
-};
 
 // Function to check if an event is a Tribe event
 const isTribeEvent = (title: string): boolean => {
@@ -52,16 +24,15 @@ const isTribeEvent = (title: string): boolean => {
 
 const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, compact = false, onLike }) => {
   const [isLiking, setIsLiking] = useState(false);
-  const { newEventIds, handleLikeEvent } = useEventContext();
-  const { eventLikes } = useLikeSync(); // Use the sync hook
+  const { newEventIds, handleLikeEvent, eventLikes } = useEventContext();
 
   const isNewEvent = newEventIds.has(event.id);
   const isTribe = isTribeEvent(event.title);
 
-  // Get likes with better synchronization - prioritize context over event property
+  // Simplified like display logic - use eventLikes for GitHub events, event.likes for others
   const displayLikes = event.id.startsWith('github-')
     ? (eventLikes[event.id] || 0)
-    : Math.max(eventLikes[event.id] || 0, event.likes || 0);
+    : (event.likes || 0);
 
   const icon = event.category in categoryIcons
     ? categoryIcons[event.category]

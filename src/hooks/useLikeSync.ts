@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react';
 import { useEventContext } from '@/contexts/EventContext';
 
-// Hook for synchronizing likes across components
+// Simplified hook for synchronizing likes across components
 export const useLikeSync = () => {
   const { events, eventLikes, refreshEvents } = useEventContext();
   const syncInterval = useRef<NodeJS.Timeout | null>(null);
@@ -42,12 +42,6 @@ export const useLikeSync = () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [refreshEvents]);
-
-  // Sync when events or eventLikes change
-  useEffect(() => {
-    // Force a re-render of components that depend on likes
-    console.log('Event likes updated:', eventLikes);
-  }, [eventLikes, events]);
 
   return {
     eventLikes,
