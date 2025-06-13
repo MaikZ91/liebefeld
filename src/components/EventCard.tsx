@@ -1,3 +1,4 @@
+
 import React, { useState, memo } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign } from 'lucide-react';
@@ -14,6 +15,34 @@ interface EventCardProps {
   onLike?: (id: string) => void;
 }
 
+// Category icon mappings
+const categoryIcons: Record<string, React.ReactNode> = {
+  'Konzert': <Music className="w-3 h-3" />,
+  'Party': <PartyPopper className="w-3 h-3" />,
+  'Festival': <Music className="w-3 h-3" />,
+  'Ausstellung': <Image className="w-3 h-3" />,
+  'Sport': <Dumbbell className="w-3 h-3" />,
+  'Workshop': <Users className="w-3 h-3" />,
+  'Theater': <Landmark className="w-3 h-3" />,
+  'Kino': <Image className="w-3 h-3" />,
+  'Lesung': <Users className="w-3 h-3" />,
+  'Sonstiges': <Calendar className="w-3 h-3" />
+};
+
+// Category color mappings
+const categoryColors: Record<string, string> = {
+  'Konzert': 'bg-purple-500/70 text-purple-50',
+  'Party': 'bg-pink-500/70 text-pink-50',
+  'Festival': 'bg-indigo-500/70 text-indigo-50',
+  'Ausstellung': 'bg-teal-500/70 text-teal-50',
+  'Sport': 'bg-green-500/70 text-green-50',
+  'Workshop': 'bg-blue-500/70 text-blue-50',
+  'Theater': 'bg-red-500/70 text-red-50',
+  'Kino': 'bg-yellow-500/70 text-yellow-50',
+  'Lesung': 'bg-gray-500/70 text-gray-50',
+  'Sonstiges': 'bg-orange-400/70 text-orange-50'
+};
+
 // Function to check if an event is a Tribe event
 const isTribeEvent = (title: string): boolean => {
   const tribeKeywords = ['tribe', 'tuesday run', 'kennenlernabend', 'creatives circle'];
@@ -29,7 +58,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
   const isNewEvent = newEventIds.has(event.id);
   const isTribe = isTribeEvent(event.title);
 
-  // Simplified like display logic - use eventLikes for GitHub events, event.likes for others
+  // Use eventLikes for GitHub events, event.likes for others
   const displayLikes = event.id.startsWith('github-')
     ? (eventLikes[event.id] || 0)
     : (event.likes || 0);
