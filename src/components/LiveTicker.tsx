@@ -1,4 +1,3 @@
-// src/components/LiveTicker.tsx
 
 import React, { useEffect, useState, useRef } from 'react';
 import { Calendar, ThumbsUp } from 'lucide-react';
@@ -61,6 +60,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef }) => {
       const topEventsByDay = Object.keys(eventsByDay).map(dateKey => {
         const dayEvents = eventsByDay[dateKey];
         
+        // Sort by likes (simplified - directly from event object)
         return dayEvents.sort((a, b) => {
           const likesA = a.likes || 0;
           const likesB = b.likes || 0;
@@ -100,8 +100,6 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef }) => {
         onMouseLeave={() => setIsPaused(false)}
         ref={tickerRef}
       >
-        {/* Removed the fixed red label div */}
-        
         <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black to-transparent z-[5]"></div>
         <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black to-transparent z-[5]"></div>
         
@@ -131,8 +129,11 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef }) => {
                   <span className="text-gray-400 text-xs mr-1">({event.location || 'Keine Ortsangabe'})</span>
                   <span className="text-yellow-500 text-xs flex items-center">
                     <ThumbsUp className="w-3 h-3 mr-0.5" /> 
-                    {typeof event.likes === 'number' ? event.likes : 0}
+                    {event.likes || 0}
                   </span>
+                  {event.source === 'github' && (
+                    <span className="text-blue-400 text-xs ml-1">[GitHub]</span>
+                  )}
                 </span>
                 <span className="mx-2 text-red-500">•</span>
               </div>
@@ -163,7 +164,6 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef }) => {
         </style>
       </div>
       
-      {/* Animated red line below ticker */}
       <div className="w-full h-0.5 bg-black relative overflow-hidden">
         <div className="absolute top-0 left-0 h-full w-full bg-gradient-to-r from-transparent via-red-500 to-transparent animate-pulse"></div>
         <div className="absolute top-0 left-0 h-full w-8 bg-red-500 animate-bounce"></div>

@@ -132,8 +132,10 @@ export type Database = {
           created_by: string | null
           date: string
           description: string | null
+          external_id: string | null
           id: string
           image_urls: string[] | null
+          is_paid: boolean | null
           likes: number | null
           link: string | null
           location: string | null
@@ -141,6 +143,7 @@ export type Database = {
           rsvp_maybe: number | null
           rsvp_no: number | null
           rsvp_yes: number | null
+          source: string | null
           time: string
           title: string
         }
@@ -150,8 +153,10 @@ export type Database = {
           created_by?: string | null
           date: string
           description?: string | null
+          external_id?: string | null
           id?: string
           image_urls?: string[] | null
+          is_paid?: boolean | null
           likes?: number | null
           link?: string | null
           location?: string | null
@@ -159,6 +164,7 @@ export type Database = {
           rsvp_maybe?: number | null
           rsvp_no?: number | null
           rsvp_yes?: number | null
+          source?: string | null
           time: string
           title: string
         }
@@ -168,8 +174,10 @@ export type Database = {
           created_by?: string | null
           date?: string
           description?: string | null
+          external_id?: string | null
           id?: string
           image_urls?: string[] | null
+          is_paid?: boolean | null
           likes?: number | null
           link?: string | null
           location?: string | null
@@ -177,44 +185,9 @@ export type Database = {
           rsvp_maybe?: number | null
           rsvp_no?: number | null
           rsvp_yes?: number | null
+          source?: string | null
           time?: string
           title?: string
-        }
-        Relationships: []
-      }
-      github_event_likes: {
-        Row: {
-          created_at: string | null
-          event_id: string
-          id: number
-          image_urls: string[] | null
-          likes: number
-          rsvp_maybe: number | null
-          rsvp_no: number | null
-          rsvp_yes: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          event_id: string
-          id?: number
-          image_urls?: string[] | null
-          likes?: number
-          rsvp_maybe?: number | null
-          rsvp_no?: number | null
-          rsvp_yes?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          event_id?: string
-          id?: number
-          image_urls?: string[] | null
-          likes?: number
-          rsvp_maybe?: number | null
-          rsvp_no?: number | null
-          rsvp_yes?: number | null
-          updated_at?: string | null
         }
         Relationships: []
       }

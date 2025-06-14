@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState, memo, useMemo } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -17,23 +16,13 @@ interface EventListProps {
   onLike: (eventId: string) => void;
 }
 
-// Unified like display function
-const getEventLikes = (event: Event, eventLikes: Record<string, number>): number => {
-  if (event.id.startsWith('github-')) {
-    return eventLikes[event.id] || 0;
-  }
-  return event.likes || 0;
-};
-
-// Memoized EventCard component wrapper
-const MemoizedEventCard = memo(({ event, date, onSelectEvent, onLike, isTopEvent, isNewEvent, eventLikes }: {
+const MemoizedEventCard = memo(({ event, date, onSelectEvent, onLike, isTopEvent, isNewEvent }: {
   event: Event;
   date: Date;
   onSelectEvent: (event: Event, date: Date) => void;
   onLike: (eventId: string) => void;
   isTopEvent: boolean;
   isNewEvent: boolean;
-  eventLikes: Record<string, number>;
 }) => (
   <div key={event.id} className={`relative ${isTopEvent ? 'transform transition-all' : ''} w-full`}>
     {isTopEvent && (
@@ -73,25 +62,13 @@ const EventList: React.FC<EventListProps> = memo(({
   const todayRef = useRef<HTMLDivElement>(null);
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
-  const { newEventIds, filter, topEventsPerDay, eventLikes } = useEventContext();
+  const { newEventIds, filter, topEventsPerDay } = useEventContext();
 
-  // Memoize expensive computations
-  const { hochschulsportEvents, regularEvents } = useMemo(() => {
-    const hochschulsport = events.filter(event => 
-      event.title.toLowerCase().includes('hochschulsport') || 
-      event.organizer?.toLowerCase().includes('hochschulsport') ||
-      event.title.toLowerCase().includes('@hochschulsport_bielefeld') ||
-      event.organizer?.toLowerCase().includes('@hochschulsport_bielefeld')
-    );
-    
-    const regular = events.filter(event => 
-      !event.title.toLowerCase().includes('hochschulsport') && 
-      !event.organizer?.toLowerCase().includes('hochschulsport') &&
-      !event.title.toLowerCase().includes('@hochschulsport_bielefeld') &&
-      !event.organizer?.toLowerCase().includes('@hochschulsport_bielefeld')
-    );
-    
-    return { hochschulsportEvents: hochschulsport, regularEvents: regular };
+  // Separate GitHub and regular events
+  const { githubEvents, regularEvents } = useMemo(() => {
+    const github = events.filter(event => event.source === 'github');
+    const regular = events.filter(event => event.source !== 'github');
+    return { githubEvents: github, regularEvents: regular };
   }, [events]);
 
   const filteredEvents = useMemo(() => {
@@ -104,21 +81,18 @@ const EventList: React.FC<EventListProps> = memo(({
     
     return filteredEvents.filter(event => {
       if (!event.date) return false;
-      
-      const eventLikesCount = getEventLikes(event, eventLikes);
-      
-      return topEventsPerDay[event.date] === event.id && eventLikesCount > 0;
+      const eventLikes = event.likes || 0;
+      return topEventsPerDay[event.date] === event.id && eventLikes > 0;
     });
-  }, [filteredEvents, showFavorites, topEventsPerDay, eventLikes]);
+  }, [filteredEvents, showFavorites, topEventsPerDay]);
 
   const eventsByDate = useMemo(() => {
     const grouped = groupEventsByDate(regularEvents);
     
-    // Sort events within each date group with stable sorting
     Object.keys(grouped).forEach(dateStr => {
       grouped[dateStr].sort((a, b) => {
-        const likesA = getEventLikes(a, eventLikes);
-        const likesB = getEventLikes(b, eventLikes);
+        const likesA = a.likes || 0;
+        const likesB = b.likes || 0;
         
         if (likesB !== likesA) {
           return likesB - likesA;
@@ -142,10 +116,10 @@ const EventList: React.FC<EventListProps> = memo(({
     });
     
     return grouped;
-  }, [regularEvents, eventLikes]);
+  }, [regularEvents]);
   
-  const hochschulsportEventsByDate = useMemo(() => {
-    const grouped = groupEventsByDate(hochschulsportEvents);
+  const githubEventsByDate = useMemo(() => {
+    const grouped = groupEventsByDate(githubEvents);
     Object.keys(grouped).forEach(dateStr => {
       grouped[dateStr].sort((a, b) => {
         const timeA = a.time || '00:00';
@@ -165,7 +139,7 @@ const EventList: React.FC<EventListProps> = memo(({
       });
     });
     return grouped;
-  }, [hochschulsportEvents]);
+  }, [githubEvents]);
 
   useEffect(() => {
     if (displayEvents.length > 0) {
@@ -182,8 +156,8 @@ const EventList: React.FC<EventListProps> = memo(({
       
       if (todayEvents.length > 0) {
         const popular = [...todayEvents].sort((a, b) => {
-          const likesA = getEventLikes(a, eventLikes);
-          const likesB = getEventLikes(b, eventLikes);
+          const likesA = a.likes || 0;
+          const likesB = b.likes || 0;
           
           if (likesB !== likesA) {
             return likesB - likesA;
@@ -197,7 +171,7 @@ const EventList: React.FC<EventListProps> = memo(({
         setTopTodayEvent(null);
       }
     }
-  }, [displayEvents, eventLikes]);
+  }, [displayEvents]);
 
   useEffect(() => {
     if (todayRef.current && listRef.current && !hasScrolledToToday && Object.keys(eventsByDate).length > 0) {
@@ -266,7 +240,7 @@ const EventList: React.FC<EventListProps> = memo(({
               const date = parseISO(dateStr);
               const isCurrentDay = isToday(date);
               const hasNewEvents = eventsByDate[dateStr].some(event => newEventIds.has(event.id));
-              const hasHochschulsportEvents = hochschulsportEventsByDate[dateStr] && hochschulsportEventsByDate[dateStr].length > 0;
+              const hasGithubEvents = githubEventsByDate[dateStr] && githubEventsByDate[dateStr].length > 0;
               
               return (
                 <div 
@@ -297,25 +271,24 @@ const EventList: React.FC<EventListProps> = memo(({
                           onLike={onLike}
                           isTopEvent={isTopEvent}
                           isNewEvent={isNewEvent}
-                          eventLikes={eventLikes}
                         />
                       );
                     })}
                     
-                    {hasHochschulsportEvents && (
+                    {hasGithubEvents && (
                       <Accordion type="single" collapsible className="w-full mt-2">
-                        <AccordionItem value="hochschulsport" className="border-none">
+                        <AccordionItem value="github" className="border-none">
                           <AccordionTrigger className="py-2 px-3 bg-blue-900/20 hover:bg-blue-900/30 transition-colors rounded-lg text-white">
                             <div className="flex items-center">
-                              <span className="font-medium">@hochschulsport_bielefeld</span>
+                              <span className="font-medium">GitHub Events</span>
                               <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full ml-2">
-                                {hochschulsportEventsByDate[dateStr].length}
+                                {githubEventsByDate[dateStr].length}
                               </span>
                             </div>
                           </AccordionTrigger>
                           <AccordionContent className="pb-0 pt-2">
                             <div className="space-y-1 pl-2">
-                              {hochschulsportEventsByDate[dateStr].map(event => (
+                              {githubEventsByDate[dateStr].map(event => (
                                 <EventCard
                                   key={event.id}
                                   event={event}

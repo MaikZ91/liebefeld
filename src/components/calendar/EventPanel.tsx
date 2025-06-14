@@ -31,9 +31,8 @@ const EventPanel: React.FC<EventPanelProps> = ({
   onShowEventForm,
   showFavorites
 }) => {
-  const { eventLikes, newEventIds } = useEventContext();
+  const { newEventIds } = useEventContext();
   
-  // If we're on list view with a filter applied, let's make sure we show the right title
   const panelTitle = selectedDate 
     ? `Events am ${format(selectedDate, 'dd. MMMM', { locale: de })}`
     : filter 
@@ -100,6 +99,12 @@ const EventPanel: React.FC<EventPanelProps> = ({
               <span className="mx-1">•</span>
               <MapPin className="h-3 w-3 mr-1" />
               <span className="truncate">{selectedEvent.location}</span>
+              {selectedEvent.source === 'github' && (
+                <>
+                  <span className="mx-1">•</span>
+                  <span className="text-blue-400 text-xs">GitHub Event</span>
+                </>
+              )}
             </div>
             
             <p className="text-gray-300 mb-3 text-xs">{selectedEvent.description}</p>
@@ -128,8 +133,8 @@ const EventPanel: React.FC<EventPanelProps> = ({
               className="bg-black/50 text-white hover:bg-black/70 text-xs h-7 px-2"
               onClick={() => onLike(selectedEvent.id)}
             >
-              <Heart className="mr-1 h-3 w-3" fill={eventLikes[selectedEvent.id] ? 'white' : 'none'} />
-              {eventLikes[selectedEvent.id] || 0}
+              <Heart className="mr-1 h-3 w-3" fill={selectedEvent.likes && selectedEvent.likes > 0 ? 'white' : 'none'} />
+              {selectedEvent.likes || 0}
             </Button>
             <Button onClick={onShowEventForm} className="text-xs h-7 px-2">Bearbeiten</Button>
           </div>

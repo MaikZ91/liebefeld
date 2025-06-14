@@ -1,10 +1,9 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { startOfDay, format } from 'date-fns';
 import { Event, RsvpOption } from '../types/eventTypes';
 import { 
   fetchSupabaseEvents, 
-  fetchExternalEvents, 
-  fetchGitHubLikes, 
   bielefeldEvents,
   updateEventRsvp,
   syncGitHubEvents,
@@ -23,7 +22,6 @@ interface EventContextProps {
   setSelectedEvent: React.Dispatch<React.SetStateAction<Event | null>>;
   filter: string | null;
   setFilter: React.Dispatch<React.SetStateAction<string | null>>;
-  eventLikes: Record<string, number>;
   handleLikeEvent: (eventId: string) => Promise<void>;
   handleRsvpEvent: (eventId: string, option: RsvpOption) => Promise<void>;
   showFavorites: boolean;
@@ -49,7 +47,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [filter, setFilter] = useState<string | null>(null);
   const [showFavorites, setShowFavorites] = useState(false);
-  const [eventLikes, setEventLikes] = useState<Record<string, number>>({});
   const [newEventIds, setNewEventIds] = useState<Set<string>>(new Set());
   const [topEventsPerDay, setTopEventsPerDay] = useState<Record<string, string>>({});
 
@@ -62,47 +59,15 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const previouslySeenEvents: string[] = previouslySeenEventsJson ? JSON.parse(previouslySeenEventsJson) : [];
       const previouslySeenSet = new Set(previouslySeenEvents);
       
-      const githubLikes = await fetchGitHubLikes();
-      console.log('Fetched GitHub likes from database:', githubLikes);
+      // First sync GitHub events
+      await syncGitHubEvents();
       
-      const databaseLikes: Record<string, number> = {};
-      Object.keys(githubLikes).forEach(eventId => {
-        databaseLikes[eventId] = githubLikes[eventId].likes || 0;
-      });
-      
-      setEventLikes(databaseLikes);
-      
-      const supabaseEvents = await fetchSupabaseEvents();
-      console.log(`Loaded ${supabaseEvents.length} events from Supabase`);
-      
-      const externalEvents = await fetchExternalEvents(databaseLikes);
-      console.log(`Loaded ${externalEvents.length} external events`);
-      
-      await syncGitHubEvents(externalEvents);
-      
-      const eventMap = new Map<string, Event>();
-      
-      supabaseEvents.forEach(event => {
-        eventMap.set(event.id, event);
-      });
-      
-      externalEvents.forEach(extEvent => {
-        if (!eventMap.has(extEvent.id)) {
-          const eventLikes = databaseLikes[extEvent.id] || 0;
-          eventMap.set(extEvent.id, {
-            ...extEvent,
-            likes: eventLikes,
-            rsvp_yes: githubLikes[extEvent.id]?.rsvp_yes || 0,
-            rsvp_no: githubLikes[extEvent.id]?.rsvp_no || 0,
-            rsvp_maybe: githubLikes[extEvent.id]?.rsvp_maybe || 0
-          });
-        }
-      });
-      
-      const combinedEvents = Array.from(eventMap.values());
+      // Then fetch all events from unified table
+      const allEvents = await fetchSupabaseEvents();
+      console.log(`Loaded ${allEvents.length} events from unified table`);
       
       const newEventIdsSet = new Set<string>();
-      const currentEventIds = combinedEvents.map(event => event.id);
+      const currentEventIds = allEvents.map(event => event.id);
       currentEventIds.forEach(id => {
         if (!previouslySeenSet.has(id)) {
           newEventIdsSet.add(id);
@@ -112,45 +77,15 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setNewEventIds(newEventIdsSet);
       localStorage.setItem('seenEventIds', JSON.stringify(currentEventIds));
       
-      if (combinedEvents.length === 0) {
+      if (allEvents.length === 0) {
         console.log('No events found, using example data');
         setEvents(bielefeldEvents);
       } else {
-        const eventsWithSyncedRsvp = combinedEvents.map(event => {
-          if (event.id.startsWith('github-') && githubLikes[event.id]) {
-            const eventLikes = databaseLikes[event.id] || 0;
-            return {
-              ...event,
-              likes: eventLikes,
-              rsvp_yes: githubLikes[event.id]?.rsvp_yes || 0,
-              rsvp_no: githubLikes[event.id]?.rsvp_no || 0,
-              rsvp_maybe: githubLikes[event.id]?.rsvp_maybe || 0,
-              rsvp: {
-                yes: githubLikes[event.id]?.rsvp_yes || 0,
-                no: githubLikes[event.id]?.rsvp_no || 0,
-                maybe: githubLikes[event.id]?.rsvp_maybe || 0
-              }
-            };
-          }
-          
-          if (event.rsvp_yes !== undefined || event.rsvp_no !== undefined || event.rsvp_maybe !== undefined) {
-            return {
-              ...event,
-              rsvp: {
-                yes: event.rsvp_yes || 0,
-                no: event.rsvp_no || 0,
-                maybe: event.rsvp_maybe || 0
-              }
-            };
-          }
-          
-          return event;
-        });
-        
+        // Calculate top events per day
         const topEventsByDay: Record<string, string> = {};
         const eventsByDate: Record<string, Event[]> = {};
         
-        eventsWithSyncedRsvp.forEach(event => {
+        allEvents.forEach(event => {
           if (!event.date) return;
           
           if (!eventsByDate[event.date]) {
@@ -162,13 +97,9 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         
         Object.keys(eventsByDate).forEach(date => {
           const sortedEvents = [...eventsByDate[date]].sort((a, b) => {
-            const likesA = a.id.startsWith('github-') ? (databaseLikes[a.id] || 0) : (a.likes || 0);
-            const likesB = b.id.startsWith('github-') ? (databaseLikes[b.id] || 0) : (b.likes || 0);
-            
-            if (likesB !== likesA) {
-              return likesB - likesA;
+            if (b.likes !== a.likes) {
+              return b.likes - a.likes;
             }
-            
             return a.id.localeCompare(b.id);
           });
           
@@ -178,10 +109,10 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         });
         
         setTopEventsPerDay(topEventsByDay);
-        setEvents(eventsWithSyncedRsvp);
+        setEvents(allEvents);
         
         localStorage.setItem('lastEventsRefresh', new Date().toISOString());
-        logTodaysEvents(eventsWithSyncedRsvp);
+        logTodaysEvents(allEvents);
       }
     } catch (error) {
       console.error('Error loading events:', error);
@@ -191,7 +122,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
-  // Verbessertes Like-System mit Rollback und User Feedback
+  // Simplified like system using unified table
   const handleLikeEvent = async (eventId: string) => {
     try {
       console.log(`Starting like process for event: ${eventId}`);
@@ -202,86 +133,55 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return;
       }
       
-      // Aktuelle Likes ermitteln
-      const currentLikes = currentEvent.id.startsWith('github-') 
-        ? (eventLikes[eventId] || 0)
-        : (currentEvent.likes || 0);
-      
+      const currentLikes = currentEvent.likes || 0;
       const newLikes = currentLikes + 1;
       
       console.log(`Attempting to update likes from ${currentLikes} to ${newLikes} for event ${eventId}`);
       
       // Optimistic Update: UI sofort aktualisieren
-      if (eventId.startsWith('github-')) {
-        setEventLikes(prev => ({
-          ...prev,
-          [eventId]: newLikes
-        }));
-      } else {
-        setEvents(prevEvents => 
-          prevEvents.map(event => 
-            event.id === eventId ? { ...event, likes: newLikes } : event
-          )
-        );
-      }
+      setEvents(prevEvents => 
+        prevEvents.map(event => 
+          event.id === eventId ? { ...event, likes: newLikes } : event
+        )
+      );
       
-      // 1. Datenbank Update versuchen
+      // Database Update
       const dbUpdateSuccess = await updateEventLikesInDb(eventId, newLikes);
       
       if (!dbUpdateSuccess) {
         console.error(`Database update failed for event ${eventId}, rolling back UI`);
         
         // Rollback: UI auf ursprünglichen Wert zurücksetzen
-        if (eventId.startsWith('github-')) {
-          setEventLikes(prev => ({
-            ...prev,
-            [eventId]: currentLikes
-          }));
-        } else {
-          setEvents(prevEvents => 
-            prevEvents.map(event => 
-              event.id === eventId ? { ...event, likes: currentLikes } : event
-            )
-          );
-        }
+        setEvents(prevEvents => 
+          prevEvents.map(event => 
+            event.id === eventId ? { ...event, likes: currentLikes } : event
+          )
+        );
         
-        // Fehlermeldung für User (optional: Toast notification könnte hier hinzugefügt werden)
         console.error('Like failed - database update unsuccessful');
         return;
       }
       
-      // 2. Einzelnes Event aus Datenbank neu laden zur Bestätigung
+      // Confirm with fresh data from database
       console.log(`Database update successful, refetching event ${eventId} for confirmation`);
       const updatedEvent = await refetchSingleEvent(eventId);
       
       if (updatedEvent) {
         console.log(`Successfully refetched event ${eventId} with ${updatedEvent.likes} likes`);
         
-        // Final Update: Event in Liste aktualisieren
         setEvents(prevEvents => 
           prevEvents.map(event => 
             event.id === eventId ? updatedEvent : event
           )
         );
         
-        // GitHub Events: eventLikes State final aktualisieren
-        if (eventId.startsWith('github-')) {
-          setEventLikes(prev => ({
-            ...prev,
-            [eventId]: updatedEvent.likes || 0
-          }));
-        }
-        
         console.log(`Like process completed successfully for event ${eventId}`);
       } else {
         console.warn(`Could not refetch event ${eventId} after database update`);
-        // UI bleibt beim optimistic update, da DB Update erfolgreich war
       }
       
     } catch (error) {
       console.error('Error in handleLikeEvent:', error);
-      
-      // Bei unerwarteten Fehlern: kompletten Refresh versuchen
       console.log('Attempting full refresh due to unexpected error');
       await refreshEvents();
     }
@@ -310,20 +210,10 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       await updateEventRsvp(eventId, newRsvp);
       console.log(`Successfully updated RSVP in database for event ${eventId}`);
       
-      const currentLikes = currentEvent.id.startsWith('github-') 
-        ? (eventLikes[eventId] || 0)
-        : (currentEvent.likes || 0);
-      const newLikesValue = Math.max(currentLikes, newRsvp.yes + newRsvp.maybe);
+      const newLikesValue = Math.max(currentEvent.likes || 0, newRsvp.yes + newRsvp.maybe);
       
       await updateEventLikesInDb(eventId, newLikesValue);
       console.log(`Successfully updated likes in database for event ${eventId} to ${newLikesValue}`);
-      
-      if (eventId.startsWith('github-')) {
-        setEventLikes(prev => ({
-          ...prev,
-          [eventId]: newLikesValue
-        }));
-      }
       
       setEvents(prevEvents => {
         return prevEvents.map(event => 
@@ -381,7 +271,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setSelectedEvent,
     filter,
     setFilter,
-    eventLikes,
     handleLikeEvent,
     handleRsvpEvent,
     showFavorites,
