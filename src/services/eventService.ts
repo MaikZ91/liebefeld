@@ -498,7 +498,7 @@ export const syncGitHubEvents = async (events: Event[]): Promise<void> => {
             rsvp_yes: event.rsvp_yes || 0,
             rsvp_no: event.rsvp_no || 0,
             rsvp_maybe: event.rsvp_maybe || 0,
-            image_urls: event.image_urls || []
+            image_urls: event.image_url ? [event.image_url] : [] // Fixed: use image_url instead of image_urls
           }, {
             onConflict: 'event_id'
           });
