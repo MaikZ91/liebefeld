@@ -1,4 +1,3 @@
-
 import React, { useState, memo } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign } from 'lucide-react';
@@ -56,15 +55,10 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
   const isNewEvent = newEventIds.has(event.id);
   const isTribe = isTribeEvent(event.title);
 
-  // Unified like display logic - always use the same source
-  const getDisplayLikes = (): number => {
-    if (event.id.startsWith('github-')) {
-      return eventLikes[event.id] || 0;
-    }
-    return event.likes || 0;
-  };
-
-  const displayLikes = getDisplayLikes();
+  // Einheitliche Like-Anzeige für alle Event-Typen
+  const displayLikes = event.id.startsWith('github-') 
+    ? (eventLikes[event.id] || 0)
+    : (event.likes || 0);
 
   const icon = event.category in categoryIcons
     ? categoryIcons[event.category]
@@ -86,7 +80,6 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     } catch (error) {
       console.error('Error liking event:', error);
     } finally {
-      // Short delay to prevent double-clicks
       setTimeout(() => {
         setIsLiking(false);
       }, 1000);

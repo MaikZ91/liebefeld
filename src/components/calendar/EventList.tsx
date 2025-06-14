@@ -1,4 +1,3 @@
-// src/components/calendar/EventList.tsx
 
 import React, { useRef, useEffect, useState, memo, useMemo } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
@@ -6,10 +5,8 @@ import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
 import EventCard from '@/components/EventCard';
 import { groupEventsByDate } from '@/utils/eventUtils';
-import { Star, ChevronDown, ChevronUp } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
-import { useLikeSync } from '@/hooks/useLikeSync';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface EventListProps {
@@ -28,7 +25,7 @@ const getEventLikes = (event: Event, eventLikes: Record<string, number>): number
   return event.likes || 0;
 };
 
-// Memoized EventCard component wrapper to prevent unnecessary re-renders
+// Memoized EventCard component wrapper
 const MemoizedEventCard = memo(({ event, date, onSelectEvent, onLike, isTopEvent, isNewEvent, eventLikes }: {
   event: Event;
   date: Date;
@@ -78,7 +75,7 @@ const EventList: React.FC<EventListProps> = memo(({
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
   const { newEventIds, filter, topEventsPerDay, eventLikes } = useEventContext();
 
-  // Memoize expensive computations with consistent like display
+  // Memoize expensive computations
   const { hochschulsportEvents, regularEvents } = useMemo(() => {
     const hochschulsport = events.filter(event => 
       event.title.toLowerCase().includes('hochschulsport') || 
@@ -105,7 +102,6 @@ const EventList: React.FC<EventListProps> = memo(({
   const displayEvents = useMemo(() => {
     if (!showFavorites) return filteredEvents;
     
-    // For favorites, use unified like logic
     return filteredEvents.filter(event => {
       if (!event.date) return false;
       
@@ -118,10 +114,9 @@ const EventList: React.FC<EventListProps> = memo(({
   const eventsByDate = useMemo(() => {
     const grouped = groupEventsByDate(regularEvents);
     
-    // Sort events within each date group with unified like logic
+    // Sort events within each date group with stable sorting
     Object.keys(grouped).forEach(dateStr => {
       grouped[dateStr].sort((a, b) => {
-        // Use unified like display logic
         const likesA = getEventLikes(a, eventLikes);
         const likesB = getEventLikes(b, eventLikes);
         
@@ -129,7 +124,6 @@ const EventList: React.FC<EventListProps> = memo(({
           return likesB - likesA;
         }
         
-        // Then sort by time (ascending)
         const timeA = a.time || '00:00';
         const timeB = b.time || '00:00';
         
@@ -188,7 +182,6 @@ const EventList: React.FC<EventListProps> = memo(({
       
       if (todayEvents.length > 0) {
         const popular = [...todayEvents].sort((a, b) => {
-          // Use unified like logic for determining top event
           const likesA = getEventLikes(a, eventLikes);
           const likesB = getEventLikes(b, eventLikes);
           
