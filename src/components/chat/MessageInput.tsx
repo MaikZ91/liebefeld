@@ -160,18 +160,17 @@ const MessageInput: React.FC<MessageInputProps> = ({
   }, []);
 
   // Dynamisches padding-left basierend auf dem Modus
-  // Linke Buttons: 2 Icon-Buttons (je 24px breit) + 10px Abstand + 3 Text-Buttons (ca. 70px breit, da px-2) + 10px Abstand.
-  // Das schlägt vor, dass die Buttons in zwei Spalten liegen sollen.
-  // Icon-Buttons h6 w6 = 24px. Text-Buttons text-[10px] h-6 px-2.
-  // Die Text-Buttons sind breiter, sagen wir ca. 70px.
-  // Um sie alle auf der linken Seite in einer organisierten Weise anzuzeigen,
-  // werde ich sie in zwei vertikalen Spalten anordnen:
-  // Spalte 1 (links): Event teilen, Bild anhängen (Icon-Buttons)
-  // Spalte 2 (rechts davon): Kreativität, Ausgehen, Sport (Text-Buttons)
-  // Geschätzte Gesamtbreite der Buttons plus Abstand:
-  // (Breite Icon-Button + Abstand) + (Breite Text-Button + Abstand) = (24px + 8px) + (70px + 8px) = 32px + 78px = 110px.
-  // Dann noch etwas Puffer, sagen wir 120px insgesamt von links für den Text.
-  const leftPadding = mode === 'community' ? 'pl-[120px]' : 'pl-4'; 
+  // Geschätzte Breite der Buttons:
+  // Icon-Buttons: 24px (Breite) + 4px (Abstand zum nächsten Element) = 28px
+  // Kategorie-Buttons: ca. 70px (Breite, da px-2 und text-[10px]) + 4px (Abstand) = 74px
+  // Spalte 1: Icon-Buttons (2 Zeilen)
+  // Spalte 2: Kategorie-Buttons (3 Zeilen)
+  // Der linke Block (Icon-Buttons) braucht ca. 24px + etwas Abstand von links.
+  // Der rechte Block (Kategorie-Buttons) startet dann bei ca. 24px (Breite des Icon-Buttons) + 8px (Abstand zwischen den Blöcken) = 32px.
+  // Seine Breite ist ca. 70px.
+  // Gesamtpadding links: 24px (Icon-Button) + 8px (Abstand zwischen Blöcken) + 70px (Kategorie-Button) + 8px (Puffer) = 110px.
+  // Um sicherzustellen, dass alles passt, setze ich das padding auf 110px.
+  const leftPadding = mode === 'community' ? 'pl-[110px]' : 'pl-4'; 
 
   return (
     <div className="w-full space-y-2">
@@ -222,7 +221,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
                 </Button>
             </div>
             {/* Rechter Block: Kategorie-Buttons - neben dem ersten Block */}
-            <div className="flex flex-col gap-1 absolute left-[40px] top-1"> {/* 'left' wurde angepasst, um direkt neben den Icon-Buttons zu starten */}
+            <div className="flex flex-col gap-1 absolute left-[35px] top-1"> {/* 'left' wurde erneut angepasst: 1 (left des div) + 24 (Breite des Icon-Buttons) + 10 (Abstand) = 35px */}
               <Button
                 onClick={() => handleCategoryClick('Kreativität')}
                 variant="outline"
