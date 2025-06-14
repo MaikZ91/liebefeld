@@ -86,6 +86,19 @@
     --sidebar-ring: 0 100% 55%;
   }
 
+  /* WICHTIG: Globales Scrolling deaktivieren */
+  html, body {
+    height: 100vh;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  }
+
+  #root {
+    height: 100vh;
+    overflow: hidden;
+  }
+
   * {
     @apply border-border;
   }

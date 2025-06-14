@@ -140,22 +140,22 @@ const Index = () => {
   };
   
   return (
-    <div className="h-screen flex flex-col bg-black text-white overflow-hidden">
-      {/* Header */}
-      <div className="flex-shrink-0">
+    <div className="h-screen w-screen flex flex-col bg-black text-white overflow-hidden fixed inset-0">
+      {/* Header - Fixed height */}
+      <div className="h-auto flex-shrink-0">
         <CalendarNavbar />
         <BetaTesterBanner />
       </div>
       
-      {/* LiveTicker - Fixed at top, always visible */}
-      <div className="w-full bg-black/95 backdrop-blur-lg border-b border-white/20 shadow-xl z-40 flex-shrink-0">
+      {/* LiveTicker - Fixed height, always visible */}
+      <div className="h-12 w-full bg-black/95 backdrop-blur-lg border-b border-white/20 shadow-xl z-40 flex-shrink-0">
         <LiveTickerWrapper />
       </div>
       
-      {/* Main content - fits remaining space without scrolling */}
-      <div className="flex-1 flex flex-col min-h-0">
-        {/* Hero Section - takes half of remaining space */}
-        <div className="flex-1 relative bg-gradient-to-br from-gray-900 via-black to-purple-900/80">
+      {/* Main content - Fixed calculated height */}
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ height: 'calc(100vh - 120px)' }}>
+        {/* Hero Section - Fixed half height */}
+        <div className="h-1/2 relative bg-gradient-to-br from-gray-900 via-black to-purple-900/80 overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900/30 via-black/60 to-black opacity-90"></div>
           
           {/* Premium particle effect overlay */}
@@ -261,10 +261,10 @@ const Index = () => {
           </div>
         </div>
         
-        {/* Bottom section - takes the other half with compact layout */}
-        <div className="flex-1 flex">
+        {/* Bottom section - Fixed half height with internal overflow */}
+        <div className="h-1/2 flex overflow-hidden">
           {/* Community Gallery - left side */}
-          <div className="flex-1 bg-gradient-to-b from-gray-900 via-black to-gray-800 p-4 border-r border-gray-700/50">
+          <div className="w-1/2 bg-gradient-to-b from-gray-900 via-black to-gray-800 p-4 border-r border-gray-700/50 overflow-hidden">
             <div className="text-center mb-4">
               <h2 className="text-2xl md:text-3xl font-bold mb-2 font-serif bg-gradient-to-r from-white via-gray-200 to-white bg-clip-text text-transparent tracking-wide">
                 Unsere Community
@@ -276,13 +276,13 @@ const Index = () => {
             
             <ImageCarousel 
               images={communityImages}
-              className="w-full h-40"
+              className="w-full h-32"
               autoSlideInterval={10000}
             />
           </div>
           
           {/* Perfect Day Panel - right side */}
-          <div className="flex-1 bg-gradient-to-br from-gray-900 via-black to-gray-800 p-4">
+          <div className="w-1/2 bg-gradient-to-br from-gray-900 via-black to-gray-800 p-4 overflow-hidden">
             <div className="text-center mb-4">
               <h2 className="text-2xl md:text-3xl font-bold mb-2 font-serif bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                 Dein perfekter Tag
@@ -293,7 +293,7 @@ const Index = () => {
             </div>
             <EventProvider>
               <PerfectDayPanel 
-                className="w-full h-40 bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/50 shadow-2xl" 
+                className="w-full h-32 bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/50 shadow-2xl overflow-y-auto" 
                 onAskChatbot={handleChatbotQuery}
               />
             </EventProvider>
