@@ -9,7 +9,7 @@ import {
   addNewEvent,
   logTodaysEvents
 } from '../services/eventService';
-import { refetchSingleEvent, updateEventLikesInDb } from '../services/singleEventService';
+import { updateEventLikesInDb } from '../services/singleEventService';
 
 interface EventContextProps {
   events: Event[];
@@ -134,54 +134,25 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const currentLikes = currentEvent.likes || 0;
       const newLikes = currentLikes + 1;
       
-      console.log(`Attempting to update likes from ${currentLikes} to ${newLikes} for event ${eventId}`);
+      console.log(`Updating likes from ${currentLikes} to ${newLikes} for event ${eventId}`);
       
-      // Optimistic Update: UI sofort aktualisieren
-      setEvents(prevEvents => 
-        prevEvents.map(event => 
-          event.id === eventId ? { ...event, likes: newLikes } : event
-        )
-      );
-      
-      // Database Update
+      // Update database
       const dbUpdateSuccess = await updateEventLikesInDb(eventId, newLikes);
       
       if (!dbUpdateSuccess) {
-        console.error(`Database update failed for event ${eventId}, rolling back UI`);
-        
-        // Rollback: UI auf ursprünglichen Wert zurücksetzen
-        setEvents(prevEvents => 
-          prevEvents.map(event => 
-            event.id === eventId ? { ...event, likes: currentLikes } : event
-          )
-        );
-        
-        console.error('Like failed - database update unsuccessful');
+        console.error(`Database update failed for event ${eventId}`);
         return;
       }
       
-      // Confirm with fresh data from database
-      console.log(`Database update successful, refetching event ${eventId} for confirmation`);
-      const updatedEvent = await refetchSingleEvent(eventId);
+      console.log(`Database update successful, refreshing all events`);
       
-      if (updatedEvent) {
-        console.log(`Successfully refetched event ${eventId} with ${updatedEvent.likes} likes`);
-        
-        setEvents(prevEvents => 
-          prevEvents.map(event => 
-            event.id === eventId ? updatedEvent : event
-          )
-        );
-        
-        console.log(`Like process completed successfully for event ${eventId}`);
-      } else {
-        console.warn(`Could not refetch event ${eventId} after database update`);
-      }
+      // Refresh all events to get updated likes and recalculated ranking
+      await refreshEvents();
+      
+      console.log(`Like process completed successfully for event ${eventId}`);
       
     } catch (error) {
       console.error('Error in handleLikeEvent:', error);
-      console.log('Attempting full refresh due to unexpected error');
-      await refreshEvents();
     }
   };
 
