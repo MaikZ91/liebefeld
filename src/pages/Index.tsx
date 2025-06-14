@@ -1,3 +1,4 @@
+
 // src/pages/Index.tsx
 import React, { useEffect, useState, useRef } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
@@ -16,17 +17,6 @@ import { EventProvider, useEventContext } from '@/contexts/EventContext';
 
 const LiveTickerWrapper = () => {
   const tickerRef = useRef<HTMLDivElement>(null);
-  
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (tickerRef.current) {
-        tickerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        console.log('Scrolling to live ticker after animations completed');
-      }
-    }, 5000);
-    
-    return () => clearTimeout(timer);
-  }, []);
   
   return (
     <EventProvider>
@@ -155,7 +145,7 @@ const Index = () => {
       <BetaTesterBanner />
       <main className="flex-grow relative">
         {/* Enhanced Hero Section with premium gradients */}
-        <div className="relative w-full h-[55vh] min-h-[600px] overflow-hidden bg-gradient-to-br from-gray-900 via-black to-purple-900/80">
+        <div className="relative w-full h-[55vh] min-h-[600px] max-h-[600px] overflow-hidden bg-gradient-to-br from-gray-900 via-black to-purple-900/80">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900/30 via-black/60 to-black opacity-90"></div>
           
           {/* Premium particle effect overlay */}
@@ -167,12 +157,12 @@ const Index = () => {
             <div className="absolute bottom-32 right-1/4 w-2 h-2 bg-white/60 rounded-full animate-pulse delay-700"></div>
           </div>
           
-          {/* LiveTicker at the top with enhanced styling */}
-          <div className="w-full bg-black/95 backdrop-blur-lg absolute top-0 left-0 border-b border-white/20 shadow-xl">
+          {/* LiveTicker at the top with enhanced styling - positioned fixed */}
+          <div className="w-full bg-black/95 backdrop-blur-lg fixed top-[60px] left-0 right-0 border-b border-white/20 shadow-xl z-40">
             <LiveTickerWrapper />
           </div>
           
-          <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4 pt-4">
+          <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-4 pt-16">
             <div className="absolute left-4 top-4 flex items-center gap-3 z-20">
               <InstagramFeed />
               
@@ -263,15 +253,11 @@ const Index = () => {
                 </Button>
               </div>
             </div>
-            
-            <div className="w-full bg-black/95 backdrop-blur-lg absolute bottom-0 left-0 border-t border-white/20 shadow-xl">
-              <LiveTickerWrapper />
-            </div>
           </div>
         </div>
         
         {/* Premium Community Gallery Section */}
-        <div className="bg-gradient-to-b from-gray-900 via-black to-gray-800 py-16 border-y border-gray-700/50">
+        <div className="bg-gradient-to-b from-gray-900 via-black to-gray-800 py-16 border-y border-gray-700/50 mt-16">
           <div className="container mx-auto px-6">
             <div className="text-center mb-12">
               <h2 className="text-4xl md:text-5xl font-bold mb-4 font-serif bg-gradient-to-r from-white via-gray-200 to-white bg-clip-text text-transparent tracking-wide">

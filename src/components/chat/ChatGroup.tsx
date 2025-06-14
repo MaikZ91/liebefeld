@@ -11,7 +11,9 @@ import { USERNAME_KEY, AVATAR_KEY, TypingUser } from '@/types/chatTypes';
 import { useEventContext } from '@/contexts/EventContext';
 import { toast } from '@/hooks/use-toast';
 import { getInitials } from '@/utils/chatUIUtils';
-import MessageInput from './MessageInput'; // Korrigierter Importpfad
+import MessageInput from './MessageInput';
+import MessageList from './MessageList';
+import { useScrollManagement } from '@/hooks/chat/useScrollManagement';
 
 interface ChatGroupProps {
   groupId: string;
@@ -47,7 +49,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
   const [eventSearchQuery, setEventSearchQuery] = useState('');
   
-  const chatBottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const messagesRef = useRef<Message[]>(messages);
@@ -55,6 +56,9 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   const sentMessageIds = useRef<Set<string>>(new Set());
   
   const { events } = useEventContext();
+  
+  // Use scroll management hook
+  const scrollManagement = useScrollManagement(messages, typingUsers);
   
   // Detect the group type based on name
   const isAusgehenGroup = groupName.toLowerCase() === 'ausgehen';
@@ -323,13 +327,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     }
   };
   
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    if (chatBottomRef.current) {
-      chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages, typingUsers]);
-  
   // Format time for display
   const formatTime = (isoDateString: string): string => {
     const date = new Date(isoDateString);
@@ -355,24 +352,13 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   };
   
   // Handle sending messages
-  const handleSubmit = async (eventData?: any) => { // Removed `e: React.FormEvent` and added `eventData`
+  const handleSubmit = async (eventData?: any) => {
     if ((!newMessage.trim() && !fileInputRef.current?.files?.length && !eventData) || !username || !groupId) {
       return;
     }
     
     try {
       setIsSending(true);
-      
-      // Handle file upload (existing logic, not directly used in this updated file)
-      let mediaUrl = undefined;
-      /*
-      if (fileInputRef.current?.files?.length) {
-        const file = fileInputRef.current.files[0];
-        // Here you would upload the file to storage and get a URL
-        // For now, this part is commented out as fileInputRef is not passed to MessageInput
-        // and its logic should be handled there.
-      }
-      */
       
       // Format message with event data if present
       let messageText = newMessage.trim();
@@ -409,12 +395,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       
       // Clear input 
       setNewMessage('');
-      // Reset file input (if applicable, though handled by MessageInput internally)
-      /*
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      */
       
       // Send message to database
       const { data, error } = await supabase
@@ -424,7 +404,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           sender: username,
           text: messageText,
           avatar: localStorage.getItem(AVATAR_KEY),
-          // media_url: mediaUrl, // Add media_url if you implement file uploads
           read_by: [username]
         })
         .select('id');
@@ -433,18 +412,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         console.error('Error sending message:', error);
         throw error;
       }
-      
-      // Reset typing state (handled by MessageInput callbacks)
-      /*
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-      
-      if (isTyping) {
-        // ... typing broadcast logic ...
-        setIsTyping(false);
-      }
-      */
       
     } catch (error) {
       console.error('Error sending message:', error);
@@ -461,8 +428,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   // Handle input change from MessageInput
   const handleInputChangeFromMessageInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);
-    // You would typically handle typing status here, but MessageInput already has its own internal state
-    // and sends broadcasts. So we just need to update newMessage.
   };
   
   // Handle key down from MessageInput
@@ -472,7 +437,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       handleSubmit();
     }
   };
-  
   
   // Filter events for sharing based on search query
   const filteredEvents = events.filter(event => {
@@ -497,12 +461,12 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     };
     
     setIsEventSelectOpen(false);
-    handleSubmit(eventData); // Pass eventData to handleSubmit
+    handleSubmit(eventData);
   };
 
   return (
-    <div className="flex flex-col h-full bg-black">
-      <div className="border-b border-gray-800 bg-black py-3 px-4">
+    <div className="flex flex-col h-full max-h-full bg-black overflow-hidden">
+      <div className="border-b border-gray-800 bg-black py-3 px-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center mr-3">
@@ -540,124 +504,75 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         </div>
       </div>
       
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-4 bg-black">
-          {loading && (
-            <div className="flex items-center justify-center h-full">
-              <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-red-500 rounded-full"></div>
-            </div>
-          )}
-          
-          {error && !loading && (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <p className="text-red-500 mb-4">{error}</p>
-                <Button variant="outline" onClick={handleReconnect}>
-                  <RefreshCw className="h-4 w-4 mr-2" /> Reconnect
-                </Button>
-              </div>
-            </div>
-          )}
-          
-          {!loading && !error && (
-            <div className="flex flex-col space-y-4">
-              {messages.map((message, index) => {
-                const isConsecutive = index > 0 && messages[index - 1].user_name === message.user_name;
-                const timeAgo = formatTime(message.created_at);
-                
-                return (
-                  <div key={message.id} className="w-full">
-                    {!isConsecutive && (
-                      <div className="flex items-center mb-1">
-                        <Avatar className="h-8 w-8 mr-2">
-                          <AvatarImage src={message.user_avatar} alt={message.user_name} />
-                          <AvatarFallback className="bg-red-500">{getInitials(message.user_name)}</AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium text-white">{message.user_name}</span>
-                        <span className="text-xs text-gray-400 ml-2">{timeAgo}</span>
-                      </div>
-                    )}
-                    <div className={`ml-10 pl-2 border-l-2 border-red-500 ${isConsecutive ? 'mt-1' : 'mt-0'}`}>
-                      <div className="bg-black rounded-md p-2 text-white break-words">
-                        {message.content}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-              
-              {typingUsers.length > 0 && (
-                <div className="ml-10 pl-2">
-                  <div className="text-gray-400 text-sm flex items-center">
-                    {typingUsers.length === 1 ? (
-                      <>{typingUsers[0].username} schreibt...</>
-                    ) : (
-                      <>{typingUsers.length} Personen schreiben...</>
-                    )}
-                    <div className="flex ml-2">
-                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-1 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-1 animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              <div ref={chatBottomRef}></div>
-            </div>
-          )}
-        </div>
+      <MessageList
+        messages={messages.map(msg => ({
+          id: msg.id,
+          created_at: msg.created_at,
+          text: msg.content,
+          user_name: msg.user_name,
+          user_avatar: msg.user_avatar,
+          group_id: msg.group_id,
+          reactions: []
+        }))}
+        loading={loading}
+        error={error}
+        username={username}
+        typingUsers={typingUsers}
+        formatTime={formatTime}
+        isGroup={isGroup}
+        groupType={groupType}
+        chatBottomRef={scrollManagement.chatBottomRef}
+      />
         
-        <div className="p-3 bg-black border-t border-gray-800">
-          <MessageInput 
-            username={username}
-            groupId={groupId}
-            handleSendMessage={handleSubmit}
-            isEventSelectOpen={isEventSelectOpen}
-            setIsEventSelectOpen={setIsEventSelectOpen}
-            eventSelectContent={
-              <>
-                <div className="p-2 border-b border-gray-800">
-                  <div className="flex items-center gap-2">
-                    <Search className="h-5 w-5 text-gray-400" />
-                    <Input
-                      value={eventSearchQuery}
-                      onChange={(e) => setEventSearchQuery(e.target.value)}
-                      placeholder="Event suchen..."
-                      className="bg-black border-gray-800"
-                    />
-                  </div>
+      <div className="p-3 bg-black border-t border-gray-800 flex-shrink-0">
+        <MessageInput 
+          username={username}
+          groupId={groupId}
+          handleSendMessage={handleSubmit}
+          isEventSelectOpen={isEventSelectOpen}
+          setIsEventSelectOpen={setIsEventSelectOpen}
+          eventSelectContent={
+            <>
+              <div className="p-2 border-b border-gray-800">
+                <div className="flex items-center gap-2">
+                  <Search className="h-5 w-5 text-gray-400" />
+                  <Input
+                    value={eventSearchQuery}
+                    onChange={(e) => setEventSearchQuery(e.target.value)}
+                    placeholder="Event suchen..."
+                    className="bg-black border-gray-800"
+                  />
                 </div>
-                <ScrollArea className="h-[350px]">
-                  <div className="p-2 space-y-2">
-                    {filteredEvents.length === 0 ? (
-                      <p className="text-gray-400 text-center py-4">Keine Events gefunden</p>
-                    ) : (
-                      filteredEvents.map((event) => (
-                        <div 
-                          key={event.id} 
-                          className="p-2 bg-black rounded-md hover:bg-gray-900 cursor-pointer border border-gray-800"
-                          onClick={() => handleSelectEventToShare(event)}
-                        >
-                          <p className="font-medium text-white">{event.title}</p>
-                          <p className="text-sm text-gray-400">
-                            {event.date} um {event.time} • {event.category}
-                          </p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </ScrollArea>
-              </>
-            }
-            isSending={isSending}
-            value={newMessage}
-            onChange={handleInputChangeFromMessageInput}
-            onKeyDown={handleKeyDownFromMessageInput}
-            placeholder="Schreibe eine Nachricht..."
-            mode="community"
-          />
-        </div>
+              </div>
+              <ScrollArea className="h-[350px]">
+                <div className="p-2 space-y-2">
+                  {filteredEvents.length === 0 ? (
+                    <p className="text-gray-400 text-center py-4">Keine Events gefunden</p>
+                  ) : (
+                    filteredEvents.map((event) => (
+                      <div 
+                        key={event.id} 
+                        className="p-2 bg-black rounded-md hover:bg-gray-900 cursor-pointer border border-gray-800"
+                        onClick={() => handleSelectEventToShare(event)}
+                      >
+                        <p className="font-medium text-white">{event.title}</p>
+                        <p className="text-sm text-gray-400">
+                          {event.date} um {event.time} • {event.category}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </>
+          }
+          isSending={isSending}
+          value={newMessage}
+          onChange={handleInputChangeFromMessageInput}
+          onKeyDown={handleKeyDownFromMessageInput}
+          placeholder="Schreibe eine Nachricht..."
+          mode="community"
+        />
       </div>
     </div>
   );

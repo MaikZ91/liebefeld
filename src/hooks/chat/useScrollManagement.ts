@@ -27,7 +27,7 @@ export const useScrollManagement = (messages: Message[], typingUsers: any[]) => 
       if (isAtBottom && !isUserScrolling) {
         console.log('Auto-scrolling because user is at bottom or not actively scrolling');
         setTimeout(() => {
-          initializeScrollPosition();
+          scrollToBottom();
         }, 100);
       } else {
         console.log('Not auto-scrolling because user has scrolled up', { isAtBottom, isUserScrolling });
@@ -42,7 +42,7 @@ export const useScrollManagement = (messages: Message[], typingUsers: any[]) => 
     if (typingUsers.length > 0 && isAtBottom && !isUserScrolling) {
       console.log('Scrolling to show typing indicators');
       setTimeout(() => {
-        initializeScrollPosition();
+        scrollToBottom();
       }, 100);
     }
   }, [typingUsers, isUserScrolling, isAtBottom]);
@@ -119,35 +119,27 @@ export const useScrollManagement = (messages: Message[], typingUsers: any[]) => 
     };
   }, [isUserScrolling]);
 
-  // Initial scroll position setup on mobile
-  useEffect(() => {
-    if (isMobile) {
-      // Use a slightly longer delay for mobile to ensure DOM is fully rendered
-      setTimeout(() => {
-        initializeScrollPosition();
-      }, 500);
-    }
-  }, [isMobile]);
-
-  const initializeScrollPosition = () => {
+  // Improved scroll to bottom function
+  const scrollToBottom = () => {
     const container = chatContainerRef.current;
     if (container) {
+      // Use immediate scroll to prevent overscrolling
       container.scrollTop = container.scrollHeight;
     }
     
     if (chatBottomRef.current) {
-      chatBottomRef.current.scrollIntoView({ behavior: isMobile ? 'auto' : 'smooth' });
+      chatBottomRef.current.scrollIntoView({ 
+        behavior: isMobile ? 'auto' : 'smooth',
+        block: 'end'
+      });
     }
   };
 
-  // Function to manually scroll to bottom (to be used by buttons or other UI elements)
-  const scrollToBottom = () => {
-    console.log('Manual scroll to bottom requested');
-    setIsUserScrolling(false);
-    setIsAtBottom(true);
+  // Initial scroll position setup
+  const initializeScrollPosition = () => {
     setTimeout(() => {
-      initializeScrollPosition();
-    }, 50);
+      scrollToBottom();
+    }, 100);
   };
 
   return {

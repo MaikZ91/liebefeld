@@ -1,7 +1,7 @@
+
 // src/components/chat/MessageList.tsx
 import React, { useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { getInitials } from '@/utils/chatUIUtils';
 import ChatMessage from './ChatMessage';
 import TypingIndicator from './TypingIndicator';
@@ -34,15 +34,6 @@ const MessageList: React.FC<MessageListProps> = ({
   chatBottomRef
 }) => {
   const isMobile = useIsMobile();
-  
-  // Force scroll to bottom on initial render for mobile
-  useEffect(() => {
-    if (isMobile && chatBottomRef.current) {
-      setTimeout(() => {
-        chatBottomRef.current.scrollIntoView({ behavior: 'auto' });
-      }, 500);
-    }
-  }, [isMobile, chatBottomRef]);
 
   // Parse event data from message text
   const parseEventData = (message: Message): EventShare | undefined => {
@@ -93,13 +84,13 @@ const MessageList: React.FC<MessageListProps> = ({
   }
 
   return (
-    <div className={`flex-grow p-4 bg-black overflow-y-auto w-full max-w-full h-full flex flex-col`}>
+    <div className="flex-1 flex flex-col min-h-0 max-h-full overflow-hidden">
       {error && (
         <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>
       )}
 
-      <ScrollArea className="h-full w-full pr-2 flex-grow" type={isMobile ? "always" : "hover"}>
-        <div className="flex flex-col space-y-1 w-full max-w-full pb-4">
+      <div className="flex-1 overflow-y-auto p-4 bg-black min-h-0">
+        <div className="flex flex-col space-y-1 w-full max-w-full">
           {messages.length === 0 && !loading && !error && (
             <div className="text-center text-gray-400 py-4">No messages yet. Start the conversation!</div>
           )}
@@ -155,7 +146,7 @@ const MessageList: React.FC<MessageListProps> = ({
           
           <div ref={chatBottomRef} />
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 };
