@@ -29,7 +29,6 @@ const categoryIcons: Record<string, React.ReactNode> = {
   'Sonstiges': <Calendar className="w-3 h-3" />
 };
 
-// Category color mappings
 const categoryColors: Record<string, string> = {
   'Konzert': 'bg-purple-500/70 text-purple-50',
   'Party': 'bg-pink-500/70 text-pink-50',
@@ -43,7 +42,6 @@ const categoryColors: Record<string, string> = {
   'Sonstiges': 'bg-orange-400/70 text-orange-50'
 };
 
-// Function to check if an event is a Tribe event
 const isTribeEvent = (title: string): boolean => {
   const tribeKeywords = ['tribe', 'tuesday run', 'kennenlernabend', 'creatives circle'];
   return tribeKeywords.some(keyword =>
@@ -58,10 +56,15 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
   const isNewEvent = newEventIds.has(event.id);
   const isTribe = isTribeEvent(event.title);
 
-  // Use eventLikes for GitHub events, event.likes for others
-  const displayLikes = event.id.startsWith('github-')
-    ? (eventLikes[event.id] || 0)
-    : (event.likes || 0);
+  // Unified like display logic - always use the same source
+  const getDisplayLikes = (): number => {
+    if (event.id.startsWith('github-')) {
+      return eventLikes[event.id] || 0;
+    }
+    return event.likes || 0;
+  };
+
+  const displayLikes = getDisplayLikes();
 
   const icon = event.category in categoryIcons
     ? categoryIcons[event.category]
@@ -72,7 +75,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     if (isLiking) return;
     
     setIsLiking(true);
-    console.log(`Liking event ${event.id} (${event.title}) with current likes: ${displayLikes}`);
+    console.log(`EventCard: Liking event ${event.id} (${event.title}) with current likes: ${displayLikes}`);
     
     try {
       if (onLike) {
@@ -83,9 +86,10 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     } catch (error) {
       console.error('Error liking event:', error);
     } finally {
+      // Short delay to prevent double-clicks
       setTimeout(() => {
         setIsLiking(false);
-      }, 150);
+      }, 1000);
     }
   };
 
@@ -187,7 +191,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
                 size="icon"
                 className={cn(
                   "h-4 w-4 rounded-full transition-all p-0",
-                  isLiking ? "opacity-70" : ""
+                  isLiking ? "opacity-70 cursor-not-allowed" : ""
                 )}
                 onClick={handleLike}
                 disabled={isLiking}
@@ -199,7 +203,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
                 )} />
               </Button>
               {displayLikes > 0 && (
-                <span className="text-[8px] text-white">{displayLikes}</span>
+                <span className="text-[8px] text-white font-medium">{displayLikes}</span>
               )}
             </div>
           </div>
@@ -288,7 +292,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
               size="icon"
               className={cn(
                 "h-7 w-7 rounded-full mr-1 transition-all",
-                isLiking ? "opacity-70" : ""
+                isLiking ? "opacity-70 cursor-not-allowed" : ""
               )}
               onClick={handleLike}
               disabled={isLiking}
@@ -300,7 +304,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
               )} />
             </Button>
             {displayLikes > 0 && (
-              <span className="text-sm text-white">{displayLikes}</span>
+              <span className="text-sm text-white font-medium">{displayLikes}</span>
             )}
           </div>
         </div>
