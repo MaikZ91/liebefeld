@@ -1,5 +1,6 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { startOfDay, format } from 'date-fns';
+import { startOfDay } from 'date-fns';
 import { Event, RsvpOption } from '../types/eventTypes';
 import { 
   fetchSupabaseEvents, 
@@ -20,12 +21,10 @@ interface EventContextProps {
   setSelectedEvent: React.Dispatch<React.SetStateAction<Event | null>>;
   filter: string | null;
   setFilter: React.Dispatch<React.SetStateAction<string | null>>;
-  handleLikeEvent: (eventId: string) => Promise<void>;
   handleRsvpEvent: (eventId: string, option: RsvpOption) => Promise<void>;
   showFavorites: boolean;
   setShowFavorites: React.Dispatch<React.SetStateAction<boolean>>;
   refreshEvents: () => Promise<void>;
-  newEventIds: Set<string>;
   topEventsPerDay: Record<string, string>;
   addUserEvent: (event: Omit<Event, 'id'>) => Promise<Event>;
 }
@@ -45,75 +44,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [filter, setFilter] = useState<string | null>(null);
   const [showFavorites, setShowFavorites] = useState(false);
-  const [newEventIds, setNewEventIds] = useState<Set<string>>(new Set());
   const [topEventsPerDay, setTopEventsPerDay] = useState<Record<string, string>>({});
-
-  // Function to refresh events after like (without GitHub sync)
-  const refreshEventsAfterLike = async () => {
-    try {
-      console.log('🔄 [refreshEventsAfterLike] STARTING refresh after like...');
-      
-      const refreshStartTime = Date.now();
-      const allEvents = await fetchSupabaseEvents();
-      const refreshDuration = Date.now() - refreshStartTime;
-      
-      console.log(`🔄 [refreshEventsAfterLike] Loaded ${allEvents.length} events in ${refreshDuration}ms`);
-      
-      // Find KUHNT event specifically for debugging
-      const kuhntEvent = allEvents.find(event => event.title.includes('KUHNT'));
-      if (kuhntEvent) {
-        console.log(`🔄 [refreshEventsAfterLike] KUHNT event found with ${kuhntEvent.likes} likes (ID: ${kuhntEvent.id})`);
-      }
-      
-      // Calculate new events based on created_at (last 24 hours) - NO localStorage
-      const now = new Date();
-      const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-      const newEventIdsSet = new Set<string>();
-      
-      allEvents.forEach(event => {
-        if (event.created_at && new Date(event.created_at) > twentyFourHoursAgo) {
-          newEventIdsSet.add(event.id);
-        }
-      });
-      
-      setNewEventIds(newEventIdsSet);
-      
-      // Calculate top events per day
-      const topEventsByDay: Record<string, string> = {};
-      const eventsByDate: Record<string, Event[]> = {};
-      
-      allEvents.forEach(event => {
-        if (!event.date) return;
-        
-        if (!eventsByDate[event.date]) {
-          eventsByDate[event.date] = [];
-        }
-        
-        eventsByDate[event.date].push(event);
-      });
-      
-      Object.keys(eventsByDate).forEach(date => {
-        const sortedEvents = [...eventsByDate[date]].sort((a, b) => {
-          if (b.likes !== a.likes) {
-            return b.likes - a.likes;
-          }
-          return a.id.localeCompare(b.id);
-        });
-        
-        if (sortedEvents.length > 0) {
-          topEventsByDay[date] = sortedEvents[0].id;
-        }
-      });
-      
-      setTopEventsPerDay(topEventsByDay);
-      setEvents(allEvents);
-      
-      console.log('🔄 [refreshEventsAfterLike] COMPLETED ✅');
-      
-    } catch (error) {
-      console.error('🔄 [refreshEventsAfterLike] ERROR:', error);
-    }
-  };
 
   const refreshEvents = async () => {
     setIsLoading(true);
@@ -129,25 +60,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const refreshDuration = Date.now() - refreshStartTime;
       
       console.log(`🔄 [refreshEvents] Loaded ${allEvents.length} events in ${refreshDuration}ms`);
-      
-      // Find KUHNT event specifically for debugging
-      const kuhntEvent = allEvents.find(event => event.title.includes('KUHNT'));
-      if (kuhntEvent) {
-        console.log(`🔄 [refreshEvents] KUHNT event found with ${kuhntEvent.likes} likes (ID: ${kuhntEvent.id})`);
-      }
-      
-      // Calculate new events based on created_at (last 24 hours) - NO localStorage
-      const now = new Date();
-      const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-      const newEventIdsSet = new Set<string>();
-      
-      allEvents.forEach(event => {
-        if (event.created_at && new Date(event.created_at) > twentyFourHoursAgo) {
-          newEventIdsSet.add(event.id);
-        }
-      });
-      
-      setNewEventIds(newEventIdsSet);
       
       // Calculate top events per day
       const topEventsByDay: Record<string, string> = {};
@@ -188,50 +100,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       console.log('Keeping current events due to error, no fallback to example data');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleLikeEvent = async (eventId: string) => {
-    try {
-      console.log(`❤️ [handleLikeEvent] STARTING for event: ${eventId}`);
-      console.log(`❤️ [handleLikeEvent] Available events count: ${events.length}`);
-      
-      if (!eventId) {
-        console.error(`❤️ [handleLikeEvent] ERROR: eventId is empty or null`);
-        return;
-      }
-      
-      const currentEvent = events.find(event => event.id === eventId);
-      if (!currentEvent) {
-        console.error(`❤️ [handleLikeEvent] ERROR: Event with ID ${eventId} not found in local state`);
-        console.log(`❤️ [handleLikeEvent] Available event IDs:`, events.map(e => e.id));
-        return;
-      }
-      
-      const currentLikes = currentEvent.likes || 0;
-      const newLikes = currentLikes + 1;
-      
-      console.log(`❤️ [handleLikeEvent] Event "${currentEvent.title}" - Current likes: ${currentLikes}, New likes: ${newLikes}`);
-      
-      // Update database FIRST and wait for completion
-      console.log(`❤️ [handleLikeEvent] Updating database...`);
-      const dbUpdateSuccess = await updateEventLikesInDb(eventId, newLikes);
-      
-      if (!dbUpdateSuccess) {
-        console.error(`❤️ [handleLikeEvent] Database update failed for event ${eventId}`);
-        throw new Error('Database update failed');
-      }
-      
-      console.log(`❤️ [handleLikeEvent] Database update successful, now refreshing events...`);
-      
-      // Refresh events immediately without GitHub sync and without delay
-      await refreshEventsAfterLike();
-      
-      console.log(`❤️ [handleLikeEvent] Process completed for event ${eventId} ✅`);
-      
-    } catch (error) {
-      console.error('❤️ [handleLikeEvent] ERROR:', error);
-      throw error; // Re-throw so EventCard can handle it
     }
   };
 
@@ -318,12 +186,10 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setSelectedEvent,
     filter,
     setFilter,
-    handleLikeEvent,
     handleRsvpEvent,
     showFavorites,
     setShowFavorites,
     refreshEvents,
-    newEventIds,
     topEventsPerDay,
     addUserEvent,
   };

@@ -1,9 +1,11 @@
+
 import React, { useState, memo } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { updateEventLikesInDb } from '@/services/singleEventService';
 import { useEventContext } from '@/contexts/EventContext';
 
 interface EventCardProps {
@@ -56,15 +58,14 @@ const isEventNew = (event: Event): boolean => {
   return new Date(event.created_at) > twentyFourHoursAgo;
 };
 
-const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, compact = false, onLike }) => {
+const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, compact = false }) => {
   const [isLiking, setIsLiking] = useState(false);
-  const [likeError, setLikeError] = useState<string | null>(null);
-  const { handleLikeEvent } = useEventContext();
+  const { refreshEvents } = useEventContext();
 
-  const isNewEvent = isEventNew(event); // DB-based NEW badge
+  const isNewEvent = isEventNew(event);
   const isTribe = isTribeEvent(event.title);
 
-  // Simplified likes display - directly from event object
+  // Display likes directly from event object
   const displayLikes = event.likes || 0;
 
   const icon = event.category in categoryIcons
@@ -75,7 +76,6 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     e.stopPropagation();
     
     console.log(`🚀 [EventCard] LIKE BUTTON CLICKED - Event: ${event.id} (${event.title})`);
-    console.log(`🚀 [EventCard] Current state - isLiking: ${isLiking}, displayLikes: ${displayLikes}`);
     
     if (isLiking) {
       console.log(`🚀 [EventCard] BLOCKED - Already liking, returning early`);
@@ -83,33 +83,28 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     }
     
     setIsLiking(true);
-    setLikeError(null);
     
     try {
-      console.log(`🚀 [EventCard] Starting like process...`);
+      const currentLikes = event.likes || 0;
+      const newLikes = currentLikes + 1;
       
-      if (onLike) {
-        console.log(`🚀 [EventCard] Using onLike prop`);
-        await onLike(event.id);
-      } else if (handleLikeEvent) {
-        console.log(`🚀 [EventCard] Using handleLikeEvent from context`);
-        await handleLikeEvent(event.id);
+      console.log(`🚀 [EventCard] Updating DB directly - Event: ${event.id}, New likes: ${newLikes}`);
+      
+      // Update database directly
+      const success = await updateEventLikesInDb(event.id, newLikes);
+      
+      if (success) {
+        console.log(`🚀 [EventCard] DB update successful, refreshing events...`);
+        // Refresh events to show updated likes
+        await refreshEvents();
       } else {
-        throw new Error('No like handler available');
+        console.error(`🚀 [EventCard] DB update failed for event ${event.id}`);
       }
       
-      console.log(`🚀 [EventCard] Like process completed successfully`);
     } catch (error) {
       console.error('🚀 [EventCard] ERROR during like process:', error);
-      setLikeError('Like fehlgeschlagen');
     } finally {
-      console.log(`🚀 [EventCard] Finally block - resetting isLiking state`);
-      setTimeout(() => {
-        setIsLiking(false);
-        if (likeError) {
-          setTimeout(() => setLikeError(null), 2000);
-        }
-      }, 1000);
+      setIsLiking(false);
     }
   };
 
@@ -211,18 +206,15 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
                 size="icon"
                 className={cn(
                   "h-4 w-4 rounded-full transition-all p-0",
-                  isLiking ? "opacity-70 cursor-not-allowed" : "",
-                  likeError ? "bg-red-500/20" : ""
+                  isLiking ? "opacity-70 cursor-not-allowed" : ""
                 )}
                 onClick={handleLike}
                 disabled={isLiking}
-                title={likeError || undefined}
               >
                 <Heart className={cn(
                   "w-2 h-2 transition-transform text-white",
                   displayLikes > 0 ? "fill-red-500 text-white" : "",
-                  isLiking ? "scale-125" : "",
-                  likeError ? "text-red-400" : ""
+                  isLiking ? "scale-125" : ""
                 )} />
               </Button>
               {displayLikes > 0 && (
