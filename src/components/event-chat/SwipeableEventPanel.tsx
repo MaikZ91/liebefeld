@@ -19,7 +19,7 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
   className
 }) => {
   const [currentIndex, setCurrentIndex] = useState(panelData.currentIndex || 0);
-  const { handleLikeEvent, eventLikes } = useEventContext();
+  const { handleLikeEvent } = useEventContext();
   const [isLiking, setIsLiking] = useState(false);
   
   const currentItem = panelData.events[currentIndex];
@@ -74,8 +74,8 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
   const imageUrl = isAd ? (currentItem as AdEvent).imageUrl : (currentItem as PanelEvent).image_url;
   const displayLink = isAd ? (currentItem as AdEvent).link : (currentItem as PanelEvent).link;
 
-  // Get likes for PanelEvent items
-  const eventLikesCount = isPanelEvent ? (eventLikes[(currentItem as PanelEvent).id] || 0) : 0;
+  // Get likes for PanelEvent items - now from the event object directly
+  const eventLikesCount = isPanelEvent ? ((currentItem as PanelEvent).likes || 0) : 0;
 
   return (
     <div className={cn(
