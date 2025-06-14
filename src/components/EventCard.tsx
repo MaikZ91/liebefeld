@@ -1,4 +1,3 @@
-
 import React, { useState, memo } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign } from 'lucide-react';
@@ -7,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useEventContext } from '@/contexts/EventContext';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from "sonner";
 
 interface EventCardProps {
   event: Event;
@@ -71,38 +71,36 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     if (isLiking) return;
-    
-    console.log(`🚀 Like clicked for event: ${event.id} (${event.title})`);
+
     setIsLiking(true);
-    
+    console.log(`[LIKE HANDLER] Klick für Event:`, event?.id, event?.title);
+
     try {
       const currentLikes = event.likes || 0;
       const newLikes = currentLikes + 1;
-      
-      console.log(`🚀 Updating likes from ${currentLikes} to ${newLikes} for event ${event.id}`);
-      
-      // Direct database update
-      const { error } = await supabase
-        .from('community_events')
+      console.log(`[LIKE HANDLER] Likes alt: ${currentLikes}, neu: ${newLikes}`);
+
+      const { error, data } = await supabase
+        .from("community_events")
         .update({ likes: newLikes })
-        .eq('id', event.id);
-      
+        .eq("id", event.id);
+      console.log(`[LIKE HANDLER] Supabase Response`, { data, error });
+
       if (error) {
-        console.error('🚀 Database error:', error);
-        throw error;
+        toast.error("Fehler beim Speichern deines Likes.");
+        console.error("[LIKE HANDLER] Database Error:", error);
+        return;
       }
-      
-      console.log(`🚀 Successfully updated likes in database, refreshing events...`);
-      
-      // Refresh events to get updated data
+
+      toast.success("Danke fürs Liken!");
       await refreshEvents();
-      
-      console.log(`🚀 Events refreshed successfully`);
-      
+      console.log(`[LIKE HANDLER] Events erfolgreich refreshed`);
+
     } catch (error) {
-      console.error('🚀 Error updating likes:', error);
+      toast.error("Unerwarteter Fehler beim Liken.");
+      console.error("[LIKE HANDLER] Unerwarteter Fehler:", error);
     } finally {
       setIsLiking(false);
     }
