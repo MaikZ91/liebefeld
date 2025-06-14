@@ -67,7 +67,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const githubLikes = await fetchGitHubLikes();
       console.log('Fetched GitHub likes from database:', githubLikes);
       
-      // Set eventLikes directly from database - no merge logic
+      // Set eventLikes directly from database
       const databaseLikes: Record<string, number> = {};
       Object.keys(githubLikes).forEach(eventId => {
         databaseLikes[eventId] = githubLikes[eventId].likes || 0;
@@ -207,7 +207,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return;
       }
       
-      console.log(`Starting like operation for event with ID: ${eventId}`);
+      console.log(`Starting simplified like operation for event with ID: ${eventId}`);
       const currentEvent = events.find(event => event.id === eventId);
       if (!currentEvent) {
         console.error(`Event with ID ${eventId} not found`);
@@ -226,59 +226,26 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       console.log(`Increasing likes for ${eventId} from ${currentLikes} to ${newLikesValue}`);
       
       try {
-        // First update database
+        // Single database operation - only update likes
         await updateEventLikes(eventId, newLikesValue);
         console.log(`Successfully updated likes in database for event ${eventId}`);
         
-        // Then update local state only after successful database update
+        // Update only eventLikes state for immediate UI response
         setEventLikes(prev => ({
           ...prev,
           [eventId]: newLikesValue
         }));
         
-        // Update events state for immediate UI response
-        setEvents(prevEvents => {
-          const updatedEvents = prevEvents.map(event => 
-            event.id === eventId 
-              ? { 
-                  ...event, 
-                  likes: newLikesValue,
-                  rsvp_yes: (event.rsvp_yes ?? event.rsvp?.yes ?? 0) + 1,
-                  rsvp: {
-                    yes: (event.rsvp_yes ?? event.rsvp?.yes ?? 0) + 1,
-                    no: event.rsvp_no ?? event.rsvp?.no ?? 0,
-                    maybe: event.rsvp_maybe ?? event.rsvp?.maybe ?? 0
-                  }
-                } 
-              : event
-          );
-          
-          return updatedEvents.sort((a, b) => {
-            const dateComparison = a.date.localeCompare(b.date);
-            if (dateComparison !== 0) return dateComparison;
-            
-            const likesA = a.id.startsWith('github-') ? (eventLikes[a.id] || 0) : (a.likes || 0);
-            const likesB = b.id.startsWith('github-') ? (eventLikes[b.id] || 0) : (b.likes || 0);
-            if (likesB !== likesA) return likesB - likesA;
-            
-            return a.id.localeCompare(b.id);
+        // For non-GitHub events, also update the events array
+        if (!currentEvent.id.startsWith('github-')) {
+          setEvents(prevEvents => {
+            return prevEvents.map(event => 
+              event.id === eventId 
+                ? { ...event, likes: newLikesValue } 
+                : event
+            );
           });
-        });
-        
-        // Update RSVP in database
-        const currentRsvp = {
-          yes: currentEvent.rsvp_yes ?? currentEvent.rsvp?.yes ?? 0,
-          no: currentEvent.rsvp_no ?? currentEvent.rsvp?.no ?? 0,
-          maybe: currentEvent.rsvp_maybe ?? currentEvent.rsvp?.maybe ?? 0
-        };
-        
-        const newRsvp = { 
-          ...currentRsvp,
-          yes: currentRsvp.yes + 1 
-        };
-        
-        await updateEventRsvp(eventId, newRsvp);
-        console.log(`Successfully updated RSVP in database for event ${eventId}`);
+        }
         
         // Update topEventsPerDay after successful database update
         setTopEventsPerDay(prev => {
@@ -403,16 +370,21 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     
     window.refreshEventsContext = refreshEvents;
     
+    // Reduced refresh interval and skip when likes are pending
     const refreshInterval = setInterval(() => {
-      console.log('Performing periodic event refresh');
-      refreshEvents();
+      if (pendingLikes.size === 0) {
+        console.log('Performing periodic event refresh (no pending likes)');
+        refreshEvents();
+      } else {
+        console.log('Skipping periodic refresh due to pending likes');
+      }
     }, 60000);
     
     return () => {
       clearInterval(refreshInterval);
       delete window.refreshEventsContext;
     };
-  }, []);
+  }, [pendingLikes.size]);
 
   const value = {
     events,

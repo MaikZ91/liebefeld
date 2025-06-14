@@ -1,4 +1,3 @@
-
 // src/services/eventService.ts
 
 import { supabase } from "@/integrations/supabase/client";
@@ -484,46 +483,39 @@ export const transformGitHubEvents = (
 };
 
 // Sync GitHub events with database
-export const syncGitHubEvents = async (githubEvents: Event[]): Promise<void> => {
+export const syncGitHubEvents = async (events: Event[]): Promise<void> => {
+  console.log('Syncing GitHub events with database...');
+  
   try {
-    console.log(`Syncing ${githubEvents.length} GitHub events with database`);
-    
-    const { data: existingEventLikes, error: likesError } = await supabase
-      .from('github_event_likes')
-      .select('event_id');
-    
-    if (likesError) {
-      console.error('Error fetching existing GitHub event likes:', likesError);
-      return;
-    }
-    
-    const existingEventIds = new Set(existingEventLikes?.map(e => e.event_id) || []);
-    const newEvents = githubEvents.filter(e => !existingEventIds.has(e.id));
-    
-    console.log(`Found ${newEvents.length} new GitHub events to sync`);
-    
-    // Insert records for new GitHub events
-    if (newEvents.length > 0) {
-      const newEventRecords = newEvents.map(event => ({
-        event_id: event.id,
-        likes: 0,
-        rsvp_yes: 0,
-        rsvp_no: 0,
-        rsvp_maybe: 0
-      }));
-      
-      const { error: insertError } = await supabase
-        .from('github_event_likes')
-        .insert(newEventRecords);
-      
-      if (insertError) {
-        console.error('Error syncing new GitHub events:', insertError);
-      } else {
-        console.log(`Successfully synced ${newEvents.length} new GitHub events`);
+    for (const event of events) {
+      if (event.id.startsWith('github-')) {
+        // Use UPSERT to prevent duplicate key errors
+        const { error } = await supabase
+          .from('github_event_likes')
+          .upsert({
+            event_id: event.id,
+            likes: event.likes || 0,
+            rsvp_yes: event.rsvp_yes || 0,
+            rsvp_no: event.rsvp_no || 0,
+            rsvp_maybe: event.rsvp_maybe || 0,
+            image_urls: event.image_urls || []
+          }, {
+            onConflict: 'event_id'
+          });
+          
+        if (error) {
+          console.error(`Error syncing GitHub event ${event.id}:`, error);
+          // Continue with other events even if one fails
+          continue;
+        }
+        
+        console.log(`Successfully synced GitHub event: ${event.id}`);
       }
     }
+    
+    console.log('GitHub events sync completed');
   } catch (error) {
-    console.error('Error syncing GitHub events:', error);
+    console.error('Error syncing new GitHub events:', error);
   }
 };
 
