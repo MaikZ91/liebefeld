@@ -160,8 +160,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
   }, []);
 
   // Dynamisches padding-left basierend auf dem Modus
-  // Berücksichtigt die Breite der Buttons und den gewünschten Abstand
-  const leftPadding = mode === 'community' ? 'pl-[180px]' : 'pl-4'; // Erhöhtes Padding, um Platz für alle Buttons zu schaffen
+  // Zusätzliche 75px (3x 25px für Buttons mit Abstand) zu den bestehenden 50px für Icons.
+  const leftPadding = mode === 'community' ? 'pl-[200px]' : 'pl-4'; // Erhöhtes Padding, um Platz für alle Buttons zu schaffen
 
   return (
     <div className="w-full space-y-2">
@@ -174,70 +174,70 @@ const MessageInput: React.FC<MessageInputProps> = ({
           className={`min-h-[50px] flex-grow resize-none pr-14 border-2 border-red-500 focus:border-red-600 focus:ring-2 focus:ring-red-500 shadow-md shadow-red-500/10 transition-all duration-200 placeholder-red-500 ${leftPadding}`}
         />
         {/* Buttons auf der linken Seite des Inputs (absolute Positionierung) */}
-        {mode === 'community' && (
-          <div className="flex flex-col gap-1 absolute left-1 top-1"> {/* Position von "left-1 top-1" beibehalten */}
-            <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
-              <PopoverTrigger asChild>
+        {mode === 'community' && ( // Only show in community mode
+          <>
+            <div className="flex flex-col gap-1 absolute left-1 top-1"> {/* Position von "left-1 top-1" beibehalten */}
+                <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
+                    <PopoverTrigger asChild>
+                        <Button
+                            onClick={handleShareEvent}
+                            variant="outline"
+                            size="icon"
+                            type="button"
+                            className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
+                            title="Event teilen"
+                        >
+                            <Calendar className="h-3 w-3" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                        className="w-80 p-0 max-h-[400px] overflow-y-auto"
+                        side="top"
+                        align="start"
+                        sideOffset={5}
+                    >
+                        {eventSelectContent}
+                    </PopoverContent>
+                </Popover>
                 <Button
-                  onClick={handleShareEvent}
-                  variant="outline"
-                  size="icon"
-                  type="button"
-                  className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
-                  title="Event teilen"
+                    onClick={handleFileUpload}
+                    variant="outline"
+                    size="icon"
+                    type="button"
+                    className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
+                    title="Bild anhängen"
                 >
-                  <Calendar className="h-3 w-3" />
+                    <Paperclip className="h-3 w-3" />
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                className="w-80 p-0 max-h-[400px] overflow-y-auto"
-                side="top"
-                align="start"
-                sideOffset={5}
+            </div>
+            {/* Container für die neuen Kategorie-Buttons - Positionierung korrigiert */}
+            <div className="flex gap-1 absolute left-[65px] top-1 flex-col"> {/* Neuer 'left'-Wert für diese Buttons, damit sie sichtbar sind */}
+              <Button
+                onClick={() => handleCategoryClick('Kreativität')}
+                variant="outline"
+                size="sm"
+                className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
               >
-                {eventSelectContent}
-              </PopoverContent>
-            </Popover>
-            <Button
-              onClick={handleFileUpload}
-              variant="outline"
-              size="icon"
-              type="button"
-              className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
-              title="Bild anhängen"
-            >
-              <Paperclip className="h-3 w-3" />
-            </Button>
-          </div>
-        )}
-        {/* Container für die neuen Kategorie-Buttons - Positionierung korrigiert */}
-        {mode === 'community' && (
-          <div className="flex gap-1 absolute left-[80px] top-1 flex-col"> {/* Neuer 'left'-Wert für diese Buttons */}
-            <Button
-              onClick={() => handleCategoryClick('Kreativität')}
-              variant="outline"
-              size="sm"
-              className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
-            >
-              Kreativität
-            </Button>
-            <Button
-              onClick={() => handleCategoryClick('Ausgehen')}
-              variant="outline"
-              size="sm"
-              className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
-            >
-              Ausgehen
-            </Button>
-            <Button
-              onClick={() => handleCategoryClick('Sport')}
-              variant="outline"
-              size="sm"
-              className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
-            >
-              Sport
-            </Button>
-          </div>
+                Kreativität
+              </Button>
+              <Button
+                onClick={() => handleCategoryClick('Ausgehen')}
+                variant="outline"
+                size="sm"
+                className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
+              >
+                Ausgehen
+              </Button>
+              <Button
+                onClick={() => handleCategoryClick('Sport')}
+                variant="outline"
+                size="sm"
+                className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
+              >
+                Sport
+              </Button>
+            </div>
+          </>
         )}
         <input
           type="file"
