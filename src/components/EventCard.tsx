@@ -93,28 +93,46 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     console.log(`🚀 [EventCard] OPTIMISTIC UPDATE - New likes: ${newLikes}`);
     
     try {
-      console.log(`🚀 [EventCard] Updating DB directly - Event: ${event.id}, New likes: ${newLikes}`);
+      // PRE-CALL DEBUG - Checken ob die Funktion existiert
+      console.log(`🚀 [EventCard] About to call updateEventLikesInDb function...`);
+      console.log(`🚀 [EventCard] Function exists:`, typeof updateEventLikesInDb);
+      console.log(`🚀 [EventCard] Parameters - Event ID: ${event.id}, New likes: ${newLikes}`);
       
-      // Update database directly
-      const success = await updateEventLikesInDb(event.id, newLikes);
-      
-      if (success) {
-        console.log(`🚀 [EventCard] DB update successful, refreshing events...`);
-        // Refresh events to sync with DB - aber optimistic UI bleibt bis refresh done ist
-        await refreshEvents();
-        // Nach dem refresh können wir das optimistic update zurücksetzen
-        setOptimisticLikes(null);
-      } else {
-        console.error(`🚀 [EventCard] DB update failed for event ${event.id}, reverting optimistic update`);
+      // Eigener try-catch nur für den DB-Call
+      try {
+        console.log(`🚀 [EventCard] CALLING updateEventLikesInDb NOW...`);
+        const success = await updateEventLikesInDb(event.id, newLikes);
+        console.log(`🚀 [EventCard] updateEventLikesInDb returned:`, success);
+        
+        if (success) {
+          console.log(`🚀 [EventCard] DB update successful, refreshing events...`);
+          // Refresh events to sync with DB - aber optimistic UI bleibt bis refresh done ist
+          await refreshEvents();
+          // Nach dem refresh können wir das optimistic update zurücksetzen
+          setOptimisticLikes(null);
+        } else {
+          console.error(`🚀 [EventCard] DB update failed for event ${event.id}, reverting optimistic update`);
+          // Bei Fehler optimistic update rückgängig machen
+          setOptimisticLikes(null);
+        }
+      } catch (dbError) {
+        console.error(`🚀 [EventCard] SPECIFIC DB CALL ERROR:`, dbError);
+        console.error(`🚀 [EventCard] DB Error type:`, typeof dbError);
+        console.error(`🚀 [EventCard] DB Error message:`, dbError?.message || 'No message');
+        console.error(`🚀 [EventCard] DB Error stack:`, dbError?.stack || 'No stack');
         // Bei Fehler optimistic update rückgängig machen
         setOptimisticLikes(null);
+        throw dbError; // Re-throw für äußeren catch
       }
       
     } catch (error) {
-      console.error('🚀 [EventCard] ERROR during like process:', error);
+      console.error('🚀 [EventCard] OUTER ERROR during like process:', error);
+      console.error('🚀 [EventCard] Error type:', typeof error);
+      console.error('🚀 [EventCard] Error message:', error?.message || 'No message');
       // Bei Fehler optimistic update rückgängig machen
       setOptimisticLikes(null);
     } finally {
+      console.log(`🚀 [EventCard] FINALLY block reached, setting isLiking to false`);
       setIsLiking(false);
     }
   };
