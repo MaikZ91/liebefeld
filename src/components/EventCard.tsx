@@ -60,13 +60,14 @@ const isEventNew = (event: Event): boolean => {
 
 const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, compact = false }) => {
   const [isLiking, setIsLiking] = useState(false);
+  const [optimisticLikes, setOptimisticLikes] = useState<number | null>(null);
   const { refreshEvents } = useEventContext();
 
   const isNewEvent = isEventNew(event);
   const isTribe = isTribeEvent(event.title);
 
-  // Display likes directly from event object
-  const displayLikes = event.likes || 0;
+  // Use optimistic likes if available, otherwise use event likes
+  const displayLikes = optimisticLikes !== null ? optimisticLikes : (event.likes || 0);
 
   const icon = event.category in categoryIcons
     ? categoryIcons[event.category]
@@ -84,10 +85,14 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     
     setIsLiking(true);
     
+    const currentLikes = event.likes || 0;
+    const newLikes = currentLikes + 1;
+    
+    // Optimistic update - sofort UI aktualisieren
+    setOptimisticLikes(newLikes);
+    console.log(`🚀 [EventCard] OPTIMISTIC UPDATE - New likes: ${newLikes}`);
+    
     try {
-      const currentLikes = event.likes || 0;
-      const newLikes = currentLikes + 1;
-      
       console.log(`🚀 [EventCard] Updating DB directly - Event: ${event.id}, New likes: ${newLikes}`);
       
       // Update database directly
@@ -95,14 +100,20 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
       
       if (success) {
         console.log(`🚀 [EventCard] DB update successful, refreshing events...`);
-        // Refresh events to show updated likes
+        // Refresh events to sync with DB - aber optimistic UI bleibt bis refresh done ist
         await refreshEvents();
+        // Nach dem refresh können wir das optimistic update zurücksetzen
+        setOptimisticLikes(null);
       } else {
-        console.error(`🚀 [EventCard] DB update failed for event ${event.id}`);
+        console.error(`🚀 [EventCard] DB update failed for event ${event.id}, reverting optimistic update`);
+        // Bei Fehler optimistic update rückgängig machen
+        setOptimisticLikes(null);
       }
       
     } catch (error) {
       console.error('🚀 [EventCard] ERROR during like process:', error);
+      // Bei Fehler optimistic update rückgängig machen
+      setOptimisticLikes(null);
     } finally {
       setIsLiking(false);
     }
@@ -214,11 +225,14 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
                 <Heart className={cn(
                   "w-2 h-2 transition-transform text-white",
                   displayLikes > 0 ? "fill-red-500 text-white" : "",
-                  isLiking ? "scale-125" : ""
+                  isLiking || optimisticLikes !== null ? "scale-125" : ""
                 )} />
               </Button>
               {displayLikes > 0 && (
-                <span className="text-[8px] text-white font-medium">{displayLikes}</span>
+                <span className={cn(
+                  "text-[8px] text-white font-medium transition-all",
+                  optimisticLikes !== null ? "text-red-400" : ""
+                )}>{displayLikes}</span>
               )}
             </div>
           </div>
@@ -315,11 +329,14 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
               <Heart className={cn(
                 "w-4 h-4 transition-transform text-white",
                 displayLikes > 0 ? "fill-red-500 text-white" : "",
-                isLiking ? "scale-125" : ""
+                isLiking || optimisticLikes !== null ? "scale-125" : ""
               )} />
             </Button>
             {displayLikes > 0 && (
-              <span className="text-sm text-white font-medium">{displayLikes}</span>
+              <span className={cn(
+                "text-sm text-white font-medium transition-all",
+                optimisticLikes !== null ? "text-red-400" : ""
+              )}>{displayLikes}</span>
             )}
           </div>
         </div>
