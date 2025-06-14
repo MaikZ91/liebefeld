@@ -64,11 +64,11 @@ const EventList: React.FC<EventListProps> = memo(({
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
   const { newEventIds, filter, topEventsPerDay } = useEventContext();
 
-  // Separate GitHub and regular events
-  const { githubEvents, regularEvents } = useMemo(() => {
-    const github = events.filter(event => event.source === 'github');
-    const regular = events.filter(event => event.source !== 'github');
-    return { githubEvents: github, regularEvents: regular };
+  // Separate Sport and regular events
+  const { sportEvents, regularEvents } = useMemo(() => {
+    const sport = events.filter(event => event.category === 'Sport');
+    const regular = events.filter(event => event.category !== 'Sport');
+    return { sportEvents: sport, regularEvents: regular };
   }, [events]);
 
   const filteredEvents = useMemo(() => {
@@ -118,8 +118,8 @@ const EventList: React.FC<EventListProps> = memo(({
     return grouped;
   }, [regularEvents]);
   
-  const githubEventsByDate = useMemo(() => {
-    const grouped = groupEventsByDate(githubEvents);
+  const sportEventsByDate = useMemo(() => {
+    const grouped = groupEventsByDate(sportEvents);
     Object.keys(grouped).forEach(dateStr => {
       grouped[dateStr].sort((a, b) => {
         const timeA = a.time || '00:00';
@@ -139,7 +139,7 @@ const EventList: React.FC<EventListProps> = memo(({
       });
     });
     return grouped;
-  }, [githubEvents]);
+  }, [sportEvents]);
 
   useEffect(() => {
     if (displayEvents.length > 0) {
@@ -240,7 +240,7 @@ const EventList: React.FC<EventListProps> = memo(({
               const date = parseISO(dateStr);
               const isCurrentDay = isToday(date);
               const hasNewEvents = eventsByDate[dateStr].some(event => newEventIds.has(event.id));
-              const hasGithubEvents = githubEventsByDate[dateStr] && githubEventsByDate[dateStr].length > 0;
+              const hasSportEvents = sportEventsByDate[dateStr] && sportEventsByDate[dateStr].length > 0;
               
               return (
                 <div 
@@ -275,27 +275,27 @@ const EventList: React.FC<EventListProps> = memo(({
                       );
                     })}
                     
-                    {hasGithubEvents && (
+                    {hasSportEvents && (
                       <Accordion type="single" collapsible className="w-full mt-2">
-                        <AccordionItem value="github" className="border-none">
-                          <AccordionTrigger className="py-2 px-3 bg-blue-900/20 hover:bg-blue-900/30 transition-colors rounded-lg text-white">
+                        <AccordionItem value="sport" className="border-none">
+                          <AccordionTrigger className="py-2 px-3 bg-green-900/20 hover:bg-green-900/30 transition-colors rounded-lg text-white">
                             <div className="flex items-center">
-                              <span className="font-medium">GitHub Events</span>
-                              <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full ml-2">
-                                {githubEventsByDate[dateStr].length}
+                              <span className="font-medium">Sport Events</span>
+                              <span className="text-xs bg-green-500/20 text-green-300 px-2 py-0.5 rounded-full ml-2">
+                                {sportEventsByDate[dateStr].length}
                               </span>
                             </div>
                           </AccordionTrigger>
                           <AccordionContent className="pb-0 pt-2">
                             <div className="space-y-1 pl-2">
-                              {githubEventsByDate[dateStr].map(event => (
+                              {sportEventsByDate[dateStr].map(event => (
                                 <EventCard
                                   key={event.id}
                                   event={event}
                                   compact={true}
                                   onClick={() => onSelectEvent(event, date)}
                                   onLike={onLike}
-                                  className="border-l-2 border-blue-500"
+                                  className="border-l-2 border-green-500"
                                 />
                               ))}
                             </div>
