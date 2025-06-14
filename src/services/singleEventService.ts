@@ -33,7 +33,7 @@ export const refetchSingleEvent = async (eventId: string): Promise<Event | null>
         rsvp_yes: eventData.rsvp_yes || 0,
         rsvp_no: eventData.rsvp_no || 0,
         rsvp_maybe: eventData.rsvp_maybe || 0,
-        source: eventData.source || 'community',
+        source: (eventData.source as 'community' | 'github') || 'community',
         external_id: eventData.external_id,
         is_paid: eventData.is_paid || false
       };

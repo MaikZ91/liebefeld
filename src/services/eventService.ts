@@ -68,7 +68,7 @@ export const fetchSupabaseEvents = async (): Promise<Event[]> => {
         rsvp_yes: event.rsvp_yes || 0,
         rsvp_no: event.rsvp_no || 0,
         rsvp_maybe: event.rsvp_maybe || 0,
-        source: event.source || 'community',
+        source: (event.source as 'community' | 'github') || 'community',
         external_id: event.external_id,
         is_paid: event.is_paid || false,
         rsvp: {

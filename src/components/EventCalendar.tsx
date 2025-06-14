@@ -55,7 +55,6 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     handleLikeEvent,
     showFavorites,
     setShowFavorites,
-    eventLikes,
     refreshEvents,
     newEventIds,
     topEventsPerDay,
@@ -84,9 +83,9 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
         (event.likes && event.likes > 0)
       );
     } else {
-      return getMonthOrFavoriteEvents(events, currentDate, false, eventLikes);
+      return getMonthOrFavoriteEvents(events, currentDate, false, {});
     }
-  }, [events, currentDate, showFavorites, eventLikes, showNewEvents, newEventIds, topEventsPerDay]);
+  }, [events, currentDate, showFavorites, showNewEvents, newEventIds, topEventsPerDay]);
   
   const filteredEvents = selectedDate 
     ? getEventsForDay(events, selectedDate, filter)

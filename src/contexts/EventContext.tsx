@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { startOfDay, format } from 'date-fns';
 import { Event, RsvpOption } from '../types/eventTypes';
@@ -122,7 +121,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
-  // Simplified like system using unified table
   const handleLikeEvent = async (eventId: string) => {
     try {
       console.log(`Starting like process for event: ${eventId}`);

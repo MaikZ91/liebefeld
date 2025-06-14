@@ -108,7 +108,7 @@ export const transformGitHubEvents = (
       date: eventDate,
       time: githubEvent.time || '00:00',
       location: location,
-      organizer: githubEvent.organizer || 'Unbekannt',
+      organizer: 'Unbekannt',
       category: category,
       likes: likesData.likes || 0,
       rsvp: {
@@ -117,7 +117,8 @@ export const transformGitHubEvents = (
         maybe: likesData.rsvp_maybe || 0
       },
       link: githubEvent.link || null,
-      image_url: githubEvent.image_url || null // Use single image_url
+      image_url: null,
+      source: 'github'
     };
     
     console.log(`[transformGitHubEvents] Transformed event:`, transformedEvent);

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { type Event, RsvpOption, normalizeRsvpCounts } from '../types/eventTypes';
 import { format, parseISO } from 'date-fns';
@@ -33,12 +32,9 @@ const categoryColors: Record<string, string> = {
 const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike, onRsvp }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [showSparkle, setShowSparkle] = useState(false);
-  const { eventLikes } = useEventContext();
   
-  // Get the correct likes count based on event type - only from the database!
-  const displayLikes = event.id.startsWith('github-') 
-    ? (eventLikes[event.id] || 0) 
-    : (event.likes || 0);
+  // Get the correct likes count directly from the event
+  const displayLikes = event.likes || 0;
   
   const handleClose = () => {
     setIsOpen(false);

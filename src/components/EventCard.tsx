@@ -106,7 +106,6 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
         className={cn(
           "dark-glass-card rounded-lg p-1.5 cursor-pointer hover-scale mb-0.5 w-full",
           isTribe && "border-l-2 border-purple-500 bg-gradient-to-r from-purple-900/20 to-transparent",
-          event.source === 'github' && "border-r-2 border-blue-500 bg-gradient-to-l from-blue-900/10 to-transparent",
           className
         )}
         onClick={onClick}
@@ -132,11 +131,6 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
               {event.is_paid && (
                 <Badge className="bg-amber-500 text-white text-[10px] flex items-center gap-0.5 h-3 px-1">
                   <DollarSign className="w-2 h-2" />
-                </Badge>
-              )}
-              {event.source === 'github' && (
-                <Badge className="bg-blue-600 text-white text-[10px] flex items-center gap-0.5 h-3 px-1">
-                  <span>GitHub</span>
                 </Badge>
               )}
               {isTribe && (
@@ -219,13 +213,12 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     );
   }
 
-  // Non-compact version with improved error handling
+  // Non-compact version
   return (
     <div
       className={cn(
         "dark-glass-card rounded-xl p-4 cursor-pointer hover-scale w-full",
         isTribe && "border-l-4 border-purple-500 bg-gradient-to-r from-purple-900/20 to-transparent",
-        event.source === 'github' && "border-r-4 border-blue-500 bg-gradient-to-l from-blue-900/10 to-transparent",
         className
       )}
       onClick={onClick}
@@ -243,11 +236,6 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
               <Badge className="bg-amber-500 text-white text-xs flex items-center gap-1 h-5 px-2 self-start">
                 <DollarSign className="w-3 h-3" />
                 <span>Kostenpflichtig</span>
-              </Badge>
-            )}
-            {event.source === 'github' && (
-              <Badge className="bg-blue-600 text-white text-xs flex items-center gap-1 h-5 px-2 self-start">
-                <span>GitHub Event</span>
               </Badge>
             )}
             {isTribe && (
