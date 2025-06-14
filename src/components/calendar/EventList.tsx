@@ -20,14 +20,23 @@ interface EventListProps {
   onLike: (eventId: string) => void;
 }
 
+// Unified like display function
+const getEventLikes = (event: Event, eventLikes: Record<string, number>): number => {
+  if (event.id.startsWith('github-')) {
+    return eventLikes[event.id] || 0;
+  }
+  return event.likes || 0;
+};
+
 // Memoized EventCard component wrapper to prevent unnecessary re-renders
-const MemoizedEventCard = memo(({ event, date, onSelectEvent, onLike, isTopEvent, isNewEvent }: {
+const MemoizedEventCard = memo(({ event, date, onSelectEvent, onLike, isTopEvent, isNewEvent, eventLikes }: {
   event: Event;
   date: Date;
   onSelectEvent: (event: Event, date: Date) => void;
   onLike: (eventId: string) => void;
   isTopEvent: boolean;
   isNewEvent: boolean;
+  eventLikes: Record<string, number>;
 }) => (
   <div key={event.id} className={`relative ${isTopEvent ? 'transform transition-all' : ''} w-full`}>
     {isTopEvent && (
@@ -96,13 +105,11 @@ const EventList: React.FC<EventListProps> = memo(({
   const displayEvents = useMemo(() => {
     if (!showFavorites) return filteredEvents;
     
-    // For favorites, use consistent like logic
+    // For favorites, use unified like logic
     return filteredEvents.filter(event => {
       if (!event.date) return false;
       
-      const eventLikesCount = event.id.startsWith('github-')
-        ? (eventLikes[event.id] || 0)
-        : (event.likes || 0);
+      const eventLikesCount = getEventLikes(event, eventLikes);
       
       return topEventsPerDay[event.date] === event.id && eventLikesCount > 0;
     });
@@ -111,16 +118,12 @@ const EventList: React.FC<EventListProps> = memo(({
   const eventsByDate = useMemo(() => {
     const grouped = groupEventsByDate(regularEvents);
     
-    // Sort events within each date group with consistent like logic
+    // Sort events within each date group with unified like logic
     Object.keys(grouped).forEach(dateStr => {
       grouped[dateStr].sort((a, b) => {
-        // Use consistent like display logic
-        const likesA = a.id.startsWith('github-')
-          ? (eventLikes[a.id] || 0)
-          : (a.likes || 0);
-        const likesB = b.id.startsWith('github-')
-          ? (eventLikes[b.id] || 0)
-          : (b.likes || 0);
+        // Use unified like display logic
+        const likesA = getEventLikes(a, eventLikes);
+        const likesB = getEventLikes(b, eventLikes);
         
         if (likesB !== likesA) {
           return likesB - likesA;
@@ -185,13 +188,9 @@ const EventList: React.FC<EventListProps> = memo(({
       
       if (todayEvents.length > 0) {
         const popular = [...todayEvents].sort((a, b) => {
-          // Use consistent like logic for determining top event
-          const likesA = a.id.startsWith('github-')
-            ? (eventLikes[a.id] || 0)
-            : (a.likes || 0);
-          const likesB = b.id.startsWith('github-')
-            ? (eventLikes[b.id] || 0)
-            : (b.likes || 0);
+          // Use unified like logic for determining top event
+          const likesA = getEventLikes(a, eventLikes);
+          const likesB = getEventLikes(b, eventLikes);
           
           if (likesB !== likesA) {
             return likesB - likesA;
@@ -305,6 +304,7 @@ const EventList: React.FC<EventListProps> = memo(({
                           onLike={onLike}
                           isTopEvent={isTopEvent}
                           isNewEvent={isNewEvent}
+                          eventLikes={eventLikes}
                         />
                       );
                     })}
