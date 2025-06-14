@@ -5,8 +5,8 @@ import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, La
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { updateEventLikesInDb } from '@/services/singleEventService';
 import { useEventContext } from '@/contexts/EventContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EventCardProps {
   event: Event;
@@ -60,14 +60,10 @@ const isEventNew = (event: Event): boolean => {
 
 const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, compact = false }) => {
   const [isLiking, setIsLiking] = useState(false);
-  const [optimisticLikes, setOptimisticLikes] = useState<number | null>(null);
   const { refreshEvents } = useEventContext();
 
   const isNewEvent = isEventNew(event);
   const isTribe = isTribeEvent(event.title);
-
-  // Use optimistic likes if available, otherwise use event likes
-  const displayLikes = optimisticLikes !== null ? optimisticLikes : (event.likes || 0);
 
   const icon = event.category in categoryIcons
     ? categoryIcons[event.category]
@@ -76,63 +72,38 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
     
-    console.log(`🚀 [EventCard] LIKE BUTTON CLICKED - Event: ${event.id} (${event.title})`);
+    if (isLiking) return;
     
-    if (isLiking) {
-      console.log(`🚀 [EventCard] BLOCKED - Already liking, returning early`);
-      return;
-    }
-    
+    console.log(`🚀 Like clicked for event: ${event.id} (${event.title})`);
     setIsLiking(true);
     
-    const currentLikes = event.likes || 0;
-    const newLikes = currentLikes + 1;
-    
-    // Optimistic update - sofort UI aktualisieren
-    setOptimisticLikes(newLikes);
-    console.log(`🚀 [EventCard] OPTIMISTIC UPDATE - New likes: ${newLikes}`);
-    
     try {
-      // PRE-CALL DEBUG - Checken ob die Funktion existiert
-      console.log(`🚀 [EventCard] About to call updateEventLikesInDb function...`);
-      console.log(`🚀 [EventCard] Function exists:`, typeof updateEventLikesInDb);
-      console.log(`🚀 [EventCard] Parameters - Event ID: ${event.id}, New likes: ${newLikes}`);
+      const currentLikes = event.likes || 0;
+      const newLikes = currentLikes + 1;
       
-      // Eigener try-catch nur für den DB-Call
-      try {
-        console.log(`🚀 [EventCard] CALLING updateEventLikesInDb NOW...`);
-        const success = await updateEventLikesInDb(event.id, newLikes);
-        console.log(`🚀 [EventCard] updateEventLikesInDb returned:`, success);
-        
-        if (success) {
-          console.log(`🚀 [EventCard] DB update successful, refreshing events...`);
-          // Refresh events to sync with DB - aber optimistic UI bleibt bis refresh done ist
-          await refreshEvents();
-          // Nach dem refresh können wir das optimistic update zurücksetzen
-          setOptimisticLikes(null);
-        } else {
-          console.error(`🚀 [EventCard] DB update failed for event ${event.id}, reverting optimistic update`);
-          // Bei Fehler optimistic update rückgängig machen
-          setOptimisticLikes(null);
-        }
-      } catch (dbError) {
-        console.error(`🚀 [EventCard] SPECIFIC DB CALL ERROR:`, dbError);
-        console.error(`🚀 [EventCard] DB Error type:`, typeof dbError);
-        console.error(`🚀 [EventCard] DB Error message:`, dbError?.message || 'No message');
-        console.error(`🚀 [EventCard] DB Error stack:`, dbError?.stack || 'No stack');
-        // Bei Fehler optimistic update rückgängig machen
-        setOptimisticLikes(null);
-        throw dbError; // Re-throw für äußeren catch
+      console.log(`🚀 Updating likes from ${currentLikes} to ${newLikes} for event ${event.id}`);
+      
+      // Direct database update
+      const { error } = await supabase
+        .from('community_events')
+        .update({ likes: newLikes })
+        .eq('id', event.id);
+      
+      if (error) {
+        console.error('🚀 Database error:', error);
+        throw error;
       }
       
+      console.log(`🚀 Successfully updated likes in database, refreshing events...`);
+      
+      // Refresh events to get updated data
+      await refreshEvents();
+      
+      console.log(`🚀 Events refreshed successfully`);
+      
     } catch (error) {
-      console.error('🚀 [EventCard] OUTER ERROR during like process:', error);
-      console.error('🚀 [EventCard] Error type:', typeof error);
-      console.error('🚀 [EventCard] Error message:', error?.message || 'No message');
-      // Bei Fehler optimistic update rückgängig machen
-      setOptimisticLikes(null);
+      console.error('🚀 Error updating likes:', error);
     } finally {
-      console.log(`🚀 [EventCard] FINALLY block reached, setting isLiking to false`);
       setIsLiking(false);
     }
   };
@@ -242,15 +213,12 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
               >
                 <Heart className={cn(
                   "w-2 h-2 transition-transform text-white",
-                  displayLikes > 0 ? "fill-red-500 text-white" : "",
-                  isLiking || optimisticLikes !== null ? "scale-125" : ""
+                  (event.likes || 0) > 0 ? "fill-red-500 text-white" : "",
+                  isLiking ? "scale-125" : ""
                 )} />
               </Button>
-              {displayLikes > 0 && (
-                <span className={cn(
-                  "text-[8px] text-white font-medium transition-all",
-                  optimisticLikes !== null ? "text-red-400" : ""
-                )}>{displayLikes}</span>
+              {(event.likes || 0) > 0 && (
+                <span className="text-[8px] text-white font-medium">{event.likes}</span>
               )}
             </div>
           </div>
@@ -346,15 +314,12 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
             >
               <Heart className={cn(
                 "w-4 h-4 transition-transform text-white",
-                displayLikes > 0 ? "fill-red-500 text-white" : "",
-                isLiking || optimisticLikes !== null ? "scale-125" : ""
+                (event.likes || 0) > 0 ? "fill-red-500 text-white" : "",
+                isLiking ? "scale-125" : ""
               )} />
             </Button>
-            {displayLikes > 0 && (
-              <span className={cn(
-                "text-sm text-white font-medium transition-all",
-                optimisticLikes !== null ? "text-red-400" : ""
-              )}>{displayLikes}</span>
+            {(event.likes || 0) > 0 && (
+              <span className="text-sm text-white font-medium">{event.likes}</span>
             )}
           </div>
         </div>
