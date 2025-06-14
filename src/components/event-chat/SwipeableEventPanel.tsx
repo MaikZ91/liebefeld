@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, MapPin, Clock, Euro, UsersRound, Calendar, E
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { PanelEventData, PanelEvent, AdEvent } from './types';
+import { updateEventLikesInDb } from '@/services/singleEventService';
 import { useEventContext } from '@/contexts/EventContext';
 
 interface SwipeableEventPanelProps {
@@ -19,7 +20,7 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
   className
 }) => {
   const [currentIndex, setCurrentIndex] = useState(panelData.currentIndex || 0);
-  const { handleLikeEvent } = useEventContext();
+  const { refreshEvents } = useEventContext();
   const [isLiking, setIsLiking] = useState(false);
   
   const currentItem = panelData.events[currentIndex];
@@ -55,7 +56,22 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
     setIsLiking(true);
     
     try {
-      await handleLikeEvent(eventId);
+      const panelEvent = currentItem as PanelEvent;
+      const currentLikes = panelEvent.likes || 0;
+      const newLikes = currentLikes + 1;
+      
+      console.log(`🚀 [SwipeableEventPanel] Updating DB directly - Event: ${eventId}, New likes: ${newLikes}`);
+      
+      // Update database directly
+      const success = await updateEventLikesInDb(eventId, newLikes);
+      
+      if (success) {
+        console.log(`🚀 [SwipeableEventPanel] DB update successful, refreshing events...`);
+        // Refresh events to show updated likes
+        await refreshEvents();
+      } else {
+        console.error(`🚀 [SwipeableEventPanel] DB update failed for event ${eventId}`);
+      }
     } catch (error) {
       console.error('Error liking event:', error);
     } finally {

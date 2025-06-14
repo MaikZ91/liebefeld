@@ -1,3 +1,4 @@
+
 // src/components/EventCalendar.tsx
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
@@ -15,7 +16,6 @@ import EventList from './calendar/EventList';
 import EventPanel from './calendar/EventPanel';
 import FavoritesView from './calendar/FavoritesView';
 import EventForm from './EventForm';
-// import AdPanel from './AdPanel'; // Entfernen Sie diese Zeile
 import PerfectDayPanel from './PerfectDayPanel';
 import { useEventContext } from '@/contexts/EventContext';
 import { toast } from 'sonner';
@@ -52,11 +52,9 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     setSelectedEvent,
     filter,
     setFilter,
-    handleLikeEvent,
     showFavorites,
     setShowFavorites,
     refreshEvents,
-    newEventIds,
     topEventsPerDay,
     addUserEvent
   } = useEventContext();
@@ -75,7 +73,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   
   const eventsToDisplay = React.useMemo(() => {
     if (showNewEvents) {
-      return events.filter(event => newEventIds.has(event.id));
+      return []; // No new events tracking for now
     } else if (showFavorites) {
       return events.filter(event => 
         event.date && 
@@ -85,7 +83,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     } else {
       return getMonthOrFavoriteEvents(events, currentDate, false, {});
     }
-  }, [events, currentDate, showFavorites, showNewEvents, newEventIds, topEventsPerDay]);
+  }, [events, currentDate, showFavorites, showNewEvents, topEventsPerDay]);
   
   const filteredEvents = selectedDate 
     ? getEventsForDay(events, selectedDate, filter)
@@ -176,7 +174,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
           categoryIcons={categoryIcons}
           showNewEvents={showNewEvents}
           toggleNewEvents={toggleNewEvents}
-          newEventsCount={newEventIds.size}
+          newEventsCount={0} // No new events tracking for now
           view={view}
           setView={setView}
           onShowEventForm={toggleEventForm}
@@ -209,11 +207,10 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                     setSelectedDate(date);
                     setSelectedEvent(event);
                   }}
-                  onLike={handleLikeEvent}
+                  onLike={() => {}} // No longer needed - EventCard handles directly
                 />
               </div>
               <div className="md:col-span-1 space-y-3">
-                {/* <AdPanel className="h-[280px]" /> */} {/* Entfernen Sie diese Zeile */}
                 <PerfectDayPanel className="w-full" onAskChatbot={triggerChatbotQuery} />
               </div>
             </div>
@@ -231,7 +228,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                   <div className="text-center p-3">
                     <h3 className="text-base font-medium mb-2">Neue Events</h3>
                     <p className="text-xs text-muted-foreground mb-3">
-                      Es gibt {newEventIds.size} neue Events seit deinem letzten Besuch.
+                      Keine neuen Events gefunden.
                     </p>
                     <Button onClick={() => setView("list")} size="sm" className="text-xs h-7 px-2">
                       Als Liste anzeigen
@@ -255,12 +252,11 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                   filter={filter}
                   onEventSelect={handleEventSelect}
                   onEventClose={() => setSelectedEvent(null)}
-                  onLike={handleLikeEvent}
+                  onLike={() => {}} // No longer needed - EventCard handles directly
                   onShowEventForm={toggleEventForm}
                   showFavorites={showFavorites}
                 />
                 
-                {/* <AdPanel className="h-[200px]" /> */} {/* Entfernen Sie diese Zeile */}
                 <PerfectDayPanel 
                   className="w-full h-[280px]" 
                   onAskChatbot={triggerChatbotQuery} 

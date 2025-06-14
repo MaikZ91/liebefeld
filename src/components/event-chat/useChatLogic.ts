@@ -37,9 +37,6 @@ export const useChatLogic = (
   const welcomeMessageShownRef = useRef(false);
   const appLaunchedBeforeRef = useRef(false); 
 
-  // Get event context for notifications
-  const { newEventIds } = useEventContext();
-
   const examplePrompts = [
     "Welche Events gibt es heute?",
     "Was kann ich am Wochenende machen?",
@@ -81,40 +78,17 @@ export const useChatLogic = (
     }
   ];
 
-  // Handle new event notifications
+  // Handle new event notifications - removed for now since newEventIds was removed
   const handleNewEventNotification = useCallback((eventCount: number) => {
-    console.log('Creating event notification for', eventCount, 'events');
-    
-    // Get the actual new events
-    const newEvents = getNewEventsFromIds(events, newEventIds);
-    
-    if (newEvents.length > 0) {
-      const notificationMessage = createEventNotificationMessage(eventCount, newEvents);
-      
-      setMessages(prev => {
-        // Check if we already have a recent event notification (within last 5 minutes)
-        const recentNotification = prev.find(msg => 
-          msg.isEventNotification && 
-          new Date(msg.timestamp).getTime() > Date.now() - (5 * 60 * 1000)
-        );
-        
-        if (recentNotification) {
-          console.log('Recent event notification exists, skipping');
-          return prev;
-        }
-        
-        console.log('Adding event notification message');
-        return [...prev, notificationMessage];
-      });
-    }
-  }, [events, newEventIds]);
+    console.log('Event notifications temporarily disabled');
+  }, []);
 
-  // Setup event notifications (only for fullPage and AI mode)
-  useEventNotifications({
-    onNewEvents: handleNewEventNotification,
-    isEnabled: fullPage && isChatOpen, // Only enable for full page chat when open
-    activeChatMode: activeChatModeValue
-  });
+  // Setup event notifications (disabled for now)
+  // useEventNotifications({
+  //   onNewEvents: handleNewEventNotification,
+  //   isEnabled: false,
+  //   activeChatMode: activeChatModeValue
+  // });
 
   // Handle daily Perfect Day messages
   const handleDailyPerfectDayMessage = useCallback((message: ChatMessage) => {
@@ -140,7 +114,8 @@ export const useChatLogic = (
         location: event.location,
         image_url: event.image_url || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop',
         category: event.category,
-        link: event.link
+        link: event.link,
+        likes: event.likes || 0
       });
     });
 
@@ -228,7 +203,6 @@ export const useChatLogic = (
     }
   }, [fetchGlobalQueries]);
 
-  // Funktion zum Aktualisieren der letzten Abfragen des Benutzers
   const updateRecentQueries = useCallback((query: string) => {
     setRecentQueries(prev => {
       const filteredQueries = prev.filter(q => q !== query);

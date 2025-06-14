@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState, memo, useMemo } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -42,7 +43,6 @@ const MemoizedEventCard = memo(({ event, date, onSelectEvent, onLike, isTopEvent
         event={event}
         compact={true}
         onClick={() => onSelectEvent(event, date)}
-        onLike={onLike}
         className={`${isTopEvent ? 'border-l-2 border-[#E53935]' : isNewEvent ? 'border-l-2 border-green-500' : ''} relative w-full`}
       />
     </div>
@@ -83,7 +83,7 @@ const EventList: React.FC<EventListProps> = memo(({
   const todayRef = useRef<HTMLDivElement>(null);
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
-  const { newEventIds, filter, topEventsPerDay } = useEventContext();
+  const { filter, topEventsPerDay } = useEventContext();
 
   // Separate only specific sport events, not all events in "Sport" category
   const { sportEvents, regularEvents } = useMemo(() => {
@@ -245,13 +245,6 @@ const EventList: React.FC<EventListProps> = memo(({
                 ? `${filter} Events` 
                 : "Alle Events"}
         </h3>
-        
-        {newEventIds.size > 0 && !showFavorites && !showNewEvents && (
-          <div className="flex items-center gap-1 bg-green-600/20 px-2 py-0.5 rounded-full">
-            <span className="text-green-400 text-xs font-bold">NEW</span>
-            <span className="text-green-400 text-xs font-medium">{newEventIds.size}</span>
-          </div>
-        )}
       </div>
       
       <div ref={listRef} className="overflow-y-auto max-h-[650px] pr-1 scrollbar-thin w-full">
@@ -260,7 +253,6 @@ const EventList: React.FC<EventListProps> = memo(({
             {Object.keys(eventsByDate).sort().map(dateStr => {
               const date = parseISO(dateStr);
               const isCurrentDay = isToday(date);
-              const hasNewEvents = eventsByDate[dateStr].some(event => newEventIds.has(event.id));
               const hasSportEvents = sportEventsByDate[dateStr] && sportEventsByDate[dateStr].length > 0;
               
               return (
@@ -272,16 +264,11 @@ const EventList: React.FC<EventListProps> = memo(({
                 >
                   <h4 className="text-sm font-medium mb-0.5 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-0.5 z-10 rounded-md flex items-center w-full">
                     {format(date, 'EEEE, d. MMMM', { locale: de })}
-                    {hasNewEvents && (
-                      <span className="ml-1 text-[10px] bg-green-600 text-white px-1 py-0.5 rounded-full flex items-center gap-0.5">
-                        <span className="font-bold">NEW</span>
-                      </span>
-                    )}
                   </h4>
                   <div className="space-y-0.5 w-full">
                     {eventsByDate[dateStr].map((event) => {
                       const isTopEvent = isCurrentDay && topTodayEvent && event.id === topTodayEvent.id;
-                      const isNewEvent = newEventIds.has(event.id);
+                      const isNewEvent = false; // No new events tracking for now
                       
                       return (
                         <MemoizedEventCard
@@ -315,7 +302,6 @@ const EventList: React.FC<EventListProps> = memo(({
                                   event={event}
                                   compact={true}
                                   onClick={() => onSelectEvent(event, date)}
-                                  onLike={onLike}
                                   className="border-l-2 border-green-500"
                                 />
                               ))}

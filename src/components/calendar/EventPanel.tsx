@@ -5,7 +5,6 @@ import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
 import { Button } from '@/components/ui/button';
 import { CalendarIcon, MapPin, Heart, Link } from 'lucide-react';
-import { useEventContext } from '@/contexts/EventContext';
 import EventCard from '@/components/EventCard';
 
 interface EventPanelProps {
@@ -31,8 +30,6 @@ const EventPanel: React.FC<EventPanelProps> = ({
   onShowEventForm,
   showFavorites
 }) => {
-  const { newEventIds } = useEventContext();
-  
   const panelTitle = selectedDate 
     ? `Events am ${format(selectedDate, 'dd. MMMM', { locale: de })}`
     : filter 
@@ -64,8 +61,7 @@ const EventPanel: React.FC<EventPanelProps> = ({
                       event={event}
                       compact={true}
                       onClick={() => onEventSelect(event)}
-                      onLike={onLike}
-                      className={newEventIds.has(event.id) ? 'border-l-2 border-green-500' : ''}
+                      className=""
                     />
                   ))}
                 </div>

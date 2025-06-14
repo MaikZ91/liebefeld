@@ -1,3 +1,4 @@
+
 // src/pages/Chat.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { Layout } from '@/components/layouts/Layout';
@@ -31,7 +32,6 @@ const ChatPage = () => {
   
   const {
     events,
-    newEventIds, // Get newEventIds from EventContext
     refreshEvents // Get refreshEvents to update event counts
   } = useEventContext();
   const {
@@ -172,7 +172,7 @@ const ChatPage = () => {
     }
   }, [activeView, username]);
 
-  // Effect to handle new events
+  // Effect to handle new events - removed since newEventIds was removed
   useEffect(() => {
     // Mark new events as seen when the EventListSheet is opened
     if (isEventListSheetOpen) {
@@ -231,7 +231,7 @@ const ChatPage = () => {
         handleOpenUserDirectory={handleOpenUserDirectory}
         setIsEventListSheetOpen={setIsEventListSheetOpen}
         newMessagesCount={unreadMessageCount} // Pass new messages count
-        newEventsCount={newEventIds.size} // Pass new events count
+        newEventsCount={0} // No new events tracking for now
       >
         <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
           {/* Remove the button bar since buttons are now in header */}
