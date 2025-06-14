@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Heart, History, CalendarPlus, Send, Paperclip, Calendar } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Heart, History, CalendarPlus, Send, Calendar, ChevronDown } from 'lucide-react';
 import { ChatInputProps } from './types';
 
 // Add a separate AnimatedText component if it's not already defined elsewhere
@@ -36,9 +38,6 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   activeCategory = 'Kreativität',
   onCategoryChange
 }) => {
-  // Add fileInputRef declaration
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   // Animated placeholder suggestions
   const suggestions = [
     "Frage nach Events...",
@@ -136,7 +135,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   };
 
   // Bestimme das padding-left basierend auf dem aktiven Modus
-  const inputPaddingLeft = activeChatModeValue === 'community' ? 'pl-[280px]' : 'pl-28';
+  const inputPaddingLeft = activeChatModeValue === 'community' ? 'pl-[140px]' : 'pl-28';
 
   return (
     <div className="flex items-center relative max-w-full">
@@ -182,7 +181,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           </>
         ) : ( // Community Chat Buttons
           <>
-            {/* Icon-Buttons (Event teilen & Bild anhängen) - horizontal angeordnet */}
+            {/* Event teilen Button */}
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -199,75 +198,62 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
                 <div className="p-4 text-sm text-gray-400">Eventauswahl wird geladen...</div>
               </PopoverContent>
             </Popover>
-
-            <Button
-              variant="outline"
-              size="icon"
-              type="button"
-              className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
-              title="Bild anhängen"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Paperclip className="h-3 w-3" />
-            </Button>
             
-            {/* Kategorie-Buttons - horizontal neben den Icon-Buttons with active state */}
-            <Button
-              onClick={() => handleCategoryClick('Kreativität')}
-              variant={activeCategory === 'Kreativität' ? "default" : "outline"}
-              size="sm"
-              className={cn(
-                "rounded-full h-6 px-2 text-[10px] transition-all",
-                activeCategory === 'Kreativität' 
-                  ? "bg-red-500 text-white border-red-500 hover:bg-red-600" 
-                  : "border-red-500/30 hover:bg-red-500/10"
-              )}
-            >
-              Kreativität
-            </Button>
-            <Button
-              onClick={() => handleCategoryClick('Ausgehen')}
-              variant={activeCategory === 'Ausgehen' ? "default" : "outline"}
-              size="sm"
-              className={cn(
-                "rounded-full h-6 px-2 text-[10px] transition-all",
-                activeCategory === 'Ausgehen' 
-                  ? "bg-red-500 text-white border-red-500 hover:bg-red-600" 
-                  : "border-red-500/30 hover:bg-red-500/10"
-              )}
-            >
-              Ausgehen
-            </Button>
-            <Button
-              onClick={() => handleCategoryClick('Sport')}
-              variant={activeCategory === 'Sport' ? "default" : "outline"}
-              size="sm"
-              className={cn(
-                "rounded-full h-6 px-2 text-[10px] transition-all",
-                activeCategory === 'Sport' 
-                  ? "bg-red-500 text-white border-red-500 hover:bg-red-600" 
-                  : "border-red-500/30 hover:bg-red-500/10"
-              )}
-            >
-              Sport
-            </Button>
+            {/* Kategorie-Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10 flex items-center gap-1 min-w-[80px]"
+                >
+                  {activeCategory}
+                  <ChevronDown className="h-2 w-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                className="bg-zinc-900 border-red-500/30 z-50"
+                side="top"
+                align="start"
+              >
+                <DropdownMenuItem
+                  onClick={() => handleCategoryClick('Kreativität')}
+                  className={cn(
+                    "text-white hover:bg-red-500/20 cursor-pointer",
+                    activeCategory === 'Kreativität' && "bg-red-500/20"
+                  )}
+                >
+                  Kreativität
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleCategoryClick('Ausgehen')}
+                  className={cn(
+                    "text-white hover:bg-red-500/20 cursor-pointer",
+                    activeCategory === 'Ausgehen' && "bg-red-500/20"
+                  )}
+                >
+                  Ausgehen
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleCategoryClick('Sport')}
+                  className={cn(
+                    "text-white hover:bg-red-500/20 cursor-pointer",
+                    activeCategory === 'Sport' && "bg-red-500/20"
+                  )}
+                >
+                  Sport
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </>
         )}
       </div>
-
-      <input
-        type="file"
-        ref={fileInputRef}
-        className="hidden"
-        accept="image/*"
-        onChange={() => {}}
-      />
       
       {/* Clickable overlay for animated text */}
       <div 
         className={cn(
           "absolute inset-0 cursor-text z-5 pointer-events-none",
-          activeChatModeValue === 'community' ? 'left-[280px]' : 'left-28'
+          activeChatModeValue === 'community' ? 'left-[140px]' : 'left-28'
         )}
         onClick={handleSuggestionClick}
         style={{ pointerEvents: input.trim() === '' && displayText.trim() !== '' ? 'auto' : 'none' }}

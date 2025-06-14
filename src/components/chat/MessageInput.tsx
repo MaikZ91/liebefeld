@@ -1,9 +1,12 @@
+
 // src/components/chat/MessageInput.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Loader2, Send, Paperclip, Calendar } from 'lucide-react';
+import { Loader2, Send, Calendar, ChevronDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 import { supabase } from "@/integrations/supabase/client";
 import { EventShare } from '@/types/chatTypes';
 import { messageService } from '@/services/messageService';
@@ -22,6 +25,7 @@ interface MessageInputProps {
   placeholder?: string;
   mode?: 'ai' | 'community'; // Added mode prop
   onCategorySelect?: (category: string) => void; // Hinzugefügte Prop
+  activeCategory?: string; // Active category prop
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({
@@ -37,12 +41,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
   onKeyDown,
   placeholder = "Schreibe eine Nachricht...",
   mode = 'community', // Default to community mode
-  onCategorySelect // Hinzugefügte Prop
+  onCategorySelect, // Hinzugefügte Prop
+  activeCategory = 'Kreativität' // Default category
 }) => {
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Ensure we have a valid UUID for groupId
   const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
@@ -125,7 +129,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
   const handleSubmit = async () => {
     const messageToSend = value !== undefined ? value : newMessage;
-    if ((messageToSend.trim() || fileInputRef.current?.files?.length) && !isSending) {
+    if (messageToSend.trim() && !isSending) {
       try {
         await handleSendMessage();
         if (value === undefined) {
@@ -135,10 +139,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
         console.error('Error in message submission:', error);
       }
     }
-  };
-
-  const handleFileUpload = () => {
-    fileInputRef.current?.click();
   };
 
   const handleShareEvent = () => {
@@ -160,17 +160,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   }, []);
 
   // Dynamisches padding-left basierend auf dem Modus
-  // Geschätzte Breite der Buttons:
-  // Icon-Buttons: 24px (Breite) + 4px (Abstand zum nächsten Element) = 28px
-  // Kategorie-Buttons: ca. 70px (Breite, da px-2 und text-[10px]) + 4px (Abstand) = 74px
-  // Spalte 1: Icon-Buttons (2 Zeilen)
-  // Spalte 2: Kategorie-Buttons (3 Zeilen)
-  // Der linke Block (Icon-Buttons) braucht ca. 24px + etwas Abstand von links.
-  // Der rechte Block (Kategorie-Buttons) startet dann bei ca. 24px (Breite des Icon-Buttons) + 8px (Abstand zwischen den Blöcken) = 32px.
-  // Seine Breite ist ca. 70px.
-  // Gesamtpadding links: 24px (Icon-Button) + 8px (Abstand zwischen Blöcken) + 70px (Kategorie-Button) + 8px (Puffer) = 110px.
-  // Um sicherzustellen, dass alles passt, setze ich das padding auf 110px.
-  const leftPadding = mode === 'community' ? 'pl-[110px]' : 'pl-4'; 
+  const leftPadding = mode === 'community' ? 'pl-[100px]' : 'pl-4'; 
 
   return (
     <div className="w-full space-y-2">
@@ -184,82 +174,83 @@ const MessageInput: React.FC<MessageInputProps> = ({
         />
         {/* Buttons auf der linken Seite des Inputs (absolute Positionierung) */}
         {mode === 'community' && ( // Only show in community mode
-          <>
-            {/* Linker Block: Event teilen & Bild anhängen - direkt im Input-Feld */}
-            <div className="flex flex-col gap-1 absolute left-1 top-1">
-                <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
-                    <PopoverTrigger asChild>
-                        <Button
-                            onClick={handleShareEvent}
-                            variant="outline"
-                            size="icon"
-                            type="button"
-                            className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
-                            title="Event teilen"
-                        >
-                            <Calendar className="h-3 w-3" />
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                        className="w-80 p-0 max-h-[400px] overflow-y-auto"
-                        side="top"
-                        align="start"
-                        sideOffset={5}
-                    >
-                        {eventSelectContent}
-                    </PopoverContent>
-                </Popover>
+          <div className="flex items-center gap-1 absolute left-1 top-1">
+            {/* Event teilen Button */}
+            <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
+              <PopoverTrigger asChild>
                 <Button
-                    onClick={handleFileUpload}
-                    variant="outline"
-                    size="icon"
-                    type="button"
-                    className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
-                    title="Bild anhängen"
+                  onClick={handleShareEvent}
+                  variant="outline"
+                  size="icon"
+                  type="button"
+                  className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
+                  title="Event teilen"
                 >
-                    <Paperclip className="h-3 w-3" />
+                  <Calendar className="h-3 w-3" />
                 </Button>
-            </div>
-            {/* Rechter Block: Kategorie-Buttons - neben dem ersten Block */}
-            <div className="flex flex-col gap-1 absolute left-[35px] top-1"> {/* 'left' wurde erneut angepasst: 1 (left des div) + 24 (Breite des Icon-Buttons) + 10 (Abstand) = 35px */}
-              <Button
-                onClick={() => handleCategoryClick('Kreativität')}
-                variant="outline"
-                size="sm"
-                className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-80 p-0 max-h-[400px] overflow-y-auto"
+                side="top"
+                align="start"
+                sideOffset={5}
               >
-                Kreativität
-              </Button>
-              <Button
-                onClick={() => handleCategoryClick('Ausgehen')}
-                variant="outline"
-                size="sm"
-                className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
+                {eventSelectContent}
+              </PopoverContent>
+            </Popover>
+            
+            {/* Kategorie-Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10 flex items-center gap-1 min-w-[70px]"
+                >
+                  {activeCategory}
+                  <ChevronDown className="h-2 w-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                className="bg-zinc-900 border-red-500/30 z-50"
+                side="top"
+                align="start"
               >
-                Ausgehen
-              </Button>
-              <Button
-                onClick={() => handleCategoryClick('Sport')}
-                variant="outline"
-                size="sm"
-                className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
-              >
-                Sport
-              </Button>
-            </div>
-          </>
+                <DropdownMenuItem
+                  onClick={() => handleCategoryClick('Kreativität')}
+                  className={cn(
+                    "text-white hover:bg-red-500/20 cursor-pointer",
+                    activeCategory === 'Kreativität' && "bg-red-500/20"
+                  )}
+                >
+                  Kreativität
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleCategoryClick('Ausgehen')}
+                  className={cn(
+                    "text-white hover:bg-red-500/20 cursor-pointer",
+                    activeCategory === 'Ausgehen' && "bg-red-500/20"
+                  )}
+                >
+                  Ausgehen
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleCategoryClick('Sport')}
+                  className={cn(
+                    "text-white hover:bg-red-500/20 cursor-pointer",
+                    activeCategory === 'Sport' && "bg-red-500/20"
+                  )}
+                >
+                  Sport
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         )}
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          accept="image/*"
-          onChange={() => {}}
-        />
         {/* Send button on the right */}
         <Button
           onClick={handleSubmit}
-          disabled={isSending || (!value?.trim() && !newMessage.trim() && !fileInputRef.current?.files?.length)}
+          disabled={isSending || (!value?.trim() && !newMessage.trim())}
           className="rounded-full min-w-[32px] h-8 w-8 absolute right-1 top-1 p-0 bg-red-500 hover:bg-red-600 text-white"
         >
           {isSending ? (
