@@ -42,18 +42,32 @@ export const bielefeldEvents: Event[] = [
 // Fetch all events from unified community_events table
 export const fetchSupabaseEvents = async (): Promise<Event[]> => {
   try {
+    console.log('📥 [fetchSupabaseEvents] STARTING database query...');
+    const queryStartTime = Date.now();
+    
     const { data: eventsData, error: eventsError } = await supabase
       .from('community_events')
       .select('*')
       .order('date', { ascending: true });
     
+    const queryDuration = Date.now() - queryStartTime;
+    console.log(`📥 [fetchSupabaseEvents] Query completed in ${queryDuration}ms`);
+    
     if (eventsError) {
+      console.error('📥 [fetchSupabaseEvents] DATABASE ERROR:', eventsError);
       throw eventsError;
     }
     
     if (eventsData) {
-      console.log('Loaded events from Supabase:', eventsData);
-      return eventsData.map(event => ({
+      console.log(`📥 [fetchSupabaseEvents] Retrieved ${eventsData.length} events from database`);
+      
+      // Find KUHNT event specifically for debugging
+      const kuhntEventData = eventsData.find(event => event.title.includes('KUHNT'));
+      if (kuhntEventData) {
+        console.log(`📥 [fetchSupabaseEvents] Raw KUHNT data from DB:`, kuhntEventData);
+      }
+      
+      const transformedEvents = eventsData.map(event => ({
         id: event.id.toString(),
         title: event.title,
         description: event.description || '',
@@ -77,11 +91,21 @@ export const fetchSupabaseEvents = async (): Promise<Event[]> => {
           maybe: event.rsvp_maybe || 0
         }
       }));
+      
+      // Check KUHNT event after transformation
+      const kuhntTransformed = transformedEvents.find(event => event.title.includes('KUHNT'));
+      if (kuhntTransformed) {
+        console.log(`📥 [fetchSupabaseEvents] Transformed KUHNT event:`, kuhntTransformed);
+      }
+      
+      console.log('📥 [fetchSupabaseEvents] COMPLETED ✅');
+      return transformedEvents;
     }
     
+    console.log('📥 [fetchSupabaseEvents] No data returned from database');
     return [];
   } catch (error) {
-    console.error('Error loading events from Supabase:', error);
+    console.error('📥 [fetchSupabaseEvents] EXCEPTION:', error);
     return [];
   }
 };

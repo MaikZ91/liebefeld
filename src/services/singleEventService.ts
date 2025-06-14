@@ -1,69 +1,64 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { Event } from '@/types/eventTypes';
+import { supabase } from "@/integrations/supabase/client";
 
-export const refetchSingleEvent = async (eventId: string): Promise<Event | null> => {
+export const updateEventLikesInDb = async (eventId: string, newLikesValue: number): Promise<boolean> => {
   try {
-    console.log(`Refetching single event: ${eventId}`);
+    console.log(`🔥 [updateEventLikesInDb] STARTING - Event: ${eventId}, New Likes: ${newLikesValue}`);
     
-    const { data: eventData, error } = await supabase
+    // First, check current value in DB
+    const { data: currentData, error: selectError } = await supabase
       .from('community_events')
-      .select('*')
+      .select('likes, title')
       .eq('id', eventId)
       .single();
     
-    if (error) {
-      console.error('Error fetching event:', error);
-      return null;
-    }
-    
-    if (eventData) {
-      return {
-        id: eventData.id,
-        title: eventData.title,
-        description: eventData.description || '',
-        date: eventData.date,
-        time: eventData.time?.toString() || '00:00',
-        location: eventData.location || '',
-        organizer: eventData.organizer || '',
-        category: eventData.category,
-        link: eventData.link,
-        image_url: eventData.image_urls?.[0] || undefined,
-        likes: eventData.likes || 0,
-        rsvp_yes: eventData.rsvp_yes || 0,
-        rsvp_no: eventData.rsvp_no || 0,
-        rsvp_maybe: eventData.rsvp_maybe || 0,
-        source: (eventData.source as 'community' | 'github') || 'community',
-        external_id: eventData.external_id,
-        is_paid: eventData.is_paid || false
-      };
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('Error in refetchSingleEvent:', error);
-    return null;
-  }
-};
-
-export const updateEventLikesInDb = async (eventId: string, newLikes: number): Promise<boolean> => {
-  try {
-    console.log(`Updating likes for event ${eventId} to ${newLikes}`);
-    
-    const { error } = await supabase
-      .from('community_events')
-      .update({ likes: newLikes })
-      .eq('id', eventId);
-    
-    if (error) {
-      console.error('Error updating event likes:', error);
+    if (selectError) {
+      console.error(`🔥 [updateEventLikesInDb] SELECT ERROR:`, selectError);
       return false;
     }
     
-    console.log(`Successfully updated likes for event ${eventId} to ${newLikes}`);
+    console.log(`🔥 [updateEventLikesInDb] CURRENT DB VALUE: ${currentData?.likes} for "${currentData?.title}"`);
+    
+    // Perform the update
+    const updateStartTime = Date.now();
+    const { error: updateError, data: updateData } = await supabase
+      .from('community_events')
+      .update({ likes: newLikesValue })
+      .eq('id', eventId)
+      .select('likes, title');
+      
+    const updateDuration = Date.now() - updateStartTime;
+    
+    if (updateError) {
+      console.error(`🔥 [updateEventLikesInDb] UPDATE ERROR:`, updateError);
+      return false;
+    }
+    
+    console.log(`🔥 [updateEventLikesInDb] UPDATE SUCCESS in ${updateDuration}ms:`, updateData);
+    
+    // Verify the update immediately
+    const { data: verifyData, error: verifyError } = await supabase
+      .from('community_events')
+      .select('likes, title')
+      .eq('id', eventId)
+      .single();
+    
+    if (verifyError) {
+      console.error(`🔥 [updateEventLikesInDb] VERIFY ERROR:`, verifyError);
+      return false;
+    }
+    
+    console.log(`🔥 [updateEventLikesInDb] VERIFICATION: DB now shows ${verifyData?.likes} likes for "${verifyData?.title}"`);
+    
+    if (verifyData?.likes !== newLikesValue) {
+      console.error(`🔥 [updateEventLikesInDb] MISMATCH! Expected ${newLikesValue}, got ${verifyData?.likes}`);
+      return false;
+    }
+    
+    console.log(`🔥 [updateEventLikesInDb] COMPLETED SUCCESSFULLY ✅`);
     return true;
   } catch (error) {
-    console.error('Error in updateEventLikesInDb:', error);
+    console.error(`🔥 [updateEventLikesInDb] EXCEPTION:`, error);
     return false;
   }
 };

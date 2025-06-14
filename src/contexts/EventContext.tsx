@@ -51,7 +51,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const refreshEvents = async () => {
     setIsLoading(true);
     try {
-      console.log('Refreshing all events...');
+      console.log('🔄 [refreshEvents] STARTING refresh...');
       
       const previouslySeenEventsJson = localStorage.getItem('seenEventIds');
       const previouslySeenEvents: string[] = previouslySeenEventsJson ? JSON.parse(previouslySeenEventsJson) : [];
@@ -61,8 +61,17 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       await syncGitHubEvents();
       
       // Then fetch all events from unified table
+      const refreshStartTime = Date.now();
       const allEvents = await fetchSupabaseEvents();
-      console.log(`Loaded ${allEvents.length} events from unified table`);
+      const refreshDuration = Date.now() - refreshStartTime;
+      
+      console.log(`🔄 [refreshEvents] Loaded ${allEvents.length} events in ${refreshDuration}ms`);
+      
+      // Find KUHNT event specifically for debugging
+      const kuhntEvent = allEvents.find(event => event.title.includes('KUHNT'));
+      if (kuhntEvent) {
+        console.log(`🔄 [refreshEvents] KUHNT event found with ${kuhntEvent.likes} likes (ID: ${kuhntEvent.id})`);
+      }
       
       const newEventIdsSet = new Set<string>();
       const currentEventIds = allEvents.map(event => event.id);
@@ -109,8 +118,10 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       localStorage.setItem('lastEventsRefresh', new Date().toISOString());
       logTodaysEvents(allEvents);
       
+      console.log('🔄 [refreshEvents] COMPLETED ✅');
+      
     } catch (error) {
-      console.error('Error loading events:', error);
+      console.error('🔄 [refreshEvents] ERROR:', error);
       // Even on error, keep current events instead of falling back to example data
       console.log('Keeping current events due to error, no fallback to example data');
     } finally {
@@ -120,36 +131,40 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const handleLikeEvent = async (eventId: string) => {
     try {
-      console.log(`Starting like process for event: ${eventId}`);
+      console.log(`❤️ [handleLikeEvent] STARTING for event: ${eventId}`);
       
       const currentEvent = events.find(event => event.id === eventId);
       if (!currentEvent) {
-        console.error(`Event with ID ${eventId} not found in local state`);
+        console.error(`❤️ [handleLikeEvent] Event with ID ${eventId} not found in local state`);
         return;
       }
       
       const currentLikes = currentEvent.likes || 0;
       const newLikes = currentLikes + 1;
       
-      console.log(`Updating likes from ${currentLikes} to ${newLikes} for event ${eventId}`);
+      console.log(`❤️ [handleLikeEvent] Event "${currentEvent.title}" - Current likes: ${currentLikes}, New likes: ${newLikes}`);
       
-      // Update database
+      // Update database FIRST and wait for completion
+      console.log(`❤️ [handleLikeEvent] Updating database...`);
       const dbUpdateSuccess = await updateEventLikesInDb(eventId, newLikes);
       
       if (!dbUpdateSuccess) {
-        console.error(`Database update failed for event ${eventId}`);
+        console.error(`❤️ [handleLikeEvent] Database update failed for event ${eventId}`);
         return;
       }
       
-      console.log(`Database update successful, refreshing all events`);
+      console.log(`❤️ [handleLikeEvent] Database update successful, now refreshing events...`);
+      
+      // Add a small delay to ensure DB update is fully committed
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Refresh all events to get updated likes and recalculated ranking
       await refreshEvents();
       
-      console.log(`Like process completed successfully for event ${eventId}`);
+      console.log(`❤️ [handleLikeEvent] Process completed for event ${eventId} ✅`);
       
     } catch (error) {
-      console.error('Error in handleLikeEvent:', error);
+      console.error('❤️ [handleLikeEvent] ERROR:', error);
     }
   };
 
