@@ -1,3 +1,4 @@
+
 // src/components/event-chat/types.ts
 import { LandingSlideData } from './SwipeableLandingPanel';
 
@@ -28,6 +29,7 @@ export interface PanelEvent {
   image_url: string;
   category: string;
   link?: string; 
+  likes?: number; // Added likes property
 }
 
 export interface AdEvent {
