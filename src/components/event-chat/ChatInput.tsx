@@ -128,7 +128,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   // Bestimme das padding-left basierend auf dem aktiven Modus
-  const inputPaddingLeft = activeChatModeValue === 'community' ? 'pl-[280px]' : 'pl-20';
+  const inputPaddingLeft = activeChatModeValue === 'community' ? 'pl-[280px]' : 'pl-28';
 
   return (
     <div className="flex items-center relative max-w-full">
@@ -244,7 +244,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
       <div 
         className={cn(
           "absolute inset-0 cursor-text z-5 pointer-events-none",
-          activeChatModeValue === 'community' ? 'left-[280px]' : 'left-24'
+          activeChatModeValue === 'community' ? 'left-[280px]' : 'left-28'
         )}
         onClick={handleSuggestionClick}
         style={{ pointerEvents: input.trim() === '' && displayText.trim() !== '' ? 'auto' : 'none' }}
