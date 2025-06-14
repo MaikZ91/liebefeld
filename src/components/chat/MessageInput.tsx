@@ -160,13 +160,24 @@ const MessageInput: React.FC<MessageInputProps> = ({
   }, []);
 
   // Dynamisches padding-left basierend auf dem Modus
-  // Zusätzliche 75px (3x 25px für Buttons mit Abstand) zu den bestehenden 50px für Icons.
-  const leftPadding = mode === 'community' ? 'pl-[200px]' : 'pl-4'; // Erhöhtes Padding, um Platz für alle Buttons zu schaffen
+  // Die "Event teilen" und "Bild anhängen" Buttons sind 24px breit + 8px Abstand.
+  // Die Kategorie-Buttons sind ca. 75px breit (geschätzt, basierend auf 'Kreativität') + 8px Abstand.
+  // Benötigtes Padding: (2 * (24px + 8px)) + (3 * (75px + 8px))
+  // Das ist nicht sinnvoll. Die Buttons sollen nebeneinander liegen.
+  // Also: 2 kleine Buttons übereinander, dann 3 Kategorie-Buttons übereinander.
+  // Breite der Kategorie-Buttons: ca. 75px. Abstand 8px.
+  // Der linke Block (Event teilen, Bild anhängen) ist 24px breit.
+  // Der rechte Block (Kategorie-Buttons) ist 75px breit.
+  // Gesamter Platzbedarf: 24px (linker Block) + 8px (Abstand) + 75px (rechter Block) = 107px.
+  // Plus 16px (links) und 16px (rechts) für generellen padding.
+  // Also 107px + 16px = 123px.
+  // Ich setze es mal auf 140px, um etwas Puffer zu haben.
+  const leftPadding = mode === 'community' ? 'pl-[140px]' : 'pl-4'; 
 
   return (
     <div className="w-full space-y-2">
       <div className="flex items-center gap-2 relative">
-        <Textarea
+        <Textarea 
           placeholder={placeholder}
           value={value !== undefined ? value : newMessage}
           onChange={handleMessageChange}
@@ -176,7 +187,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
         {/* Buttons auf der linken Seite des Inputs (absolute Positionierung) */}
         {mode === 'community' && ( // Only show in community mode
           <>
-            <div className="flex flex-col gap-1 absolute left-1 top-1"> {/* Position von "left-1 top-1" beibehalten */}
+            {/* Linker Block: Event teilen & Bild anhängen */}
+            <div className="flex flex-col gap-1 absolute left-1 top-1">
                 <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
                     <PopoverTrigger asChild>
                         <Button
@@ -210,8 +222,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
                     <Paperclip className="h-3 w-3" />
                 </Button>
             </div>
-            {/* Container für die neuen Kategorie-Buttons - Positionierung korrigiert */}
-            <div className="flex gap-1 absolute left-[65px] top-1 flex-col"> {/* Neuer 'left'-Wert für diese Buttons, damit sie sichtbar sind */}
+            {/* Rechter Block: Kategorie-Buttons */}
+            <div className="flex flex-col gap-1 absolute left-[50px] top-1"> {/* 'left' wurde angepasst */}
               <Button
                 onClick={() => handleCategoryClick('Kreativität')}
                 variant="outline"
