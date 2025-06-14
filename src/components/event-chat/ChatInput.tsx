@@ -1,3 +1,4 @@
+
 // src/components/event-chat/ChatInput.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
@@ -127,27 +128,16 @@ const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   // Bestimme das padding-left basierend auf dem aktiven Modus
-  // AI-Modus: Hat 3 Icon-Buttons. Jeder Icon-Button ist h-6 w-6 (24px).
+  // AI-Modus: Hat 3 Icon-Buttons horizontal angeordnet. Jeder Icon-Button ist h-6 w-6 (24px).
   //  Breite (icons) = 3 * 24px + 2 * 4px (gap) = 72 + 8 = 80px. Also pl-20 ist gut.
-  // Community-Modus: Hat 2 Icon-Buttons (24px) und 3 Text-Buttons (ca. 70px breit, da px-2).
-  //  Angenommen, Icons sind links, Text-Buttons rechts davon.
-  //  Breite (icons) + Abstand + Breite (text-buttons)
-  //  (2 * 24px + 1 * 4px (gap)) + (3 * 70px + 2 * 4px (gap)) = (48 + 4) + (210 + 8) = 52 + 218 = 270px
-  // Das ist zu viel für das aktuelle Layout. Stattdessen werden die Icon-Buttons und die Text-Buttons
-  // in zwei getrennten, vertikal gestapelten Blöcken direkt links vom Input platziert.
-  // Block 1 (Icon-Buttons): ca. 24px breit.
-  // Block 2 (Text-Buttons): ca. 70px breit.
-  // Die Textarea muss den breitesten Block plus linken Puffer abdecken.
-  // Da die Text-Buttons breiter sind, müssen wir das Padding nach deren Breite ausrichten.
-  // (Breite Text-Button) + (links-Puffer des Inputs) = 70px + 16px (standard input padding) = 86px
-  // Plus den Abstand zwischen den Button-Spalten. Sagen wir 90px für den Start des Textes.
-  // Um etwas Puffer zu haben und sicherzustellen, dass die Textbuttons nicht zu eng sind,
-  // setze ich das padding auf 110px.
-  const inputPaddingLeft = activeChatModeValue === 'community' ? 'pl-[110px]' : 'pl-20';
+  // Community-Modus: Hat 2 Icon-Buttons und 3 Text-Buttons horizontal angeordnet.
+  //  Geschätzte Gesamtbreite: (2 * 24px) + (3 * 70px) + Abstände = 48 + 210 + 20 = 278px
+  //  Das ist zu viel, daher nutzen wir eine kompaktere Anordnung mit weniger padding
+  const inputPaddingLeft = activeChatModeValue === 'community' ? 'pl-[280px]' : 'pl-20';
 
   return (
     <div className="flex items-center relative max-w-full">
-      <div className="absolute left-2 top-1 flex flex-col gap-1 z-10">
+      <div className="absolute left-2 top-1 flex items-center gap-1 z-10">
         {activeChatModeValue === 'ai' ? (
           <>
             {/* Herz button für personalisierten Modus */}
@@ -189,7 +179,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           </>
         ) : ( // Community Chat Buttons
           <>
-            {/* Icon-Buttons (Event teilen & Bild anhängen) */}
+            {/* Icon-Buttons (Event teilen & Bild anhängen) - horizontal angeordnet */}
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -216,33 +206,32 @@ const ChatInput: React.FC<ChatInputProps> = ({
             >
               <Paperclip className="h-3 w-3" />
             </Button>
-            {/* Kategorie-Buttons - direkt neben den Icon-Buttons */}
-            <div className="flex flex-col gap-1 absolute left-[32px] top-0">
-              <Button
-                onClick={() => handleCategoryClick('Kreativität')}
-                variant="outline"
-                size="sm"
-                className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
-              >
-                Kreativität
-              </Button>
-              <Button
-                onClick={() => handleCategoryClick('Ausgehen')}
-                variant="outline"
-                size="sm"
-                className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
-              >
-                Ausgehen
-              </Button>
-              <Button
-                onClick={() => handleCategoryClick('Sport')}
-                variant="outline"
-                size="sm"
-                className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
-              >
-                Sport
-              </Button>
-            </div>
+            
+            {/* Kategorie-Buttons - horizontal neben den Icon-Buttons */}
+            <Button
+              onClick={() => handleCategoryClick('Kreativität')}
+              variant="outline"
+              size="sm"
+              className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
+            >
+              Kreativität
+            </Button>
+            <Button
+              onClick={() => handleCategoryClick('Ausgehen')}
+              variant="outline"
+              size="sm"
+              className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
+            >
+              Ausgehen
+            </Button>
+            <Button
+              onClick={() => handleCategoryClick('Sport')}
+              variant="outline"
+              size="sm"
+              className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
+            >
+              Sport
+            </Button>
           </>
         )}
       </div>
@@ -259,7 +248,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
       <div 
         className={cn(
           "absolute inset-0 cursor-text z-5 pointer-events-none",
-          activeChatModeValue === 'community' ? 'left-[110px]' : 'left-20'
+          activeChatModeValue === 'community' ? 'left-[280px]' : 'left-20'
         )}
         onClick={handleSuggestionClick}
         style={{ pointerEvents: input.trim() === '' && displayText.trim() !== '' ? 'auto' : 'none' }}
