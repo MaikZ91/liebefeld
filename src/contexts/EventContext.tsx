@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { startOfDay, format } from 'date-fns';
 import { Event, RsvpOption } from '../types/eventTypes';
@@ -82,14 +83,21 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const externalEvents = await fetchExternalEvents(databaseLikes);
       console.log(`Loaded ${externalEvents.length} external events`);
       
-      await syncGitHubEvents(externalEvents);
+      // Don't let sync errors prevent event display
+      try {
+        await syncGitHubEvents(externalEvents);
+      } catch (syncError) {
+        console.warn('GitHub sync failed, but continuing with event display:', syncError);
+      }
       
       const eventMap = new Map<string, Event>();
       
+      // Add Supabase events
       supabaseEvents.forEach(event => {
         eventMap.set(event.id, event);
       });
       
+      // Add external events
       externalEvents.forEach(extEvent => {
         if (!eventMap.has(extEvent.id)) {
           // Use database likes for GitHub events
@@ -105,9 +113,10 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       });
       
       const combinedEvents = Array.from(eventMap.values());
+      console.log(`Combined ${combinedEvents.length} total events for display`);
       
+      // Track new events
       const newEventIdsSet = new Set<string>();
-      
       const currentEventIds = combinedEvents.map(event => event.id);
       currentEventIds.forEach(id => {
         if (!previouslySeenSet.has(id)) {
@@ -116,9 +125,9 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       });
       
       setNewEventIds(newEventIdsSet);
-      
       localStorage.setItem('seenEventIds', JSON.stringify(currentEventIds));
       
+      // Always set events, even if empty from API
       if (combinedEvents.length === 0) {
         console.log('No events found, using example data');
         setEvents(bielefeldEvents);
@@ -154,6 +163,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           return event;
         });
         
+        // Calculate top events per day
         const topEventsByDay: Record<string, string> = {};
         const eventsByDate: Record<string, Event[]> = {};
         
@@ -191,9 +201,11 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         localStorage.setItem('lastEventsRefresh', new Date().toISOString());
         
         logTodaysEvents(eventsWithSyncedRsvp);
+        console.log(`Successfully set ${eventsWithSyncedRsvp.length} events for display`);
       }
     } catch (error) {
       console.error('Error loading events:', error);
+      // Fallback to example events if there's an error
       setEvents(bielefeldEvents);
     } finally {
       setIsLoading(false);
@@ -364,13 +376,16 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   useEffect(() => {
     console.log('EventProvider: Loading events...');
     
+    // Clear any old refresh timestamp
     localStorage.removeItem('lastEventsRefresh');
     
+    // Initial load
     refreshEvents();
     
+    // Expose refresh function globally for debugging
     window.refreshEventsContext = refreshEvents;
     
-    // Reduced refresh interval and skip when likes are pending
+    // Periodic refresh - but less frequent to avoid conflicts
     const refreshInterval = setInterval(() => {
       if (pendingLikes.size === 0) {
         console.log('Performing periodic event refresh (no pending likes)');
@@ -378,7 +393,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       } else {
         console.log('Skipping periodic refresh due to pending likes');
       }
-    }, 60000);
+    }, 120000); // Increased to 2 minutes
     
     return () => {
       clearInterval(refreshInterval);
