@@ -1,4 +1,3 @@
-
 // src/components/event-chat/ChatInput.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
@@ -114,7 +113,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   return (
     <div className="flex items-center relative max-w-full">
-      <div className="absolute left-3 flex items-center gap-1 z-10">
+      <div className="absolute left-3 flex items-center gap-0.5 z-10">
         {/* Heart button for toggling personalized mode - nur im AI-Modus sichtbar */}
         {activeChatModeValue === 'ai' && (
           <Button 
@@ -164,14 +163,14 @@ const ChatInput: React.FC<ChatInputProps> = ({
         placeholder={placeholderText}
         className={cn(
           "flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pr-14 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 min-w-0 text-left",
-          activeChatModeValue === 'ai' ? 'pl-32' : 'pl-4' // Angepasstes Padding für 3 Buttons
+          activeChatModeValue === 'ai' ? 'pl-28' : 'pl-4' // Reduziertes Padding für engere Button-Anordnung
         )} 
       />
       
       {/* Clickable overlay for placeholder suggestions */}
       {activeChatModeValue === 'ai' && showAnimatedPrompts && input.trim() === '' && displayText.trim() !== '' && ( 
         <div 
-          className="absolute left-32 right-14 top-3 bottom-3 cursor-pointer z-5"
+          className="absolute left-28 right-14 top-3 bottom-3 cursor-pointer z-5"
           onClick={handleSuggestionClick}
           title="Klicken um Vorschlag zu übernehmen"
         />
