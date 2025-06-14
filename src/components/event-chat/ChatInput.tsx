@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Heart, History, CalendarPlus, Send, Paperclip, Calendar } from 'lucide-react'; // Paperclip und Calendar importieren
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Heart, History, CalendarPlus, Send, Paperclip, Calendar } from 'lucide-react';
 import { ChatInputProps } from './types';
 
 // Add a separate AnimatedText component if it's not already defined elsewhere
@@ -27,8 +28,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
   inputRef,
   onAddEvent,
   showAnimatedPrompts,
-  activeChatModeValue // <-- Diese Prop ist entscheidend!
+  activeChatModeValue
 }) => {
+  // Add fileInputRef declaration
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Animated placeholder suggestions
   const suggestions = [
     "Frage nach Events...",
@@ -141,10 +145,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
   // setze ich das padding auf 110px.
   const inputPaddingLeft = activeChatModeValue === 'community' ? 'pl-[110px]' : 'pl-20';
 
-
   return (
     <div className="flex items-center relative max-w-full">
-      <div className="absolute left-2 top-1 flex flex-col gap-1 z-10"> {/* Angepasste Positionierung für vertikalen Stack */}
+      <div className="absolute left-2 top-1 flex flex-col gap-1 z-10">
         {activeChatModeValue === 'ai' ? (
           <>
             {/* Herz button für personalisierten Modus */}
@@ -190,7 +193,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
             <Popover>
               <PopoverTrigger asChild>
                 <Button
-                  // onClick={handleShareEvent} // Deaktiviert, da Popover das übernimmt
                   variant="outline"
                   size="icon"
                   type="button"
@@ -200,24 +202,12 @@ const ChatInput: React.FC<ChatInputProps> = ({
                   <Calendar className="h-3 w-3" />
                 </Button>
               </PopoverTrigger>
-              {/* PopoverContent für Event teilen (wie in MessageInput.tsx) */}
-              {/* Hier sollte die Logik für eventSelectContent rein, oder diese Popover-Struktur muss überlegt werden */}
-              {/* Da ChatInput diese Props nicht direkt kennt, muss handleShareEvent hier die Popover steuern */}
-              {/* Da wir hier nur die Trigger anzeigen, ist das Popover-Handling außerhalb dieser Komponente. */}
-              {/* Für den Moment ist es ok, da wir den EventSelectContent nicht direkt im ChatInput handhaben. */}
-              {/* Das PopoverContent würde hier nicht direkt passen, da es den Status (isEventSelectOpen) von GroupChat oder MessageInput benötigt. */}
-              {/* Ich werde es vereinfachen und das PopoverContent hier nicht direkt rendern, da es an anderer Stelle gerendert wird. */}
               <PopoverContent className="w-80 p-0 max-h-[400px] overflow-y-auto" side="top" align="start" sideOffset={5}>
-                 {/* Da ChatInput.tsx dies nicht direkt kennt, wird es hier weggelassen,
-                 es wird erwartet, dass dies von der aufrufenden Komponente gehandhabt wird. */}
-                 {/* Beispiel: Ein Klick auf den Button würde eine Funktion in FullPageChatBot auslösen,
-                 die dann das Popover rendert. */}
-                 <div className="p-4 text-sm text-gray-400">Eventauswahl wird geladen...</div>
+                <div className="p-4 text-sm text-gray-400">Eventauswahl wird geladen...</div>
               </PopoverContent>
             </Popover>
 
             <Button
-              // onClick={handleFileUpload} // Deaktiviert, da handleFileUpload nicht hier ist
               variant="outline"
               size="icon"
               type="button"
@@ -227,7 +217,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               <Paperclip className="h-3 w-3" />
             </Button>
             {/* Kategorie-Buttons - direkt neben den Icon-Buttons */}
-            <div className="flex flex-col gap-1 absolute left-[32px] top-0"> {/* Startet nach dem ersten Icon-Button (24px) + etwas Abstand (8px) */}
+            <div className="flex flex-col gap-1 absolute left-[32px] top-0">
               <Button
                 onClick={() => handleCategoryClick('Kreativität')}
                 variant="outline"
@@ -265,16 +255,26 @@ const ChatInput: React.FC<ChatInputProps> = ({
         onChange={() => {}}
       />
       
-      <input // Hier wurde Textarea durch input ersetzt, da das Beispiel ein input-Feld zeigt.
+      {/* Clickable overlay for animated text */}
+      <div 
+        className={cn(
+          "absolute inset-0 cursor-text z-5 pointer-events-none",
+          activeChatModeValue === 'community' ? 'left-[110px]' : 'left-20'
+        )}
+        onClick={handleSuggestionClick}
+        style={{ pointerEvents: input.trim() === '' && displayText.trim() !== '' ? 'auto' : 'none' }}
+      />
+      
+      <input
         ref={inputRef}
-        type="text" // Type text, da es ein einfaches Eingabefeld ist
+        type="text"
         value={input}
         onChange={handleInputChange}
         onKeyPress={handleKeyPress}
         placeholder={placeholderText}
         className={cn(
           "flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pr-14 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 min-w-0 text-left",
-          inputPaddingLeft // Dynamisches padding-left
+          inputPaddingLeft
         )}
       />
 
