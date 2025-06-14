@@ -128,16 +128,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   // Bestimme das padding-left basierend auf dem aktiven Modus
-  // AI-Modus: Hat 3 Icon-Buttons horizontal angeordnet. Jeder Icon-Button ist h-6 w-6 (24px).
-  //  Breite (icons) = 3 * 24px + 2 * 4px (gap) = 72 + 8 = 80px. Also pl-20 ist gut.
-  // Community-Modus: Hat 2 Icon-Buttons und 3 Text-Buttons horizontal angeordnet.
-  //  Geschätzte Gesamtbreite: (2 * 24px) + (3 * 70px) + Abstände = 48 + 210 + 20 = 278px
-  //  Das ist zu viel, daher nutzen wir eine kompaktere Anordnung mit weniger padding
   const inputPaddingLeft = activeChatModeValue === 'community' ? 'pl-[280px]' : 'pl-20';
 
   return (
     <div className="flex items-center relative max-w-full">
-      <div className="absolute left-2 top-1 flex items-center gap-1 z-10">
+      <div className="absolute left-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1 z-10">
         {activeChatModeValue === 'ai' ? (
           <>
             {/* Herz button für personalisierten Modus */}
@@ -203,6 +198,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               type="button"
               className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
               title="Bild anhängen"
+              onClick={() => fileInputRef.current?.click()}
             >
               <Paperclip className="h-3 w-3" />
             </Button>
@@ -248,7 +244,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
       <div 
         className={cn(
           "absolute inset-0 cursor-text z-5 pointer-events-none",
-          activeChatModeValue === 'community' ? 'left-[280px]' : 'left-20'
+          activeChatModeValue === 'community' ? 'left-[280px]' : 'left-24'
         )}
         onClick={handleSuggestionClick}
         style={{ pointerEvents: input.trim() === '' && displayText.trim() !== '' ? 'auto' : 'none' }}
@@ -272,7 +268,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         onClick={() => handleSendMessage()}
         disabled={!input.trim() || isTyping}
         className={cn(
-          "absolute right-2 rounded-full p-2 flex-shrink-0",
+          "absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full p-2 flex-shrink-0",
           input.trim() && !isTyping
             ? "bg-red-500 hover:bg-red-600 text-white"
             : "bg-zinc-800 text-zinc-500"
