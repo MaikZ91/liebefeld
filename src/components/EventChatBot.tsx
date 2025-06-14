@@ -30,14 +30,14 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
   const { toast } = useToast();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   
-  // Create group mapping for categories
+  // Create group mapping for categories with proper UUIDs
   const categoryToGroupId = {
-    'Kreativität': 'general', // Use existing general group for Kreativität
-    'Ausgehen': 'ausgehen',
-    'Sport': 'sport'
+    'Kreativität': '00000000-0000-4000-8000-000000000000', // Use existing general group for Kreativität
+    'Ausgehen': '11111111-1111-4111-8111-111111111111', // UUID for Ausgehen group
+    'Sport': '22222222-2222-4222-8222-222222222222' // UUID for Sport group
   };
   
-  const communityGroupId = categoryToGroupId[activeCategory as keyof typeof categoryToGroupId] || 'general';
+  const communityGroupId = categoryToGroupId[activeCategory as keyof typeof categoryToGroupId] || '00000000-0000-4000-8000-000000000000';
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
   // Use the chat logic hook to manage state and functions

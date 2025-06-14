@@ -1,3 +1,4 @@
+
 // src/components/event-chat/FloatingChatBot.tsx
 
 import React from 'react';
@@ -17,6 +18,8 @@ interface FloatingChatBotProps extends EventChatBotProps {
   chatLogic: any;
   activeChatModeValue: 'ai' | 'community';
   communityGroupId: string;
+  activeCategory?: string;
+  onCategoryChange?: (category: string) => void;
 }
 
 const FloatingChatBot: React.FC<FloatingChatBotProps> = ({
@@ -25,7 +28,9 @@ const FloatingChatBot: React.FC<FloatingChatBotProps> = ({
   chatLogic,
   activeChatModeValue,
   communityGroupId,
-  onAddEvent
+  onAddEvent,
+  activeCategory = 'Kreativität',
+  onCategoryChange
 }) => {
   const {
     messages,
@@ -47,7 +52,7 @@ const FloatingChatBot: React.FC<FloatingChatBotProps> = ({
     toggleRecentQueries,
     clearChatHistory,
     exportChatHistory,
-    showAnimatedPrompts // Prop von chatLogic extrahieren
+    showAnimatedPrompts
   } = chatLogic;
 
   // Determine which queries to render
@@ -86,7 +91,7 @@ const FloatingChatBot: React.FC<FloatingChatBotProps> = ({
             />
           </div>
         ) : (
-          <GroupChat compact={true} groupId={communityGroupId} groupName="Allgemein" />
+          <GroupChat compact={true} groupId={communityGroupId} groupName={activeCategory} />
         )}
       </ScrollArea>
       
@@ -98,7 +103,6 @@ const FloatingChatBot: React.FC<FloatingChatBotProps> = ({
           handleExamplePromptClick={handleExamplePromptClick}
         />
         
-        {/* Passiere die showAnimatedPrompts und activeChatModeValue Props an ChatInput */}
         {activeChatModeValue === 'ai' && (
           <ChatInput
             input={input}
@@ -112,8 +116,10 @@ const FloatingChatBot: React.FC<FloatingChatBotProps> = ({
             toggleRecentQueries={toggleRecentQueries}
             inputRef={inputRef}
             onAddEvent={onAddEvent}
-            showAnimatedPrompts={showAnimatedPrompts} // HIER HINZUGEFÜGT
-            activeChatModeValue={activeChatModeValue} // HIER HINZUGEFÜGT
+            showAnimatedPrompts={showAnimatedPrompts}
+            activeChatModeValue={activeChatModeValue}
+            activeCategory={activeCategory}
+            onCategoryChange={onCategoryChange}
           />
         )}
       </div>
