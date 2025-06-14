@@ -191,14 +191,14 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
-  // Minimales Like-System: Update Datenbank -> Lade einzelnes Event -> Update UI
+  // Verbessertes Like-System mit Rollback und User Feedback
   const handleLikeEvent = async (eventId: string) => {
     try {
-      console.log(`Liking event: ${eventId}`);
+      console.log(`Starting like process for event: ${eventId}`);
       
       const currentEvent = events.find(event => event.id === eventId);
       if (!currentEvent) {
-        console.error(`Event with ID ${eventId} not found`);
+        console.error(`Event with ID ${eventId} not found in local state`);
         return;
       }
       
@@ -209,23 +209,62 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       const newLikes = currentLikes + 1;
       
-      console.log(`Updating likes from ${currentLikes} to ${newLikes} for event ${eventId}`);
+      console.log(`Attempting to update likes from ${currentLikes} to ${newLikes} for event ${eventId}`);
       
-      // 1. Likes in Datenbank schreiben
-      await updateEventLikesInDb(eventId, newLikes);
+      // Optimistic Update: UI sofort aktualisieren
+      if (eventId.startsWith('github-')) {
+        setEventLikes(prev => ({
+          ...prev,
+          [eventId]: newLikes
+        }));
+      } else {
+        setEvents(prevEvents => 
+          prevEvents.map(event => 
+            event.id === eventId ? { ...event, likes: newLikes } : event
+          )
+        );
+      }
       
-      // 2. Einzelnes Event aus Datenbank neu laden
+      // 1. Datenbank Update versuchen
+      const dbUpdateSuccess = await updateEventLikesInDb(eventId, newLikes);
+      
+      if (!dbUpdateSuccess) {
+        console.error(`Database update failed for event ${eventId}, rolling back UI`);
+        
+        // Rollback: UI auf ursprünglichen Wert zurücksetzen
+        if (eventId.startsWith('github-')) {
+          setEventLikes(prev => ({
+            ...prev,
+            [eventId]: currentLikes
+          }));
+        } else {
+          setEvents(prevEvents => 
+            prevEvents.map(event => 
+              event.id === eventId ? { ...event, likes: currentLikes } : event
+            )
+          );
+        }
+        
+        // Fehlermeldung für User (optional: Toast notification könnte hier hinzugefügt werden)
+        console.error('Like failed - database update unsuccessful');
+        return;
+      }
+      
+      // 2. Einzelnes Event aus Datenbank neu laden zur Bestätigung
+      console.log(`Database update successful, refetching event ${eventId} for confirmation`);
       const updatedEvent = await refetchSingleEvent(eventId);
       
       if (updatedEvent) {
-        // 3. UI für nur dieses Event aktualisieren
+        console.log(`Successfully refetched event ${eventId} with ${updatedEvent.likes} likes`);
+        
+        // Final Update: Event in Liste aktualisieren
         setEvents(prevEvents => 
           prevEvents.map(event => 
             event.id === eventId ? updatedEvent : event
           )
         );
         
-        // GitHub Events: eventLikes State aktualisieren
+        // GitHub Events: eventLikes State final aktualisieren
         if (eventId.startsWith('github-')) {
           setEventLikes(prev => ({
             ...prev,
@@ -233,11 +272,18 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           }));
         }
         
-        console.log(`Successfully updated event ${eventId} with new likes: ${updatedEvent.likes}`);
+        console.log(`Like process completed successfully for event ${eventId}`);
+      } else {
+        console.warn(`Could not refetch event ${eventId} after database update`);
+        // UI bleibt beim optimistic update, da DB Update erfolgreich war
       }
       
     } catch (error) {
-      console.error('Error liking event:', error);
+      console.error('Error in handleLikeEvent:', error);
+      
+      // Bei unerwarteten Fehlern: kompletten Refresh versuchen
+      console.log('Attempting full refresh due to unexpected error');
+      await refreshEvents();
     }
   };
 

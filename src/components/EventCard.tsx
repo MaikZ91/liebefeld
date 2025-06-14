@@ -50,6 +50,7 @@ const isTribeEvent = (title: string): boolean => {
 
 const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, compact = false, onLike }) => {
   const [isLiking, setIsLiking] = useState(false);
+  const [likeError, setLikeError] = useState<string | null>(null);
   const { newEventIds, handleLikeEvent, eventLikes } = useEventContext();
 
   const isNewEvent = newEventIds.has(event.id);
@@ -69,7 +70,8 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     if (isLiking) return;
     
     setIsLiking(true);
-    console.log(`EventCard: Liking event ${event.id} (${event.title}) with current likes: ${displayLikes}`);
+    setLikeError(null);
+    console.log(`EventCard: Starting like for event ${event.id} (${event.title}) with current likes: ${displayLikes}`);
     
     try {
       if (onLike) {
@@ -77,11 +79,16 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
       } else {
         await handleLikeEvent(event.id);
       }
+      console.log(`EventCard: Like completed for event ${event.id}`);
     } catch (error) {
-      console.error('Error liking event:', error);
+      console.error('EventCard: Error liking event:', error);
+      setLikeError('Like fehlgeschlagen');
     } finally {
       setTimeout(() => {
         setIsLiking(false);
+        if (likeError) {
+          setTimeout(() => setLikeError(null), 2000);
+        }
       }, 1000);
     }
   };
@@ -184,15 +191,18 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
                 size="icon"
                 className={cn(
                   "h-4 w-4 rounded-full transition-all p-0",
-                  isLiking ? "opacity-70 cursor-not-allowed" : ""
+                  isLiking ? "opacity-70 cursor-not-allowed" : "",
+                  likeError ? "bg-red-500/20" : ""
                 )}
                 onClick={handleLike}
                 disabled={isLiking}
+                title={likeError || undefined}
               >
                 <Heart className={cn(
                   "w-2 h-2 transition-transform text-white",
                   displayLikes > 0 ? "fill-red-500 text-white" : "",
-                  isLiking ? "scale-125" : ""
+                  isLiking ? "scale-125" : "",
+                  likeError ? "text-red-400" : ""
                 )} />
               </Button>
               {displayLikes > 0 && (
@@ -205,7 +215,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     );
   }
 
-  // Non-compact version (existing implementation with smaller round image)
+  // Non-compact version mit verbessertem Error Handling
   return (
     <div
       className={cn(

@@ -75,26 +75,28 @@ export const refetchSingleEvent = async (eventId: string): Promise<Event | null>
   }
 };
 
-export const updateEventLikesInDb = async (eventId: string, newLikes: number) => {
+export const updateEventLikesInDb = async (eventId: string, newLikes: number): Promise<boolean> => {
   try {
     console.log(`Updating likes for event ${eventId} to ${newLikes}`);
     
     if (eventId.startsWith('github-')) {
-      // Update GitHub event likes
+      // For GitHub events: use upsert with correct onConflict
       const { error } = await supabase
         .from('github_event_likes')
         .upsert({
           event_id: eventId,
           likes: newLikes,
           updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'event_id'
         });
       
       if (error) {
         console.error('Error updating GitHub event likes:', error);
-        throw error;
+        return false;
       }
     } else {
-      // Update community event likes
+      // For Community events: use simple update
       const { error } = await supabase
         .from('community_events')
         .update({ likes: newLikes })
@@ -102,13 +104,14 @@ export const updateEventLikesInDb = async (eventId: string, newLikes: number) =>
       
       if (error) {
         console.error('Error updating community event likes:', error);
-        throw error;
+        return false;
       }
     }
     
-    console.log(`Successfully updated likes for event ${eventId}`);
+    console.log(`Successfully updated likes for event ${eventId} to ${newLikes}`);
+    return true;
   } catch (error) {
     console.error('Error in updateEventLikesInDb:', error);
-    throw error;
+    return false;
   }
 };
