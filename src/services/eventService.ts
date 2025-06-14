@@ -85,6 +85,7 @@ export const fetchSupabaseEvents = async (): Promise<Event[]> => {
         source: (event.source as 'community' | 'github') || 'community',
         external_id: event.external_id,
         is_paid: event.is_paid || false,
+        created_at: event.created_at, // Add created_at for DB-based NEW badge
         rsvp: {
           yes: event.rsvp_yes || 0,
           no: event.rsvp_no || 0,

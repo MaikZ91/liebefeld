@@ -48,43 +48,36 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [newEventIds, setNewEventIds] = useState<Set<string>>(new Set());
   const [topEventsPerDay, setTopEventsPerDay] = useState<Record<string, string>>({});
 
-  const refreshEvents = async () => {
-    setIsLoading(true);
+  // Function to refresh events after like (without GitHub sync)
+  const refreshEventsAfterLike = async () => {
     try {
-      console.log('🔄 [refreshEvents] STARTING refresh...');
+      console.log('🔄 [refreshEventsAfterLike] STARTING refresh after like...');
       
-      const previouslySeenEventsJson = localStorage.getItem('seenEventIds');
-      const previouslySeenEvents: string[] = previouslySeenEventsJson ? JSON.parse(previouslySeenEventsJson) : [];
-      const previouslySeenSet = new Set(previouslySeenEvents);
-      
-      // First sync GitHub events
-      await syncGitHubEvents();
-      
-      // Then fetch all events from unified table
       const refreshStartTime = Date.now();
       const allEvents = await fetchSupabaseEvents();
       const refreshDuration = Date.now() - refreshStartTime;
       
-      console.log(`🔄 [refreshEvents] Loaded ${allEvents.length} events in ${refreshDuration}ms`);
+      console.log(`🔄 [refreshEventsAfterLike] Loaded ${allEvents.length} events in ${refreshDuration}ms`);
       
       // Find KUHNT event specifically for debugging
       const kuhntEvent = allEvents.find(event => event.title.includes('KUHNT'));
       if (kuhntEvent) {
-        console.log(`🔄 [refreshEvents] KUHNT event found with ${kuhntEvent.likes} likes (ID: ${kuhntEvent.id})`);
+        console.log(`🔄 [refreshEventsAfterLike] KUHNT event found with ${kuhntEvent.likes} likes (ID: ${kuhntEvent.id})`);
       }
       
+      // Calculate new events based on created_at (last 24 hours) - NO localStorage
+      const now = new Date();
+      const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
       const newEventIdsSet = new Set<string>();
-      const currentEventIds = allEvents.map(event => event.id);
-      currentEventIds.forEach(id => {
-        if (!previouslySeenSet.has(id)) {
-          newEventIdsSet.add(id);
+      
+      allEvents.forEach(event => {
+        if (event.created_at && new Date(event.created_at) > twentyFourHoursAgo) {
+          newEventIdsSet.add(event.id);
         }
       });
       
       setNewEventIds(newEventIdsSet);
-      localStorage.setItem('seenEventIds', JSON.stringify(currentEventIds));
       
-      // Always use events from database - no fallback to example data
       // Calculate top events per day
       const topEventsByDay: Record<string, string> = {};
       const eventsByDate: Record<string, Event[]> = {};
@@ -115,14 +108,83 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setTopEventsPerDay(topEventsByDay);
       setEvents(allEvents);
       
-      localStorage.setItem('lastEventsRefresh', new Date().toISOString());
+      console.log('🔄 [refreshEventsAfterLike] COMPLETED ✅');
+      
+    } catch (error) {
+      console.error('🔄 [refreshEventsAfterLike] ERROR:', error);
+    }
+  };
+
+  const refreshEvents = async () => {
+    setIsLoading(true);
+    try {
+      console.log('🔄 [refreshEvents] STARTING refresh...');
+      
+      // First sync GitHub events
+      await syncGitHubEvents();
+      
+      // Then fetch all events from unified table
+      const refreshStartTime = Date.now();
+      const allEvents = await fetchSupabaseEvents();
+      const refreshDuration = Date.now() - refreshStartTime;
+      
+      console.log(`🔄 [refreshEvents] Loaded ${allEvents.length} events in ${refreshDuration}ms`);
+      
+      // Find KUHNT event specifically for debugging
+      const kuhntEvent = allEvents.find(event => event.title.includes('KUHNT'));
+      if (kuhntEvent) {
+        console.log(`🔄 [refreshEvents] KUHNT event found with ${kuhntEvent.likes} likes (ID: ${kuhntEvent.id})`);
+      }
+      
+      // Calculate new events based on created_at (last 24 hours) - NO localStorage
+      const now = new Date();
+      const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+      const newEventIdsSet = new Set<string>();
+      
+      allEvents.forEach(event => {
+        if (event.created_at && new Date(event.created_at) > twentyFourHoursAgo) {
+          newEventIdsSet.add(event.id);
+        }
+      });
+      
+      setNewEventIds(newEventIdsSet);
+      
+      // Calculate top events per day
+      const topEventsByDay: Record<string, string> = {};
+      const eventsByDate: Record<string, Event[]> = {};
+      
+      allEvents.forEach(event => {
+        if (!event.date) return;
+        
+        if (!eventsByDate[event.date]) {
+          eventsByDate[event.date] = [];
+        }
+        
+        eventsByDate[event.date].push(event);
+      });
+      
+      Object.keys(eventsByDate).forEach(date => {
+        const sortedEvents = [...eventsByDate[date]].sort((a, b) => {
+          if (b.likes !== a.likes) {
+            return b.likes - a.likes;
+          }
+          return a.id.localeCompare(b.id);
+        });
+        
+        if (sortedEvents.length > 0) {
+          topEventsByDay[date] = sortedEvents[0].id;
+        }
+      });
+      
+      setTopEventsPerDay(topEventsByDay);
+      setEvents(allEvents);
+      
       logTodaysEvents(allEvents);
       
       console.log('🔄 [refreshEvents] COMPLETED ✅');
       
     } catch (error) {
       console.error('🔄 [refreshEvents] ERROR:', error);
-      // Even on error, keep current events instead of falling back to example data
       console.log('Keeping current events due to error, no fallback to example data');
     } finally {
       setIsLoading(false);
@@ -162,11 +224,8 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       console.log(`❤️ [handleLikeEvent] Database update successful, now refreshing events...`);
       
-      // Add a small delay to ensure DB update is fully committed
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      // Refresh all events to get updated likes and recalculated ranking
-      await refreshEvents();
+      // Refresh events immediately without GitHub sync and without delay
+      await refreshEventsAfterLike();
       
       console.log(`❤️ [handleLikeEvent] Process completed for event ${eventId} ✅`);
       
@@ -241,7 +300,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   useEffect(() => {
     console.log('EventProvider: Loading events...');
-    localStorage.removeItem('lastEventsRefresh');
     refreshEvents();
     window.refreshEventsContext = refreshEvents;
     

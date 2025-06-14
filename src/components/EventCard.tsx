@@ -1,4 +1,3 @@
-
 import React, { useState, memo } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign } from 'lucide-react';
@@ -49,12 +48,20 @@ const isTribeEvent = (title: string): boolean => {
   );
 };
 
+// Function to check if event is new based on created_at (last 24 hours)
+const isEventNew = (event: Event): boolean => {
+  if (!event.created_at) return false;
+  const now = new Date();
+  const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+  return new Date(event.created_at) > twentyFourHoursAgo;
+};
+
 const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, compact = false, onLike }) => {
   const [isLiking, setIsLiking] = useState(false);
   const [likeError, setLikeError] = useState<string | null>(null);
-  const { newEventIds, handleLikeEvent } = useEventContext();
+  const { handleLikeEvent } = useEventContext();
 
-  const isNewEvent = newEventIds.has(event.id);
+  const isNewEvent = isEventNew(event); // DB-based NEW badge
   const isTribe = isTribeEvent(event.title);
 
   // Simplified likes display - directly from event object

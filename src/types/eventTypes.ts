@@ -1,4 +1,3 @@
-
 export interface Event {
   id: string;
   title: string;
@@ -22,6 +21,7 @@ export interface Event {
   source?: 'community' | 'github';
   external_id?: string;
   is_paid?: boolean;
+  created_at?: string; // Add created_at field for DB-based NEW badge
 }
 
 // Legacy interface for backward compatibility
