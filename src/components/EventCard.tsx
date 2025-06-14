@@ -1,3 +1,4 @@
+
 import React, { useState, memo } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign } from 'lucide-react';
@@ -65,23 +66,37 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isLiking) return;
+    
+    console.log(`🚀 [EventCard] LIKE BUTTON CLICKED - Event: ${event.id} (${event.title})`);
+    console.log(`🚀 [EventCard] Current state - isLiking: ${isLiking}, displayLikes: ${displayLikes}`);
+    
+    if (isLiking) {
+      console.log(`🚀 [EventCard] BLOCKED - Already liking, returning early`);
+      return;
+    }
     
     setIsLiking(true);
     setLikeError(null);
-    console.log(`EventCard: Starting like for event ${event.id} (${event.title}) with current likes: ${displayLikes}`);
     
     try {
+      console.log(`🚀 [EventCard] Starting like process...`);
+      
       if (onLike) {
-        onLike(event.id);
-      } else {
+        console.log(`🚀 [EventCard] Using onLike prop`);
+        await onLike(event.id);
+      } else if (handleLikeEvent) {
+        console.log(`🚀 [EventCard] Using handleLikeEvent from context`);
         await handleLikeEvent(event.id);
+      } else {
+        throw new Error('No like handler available');
       }
-      console.log(`EventCard: Like completed for event ${event.id}`);
+      
+      console.log(`🚀 [EventCard] Like process completed successfully`);
     } catch (error) {
-      console.error('EventCard: Error liking event:', error);
+      console.error('🚀 [EventCard] ERROR during like process:', error);
       setLikeError('Like fehlgeschlagen');
     } finally {
+      console.log(`🚀 [EventCard] Finally block - resetting isLiking state`);
       setTimeout(() => {
         setIsLiking(false);
         if (likeError) {

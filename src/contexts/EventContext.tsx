@@ -132,10 +132,17 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const handleLikeEvent = async (eventId: string) => {
     try {
       console.log(`❤️ [handleLikeEvent] STARTING for event: ${eventId}`);
+      console.log(`❤️ [handleLikeEvent] Available events count: ${events.length}`);
+      
+      if (!eventId) {
+        console.error(`❤️ [handleLikeEvent] ERROR: eventId is empty or null`);
+        return;
+      }
       
       const currentEvent = events.find(event => event.id === eventId);
       if (!currentEvent) {
-        console.error(`❤️ [handleLikeEvent] Event with ID ${eventId} not found in local state`);
+        console.error(`❤️ [handleLikeEvent] ERROR: Event with ID ${eventId} not found in local state`);
+        console.log(`❤️ [handleLikeEvent] Available event IDs:`, events.map(e => e.id));
         return;
       }
       
@@ -150,13 +157,13 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       if (!dbUpdateSuccess) {
         console.error(`❤️ [handleLikeEvent] Database update failed for event ${eventId}`);
-        return;
+        throw new Error('Database update failed');
       }
       
       console.log(`❤️ [handleLikeEvent] Database update successful, now refreshing events...`);
       
       // Add a small delay to ensure DB update is fully committed
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       // Refresh all events to get updated likes and recalculated ranking
       await refreshEvents();
@@ -165,6 +172,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
     } catch (error) {
       console.error('❤️ [handleLikeEvent] ERROR:', error);
+      throw error; // Re-throw so EventCard can handle it
     }
   };
 

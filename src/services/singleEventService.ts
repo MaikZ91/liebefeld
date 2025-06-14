@@ -5,6 +5,11 @@ export const updateEventLikesInDb = async (eventId: string, newLikesValue: numbe
   try {
     console.log(`🔥 [updateEventLikesInDb] STARTING - Event: ${eventId}, New Likes: ${newLikesValue}`);
     
+    if (!eventId || newLikesValue < 0) {
+      console.error(`🔥 [updateEventLikesInDb] INVALID PARAMS - EventId: ${eventId}, Likes: ${newLikesValue}`);
+      return false;
+    }
+    
     // First, check current value in DB
     const { data: currentData, error: selectError } = await supabase
       .from('community_events')
@@ -14,6 +19,11 @@ export const updateEventLikesInDb = async (eventId: string, newLikesValue: numbe
     
     if (selectError) {
       console.error(`🔥 [updateEventLikesInDb] SELECT ERROR:`, selectError);
+      return false;
+    }
+    
+    if (!currentData) {
+      console.error(`🔥 [updateEventLikesInDb] NO DATA FOUND for event ${eventId}`);
       return false;
     }
     
