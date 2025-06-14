@@ -142,7 +142,7 @@ const Index = () => {
   return (
     <div className="h-screen w-screen flex flex-col bg-black text-white overflow-hidden fixed inset-0">
       {/* Header - Fixed height */}
-      <div className="h-auto flex-shrink-0">
+      <div className="h-20 flex-shrink-0">
         <CalendarNavbar />
         <BetaTesterBanner />
       </div>
@@ -153,7 +153,7 @@ const Index = () => {
       </div>
       
       {/* Main content - Fixed calculated height */}
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ height: 'calc(100vh - 120px)' }}>
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ height: 'calc(100vh - 128px)' }}>
         {/* Hero Section - Fixed half height */}
         <div className="h-1/2 relative bg-gradient-to-br from-gray-900 via-black to-purple-900/80 overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900/30 via-black/60 to-black opacity-90"></div>
