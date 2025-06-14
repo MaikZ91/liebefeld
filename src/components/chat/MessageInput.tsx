@@ -159,9 +159,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
     };
   }, []);
 
-  // Determine padding based on mode and number of active left-side buttons
-  // Das padding-left wird jetzt auf 100px gesetzt, um die Buttons unterzubringen.
-  const leftPadding = mode === 'community' ? 'pl-[100px]' : 'pl-4';
+  // Dynamisches padding-left basierend auf dem Modus
+  // Berücksichtigt die Breite der Buttons und den gewünschten Abstand
+  const leftPadding = mode === 'community' ? 'pl-[180px]' : 'pl-4'; // Erhöhtes Padding, um Platz für alle Buttons zu schaffen
 
   return (
     <div className="w-full space-y-2">
@@ -173,48 +173,46 @@ const MessageInput: React.FC<MessageInputProps> = ({
           onKeyDown={handleKeyDown}
           className={`min-h-[50px] flex-grow resize-none pr-14 border-2 border-red-500 focus:border-red-600 focus:ring-2 focus:ring-red-500 shadow-md shadow-red-500/10 transition-all duration-200 placeholder-red-500 ${leftPadding}`}
         />
-        {/* Buttons on the left side of the input (absolute positioning) */}
-        <div className="flex flex-col gap-2 absolute left-1 top-1">
-          {mode === 'community' && ( // Only show in community mode
-            <>
-              <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    onClick={handleShareEvent}
-                    variant="outline"
-                    size="icon"
-                    type="button"
-                    className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
-                    title="Event teilen"
-                  >
-                    <Calendar className="h-3 w-3" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-80 p-0 max-h-[400px] overflow-y-auto"
-                  side="top"
-                  align="start" // Changed align to start to keep it left-aligned
-                  sideOffset={5}
-                >
-                  {eventSelectContent}
-                </PopoverContent>
-              </Popover>
-              <Button
-                onClick={handleFileUpload}
-                variant="outline"
-                size="icon"
-                type="button"
-                className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
-                title="Bild anhängen"
-              >
-                <Paperclip className="h-3 w-3" />
-              </Button>
-            </>
-          )}
-        </div>
-        {/* Container für die neuen Kategorie-Buttons */}
+        {/* Buttons auf der linken Seite des Inputs (absolute Positionierung) */}
         {mode === 'community' && (
-          <div className="flex gap-1 absolute left-[80px] top-1 flex-col"> {/* Positionierung angepasst */}
+          <div className="flex flex-col gap-1 absolute left-1 top-1"> {/* Position von "left-1 top-1" beibehalten */}
+            <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  onClick={handleShareEvent}
+                  variant="outline"
+                  size="icon"
+                  type="button"
+                  className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
+                  title="Event teilen"
+                >
+                  <Calendar className="h-3 w-3" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-80 p-0 max-h-[400px] overflow-y-auto"
+                side="top"
+                align="start"
+                sideOffset={5}
+              >
+                {eventSelectContent}
+              </PopoverContent>
+            </Popover>
+            <Button
+              onClick={handleFileUpload}
+              variant="outline"
+              size="icon"
+              type="button"
+              className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
+              title="Bild anhängen"
+            >
+              <Paperclip className="h-3 w-3" />
+            </Button>
+          </div>
+        )}
+        {/* Container für die neuen Kategorie-Buttons - Positionierung korrigiert */}
+        {mode === 'community' && (
+          <div className="flex gap-1 absolute left-[80px] top-1 flex-col"> {/* Neuer 'left'-Wert für diese Buttons */}
             <Button
               onClick={() => handleCategoryClick('Kreativität')}
               variant="outline"
