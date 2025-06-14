@@ -51,6 +51,27 @@ const MemoizedEventCard = memo(({ event, date, onSelectEvent, onLike, isTopEvent
 
 MemoizedEventCard.displayName = 'MemoizedEventCard';
 
+// Helper function to determine if an event should be in the sport accordion
+const isSportEvent = (event: Event): boolean => {
+  const title = event.title.toLowerCase();
+  const description = event.description?.toLowerCase() || '';
+  
+  // Only specific sport-related keywords should go in the sport accordion
+  const sportKeywords = [
+    'fitness', 'gym', 'workout', 'training', 'marathon', 'triathlon', 
+    'basketball', 'football', 'volleyball', 'tennis', 'badminton',
+    'schwimmen', 'radfahren', 'yoga', 'pilates', 'crossfit'
+  ];
+  
+  // Check if it's in Sport category AND contains explicit sport keywords
+  // OR if title/description contains sport keywords
+  return (event.category === 'Sport' && sportKeywords.some(keyword => 
+    title.includes(keyword) || description.includes(keyword)
+  )) || sportKeywords.some(keyword => 
+    title.includes(keyword) || description.includes(keyword)
+  );
+};
+
 const EventList: React.FC<EventListProps> = memo(({
   events,
   showFavorites,
@@ -64,10 +85,10 @@ const EventList: React.FC<EventListProps> = memo(({
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
   const { newEventIds, filter, topEventsPerDay } = useEventContext();
 
-  // Separate Sport and regular events
+  // Separate only specific sport events, not all events in "Sport" category
   const { sportEvents, regularEvents } = useMemo(() => {
-    const sport = events.filter(event => event.category === 'Sport');
-    const regular = events.filter(event => event.category !== 'Sport');
+    const sport = events.filter(event => isSportEvent(event));
+    const regular = events.filter(event => !isSportEvent(event));
     return { sportEvents: sport, regularEvents: regular };
   }, [events]);
 
