@@ -1,4 +1,3 @@
-
 // src/components/chat/MessageInput.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from "@/integrations/supabase/client";
 import { EventShare } from '@/types/chatTypes';
 import { messageService } from '@/services/messageService';
+import { useEventContext } from '@/contexts/EventContext';
 
 interface MessageInputProps {
   username: string;
@@ -42,11 +42,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
   placeholder = "Schreibe eine Nachricht...",
   mode = 'community', // Default to community mode
   onCategorySelect, // Hinzugefügte Prop
-  activeCategory = 'Kreativität' // Default category
+  activeCategory = 'Ausgehen' // Default category changed to Ausgehen
 }) => {
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { events } = useEventContext(); // Zugriff auf Events
 
   // Ensure we have a valid UUID for groupId
   const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
@@ -151,6 +152,46 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
+  // Event-Inhalt für das Popover
+  const realEventSelectContent = (
+    <div className="max-h-[300px] overflow-y-auto">
+      {events && events.length > 0 ? (
+        <div className="space-y-2 p-2">
+          <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+            Events auswählen
+          </div>
+          {events.map((event) => (
+            <div
+              key={event.id}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-pointer border border-gray-200 dark:border-gray-700"
+              onClick={() => {
+                // Event-Daten in die Nachricht einfügen
+                const eventMessage = `Schaut euch dieses Event an: ${event.title} am ${event.date} um ${event.time} in ${event.location}`;
+                if (onChange) {
+                  // Simuliere ein change event
+                  const fakeEvent = { target: { value: eventMessage } } as React.ChangeEvent<HTMLTextAreaElement>;
+                  onChange(fakeEvent);
+                } else {
+                  setNewMessage(eventMessage);
+                }
+                setIsEventSelectOpen(false);
+              }}
+            >
+              <div className="font-medium text-sm">{event.title}</div>
+              <div className="text-xs text-gray-500">
+                {event.date} • {event.location}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="p-4 text-sm text-gray-500 text-center">
+          Keine Events verfügbar
+        </div>
+      )}
+    </div>
+  );
+
   useEffect(() => {
     return () => {
       if (typingTimeoutRef.current) {
@@ -175,31 +216,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         {/* Buttons auf der linken Seite des Inputs (absolute Positionierung) */}
         {mode === 'community' && ( // Only show in community mode
           <div className="flex items-center gap-1 absolute left-1 top-1">
-            {/* Event teilen Button */}
-            <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  onClick={handleShareEvent}
-                  variant="outline"
-                  size="icon"
-                  type="button"
-                  className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
-                  title="Event teilen"
-                >
-                  <Calendar className="h-3 w-3" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                className="w-80 p-0 max-h-[400px] overflow-y-auto"
-                side="top"
-                align="start"
-                sideOffset={5}
-              >
-                {eventSelectContent}
-              </PopoverContent>
-            </Popover>
-            
-            {/* Kategorie-Dropdown */}
+            {/* Kategorie-Dropdown (jetzt zuerst) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -245,6 +262,30 @@ const MessageInput: React.FC<MessageInputProps> = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            
+            {/* Event teilen Button (jetzt zweiter) */}
+            <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  onClick={handleShareEvent}
+                  variant="outline"
+                  size="icon"
+                  type="button"
+                  className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
+                  title="Event teilen"
+                >
+                  <Calendar className="h-3 w-3" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-80 p-0 max-h-[400px] overflow-y-auto"
+                side="top"
+                align="start"
+                sideOffset={5}
+              >
+                {realEventSelectContent}
+              </PopoverContent>
+            </Popover>
           </div>
         )}
         {/* Send button on the right */}

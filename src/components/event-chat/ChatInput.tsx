@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Heart, History, CalendarPlus, Send, Calendar, ChevronDown } from 'lucide-react';
 import { ChatInputProps } from './types';
+import { useEventContext } from '@/contexts/EventContext';
 
 // Add a separate AnimatedText component if it's not already defined elsewhere
 const AnimatedText = ({ text, className = '' }: { text: string; className?: string }) => {
@@ -35,9 +35,12 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   onAddEvent,
   showAnimatedPrompts,
   activeChatModeValue,
-  activeCategory = 'Kreativität',
+  activeCategory = 'Ausgehen',
   onCategoryChange
 }) => {
+  const { events } = useEventContext(); // Zugriff auf Events
+  const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
+
   // Animated placeholder suggestions
   const suggestions = [
     "Frage nach Events...",
@@ -120,6 +123,41 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 
   const placeholderText = getDynamicPlaceholder();
 
+  // Event-Inhalt für das Popover
+  const eventSelectContent = (
+    <div className="max-h-[300px] overflow-y-auto">
+      {events && events.length > 0 ? (
+        <div className="space-y-2 p-2">
+          <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+            Events auswählen
+          </div>
+          {events.map((event) => (
+            <div
+              key={event.id}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-pointer border border-gray-200 dark:border-gray-700"
+              onClick={() => {
+                setInput(`Hier ist ein Event: ${event.title} am ${event.date} um ${event.time} in ${event.location}`);
+                setIsEventSelectOpen(false);
+                if (inputRef.current) {
+                  inputRef.current.focus();
+                }
+              }}
+            >
+              <div className="font-medium text-sm">{event.title}</div>
+              <div className="text-xs text-gray-500">
+                {event.date} • {event.location}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="p-4 text-sm text-gray-500 text-center">
+          Keine Events verfügbar
+        </div>
+      )}
+    </div>
+  );
+
   // Enhanced category click handler with state management
   const handleCategoryClick = (category: string) => {
     if (onCategoryChange) {
@@ -181,25 +219,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           </>
         ) : ( // Community Chat Buttons
           <>
-            {/* Event teilen Button */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  type="button"
-                  className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
-                  title="Event teilen"
-                >
-                  <Calendar className="h-3 w-3" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 p-0 max-h-[400px] overflow-y-auto" side="top" align="start" sideOffset={5}>
-                <div className="p-4 text-sm text-gray-400">Eventauswahl wird geladen...</div>
-              </PopoverContent>
-            </Popover>
-            
-            {/* Kategorie-Dropdown */}
+            {/* Kategorie-Dropdown (jetzt zuerst) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -245,6 +265,24 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            
+            {/* Event teilen Button (jetzt zweiter) */}
+            <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  type="button"
+                  className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
+                  title="Event teilen"
+                >
+                  <Calendar className="h-3 w-3" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0 max-h-[400px] overflow-y-auto" side="top" align="start" sideOffset={5}>
+                {eventSelectContent}
+              </PopoverContent>
+            </Popover>
           </>
         )}
       </div>
