@@ -23,8 +23,8 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
   const activeChatModeValue = activeChatMode !== undefined ? activeChatMode : internalActiveChatMode;
   const setActiveChatModeValue = setActiveChatMode || setInternalActiveChatMode;
   
-  // Add category state management
-  const [activeCategory, setActiveCategory] = useState<string>('Kreativität');
+  // Add category state management - changed default to 'Ausgehen'
+  const [activeCategory, setActiveCategory] = useState<string>('Ausgehen');
   
   const { events } = useEventContext();
   const { toast } = useToast();
@@ -37,7 +37,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
     'Sport': '22222222-2222-4222-8222-222222222222' // UUID for Sport group
   };
   
-  const communityGroupId = categoryToGroupId[activeCategory as keyof typeof categoryToGroupId] || '00000000-0000-4000-8000-000000000000';
+  const communityGroupId = categoryToGroupId[activeCategory as keyof typeof categoryToGroupId] || '11111111-1111-4111-8111-111111111111';
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
   // Use the chat logic hook to manage state and functions
