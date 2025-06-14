@@ -24,11 +24,11 @@ interface MessageInputProps {
   onCategorySelect?: (category: string) => void; // Hinzugefügte Prop
 }
 
-const MessageInput: React.FC<MessageInputProps> = ({ 
-  username, 
-  groupId, 
-  handleSendMessage, 
-  isEventSelectOpen, 
+const MessageInput: React.FC<MessageInputProps> = ({
+  username,
+  groupId,
+  handleSendMessage,
+  isEventSelectOpen,
   setIsEventSelectOpen,
   eventSelectContent,
   isSending,
@@ -43,7 +43,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Ensure we have a valid UUID for groupId
   const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
 
@@ -52,9 +52,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
       onChange(e);
       return;
     }
-    
+
     setNewMessage(e.target.value);
-    
+
     // Only broadcast typing status if we have a username and groupId
     if (username && groupId) {
       if (!isTyping && e.target.value.trim()) {
@@ -62,7 +62,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         try {
           const channel = supabase.channel(`typing:${validGroupId}`);
           channel.subscribe();
-          
+
           // After subscribing, send the typing status
           setTimeout(() => {
             channel.send({
@@ -79,17 +79,17 @@ const MessageInput: React.FC<MessageInputProps> = ({
           console.error('Error sending typing status:', error);
         }
       }
-      
+
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
-      
+
       typingTimeoutRef.current = setTimeout(() => {
         if (isTyping) {
           try {
             const channel = supabase.channel(`typing:${validGroupId}`);
             channel.subscribe();
-            
+
             // After subscribing, send the typing status
             setTimeout(() => {
               channel.send({
@@ -116,7 +116,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
       onKeyDown(e);
       return;
     }
-    
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
@@ -160,13 +160,13 @@ const MessageInput: React.FC<MessageInputProps> = ({
   }, []);
 
   // Determine padding based on mode and number of active left-side buttons
-  // New calculation for left padding to accommodate three buttons
-  const leftPadding = mode === 'community' ? 'pl-[100px]' : 'pl-4'; // Adjusted from 75px to 100px
+  // Das padding-left wird jetzt auf 100px gesetzt, um die Buttons unterzubringen.
+  const leftPadding = mode === 'community' ? 'pl-[100px]' : 'pl-4';
 
   return (
     <div className="w-full space-y-2">
       <div className="flex items-center gap-2 relative">
-        <Textarea 
+        <Textarea
           placeholder={placeholder}
           value={value !== undefined ? value : newMessage}
           onChange={handleMessageChange}
@@ -179,8 +179,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
             <>
               <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
                 <PopoverTrigger asChild>
-                  <Button 
-                    onClick={handleShareEvent} 
+                  <Button
+                    onClick={handleShareEvent}
                     variant="outline"
                     size="icon"
                     type="button"
@@ -190,17 +190,17 @@ const MessageInput: React.FC<MessageInputProps> = ({
                     <Calendar className="h-3 w-3" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent 
-                  className="w-80 p-0 max-h-[400px] overflow-y-auto" 
-                  side="top" 
+                <PopoverContent
+                  className="w-80 p-0 max-h-[400px] overflow-y-auto"
+                  side="top"
                   align="start" // Changed align to start to keep it left-aligned
                   sideOffset={5}
                 >
                   {eventSelectContent}
                 </PopoverContent>
               </Popover>
-              <Button 
-                onClick={handleFileUpload} 
+              <Button
+                onClick={handleFileUpload}
                 variant="outline"
                 size="icon"
                 type="button"
@@ -209,46 +209,48 @@ const MessageInput: React.FC<MessageInputProps> = ({
               >
                 <Paperclip className="h-3 w-3" />
               </Button>
-              {/* Neue Buttons für den Community Chat Input */}
-              <div className="flex gap-1 absolute top-0 -left-[75px] flex-col">
-                <Button 
-                  onClick={() => handleCategoryClick('Kreativität')} 
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
-                >
-                  Kreativität
-                </Button>
-                <Button 
-                  onClick={() => handleCategoryClick('Ausgehen')} 
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
-                >
-                  Ausgehen
-                </Button>
-                <Button 
-                  onClick={() => handleCategoryClick('Sport')} 
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
-                >
-                  Sport
-                </Button>
-              </div>
             </>
           )}
         </div>
-        <input 
-          type="file" 
-          ref={fileInputRef} 
-          className="hidden" 
+        {/* Container für die neuen Kategorie-Buttons */}
+        {mode === 'community' && (
+          <div className="flex gap-1 absolute left-[80px] top-1 flex-col"> {/* Positionierung angepasst */}
+            <Button
+              onClick={() => handleCategoryClick('Kreativität')}
+              variant="outline"
+              size="sm"
+              className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
+            >
+              Kreativität
+            </Button>
+            <Button
+              onClick={() => handleCategoryClick('Ausgehen')}
+              variant="outline"
+              size="sm"
+              className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
+            >
+              Ausgehen
+            </Button>
+            <Button
+              onClick={() => handleCategoryClick('Sport')}
+              variant="outline"
+              size="sm"
+              className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
+            >
+              Sport
+            </Button>
+          </div>
+        )}
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
           accept="image/*"
           onChange={() => {}}
         />
         {/* Send button on the right */}
-        <Button 
-          onClick={handleSubmit} 
+        <Button
+          onClick={handleSubmit}
           disabled={isSending || (!value?.trim() && !newMessage.trim() && !fileInputRef.current?.files?.length)}
           className="rounded-full min-w-[32px] h-8 w-8 absolute right-1 top-1 p-0 bg-red-500 hover:bg-red-600 text-white"
         >
