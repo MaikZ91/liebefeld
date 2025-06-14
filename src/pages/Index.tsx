@@ -147,13 +147,13 @@ const Index = () => {
         <BetaTesterBanner />
       </div>
       
-      {/* LiveTicker - Fixed height, always visible */}
-      <div className="h-12 w-full bg-black/95 backdrop-blur-lg border-b border-white/20 shadow-xl z-40 flex-shrink-0">
+      {/* LiveTicker - Fixed position with highest z-index */}
+      <div className="fixed top-20 left-0 right-0 h-12 w-full bg-black/95 backdrop-blur-lg border-b border-white/20 shadow-xl z-50 flex-shrink-0">
         <LiveTickerWrapper />
       </div>
       
-      {/* Main content - Fixed calculated height */}
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ height: 'calc(100vh - 128px)' }}>
+      {/* Main content - Fixed calculated height with top padding for ticker */}
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ height: 'calc(100vh - 80px)', paddingTop: '48px' }}>
         {/* Hero Section - Fixed half height */}
         <div className="h-1/2 relative bg-gradient-to-br from-gray-900 via-black to-purple-900/80 overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900/30 via-black/60 to-black opacity-90"></div>
@@ -300,8 +300,11 @@ const Index = () => {
           </div>
         </div>
       </div>
-          
-      <EventChatBot />
+      
+      {/* Chat components with lower z-index to not interfere with ticker */}
+      <div className="relative z-40">
+        <EventChatBot />
+      </div>
 
       <CommunityTest 
         open={testModalOpen} 
