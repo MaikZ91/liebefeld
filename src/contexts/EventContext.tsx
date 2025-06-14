@@ -3,7 +3,6 @@ import { startOfDay, format } from 'date-fns';
 import { Event, RsvpOption } from '../types/eventTypes';
 import { 
   fetchSupabaseEvents, 
-  bielefeldEvents,
   updateEventRsvp,
   syncGitHubEvents,
   addNewEvent,
@@ -76,46 +75,44 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setNewEventIds(newEventIdsSet);
       localStorage.setItem('seenEventIds', JSON.stringify(currentEventIds));
       
-      if (allEvents.length === 0) {
-        console.log('No events found, using example data');
-        setEvents(bielefeldEvents);
-      } else {
-        // Calculate top events per day
-        const topEventsByDay: Record<string, string> = {};
-        const eventsByDate: Record<string, Event[]> = {};
+      // Always use events from database - no fallback to example data
+      // Calculate top events per day
+      const topEventsByDay: Record<string, string> = {};
+      const eventsByDate: Record<string, Event[]> = {};
+      
+      allEvents.forEach(event => {
+        if (!event.date) return;
         
-        allEvents.forEach(event => {
-          if (!event.date) return;
-          
-          if (!eventsByDate[event.date]) {
-            eventsByDate[event.date] = [];
+        if (!eventsByDate[event.date]) {
+          eventsByDate[event.date] = [];
+        }
+        
+        eventsByDate[event.date].push(event);
+      });
+      
+      Object.keys(eventsByDate).forEach(date => {
+        const sortedEvents = [...eventsByDate[date]].sort((a, b) => {
+          if (b.likes !== a.likes) {
+            return b.likes - a.likes;
           }
-          
-          eventsByDate[event.date].push(event);
+          return a.id.localeCompare(b.id);
         });
         
-        Object.keys(eventsByDate).forEach(date => {
-          const sortedEvents = [...eventsByDate[date]].sort((a, b) => {
-            if (b.likes !== a.likes) {
-              return b.likes - a.likes;
-            }
-            return a.id.localeCompare(b.id);
-          });
-          
-          if (sortedEvents.length > 0) {
-            topEventsByDay[date] = sortedEvents[0].id;
-          }
-        });
-        
-        setTopEventsPerDay(topEventsByDay);
-        setEvents(allEvents);
-        
-        localStorage.setItem('lastEventsRefresh', new Date().toISOString());
-        logTodaysEvents(allEvents);
-      }
+        if (sortedEvents.length > 0) {
+          topEventsByDay[date] = sortedEvents[0].id;
+        }
+      });
+      
+      setTopEventsPerDay(topEventsByDay);
+      setEvents(allEvents);
+      
+      localStorage.setItem('lastEventsRefresh', new Date().toISOString());
+      logTodaysEvents(allEvents);
+      
     } catch (error) {
       console.error('Error loading events:', error);
-      setEvents(bielefeldEvents);
+      // Even on error, keep current events instead of falling back to example data
+      console.log('Keeping current events due to error, no fallback to example data');
     } finally {
       setIsLoading(false);
     }
