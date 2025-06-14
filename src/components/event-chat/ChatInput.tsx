@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -158,13 +159,12 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     </div>
   );
 
-  // Enhanced category click handler with state management
+  // Enhanced category click handler - removed automatic text insertion
   const handleCategoryClick = (category: string) => {
     if (onCategoryChange) {
       onCategoryChange(category);
     }
-    setInput(`Zeige mir Events in der Kategorie: ${category}`);
-    // Optional: Direkt senden oder Fokus setzen
+    // Removed automatic text insertion - only change category
     setTimeout(() => {
         if (inputRef.current) {
             inputRef.current.focus();
@@ -219,7 +219,25 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           </>
         ) : ( // Community Chat Buttons
           <>
-            {/* Kategorie-Dropdown (jetzt zuerst) */}
+            {/* Event teilen Button (jetzt zuerst) */}
+            <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  type="button"
+                  className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
+                  title="Event teilen"
+                >
+                  <Calendar className="h-3 w-3" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0 max-h-[400px] overflow-y-auto" side="top" align="start" sideOffset={5}>
+                {eventSelectContent}
+              </PopoverContent>
+            </Popover>
+
+            {/* Kategorie-Dropdown (jetzt zweiter) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -265,24 +283,6 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            
-            {/* Event teilen Button (jetzt zweiter) */}
-            <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  type="button"
-                  className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
-                  title="Event teilen"
-                >
-                  <Calendar className="h-3 w-3" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 p-0 max-h-[400px] overflow-y-auto" side="top" align="start" sideOffset={5}>
-                {eventSelectContent}
-              </PopoverContent>
-            </Popover>
           </>
         )}
       </div>

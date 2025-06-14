@@ -1,3 +1,4 @@
+
 // src/components/chat/MessageInput.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Textarea } from "@/components/ui/textarea";
@@ -150,6 +151,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
     if (onCategorySelect) {
       onCategorySelect(category);
     }
+    // Removed automatic text insertion - only change category
   };
 
   // Event-Inhalt für das Popover
@@ -216,7 +218,31 @@ const MessageInput: React.FC<MessageInputProps> = ({
         {/* Buttons auf der linken Seite des Inputs (absolute Positionierung) */}
         {mode === 'community' && ( // Only show in community mode
           <div className="flex items-center gap-1 absolute left-1 top-1">
-            {/* Kategorie-Dropdown (jetzt zuerst) */}
+            {/* Event teilen Button (jetzt zuerst) */}
+            <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  onClick={handleShareEvent}
+                  variant="outline"
+                  size="icon"
+                  type="button"
+                  className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
+                  title="Event teilen"
+                >
+                  <Calendar className="h-3 w-3" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-80 p-0 max-h-[400px] overflow-y-auto"
+                side="top"
+                align="start"
+                sideOffset={5}
+              >
+                {realEventSelectContent}
+              </PopoverContent>
+            </Popover>
+
+            {/* Kategorie-Dropdown (jetzt zweiter) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -262,30 +288,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            
-            {/* Event teilen Button (jetzt zweiter) */}
-            <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  onClick={handleShareEvent}
-                  variant="outline"
-                  size="icon"
-                  type="button"
-                  className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
-                  title="Event teilen"
-                >
-                  <Calendar className="h-3 w-3" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                className="w-80 p-0 max-h-[400px] overflow-y-auto"
-                side="top"
-                align="start"
-                sideOffset={5}
-              >
-                {realEventSelectContent}
-              </PopoverContent>
-            </Popover>
           </div>
         )}
         {/* Send button on the right */}
