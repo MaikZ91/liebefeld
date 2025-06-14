@@ -1,5 +1,3 @@
-
-// src/components/event-chat/ChatInput.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -16,7 +14,12 @@ const AnimatedText = ({ text, className = '' }: { text: string; className?: stri
   );
 };
 
-const ChatInput: React.FC<ChatInputProps> = ({
+interface ExtendedChatInputProps extends ChatInputProps {
+  activeCategory?: string;
+  onCategoryChange?: (category: string) => void;
+}
+
+const ChatInput: React.FC<ExtendedChatInputProps> = ({
   input,
   setInput,
   handleSendMessage,
@@ -29,7 +32,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
   inputRef,
   onAddEvent,
   showAnimatedPrompts,
-  activeChatModeValue
+  activeChatModeValue,
+  activeCategory = 'Kreativität',
+  onCategoryChange
 }) => {
   // Add fileInputRef declaration
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -116,8 +121,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   const placeholderText = getDynamicPlaceholder();
 
-  // Funktion für Kategorie-Buttons (muss in dieser Komponente definiert werden)
+  // Enhanced category click handler with state management
   const handleCategoryClick = (category: string) => {
+    if (onCategoryChange) {
+      onCategoryChange(category);
+    }
     setInput(`Zeige mir Events in der Kategorie: ${category}`);
     // Optional: Direkt senden oder Fokus setzen
     setTimeout(() => {
@@ -203,28 +211,43 @@ const ChatInput: React.FC<ChatInputProps> = ({
               <Paperclip className="h-3 w-3" />
             </Button>
             
-            {/* Kategorie-Buttons - horizontal neben den Icon-Buttons */}
+            {/* Kategorie-Buttons - horizontal neben den Icon-Buttons with active state */}
             <Button
               onClick={() => handleCategoryClick('Kreativität')}
-              variant="outline"
+              variant={activeCategory === 'Kreativität' ? "default" : "outline"}
               size="sm"
-              className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
+              className={cn(
+                "rounded-full h-6 px-2 text-[10px] transition-all",
+                activeCategory === 'Kreativität' 
+                  ? "bg-red-500 text-white border-red-500 hover:bg-red-600" 
+                  : "border-red-500/30 hover:bg-red-500/10"
+              )}
             >
               Kreativität
             </Button>
             <Button
               onClick={() => handleCategoryClick('Ausgehen')}
-              variant="outline"
+              variant={activeCategory === 'Ausgehen' ? "default" : "outline"}
               size="sm"
-              className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
+              className={cn(
+                "rounded-full h-6 px-2 text-[10px] transition-all",
+                activeCategory === 'Ausgehen' 
+                  ? "bg-red-500 text-white border-red-500 hover:bg-red-600" 
+                  : "border-red-500/30 hover:bg-red-500/10"
+              )}
             >
               Ausgehen
             </Button>
             <Button
               onClick={() => handleCategoryClick('Sport')}
-              variant="outline"
+              variant={activeCategory === 'Sport' ? "default" : "outline"}
               size="sm"
-              className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
+              className={cn(
+                "rounded-full h-6 px-2 text-[10px] transition-all",
+                activeCategory === 'Sport' 
+                  ? "bg-red-500 text-white border-red-500 hover:bg-red-600" 
+                  : "border-red-500/30 hover:bg-red-500/10"
+              )}
             >
               Sport
             </Button>

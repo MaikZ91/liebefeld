@@ -23,10 +23,21 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
   const activeChatModeValue = activeChatMode !== undefined ? activeChatMode : internalActiveChatMode;
   const setActiveChatModeValue = setActiveChatMode || setInternalActiveChatMode;
   
+  // Add category state management
+  const [activeCategory, setActiveCategory] = useState<string>('Kreativität');
+  
   const { events } = useEventContext();
   const { toast } = useToast();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
-  const [communityGroupId, setCommunityGroupId] = useState('general');  // Default group ID
+  
+  // Create group mapping for categories
+  const categoryToGroupId = {
+    'Kreativität': 'general', // Use existing general group for Kreativität
+    'Ausgehen': 'ausgehen',
+    'Sport': 'sport'
+  };
+  
+  const communityGroupId = categoryToGroupId[activeCategory as keyof typeof categoryToGroupId] || 'general';
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
   // Use the chat logic hook to manage state and functions
@@ -46,6 +57,11 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
     if (activeChatModeValue === 'ai' && onToggleCommunity) {
       onToggleCommunity();
     }
+  };
+
+  // Handle category change
+  const handleCategoryChange = (category: string) => {
+    setActiveCategory(category);
   };
 
   // Handle profile update
@@ -70,6 +86,8 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
         activeChatModeValue={activeChatModeValue}
         communityGroupId={communityGroupId}
         onAddEvent={onAddEvent}
+        activeCategory={activeCategory}
+        onCategoryChange={handleCategoryChange}
       />
     );
   }
@@ -86,6 +104,8 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
           communityGroupId={communityGroupId}
           fullPage={fullPage}
           onAddEvent={onAddEvent}
+          activeCategory={activeCategory}
+          onCategoryChange={handleCategoryChange}
         />
       ) : (
         <button

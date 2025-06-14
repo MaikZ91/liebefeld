@@ -25,13 +25,17 @@ interface FullPageChatBotProps {
   communityGroupId: string;
   onAddEvent?: () => void;
   hideButtons?: boolean;
+  activeCategory?: string;
+  onCategoryChange?: (category: string) => void;
 }
 
 const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   chatLogic,
   activeChatModeValue,
   communityGroupId,
-  onAddEvent
+  onAddEvent,
+  activeCategory = 'Kreativität',
+  onCategoryChange
 }) => {
   const {
     messages: aiMessages,
@@ -170,7 +174,9 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
           inputRef={inputRef}
           onAddEvent={onAddEvent}
           showAnimatedPrompts={showAnimatedPrompts}
-          activeChatModeValue={activeChatModeValue} // HIER WIRD activeChatModeValue WEITERGEGEBEN
+          activeChatModeValue={activeChatModeValue}
+          activeCategory={activeCategory}
+          onCategoryChange={onCategoryChange}
         />
       </div>
 
@@ -183,7 +189,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               isTyping={aiTyping}
               handleDateSelect={handleDateSelect}
               messagesEndRef={messagesEndRef}
-              examplePrompts={examplePrompts} // examplePrompts weiterhin hier übergeben
+              examplePrompts={examplePrompts}
               handleExamplePromptClick={handleExamplePromptClick}
             />
             <div ref={messagesEndRef} />
@@ -203,7 +209,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               <div className="space-y-2 py-4">
                 {communityMessages.length === 0 && !communityLoading && !communityError && (
                   <div className="text-center text-gray-400 py-4">
-                    Noch keine Nachrichten. Starte die Unterhaltung!
+                    Noch keine Nachrichten in {activeCategory}. Starte die Unterhaltung!
                   </div>
                 )}
 
@@ -230,7 +236,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                       )}
                       <div className="break-words">
                         <ChatMessage
-                          message={message.text} // Changed from message.content to message.text
+                          message={message.text}
                           isConsecutive={isConsecutive}
                           isGroup
                           messageId={message.id}

@@ -1,4 +1,3 @@
-
 // src/components/event-chat/types.ts
 import { LandingSlideData } from './SwipeableLandingPanel';
 
@@ -70,12 +69,14 @@ export interface ChatInputProps {
   handleKeyPress: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   isHeartActive: boolean;
   handleHeartClick: () => void;
-  globalQueries: string[];
+  globalQueries: any[];
   toggleRecentQueries: () => void;
   inputRef: React.RefObject<HTMLInputElement>;
   onAddEvent?: () => void;
   showAnimatedPrompts: boolean;
   activeChatModeValue: 'ai' | 'community';
+  activeCategory?: string;
+  onCategoryChange?: (category: string) => void;
 }
 
 export interface RecentQueriesProps {
