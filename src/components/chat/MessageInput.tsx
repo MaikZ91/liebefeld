@@ -160,19 +160,18 @@ const MessageInput: React.FC<MessageInputProps> = ({
   }, []);
 
   // Dynamisches padding-left basierend auf dem Modus
-  // Die "Event teilen" und "Bild anhängen" Buttons sind 24px breit + 8px Abstand.
-  // Die Kategorie-Buttons sind ca. 75px breit (geschätzt, basierend auf 'Kreativität') + 8px Abstand.
-  // Benötigtes Padding: (2 * (24px + 8px)) + (3 * (75px + 8px))
-  // Das ist nicht sinnvoll. Die Buttons sollen nebeneinander liegen.
-  // Also: 2 kleine Buttons übereinander, dann 3 Kategorie-Buttons übereinander.
-  // Breite der Kategorie-Buttons: ca. 75px. Abstand 8px.
-  // Der linke Block (Event teilen, Bild anhängen) ist 24px breit.
-  // Der rechte Block (Kategorie-Buttons) ist 75px breit.
-  // Gesamter Platzbedarf: 24px (linker Block) + 8px (Abstand) + 75px (rechter Block) = 107px.
-  // Plus 16px (links) und 16px (rechts) für generellen padding.
-  // Also 107px + 16px = 123px.
-  // Ich setze es mal auf 140px, um etwas Puffer zu haben.
-  const leftPadding = mode === 'community' ? 'pl-[140px]' : 'pl-4'; 
+  // Linke Buttons: 2 Icon-Buttons (je 24px breit) + 10px Abstand + 3 Text-Buttons (ca. 70px breit, da px-2) + 10px Abstand.
+  // Das schlägt vor, dass die Buttons in zwei Spalten liegen sollen.
+  // Icon-Buttons h6 w6 = 24px. Text-Buttons text-[10px] h-6 px-2.
+  // Die Text-Buttons sind breiter, sagen wir ca. 70px.
+  // Um sie alle auf der linken Seite in einer organisierten Weise anzuzeigen,
+  // werde ich sie in zwei vertikalen Spalten anordnen:
+  // Spalte 1 (links): Event teilen, Bild anhängen (Icon-Buttons)
+  // Spalte 2 (rechts davon): Kreativität, Ausgehen, Sport (Text-Buttons)
+  // Geschätzte Gesamtbreite der Buttons plus Abstand:
+  // (Breite Icon-Button + Abstand) + (Breite Text-Button + Abstand) = (24px + 8px) + (70px + 8px) = 32px + 78px = 110px.
+  // Dann noch etwas Puffer, sagen wir 120px insgesamt von links für den Text.
+  const leftPadding = mode === 'community' ? 'pl-[120px]' : 'pl-4'; 
 
   return (
     <div className="w-full space-y-2">
@@ -187,7 +186,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         {/* Buttons auf der linken Seite des Inputs (absolute Positionierung) */}
         {mode === 'community' && ( // Only show in community mode
           <>
-            {/* Linker Block: Event teilen & Bild anhängen */}
+            {/* Linker Block: Event teilen & Bild anhängen - direkt im Input-Feld */}
             <div className="flex flex-col gap-1 absolute left-1 top-1">
                 <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
                     <PopoverTrigger asChild>
@@ -222,8 +221,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
                     <Paperclip className="h-3 w-3" />
                 </Button>
             </div>
-            {/* Rechter Block: Kategorie-Buttons */}
-            <div className="flex flex-col gap-1 absolute left-[50px] top-1"> {/* 'left' wurde angepasst */}
+            {/* Rechter Block: Kategorie-Buttons - neben dem ersten Block */}
+            <div className="flex flex-col gap-1 absolute left-[40px] top-1"> {/* 'left' wurde angepasst, um direkt neben den Icon-Buttons zu starten */}
               <Button
                 onClick={() => handleCategoryClick('Kreativität')}
                 variant="outline"
