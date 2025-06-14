@@ -168,10 +168,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
         )} 
       />
       
-      {/* Clickable overlay for placeholder suggestions */}
+      {/* Clickable overlay for placeholder suggestions - moved further right */}
       {activeChatModeValue === 'ai' && showAnimatedPrompts && input.trim() === '' && displayText.trim() !== '' && ( 
         <div 
-          className="absolute left-20 right-14 top-3 bottom-3 cursor-pointer z-5"
+          className="absolute left-24 right-14 top-3 bottom-3 cursor-pointer z-5"
           onClick={handleSuggestionClick}
           title="Klicken um Vorschlag zu übernehmen"
         />
