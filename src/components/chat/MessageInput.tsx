@@ -21,6 +21,7 @@ interface MessageInputProps {
   onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   placeholder?: string;
   mode?: 'ai' | 'community'; // Added mode prop
+  onCategorySelect?: (category: string) => void; // Hinzugefügte Prop
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({ 
@@ -35,7 +36,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
   onChange,
   onKeyDown,
   placeholder = "Schreibe eine Nachricht...",
-  mode = 'community' // Default to community mode
+  mode = 'community', // Default to community mode
+  onCategorySelect // Hinzugefügte Prop
 }) => {
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -143,6 +145,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
     setIsEventSelectOpen(true);
   };
 
+  const handleCategoryClick = (category: string) => {
+    if (onCategorySelect) {
+      onCategorySelect(category);
+    }
+  };
+
   useEffect(() => {
     return () => {
       if (typingTimeoutRef.current) {
@@ -152,7 +160,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
   }, []);
 
   // Determine padding based on mode and number of active left-side buttons
-  const leftPadding = mode === 'community' ? 'pl-[75px]' : 'pl-4'; // Adjusted for 2 buttons on left
+  // New calculation for left padding to accommodate three buttons
+  const leftPadding = mode === 'community' ? 'pl-[100px]' : 'pl-4'; // Adjusted from 75px to 100px
 
   return (
     <div className="w-full space-y-2">
@@ -167,39 +176,68 @@ const MessageInput: React.FC<MessageInputProps> = ({
         {/* Buttons on the left side of the input (absolute positioning) */}
         <div className="flex flex-col gap-2 absolute left-1 top-1">
           {mode === 'community' && ( // Only show in community mode
-            <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
-              <PopoverTrigger asChild>
-                <Button 
-                  onClick={handleShareEvent} 
-                  variant="outline"
-                  size="icon"
-                  type="button"
-                  className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
-                  title="Event teilen"
+            <>
+              <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
+                <PopoverTrigger asChild>
+                  <Button 
+                    onClick={handleShareEvent} 
+                    variant="outline"
+                    size="icon"
+                    type="button"
+                    className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
+                    title="Event teilen"
+                  >
+                    <Calendar className="h-3 w-3" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent 
+                  className="w-80 p-0 max-h-[400px] overflow-y-auto" 
+                  side="top" 
+                  align="start" // Changed align to start to keep it left-aligned
+                  sideOffset={5}
                 >
-                  <Calendar className="h-3 w-3" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent 
-                className="w-80 p-0 max-h-[400px] overflow-y-auto" 
-                side="top" 
-                align="start" // Changed align to start to keep it left-aligned
-                sideOffset={5}
+                  {eventSelectContent}
+                </PopoverContent>
+              </Popover>
+              <Button 
+                onClick={handleFileUpload} 
+                variant="outline"
+                size="icon"
+                type="button"
+                className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
+                title="Bild anhängen"
               >
-                {eventSelectContent}
-              </PopoverContent>
-            </Popover>
+                <Paperclip className="h-3 w-3" />
+              </Button>
+              {/* Neue Buttons für den Community Chat Input */}
+              <div className="flex gap-1 absolute top-0 -left-[75px] flex-col">
+                <Button 
+                  onClick={() => handleCategoryClick('Kreativität')} 
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
+                >
+                  Kreativität
+                </Button>
+                <Button 
+                  onClick={() => handleCategoryClick('Ausgehen')} 
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
+                >
+                  Ausgehen
+                </Button>
+                <Button 
+                  onClick={() => handleCategoryClick('Sport')} 
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10"
+                >
+                  Sport
+                </Button>
+              </div>
+            </>
           )}
-          <Button 
-            onClick={handleFileUpload} 
-            variant="outline"
-            size="icon"
-            type="button"
-            className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
-            title="Bild anhängen"
-          >
-            <Paperclip className="h-3 w-3" />
-          </Button>
         </div>
         <input 
           type="file" 
