@@ -24,7 +24,7 @@ interface ChatGroupProps {
 interface Message {
   id: string;
   created_at: string;
-  content: string;
+  text: string; // Changed from 'content' to 'text'
   user_name: string;
   user_avatar: string;
   group_id: string;
@@ -107,7 +107,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         const formattedMessages: Message[] = (data || []).map(msg => ({
           id: msg.id,
           created_at: msg.created_at,
-          content: msg.text,
+          text: msg.text, // Use 'text' directly from database
           user_name: msg.sender,
           user_avatar: msg.avatar || '',
           group_id: msg.group_id,
@@ -169,7 +169,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           const newMessage: Message = {
             id: msg.id,
             created_at: msg.created_at,
-            content: msg.text,
+            text: msg.text, // Use 'text' directly from database
             user_name: msg.sender,
             user_avatar: msg.avatar || '',
             group_id: msg.group_id,
@@ -299,7 +299,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       const formattedMessages: Message[] = (data || []).map(msg => ({
         id: msg.id,
         created_at: msg.created_at,
-        content: msg.text,
+        text: msg.text, // Use 'text' directly from database
         user_name: msg.sender,
         user_avatar: msg.avatar || '',
         group_id: msg.group_id,
@@ -383,7 +383,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       const optimisticMessage: Message = {
         id: tempId,
         created_at: new Date().toISOString(),
-        content: messageText,
+        text: messageText, // Use 'text' instead of 'content'
         user_name: username,
         user_avatar: localStorage.getItem(AVATAR_KEY) || '',
         group_id: groupId,
@@ -508,7 +508,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         messages={messages.map(msg => ({
           id: msg.id,
           created_at: msg.created_at,
-          text: msg.content,
+          text: msg.text, // Use 'text' instead of 'content'
           user_name: msg.user_name,
           user_avatar: msg.user_avatar,
           group_id: msg.group_id,
