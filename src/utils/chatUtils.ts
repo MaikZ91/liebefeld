@@ -1,3 +1,4 @@
+
 // src/utils/chatUtils.ts
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -5,10 +6,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { LandingSlideData } from '@/components/event-chat/SwipeableLandingPanel';
 
 export const getWelcomeMessage = () => {
+  const cityName = typeof window !== 'undefined' ? localStorage.getItem('selectedCityName') || 'Liebefeld' : 'Liebefeld';
   // Schönere Willkommensnachricht mit Farb- und Layout-Details
   return `
     <div class="rounded-2xl border border-red-700 bg-black/60 text-white p-6 mx-auto max-w-[420px] shadow-xl text-center">
-      <p class="text-2xl font-extrabold tracking-tight mb-2 bg-gradient-to-br from-red-400 to-pink-400 text-transparent bg-clip-text">Hallo Liebefeld!</p>
+      <p class="text-2xl font-extrabold tracking-tight mb-2 bg-gradient-to-br from-red-400 to-pink-400 text-transparent bg-clip-text">Hallo ${cityName}!</p>
       <p class="text-white text-base mb-2">Willkommen bei <span class="font-semibold text-red-400">THE TRIBE</span> – deiner Community Plattform für Events & Social Impact im Quartier!</p>
       <p class="text-gray-300 text-sm">Lass dich inspirieren, chatte mit der KI oder swipe durch die Community-Features.</p>
     </div>
@@ -73,10 +75,11 @@ export const createLandingSlideData = (): LandingSlideData => {
 
 // Neue Funktion für die animierte Willkommensnachricht
 export const getAnimatedWelcomeMessage = () => {
+  const cityName = typeof window !== 'undefined' ? localStorage.getItem('selectedCityName') || 'Liebefeld' : 'Liebefeld';
   return `
     <div class="rounded-lg p-3 text-sm bg-black text-white">
       <p class="text-lg font-bold text-white mb-2">
-        <span class="typewriter-animation">Hallo Liebefeld!</span>
+        <span class="typewriter-animation">Hallo ${cityName}!</span>
       </p>
       <p class="text-white mb-3">Willkommen bei THE TRIBE - deiner Community-Plattform für Events, Networking und lokale Initiativen!</p>
       <p class="text-sm text-gray-300">Swipe durch die Slides unten, um mehr zu erfahren:</p>

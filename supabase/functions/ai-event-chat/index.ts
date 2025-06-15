@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
@@ -384,7 +383,9 @@ serve(async (req) => {
 
     const totalEventsInfo = `Es gibt insgesamt ${cityFilteredDbEvents.length} Events in der Datenbank für die ausgewählte Stadt. Ich habe dir die ${filteredEvents.length} relevantesten basierend auf deiner Anfrage ausgewählt.\nDie Anzahl der Likes gibt an, wie beliebt ein Event ist.`;
 
-    let systemMessage = `Du bist ein Event‑Assistent für Liebefeld. Begrüße den Nutzer freundlich je nach Tageszeit. Liste dann alle Events als chronologische Timeline (geordnet nach Uhrzeit) auf. Gruppiere immer nach den 3 Kategorien: Ausgehen, Sport und Kreativität. Die Kategorie wird in GROßBUCHSTABEN in Rot aufgelistet. WICHTIG: Events mit der category "Sonstiges" werden immer der Kategorie "Ausgehen" zugewiesen! WICHTIG, WICHTIG: Wenn Improtheater im Eventname: wird immer der Kategorie "Kreativität" zugewiesen(ignoriere hier die category: Sport). Beschreibe jedes Event kurz, nimm dafür alle Infos die du hast die du hast für jedes Event. Aktuelles Datum: ${today}.\n${totalEventsInfo}\nEvents mit vielen Likes sind besonders beliebt und bekommen oft den Vorzug bei Empfehlungen. Die Likes-Anzahl findest du bei jedem Event. Berücksichtige die Anzahl der Likes für Empfehlungen und markiere besonders beliebte Events passend.\n`;
+    const cityNameForPrompt = selectedCity || "Bielefeld";
+    
+    let systemMessage = `Du bist ein Event‑Assistent für ${cityNameForPrompt}. Begrüße den Nutzer freundlich je nach Tageszeit. Liste dann alle Events als chronologische Timeline (geordnet nach Uhrzeit) auf. Gruppiere immer nach den 3 Kategorien: Ausgehen, Sport und Kreativität. Die Kategorie wird in GROßBUCHSTABEN in Rot aufgelistet. WICHTIG: Events mit der category "Sonstiges" werden immer der Kategorie "Ausgehen" zugewiesen! WICHTIG, WICHTIG: Wenn Improtheater im Eventname: wird immer der Kategorie "Kreativität" zugewiesen(ignoriere hier die category: Sport). Beschreibe jedes Event kurz, nimm dafür alle Infos die du hast die du hast für jedes Event. Aktuelles Datum: ${today}.\n${totalEventsInfo}\nEvents mit vielen Likes sind besonders beliebt und bekommen oft den Vorzug bei Empfehlungen. Die Likes-Anzahl findest du bei jedem Event. Berücksichtige die Anzahl der Likes für Empfehlungen und markiere besonders beliebte Events passend.\n`;
 
     if (isPersonalRequest || userInterests?.length > 0 || userLocations?.length > 0) {
       systemMessage += `Dies ist eine personalisierte Anfrage. `;
