@@ -33,6 +33,24 @@ const categoryIcons = {
   "Meeting": <Users className="h-4 w-4" />
 };
 
+const cities = [
+  { name: "Bielefeld", abbr: "BI" },
+  { name: "Berlin", abbr: "berlin" },
+  { name: "Hamburg", abbr: "hamburg" },
+  { name: "München", abbr: "munich" },
+  { name: "Köln", abbr: "cologne" },
+  { name: "Frankfurt", abbr: "frankfurt" },
+  { name: "Stuttgart", abbr: "stuttgart" },
+  { name: "Düsseldorf", abbr: "duesseldorf" },
+  { name: "Leipzig", abbr: "leipzig" },
+  { name: "Hannover", abbr: "hanover" },
+  { name: "Nürnberg", abbr: "nuremberg" },
+  { name: "Bremen", abbr: "bremen" },
+  { name: "Dresden", abbr: "dresden" },
+  { name: "Essen", abbr: "essen" },
+  { name: "Dortmund", abbr: "dortmund" },
+];
+
 export const isTribeEvent = (title: string): boolean => {
   const tribeKeywords = ['tribe', 'tuesday run', 'kennenlernabend', 'creatives circle'];
   return tribeKeywords.some(keyword => 
@@ -53,13 +71,22 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     setShowFavorites,
     refreshEvents,
     topEventsPerDay,
-    addUserEvent
+    addUserEvent,
+    selectedCity
   } = useEventContext();
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"calendar" | "list">(defaultView);
   const [showEventForm, setShowEventForm] = useState(false);
   const [showNewEvents, setShowNewEvents] = useState(false);
+  
+  const eventsFilteredByCity = React.useMemo(() => {
+    if (!selectedCity) return events;
+    const cityObject = cities.find(c => c.abbr === selectedCity);
+    if (!cityObject) return events;
+    const cityName = cityObject.name;
+    return events.filter(event => event.location && event.location.toLowerCase() === cityName.toLowerCase());
+  }, [events, selectedCity]);
   
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
@@ -72,27 +99,27 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     if (showNewEvents) {
       return []; // No new events tracking for now
     } else if (showFavorites) {
-      return events.filter(event => 
+      return eventsFilteredByCity.filter(event => 
         event.date && 
         topEventsPerDay[event.date] === event.id && 
         (event.likes && event.likes > 0)
       );
     } else {
-      return getMonthOrFavoriteEvents(events, currentDate, false, {});
+      return getMonthOrFavoriteEvents(eventsFilteredByCity, currentDate, false, {});
     }
-  }, [events, currentDate, showFavorites, showNewEvents, topEventsPerDay]);
+  }, [eventsFilteredByCity, currentDate, showFavorites, showNewEvents, topEventsPerDay]);
   
   const filteredEvents = selectedDate 
-    ? getEventsForDay(events, selectedDate, filter)
+    ? getEventsForDay(eventsFilteredByCity, selectedDate, filter)
     : [];
     
   const favoriteEvents = React.useMemo(() => {
-    return events.filter(event => 
+    return eventsFilteredByCity.filter(event => 
       event.date && 
       topEventsPerDay[event.date] === event.id && 
       (event.likes && event.likes > 0)
     );
-  }, [events, topEventsPerDay]);
+  }, [eventsFilteredByCity, topEventsPerDay]);
 
   const handleDateClick = (day: Date) => {
     const normalizedDay = normalizeDate(day);

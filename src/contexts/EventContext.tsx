@@ -22,6 +22,8 @@ interface EventContextProps {
   refreshEvents: () => Promise<void>;
   topEventsPerDay: Record<string, string>;
   addUserEvent: (event: Omit<Event, 'id'>) => Promise<Event>;
+  selectedCity: string;
+  setSelectedCity: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const EventContext = createContext<EventContextProps | undefined>(undefined);
@@ -41,6 +43,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [filter, setFilter] = useState<string | null>(null);
   const [showFavorites, setShowFavorites] = useState(false);
+  const [selectedCity, setSelectedCity] = useState('BI');
   
   const topEventsPerDay = useTopEvents(events);
   
@@ -61,6 +64,8 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     refreshEvents,
     topEventsPerDay,
     addUserEvent,
+    selectedCity,
+    setSelectedCity,
   }), [
     events,
     setEvents,
@@ -77,7 +82,9 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setSelectedDate,
     setSelectedEvent,
     setFilter,
-    setShowFavorites
+    setShowFavorites,
+    selectedCity,
+    setSelectedCity,
   ]);
 
   return <EventContext.Provider value={value}>{children}</EventContext.Provider>;

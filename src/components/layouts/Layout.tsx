@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, Calendar, MessageSquare, List, Users, User } from "lucide-react";
 import { Badge } from '@/components/ui/badge'; // Import Badge component
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useEventContext } from "@/contexts/EventContext";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -166,7 +167,7 @@ const MainNav: React.FC<MainNavProps> = ({
   newMessagesCount, // Destructure
   newEventsCount // Destructure
 }) => {
-  const [city, setCity] = React.useState('BI');
+  const { selectedCity: city, setSelectedCity: setCity } = useEventContext();
   
   // If we're on chat page or the root path, show THE TRIBE + chat navigation buttons
   if (pathname === '/chat' || pathname === '/') {
