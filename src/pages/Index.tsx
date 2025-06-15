@@ -267,7 +267,7 @@ const Index = () => {
       
       {/* Chat components with lower z-index to not interfere with ticker */}
       <div className="relative z-40">
-        <EventChatBot />
+        
       </div>
 
       <CommunityTest 
