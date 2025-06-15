@@ -131,18 +131,9 @@ Deno.serve(async (req) => {
               } else {
                 year = yearStr;
               }
-            } else { // Year is not present, infer it
-              const eventMonth = parseInt(month, 10);
-              const eventDay = parseInt(day, 10);
-              
-              // If the event month is before the current month, or it's the same month but an earlier day,
-              // and the date is not today, assume it's for next year.
-              if (eventMonth < currentMonth || (eventMonth === currentMonth && eventDay < currentDay)) {
-                year = (currentYear + 1).toString();
-                console.log(`Inferred next year for ${githubEvent.event}: ${year}`);
-              } else {
-                year = currentYear.toString();
-              }
+            } else { // Year is not present, default to 2025
+              year = '2025';
+              console.log(`No year found for "${githubEvent.event}". Defaulting to ${year}.`);
             }
             eventDate = `${year}-${month}-${day}`;
           }
