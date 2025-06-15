@@ -1,4 +1,3 @@
-
 // src/components/EventCalendar.tsx
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
@@ -207,7 +206,6 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                     setSelectedDate(date);
                     setSelectedEvent(event);
                   }}
-                  onLike={() => {}} // No longer needed - EventCard handles directly
                 />
               </div>
               <div className="md:col-span-1 space-y-3">
@@ -252,7 +250,6 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                   filter={filter}
                   onEventSelect={handleEventSelect}
                   onEventClose={() => setSelectedEvent(null)}
-                  onLike={() => {}} // No longer needed - EventCard handles directly
                   onShowEventForm={toggleEventForm}
                   showFavorites={showFavorites}
                 />
