@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -96,20 +97,24 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-5xl bg-black text-white border-gray-800">
-          <DirectoryHeader 
-            currentUsername={currentUsername}
-            onOpenProfileEditor={handleOpenProfileEditor}
-          />
+        <DialogContent className="sm:max-w-5xl bg-black text-white border-gray-800 p-0">
+          <div className="p-6 pb-0">
+            <DirectoryHeader 
+              currentUsername={currentUsername}
+              onOpenProfileEditor={handleOpenProfileEditor}
+            />
+          </div>
           
           <div className="py-4">
-            <UserLoadingState 
-              error={error} 
-              loading={loading} 
-              userCount={users.length} 
-            />
-            
-            {!loading && !error && users.length > 0 && (
+            {(loading || !!error || (users.length === 0 && !loading)) ? (
+              <div className="px-6">
+                <UserLoadingState 
+                  error={error} 
+                  loading={loading} 
+                  userCount={users.length} 
+                />
+              </div>
+            ) : (
               <UserGallery 
                 users={users} 
                 currentUsername={currentUsername} 
