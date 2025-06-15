@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { generatePersonalizedPrompt } from '@/utils/chatUtils';
-import { PersonalizationOptions } from './types';
+import { PersonalizationOptions } from '@/components/event-chat/types';
 import { UserProfile } from '@/types/chatTypes';
 
 export const usePersonalization = (
