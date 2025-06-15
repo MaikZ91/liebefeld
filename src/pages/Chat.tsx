@@ -1,4 +1,3 @@
-
 // src/pages/Chat.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { Layout } from '@/components/layouts/Layout';
@@ -171,18 +170,6 @@ const ChatPage = () => {
       markAllAsRead();
     }
   }, [activeView, username]);
-
-  // Effect to handle new events - removed since newEventIds was removed
-  useEffect(() => {
-    // Mark new events as seen when the EventListSheet is opened
-    if (isEventListSheetOpen) {
-      const allEventIds = events.map(event => event.id);
-      localStorage.setItem('seenEventIds', JSON.stringify(allEventIds));
-      if (refreshEvents) {
-        refreshEvents(); // Trigger a refresh to update newEventIds in context
-      }
-    }
-  }, [isEventListSheetOpen, events, refreshEvents]);
 
   // Check if we're on mobile for responsive design adjustments
   const [isMobile, setIsMobile] = useState(false);
