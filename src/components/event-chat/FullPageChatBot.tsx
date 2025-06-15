@@ -177,7 +177,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
           activeChatModeValue={activeChatModeValue}
           activeCategory={activeCategory}
           onCategoryChange={onCategoryChange}
-          examplePrompts={examplePrompts}
         />
       </div>
 
