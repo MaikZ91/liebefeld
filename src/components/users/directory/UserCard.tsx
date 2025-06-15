@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UserProfile } from "@/types/chatTypes";
 import { Card } from "@/components/ui/card";
@@ -11,16 +10,14 @@ interface UserCardProps {
   onSelectUser: (user: UserProfile) => void;
 }
 
-const getPlaceholderUrl = (username: string) => {
-  if (!username) username = 'default-user';
-  const colors = ['E53935', '1A1A1A', 'FFFFFF', 'F44336', 'B71C1C'];
-  return `https://source.boringavatars.com/marble/240/${encodeURIComponent(username)}?colors=${colors.join(',')}&square`;
+const getPlaceholderUrl = () => {
+  return '/placeholder.svg';
 };
 
 
 const UserCard: React.FC<UserCardProps> = ({ user, currentUsername, onSelectUser }) => {
   const isCurrentUser = user.username === currentUsername;
-  const avatarSrc = user.avatar || getPlaceholderUrl(user.username);
+  const avatarSrc = user.avatar || getPlaceholderUrl();
 
   return (
     <Card
