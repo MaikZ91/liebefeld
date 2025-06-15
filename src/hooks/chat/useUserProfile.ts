@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile, USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
@@ -25,11 +24,7 @@ export const useUserProfile = () => {
           localStorage.removeItem('user_locations');
         }
 
-        if (profile.hobbies && profile.hobbies.length > 0) {
-          localStorage.setItem('user_bio', profile.hobbies[0]);
-        } else {
-          localStorage.removeItem('user_bio');
-        }
+        localStorage.removeItem('user_bio');
         
         setUserProfile(profile);
       } else {
@@ -41,7 +36,6 @@ export const useUserProfile = () => {
       
       return profile;
     } catch (err) {
-      console.error('[useUserProfile] Error fetching user profile:', err);
       setError(err instanceof Error ? err : new Error('Failed to fetch user profile'));
       return null;
     }

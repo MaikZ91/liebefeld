@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UserProfile } from "@/types/chatTypes";
 import { Card } from "@/components/ui/card";
@@ -21,7 +20,6 @@ const getPlaceholderUrl = (username: string) => {
 const UserCard: React.FC<UserCardProps> = ({ user, currentUsername, onSelectUser }) => {
   const isCurrentUser = user.username === currentUsername;
   const avatarSrc = user.avatar || getPlaceholderUrl(user.username);
-  const bio = user.hobbies && user.hobbies.length > 0 ? user.hobbies[0] : null;
 
   return (
     <Card
@@ -42,13 +40,7 @@ const UserCard: React.FC<UserCardProps> = ({ user, currentUsername, onSelectUser
       <div className="absolute bottom-0 left-0 right-0 p-4 text-white flex flex-col justify-end h-full">
         <div className="flex-grow" /> {/* Spacer */}
         
-        <div className="space-y-2 mb-2 text-xs">
-          {bio && (
-            <div className="flex items-start gap-1.5">
-              <MessageSquareText className="h-3.5 w-3.5 text-gray-300 shrink-0 mt-0.5" />
-              <p className="text-gray-200 line-clamp-2 text-sm">{bio}</p>
-            </div>
-          )}
+        <div className="space-y-1.5 mb-2 text-xs">
           {user.interests && user.interests.length > 0 && (
             <div className="flex flex-wrap gap-1.5 items-center">
               <Heart className="h-3.5 w-3.5 text-red-400 shrink-0" />

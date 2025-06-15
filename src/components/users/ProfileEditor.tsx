@@ -15,7 +15,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 // Import our new components
 import AvatarUploader from './profile/AvatarUploader';
 import UsernameField from './profile/UsernameField';
-import BioField from './profile/BioField';
 import InterestsEditor from './profile/InterestsEditor';
 import LocationSelector from './profile/LocationSelector';
 
@@ -31,7 +30,6 @@ const profileSchema = z.object({
     message: "Username must be at least 2 characters.",
   }),
   avatar: z.string().optional(),
-  bio: z.string().max(500, "Bio darf maximal 500 Zeichen lang sein.").optional(),
 });
 
 const ProfileEditor: React.FC<ProfileEditorProps> = ({
@@ -51,7 +49,6 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     defaultValues: {
       username: currentUser?.username || '',
       avatar: currentUser?.avatar || '',
-      bio: (currentUser?.hobbies && currentUser.hobbies[0]) || '',
     },
   });
 
@@ -63,7 +60,6 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       form.reset({
         username: currentUser.username,
         avatar: currentUser.avatar || '',
-        bio: (currentUser.hobbies && currentUser.hobbies[0]) || '',
       });
       
       // Reset uploadedImage when currentUser changes
@@ -78,7 +74,6 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       console.log('Form initialized with:', {
         username: currentUser.username,
         avatar: currentUser.avatar,
-        bio: (currentUser.hobbies && currentUser.hobbies[0]) || '',
         interests: currentUser.interests || [],
         favorite_locations: currentUser.favorite_locations || []
       });
@@ -137,14 +132,12 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
       // Use actual Avatar URL
       const avatarUrl = uploadedImage || values.avatar;
       
-      const hobbies = values.bio ? [values.bio] : [];
-      
       console.log("Saving profile with data:", {
         username: values.username,
         avatar: avatarUrl,
         interests: interests,
         favorite_locations: favoriteLocations,
-        hobbies: hobbies,
+        hobbies: [],
       });
       
       // Save username in localStorage
@@ -161,7 +154,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         avatar: avatarUrl || null,
         interests: interests,
         favorite_locations: favoriteLocations,
-        hobbies: hobbies,
+        hobbies: [],
       });
       
       console.log("Profile updated successfully:", updatedProfile);
@@ -217,7 +210,6 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
 
                 <div className="space-y-6">
                   <UsernameField form={form} />
-                  <BioField form={form} />
                   <InterestsEditor 
                     interests={interests}
                     onInterestsChange={setInterests}
