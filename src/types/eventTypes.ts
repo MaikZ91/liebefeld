@@ -10,6 +10,7 @@ export interface Event {
   category: string;
   link?: string;
   image_url?: string;
+  image_urls?: string[];
   likes?: number;
   rsvp_yes?: number;
   rsvp_no?: number;
