@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -84,7 +85,19 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     if (!selectedCity) return events;
     const cityObject = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase());
     const cityName = cityObject ? cityObject.name : selectedCity;
-    return events.filter(event => event.city && event.city.toLowerCase() === cityName.toLowerCase());
+    const targetCityName = cityName.toLowerCase();
+
+    return events.filter(event => {
+      const eventCity = event.city ? event.city.toLowerCase() : null;
+
+      // When "Bielefeld" is selected, also show events where city is not set.
+      if (targetCityName === 'bielefeld') {
+        return !eventCity || eventCity === 'bielefeld';
+      }
+      
+      // For other cities, require an exact match.
+      return eventCity === targetCityName;
+    });
   }, [events, selectedCity]);
   
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
