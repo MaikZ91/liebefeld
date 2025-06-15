@@ -85,28 +85,24 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
       return;
     }
 
-    // Optimistic UI-Update:
-    setOptimisticLikes((prev) => (prev ?? event.likes ?? 0) + 1);
-
+    const oldLikes = optimisticLikes ?? event.likes ?? 0;
+    setOptimisticLikes(oldLikes + 1);
     setIsLiking(true);
     console.log(`[LIKE HANDLER] Like angefragt für Event:`, event?.id, event?.title);
 
     try {
-      const currentLikesDb = event.likes || 0;
-      const newLikes = currentLikesDb + 1;
-      console.log(`[LIKE HANDLER] Likes alt: ${currentLikesDb}, neu: ${newLikes}`);
-
-      // Like in DB erhöhen, mit .select für Rückgabe
+      const newLikes = (event.likes || 0) + 1;
       const { error, data } = await supabase
         .from("community_events")
         .update({ likes: newLikes })
         .eq("id", event.id)
         .select();
 
-      console.log(`[LIKE HANDLER] Supabase Response`, { data, error, eventId: event.id });
+      // Zusätzliche logs für das Debugging
+      console.log(`[LIKE HANDLER] Supabase update response:`, { data, error });
 
       if (error) {
-        toast.error("Fehler beim Speichern deines Likes.");
+        toast.error("Fehler beim Speichern deines Likes (DB Error).");
         setOptimisticLikes(event.likes ?? 0);
         setIsLiking(false);
         return;
@@ -117,36 +113,32 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
         setOptimisticLikes(event.likes ?? 0);
         setIsLiking(false);
         return;
-      } else {
-        console.log(`[LIKE HANDLER] Returned after update:`, data[0]);
       }
-
-      // Weitere Validierung: Hat sich der Wert geändert?
+      
       const updatedLikes = data[0]?.likes;
       if (typeof updatedLikes !== "number" || updatedLikes < newLikes) {
         toast.error(`Warnung: Like-Zähler wurde nicht erhöht. DB-Likes: ${updatedLikes}, erwartet: ${newLikes}`);
+        setOptimisticLikes(event.likes ?? 0);
       } else {
         toast.success("Danke fürs Liken!");
+        setOptimisticLikes(updatedLikes);
       }
 
-      // Warten, damit Supabase das Update propagieren kann
+      // Damit Supabase das Update propagieren kann
       await new Promise((r) => setTimeout(r, 800));
-
       await refreshEvents();
       console.log(`[LIKE HANDLER] Events erfolgreich refreshed`);
       setTimeout(() => setOptimisticLikes(undefined), 1000);
 
-      setTimeout(() => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const refreshedEvent = typeof event.id === "string"
-          ? (window as any)?.allEvents?.find((ev: any) => ev.id === event.id)
-          : null;
-        console.log("[LIKE HANDLER] Nach refresh (aus globalem allEvents):", refreshedEvent);
-      }, 400);
-    } catch (error) {
-      toast.error("Unerwarteter Fehler beim Liken.");
+    } catch (err) {
+      // Prüfe auf typische RLS/Policy Fehler
+      if (err instanceof Error && err.message.includes("row-level security")) {
+        toast.error("Datenbank-Fehler: Row Level Security verhindert Like.");
+      } else {
+        toast.error("Unerwarteter Fehler beim Liken.");
+      }
       setOptimisticLikes(event.likes ?? 0);
-      console.error("[LIKE HANDLER] Unerwarteter Fehler:", error);
+      console.error("[LIKE HANDLER] Unerwarteter Fehler:", err);
     } finally {
       setIsLiking(false);
     }
