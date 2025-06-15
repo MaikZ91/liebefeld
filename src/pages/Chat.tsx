@@ -27,7 +27,6 @@ const ChatPage = () => {
   const [isUserDirectoryOpen, setIsUserDirectoryOpen] = useState(false);
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
-  const [username, setUsername] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || ''); // Initialize username from localStorage
   
   const {
     events,
@@ -68,11 +67,10 @@ const ChatPage = () => {
   // Updated function for profile completion
   const handleProfileUpdate = async () => {
     // Refresh the profile immediately to ensure we have the latest data
-    await refetchProfile();
-    if (userProfile) {
-      setUsername(userProfile.username);
+    const profile = await refetchProfile();
+    if (profile) {
       toast({
-        title: "Willkommen " + userProfile.username + "!",
+        title: "Willkommen " + profile.username + "!",
         description: "Du kannst jetzt in den Gruppen chatten.",
         variant: "success"
       });
@@ -98,7 +96,7 @@ const ChatPage = () => {
         messageSubscriptionChannelRef.current = supabase
           .channel('public:chat_messages')
           .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
-            if (payload.new && payload.new.sender !== username) { // Only count messages from other users
+            if (payload.new && payload.new.sender !== currentUser) { // Only count messages from other users
               // Increment unread message count
               setUnreadMessageCount(prev => prev + 1);
             }
@@ -126,10 +124,10 @@ const ChatPage = () => {
         supabase.removeChannel(messageSubscriptionChannelRef.current);
       }
     };
-  }, [username]); // Depend on username to re-subscribe if it changes
+  }, [currentUser]); // Depend on currentUser to re-subscribe if it changes
 
   const fetchUnreadMessageCount = async () => {
-    if (!username || username === 'Gast') {
+    if (!currentUser || currentUser === 'Gast') {
       setUnreadMessageCount(0);
       return;
     }
@@ -138,7 +136,7 @@ const ChatPage = () => {
       // Get all messages and filter unread ones
       const allMessages = await messageService.fetchMessages(messageService.DEFAULT_GROUP_ID);
       const unreadCount = allMessages.filter(msg => 
-        msg.user_name !== username && (!msg.read_by || !msg.read_by.includes(username))
+        msg.user_name !== currentUser && (!msg.read_by || !msg.read_by.includes(currentUser))
       ).length;
       setUnreadMessageCount(unreadCount);
     } catch (error) {
@@ -153,14 +151,14 @@ const ChatPage = () => {
       setUnreadMessageCount(0); // Reset count when entering community chat
       // Mark all messages as read for the current user in the default group
       const markAllAsRead = async () => {
-        if (username && username !== 'Gast') {
+        if (currentUser && currentUser !== 'Gast') {
           try {
             const allMessages = await messageService.fetchMessages(messageService.DEFAULT_GROUP_ID);
             const unreadMessageIds = allMessages.filter(msg => 
-              msg.user_name !== username && (!msg.read_by || !msg.read_by.includes(username))
+              msg.user_name !== currentUser && (!msg.read_by || !msg.read_by.includes(currentUser))
             ).map(msg => msg.id);
             if (unreadMessageIds.length > 0) {
-              await messageService.markMessagesAsRead(messageService.DEFAULT_GROUP_ID, unreadMessageIds, username);
+              await messageService.markMessagesAsRead(messageService.DEFAULT_GROUP_ID, unreadMessageIds, currentUser);
             }
           } catch (error) {
             console.error('Error marking all messages as read:', error);
@@ -169,7 +167,7 @@ const ChatPage = () => {
       };
       markAllAsRead();
     }
-  }, [activeView, username]);
+  }, [activeView, currentUser]);
 
   // Check if we're on mobile for responsive design adjustments
   const [isMobile, setIsMobile] = useState(false);
@@ -180,10 +178,8 @@ const ChatPage = () => {
     checkIsMobile();
     window.addEventListener('resize', checkIsMobile);
 
-    // Check if we need to refresh the profile when the component mounts
-    refetchProfile();
     return () => window.removeEventListener('resize', checkIsMobile);
-  }, [refetchProfile]);
+  }, []);
 
   // Show loading state while initializing
   if (!isPageLoaded) {
@@ -280,7 +276,7 @@ const ChatPage = () => {
                 open={isUserDirectoryOpen}
                 onOpenChange={setIsUserDirectoryOpen}
                 onSelectUser={handleSelectUser}
-                currentUsername={username}
+                currentUsername={currentUser}
               />
             </div>
           </SheetContent>

@@ -29,9 +29,6 @@ const GroupChat: React.FC<GroupChatProps> = ({
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const { toast } = useToast();
-  
-  // Add state to track if we've tried to refresh the profile after an edit
-  const [hasRefreshedAfterEdit, setHasRefreshedAfterEdit] = useState(false);
 
   // Ensure we have a valid UUID for the groupId
   const validGroupId = groupId === 'general' ? '00000000-0000-4000-8000-000000000000' : groupId;
@@ -57,7 +54,6 @@ const GroupChat: React.FC<GroupChatProps> = ({
   // Handle profile update
   const handleProfileUpdate = async () => {
     const updatedProfile = await refetchProfile();
-    setHasRefreshedAfterEdit(true);
     
     if (updatedProfile) {
       toast({
@@ -68,20 +64,14 @@ const GroupChat: React.FC<GroupChatProps> = ({
     }
   };
   
-  // Effect to force refresh profile when component mounts
+  // Effect to manage initialization state
   useEffect(() => {
-    if (!hasRefreshedAfterEdit) {
-      refetchProfile();
-      setHasRefreshedAfterEdit(true);
-    }
-    
-    // Set a timeout to ensure we don't show loading state for too long
     const timer = setTimeout(() => {
       setIsInitializing(false);
     }, 1500);
     
     return () => clearTimeout(timer);
-  }, [refetchProfile, hasRefreshedAfterEdit]);
+  }, []);
   
   // Show loading skeleton during initialization
   if (isInitializing && loading) {

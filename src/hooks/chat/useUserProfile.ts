@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile, USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
 import { userService } from '@/services/userService';
@@ -10,7 +10,7 @@ export const useUserProfile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchProfile = async (username: string) => {
+  const fetchProfile = useCallback(async (username: string) => {
     try {
       const profile = await userService.getUserByUsername(username);
       
@@ -38,19 +38,15 @@ export const useUserProfile = () => {
       setError(err instanceof Error ? err : new Error('Failed to fetch user profile'));
       return null;
     }
-  };
+  }, []);
 
-  const refetchProfile = async () => {
+  const refetchProfile = useCallback(async () => {
     setLoading(true);
     try {
-      let usernameToFetch = currentUser;
-      
+      let usernameToFetch: string | null = null;
       try {
-        const storedUsername = localStorage.getItem(USERNAME_KEY);
-        if (storedUsername && storedUsername !== currentUser) {
-          setCurrentUser(storedUsername);
-          usernameToFetch = storedUsername;
-        }
+        usernameToFetch = localStorage.getItem(USERNAME_KEY);
+        setCurrentUser(usernameToFetch || 'Gast');
       } catch (err) {
         // console.error('[useUserProfile] Error accessing localStorage:', err);
       }
@@ -65,39 +61,14 @@ export const useUserProfile = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchProfile]);
 
   // Add an alias for refetchProfile to maintain compatibility
   const refreshUserProfile = refetchProfile;
 
   useEffect(() => {
-    const getSession = async () => {
-      setLoading(true);
-      try {
-        let storedUsername = null;
-        try {
-          storedUsername = localStorage.getItem(USERNAME_KEY);
-        } catch (localStorageError) {
-          // console.error("[useUserProfile] Error accessing localStorage:", localStorageError);
-        }
-
-        if (storedUsername) {
-          setCurrentUser(storedUsername);
-          await fetchProfile(storedUsername);
-        } else {
-          setCurrentUser('Gast');
-          setUserProfile(null);
-        }
-      } catch (err) {
-        console.error('[useUserProfile] Error during session initialization:', err);
-        setError(err instanceof Error ? err : new Error('Failed to initialize session'));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getSession();
-  }, []);
+    refetchProfile();
+  }, [refetchProfile]);
 
   return { currentUser, userProfile, loading, error, refetchProfile, refreshUserProfile };
 };
