@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Calendar, MessageSquare, List, Users, User } from "lucide-react";
 import { Badge } from '@/components/ui/badge'; // Import Badge component
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -147,14 +148,31 @@ const MainNav: React.FC<MainNavProps> = ({
   newMessagesCount, // Destructure
   newEventsCount // Destructure
 }) => {
+  const [city, setCity] = React.useState('BI');
   
   // If we're on chat page or the root path, show THE TRIBE + chat navigation buttons
   if (pathname === '/chat' || pathname === '/') {
     return (
       <div className="flex items-center w-full">
-        <Link to="/" className="mr-6 flex items-center space-x-2">
-          <span className="font-bold inline-block">THE TRIBE</span>
-        </Link>
+        <div className="flex items-baseline mr-6">
+          <Link to="/" className="flex items-center">
+            <span className="font-bold inline-block">THE TRIBE</span>
+          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+               <Button
+                  variant="ghost"
+                  className="p-0 h-auto font-bold text-white hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 hover:text-gray-300 active:bg-transparent hover:underline underline-offset-4 cursor-pointer"
+                >
+                .{city}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-zinc-900 border-red-500/30">
+              <DropdownMenuItem onClick={() => setCity('BI')} className="text-white hover:bg-red-500/20 cursor-pointer focus:bg-red-500/20 focus:text-white">Bielefeld</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setCity('HH')} className="text-white hover:bg-red-500/20 cursor-pointer focus:bg-red-500/20 focus:text-white">Hamburg</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
         
         {/* Chat navigation buttons */}
         <div className="flex items-center justify-between w-full">

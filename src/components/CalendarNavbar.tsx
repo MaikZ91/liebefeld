@@ -1,14 +1,10 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 import { cn } from '@/lib/utils';
 import { CalendarDays, Info, MessageSquare } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
 
 const CalendarNavbar: React.FC = () => {
   const location = useLocation();
-  const [city, setCity] = useState('BI');
   
   const links = [
     { href: '/', icon: CalendarDays, label: 'Kalender & Community' },
@@ -24,20 +20,6 @@ const CalendarNavbar: React.FC = () => {
             <Link to="/" className="flex items-center">
               <h1 className="font-serif text-2xl font-bold tracking-tight">THE TRIBE</h1>
             </Link>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                 <Button
-                    variant="ghost"
-                    className="p-0 h-auto font-serif text-2xl font-bold tracking-tight text-white hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 hover:text-gray-300 active:bg-transparent hover:underline underline-offset-4 cursor-pointer"
-                  >
-                  .{city}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-zinc-900 border-red-500/30">
-                <DropdownMenuItem onClick={() => setCity('BI')} className="text-white hover:bg-red-500/20 cursor-pointer focus:bg-red-500/20 focus:text-white">Bielefeld</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setCity('HH')} className="text-white hover:bg-red-500/20 cursor-pointer focus:bg-red-500/20 focus:text-white">Hamburg</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
           
           {/* Desktop navigation - now positioned next to the logo */}
