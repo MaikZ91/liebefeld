@@ -28,7 +28,7 @@ const CalendarNavbar: React.FC = () => {
               <DropdownMenuTrigger asChild>
                  <Button
                     variant="ghost"
-                    className="p-0 h-auto font-serif text-2xl font-bold tracking-tight text-white hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 hover:text-white active:bg-transparent"
+                    className="p-0 h-auto font-serif text-2xl font-bold tracking-tight text-white hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 hover:text-gray-300 active:bg-transparent hover:underline underline-offset-4 cursor-pointer"
                   >
                   .{city}
                 </Button>
