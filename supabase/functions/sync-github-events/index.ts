@@ -33,6 +33,33 @@ Deno.serve(async (req) => {
   try {
     console.log('Starting GitHub events synchronization...');
 
+    // 1. Fetch existing GitHub-sourced events to preserve user-generated data
+    const { data: existingEvents, error: existingEventsError } = await supabase
+      .from('community_events')
+      .select('external_id, likes, rsvp_yes, rsvp_no, rsvp_maybe')
+      .eq('source', 'github');
+
+    if (existingEventsError) {
+      console.error('Error fetching existing events:', existingEventsError);
+      throw new Error(`Failed to fetch existing events: ${existingEventsError.message}`);
+    }
+
+    const existingEventsMap = new Map();
+    if (existingEvents) {
+      for (const event of existingEvents) {
+        if (event.external_id) {
+          existingEventsMap.set(event.external_id, {
+            likes: event.likes,
+            rsvp_yes: event.rsvp_yes,
+            rsvp_no: event.rsvp_no,
+            rsvp_maybe: event.rsvp_maybe,
+          });
+        }
+      }
+    }
+    console.log(`Found ${existingEventsMap.size} existing GitHub events with user data to preserve.`);
+
+
     // URL zur GitHub Events JSON Datei
     const EXTERNAL_EVENTS_URL = "https://raw.githubusercontent.com/MaikZ91/productiontools/master/events.json";
     const cacheBuster = `?t=${new Date().getTime()}`;
@@ -112,6 +139,7 @@ Deno.serve(async (req) => {
       }
 
       const externalId = githubEvent.hash || githubEvent.event || `event-${transformedEvents.length}`;
+      const existingData = existingEventsMap.get(externalId);
 
       transformedEvents.push({
         source: 'github',
@@ -125,14 +153,14 @@ Deno.serve(async (req) => {
         category: category,
         link: githubEvent.link || null,
         is_paid: false,
-        likes: 0,
-        rsvp_yes: 0,
-        rsvp_no: 0,
-        rsvp_maybe: 0
+        likes: existingData ? existingData.likes : 0,
+        rsvp_yes: existingData ? existingData.rsvp_yes : 0,
+        rsvp_no: existingData ? existingData.rsvp_no : 0,
+        rsvp_maybe: existingData ? existingData.rsvp_maybe : 0
       });
     }
 
-    console.log(`Transformed ${transformedEvents.length} events`);
+    console.log(`Transformed ${transformedEvents.length} events, preserving user data.`);
 
     // Upsert events into community_events table
     let successCount = 0;
@@ -189,3 +217,4 @@ Deno.serve(async (req) => {
     );
   }
 });
+
