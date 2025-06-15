@@ -11,7 +11,7 @@ import PerfectDayPanel from '@/components/PerfectDayPanel';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { QrCode } from 'lucide-react';
-import { EventProvider, useEventContext } from '@/contexts/EventContext';
+import { useEventContext } from '@/contexts/EventContext';
 
 type AnimationType = 'char' | 'word' | 'whole';
 
@@ -121,7 +121,7 @@ const Index = () => {
     }
   };
   
-  const { events } = useEventContext(); // Hole Events direkt aus Context
+  const { events } = useEventContext(); // This now uses the one, true EventProvider from App.tsx
 
   return (
     <div className="h-screen w-screen flex flex-col bg-black text-white overflow-hidden fixed inset-0">
@@ -133,7 +133,7 @@ const Index = () => {
       
       {/* LiveTicker - Fixed position with highest z-index */}
       <div className="fixed top-20 left-0 right-0 h-12 w-full bg-black/95 backdrop-blur-lg border-b border-white/20 shadow-xl z-50 flex-shrink-0">
-        <LiveTicker events={events} /> {/* Direkt aus Context, kein Provider mehr */}
+        <LiveTicker events={events} /> {/* Directly from global context, no more re-renders */}
       </div>
       
       {/* Main content - Fixed calculated height with top padding for ticker */}
@@ -275,12 +275,10 @@ const Index = () => {
                 Personalisierte Event-Empfehlungen
               </p>
             </div>
-            <EventProvider>
-              <PerfectDayPanel 
-                className="w-full h-32 bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/50 shadow-2xl overflow-y-auto" 
-                onAskChatbot={handleChatbotQuery}
-              />
-            </EventProvider>
+            <PerfectDayPanel 
+              className="w-full h-32 bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/50 shadow-2xl overflow-y-auto" 
+              onAskChatbot={handleChatbotQuery}
+            />
           </div>
         </div>
       </div>

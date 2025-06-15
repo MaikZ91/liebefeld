@@ -29,12 +29,6 @@ interface EventContextProps {
   addUserEvent: (event: Omit<Event, 'id'>) => Promise<Event>;
 }
 
-declare global {
-  interface Window {
-    refreshEventsContext?: () => Promise<void>;
-  }
-}
-
 const EventContext = createContext<EventContextProps | undefined>(undefined);
 
 export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -197,13 +191,8 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   useEffect(() => {
-    console.log('EventProvider: Loading events...');
+    console.log('EventProvider: Initial event load...');
     refreshEvents();
-    window.refreshEventsContext = refreshEvents;
-    
-    return () => {
-      delete window.refreshEventsContext;
-    };
   }, []);
 
   const value = {
