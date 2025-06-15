@@ -338,12 +338,13 @@ serve(async (req) => {
         thisMonthEvents.slice(0, 3).map((e: any) => `${e.title} (${e.date})`));
     }
     
-    // Format events with actual categories
+    // Format events with actual categories and add likes
     const formattedEvents = filteredEvents
       .map((e: any) => {
         // Use the actual category from the event, don't default to 'Sonstiges'
         const actualCategory = e.category || 'Unbekannt';
-        console.log(`[ai-event-chat] Event "${e.title}" has category: ${actualCategory}`);
+        const likesCount = e.likes ?? 0;
+        console.log(`[ai-event-chat] Event "${e.title}" has category: ${actualCategory} and likes: ${likesCount}`);
         
         return [
           `Event: ${e.title}`,
@@ -351,14 +352,15 @@ serve(async (req) => {
           `Zeit: ${e.time}`,
           `Kategorie: ${actualCategory}`, // Use the actual category
           e.location ? `Ort: ${e.location}` : "",
+          `Likes: ${likesCount}` // <--- Add likes information for each event
         ].filter(Boolean).join("\n");
       })
       .join("\n\n");
 
-    const totalEventsInfo = `Es gibt insgesamt ${dbEvents.length} Events in der Datenbank. Ich habe dir die ${filteredEvents.length} relevantesten basierend auf deiner Anfrage ausgewählt.`;
-    
-    let systemMessage = `Du bist ein Event‑Assistent für Liebefeld. Begrüße den Nutzer freundlich je nach Tageszeit. Liste dann alle Events als chronologische Timeline (geordnet nach Uhrzeit) auf. Gruppiere immer nach den 3 Kategorien: Ausgehen, Sport und Kreativität. Die Kategorie wird in GROßBUCHSTABEN in Rot aufgelistet. WICHTIG: Events mit der category "Sonstiges" werden immer der Kategorie "Ausgehen" zugewiesen! WICHTIG, WICHTIG: Wenn Improtheater im Eventname: wird immer der Kategorie "Kreativität" zugewiesen(ignoriere hier die category: Sport). Beschreibe jedes Event kurz, nimm dafür alle Infos die du hast die du hast für jedes Event. Aktuelles Datum: ${today}.\n${totalEventsInfo}\n`;
-    
+    const totalEventsInfo = `Es gibt insgesamt ${dbEvents.length} Events in der Datenbank. Ich habe dir die ${filteredEvents.length} relevantesten basierend auf deiner Anfrage ausgewählt.\nDie Anzahl der Likes gibt an, wie beliebt ein Event ist.`;
+
+    let systemMessage = `Du bist ein Event‑Assistent für Liebefeld. Begrüße den Nutzer freundlich je nach Tageszeit. Liste dann alle Events als chronologische Timeline (geordnet nach Uhrzeit) auf. Gruppiere immer nach den 3 Kategorien: Ausgehen, Sport und Kreativität. Die Kategorie wird in GROßBUCHSTABEN in Rot aufgelistet. WICHTIG: Events mit der category "Sonstiges" werden immer der Kategorie "Ausgehen" zugewiesen! WICHTIG, WICHTIG: Wenn Improtheater im Eventname: wird immer der Kategorie "Kreativität" zugewiesen(ignoriere hier die category: Sport). Beschreibe jedes Event kurz, nimm dafür alle Infos die du hast die du hast für jedes Event. Aktuelles Datum: ${today}.\n${totalEventsInfo}\nEvents mit vielen Likes sind besonders beliebt und bekommen oft den Vorzug bei Empfehlungen. Die Likes-Anzahl findest du bei jedem Event. Berücksichtige die Anzahl der Likes für Empfehlungen und markiere besonders beliebte Events passend.\n`;
+
     if (isPersonalRequest || userInterests?.length > 0 || userLocations?.length > 0) {
       systemMessage += `Dies ist eine personalisierte Anfrage. `;
       
