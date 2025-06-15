@@ -59,8 +59,13 @@ const isEventNew = (event: Event): boolean => {
 };
 
 const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, compact = false }) => {
+  // Optimistic state for likes:
+  const [optimisticLikes, setOptimisticLikes] = useState<number | undefined>(event.likes);
   const [isLiking, setIsLiking] = useState(false);
   const { refreshEvents } = useEventContext();
+
+  // Helper um Likes zu zeigen (State bevorzugt, sonst Fallback):
+  const currentLikes = optimisticLikes !== undefined ? optimisticLikes : event.likes || 0;
 
   const isNewEvent = isEventNew(event);
   const isTribe = isTribeEvent(event.title);
@@ -73,35 +78,38 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     e.stopPropagation();
 
     if (isLiking) return;
-
     if (!event?.id) {
       console.error("[LIKE HANDLER] Kein Event! Kann Like nicht speichern.", event);
       toast.error("Fehler: Event nicht gefunden.");
       return;
     }
 
+    // Optimistic UI-Update:
+    setOptimisticLikes((prev) => (prev ?? event.likes ?? 0) + 1);
+
     setIsLiking(true);
     console.log(`[LIKE HANDLER] Like angefragt für Event:`, event?.id, event?.title);
 
     try {
-      const currentLikes = event.likes || 0;
-      const newLikes = currentLikes + 1;
-      console.log(`[LIKE HANDLER] Likes alt: ${currentLikes}, neu: ${newLikes}`);
+      const currentLikesDb = event.likes || 0;
+      const newLikes = currentLikesDb + 1;
+      console.log(`[LIKE HANDLER] Likes alt: ${currentLikesDb}, neu: ${newLikes}`);
 
       // Like direkt in DB erhöhen
       const { error, data } = await supabase
         .from("community_events")
         .update({ likes: newLikes })
         .eq("id", event.id);
+
       console.log(`[LIKE HANDLER] Supabase Response`, { data, error });
       if (error) {
         toast.error("Fehler beim Speichern deines Likes.");
-        console.error("[LIKE HANDLER] Database Error:", error);
+        // Setze Likes wieder zurück (Rollback):
+        setOptimisticLikes(event.likes ?? 0);
         setIsLiking(false);
         return;
       }
 
-      // Prüfe, ob das Row zurückgegeben wurde & Likes Wert darin geloggt
       if (data && Array.isArray(data)) {
         console.log(`[LIKE HANDLER] Returned after update:`, data[0]);
       } else if (data) {
@@ -113,20 +121,25 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
       toast.success("Danke fürs Liken!");
       // Warten, damit Supabase das Update propagieren kann
       await new Promise((r) => setTimeout(r, 800));
+
+      // Nach dem Refresh werden die neuen Likes geladen (optimistischer Wert bleibt bis dahin sichtbar):
       await refreshEvents();
       console.log(`[LIKE HANDLER] Events erfolgreich refreshed`);
 
-      // Suche das upgedatete Event und logge seinen Likes-Wert
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // Optimistic likes können zurückgesetzt werden, sobald Events neu geladen:
+      setTimeout(() => setOptimisticLikes(undefined), 1000);
+
       setTimeout(() => {
+        // Check global events variable falls gesetzt
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const refreshedEvent = typeof event.id === "string"
           ? (window as any)?.allEvents?.find((ev: any) => ev.id === event.id)
           : null;
         console.log("[LIKE HANDLER] Nach refresh (aus globalem allEvents):", refreshedEvent);
       }, 400);
-
     } catch (error) {
       toast.error("Unerwarteter Fehler beim Liken.");
+      setOptimisticLikes(event.likes ?? 0); // Rollback
       console.error("[LIKE HANDLER] Unerwarteter Fehler:", error);
     } finally {
       setIsLiking(false);
@@ -238,12 +251,12 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
               >
                 <Heart className={cn(
                   "w-2 h-2 transition-transform text-white",
-                  (event.likes || 0) > 0 ? "fill-red-500 text-white" : "",
+                  currentLikes > 0 ? "fill-red-500 text-white" : "",
                   isLiking ? "scale-125" : ""
                 )} />
               </Button>
-              {(event.likes || 0) > 0 && (
-                <span className="text-[8px] text-white font-medium">{event.likes}</span>
+              {currentLikes > 0 && (
+                <span className="text-[8px] text-white font-medium">{currentLikes}</span>
               )}
             </div>
           </div>
@@ -339,12 +352,12 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
             >
               <Heart className={cn(
                 "w-4 h-4 transition-transform text-white",
-                (event.likes || 0) > 0 ? "fill-red-500 text-white" : "",
+                currentLikes > 0 ? "fill-red-500 text-white" : "",
                 isLiking ? "scale-125" : ""
               )} />
             </Button>
-            {(event.likes || 0) > 0 && (
-              <span className="text-sm text-white font-medium">{event.likes}</span>
+            {currentLikes > 0 && (
+              <span className="text-sm text-white font-medium">{currentLikes}</span>
             )}
           </div>
         </div>
