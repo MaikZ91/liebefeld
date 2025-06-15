@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { MessageListProps } from './types';
 import SwipeableEventPanel from './SwipeableEventPanel';
 import SwipeableLandingPanel from './SwipeableLandingPanel';
-import TypewriterPrompt from './TypewriterPrompt'; // NEU
+import TypewriterPrompt from './TypewriterPrompt';
 
 import './MessageList.css'; 
 
@@ -23,7 +23,7 @@ const MessageList: React.FC<MessageListProps> = ({
   const typewriterPromptMessage = messages.find(m => m.id === 'typewriter-prompt');
   const landingSlideMessage = messages.find(m => m.id === 'landing-slides');
 
-  // Alle übrigen Nachrichten (z. B. Bot-/User-Messages/Panels/HTML)
+  // Alle übrigen Nachrichten (z. B. Bot-/User-Messages/Panels/HTML)
   const mainMessages = messages
     .filter(m => !['welcome', 'typewriter-prompt', 'landing-slides'].includes(m.id));
 
@@ -37,10 +37,10 @@ const MessageList: React.FC<MessageListProps> = ({
           </div>
         )}
 
-        {/* Schreibmaschinen-Prompt */}
-        {typewriterPromptMessage && (
+        {/* Schreibmaschinen-Prompt - Verwende examplePrompts aus Props */}
+        {typewriterPromptMessage && examplePrompts && examplePrompts.length > 0 && (
           <TypewriterPrompt
-            prompts={typewriterPromptMessage.examplePrompts || []}
+            prompts={examplePrompts}
             onPromptClick={handleExamplePromptClick}
             loopInterval={3000}
             typingSpeed={40}
@@ -118,4 +118,3 @@ const MessageList: React.FC<MessageListProps> = ({
 };
 
 export default MessageList;
-
