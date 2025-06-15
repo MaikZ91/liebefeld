@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useEventContext } from '@/contexts/EventContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
+import EventLikeButton from "./EventLikeButton";
 
 interface EventCardProps {
   event: Event;
@@ -243,27 +244,12 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
               {icon}
             </Badge>
 
-            <div className="flex items-center gap-0.5">
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  "h-4 w-4 rounded-full transition-all p-0",
-                  isLiking ? "opacity-70 cursor-not-allowed" : ""
-                )}
-                onClick={handleLike}
-                disabled={isLiking}
-              >
-                <Heart className={cn(
-                  "w-2 h-2 transition-transform text-white",
-                  currentLikes > 0 ? "fill-red-500 text-white" : "",
-                  isLiking ? "scale-125" : ""
-                )} />
-              </Button>
-              {currentLikes > 0 && (
-                <span className="text-[8px] text-white font-medium">{currentLikes}</span>
-              )}
-            </div>
+            <EventLikeButton
+              likes={currentLikes}
+              isLiking={isLiking}
+              onLike={handleLike}
+              small
+            />
           </div>
         </div>
       </div>
@@ -344,27 +330,11 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
             {event.category}
           </Badge>
 
-          <div className="flex items-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "h-7 w-7 rounded-full mr-1 transition-all",
-                isLiking ? "opacity-70 cursor-not-allowed" : ""
-              )}
-              onClick={handleLike}
-              disabled={isLiking}
-            >
-              <Heart className={cn(
-                "w-4 h-4 transition-transform text-white",
-                currentLikes > 0 ? "fill-red-500 text-white" : "",
-                isLiking ? "scale-125" : ""
-              )} />
-            </Button>
-            {currentLikes > 0 && (
-              <span className="text-sm text-white font-medium">{currentLikes}</span>
-            )}
-          </div>
+          <EventLikeButton
+            likes={currentLikes}
+            isLiking={isLiking}
+            onLike={handleLike}
+          />
         </div>
       </div>
 
