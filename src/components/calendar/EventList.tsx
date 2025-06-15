@@ -157,15 +157,19 @@ const EventList: React.FC<EventListProps> = memo(({
           const startTime = performance.now();
           
           const animateScroll = (currentTime: number) => {
+            if (!listRef.current) {
+              return; // Guard against component unmount
+            }
+            
             const elapsedTime = currentTime - startTime;
             
             if (elapsedTime < duration) {
               const progress = 1 - Math.pow(1 - elapsedTime / duration, 2);
               const scrollValue = currentScrollTop + (targetScrollTop - currentScrollTop) * progress;
-              listRef.current!.scrollTop = scrollValue;
+              listRef.current.scrollTop = scrollValue;
               requestAnimationFrame(animateScroll);
             } else {
-              listRef.current!.scrollTop = targetScrollTop;
+              listRef.current.scrollTop = targetScrollTop;
               console.log('EventList: Smooth scroll completed after animations');
               setHasScrolledToToday(true);
             }
