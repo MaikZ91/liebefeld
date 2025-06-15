@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { UserProfile } from "@/types/chatTypes";
 import { Card } from "@/components/ui/card";
@@ -69,7 +68,7 @@ const UserCard: React.FC<UserCardProps> = ({ user, currentUsername, onSelectUser
       )}
 
       {isFlipped && (
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm p-3 text-white flex flex-col justify-between transition-opacity duration-300 animate-in fade-in">
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm p-4 text-white flex flex-col justify-between transition-opacity duration-300 animate-in fade-in">
             <div className="flex justify-between items-start">
               <h3 className="font-bold text-lg truncate" style={{textShadow: '1px 1px 3px rgba(0,0,0,0.7)'}}>{user.username}</h3>
               <button onClick={handleCloseDetails} className="p-1 -mr-2 -mt-2 rounded-full hover:bg-white/20">
@@ -77,12 +76,12 @@ const UserCard: React.FC<UserCardProps> = ({ user, currentUsername, onSelectUser
               </button>
             </div>
             
-            <div className="space-y-3 overflow-y-auto flex-grow my-3 text-xs pr-1">
+            <div className="space-y-4 overflow-y-auto flex-grow my-4 text-xs pr-1">
               {user.interests && user.interests.length > 0 ? (
-                  <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center gap-1.5">
-                          <Heart className="h-4 w-4 text-red-400 shrink-0" />
-                          <span className="font-semibold">Interessen</span>
+                  <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                          <Heart className="h-5 w-5 text-red-400 shrink-0" />
+                          <span className="font-semibold text-sm">Interessen</span>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                           {user.interests.map(interest => (
@@ -94,10 +93,10 @@ const UserCard: React.FC<UserCardProps> = ({ user, currentUsername, onSelectUser
                   <div className="text-gray-400 text-center py-4">Keine Interessen angegeben.</div>
               )}
               {user.favorite_locations && user.favorite_locations.length > 0 ? (
-                  <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center gap-1.5">
-                          <MapPin className="h-4 w-4 text-blue-400 shrink-0" />
-                          <span className="font-semibold">Lieblingsorte</span>
+                  <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                          <MapPin className="h-5 w-5 text-blue-400 shrink-0" />
+                          <span className="font-semibold text-sm">Lieblingsorte</span>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                           {user.favorite_locations.map(location => (
