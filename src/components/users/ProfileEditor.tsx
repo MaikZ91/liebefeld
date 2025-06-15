@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -195,7 +194,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-black text-white border border-gray-800 sm:max-w-3xl max-h-[90vh] flex flex-col">
+      <DialogContent className="bg-black text-white border border-gray-800 sm:max-w-lg max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-white text-2xl">Dein Profil</DialogTitle>
           <DialogDescription className="text-gray-400">
@@ -206,17 +205,17 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-grow overflow-hidden">
             <ScrollArea className="flex-grow pr-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-4">
-                <div className="md:col-span-1 flex flex-col items-center text-center space-y-4">
+              <div className="space-y-8 py-4">
+                <div className="flex flex-col items-center text-center space-y-4">
                   <AvatarUploader 
                     username={form.watch('username')}
                     currentAvatar={uploadedImage || form.watch('avatar')}
                     onAvatarChange={handleAvatarUpdate}
                   />
-                  <p className="text-sm text-gray-400">Lade ein Bild von dir hoch, um dein Profil zu personalisieren.</p>
+                  <p className="text-sm text-gray-400 px-8">Dein Profilbild ist das Erste, was andere sehen. Wähle ein Gutes!</p>
                 </div>
 
-                <div className="md:col-span-2 space-y-6">
+                <div className="space-y-6">
                   <UsernameField form={form} />
                   <BioField form={form} />
                   <InterestsEditor 

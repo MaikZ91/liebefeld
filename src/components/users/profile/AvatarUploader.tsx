@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/chatUIUtils';
@@ -79,9 +78,9 @@ const AvatarUploader: React.FC<AvatarUploaderProps> = ({
 
   return (
     <div className="flex flex-col items-center mb-4">
-      <Avatar className="h-24 w-24 mb-3 border-2 border-red-500/50">
+      <Avatar className="h-32 w-32 mb-3 border-4 border-red-500/50">
         <AvatarImage src={currentAvatar || ''} alt={username} />
-        <AvatarFallback className="bg-red-500 text-2xl">
+        <AvatarFallback className="bg-red-500 text-4xl">
           {getInitials(username)}
         </AvatarFallback>
       </Avatar>
