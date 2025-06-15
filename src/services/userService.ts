@@ -2,6 +2,9 @@
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/types/chatTypes';
 
+const CACHE_KEY_PREFIX = 'user_profile_';
+const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+
 export const userService = {
   /**
    * Benutzerprofile abrufen
@@ -24,12 +27,22 @@ export const userService = {
    * Ein einzelnes Benutzerprofil abrufen über Edge Function
    */
   async getUserByUsername(username: string): Promise<UserProfile | null> {
-    if (!username) {
-      console.error('[userService] Username is required to fetch profile');
+    if (!username || username === 'Gast') {
       return null;
     }
     
-    console.log(`[userService] Fetching profile for username: ${username}`);
+    const cacheKey = `${CACHE_KEY_PREFIX}${username}`;
+    try {
+        const cachedItem = localStorage.getItem(cacheKey);
+        if (cachedItem) {
+            const { profile, timestamp } = JSON.parse(cachedItem);
+            if (Date.now() - timestamp < CACHE_DURATION_MS) {
+                return profile;
+            }
+        }
+    } catch (e) {
+        console.error('[userService] Error reading from cache:', e);
+    }
     
     try {
       const { data, error } = await supabase.functions.invoke('manage_user_profile', {
@@ -41,30 +54,26 @@ export const userService = {
         throw error;
       }
       
-      if (data?.profile) {
-        console.log('[userService] Profile received from edge function:', data.profile);
-        console.log('[userService] Interests:', data.profile.interests || []);
-        console.log('[userService] Favorite locations:', data.profile.favorite_locations || []);
-        
-        // Ensure favorite_locations is an array (important fix)
-        if (data.profile.favorite_locations === null) {
-          data.profile.favorite_locations = [];
+      const profile = data?.profile;
+
+      if (profile) {
+        if (profile.favorite_locations === null) {
+          profile.favorite_locations = [];
         }
-        
-        // Ensure interests is an array (important fix)
-        if (data.profile.interests === null) {
-          data.profile.interests = [];
+        if (profile.interests === null) {
+          profile.interests = [];
         }
-      } else {
-        console.log('[userService] No profile found for user:', username);
+        try {
+            localStorage.setItem(cacheKey, JSON.stringify({ profile, timestamp: Date.now() }));
+        } catch (e) {
+            console.error('[userService] Error writing to cache:', e);
+        }
       }
       
-      return data?.profile || null;
+      return profile || null;
     } catch (error) {
       console.error('[userService] Fehler beim Abrufen des Benutzerprofils:', error);
       
-      // Fallback to direct DB query if edge function fails
-      console.log('[userService] Attempting direct DB query as fallback');
       const { data, error: dbError } = await supabase
         .from('user_profiles')
         .select('*')
@@ -77,18 +86,16 @@ export const userService = {
       }
       
       if (data) {
-        console.log('[userService] Profile found via direct DB query:', data);
-        console.log('[userService] Interests:', data.interests || []);
-        console.log('[userService] Favorite locations:', data.favorite_locations || []);
-        
-        // Ensure favorite_locations is an array (important fix) 
         if (data.favorite_locations === null) {
           data.favorite_locations = [];
         }
-        
-        // Ensure interests is an array (important fix)
         if (data.interests === null) {
           data.interests = [];
+        }
+        try {
+            localStorage.setItem(cacheKey, JSON.stringify({ profile: data, timestamp: Date.now() }));
+        } catch (e) {
+            console.error('[userService] Error writing to cache:', e);
         }
       }
       
@@ -101,14 +108,10 @@ export const userService = {
    */
   async createOrUpdateProfile(profile: Partial<UserProfile> & { username: string }): Promise<UserProfile> {
     try {
-      console.log('Creating or updating profile with data:', profile);
-      
-      // Ensure favorite_locations is an array before sending
       if (!Array.isArray(profile.favorite_locations)) {
         profile.favorite_locations = profile.favorite_locations || [];
       }
       
-      // Ensure interests is an array before sending
       if (!Array.isArray(profile.interests)) {
         profile.interests = profile.interests || [];
       }
@@ -126,7 +129,9 @@ export const userService = {
       
       if (!result) throw new Error('No profile data returned');
       
-      console.log('Profile saved successfully:', result);
+      const cacheKey = `${CACHE_KEY_PREFIX}${profile.username}`;
+      localStorage.removeItem(cacheKey);
+      
       return result as UserProfile;
     } catch (error) {
       console.error('Fehler in createOrUpdateProfile:', error);

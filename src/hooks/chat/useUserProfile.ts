@@ -52,7 +52,7 @@ export const useUserProfile = () => {
           usernameToFetch = storedUsername;
         }
       } catch (err) {
-        console.error('[useUserProfile] Error accessing localStorage:', err);
+        // console.error('[useUserProfile] Error accessing localStorage:', err);
       }
       
       if (usernameToFetch && usernameToFetch !== 'Gast') {
@@ -78,7 +78,7 @@ export const useUserProfile = () => {
         try {
           storedUsername = localStorage.getItem(USERNAME_KEY);
         } catch (localStorageError) {
-          console.error("[useUserProfile] Error accessing localStorage:", localStorageError);
+          // console.error("[useUserProfile] Error accessing localStorage:", localStorageError);
         }
 
         if (storedUsername) {
