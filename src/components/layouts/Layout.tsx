@@ -139,6 +139,24 @@ interface MainNavProps {
   newEventsCount: number; // Added
 }
 
+const cities = [
+  { name: "Bielefeld", abbr: "BI" },
+  { name: "Berlin", abbr: "berlin" },
+  { name: "Hamburg", abbr: "hamburg" },
+  { name: "München", abbr: "munich" },
+  { name: "Köln", abbr: "cologne" },
+  { name: "Frankfurt", abbr: "frankfurt" },
+  { name: "Stuttgart", abbr: "stuttgart" },
+  { name: "Düsseldorf", abbr: "duesseldorf" },
+  { name: "Leipzig", abbr: "leipzig" },
+  { name: "Hannover", abbr: "hanover" },
+  { name: "Nürnberg", abbr: "nuremberg" },
+  { name: "Bremen", abbr: "bremen" },
+  { name: "Dresden", abbr: "dresden" },
+  { name: "Essen", abbr: "essen" },
+  { name: "Dortmund", abbr: "dortmund" },
+];
+
 const MainNav: React.FC<MainNavProps> = ({ 
   pathname, 
   activeView, 
@@ -168,8 +186,9 @@ const MainNav: React.FC<MainNavProps> = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="bg-zinc-900 border-red-500/30">
-              <DropdownMenuItem onClick={() => setCity('BI')} className="text-white hover:bg-red-500/20 cursor-pointer focus:bg-red-500/20 focus:text-white">Bielefeld</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setCity('HH')} className="text-white hover:bg-red-500/20 cursor-pointer focus:bg-red-500/20 focus:text-white">Hamburg</DropdownMenuItem>
+              {cities.map((c) => (
+                <DropdownMenuItem key={c.abbr} onClick={() => setCity(c.abbr)} className="text-white hover:bg-red-500/20 cursor-pointer focus:bg-red-500/20 focus:text-white">{c.name}</DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
