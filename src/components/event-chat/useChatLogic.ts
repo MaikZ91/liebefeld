@@ -523,39 +523,42 @@ export const useChatLogic = (
 
     appLaunchedBeforeRef.current = localStorage.getItem(APP_LAUNCHED_KEY) === 'true';
 
+    // Boot order: only AI mode, only if not already loaded from storage
     if (!welcomeMessageShownRef.current && activeChatModeValue === 'ai') {
-        const hasMessages = messages.length > 0;
-        const hasSavedMessages = localStorage.getItem(CHAT_HISTORY_KEY) !== null;
+      const hasMessages = messages.length > 0;
+      const hasSavedMessages = localStorage.getItem(CHAT_HISTORY_KEY) !== null;
 
-        if (!hasMessages && !hasSavedMessages && !appLaunchedBeforeRef.current) {
-            welcomeMessageShownRef.current = true;
-            localStorage.setItem(APP_LAUNCHED_KEY, 'true');
-            setMessages([
-                {
-                    id: 'welcome',
-                    isUser: false,
-                    text: 'Willkommen bei THE TRIBE!',
-                    html: getWelcomeMessage(),
-                    timestamp: new Date().toISOString()
-                },
-                {
-                    id: 'typewriter-prompt',
-                    isUser: false,
-                    text: 'Frag mich etwas:',
-                    examplePrompts: examplePrompts, // <-- neue variable verwenden
-                    timestamp: new Date().toISOString()
-                },
-                {
-                    id: 'landing-slides',
-                    isUser: false,
-                    text: 'Entdecke unsere Community-Features:',
-                    slideData: createLandingSlideData(),
-                    timestamp: new Date().toISOString()
-                }
-            ]);
-        } else if (hasSavedMessages || appLaunchedBeforeRef.current) {
-            welcomeMessageShownRef.current = true;
-        }
+      if (!hasMessages && !hasSavedMessages && !appLaunchedBeforeRef.current) {
+        welcomeMessageShownRef.current = true;
+        localStorage.setItem(APP_LAUNCHED_KEY, 'true');
+        setMessages([
+          {
+            id: 'welcome',
+            isUser: false,
+            text: 'Willkommen bei THE TRIBE!',
+            html: getWelcomeMessage(),
+            timestamp: new Date().toISOString()
+          },
+          {
+            id: 'typewriter-prompt',
+            isUser: false,
+            text: 'Frag mich etwas:',
+            examplePrompts: examplePrompts,
+            timestamp: new Date().toISOString()
+          },
+          {
+            id: 'landing-slides',
+            isUser: false,
+            text: 'Entdecke unsere Community-Features:',
+            slideData: createLandingSlideData(),
+            timestamp: new Date().toISOString()
+          }
+        ]);
+        console.log('[ChatLogic:Welcome] Initial welcome/typewriter/landing messages gesetzt!');
+      } else if (hasSavedMessages || appLaunchedBeforeRef.current) {
+        welcomeMessageShownRef.current = true;
+        // No-op: messages restored from storage or already flagged launched
+      }
     }
   }, [activeChatModeValue, messages.length]);
 
@@ -601,7 +604,7 @@ export const useChatLogic = (
           id: 'typewriter-prompt',
           isUser: false,
           text: 'Frag mich etwas:',
-          examplePrompts: examplePrompts, // <-- neue variable verwenden
+          examplePrompts: examplePrompts,
           timestamp: new Date().toISOString()
         },
         {
@@ -649,7 +652,7 @@ export const useChatLogic = (
     setShowRecentQueries,
     messagesEndRef,
     inputRef,
-    examplePrompts, // <-- Rückgabe für MessageList/Prompt-Komponente
+    examplePrompts, // <-- wichtig: für MessageList/Prompt-Komponenten immer vorhanden
     isHeartActive,
     handleToggleChat,
     handleSendMessage,
