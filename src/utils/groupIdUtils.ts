@@ -1,4 +1,3 @@
-
 // src/utils/groupIdUtils.ts
 import { v5 as uuidv5 } from 'uuid';
 
@@ -6,18 +5,17 @@ import { v5 as uuidv5 } from 'uuid';
 const TRIBE_NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
 
 /**
- * Creates a deterministic UUID for city-specific group IDs
- * This ensures the same city-category combination always produces the same UUID
+ * Creates a deterministic, readable string for city-specific group IDs.
+ * This ensures the same city-category combination always produces the same ID.
+ * Example: createCitySpecificGroupId('Sport', 'BI') returns 'bi_sport'
  */
 export const createCitySpecificGroupId = (category: string, cityAbbr: string): string => {
+  // Normalize city and category to create a URL-safe, predictable ID
   const normalizedCity = cityAbbr.toLowerCase();
   const normalizedCategory = category.toLowerCase();
   
-  // Create a deterministic string identifier
-  const stringIdentifier = `${normalizedCity}_${normalizedCategory}`;
-  
-  // Generate a deterministic UUID using UUID v5
-  return uuidv5(stringIdentifier, TRIBE_NAMESPACE);
+  // Create a deterministic string identifier, e.g., "bi_sport"
+  return `${normalizedCity}_${normalizedCategory}`;
 };
 
 /**

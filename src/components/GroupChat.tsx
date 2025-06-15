@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import ChatGroup from './chat/ChatGroup';
 import { UserProfile } from '@/types/chatTypes';
 import UserDirectory from './users/UserDirectory';
@@ -10,8 +9,6 @@ import ProfileEditor from './users/ProfileEditor';
 import { useToast } from '@/hooks/use-toast';
 import { UserCircle, LogIn } from 'lucide-react';
 import ChatLoadingSkeleton from './chat/ChatLoadingSkeleton';
-import { useEventContext, cities } from '@/contexts/EventContext';
-import { createGroupDisplayName, parseLegacyGroupId } from '@/utils/groupIdUtils';
 
 interface GroupChatProps {
   groupId: string;
@@ -31,24 +28,9 @@ const GroupChat: React.FC<GroupChatProps> = ({
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const { toast } = useToast();
-  const { selectedCity } = useEventContext();
 
-  // Parse city-specific group ID to get display name
-  const getCitySpecificDisplayName = (groupId: string, baseGroupName: string): string => {
-    // Try to parse legacy string-based group ID first
-    const legacyParsed = parseLegacyGroupId(groupId);
-    if (legacyParsed) {
-      return createGroupDisplayName(legacyParsed.category, legacyParsed.city, cities);
-    }
-    
-    // For UUID-based group IDs, we need to determine the category and city from context
-    // Since we can't reverse-engineer from UUID, we'll use the current selected city and active category
-    // This is passed down from the parent component context
-    const currentCategory = 'Ausgehen'; // Default category, ideally this should be passed as prop
-    return createGroupDisplayName(currentCategory, selectedCity, cities);
-  };
-
-  const displayGroupName = getCitySpecificDisplayName(groupId, groupName);
+  // The groupName prop is now the source of truth, no need to recalculate it from the ID.
+  const displayGroupName = groupName;
 
   // Open user directory
   const handleOpenUserDirectory = () => {
