@@ -154,7 +154,7 @@ const MainNav: React.FC<MainNavProps> = ({
   if (pathname === '/chat' || pathname === '/') {
     return (
       <div className="flex items-center w-full">
-        <div className="flex items-baseline mr-6">
+        <div className="flex flex-col items-start mr-6">
           <Link to="/" className="flex items-center">
             <span className="font-bold inline-block">THE TRIBE</span>
           </Link>
@@ -162,7 +162,7 @@ const MainNav: React.FC<MainNavProps> = ({
             <DropdownMenuTrigger asChild>
                <Button
                   variant="ghost"
-                  className="p-0 h-auto font-bold text-white hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 hover:text-gray-300 active:bg-transparent hover:underline underline-offset-4 cursor-pointer"
+                  className="p-0 h-auto font-bold text-white hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 hover:text-gray-300 active:bg-transparent hover:underline underline-offset-4 cursor-pointer -mt-1"
                 >
                 .{city}
               </Button>
