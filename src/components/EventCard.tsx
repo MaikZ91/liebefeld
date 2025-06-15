@@ -5,8 +5,6 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useEventContext } from '@/contexts/EventContext';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from "sonner";
 import EventLikeButton from "./EventLikeButton";
 
 interface EventCardProps {
@@ -14,7 +12,6 @@ interface EventCardProps {
   onClick?: () => void;
   className?: string;
   compact?: boolean;
-  onLike?: (id: string) => void;
 }
 
 // Category icon mappings
@@ -60,12 +57,11 @@ const isEventNew = (event: Event): boolean => {
 };
 
 const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, compact = false }) => {
-  // Optimistic state for likes:
-  const [optimisticLikes, setOptimisticLikes] = useState<number | undefined>(event.likes);
+  const { handleLikeEvent } = useEventContext();
   const [isLiking, setIsLiking] = useState(false);
 
   // Helper um Likes zu zeigen (State bevorzugt, sonst Fallback):
-  const currentLikes = optimisticLikes !== undefined ? optimisticLikes : event.likes || 0;
+  const currentLikes = event.likes || 0;
 
   const isNewEvent = isEventNew(event);
   const isTribe = isTribeEvent(event.title);
@@ -79,57 +75,13 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
 
     if (isLiking) return;
     if (!event?.id) {
-      console.error("[LIKE HANDLER] Kein Event! Kann Like nicht speichern.", event);
-      toast.error("Fehler: Event nicht gefunden.");
+      console.error("[LIKE HANDLER] Kein Event-ID! Kann Like nicht ausführen.", event);
       return;
     }
 
-    const oldLikes = optimisticLikes ?? event.likes ?? 0;
-    setOptimisticLikes(oldLikes + 1);
     setIsLiking(true);
-
-    try {
-      const newLikes = (event.likes || 0) + 1;
-      const { error, data } = await supabase
-        .from("community_events")
-        .update({ likes: newLikes })
-        .eq("id", event.id)
-        .select();
-
-      if (error) {
-        toast.error("Fehler beim Speichern deines Likes (DB Error).");
-        setOptimisticLikes(event.likes ?? 0);
-        setIsLiking(false);
-        return;
-      }
-
-      if (!data || !Array.isArray(data) || data.length === 0) {
-        toast.error(`Fehler: Like konnte nicht gespeichert werden (keine Zeile geupdatet).`);
-        setOptimisticLikes(event.likes ?? 0);
-        setIsLiking(false);
-        return;
-      }
-      
-      const updatedLikes = data[0]?.likes;
-      if (typeof updatedLikes !== "number" || updatedLikes < newLikes) {
-        toast.error(`Warnung: Like-Zähler wurde nicht erhöht. DB-Likes: ${updatedLikes}, erwartet: ${newLikes}`);
-        setOptimisticLikes(event.likes ?? 0);
-      } else {
-        toast.success("Danke fürs Liken!");
-        setOptimisticLikes(updatedLikes);
-      }
-
-    } catch (err) {
-      if (err instanceof Error && err.message.includes("row-level security")) {
-        toast.error("Datenbank-Fehler: Row Level Security verhindert Like.");
-      } else {
-        toast.error("Unerwarteter Fehler beim Liken.");
-      }
-      setOptimisticLikes(event.likes ?? 0);
-      console.error("[LIKE HANDLER] Unerwarteter Fehler:", err);
-    } finally {
-      setIsLiking(false);
-    }
+    await handleLikeEvent(event.id);
+    setTimeout(() => setIsLiking(false), 250);
   };
 
   const handleLinkClick = (e: React.MouseEvent) => {

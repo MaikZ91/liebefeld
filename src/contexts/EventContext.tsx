@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { startOfDay } from 'date-fns';
 import { Event, RsvpOption } from '../types/eventTypes';
@@ -21,6 +20,7 @@ interface EventContextProps {
   setSelectedEvent: React.Dispatch<React.SetStateAction<Event | null>>;
   filter: string | null;
   setFilter: React.Dispatch<React.SetStateAction<string | null>>;
+  handleLikeEvent: (eventId: string) => Promise<void>;
   handleRsvpEvent: (eventId: string, option: RsvpOption) => Promise<void>;
   showFavorites: boolean;
   setShowFavorites: React.Dispatch<React.SetStateAction<boolean>>;
@@ -100,6 +100,36 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       console.log('Keeping current events due to error, no fallback to example data');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleLikeEvent = async (eventId: string) => {
+    const eventToLike = events.find(e => e.id === eventId);
+    if (!eventToLike) {
+      console.error(`[handleLikeEvent] Event with ID ${eventId} not found.`);
+      return;
+    }
+
+    const oldLikes = eventToLike.likes || 0;
+    const newLikes = oldLikes + 1;
+
+    // Optimistic UI update
+    setEvents(prevEvents =>
+      prevEvents.map(event =>
+        event.id === eventId ? { ...event, likes: newLikes } : event
+      )
+    );
+
+    // Update database
+    const success = await updateEventLikesInDb(eventId, newLikes);
+
+    // Revert if DB update fails
+    if (!success) {
+      setEvents(prevEvents =>
+        prevEvents.map(event =>
+          event.id === eventId ? { ...event, likes: oldLikes } : event
+        )
+      );
     }
   };
 
@@ -186,6 +216,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setSelectedEvent,
     filter,
     setFilter,
+    handleLikeEvent,
     handleRsvpEvent,
     showFavorites,
     setShowFavorites,

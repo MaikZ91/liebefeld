@@ -13,7 +13,6 @@ import { useEventContext } from '@/contexts/EventContext';
 interface EventDetailsProps {
   event: Event;
   onClose: () => void;
-  onLike?: () => void;
   onRsvp?: (option: RsvpOption) => void;
 }
 
@@ -29,9 +28,11 @@ const categoryColors: Record<string, string> = {
   'Ausstellung': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300',
 };
 
-const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike, onRsvp }) => {
+const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onRsvp }) => {
+  const { handleLikeEvent } = useEventContext();
   const [isOpen, setIsOpen] = useState(true);
   const [showSparkle, setShowSparkle] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
   
   // Get the correct likes count directly from the event
   const displayLikes = event.likes || 0;
@@ -41,13 +42,16 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike, onR
     setTimeout(onClose, 300); // Allow animation to complete
   };
 
-  const handleLike = () => {
+  const handleLike = async () => {
+    if (isLiking) return;
+
+    setIsLiking(true);
     setShowSparkle(true);
+    
+    await handleLikeEvent(event.id);
+
     setTimeout(() => setShowSparkle(false), 1000);
-    if (onLike) {
-      console.log(`Liking event ${event.id} from EventDetails, current likes: ${displayLikes}`);
-      onLike();
-    }
+    setIsLiking(false);
   };
   
   const handleRsvp = (option: RsvpOption) => {
@@ -80,24 +84,23 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onLike, onR
               )}>
                 {event.category}
               </Badge>
-              {onLike && (
-                <Button 
-                  onClick={handleLike} 
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-full p-1 hover:bg-red-500/10"
-                >
-                  <div className="relative">
-                    <Heart className={cn("h-5 w-5 text-red-500", displayLikes > 0 ? "fill-red-500" : "")} />
-                    {showSparkle && (
-                      <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-yellow-300 animate-pulse" />
-                    )}
-                  </div>
-                  {displayLikes > 0 && (
-                    <span className="ml-1 text-xs text-red-500">{displayLikes}</span>
+              <Button 
+                onClick={handleLike} 
+                variant="ghost"
+                size="icon"
+                className="rounded-full p-1 hover:bg-red-500/10"
+                disabled={isLiking}
+              >
+                <div className="relative">
+                  <Heart className={cn("h-5 w-5 text-red-500", displayLikes > 0 ? "fill-red-500" : "")} />
+                  {showSparkle && (
+                    <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-yellow-300 animate-pulse" />
                   )}
-                </Button>
-              )}
+                </div>
+                {displayLikes > 0 && (
+                  <span className="ml-1 text-xs text-red-500">{displayLikes}</span>
+                )}
+              </Button>
             </div>
           </div>
           <DialogDescription className="text-muted-foreground mt-3 text-gray-300 font-light">

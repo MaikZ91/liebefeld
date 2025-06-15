@@ -4,7 +4,6 @@ import { ChevronLeft, ChevronRight, MapPin, Clock, Euro, UsersRound, Calendar, E
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { PanelEventData, PanelEvent, AdEvent } from './types';
-import { updateEventLikesInDb } from '@/services/singleEventService';
 import { useEventContext } from '@/contexts/EventContext';
 
 interface SwipeableEventPanelProps {
@@ -18,11 +17,17 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
   onEventSelect,
   className
 }) => {
+  const { handleLikeEvent, events } = useEventContext();
   const [currentIndex, setCurrentIndex] = useState(panelData.currentIndex || 0);
   const [isLiking, setIsLiking] = useState(false);
   
-  const currentItem = panelData.events[currentIndex];
+  const currentPanelItem = panelData.events[currentIndex];
   
+  // Get the most up-to-date event data from the context if it's a regular event
+  const currentItem = ('id' in currentPanelItem && currentPanelItem.id)
+    ? events.find(e => e.id === currentPanelItem.id) || currentPanelItem
+    : currentPanelItem;
+
   const handlePrevious = () => {
     setCurrentIndex((prev) => 
       prev === 0 ? panelData.events.length - 1 : prev - 1
@@ -47,27 +52,14 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
     
-    // Only handle likes for PanelEvent items with an id
     if (!('id' in currentItem) || isLiking) return;
     
     const eventId = (currentItem as PanelEvent).id;
     setIsLiking(true);
     
-    try {
-      const panelEvent = currentItem as PanelEvent;
-      const currentLikes = panelEvent.likes || 0;
-      const newLikes = currentLikes + 1;
-
-      // Update database directly (ohne globalen Refresh!)
-      const success = await updateEventLikesInDb(eventId, newLikes);
-
-      // Optional: Falls möglich, Panel-Likes im UI erhöhen – 
-      // Da PanelData immutable ist, kann dies hier nicht direkt erfolgen (aus API rausziehen falls gewünscht)
-    } catch (error) {
-      // ... Fehlerhandling ...
-    } finally {
-      setTimeout(() => setIsLiking(false), 150);
-    }
+    await handleLikeEvent(eventId);
+    
+    setTimeout(() => setIsLiking(false), 250);
   };
 
   if (!currentItem) return null;

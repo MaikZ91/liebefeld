@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState, memo, useMemo } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -14,14 +13,12 @@ interface EventListProps {
   showFavorites: boolean;
   showNewEvents?: boolean;
   onSelectEvent: (event: Event, date: Date) => void;
-  onLike: (eventId: string) => void;
 }
 
-const MemoizedEventCard = memo(({ event, date, onSelectEvent, onLike, isTopEvent, isNewEvent }: {
+const MemoizedEventCard = memo(({ event, date, onSelectEvent, isTopEvent, isNewEvent }: {
   event: Event;
   date: Date;
   onSelectEvent: (event: Event, date: Date) => void;
-  onLike: (eventId: string) => void;
   isTopEvent: boolean;
   isNewEvent: boolean;
 }) => (
@@ -76,8 +73,7 @@ const EventList: React.FC<EventListProps> = memo(({
   events,
   showFavorites,
   showNewEvents = false,
-  onSelectEvent,
-  onLike
+  onSelectEvent
 }) => {
   const listRef = useRef<HTMLDivElement>(null);
   const todayRef = useRef<HTMLDivElement>(null);
@@ -276,7 +272,6 @@ const EventList: React.FC<EventListProps> = memo(({
                           event={event}
                           date={date}
                           onSelectEvent={onSelectEvent}
-                          onLike={onLike}
                           isTopEvent={isTopEvent}
                           isNewEvent={isNewEvent}
                         />
