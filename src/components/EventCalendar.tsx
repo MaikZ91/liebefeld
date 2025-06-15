@@ -1,4 +1,3 @@
-// src/components/EventCalendar.tsx
 import React, { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -15,7 +14,6 @@ import EventList from './calendar/EventList';
 import EventPanel from './calendar/EventPanel';
 import FavoritesView from './calendar/FavoritesView';
 import EventForm from './EventForm';
-import PerfectDayPanel from './PerfectDayPanel';
 import { useEventContext } from '@/contexts/EventContext';
 import { toast } from 'sonner';
 
