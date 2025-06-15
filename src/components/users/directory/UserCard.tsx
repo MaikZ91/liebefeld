@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { UserProfile } from "@/types/chatTypes";
 import { Card } from "@/components/ui/card";
@@ -21,7 +22,7 @@ const UserCard: React.FC<UserCardProps> = ({ user, currentUsername, onSelectUser
 
   return (
     <Card
-      className={`relative w-full aspect-[4/5] overflow-hidden rounded-xl group transition-all duration-300 ${
+      className={`relative w-full aspect-square overflow-hidden group transition-all duration-300 ${
         isCurrentUser 
           ? 'opacity-60 cursor-not-allowed'
           : 'cursor-pointer hover:shadow-2xl hover:shadow-red-500/20 hover:ring-2 hover:ring-red-500/80 transform hover:-translate-y-1'
