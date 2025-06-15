@@ -1,3 +1,4 @@
+
 // src/components/event-chat/FullPageChatBot.tsx
 import React, { useEffect } from 'react';
 import MessageList from './MessageList';
@@ -12,6 +13,7 @@ import TypingIndicator from '@/components/chat/TypingIndicator';
 import ChatMessage from '@/components/chat/ChatMessage';
 import MessageReactions from '@/components/chat/MessageReactions';
 import { chatService } from '@/services/chatService';
+import { useEventContext, cities } from '@/contexts/EventContext';
 
 /**
  * Hinweis: Für die unsichtbaren Scrollleisten wird das Tailwind-Plugin
@@ -58,6 +60,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     showAnimatedPrompts 
   } = chatLogic;
 
+  const { selectedCity } = useEventContext();
+
   /* ------------------------------------------------------------------ */
   /* community chat hooks                                               */
   /* ------------------------------------------------------------------ */
@@ -99,6 +103,13 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     if (diff < 60) return `vor ${diff}m`;
     if (diff < 24 * 60) return `vor ${Math.floor(diff / 60)}h`;
     return `vor ${Math.floor(diff / 1440)}d`;
+  };
+
+  // Get city-specific display name for community chat
+  const getCommunityDisplayName = (category: string, cityAbbr: string): string => {
+    const city = cities.find(c => c.abbr.toLowerCase() === cityAbbr.toLowerCase());
+    const cityName = city ? city.name : cityAbbr.toUpperCase();
+    return `${category} • ${cityName}`;
   };
 
   // Handle reaction toggle
@@ -209,7 +220,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               <div className="space-y-2 py-4">
                 {communityMessages.length === 0 && !communityLoading && !communityError && (
                   <div className="text-center text-gray-400 py-4">
-                    Noch keine Nachrichten in {activeCategory}. Starte die Unterhaltung!
+                    Noch keine Nachrichten in {getCommunityDisplayName(activeCategory || 'Community', selectedCity)}. Starte die Unterhaltung!
                   </div>
                 )}
 

@@ -25,18 +25,20 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
   // Add category state management - changed default to 'Ausgehen'
   const [activeCategory, setActiveCategory] = useState<string>('Ausgehen');
   
-  const { events } = useEventContext();
+  const { events, selectedCity } = useEventContext();
   const { toast } = useToast();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   
-  // Create group mapping for categories with proper UUIDs
-  const categoryToGroupId = {
-    'Kreativität': '00000000-0000-4000-8000-000000000000', // Use existing general group for Kreativität
-    'Ausgehen': '11111111-1111-4111-8111-111111111111', // UUID for Ausgehen group
-    'Sport': '22222222-2222-4222-8222-222222222222' // UUID for Sport group
+  // Create city-specific group mapping for categories
+  const createCitySpecificGroupId = (category: string, cityAbbr: string): string => {
+    const normalizedCity = cityAbbr.toLowerCase();
+    const normalizedCategory = category.toLowerCase();
+    
+    // Create city-specific group ID format: {city}_{category}
+    return `${normalizedCity}_${normalizedCategory}`;
   };
   
-  const communityGroupId = categoryToGroupId[activeCategory as keyof typeof categoryToGroupId] || '11111111-1111-4111-8111-111111111111';
+  const communityGroupId = createCitySpecificGroupId(activeCategory, selectedCity);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
   // Use the chat logic hook to manage state and functions

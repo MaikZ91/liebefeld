@@ -10,6 +10,7 @@ import ProfileEditor from './users/ProfileEditor';
 import { useToast } from '@/hooks/use-toast';
 import { UserCircle, LogIn } from 'lucide-react';
 import ChatLoadingSkeleton from './chat/ChatLoadingSkeleton';
+import { useEventContext, cities } from '@/contexts/EventContext';
 
 interface GroupChatProps {
   groupId: string;
@@ -29,9 +30,30 @@ const GroupChat: React.FC<GroupChatProps> = ({
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const { toast } = useToast();
+  const { selectedCity } = useEventContext();
 
-  // Ensure we have a valid UUID for the groupId
-  const validGroupId = groupId === 'general' ? '00000000-0000-4000-8000-000000000000' : groupId;
+  // Parse city-specific group ID to get display name
+  const getCitySpecificDisplayName = (groupId: string, baseGroupName: string): string => {
+    // Check if this is a city-specific group ID (format: {city}_{category})
+    const parts = groupId.split('_');
+    if (parts.length === 2) {
+      const [cityAbbr, category] = parts;
+      
+      // Find the city name from the abbreviation
+      const city = cities.find(c => c.abbr.toLowerCase() === cityAbbr.toLowerCase());
+      const cityName = city ? city.name : cityAbbr.toUpperCase();
+      
+      // Capitalize the category
+      const capitalizedCategory = category.charAt(0).toUpperCase() + category.slice(1);
+      
+      return `${capitalizedCategory} • ${cityName}`;
+    }
+    
+    // Fallback to base group name for legacy IDs
+    return baseGroupName;
+  };
+
+  const displayGroupName = getCitySpecificDisplayName(groupId, groupName);
 
   // Open user directory
   const handleOpenUserDirectory = () => {
@@ -96,8 +118,8 @@ const GroupChat: React.FC<GroupChatProps> = ({
         </div>
       ) : (
         <ChatGroup 
-          groupId={validGroupId} 
-          groupName={groupName}
+          groupId={groupId} 
+          groupName={displayGroupName}
           onOpenUserDirectory={handleOpenUserDirectory} 
         />
       )}
