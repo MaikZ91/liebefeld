@@ -103,7 +103,7 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md bg-black text-white border border-gray-800">
+        <DialogContent className="sm:max-w-3xl bg-black text-white border-gray-800">
           <DirectoryHeader 
             viewMode={viewMode}
             toggleViewMode={toggleViewMode}
