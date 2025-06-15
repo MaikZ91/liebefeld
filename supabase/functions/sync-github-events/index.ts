@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 const corsHeaders = {
@@ -74,7 +73,10 @@ Deno.serve(async (req) => {
     const githubEvents: GitHubEvent[] = await response.json();
     console.log(`Fetched ${githubEvents.length} GitHub events`);
 
-    const currentYear = new Date().getFullYear();
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // getMonth() is 0-indexed
+    const currentDay = now.getDate();
     const transformedEvents = [];
 
     for (const githubEvent of githubEvents) {
@@ -116,17 +118,39 @@ Deno.serve(async (req) => {
       try {
         const dateStr = githubEvent.date;
         if (dateStr && dateStr.includes('.')) {
-          const dateMatch = dateStr.match(/(\d{1,2})\.(\d{1,2})(?:\.(\d{4}))?/);
+          const dateMatch = dateStr.match(/(\d{1,2})\.(\d{1,2})(?:\.(\d{4}|\d{2}))?/);
           if (dateMatch) {
             const day = dateMatch[1].padStart(2, '0');
             const month = dateMatch[2].padStart(2, '0');
-            const year = dateMatch[3] || currentYear.toString();
+            let year;
+
+            if (dateMatch[3]) { // Year is present
+              let yearStr = dateMatch[3];
+              if (yearStr.length === 2) {
+                year = `20${yearStr}`; // Assume 21st century for 2-digit years
+              } else {
+                year = yearStr;
+              }
+            } else { // Year is not present, infer it
+              const eventMonth = parseInt(month, 10);
+              const eventDay = parseInt(day, 10);
+              
+              // If the event month is before the current month, or it's the same month but an earlier day,
+              // and the date is not today, assume it's for next year.
+              if (eventMonth < currentMonth || (eventMonth === currentMonth && eventDay < currentDay)) {
+                year = (currentYear + 1).toString();
+                console.log(`Inferred next year for ${githubEvent.event}: ${year}`);
+              } else {
+                year = currentYear.toString();
+              }
+            }
             eventDate = `${year}-${month}-${day}`;
           }
         }
         
         if (!eventDate) {
-          eventDate = new Date().toISOString().split('T')[0];
+          console.warn(`Could not parse date for ${githubEvent.event} from string: "${dateStr}". Defaulting to today.`);
+          eventDate = now.toISOString().split('T')[0];
         }
       } catch (error) {
         console.warn(`Error parsing date for ${title}:`, error);
