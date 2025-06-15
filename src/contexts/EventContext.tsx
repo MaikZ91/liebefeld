@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { startOfDay } from 'date-fns';
 import { Event, RsvpOption } from '../types/eventTypes';
@@ -101,33 +100,63 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, [events]);
 
   const handleLikeEvent = useCallback(async (eventId: string) => {
-    let oldLikes = 0;
+    console.log(`[handleLikeEvent] 💙 Funktion wurde für Event-ID aufgerufen: ${eventId}`);
+
+    if (!eventId || typeof eventId !== 'string') {
+        console.error('[handleLikeEvent] 🛑 Ungültige oder fehlende eventId!', eventId);
+        return;
+    }
     
-    // Optimistic UI update
-    setEvents(prevEvents => {
-        const eventToLike = prevEvents.find(e => e.id === eventId);
-        if (!eventToLike) {
-            console.error(`[handleLikeEvent] Event with ID ${eventId} not found.`);
-            return prevEvents;
-        };
-        oldLikes = eventToLike.likes || 0;
-        const newLikes = oldLikes + 1;
-        
-        return prevEvents.map(event =>
-            event.id === eventId ? { ...event, likes: newLikes } : event
-        );
-    });
+    let oldLikes = -1; // -1 to indicate event not found yet
 
-    // Update database
-    const success = await updateEventLikesInDb(eventId, oldLikes + 1);
+    try {
+        // Optimistic UI update
+        setEvents(prevEvents => {
+            const eventToLike = prevEvents.find(e => e.id === eventId);
+            if (!eventToLike) {
+                console.error(`[handleLikeEvent] 💔 Event mit ID ${eventId} im State nicht gefunden.`);
+                return prevEvents; // Return unchanged state if event not found
+            };
+            oldLikes = eventToLike.likes || 0;
+            console.log(`[handleLikeEvent] 👍 Optimistisches Update: oldLikes=${oldLikes}, newLikes=${oldLikes + 1}`);
+            
+            return prevEvents.map(event =>
+                event.id === eventId ? { ...event, likes: oldLikes + 1 } : event
+            );
+        });
 
-    // Revert if DB update fails
-    if (!success) {
-      setEvents(prevEvents =>
-        prevEvents.map(event =>
-          event.id === eventId ? { ...event, likes: oldLikes } : event
-        )
-      );
+        // A short delay to ensure state update has propagated before we check oldLikes
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        if (oldLikes === -1) {
+            console.error("[handleLikeEvent] 🛑 Abbruch, da Event nicht im State gefunden wurde.");
+            return;
+        }
+
+        // Update database
+        console.log(`[handleLikeEvent] 🚀 Datenbank-Update wird für ${eventId} mit newLikes=${oldLikes + 1} aufgerufen...`);
+        const success = await updateEventLikesInDb(eventId, oldLikes + 1);
+        console.log(`[handleLikeEvent] 🛰️ Datenbank-Update Ergebnis: ${success ? '✅ ERFOLGREICH' : '❌ FEHLGESCHLAGEN'}`);
+
+        // Revert if DB update fails
+        if (!success) {
+          console.log(`[handleLikeEvent] ⏪ Rollback wird ausgeführt. Likes werden auf ${oldLikes} zurückgesetzt.`);
+          setEvents(prevEvents =>
+            prevEvents.map(event =>
+              event.id === eventId ? { ...event, likes: oldLikes } : event
+            )
+          );
+        }
+    } catch (error) {
+        console.error('[handleLikeEvent] 💥 Unerwarteter Fehler im try-catch Block:', error);
+        // Revert on any unexpected error
+        if (oldLikes !== -1) {
+            setEvents(prevEvents =>
+                prevEvents.map(event =>
+                  event.id === eventId ? { ...event, likes: oldLikes } : event
+                )
+            );
+        }
     }
   }, []);
 
