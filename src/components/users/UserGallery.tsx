@@ -16,8 +16,8 @@ const UserGallery: React.FC<UserGalleryProps> = ({
   onSelectUser
 }) => {
   return (
-    <ScrollArea className="h-[60vh] -mx-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-6">
+    <ScrollArea className="h-[70vh] -mx-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 px-4">
         {users.map(user => (
           <UserCard 
             key={user.id}

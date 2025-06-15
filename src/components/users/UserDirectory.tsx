@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +9,6 @@ import ProfileEditor from './ProfileEditor';
 
 // Import our new components
 import DirectoryHeader from './directory/DirectoryHeader';
-import UserList from './directory/UserList';
 import UserLoadingState from './directory/UserLoadingState';
 
 interface UserDirectoryProps {
@@ -29,7 +27,6 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'gallery'>('gallery');
   const [profileEditorOpen, setProfileEditorOpen] = useState(false);
   const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
   const { refetchProfile } = useUserProfile();
@@ -86,10 +83,6 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
     onOpenChange(false);
   };
 
-  const toggleViewMode = () => {
-    setViewMode(prev => prev === 'list' ? 'gallery' : 'list');
-  };
-
   const handleOpenProfileEditor = () => {
     setProfileEditorOpen(true);
   };
@@ -103,10 +96,8 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-3xl bg-black text-white border-gray-800">
+        <DialogContent className="sm:max-w-5xl bg-black text-white border-gray-800">
           <DirectoryHeader 
-            viewMode={viewMode}
-            toggleViewMode={toggleViewMode}
             currentUsername={currentUsername}
             onOpenProfileEditor={handleOpenProfileEditor}
           />
@@ -119,19 +110,11 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
             />
             
             {!loading && !error && users.length > 0 && (
-              viewMode === 'gallery' ? (
-                <UserGallery 
-                  users={users} 
-                  currentUsername={currentUsername} 
-                  onSelectUser={handleSelectUser} 
-                />
-              ) : (
-                <UserList 
-                  users={users}
-                  currentUsername={currentUsername}
-                  onSelectUser={handleSelectUser}
-                />
-              )
+              <UserGallery 
+                users={users} 
+                currentUsername={currentUsername} 
+                onSelectUser={handleSelectUser} 
+              />
             )}
           </div>
         </DialogContent>

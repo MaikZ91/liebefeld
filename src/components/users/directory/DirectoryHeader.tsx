@@ -2,18 +2,14 @@
 import React from 'react';
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Grid2x2, List, UserCog, LogIn } from 'lucide-react';
+import { UserCog, LogIn } from 'lucide-react';
 
 interface DirectoryHeaderProps {
-  viewMode: 'list' | 'gallery';
-  toggleViewMode: () => void;
   currentUsername?: string;
   onOpenProfileEditor: () => void;
 }
 
 const DirectoryHeader: React.FC<DirectoryHeaderProps> = ({
-  viewMode,
-  toggleViewMode,
   currentUsername,
   onOpenProfileEditor
 }) => {
@@ -34,14 +30,6 @@ const DirectoryHeader: React.FC<DirectoryHeaderProps> = ({
           ) : (
             <LogIn className="h-4 w-4" />
           )}
-        </Button>
-        <Button 
-          variant="outline" 
-          size="icon"
-          onClick={toggleViewMode}
-          className="h-8 w-8 border-gray-700 text-white hover:text-red-400 hover:border-red-500"
-        >
-          {viewMode === 'list' ? <Grid2x2 className="h-4 w-4" /> : <List className="h-4 w-4" />}
         </Button>
       </div>
     </DialogHeader>
