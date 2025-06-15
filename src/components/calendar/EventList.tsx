@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState, memo, useMemo, useCallback } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -7,7 +6,6 @@ import EventCard from '@/components/EventCard';
 import { groupEventsByDate } from '@/utils/eventUtils';
 import { Star } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface EventListProps {
   events: Event[];
@@ -55,43 +53,6 @@ const MemoizedEventCard = memo(({ event, date, onSelectEvent, isTopEvent, isNewE
 
 MemoizedEventCard.displayName = 'MemoizedEventCard';
 
-// Helper component for sport events to use useCallback
-const SportEventCard = ({ event, date, onSelectEvent }: { event: Event, date: Date, onSelectEvent: (event: Event, date: Date) => void }) => {
-  const handleClick = useCallback(() => {
-    onSelectEvent(event, date);
-  }, [event, date, onSelectEvent]);
-
-  return (
-    <EventCard
-      event={event}
-      compact={true}
-      onClick={handleClick}
-      className="border-l-2 border-green-500"
-    />
-  );
-};
-
-// Helper function to determine if an event should be in the sport accordion
-const isSportEvent = (event: Event): boolean => {
-  const title = event.title.toLowerCase();
-  const description = event.description?.toLowerCase() || '';
-  
-  // Only specific sport-related keywords should go in the sport accordion
-  const sportKeywords = [
-    'fitness', 'gym', 'workout', 'training', 'marathon', 'triathlon', 
-    'basketball', 'football', 'volleyball', 'tennis', 'badminton',
-    'schwimmen', 'radfahren', 'yoga', 'pilates', 'crossfit'
-  ];
-  
-  // Check if it's in Sport category AND contains explicit sport keywords
-  // OR if title/description contains sport keywords
-  return (event.category === 'Sport' && sportKeywords.some(keyword => 
-    title.includes(keyword) || description.includes(keyword)
-  )) || sportKeywords.some(keyword => 
-    title.includes(keyword) || description.includes(keyword)
-  );
-};
-
 const EventList: React.FC<EventListProps> = memo(({
   events,
   showFavorites,
@@ -103,13 +64,6 @@ const EventList: React.FC<EventListProps> = memo(({
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
   const { filter, topEventsPerDay } = useEventContext();
-
-  // Separate only specific sport events, not all events in "Sport" category
-  const { sportEvents, regularEvents } = useMemo(() => {
-    const sport = events.filter(event => isSportEvent(event));
-    const regular = events.filter(event => !isSportEvent(event));
-    return { sportEvents: sport, regularEvents: regular };
-  }, [events]);
 
   const filteredEvents = useMemo(() => {
     if (!filter) return events;
@@ -127,7 +81,7 @@ const EventList: React.FC<EventListProps> = memo(({
   }, [filteredEvents, showFavorites, topEventsPerDay]);
 
   const eventsByDate = useMemo(() => {
-    const grouped = groupEventsByDate(regularEvents);
+    const grouped = groupEventsByDate(filteredEvents);
     
     Object.keys(grouped).forEach(dateStr => {
       grouped[dateStr].sort((a, b) => {
@@ -156,31 +110,8 @@ const EventList: React.FC<EventListProps> = memo(({
     });
     
     return grouped;
-  }, [regularEvents]);
+  }, [filteredEvents]);
   
-  const sportEventsByDate = useMemo(() => {
-    const grouped = groupEventsByDate(sportEvents);
-    Object.keys(grouped).forEach(dateStr => {
-      grouped[dateStr].sort((a, b) => {
-        const timeA = a.time || '00:00';
-        const timeB = b.time || '00:00';
-        
-        const [hourA, minuteA] = timeA.split(':').map(Number);
-        const [hourB, minuteB] = timeB.split(':').map(Number);
-        
-        if (hourA !== hourB) {
-          return hourA - hourB;
-        }
-        if (minuteA !== minuteB) {
-          return minuteA - minuteB;
-        }
-        
-        return a.id.localeCompare(b.id);
-      });
-    });
-    return grouped;
-  }, [sportEvents]);
-
   useEffect(() => {
     if (displayEvents.length > 0) {
       const todayEvents = displayEvents.filter(event => {
@@ -272,7 +203,6 @@ const EventList: React.FC<EventListProps> = memo(({
             {Object.keys(eventsByDate).sort().map(dateStr => {
               const date = parseISO(dateStr);
               const isCurrentDay = isToday(date);
-              const hasSportEvents = sportEventsByDate[dateStr] && sportEventsByDate[dateStr].length > 0;
               
               return (
                 <div 
@@ -300,33 +230,6 @@ const EventList: React.FC<EventListProps> = memo(({
                         />
                       );
                     })}
-                    
-                    {hasSportEvents && (
-                      <Accordion type="single" collapsible className="w-full mt-2">
-                        <AccordionItem value="sport" className="border-none">
-                          <AccordionTrigger className="py-2 px-3 bg-green-900/20 hover:bg-green-900/30 transition-colors rounded-lg text-white">
-                            <div className="flex items-center">
-                              <span className="font-medium">Sport Events</span>
-                              <span className="text-xs bg-green-500/20 text-green-300 px-2 py-0.5 rounded-full ml-2">
-                                {sportEventsByDate[dateStr].length}
-                              </span>
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent className="pb-0 pt-2">
-                            <div className="space-y-1 pl-2">
-                              {sportEventsByDate[dateStr].map(event => (
-                                <SportEventCard
-                                  key={event.id}
-                                  event={event}
-                                  date={date}
-                                  onSelectEvent={onSelectEvent}
-                                />
-                              ))}
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      </Accordion>
-                    )}
                   </div>
                 </div>
               );
