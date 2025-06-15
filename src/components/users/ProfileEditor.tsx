@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { userService } from '@/services/userService';
 import { toast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Import our new components
 import AvatarUploader from './profile/AvatarUploader';
@@ -193,7 +195,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-black text-white border border-gray-800 sm:max-w-3xl">
+      <DialogContent className="bg-black text-white border border-gray-800 sm:max-w-3xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-white text-2xl">Dein Profil</DialogTitle>
           <DialogDescription className="text-gray-400">
@@ -202,33 +204,35 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-4">
-              <div className="md:col-span-1 flex flex-col items-center text-center space-y-4">
-                <AvatarUploader 
-                  username={form.watch('username')}
-                  currentAvatar={uploadedImage || form.watch('avatar')}
-                  onAvatarChange={handleAvatarUpdate}
-                />
-                <p className="text-sm text-gray-400">Lade ein Bild von dir hoch, um dein Profil zu personalisieren.</p>
-              </div>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-grow overflow-hidden">
+            <ScrollArea className="flex-grow pr-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-4">
+                <div className="md:col-span-1 flex flex-col items-center text-center space-y-4">
+                  <AvatarUploader 
+                    username={form.watch('username')}
+                    currentAvatar={uploadedImage || form.watch('avatar')}
+                    onAvatarChange={handleAvatarUpdate}
+                  />
+                  <p className="text-sm text-gray-400">Lade ein Bild von dir hoch, um dein Profil zu personalisieren.</p>
+                </div>
 
-              <div className="md:col-span-2 space-y-6">
-                <UsernameField form={form} />
-                <BioField form={form} />
-                <InterestsEditor 
-                  interests={interests}
-                  onInterestsChange={setInterests}
-                />
-                <LocationSelector
-                  locations={locations}
-                  favoriteLocations={favoriteLocations}
-                  onLocationsChange={setFavoriteLocations}
-                />
+                <div className="md:col-span-2 space-y-6">
+                  <UsernameField form={form} />
+                  <BioField form={form} />
+                  <InterestsEditor 
+                    interests={interests}
+                    onInterestsChange={setInterests}
+                  />
+                  <LocationSelector
+                    locations={locations}
+                    favoriteLocations={favoriteLocations}
+                    onLocationsChange={setFavoriteLocations}
+                  />
+                </div>
               </div>
-            </div>
+            </ScrollArea>
             
-            <DialogFooter className="sm:justify-end pt-6 border-t border-gray-800">
+            <DialogFooter className="sm:justify-end pt-6 border-t border-gray-800 shrink-0">
               <Button
                 type="button"
                 variant="outline"
