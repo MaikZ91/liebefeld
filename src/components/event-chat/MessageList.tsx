@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { MessageListProps } from './types';
 import SwipeableEventPanel from './SwipeableEventPanel';
 import SwipeableLandingPanel from './SwipeableLandingPanel';
-import TypewriterPrompt from './TypewriterPrompt';
 
 import './MessageList.css'; 
 
@@ -18,36 +17,22 @@ const MessageList: React.FC<MessageListProps> = ({
   examplePrompts,
   handleExamplePromptClick
 }) => {
-  // Es wird explizit nach dem statischen Willkommensprompt gesucht
   const welcomeMessage = messages.find(m => m.id === 'welcome');
-  const typewriterPromptMessage = messages.find(m => m.id === 'typewriter-prompt');
   const landingSlideMessage = messages.find(m => m.id === 'landing-slides');
 
-  // Alle übrigen Nachrichten (z. B. Bot-/User-Messages/Panels/HTML)
+  // Filter out typewriter-prompt message since animation is now in input field
   const mainMessages = messages
     .filter(m => !['welcome', 'typewriter-prompt', 'landing-slides'].includes(m.id));
 
   return (
     <div className="h-full overflow-y-auto">
       <div className="space-y-3 pb-2 px-1">
-        {/* Optisch schöne Welcome Nachricht */}
         {welcomeMessage && welcomeMessage.html && (
           <div className="flex justify-center animate-fade-in-fast">
             <div dangerouslySetInnerHTML={{ __html: welcomeMessage.html }} />
           </div>
         )}
 
-        {/* Schreibmaschinen-Prompt - Verwende examplePrompts aus Props */}
-        {typewriterPromptMessage && examplePrompts && examplePrompts.length > 0 && (
-          <TypewriterPrompt
-            prompts={examplePrompts}
-            onPromptClick={handleExamplePromptClick}
-            loopInterval={3000}
-            typingSpeed={40}
-          />
-        )}
-
-        {/* Landing Panel als Slides */}
         {landingSlideMessage && landingSlideMessage.slideData && (
           <div className="flex justify-center">
             <div className="w-full max-w-md mx-auto">
@@ -56,9 +41,7 @@ const MessageList: React.FC<MessageListProps> = ({
           </div>
         )}
 
-        {/* Restliche Chat- und Bot-Messages */}
         {mainMessages.map((message) => {
-          // Panel
           if (message.panelData) {
             return (
               <div key={message.id} className={cn("max-w-[85%] rounded-lg bg-black border border-black", message.isEventNotification && "border-red-500/50 bg-red-900/10")}>
@@ -73,7 +56,6 @@ const MessageList: React.FC<MessageListProps> = ({
               </div>
             );
           }
-          // HTML Message
           if (message.html) {
             return (
               <div key={message.id} className="max-w-[85%] rounded-lg bg-black border border-black">
@@ -81,7 +63,6 @@ const MessageList: React.FC<MessageListProps> = ({
               </div>
             );
           }
-          // Standard
           return (
             <div
               key={message.id}

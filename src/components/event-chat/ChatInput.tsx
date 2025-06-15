@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -20,6 +19,7 @@ const AnimatedText = ({ text, className = '' }: { text: string; className?: stri
 interface ExtendedChatInputProps extends ChatInputProps {
   activeCategory?: string;
   onCategoryChange?: (category: string) => void;
+  examplePrompts?: string[];
 }
 
 const ChatInput: React.FC<ExtendedChatInputProps> = ({
@@ -37,13 +37,19 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   showAnimatedPrompts,
   activeChatModeValue,
   activeCategory = 'Ausgehen',
-  onCategoryChange
+  onCategoryChange,
+  examplePrompts = []
 }) => {
   const { events } = useEventContext(); // Zugriff auf Events
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
 
-  // Animated placeholder suggestions
-  const suggestions = [
+  // Typewriter animation states
+  const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
+  const [displayText, setDisplayText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Use examplePrompts if available, otherwise fallback to default suggestions
+  const suggestions = examplePrompts.length > 0 ? examplePrompts : [
     "Frage nach Events...",
     "Welche Events gibt es heute?",
     "Was kann ich am Wochenende machen?",
@@ -51,20 +57,10 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     "❤️ Zeige mir Events, die zu mir passen"
   ];
 
-  const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
-  const [displayText, setDisplayText] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
-
+  // Typewriter animation effect
   useEffect(() => {
-    // Wenn die Animation nicht gezeigt werden soll, displayText zurücksetzen und abbrechen.
-    if (!showAnimatedPrompts) {
+    if (!showAnimatedPrompts || input.trim() !== '') {
       setDisplayText('');
-      return;
-    }
-
-    // Nur animieren, wenn das Inputfeld leer ist.
-    if (input.trim() !== '') {
-      setDisplayText(''); // Wichtig: Wenn Input vorhanden, Animation stoppen
       return;
     }
 
@@ -72,19 +68,15 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 
     const timer = setTimeout(() => {
       if (!isDeleting) {
-        // Typing animation
         if (displayText.length < currentSuggestion.length) {
           setDisplayText(currentSuggestion.slice(0, displayText.length + 1));
         } else {
-          // Pause before deleting
           setTimeout(() => setIsDeleting(true), 2000);
         }
       } else {
-        // Deleting animation
         if (displayText.length > 0) {
           setDisplayText(displayText.slice(0, -1));
         } else {
-          // Move to next suggestion
           setIsDeleting(false);
           setCurrentSuggestionIndex((prev) => (prev + 1) % suggestions.length);
         }
@@ -94,7 +86,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     return () => clearTimeout(timer);
   }, [displayText, isDeleting, currentSuggestionIndex, input, suggestions, showAnimatedPrompts]);
 
-  // Handle input change - always expect setInput to accept string
+  // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
   };
@@ -113,11 +105,11 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     }
   };
 
-  // Dynamischer Placeholder-Text basierend auf dem aktiven Chat-Modus
+  // Dynamic placeholder text
   const getDynamicPlaceholder = () => {
     if (activeChatModeValue === 'ai') {
       return showAnimatedPrompts && input.trim() === '' ? displayText : "Frage nach Events...";
-    } else { // 'community'
+    } else {
       return "Verbinde dich mit der Community...";
     }
   };
