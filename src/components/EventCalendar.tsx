@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -15,7 +14,7 @@ import EventList from './calendar/EventList';
 import EventPanel from './calendar/EventPanel';
 import FavoritesView from './calendar/FavoritesView';
 import EventForm from './EventForm';
-import { useEventContext } from '@/contexts/EventContext';
+import { useEventContext, cities } from '@/contexts/EventContext';
 import { toast } from 'sonner';
 
 interface EventCalendarProps {
@@ -33,24 +32,6 @@ const categoryIcons = {
   "Networking": <Users className="h-4 w-4" />,
   "Meeting": <Users className="h-4 w-4" />
 };
-
-const cities = [
-  { name: "Bielefeld", abbr: "BI" },
-  { name: "Berlin", abbr: "berlin" },
-  { name: "Hamburg", abbr: "hamburg" },
-  { name: "München", abbr: "munich" },
-  { name: "Köln", abbr: "cologne" },
-  { name: "Frankfurt", abbr: "frankfurt" },
-  { name: "Stuttgart", abbr: "stuttgart" },
-  { name: "Düsseldorf", abbr: "duesseldorf" },
-  { name: "Leipzig", abbr: "leipzig" },
-  { name: "Hannover", abbr: "hanover" },
-  { name: "Nürnberg", abbr: "nuremberg" },
-  { name: "Bremen", abbr: "bremen" },
-  { name: "Dresden", abbr: "dresden" },
-  { name: "Essen", abbr: "essen" },
-  { name: "Dortmund", abbr: "dortmund" },
-];
 
 export const isTribeEvent = (title: string): boolean => {
   const tribeKeywords = ['tribe', 'tuesday run', 'kennenlernabend', 'creatives circle'];

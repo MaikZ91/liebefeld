@@ -165,6 +165,8 @@ export const generateResponse = async (query: string, events: any[], isHeartMode
                             query.includes('persönlich') || 
                             query.includes('❤️') ? userLocations : null;
       
+      const selectedCityName = localStorage.getItem('selectedCityName') || 'Bielefeld';
+
       console.log('[chatUtils] Sending interests to edge function:', JSON.stringify(interestsToSend));
       console.log('[chatUtils] Sending locations to edge function:', JSON.stringify(locationsToSend));
       
@@ -178,7 +180,8 @@ export const generateResponse = async (query: string, events: any[], isHeartMode
         nextWeekStart,
         nextWeekEnd,
         userInterests: interestsToSend,
-        userLocations: locationsToSend
+        userLocations: locationsToSend,
+        selectedCity: selectedCityName,
       };
       console.log('[chatUtils] Full payload being sent to edge function:', JSON.stringify(payload));
       

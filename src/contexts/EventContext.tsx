@@ -1,9 +1,27 @@
 
-import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo, useCallback } from 'react';
 import { startOfDay } from 'date-fns';
 import { Event, RsvpOption } from '../types/eventTypes';
 import { useEvents } from '../hooks/useEvents';
 import { useTopEvents } from '../hooks/useTopEvents';
+
+export const cities = [
+  { name: "Bielefeld", abbr: "BI" },
+  { name: "Berlin", abbr: "berlin" },
+  { name: "Hamburg", abbr: "hamburg" },
+  { name: "München", abbr: "munich" },
+  { name: "Köln", abbr: "cologne" },
+  { name: "Frankfurt", abbr: "frankfurt" },
+  { name: "Stuttgart", abbr: "stuttgart" },
+  { name: "Düsseldorf", abbr: "duesseldorf" },
+  { name: "Leipzig", abbr: "leipzig" },
+  { name: "Hannover", abbr: "hanover" },
+  { name: "Nürnberg", abbr: "nuremberg" },
+  { name: "Bremen", abbr: "bremen" },
+  { name: "Dresden", abbr: "dresden" },
+  { name: "Essen", abbr: "essen" },
+  { name: "Dortmund", abbr: "dortmund" },
+];
 
 interface EventContextProps {
   events: Event[];
@@ -23,7 +41,7 @@ interface EventContextProps {
   topEventsPerDay: Record<string, string>;
   addUserEvent: (event: Omit<Event, 'id'>) => Promise<Event>;
   selectedCity: string;
-  setSelectedCity: React.Dispatch<React.SetStateAction<string>>;
+  setSelectedCity: (abbr: string) => void;
 }
 
 const EventContext = createContext<EventContextProps | undefined>(undefined);
@@ -43,9 +61,20 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [filter, setFilter] = useState<string | null>(null);
   const [showFavorites, setShowFavorites] = useState(false);
-  const [selectedCity, setSelectedCity] = useState('BI');
+  const [selectedCity, setSelectedCityState] = useState(() => localStorage.getItem('selectedCityAbbr') || 'BI');
   
   const topEventsPerDay = useTopEvents(events);
+  
+  const setSelectedCity = useCallback((abbr: string) => {
+    setSelectedCityState(abbr);
+    localStorage.setItem('selectedCityAbbr', abbr);
+    const cityObject = cities.find(c => c.abbr.toLowerCase() === abbr.toLowerCase());
+    if (cityObject) {
+      localStorage.setItem('selectedCityName', cityObject.name);
+    } else {
+      localStorage.setItem('selectedCityName', abbr);
+    }
+  }, []);
   
   const value = useMemo(() => ({
     events,

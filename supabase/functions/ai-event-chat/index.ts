@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
@@ -35,9 +36,13 @@ serve(async (req) => {
       nextWeekEnd,
       userInterests,
       userLocations,
+      selectedCity,
     } = await req.json();
 
     console.log(`[ai-event-chat] Received query: ${query}`);
+    if (selectedCity) {
+      console.log(`[ai-event-chat] Received selectedCity: ${selectedCity}`);
+    }
     console.log(`[ai-event-chat] Received currentDate: ${currentDate}`);
     console.log(`[ai-event-chat] Received next week range: ${nextWeekStart} to ${nextWeekEnd}`);
     
@@ -67,7 +72,20 @@ serve(async (req) => {
       throw new Error(`[ai-event-chat] Datenbank‑Fehler: ${eventsError.message}`);
     }
 
-    let filteredEvents = allEvents?.length ? allEvents : dbEvents;
+    let cityFilteredDbEvents = dbEvents;
+    if (selectedCity) {
+      console.log(`[ai-event-chat] Filtering DB events by city: ${selectedCity}`);
+      const targetCityName = selectedCity.toLowerCase();
+      
+      if (targetCityName === 'bielefeld') {
+        cityFilteredDbEvents = dbEvents.filter(e => !e.city || e.city.toLowerCase() === 'bielefeld');
+      } else {
+        cityFilteredDbEvents = dbEvents.filter(e => e.city && e.city.toLowerCase() === targetCityName);
+      }
+      console.log(`[ai-event-chat] After city filtering for "${selectedCity}": ${cityFilteredDbEvents.length} events from ${dbEvents.length}`);
+    }
+
+    let filteredEvents = allEvents?.length ? allEvents : cityFilteredDbEvents;
     
     const lowercaseQuery = query.toLowerCase();
     
@@ -310,7 +328,7 @@ serve(async (req) => {
     // Falls die Filterung zu streng war und keine Events übrig sind, nehmen wir die letzten 20 Events
     if (filteredEvents.length === 0) {
       console.log("Keine Events nach Filterung übrig, verwende die nächsten 20 anstehenden Events");
-      filteredEvents = dbEvents
+      filteredEvents = cityFilteredDbEvents
         .filter((e: any) => e.date >= today)
         .sort((a: any, b: any) => a.date.localeCompare(b.date))
         .slice(0, 20);
@@ -357,7 +375,7 @@ serve(async (req) => {
       })
       .join("\n\n");
 
-    const totalEventsInfo = `Es gibt insgesamt ${dbEvents.length} Events in der Datenbank. Ich habe dir die ${filteredEvents.length} relevantesten basierend auf deiner Anfrage ausgewählt.\nDie Anzahl der Likes gibt an, wie beliebt ein Event ist.`;
+    const totalEventsInfo = `Es gibt insgesamt ${cityFilteredDbEvents.length} Events in der Datenbank für die ausgewählte Stadt. Ich habe dir die ${filteredEvents.length} relevantesten basierend auf deiner Anfrage ausgewählt.\nDie Anzahl der Likes gibt an, wie beliebt ein Event ist.`;
 
     let systemMessage = `Du bist ein Event‑Assistent für Liebefeld. Begrüße den Nutzer freundlich je nach Tageszeit. Liste dann alle Events als chronologische Timeline (geordnet nach Uhrzeit) auf. Gruppiere immer nach den 3 Kategorien: Ausgehen, Sport und Kreativität. Die Kategorie wird in GROßBUCHSTABEN in Rot aufgelistet. WICHTIG: Events mit der category "Sonstiges" werden immer der Kategorie "Ausgehen" zugewiesen! WICHTIG, WICHTIG: Wenn Improtheater im Eventname: wird immer der Kategorie "Kreativität" zugewiesen(ignoriere hier die category: Sport). Beschreibe jedes Event kurz, nimm dafür alle Infos die du hast die du hast für jedes Event. Aktuelles Datum: ${today}.\n${totalEventsInfo}\nEvents mit vielen Likes sind besonders beliebt und bekommen oft den Vorzug bei Empfehlungen. Die Likes-Anzahl findest du bei jedem Event. Berücksichtige die Anzahl der Likes für Empfehlungen und markiere besonders beliebte Events passend.\n`;
 
