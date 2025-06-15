@@ -37,19 +37,23 @@ export const useChatLogic = (
   const welcomeMessageShownRef = useRef(false);
   const appLaunchedBeforeRef = useRef(false); 
 
-  // ERWEITERTE Prompt-Liste zentral für TypewriterPrompt
-  const typewriterPrompts = [
+  // Promptvorschlag-Liste für den Schreibmaschinen-Effekt (erweitert)
+  const examplePrompts = [
     "Welche Events gibt es heute?",
     "Was geht am Wochenende in Liebefeld?",
     "Zeig mir Events für Familien.",
     "Welche Konzerte laufen diese Woche?",
-    "Wie ist das Wetter?",
     "Gibt es kostenlose Events?",
     "Meine Tipps für einen perfekten Tag in Liebefeld.",
     "Zeig mir nachhaltige Events.",
     "Was läuft gerade in der Nähe?",
     "Empfiehl mir etwas Neues!",
-    "Welche kulturellen Highlights gibt es?"
+    "Welche kulturellen Highlights gibt es?",
+    "Gibt es Workshops oder Kurse demnächst?",
+    "Welche Outdoor-Aktivitäten finden statt?",
+    "Was ist heute für Kinder und Jugendliche los?",
+    "Finde ein Afterwork-Event!",
+    "Zeig mir Kunst- und Ausstellungs-Highlights."
   ];
 
   const adEvents: AdEvent[] = [
@@ -538,7 +542,7 @@ export const useChatLogic = (
                     id: 'typewriter-prompt',
                     isUser: false,
                     text: 'Frag mich etwas:',
-                    examplePrompts: typewriterPrompts,
+                    examplePrompts: examplePrompts, // <-- neue variable verwenden
                     timestamp: new Date().toISOString()
                 },
                 {
@@ -594,11 +598,11 @@ export const useChatLogic = (
           timestamp: new Date().toISOString()
         },
         {
-            id: 'static-prompts', 
-            isUser: false,
-            text: 'Frag mich zum Beispiel:',
-            examplePrompts: examplePrompts, 
-            timestamp: new Date().toISOString()
+          id: 'typewriter-prompt',
+          isUser: false,
+          text: 'Frag mich etwas:',
+          examplePrompts: examplePrompts, // <-- neue variable verwenden
+          timestamp: new Date().toISOString()
         },
         {
           id: 'landing-slides',
@@ -645,7 +649,7 @@ export const useChatLogic = (
     setShowRecentQueries,
     messagesEndRef,
     inputRef,
-    examplePrompts,
+    examplePrompts, // <-- Rückgabe für MessageList/Prompt-Komponente
     isHeartActive,
     handleToggleChat,
     handleSendMessage,
