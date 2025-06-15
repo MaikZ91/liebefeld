@@ -29,19 +29,20 @@ const InterestsEditor: React.FC<InterestsEditorProps> = ({
   };
   
   return (
-    <div className="space-y-2">
-      <Label>Interessen</Label>
-      <div className="flex flex-wrap gap-2 mb-2">
+    <div className="space-y-3">
+      <Label className="text-gray-300">Interessen</Label>
+      <div className="flex flex-wrap gap-2 mb-2 p-2 bg-gray-900/50 border border-gray-800 rounded-md min-h-[40px] items-center">
+        {interests.length === 0 && <p className="text-sm text-gray-500">Füge deine Interessen hinzu...</p>}
         {interests.map((interest, index) => (
           <Badge 
             key={index} 
             variant="outline" 
-            className="bg-gray-800 border-gray-700 flex items-center gap-1"
+            className="bg-red-900/80 border border-red-700/50 text-red-100 flex items-center gap-1.5"
           >
             {interest}
             <X 
               size={14} 
-              className="cursor-pointer text-gray-400 hover:text-red-400" 
+              className="cursor-pointer text-red-200 hover:text-white" 
               onClick={() => handleRemoveInterest(interest)}
             />
           </Badge>
@@ -51,8 +52,8 @@ const InterestsEditor: React.FC<InterestsEditorProps> = ({
         <Input
           value={newInterest}
           onChange={(e) => setNewInterest(e.target.value)}
-          placeholder="Neues Interesse"
-          className="bg-gray-900 border-gray-700"
+          placeholder="z.B. Sport, Musik, Reisen"
+          className="bg-gray-900/50 border-gray-700 focus:ring-red-500 focus:border-red-500"
           onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddInterest())}
         />
         <Button 
@@ -60,7 +61,7 @@ const InterestsEditor: React.FC<InterestsEditorProps> = ({
           size="icon" 
           onClick={handleAddInterest}
           variant="outline"
-          className="border-gray-700 text-white"
+          className="border-gray-700 text-white hover:bg-red-500/20 hover:border-red-500"
         >
           <Plus size={16} />
         </Button>

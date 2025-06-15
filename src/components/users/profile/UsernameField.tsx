@@ -16,12 +16,12 @@ const UsernameField: React.FC<UsernameFieldProps> = ({ form }) => {
       name="username"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Benutzername</FormLabel>
+          <FormLabel className="text-gray-300">Benutzername</FormLabel>
           <FormControl>
             <Input
-              placeholder="Benutzername eingeben"
+              placeholder="Dein öffentlicher Name"
               {...field}
-              className="bg-gray-900 border-gray-700"
+              className="bg-gray-900/50 border-gray-700 focus:ring-red-500 focus:border-red-500 text-base"
             />
           </FormControl>
           <FormMessage />

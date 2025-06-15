@@ -182,43 +182,49 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({
     }
   };
 
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-black text-white border border-gray-800 sm:max-w-md">
+      <DialogContent className="bg-black text-white border border-gray-800 sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle className="text-white">Profil bearbeiten</DialogTitle>
+          <DialogTitle className="text-white text-2xl">Dein Profil</DialogTitle>
           <DialogDescription className="text-gray-400">
-            Hier kannst du dein Profil anpassen.
+            Zeig der Community, wer du bist. Änderungen werden sofort für andere sichtbar.
           </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <AvatarUploader 
-              username={form.watch('username')}
-              currentAvatar={uploadedImage || form.watch('avatar')}
-              onAvatarChange={handleAvatarUpdate}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-4">
+              <div className="md:col-span-1 flex flex-col items-center text-center space-y-4">
+                <AvatarUploader 
+                  username={form.watch('username')}
+                  currentAvatar={uploadedImage || form.watch('avatar')}
+                  onAvatarChange={handleAvatarUpdate}
+                />
+                <p className="text-sm text-gray-400">Lade ein Bild von dir hoch, um dein Profil zu personalisieren.</p>
+              </div>
+
+              <div className="md:col-span-2 space-y-6">
+                <UsernameField form={form} />
+                <InterestsEditor 
+                  interests={interests}
+                  onInterestsChange={setInterests}
+                />
+                <LocationSelector
+                  locations={locations}
+                  favoriteLocations={favoriteLocations}
+                  onLocationsChange={setFavoriteLocations}
+                />
+              </div>
+            </div>
             
-            <UsernameField form={form} />
-            
-            <InterestsEditor 
-              interests={interests}
-              onInterestsChange={setInterests}
-            />
-            
-            <LocationSelector
-              locations={locations}
-              favoriteLocations={favoriteLocations}
-              onLocationsChange={setFavoriteLocations}
-            />
-            
-            <DialogFooter className="sm:justify-end">
+            <DialogFooter className="sm:justify-end pt-6 border-t border-gray-800">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="border-gray-700 text-white"
+                className="border-gray-700 text-white hover:bg-gray-800"
               >
                 Abbrechen
               </Button>
