@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Music, PartyPopper, Image, Dumbbell, Map, Plus, Users } from 'lucide-react';
@@ -105,6 +105,11 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
     setSelectedEvent(event);
   };
   
+  const handleSelectEventFromList = useCallback((event: Event, date: Date) => {
+    setSelectedDate(date);
+    setSelectedEvent(event);
+  }, [setSelectedDate, setSelectedEvent]);
+
   const handleAddEvent = async (newEvent: Omit<Event, 'id'>) => {
     try {
       console.log('Adding new event to database only:', newEvent);
@@ -200,10 +205,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                   events={eventsToDisplay}
                   showFavorites={showFavorites}
                   showNewEvents={showNewEvents}
-                  onSelectEvent={(event, date) => {
-                    setSelectedDate(date);
-                    setSelectedEvent(event);
-                  }}
+                  onSelectEvent={handleSelectEventFromList}
                 />
               </div>
             </div>

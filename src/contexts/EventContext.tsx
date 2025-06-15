@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { startOfDay } from 'date-fns';
 import { Event, RsvpOption } from '../types/eventTypes';
 import { 
@@ -41,7 +41,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [showFavorites, setShowFavorites] = useState(false);
   const [topEventsPerDay, setTopEventsPerDay] = useState<Record<string, string>>({});
 
-  const refreshEvents = async () => {
+  const refreshEvents = useCallback(async () => {
     setIsLoading(true);
     try {
       console.log('🔄 [refreshEvents] STARTING refresh...');
@@ -56,34 +56,6 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       console.log(`🔄 [refreshEvents] Loaded ${allEvents.length} events in ${refreshDuration}ms`);
       
-      // Calculate top events per day
-      const topEventsByDay: Record<string, string> = {};
-      const eventsByDate: Record<string, Event[]> = {};
-      
-      allEvents.forEach(event => {
-        if (!event.date) return;
-        
-        if (!eventsByDate[event.date]) {
-          eventsByDate[event.date] = [];
-        }
-        
-        eventsByDate[event.date].push(event);
-      });
-      
-      Object.keys(eventsByDate).forEach(date => {
-        const sortedEvents = [...eventsByDate[date]].sort((a, b) => {
-          if (b.likes !== a.likes) {
-            return b.likes - a.likes;
-          }
-          return a.id.localeCompare(b.id);
-        });
-        
-        if (sortedEvents.length > 0) {
-          topEventsByDay[date] = sortedEvents[0].id;
-        }
-      });
-      
-      setTopEventsPerDay(topEventsByDay);
       setEvents(allEvents);
       
       logTodaysEvents(allEvents);
@@ -96,27 +68,58 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const handleLikeEvent = async (eventId: string) => {
-    const eventToLike = events.find(e => e.id === eventId);
-    if (!eventToLike) {
-      console.error(`[handleLikeEvent] Event with ID ${eventId} not found.`);
-      return;
-    }
+  useEffect(() => {
+    const topEventsByDay: Record<string, string> = {};
+    const eventsByDate: Record<string, Event[]> = {};
 
-    const oldLikes = eventToLike.likes || 0;
-    const newLikes = oldLikes + 1;
+    events.forEach(event => {
+      if (!event.date) return;
+      if (!eventsByDate[event.date]) {
+        eventsByDate[event.date] = [];
+      }
+      eventsByDate[event.date].push(event);
+    });
 
+    Object.keys(eventsByDate).forEach(date => {
+      const sortedEvents = [...eventsByDate[date]].sort((a, b) => {
+        const bLikes = b.likes || 0;
+        const aLikes = a.likes || 0;
+        if (bLikes !== aLikes) {
+          return bLikes - aLikes;
+        }
+        return a.id.localeCompare(b.id);
+      });
+
+      if (sortedEvents.length > 0) {
+        topEventsByDay[date] = sortedEvents[0].id;
+      }
+    });
+
+    setTopEventsPerDay(topEventsByDay);
+  }, [events]);
+
+  const handleLikeEvent = useCallback(async (eventId: string) => {
+    let oldLikes = 0;
+    
     // Optimistic UI update
-    setEvents(prevEvents =>
-      prevEvents.map(event =>
-        event.id === eventId ? { ...event, likes: newLikes } : event
-      )
-    );
+    setEvents(prevEvents => {
+        const eventToLike = prevEvents.find(e => e.id === eventId);
+        if (!eventToLike) {
+            console.error(`[handleLikeEvent] Event with ID ${eventId} not found.`);
+            return prevEvents;
+        };
+        oldLikes = eventToLike.likes || 0;
+        const newLikes = oldLikes + 1;
+        
+        return prevEvents.map(event =>
+            event.id === eventId ? { ...event, likes: newLikes } : event
+        );
+    });
 
     // Update database
-    const success = await updateEventLikesInDb(eventId, newLikes);
+    const success = await updateEventLikesInDb(eventId, oldLikes + 1);
 
     // Revert if DB update fails
     if (!success) {
@@ -126,37 +129,34 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         )
       );
     }
-  };
+  }, []);
 
-  const handleRsvpEvent = async (eventId: string, option: RsvpOption) => {
+  const handleRsvpEvent = useCallback(async (eventId: string, option: RsvpOption) => {
     try {
       console.log(`RSVP for event with ID: ${eventId}, option: ${option}`);
-      const currentEvent = events.find(event => event.id === eventId);
-      if (!currentEvent) {
-        console.error(`Event with ID ${eventId} not found`);
-        return;
-      }
-      
-      const currentRsvp = {
-        yes: currentEvent.rsvp_yes ?? currentEvent.rsvp?.yes ?? 0,
-        no: currentEvent.rsvp_no ?? currentEvent.rsvp?.no ?? 0,
-        maybe: currentEvent.rsvp_maybe ?? currentEvent.rsvp?.maybe ?? 0
-      };
-      
-      const newRsvp = { ...currentRsvp };
-      newRsvp[option] += 1;
-      
-      console.log(`Updating RSVP for ${eventId} to:`, newRsvp);
-      
-      await updateEventRsvp(eventId, newRsvp);
-      console.log(`Successfully updated RSVP in database for event ${eventId}`);
-      
-      const newLikesValue = Math.max(currentEvent.likes || 0, newRsvp.yes + newRsvp.maybe);
-      
-      await updateEventLikesInDb(eventId, newLikesValue);
-      console.log(`Successfully updated likes in database for event ${eventId} to ${newLikesValue}`);
+      let newLikesValue = 0;
+      const newRsvp = { yes: 0, no: 0, maybe: 0 };
       
       setEvents(prevEvents => {
+        const currentEvent = prevEvents.find(event => event.id === eventId);
+        if (!currentEvent) {
+          console.error(`Event with ID ${eventId} not found`);
+          return prevEvents;
+        }
+        
+        const currentRsvp = {
+          yes: currentEvent.rsvp_yes ?? currentEvent.rsvp?.yes ?? 0,
+          no: currentEvent.rsvp_no ?? currentEvent.rsvp?.no ?? 0,
+          maybe: currentEvent.rsvp_maybe ?? currentEvent.rsvp?.maybe ?? 0
+        };
+        
+        newRsvp.yes = currentRsvp.yes;
+        newRsvp.no = currentRsvp.no;
+        newRsvp.maybe = currentRsvp.maybe;
+        newRsvp[option] += 1;
+        
+        newLikesValue = Math.max(currentEvent.likes || 0, newRsvp.yes + newRsvp.maybe);
+        
         return prevEvents.map(event => 
           event.id === eventId 
             ? { 
@@ -170,12 +170,19 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             : event
         );
       });
+      
+      await updateEventRsvp(eventId, newRsvp);
+      console.log(`Successfully updated RSVP in database for event ${eventId}`);
+      
+      await updateEventLikesInDb(eventId, newLikesValue);
+      console.log(`Successfully updated likes in database for event ${eventId} to ${newLikesValue}`);
+      
     } catch (error) {
       console.error('Error updating RSVP:', error);
     }
-  };
+  }, []);
 
-  const addUserEvent = async (eventData: Omit<Event, 'id'>): Promise<Event> => {
+  const addUserEvent = useCallback(async (eventData: Omit<Event, 'id'>): Promise<Event> => {
     try {
       console.log('Adding new user event to database and local state:', eventData);
       
@@ -191,12 +198,12 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       console.error('Error adding new event:', error);
       throw error;
     }
-  };
+  }, []);
 
   useEffect(() => {
     console.log('EventProvider: Initial event load...');
     refreshEvents();
-  }, []);
+  }, [refreshEvents]);
 
   const value = {
     events,

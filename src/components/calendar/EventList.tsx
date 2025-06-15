@@ -1,4 +1,5 @@
-import React, { useRef, useEffect, useState, memo, useMemo } from 'react';
+
+import React, { useRef, useEffect, useState, memo, useMemo, useCallback } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
@@ -21,32 +22,54 @@ const MemoizedEventCard = memo(({ event, date, onSelectEvent, isTopEvent, isNewE
   onSelectEvent: (event: Event, date: Date) => void;
   isTopEvent: boolean;
   isNewEvent: boolean;
-}) => (
-  <div key={event.id} className={`relative ${isTopEvent ? 'transform transition-all' : ''} w-full`}>
-    {isTopEvent && (
-      <div className="absolute -left-1 top-0 bottom-0 w-1 bg-gradient-to-b from-[#E53935] to-[#C62828] rounded-full"></div>
-    )}
-    {isNewEvent && !isTopEvent && (
-      <div className="absolute -left-1 top-0 bottom-0 w-1 bg-gradient-to-b from-green-500 to-green-700 rounded-full"></div>
-    )}
-    <div className={`${isTopEvent ? 'bg-gradient-to-r from-[#C62828]/20 to-transparent rounded-lg w-full' : isNewEvent ? 'bg-gradient-to-r from-green-600/10 to-transparent rounded-lg w-full' : 'w-full'}`}>
+}) => {
+  const handleClick = useCallback(() => {
+    onSelectEvent(event, date);
+  }, [event, date, onSelectEvent]);
+
+  return (
+    <div key={event.id} className={`relative ${isTopEvent ? 'transform transition-all' : ''} w-full`}>
       {isTopEvent && (
-        <div className="absolute right-1 top-1 bg-[#E53935] text-white px-1 py-0.5 rounded-full text-[10px] flex items-center z-20">
-          <Star className="w-2 h-2 mr-0.5 fill-white" />
-          <span>Top</span>
-        </div>
+        <div className="absolute -left-1 top-0 bottom-0 w-1 bg-gradient-to-b from-[#E53935] to-[#C62828] rounded-full"></div>
       )}
-      <EventCard 
-        event={event}
-        compact={true}
-        onClick={() => onSelectEvent(event, date)}
-        className={`${isTopEvent ? 'border-l-2 border-[#E53935]' : isNewEvent ? 'border-l-2 border-green-500' : ''} relative w-full`}
-      />
+      {isNewEvent && !isTopEvent && (
+        <div className="absolute -left-1 top-0 bottom-0 w-1 bg-gradient-to-b from-green-500 to-green-700 rounded-full"></div>
+      )}
+      <div className={`${isTopEvent ? 'bg-gradient-to-r from-[#C62828]/20 to-transparent rounded-lg w-full' : isNewEvent ? 'bg-gradient-to-r from-green-600/10 to-transparent rounded-lg w-full' : 'w-full'}`}>
+        {isTopEvent && (
+          <div className="absolute right-1 top-1 bg-[#E53935] text-white px-1 py-0.5 rounded-full text-[10px] flex items-center z-20">
+            <Star className="w-2 h-2 mr-0.5 fill-white" />
+            <span>Top</span>
+          </div>
+        )}
+        <EventCard 
+          event={event}
+          compact={true}
+          onClick={handleClick}
+          className={`${isTopEvent ? 'border-l-2 border-[#E53935]' : isNewEvent ? 'border-l-2 border-green-500' : ''} relative w-full`}
+        />
+      </div>
     </div>
-  </div>
-));
+  );
+});
 
 MemoizedEventCard.displayName = 'MemoizedEventCard';
+
+// Helper component for sport events to use useCallback
+const SportEventCard = ({ event, date, onSelectEvent }: { event: Event, date: Date, onSelectEvent: (event: Event, date: Date) => void }) => {
+  const handleClick = useCallback(() => {
+    onSelectEvent(event, date);
+  }, [event, date, onSelectEvent]);
+
+  return (
+    <EventCard
+      event={event}
+      compact={true}
+      onClick={handleClick}
+      className="border-l-2 border-green-500"
+    />
+  );
+};
 
 // Helper function to determine if an event should be in the sport accordion
 const isSportEvent = (event: Event): boolean => {
@@ -292,12 +315,11 @@ const EventList: React.FC<EventListProps> = memo(({
                           <AccordionContent className="pb-0 pt-2">
                             <div className="space-y-1 pl-2">
                               {sportEventsByDate[dateStr].map(event => (
-                                <EventCard
+                                <SportEventCard
                                   key={event.id}
                                   event={event}
-                                  compact={true}
-                                  onClick={() => onSelectEvent(event, date)}
-                                  className="border-l-2 border-green-500"
+                                  date={date}
+                                  onSelectEvent={onSelectEvent}
                                 />
                               ))}
                             </div>
