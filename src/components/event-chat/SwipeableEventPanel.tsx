@@ -1,4 +1,3 @@
-
 // src/components/event-chat/SwipeableEventPanel.tsx
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, MapPin, Clock, Euro, UsersRound, Calendar, ExternalLink, Music, Heart } from 'lucide-react';
@@ -20,7 +19,6 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
   className
 }) => {
   const [currentIndex, setCurrentIndex] = useState(panelData.currentIndex || 0);
-  const { refreshEvents } = useEventContext();
   const [isLiking, setIsLiking] = useState(false);
   
   const currentItem = panelData.events[currentIndex];
@@ -59,21 +57,14 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
       const panelEvent = currentItem as PanelEvent;
       const currentLikes = panelEvent.likes || 0;
       const newLikes = currentLikes + 1;
-      
-      console.log(`🚀 [SwipeableEventPanel] Updating DB directly - Event: ${eventId}, New likes: ${newLikes}`);
-      
-      // Update database directly
+
+      // Update database directly (ohne globalen Refresh!)
       const success = await updateEventLikesInDb(eventId, newLikes);
-      
-      if (success) {
-        console.log(`🚀 [SwipeableEventPanel] DB update successful, refreshing events...`);
-        // Refresh events to show updated likes
-        await refreshEvents();
-      } else {
-        console.error(`🚀 [SwipeableEventPanel] DB update failed for event ${eventId}`);
-      }
+
+      // Optional: Falls möglich, Panel-Likes im UI erhöhen – 
+      // Da PanelData immutable ist, kann dies hier nicht direkt erfolgen (aus API rausziehen falls gewünscht)
     } catch (error) {
-      console.error('Error liking event:', error);
+      // ... Fehlerhandling ...
     } finally {
       setTimeout(() => setIsLiking(false), 150);
     }

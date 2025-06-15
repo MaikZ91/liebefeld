@@ -63,7 +63,6 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
   // Optimistic state for likes:
   const [optimisticLikes, setOptimisticLikes] = useState<number | undefined>(event.likes);
   const [isLiking, setIsLiking] = useState(false);
-  const { refreshEvents } = useEventContext();
 
   // Helper um Likes zu zeigen (State bevorzugt, sonst Fallback):
   const currentLikes = optimisticLikes !== undefined ? optimisticLikes : event.likes || 0;
@@ -88,7 +87,6 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     const oldLikes = optimisticLikes ?? event.likes ?? 0;
     setOptimisticLikes(oldLikes + 1);
     setIsLiking(true);
-    console.log(`[LIKE HANDLER] Like angefragt für Event:`, event?.id, event?.title);
 
     try {
       const newLikes = (event.likes || 0) + 1;
@@ -97,9 +95,6 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
         .update({ likes: newLikes })
         .eq("id", event.id)
         .select();
-
-      // Zusätzliche logs für das Debugging
-      console.log(`[LIKE HANDLER] Supabase update response:`, { data, error });
 
       if (error) {
         toast.error("Fehler beim Speichern deines Likes (DB Error).");
@@ -124,14 +119,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
         setOptimisticLikes(updatedLikes);
       }
 
-      // Damit Supabase das Update propagieren kann
-      await new Promise((r) => setTimeout(r, 800));
-      await refreshEvents();
-      console.log(`[LIKE HANDLER] Events erfolgreich refreshed`);
-      setTimeout(() => setOptimisticLikes(undefined), 1000);
-
     } catch (err) {
-      // Prüfe auf typische RLS/Policy Fehler
       if (err instanceof Error && err.message.includes("row-level security")) {
         toast.error("Datenbank-Fehler: Row Level Security verhindert Like.");
       } else {
