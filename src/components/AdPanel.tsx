@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Calendar, Users, X, UsersRound, Music, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -84,8 +83,7 @@ const AdPanel: React.FC<AdPanelProps> = ({ className }) => {
                 alt={ad.title} 
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  console.error(`Failed to load ad image: ${ad.imageUrl}`);
-                  e.currentTarget.src = "https://images.unsplash.com/photo-1649972904349-6e44c42644a7?auto=format&fit=crop&w=800&q=80";
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&q=80";
                 }}
               />
             )}

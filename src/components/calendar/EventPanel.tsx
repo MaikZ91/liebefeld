@@ -130,6 +130,9 @@ const EventPanel: React.FC<EventPanelProps> = ({
                   src={selectedEvent.image_url}
                   alt={selectedEvent.title}
                   className="w-full h-32 object-cover rounded-lg"
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&q=80';
+                  }}
                 />
               </div>
             )}
