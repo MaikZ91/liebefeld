@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Calendar, ThumbsUp } from 'lucide-react';
 import { format, parseISO, isSameMonth, startOfDay, isAfter, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -11,84 +11,58 @@ interface LiveTickerProps {
 }
 
 const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef }) => {
-  const [tickerEvents, setTickerEvents] = useState<Event[]>([]);
+  // useMemo: Filter + Sort Logik nur wenn events sich wirklich ändern
+  const tickerEvents = useMemo(() => {
+    if (events.length === 0) return [];
+
+    const currentDate = new Date();
+    const today = startOfDay(new Date());
+
+    const currentMonthEvents = events.filter(event => {
+      if (!event.date) return false;
+      try {
+        const eventDate = parseISO(event.date);
+        return isSameMonth(eventDate, currentDate) && (isAfter(eventDate, today) || isToday(eventDate));
+      } catch {
+        return false;
+      }
+    });
+
+    const eventsByDay: Record<string, Event[]> = {};
+    currentMonthEvents.forEach(event => {
+      if (!event.date) return;
+      try {
+        const eventDate = parseISO(event.date);
+        const dateKey = format(eventDate, 'yyyy-MM-dd');
+        if (!eventsByDay[dateKey]) eventsByDay[dateKey] = [];
+        eventsByDay[dateKey].push(event);
+      } catch { /* ignore */ }
+    });
+
+    const topEventsByDay = Object.keys(eventsByDay).map(dateKey => {
+      const dayEvents = eventsByDay[dateKey];
+      return dayEvents.sort((a, b) => (b.likes || 0) - (a.likes || 0))[0];
+    });
+
+    return topEventsByDay.sort((a, b) => {
+      try {
+        const dateA = parseISO(a.date);
+        const dateB = parseISO(b.date);
+        return dateA.getTime() - dateB.getTime();
+      } catch {
+        return 0;
+      }
+    });
+  }, [events]);
+  
+  // Animation pause für hover
   const [isPaused, setIsPaused] = useState(false);
   const innerTickerRef = useRef<HTMLDivElement>(null);
-  
-  useEffect(() => {
-    if (events.length === 0) return;
-    
-    try {
-      console.log(`LiveTicker: Processing ${events.length} events for ticker`);
-      
-      const currentDate = new Date();
-      const today = startOfDay(new Date());
-      
-      const currentMonthEvents = events.filter(event => {
-        try {
-          if (!event.date) return false;
-          const eventDate = parseISO(event.date);
-          
-          return isSameMonth(eventDate, currentDate) && (isAfter(eventDate, today) || isToday(eventDate));
-        } catch (error) {
-          console.error(`Error filtering for current month: ${event.date}`, error);
-          return false;
-        }
-      });
-      
-      console.log(`LiveTicker: Found ${currentMonthEvents.length} events for current month`);
-      
-      const eventsByDay: Record<string, Event[]> = {};
-      
-      currentMonthEvents.forEach(event => {
-        try {
-          if (!event.date) return;
-          
-          const eventDate = parseISO(event.date);
-          const dateKey = format(eventDate, 'yyyy-MM-dd');
-          
-          if (!eventsByDay[dateKey]) {
-            eventsByDay[dateKey] = [];
-          }
-          
-          eventsByDay[dateKey].push(event);
-        } catch (error) {
-          console.error(`Error grouping events by day: ${event.date}`, error);
-        }
-      });
-      
-      const topEventsByDay = Object.keys(eventsByDay).map(dateKey => {
-        const dayEvents = eventsByDay[dateKey];
-        
-        // Sort by likes (simplified - directly from event object)
-        return dayEvents.sort((a, b) => {
-          const likesA = a.likes || 0;
-          const likesB = b.likes || 0;
-          return likesB - likesA;
-        })[0];
-      });
-      
-      console.log(`LiveTicker: Found ${topEventsByDay.length} top events for the current month`);
-      
-      const sortedTopEvents = topEventsByDay.sort((a, b) => {
-        try {
-          const dateA = parseISO(a.date);
-          const dateB = parseISO(b.date);
-          return dateA.getTime() - dateB.getTime();
-        } catch (error) {
-          console.error(`Error sorting top events by date: ${a.date}, ${b.date}`, error);
-          return 0;
-        }
-      });
-      
-      setTickerEvents(sortedTopEvents);
-    } catch (error) {
-      console.error("Error processing events for ticker:", error);
-    }
-  }, [events]);
+
+  // Entferne alle unkritischen Logging-Statements (nur noch Fehler im Fehlerfall)
+  // -> Kein console.log für "Processing X events"/"Found Y events" mehr
 
   if (!tickerEvents.length) {
-    console.log('LiveTicker: No top events to display');
     return null;
   }
 
@@ -119,8 +93,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef }) => {
                       try {
                         const date = parseISO(event.date);
                         return format(date, 'dd.MM', { locale: de });
-                      } catch (error) {
-                        console.error(`Failed to format date: ${event.date}`, error);
+                      } catch {
                         return 'Datum?';
                       }
                     })()}:

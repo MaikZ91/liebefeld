@@ -1,5 +1,3 @@
-
-// src/pages/Index.tsx
 import React, { useEffect, useState, useRef } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
@@ -14,22 +12,6 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { QrCode } from 'lucide-react';
 import { EventProvider, useEventContext } from '@/contexts/EventContext';
-
-const LiveTickerWrapper = () => {
-  const tickerRef = useRef<HTMLDivElement>(null);
-  
-  return (
-    <EventProvider>
-      <EventProviderConsumer tickerRef={tickerRef} />
-    </EventProvider>
-  );
-};
-
-const EventProviderConsumer = ({ tickerRef }: { tickerRef: React.RefObject<HTMLDivElement> }) => {
-  const { events } = useEventContext();
-  console.log(`EventProviderConsumer: Passing ${events.length} events to LiveTicker`);
-  return <LiveTicker events={events} tickerRef={tickerRef} />;
-};
 
 type AnimationType = 'char' | 'word' | 'whole';
 
@@ -139,6 +121,8 @@ const Index = () => {
     }
   };
   
+  const { events } = useEventContext(); // Hole Events direkt aus Context
+
   return (
     <div className="h-screen w-screen flex flex-col bg-black text-white overflow-hidden fixed inset-0">
       {/* Header - Fixed height */}
@@ -149,7 +133,7 @@ const Index = () => {
       
       {/* LiveTicker - Fixed position with highest z-index */}
       <div className="fixed top-20 left-0 right-0 h-12 w-full bg-black/95 backdrop-blur-lg border-b border-white/20 shadow-xl z-50 flex-shrink-0">
-        <LiveTickerWrapper />
+        <LiveTicker events={events} /> {/* Direkt aus Context, kein Provider mehr */}
       </div>
       
       {/* Main content - Fixed calculated height with top padding for ticker */}
