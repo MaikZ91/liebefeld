@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { UserProfile } from "@/types/chatTypes";
 import { Card } from "@/components/ui/card";
@@ -39,7 +40,7 @@ const UserCard: React.FC<UserCardProps> = ({ user, currentUsername, onSelectUser
 
   return (
     <Card
-      className={`relative w-full aspect-square overflow-hidden group transition-all duration-300 ${
+      className={`relative w-full aspect-square overflow-hidden group transition-all duration-300 rounded-none ${
         isCurrentUser 
           ? 'opacity-60 cursor-not-allowed'
           : 'cursor-pointer'
