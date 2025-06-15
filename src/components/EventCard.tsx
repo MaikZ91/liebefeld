@@ -102,10 +102,12 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
       }
 
       // Prüfe, ob das Row zurückgegeben wurde & Likes Wert darin geloggt
-      if (Array.isArray(data)) {
+      if (data && Array.isArray(data)) {
         console.log(`[LIKE HANDLER] Returned after update:`, data[0]);
-      } else {
+      } else if (data) {
         console.log(`[LIKE HANDLER] Returned after update:`, data);
+      } else {
+        console.log(`[LIKE HANDLER] Returned after update:`, null);
       }
 
       toast.success("Danke fürs Liken!");
