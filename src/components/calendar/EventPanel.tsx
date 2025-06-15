@@ -1,11 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
 import { Button } from '@/components/ui/button';
 import { CalendarIcon, MapPin, Heart, Link } from 'lucide-react';
 import EventCard from '@/components/EventCard';
+import { useEventContext } from '@/contexts/EventContext';
+import { cn } from '@/lib/utils';
 
 interface EventPanelProps {
   selectedDate: Date | null;
@@ -14,7 +16,6 @@ interface EventPanelProps {
   filter: string | null;
   onEventSelect: (event: Event) => void;
   onEventClose: () => void;
-  onLike: (eventId: string) => void;
   onShowEventForm: () => void;
   showFavorites: boolean;
 }
@@ -26,10 +27,21 @@ const EventPanel: React.FC<EventPanelProps> = ({
   filter,
   onEventSelect,
   onEventClose,
-  onLike,
   onShowEventForm,
   showFavorites
 }) => {
+  const { handleLikeEvent } = useEventContext();
+  const [isLiking, setIsLiking] = useState(false);
+
+  const handleLike = async (eventId: string) => {
+    if (isLiking) return;
+    setIsLiking(true);
+    await handleLikeEvent(eventId);
+    // After the context updates the event, this component will re-render
+    // with the new like count. We can set isLiking to false after a short delay.
+    setTimeout(() => setIsLiking(false), 250);
+  };
+  
   const panelTitle = selectedDate 
     ? `Events am ${format(selectedDate, 'dd. MMMM', { locale: de })}`
     : filter 
@@ -127,9 +139,10 @@ const EventPanel: React.FC<EventPanelProps> = ({
             <Button 
               variant="outline" 
               className="bg-black/50 text-white hover:bg-black/70 text-xs h-7 px-2"
-              onClick={() => onLike(selectedEvent.id)}
+              onClick={() => handleLike(selectedEvent.id)}
+              disabled={isLiking}
             >
-              <Heart className="mr-1 h-3 w-3" fill={selectedEvent.likes && selectedEvent.likes > 0 ? 'white' : 'none'} />
+              <Heart className={cn("mr-1 h-3 w-3", selectedEvent.likes && selectedEvent.likes > 0 ? "fill-white" : "none")} />
               {selectedEvent.likes || 0}
             </Button>
             <Button onClick={onShowEventForm} className="text-xs h-7 px-2">Bearbeiten</Button>
