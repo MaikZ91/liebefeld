@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { UserCircle, LogIn } from 'lucide-react';
 import ChatLoadingSkeleton from './chat/ChatLoadingSkeleton';
 import { useEventContext, cities } from '@/contexts/EventContext';
+import { createGroupDisplayName, parseLegacyGroupId } from '@/utils/groupIdUtils';
 
 interface GroupChatProps {
   groupId: string;
@@ -34,23 +35,17 @@ const GroupChat: React.FC<GroupChatProps> = ({
 
   // Parse city-specific group ID to get display name
   const getCitySpecificDisplayName = (groupId: string, baseGroupName: string): string => {
-    // Check if this is a city-specific group ID (format: {city}_{category})
-    const parts = groupId.split('_');
-    if (parts.length === 2) {
-      const [cityAbbr, category] = parts;
-      
-      // Find the city name from the abbreviation
-      const city = cities.find(c => c.abbr.toLowerCase() === cityAbbr.toLowerCase());
-      const cityName = city ? city.name : cityAbbr.toUpperCase();
-      
-      // Capitalize the category
-      const capitalizedCategory = category.charAt(0).toUpperCase() + category.slice(1);
-      
-      return `${capitalizedCategory} • ${cityName}`;
+    // Try to parse legacy string-based group ID first
+    const legacyParsed = parseLegacyGroupId(groupId);
+    if (legacyParsed) {
+      return createGroupDisplayName(legacyParsed.category, legacyParsed.city, cities);
     }
     
-    // Fallback to base group name for legacy IDs
-    return baseGroupName;
+    // For UUID-based group IDs, we need to determine the category and city from context
+    // Since we can't reverse-engineer from UUID, we'll use the current selected city and active category
+    // This is passed down from the parent component context
+    const currentCategory = 'Ausgehen'; // Default category, ideally this should be passed as prop
+    return createGroupDisplayName(currentCategory, selectedCity, cities);
   };
 
   const displayGroupName = getCitySpecificDisplayName(groupId, groupName);

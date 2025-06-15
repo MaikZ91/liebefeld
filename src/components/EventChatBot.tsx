@@ -9,6 +9,7 @@ import FullPageChatBot from './event-chat/FullPageChatBot';
 import { useChatLogic } from './event-chat/useChatLogic';
 import { usePersonalization } from './event-chat/usePersonalization';
 import { EventChatBotProps } from './event-chat/types';
+import { createCitySpecificGroupId } from '@/utils/groupIdUtils';
 
 const EventChatBot: React.FC<EventChatBotProps> = ({ 
   fullPage = false, 
@@ -29,15 +30,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
   const { toast } = useToast();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   
-  // Create city-specific group mapping for categories
-  const createCitySpecificGroupId = (category: string, cityAbbr: string): string => {
-    const normalizedCity = cityAbbr.toLowerCase();
-    const normalizedCategory = category.toLowerCase();
-    
-    // Create city-specific group ID format: {city}_{category}
-    return `${normalizedCity}_${normalizedCategory}`;
-  };
-  
+  // Create city-specific group ID using UUID generation
   const communityGroupId = createCitySpecificGroupId(activeCategory, selectedCity);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   

@@ -14,6 +14,7 @@ import ChatMessage from '@/components/chat/ChatMessage';
 import MessageReactions from '@/components/chat/MessageReactions';
 import { chatService } from '@/services/chatService';
 import { useEventContext, cities } from '@/contexts/EventContext';
+import { createGroupDisplayName } from '@/utils/groupIdUtils';
 
 /**
  * Hinweis: Für die unsichtbaren Scrollleisten wird das Tailwind-Plugin
@@ -105,11 +106,9 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     return `vor ${Math.floor(diff / 1440)}d`;
   };
 
-  // Get city-specific display name for community chat
+  // Get city-specific display name for community chat using the utility function
   const getCommunityDisplayName = (category: string, cityAbbr: string): string => {
-    const city = cities.find(c => c.abbr.toLowerCase() === cityAbbr.toLowerCase());
-    const cityName = city ? city.name : cityAbbr.toUpperCase();
-    return `${category} • ${cityName}`;
+    return createGroupDisplayName(category, cityAbbr, cities);
   };
 
   // Handle reaction toggle
