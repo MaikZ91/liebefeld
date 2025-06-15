@@ -37,10 +37,19 @@ export const useChatLogic = (
   const welcomeMessageShownRef = useRef(false);
   const appLaunchedBeforeRef = useRef(false); 
 
-  const examplePrompts = [
+  // ERWEITERTE Prompt-Liste zentral für TypewriterPrompt
+  const typewriterPrompts = [
     "Welche Events gibt es heute?",
-    "Was kann ich am Wochenende machen?",
-    "Gibt es Konzerte im Lokschuppen?"
+    "Was geht am Wochenende in Liebefeld?",
+    "Zeig mir Events für Familien.",
+    "Welche Konzerte laufen diese Woche?",
+    "Wie ist das Wetter?",
+    "Gibt es kostenlose Events?",
+    "Meine Tipps für einen perfekten Tag in Liebefeld.",
+    "Zeig mir nachhaltige Events.",
+    "Was läuft gerade in der Nähe?",
+    "Empfiehl mir etwas Neues!",
+    "Welche kulturellen Highlights gibt es?"
   ];
 
   const adEvents: AdEvent[] = [
@@ -526,10 +535,10 @@ export const useChatLogic = (
                     timestamp: new Date().toISOString()
                 },
                 {
-                    id: 'static-prompts', 
+                    id: 'typewriter-prompt',
                     isUser: false,
-                    text: 'Frag mich zum Beispiel:',
-                    examplePrompts: examplePrompts, 
+                    text: 'Frag mich etwas:',
+                    examplePrompts: typewriterPrompts,
                     timestamp: new Date().toISOString()
                 },
                 {
