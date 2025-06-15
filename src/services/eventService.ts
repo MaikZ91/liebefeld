@@ -1,42 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Event } from "../types/eventTypes";
-import { format } from "date-fns";
-
-// Example data for Bielefeld events
-export const bielefeldEvents: Event[] = [
-  {
-    id: "example-1",
-    title: "Jazz-Konzert",
-    description: "Live-Jazz-Musik in der Innenstadt",
-    date: format(new Date(), 'yyyy-MM-dd'),
-    time: "19:00",
-    location: "Bielefeld",
-    organizer: "Jazzclub Bielefeld",
-    category: "Konzert",
-    source: "community",
-    is_paid: false,
-    likes: 0,
-    rsvp_yes: 0,
-    rsvp_no: 0,
-    rsvp_maybe: 0
-  },
-  {
-    id: "example-2",
-    title: "Stadtfest",
-    description: "Jährliches Stadtfest mit vielen Attraktionen",
-    date: format(new Date(), 'yyyy-MM-dd'),
-    time: "10:00",
-    location: "Bielefeld",
-    organizer: "Stadt Bielefeld",
-    category: "Sonstiges",
-    source: "community",
-    is_paid: false,
-    likes: 0,
-    rsvp_yes: 0,
-    rsvp_no: 0,
-    rsvp_maybe: 0
-  }
-];
 
 // Fetch all events from unified community_events table
 export const fetchSupabaseEvents = async (): Promise<Event[]> => {
@@ -213,27 +177,4 @@ export const syncGitHubEvents = async (): Promise<void> => {
   } catch (error) {
     console.error('Error calling GitHub sync function:', error);
   }
-};
-
-// Log today's events
-export const logTodaysEvents = (events: Event[]): void => {
-  const today = format(new Date(), 'yyyy-MM-dd');
-  const todaysEvents = events.filter(event => event.date === today);
-  if (todaysEvents.length > 0) {
-    console.log(`Today's events (${today}):`, todaysEvents.length);
-    todaysEvents.forEach(event => {
-      console.log(`- ${event.title} (${event.source}) - ${event.likes} likes`);
-    });
-  }
-};
-
-// Deprecated functions (kept for backward compatibility but will be removed)
-export const fetchExternalEvents = async (): Promise<Event[]> => {
-  console.warn('fetchExternalEvents is deprecated. Use fetchSupabaseEvents instead.');
-  return [];
-};
-
-export const fetchGitHubLikes = async (): Promise<Record<string, any>> => {
-  console.warn('fetchGitHubLikes is deprecated. Likes are now in community_events table.');
-  return {};
 };

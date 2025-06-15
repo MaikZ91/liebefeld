@@ -1,50 +1,57 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { Event, RsvpOption } from '../types/eventTypes';
 import { 
   fetchSupabaseEvents, 
   updateEventRsvp,
   syncGitHubEvents,
-  addNewEvent,
-  logTodaysEvents
+  addNewEvent
 } from '../services/eventService';
 import { updateEventLikesInDb } from '../services/singleEventService';
 
 export const useEvents = () => {
   const [events, setEvents] = useState<Event[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Ladezustand standardmäßig auf true
 
+  // Dieser useEffect wird nur einmal beim Start der App ausgeführt.
+  useEffect(() => {
+    const initialLoad = async () => {
+      setIsLoading(true);
+      try {
+        console.log('🔄 [useEvents] Starte einmaligen Sync und Ladevorgang...');
+        // 1. Zuerst die Events von GitHub synchronisieren.
+        await syncGitHubEvents();
+        
+        // 2. Danach alle Events aus der Datenbank laden.
+        const allEvents = await fetchSupabaseEvents();
+        
+        console.log(`🔄 [useEvents] Einmaliger Ladevorgang abgeschlossen. ${allEvents.length} Events geladen.`);
+        setEvents(allEvents);
+        
+      } catch (error) {
+        console.error('🔄 [useEvents] FEHLER beim initialen Laden:', error);
+        setEvents([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    initialLoad();
+  }, []); // Das leere Array [] stellt sicher, dass dies nur einmal passiert.
+
+  // Eine Funktion, um Events manuell aus der DB zu aktualisieren, ohne GitHub-Sync.
   const refreshEvents = useCallback(async () => {
     setIsLoading(true);
     try {
-      console.log('🔄 [refreshEvents] STARTING refresh...');
-      
-      await syncGitHubEvents();
-      
-      const refreshStartTime = Date.now();
+      console.log('🔄 [refreshEvents] Manuelles Neuladen der Events aus der DB...');
       const allEvents = await fetchSupabaseEvents();
-      const refreshDuration = Date.now() - refreshStartTime;
-      
-      console.log(`🔄 [refreshEvents] Loaded ${allEvents.length} events in ${refreshDuration}ms`);
-      
       setEvents(allEvents);
-      
-      logTodaysEvents(allEvents);
-      
-      console.log('🔄 [refreshEvents] COMPLETED ✅');
-      
+      console.log(`🔄 [refreshEvents] ${allEvents.length} Events geladen.`);
     } catch (error) {
-      console.error('🔄 [refreshEvents] ERROR:', error);
-      console.log('Keeping current events due to error, no fallback to example data');
+      console.error('🔄 [refreshEvents] FEHLER:', error);
     } finally {
       setIsLoading(false);
     }
   }, []);
-
-  useEffect(() => {
-    console.log('useEvents: Initial event load...');
-    refreshEvents();
-  }, [refreshEvents]);
 
   const handleLikeEvent = useCallback(async (eventId: string) => {
     console.log(`[handleLikeEvent] 💙 Funktion wurde für Event-ID aufgerufen: ${eventId}`);
