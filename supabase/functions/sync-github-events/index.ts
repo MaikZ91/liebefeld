@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 const corsHeaders = {
@@ -166,7 +167,7 @@ Deno.serve(async (req) => {
         date: eventDate,
         time: eventTime,
         location: location,
-        city: githubEvent.city || null,
+        city: githubEvent.city || 'Bielefeld', // Default to Bielefeld if city is not provided
         organizer: '',
         category: category,
         link: githubEvent.link || null,
