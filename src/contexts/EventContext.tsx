@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { startOfDay } from 'date-fns';
 import { Event, RsvpOption } from '../types/eventTypes';
@@ -176,12 +177,14 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const addUserEvent = async (eventData: Omit<Event, 'id'>): Promise<Event> => {
     try {
-      console.log('Adding new user event to database only:', eventData);
+      console.log('Adding new user event to database and local state:', eventData);
       
       const newEvent = await addNewEvent(eventData);
       console.log('Successfully added new event to database:', newEvent);
       
-      await refreshEvents();
+      setEvents(prevEvents => 
+        [...prevEvents, newEvent].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      );
       
       return newEvent;
     } catch (error) {

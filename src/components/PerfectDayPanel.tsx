@@ -118,8 +118,6 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
         
         const allSuggestions = await getAllSuggestionsByCategory(timeOfDay, selectedInterest, weather);
         allSuggestionsRef.current = allSuggestions;
-        
-        console.log(`Loaded ${suggestions.length} suggestions (showing max 4) from ${allSuggestions.length} total for ${selectedInterest}`);
       };
       
       fetchAndSetSuggestions();
@@ -133,8 +131,6 @@ const PerfectDayPanel: React.FC<PerfectDayProps> = ({ className, onAskChatbot })
       
       const allSuggestions = await getAllSuggestionsByCategory(timeOfDay, selectedInterest, weather);
       allSuggestionsRef.current = allSuggestions;
-      
-      console.log(`Initially loaded ${initialSuggestions.length} suggestions (showing max 4) from ${allSuggestions.length} total for ${selectedInterest}`);
     };
     
     loadInitialSuggestions();

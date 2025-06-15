@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Event } from "../types/eventTypes";
 import { format } from "date-fns";
@@ -42,16 +41,10 @@ export const bielefeldEvents: Event[] = [
 // Fetch all events from unified community_events table
 export const fetchSupabaseEvents = async (): Promise<Event[]> => {
   try {
-    console.log('📥 [fetchSupabaseEvents] STARTING database query...');
-    const queryStartTime = Date.now();
-    
     const { data: eventsData, error: eventsError } = await supabase
       .from('community_events')
       .select('*')
       .order('date', { ascending: true });
-    
-    const queryDuration = Date.now() - queryStartTime;
-    console.log(`📥 [fetchSupabaseEvents] Query completed in ${queryDuration}ms`);
     
     if (eventsError) {
       console.error('📥 [fetchSupabaseEvents] DATABASE ERROR:', eventsError);
@@ -59,14 +52,6 @@ export const fetchSupabaseEvents = async (): Promise<Event[]> => {
     }
     
     if (eventsData) {
-      console.log(`📥 [fetchSupabaseEvents] Retrieved ${eventsData.length} events from database`);
-      
-      // Find KUHNT event specifically for debugging
-      const kuhntEventData = eventsData.find(event => event.title.includes('KUHNT'));
-      if (kuhntEventData) {
-        console.log(`📥 [fetchSupabaseEvents] Raw KUHNT data from DB:`, kuhntEventData);
-      }
-      
       const transformedEvents = eventsData.map(event => ({
         id: event.id.toString(),
         title: event.title,
@@ -92,18 +77,9 @@ export const fetchSupabaseEvents = async (): Promise<Event[]> => {
           maybe: event.rsvp_maybe || 0
         }
       }));
-      
-      // Check KUHNT event after transformation
-      const kuhntTransformed = transformedEvents.find(event => event.title.includes('KUHNT'));
-      if (kuhntTransformed) {
-        console.log(`📥 [fetchSupabaseEvents] Transformed KUHNT event:`, kuhntTransformed);
-      }
-      
-      console.log('📥 [fetchSupabaseEvents] COMPLETED ✅');
       return transformedEvents;
     }
     
-    console.log('📥 [fetchSupabaseEvents] No data returned from database');
     return [];
   } catch (error) {
     console.error('📥 [fetchSupabaseEvents] EXCEPTION:', error);
@@ -243,10 +219,12 @@ export const syncGitHubEvents = async (): Promise<void> => {
 export const logTodaysEvents = (events: Event[]): void => {
   const today = format(new Date(), 'yyyy-MM-dd');
   const todaysEvents = events.filter(event => event.date === today);
-  console.log(`Today's events (${today}):`, todaysEvents.length);
-  todaysEvents.forEach(event => {
-    console.log(`- ${event.title} (${event.source}) - ${event.likes} likes`);
-  });
+  if (todaysEvents.length > 0) {
+    console.log(`Today's events (${today}):`, todaysEvents.length);
+    todaysEvents.forEach(event => {
+      console.log(`- ${event.title} (${event.source}) - ${event.likes} likes`);
+    });
+  }
 };
 
 // Deprecated functions (kept for backward compatibility but will be removed)
