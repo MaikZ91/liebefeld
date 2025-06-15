@@ -107,35 +107,28 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         return;
     }
     
-    let oldLikes = -1; // -1 to indicate event not found yet
+    const eventToLike = events.find(e => e.id === eventId);
+    if (!eventToLike) {
+        console.error(`[handleLikeEvent] 💔 Event mit ID ${eventId} im State nicht gefunden.`);
+        return;
+    }
+
+    const oldLikes = eventToLike.likes || 0;
+    const newLikes = oldLikes + 1;
+    
+    console.log(`[handleLikeEvent] 👍 Optimistisches Update: oldLikes=${oldLikes}, newLikes=${newLikes}`);
+    
+    // Optimistic UI update
+    setEvents(prevEvents =>
+        prevEvents.map(event =>
+            event.id === eventId ? { ...event, likes: newLikes } : event
+        )
+    );
 
     try {
-        // Optimistic UI update
-        setEvents(prevEvents => {
-            const eventToLike = prevEvents.find(e => e.id === eventId);
-            if (!eventToLike) {
-                console.error(`[handleLikeEvent] 💔 Event mit ID ${eventId} im State nicht gefunden.`);
-                return prevEvents; // Return unchanged state if event not found
-            };
-            oldLikes = eventToLike.likes || 0;
-            console.log(`[handleLikeEvent] 👍 Optimistisches Update: oldLikes=${oldLikes}, newLikes=${oldLikes + 1}`);
-            
-            return prevEvents.map(event =>
-                event.id === eventId ? { ...event, likes: oldLikes + 1 } : event
-            );
-        });
-
-        // A short delay to ensure state update has propagated before we check oldLikes
-        await new Promise(resolve => setTimeout(resolve, 0));
-
-        if (oldLikes === -1) {
-            console.error("[handleLikeEvent] 🛑 Abbruch, da Event nicht im State gefunden wurde.");
-            return;
-        }
-
         // Update database
-        console.log(`[handleLikeEvent] 🚀 Datenbank-Update wird für ${eventId} mit newLikes=${oldLikes + 1} aufgerufen...`);
-        const success = await updateEventLikesInDb(eventId, oldLikes + 1);
+        console.log(`[handleLikeEvent] 🚀 Datenbank-Update wird für ${eventId} mit newLikes=${newLikes} aufgerufen...`);
+        const success = await updateEventLikesInDb(eventId, newLikes);
         console.log(`[handleLikeEvent] 🛰️ Datenbank-Update Ergebnis: ${success ? '✅ ERFOLGREICH' : '❌ FEHLGESCHLAGEN'}`);
 
         // Revert if DB update fails
@@ -150,15 +143,13 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     } catch (error) {
         console.error('[handleLikeEvent] 💥 Unerwarteter Fehler im try-catch Block:', error);
         // Revert on any unexpected error
-        if (oldLikes !== -1) {
-            setEvents(prevEvents =>
-                prevEvents.map(event =>
-                  event.id === eventId ? { ...event, likes: oldLikes } : event
-                )
-            );
-        }
+        setEvents(prevEvents =>
+            prevEvents.map(event =>
+              event.id === eventId ? { ...event, likes: oldLikes } : event
+            )
+        );
     }
-  }, []);
+  }, [events, setEvents]);
 
   const handleRsvpEvent = useCallback(async (eventId: string, option: RsvpOption) => {
     try {
@@ -232,7 +223,8 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   useEffect(() => {
     console.log('EventProvider: Initial event load...');
     refreshEvents();
-  }, [refreshEvents]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const value = {
     events,
