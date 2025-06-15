@@ -134,7 +134,7 @@ export type Database = {
           description: string | null
           external_id: string | null
           id: string
-          image_urls: string[] | null
+          image_url: string | null
           is_paid: boolean | null
           likes: number | null
           link: string | null
@@ -155,7 +155,7 @@ export type Database = {
           description?: string | null
           external_id?: string | null
           id?: string
-          image_urls?: string[] | null
+          image_url?: string | null
           is_paid?: boolean | null
           likes?: number | null
           link?: string | null
@@ -176,7 +176,7 @@ export type Database = {
           description?: string | null
           external_id?: string | null
           id?: string
-          image_urls?: string[] | null
+          image_url?: string | null
           is_paid?: boolean | null
           likes?: number | null
           link?: string | null

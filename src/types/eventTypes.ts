@@ -1,3 +1,4 @@
+
 export interface Event {
   id: string;
   title: string;
@@ -36,6 +37,7 @@ export interface GitHubEvent {
   genre?: string;
   type?: string;
   link?: string;
+  image_url?: string;
 }
 
 export type RsvpOption = 'yes' | 'no' | 'maybe';

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Event } from "../types/eventTypes";
 
@@ -26,7 +25,7 @@ export const fetchSupabaseEvents = async (): Promise<Event[]> => {
         organizer: event.organizer || '',
         category: event.category,
         link: event.link,
-        image_url: event.image_urls && event.image_urls.length > 0 ? event.image_urls[0] : null,
+        image_url: event.image_url,
         likes: event.likes || 0,
         rsvp_yes: event.rsvp_yes || 0,
         rsvp_no: event.rsvp_no || 0,
@@ -115,7 +114,7 @@ export const addNewEvent = async (newEvent: Omit<Event, 'id'>): Promise<Event> =
         rsvp_no: 0,
         rsvp_maybe: 0,
         link: newEvent.link || null,
-        image_urls: newEvent.image_url ? [newEvent.image_url] : null,
+        image_url: newEvent.image_url || null,
         source: newEvent.source || 'community',
         external_id: newEvent.external_id || null,
         is_paid: newEvent.is_paid || false
@@ -140,7 +139,7 @@ export const addNewEvent = async (newEvent: Omit<Event, 'id'>): Promise<Event> =
       ...newEvent,
       id: data.id,
       likes: 0,
-      image_url: data.image_urls && data.image_urls.length > 0 ? data.image_urls[0] : null,
+      image_url: data.image_url,
       rsvp: {
         yes: 0,
         no: 0,

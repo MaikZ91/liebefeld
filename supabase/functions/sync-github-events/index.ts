@@ -17,6 +17,7 @@ interface GitHubEvent {
   genre?: string;
   type?: string;
   link?: string;
+  image_url?: string;
 }
 
 Deno.serve(async (req) => {
@@ -152,6 +153,7 @@ Deno.serve(async (req) => {
         organizer: '',
         category: category,
         link: githubEvent.link || null,
+        image_url: githubEvent.image_url || null,
         is_paid: false,
         likes: existingData ? existingData.likes : 0,
         rsvp_yes: existingData ? existingData.rsvp_yes : 0,
@@ -217,4 +219,3 @@ Deno.serve(async (req) => {
     );
   }
 });
-
