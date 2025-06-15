@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -87,6 +86,7 @@ async function createOrUpdateProfile(supabaseClient, profile) {
           avatar: profile.avatar,
           interests: profile.interests || [],
           favorite_locations: profile.favorite_locations || [],
+          hobbies: profile.hobbies || [], // Add hobbies/bio
           last_online: new Date().toISOString()
         })
         .eq('username', profile.username)
@@ -104,6 +104,7 @@ async function createOrUpdateProfile(supabaseClient, profile) {
           avatar: profile.avatar || null,
           interests: profile.interests || [],
           favorite_locations: profile.favorite_locations || [],
+          hobbies: profile.hobbies || [], // Add hobbies/bio
           last_online: new Date().toISOString()
         })
         .select()

@@ -24,12 +24,19 @@ export const useUserProfile = () => {
         } else {
           localStorage.removeItem('user_locations');
         }
+
+        if (profile.hobbies && profile.hobbies.length > 0) {
+          localStorage.setItem('user_bio', profile.hobbies[0]);
+        } else {
+          localStorage.removeItem('user_bio');
+        }
         
         setUserProfile(profile);
       } else {
         setUserProfile(null);
         localStorage.removeItem('user_interests');
         localStorage.removeItem('user_locations');
+        localStorage.removeItem('user_bio');
       }
       
       return profile;

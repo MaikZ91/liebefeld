@@ -3,7 +3,7 @@ import React from 'react';
 import { UserProfile } from "@/types/chatTypes";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, MapPin } from "lucide-react";
+import { Heart, MapPin, MessageSquareText } from "lucide-react";
 
 interface UserCardProps {
   user: UserProfile;
@@ -21,10 +21,11 @@ const getPlaceholderUrl = (username: string) => {
 const UserCard: React.FC<UserCardProps> = ({ user, currentUsername, onSelectUser }) => {
   const isCurrentUser = user.username === currentUsername;
   const avatarSrc = user.avatar || getPlaceholderUrl(user.username);
+  const bio = user.hobbies && user.hobbies.length > 0 ? user.hobbies[0] : null;
 
   return (
     <Card
-      className={`relative w-full aspect-square overflow-hidden rounded-xl group transition-all duration-300 ${
+      className={`relative w-full aspect-[4/5] overflow-hidden rounded-xl group transition-all duration-300 ${
         isCurrentUser 
           ? 'opacity-60 cursor-not-allowed'
           : 'cursor-pointer hover:shadow-2xl hover:shadow-red-500/20 hover:ring-2 hover:ring-red-500/80 transform hover:-translate-y-1'
@@ -36,12 +37,18 @@ const UserCard: React.FC<UserCardProps> = ({ user, currentUsername, onSelectUser
         alt={user.username} 
         className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
       
-      <div className="absolute bottom-0 left-0 right-0 p-3 text-white flex flex-col justify-end h-full">
+      <div className="absolute bottom-0 left-0 right-0 p-4 text-white flex flex-col justify-end h-full">
         <div className="flex-grow" /> {/* Spacer */}
         
-        <div className="space-y-1.5 mb-2 text-xs">
+        <div className="space-y-2 mb-2 text-xs">
+          {bio && (
+            <div className="flex items-start gap-1.5">
+              <MessageSquareText className="h-3.5 w-3.5 text-gray-300 shrink-0 mt-0.5" />
+              <p className="text-gray-200 line-clamp-2 text-sm">{bio}</p>
+            </div>
+          )}
           {user.interests && user.interests.length > 0 && (
             <div className="flex flex-wrap gap-1.5 items-center">
               <Heart className="h-3.5 w-3.5 text-red-400 shrink-0" />
@@ -61,7 +68,7 @@ const UserCard: React.FC<UserCardProps> = ({ user, currentUsername, onSelectUser
         </div>
 
         <div className="flex items-center gap-2">
-            <h3 className="font-bold text-base truncate" style={{textShadow: '1px 1px 3px rgba(0,0,0,0.7)'}}>{user.username}</h3>
+            <h3 className="font-bold text-lg truncate" style={{textShadow: '1px 1px 3px rgba(0,0,0,0.7)'}}>{user.username}</h3>
             <div className="h-2.5 w-2.5 rounded-full bg-green-500 shrink-0 border-2 border-black/50"></div>
         </div>
       </div>
