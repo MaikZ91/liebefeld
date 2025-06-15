@@ -1,3 +1,4 @@
+
 import React, { useState, memo } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
 import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign } from 'lucide-react';
@@ -95,27 +96,29 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
       const newLikes = currentLikesDb + 1;
       console.log(`[LIKE HANDLER] Likes alt: ${currentLikesDb}, neu: ${newLikes}`);
 
-      // Like direkt in DB erhöhen
+      // Like direkt in DB erhöhen, jetzt mit select für Result
       const { error, data } = await supabase
         .from("community_events")
         .update({ likes: newLikes })
-        .eq("id", event.id);
+        .eq("id", event.id)
+        .select(); // returns updated rows
 
       console.log(`[LIKE HANDLER] Supabase Response`, { data, error });
       if (error) {
         toast.error("Fehler beim Speichern deines Likes.");
-        // Setze Likes wieder zurück (Rollback):
         setOptimisticLikes(event.likes ?? 0);
         setIsLiking(false);
         return;
       }
 
-      if (data && Array.isArray(data)) {
-        console.log(`[LIKE HANDLER] Returned after update:`, data[0]);
-      } else if (data) {
-        console.log(`[LIKE HANDLER] Returned after update:`, data);
+      // Neue: check ob überhaupt Zeile verändert wurde!
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        toast.error("Fehler: Like konnte nicht gespeichert werden (keine Zeile geupdatet).");
+        setOptimisticLikes(event.likes ?? 0);
+        setIsLiking(false);
+        return;
       } else {
-        console.log(`[LIKE HANDLER] Returned after update:`, null);
+        console.log(`[LIKE HANDLER] Returned after update:`, data[0]);
       }
 
       toast.success("Danke fürs Liken!");
