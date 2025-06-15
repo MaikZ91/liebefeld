@@ -197,7 +197,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
         >
           <TabsContent value="list" className="w-full">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
-              <div className="md:col-span-2">
+              <div className="md:col-span-3">
                 <EventList 
                   events={eventsToDisplay}
                   showFavorites={showFavorites}
@@ -207,9 +207,6 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                     setSelectedEvent(event);
                   }}
                 />
-              </div>
-              <div className="md:col-span-1 space-y-3">
-                <PerfectDayPanel className="w-full" onAskChatbot={triggerChatbotQuery} />
               </div>
             </div>
           </TabsContent>
@@ -252,11 +249,6 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                   onEventClose={() => setSelectedEvent(null)}
                   onShowEventForm={toggleEventForm}
                   showFavorites={showFavorites}
-                />
-                
-                <PerfectDayPanel 
-                  className="w-full h-[280px]" 
-                  onAskChatbot={triggerChatbotQuery} 
                 />
               </div>
             </div>

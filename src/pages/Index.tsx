@@ -248,7 +248,7 @@ const Index = () => {
         {/* Bottom section - Fixed half height with internal overflow */}
         <div className="h-1/2 flex overflow-hidden">
           {/* Community Gallery - left side */}
-          <div className="w-1/2 bg-gradient-to-b from-gray-900 via-black to-gray-800 p-4 border-r border-gray-700/50 overflow-hidden">
+          <div className="w-full bg-gradient-to-b from-gray-900 via-black to-gray-800 p-4 border-r border-gray-700/50 overflow-hidden">
             <div className="text-center mb-4">
               <h2 className="text-2xl md:text-3xl font-bold mb-2 font-serif bg-gradient-to-r from-white via-gray-200 to-white bg-clip-text text-transparent tracking-wide">
                 Unsere Community
@@ -262,22 +262,6 @@ const Index = () => {
               images={communityImages}
               className="w-full h-32"
               autoSlideInterval={10000}
-            />
-          </div>
-          
-          {/* Perfect Day Panel - right side */}
-          <div className="w-1/2 bg-gradient-to-br from-gray-900 via-black to-gray-800 p-4 overflow-hidden">
-            <div className="text-center mb-4">
-              <h2 className="text-2xl md:text-3xl font-bold mb-2 font-serif bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                Dein perfekter Tag
-              </h2>
-              <p className="text-gray-400 text-sm max-w-xl mx-auto">
-                Personalisierte Event-Empfehlungen
-              </p>
-            </div>
-            <PerfectDayPanel 
-              className="w-full h-32 bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/50 shadow-2xl overflow-y-auto" 
-              onAskChatbot={handleChatbotQuery}
             />
           </div>
         </div>
