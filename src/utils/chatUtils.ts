@@ -175,7 +175,7 @@ export const generateResponse = async (query: string, events: any[], isHeartMode
         query,
         timeOfDay,
         weather,
-        allEvents: events,
+        // allEvents: events, // KEY FIX: Removed to force edge function to fetch and filter by city.
         currentDate,
         nextWeekStart,
         nextWeekEnd,

@@ -30,7 +30,7 @@ serve(async (req) => {
       query,
       timeOfDay,
       weather,
-      allEvents,
+      allEvents, // This is intentionally received but will be ignored to ensure correct filtering.
       currentDate,
       nextWeekStart,
       nextWeekEnd,
@@ -39,7 +39,7 @@ serve(async (req) => {
       selectedCity,
     } = await req.json();
 
-    console.log(`[ai-event-chat] Received query: ${query}`);
+    console.log(`[ai-event-chat] START execution for query: "${query}"`);
     if (selectedCity) {
       console.log(`[ai-event-chat] Received selectedCity: ${selectedCity}`);
     }
@@ -63,6 +63,7 @@ serve(async (req) => {
     /***************************
      * EVENT RETRIEVAL AND FILTERING
      ***************************/
+    console.log("[ai-event-chat] Fetching all events from database...");
     const { data: dbEvents, error: eventsError } = await supabase
       .from("community_events")
       .select("*")
@@ -71,6 +72,7 @@ serve(async (req) => {
     if (eventsError) {
       throw new Error(`[ai-event-chat] Datenbank‑Fehler: ${eventsError.message}`);
     }
+    console.log(`[ai-event-chat] Fetched ${dbEvents.length} total events from DB.`);
 
     let cityFilteredDbEvents = dbEvents;
     if (selectedCity) {
@@ -79,13 +81,18 @@ serve(async (req) => {
       
       if (targetCityName === 'bielefeld') {
         cityFilteredDbEvents = dbEvents.filter(e => !e.city || e.city.toLowerCase() === 'bielefeld');
+        console.log(`[ai-event-chat] Special filter for 'Bielefeld' (includes null city).`);
       } else {
         cityFilteredDbEvents = dbEvents.filter(e => e.city && e.city.toLowerCase() === targetCityName);
       }
-      console.log(`[ai-event-chat] After city filtering for "${selectedCity}": ${cityFilteredDbEvents.length} events from ${dbEvents.length}`);
+      console.log(`[ai-event-chat] After city filtering for "${selectedCity}": ${cityFilteredDbEvents.length} events remain.`);
+    } else {
+        console.log(`[ai-event-chat] No city selected. Using all ${dbEvents.length} events.`);
     }
-
-    let filteredEvents = allEvents?.length ? allEvents : cityFilteredDbEvents;
+    
+    // KEY FIX: Always start with the city-filtered list from the database.
+    let filteredEvents = cityFilteredDbEvents;
+    console.log(`[ai-event-chat] Initial event pool for filtering has ${filteredEvents.length} events.`);
     
     const lowercaseQuery = query.toLowerCase();
     
