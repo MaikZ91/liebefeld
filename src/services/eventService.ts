@@ -36,6 +36,7 @@ export const fetchSupabaseEvents = async (): Promise<Event[]> => {
         external_id: event.external_id,
         is_paid: event.is_paid || false,
         created_at: event.created_at, // Add created_at for DB-based NEW badge
+        city: event.city || undefined,
         rsvp: {
           yes: event.rsvp_yes || 0,
           no: event.rsvp_no || 0,
@@ -109,6 +110,7 @@ export const addNewEvent = async (newEvent: Omit<Event, 'id'>): Promise<Event> =
         date: newEvent.date,
         time: newEvent.time,
         location: newEvent.location,
+        city: newEvent.city || null,
         organizer: newEvent.organizer,
         category: newEvent.category,
         likes: 0,
@@ -144,6 +146,7 @@ export const addNewEvent = async (newEvent: Omit<Event, 'id'>): Promise<Event> =
       likes: 0,
       image_url: data.image_url,
       image_urls: data.image_url ? [data.image_url] : [],
+      city: data.city || undefined,
       rsvp: {
         yes: 0,
         no: 0,

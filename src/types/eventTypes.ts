@@ -1,4 +1,3 @@
-
 export interface Event {
   id: string;
   title: string;
@@ -24,6 +23,7 @@ export interface Event {
   external_id?: string;
   is_paid?: boolean;
   created_at?: string; // Add created_at field for DB-based NEW badge
+  city?: string;
 }
 
 // Legacy interface for backward compatibility
@@ -39,6 +39,7 @@ export interface GitHubEvent {
   type?: string;
   link?: string;
   image_url?: string;
+  city?: string;
 }
 
 export type RsvpOption = 'yes' | 'no' | 'maybe';

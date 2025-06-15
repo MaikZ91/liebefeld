@@ -17,6 +17,7 @@ interface GitHubEvent {
   type?: string;
   link?: string;
   image_url?: string;
+  city?: string;
 }
 
 Deno.serve(async (req) => {
@@ -165,6 +166,7 @@ Deno.serve(async (req) => {
         date: eventDate,
         time: eventTime,
         location: location,
+        city: githubEvent.city || null,
         organizer: '',
         category: category,
         link: githubEvent.link || null,

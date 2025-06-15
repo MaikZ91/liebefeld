@@ -82,10 +82,9 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   
   const eventsFilteredByCity = React.useMemo(() => {
     if (!selectedCity) return events;
-    const cityObject = cities.find(c => c.abbr === selectedCity);
-    if (!cityObject) return events;
-    const cityName = cityObject.name;
-    return events.filter(event => event.location && event.location.toLowerCase() === cityName.toLowerCase());
+    const cityObject = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase());
+    const cityName = cityObject ? cityObject.name : selectedCity;
+    return events.filter(event => event.city && event.city.toLowerCase() === cityName.toLowerCase());
   }, [events, selectedCity]);
   
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
@@ -139,8 +138,13 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
 
   const handleAddEvent = async (newEvent: Omit<Event, 'id'>) => {
     try {
-      console.log('Adding new event to database only:', newEvent);
-      await addUserEvent(newEvent);
+      const cityObject = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase());
+      const cityName = cityObject ? cityObject.name : selectedCity;
+      
+      const eventWithCity = { ...newEvent, city: cityName };
+
+      console.log('Adding new event to database only:', eventWithCity);
+      await addUserEvent(eventWithCity);
       toast.success("Event erfolgreich hinzugefügt!");
       setShowEventForm(false);
     } catch (error) {

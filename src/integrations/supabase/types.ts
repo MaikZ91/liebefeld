@@ -128,6 +128,7 @@ export type Database = {
       community_events: {
         Row: {
           category: string
+          city: string | null
           created_at: string | null
           created_by: string | null
           date: string
@@ -149,6 +150,7 @@ export type Database = {
         }
         Insert: {
           category: string
+          city?: string | null
           created_at?: string | null
           created_by?: string | null
           date: string
@@ -170,6 +172,7 @@ export type Database = {
         }
         Update: {
           category?: string
+          city?: string | null
           created_at?: string | null
           created_by?: string | null
           date?: string
