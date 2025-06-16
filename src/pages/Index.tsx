@@ -1,3 +1,4 @@
+// src/pages/Index.tsx
 import React, { useEffect, useState, useRef } from 'react';
 import CalendarNavbar from '@/components/CalendarNavbar';
 import LiveTicker from '@/components/LiveTicker';
@@ -9,7 +10,7 @@ import BetaTesterBanner from '@/components/BetaTesterBanner';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { QrCode } from 'lucide-react';
-import { useEventContext } from '@/contexts/EventContext';
+import { useEventContext } from '@/contexts/EventContext'; // Import useEventContext
 
 type AnimationType = 'char' | 'word' | 'whole';
 
@@ -119,7 +120,8 @@ const Index = () => {
     }
   };
   
-  const { events } = useEventContext(); // This now uses the one, true EventProvider from App.tsx
+  // Hole Events, isLoading und selectedCity aus dem Kontext
+  const { events, isLoading, selectedCity } = useEventContext(); 
 
   return (
     <div className="h-screen w-screen flex flex-col bg-black text-white overflow-hidden fixed inset-0">
@@ -131,7 +133,7 @@ const Index = () => {
       
       {/* LiveTicker - Fixed position with highest z-index */}
       <div className="fixed top-20 left-0 right-0 h-12 w-full bg-black/95 backdrop-blur-lg border-b border-white/20 shadow-xl z-50 flex-shrink-0">
-        <LiveTicker events={events} /> {/* Directly from global context, no more re-renders */}
+        <LiveTicker events={events} isLoadingEvents={isLoading} selectedCity={selectedCity} /> {/* selectedCity als Prop übergeben */}
       </div>
       
       {/* Main content - Fixed calculated height with top padding for ticker */}
