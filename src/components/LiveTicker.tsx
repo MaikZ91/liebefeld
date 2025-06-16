@@ -15,6 +15,8 @@ interface LiveTickerProps {
 
 const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef, isLoadingEvents = false, selectedCity }) => {
   const tickerEvents = useMemo(() => {
+    // Filtere und sortiere nur, wenn Events vorhanden sind.
+    // Ansonsten gib ein leeres Array zurück, um die Rendering-Logik zu vereinfachen.
     if (events.length === 0) return [];
 
     const currentDate = new Date();
@@ -142,7 +144,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef, isLoadingEve
           </div>
         </div>
         
-        <style jsx>{`
+        <style>{` /* jsx removed */
             @keyframes ticker {
               0% {
                 transform: translateX(0);
