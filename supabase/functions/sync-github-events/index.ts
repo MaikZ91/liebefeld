@@ -61,7 +61,6 @@ Deno.serve(async (req) => {
     }
     console.log(`Found ${existingEventsMap.size} existing GitHub events with user data to preserve.`);
 
-
     // URL zur GitHub Events JSON Datei
     const EXTERNAL_EVENTS_URL = "https://raw.githubusercontent.com/MaikZ91/productiontools/master/events.json";
     const cacheBuster = `?t=${new Date().getTime()}`;
@@ -77,8 +76,6 @@ Deno.serve(async (req) => {
 
     const now = new Date();
     const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1; // getMonth() is 0-indexed
-    const currentDay = now.getDate();
     const transformedEvents = [];
 
     for (const githubEvent of githubEvents) {
@@ -115,12 +112,15 @@ Deno.serve(async (req) => {
         else if (eventText.includes('lesung')) category = 'Lesung';
       }
 
-      // Parse date
+      // Parse date - IMPROVED TO HANDLE WEEKDAY PREFIXES
       let eventDate = '';
       try {
         const dateStr = githubEvent.date;
+        console.log(`[DATE PARSING] Original date string: "${dateStr}" for event "${title}"`);
+        
         if (dateStr && dateStr.includes('.')) {
-          const dateMatch = dateStr.match(/(\d{1,2})\.(\d{1,2})(?:\.(\d{4}|\d{2}))?/);
+          // Updated regex to handle optional weekday prefixes like "Tu, " or "Mo, "
+          const dateMatch = dateStr.match(/(?:\w+,\s*)?(\d{1,2})\.(\d{1,2})(?:\.(\d{4}|\d{2}))?/);
           if (dateMatch) {
             const day = dateMatch[1].padStart(2, '0');
             const month = dateMatch[2].padStart(2, '0');
@@ -135,18 +135,21 @@ Deno.serve(async (req) => {
               }
             } else { // Year is not present, default to 2025
               year = '2025';
-              console.log(`No year found for "${githubEvent.event}". Defaulting to ${year}.`);
+              console.log(`[DATE PARSING] No year found for "${title}". Defaulting to ${year}.`);
             }
             eventDate = `${year}-${month}-${day}`;
+            console.log(`[DATE PARSING] Successfully parsed "${dateStr}" -> "${eventDate}" for event "${title}"`);
+          } else {
+            console.warn(`[DATE PARSING] Regex failed to match date string: "${dateStr}" for event "${title}"`);
           }
         }
         
         if (!eventDate) {
-          console.warn(`Could not parse date for ${githubEvent.event} from string: "${dateStr}". Defaulting to today.`);
+          console.warn(`[DATE PARSING] Could not parse date for "${title}" from string: "${dateStr}". Defaulting to today.`);
           eventDate = now.toISOString().split('T')[0];
         }
       } catch (error) {
-        console.warn(`Error parsing date for ${title}:`, error);
+        console.error(`[DATE PARSING] Error parsing date for ${title}:`, error);
         eventDate = new Date().toISOString().split('T')[0];
       }
 
