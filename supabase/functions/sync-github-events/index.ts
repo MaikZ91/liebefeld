@@ -1,4 +1,4 @@
-
+// supabase/functions/sync-github-events/index.ts
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 const corsHeaders = {
@@ -75,11 +75,10 @@ Deno.serve(async (req) => {
     console.log(`Fetched ${githubEvents.length} GitHub events`);
 
     const now = new Date();
-    const currentYear = now.getFullYear();
     const transformedEvents = [];
 
     for (const githubEvent of githubEvents) {
-      // Transform GitHub event to our format
+      // Clean title from special characters and extract location
       let title = githubEvent.event || 'Unnamed Event';
       let location = githubEvent.location || '';
       
@@ -89,6 +88,9 @@ Deno.serve(async (req) => {
         title = locationMatch[1].trim();
         location = locationMatch[2].trim();
       }
+
+      // Remove leading/trailing asterisks or other problematic characters from title
+      title = title.replace(/^[\*\s]+|[\*\s]+$/g, '').trim();
 
       // Determine category
       let category = 'Sonstiges';
@@ -105,11 +107,15 @@ Deno.serve(async (req) => {
         else if (eventText.includes('party') || eventText.includes('club')) category = 'Party';
         else if (eventText.includes('festival')) category = 'Festival';
         else if (eventText.includes('ausstellung') || eventText.includes('kunst')) category = 'Ausstellung';
-        else if (eventText.includes('sport') || eventText.includes('fitness')) category = 'Sport';
+        else if (eventText.includes('sport') || eventText.includes('fitness') || eventText.includes('laufen') || eventText.includes('training') || eventText.includes('yoga') || eventText.includes('tango')) category = 'Sport';
         else if (eventText.includes('workshop')) category = 'Workshop';
         else if (eventText.includes('theater')) category = 'Theater';
         else if (eventText.includes('kino') || eventText.includes('film')) category = 'Kino';
         else if (eventText.includes('lesung')) category = 'Lesung';
+        else if (eventText.includes('quiz') || eventText.includes('kneipenquiz')) category = 'Ausgehen';
+        else if (eventText.includes('foodsharing') || eventText.includes('cafe')) category = 'Ausgehen';
+        else if (eventText.includes('kreatives schreiben') || eventText.includes('improv')) category = 'Kreativität';
+        else if (eventText.includes('yoga')) category = 'Sport';
       }
 
       // Parse date - IMPROVED TO HANDLE WEEKDAY PREFIXES
@@ -126,16 +132,31 @@ Deno.serve(async (req) => {
             const month = dateMatch[2].padStart(2, '0');
             let year;
 
-            if (dateMatch[3]) { // Year is present
+            // Determine the year. If a 2-digit year is provided, assume 21st century.
+            // If no year is provided, default to current year.
+            if (dateMatch[3]) { 
               let yearStr = dateMatch[3];
               if (yearStr.length === 2) {
-                year = `20${yearStr}`; // Assume 21st century for 2-digit years
+                year = `20${yearStr}`;
               } else {
                 year = yearStr;
               }
-            } else { // Year is not present, default to 2025
-              year = '2025';
-              console.log(`[DATE PARSING] No year found for "${title}". Defaulting to ${year}.`);
+            } else { 
+              // If no year is explicitly mentioned, assume it's for the current year or next closest year
+              // This is a heuristic that might need further refinement for edge cases.
+              const currentYear = now.getFullYear();
+              const parsedMonth = parseInt(month, 10);
+              const parsedDay = parseInt(day, 10);
+              
+              const testDateCurrentYear = new Date(currentYear, parsedMonth - 1, parsedDay);
+              const testDateNextYear = new Date(currentYear + 1, parsedMonth - 1, parsedDay);
+
+              if (testDateCurrentYear >= now) {
+                year = currentYear.toString();
+              } else {
+                year = (currentYear + 1).toString(); // Assume it's for next year if current year's date already passed
+              }
+              console.log(`[DATE PARSING] No year found for "${title}". Inferring to ${year}.`);
             }
             eventDate = `${year}-${month}-${day}`;
             console.log(`[DATE PARSING] Successfully parsed "${dateStr}" -> "${eventDate}" for event "${title}"`);
@@ -146,11 +167,11 @@ Deno.serve(async (req) => {
         
         if (!eventDate) {
           console.warn(`[DATE PARSING] Could not parse date for "${title}" from string: "${dateStr}". Defaulting to today.`);
-          eventDate = now.toISOString().split('T')[0];
+          eventDate = now.toISOString().split('T')[0]; // Fallback if parsing fails
         }
       } catch (error) {
         console.error(`[DATE PARSING] Error parsing date for ${title}:`, error);
-        eventDate = new Date().toISOString().split('T')[0];
+        eventDate = new Date().toISOString().split('T')[0]; // Fallback on error
       }
 
       // Parse time
@@ -159,10 +180,13 @@ Deno.serve(async (req) => {
         eventTime = '20:00';
       }
 
-      const externalId = githubEvent.hash || githubEvent.event || `event-${transformedEvents.length}`;
+      // Generate a more robust external_id from cleaned title and parsed date/time
+      const uniqueStringForId = `${title.toLowerCase().replace(/[^\w\s]/gi, '').replace(/\s+/g, '-')}_${eventDate}_${eventTime}_${location.toLowerCase().replace(/[^\w\s]/gi, '').replace(/\s+/g, '-')}`;
+      const externalId = githubEvent.hash || uniqueStringForId || `event-${transformedEvents.length}`;
+      
       const existingData = existingEventsMap.get(externalId);
 
-      transformedEvents.push({
+      const transformedEvent = {
         source: 'github',
         external_id: externalId,
         title: title,
@@ -171,16 +195,19 @@ Deno.serve(async (req) => {
         time: eventTime,
         location: location,
         city: githubEvent.city || 'Bielefeld', // Default to Bielefeld if city is not provided
-        organizer: '',
+        organizer: githubEvent.organizer || 'Unbekannt', // Use organizer from source if available
         category: category,
         link: githubEvent.link || null,
         image_url: githubEvent.image_url || null,
-        is_paid: false,
+        is_paid: false, // Assuming GitHub events are not paid unless explicitly stated
         likes: existingData ? existingData.likes : 0,
         rsvp_yes: existingData ? existingData.rsvp_yes : 0,
         rsvp_no: existingData ? existingData.rsvp_no : 0,
         rsvp_maybe: existingData ? existingData.rsvp_maybe : 0
-      });
+      };
+
+      console.log(`[Transformed Event Debug] Event: ${transformedEvent.title}, Date: ${transformedEvent.date}, Time: ${transformedEvent.time}, External ID: ${transformedEvent.external_id}, Category: ${transformedEvent.category}`);
+      transformedEvents.push(transformedEvent);
     }
 
     console.log(`Transformed ${transformedEvents.length} events, preserving user data.`);
@@ -199,13 +226,13 @@ Deno.serve(async (req) => {
           });
 
         if (error) {
-          console.error(`Error upserting event ${event.title}:`, error);
+          console.error(`Error upserting event ${event.title} (External ID: ${event.external_id}):`, error);
           errorCount++;
         } else {
           successCount++;
         }
       } catch (error) {
-        console.error(`Exception upserting event ${event.title}:`, error);
+        console.error(`Exception upserting event ${event.title} (External ID: ${event.external_id}):`, error);
         errorCount++;
       }
     }
