@@ -18,9 +18,9 @@ export const cities = [
   { name: "Hannover", abbr: "hanover" },
   { name: "Köln", abbr: "cologne" },
   { name: "Leipzig", abbr: "leipzig" },
-  { name: "Lübeck", abbr: "luebeck" },
+  { name: "Lübeck", abbr: "lübeck" },
   { name: "München", abbr: "munich" },
-  { name: "Münster", abbr: "muenster" },
+  { name: "Münster", abbr: "münster" },
   { name: "Nürnberg", abbr: "nuremberg" },
   { name: "Stuttgart", abbr: "stuttgart" },
 ];
