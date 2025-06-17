@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, MapPin, Users, Calendar, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -131,9 +130,9 @@ const CitySearchField: React.FC<CitySearchFieldProps> = ({ onCitySelect, current
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative w-32 md:w-40" ref={dropdownRef}>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 h-3 w-3" />
         <Input
           ref={inputRef}
           type="text"
@@ -144,12 +143,12 @@ const CitySearchField: React.FC<CitySearchFieldProps> = ({ onCitySelect, current
             setIsOpen(true);
           }}
           onFocus={() => setIsOpen(true)}
-          className="pl-10 bg-gray-900 border-gray-700 focus:ring-red-500 focus:border-red-500 text-white placeholder:text-gray-500"
+          className="pl-7 pr-2 py-1 h-8 text-xs bg-gray-900 border-gray-700 focus:ring-red-500 focus:border-red-500 text-white placeholder:text-white placeholder:font-medium"
         />
       </div>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-gray-900 border border-gray-700 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-gray-900 border border-gray-700 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto min-w-[200px]">
           {/* Bestehende Städte */}
           {filteredCities.length > 0 && (
             <div className="p-2">

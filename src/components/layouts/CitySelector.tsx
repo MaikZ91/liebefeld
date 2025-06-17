@@ -17,12 +17,10 @@ const CitySelector: React.FC = () => {
     selectedCity.charAt(0).toUpperCase() + selectedCity.slice(1);
 
   return (
-    <div className="w-64">
-      <CitySearchField 
-        onCitySelect={handleCitySelect}
-        currentCity={displayCity}
-      />
-    </div>
+    <CitySearchField 
+      onCitySelect={handleCitySelect}
+      currentCity={displayCity}
+    />
   );
 };
 
