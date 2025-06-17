@@ -130,7 +130,7 @@ const CitySearchField: React.FC<CitySearchFieldProps> = ({ onCitySelect, current
   };
 
   return (
-    <div className="relative w-32 md:w-40" ref={dropdownRef}>
+    <div className="relative w-32 md:w-35" ref={dropdownRef}>
       <div className="relative">
         <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 h-3 w-3" />
         <Input
@@ -143,7 +143,7 @@ const CitySearchField: React.FC<CitySearchFieldProps> = ({ onCitySelect, current
             setIsOpen(true);
           }}
           onFocus={() => setIsOpen(true)}
-          className="pl-7 pr-1 py-1 h-8 text-xs bg-gray-900 border-gray-700 focus:ring-red-500 focus:border-red-500 text-white placeholder:text-white placeholder:font-medium"
+          className="pl-7 pr-2 py-1 h-8 text-xs bg-gray-900 border-gray-700 focus:ring-red-500 focus:border-red-500 text-white placeholder:text-white placeholder:font-medium"
         />
       </div>
 
