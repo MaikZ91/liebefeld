@@ -162,7 +162,10 @@ const CitySearchField: React.FC<CitySearchFieldProps> = ({ onCitySelect, current
                 >
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-gray-400" />
-                    <span className="text-white font-medium">{city.name}</span>
+                    <div className="flex flex-col">
+                      <span className="text-white font-bold text-sm tracking-wider">THE TRIBE.</span>
+                      <span className="text-white font-medium text-xs lowercase">{city.name}</span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     {city.hasEvents && (
@@ -191,10 +194,10 @@ const CitySearchField: React.FC<CitySearchFieldProps> = ({ onCitySelect, current
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Plus className="h-4 w-4 text-gray-400" />
-                    <span className="text-white font-medium">{searchTerm}</span>
-                    <Badge variant="outline" className="text-xs border-gray-600 text-gray-400">
-                      THE TRIBE.{searchTerm.toLowerCase()}
-                    </Badge>
+                    <div className="flex flex-col">
+                      <span className="text-white font-bold text-sm tracking-wider">THE TRIBE.</span>
+                      <span className="text-white font-medium text-xs lowercase">{searchTerm}</span>
+                    </div>
                   </div>
                   <Button
                     onClick={() => handleGenerateEvents(searchTerm)}
