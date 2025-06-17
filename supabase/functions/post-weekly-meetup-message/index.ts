@@ -7,7 +7,6 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
-  // CORS-Preflight-Anfragen behandeln
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -20,26 +19,46 @@ Deno.serve(async (req) => {
   try {
     console.log('Starte das Posten der wöchentlichen Community-Nachrichten...');
 
+    // Aktuellen Wochentag und Monatstag für die bedingte Posting-Logik ermitteln
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Sonntag, 1 = Montag, ..., 6 = Samstag
+    const dayOfMonth = today.getDate();
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate(); // Letzter Tag des aktuellen Monats
+
     // 1. Nachrichten-Inhalte definieren
     const kennenlernabendMessageContent = `TRIBE Kennenlernabend
-🗓️ **Jeden Sonntag**
+🗓️ **Jeden Samstag**
 
 Lust auf neue Leute, echte Gespräche und gemeinsame Ideen? Ob einfach quatschen, kreative Projekte planen oder zukünftige Treffen – beim TRIBE-Abend findet ihr Raum dafür.
 
-Lasst uns den Sonntagabend gemeinsam gestalten! Findet euch in der Stadt zusammen und sichert euch einen gemütlichen Platz, wo immer es euch passt. Wer hat Lust, dabei zu sein und sich um die Koordination zu kümmern? 👍 unter diese Nachricht, um euch abzustimmen!`; // Kennenlernabend message
+Lasst uns den Samstagabend gemeinsam gestalten! Findet euch in der Stadt zusammen und sichert euch einen gemütlichen Platz, wo immer es euch passt. Wer hat Lust, dabei zu sein und sich um die Koordination zu kümmern? 👍 unter diese Nachricht, um euch abzustimmen!`;
 
     const wandersamstagMessageContent = `TRIBE Wandersamstag
 🗓️ Jeden letzten Samstag im Monat
 
 Packt eure Rucksäcke und schnürt die Schuhe! Lust auf frische Luft, neue Wege und gute Gespräche in der Natur? Der TRIBE Wandersamstag ist eure Gelegenheit, gemeinsam die Umgebung zu erkunden und neue Leute kennenzulernen.
 
-Lasst uns den Wandersamstag gemeinsam gestalten! Findet euch zusammen und stimmt eine schöne Route ab. Wer ist dabei und hat Lust, eine Wanderung zu organisieren? 👍 unter diese Nachricht, um euch abzustimmen!`; // Wandersamstag message
+Lasst uns den Wandersamstag gemeinsam gestalten! Findet euch zusammen und stimmt eine schöne Route ab. Wer ist dabei und hat Lust, eine Wanderung zu organisieren? 👍 unter diese Nachricht, um euch abzustimmen!`;
 
-    // 2. Relevante Gruppen abrufen (Gruppen, deren ID auf '_ausgehen' ODER '_sport' enden)
+    const tuesdayRunMessageContent = `TRIBE Tuesday Run
+🗓️ Jeden Dienstag 
+
+Lust auf eine gemeinsame Laufrunde, neue Bestzeiten und gute Gespräche? Schließ dich dem TRIBE Tuesday Run an und starte fit in die Woche! Egal ob Anfänger oder Fortgeschritten – der Spaß steht im Vordergrund.
+
+Finde dich mit anderen Läufern zusammen und entdeckt neue Strecken in der Stadt. Wer ist dabei und hat Lust, eine Laufrunde zu organisieren? 👍 unter diese Nachricht, um euch abzustimmen!`;
+
+     const creativeCircleMessageContent = `TRIBE Creative Circle
+🗓️ Jeden letzten Freitag im Monat
+
+Lasst eurer Kreativität freien Lauf! Ob Jammen, Fotowalk, gemeinsame Auftritte oder Malen – der Creative Circle bietet Raum für Austausch, Inspiration und gemeinsame Projekte.
+
+Teilt eure Ideen, findet Mitstreiter und gestaltet unvergessliche Momente. Wer ist dabei und hat Lust, den nächsten Creative Circle zu organisieren? 👍 unter diese Nachricht, um euch abzustimmen!`;
+
+    // 2. Alle relevanten Gruppen abrufen (Ausgehen und Sport)
     const { data: relevantGroups, error: groupsError } = await supabase
       .from('chat_groups')
       .select('id, name')
-      .or('id.like.%_ausgehen,id.like.%_sport'); // Filtert nach Gruppen, die auf '_ausgehen' ODER '_sport' enden
+      .or('id.like.%_ausgehen,id.like.%_sport'); // Holt Gruppen, die auf '_ausgehen' ODER '_sport' enden
 
     if (groupsError) {
       console.error('Fehler beim Abrufen der relevanten Gruppen:', groupsError);
@@ -57,44 +76,84 @@ Lasst uns den Wandersamstag gemeinsam gestalten! Findet euch zusammen und stimmt
     let successCount = 0;
     let errorCount = 0;
 
-    // 3. Nachricht an jede Gruppe posten, basierend auf der Kategorie, die aus der ID abgeleitet wird
+    // 3. Nachricht an jede Gruppe posten, basierend auf Kategorie und aktuellem Datum
     for (const group of relevantGroups) {
       let messageToPost = '';
       let groupCategory = '';
+      let shouldPost = false; // Flag, ob für diese Gruppe in diesem Lauf gepostet werden soll
 
       if (group.id.endsWith('_ausgehen')) {
+        // Kennenlernabend: Annahme ist, dass er wöchentlich gepostet wird, z.B. montags.
+        // Wenn es nur am tatsächlichen Samstag gepostet werden soll, müsste der Cron-Job angepasst werden.
         messageToPost = kennenlernabendMessageContent;
         groupCategory = 'Ausgehen';
+        if (dayOfWeek === 1) { // Montag
+          shouldPost = true;
+        } else {
+          console.log(`Überspringe Kennenlernabend für ${group.name} - nicht Montag.`);
+        }
       } else if (group.id.endsWith('_sport')) {
-        messageToPost = wandersamstagMessageContent;
         groupCategory = 'Sport';
-      } else {
-        // Falls eine Gruppe gefunden wird, die nicht '_ausgehen' oder '_sport' ist (z.B. neue Kategorien)
-        console.warn(`Gruppe ${group.id} passt zu keiner bekannten Kategorie (_ausgehen oder _sport), überspringe.`);
+        // Sport-Gruppen: Logik für Wandersamstag oder Tuesday Run
+        // Überprüfen, ob es der letzte Samstag im Monat ist
+        const isLastSaturdayOfMonth = (dayOfWeek === 6 && (dayOfMonth >= lastDayOfMonth - 6));
+        // Überprüfen, ob es Dienstag ist
+        const isTuesday = (dayOfWeek === 2);
+
+        if (isLastSaturdayOfMonth) {
+          messageToPost = wandersamstagMessageContent;
+          shouldPost = true;
+          console.log(`Poste Wandersamstag für ${group.name} - ist letzter Samstag im Monat (${dayOfMonth}/${lastDayOfMonth}).`);
+        } else if (isTuesday) {
+          messageToPost = tuesdayRunMessageContent;
+          shouldPost = true;
+          console.log(`Poste Tuesday Run für ${group.name} - ist Dienstag.`);
+        } else {
+          console.log(`Überspringe Sport-Nachricht für ${group.name} - weder letzter Samstag noch Dienstag.`);
+        }
+      }  else if (group.id.endsWith('_creative')) {
+          // Creative Circle: Posten am letzten Freitag im Monat
+          const isLastFridayOfMonth = (dayOfWeek === 5 && (dayOfMonth >= lastDayOfMonth - 6));
+          if (isLastFridayOfMonth) {
+              messageToPost = creativeCircleMessageContent;
+              shouldPost = true;
+              groupCategory = 'Creative';
+              console.log(`Poste Creative Circle Nachricht für ${group.name} - ist letzter Freitag im Monat.`);
+          } else {
+              console.log(`Überspringe Creative Circle Nachricht für ${group.name} - ist nicht letzter Freitag im Monat.`);
+          }
+
+      }
+       else {
+        console.warn(`Gruppe ${group.id} passt zu keiner bekannten Kategorie (_ausgehen, _sport oder _creative), überspringe.`);
         continue; // Diese Gruppe überspringen
       }
 
-      try {
-        const { error: insertError } = await supabase
-          .from('chat_messages')
-          .insert({
-            group_id: group.id,
-            sender: 'TRIBE Bot', // Der Absender der Nachricht
-            avatar: 'https://cdn.jsdelivr.net/gh/MaikZ91/productiontools/bot_avatar.png', // Ein Platzhalter-Avatar
-            text: messageToPost,
-            read_by: [] // Die Bot-Nachricht ist zunächst von niemandem gelesen
-          });
+      if (shouldPost && messageToPost) {
+        try {
+          const { error: insertError } = await supabase
+            .from('chat_messages')
+            .insert({
+              group_id: group.id,
+              sender: 'TRIBE Bot',
+              avatar: 'https://cdn.jsdelivr.net/gh/MaikZ91/productiontools/bot_avatar.png',
+              text: messageToPost,
+              read_by: []
+            });
 
-        if (insertError) {
-          console.error(`Fehler beim Posten der Nachricht an Gruppe ${group.id} (${group.name}) [Kategorie: ${groupCategory}]:`, insertError);
+          if (insertError) {
+            console.error(`Fehler beim Posten der Nachricht an Gruppe ${group.id} (${group.name}) [Kategorie: ${groupCategory}]:`, insertError);
+            errorCount++;
+          } else {
+            successCount++;
+            console.log(`Nachricht erfolgreich an Gruppe ${group.name} [Kategorie: ${groupCategory}] gepostet.`);
+          }
+        } catch (postError) {
+          console.error(`Ausnahme beim Posten der Nachricht an Gruppe ${group.id}:`, postError);
           errorCount++;
-        } else {
-          successCount++;
-          console.log(`Nachricht erfolgreich an Gruppe ${group.name} [Kategorie: ${groupCategory}] gepostet.`);
         }
-      } catch (postError) {
-        console.error(`Ausnahme beim Posten der Nachricht an Gruppe ${group.id}:`, postError);
-        errorCount++;
+      } else {
+        console.log(`Posten für Gruppe ${group.name} übersprungen, da keine Nachricht oder Bedingung nicht erfüllt.`);
       }
     }
 
