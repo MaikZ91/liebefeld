@@ -28,11 +28,11 @@ Deno.serve(async (req) => {
 
     // 1. Nachrichten-Inhalte definieren
     const kennenlernabendMessageContent = `TRIBE Kennenlernabend
-🗓️ **Jeden Samstag**
+🗓️ **Jeden Sonntag**
 
 Lust auf neue Leute, echte Gespräche und gemeinsame Ideen? Ob einfach quatschen, kreative Projekte planen oder zukünftige Treffen – beim TRIBE-Abend findet ihr Raum dafür.
 
-Lasst uns den Samstagabend gemeinsam gestalten! Findet euch in der Stadt zusammen und sichert euch einen gemütlichen Platz, wo immer es euch passt. Wer hat Lust, dabei zu sein und sich um die Koordination zu kümmern? 👍 unter diese Nachricht, um euch abzustimmen!`;
+Lasst uns den Sonntagabend gemeinsam gestalten! Findet euch in der Stadt zusammen und sichert euch einen gemütlichen Platz, wo immer es euch passt. Wer hat Lust, dabei zu sein und sich um die Koordination zu kümmern? 👍 unter diese Nachricht, um euch abzustimmen!`;
 
     const wandersamstagMessageContent = `TRIBE Wandersamstag
 🗓️ Jeden letzten Samstag im Monat
@@ -42,7 +42,7 @@ Packt eure Rucksäcke und schnürt die Schuhe! Lust auf frische Luft, neue Wege 
 Lasst uns den Wandersamstag gemeinsam gestalten! Findet euch zusammen und stimmt eine schöne Route ab. Wer ist dabei und hat Lust, eine Wanderung zu organisieren? 👍 unter diese Nachricht, um euch abzustimmen!`;
 
     const tuesdayRunMessageContent = `TRIBE Tuesday Run
-🗓️ Jeden Dienstag im Monat
+🗓️ Jeden Dienstag
 
 Lust auf eine gemeinsame Laufrunde, neue Bestzeiten und gute Gespräche? Schließ dich dem TRIBE Tuesday Run an und starte fit in die Woche! Egal ob Anfänger oder Fortgeschritten – der Spaß steht im Vordergrund.
 
