@@ -1,14 +1,14 @@
+
 // src/components/layouts/Layout.tsx
-// Changed: Added newMessagesCount and newEventsCount to MainNav props
+// Changed: Replaced city dropdown with CitySelector component
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Calendar, MessageSquare, List, Users, User } from "lucide-react";
-import { Badge } from '@/components/ui/badge'; // Import Badge component
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useEventContext } from "@/contexts/EventContext";
+import { Badge } from '@/components/ui/badge';
+import CitySelector from './CitySelector';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -18,8 +18,8 @@ interface LayoutProps {
   setActiveView?: (view: 'ai' | 'community') => void;
   handleOpenUserDirectory?: () => void;
   setIsEventListSheetOpen?: (open: boolean) => void;
-  newMessagesCount?: number; // Added newMessagesCount
-  newEventsCount?: number; // Added newEventsCount
+  newMessagesCount?: number;
+  newEventsCount?: number;
 }
 
 export const Layout: React.FC<LayoutProps> = ({
@@ -29,8 +29,8 @@ export const Layout: React.FC<LayoutProps> = ({
   setActiveView,
   handleOpenUserDirectory,
   setIsEventListSheetOpen,
-  newMessagesCount = 0, // Default to 0
-  newEventsCount = 0 // Default to 0
+  newMessagesCount = 0,
+  newEventsCount = 0
 }) => {
   const { pathname } = useLocation();
   const [isAddEventModalOpen, setIsAddEventModalOpen] = React.useState(false);
@@ -136,29 +136,9 @@ interface MainNavProps {
   setActiveView?: (view: 'ai' | 'community') => void;
   handleOpenUserDirectory?: () => void;
   setIsEventListSheetOpen?: (open: boolean) => void;
-  newMessagesCount: number; // Added
-  newEventsCount: number; // Added
+  newMessagesCount: number;
+  newEventsCount: number;
 }
-
-const cities = [
-  { name: "Bielefeld", abbr: "BI" },
-  { name: "Berlin", abbr: "berlin" },
-  { name: "Bremen", abbr: "bremen" },
-  { name: "Dortmund", abbr: "dortmund" },
-  { name: "Dresden", abbr: "dresden" },
-  { name: "Düsseldorf", abbr: "duesseldorf" },
-  { name: "Essen", abbr: "essen" },
-  { name: "Frankfurt", abbr: "frankfurt" },
-  { name: "Hamburg", abbr: "hamburg" },
-  { name: "Hannover", abbr: "hanover" },
-  { name: "Köln", abbr: "cologne" },
-  { name: "Leipzig", abbr: "leipzig" },
-  { name: "Lübeck", abbr: "luebeck" },
-  { name: "München", abbr: "munich" },
-  { name: "Münster", abbr: "muenster" },
-  { name: "Nürnberg", abbr: "nuremberg" },
-  { name: "Stuttgart", abbr: "stuttgart" },
-];
 
 const MainNav: React.FC<MainNavProps> = ({ 
   pathname, 
@@ -166,12 +146,10 @@ const MainNav: React.FC<MainNavProps> = ({
   setActiveView, 
   handleOpenUserDirectory, 
   setIsEventListSheetOpen,
-  newMessagesCount, // Destructure
-  newEventsCount // Destructure
+  newMessagesCount,
+  newEventsCount
 }) => {
-  const { selectedCity: city, setSelectedCity: setCity } = useEventContext();
-  
-  // If we're on chat page or the root path, show THE TRIBE + chat navigation buttons
+  // If we're on chat page or the root path, show THE TRIBE + city selector + chat navigation buttons
   if (pathname === '/chat' || pathname === '/') {
     return (
       <div className="flex items-center w-full">
@@ -179,21 +157,7 @@ const MainNav: React.FC<MainNavProps> = ({
           <Link to="/" className="flex items-center">
             <span className="font-bold inline-block">THE TRIBE</span>
           </Link>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-               <Button
-                  variant="ghost"
-                  className="p-0 h-auto font-bold text-white hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 hover:text-gray-300 active:bg-transparent hover:underline underline-offset-4 cursor-pointer -mt-1"
-                >
-                .{city}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-zinc-900 border-red-500/30">
-              {cities.map((c) => (
-                <DropdownMenuItem key={c.abbr} onClick={() => setCity(c.abbr)} className="text-white hover:bg-red-500/20 cursor-pointer focus:bg-red-500/20 focus:text-white">{c.name}</DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <CitySelector />
         </div>
         
         {/* Chat navigation buttons */}

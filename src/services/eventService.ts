@@ -32,7 +32,7 @@ export const fetchSupabaseEvents = async (): Promise<Event[]> => {
         rsvp_yes: event.rsvp_yes || 0,
         rsvp_no: event.rsvp_no || 0,
         rsvp_maybe: event.rsvp_maybe || 0,
-        source: (event.source as 'community' | 'github') || 'community',
+        source: (event.source as 'community' | 'github' | 'ai_generated') || 'community',
         external_id: event.external_id,
         is_paid: event.is_paid || false,
         created_at: event.created_at, // Add created_at for DB-based NEW badge
@@ -183,5 +183,26 @@ export const syncGitHubEvents = async (): Promise<void> => {
     }
   } catch (error) {
     console.error('Error calling GitHub sync function:', error);
+  }
+};
+
+// Generate events for a new city using AI
+export const generateCityEvents = async (city: string): Promise<void> => {
+  try {
+    console.log(`Generating events for city: ${city}`);
+    
+    const { data, error } = await supabase.functions.invoke('generate-city-events', {
+      body: { city }
+    });
+    
+    if (error) {
+      console.error('Error generating city events:', error);
+      throw error;
+    } else {
+      console.log('City events generation completed:', data);
+    }
+  } catch (error) {
+    console.error('Error calling city events generation function:', error);
+    throw error;
   }
 };

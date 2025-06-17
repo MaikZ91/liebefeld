@@ -1,3 +1,4 @@
+
 export interface Event {
   id: string;
   title: string;
@@ -19,7 +20,7 @@ export interface Event {
     no: number;
     maybe: number;
   };
-  source?: 'community' | 'github';
+  source?: 'community' | 'github' | 'ai_generated';
   external_id?: string;
   is_paid?: boolean;
   created_at?: string; // Add created_at field for DB-based NEW badge
