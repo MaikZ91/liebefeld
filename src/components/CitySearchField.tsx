@@ -137,7 +137,7 @@ const CitySearchField: React.FC<CitySearchFieldProps> = ({ onCitySelect, current
         <Input
           ref={inputRef}
           type="text"
-          placeholder={`Aktuell: ${currentCity} - Stadt suchen...`}
+          placeholder={currentCity.toLowerCase()}
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
