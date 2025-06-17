@@ -143,7 +143,7 @@ const CitySearchField: React.FC<CitySearchFieldProps> = ({ onCitySelect, current
             setIsOpen(true);
           }}
           onFocus={() => setIsOpen(true)}
-          className="pl-7 pr-2 py-1 h-8 text-xs bg-gray-900 border-gray-700 focus:ring-red-500 focus:border-red-500 text-white placeholder:text-white placeholder:font-medium"
+          className="pl-7 pr-1 py-1 h-8 text-xs bg-gray-900 border-gray-700 focus:ring-red-500 focus:border-red-500 text-white placeholder:text-white placeholder:font-medium"
         />
       </div>
 
