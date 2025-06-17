@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
 
     // Die Nachricht, die gepostet werden soll
     const messageContent = `TRIBE Kennenlernabend
-🗓️ **Jeden Samstag**
+🗓️ **Jeden Sonntag**
 
 Lust auf neue Leute, echte Gespräche und gemeinsame Ideen? Ob einfach quatschen, kreative Projekte planen oder zukünftige Treffen – beim TRIBE-Abend findet ihr Raum dafür.
 
