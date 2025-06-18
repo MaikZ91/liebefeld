@@ -36,7 +36,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           )}
         >
           <Calendar className="h-5 w-5" />
-          <span className="text-xs">Events</span>
+          <span className="text-xs">AI Assistent</span>
           {newEventsCount > 0 && (
             <Badge className="absolute -top-1 -right-1 bg-green-600 text-white h-4 w-4 flex items-center justify-center rounded-full text-[10px] p-0">
               {newEventsCount}
