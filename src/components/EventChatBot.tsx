@@ -26,7 +26,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
   // Add category state management - changed default to 'Ausgehen'
   const [activeCategory, setActiveCategory] = useState<string>('Ausgehen');
   
-  const { events, selectedCity } = useEventContext();
+  const { selectedCity } = useEventContext();
   const { toast } = useToast();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   
@@ -34,8 +34,8 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
   const communityGroupId = createCitySpecificGroupId(activeCategory, selectedCity);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
-  // Use the chat logic hook to manage state and functions
-  const chatLogic = useChatLogic(events, fullPage, activeChatModeValue);
+  // Use the chat logic hook to manage state and functions - no longer pass events
+  const chatLogic = useChatLogic(fullPage, activeChatModeValue);
   
   // Use personalization hook
   const { sendPersonalizedQuery } = usePersonalization(
