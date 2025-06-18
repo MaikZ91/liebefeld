@@ -9,6 +9,9 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Calendar, Clock, Users, MapPin, Filter, X } from 'lucide-react';
 import { Event } from '@/types/eventTypes';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css'; // Wichtig: Leaflet CSS importieren
+import L from 'leaflet'; // Leaflet selbst importieren für Marker-Symbole
 
 const EventHeatmap: React.FC = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
