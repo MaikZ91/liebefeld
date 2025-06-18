@@ -2,8 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getInitials } from '@/utils/chatUIUtils';
 import { AVATAR_KEY } from '@/types/chatTypes';
@@ -54,43 +52,6 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   
   return (
     <div className="md:hidden flex flex-col h-[calc(100vh-200px)] min-h-[500px]">
-      <div className="flex justify-center mb-4">
-        <div className="inline-flex rounded-md shadow-sm w-full" role="group">
-          <Button
-            variant={activeMobileView === 'calendar' ? 'default' : 'outline'} 
-            onClick={handleClickCalendar}
-            className={cn(
-              "rounded-l-md rounded-r-none flex-1 relative",
-              activeMobileView === 'calendar' ? "bg-white text-black" : "bg-gray-800 text-white border-gray-700"
-            )}
-          >
-            <Calendar className="mr-2 h-4 w-4" />
-            Kalender
-            {newEvents > 0 && (
-              <Badge className="absolute -top-2 -right-2 bg-red-500 text-white">
-                {newEvents}
-              </Badge>
-            )}
-          </Button>
-          <Button
-            variant={activeMobileView === 'chat' ? 'default' : 'outline'} 
-            onClick={handleClickChat}
-            className={cn(
-              "rounded-r-md rounded-l-none flex-1 relative",
-              activeMobileView === 'chat' ? "bg-white text-black" : "bg-gray-800 text-white border-gray-700"
-            )}
-          >
-            <MessageSquare className="mr-2 h-4 w-4" />
-            Community
-            {newMessages > 0 && activeMobileView !== 'chat' && (
-              <Badge className="absolute -top-2 -right-2 bg-red-500 text-white">
-                {newMessages}
-              </Badge>
-            )}
-          </Button>
-        </div>
-      </div>
-      
       <div className={cn(
         "flex-grow transition-all duration-300",
         activeMobileView === 'calendar' ? 'block' : 'hidden'

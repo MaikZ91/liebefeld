@@ -124,7 +124,7 @@ const Index = () => {
   const { events, isLoading, selectedCity } = useEventContext(); 
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-black text-white overflow-hidden fixed inset-0">
+    <div className="h-screen w-screen flex flex-col bg-black text-white overflow-hidden fixed inset-0 pb-20">
       {/* Header - Fixed height */}
       <div className="h-20 flex-shrink-0">
         <CalendarNavbar />

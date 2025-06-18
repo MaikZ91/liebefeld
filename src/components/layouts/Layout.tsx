@@ -1,14 +1,13 @@
 
 // src/components/layouts/Layout.tsx
-// Changed: Replaced city dropdown with CitySelector component
+// Changed: Moved navigation buttons to bottom, simplified header
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Calendar, MessageSquare, List, Users, User } from "lucide-react";
-import { Badge } from '@/components/ui/badge';
 import CitySelector from './CitySelector';
+import { BottomNavigation } from './BottomNavigation';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -68,15 +67,7 @@ export const Layout: React.FC<LayoutProps> = ({
       
       <header className="sticky top-0 z-50 w-full bg-black/90 backdrop-blur-sm border-b border-black">
         <div className="container flex h-16 items-center">
-          <MainNav 
-            pathname={pathname}
-            activeView={activeView}
-            setActiveView={setActiveView}
-            handleOpenUserDirectory={handleOpenUserDirectory}
-            setIsEventListSheetOpen={setIsEventListSheetOpen}
-            newMessagesCount={newMessagesCount}
-            newEventsCount={newEventsCount}
-          />
+          <MainNav pathname={pathname} />
           {(pathname !== '/chat' && pathname !== '/') && ( 
             <div className="ml-auto flex items-center space-x-4">
               <ThemeToggleButton />
@@ -85,9 +76,21 @@ export const Layout: React.FC<LayoutProps> = ({
         </div>
       </header>
       
-      <main>
+      <main className="pb-20">
         {children}
       </main>
+      
+      {/* Bottom Navigation for Chat and Root pages */}
+      {(pathname === '/chat' || pathname === '/') && (
+        <BottomNavigation
+          activeView={activeView}
+          setActiveView={setActiveView}
+          handleOpenUserDirectory={handleOpenUserDirectory}
+          setIsEventListSheetOpen={setIsEventListSheetOpen}
+          newMessagesCount={newMessagesCount}
+          newEventsCount={newEventsCount}
+        />
+      )}
       
       {!hideFooter && (
         <footer className="border-t border-black bg-black">
@@ -132,24 +135,10 @@ const items: NavItem[] = [
 
 interface MainNavProps {
   pathname: string;
-  activeView?: 'ai' | 'community';
-  setActiveView?: (view: 'ai' | 'community') => void;
-  handleOpenUserDirectory?: () => void;
-  setIsEventListSheetOpen?: (open: boolean) => void;
-  newMessagesCount: number;
-  newEventsCount: number;
 }
 
-const MainNav: React.FC<MainNavProps> = ({ 
-  pathname, 
-  activeView, 
-  setActiveView, 
-  handleOpenUserDirectory, 
-  setIsEventListSheetOpen,
-  newMessagesCount,
-  newEventsCount
-}) => {
-  // If we're on chat page or the root path, show THE TRIBE + city selector + chat navigation buttons
+const MainNav: React.FC<MainNavProps> = ({ pathname }) => {
+  // If we're on chat page or the root path, show simplified header with THE TRIBE + city selector
   if (pathname === '/chat' || pathname === '/') {
     return (
       <div className="flex items-center w-full">
@@ -158,64 +147,6 @@ const MainNav: React.FC<MainNavProps> = ({
             <span className="font-bold inline-block">THE TRIBE</span>
           </Link>
           <CitySelector />
-        </div>
-        
-        {/* Chat navigation buttons */}
-        <div className="flex items-center justify-between w-full">
-          <div className="flex space-x-2">
-            <Button 
-              variant={activeView === 'ai' ? "default" : "outline"} 
-              size="sm" 
-              onClick={() => setActiveView?.('ai')} 
-              className={`flex items-center gap-0.5 px-1.5 py-1 relative ${activeView === 'ai' ? 'bg-red-500 hover:bg-red-600' : ''}`}
-            >
-              <Calendar className="h-4 w-4" />
-              <span className="text-[10px] px-1">Events</span>
-              {newEventsCount > 0 && (
-                <Badge className="absolute -top-2 -right-2 bg-green-600 text-white h-4 w-4 flex items-center justify-center rounded-full text-[10px]">
-                  {newEventsCount}
-                </Badge>
-              )}
-            </Button>
-            <Button 
-              variant={activeView === 'community' ? "default" : "outline"} 
-              size="sm" 
-              onClick={() => setActiveView?.('community')} 
-              className={`flex items-center gap-0.5 px-1.5 py-1 relative ${activeView === 'community' ? 'bg-red-500 hover:bg-red-600' : ''}`}
-            >
-              <Users className="h-4 w-4" />
-              <span className="text-[10px] px-1">Community</span>
-              {newMessagesCount > 0 && (
-                <Badge className="absolute -top-2 -right-2 bg-green-600 text-white h-4 w-4 flex items-center justify-center rounded-full text-[10px]">
-                  {newMessagesCount}
-                </Badge>
-              )}
-            </Button>
-          </div>
-          
-          <div className="flex gap-2">
-            {/* User Directory Button */}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleOpenUserDirectory} 
-              className="flex items-center gap-2"
-            >
-              <User className="h-4 w-4" />
-              <span className="hidden md:inline">Benutzer</span>
-            </Button>
-            
-            {/* Calendar Events Button */}
-            <Button 
-              variant="default" 
-              size="sm" 
-              onClick={() => setIsEventListSheetOpen?.(true)} 
-              className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white"
-            >
-              <Calendar className="h-4 w-4" />
-              <span className="hidden md:inline">Events anzeigen</span>
-            </Button>
-          </div>
         </div>
       </div>
     );
