@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Users, MapPin, Filter, X } from 'lucide-react';
+import { useEvents } from '@/hooks/useEvents';
 
 // Workaround für Standard-Leaflet-Marker-Symbole
 L.Icon.Default.mergeOptions({
@@ -21,9 +22,11 @@ const EventHeatmap = () => {
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [dateFilter, setDateFilter] = useState('');
     const [eventCoordinates, setEventCoordinates] = useState<Record<string, [number, number]>>({});
-    const [events, setEvents] = useState([]);
+    
+    // Use the useEvents hook to get events data
+    const { events, isLoading } = useEvents();
 
-    console.log('EventHeatmap: component mounted');
+    console.log('EventHeatmap: component mounted, events:', events.length);
 
     // Filter events for Bielefeld
     const bielefeld_events = events.filter(
@@ -76,7 +79,9 @@ const EventHeatmap = () => {
             }
         };
 
-        geocodeEvents();
+        if (bielefeld_events.length > 0) {
+            geocodeEvents();
+        }
     }, [bielefeld_events.length]);
 
     // Get marker color based on event popularity
@@ -135,6 +140,18 @@ const EventHeatmap = () => {
       </div>
     `;
     };
+
+    // Show loading state while events are being fetched
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-black text-white">
+                <div className="text-center">
+                    <h2 className="text-xl mb-2">Lade Events...</h2>
+                    <p className="text-gray-400">Bitte warten Sie einen Moment.</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="relative w-full h-screen bg-black">
