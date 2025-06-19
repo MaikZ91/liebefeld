@@ -1,11 +1,8 @@
-
 import React, { useEffect, useRef, useState } from 'react';
-// Importe für react-leaflet
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css'; // Wichtig: Leaflet CSS importieren
-import L from 'leaflet'; // Leaflet selbst importieren für Marker-Symbole
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
-// Ihre bestehenden Komponenten-Importe
 import { useEventContext } from '@/contexts/EventContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,8 +10,6 @@ import { Input } from '@/components/ui/input';
 import { Users, MapPin, Filter, X } from 'lucide-react';
 
 // Workaround für Standard-Leaflet-Marker-Symbole
-// Dies ist notwendig, da Leaflet standardmäßig versucht, Icons von einem bestimmten Pfad zu laden,
-// der in einer modernen Build-Umgebung oft nicht existiert.
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
@@ -201,25 +196,22 @@ const EventHeatmap = () => {
                 </Card>
             </div>
 
-            {/* MapContainer ist die Hauptkomponente von react-leaflet */}
             <MapContainer
-                center={[52.0302, 8.5311]} // Initialzentrum: Bielefeld [latitude, longitude]
-                zoom={12} // Initialzoomstufe
-                scrollWheelZoom={true} // Scroll-Zoom aktivieren
-                className="w-full h-full z-0" // Stellen Sie sicher, dass die Karte im Hintergrund ist
+                center={[52.0302, 8.5311]}
+                zoom={12}
+                scrollWheelZoom={true}
+                className="w-full h-full z-0"
             >
-                {/* TileLayer für OpenStreetMap-Kartenkacheln */}
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
 
-                {/* Marker für gefilterte Events */}
                 {filteredEvents.map((event, index) => {
                     const coordinates = eventCoordinates[event.id];
                     
                     if (!coordinates) {
-                        return null; // Marker nicht anzeigen, bis Koordinaten verfügbar sind
+                        return null;
                     }
 
                     const color = getMarkerColor(event);
