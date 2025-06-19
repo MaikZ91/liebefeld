@@ -16,8 +16,23 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
 
+// Types for EventMarkers props
+interface EventMarkersProps {
+  filteredEvents: any[];
+  eventCoordinates: Record<string, [number, number]>;
+  getMarkerColor: (event: any) => string;
+  createCustomMarkerIcon: (color: string, size: number) => L.DivIcon;
+  createPopupContent: (event: any) => string;
+}
+
 // Separate component for map markers to avoid context issues
-const EventMarkers = ({ filteredEvents, eventCoordinates, getMarkerColor, createCustomMarkerIcon, createPopupContent }) => {
+const EventMarkers: React.FC<EventMarkersProps> = ({ 
+  filteredEvents, 
+  eventCoordinates, 
+  getMarkerColor, 
+  createCustomMarkerIcon, 
+  createPopupContent 
+}) => {
   return (
     <>
       {filteredEvents.map((event, index) => {
@@ -48,7 +63,7 @@ const EventHeatmap = () => {
     const markers = useRef([]);
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [dateFilter, setDateFilter] = useState('');
-    const [eventCoordinates, setEventCoordinates] = useState({});
+    const [eventCoordinates, setEventCoordinates] = useState<Record<string, [number, number]>>({});
     const { events } = useEventContext();
 
     // Filter events for Bielefeld
@@ -68,7 +83,7 @@ const EventHeatmap = () => {
     });
 
     // Geocoding-Funktion für Adressen mit OpenStreetMap Nominatim
-    const geocodeAddress = async (address) => {
+    const geocodeAddress = async (address: string): Promise<[number, number] | null> => {
         try {
             const response = await fetch(
                 `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address + ', Bielefeld, Germany')}&format=json&limit=1`
@@ -86,7 +101,7 @@ const EventHeatmap = () => {
     // Geocode all events when component mounts or events change
     useEffect(() => {
         const geocodeEvents = async () => {
-            const newCoordinates = {};
+            const newCoordinates: Record<string, [number, number]> = {};
             
             for (const event of bielefeld_events) {
                 if (event.location && !eventCoordinates[event.id]) {
@@ -106,7 +121,7 @@ const EventHeatmap = () => {
     }, [bielefeld_events.length]);
 
     // Get marker color based on event popularity
-    const getMarkerColor = (event) => {
+    const getMarkerColor = (event: any): string => {
         const popularity = (event.likes || 0) + (event.rsvp_yes || 0);
         if (popularity >= 20) return '#ef4444'; // red - very popular
         if (popularity >= 10) return '#f97316'; // orange - popular
@@ -115,7 +130,7 @@ const EventHeatmap = () => {
     };
 
     // Erstellen eines benutzerdefinierten Leaflet DivIcons
-    const createCustomMarkerIcon = (color, size) => {
+    const createCustomMarkerIcon = (color: string, size: number): L.DivIcon => {
         return L.divIcon({
             className: 'custom-leaflet-marker',
             html: `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.3);"></div>`,
@@ -126,7 +141,7 @@ const EventHeatmap = () => {
     };
 
     // Create popup content
-    const createPopupContent = (event) => {
+    const createPopupContent = (event: any): string => {
         const participants = event.rsvp_yes || 0;
         const likes = event.likes || 0;
         return `
