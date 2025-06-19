@@ -17,75 +17,10 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
 
-const EventHeatmap = () => {
-    const markers = useRef([]);
-    const [selectedCategory, setSelectedCategory] = useState('all');
-    const [dateFilter, setDateFilter] = useState('');
-    const [eventCoordinates, setEventCoordinates] = useState<Record<string, [number, number]>>({});
-    
-    // Use the useEvents hook to get events data
-    const { events, isLoading } = useEvents();
-
-    console.log('EventHeatmap: component mounted, events:', events.length);
-
-    // Filter events for Bielefeld
-    const bielefeld_events = events.filter(
-        (event) => !event.city || event.city.toLowerCase() === 'bielefeld' || event.city.toLowerCase() === 'bi'
-    );
-
-    const categories = [
-        'all',
-        ...Array.from(new Set(bielefeld_events.map((e) => e.category))),
-    ];
-
-    const filteredEvents = bielefeld_events.filter((event) => {
-        const categoryMatch = selectedCategory === 'all' || event.category === selectedCategory;
-        const dateMatch = !dateFilter || event.date === dateFilter;
-        return categoryMatch && dateMatch;
-    });
-
-    // Geocoding-Funktion für Adressen mit OpenStreetMap Nominatim
-    const geocodeAddress = async (address: string): Promise<[number, number] | null> => {
-        try {
-            const response = await fetch(
-                `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address + ', Bielefeld, Germany')}&format=json&limit=1`
-            );
-            const data = await response.json();
-            if (data && data.length > 0) {
-                return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-            }
-        } catch (error) {
-            console.error('Geocoding error:', error);
-        }
-        return null;
-    };
-
-    // Geocode all events when component mounts or events change
-    useEffect(() => {
-        const geocodeEvents = async () => {
-            const newCoordinates: Record<string, [number, number]> = {};
-            
-            for (const event of bielefeld_events) {
-                if (event.location && !eventCoordinates[event.id]) {
-                    const coords = await geocodeAddress(event.location);
-                    if (coords) {
-                        newCoordinates[event.id] = coords;
-                    }
-                }
-            }
-            
-            if (Object.keys(newCoordinates).length > 0) {
-                setEventCoordinates(prev => ({ ...prev, ...newCoordinates }));
-            }
-        };
-
-        if (bielefeld_events.length > 0) {
-            geocodeEvents();
-        }
-    }, [bielefeld_events.length]);
-
+// Create a separate component for the map markers to avoid context issues
+const MapMarkers = ({ events, eventCoordinates }) => {
     // Get marker color based on event popularity
-    const getMarkerColor = (event: any): string => {
+    const getMarkerColor = (event) => {
         const popularity = (event.likes || 0) + (event.rsvp_yes || 0);
         if (popularity >= 20) return '#ef4444'; // red - very popular
         if (popularity >= 10) return '#f97316'; // orange - popular
@@ -94,7 +29,7 @@ const EventHeatmap = () => {
     };
 
     // Erstellen eines benutzerdefinierten Leaflet DivIcons
-    const createCustomMarkerIcon = (color: string, size: number): L.DivIcon => {
+    const createCustomMarkerIcon = (color, size) => {
         return L.divIcon({
             className: 'custom-leaflet-marker',
             html: `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.3);"></div>`,
@@ -105,7 +40,7 @@ const EventHeatmap = () => {
     };
 
     // Create popup content
-    const createPopupContent = (event: any): string => {
+    const createPopupContent = (event) => {
         const participants = event.rsvp_yes || 0;
         const likes = event.likes || 0;
         return `
@@ -140,6 +75,99 @@ const EventHeatmap = () => {
       </div>
     `;
     };
+
+    return (
+        <>
+            {events.map((event, index) => {
+                const coordinates = eventCoordinates[event.id];
+                
+                if (!coordinates) {
+                    return null;
+                }
+
+                const color = getMarkerColor(event);
+                const popularity = (event.likes || 0) + (event.rsvp_yes || 0);
+                const size = Math.max(15, Math.min(40, 15 + popularity * 2));
+                const customIcon = createCustomMarkerIcon(color, size);
+
+                return (
+                    <Marker key={event.id || index} position={coordinates} icon={customIcon}>
+                        <Popup className="custom-popup">
+                            <div dangerouslySetInnerHTML={{ __html: createPopupContent(event) }} />
+                        </Popup>
+                    </Marker>
+                );
+            })}
+        </>
+    );
+};
+
+const EventHeatmap = () => {
+    const markers = useRef([]);
+    const [selectedCategory, setSelectedCategory] = useState('all');
+    const [dateFilter, setDateFilter] = useState('');
+    const [eventCoordinates, setEventCoordinates] = useState({});
+    
+    // Use the useEvents hook to get events data
+    const { events, isLoading } = useEvents();
+
+    console.log('EventHeatmap: component mounted, events:', events.length);
+
+    // Filter events for Bielefeld
+    const bielefeld_events = events.filter(
+        (event) => !event.city || event.city.toLowerCase() === 'bielefeld' || event.city.toLowerCase() === 'bi'
+    );
+
+    const categories = [
+        'all',
+        ...Array.from(new Set(bielefeld_events.map((e) => e.category))),
+    ];
+
+    const filteredEvents = bielefeld_events.filter((event) => {
+        const categoryMatch = selectedCategory === 'all' || event.category === selectedCategory;
+        const dateMatch = !dateFilter || event.date === dateFilter;
+        return categoryMatch && dateMatch;
+    });
+
+    // Geocoding-Funktion für Adressen mit OpenStreetMap Nominatim
+    const geocodeAddress = async (address) => {
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address + ', Bielefeld, Germany')}&format=json&limit=1`
+            );
+            const data = await response.json();
+            if (data && data.length > 0) {
+                return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+            }
+        } catch (error) {
+            console.error('Geocoding error:', error);
+        }
+        return null;
+    };
+
+    // Geocode all events when component mounts or events change
+    useEffect(() => {
+        const geocodeEvents = async () => {
+            const newCoordinates = {};
+            
+            for (const event of bielefeld_events) {
+                if (event.location && !eventCoordinates[event.id]) {
+                    const coords = await geocodeAddress(event.location);
+                    if (coords) {
+                        newCoordinates[event.id] = coords;
+                    }
+                }
+            }
+            
+            if (Object.keys(newCoordinates).length > 0) {
+                setEventCoordinates(prev => ({ ...prev, ...newCoordinates }));
+            }
+        };
+
+        if (bielefeld_events.length > 0) {
+            geocodeEvents();
+        }
+    }, [bielefeld_events.length]);
 
     // Show loading state while events are being fetched
     if (isLoading) {
@@ -225,26 +253,7 @@ const EventHeatmap = () => {
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                {filteredEvents.map((event, index) => {
-                    const coordinates = eventCoordinates[event.id];
-                    
-                    if (!coordinates) {
-                        return null;
-                    }
-
-                    const color = getMarkerColor(event);
-                    const popularity = (event.likes || 0) + (event.rsvp_yes || 0);
-                    const size = Math.max(15, Math.min(40, 15 + popularity * 2));
-                    const customIcon = createCustomMarkerIcon(color, size);
-
-                    return (
-                        <Marker key={event.id || index} position={coordinates} icon={customIcon}>
-                            <Popup className="custom-popup">
-                                <div dangerouslySetInnerHTML={{ __html: createPopupContent(event) }} />
-                            </Popup>
-                        </Marker>
-                    );
-                })}
+                <MapMarkers events={filteredEvents} eventCoordinates={eventCoordinates} />
             </MapContainer>
         </div>
     );
