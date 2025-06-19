@@ -16,6 +16,34 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
 
+// Separate component for map markers to avoid context issues
+const EventMarkers = ({ filteredEvents, eventCoordinates, getMarkerColor, createCustomMarkerIcon, createPopupContent }) => {
+  return (
+    <>
+      {filteredEvents.map((event, index) => {
+        const coordinates = eventCoordinates[event.id];
+        
+        if (!coordinates) {
+          return null;
+        }
+
+        const color = getMarkerColor(event);
+        const popularity = (event.likes || 0) + (event.rsvp_yes || 0);
+        const size = Math.max(15, Math.min(40, 15 + popularity * 2));
+        const customIcon = createCustomMarkerIcon(color, size);
+
+        return (
+          <Marker key={event.id || index} position={coordinates} icon={customIcon}>
+            <Popup className="custom-popup">
+              <div dangerouslySetInnerHTML={{ __html: createPopupContent(event) }} />
+            </Popup>
+          </Marker>
+        );
+      })}
+    </>
+  );
+};
+
 const EventHeatmap = () => {
     const markers = useRef([]);
     const [selectedCategory, setSelectedCategory] = useState('all');
@@ -206,27 +234,13 @@ const EventHeatmap = () => {
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-
-                {filteredEvents.map((event, index) => {
-                    const coordinates = eventCoordinates[event.id];
-                    
-                    if (!coordinates) {
-                        return null;
-                    }
-
-                    const color = getMarkerColor(event);
-                    const popularity = (event.likes || 0) + (event.rsvp_yes || 0);
-                    const size = Math.max(15, Math.min(40, 15 + popularity * 2));
-                    const customIcon = createCustomMarkerIcon(color, size);
-
-                    return (
-                        <Marker key={event.id || index} position={coordinates} icon={customIcon}>
-                            <Popup className="custom-popup">
-                                <div dangerouslySetInnerHTML={{ __html: createPopupContent(event) }} />
-                            </Popup>
-                        </Marker>
-                    );
-                })}
+                <EventMarkers 
+                    filteredEvents={filteredEvents}
+                    eventCoordinates={eventCoordinates}
+                    getMarkerColor={getMarkerColor}
+                    createCustomMarkerIcon={createCustomMarkerIcon}
+                    createPopupContent={createPopupContent}
+                />
             </MapContainer>
         </div>
     );
