@@ -1,4 +1,5 @@
 
+
 import React, { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -22,7 +23,12 @@ const EventHeatmap = () => {
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [dateFilter, setDateFilter] = useState('');
     const [eventCoordinates, setEventCoordinates] = useState<Record<string, [number, number]>>({});
-    const { events } = useEventContext();
+    
+    // Safely consume the context with error handling
+    const eventContext = useEventContext();
+    const events = eventContext?.events || [];
+
+    console.log('EventHeatmap: events from context:', events.length);
 
     // Filter events for Bielefeld
     const bielefeld_events = events.filter(
@@ -134,6 +140,18 @@ const EventHeatmap = () => {
       </div>
     `;
     };
+
+    // Add error boundary check
+    if (!eventContext) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-black text-white">
+                <div className="text-center">
+                    <h2 className="text-xl mb-2">Event Context nicht verfügbar</h2>
+                    <p className="text-gray-400">Bitte laden Sie die Seite neu.</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="relative w-full h-screen bg-black">
