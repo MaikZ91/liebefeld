@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 // Importe für react-leaflet
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -15,14 +14,11 @@ import { Users, MapPin, Filter, X } from 'lucide-react';
 // Workaround für Standard-Leaflet-Marker-Symbole
 // Dies ist notwendig, da Leaflet standardmäßig versucht, Icons von einem bestimmten Pfad zu laden,
 // der in einer modernen Build-Umgebung oft nicht existiert.
-delete L.Icon.Default.prototype._getIconUrl;
-
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
-
 
 const EventHeatmap = () => {
     // mapContainer und map refs werden mit react-leaflet nicht mehr direkt benötigt
