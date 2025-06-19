@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 // Importe für react-leaflet
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -21,18 +22,10 @@ L.Icon.Default.mergeOptions({
 });
 
 const EventHeatmap = () => {
-    // mapContainer und map refs werden mit react-leaflet nicht mehr direkt benötigt
-    // da MapContainer die Map-Instanz intern verwaltet.
-    // markers ref ist weiterhin nützlich, falls Sie manuelle Marker-Logik hätten,
-    // aber mit react-leaflet rendert man Marker oft direkt im JSX.
-    const markers = useRef([]); // Kann beibehalten werden, falls für andere Zwecke nützlich
-
-    // Mapbox Token und die zugehörige State-Variable sind nicht mehr erforderlich
-    // const [mapboxToken, setMapboxToken] = useState('');
-    // const [showTokenInput, setShowTokenInput] = useState(true);
-
+    const markers = useRef([]);
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [dateFilter, setDateFilter] = useState('');
+    const [eventCoordinates, setEventCoordinates] = useState({});
     const { events } = useEventContext();
 
     // Filter events for Bielefeld
@@ -52,7 +45,6 @@ const EventHeatmap = () => {
     });
 
     // Geocoding-Funktion für Adressen mit OpenStreetMap Nominatim
-    // Wichtig: Beachten Sie die Nutzungsrichtlinien von Nominatim!
     const geocodeAddress = async (address) => {
         try {
             const response = await fetch(
@@ -60,7 +52,6 @@ const EventHeatmap = () => {
             );
             const data = await response.json();
             if (data && data.length > 0) {
-                // Nominatim gibt [longitude, latitude] zurück, Leaflet/react-leaflet erwartet [latitude, longitude]
                 return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
             }
         } catch (error) {
@@ -68,6 +59,28 @@ const EventHeatmap = () => {
         }
         return null;
     };
+
+    // Geocode all events when component mounts or events change
+    useEffect(() => {
+        const geocodeEvents = async () => {
+            const newCoordinates = {};
+            
+            for (const event of bielefeld_events) {
+                if (event.location && !eventCoordinates[event.id]) {
+                    const coords = await geocodeAddress(event.location);
+                    if (coords) {
+                        newCoordinates[event.id] = coords;
+                    }
+                }
+            }
+            
+            if (Object.keys(newCoordinates).length > 0) {
+                setEventCoordinates(prev => ({ ...prev, ...newCoordinates }));
+            }
+        };
+
+        geocodeEvents();
+    }, [bielefeld_events.length]);
 
     // Get marker color based on event popularity
     const getMarkerColor = (event) => {
@@ -81,11 +94,11 @@ const EventHeatmap = () => {
     // Erstellen eines benutzerdefinierten Leaflet DivIcons
     const createCustomMarkerIcon = (color, size) => {
         return L.divIcon({
-            className: 'custom-leaflet-marker', // Optional, für zusätzliches CSS
+            className: 'custom-leaflet-marker',
             html: `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.3);"></div>`,
             iconSize: [size, size],
-            iconAnchor: [size / 2, size / 2], // Zentriert den Marker auf der Koordinate
-            popupAnchor: [0, -size / 2], // Position des Popups relativ zum Marker
+            iconAnchor: [size / 2, size / 2],
+            popupAnchor: [0, -size / 2],
         });
     };
 
@@ -125,9 +138,6 @@ const EventHeatmap = () => {
       </div>
     `;
     };
-
-    // Die Logik für die Token-Eingabe entfällt, da OpenStreetMap keinen Token benötigt.
-    // Daher wird der showTokenInput-State und der zugehörige Render-Block entfernt.
 
     return (
         <div className="relative w-full h-screen bg-black">
@@ -206,19 +216,8 @@ const EventHeatmap = () => {
 
                 {/* Marker für gefilterte Events */}
                 {filteredEvents.map((event, index) => {
-                    // Verwenden Sie einen lokalen State, um die asynchron geladenen Koordinaten zu speichern
-                    const [coordinates, setCoordinates] = useState(null);
-
-                    useEffect(() => {
-                        const getCoords = async () => {
-                            if (event.location) {
-                                const coords = await geocodeAddress(event.location);
-                                setCoordinates(coords);
-                            }
-                        };
-                        getCoords();
-                    }, [event.location]); // Abhängigkeit von event.location
-
+                    const coordinates = eventCoordinates[event.id];
+                    
                     if (!coordinates) {
                         return null; // Marker nicht anzeigen, bis Koordinaten verfügbar sind
                     }
