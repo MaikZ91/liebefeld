@@ -70,17 +70,19 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
     }
   };
 
-  // Always render the chat interface when in fullPage mode
+  // Always render the full page chat when fullPage is true
   if (fullPage) {
     return (
-      <FullPageChatBot
-        chatLogic={chatLogic}
-        activeChatModeValue={activeChatModeValue}
-        communityGroupId={communityGroupId}
-        onAddEvent={onAddEvent}
-        activeCategory={activeCategory}
-        onCategoryChange={handleCategoryChange}
-      />
+      <div className="h-full w-full bg-black relative">
+        <FullPageChatBot
+          chatLogic={chatLogic}
+          activeChatModeValue={activeChatModeValue}
+          communityGroupId={communityGroupId}
+          onAddEvent={onAddEvent}
+          activeCategory={activeCategory}
+          onCategoryChange={handleCategoryChange}
+        />
+      </div>
     );
   }
 

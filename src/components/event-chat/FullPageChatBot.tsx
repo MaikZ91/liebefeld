@@ -1,4 +1,3 @@
-
 // src/components/event-chat/FullPageChatBot.tsx
 import React, { useEffect } from 'react';
 import MessageList from './MessageList';
@@ -140,11 +139,16 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   }, [communityMessages, communitySending, activeChatModeValue, chatBottomRef]);
 
+  console.log('[FullPageChatBot] Rendering with activeChatModeValue:', activeChatModeValue);
+  console.log('[FullPageChatBot] AI messages count:', aiMessages.length);
+
   // Ensure the component is always visible and properly positioned
   return (
-    <div className="flex flex-col h-screen min-h-0 w-full bg-black relative z-10">
-      {/* Header with higher z-index to ensure visibility */}
-      <div className="border-b border-red-500/20 sticky top-0 z-50 bg-black px-[13px] py-2"> 
+    <div className="flex flex-col h-screen min-h-0 w-full bg-black relative" style={{ zIndex: 1 }}>
+      {console.log('[FullPageChatBot] Main container rendering')}
+      
+      {/* Header with proper z-index */}
+      <div className="border-b border-red-500/20 sticky top-0 bg-black px-[13px] py-2" style={{ zIndex: 10 }}> 
         {activeChatModeValue === 'ai' && (
           <RecentQueries
             showRecentQueries={showRecentQueries}
@@ -173,10 +177,13 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
         />
       </div>
 
-      {/* Main content area with proper positioning */}
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none bg-black relative z-10">
+      {/* Main content area with proper positioning and always visible */}
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none bg-black relative" style={{ zIndex: 5 }}>
+        {console.log('[FullPageChatBot] Content area rendering, mode:', activeChatModeValue)}
+        
         {activeChatModeValue === 'ai' ? (
           <div className="pt-8 px-3 min-h-full"> 
+            {console.log('[FullPageChatBot] AI mode rendering with messages:', aiMessages.length)}
             <MessageList
               messages={aiMessages}
               isTyping={aiTyping}
@@ -189,6 +196,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
           </div>
         ) : (
           <div className="h-full min-h-0 flex flex-col bg-black">
+            {console.log('[FullPageChatBot] Community mode rendering')}
+            
             {communityError && (
               <div className="text-center text-red-500 text-lg font-semibold py-4">
                 Error: {communityError}
