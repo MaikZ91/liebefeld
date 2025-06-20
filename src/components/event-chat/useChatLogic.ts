@@ -23,8 +23,8 @@ export const useChatLogic = (
   // Get events and selectedCity from EventContext instead of props
   const { events, selectedCity } = useEventContext();
   
-  // Simplified initial state - always visible in fullPage mode
-  const [isVisible, setIsVisible] = useState(fullPage);
+  // Always visible in fullPage mode
+  const [isVisible, setIsVisible] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(fullPage);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -34,6 +34,7 @@ export const useChatLogic = (
   const [showRecentQueries, setShowRecentQueries] = useState(false);
   const [isHeartActive, setIsHeartActive] = useState(false);
   const [hasUserSentFirstMessage, setHasUserSentFirstMessage] = useState(false); 
+  const [isInitialized, setIsInitialized] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -466,6 +467,50 @@ export const useChatLogic = (
     };
   }, []);
 
+  // Initialize welcome messages for AI mode
+  const initializeWelcomeMessages = useCallback(() => {
+    if (welcomeMessageShownRef.current || activeChatModeValue !== 'ai' || !fullPage) {
+      return;
+    }
+
+    const hasMessages = messages.length > 0;
+    const hasSavedMessages = localStorage.getItem(CHAT_HISTORY_KEY) !== null;
+
+    // Only show welcome messages if no messages exist and app hasn't been launched before
+    if (!hasMessages && !hasSavedMessages && !appLaunchedBeforeRef.current) {
+      welcomeMessageShownRef.current = true;
+      localStorage.setItem(APP_LAUNCHED_KEY, 'true');
+      
+      setMessages([
+        {
+          id: 'welcome',
+          isUser: false,
+          text: 'Willkommen bei THE TRIBE!',
+          html: getWelcomeMessage(),
+          timestamp: new Date().toISOString()
+        },
+        {
+          id: 'typewriter-prompt',
+          isUser: false,
+          text: 'Frag mich etwas:',
+          examplePrompts: examplePrompts,
+          timestamp: new Date().toISOString()
+        },
+        {
+          id: 'landing-slides',
+          isUser: false,
+          text: 'Entdecke unsere Community-Features:',
+          slideData: createLandingSlideData(),
+          timestamp: new Date().toISOString()
+        }
+      ]);
+      console.log('[ChatLogic:Welcome] Initial welcome messages set for fullPage AI mode!');
+    } else if (hasSavedMessages || appLaunchedBeforeRef.current) {
+      welcomeMessageShownRef.current = true;
+    }
+  }, [activeChatModeValue, messages.length, fullPage, examplePrompts]);
+
+  // Load initial state from localStorage
   useEffect(() => {
     const savedMessages = localStorage.getItem(CHAT_HISTORY_KEY);
     if (savedMessages) {
@@ -502,10 +547,19 @@ export const useChatLogic = (
 
     if (typeof window !== 'undefined') {
       setHasUserSentFirstMessage(localStorage.getItem(USER_SENT_FIRST_MESSAGE_KEY) === 'true');
+      appLaunchedBeforeRef.current = localStorage.getItem(APP_LAUNCHED_KEY) === 'true';
     }
     
     fetchGlobalQueries();
+    setIsInitialized(true);
   }, [fetchGlobalQueries]);
+
+  // Initialize welcome messages after initial state is loaded
+  useEffect(() => {
+    if (isInitialized) {
+      initializeWelcomeMessages();
+    }
+  }, [isInitialized, initializeWelcomeMessages]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -540,50 +594,6 @@ export const useChatLogic = (
       return () => clearTimeout(timer);
     }
   }, [fullPage]);
-
-  // Improved welcome message initialization
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    appLaunchedBeforeRef.current = localStorage.getItem(APP_LAUNCHED_KEY) === 'true';
-
-    // Only initialize welcome messages in AI mode and if not already loaded
-    if (!welcomeMessageShownRef.current && activeChatModeValue === 'ai' && fullPage) {
-      const hasMessages = messages.length > 0;
-      const hasSavedMessages = localStorage.getItem(CHAT_HISTORY_KEY) !== null;
-
-      if (!hasMessages && !hasSavedMessages && !appLaunchedBeforeRef.current) {
-        welcomeMessageShownRef.current = true;
-        localStorage.setItem(APP_LAUNCHED_KEY, 'true');
-        setMessages([
-          {
-            id: 'welcome',
-            isUser: false,
-            text: 'Willkommen bei THE TRIBE!',
-            html: getWelcomeMessage(),
-            timestamp: new Date().toISOString()
-          },
-          {
-            id: 'typewriter-prompt',
-            isUser: false,
-            text: 'Frag mich etwas:',
-            examplePrompts: examplePrompts,
-            timestamp: new Date().toISOString()
-          },
-          {
-            id: 'landing-slides',
-            isUser: false,
-            text: 'Entdecke unsere Community-Features:',
-            slideData: createLandingSlideData(),
-            timestamp: new Date().toISOString()
-          }
-        ]);
-        console.log('[ChatLogic:Welcome] Initial welcome messages set for fullPage AI mode!');
-      } else if (hasSavedMessages || appLaunchedBeforeRef.current) {
-        welcomeMessageShownRef.current = true;
-      }
-    }
-  }, [activeChatModeValue, messages.length, fullPage]);
 
   useEffect(() => {
     if (messagesEndRef.current) {
