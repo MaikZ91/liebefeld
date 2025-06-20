@@ -23,9 +23,9 @@ export const useChatLogic = (
   // Get events and selectedCity from EventContext instead of props
   const { events, selectedCity } = useEventContext();
   
-  // Always visible in fullPage mode
+  // Always visible and chat always open in fullPage mode
   const [isVisible, setIsVisible] = useState(true);
-  const [isChatOpen, setIsChatOpen] = useState(fullPage);
+  const [isChatOpen, setIsChatOpen] = useState(true); // Always open for fullPage
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -41,7 +41,7 @@ export const useChatLogic = (
   const welcomeMessageShownRef = useRef(false);
   const appLaunchedBeforeRef = useRef(false); 
 
-  // Promptvorschlag-Liste für den Schreibmaschinen-Effekt (erweitert)
+  // Extended example prompts list
   const examplePrompts = [
     "Welche Events gibt es heute?",
     "Was geht am Wochenende in Liebefeld?",
@@ -99,7 +99,6 @@ export const useChatLogic = (
   const filterEventsByCity = useCallback((eventsToFilter: Event[]) => {
     if (!selectedCity) return eventsToFilter;
     
-    // Special handling for Bielefeld - include events without city specified
     if (selectedCity.toLowerCase() === 'bi' || selectedCity.toLowerCase() === 'bielefeld') {
       return eventsToFilter.filter(event => 
         !event.city || 
@@ -108,23 +107,19 @@ export const useChatLogic = (
       );
     }
     
-    // For other cities, filter by exact match
     return eventsToFilter.filter(event => 
       event.city && event.city.toLowerCase() === selectedCity.toLowerCase()
     );
   }, [selectedCity]);
 
-  // Handle new event notifications - removed for now since newEventIds was removed
   const handleNewEventNotification = useCallback((eventCount: number) => {
     console.log('Event notifications temporarily disabled');
   }, []);
 
-  // Handle daily Perfect Day messages
   const handleDailyPerfectDayMessage = useCallback((message: ChatMessage) => {
     setMessages(prev => [...prev, message]);
   }, []);
 
-  // Setup daily Perfect Day messages
   useDailyPerfectDay({
     onDailyMessage: handleDailyPerfectDayMessage,
     activeChatMode: activeChatModeValue
@@ -167,6 +162,9 @@ export const useChatLogic = (
   };
 
   const handleToggleChat = useCallback(() => {
+    // In fullPage mode, chat is always open
+    if (fullPage) return;
+    
     setIsChatOpen(prev => !prev);
     if (!isChatOpen) {
       setTimeout(() => {
@@ -175,7 +173,7 @@ export const useChatLogic = (
         }
       }, 300);
     }
-  }, [isChatOpen]);
+  }, [isChatOpen, fullPage]);
 
   // Funktion zum Abrufen globaler Abfragen von Supabase
   const fetchGlobalQueries = useCallback(async () => {
@@ -467,56 +465,60 @@ export const useChatLogic = (
     };
   }, []);
 
-  // Initialize welcome messages for AI mode
+  // Simplified welcome message initialization - always show for AI mode in fullPage
   const initializeWelcomeMessages = useCallback(() => {
-    if (welcomeMessageShownRef.current || activeChatModeValue !== 'ai' || !fullPage) {
+    console.log('[useChatLogic] Initializing welcome messages for AI mode in fullPage');
+    
+    if (activeChatModeValue !== 'ai' || !fullPage) {
+      console.log('[useChatLogic] Skipping welcome messages - not AI mode or not fullPage');
       return;
     }
 
-    const hasMessages = messages.length > 0;
-    const hasSavedMessages = localStorage.getItem(CHAT_HISTORY_KEY) !== null;
-
-    // Only show welcome messages if no messages exist and app hasn't been launched before
-    if (!hasMessages && !hasSavedMessages && !appLaunchedBeforeRef.current) {
-      welcomeMessageShownRef.current = true;
-      localStorage.setItem(APP_LAUNCHED_KEY, 'true');
-      
-      setMessages([
-        {
-          id: 'welcome',
-          isUser: false,
-          text: 'Willkommen bei THE TRIBE!',
-          html: getWelcomeMessage(),
-          timestamp: new Date().toISOString()
-        },
-        {
-          id: 'typewriter-prompt',
-          isUser: false,
-          text: 'Frag mich etwas:',
-          examplePrompts: examplePrompts,
-          timestamp: new Date().toISOString()
-        },
-        {
-          id: 'landing-slides',
-          isUser: false,
-          text: 'Entdecke unsere Community-Features:',
-          slideData: createLandingSlideData(),
-          timestamp: new Date().toISOString()
-        }
-      ]);
-      console.log('[ChatLogic:Welcome] Initial welcome messages set for fullPage AI mode!');
-    } else if (hasSavedMessages || appLaunchedBeforeRef.current) {
-      welcomeMessageShownRef.current = true;
+    // Check if we already have messages or welcome has been shown
+    if (messages.length > 0 || welcomeMessageShownRef.current) {
+      console.log('[useChatLogic] Welcome messages already shown or messages exist');
+      return;
     }
-  }, [activeChatModeValue, messages.length, fullPage, examplePrompts]);
+
+    welcomeMessageShownRef.current = true;
+    
+    console.log('[useChatLogic] Setting initial welcome messages');
+    setMessages([
+      {
+        id: 'welcome',
+        isUser: false,
+        text: 'Willkommen bei THE TRIBE!',
+        html: getWelcomeMessage(),
+        timestamp: new Date().toISOString()
+      },
+      {
+        id: 'typewriter-prompt',
+        isUser: false,
+        text: 'Frag mich etwas:',
+        examplePrompts: examplePrompts,
+        timestamp: new Date().toISOString()
+      },
+      {
+        id: 'landing-slides',
+        isUser: false,
+        text: 'Entdecke unsere Community-Features:',
+        slideData: createLandingSlideData(),
+        timestamp: new Date().toISOString()
+      }
+    ]);
+  }, [activeChatModeValue, fullPage, messages.length, examplePrompts]);
 
   // Load initial state from localStorage
   useEffect(() => {
+    console.log('[useChatLogic] Loading initial state from localStorage');
+    
+    // Load saved messages
     const savedMessages = localStorage.getItem(CHAT_HISTORY_KEY);
     if (savedMessages) {
       try {
         const parsedMessages = JSON.parse(savedMessages);
         if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
+          console.log('[useChatLogic] Loaded', parsedMessages.length, 'saved messages');
           setMessages(parsedMessages);
           welcomeMessageShownRef.current = true;
         }
@@ -525,6 +527,7 @@ export const useChatLogic = (
       }
     }
     
+    // Load other saved data
     const savedQueries = localStorage.getItem(CHAT_QUERIES_KEY);
     if (savedQueries) {
       try {
@@ -553,6 +556,18 @@ export const useChatLogic = (
     fetchGlobalQueries();
     setIsInitialized(true);
   }, [fetchGlobalQueries]);
+
+  // Initialize welcome messages after everything is loaded - simplified trigger
+  useEffect(() => {
+    if (isInitialized && activeChatModeValue === 'ai' && fullPage) {
+      // Short delay to ensure component is fully mounted and visible
+      const timer = setTimeout(() => {
+        initializeWelcomeMessages();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isInitialized, activeChatModeValue, fullPage, initializeWelcomeMessages]);
 
   // Initialize welcome messages after initial state is loaded
   useEffect(() => {
@@ -590,7 +605,7 @@ export const useChatLogic = (
       const timer = setTimeout(() => {
         setIsVisible(true);
       }, 5000);
-
+      
       return () => clearTimeout(timer);
     }
   }, [fullPage]);
