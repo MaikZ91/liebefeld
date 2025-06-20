@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useEventContext } from '@/contexts/EventContext';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
@@ -34,7 +34,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
   const communityGroupId = createCitySpecificGroupId(activeCategory, selectedCity);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
-  // Use the chat logic hook to manage state and functions - no longer pass events
+  // Use the chat logic hook to manage state and functions
   const chatLogic = useChatLogic(fullPage, activeChatModeValue);
   
   // Use personalization hook
@@ -70,9 +70,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
     }
   };
 
-  if (!chatLogic.isVisible) return null;
-
-  // If we're in fullPage mode, render a different UI
+  // Always render the chat interface when in fullPage mode
   if (fullPage) {
     return (
       <FullPageChatBot
@@ -86,7 +84,7 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
     );
   }
 
-  // The floating chatbot has been removed.
+  // For non-fullPage mode, return null since floating chat is removed
   return null;
 };
 

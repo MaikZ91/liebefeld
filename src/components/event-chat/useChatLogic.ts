@@ -23,7 +23,8 @@ export const useChatLogic = (
   // Get events and selectedCity from EventContext instead of props
   const { events, selectedCity } = useEventContext();
   
-  const [isVisible, setIsVisible] = useState(false);
+  // Simplified initial state - always visible in fullPage mode
+  const [isVisible, setIsVisible] = useState(fullPage);
   const [isChatOpen, setIsChatOpen] = useState(fullPage);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -116,13 +117,6 @@ export const useChatLogic = (
   const handleNewEventNotification = useCallback((eventCount: number) => {
     console.log('Event notifications temporarily disabled');
   }, []);
-
-  // Setup event notifications (disabled for now)
-  // useEventNotifications({
-  //   onNewEvents: handleNewEventNotification,
-  //   isEnabled: false,
-  //   activeChatMode: activeChatModeValue
-  // });
 
   // Handle daily Perfect Day messages
   const handleDailyPerfectDayMessage = useCallback((message: ChatMessage) => {
@@ -534,21 +528,27 @@ export const useChatLogic = (
     }
   }, [isHeartActive]);
 
+  // Simplified visibility logic - immediately visible in fullPage mode
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (fullPage) {
       setIsVisible(true);
-    }, fullPage ? 0 : 5000);
+    } else {
+      const timer = setTimeout(() => {
+        setIsVisible(true);
+      }, 5000);
 
-    return () => clearTimeout(timer);
+      return () => clearTimeout(timer);
+    }
   }, [fullPage]);
 
+  // Improved welcome message initialization
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     appLaunchedBeforeRef.current = localStorage.getItem(APP_LAUNCHED_KEY) === 'true';
 
-    // Boot order: only AI mode, only if not already loaded from storage
-    if (!welcomeMessageShownRef.current && activeChatModeValue === 'ai') {
+    // Only initialize welcome messages in AI mode and if not already loaded
+    if (!welcomeMessageShownRef.current && activeChatModeValue === 'ai' && fullPage) {
       const hasMessages = messages.length > 0;
       const hasSavedMessages = localStorage.getItem(CHAT_HISTORY_KEY) !== null;
 
@@ -578,13 +578,12 @@ export const useChatLogic = (
             timestamp: new Date().toISOString()
           }
         ]);
-        console.log('[ChatLogic:Welcome] Initial welcome/typewriter/landing messages gesetzt!');
+        console.log('[ChatLogic:Welcome] Initial welcome messages set for fullPage AI mode!');
       } else if (hasSavedMessages || appLaunchedBeforeRef.current) {
         welcomeMessageShownRef.current = true;
-        // No-op: messages restored from storage or already flagged launched
       }
     }
-  }, [activeChatModeValue, messages.length]);
+  }, [activeChatModeValue, messages.length, fullPage]);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -676,7 +675,7 @@ export const useChatLogic = (
     setShowRecentQueries,
     messagesEndRef,
     inputRef,
-    examplePrompts, // <-- wichtig: für MessageList/Prompt-Komponenten immer vorhanden
+    examplePrompts,
     isHeartActive,
     handleToggleChat,
     handleSendMessage,
