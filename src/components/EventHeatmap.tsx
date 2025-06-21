@@ -17,8 +17,48 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
 
-// Separate component for map markers
-const MapMarkers = ({ events, eventCoordinates }) => {
+const EventHeatmap = () => {
+    const [selectedCategory, setSelectedCategory] = useState('all');
+    const [dateFilter, setDateFilter] = useState('');
+    const [eventCoordinates, setEventCoordinates] = useState({});
+    
+    const { events, isLoading } = useEvents();
+
+    console.log('EventHeatmap: component mounted, events:', events.length);
+
+    // Filter events for Bielefeld
+    const bielefeld_events = events.filter(
+        (event) => !event.city || event.city.toLowerCase() === 'bielefeld' || event.city.toLowerCase() === 'bi'
+    );
+
+    const categories = [
+        'all',
+        ...Array.from(new Set(bielefeld_events.map((e) => e.category))),
+    ];
+
+    const filteredEvents = bielefeld_events.filter((event) => {
+        const categoryMatch = selectedCategory === 'all' || event.category === selectedCategory;
+        const dateMatch = !dateFilter || event.date === dateFilter;
+        return categoryMatch && dateMatch;
+    });
+
+    // Geocoding function using OpenStreetMap Nominatim
+    const geocodeAddress = async (address) => {
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address + ', Bielefeld, Germany')}&format=json&limit=1`
+            );
+            const data = await response.json();
+            if (data && data.length > 0) {
+                return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+            }
+        } catch (error) {
+            console.error('Geocoding error:', error);
+        }
+        return null;
+    };
+
+    // Helper functions for markers
     const getMarkerColor = (event) => {
         const popularity = (event.likes || 0) + (event.rsvp_yes || 0);
         if (popularity >= 20) return '#ef4444';
@@ -71,73 +111,6 @@ const MapMarkers = ({ events, eventCoordinates }) => {
         </div>
       </div>
     `;
-    };
-
-    return (
-        <>
-            {events.map((event, index) => {
-                const coordinates = eventCoordinates[event.id];
-                
-                if (!coordinates) {
-                    return null;
-                }
-
-                const color = getMarkerColor(event);
-                const popularity = (event.likes || 0) + (event.rsvp_yes || 0);
-                const size = Math.max(15, Math.min(40, 15 + popularity * 2));
-                const customIcon = createCustomMarkerIcon(color, size);
-
-                return (
-                    <Marker key={event.id || index} position={coordinates} icon={customIcon}>
-                        <Popup className="custom-popup">
-                            <div dangerouslySetInnerHTML={{ __html: createPopupContent(event) }} />
-                        </Popup>
-                    </Marker>
-                );
-            })}
-        </>
-    );
-};
-
-const EventHeatmap = () => {
-    const [selectedCategory, setSelectedCategory] = useState('all');
-    const [dateFilter, setDateFilter] = useState('');
-    const [eventCoordinates, setEventCoordinates] = useState({});
-    
-    const { events, isLoading } = useEvents();
-
-    console.log('EventHeatmap: component mounted, events:', events.length);
-
-    // Filter events for Bielefeld
-    const bielefeld_events = events.filter(
-        (event) => !event.city || event.city.toLowerCase() === 'bielefeld' || event.city.toLowerCase() === 'bi'
-    );
-
-    const categories = [
-        'all',
-        ...Array.from(new Set(bielefeld_events.map((e) => e.category))),
-    ];
-
-    const filteredEvents = bielefeld_events.filter((event) => {
-        const categoryMatch = selectedCategory === 'all' || event.category === selectedCategory;
-        const dateMatch = !dateFilter || event.date === dateFilter;
-        return categoryMatch && dateMatch;
-    });
-
-    // Geocoding function using OpenStreetMap Nominatim
-    const geocodeAddress = async (address) => {
-        try {
-            const response = await fetch(
-                `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address + ', Bielefeld, Germany')}&format=json&limit=1`
-            );
-            const data = await response.json();
-            if (data && data.length > 0) {
-                return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-            }
-        } catch (error) {
-            console.error('Geocoding error:', error);
-        }
-        return null;
     };
 
     // Geocode all events when component mounts or events change
@@ -247,7 +220,26 @@ const EventHeatmap = () => {
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                <MapMarkers events={filteredEvents} eventCoordinates={eventCoordinates} />
+                {filteredEvents.map((event, index) => {
+                    const coordinates = eventCoordinates[event.id];
+                    
+                    if (!coordinates) {
+                        return null;
+                    }
+
+                    const color = getMarkerColor(event);
+                    const popularity = (event.likes || 0) + (event.rsvp_yes || 0);
+                    const size = Math.max(15, Math.min(40, 15 + popularity * 2));
+                    const customIcon = createCustomMarkerIcon(color, size);
+
+                    return (
+                        <Marker key={event.id || index} position={coordinates} icon={customIcon}>
+                            <Popup className="custom-popup">
+                                <div dangerouslySetInnerHTML={{ __html: createPopupContent(event) }} />
+                            </Popup>
+                        </Marker>
+                    );
+                })}
             </MapContainer>
         </div>
     );
