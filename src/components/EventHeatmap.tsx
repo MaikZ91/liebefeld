@@ -24,12 +24,12 @@ const EventHeatmap = () => {
     
     const { events, isLoading } = useEvents();
 
-    console.log('EventHeatmap: component mounted, events:', events.length);
+    console.log('EventHeatmap: component mounted, events:', events?.length || 0);
 
     // Filter events for Bielefeld
-    const bielefeld_events = events.filter(
+    const bielefeld_events = events?.filter(
         (event) => !event.city || event.city.toLowerCase() === 'bielefeld' || event.city.toLowerCase() === 'bi'
-    );
+    ) || [];
 
     const categories = [
         'all',
@@ -150,7 +150,7 @@ const EventHeatmap = () => {
 
     return (
         <div className="relative w-full h-screen bg-black">
-            <div className="absolute top-4 left-4 z-10 space-y-2">
+            <div className="absolute top-4 left-4 z-[1000] space-y-2">
                 <Card className="p-4 bg-black/90 backdrop-blur border-gray-700">
                     <h3 className="text-white font-bold mb-3 flex items-center gap-2">
                         <Filter className="w-4 h-4" />
@@ -214,13 +214,14 @@ const EventHeatmap = () => {
                 center={[52.0302, 8.5311]}
                 zoom={12}
                 scrollWheelZoom={true}
-                className="w-full h-full z-0"
+                className="w-full h-full"
+                style={{ zIndex: 0 }}
             >
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                {filteredEvents.map((event, index) => {
+                {filteredEvents.map((event) => {
                     const coordinates = eventCoordinates[event.id];
                     
                     if (!coordinates) {
@@ -233,7 +234,7 @@ const EventHeatmap = () => {
                     const customIcon = createCustomMarkerIcon(color, size);
 
                     return (
-                        <Marker key={event.id || index} position={coordinates} icon={customIcon}>
+                        <Marker key={event.id} position={coordinates} icon={customIcon}>
                             <Popup className="custom-popup">
                                 <div dangerouslySetInnerHTML={{ __html: createPopupContent(event) }} />
                             </Popup>
