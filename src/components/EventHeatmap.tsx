@@ -1,39 +1,45 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Filter, X } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 
-// Fix for default Leaflet marker icons
+// Fix Leaflet default icons
+delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
+
+interface EventCoordinates {
+  [eventId: string]: [number, number];
+}
 
 const EventHeatmap: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [dateFilter, setDateFilter] = useState('');
-  const [eventCoordinates, setEventCoordinates] = useState<Record<string, [number, number]>>({});
+  const [eventCoordinates, setEventCoordinates] = useState<EventCoordinates>({});
   
   const { events, isLoading } = useEvents();
 
   // Filter events for Bielefeld
-  const bielefeldEvents = React.useMemo(() => {
+  const bielefeldEvents = useMemo(() => {
     if (!events) return [];
     return events.filter(
-      (event) => !event.city || event.city.toLowerCase() === 'bielefeld' || event.city.toLowerCase() === 'bi'
+      (event) => !event.city || 
+        event.city.toLowerCase() === 'bielefeld' || 
+        event.city.toLowerCase() === 'bi'
     );
   }, [events]);
 
   // Get unique categories
-  const categories = React.useMemo(() => {
+  const categories = useMemo(() => {
     return [
       'all',
       ...Array.from(new Set(bielefeldEvents.map((e) => e.category))),
@@ -41,7 +47,7 @@ const EventHeatmap: React.FC = () => {
   }, [bielefeldEvents]);
 
   // Filter events based on category and date
-  const filteredEvents = React.useMemo(() => {
+  const filteredEvents = useMemo(() => {
     return bielefeldEvents.filter((event) => {
       const categoryMatch = selectedCategory === 'all' || event.category === selectedCategory;
       const dateMatch = !dateFilter || event.date === dateFilter;
@@ -49,7 +55,7 @@ const EventHeatmap: React.FC = () => {
     });
   }, [bielefeldEvents, selectedCategory, dateFilter]);
 
-  // Geocoding function using OpenStreetMap Nominatim
+  // Geocoding function
   const geocodeAddress = async (address: string): Promise<[number, number] | null> => {
     try {
       const response = await fetch(
@@ -65,67 +71,42 @@ const EventHeatmap: React.FC = () => {
     return null;
   };
 
-  // Get marker color based on popularity
-  const getMarkerColor = (event: any) => {
+  // Create custom marker icon based on popularity
+  const createCustomIcon = (event: any) => {
     const popularity = (event.likes || 0) + (event.rsvp_yes || 0);
-    if (popularity >= 20) return '#ef4444';
-    if (popularity >= 10) return '#f97316';
-    if (popularity >= 5) return '#eab308';
-    return '#22c55e';
-  };
+    let color = '#22c55e';
+    let size = 20;
 
-  // Create custom marker icon
-  const createCustomMarkerIcon = (color: string, size: number) => {
+    if (popularity >= 20) {
+      color = '#ef4444';
+      size = 30;
+    } else if (popularity >= 10) {
+      color = '#f97316';
+      size = 26;
+    } else if (popularity >= 5) {
+      color = '#eab308';
+      size = 23;
+    }
+
     return L.divIcon({
-      className: 'custom-leaflet-marker',
-      html: `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.3);"></div>`,
+      className: 'custom-marker',
+      html: `<div style="
+        background-color: ${color};
+        width: ${size}px;
+        height: ${size}px;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      "></div>`,
       iconSize: [size, size],
       iconAnchor: [size / 2, size / 2],
-      popupAnchor: [0, -size / 2],
     });
-  };
-
-  // Create popup content
-  const createPopupContent = (event: any) => {
-    const participants = event.rsvp_yes || 0;
-    const likes = event.likes || 0;
-    return `
-      <div class="p-4 bg-black text-white rounded-lg min-w-[300px]">
-        <h3 class="font-bold text-lg mb-2 text-red-500">${event.title}</h3>
-        <div class="space-y-2 text-sm">
-          <div class="flex items-center gap-2">
-            <span class="w-4 h-4">📅</span>
-            <span>${new Date(event.date).toLocaleDateString('de-DE')}</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="w-4 h-4">🕐</span>
-            <span>${event.time}</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="w-4 h-4">📍</span>
-            <span>${event.location}</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="w-4 h-4">👥</span>
-            <span>${participants} Teilnehmer</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="w-4 h-4">❤️</span>
-            <span>${likes} Likes</span>
-          </div>
-          <div class="mt-3">
-            <span class="px-2 py-1 bg-red-500 text-white text-xs rounded-full">${event.category}</span>
-          </div>
-          ${event.description ? `<p class="mt-2 text-gray-300 text-xs">${event.description.substring(0, 100)}...</p>` : ''}
-        </div>
-      </div>
-    `;
   };
 
   // Geocode events when they change
   useEffect(() => {
     const geocodeEvents = async () => {
-      const newCoordinates: Record<string, [number, number]> = {};
+      const newCoordinates: EventCoordinates = {};
       
       for (const event of bielefeldEvents) {
         if (event.location && !eventCoordinates[event.id]) {
@@ -144,7 +125,7 @@ const EventHeatmap: React.FC = () => {
     if (bielefeldEvents.length > 0) {
       geocodeEvents();
     }
-  }, [bielefeldEvents]);
+  }, [bielefeldEvents, eventCoordinates]);
 
   if (isLoading) {
     return (
@@ -204,24 +185,28 @@ const EventHeatmap: React.FC = () => {
         {/* Legend */}
         <Card className="p-4 bg-black/90 backdrop-blur border-gray-700 text-white text-sm">
           <h4 className="font-bold mb-2">Legende:</h4>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded-full bg-[#ef4444]"></span> Sehr beliebt (20+ Teilnehmer/Likes)
+              <span className="w-6 h-6 rounded-full bg-[#ef4444] border-2 border-white"></span>
+              <span>Sehr beliebt (20+)</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded-full bg-[#f97316]"></span> Beliebt (10-19 Teilnehmer/Likes)
+              <span className="w-5 h-5 rounded-full bg-[#f97316] border-2 border-white"></span>
+              <span>Beliebt (10-19)</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded-full bg-[#eab308]"></span> Moderat (5-9 Teilnehmer/Likes)
+              <span className="w-4 h-4 rounded-full bg-[#eab308] border-2 border-white"></span>
+              <span>Moderat (5-9)</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded-full bg-[#22c55e]"></span> Neu/Gering (0-4 Teilnehmer/Likes)
+              <span className="w-4 h-4 rounded-full bg-[#22c55e] border-2 border-white"></span>
+              <span>Neu/Gering (0-4)</span>
             </div>
           </div>
         </Card>
       </div>
 
-      {/* Map */}
+      {/* Map Container */}
       <MapContainer
         center={[52.0302, 8.5311]}
         zoom={12}
@@ -233,26 +218,61 @@ const EventHeatmap: React.FC = () => {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {filteredEvents.map((event) => {
-          const coordinates = eventCoordinates[event.id];
-          
-          if (!coordinates) {
-            return null;
-          }
+        {filteredEvents
+          .filter(event => eventCoordinates[event.id])
+          .map((event) => {
+            const coordinates = eventCoordinates[event.id];
+            const customIcon = createCustomIcon(event);
+            const participants = event.rsvp_yes || 0;
+            const likes = event.likes || 0;
 
-          const color = getMarkerColor(event);
-          const popularity = (event.likes || 0) + (event.rsvp_yes || 0);
-          const size = Math.max(15, Math.min(40, 15 + popularity * 2));
-          const customIcon = createCustomMarkerIcon(color, size);
-
-          return (
-            <Marker key={event.id} position={coordinates} icon={customIcon}>
-              <Popup className="custom-popup">
-                <div dangerouslySetInnerHTML={{ __html: createPopupContent(event) }} />
-              </Popup>
-            </Marker>
-          );
-        })}
+            return (
+              <Marker 
+                key={event.id} 
+                position={coordinates} 
+                icon={customIcon}
+              >
+                <Popup>
+                  <div className="p-3 min-w-[250px]">
+                    <h3 className="font-bold text-lg mb-2 text-red-600">{event.title}</h3>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span>📅</span>
+                        <span>{new Date(event.date).toLocaleDateString('de-DE')}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span>🕐</span>
+                        <span>{event.time}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span>📍</span>
+                        <span>{event.location}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span>👥</span>
+                        <span>{participants} Teilnehmer</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span>❤️</span>
+                        <span>{likes} Likes</span>
+                      </div>
+                      <div className="mt-2">
+                        <span className="px-2 py-1 bg-red-500 text-white text-xs rounded-full">
+                          {event.category}
+                        </span>
+                      </div>
+                      {event.description && (
+                        <p className="mt-2 text-gray-600 text-xs">
+                          {event.description.substring(0, 100)}...
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })
+        }
       </MapContainer>
     </div>
   );
