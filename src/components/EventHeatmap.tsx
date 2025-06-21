@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -7,28 +7,26 @@ import L from 'leaflet';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Users, MapPin, Filter, X } from 'lucide-react';
+import { Filter, X } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 
-// Workaround für Standard-Leaflet-Marker-Symbole
+// Fix for default Leaflet marker icons
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
 
-// Create a separate component for the map markers to avoid context issues
+// Separate component for map markers
 const MapMarkers = ({ events, eventCoordinates }) => {
-    // Get marker color based on event popularity
     const getMarkerColor = (event) => {
         const popularity = (event.likes || 0) + (event.rsvp_yes || 0);
-        if (popularity >= 20) return '#ef4444'; // red - very popular
-        if (popularity >= 10) return '#f97316'; // orange - popular
-        if (popularity >= 5) return '#eab308'; // yellow - moderate
-        return '#22c55e'; // green - new/low popularity
+        if (popularity >= 20) return '#ef4444';
+        if (popularity >= 10) return '#f97316';
+        if (popularity >= 5) return '#eab308';
+        return '#22c55e';
     };
 
-    // Erstellen eines benutzerdefinierten Leaflet DivIcons
     const createCustomMarkerIcon = (color, size) => {
         return L.divIcon({
             className: 'custom-leaflet-marker',
@@ -39,7 +37,6 @@ const MapMarkers = ({ events, eventCoordinates }) => {
         });
     };
 
-    // Create popup content
     const createPopupContent = (event) => {
         const participants = event.rsvp_yes || 0;
         const likes = event.likes || 0;
@@ -103,12 +100,10 @@ const MapMarkers = ({ events, eventCoordinates }) => {
 };
 
 const EventHeatmap = () => {
-    const markers = useRef([]);
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [dateFilter, setDateFilter] = useState('');
     const [eventCoordinates, setEventCoordinates] = useState({});
     
-    // Use the useEvents hook to get events data
     const { events, isLoading } = useEvents();
 
     console.log('EventHeatmap: component mounted, events:', events.length);
@@ -129,7 +124,7 @@ const EventHeatmap = () => {
         return categoryMatch && dateMatch;
     });
 
-    // Geocoding-Funktion für Adressen mit OpenStreetMap Nominatim
+    // Geocoding function using OpenStreetMap Nominatim
     const geocodeAddress = async (address) => {
         try {
             const response = await fetch(
@@ -169,7 +164,6 @@ const EventHeatmap = () => {
         }
     }, [bielefeld_events.length]);
 
-    // Show loading state while events are being fetched
     if (isLoading) {
         return (
             <div className="flex items-center justify-center h-screen bg-black text-white">
