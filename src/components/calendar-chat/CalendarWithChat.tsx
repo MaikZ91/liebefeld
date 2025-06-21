@@ -2,9 +2,7 @@
 import React from 'react';
 import EventChatBot from '@/components/EventChatBot';
 
-// Re-export the main component with explicit fullPage prop
-const CalendarWithChat: React.FC = () => {
+// Re-export the main component
+export default function CalendarWithChat() {
   return <EventChatBot fullPage={true} />;
-};
-
-export default CalendarWithChat;
+}

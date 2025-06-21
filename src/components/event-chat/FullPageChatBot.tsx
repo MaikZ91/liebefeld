@@ -1,3 +1,4 @@
+
 // src/components/event-chat/FullPageChatBot.tsx
 import React, { useEffect } from 'react';
 import MessageList from './MessageList';
@@ -14,6 +15,12 @@ import MessageReactions from '@/components/chat/MessageReactions';
 import { chatService } from '@/services/chatService';
 import { useEventContext, cities } from '@/contexts/EventContext';
 import { createGroupDisplayName } from '@/utils/groupIdUtils';
+
+/**
+ * Hinweis: Für die unsichtbaren Scrollleisten wird das Tailwind-Plugin
+ * `tailwind-scrollbar-hide` (oder gleichwertig) erwartet. 
+ * Damit genügt die Utility-Klasse `scrollbar-none`.
+ */
 
 interface FullPageChatBotProps {
   chatLogic: any;
@@ -56,7 +63,9 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   const { selectedCity } = useEventContext();
 
-  // Community chat hooks
+  /* ------------------------------------------------------------------ */
+  /* community chat hooks                                               */
+  /* ------------------------------------------------------------------ */
   const username =
     typeof window !== 'undefined'
       ? localStorage.getItem(USERNAME_KEY) || 'Anonymous'
@@ -83,6 +92,9 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   const queriesToRender = globalQueries.length > 0 ? globalQueries : [];
 
+  /* ------------------------------------------------------------------ */
+  /* helpers                                                            */
+  /* ------------------------------------------------------------------ */
   const formatTime = (isoDateString: string) => {
     const date = new Date(isoDateString);
     const now = new Date();
@@ -94,10 +106,12 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     return `vor ${Math.floor(diff / 1440)}d`;
   };
 
+  // Get city-specific display name for community chat using the utility function
   const getCommunityDisplayName = (category: string, cityAbbr: string): string => {
     return createGroupDisplayName(category, cityAbbr, cities);
   };
 
+  // Handle reaction toggle
   const handleReaction = async (messageId: string, emoji: string) => {
     try {
       await chatService.toggleReaction(messageId, emoji, username);
@@ -126,7 +140,9 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const currentInputValue = activeChatModeValue === 'ai' ? input : communityInput;
   const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending;
 
-  // Auto-scroll effects
+  /* ------------------------------------------------------------------ */
+  /* Auto-jump to bottom                                                */
+  /* ------------------------------------------------------------------ */
   useEffect(() => {
     if (activeChatModeValue === 'ai' && messagesEndRef?.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
@@ -139,16 +155,13 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   }, [communityMessages, communitySending, activeChatModeValue, chatBottomRef]);
 
-  console.log('[FullPageChatBot] Rendering with activeChatModeValue:', activeChatModeValue);
-  console.log('[FullPageChatBot] AI messages count:', aiMessages.length);
-
-  // Ensure the component is always visible and properly positioned
+  /* ------------------------------------------------------------------ */
+  /* render                                                             */
+  /* ------------------------------------------------------------------ */
   return (
-    <div className="flex flex-col h-screen min-h-0 w-full bg-black relative" style={{ zIndex: 1 }}>
-      {console.log('[FullPageChatBot] Main container rendering')}
-      
-      {/* Header with proper z-index */}
-      <div className="border-b border-red-500/20 sticky top-0 bg-black px-[13px] py-2" style={{ zIndex: 10 }}> 
+    <div className="flex flex-col h-screen min-h-0">
+      {/* Sticky Header */}
+      <div className="border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-2"> 
         {activeChatModeValue === 'ai' && (
           <RecentQueries
             showRecentQueries={showRecentQueries}
@@ -177,13 +190,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
         />
       </div>
 
-      {/* Main content area with proper positioning and always visible */}
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none bg-black relative" style={{ zIndex: 5 }}>
-        {console.log('[FullPageChatBot] Content area rendering, mode:', activeChatModeValue)}
-        
+      {/* Main scroll container */}
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
         {activeChatModeValue === 'ai' ? (
-          <div className="pt-8 px-3 min-h-full"> 
-            {console.log('[FullPageChatBot] AI mode rendering with messages:', aiMessages.length)}
+          <div className="pt-32 px-3"> 
             <MessageList
               messages={aiMessages}
               isTyping={aiTyping}
@@ -195,9 +205,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
             <div ref={messagesEndRef} />
           </div>
         ) : (
-          <div className="h-full min-h-0 flex flex-col bg-black">
-            {console.log('[FullPageChatBot] Community mode rendering')}
-            
+          <div className="h-full min-h-0 flex flex-col">
             {communityError && (
               <div className="text-center text-red-500 text-lg font-semibold py-4">
                 Error: {communityError}

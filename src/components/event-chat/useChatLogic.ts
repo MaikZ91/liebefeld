@@ -23,9 +23,8 @@ export const useChatLogic = (
   // Get events and selectedCity from EventContext instead of props
   const { events, selectedCity } = useEventContext();
   
-  // Always visible and chat always open in fullPage mode
-  const [isVisible, setIsVisible] = useState(true);
-  const [isChatOpen, setIsChatOpen] = useState(true); // Always open for fullPage
+  const [isVisible, setIsVisible] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(fullPage);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -34,14 +33,13 @@ export const useChatLogic = (
   const [showRecentQueries, setShowRecentQueries] = useState(false);
   const [isHeartActive, setIsHeartActive] = useState(false);
   const [hasUserSentFirstMessage, setHasUserSentFirstMessage] = useState(false); 
-  const [isInitialized, setIsInitialized] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const welcomeMessageShownRef = useRef(false);
   const appLaunchedBeforeRef = useRef(false); 
 
-  // Extended example prompts list
+  // Promptvorschlag-Liste für den Schreibmaschinen-Effekt (erweitert)
   const examplePrompts = [
     "Welche Events gibt es heute?",
     "Was geht am Wochenende in Liebefeld?",
@@ -99,6 +97,7 @@ export const useChatLogic = (
   const filterEventsByCity = useCallback((eventsToFilter: Event[]) => {
     if (!selectedCity) return eventsToFilter;
     
+    // Special handling for Bielefeld - include events without city specified
     if (selectedCity.toLowerCase() === 'bi' || selectedCity.toLowerCase() === 'bielefeld') {
       return eventsToFilter.filter(event => 
         !event.city || 
@@ -107,19 +106,30 @@ export const useChatLogic = (
       );
     }
     
+    // For other cities, filter by exact match
     return eventsToFilter.filter(event => 
       event.city && event.city.toLowerCase() === selectedCity.toLowerCase()
     );
   }, [selectedCity]);
 
+  // Handle new event notifications - removed for now since newEventIds was removed
   const handleNewEventNotification = useCallback((eventCount: number) => {
     console.log('Event notifications temporarily disabled');
   }, []);
 
+  // Setup event notifications (disabled for now)
+  // useEventNotifications({
+  //   onNewEvents: handleNewEventNotification,
+  //   isEnabled: false,
+  //   activeChatMode: activeChatModeValue
+  // });
+
+  // Handle daily Perfect Day messages
   const handleDailyPerfectDayMessage = useCallback((message: ChatMessage) => {
     setMessages(prev => [...prev, message]);
   }, []);
 
+  // Setup daily Perfect Day messages
   useDailyPerfectDay({
     onDailyMessage: handleDailyPerfectDayMessage,
     activeChatMode: activeChatModeValue
@@ -162,9 +172,6 @@ export const useChatLogic = (
   };
 
   const handleToggleChat = useCallback(() => {
-    // In fullPage mode, chat is always open
-    if (fullPage) return;
-    
     setIsChatOpen(prev => !prev);
     if (!isChatOpen) {
       setTimeout(() => {
@@ -173,7 +180,7 @@ export const useChatLogic = (
         }
       }, 300);
     }
-  }, [isChatOpen, fullPage]);
+  }, [isChatOpen]);
 
   // Funktion zum Abrufen globaler Abfragen von Supabase
   const fetchGlobalQueries = useCallback(async () => {
@@ -465,60 +472,12 @@ export const useChatLogic = (
     };
   }, []);
 
-  // Simplified welcome message initialization - always show for AI mode in fullPage
-  const initializeWelcomeMessages = useCallback(() => {
-    console.log('[useChatLogic] Initializing welcome messages for AI mode in fullPage');
-    
-    if (activeChatModeValue !== 'ai' || !fullPage) {
-      console.log('[useChatLogic] Skipping welcome messages - not AI mode or not fullPage');
-      return;
-    }
-
-    // Check if we already have messages or welcome has been shown
-    if (messages.length > 0 || welcomeMessageShownRef.current) {
-      console.log('[useChatLogic] Welcome messages already shown or messages exist');
-      return;
-    }
-
-    welcomeMessageShownRef.current = true;
-    
-    console.log('[useChatLogic] Setting initial welcome messages');
-    setMessages([
-      {
-        id: 'welcome',
-        isUser: false,
-        text: 'Willkommen bei THE TRIBE!',
-        html: getWelcomeMessage(),
-        timestamp: new Date().toISOString()
-      },
-      {
-        id: 'typewriter-prompt',
-        isUser: false,
-        text: 'Frag mich etwas:',
-        examplePrompts: examplePrompts,
-        timestamp: new Date().toISOString()
-      },
-      {
-        id: 'landing-slides',
-        isUser: false,
-        text: 'Entdecke unsere Community-Features:',
-        slideData: createLandingSlideData(),
-        timestamp: new Date().toISOString()
-      }
-    ]);
-  }, [activeChatModeValue, fullPage, messages.length, examplePrompts]);
-
-  // Load initial state from localStorage
   useEffect(() => {
-    console.log('[useChatLogic] Loading initial state from localStorage');
-    
-    // Load saved messages
     const savedMessages = localStorage.getItem(CHAT_HISTORY_KEY);
     if (savedMessages) {
       try {
         const parsedMessages = JSON.parse(savedMessages);
         if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
-          console.log('[useChatLogic] Loaded', parsedMessages.length, 'saved messages');
           setMessages(parsedMessages);
           welcomeMessageShownRef.current = true;
         }
@@ -527,7 +486,6 @@ export const useChatLogic = (
       }
     }
     
-    // Load other saved data
     const savedQueries = localStorage.getItem(CHAT_QUERIES_KEY);
     if (savedQueries) {
       try {
@@ -550,31 +508,10 @@ export const useChatLogic = (
 
     if (typeof window !== 'undefined') {
       setHasUserSentFirstMessage(localStorage.getItem(USER_SENT_FIRST_MESSAGE_KEY) === 'true');
-      appLaunchedBeforeRef.current = localStorage.getItem(APP_LAUNCHED_KEY) === 'true';
     }
     
     fetchGlobalQueries();
-    setIsInitialized(true);
   }, [fetchGlobalQueries]);
-
-  // Initialize welcome messages after everything is loaded - simplified trigger
-  useEffect(() => {
-    if (isInitialized && activeChatModeValue === 'ai' && fullPage) {
-      // Short delay to ensure component is fully mounted and visible
-      const timer = setTimeout(() => {
-        initializeWelcomeMessages();
-      }, 100);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isInitialized, activeChatModeValue, fullPage, initializeWelcomeMessages]);
-
-  // Initialize welcome messages after initial state is loaded
-  useEffect(() => {
-    if (isInitialized) {
-      initializeWelcomeMessages();
-    }
-  }, [isInitialized, initializeWelcomeMessages]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -597,18 +534,57 @@ export const useChatLogic = (
     }
   }, [isHeartActive]);
 
-  // Simplified visibility logic - immediately visible in fullPage mode
   useEffect(() => {
-    if (fullPage) {
+    const timer = setTimeout(() => {
       setIsVisible(true);
-    } else {
-      const timer = setTimeout(() => {
-        setIsVisible(true);
-      }, 5000);
-      
-      return () => clearTimeout(timer);
-    }
+    }, fullPage ? 0 : 5000);
+
+    return () => clearTimeout(timer);
   }, [fullPage]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    appLaunchedBeforeRef.current = localStorage.getItem(APP_LAUNCHED_KEY) === 'true';
+
+    // Boot order: only AI mode, only if not already loaded from storage
+    if (!welcomeMessageShownRef.current && activeChatModeValue === 'ai') {
+      const hasMessages = messages.length > 0;
+      const hasSavedMessages = localStorage.getItem(CHAT_HISTORY_KEY) !== null;
+
+      if (!hasMessages && !hasSavedMessages && !appLaunchedBeforeRef.current) {
+        welcomeMessageShownRef.current = true;
+        localStorage.setItem(APP_LAUNCHED_KEY, 'true');
+        setMessages([
+          {
+            id: 'welcome',
+            isUser: false,
+            text: 'Willkommen bei THE TRIBE!',
+            html: getWelcomeMessage(),
+            timestamp: new Date().toISOString()
+          },
+          {
+            id: 'typewriter-prompt',
+            isUser: false,
+            text: 'Frag mich etwas:',
+            examplePrompts: examplePrompts,
+            timestamp: new Date().toISOString()
+          },
+          {
+            id: 'landing-slides',
+            isUser: false,
+            text: 'Entdecke unsere Community-Features:',
+            slideData: createLandingSlideData(),
+            timestamp: new Date().toISOString()
+          }
+        ]);
+        console.log('[ChatLogic:Welcome] Initial welcome/typewriter/landing messages gesetzt!');
+      } else if (hasSavedMessages || appLaunchedBeforeRef.current) {
+        welcomeMessageShownRef.current = true;
+        // No-op: messages restored from storage or already flagged launched
+      }
+    }
+  }, [activeChatModeValue, messages.length]);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -700,7 +676,7 @@ export const useChatLogic = (
     setShowRecentQueries,
     messagesEndRef,
     inputRef,
-    examplePrompts,
+    examplePrompts, // <-- wichtig: für MessageList/Prompt-Komponenten immer vorhanden
     isHeartActive,
     handleToggleChat,
     handleSendMessage,
