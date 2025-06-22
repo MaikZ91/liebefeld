@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,11 +14,10 @@ import CSAEPolicies from "./pages/CSAEPolicies";
 import Chat from "./pages/Chat";
 import { EventProvider } from "./contexts/EventContext";
 import { initializeSupabase } from "./utils/initSupabase";
-import Heatmap from '@/pages/Heatmap';
 
 const queryClient = new QueryClient();
 
-function App() {
+const App = () => {
   // Initialize Supabase when the app loads
   useEffect(() => {
     initializeSupabase()
@@ -44,8 +44,7 @@ function App() {
               <Route path="/chat" element={<Chat />} />
               <Route path="/impressum" element={<Impressum />} />
               <Route path="/privacy" element={<Privacy />} />
-              <Route path="/policies" element={<CSAEPolicies />} />
-              <Route path="/heatmap" element={<Heatmap />} />
+              <Route path="/csae-policies" element={<CSAEPolicies />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
@@ -54,6 +53,6 @@ function App() {
       </TooltipProvider>
     </QueryClientProvider>
   );
-}
+};
 
 export default App;

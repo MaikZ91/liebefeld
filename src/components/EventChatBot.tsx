@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useEventContext } from '@/contexts/EventContext';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
@@ -11,28 +11,22 @@ import { usePersonalization } from './event-chat/usePersonalization';
 import { EventChatBotProps } from './event-chat/types';
 import { createCitySpecificGroupId } from '@/utils/groupIdUtils';
 
-interface ExtendedEventChatBotProps extends EventChatBotProps {
-  onChatLogicReady?: (chatLogic: any) => void;
-  activeCategory?: string;
-  onCategoryChange?: (category: string) => void;
-}
-
-const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({ 
+const EventChatBot: React.FC<EventChatBotProps> = ({ 
   fullPage = false, 
   onAddEvent, 
   onToggleCommunity,
   activeChatMode,
-  setActiveChatMode,
-  onChatLogicReady,
-  activeCategory = 'Ausgehen',
-  onCategoryChange
+  setActiveChatMode
 }) => {
   // Use the prop value if provided, otherwise use internal state
   const [internalActiveChatMode, setInternalActiveChatMode] = useState<'ai' | 'community'>('ai');
   const activeChatModeValue = activeChatMode !== undefined ? activeChatMode : internalActiveChatMode;
   const setActiveChatModeValue = setActiveChatMode || setInternalActiveChatMode;
   
-  const { selectedCity } = useEventContext();
+  // Add category state management - changed default to 'Ausgehen'
+  const [activeCategory, setActiveCategory] = useState<string>('Ausgehen');
+  
+  const { events, selectedCity } = useEventContext();
   const { toast } = useToast();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   
@@ -40,29 +34,14 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   const communityGroupId = createCitySpecificGroupId(activeCategory, selectedCity);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
-  // Use the chat logic hook to manage state and functions - no longer pass events
-  const chatLogic = useChatLogic(fullPage, activeChatModeValue);
+  // Use the chat logic hook to manage state and functions
+  const chatLogic = useChatLogic(events, fullPage, activeChatModeValue);
   
   // Use personalization hook
   const { sendPersonalizedQuery } = usePersonalization(
     chatLogic.handleSendMessage, 
     { userProfile, currentUser, userService }
   );
-
-  // Enhanced chatLogic with additional properties for header integration
-  const enhancedChatLogic = {
-    ...chatLogic,
-    onAddEvent,
-    activeCategory,
-    onCategoryChange
-  };
-
-  // Expose chatLogic to parent component
-  useEffect(() => {
-    if (onChatLogicReady && enhancedChatLogic) {
-      onChatLogicReady(enhancedChatLogic);
-    }
-  }, [onChatLogicReady, enhancedChatLogic]);
 
   const handleToggleChatMode = () => {
     const newMode = activeChatModeValue === 'ai' ? 'community' : 'ai';
@@ -72,6 +51,11 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
     if (activeChatModeValue === 'ai' && onToggleCommunity) {
       onToggleCommunity();
     }
+  };
+
+  // Handle category change
+  const handleCategoryChange = (category: string) => {
+    setActiveCategory(category);
   };
 
   // Handle profile update
@@ -92,12 +76,12 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   if (fullPage) {
     return (
       <FullPageChatBot
-        chatLogic={enhancedChatLogic}
+        chatLogic={chatLogic}
         activeChatModeValue={activeChatModeValue}
         communityGroupId={communityGroupId}
         onAddEvent={onAddEvent}
         activeCategory={activeCategory}
-        onCategoryChange={onCategoryChange}
+        onCategoryChange={handleCategoryChange}
       />
     );
   }

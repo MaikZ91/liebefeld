@@ -1,5 +1,8 @@
+
+// src/components/event-chat/FullPageChatBot.tsx
 import React, { useEffect } from 'react';
 import MessageList from './MessageList';
+import ChatInput from './ChatInput';
 import RecentQueries from './RecentQueries';
 import { useChatMessages } from '@/hooks/chat/useChatMessages';
 import { useMessageSending } from '@/hooks/chat/useMessageSending';
@@ -12,6 +15,12 @@ import MessageReactions from '@/components/chat/MessageReactions';
 import { chatService } from '@/services/chatService';
 import { useEventContext, cities } from '@/contexts/EventContext';
 import { createGroupDisplayName } from '@/utils/groupIdUtils';
+
+/**
+ * Hinweis: Für die unsichtbaren Scrollleisten wird das Tailwind-Plugin
+ * `tailwind-scrollbar-hide` (oder gleichwertig) erwartet. 
+ * Damit genügt die Utility-Klasse `scrollbar-none`.
+ */
 
 interface FullPageChatBotProps {
   chatLogic: any;
@@ -68,7 +77,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     error: communityError,
     typingUsers,
     chatBottomRef,
-    chatContainerRef, // Ensure this is correctly referenced
+    chatContainerRef,
     addOptimisticMessage
   } = useChatMessages(communityGroupId, username);
 
@@ -111,6 +120,26 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   };
 
+  const handleUnifiedSendMessage = async () => {
+    activeChatModeValue === 'ai' ? await aiSendMessage() : await communitySendMessage();
+  };
+
+  const handleUnifiedInputChange = (value: string) => {
+    activeChatModeValue === 'ai' ? setInput(value) : setCommunityInput(value);
+  };
+
+  const handleUnifiedKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (activeChatModeValue === 'ai') {
+      handleKeyPress(e);
+    } else if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      communitySendMessage();
+    }
+  };
+
+  const currentInputValue = activeChatModeValue === 'ai' ? input : communityInput;
+  const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending;
+
   /* ------------------------------------------------------------------ */
   /* Auto-jump to bottom                                                */
   /* ------------------------------------------------------------------ */
@@ -121,33 +150,50 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   }, [aiMessages, aiTyping, activeChatModeValue, messagesEndRef]);
 
   useEffect(() => {
-    // We explicitly use chatContainerRef for community chat scrolling
-    if (activeChatModeValue === 'community' && chatContainerRef?.current) {
-        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    if (activeChatModeValue === 'community' && chatBottomRef?.current) {
+      chatBottomRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
     }
-  }, [communityMessages, communitySending, activeChatModeValue, chatContainerRef]);
+  }, [communityMessages, communitySending, activeChatModeValue, chatBottomRef]);
 
   /* ------------------------------------------------------------------ */
   /* render                                                             */
   /* ------------------------------------------------------------------ */
   return (
-    <div className="flex flex-col h-full min-h-0">
-      {/* Recent Queries for AI mode only - moved to top */}
-      {activeChatModeValue === 'ai' && (
-        <div className="border-b border-red-500/20 bg-black px-[13px] py-2">
+    <div className="flex flex-col h-screen min-h-0">
+      {/* Sticky Header */}
+      <div className="border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-2"> 
+        {activeChatModeValue === 'ai' && (
           <RecentQueries
             showRecentQueries={showRecentQueries}
             setShowRecentQueries={setShowRecentQueries}
             queriesToRender={queriesToRender}
             handleExamplePromptClick={handleExamplePromptClick}
           />
-        </div>
-      )}
+        )}
 
-      {/* Main scroll container - now takes full remaining height */}
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none" ref={activeChatModeValue === 'community' ? chatContainerRef : undefined}>
+        <ChatInput
+          input={currentInputValue}
+          setInput={handleUnifiedInputChange}
+          handleSendMessage={handleUnifiedSendMessage}
+          isTyping={currentIsTyping}
+          handleKeyPress={handleUnifiedKeyPress}
+          isHeartActive={isHeartActive}
+          handleHeartClick={handleHeartClick}
+          globalQueries={globalQueries}
+          toggleRecentQueries={toggleRecentQueries}
+          inputRef={inputRef}
+          onAddEvent={onAddEvent}
+          showAnimatedPrompts={showAnimatedPrompts}
+          activeChatModeValue={activeChatModeValue}
+          activeCategory={activeCategory}
+          onCategoryChange={onCategoryChange}
+        />
+      </div>
+
+      {/* Main scroll container */}
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
         {activeChatModeValue === 'ai' ? (
-          <div className="pt-4 px-3"> 
+          <div className="pt-32 px-3"> 
             <MessageList
               messages={aiMessages}
               isTyping={aiTyping}
@@ -159,7 +205,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
             <div ref={messagesEndRef} />
           </div>
         ) : (
-          // Community Chat
           <div className="h-full min-h-0 flex flex-col">
             {communityError && (
               <div className="text-center text-red-500 text-lg font-semibold py-4">
@@ -167,8 +212,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               </div>
             )}
 
-            {/* The actual scrollable message area for community chat */}
-            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4"> {/* This is the key scrollable area */}
+            <div
+              ref={chatContainerRef}
+              className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4"
+            >
               <div className="space-y-2 py-4">
                 {communityMessages.length === 0 && !communityLoading && !communityError && (
                   <div className="text-center text-gray-400 py-4">

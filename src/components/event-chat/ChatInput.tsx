@@ -39,14 +39,16 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   activeCategory = 'Ausgehen',
   onCategoryChange
 }) => {
-  const { events } = useEventContext();
+  const { events } = useEventContext(); // Zugriff auf Events
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
 
-  // Simplified suggestions for header
+  // Animated placeholder suggestions
   const suggestions = [
-    "Events suchen...",
-    "Was läuft heute?",
-    "❤️ Passende Events finden"
+    "Frage nach Events...",
+    "Welche Events gibt es heute?",
+    "Was kann ich am Wochenende machen?",
+    "Gibt es Konzerte im Lokschuppen?",
+    "❤️ Zeige mir Events, die zu mir passen"
   ];
 
   const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
@@ -92,155 +94,170 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     return () => clearTimeout(timer);
   }, [displayText, isDeleting, currentSuggestionIndex, input, suggestions, showAnimatedPrompts]);
 
-  // Handle input change
+  // Handle input change - always expect setInput to accept string
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
   };
 
-  // Compact placeholder for header
+  // Handle suggestion click
+  const handleSuggestionClick = () => {
+    if (input.trim() === '' && displayText.trim() !== '') {
+      const currentSuggestion = suggestions[currentSuggestionIndex];
+      setInput(currentSuggestion);
+      // Focus the input after setting the value
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 0);
+    }
+  };
+
+  // Dynamischer Placeholder-Text basierend auf dem aktiven Chat-Modus
   const getDynamicPlaceholder = () => {
     if (activeChatModeValue === 'ai') {
-      return showAnimatedPrompts && input.trim() === '' ? displayText : "Events suchen...";
-    } else {
-      return "Mit Community chatten...";
+      return showAnimatedPrompts && input.trim() === '' ? displayText : "Frage nach Events...";
+    } else { // 'community'
+      return "Verbinde dich mit der Community...";
     }
   };
 
   const placeholderText = getDynamicPlaceholder();
 
-  // Event content for popover
+  // Event-Inhalt für das Popover
   const eventSelectContent = (
-    <div className="max-h-[200px] overflow-y-auto">
+    <div className="max-h-[300px] overflow-y-auto">
       {events && events.length > 0 ? (
         <div className="space-y-2 p-2">
           <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
             Events auswählen
           </div>
-          {events.slice(0, 5).map((event) => (
+          {events.map((event) => (
             <div
               key={event.id}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-pointer border border-gray-200 dark:border-gray-700"
               onClick={() => {
-                setInput(`Event: ${event.title} am ${event.date}`);
+                setInput(`Hier ist ein Event: ${event.title} am ${event.date} um ${event.time} in ${event.location}`);
                 setIsEventSelectOpen(false);
                 if (inputRef.current) {
                   inputRef.current.focus();
                 }
               }}
             >
-              <div className="font-medium text-xs">{event.title}</div>
+              <div className="font-medium text-sm">{event.title}</div>
               <div className="text-xs text-gray-500">
-                {event.date}
+                {event.date} • {event.location}
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="p-3 text-sm text-gray-500 text-center">
-          Keine Events
+        <div className="p-4 text-sm text-gray-500 text-center">
+          Keine Events verfügbar
         </div>
       )}
     </div>
   );
 
-  // Category click handler
+  // Enhanced category click handler - removed automatic text insertion
   const handleCategoryClick = (category: string) => {
     if (onCategoryChange) {
       onCategoryChange(category);
     }
+    // Removed automatic text insertion - only change category
+    setTimeout(() => {
+        if (inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, 0);
   };
 
-  // Calculate padding based on active mode and buttons
-  const getLeftPadding = () => {
-    if (activeChatModeValue === 'ai') {
-      // AI mode: Heart + History + CalendarPlus (3 buttons = ~72px + 8px gaps = 80px + 8px margin = 88px)
-      const buttonCount = 1 + (globalQueries.length > 0 ? 1 : 0) + (onAddEvent ? 1 : 0);
-      return `pl-[${88 + (buttonCount - 1) * 24}px]`;
-    } else {
-      // Community mode: Calendar + Category dropdown (wider = ~100px)
-      return 'pl-[100px]';
-    }
-  };
+  // Bestimme das padding-left basierend auf dem aktiven Modus
+  const inputPaddingLeft = activeChatModeValue === 'community' ? 'pl-[140px]' : 'pl-28';
 
-  // Ultra-compact design for header - now with proper width constraints and padding
   return (
-    <div className="flex items-center relative w-full max-w-md mx-auto">
-      {/* Left side buttons - ultra compact */}
-      <div className="absolute left-2 top-1/2 transform -translate-y-1/2 flex items-center gap-0.5 z-10">
+    <div className="flex items-center relative max-w-full">
+      <div className="absolute left-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1 z-10">
         {activeChatModeValue === 'ai' ? (
           <>
+            {/* Herz button für personalisierten Modus */}
             <Button
               variant="ghost"
               size="icon"
               onClick={handleHeartClick}
-              className={`h-6 w-6 p-0 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`}
-              title={isHeartActive ? "Personalisiert" : "Standard"}
+              className={`h-6 w-6 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`}
+              title={isHeartActive ? "Personalisierter Modus aktiv" : "Standard-Modus aktiv"}
             >
               <Heart className={`h-3 w-3 ${isHeartActive ? 'fill-red-500' : ''}`} />
             </Button>
 
+            {/* History button für Community Anfragen */}
             {globalQueries.length > 0 && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={toggleRecentQueries}
-                className="h-6 w-6 p-0 text-red-400"
-                title="Verlauf"
+                className="h-6 w-6 text-red-400"
+                title="Community Anfragen"
               >
                 <History className="h-3 w-3" />
               </Button>
             )}
 
+            {/* Add Event button mit Kalender-Icon */}
             {onAddEvent && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onAddEvent}
-                className="h-6 w-6 p-0 text-red-400"
-                title="Event +"
+                className="h-6 w-6 text-red-400"
+                title="Event hinzufügen"
               >
                 <CalendarPlus className="h-3 w-3" />
               </Button>
             )}
           </>
-        ) : (
+        ) : ( // Community Chat Buttons
           <>
+            {/* Event teilen Button (jetzt zuerst) */}
             <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-6 w-6 p-0 border-red-500/30 hover:bg-red-500/10"
+                  type="button"
+                  className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
                   title="Event teilen"
                 >
                   <Calendar className="h-3 w-3" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-60 p-0" side="bottom" align="start">
+              <PopoverContent className="w-80 p-0 max-h-[400px] overflow-y-auto" side="top" align="start" sideOffset={5}>
                 {eventSelectContent}
               </PopoverContent>
             </Popover>
 
+            {/* Kategorie-Dropdown (jetzt zweiter) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-6 px-1.5 text-xs border-red-500/30 hover:bg-red-500/10 flex items-center gap-0.5"
+                  className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10 flex items-center gap-1 min-w-[80px]"
                 >
-                  <span className="text-xs">{activeCategory?.slice(0, 3)}</span>
+                  {activeCategory}
                   <ChevronDown className="h-2 w-2" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
                 className="bg-zinc-900 border-red-500/30 z-50"
-                side="bottom"
+                side="top"
                 align="start"
               >
                 <DropdownMenuItem
                   onClick={() => handleCategoryClick('Kreativität')}
                   className={cn(
-                    "text-white hover:bg-red-500/20 cursor-pointer text-xs",
+                    "text-white hover:bg-red-500/20 cursor-pointer",
                     activeCategory === 'Kreativität' && "bg-red-500/20"
                   )}
                 >
@@ -249,7 +266,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
                 <DropdownMenuItem
                   onClick={() => handleCategoryClick('Ausgehen')}
                   className={cn(
-                    "text-white hover:bg-red-500/20 cursor-pointer text-xs",
+                    "text-white hover:bg-red-500/20 cursor-pointer",
                     activeCategory === 'Ausgehen' && "bg-red-500/20"
                   )}
                 >
@@ -258,7 +275,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
                 <DropdownMenuItem
                   onClick={() => handleCategoryClick('Sport')}
                   className={cn(
-                    "text-white hover:bg-red-500/20 cursor-pointer text-xs",
+                    "text-white hover:bg-red-500/20 cursor-pointer",
                     activeCategory === 'Sport' && "bg-red-500/20"
                   )}
                 >
@@ -270,7 +287,16 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         )}
       </div>
       
-      {/* Input field - ultra compact with dynamic padding based on button count */}
+      {/* Clickable overlay for animated text */}
+      <div 
+        className={cn(
+          "absolute inset-0 cursor-text z-5 pointer-events-none",
+          activeChatModeValue === 'community' ? 'left-[140px]' : 'left-28'
+        )}
+        onClick={handleSuggestionClick}
+        style={{ pointerEvents: input.trim() === '' && displayText.trim() !== '' ? 'auto' : 'none' }}
+      />
+      
       <input
         ref={inputRef}
         type="text"
@@ -279,25 +305,23 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         onKeyPress={handleKeyPress}
         placeholder={placeholderText}
         className={cn(
-          "w-full bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/50 rounded-full py-1.5 pr-12 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500/70 shadow-sm transition-all duration-200 hover:border-red-400",
-          activeChatModeValue === 'ai' 
-            ? `pl-[${88 + Math.max(0, (globalQueries.length > 0 ? 1 : 0) + (onAddEvent ? 1 : 0) - 1) * 24}px]`
-            : 'pl-[100px]'
+          "flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pr-14 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 min-w-0 text-left",
+          inputPaddingLeft
         )}
       />
 
-      {/* Send button - ultra compact and properly positioned */}
+      {/* Send button on the right */}
       <button
         onClick={() => handleSendMessage()}
         disabled={!input.trim() || isTyping}
         className={cn(
-          "absolute right-1 top-1/2 transform -translate-y-1/2 rounded-full p-1 flex-shrink-0",
+          "absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full p-2 flex-shrink-0",
           input.trim() && !isTyping
             ? "bg-red-500 hover:bg-red-600 text-white"
             : "bg-zinc-800 text-zinc-500"
         )}
       >
-        <Send className="h-3 w-3" />
+        <Send className="h-4 w-4" />
       </button>
     </div>
   );

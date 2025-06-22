@@ -1,3 +1,4 @@
+
 import { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
@@ -38,7 +39,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       const optimisticMessage = {
         id: tempId,
         created_at: new Date().toISOString(),
-        text: trimmedMessage, // Changed from 'content' to 'text'
+        content: trimmedMessage,
         user_name: username,
         user_avatar: localStorage.getItem(AVATAR_KEY) || '',
         group_id: groupId,

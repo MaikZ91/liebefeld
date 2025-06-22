@@ -17,12 +17,10 @@ const APP_LAUNCHED_KEY = 'app_launched_before';
 const USER_SENT_FIRST_MESSAGE_KEY = 'user_sent_first_message'; 
 
 export const useChatLogic = (
+  events: any[],
   fullPage: boolean = false,
   activeChatModeValue: 'ai' | 'community' = 'ai'
 ) => {
-  // Get events and selectedCity from EventContext instead of props
-  const { events, selectedCity } = useEventContext();
-  
   const [isVisible, setIsVisible] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(fullPage);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -93,25 +91,6 @@ export const useChatLogic = (
     }
   ];
 
-  // Helper function to filter events by selected city
-  const filterEventsByCity = useCallback((eventsToFilter: Event[]) => {
-    if (!selectedCity) return eventsToFilter;
-    
-    // Special handling for Bielefeld - include events without city specified
-    if (selectedCity.toLowerCase() === 'bi' || selectedCity.toLowerCase() === 'bielefeld') {
-      return eventsToFilter.filter(event => 
-        !event.city || 
-        event.city.toLowerCase() === 'bielefeld' || 
-        event.city.toLowerCase() === 'bi'
-      );
-    }
-    
-    // For other cities, filter by exact match
-    return eventsToFilter.filter(event => 
-      event.city && event.city.toLowerCase() === selectedCity.toLowerCase()
-    );
-  }, [selectedCity]);
-
   // Handle new event notifications - removed for now since newEventIds was removed
   const handleNewEventNotification = useCallback((eventCount: number) => {
     console.log('Event notifications temporarily disabled');
@@ -136,12 +115,9 @@ export const useChatLogic = (
   });
 
   const createPanelData = (filteredEvents: Event[]): PanelEventData => {
-    // Filter events by selected city before creating panel data
-    const cityFilteredEvents = filterEventsByCity(filteredEvents);
-    
     const allItems: (PanelEvent | AdEvent)[] = [];
 
-    cityFilteredEvents.slice(0, 5).forEach(event => {
+    filteredEvents.slice(0, 5).forEach(event => {
       allItems.push({
         id: event.id,
         title: event.title,
