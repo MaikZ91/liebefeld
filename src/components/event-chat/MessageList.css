@@ -1,4 +1,3 @@
-
 .event-list-container .bg-red-900\/20 {
   margin-bottom: 0.75rem;
 }
@@ -21,10 +20,13 @@
 }
 
 /* Force override any other text colors in event cards */
+/* Removed overly aggressive rules that affected all spans and divs */
+/*
 .event-list-container span,
 .event-list-container div {
   color: white !important;
 }
+*/
 
 /* Only exclude category labels */
 .event-list-container .bg-red-500,
