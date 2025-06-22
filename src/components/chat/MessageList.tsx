@@ -1,5 +1,3 @@
-
-// src/components/chat/MessageList.tsx
 import React, { useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/chatUIUtils';
