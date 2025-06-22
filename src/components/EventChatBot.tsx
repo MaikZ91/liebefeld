@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useEventContext } from '@/contexts/EventContext';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
@@ -11,20 +11,26 @@ import { usePersonalization } from './event-chat/usePersonalization';
 import { EventChatBotProps } from './event-chat/types';
 import { createCitySpecificGroupId } from '@/utils/groupIdUtils';
 
-const EventChatBot: React.FC<EventChatBotProps> = ({ 
+interface ExtendedEventChatBotProps extends EventChatBotProps {
+  onChatLogicReady?: (chatLogic: any) => void;
+  activeCategory?: string;
+  onCategoryChange?: (category: string) => void;
+}
+
+const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({ 
   fullPage = false, 
   onAddEvent, 
   onToggleCommunity,
   activeChatMode,
-  setActiveChatMode
+  setActiveChatMode,
+  onChatLogicReady,
+  activeCategory = 'Ausgehen',
+  onCategoryChange
 }) => {
   // Use the prop value if provided, otherwise use internal state
   const [internalActiveChatMode, setInternalActiveChatMode] = useState<'ai' | 'community'>('ai');
   const activeChatModeValue = activeChatMode !== undefined ? activeChatMode : internalActiveChatMode;
   const setActiveChatModeValue = setActiveChatMode || setInternalActiveChatMode;
-  
-  // Add category state management - changed default to 'Ausgehen'
-  const [activeCategory, setActiveCategory] = useState<string>('Ausgehen');
   
   const { selectedCity } = useEventContext();
   const { toast } = useToast();
@@ -43,6 +49,21 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
     { userProfile, currentUser, userService }
   );
 
+  // Enhanced chatLogic with additional properties for header integration
+  const enhancedChatLogic = {
+    ...chatLogic,
+    onAddEvent,
+    activeCategory,
+    onCategoryChange
+  };
+
+  // Expose chatLogic to parent component
+  useEffect(() => {
+    if (onChatLogicReady && enhancedChatLogic) {
+      onChatLogicReady(enhancedChatLogic);
+    }
+  }, [onChatLogicReady, enhancedChatLogic]);
+
   const handleToggleChatMode = () => {
     const newMode = activeChatModeValue === 'ai' ? 'community' : 'ai';
     setActiveChatModeValue(newMode);
@@ -51,11 +72,6 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
     if (activeChatModeValue === 'ai' && onToggleCommunity) {
       onToggleCommunity();
     }
-  };
-
-  // Handle category change
-  const handleCategoryChange = (category: string) => {
-    setActiveCategory(category);
   };
 
   // Handle profile update
@@ -76,12 +92,12 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
   if (fullPage) {
     return (
       <FullPageChatBot
-        chatLogic={chatLogic}
+        chatLogic={enhancedChatLogic}
         activeChatModeValue={activeChatModeValue}
         communityGroupId={communityGroupId}
         onAddEvent={onAddEvent}
         activeCategory={activeCategory}
-        onCategoryChange={handleCategoryChange}
+        onCategoryChange={onCategoryChange}
       />
     );
   }

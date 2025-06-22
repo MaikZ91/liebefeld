@@ -1,3 +1,4 @@
+
 // src/pages/Chat.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { Layout } from '@/components/layouts/Layout';
@@ -27,6 +28,8 @@ const ChatPage = () => {
   const [isUserDirectoryOpen, setIsUserDirectoryOpen] = useState(false);
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string>('Ausgehen');
+  const [chatLogic, setChatLogic] = useState<any>(null);
   
   const {
     events,
@@ -77,6 +80,11 @@ const ChatPage = () => {
       // Re-fetch unread messages after username is set/updated
       fetchUnreadMessageCount();
     }
+  };
+
+  // Handle category change
+  const handleCategoryChange = (category: string) => {
+    setActiveCategory(category);
   };
 
   // WhatsApp community link - Updated with the actual WhatsApp community link
@@ -215,6 +223,9 @@ const ChatPage = () => {
         setIsEventListSheetOpen={setIsEventListSheetOpen}
         newMessagesCount={unreadMessageCount} // Pass new messages count
         newEventsCount={0} // No new events tracking for now
+        chatLogic={chatLogic}
+        activeCategory={activeCategory}
+        onCategoryChange={handleCategoryChange}
       >
         <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
           {/* Remove the button bar since buttons are now in header */}
@@ -228,6 +239,9 @@ const ChatPage = () => {
                 activeChatMode={activeView} 
                 setActiveChatMode={setActiveView}
                 hideButtons={true}
+                onChatLogicReady={setChatLogic}
+                activeCategory={activeCategory}
+                onCategoryChange={handleCategoryChange}
               />
             </div>
           </div>

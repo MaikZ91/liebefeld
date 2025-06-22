@@ -1,6 +1,6 @@
 
 // src/components/layouts/Layout.tsx
-// Changed: Moved navigation buttons to bottom, simplified header
+// Changed: Added ChatInput integration in header for chat pages
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Button } from "@/components/ui/button";
 import CitySelector from './CitySelector';
 import { BottomNavigation } from './BottomNavigation';
+import ChatInput from '../event-chat/ChatInput';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -19,6 +20,10 @@ interface LayoutProps {
   setIsEventListSheetOpen?: (open: boolean) => void;
   newMessagesCount?: number;
   newEventsCount?: number;
+  // ChatInput related props
+  chatLogic?: any;
+  activeCategory?: string;
+  onCategoryChange?: (category: string) => void;
 }
 
 export const Layout: React.FC<LayoutProps> = ({
@@ -29,7 +34,10 @@ export const Layout: React.FC<LayoutProps> = ({
   handleOpenUserDirectory,
   setIsEventListSheetOpen,
   newMessagesCount = 0,
-  newEventsCount = 0
+  newEventsCount = 0,
+  chatLogic,
+  activeCategory,
+  onCategoryChange
 }) => {
   const { pathname } = useLocation();
   const [isAddEventModalOpen, setIsAddEventModalOpen] = React.useState(false);
@@ -67,7 +75,13 @@ export const Layout: React.FC<LayoutProps> = ({
       
       <header className="sticky top-0 z-50 w-full bg-black/90 backdrop-blur-sm border-b border-black">
         <div className="container flex h-16 items-center">
-          <MainNav pathname={pathname} />
+          <MainNav 
+            pathname={pathname} 
+            activeView={activeView}
+            chatLogic={chatLogic}
+            activeCategory={activeCategory}
+            onCategoryChange={onCategoryChange}
+          />
           {(pathname !== '/chat' && pathname !== '/') && ( 
             <div className="ml-auto flex items-center space-x-4">
               <ThemeToggleButton />
@@ -135,19 +149,52 @@ const items: NavItem[] = [
 
 interface MainNavProps {
   pathname: string;
+  activeView?: 'ai' | 'community';
+  chatLogic?: any;
+  activeCategory?: string;
+  onCategoryChange?: (category: string) => void;
 }
 
-const MainNav: React.FC<MainNavProps> = ({ pathname }) => {
-  // If we're on chat page or the root path, show simplified header with THE TRIBE + city selector
+const MainNav: React.FC<MainNavProps> = ({ 
+  pathname, 
+  activeView, 
+  chatLogic, 
+  activeCategory, 
+  onCategoryChange 
+}) => {
+  // If we're on chat page or the root path, show simplified header with THE TRIBE + city selector + ChatInput
   if (pathname === '/chat' || pathname === '/') {
     return (
-      <div className="flex items-center w-full">
-        <div className="flex flex-col items-start mr-6">
+      <div className="flex items-center w-full gap-4">
+        <div className="flex flex-col items-start flex-shrink-0">
           <Link to="/" className="flex items-center">
             <span className="font-bold inline-block">THE TRIBE</span>
           </Link>
           <CitySelector />
         </div>
+        
+        {/* ChatInput integration for chat pages */}
+        {chatLogic && (
+          <div className="flex-1 max-w-2xl">
+            <ChatInput
+              input={chatLogic.input}
+              setInput={chatLogic.setInput}
+              handleSendMessage={chatLogic.handleSendMessage}
+              isTyping={chatLogic.isTyping}
+              handleKeyPress={chatLogic.handleKeyPress}
+              isHeartActive={chatLogic.isHeartActive}
+              handleHeartClick={chatLogic.handleHeartClick}
+              globalQueries={chatLogic.globalQueries}
+              toggleRecentQueries={chatLogic.toggleRecentQueries}
+              inputRef={chatLogic.inputRef}
+              onAddEvent={chatLogic.onAddEvent}
+              showAnimatedPrompts={chatLogic.showAnimatedPrompts}
+              activeChatModeValue={activeView}
+              activeCategory={activeCategory}
+              onCategoryChange={onCategoryChange}
+            />
+          </div>
+        )}
       </div>
     );
   }
