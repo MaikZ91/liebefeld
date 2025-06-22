@@ -150,7 +150,19 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     }
   };
 
-  // Ultra-compact design for header - now with proper width constraints
+  // Calculate padding based on active mode and buttons
+  const getLeftPadding = () => {
+    if (activeChatModeValue === 'ai') {
+      // AI mode: Heart + History + CalendarPlus (3 buttons = ~72px + 8px gaps = 80px + 8px margin = 88px)
+      const buttonCount = 1 + (globalQueries.length > 0 ? 1 : 0) + (onAddEvent ? 1 : 0);
+      return `pl-[${88 + (buttonCount - 1) * 24}px]`;
+    } else {
+      // Community mode: Calendar + Category dropdown (wider = ~100px)
+      return 'pl-[100px]';
+    }
+  };
+
+  // Ultra-compact design for header - now with proper width constraints and padding
   return (
     <div className="flex items-center relative w-full max-w-md mx-auto">
       {/* Left side buttons - ultra compact */}
@@ -258,7 +270,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         )}
       </div>
       
-      {/* Input field - ultra compact with proper padding */}
+      {/* Input field - ultra compact with dynamic padding based on button count */}
       <input
         ref={inputRef}
         type="text"
@@ -267,7 +279,10 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         onKeyPress={handleKeyPress}
         placeholder={placeholderText}
         className={cn(
-          "w-full bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/50 rounded-full py-1.5 pl-20 pr-12 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500/70 shadow-sm transition-all duration-200 hover:border-red-400"
+          "w-full bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/50 rounded-full py-1.5 pr-12 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500/70 shadow-sm transition-all duration-200 hover:border-red-400",
+          activeChatModeValue === 'ai' 
+            ? `pl-[${88 + Math.max(0, (globalQueries.length > 0 ? 1 : 0) + (onAddEvent ? 1 : 0) - 1) * 24}px]`
+            : 'pl-[100px]'
         )}
       />
 
