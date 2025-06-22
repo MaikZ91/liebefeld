@@ -1,8 +1,7 @@
 
-import React, { useEffect, useState, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -25,6 +24,9 @@ const EventHeatmap: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [dateFilter, setDateFilter] = useState('');
   const [eventCoordinates, setEventCoordinates] = useState<EventCoordinates>({});
+  const [map, setMap] = useState<L.Map | null>(null);
+  const [markers, setMarkers] = useState<L.Marker[]>([]);
+  const mapRef = useRef<HTMLDivElement>(null);
   
   const { events, isLoading } = useEvents();
 
@@ -54,6 +56,23 @@ const EventHeatmap: React.FC = () => {
       return categoryMatch && dateMatch;
     });
   }, [bielefeldEvents, selectedCategory, dateFilter]);
+
+  // Initialize map
+  useEffect(() => {
+    if (!mapRef.current || map) return;
+
+    const leafletMap = L.map(mapRef.current).setView([52.0302, 8.5311], 12);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(leafletMap);
+
+    setMap(leafletMap);
+
+    return () => {
+      leafletMap.remove();
+    };
+  }, [map]);
 
   // Geocoding function
   const geocodeAddress = async (address: string): Promise<[number, number] | null> => {
@@ -126,6 +145,72 @@ const EventHeatmap: React.FC = () => {
       geocodeEvents();
     }
   }, [bielefeldEvents, eventCoordinates]);
+
+  // Update markers when filtered events change
+  useEffect(() => {
+    if (!map) return;
+
+    // Clear existing markers
+    markers.forEach(marker => map.removeLayer(marker));
+    setMarkers([]);
+
+    const newMarkers: L.Marker[] = [];
+
+    filteredEvents
+      .filter(event => eventCoordinates[event.id])
+      .forEach((event) => {
+        const coordinates = eventCoordinates[event.id];
+        const customIcon = createCustomIcon(event);
+        const participants = event.rsvp_yes || 0;
+        const likes = event.likes || 0;
+
+        const marker = L.marker(coordinates, { icon: customIcon });
+        
+        const popupContent = `
+          <div style="padding: 12px; min-width: 250px;">
+            <h3 style="font-weight: bold; font-size: 18px; margin-bottom: 8px; color: #dc2626;">${event.title}</h3>
+            <div style="font-size: 14px;">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <span>📅</span>
+                <span>${new Date(event.date).toLocaleDateString('de-DE')}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <span>🕐</span>
+                <span>${event.time}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <span>📍</span>
+                <span>${event.location}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <span>👥</span>
+                <span>${participants} Teilnehmer</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <span>❤️</span>
+                <span>${likes} Likes</span>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <span style="padding: 4px 8px; background-color: #dc2626; color: white; font-size: 12px; border-radius: 9999px;">
+                  ${event.category}
+                </span>
+              </div>
+              ${event.description ? `
+                <p style="margin-top: 8px; color: #6b7280; font-size: 12px;">
+                  ${event.description.substring(0, 100)}...
+                </p>
+              ` : ''}
+            </div>
+          </div>
+        `;
+
+        marker.bindPopup(popupContent);
+        marker.addTo(map);
+        newMarkers.push(marker);
+      });
+
+    setMarkers(newMarkers);
+  }, [map, filteredEvents, eventCoordinates]);
 
   if (isLoading) {
     return (
@@ -207,73 +292,7 @@ const EventHeatmap: React.FC = () => {
       </div>
 
       {/* Map Container */}
-      <MapContainer
-        center={[52.0302, 8.5311]}
-        zoom={12}
-        scrollWheelZoom={true}
-        className="w-full h-full"
-        style={{ zIndex: 0 }}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        {filteredEvents
-          .filter(event => eventCoordinates[event.id])
-          .map((event) => {
-            const coordinates = eventCoordinates[event.id];
-            const customIcon = createCustomIcon(event);
-            const participants = event.rsvp_yes || 0;
-            const likes = event.likes || 0;
-
-            return (
-              <Marker 
-                key={event.id} 
-                position={coordinates} 
-                icon={customIcon}
-              >
-                <Popup>
-                  <div className="p-3 min-w-[250px]">
-                    <h3 className="font-bold text-lg mb-2 text-red-600">{event.title}</h3>
-                    <div className="space-y-1 text-sm">
-                      <div className="flex items-center gap-2">
-                        <span>📅</span>
-                        <span>{new Date(event.date).toLocaleDateString('de-DE')}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span>🕐</span>
-                        <span>{event.time}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span>📍</span>
-                        <span>{event.location}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span>👥</span>
-                        <span>{participants} Teilnehmer</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span>❤️</span>
-                        <span>{likes} Likes</span>
-                      </div>
-                      <div className="mt-2">
-                        <span className="px-2 py-1 bg-red-500 text-white text-xs rounded-full">
-                          {event.category}
-                        </span>
-                      </div>
-                      {event.description && (
-                        <p className="mt-2 text-gray-600 text-xs">
-                          {event.description.substring(0, 100)}...
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </Popup>
-              </Marker>
-            );
-          })
-        }
-      </MapContainer>
+      <div ref={mapRef} className="w-full h-full" />
     </div>
   );
 };
