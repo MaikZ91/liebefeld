@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -149,18 +150,18 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     }
   };
 
-  // Compact design for header
+  // Ultra-compact design for header - now with proper width constraints
   return (
-    <div className="flex items-center relative w-full max-w-lg">
-      {/* Left side buttons - more compact */}
-      <div className="absolute left-1 top-1/2 transform -translate-y-1/2 flex items-center gap-1 z-10">
+    <div className="flex items-center relative w-full max-w-md mx-auto">
+      {/* Left side buttons - ultra compact */}
+      <div className="absolute left-2 top-1/2 transform -translate-y-1/2 flex items-center gap-0.5 z-10">
         {activeChatModeValue === 'ai' ? (
           <>
             <Button
               variant="ghost"
               size="icon"
               onClick={handleHeartClick}
-              className={`h-5 w-5 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`}
+              className={`h-6 w-6 p-0 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`}
               title={isHeartActive ? "Personalisiert" : "Standard"}
             >
               <Heart className={`h-3 w-3 ${isHeartActive ? 'fill-red-500' : ''}`} />
@@ -171,10 +172,10 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
                 variant="ghost"
                 size="icon"
                 onClick={toggleRecentQueries}
-                className="h-5 w-5 text-red-400"
+                className="h-6 w-6 p-0 text-red-400"
                 title="Verlauf"
               >
-                <History className="h-2 w-2" />
+                <History className="h-3 w-3" />
               </Button>
             )}
 
@@ -183,10 +184,10 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
                 variant="ghost"
                 size="icon"
                 onClick={onAddEvent}
-                className="h-5 w-5 text-red-400"
+                className="h-6 w-6 p-0 text-red-400"
                 title="Event +"
               >
-                <CalendarPlus className="h-2 w-2" />
+                <CalendarPlus className="h-3 w-3" />
               </Button>
             )}
           </>
@@ -197,10 +198,10 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-5 w-5 border-red-500/30 hover:bg-red-500/10"
+                  className="h-6 w-6 p-0 border-red-500/30 hover:bg-red-500/10"
                   title="Event teilen"
                 >
-                  <Calendar className="h-2 w-2" />
+                  <Calendar className="h-3 w-3" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-60 p-0" side="bottom" align="start">
@@ -213,14 +214,14 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-5 px-1 text-xs border-red-500/30 hover:bg-red-500/10 flex items-center gap-1"
+                  className="h-6 px-1.5 text-xs border-red-500/30 hover:bg-red-500/10 flex items-center gap-0.5"
                 >
-                  {activeCategory?.slice(0, 3)}
+                  <span className="text-xs">{activeCategory?.slice(0, 3)}</span>
                   <ChevronDown className="h-2 w-2" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
-                className="bg-zinc-900 border-red-500/30"
+                className="bg-zinc-900 border-red-500/30 z-50"
                 side="bottom"
                 align="start"
               >
@@ -257,7 +258,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         )}
       </div>
       
-      {/* Input field - more compact */}
+      {/* Input field - ultra compact with proper padding */}
       <input
         ref={inputRef}
         type="text"
@@ -266,16 +267,16 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         onKeyPress={handleKeyPress}
         placeholder={placeholderText}
         className={cn(
-          "flex-1 bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/50 rounded-full py-2 px-16 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500/70 shadow-sm transition-all duration-200 hover:border-red-400"
+          "w-full bg-zinc-900/50 dark:bg-zinc-800/50 border border-red-500/50 rounded-full py-1.5 pl-20 pr-12 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500/70 shadow-sm transition-all duration-200 hover:border-red-400"
         )}
       />
 
-      {/* Send button - more compact */}
+      {/* Send button - ultra compact and properly positioned */}
       <button
         onClick={() => handleSendMessage()}
         disabled={!input.trim() || isTyping}
         className={cn(
-          "absolute right-1 top-1/2 transform -translate-y-1/2 rounded-full p-1.5 flex-shrink-0",
+          "absolute right-1 top-1/2 transform -translate-y-1/2 rounded-full p-1 flex-shrink-0",
           input.trim() && !isTyping
             ? "bg-red-500 hover:bg-red-600 text-white"
             : "bg-zinc-800 text-zinc-500"
