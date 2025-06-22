@@ -1,5 +1,3 @@
-
-// src/components/event-chat/FullPageChatBot.tsx
 import React, { useEffect } from 'react';
 import MessageList from './MessageList';
 import RecentQueries from './RecentQueries';
@@ -70,7 +68,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     error: communityError,
     typingUsers,
     chatBottomRef,
-    chatContainerRef,
+    chatContainerRef, // Ensure this is correctly referenced
     addOptimisticMessage
   } = useChatMessages(communityGroupId, username);
 
@@ -123,10 +121,11 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   }, [aiMessages, aiTyping, activeChatModeValue, messagesEndRef]);
 
   useEffect(() => {
-    if (activeChatModeValue === 'community' && chatBottomRef?.current) {
-      chatBottomRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+    // We explicitly use chatContainerRef for community chat scrolling
+    if (activeChatModeValue === 'community' && chatContainerRef?.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-  }, [communityMessages, communitySending, activeChatModeValue, chatBottomRef]);
+  }, [communityMessages, communitySending, activeChatModeValue, chatContainerRef]);
 
   /* ------------------------------------------------------------------ */
   /* render                                                             */
@@ -146,7 +145,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       )}
 
       {/* Main scroll container - now takes full remaining height */}
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none" ref={activeChatModeValue === 'community' ? chatContainerRef : undefined}>
         {activeChatModeValue === 'ai' ? (
           <div className="pt-4 px-3"> 
             <MessageList
@@ -160,6 +159,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
             <div ref={messagesEndRef} />
           </div>
         ) : (
+          // Community Chat
           <div className="h-full min-h-0 flex flex-col">
             {communityError && (
               <div className="text-center text-red-500 text-lg font-semibold py-4">
@@ -167,10 +167,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               </div>
             )}
 
-            <div
-              ref={chatContainerRef}
-              className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4"
-            >
+            {/* The actual scrollable message area for community chat */}
+            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4"> {/* This is the key scrollable area */}
               <div className="space-y-2 py-4">
                 {communityMessages.length === 0 && !communityLoading && !communityError && (
                   <div className="text-center text-gray-400 py-4">
