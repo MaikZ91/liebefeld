@@ -27,7 +27,7 @@ export const useChatLogic = (
   const [isChatOpen, setIsChatOpen] = useState(fullPage);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
+  const [isTyping, setIsTyping] = useState(false); // This will indicate AI processing/typing
   const [recentQueries, setRecentQueries] = useState<string[]>([]);
   const [globalQueries, setGlobalQueries] = useState<string[]>([]);
   const [showRecentQueries, setShowRecentQueries] = useState(false);
@@ -38,6 +38,8 @@ export const useChatLogic = (
   const inputRef = useRef<HTMLInputElement>(null);
   const welcomeMessageShownRef = useRef(false);
   const appLaunchedBeforeRef = useRef(false); 
+  // Removed typingTimeoutRef as it's not needed for AI typing simulation during user input
+  
 
   // Promptvorschlag-Liste für den Schreibmaschinen-Effekt (erweitert)
   const examplePrompts = [
@@ -269,8 +271,11 @@ export const useChatLogic = (
     };
     
     setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setIsTyping(true);
+    setInput(''); // Clear input immediately for smooth typing experience
+    setIsTyping(true); // Set isTyping to true to show AI processing/typing indicator
+
+    // Simulate AI processing/typing delay
+    await new Promise(resolve => setTimeout(resolve, 1500)); 
 
     const lowercaseMessage = message.toLowerCase().trim();
 
@@ -327,7 +332,7 @@ export const useChatLogic = (
         };
         setMessages(prev => [...prev, errorMessage]);
       } finally {
-        setIsTyping(false);
+        setIsTyping(false); // Stop typing after response
       }
       return;
     }
@@ -426,13 +431,12 @@ export const useChatLogic = (
       
       setMessages(prev => [...prev, errorMessage]);
     } finally {
-      setIsTyping(false);
+      setIsTyping(false); // Stop typing after response
     }
   };
 
   const handleDateSelect = (date: string) => {
-    const formattedDate = date;
-    const prompt = `Welche Events gibt es am ${formattedDate}?`;
+    const prompt = `Welche Events gibt es am ${date}?`;
     handleSendMessage(prompt);
   };
 
@@ -453,9 +457,16 @@ export const useChatLogic = (
     }, 500);
   };
 
+  // Minimalistische handleInputChange für flüssiges Tippen
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+    // isTyping wird hier NICHT manipuliert, da es den KI-Verarbeitungsstatus anzeigt.
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      handleSendMessage();
+      e.preventDefault(); // Verhindert einen Zeilenumbruch im Input-Feld
+      handleSendMessage(); // Löst das Senden der Nachricht aus
     }
   };
 
@@ -683,7 +694,8 @@ export const useChatLogic = (
     handleDateSelect,
     handleExamplePromptClick,
     handleExternalQuery,
-    handleKeyPress,
+    handleKeyPress, // Pass the new handleKeyPress
+    handleInputChange, // Pass the new handleInputChange
     handleHeartClick,
     toggleRecentQueries,
     clearChatHistory,
