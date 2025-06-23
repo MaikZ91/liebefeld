@@ -1,4 +1,3 @@
-
 // src/components/event-chat/FullPageChatBot.tsx
 import React, { useEffect } from 'react';
 import MessageList from './MessageList';
@@ -89,15 +88,16 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     setNewMessage: setCommunityInput
   } = useMessageSending(communityGroupId, username, addOptimisticMessage);
 
-  // Synchronize external input with community input
+  // Only update external input when community input changes, not the other way around
   useEffect(() => {
-    if (activeChatModeValue === 'community' && setExternalInput) {
+    if (activeChatModeValue === 'community' && setExternalInput && communityInput !== externalInput) {
       setExternalInput(communityInput);
     }
   }, [communityInput, activeChatModeValue, setExternalInput]);
 
+  // Only update community input from external when it's different and not empty
   useEffect(() => {
-    if (activeChatModeValue === 'community' && externalInput !== communityInput) {
+    if (activeChatModeValue === 'community' && externalInput !== communityInput && externalInput !== '') {
       setCommunityInput(externalInput);
     }
   }, [externalInput, activeChatModeValue, setCommunityInput, communityInput]);
@@ -151,9 +151,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       setInput(value);
     } else {
       setCommunityInput(value);
-      if (setExternalInput) {
-        setExternalInput(value);
-      }
     }
   };
 
@@ -166,6 +163,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   };
 
+  // Use internal states for input values instead of external when not hidden
   const currentInputValue = activeChatModeValue === 'ai' ? input : (hideInput ? externalInput : communityInput);
   const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending;
 
