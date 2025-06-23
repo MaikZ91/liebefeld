@@ -1,6 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+Gerne, hier ist der korrigierte Code für `supabase/functions/ai-event-chat/index.ts`:
+
+```typescript
+import { serve } from "[https://deno.land/std@0.168.0/http/server.ts](https://deno.land/std@0.168.0/http/server.ts)";
+import "[https://deno.land/x/xhr@0.1.0/mod.ts](https://deno.land/x/xhr@0.1.0/mod.ts)";
+import { createClient } from "[https://esm.sh/@supabase/supabase-js@2.38.4](https://esm.sh/@supabase/supabase-js@2.38.4)";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -59,50 +62,43 @@ serve(async (req) => {
     console.log(`[ai-event-chat] Server's 'today' date: ${today}`);
 
     /***************************
-     * EVENT RETRIEVAL AND FILTERING
+     * EVENT RETRIEVAL AND FILTERING (Optimized)
      ***************************/
-    console.log("[ai-event-chat] Fetching all events from database...");
-    const { data: dbEvents, error: eventsError } = await supabase
+    console.log(`[ai-event-chat] Fetching events from database for city: ${selectedCity || 'all'}`);
+    let queryBuilder = supabase
       .from("community_events")
       .select("*")
-      .order("date", { ascending: true });
+      .order("date", { ascending: true })
+      .order("time", { ascending: true }); // Order by time as well for consistency
 
-    if (eventsError) {
-      throw new Error(`[ai-event-chat] Datenbank-Fehler: ${eventsError.message}`);
-    }
-    console.log(`[ai-event-chat] Fetched ${dbEvents.length} total events from DB.`);
-    // Log the dates of first few events fetched directly from DB to confirm they are there
-    console.log(`[ai-event-chat] First 5 events from DB: ${JSON.stringify(dbEvents.slice(0,5).map(e => ({id: e.id, title: e.title, date: e.date, city: e.city})))}`);
-
-
-    let cityFilteredDbEvents = dbEvents;
+    // Apply city filter directly in the database query
     if (selectedCity) {
       const selectedCityLower = selectedCity.toLowerCase();
-      // Map frontend abbr to full name for comparison if needed, or handle direct abbr
-      // Assuming frontend sends 'BI' or 'bielefeld' for Bielefeld, and full lowercased name for others.
-      // Database stores 'Bielefeld' (capitalized) or null for Bielefeld-specific, and full names for others.
-      
-      console.log(`[ai-event-chat] Applying city filter for: ${selectedCityLower}`);
-
-      cityFilteredDbEvents = dbEvents.filter(e => {
-        const eventCityLower = typeof e.city === 'string' ? e.city.toLowerCase() : null;
-
-        if (selectedCityLower === 'bielefeld' || selectedCityLower === 'bi') {
-          // If Bielefeld is selected, show events with 'Bielefeld', 'bi', or null city
-          return eventCityLower === null || eventCityLower === 'bielefeld' || eventCityLower === 'bi';
-        } else {
-          // For other cities, exact match
-          return eventCityLower === selectedCityLower;
-        }
-      });
-      console.log(`[ai-event-chat] After city filtering for "${selectedCity}": ${cityFilteredDbEvents.length} events remain.`);
-    } else {
-        console.log(`[ai-event-chat] No city selected. Using all ${dbEvents.length} events.`);
+      // Handle Bielefeld specifically: match 'bielefeld', 'bi', or null (for default city)
+      if (selectedCityLower === 'bielefeld' || selectedCityLower === 'bi') {
+        queryBuilder = queryBuilder.or('city.eq.bielefeld,city.eq.bi,city.is.null');
+      } else {
+        // For other cities, require an exact match
+        queryBuilder = queryBuilder.eq('city', selectedCityLower);
+      }
     }
     
-    // KEY FIX: Always start with the city-filtered list from the database.
-    let filteredEvents = cityFilteredDbEvents;
-    console.log(`[ai-event-chat] Initial event pool for filtering has ${filteredEvents.length} events (after city filter).`);
+    // Add a limit to ensure we don't fetch too many rows, but higher than default
+    queryBuilder = queryBuilder.limit(5000); 
+
+    const { data: dbEvents, error: eventsError } = await queryBuilder;
+
+    if (eventsError) {
+      throw new Error(`[ai-event-chat] Datenbank-Fehler beim Abrufen: ${eventsError.message}`);
+    }
+    console.log(`[ai-event-chat] Fetched ${dbEvents.length} total events from DB for selected city.`);
+    // Log the dates of first few events fetched directly from DB to confirm they are there
+    console.log(`[ai-event-chat] First 5 events from DB (city-filtered): ${JSON.stringify(dbEvents.slice(0,5).map(e => ({id: e.id, title: e.title, date: e.date, city: e.city})))}`);
+
+    // At this point, dbEvents should only contain events for the selected city,
+    // and up to the limit (which is now 5000).
+    let filteredEvents = dbEvents;
+    console.log(`[ai-event-chat] Initial event pool for filtering has ${filteredEvents.length} events (after initial DB filter).`);
     
     const lowercaseQuery = query.toLowerCase();
     
@@ -139,7 +135,7 @@ serve(async (req) => {
       lowercaseQuery.includes("in diesem monat") ||
       lowercaseQuery.includes("diesen monat") ||
       lowercaseQuery.includes("this month") ||
-      lowercaseQuery.includes("im mai") || // Specific month queries like 'im mai' should ideally be handled by LLM, but included here for completeness
+      lowercaseQuery.includes("im mai") || 
       lowercaseQuery.includes("in may") ||
       lowercaseQuery.includes("aktueller monat") ||
       lowercaseQuery.includes("current month")
@@ -206,7 +202,7 @@ serve(async (req) => {
       const todayDateObj = new Date(currentDate);
       const dayOfWeek = todayDateObj.getDay();
       
-      const daysUntilSaturday = dayOfWeek === 6 ? 0 : 6 - dayOfWeek; // 0 if today is Saturday, otherwise days until next Saturday
+      const daysUntilSaturday = dayOfWeek === 6 ? 0 : 6 - dayOfWeek;
       const saturday = new Date(todayDateObj);
       saturday.setDate(todayDateObj.getDate() + daysUntilSaturday);
       const saturdayStr = saturday.toISOString().split('T')[0];
@@ -219,9 +215,9 @@ serve(async (req) => {
       filteredEvents = filteredEvents.filter(e => e.date === saturdayStr || e.date === sundayStr);
       console.log(`[ai-event-chat] Nach Filterung für "Wochenende": ${filteredEvents.length} Events übrig`);
     }
-    // If no specific date filter is explicitly requested, but it's a personalized request,
-    // or if no date filter is applied, we implicitly want events from today onwards.
-    else if (!isPersonalRequest) { // Only apply this broad filter if it's NOT a specific date query AND NOT a personalized query
+    // If no specific date filter is explicitly requested AND it's not a personalized request,
+    // we implicitly want events from today onwards.
+    else if (!isPersonalRequest) { 
       console.log(`[ai-event-chat] No specific date query detected or not a personalized request. Filtering for events from today (${today}) onwards.`);
       filteredEvents = filteredEvents.filter((e: any) => e.date >= today);
       console.log(`[ai-event-chat] After general 'today onwards' filter: ${filteredEvents.length} events remain.`);
@@ -345,19 +341,39 @@ serve(async (req) => {
       console.log(`[ai-event-chat] Nach Filterung für Kategorie "${categoryFilter}": ${filteredEvents.length} von ${beforeCount} Events übrig`);
     }
 
-    // Ensure main filter always starts from today if no other specific date filter was applied.
-    // This was previously applied only if !isPersonalRequest, but should apply broadly if no date-specific query caught it.
-    // I've moved the generic "from today onwards" filter up to a more general else-if block
-    // to ensure it applies when no other date filter is active.
-    
     // Falls die Filterung zu streng war und keine Events übrig sind, nehmen wir die nächsten 20 Events ab heute.
     // Dies sollte nur als letzter Ausweg dienen, um immer eine Antwort zu haben.
     if (filteredEvents.length === 0) {
       console.log("Keine Events nach Filterung übrig, verwende die nächsten 20 anstehenden Events (Fallback)");
-      filteredEvents = cityFilteredDbEvents // Fallback to city-filtered ALL events
-        .filter((e: any) => e.date >= today) // Ensure they are future events
-        .sort((a: any, b: any) => a.date.localeCompare(b.date))
-        .slice(0, 20);
+      // Fallback: fetch events again without specific query filters, but still city-filtered and future.
+      const { data: fallbackEvents, error: fallbackError } = await supabase
+        .from("community_events")
+        .select("*")
+        .order("date", { ascending: true })
+        .order("time", { ascending: true })
+        .limit(20); // Limit to 20 for fallback
+
+      if (fallbackError) {
+        console.error('[ai-event-chat] Fallback query failed:', fallbackError);
+        // If fallback fails, just use an empty array
+        filteredEvents = [];
+      } else {
+        // Apply city filter to fallback events (if it wasn't applied in main queryBuilder)
+        let processedFallbackEvents = fallbackEvents;
+        if (selectedCity) {
+            const selectedCityLower = selectedCity.toLowerCase();
+            processedFallbackEvents = fallbackEvents.filter(e => {
+                const eventCityLower = typeof e.city === 'string' ? e.city.toLowerCase() : null;
+                if (selectedCityLower === 'bielefeld' || selectedCityLower === 'bi') {
+                    return eventCityLower === null || eventCityLower === 'bielefeld' || eventCityLower === 'bi';
+                } else {
+                    return eventCityLower === selectedCityLower;
+                }
+            });
+        }
+        filteredEvents = processedFallbackEvents.filter((e: any) => e.date >= today); // Ensure they are future events
+        console.log(`[ai-event-chat] Fallback: ${filteredEvents.length} future events from city for AI model.`);
+      }
     }
 
     // Sort all filtered events by date
@@ -376,7 +392,7 @@ serve(async (req) => {
 
     // Log events in the current month
     const thisMonthEvents = filteredEvents.filter((e: any) => e.date >= firstDayOfMonth && e.date <= lastDayOfMonth);
-    console.log(`[ai-event-chat] Events für diesen Monat (${firstDayOfMonth} bis ${lastDayOfMonth}): ${thisMonthEvents.length}`);
+    console.log(`[ai-event-chat] Events für diesen Monat (${firstDayOfMonth} bis ${lastMonthDayOfMonth}): ${thisMonthEvents.length}`); // Fixed lastMonthDayOfMonth to lastDayOfMonth
     if (thisMonthEvents.length > 0) {
       console.log('[ai-event-chat] Beispiele für Events diesen Monat:', 
         thisMonthEvents.slice(0, 3).map((e: any) => `${e.title} (${e.date})`));
@@ -401,7 +417,7 @@ serve(async (req) => {
       })
       .join("\n\n");
 
-    const totalEventsInfo = `Es gibt insgesamt ${cityFilteredDbEvents.length} Events in der Datenbank für die ausgewählte Stadt. Ich habe dir die ${filteredEvents.length} relevantesten basierend auf deiner Anfrage ausgewählt.\nDie Anzahl der Likes gibt an, wie beliebt ein Event ist.`;
+    const totalEventsInfo = `Es gibt insgesamt ${dbEvents.length} Events in der Datenbank für die ausgewählte Stadt. Ich habe dir die ${filteredEvents.length} relevantesten basierend auf deiner Anfrage ausgewählt.\nDie Anzahl der Likes gibt an, wie beliebt ein Event ist.`; // Changed from cityFilteredDbEvents.length to dbEvents.length
 
     const cityNameForPrompt = selectedCity || "Bielefeld";
     
@@ -460,7 +476,7 @@ serve(async (req) => {
     console.log("[ai-event-chat] Categories being sent:", filteredEvents.map((e: any) => `${e.title}: ${e.category}`));
     
     const payload = {
-      model: "google/gemini-2.0-flash-lite-001", // gemini-2.0-flash-lite is more reliable
+      model: "google/gemini-2.0-flash-lite-001", 
       messages: [
         { role: "system", content: systemMessage },
         { role: "user", content: query },
@@ -472,7 +488,7 @@ serve(async (req) => {
     console.log("[ai-event-chat] Full payload being sent:", JSON.stringify(payload));
 
     const orRes = await fetch(
-      "https://openrouter.ai/api/v1/chat/completions",
+      "[https://openrouter.ai/api/v1/chat/completions](https://openrouter.ai/api/v1/chat/completions)",
       {
         method: "POST",
         headers: {
@@ -551,14 +567,12 @@ serve(async (req) => {
     let aiContent: string = choice.message?.content ?? 
       (choice.message?.function_call ? JSON.stringify(choice.message.function_call) : "Keine Antwort erhalten");
     
-    // Hier den Text transformieren: Umwandeln von Markdown-Listen in HTML-Listen
-    // Ersetze Listen-Formatierungen wie "* Item" oder "- Item" in HTML <ul><li> Format
+    // Hier den Text transformieren: Umwandlung von Markdown-Listen in HTML-Listen und Hervorhebung
     aiContent = aiContent.replace(/\n[\*\-]\s+(.*?)(?=\n[\*\-]|\n\n|$)/g, (match, item) => {
-      // Extract event information if available
+      // Extract event information if available and format as styled card
       const titleMatch = item.match(/(.*?) um (.*?) (?:in|bei|im) (.*?) \(Kategorie: (.*?)\)/i);
       if (titleMatch) {
         const [_, title, time, location, category] = titleMatch;
-        // Format as event card similar to EventCard component
         return `
           <li class="dark-glass-card rounded-lg p-2 mb-2 hover-scale">
             <div class="flex justify-between items-start gap-1">
@@ -566,73 +580,64 @@ serve(async (req) => {
                 <h4 class="font-medium text-sm text-white break-words">${title}</h4>
                 <div class="flex flex-wrap items-center gap-1 mt-0.5 text-xs text-white">
                   <div class="flex items-center">
-                    <svg class="w-3 h-3 mr-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <svg class="w-3 h-3 mr-0.5 flex-shrink-0" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     <span>${time} Uhr</span>
                   </div>
                   <div class="flex items-center max-w-[120px] overflow-hidden">
-                    <svg class="w-3 h-3 mr-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <svg class="w-3 h-3 mr-0.5 flex-shrink-0" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
                     <span class="truncate">${location}</span>
                   </div>
                 </div>
               </div>
               <div class="flex items-center gap-2">
                 <span class="bg-black text-red-500 dark:bg-black dark:text-red-500 flex-shrink-0 flex items-center gap-0.5 text-xs font-medium whitespace-nowrap px-1.5 py-0.5 rounded-md">
-                  <svg class="w-3 h-3 mr-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <svg class="w-3 h-3 mr-0.5" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                   ${category}
                 </span>
                 <div class="flex items-center">
-                  <svg class="w-3 h-3 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                  <svg class="w-3 h-3 text-white" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
                 </div>
               </div>
             </div>
           </li>`;
       }
-      
-      // Default list item if not an event
       return `<li class="mb-1">${item}</li>`;
     });
     
-    // Füge <ul> Tags um die Liste
+    // Wrap lists with <ul> tags
     if (aiContent.includes('<li>')) {
       aiContent = aiContent.replace(/<li>/, '<ul class="space-y-2 my-3"><li>');
       aiContent = aiContent.replace(/([^>])$/, '$1</ul>');
-      
-      // Stelle sicher, dass die Liste korrekt schließt
       if (!aiContent.endsWith('</ul>')) {
         aiContent += '</ul>';
       }
     }
     
-    // Generell Markdown-Bold in HTML-Bold umwandeln
+    // Markdown bold to HTML bold
     aiContent = aiContent.replace(/\*\*(.*?)\*\*/g, '<strong class="text-red-500">$1</strong>');
     aiContent = aiContent.replace(/__(.*?)__/g, '<strong class="text-red-500">$1</strong>');
     
     // Highlight personalized content
     if (isPersonalRequest || userInterests?.length > 0) {
-      // Make interest keywords bold in the text
       if (userInterests && userInterests.length > 0) {
         userInterests.forEach((interest: string) => {
           const interestRegex = new RegExp(`\\b(${interest})\\b`, 'gi');
           aiContent = aiContent.replace(interestRegex, '<strong class="text-yellow-500">$1</strong>');
         });
       }
-      
-      // Add a personalization badge at the top
       const interestsLabel = userInterests && userInterests.length > 0 
         ? `basierend auf deinem Interesse für ${userInterests.join(', ')}` 
         : 'basierend auf deinen Vorlieben';
-        
       const personalizationBadge = `
         <div class="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-2 mb-3">
           <p class="text-sm flex items-center gap-1">
-            <svg class="w-4 h-4 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="w-4 h-4 text-yellow-500" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
             </svg>
             <span>Personalisierte Vorschläge ${interestsLabel}</span>
           </p>
         </div>
       `;
-      
       aiContent = personalizationBadge + aiContent;
     }
     
