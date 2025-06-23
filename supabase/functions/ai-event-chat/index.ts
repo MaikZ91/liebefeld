@@ -72,9 +72,10 @@ serve(async (req) => {
     // Apply city filter directly in the database query
     if (selectedCity) {
       const targetCityName = selectedCity.toLowerCase();
-      if (targetCityName === 'bielefeld') {
-        dbQuery = dbQuery.or('city.is.null,city.eq.bielefeld');
-        console.log(`[ai-event-chat] Applying DB filter for 'Bielefeld' (includes null city).`);
+      // Corrected logic: if selectedCity is 'bielefeld' or 'bi', include events where city is null
+      if (targetCityName === 'bielefeld' || targetCityName === 'bi') {
+        dbQuery = dbQuery.or('city.is.null,city.eq.bielefeld,city.eq.bi');
+        console.log(`[ai-event-chat] Applying DB filter for 'Bielefeld' (includes null city and 'bi').`);
       } else {
         dbQuery = dbQuery.eq('city', targetCityName);
       }
@@ -339,8 +340,9 @@ serve(async (req) => {
 
       if (selectedCity) {
         const targetCityName = selectedCity.toLowerCase();
-        if (targetCityName === 'bielefeld') {
-          fallbackDbQuery = fallbackDbQuery.or('city.is.null,city.eq.bielefeld');
+        // Corrected fallback logic: if selectedCity is 'bielefeld' or 'bi', include events where city is null
+        if (targetCityName === 'bielefeld' || targetCityName === 'bi') {
+          fallbackDbQuery = fallbackDbQuery.or('city.is.null,city.eq.bielefeld,city.eq.bi');
         } else {
           fallbackDbQuery = fallbackDbQuery.eq('city', targetCityName);
         }
