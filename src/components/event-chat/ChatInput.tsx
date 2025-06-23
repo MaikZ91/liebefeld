@@ -1,10 +1,11 @@
+// src/components/event-chat/ChatInput.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Heart, History, CalendarPlus, Send, Calendar, ChevronDown } from 'lucide-react';
-import { ChatInputProps } from './types';
+import { ChatInputProps } from './types'; // Sicherstellen, dass die aktualisierten Typen importiert werden
 import { useEventContext } from '@/contexts/EventContext';
 
 const AnimatedText = ({ text, className = '' }: { text: string; className?: string }) => {
@@ -15,18 +16,19 @@ const AnimatedText = ({ text, className = '' }: { text: string; className?: stri
   );
 };
 
+// `ExtendedChatInputProps` erbt nun korrekt von der aktualisierten `ChatInputProps`
 interface ExtendedChatInputProps extends ChatInputProps {
   activeCategory?: string;
   onCategoryChange?: (category: string) => void;
 }
 
 const ChatInput: React.FC<ExtendedChatInputProps> = ({
-  input, // This is the value from the parent hook (useChatLogic or useMessageSending)
-  setInput, // This is the setter for the parent hook's input
+  input, 
+  setInput, 
   handleSendMessage,
-  isTyping, // This is AI's processing status OR community sending status
-  handleKeyPress, // KeyPress from parent (e.g., for Enter key)
-  handleInputChange: parentHandleInputChange, // This is the onChange from parent, potentially unused
+  isTyping, 
+  handleKeyPress, 
+  // `handleInputChange: parentHandleInputChange` wurde entfernt, da es nicht mehr benötigt wird und Typfehler verursacht.
   isHeartActive,
   handleHeartClick,
   globalQueries,
@@ -40,19 +42,16 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 }) => {
   const { events } = useEventContext();
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
-  // NEW: Local state for the input field value
   const [localInput, setLocalInput] = useState(input);
 
-  // Sync localInput with parent input prop if it changes (e.g., from example prompts)
   useEffect(() => {
     setLocalInput(input);
   }, [input]);
 
-
   const suggestions = [
     "Frage nach Events...",
     "Welche Events gibt es heute?",
-    "Was kann ich am Wochenende machen?",
+    "Was geht am Wochenende in Liebefeld?",
     "Gibt es Konzerte im Lokschuppen?",
     "❤️ Zeige mir Events, die zu mir passen"
   ];
@@ -67,7 +66,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
       return;
     }
 
-    if (localInput.trim() !== '') { // Use localInput here
+    if (localInput.trim() !== '') { 
       setDisplayText('');
       return;
     }
@@ -92,44 +91,35 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     }, isDeleting ? 50 : 100);
 
     return () => clearTimeout(timer);
-  }, [displayText, isDeleting, currentSuggestionIndex, localInput, suggestions, showAnimatedPrompts]); // Use localInput
+  }, [displayText, isDeleting, currentSuggestionIndex, localInput, suggestions, showAnimatedPrompts]); 
 
-
-  // NEW: Local handler for input change
+  // Lokaler Handler für Input-Änderungen, der den lokalen Zustand aktualisiert
   const handleLocalInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalInput(e.target.value); // Update local state immediately
-    // If there's a parentHandleInputChange and it's not the default one from useChatLogic
-    // (which is now empty), we could call it here for other effects if needed.
-    // For AI Chat, it's not needed, for Community Chat, useMessageSending's onChange is called.
-    if (activeChatModeValue === 'community' && parentHandleInputChange) {
-      parentHandleInputChange(e); // Propagate to useMessageSending if in community mode
-    }
+    setLocalInput(e.target.value);
+    // Die `setInput`-Prop (vom Parent) wird NICHT hier aufgerufen, sondern erst beim Senden,
+    // um die "single source of truth" korrekt zu halten.
   };
 
-  // NEW: Local handler for sending message
-  const handleLocalSendMessage = (eventData?: any) => {
-    setInput(localInput); // Update parent hook's input state right before sending
-    handleSendMessage(localInput); // Send message using the parent's handler
-    setLocalInput(''); // Clear local input field
+  // Lokaler Handler für das Senden (z.B. Enter-Taste)
+  const handleLocalSendMessage = () => {
+    setInput(localInput); // Aktualisiert den Input-Zustand des Parent-Hooks
+    handleSendMessage(localInput); // Ruft die Sende-Funktion des Parent-Hooks auf
+    setLocalInput(''); // Leert das lokale Input-Feld
   };
   
-  // NEW: Local handler for key press (specifically for Enter)
+  // Lokaler Handler für Tastendrücke (z.B. Enter)
   const handleLocalKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       handleLocalSendMessage();
     } else {
-      // If parent has a keyPress handler (e.g. for debug or other purposes), call it
-      if (handleKeyPress) {
-        handleKeyPress(e);
-      }
+      handleKeyPress(e); // Ruft die `handleKeyPress`-Prop des Parent-Hooks auf (falls vorhanden, z.B. für Debugging)
     }
   };
 
-
   const handleSuggestionClick = () => {
-    if (localInput.trim() === '' && displayText.trim() !== '') { // Use localInput
-      setLocalInput(displayText); // Set local input from suggestion
+    if (localInput.trim() === '' && displayText.trim() !== '') { 
+      setLocalInput(displayText); 
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
@@ -140,7 +130,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 
   const getDynamicPlaceholder = () => {
     if (activeChatModeValue === 'ai') {
-      return showAnimatedPrompts && localInput.trim() === '' ? displayText : "Frage nach Events..."; // Use localInput
+      return showAnimatedPrompts && localInput.trim() === '' ? displayText : "Frage nach Events..."; 
     } else {
       return "Verbinde dich mit der Community...";
     }
@@ -197,13 +187,11 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     }, 0);
   };
 
-  // Calculate dynamic padding based on buttons
   const getButtonWidth = () => {
     if (activeChatModeValue === 'community') {
-      return 'pl-[120px]'; // Calendar + Category buttons
+      return 'pl-[120px]'; 
     } else {
-      // AI mode: Heart + History (if available) + Add Event
-      const baseButtons = 2; // Heart + Add Event
+      const baseButtons = 2; 
       const historyButton = globalQueries.length > 0 ? 1 : 0;
       const totalButtons = baseButtons + historyButton;
       return totalButtons === 2 ? 'pl-14' : 'pl-20';
@@ -323,15 +311,15 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           getButtonWidth().replace('pl-', 'left-')
         )}
         onClick={handleSuggestionClick}
-        style={{ pointerEvents: localInput.trim() === '' && displayText.trim() !== '' ? 'auto' : 'none' }} // Use localInput
+        style={{ pointerEvents: localInput.trim() === '' && displayText.trim() !== '' ? 'auto' : 'none' }} 
       />
       
       <input
         ref={inputRef}
         type="text"
-        value={localInput} // Use localInput here
-        onChange={handleLocalInputChange} // Use local handler
-        onKeyPress={handleLocalKeyPress} // Use local handler
+        value={localInput} 
+        onChange={handleLocalInputChange} 
+        onKeyPress={handleLocalKeyPress} 
         placeholder={placeholderText}
         className={cn(
           "w-full bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pr-10 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 text-left",
@@ -340,11 +328,11 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
       />
 
       <button
-        onClick={() => handleLocalSendMessage()} // Use local handler
-        disabled={!localInput.trim() || isTyping} // Use localInput for validation
+        onClick={() => handleLocalSendMessage()} 
+        disabled={!localInput.trim() || isTyping} 
         className={cn(
           "absolute right-1 top-1/2 transform -translate-y-1/2 rounded-full p-1.5 flex-shrink-0",
-          localInput.trim() && !isTyping // Use localInput for visual state
+          localInput.trim() && !isTyping 
             ? "bg-red-500 hover:bg-red-600 text-white"
             : "bg-zinc-800 text-zinc-500"
         )}
