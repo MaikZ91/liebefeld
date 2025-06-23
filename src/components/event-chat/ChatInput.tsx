@@ -1,4 +1,4 @@
-
+// src/components/event-chat/ChatInput.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Heart, History, CalendarPlus, Send, Calendar, ChevronDown } from 'lucide-react';
 import { ChatInputProps } from './types';
 import { useEventContext } from '@/contexts/EventContext';
+import { supabase } from '@/integrations/supabase/client';
+import { AVATAR_KEY, USERNAME_KEY } from '@/types/chatTypes'; // Added USERNAME_KEY
 
 const AnimatedText = ({ text, className = '' }: { text: string; className?: string }) => {
   return (
@@ -19,14 +21,20 @@ const AnimatedText = ({ text, className = '' }: { text: string; className?: stri
 interface ExtendedChatInputProps extends ChatInputProps {
   activeCategory?: string;
   onCategoryChange?: (category: string) => void;
+  // `input` and `setInput` are still here because `FullPageChatBot`
+  // needs to control the value when external actions (like clicking suggestions) happen.
+  // The internal state `internalNewMessage` will handle immediate typing feedback.
+  input: string;
+  setInput: (value: string) => void;
+  handleSendMessage: (input?: string) => Promise<void>;
 }
 
 const ChatInput: React.FC<ExtendedChatInputProps> = ({
-  input,
-  setInput,
-  handleSendMessage,
-  isTyping,
-  handleKeyPress,
+  input, // Controlled input from parent (useChatLogic)
+  setInput, // Setter for the controlled input
+  handleSendMessage, // Parent's send message handler
+  isTyping: parentIsTyping, // Renamed to avoid conflict with internal state
+  handleKeyPress: parentHandleKeyPress, // Renamed
   isHeartActive,
   handleHeartClick,
   globalQueries,
@@ -40,6 +48,16 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 }) => {
   const { events } = useEventContext();
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
+  const [internalNewMessage, setInternalNewMessage] = useState(input); // Internal state for immediate input feedback
+  const [internalIsTyping, setInternalIsTyping] = useState(false); // Internal typing state
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync internal state with external prop, but only if external changes it
+  useEffect(() => {
+    if (input !== internalNewMessage) {
+      setInternalNewMessage(input);
+    }
+  }, [input]);
 
   const suggestions = [
     "Frage nach Events...",
@@ -59,7 +77,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
       return;
     }
 
-    if (input.trim() !== '') {
+    if (internalNewMessage.trim() !== '') { // Use internal state here
       setDisplayText('');
       return;
     }
@@ -84,27 +102,98 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     }, isDeleting ? 50 : 100);
 
     return () => clearTimeout(timer);
-  }, [displayText, isDeleting, currentSuggestionIndex, input, suggestions, showAnimatedPrompts]);
+  }, [displayText, isDeleting, currentSuggestionIndex, internalNewMessage, suggestions, showAnimatedPrompts]); // Use internalNewMessage
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value);
+    const newValue = e.target.value;
+    setInternalNewMessage(newValue); // Update internal state immediately
+
+    // Manage typing status only if in AI mode and there's a username (not 'Gast')
+    if (activeChatModeValue === 'ai' && localStorage.getItem(USERNAME_KEY) && localStorage.getItem(USERNAME_KEY) !== 'Gast') {
+      if (!internalIsTyping && newValue.trim()) {
+        setInternalIsTyping(true);
+        // Send typing status start
+        supabase.channel(`typing:ai`).send({ // Use a specific channel for AI typing
+          type: 'broadcast',
+          event: 'typing',
+          payload: {
+            username: localStorage.getItem(USERNAME_KEY),
+            avatar: localStorage.getItem(AVATAR_KEY),
+            isTyping: true
+          }
+        });
+      }
+
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      
+      // Set a timeout to send typing status end after a delay
+      typingTimeoutRef.current = setTimeout(() => {
+        if (internalIsTyping) {
+          supabase.channel(`typing:ai`).send({ // Use a specific channel for AI typing
+            type: 'broadcast',
+            event: 'typing',
+            payload: {
+              username: localStorage.getItem(USERNAME_KEY),
+              avatar: localStorage.getItem(AVATAR_KEY),
+              isTyping: false
+            }
+          });
+          setInternalIsTyping(false);
+        }
+      }, 2000);
+    }
+  };
+
+  const handleSubmit = async () => {
+    const messageToSend = internalNewMessage.trim(); // Use internal state
+    if (!messageToSend) return;
+
+    setInput(''); // Clear parent's input state directly after preparing message
+    await handleSendMessage(messageToSend); // Pass the message directly
+    setInternalNewMessage(''); // Clear internal input after sending
+
+    // Ensure typing status is set to false after sending
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+    if (internalIsTyping && activeChatModeValue === 'ai') { // Check active mode again
+        supabase.channel(`typing:ai`).send({ // Use a specific channel for AI typing
+            type: 'broadcast',
+            event: 'typing',
+            payload: {
+                username: localStorage.getItem(USERNAME_KEY),
+                avatar: localStorage.getItem(AVATAR_KEY),
+                isTyping: false
+            }
+        });
+        setInternalIsTyping(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(); // Call internal submit directly
+    }
+    // parentHandleKeyPress(e); // Still allow parent to handle general key presses if needed
   };
 
   const handleSuggestionClick = () => {
-    if (input.trim() === '' && displayText.trim() !== '') {
+    if (internalNewMessage.trim() === '' && displayText.trim() !== '') {
       const currentSuggestion = suggestions[currentSuggestionIndex];
-      setInput(currentSuggestion);
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-      }, 0);
+      setInternalNewMessage(currentSuggestion); // Update internal state
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
     }
   };
 
   const getDynamicPlaceholder = () => {
     if (activeChatModeValue === 'ai') {
-      return showAnimatedPrompts && input.trim() === '' ? displayText : "Frage nach Events...";
+      return showAnimatedPrompts && internalNewMessage.trim() === '' ? displayText : "Frage nach Events...";
     } else {
       return "Verbinde dich mit der Community...";
     }
@@ -124,7 +213,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
               key={event.id}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-pointer border border-gray-200 dark:border-gray-700"
               onClick={() => {
-                setInput(`Hier ist ein Event: ${event.title} am ${event.date} um ${event.time} in ${event.location}`);
+                const eventMessage = `Hier ist ein Event: ${event.title} am ${event.date} um ${event.time} in ${event.location}`;
+                setInternalNewMessage(eventMessage); // Update internal state
                 setIsEventSelectOpen(false);
                 if (inputRef.current) {
                   inputRef.current.focus();
@@ -214,6 +304,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
             <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
               <PopoverTrigger asChild>
                 <Button
+                  onClick={(e) => { e.preventDefault(); setIsEventSelectOpen(true); }} // Prevent form submission
                   variant="outline"
                   size="icon"
                   type="button"
@@ -283,15 +374,15 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           getButtonWidth().replace('pl-', 'left-')
         )}
         onClick={handleSuggestionClick}
-        style={{ pointerEvents: input.trim() === '' && displayText.trim() !== '' ? 'auto' : 'none' }}
+        style={{ pointerEvents: internalNewMessage.trim() === '' && displayText.trim() !== '' ? 'auto' : 'none' }}
       />
       
       <input
         ref={inputRef}
         type="text"
-        value={input}
-        onChange={handleInputChange}
-        onKeyPress={handleKeyPress}
+        value={internalNewMessage} // Use internal state
+        onChange={handleInputChange} // Use internal handler
+        onKeyDown={handleKeyDown} // Use internal handler
         placeholder={placeholderText}
         className={cn(
           "w-full bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pr-10 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 text-left",
@@ -300,11 +391,11 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
       />
 
       <button
-        onClick={() => handleSendMessage()}
-        disabled={!input.trim() || isTyping}
+        onClick={handleSubmit} // Call internal submit directly
+        disabled={!internalNewMessage.trim() || parentIsTyping} // Use parentIsTyping for button disabling
         className={cn(
           "absolute right-1 top-1/2 transform -translate-y-1/2 rounded-full p-1.5 flex-shrink-0",
-          input.trim() && !isTyping
+          internalNewMessage.trim() && !parentIsTyping // Use parentIsTyping for button styling
             ? "bg-red-500 hover:bg-red-600 text-white"
             : "bg-zinc-800 text-zinc-500"
         )}
