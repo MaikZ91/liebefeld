@@ -39,9 +39,7 @@ serve(async (req) => {
     } = await req.json();
 
     console.log(`[ai-event-chat] START execution for query: "${query}"`);
-    if (selectedCity) {
-      console.log(`[ai-event-chat] Received selectedCity: ${selectedCity}`);
-    }
+    console.log(`[ai-event-chat] Received selectedCity (from frontend): ${selectedCity}`);
     console.log(`[ai-event-chat] Received currentDate: ${currentDate}`);
     console.log(`[ai-event-chat] Received next week range: ${nextWeekStart} to ${nextWeekEnd}`);
     
@@ -58,6 +56,7 @@ serve(async (req) => {
     }
 
     const today = new Date().toISOString().split("T")[0];
+    console.log(`[ai-event-chat] Server's 'today' date: ${today}`);
 
     /***************************
      * EVENT RETRIEVAL AND FILTERING
@@ -69,21 +68,33 @@ serve(async (req) => {
       .order("date", { ascending: true });
 
     if (eventsError) {
-      throw new Error(`[ai-event-chat] Datenbank‑Fehler: ${eventsError.message}`);
+      throw new Error(`[ai-event-chat] Datenbank-Fehler: ${eventsError.message}`);
     }
     console.log(`[ai-event-chat] Fetched ${dbEvents.length} total events from DB.`);
+    // Log the dates of first few events fetched directly from DB to confirm they are there
+    console.log(`[ai-event-chat] First 5 events from DB: ${JSON.stringify(dbEvents.slice(0,5).map(e => ({id: e.id, title: e.title, date: e.date, city: e.city})))}`);
+
 
     let cityFilteredDbEvents = dbEvents;
     if (selectedCity) {
-      console.log(`[ai-event-chat] Filtering DB events by city: ${selectedCity}`);
-      const targetCityName = selectedCity.toLowerCase();
+      const selectedCityLower = selectedCity.toLowerCase();
+      // Map frontend abbr to full name for comparison if needed, or handle direct abbr
+      // Assuming frontend sends 'BI' or 'bielefeld' for Bielefeld, and full lowercased name for others.
+      // Database stores 'Bielefeld' (capitalized) or null for Bielefeld-specific, and full names for others.
       
-      if (targetCityName === 'bielefeld') {
-        cityFilteredDbEvents = dbEvents.filter(e => !e.city || e.city.toLowerCase() === 'bielefeld');
-        console.log(`[ai-event-chat] Special filter for 'Bielefeld' (includes null city).`);
-      } else {
-        cityFilteredDbEvents = dbEvents.filter(e => e.city && e.city.toLowerCase() === targetCityName);
-      }
+      console.log(`[ai-event-chat] Applying city filter for: ${selectedCityLower}`);
+
+      cityFilteredDbEvents = dbEvents.filter(e => {
+        const eventCityLower = typeof e.city === 'string' ? e.city.toLowerCase() : null;
+
+        if (selectedCityLower === 'bielefeld' || selectedCityLower === 'bi') {
+          // If Bielefeld is selected, show events with 'Bielefeld', 'bi', or null city
+          return eventCityLower === null || eventCityLower === 'bielefeld' || eventCityLower === 'bi';
+        } else {
+          // For other cities, exact match
+          return eventCityLower === selectedCityLower;
+        }
+      });
       console.log(`[ai-event-chat] After city filtering for "${selectedCity}": ${cityFilteredDbEvents.length} events remain.`);
     } else {
         console.log(`[ai-event-chat] No city selected. Using all ${dbEvents.length} events.`);
@@ -91,7 +102,7 @@ serve(async (req) => {
     
     // KEY FIX: Always start with the city-filtered list from the database.
     let filteredEvents = cityFilteredDbEvents;
-    console.log(`[ai-event-chat] Initial event pool for filtering has ${filteredEvents.length} events.`);
+    console.log(`[ai-event-chat] Initial event pool for filtering has ${filteredEvents.length} events (after city filter).`);
     
     const lowercaseQuery = query.toLowerCase();
     
@@ -108,7 +119,7 @@ serve(async (req) => {
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1).toISOString().split('T')[0];
     const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).toISOString().split('T')[0];
     
-    console.log(`[ai-event-chat] Current month range: ${firstDayOfMonth} to ${lastDayOfMonth}`);
+    console.log(`[ai-event-chat] Current month range (for date-specific query filters): ${firstDayOfMonth} to ${lastDayOfMonth}`);
 
     // Filter for date-specific queries
     // Filter für "heute" / "today" / "aktuell" etc.
@@ -128,7 +139,7 @@ serve(async (req) => {
       lowercaseQuery.includes("in diesem monat") ||
       lowercaseQuery.includes("diesen monat") ||
       lowercaseQuery.includes("this month") ||
-      lowercaseQuery.includes("im mai") ||
+      lowercaseQuery.includes("im mai") || // Specific month queries like 'im mai' should ideally be handled by LLM, but included here for completeness
       lowercaseQuery.includes("in may") ||
       lowercaseQuery.includes("aktueller monat") ||
       lowercaseQuery.includes("current month")
@@ -192,12 +203,12 @@ serve(async (req) => {
       lowercaseQuery.includes("saturday") ||
       lowercaseQuery.includes("sunday")
     ) {
-      const today = new Date(currentDate);
-      const dayOfWeek = today.getDay();
+      const todayDateObj = new Date(currentDate);
+      const dayOfWeek = todayDateObj.getDay();
       
-      const daysUntilSaturday = dayOfWeek === 6 ? 7 : 6 - dayOfWeek;
-      const saturday = new Date(today);
-      saturday.setDate(today.getDate() + daysUntilSaturday);
+      const daysUntilSaturday = dayOfWeek === 6 ? 0 : 6 - dayOfWeek; // 0 if today is Saturday, otherwise days until next Saturday
+      const saturday = new Date(todayDateObj);
+      saturday.setDate(todayDateObj.getDate() + daysUntilSaturday);
       const saturdayStr = saturday.toISOString().split('T')[0];
       
       const sunday = new Date(saturday);
@@ -208,7 +219,14 @@ serve(async (req) => {
       filteredEvents = filteredEvents.filter(e => e.date === saturdayStr || e.date === sundayStr);
       console.log(`[ai-event-chat] Nach Filterung für "Wochenende": ${filteredEvents.length} Events übrig`);
     }
-    
+    // If no specific date filter is explicitly requested, but it's a personalized request,
+    // or if no date filter is applied, we implicitly want events from today onwards.
+    else if (!isPersonalRequest) { // Only apply this broad filter if it's NOT a specific date query AND NOT a personalized query
+      console.log(`[ai-event-chat] No specific date query detected or not a personalized request. Filtering for events from today (${today}) onwards.`);
+      filteredEvents = filteredEvents.filter((e: any) => e.date >= today);
+      console.log(`[ai-event-chat] After general 'today onwards' filter: ${filteredEvents.length} events remain.`);
+    }
+
     // Apply additional filters for personalized requests or heart mode
     // First apply location filtering if userLocations are provided
     if (userLocations && userLocations.length > 0) {
@@ -232,7 +250,7 @@ serve(async (req) => {
         filteredEvents = locationFilteredEvents;
         console.log(`[ai-event-chat] Found ${locationFilteredEvents.length} events matching user locations (from ${beforeLocationFilter})`);
       } else {
-        console.log(`[ai-event-event-chat] No events found matching user locations from ${beforeLocationFilter} events`);
+        console.log(`[ai-event-chat] No events found matching user locations from ${beforeLocationFilter} events`);
       }
     }
     
@@ -327,15 +345,17 @@ serve(async (req) => {
       console.log(`[ai-event-chat] Nach Filterung für Kategorie "${categoryFilter}": ${filteredEvents.length} von ${beforeCount} Events übrig`);
     }
 
-    // Make sure we're only showing future events (or today's events)
-    filteredEvents = filteredEvents.filter((e: any) => e.date >= today);
-    console.log(`[ai-event-chat] Nach Filterung für zukünftige Events: ${filteredEvents.length} Events übrig`);
+    // Ensure main filter always starts from today if no other specific date filter was applied.
+    // This was previously applied only if !isPersonalRequest, but should apply broadly if no date-specific query caught it.
+    // I've moved the generic "from today onwards" filter up to a more general else-if block
+    // to ensure it applies when no other date filter is active.
     
-    // Falls die Filterung zu streng war und keine Events übrig sind, nehmen wir die letzten 20 Events
+    // Falls die Filterung zu streng war und keine Events übrig sind, nehmen wir die nächsten 20 Events ab heute.
+    // Dies sollte nur als letzter Ausweg dienen, um immer eine Antwort zu haben.
     if (filteredEvents.length === 0) {
-      console.log("Keine Events nach Filterung übrig, verwende die nächsten 20 anstehenden Events");
-      filteredEvents = cityFilteredDbEvents
-        .filter((e: any) => e.date >= today)
+      console.log("Keine Events nach Filterung übrig, verwende die nächsten 20 anstehenden Events (Fallback)");
+      filteredEvents = cityFilteredDbEvents // Fallback to city-filtered ALL events
+        .filter((e: any) => e.date >= today) // Ensure they are future events
         .sort((a: any, b: any) => a.date.localeCompare(b.date))
         .slice(0, 20);
     }
@@ -385,7 +405,7 @@ serve(async (req) => {
 
     const cityNameForPrompt = selectedCity || "Bielefeld";
     
-    let systemMessage = `Du bist ein Event‑Assistent für ${cityNameForPrompt}. Begrüße den Nutzer freundlich je nach Tageszeit. Liste dann alle Events als chronologische Timeline (geordnet nach Uhrzeit) auf. Gruppiere immer nach den 3 Kategorien: Ausgehen, Sport und Kreativität. Die Kategorie wird in GROßBUCHSTABEN in Rot aufgelistet. WICHTIG: Events mit der category "Sonstiges" werden immer der Kategorie "Ausgehen" zugewiesen! WICHTIG, WICHTIG: Wenn Improtheater im Eventname: wird immer der Kategorie "Kreativität" zugewiesen(ignoriere hier die category: Sport). Beschreibe jedes Event kurz, nimm dafür alle Infos die du hast die du hast für jedes Event. Aktuelles Datum: ${today}.\n${totalEventsInfo}\nEvents mit vielen Likes sind besonders beliebt und bekommen oft den Vorzug bei Empfehlungen. Die Likes-Anzahl findest du bei jedem Event. Berücksichtige die Anzahl der Likes für Empfehlungen und markiere besonders beliebte Events passend.\n`;
+    let systemMessage = `Du bist ein Event-Assistent für ${cityNameForPrompt}. Begrüße den Nutzer freundlich je nach Tageszeit. Liste dann alle Events als chronologische Timeline (geordnet nach Uhrzeit) auf. Gruppiere immer nach den 3 Kategorien: Ausgehen, Sport und Kreativität. Die Kategorie wird in GROßBUCHSTABEN in Rot aufgelistet. WICHTIG: Events mit der category "Sonstiges" werden immer der Kategorie "Ausgehen" zugewiesen! WICHTIG, WICHTIG: Wenn Improtheater im Eventname: wird immer der Kategorie "Kreativität" zugewiesen(ignoriere hier die category: Sport). Beschreibe jedes Event kurz, nimm dafür alle Infos die du hast die du hast für jedes Event. Aktuelles Datum: ${today}.\n${totalEventsInfo}\nEvents mit vielen Likes sind besonders beliebt und bekommen oft den Vorzug bei Empfehlungen. Die Likes-Anzahl findest du bei jedem Event. Berücksichtige die Anzahl der Likes für Empfehlungen und markiere besonders beliebte Events passend.\n`;
 
     if (isPersonalRequest || userInterests?.length > 0 || userLocations?.length > 0) {
       systemMessage += `Dies ist eine personalisierte Anfrage. `;
@@ -478,9 +498,9 @@ serve(async (req) => {
      ***************************/
     const debugHtml = `
       <details class="rounded-lg border border-gray-700/30 bg-gray-900/10 p-3 mt-3 text-sm">
-        <summary class="cursor-pointer font-medium text-red-500">Debug‑Info anzeigen</summary>
+        <summary class="cursor-pointer font-medium text-red-500">Debug-Info anzeigen</summary>
         <pre class="mt-2 whitespace-pre-wrap">Gesendetes Prompt:\n${JSON.stringify(payload, null, 2)}\n\n` +
-      `HTTP‑Status: ${orRes.status} ${orRes.statusText}\n\n` +
+      `HTTP-Status: ${orRes.status} ${orRes.statusText}\n\n` +
       `Modell: ${parsed?.model || "Unbekannt"}\n\n` +
       `Benutzerinteressen: ${JSON.stringify(userInterests)}\n\n` +
       `Bevorzugte Orte: ${JSON.stringify(userLocations)}\n\n` +
