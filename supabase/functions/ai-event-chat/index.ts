@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"; // <-- Korrektur hier
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,7 +39,9 @@ serve(async (req) => {
     } = await req.json();
 
     console.log(`[ai-event-chat] START execution for query: "${query}"`);
-    console.log(`[ai-event-chat] Received selectedCity (from frontend): ${selectedCity}`);
+    if (selectedCity) {
+      console.log(`[ai-event-chat] Received selectedCity: ${selectedCity}`);
+    }
     console.log(`[ai-event-chat] Received currentDate: ${currentDate}`);
     console.log(`[ai-event-chat] Received next week range: ${nextWeekStart} to ${nextWeekEnd}`);
     
@@ -56,46 +58,40 @@ serve(async (req) => {
     }
 
     const today = new Date().toISOString().split("T")[0];
-    console.log(`[ai-event-chat] Server's 'today' date: ${today}`);
 
     /***************************
-     * EVENT RETRIEVAL AND FILTERING (Optimized)
+     * EVENT RETRIEVAL AND FILTERING
      ***************************/
-    console.log(`[ai-event-chat] Fetching events from database for city: ${selectedCity || 'all'}`);
-    let queryBuilder = supabase
+    console.log("[ai-event-chat] Fetching all events from database...");
+    const { data: dbEvents, error: eventsError } = await supabase
       .from("community_events")
       .select("*")
-      .order("date", { ascending: true })
-      .order("time", { ascending: true }); // Order by time as well for consistency
-
-    // Apply city filter directly in the database query
-    if (selectedCity) {
-      const selectedCityLower = selectedCity.toLowerCase();
-      // Handle Bielefeld specifically: match 'bielefeld', 'bi', or null (for default city)
-      if (selectedCityLower === 'bielefeld' || selectedCityLower === 'bi') {
-        queryBuilder = queryBuilder.or('city.eq.bielefeld,city.eq.bi,city.is.null');
-      } else {
-        // For other cities, require an exact match
-        queryBuilder = queryBuilder.eq('city', selectedCityLower);
-      }
-    }
-    
-    // Add a limit to ensure we don't fetch too many rows, but higher than default
-    queryBuilder = queryBuilder.limit(5000); 
-
-    const { data: dbEvents, error: eventsError } = await queryBuilder;
+      .order("date", { ascending: true });
 
     if (eventsError) {
-      throw new Error(`[ai-event-chat] Datenbank-Fehler beim Abrufen: ${eventsError.message}`);
+      throw new Error(`[ai-event-chat] Datenbank‑Fehler: ${eventsError.message}`);
     }
-    console.log(`[ai-event-chat] Fetched ${dbEvents.length} total events from DB for selected city.`);
-    // Log the dates of first few events fetched directly from DB to confirm they are there
-    console.log(`[ai-event-chat] First 5 events from DB (city-filtered): ${JSON.stringify(dbEvents.slice(0,5).map(e => ({id: e.id, title: e.title, date: e.date, city: e.city})))}`);
+    console.log(`[ai-event-chat] Fetched ${dbEvents.length} total events from DB.`);
 
-    // At this point, dbEvents should only contain events for the selected city,
-    // and up to the limit (which is now 5000).
-    let filteredEvents = dbEvents;
-    console.log(`[ai-event-chat] Initial event pool for filtering has ${filteredEvents.length} events (after initial DB filter).`);
+    let cityFilteredDbEvents = dbEvents;
+    if (selectedCity) {
+      console.log(`[ai-event-chat] Filtering DB events by city: ${selectedCity}`);
+      const targetCityName = selectedCity.toLowerCase();
+      
+      if (targetCityName === 'bielefeld') {
+        cityFilteredDbEvents = dbEvents.filter(e => !e.city || e.city.toLowerCase() === 'bielefeld');
+        console.log(`[ai-event-chat] Special filter for 'Bielefeld' (includes null city).`);
+      } else {
+        cityFilteredDbEvents = dbEvents.filter(e => e.city && e.city.toLowerCase() === targetCityName);
+      }
+      console.log(`[ai-event-chat] After city filtering for "${selectedCity}": ${cityFilteredDbEvents.length} events remain.`);
+    } else {
+        console.log(`[ai-event-chat] No city selected. Using all ${dbEvents.length} events.`);
+    }
+    
+    // KEY FIX: Always start with the city-filtered list from the database.
+    let filteredEvents = cityFilteredDbEvents;
+    console.log(`[ai-event-chat] Initial event pool for filtering has ${filteredEvents.length} events.`);
     
     const lowercaseQuery = query.toLowerCase();
     
@@ -112,7 +108,7 @@ serve(async (req) => {
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1).toISOString().split('T')[0];
     const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).toISOString().split('T')[0];
     
-    console.log(`[ai-event-chat] Current month range (for date-specific query filters): ${firstDayOfMonth} to ${lastDayOfMonth}`);
+    console.log(`[ai-event-chat] Current month range: ${firstDayOfMonth} to ${lastDayOfMonth}`);
 
     // Filter for date-specific queries
     // Filter für "heute" / "today" / "aktuell" etc.
@@ -132,7 +128,7 @@ serve(async (req) => {
       lowercaseQuery.includes("in diesem monat") ||
       lowercaseQuery.includes("diesen monat") ||
       lowercaseQuery.includes("this month") ||
-      lowercaseQuery.includes("im mai") || 
+      lowercaseQuery.includes("im mai") ||
       lowercaseQuery.includes("in may") ||
       lowercaseQuery.includes("aktueller monat") ||
       lowercaseQuery.includes("current month")
@@ -196,12 +192,12 @@ serve(async (req) => {
       lowercaseQuery.includes("saturday") ||
       lowercaseQuery.includes("sunday")
     ) {
-      const todayDateObj = new Date(currentDate);
-      const dayOfWeek = todayDateObj.getDay();
+      const today = new Date(currentDate);
+      const dayOfWeek = today.getDay();
       
-      const daysUntilSaturday = dayOfWeek === 6 ? 0 : 6 - dayOfWeek;
-      const saturday = new Date(todayDateObj);
-      saturday.setDate(todayDateObj.getDate() + daysUntilSaturday);
+      const daysUntilSaturday = dayOfWeek === 6 ? 7 : 6 - dayOfWeek;
+      const saturday = new Date(today);
+      saturday.setDate(today.getDate() + daysUntilSaturday);
       const saturdayStr = saturday.toISOString().split('T')[0];
       
       const sunday = new Date(saturday);
@@ -212,14 +208,7 @@ serve(async (req) => {
       filteredEvents = filteredEvents.filter(e => e.date === saturdayStr || e.date === sundayStr);
       console.log(`[ai-event-chat] Nach Filterung für "Wochenende": ${filteredEvents.length} Events übrig`);
     }
-    // If no specific date filter is explicitly requested AND it's not a personalized request,
-    // we implicitly want events from today onwards.
-    else if (!isPersonalRequest) { 
-      console.log(`[ai-event-chat] No specific date query detected or not a personalized request. Filtering for events from today (${today}) onwards.`);
-      filteredEvents = filteredEvents.filter((e: any) => e.date >= today);
-      console.log(`[ai-event-chat] After general 'today onwards' filter: ${filteredEvents.length} events remain.`);
-    }
-
+    
     // Apply additional filters for personalized requests or heart mode
     // First apply location filtering if userLocations are provided
     if (userLocations && userLocations.length > 0) {
@@ -243,7 +232,7 @@ serve(async (req) => {
         filteredEvents = locationFilteredEvents;
         console.log(`[ai-event-chat] Found ${locationFilteredEvents.length} events matching user locations (from ${beforeLocationFilter})`);
       } else {
-        console.log(`[ai-event-chat] No events found matching user locations from ${beforeLocationFilter} events`);
+        console.log(`[ai-event-event-chat] No events found matching user locations from ${beforeLocationFilter} events`);
       }
     }
     
@@ -338,39 +327,17 @@ serve(async (req) => {
       console.log(`[ai-event-chat] Nach Filterung für Kategorie "${categoryFilter}": ${filteredEvents.length} von ${beforeCount} Events übrig`);
     }
 
-    // Falls die Filterung zu streng war und keine Events übrig sind, nehmen wir die nächsten 20 Events ab heute.
-    // Dies sollte nur als letzter Ausweg dienen, um immer eine Antwort zu haben.
+    // Make sure we're only showing future events (or today's events)
+    filteredEvents = filteredEvents.filter((e: any) => e.date >= today);
+    console.log(`[ai-event-chat] Nach Filterung für zukünftige Events: ${filteredEvents.length} Events übrig`);
+    
+    // Falls die Filterung zu streng war und keine Events übrig sind, nehmen wir die letzten 20 Events
     if (filteredEvents.length === 0) {
-      console.log("Keine Events nach Filterung übrig, verwende die nächsten 20 anstehenden Events (Fallback)");
-      // Fallback: fetch events again without specific query filters, but still city-filtered and future.
-      const { data: fallbackEvents, error: fallbackError } = await supabase
-        .from("community_events")
-        .select("*")
-        .order("date", { ascending: true })
-        .order("time", { ascending: true })
-        .limit(20); // Limit to 20 for fallback
-
-      if (fallbackError) {
-        console.error('[ai-event-chat] Fallback query failed:', fallbackError);
-        // If fallback fails, just use an empty array
-        filteredEvents = [];
-      } else {
-        // Apply city filter to fallback events (if it wasn't applied in main queryBuilder)
-        let processedFallbackEvents = fallbackEvents;
-        if (selectedCity) {
-            const selectedCityLower = selectedCity.toLowerCase();
-            processedFallbackEvents = fallbackEvents.filter(e => {
-                const eventCityLower = typeof e.city === 'string' ? e.city.toLowerCase() : null;
-                if (selectedCityLower === 'bielefeld' || selectedCityLower === 'bi') {
-                    return eventCityLower === null || eventCityLower === 'bielefeld' || eventCityLower === 'bi';
-                } else {
-                    return eventCityLower === selectedCityLower;
-                }
-            });
-        }
-        filteredEvents = processedFallbackEvents.filter((e: any) => e.date >= today); // Ensure they are future events
-        console.log(`[ai-event-chat] Fallback: ${filteredEvents.length} future events from city for AI model.`);
-      }
+      console.log("Keine Events nach Filterung übrig, verwende die nächsten 20 anstehenden Events");
+      filteredEvents = cityFilteredDbEvents
+        .filter((e: any) => e.date >= today)
+        .sort((a: any, b: any) => a.date.localeCompare(b.date))
+        .slice(0, 20);
     }
 
     // Sort all filtered events by date
@@ -389,7 +356,7 @@ serve(async (req) => {
 
     // Log events in the current month
     const thisMonthEvents = filteredEvents.filter((e: any) => e.date >= firstDayOfMonth && e.date <= lastDayOfMonth);
-    console.log(`[ai-event-chat] Events für diesen Monat (${firstDayOfMonth} bis ${lastDayOfMonth}): ${thisMonthEvents.length}`); 
+    console.log(`[ai-event-chat] Events für diesen Monat (${firstDayOfMonth} bis ${lastDayOfMonth}): ${thisMonthEvents.length}`);
     if (thisMonthEvents.length > 0) {
       console.log('[ai-event-chat] Beispiele für Events diesen Monat:', 
         thisMonthEvents.slice(0, 3).map((e: any) => `${e.title} (${e.date})`));
@@ -414,11 +381,11 @@ serve(async (req) => {
       })
       .join("\n\n");
 
-    const totalEventsInfo = `Es gibt insgesamt ${dbEvents.length} Events in der Datenbank für die ausgewählte Stadt. Ich habe dir die ${filteredEvents.length} relevantesten basierend auf deiner Anfrage ausgewählt.\nDie Anzahl der Likes gibt an, wie beliebt ein Event ist.`; 
+    const totalEventsInfo = `Es gibt insgesamt ${cityFilteredDbEvents.length} Events in der Datenbank für die ausgewählte Stadt. Ich habe dir die ${filteredEvents.length} relevantesten basierend auf deiner Anfrage ausgewählt.\nDie Anzahl der Likes gibt an, wie beliebt ein Event ist.`;
 
     const cityNameForPrompt = selectedCity || "Bielefeld";
     
-    let systemMessage = `Du bist ein Event-Assistent für ${cityNameForPrompt}. Begrüße den Nutzer freundlich je nach Tageszeit. Liste dann alle Events als chronologische Timeline (geordnet nach Uhrzeit) auf. Gruppiere immer nach den 3 Kategorien: Ausgehen, Sport und Kreativität. Die Kategorie wird in GROßBUCHSTABEN in Rot aufgelistet. WICHTIG: Events mit der category "Sonstiges" werden immer der Kategorie "Ausgehen" zugewiesen! WICHTIG, WICHTIG: Wenn Improtheater im Eventname: wird immer der Kategorie "Kreativität" zugewiesen(ignoriere hier die category: Sport). Beschreibe jedes Event kurz, nimm dafür alle Infos die du hast die du hast für jedes Event. Aktuelles Datum: ${today}.\n${totalEventsInfo}\nEvents mit vielen Likes sind besonders beliebt und bekommen oft den Vorzug bei Empfehlungen. Die Likes-Anzahl findest du bei jedem Event. Berücksichtige die Anzahl der Likes für Empfehlungen und markiere besonders beliebte Events passend.\n`;
+    let systemMessage = `Du bist ein Event‑Assistent für ${cityNameForPrompt}. Begrüße den Nutzer freundlich je nach Tageszeit. Liste dann alle Events als chronologische Timeline (geordnet nach Uhrzeit) auf. Gruppiere immer nach den 3 Kategorien: Ausgehen, Sport und Kreativität. Die Kategorie wird in GROßBUCHSTABEN in Rot aufgelistet. WICHTIG: Events mit der category "Sonstiges" werden immer der Kategorie "Ausgehen" zugewiesen! WICHTIG, WICHTIG: Wenn Improtheater im Eventname: wird immer der Kategorie "Kreativität" zugewiesen(ignoriere hier die category: Sport). Beschreibe jedes Event kurz, nimm dafür alle Infos die du hast die du hast für jedes Event. Aktuelles Datum: ${today}.\n${totalEventsInfo}\nEvents mit vielen Likes sind besonders beliebt und bekommen oft den Vorzug bei Empfehlungen. Die Likes-Anzahl findest du bei jedem Event. Berücksichtige die Anzahl der Likes für Empfehlungen und markiere besonders beliebte Events passend.\n`;
 
     if (isPersonalRequest || userInterests?.length > 0 || userLocations?.length > 0) {
       systemMessage += `Dies ist eine personalisierte Anfrage. `;
@@ -473,7 +440,7 @@ serve(async (req) => {
     console.log("[ai-event-chat] Categories being sent:", filteredEvents.map((e: any) => `${e.title}: ${e.category}`));
     
     const payload = {
-      model: "google/gemini-2.0-flash-lite-001", 
+      model: "google/gemini-2.0-flash-lite-001", // gemini-2.0-flash-lite is more reliable
       messages: [
         { role: "system", content: systemMessage },
         { role: "user", content: query },
@@ -511,9 +478,9 @@ serve(async (req) => {
      ***************************/
     const debugHtml = `
       <details class="rounded-lg border border-gray-700/30 bg-gray-900/10 p-3 mt-3 text-sm">
-        <summary class="cursor-pointer font-medium text-red-500">Debug-Info anzeigen</summary>
+        <summary class="cursor-pointer font-medium text-red-500">Debug‑Info anzeigen</summary>
         <pre class="mt-2 whitespace-pre-wrap">Gesendetes Prompt:\n${JSON.stringify(payload, null, 2)}\n\n` +
-      `HTTP-Status: ${orRes.status} ${orRes.statusText}\n\n` +
+      `HTTP‑Status: ${orRes.status} ${orRes.statusText}\n\n` +
       `Modell: ${parsed?.model || "Unbekannt"}\n\n` +
       `Benutzerinteressen: ${JSON.stringify(userInterests)}\n\n` +
       `Bevorzugte Orte: ${JSON.stringify(userLocations)}\n\n` +
@@ -564,12 +531,14 @@ serve(async (req) => {
     let aiContent: string = choice.message?.content ?? 
       (choice.message?.function_call ? JSON.stringify(choice.message.function_call) : "Keine Antwort erhalten");
     
-    // Hier den Text transformieren: Umwandlung von Markdown-Listen in HTML-Listen und Hervorhebung
+    // Hier den Text transformieren: Umwandeln von Markdown-Listen in HTML-Listen
+    // Ersetze Listen-Formatierungen wie "* Item" oder "- Item" in HTML <ul><li> Format
     aiContent = aiContent.replace(/\n[\*\-]\s+(.*?)(?=\n[\*\-]|\n\n|$)/g, (match, item) => {
-      // Extract event information if available and format as styled card
+      // Extract event information if available
       const titleMatch = item.match(/(.*?) um (.*?) (?:in|bei|im) (.*?) \(Kategorie: (.*?)\)/i);
       if (titleMatch) {
         const [_, title, time, location, category] = titleMatch;
+        // Format as event card similar to EventCard component
         return `
           <li class="dark-glass-card rounded-lg p-2 mb-2 hover-scale">
             <div class="flex justify-between items-start gap-1">
@@ -598,42 +567,52 @@ serve(async (req) => {
             </div>
           </li>`;
       }
+      
+      // Default list item if not an event
       return `<li class="mb-1">${item}</li>`;
     });
     
-    // Wrap lists with <ul> tags
+    // Füge <ul> Tags um die Liste
     if (aiContent.includes('<li>')) {
       aiContent = aiContent.replace(/<li>/, '<ul class="space-y-2 my-3"><li>');
       aiContent = aiContent.replace(/([^>])$/, '$1</ul>');
+      
+      // Stelle sicher, dass die Liste korrekt schließt
       if (!aiContent.endsWith('</ul>')) {
         aiContent += '</ul>';
       }
     }
     
-    // Markdown bold to HTML bold
+    // Generell Markdown-Bold in HTML-Bold umwandeln
     aiContent = aiContent.replace(/\*\*(.*?)\*\*/g, '<strong class="text-red-500">$1</strong>');
     aiContent = aiContent.replace(/__(.*?)__/g, '<strong class="text-red-500">$1</strong>');
     
     // Highlight personalized content
     if (isPersonalRequest || userInterests?.length > 0) {
+      // Make interest keywords bold in the text
       if (userInterests && userInterests.length > 0) {
         userInterests.forEach((interest: string) => {
           const interestRegex = new RegExp(`\\b(${interest})\\b`, 'gi');
           aiContent = aiContent.replace(interestRegex, '<strong class="text-yellow-500">$1</strong>');
         });
       }
+      
+      // Add a personalization badge at the top
       const interestsLabel = userInterests && userInterests.length > 0 
         ? `basierend auf deinem Interesse für ${userInterests.join(', ')}` 
         : 'basierend auf deinen Vorlieben';
+        
       const personalizationBadge = `
         <div class="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-2 mb-3">
           <p class="text-sm flex items-center gap-1">
             <svg class="w-4 h-4 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+            </svg>
             <span>Personalisierte Vorschläge ${interestsLabel}</span>
           </p>
         </div>
       `;
+      
       aiContent = personalizationBadge + aiContent;
     }
     

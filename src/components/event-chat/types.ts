@@ -1,3 +1,4 @@
+
 // src/components/event-chat/types.ts
 import { LandingSlideData } from './SwipeableLandingPanel';
 
@@ -65,10 +66,9 @@ export interface MessageListProps {
 export interface ChatInputProps {
   input: string;
   setInput: (value: string) => void;
-  handleSendMessage: (input?: string) => Promise<void>; // Updated signature to match useChatLogic/useMessageSending
-  isTyping: boolean; // Indicates AI processing (for AI chat) or sending (for community chat)
-  handleKeyPress: (e: React.KeyboardEvent<HTMLInputElement>) => void; // For Enter key
-  // `handleInputChange` wird hier NICHT mehr benötigt und wurde entfernt.
+  handleSendMessage: () => void;
+  isTyping: boolean;
+  handleKeyPress: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   isHeartActive: boolean;
   handleHeartClick: () => void;
   globalQueries: any[];
