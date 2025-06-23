@@ -29,10 +29,6 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   
   const [activeCategory, setActiveCategory] = useState<string>('Ausgehen');
   
-  // State for external chat input control
-  const [externalInput, setExternalInput] = useState<string>('');
-  const [externalSendTriggered, setExternalSendTriggered] = useState<boolean>(false);
-  
   const { selectedCity } = useEventContext();
   const { toast } = useToast();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
@@ -71,54 +67,15 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
     }
   };
 
-  // Handle external input changes
-  const handleExternalInputChange = (value: string) => {
-    setExternalInput(value);
-  };
-
-  // Handle external send trigger
-  const handleExternalSend = () => {
-    setExternalSendTriggered(prev => !prev);
-  };
-
-  // Enhanced unified send message for header integration
-  const handleUnifiedSendMessage = () => {
-    if (activeChatModeValue === 'ai') {
-      chatLogic.handleSendMessage();
-    } else {
-      // For community chat, trigger the external send
-      handleExternalSend();
-    }
-  };
-
-  // Enhanced unified input change for header integration
-  const handleUnifiedInputChange = (value: string) => {
-    if (activeChatModeValue === 'ai') {
-      chatLogic.setInput(value);
-    } else {
-      setExternalInput(value);
-    }
-  };
-
-  // Get current input value based on mode
-  const getCurrentInputValue = () => {
-    return activeChatModeValue === 'ai' ? chatLogic.input : externalInput;
-  };
-
   // Provide chat input props to parent component
   useEffect(() => {
     if (onChatInputPropsChange && chatLogic) {
       onChatInputPropsChange({
-        input: getCurrentInputValue(),
-        setInput: handleUnifiedInputChange,
-        handleSendMessage: handleUnifiedSendMessage,
+        input: chatLogic.input,
+        setInput: chatLogic.setInput,
+        handleSendMessage: chatLogic.handleSendMessage,
         isTyping: chatLogic.isTyping,
-        handleKeyPress: (e: React.KeyboardEvent<HTMLInputElement>) => {
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleUnifiedSendMessage();
-          }
-        },
+        handleKeyPress: chatLogic.handleKeyPress,
         isHeartActive: chatLogic.isHeartActive,
         handleHeartClick: chatLogic.handleHeartClick,
         globalQueries: chatLogic.globalQueries,
@@ -131,14 +88,12 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
       });
     }
   }, [
-    getCurrentInputValue(),
+    chatLogic.input,
     chatLogic.isTyping,
     chatLogic.isHeartActive,
     chatLogic.globalQueries.length,
     chatLogic.showAnimatedPrompts,
     activeCategory,
-    activeChatModeValue,
-    externalInput,
     onChatInputPropsChange
   ]);
 
@@ -154,9 +109,6 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
         activeCategory={activeCategory}
         onCategoryChange={handleCategoryChange}
         hideInput={true}
-        externalInput={externalInput}
-        onExternalInputChange={handleExternalInputChange}
-        onExternalSend={handleExternalSend}
       />
     );
   }
