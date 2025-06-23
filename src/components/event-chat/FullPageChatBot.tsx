@@ -1,7 +1,7 @@
 // src/components/event-chat/FullPageChatBot.tsx
 import React, { useEffect } from 'react';
 import MessageList from './MessageList';
-import ChatInput from './ChatInput';
+// import ChatInput from './ChatInput'; // Removed this import
 import RecentQueries from './RecentQueries';
 import { useChatMessages } from '@/hooks/chat/useChatMessages';
 import { useMessageSending } from '@/hooks/chat/useMessageSending';
@@ -20,10 +20,10 @@ interface FullPageChatBotProps {
   activeChatModeValue: 'ai' | 'community';
   communityGroupId: string;
   onAddEvent?: () => void;
-  // hideButtons?: boolean; // This prop is not used in FullPageChatBot based on your provided code
+  // hideButtons?: boolean; // This prop is not used here anymore
   activeCategory?: string;
   onCategoryChange?: (category: string) => void;
-  // hideInput?: boolean; // This prop is now controlled internally based on fullPage
+  onChatInputPropsChange?: (props: any) => void; // Added this prop
 }
 
 const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
@@ -33,7 +33,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   onAddEvent,
   activeCategory = 'Kreativität',
   onCategoryChange,
-  // Removed hideInput prop as it's now handled by the parent Layout
+  onChatInputPropsChange // Destructure the new prop
 }) => {
   const {
     messages: aiMessages,
@@ -50,7 +50,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     handleSendMessage: aiSendMessage,
     handleDateSelect,
     handleExamplePromptClick,
-    handleKeyPress,
+    handleKeyPress: aiHandleKeyPress, // Renamed for clarity
     handleHeartClick,
     toggleRecentQueries,
     showAnimatedPrompts
@@ -78,7 +78,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     isSending: communitySending,
     handleSubmit: communitySendMessage,
     handleInputChange: communityInputChange,
-    handleKeyDown: communityKeyDown,
+    handleKeyDown: communityHandleKeyDown, // Renamed for clarity
     setNewMessage: setCommunityInput
   } = useMessageSending(communityGroupId, username, addOptimisticMessage);
 
@@ -107,78 +107,80 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   };
 
-  const handleUnifiedSendMessage = async (eventData?: any) => {
+  // --- Unified functions to pass to the external ChatInput ---
+  const unifiedInput = activeChatModeValue === 'ai' ? input : communityInput;
+  const unifiedSetInput = (value: string) => { activeChatModeValue === 'ai' ? setInput(value) : setCommunityInput(value); };
+  const unifiedHandleSendMessage = async (eventData?: any) => {
     activeChatModeValue === 'ai' ? await aiSendMessage(eventData) : await communitySendMessage(eventData);
   };
-
-  const handleUnifiedInputChange = (value: string) => {
-    activeChatModeValue === 'ai' ? setInput(value) : setCommunityInput(value);
+  const unifiedIsSending = activeChatModeValue === 'ai' ? aiTyping : communitySending;
+  const unifiedHandleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    activeChatModeValue === 'ai' ? aiHandleKeyPress(e) : communityHandleKeyDown(e);
+  };
+  const unifiedHandleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    activeChatModeValue === 'ai' ? chatLogic.handleInputChange(e) : communityInputChange(e);
   };
 
-  const handleUnifiedKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (activeChatModeValue === 'ai') {
-      handleKeyPress(e);
-    } else if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      communitySendMessage();
-    }
-  };
-
-  const currentInputValue = activeChatModeValue === 'ai' ? input : communityInput;
-  const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending;
-
-
+  // Provide chat input props to parent component (Layout)
   useEffect(() => {
-    if (activeChatModeValue === 'ai' && messagesEndRef?.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+    if (onChatInputPropsChange) {
+      onChatInputPropsChange({
+        input: unifiedInput,
+        setInput: unifiedSetInput,
+        handleSendMessage: unifiedHandleSendMessage,
+        isTyping: unifiedIsSending,
+        handleKeyPress: unifiedHandleKeyPress,
+        handleInputChange: unifiedHandleInputChange, // Make sure to pass this as well
+        isHeartActive: isHeartActive,
+        handleHeartClick: handleHeartClick,
+        globalQueries: globalQueries,
+        toggleRecentQueries: toggleRecentQueries,
+        inputRef: inputRef,
+        onAddEvent: onAddEvent,
+        showAnimatedPrompts: showAnimatedPrompts,
+        activeCategory: activeCategory,
+        onCategoryChange: onCategoryChange,
+      });
     }
-  }, [aiMessages, aiTyping, activeChatModeValue, messagesEndRef]);
-
-  useEffect(() => {
-    if (activeChatModeValue === 'community' && chatBottomRef?.current) {
-      chatBottomRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
-    }
-  }, [communityMessages, communitySending, activeChatModeValue, chatBottomRef]);
+  }, [
+    onChatInputPropsChange,
+    unifiedInput,
+    unifiedIsSending,
+    isHeartActive,
+    globalQueries,
+    showAnimatedPrompts,
+    activeCategory,
+    onAddEvent, // Include onAddEvent in dependency array
+    unifiedSetInput,
+    unifiedHandleSendMessage,
+    unifiedHandleKeyPress,
+    unifiedHandleInputChange,
+    handleHeartClick,
+    toggleRecentQueries,
+    inputRef,
+    onCategoryChange
+  ]);
 
   return (
-    <div className="flex flex-col h-screen min-h-0">
-      {/* Conditional sticky header - now always show input, as it's part of the chatbot */}
-      <div className="border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-2">
-        {activeChatModeValue === 'ai' && (
-          <RecentQueries
-            showRecentQueries={showRecentQueries}
-            setShowRecentQueries={setShowRecentQueries}
-            queriesToRender={queriesToRender}
-            handleExamplePromptClick={handleExamplePromptClick}
-          />
-        )}
-
-        <ChatInput
-          input={currentInputValue}
-          setInput={handleUnifiedInputChange}
-          handleSendMessage={handleUnifiedSendMessage}
-          isTyping={currentIsTyping}
-          handleKeyPress={handleUnifiedKeyPress}
-          isHeartActive={isHeartActive}
-          handleHeartClick={handleHeartClick}
-          globalQueries={globalQueries}
-          toggleRecentQueries={toggleRecentQueries}
-          inputRef={inputRef}
-          onAddEvent={onAddEvent} // Pass onAddEvent directly
-          showAnimatedPrompts={showAnimatedPrompts}
-          activeChatModeValue={activeChatModeValue}
-          activeCategory={activeCategory}
-          onCategoryChange={onCategoryChange}
+    <div className="flex flex-col h-full min-h-0">
+      {/* Removed ChatInput from here as it's now rendered in Layout.tsx */}
+      {/* Keep RecentQueries if still relevant, adjusting its positioning if needed */}
+      {activeChatModeValue === 'ai' && (
+        <RecentQueries
+          showRecentQueries={showRecentQueries}
+          setShowRecentQueries={setShowRecentQueries}
+          queriesToRender={queriesToRender}
+          handleExamplePromptClick={handleExamplePromptClick}
         />
-      </div>
+      )}
 
-      {/* Main scroll container */}
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
+      {/* Main scroll container. Adjusted pt value as ChatInput is no longer here */}
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none pt-4">
         {activeChatModeValue === 'ai' ? (
-          <div className="pt-4 px-3">
+          <div className="px-3">
             <MessageList
               messages={aiMessages}
-              isTyping={aiTyping}
+              isTyping={unifiedIsSending} // Use unifiedIsSending here
               handleDateSelect={handleDateSelect}
               messagesEndRef={messagesEndRef}
               examplePrompts={examplePrompts}
