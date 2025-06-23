@@ -18,7 +18,7 @@ import UsernameDialog from '@/components/chat/UsernameDialog';
 import ProfileEditor from '@/components/users/ProfileEditor';
 import UserDirectory from '@/components/users/UserDirectory';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
-import { messageService } from '@/services/messageService';
+import { messageService } from '@/services/messageService'; // Import messageService
 
 const ChatPage = () => {
   const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
@@ -28,12 +28,9 @@ const ChatPage = () => {
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
-  // Chat bot reference to get input props
-  const [chatInputProps, setChatInputProps] = useState<any>(null);
-  
   const {
     events,
-    refreshEvents
+    refreshEvents // Get refreshEvents to update event counts
   } = useEventContext();
   const {
     currentUser,
@@ -42,8 +39,8 @@ const ChatPage = () => {
   } = useUserProfile();
 
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
-  const lastReadMessageTimestamps = useRef<Map<string, string>>(new Map());
-  const messageSubscriptionChannelRef = useRef<any>(null);
+  const lastReadMessageTimestamps = useRef<Map<string, string>>(new Map()); // Map to store last read timestamp per group
+  const messageSubscriptionChannelRef = useRef<any>(null); // Ref for message subscription
 
   // Function to show add event modal
   const handleAddEvent = () => {
@@ -57,16 +54,19 @@ const ChatPage = () => {
 
   // Function to open user directory
   const handleOpenUserDirectory = () => {
+    // For now, just close the directory - can be extended later
     setIsUserDirectoryOpen(true);
   };
 
   // Function to handle user selection from directory
   const handleSelectUser = (user: any) => {
+    // For now, just close the directory - can be extended later
     setIsUserDirectoryOpen(false);
   };
 
   // Updated function for profile completion
   const handleProfileUpdate = async () => {
+    // Refresh the profile immediately to ensure we have the latest data
     const profile = await refetchProfile();
     if (profile) {
       toast({
@@ -74,11 +74,12 @@ const ChatPage = () => {
         description: "Du kannst jetzt in den Gruppen chatten.",
         variant: "success"
       });
+      // Re-fetch unread messages after username is set/updated
       fetchUnreadMessageCount();
     }
   };
 
-  // WhatsApp community link
+  // WhatsApp community link - Updated with the actual WhatsApp community link
   const whatsAppLink = "https://chat.whatsapp.com/C13SQuimtp0JHtx5x87uxK";
 
   // Enable realtime messaging when component mounts and ensure default group exists
@@ -88,12 +89,15 @@ const ChatPage = () => {
         await setupService.ensureDefaultGroupExists();
         console.log('Default group ensured.');
 
+        // Fetch initial unread message count
         await fetchUnreadMessageCount();
 
+        // Setup realtime listener for new messages
         messageSubscriptionChannelRef.current = supabase
           .channel('public:chat_messages')
           .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
-            if (payload.new && payload.new.sender !== currentUser) {
+            if (payload.new && payload.new.sender !== currentUser) { // Only count messages from other users
+              // Increment unread message count
               setUnreadMessageCount(prev => prev + 1);
             }
           })
@@ -115,11 +119,12 @@ const ChatPage = () => {
     setupDatabase();
 
     return () => {
+      // Cleanup subscription on unmount
       if (messageSubscriptionChannelRef.current) {
         supabase.removeChannel(messageSubscriptionChannelRef.current);
       }
     };
-  }, [currentUser]);
+  }, [currentUser]); // Depend on currentUser to re-subscribe if it changes
 
   const fetchUnreadMessageCount = async () => {
     if (!currentUser || currentUser === 'Gast') {
@@ -128,6 +133,7 @@ const ChatPage = () => {
     }
 
     try {
+      // Get all messages and filter unread ones
       const allMessages = await messageService.fetchMessages(messageService.DEFAULT_GROUP_ID);
       const unreadCount = allMessages.filter(msg => 
         msg.user_name !== currentUser && (!msg.read_by || !msg.read_by.includes(currentUser))
@@ -142,7 +148,8 @@ const ChatPage = () => {
   // Effect to update unread message count when active view changes
   useEffect(() => {
     if (activeView === 'community') {
-      setUnreadMessageCount(0);
+      setUnreadMessageCount(0); // Reset count when entering community chat
+      // Mark all messages as read for the current user in the default group
       const markAllAsRead = async () => {
         if (currentUser && currentUser !== 'Gast') {
           try {
@@ -178,6 +185,7 @@ const ChatPage = () => {
   if (!isPageLoaded) {
     return (
       <>
+        {/* LiveTicker ganz oben, über dem Header */}
         <div className="w-full bg-black">
           <LiveTicker events={events} />
         </div>
@@ -195,6 +203,7 @@ const ChatPage = () => {
 
   return (
     <>
+      {/* LiveTicker ganz oben, über dem Header */}
       <div className="w-full bg-black">
         <LiveTicker events={events} />
       </div>
@@ -204,11 +213,12 @@ const ChatPage = () => {
         setActiveView={setActiveView}
         handleOpenUserDirectory={handleOpenUserDirectory}
         setIsEventListSheetOpen={setIsEventListSheetOpen}
-        newMessagesCount={unreadMessageCount}
-        newEventsCount={0}
-        chatInputProps={chatInputProps}
+        newMessagesCount={unreadMessageCount} // Pass new messages count
+        newEventsCount={0} // No new events tracking for now
       >
         <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
+          {/* Remove the button bar since buttons are now in header */}
+          
           <div className="flex-grow rounded-lg overflow-hidden border border-black flex flex-col bg-black">
             <div className="flex-grow relative">
               <EventChatBot 
@@ -218,7 +228,6 @@ const ChatPage = () => {
                 activeChatMode={activeView} 
                 setActiveChatMode={setActiveView}
                 hideButtons={true}
-                onChatInputPropsChange={setChatInputProps}
               />
             </div>
           </div>
@@ -256,12 +265,12 @@ const ChatPage = () => {
         {/* User Directory Sheet */}
         <Sheet open={isUserDirectoryOpen} onOpenChange={setIsUserDirectoryOpen}>
           <SheetContent className="sm:max-w-lg overflow-hidden">
-            <SheetHeader>
+            <SheetHeader> {/* Corrected: Removed self-closing tag here */}
               <SheetTitle>Benutzer</SheetTitle>
               <SheetDescription>
                 Entdecke andere Community-Mitglieder
               </SheetDescription>
-            </SheetHeader>
+            </SheetHeader> {/* Corrected: Added explicit closing tag here */}
             <div className="mt-4 overflow-y-auto max-h-[80vh]">
               <UserDirectory 
                 open={isUserDirectoryOpen}
