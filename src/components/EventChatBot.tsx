@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useEventContext } from '@/contexts/EventContext';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
@@ -11,33 +11,33 @@ import { usePersonalization } from './event-chat/usePersonalization';
 import { EventChatBotProps } from './event-chat/types';
 import { createCitySpecificGroupId } from '@/utils/groupIdUtils';
 
-const EventChatBot: React.FC<EventChatBotProps> = ({ 
+interface ExtendedEventChatBotProps extends EventChatBotProps {
+  onChatInputPropsChange?: (props: any) => void;
+}
+
+const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({ 
   fullPage = false, 
   onAddEvent, 
   onToggleCommunity,
   activeChatMode,
-  setActiveChatMode
+  setActiveChatMode,
+  onChatInputPropsChange
 }) => {
-  // Use the prop value if provided, otherwise use internal state
   const [internalActiveChatMode, setInternalActiveChatMode] = useState<'ai' | 'community'>('ai');
   const activeChatModeValue = activeChatMode !== undefined ? activeChatMode : internalActiveChatMode;
   const setActiveChatModeValue = setActiveChatMode || setInternalActiveChatMode;
   
-  // Add category state management - changed default to 'Ausgehen'
   const [activeCategory, setActiveCategory] = useState<string>('Ausgehen');
   
   const { selectedCity } = useEventContext();
   const { toast } = useToast();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   
-  // Create city-specific group ID using UUID generation
   const communityGroupId = createCitySpecificGroupId(activeCategory, selectedCity);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
-  // Use the chat logic hook to manage state and functions - no longer pass events
   const chatLogic = useChatLogic(fullPage, activeChatModeValue);
   
-  // Use personalization hook
   const { sendPersonalizedQuery } = usePersonalization(
     chatLogic.handleSendMessage, 
     { userProfile, currentUser, userService }
@@ -47,18 +47,15 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
     const newMode = activeChatModeValue === 'ai' ? 'community' : 'ai';
     setActiveChatModeValue(newMode);
     
-    // If switching to community mode and there's a parent toggle function, call it
     if (activeChatModeValue === 'ai' && onToggleCommunity) {
       onToggleCommunity();
     }
   };
 
-  // Handle category change
   const handleCategoryChange = (category: string) => {
     setActiveCategory(category);
   };
 
-  // Handle profile update
   const handleProfileUpdate = () => {
     if (userProfile) {
       refetchProfile();
@@ -70,9 +67,38 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
     }
   };
 
+  // Provide chat input props to parent component
+  useEffect(() => {
+    if (onChatInputPropsChange && chatLogic) {
+      onChatInputPropsChange({
+        input: chatLogic.input,
+        setInput: chatLogic.setInput,
+        handleSendMessage: chatLogic.handleSendMessage,
+        isTyping: chatLogic.isTyping,
+        handleKeyPress: chatLogic.handleKeyPress,
+        isHeartActive: chatLogic.isHeartActive,
+        handleHeartClick: chatLogic.handleHeartClick,
+        globalQueries: chatLogic.globalQueries,
+        toggleRecentQueries: chatLogic.toggleRecentQueries,
+        inputRef: chatLogic.inputRef,
+        onAddEvent: onAddEvent,
+        showAnimatedPrompts: chatLogic.showAnimatedPrompts,
+        activeCategory: activeCategory,
+        onCategoryChange: handleCategoryChange
+      });
+    }
+  }, [
+    chatLogic.input,
+    chatLogic.isTyping,
+    chatLogic.isHeartActive,
+    chatLogic.globalQueries.length,
+    chatLogic.showAnimatedPrompts,
+    activeCategory,
+    onChatInputPropsChange
+  ]);
+
   if (!chatLogic.isVisible) return null;
 
-  // If we're in fullPage mode, render a different UI
   if (fullPage) {
     return (
       <FullPageChatBot
@@ -82,11 +108,11 @@ const EventChatBot: React.FC<EventChatBotProps> = ({
         onAddEvent={onAddEvent}
         activeCategory={activeCategory}
         onCategoryChange={handleCategoryChange}
+        hideInput={true}
       />
     );
   }
 
-  // The floating chatbot has been removed.
   return null;
 };
 

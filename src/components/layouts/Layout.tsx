@@ -1,6 +1,6 @@
 
 // src/components/layouts/Layout.tsx
-// Changed: Moved navigation buttons to bottom, simplified header
+// Changed: Added ChatInput to header with proper spacing
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Button } from "@/components/ui/button";
 import CitySelector from './CitySelector';
 import { BottomNavigation } from './BottomNavigation';
+import ChatInput from '@/components/event-chat/ChatInput';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -19,6 +20,23 @@ interface LayoutProps {
   setIsEventListSheetOpen?: (open: boolean) => void;
   newMessagesCount?: number;
   newEventsCount?: number;
+  // Chat input props
+  chatInputProps?: {
+    input: string;
+    setInput: (value: string) => void;
+    handleSendMessage: () => void;
+    isTyping: boolean;
+    handleKeyPress: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+    isHeartActive: boolean;
+    handleHeartClick: () => void;
+    globalQueries: any[];
+    toggleRecentQueries: () => void;
+    inputRef: React.RefObject<HTMLInputElement>;
+    onAddEvent?: () => void;
+    showAnimatedPrompts: boolean;
+    activeCategory?: string;
+    onCategoryChange?: (category: string) => void;
+  };
 }
 
 export const Layout: React.FC<LayoutProps> = ({
@@ -29,7 +47,8 @@ export const Layout: React.FC<LayoutProps> = ({
   handleOpenUserDirectory,
   setIsEventListSheetOpen,
   newMessagesCount = 0,
-  newEventsCount = 0
+  newEventsCount = 0,
+  chatInputProps
 }) => {
   const { pathname } = useLocation();
   const [isAddEventModalOpen, setIsAddEventModalOpen] = React.useState(false);
@@ -67,7 +86,7 @@ export const Layout: React.FC<LayoutProps> = ({
       
       <header className="sticky top-0 z-50 w-full bg-black/90 backdrop-blur-sm border-b border-black">
         <div className="container flex h-16 items-center">
-          <MainNav pathname={pathname} />
+          <MainNav pathname={pathname} chatInputProps={chatInputProps} activeView={activeView} />
           {(pathname !== '/chat' && pathname !== '/') && ( 
             <div className="ml-auto flex items-center space-x-4">
               <ThemeToggleButton />
@@ -135,19 +154,45 @@ const items: NavItem[] = [
 
 interface MainNavProps {
   pathname: string;
+  chatInputProps?: any;
+  activeView?: 'ai' | 'community';
 }
 
-const MainNav: React.FC<MainNavProps> = ({ pathname }) => {
-  // If we're on chat page or the root path, show simplified header with THE TRIBE + city selector
+const MainNav: React.FC<MainNavProps> = ({ pathname, chatInputProps, activeView }) => {
+  // If we're on chat page or the root path, show header with THE TRIBE + city selector + chat input
   if (pathname === '/chat' || pathname === '/') {
     return (
-      <div className="flex items-center w-full">
-        <div className="flex flex-col items-start mr-6">
+      <div className="flex items-center w-full gap-4">
+        {/* Left side: THE TRIBE + City selector */}
+        <div className="flex flex-col items-start flex-shrink-0">
           <Link to="/" className="flex items-center">
             <span className="font-bold inline-block">THE TRIBE</span>
           </Link>
           <CitySelector />
         </div>
+        
+        {/* Right side: Chat input - only show if props are provided */}
+        {chatInputProps && (
+          <div className="flex-1 min-w-0">
+            <ChatInput
+              input={chatInputProps.input}
+              setInput={chatInputProps.setInput}
+              handleSendMessage={chatInputProps.handleSendMessage}
+              isTyping={chatInputProps.isTyping}
+              handleKeyPress={chatInputProps.handleKeyPress}
+              isHeartActive={chatInputProps.isHeartActive}
+              handleHeartClick={chatInputProps.handleHeartClick}
+              globalQueries={chatInputProps.globalQueries}
+              toggleRecentQueries={chatInputProps.toggleRecentQueries}
+              inputRef={chatInputProps.inputRef}
+              onAddEvent={chatInputProps.onAddEvent}
+              showAnimatedPrompts={chatInputProps.showAnimatedPrompts}
+              activeChatModeValue={activeView || 'ai'}
+              activeCategory={chatInputProps.activeCategory}
+              onCategoryChange={chatInputProps.onCategoryChange}
+            />
+          </div>
+        )}
       </div>
     );
   }
