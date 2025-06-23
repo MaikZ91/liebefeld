@@ -1,4 +1,3 @@
-
 // src/components/event-chat/FullPageChatBot.tsx
 import React, { useEffect } from 'react';
 import MessageList from './MessageList';
@@ -25,6 +24,10 @@ interface FullPageChatBotProps {
   activeCategory?: string;
   onCategoryChange?: (category: string) => void;
   hideInput?: boolean;
+  // Add props for external chat input control
+  externalInput?: string;
+  onExternalInputChange?: (value: string) => void;
+  onExternalSend?: () => void;
 }
 
 const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
@@ -34,7 +37,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   onAddEvent,
   activeCategory = 'Kreativität',
   onCategoryChange,
-  hideInput = false
+  hideInput = false,
+  externalInput,
+  onExternalInputChange,
+  onExternalSend
 }) => {
   const {
     messages: aiMessages,
@@ -108,12 +114,39 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   };
 
+  // Modified unified functions to work with external input
   const handleUnifiedSendMessage = async () => {
-    activeChatModeValue === 'ai' ? await aiSendMessage() : await communitySendMessage();
+    if (activeChatModeValue === 'ai') {
+      await aiSendMessage();
+    } else {
+      // For community chat, use the external send if available
+      if (onExternalSend && externalInput !== undefined) {
+        // Set the community input to match external input before sending
+        setCommunityInput(externalInput);
+        // Use a timeout to ensure the state is updated before sending
+        setTimeout(async () => {
+          await communitySendMessage();
+          // Clear external input after sending
+          if (onExternalInputChange) {
+            onExternalInputChange('');
+          }
+        }, 50);
+      } else {
+        await communitySendMessage();
+      }
+    }
   };
 
   const handleUnifiedInputChange = (value: string) => {
-    activeChatModeValue === 'ai' ? setInput(value) : setCommunityInput(value);
+    if (activeChatModeValue === 'ai') {
+      setInput(value);
+    } else {
+      // For community chat, update both internal and external input
+      setCommunityInput(value);
+      if (onExternalInputChange) {
+        onExternalInputChange(value);
+      }
+    }
   };
 
   const handleUnifiedKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -121,12 +154,21 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       handleKeyPress(e);
     } else if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      communitySendMessage();
+      handleUnifiedSendMessage();
     }
   };
 
-  const currentInputValue = activeChatModeValue === 'ai' ? input : communityInput;
+  // Use external input for community chat if provided, otherwise fall back to internal
+  const currentInputValue = activeChatModeValue === 'ai' ? input : 
+    (externalInput !== undefined ? externalInput : communityInput);
   const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending;
+
+  // Sync external input with community input when switching to community mode
+  useEffect(() => {
+    if (activeChatModeValue === 'community' && externalInput !== undefined) {
+      setCommunityInput(externalInput);
+    }
+  }, [activeChatModeValue, externalInput, setCommunityInput]);
 
   useEffect(() => {
     if (activeChatModeValue === 'ai' && messagesEndRef?.current) {
