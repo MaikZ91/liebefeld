@@ -16,12 +16,6 @@ import { chatService } from '@/services/chatService';
 import { useEventContext, cities } from '@/contexts/EventContext';
 import { createGroupDisplayName } from '@/utils/groupIdUtils';
 
-/**
- * Hinweis: Für die unsichtbaren Scrollleisten wird das Tailwind-Plugin
- * `tailwind-scrollbar-hide` (oder gleichwertig) erwartet. 
- * Damit genügt die Utility-Klasse `scrollbar-none`.
- */
-
 interface FullPageChatBotProps {
   chatLogic: any;
   activeChatModeValue: 'ai' | 'community';
@@ -30,6 +24,7 @@ interface FullPageChatBotProps {
   hideButtons?: boolean;
   activeCategory?: string;
   onCategoryChange?: (category: string) => void;
+  hideInput?: boolean;
 }
 
 const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
@@ -38,7 +33,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   communityGroupId,
   onAddEvent,
   activeCategory = 'Kreativität',
-  onCategoryChange
+  onCategoryChange,
+  hideInput = false
 }) => {
   const {
     messages: aiMessages,
@@ -63,9 +59,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   const { selectedCity } = useEventContext();
 
-  /* ------------------------------------------------------------------ */
-  /* community chat hooks                                               */
-  /* ------------------------------------------------------------------ */
   const username =
     typeof window !== 'undefined'
       ? localStorage.getItem(USERNAME_KEY) || 'Anonymous'
@@ -92,9 +85,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   const queriesToRender = globalQueries.length > 0 ? globalQueries : [];
 
-  /* ------------------------------------------------------------------ */
-  /* helpers                                                            */
-  /* ------------------------------------------------------------------ */
   const formatTime = (isoDateString: string) => {
     const date = new Date(isoDateString);
     const now = new Date();
@@ -106,12 +96,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     return `vor ${Math.floor(diff / 1440)}d`;
   };
 
-  // Get city-specific display name for community chat using the utility function
   const getCommunityDisplayName = (category: string, cityAbbr: string): string => {
     return createGroupDisplayName(category, cityAbbr, cities);
   };
 
-  // Handle reaction toggle
   const handleReaction = async (messageId: string, emoji: string) => {
     try {
       await chatService.toggleReaction(messageId, emoji, username);
@@ -140,9 +128,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const currentInputValue = activeChatModeValue === 'ai' ? input : communityInput;
   const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending;
 
-  /* ------------------------------------------------------------------ */
-  /* Auto-jump to bottom                                                */
-  /* ------------------------------------------------------------------ */
   useEffect(() => {
     if (activeChatModeValue === 'ai' && messagesEndRef?.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
@@ -155,45 +140,44 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   }, [communityMessages, communitySending, activeChatModeValue, chatBottomRef]);
 
-  /* ------------------------------------------------------------------ */
-  /* render                                                             */
-  /* ------------------------------------------------------------------ */
   return (
     <div className="flex flex-col h-screen min-h-0">
-      {/* Sticky Header */}
-      <div className="border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-2"> 
-        {activeChatModeValue === 'ai' && (
-          <RecentQueries
-            showRecentQueries={showRecentQueries}
-            setShowRecentQueries={setShowRecentQueries}
-            queriesToRender={queriesToRender}
-            handleExamplePromptClick={handleExamplePromptClick}
-          />
-        )}
+      {/* Conditional sticky header - only show if input is not hidden */}
+      {!hideInput && (
+        <div className="border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-2"> 
+          {activeChatModeValue === 'ai' && (
+            <RecentQueries
+              showRecentQueries={showRecentQueries}
+              setShowRecentQueries={setShowRecentQueries}
+              queriesToRender={queriesToRender}
+              handleExamplePromptClick={handleExamplePromptClick}
+            />
+          )}
 
-        <ChatInput
-          input={currentInputValue}
-          setInput={handleUnifiedInputChange}
-          handleSendMessage={handleUnifiedSendMessage}
-          isTyping={currentIsTyping}
-          handleKeyPress={handleUnifiedKeyPress}
-          isHeartActive={isHeartActive}
-          handleHeartClick={handleHeartClick}
-          globalQueries={globalQueries}
-          toggleRecentQueries={toggleRecentQueries}
-          inputRef={inputRef}
-          onAddEvent={onAddEvent}
-          showAnimatedPrompts={showAnimatedPrompts}
-          activeChatModeValue={activeChatModeValue}
-          activeCategory={activeCategory}
-          onCategoryChange={onCategoryChange}
-        />
-      </div>
+          <ChatInput
+            input={currentInputValue}
+            setInput={handleUnifiedInputChange}
+            handleSendMessage={handleUnifiedSendMessage}
+            isTyping={currentIsTyping}
+            handleKeyPress={handleUnifiedKeyPress}
+            isHeartActive={isHeartActive}
+            handleHeartClick={handleHeartClick}
+            globalQueries={globalQueries}
+            toggleRecentQueries={toggleRecentQueries}
+            inputRef={inputRef}
+            onAddEvent={onAddEvent}
+            showAnimatedPrompts={showAnimatedPrompts}
+            activeChatModeValue={activeChatModeValue}
+            activeCategory={activeCategory}
+            onCategoryChange={onCategoryChange}
+          />
+        </div>
+      )}
 
       {/* Main scroll container */}
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
         {activeChatModeValue === 'ai' ? (
-          <div className="pt-32 px-3"> 
+          <div className={hideInput ? "pt-4 px-3" : "pt-32 px-3"}> 
             <MessageList
               messages={aiMessages}
               isTyping={aiTyping}
