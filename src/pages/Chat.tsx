@@ -206,7 +206,7 @@ const ChatPage = () => {
         setIsEventListSheetOpen={setIsEventListSheetOpen}
         newMessagesCount={unreadMessageCount}
         newEventsCount={0}
-        chatInputProps={chatInputProps} // Pass chatInputProps to Layout
+        chatInputProps={chatInputProps}
       >
         <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
           <div className="flex-grow rounded-lg overflow-hidden border border-black flex flex-col bg-black">
@@ -217,8 +217,8 @@ const ChatPage = () => {
                 onToggleCommunity={handleToggleCommunity} 
                 activeChatMode={activeView} 
                 setActiveChatMode={setActiveView}
-                // Removed hideButtons prop
-                onChatInputPropsChange={setChatInputProps} // Set the state with the chat input props
+                hideButtons={true}
+                onChatInputPropsChange={setChatInputProps}
               />
             </div>
           </div>

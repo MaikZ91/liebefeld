@@ -1,13 +1,14 @@
+
 // src/components/event-chat/FullPageChatBot.tsx
 import React, { useEffect } from 'react';
 import MessageList from './MessageList';
-// import ChatInput from './ChatInput'; // Removed this import
+import ChatInput from './ChatInput';
 import RecentQueries from './RecentQueries';
 import { useChatMessages } from '@/hooks/chat/useChatMessages';
 import { useMessageSending } from '@/hooks/chat/useMessageSending';
 import { AVATAR_KEY, USERNAME_KEY } from '@/types/chatTypes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getInitials } from '@/utils/chatUIUtils';
+import { getInitials } from '@/utils/chatUIUtils'; 
 import TypingIndicator from '@/components/chat/TypingIndicator';
 import ChatMessage from '@/components/chat/ChatMessage';
 import MessageReactions from '@/components/chat/MessageReactions';
@@ -20,10 +21,10 @@ interface FullPageChatBotProps {
   activeChatModeValue: 'ai' | 'community';
   communityGroupId: string;
   onAddEvent?: () => void;
-  // hideButtons?: boolean; // This prop is not used here anymore
+  hideButtons?: boolean;
   activeCategory?: string;
   onCategoryChange?: (category: string) => void;
-  onChatInputPropsChange?: (props: any) => void; // Added this prop
+  hideInput?: boolean;
 }
 
 const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
@@ -33,7 +34,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   onAddEvent,
   activeCategory = 'Kreativität',
   onCategoryChange,
-  onChatInputPropsChange // Destructure the new prop
+  hideInput = false
 }) => {
   const {
     messages: aiMessages,
@@ -50,10 +51,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     handleSendMessage: aiSendMessage,
     handleDateSelect,
     handleExamplePromptClick,
-    handleKeyPress: aiHandleKeyPress, // Renamed for clarity
+    handleKeyPress,
     handleHeartClick,
     toggleRecentQueries,
-    showAnimatedPrompts
+    showAnimatedPrompts 
   } = chatLogic;
 
   const { selectedCity } = useEventContext();
@@ -78,7 +79,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     isSending: communitySending,
     handleSubmit: communitySendMessage,
     handleInputChange: communityInputChange,
-    handleKeyDown: communityHandleKeyDown, // Renamed for clarity
+    handleKeyDown: communityKeyDown,
     setNewMessage: setCommunityInput
   } = useMessageSending(communityGroupId, username, addOptimisticMessage);
 
@@ -107,80 +108,79 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   };
 
-  // --- Unified functions to pass to the external ChatInput ---
-  const unifiedInput = activeChatModeValue === 'ai' ? input : communityInput;
-  const unifiedSetInput = (value: string) => { activeChatModeValue === 'ai' ? setInput(value) : setCommunityInput(value); };
-  const unifiedHandleSendMessage = async (eventData?: any) => {
-    activeChatModeValue === 'ai' ? await aiSendMessage(eventData) : await communitySendMessage(eventData);
-  };
-  const unifiedIsSending = activeChatModeValue === 'ai' ? aiTyping : communitySending;
-  const unifiedHandleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    activeChatModeValue === 'ai' ? aiHandleKeyPress(e) : communityHandleKeyDown(e);
-  };
-  const unifiedHandleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    activeChatModeValue === 'ai' ? chatLogic.handleInputChange(e) : communityInputChange(e);
+  const handleUnifiedSendMessage = async () => {
+    activeChatModeValue === 'ai' ? await aiSendMessage() : await communitySendMessage();
   };
 
-  // Provide chat input props to parent component (Layout)
-  useEffect(() => {
-    if (onChatInputPropsChange) {
-      onChatInputPropsChange({
-        input: unifiedInput,
-        setInput: unifiedSetInput,
-        handleSendMessage: unifiedHandleSendMessage,
-        isTyping: unifiedIsSending,
-        handleKeyPress: unifiedHandleKeyPress,
-        handleInputChange: unifiedHandleInputChange, // Make sure to pass this as well
-        isHeartActive: isHeartActive,
-        handleHeartClick: handleHeartClick,
-        globalQueries: globalQueries,
-        toggleRecentQueries: toggleRecentQueries,
-        inputRef: inputRef,
-        onAddEvent: onAddEvent,
-        showAnimatedPrompts: showAnimatedPrompts,
-        activeCategory: activeCategory,
-        onCategoryChange: onCategoryChange,
-      });
+  const handleUnifiedInputChange = (value: string) => {
+    activeChatModeValue === 'ai' ? setInput(value) : setCommunityInput(value);
+  };
+
+  const handleUnifiedKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (activeChatModeValue === 'ai') {
+      handleKeyPress(e);
+    } else if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      communitySendMessage();
     }
-  }, [
-    onChatInputPropsChange,
-    unifiedInput,
-    unifiedIsSending,
-    isHeartActive,
-    globalQueries,
-    showAnimatedPrompts,
-    activeCategory,
-    onAddEvent, // Include onAddEvent in dependency array
-    unifiedSetInput,
-    unifiedHandleSendMessage,
-    unifiedHandleKeyPress,
-    unifiedHandleInputChange,
-    handleHeartClick,
-    toggleRecentQueries,
-    inputRef,
-    onCategoryChange
-  ]);
+  };
+
+  const currentInputValue = activeChatModeValue === 'ai' ? input : communityInput;
+  const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending;
+
+  useEffect(() => {
+    if (activeChatModeValue === 'ai' && messagesEndRef?.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+    }
+  }, [aiMessages, aiTyping, activeChatModeValue, messagesEndRef]);
+
+  useEffect(() => {
+    if (activeChatModeValue === 'community' && chatBottomRef?.current) {
+      chatBottomRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+    }
+  }, [communityMessages, communitySending, activeChatModeValue, chatBottomRef]);
 
   return (
-    <div className="flex flex-col h-full min-h-0">
-      {/* Removed ChatInput from here as it's now rendered in Layout.tsx */}
-      {/* Keep RecentQueries if still relevant, adjusting its positioning if needed */}
-      {activeChatModeValue === 'ai' && (
-        <RecentQueries
-          showRecentQueries={showRecentQueries}
-          setShowRecentQueries={setShowRecentQueries}
-          queriesToRender={queriesToRender}
-          handleExamplePromptClick={handleExamplePromptClick}
-        />
+    <div className="flex flex-col h-screen min-h-0">
+      {/* Conditional sticky header - only show if input is not hidden */}
+      {!hideInput && (
+        <div className="border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-2"> 
+          {activeChatModeValue === 'ai' && (
+            <RecentQueries
+              showRecentQueries={showRecentQueries}
+              setShowRecentQueries={setShowRecentQueries}
+              queriesToRender={queriesToRender}
+              handleExamplePromptClick={handleExamplePromptClick}
+            />
+          )}
+
+          <ChatInput
+            input={currentInputValue}
+            setInput={handleUnifiedInputChange}
+            handleSendMessage={handleUnifiedSendMessage}
+            isTyping={currentIsTyping}
+            handleKeyPress={handleUnifiedKeyPress}
+            isHeartActive={isHeartActive}
+            handleHeartClick={handleHeartClick}
+            globalQueries={globalQueries}
+            toggleRecentQueries={toggleRecentQueries}
+            inputRef={inputRef}
+            onAddEvent={onAddEvent}
+            showAnimatedPrompts={showAnimatedPrompts}
+            activeChatModeValue={activeChatModeValue}
+            activeCategory={activeCategory}
+            onCategoryChange={onCategoryChange}
+          />
+        </div>
       )}
 
-      {/* Main scroll container. Adjusted pt value as ChatInput is no longer here */}
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none pt-4">
+      {/* Main scroll container */}
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
         {activeChatModeValue === 'ai' ? (
-          <div className="px-3">
+          <div className={hideInput ? "pt-4 px-3" : "pt-32 px-3"}> 
             <MessageList
               messages={aiMessages}
-              isTyping={unifiedIsSending} // Use unifiedIsSending here
+              isTyping={aiTyping}
               handleDateSelect={handleDateSelect}
               messagesEndRef={messagesEndRef}
               examplePrompts={examplePrompts}
