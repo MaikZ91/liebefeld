@@ -25,6 +25,9 @@ interface FullPageChatBotProps {
   activeCategory?: string;
   onCategoryChange?: (category: string) => void;
   hideInput?: boolean;
+  externalInput?: string;
+  setExternalInput?: (value: string) => void;
+  onExternalSendHandlerChange?: (handler: (() => void) | null) => void;
 }
 
 const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
@@ -34,7 +37,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   onAddEvent,
   activeCategory = 'Kreativität',
   onCategoryChange,
-  hideInput = false
+  hideInput = false,
+  externalInput = '',
+  setExternalInput,
+  onExternalSendHandlerChange
 }) => {
   const {
     messages: aiMessages,
@@ -83,6 +89,34 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     setNewMessage: setCommunityInput
   } = useMessageSending(communityGroupId, username, addOptimisticMessage);
 
+  // Synchronize external input with community input
+  useEffect(() => {
+    if (activeChatModeValue === 'community' && setExternalInput) {
+      setExternalInput(communityInput);
+    }
+  }, [communityInput, activeChatModeValue, setExternalInput]);
+
+  useEffect(() => {
+    if (activeChatModeValue === 'community' && externalInput !== communityInput) {
+      setCommunityInput(externalInput);
+    }
+  }, [externalInput, activeChatModeValue, setCommunityInput, communityInput]);
+
+  // Provide external send handler
+  useEffect(() => {
+    if (activeChatModeValue === 'community' && onExternalSendHandlerChange) {
+      onExternalSendHandlerChange(() => communitySendMessage);
+    } else if (activeChatModeValue === 'ai' && onExternalSendHandlerChange) {
+      onExternalSendHandlerChange(() => aiSendMessage);
+    }
+    
+    return () => {
+      if (onExternalSendHandlerChange) {
+        onExternalSendHandlerChange(null);
+      }
+    };
+  }, [activeChatModeValue, communitySendMessage, aiSendMessage, onExternalSendHandlerChange]);
+
   const queriesToRender = globalQueries.length > 0 ? globalQueries : [];
 
   const formatTime = (isoDateString: string) => {
@@ -113,7 +147,14 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   };
 
   const handleUnifiedInputChange = (value: string) => {
-    activeChatModeValue === 'ai' ? setInput(value) : setCommunityInput(value);
+    if (activeChatModeValue === 'ai') {
+      setInput(value);
+    } else {
+      setCommunityInput(value);
+      if (setExternalInput) {
+        setExternalInput(value);
+      }
+    }
   };
 
   const handleUnifiedKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -125,7 +166,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   };
 
-  const currentInputValue = activeChatModeValue === 'ai' ? input : communityInput;
+  const currentInputValue = activeChatModeValue === 'ai' ? input : (hideInput ? externalInput : communityInput);
   const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending;
 
   useEffect(() => {
