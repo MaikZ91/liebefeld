@@ -1,280 +1,190 @@
-// src/components/event-chat/FullPageChatBot.tsx
-import React, { useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
-import RecentQueries from './RecentQueries';
-import { useChatMessages } from '@/hooks/chat/useChatMessages';
-import { useMessageSending } from '@/hooks/chat/useMessageSending';
-import { AVATAR_KEY, USERNAME_KEY } from '@/types/chatTypes';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getInitials } from '@/utils/chatUIUtils'; 
-import TypingIndicator from '@/components/chat/TypingIndicator';
-import ChatMessage from '@/components/chat/ChatMessage';
-import MessageReactions from '@/components/chat/MessageReactions';
-import { chatService } from '@/services/chatService';
-import { useEventContext, cities } from '@/contexts/EventContext';
-import { createGroupDisplayName } from '@/utils/groupIdUtils';
+import SwipeableEventPanel from './SwipeableEventPanel';
+import SwipeableLandingPanel from './SwipeableLandingPanel';
+import { useChatLogic } from './useChatLogic';
+import { usePersonalization } from './usePersonalization';
+import { Message } from './types';
 
 interface FullPageChatBotProps {
-  chatLogic: any;
-  activeChatModeValue: 'ai' | 'community';
-  communityGroupId: string;
-  onAddEvent?: () => void;
-  hideButtons?: boolean;
-  activeCategory?: string;
-  onCategoryChange?: (category: string) => void;
-  hideInput?: boolean;
+  activeView: 'ai' | 'community';
   externalInput?: string;
-  setExternalInput?: (value: string) => void;
-  onExternalSendHandlerChange?: (handler: (() => void) | null) => void;
+  externalSetInput?: (value: string) => void;
+  externalHandleSendMessage?: () => void;
+  externalIsTyping?: boolean;
+  externalHandleKeyPress?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  externalIsHeartActive?: boolean;
+  externalHandleHeartClick?: () => void;
+  externalGlobalQueries?: any[];
+  externalToggleRecentQueries?: () => void;
+  externalInputRef?: React.RefObject<HTMLInputElement>;
+  externalOnAddEvent?: () => void;
+  externalShowAnimatedPrompts?: boolean;
+  externalActiveCategory?: string;
+  externalOnCategoryChange?: (category: string) => void;
 }
 
 const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
-  chatLogic,
-  activeChatModeValue,
-  communityGroupId,
-  onAddEvent,
-  activeCategory = 'Kreativität',
-  onCategoryChange,
-  hideInput = false,
-  externalInput = '',
-  setExternalInput,
-  onExternalSendHandlerChange
+  activeView,
+  externalInput,
+  externalSetInput,
+  externalHandleSendMessage,
+  externalIsTyping,
+  externalHandleKeyPress,
+  externalIsHeartActive,
+  externalHandleHeartClick,
+  externalGlobalQueries,
+  externalToggleRecentQueries,
+  externalInputRef,
+  externalOnAddEvent,
+  externalShowAnimatedPrompts,
+  externalActiveCategory,
+  externalOnCategoryChange
 }) => {
+  const [isUserDirectoryOpen, setIsUserDirectoryOpen] = useState(false);
+  const [isEventListSheetOpen, setIsEventListSheetOpen] = useState(false);
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+
+  const location = useLocation();
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [showEventDetails, setShowEventDetails] = useState(false);
+  const [showLandingPanel, setShowLandingPanel] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const {
-    messages: aiMessages,
-    input: aiInput, // Renamed to aiInput
-    setInput: setAiInput, // Renamed to setAiInput
-    isTyping: aiTyping,
+    messages,
+    input: internalInput,
+    setInput: internalSetInput,
+    isTyping: internalIsTyping,
+    handleSendMessage: internalHandleSendMessage,
+    handleKeyPress: internalHandleKeyPress,
+    isHeartActive: internalIsHeartActive,
+    handleHeartClick: internalHandleHeartClick,
     globalQueries,
-    showRecentQueries,
-    setShowRecentQueries,
-    messagesEndRef,
-    inputRef,
-    examplePrompts,
-    isHeartActive,
-    handleSendMessage: aiSendMessage,
-    handleDateSelect,
-    handleExamplePromptClick,
-    handleKeyPress: aiKeyPress, // Renamed to aiKeyPress
-    handleInputChange: aiInputChange, // Renamed to aiInputChange
-    handleHeartClick,
-    toggleRecentQueries,
-    showAnimatedPrompts 
-  } = chatLogic;
-
-  const { selectedCity } = useEventContext();
-
-  const username =
-    typeof window !== 'undefined'
-      ? localStorage.getItem(USERNAME_KEY) || 'Anonymous'
-      : 'Anonymous';
+    toggleRecentQueries: internalToggleRecentQueries,
+    clearChat,
+    activeCategory: internalActiveCategory,
+    setActiveCategory: internalSetActiveCategory,
+    showAnimatedPrompts: internalShowAnimatedPrompts
+  } = useChatLogic(activeView);
 
   const {
-    messages: communityMessages,
-    loading: communityLoading,
-    error: communityError,
-    typingUsers,
-    chatBottomRef,
-    chatContainerRef,
-    addOptimisticMessage
-  } = useChatMessages(communityGroupId, username);
+    favoriteEvents,
+    likedEventIds,
+    handleLikeEvent: handleEventLike,
+    handleRsvpEvent: handleEventRsvp
+  } = usePersonalization();
 
-  const {
-    newMessage: communityInput,
-    isSending: communitySending,
-    handleSubmit: communitySendMessage,
-    handleInputChange: communityInputChange,
-    handleKeyDown: communityKeyDown,
-    setNewMessage: setCommunityInput
-  } = useMessageSending(communityGroupId, username, addOptimisticMessage);
+  // Use external props if provided (for header integration), otherwise use internal state
+  const input = externalInput !== undefined ? externalInput : internalInput;
+  const setInput = externalSetInput || internalSetInput;
+  const handleSendMessage = externalHandleSendMessage || internalHandleSendMessage;
+  const isTyping = externalIsTyping !== undefined ? externalIsTyping : internalIsTyping;
+  const handleKeyPress = externalHandleKeyPress || internalHandleKeyPress;
+  const isHeartActive = externalIsHeartActive !== undefined ? externalIsHeartActive : internalIsHeartActive;
+  const handleHeartClick = externalHandleHeartClick || internalHandleHeartClick;
+  const queries = externalGlobalQueries || globalQueries;
+  const toggleRecentQueries = externalToggleRecentQueries || internalToggleRecentQueries;
+  const finalInputRef = externalInputRef || inputRef;
+  const onAddEvent = externalOnAddEvent;
+  const showAnimatedPrompts = externalShowAnimatedPrompts !== undefined ? externalShowAnimatedPrompts : internalShowAnimatedPrompts;
+  const activeCategory = externalActiveCategory !== undefined ? externalActiveCategory : internalActiveCategory;
+  const onCategoryChange = externalOnCategoryChange || internalSetActiveCategory;
 
-  // Only update external input when community input changes, not the other way around
   useEffect(() => {
-    if (activeChatModeValue === 'community' && setExternalInput && communityInput !== externalInput) {
-      setExternalInput(communityInput);
+    if (location.hash === '#users') {
+      setIsUserDirectoryOpen(true);
     }
-  }, [communityInput, activeChatModeValue, setExternalInput]);
+  }, [location.hash]);
 
-  // Only update community input from external when it's different and not empty
   useEffect(() => {
-    if (activeChatModeValue === 'community' && externalInput !== communityInput && externalInput !== '') {
-      setCommunityInput(externalInput);
-    }
-  }, [externalInput, activeChatModeValue, setCommunityInput, communityInput]);
-
-  // Provide external send handler
-  useEffect(() => {
-    if (activeChatModeValue === 'community' && onExternalSendHandlerChange) {
-      onExternalSendHandlerChange(() => communitySendMessage);
-    } else if (activeChatModeValue === 'ai' && onExternalSendHandlerChange) {
-      onExternalSendHandlerChange(() => aiSendMessage);
-    }
-    
-    return () => {
-      if (onExternalSendHandlerChange) {
-        onExternalSendHandlerChange(null);
-      }
+    const handleEventClick = (event: CustomEvent) => {
+      setSelectedEvent(event.detail);
+      setShowEventDetails(true);
     };
-  }, [activeChatModeValue, communitySendMessage, aiSendMessage, onExternalSendHandlerChange]);
 
-  const queriesToRender = globalQueries.length > 0 ? globalQueries : [];
+    const handleLandingClick = () => {
+      setShowLandingPanel(true);
+    };
 
-  const formatTime = (isoDateString: string) => {
-    const date = new Date(isoDateString);
-    const now = new Date();
-    const diff = Math.floor((now.getTime() - date.getTime()) / 60000);
+    window.addEventListener('eventCardClick', handleEventClick as EventListener);
+    window.addEventListener('landingCardClick', handleLandingClick as EventListener);
 
-    if (diff < 1) return 'gerade eben';
-    if (diff < 60) return `vor ${diff}m`;
-    if (diff < 24 * 60) return `vor ${Math.floor(diff / 60)}h`;
-    return `vor ${Math.floor(diff / 1440)}d`;
-  };
+    return () => {
+      window.removeEventListener('eventCardClick', handleEventClick as EventListener);
+      window.removeEventListener('landingCardClick', handleLandingClick as EventListener);
+    };
+  }, []);
 
-  const getCommunityDisplayName = (category: string, cityAbbr: string): string => {
-    return createGroupDisplayName(category, cityAbbr, cities);
-  };
+  const handleEventClose = useCallback(() => {
+    setSelectedEvent(null);
+    setShowEventDetails(false);
+  }, []);
 
-  const handleReaction = async (messageId: string, emoji: string) => {
-    try {
-      await chatService.toggleReaction(messageId, emoji, username);
-    } catch (error) {
-      console.error('Error toggling reaction:', error);
-    }
-  };
+  const handleLandingClose = useCallback(() => {
+    setShowLandingPanel(false);
+  }, []);
 
-  // Unified functions to pass to ChatInput, based on activeChatModeValue
-  const currentInput = activeChatModeValue === 'ai' ? aiInput : communityInput;
-  const currentSetInput = activeChatModeValue === 'ai' ? setAiInput : setCommunityInput;
-  const currentHandleSendMessage = activeChatModeValue === 'ai' ? aiSendMessage : communitySendMessage;
-  const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending; // isTyping is AI processing, isSending is community sending
-  const currentHandleKeyPress = activeChatModeValue === 'ai' ? aiKeyPress : communityKeyDown;
-  const currentHandleInputChange = activeChatModeValue === 'ai' ? aiInputChange : communityInputChange;
+  const handleLikeEvent = useCallback((eventId: string) => {
+    handleEventLike(eventId);
+  }, [handleEventLike]);
 
-
-  useEffect(() => {
-    if (activeChatModeValue === 'ai' && messagesEndRef?.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
-    }
-  }, [aiMessages, aiTyping, activeChatModeValue, messagesEndRef]);
-
-  useEffect(() => {
-    if (activeChatModeValue === 'community' && chatBottomRef?.current) {
-      chatBottomRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
-    }
-  }, [communityMessages, communitySending, activeChatModeValue, chatBottomRef]);
+  const handleRsvpEvent = useCallback((eventId: string, option: 'yes' | 'no' | 'maybe') => {
+    handleEventRsvp(eventId, option);
+  }, [handleEventRsvp]);
 
   return (
-    <div className="flex flex-col h-screen min-h-0">
-      {/* Conditional sticky header - only show if input is not hidden */}
-      {!hideInput && (
-        <div className="border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-2"> 
-          {activeChatModeValue === 'ai' && (
-            <RecentQueries
-              showRecentQueries={showRecentQueries}
-              setShowRecentQueries={setShowRecentQueries}
-              queriesToRender={queriesToRender}
-              handleExamplePromptClick={handleExamplePromptClick}
-            />
-          )}
-
+    <div className="flex flex-col h-full bg-black text-white relative overflow-hidden">
+      <div className="flex-1 overflow-hidden">
+        <MessageList 
+          messages={messages}
+          activeView={activeView}
+          favoriteEvents={favoriteEvents}
+          likedEventIds={likedEventIds}
+          onLikeEvent={handleLikeEvent}
+          onRsvpEvent={handleRsvpEvent}
+          onClearChat={clearChat}
+        />
+      </div>
+      
+      {location.pathname === '/chat' && (
+        <div className="sticky bottom-0 left-0 right-0 bg-black/95 backdrop-blur-sm border-t border-gray-800 p-3">
           <ChatInput
-            input={currentInput}
-            setInput={currentSetInput} // Pass unified setInput
-            handleSendMessage={currentHandleSendMessage} // Pass unified handleSendMessage
-            isTyping={currentIsTyping} // Pass unified isTyping/isSending
-            handleKeyPress={currentHandleKeyPress} // Pass unified handleKeyPress
-            handleInputChange={currentHandleInputChange} // Pass unified handleInputChange
+            input={input}
+            setInput={setInput}
+            handleSendMessage={handleSendMessage}
+            isTyping={isTyping}
+            handleKeyPress={handleKeyPress}
             isHeartActive={isHeartActive}
             handleHeartClick={handleHeartClick}
-            globalQueries={globalQueries}
+            globalQueries={queries}
             toggleRecentQueries={toggleRecentQueries}
-            inputRef={inputRef}
+            inputRef={finalInputRef}
             onAddEvent={onAddEvent}
             showAnimatedPrompts={showAnimatedPrompts}
-            activeChatModeValue={activeChatModeValue}
+            activeChatModeValue={activeView}
             activeCategory={activeCategory}
             onCategoryChange={onCategoryChange}
           />
         </div>
       )}
 
-      {/* Main scroll container */}
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
-        {activeChatModeValue === 'ai' ? (
-          <div className={hideInput ? "pt-4 px-3" : "pt-32 px-3"}> 
-            <MessageList
-              messages={aiMessages}
-              isTyping={aiTyping}
-              handleDateSelect={handleDateSelect}
-              messagesEndRef={messagesEndRef}
-              examplePrompts={examplePrompts}
-              handleExamplePromptClick={handleExamplePromptClick}
-            />
-            <div ref={messagesEndRef} />
-          </div>
-        ) : (
-          <div className="h-full min-h-0 flex flex-col">
-            {communityError && (
-              <div className="text-center text-red-500 text-lg font-semibold py-4">
-                Error: {communityError}
-              </div>
-            )}
+      {showEventDetails && selectedEvent && (
+        <SwipeableEventPanel
+          event={selectedEvent}
+          onClose={handleEventClose}
+          onLikeEvent={handleLikeEvent}
+          onRsvpEvent={handleRsvpEvent}
+          isLiked={likedEventIds.has(selectedEvent.id)}
+        />
+      )}
 
-            <div
-              ref={chatContainerRef}
-              className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4"
-            >
-              <div className="space-y-2 py-4">
-                {communityMessages.length === 0 && !communityLoading && !communityError && (
-                  <div className="text-center text-gray-400 py-4">
-                    Noch keine Nachrichten in {getCommunityDisplayName(activeCategory || 'Community', selectedCity)}. Starte die Unterhaltung!
-                  </div>
-                )}
-
-                {communityMessages.map((message, index) => {
-                  const isConsecutive =
-                    index > 0 && communityMessages[index - 1].user_name === message.user_name;
-                  const timeAgo = formatTime(message.created_at);
-
-                  return (
-                    <div key={message.id} className="w-full group">
-                      {!isConsecutive && (
-                        <div className="flex items-center mb-1">
-                          <Avatar className="h-8 w-8 mr-2 flex-shrink-0 border-red-500">
-                            <AvatarImage src={message.user_avatar} alt={message.user_name} />
-                            <AvatarFallback className="bg-red-500 text-white">
-                              {getInitials(message.user_name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="text-lg font-medium text-white mr-2">
-                            {message.user_name}
-                          </div>
-                          <span className="text-sm text-gray-400">{timeAgo}</span>
-                        </div>
-                      )}
-                      <div className="break-words">
-                        <ChatMessage
-                          message={message.text}
-                          isConsecutive={isConsecutive}
-                          isGroup
-                          messageId={message.id}
-                          reactions={message.reactions || []}
-                          onReact={(emoji) => handleReaction(message.id, emoji)}
-                          currentUsername={username}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-
-                <TypingIndicator typingUsers={typingUsers} />
-                <div ref={chatBottomRef} />
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      {showLandingPanel && (
+        <SwipeableLandingPanel onClose={handleLandingClose} />
+      )}
     </div>
   );
 };
