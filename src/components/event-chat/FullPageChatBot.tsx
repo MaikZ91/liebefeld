@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import MessageList from './MessageList';
@@ -6,7 +7,7 @@ import SwipeableEventPanel from './SwipeableEventPanel';
 import SwipeableLandingPanel from './SwipeableLandingPanel';
 import { useChatLogic } from './useChatLogic';
 import { usePersonalization } from './usePersonalization';
-import { Message } from './types';
+import { ChatMessage } from './types';
 
 interface FullPageChatBotProps {
   activeView: 'ai' | 'community';
@@ -54,45 +55,25 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const [showLandingPanel, setShowLandingPanel] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const {
-    messages,
-    input: internalInput,
-    setInput: internalSetInput,
-    isTyping: internalIsTyping,
-    handleSendMessage: internalHandleSendMessage,
-    handleKeyPress: internalHandleKeyPress,
-    isHeartActive: internalIsHeartActive,
-    handleHeartClick: internalHandleHeartClick,
-    globalQueries,
-    toggleRecentQueries: internalToggleRecentQueries,
-    clearChat,
-    activeCategory: internalActiveCategory,
-    setActiveCategory: internalSetActiveCategory,
-    showAnimatedPrompts: internalShowAnimatedPrompts
-  } = useChatLogic(activeView);
+  const chatLogic = useChatLogic(activeView);
 
-  const {
-    favoriteEvents,
-    likedEventIds,
-    handleLikeEvent: handleEventLike,
-    handleRsvpEvent: handleEventRsvp
-  } = usePersonalization();
+  const personalization = usePersonalization();
 
   // Use external props if provided (for header integration), otherwise use internal state
-  const input = externalInput !== undefined ? externalInput : internalInput;
-  const setInput = externalSetInput || internalSetInput;
-  const handleSendMessage = externalHandleSendMessage || internalHandleSendMessage;
-  const isTyping = externalIsTyping !== undefined ? externalIsTyping : internalIsTyping;
-  const handleKeyPress = externalHandleKeyPress || internalHandleKeyPress;
-  const isHeartActive = externalIsHeartActive !== undefined ? externalIsHeartActive : internalIsHeartActive;
-  const handleHeartClick = externalHandleHeartClick || internalHandleHeartClick;
-  const queries = externalGlobalQueries || globalQueries;
-  const toggleRecentQueries = externalToggleRecentQueries || internalToggleRecentQueries;
+  const input = externalInput !== undefined ? externalInput : chatLogic.input;
+  const setInput = externalSetInput || chatLogic.setInput;
+  const handleSendMessage = externalHandleSendMessage || chatLogic.handleSendMessage;
+  const isTyping = externalIsTyping !== undefined ? externalIsTyping : chatLogic.isTyping;
+  const handleKeyPress = externalHandleKeyPress || chatLogic.handleKeyPress;
+  const isHeartActive = externalIsHeartActive !== undefined ? externalIsHeartActive : chatLogic.isHeartActive;
+  const handleHeartClick = externalHandleHeartClick || chatLogic.handleHeartClick;
+  const queries = externalGlobalQueries || chatLogic.globalQueries;
+  const toggleRecentQueries = externalToggleRecentQueries || chatLogic.toggleRecentQueries;
   const finalInputRef = externalInputRef || inputRef;
   const onAddEvent = externalOnAddEvent;
-  const showAnimatedPrompts = externalShowAnimatedPrompts !== undefined ? externalShowAnimatedPrompts : internalShowAnimatedPrompts;
-  const activeCategory = externalActiveCategory !== undefined ? externalActiveCategory : internalActiveCategory;
-  const onCategoryChange = externalOnCategoryChange || internalSetActiveCategory;
+  const showAnimatedPrompts = externalShowAnimatedPrompts !== undefined ? externalShowAnimatedPrompts : chatLogic.showAnimatedPrompts;
+  const activeCategory = externalActiveCategory !== undefined ? externalActiveCategory : (chatLogic.activeCategory || '');
+  const onCategoryChange = externalOnCategoryChange || chatLogic.setActiveCategory;
 
   useEffect(() => {
     if (location.hash === '#users') {
@@ -129,24 +110,23 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   }, []);
 
   const handleLikeEvent = useCallback((eventId: string) => {
-    handleEventLike(eventId);
-  }, [handleEventLike]);
+    personalization.handleLikeEvent(eventId);
+  }, [personalization.handleLikeEvent]);
 
   const handleRsvpEvent = useCallback((eventId: string, option: 'yes' | 'no' | 'maybe') => {
-    handleEventRsvp(eventId, option);
-  }, [handleEventRsvp]);
+    personalization.handleRsvpEvent(eventId, option);
+  }, [personalization.handleRsvpEvent]);
 
   return (
     <div className="flex flex-col h-full bg-black text-white relative overflow-hidden">
       <div className="flex-1 overflow-hidden">
         <MessageList 
-          messages={messages}
-          activeView={activeView}
-          favoriteEvents={favoriteEvents}
-          likedEventIds={likedEventIds}
-          onLikeEvent={handleLikeEvent}
-          onRsvpEvent={handleRsvpEvent}
-          onClearChat={clearChat}
+          messages={chatLogic.messages}
+          isTyping={isTyping}
+          handleDateSelect={() => {}}
+          messagesEndRef={useRef<HTMLDivElement>(null)}
+          examplePrompts={[]}
+          handleExamplePromptClick={() => {}}
         />
       </div>
       
@@ -174,16 +154,13 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
       {showEventDetails && selectedEvent && (
         <SwipeableEventPanel
-          event={selectedEvent}
+          isOpen={showEventDetails}
           onClose={handleEventClose}
-          onLikeEvent={handleLikeEvent}
-          onRsvpEvent={handleRsvpEvent}
-          isLiked={likedEventIds.has(selectedEvent.id)}
         />
       )}
 
       {showLandingPanel && (
-        <SwipeableLandingPanel onClose={handleLandingClose} />
+        <SwipeableLandingPanel />
       )}
     </div>
   );

@@ -84,8 +84,10 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
       {showRecentQueries && (
         <div className="absolute bottom-full left-0 right-0 mb-2 z-50">
           <RecentQueries 
-            globalQueries={globalQueries}
-            onQuerySelect={(query) => {
+            showRecentQueries={showRecentQueries}
+            setShowRecentQueries={setShowRecentQueries}
+            queriesToRender={globalQueries}
+            handleExamplePromptClick={(query) => {
               setInput(query);
               setShowRecentQueries(false);
             }}
@@ -176,10 +178,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           
           {showAnimatedPrompts && input.length === 0 && (
             <div className="absolute inset-0 pointer-events-none">
-              <TypewriterPrompt 
-                activeChatMode={activeChatModeValue}
-                activeCategory={activeCategory}
-              />
+              <TypewriterPrompt />
             </div>
           )}
         </div>

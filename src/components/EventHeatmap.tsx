@@ -395,20 +395,22 @@ const EventHeatmap: React.FC = () => {
       <div ref={mapRef} className="w-full h-full" />
       
       {/* Custom CSS for enhanced styling */}
-      <style jsx global>{`
-        .custom-popup .leaflet-popup-content-wrapper {
-          background: white;
-          border-radius: 12px;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        }
-        .custom-popup .leaflet-popup-tip {
-          background: white;
-        }
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.1); }
-        }
-      `}</style>
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          .custom-popup .leaflet-popup-content-wrapper {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+          }
+          .custom-popup .leaflet-popup-tip {
+            background: white;
+          }
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+          }
+        `
+      }} />
     </div>
   );
 };

@@ -40,12 +40,9 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   const communityGroupId = createCitySpecificGroupId(activeCategory, selectedCity);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
-  const chatLogic = useChatLogic(fullPage, activeChatModeValue);
+  const chatLogic = useChatLogic(activeChatModeValue);
   
-  const { sendPersonalizedQuery } = usePersonalization(
-    chatLogic.handleSendMessage, 
-    { userProfile, currentUser, userService }
-  );
+  const personalization = usePersonalization();
 
   const handleToggleChatMode = () => {
     const newMode = activeChatModeValue === 'ai' ? 'community' : 'ai';
@@ -121,16 +118,21 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   if (fullPage) {
     return (
       <FullPageChatBot
-        chatLogic={chatLogic}
-        activeChatModeValue={activeChatModeValue}
-        communityGroupId={communityGroupId}
-        onAddEvent={onAddEvent}
-        activeCategory={activeCategory}
-        onCategoryChange={handleCategoryChange}
-        hideInput={true}
+        activeView={activeChatModeValue}
         externalInput={externalInput}
-        setExternalInput={setExternalInput}
-        onExternalSendHandlerChange={setExternalSendHandler}
+        externalSetInput={setExternalInput}
+        externalHandleSendMessage={externalSendHandler}
+        externalIsTyping={chatLogic.isTyping}
+        externalHandleKeyPress={chatLogic.handleKeyPress}
+        externalIsHeartActive={chatLogic.isHeartActive}
+        externalHandleHeartClick={chatLogic.handleHeartClick}
+        externalGlobalQueries={chatLogic.globalQueries}
+        externalToggleRecentQueries={chatLogic.toggleRecentQueries}
+        externalInputRef={chatLogic.inputRef}
+        externalOnAddEvent={onAddEvent}
+        externalShowAnimatedPrompts={chatLogic.showAnimatedPrompts}
+        externalActiveCategory={activeCategory}
+        externalOnCategoryChange={handleCategoryChange}
       />
     );
   }
