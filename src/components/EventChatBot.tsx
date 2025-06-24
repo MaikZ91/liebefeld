@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useEventContext } from '@/contexts/EventContext';
 import { useToast } from '@/hooks/use-toast';
@@ -7,7 +6,7 @@ import { userService } from '@/services/userService';
 import ProfileEditor from './users/ProfileEditor';
 import FullPageChatBot from './event-chat/FullPageChatBot';
 import { useChatLogic } from './event-chat/useChatLogic';
-import { usePersonalization } from './event-chat/usePersonalization';
+import { usePersonalization } from '@/hooks/chat/usePersonalization';
 import { EventChatBotProps } from './event-chat/types';
 import { createCitySpecificGroupId } from '@/utils/groupIdUtils';
 
@@ -42,11 +41,14 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   
   const chatLogic = useChatLogic(activeChatModeValue === 'ai');
   
-  const personalization = usePersonalization({
-    userProfile,
-    currentUser,
-    userService
-  });
+  const personalization = usePersonalization(
+    chatLogic.handleSendMessage,
+    {
+      userProfile,
+      currentUser,
+      userService
+    }
+  );
 
   const handleToggleChatMode = () => {
     const newMode = activeChatModeValue === 'ai' ? 'community' : 'ai';

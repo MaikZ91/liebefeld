@@ -6,7 +6,7 @@ import ChatInput from './ChatInput';
 import SwipeableEventPanel from './SwipeableEventPanel';
 import SwipeableLandingPanel from './SwipeableLandingPanel';
 import { useChatLogic } from './useChatLogic';
-import { usePersonalization } from './usePersonalization';
+import { usePersonalization } from '@/hooks/chat/usePersonalization';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { userService } from '@/services/userService';
 import { ChatMessage } from './types';
@@ -60,11 +60,14 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const chatLogic = useChatLogic(activeView === 'ai');
   const { currentUser, userProfile } = useUserProfile();
 
-  const personalization = usePersonalization({
-    userProfile,
-    currentUser,
-    userService
-  });
+  const personalization = usePersonalization(
+    chatLogic.handleSendMessage,
+    {
+      userProfile,
+      currentUser,
+      userService
+    }
+  );
 
   // Use external props if provided (for header integration), otherwise use internal state
   const input = externalInput !== undefined ? externalInput : chatLogic.input;
@@ -117,16 +120,14 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   }, []);
 
   const handleLikeEvent = useCallback((eventId: string) => {
-    if (personalization.handleLikeEvent) {
-      personalization.handleLikeEvent(eventId);
-    }
-  }, [personalization]);
+    // Handle like functionality here
+    console.log('Like event:', eventId);
+  }, []);
 
   const handleRsvpEvent = useCallback((eventId: string, option: 'yes' | 'no' | 'maybe') => {
-    if (personalization.handleRsvpEvent) {
-      personalization.handleRsvpEvent(eventId, option);
-    }
-  }, [personalization]);
+    // Handle RSVP functionality here
+    console.log('RSVP event:', eventId, option);
+  }, []);
 
   return (
     <div className="flex flex-col h-full bg-black text-white relative overflow-hidden">
