@@ -7,6 +7,8 @@ import SwipeableEventPanel from './SwipeableEventPanel';
 import SwipeableLandingPanel from './SwipeableLandingPanel';
 import { useChatLogic } from './useChatLogic';
 import { usePersonalization } from './usePersonalization';
+import { useUserProfile } from '@/hooks/chat/useUserProfile';
+import { userService } from '@/services/userService';
 import { ChatMessage } from './types';
 
 interface FullPageChatBotProps {
@@ -55,9 +57,14 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const [showLandingPanel, setShowLandingPanel] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const chatLogic = useChatLogic(activeView);
+  const chatLogic = useChatLogic(activeView === 'ai');
+  const { currentUser, userProfile } = useUserProfile();
 
-  const personalization = usePersonalization();
+  const personalization = usePersonalization({
+    userProfile,
+    currentUser,
+    userService
+  });
 
   // Use external props if provided (for header integration), otherwise use internal state
   const input = externalInput !== undefined ? externalInput : chatLogic.input;
@@ -72,8 +79,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const finalInputRef = externalInputRef || inputRef;
   const onAddEvent = externalOnAddEvent;
   const showAnimatedPrompts = externalShowAnimatedPrompts !== undefined ? externalShowAnimatedPrompts : chatLogic.showAnimatedPrompts;
-  const activeCategory = externalActiveCategory !== undefined ? externalActiveCategory : (chatLogic.activeCategory || '');
-  const onCategoryChange = externalOnCategoryChange || chatLogic.setActiveCategory;
+  const activeCategory = externalActiveCategory !== undefined ? externalActiveCategory : '';
+  const onCategoryChange = externalOnCategoryChange || (() => {});
 
   useEffect(() => {
     if (location.hash === '#users') {
@@ -110,12 +117,16 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   }, []);
 
   const handleLikeEvent = useCallback((eventId: string) => {
-    personalization.handleLikeEvent(eventId);
-  }, [personalization.handleLikeEvent]);
+    if (personalization.handleLikeEvent) {
+      personalization.handleLikeEvent(eventId);
+    }
+  }, [personalization]);
 
   const handleRsvpEvent = useCallback((eventId: string, option: 'yes' | 'no' | 'maybe') => {
-    personalization.handleRsvpEvent(eventId, option);
-  }, [personalization.handleRsvpEvent]);
+    if (personalization.handleRsvpEvent) {
+      personalization.handleRsvpEvent(eventId, option);
+    }
+  }, [personalization]);
 
   return (
     <div className="flex flex-col h-full bg-black text-white relative overflow-hidden">
@@ -154,13 +165,18 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
       {showEventDetails && selectedEvent && (
         <SwipeableEventPanel
-          isOpen={showEventDetails}
           onClose={handleEventClose}
         />
       )}
 
       {showLandingPanel && (
-        <SwipeableLandingPanel />
+        <SwipeableLandingPanel
+          slideData={{
+            title: 'Landing Panel',
+            description: 'Description',
+            image: ''
+          }}
+        />
       )}
     </div>
   );

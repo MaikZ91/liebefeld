@@ -51,6 +51,14 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     'Workshop', 'Kultur', 'Networking', 'Sonstiges'
   ];
 
+  const animatedPrompts = [
+    "Was ist heute los in der Stadt?",
+    "Zeige mir Events für morgen",
+    "Plane mir den perfekten Abend",
+    "Was läuft dieses Wochenende?",
+    "Empfiehl mir etwas Neues"
+  ];
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (categoriesRef.current && !categoriesRef.current.contains(event.target as Node)) {
@@ -77,6 +85,10 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     const normalizedCategory = category === 'Alle' ? '' : category;
     onCategoryChange?.(normalizedCategory);
     setShowCategories(false);
+  };
+
+  const handlePromptClick = (prompt: string) => {
+    setInput(prompt);
   };
 
   return (
@@ -178,7 +190,10 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           
           {showAnimatedPrompts && input.length === 0 && (
             <div className="absolute inset-0 pointer-events-none">
-              <TypewriterPrompt />
+              <TypewriterPrompt 
+                prompts={animatedPrompts}
+                onPromptClick={handlePromptClick}
+              />
             </div>
           )}
         </div>

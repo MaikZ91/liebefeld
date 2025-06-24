@@ -40,9 +40,13 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   const communityGroupId = createCitySpecificGroupId(activeCategory, selectedCity);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
-  const chatLogic = useChatLogic(activeChatModeValue);
+  const chatLogic = useChatLogic(activeChatModeValue === 'ai');
   
-  const personalization = usePersonalization();
+  const personalization = usePersonalization({
+    userProfile,
+    currentUser,
+    userService
+  });
 
   const handleToggleChatMode = () => {
     const newMode = activeChatModeValue === 'ai' ? 'community' : 'ai';
