@@ -166,16 +166,26 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
       {showEventDetails && selectedEvent && (
         <SwipeableEventPanel
-          onClose={handleEventClose}
+          panelData={{
+            events: [selectedEvent],
+            currentIndex: 0
+          }}
+          onEventSelect={() => {}}
         />
       )}
 
       {showLandingPanel && (
         <SwipeableLandingPanel
           slideData={{
-            title: 'Landing Panel',
-            description: 'Description',
-            image: ''
+            slides: [{
+              title: 'Landing Panel',
+              description: 'Description',
+              imageUrl: '',
+              buttonText: 'Schließen',
+              buttonAction: handleLandingClose,
+              iconType: 'users'
+            }],
+            currentIndex: 0
           }}
         />
       )}
