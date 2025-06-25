@@ -28,47 +28,46 @@ const EventHeatmap: React.FC = () => {
   
   const { events, isLoading } = useEvents();
 
-  // Sample heatmap data for Bielefeld (real coordinates)
+  // Sample heatmap data for Bielefeld with intensity values
   const sampleBielefeldHeatmapData: [number, number, number][] = [
-    // City Center
-    [52.0302, 8.5311, 1.0], // Bielefeld Hauptbahnhof
-    [52.0192, 8.5370, 0.9], // Altstadt
-    [52.0220, 8.5280, 0.8], // Kesselbrink
-    [52.0180, 8.5330, 0.7], // Niederwall
+    // City Center - High intensity
+    [52.0302, 8.5311, 0.9], // Bielefeld Hauptbahnhof
+    [52.0192, 8.5370, 0.8], // Altstadt
+    [52.0220, 8.5280, 0.7], // Kesselbrink
+    [52.0180, 8.5330, 0.6], // Niederwall
     
     // University Area
-    [52.0380, 8.4950, 0.9], // Universität Bielefeld
-    [52.0420, 8.4900, 0.6], // Campus Nähe
+    [52.0380, 8.4950, 0.8], // Universität Bielefeld
+    [52.0420, 8.4900, 0.5], // Campus Nähe
     
     // Districts
-    [52.0420, 8.5100, 0.8], // Sennestadt
-    [52.0150, 8.5200, 0.7], // Mitte-West
-    [52.0280, 8.5450, 0.6], // Brackwede
-    [52.0080, 8.5100, 0.5], // Schildesche
+    [52.0420, 8.5100, 0.7], // Sennestadt
+    [52.0150, 8.5200, 0.6], // Mitte-West
+    [52.0280, 8.5450, 0.5], // Brackwede
+    [52.0080, 8.5100, 0.4], // Schildesche
     
-    // Event Locations
-    [52.0210, 8.5320, 0.9], // Forum Bielefeld
-    [52.0185, 8.5355, 0.8], // Theater Bielefeld
-    [52.0195, 8.5340, 0.7], // Lokschuppen
-    [52.0175, 8.5380, 0.6], // Bunker Ulmenwall
-    [52.0230, 8.5290, 0.8], // Ravensberger Park
+    // Event Locations - Medium to high intensity
+    [52.0210, 8.5320, 0.8], // Forum Bielefeld
+    [52.0185, 8.5355, 0.7], // Theater Bielefeld
+    [52.0195, 8.5340, 0.6], // Lokschuppen
+    [52.0175, 8.5380, 0.5], // Bunker Ulmenwall
+    [52.0230, 8.5290, 0.7], // Ravensberger Park
     
-    // Nightlife
+    // Nightlife - High intensity
     [52.0200, 8.5350, 0.9], // Altstadt Kneipen
     [52.0190, 8.5360, 0.8], // Goldschmiede
     [52.0185, 8.5345, 0.7], // Club Area
   ];
 
-  // Filter events for Bielefeld
-  const bielefeldEvents = events?.filter(
-    (event) => !event.city || 
-      event.city.toLowerCase().includes('bielefeld') || 
-      event.city.toLowerCase() === 'bi' ||
-      event.location?.toLowerCase().includes('bielefeld')
-  ) || [];
-
   // Get unique categories with counts
   const categoriesWithCounts = React.useMemo(() => {
+    const bielefeldEvents = events?.filter(
+      (event) => !event.city || 
+        event.city.toLowerCase().includes('bielefeld') || 
+        event.city.toLowerCase() === 'bi' ||
+        event.location?.toLowerCase().includes('bielefeld')
+    ) || [];
+
     const categoryMap = new Map<string, number>();
     bielefeldEvents.forEach(event => {
       const category = event.category || 'Sonstiges';
@@ -79,41 +78,67 @@ const EventHeatmap: React.FC = () => {
       { name: 'all', count: bielefeldEvents.length },
       ...Array.from(categoryMap.entries()).map(([name, count]) => ({ name, count }))
     ];
-  }, [bielefeldEvents]);
-
-  // Filter events based on category and date
-  const filteredEvents = React.useMemo(() => {
-    return bielefeldEvents.filter((event) => {
-      const categoryMatch = selectedCategory === 'all' || event.category === selectedCategory;
-      const dateMatch = !dateFilter || event.date === dateFilter;
-      return categoryMatch && dateMatch;
-    });
-  }, [bielefeldEvents, selectedCategory, dateFilter]);
+  }, [events]);
 
   // Initialize map
   useEffect(() => {
-    if (!mapRef.current || map) return;
+    if (!mapRef.current) return;
 
-    console.log('Initializing Bielefeld Event Heatmap...');
+    console.log('Initializing Bielefeld Event Heatmap Map...');
     
     try {
       // Create map centered on Bielefeld
       const leafletMap = L.map(mapRef.current, {
+        center: [52.0302, 8.5311], // Bielefeld coordinates
+        zoom: 13,
         zoomControl: false,
         attributionControl: true
-      }).setView([52.0302, 8.5311], 12); // Bielefeld coordinates
+      });
       
       // Add OpenStreetMap tiles
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
         minZoom: 10
-      }).addTo(leafletMap);
+      });
+      
+      tileLayer.addTo(leafletMap);
 
       // Add zoom control to bottom right
       L.control.zoom({
         position: 'bottomright'
       }).addTo(leafletMap);
+
+      // Wait for tiles to load before creating heatmap
+      tileLayer.on('load', () => {
+        console.log('Tiles loaded, creating heatmap...');
+        
+        try {
+          // Create heat layer
+          const newHeatLayer = (L as any).heatLayer(sampleBielefeldHeatmapData, {
+            radius: 25,
+            blur: 15,
+            maxZoom: 17,
+            max: 1.0,
+            minOpacity: 0.3,
+            gradient: {
+              0.0: '#3388ff',  // Blue (low activity)
+              0.2: '#00ffff',  // Cyan
+              0.4: '#00ff00',  // Green
+              0.6: '#ffff00',  // Yellow
+              0.8: '#ff8000',  // Orange
+              1.0: '#ff0000'   // Red (high activity)
+            }
+          });
+
+          newHeatLayer.addTo(leafletMap);
+          setHeatLayer(newHeatLayer);
+          console.log('Heatmap layer added successfully');
+          
+        } catch (heatError) {
+          console.error('Error creating heatmap layer:', heatError);
+        }
+      });
 
       setMap(leafletMap);
       console.log('Map initialized successfully');
@@ -126,48 +151,11 @@ const EventHeatmap: React.FC = () => {
       if (map) {
         console.log('Cleaning up map...');
         map.remove();
+        setMap(null);
+        setHeatLayer(null);
       }
     };
   }, []);
-
-  // Create and update heatmap layer
-  useEffect(() => {
-    if (!map) return;
-
-    console.log('Creating heatmap layer...');
-    
-    // Remove existing heat layer
-    if (heatLayer) {
-      map.removeLayer(heatLayer);
-    }
-
-    try {
-      // Create heat layer with sample data
-      const newHeatLayer = (L as any).heatLayer(sampleBielefeldHeatmapData, {
-        radius: 30,
-        blur: 20,
-        maxZoom: 17,
-        max: 1.0,
-        minOpacity: 0.4,
-        gradient: {
-          0.0: '#0000ff',  // Blue (low activity)
-          0.2: '#00ffff',  // Cyan
-          0.4: '#00ff00',  // Green
-          0.6: '#ffff00',  // Yellow
-          0.8: '#ff8000',  // Orange
-          1.0: '#ff0000'   // Red (high activity)
-        }
-      });
-
-      newHeatLayer.addTo(map);
-      setHeatLayer(newHeatLayer);
-      console.log('Heatmap layer added successfully with', sampleBielefeldHeatmapData.length, 'data points');
-      
-    } catch (error) {
-      console.error('Error creating heatmap layer:', error);
-    }
-
-  }, [map, filteredEvents]);
 
   if (isLoading) {
     return (
@@ -232,9 +220,9 @@ const EventHeatmap: React.FC = () => {
         {/* Stats */}
         <Card className="p-3 bg-black/95 backdrop-blur-md border-gray-700 text-white text-sm">
           <div className="space-y-1">
-            <div>📊 {filteredEvents.length} Events gefiltert</div>
-            <div>🗺️ {sampleBielefeldHeatmapData.length} Heatmap-Punkte</div>
-            <div>🔥 Heatmap zeigt Event-Hotspots</div>
+            <div>📊 {sampleBielefeldHeatmapData.length} Heatmap-Punkte</div>
+            <div>🗺️ Bielefeld Event-Hotspots</div>
+            <div>🔥 Heatmap aktiv</div>
           </div>
         </Card>
       </div>
@@ -243,7 +231,10 @@ const EventHeatmap: React.FC = () => {
       <div 
         ref={mapRef} 
         className="w-full h-full"
-        style={{ background: '#f0f0f0' }}
+        style={{ 
+          background: '#f0f0f0',
+          minHeight: '100vh'
+        }}
       />
     </div>
   );
