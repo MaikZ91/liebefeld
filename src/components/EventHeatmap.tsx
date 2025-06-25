@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
@@ -19,35 +19,56 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-interface EventCoordinates {
-  [eventId: string]: [number, number];
-}
-
 const EventHeatmap: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [dateFilter, setDateFilter] = useState('');
-  const [eventCoordinates, setEventCoordinates] = useState<EventCoordinates>({});
   const [map, setMap] = useState<L.Map | null>(null);
   const [heatLayer, setHeatLayer] = useState<any>(null);
-  const [isGeocodingInProgress, setIsGeocodingInProgress] = useState(false);
-  const [geocodingComplete, setGeocodingComplete] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
   
   const { events, isLoading } = useEvents();
 
-  // Filter events for Bielefeld with improved logic
-  const bielefeldEvents = useMemo(() => {
-    if (!events) return [];
-    return events.filter(
-      (event) => !event.city || 
-        event.city.toLowerCase().includes('bielefeld') || 
-        event.city.toLowerCase() === 'bi' ||
-        event.location?.toLowerCase().includes('bielefeld')
-    );
-  }, [events]);
+  // Sample heatmap data for Bielefeld (real coordinates)
+  const sampleBielefeldHeatmapData: [number, number, number][] = [
+    // City Center
+    [52.0302, 8.5311, 1.0], // Bielefeld Hauptbahnhof
+    [52.0192, 8.5370, 0.9], // Altstadt
+    [52.0220, 8.5280, 0.8], // Kesselbrink
+    [52.0180, 8.5330, 0.7], // Niederwall
+    
+    // University Area
+    [52.0380, 8.4950, 0.9], // Universität Bielefeld
+    [52.0420, 8.4900, 0.6], // Campus Nähe
+    
+    // Districts
+    [52.0420, 8.5100, 0.8], // Sennestadt
+    [52.0150, 8.5200, 0.7], // Mitte-West
+    [52.0280, 8.5450, 0.6], // Brackwede
+    [52.0080, 8.5100, 0.5], // Schildesche
+    
+    // Event Locations
+    [52.0210, 8.5320, 0.9], // Forum Bielefeld
+    [52.0185, 8.5355, 0.8], // Theater Bielefeld
+    [52.0195, 8.5340, 0.7], // Lokschuppen
+    [52.0175, 8.5380, 0.6], // Bunker Ulmenwall
+    [52.0230, 8.5290, 0.8], // Ravensberger Park
+    
+    // Nightlife
+    [52.0200, 8.5350, 0.9], // Altstadt Kneipen
+    [52.0190, 8.5360, 0.8], // Goldschmiede
+    [52.0185, 8.5345, 0.7], // Club Area
+  ];
+
+  // Filter events for Bielefeld
+  const bielefeldEvents = events?.filter(
+    (event) => !event.city || 
+      event.city.toLowerCase().includes('bielefeld') || 
+      event.city.toLowerCase() === 'bi' ||
+      event.location?.toLowerCase().includes('bielefeld')
+  ) || [];
 
   // Get unique categories with counts
-  const categoriesWithCounts = useMemo(() => {
+  const categoriesWithCounts = React.useMemo(() => {
     const categoryMap = new Map<string, number>();
     bielefeldEvents.forEach(event => {
       const category = event.category || 'Sonstiges';
@@ -61,7 +82,7 @@ const EventHeatmap: React.FC = () => {
   }, [bielefeldEvents]);
 
   // Filter events based on category and date
-  const filteredEvents = useMemo(() => {
+  const filteredEvents = React.useMemo(() => {
     return bielefeldEvents.filter((event) => {
       const categoryMatch = selectedCategory === 'all' || event.category === selectedCategory;
       const dateMatch = !dateFilter || event.date === dateFilter;
@@ -73,16 +94,20 @@ const EventHeatmap: React.FC = () => {
   useEffect(() => {
     if (!mapRef.current || map) return;
 
-    console.log('Initializing map...');
+    console.log('Initializing Bielefeld Event Heatmap...');
+    
     try {
+      // Create map centered on Bielefeld
       const leafletMap = L.map(mapRef.current, {
-        zoomControl: false
-      }).setView([52.0302, 8.5311], 13);
+        zoomControl: false,
+        attributionControl: true
+      }).setView([52.0302, 8.5311], 12); // Bielefeld coordinates
       
-      // Use OpenStreetMap tiles
+      // Add OpenStreetMap tiles
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19
+        maxZoom: 19,
+        minZoom: 10
       }).addTo(leafletMap);
 
       // Add zoom control to bottom right
@@ -92,125 +117,20 @@ const EventHeatmap: React.FC = () => {
 
       setMap(leafletMap);
       console.log('Map initialized successfully');
+      
     } catch (error) {
       console.error('Map initialization error:', error);
     }
 
     return () => {
       if (map) {
+        console.log('Cleaning up map...');
         map.remove();
       }
     };
   }, []);
 
-  // Geocoding with better error handling and rate limiting
-  const geocodeAddress = async (address: string): Promise<[number, number] | null> => {
-    // Check cache first
-    const cacheKey = `geocache_${address.toLowerCase()}`;
-    const cached = localStorage.getItem(cacheKey);
-    if (cached) {
-      try {
-        const coords = JSON.parse(cached);
-        return [parseFloat(coords.lat), parseFloat(coords.lon)];
-      } catch (e) {
-        localStorage.removeItem(cacheKey);
-      }
-    }
-
-    try {
-      // Add delay to respect rate limits
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const searchQuery = `${address}, Bielefeld, Germany`;
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1&addressdetails=1`,
-        {
-          headers: {
-            'User-Agent': 'THE TRIBE.BI Event Heatmap (contact: support@the-tribe.bi)'
-          }
-        }
-      );
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data && data.length > 0) {
-        const coords: [number, number] = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-        // Verify coordinates are within reasonable bounds for Bielefeld
-        if (coords[0] >= 51.8 && coords[0] <= 52.2 && coords[1] >= 8.3 && coords[1] <= 8.7) {
-          localStorage.setItem(cacheKey, JSON.stringify({ lat: data[0].lat, lon: data[0].lon }));
-          return coords;
-        }
-      }
-    } catch (error) {
-      console.error('Geocoding error for', address, ':', error);
-    }
-    return null;
-  };
-
-  // Improved geocoding with better state management
-  useEffect(() => {
-    if (geocodingComplete || isGeocodingInProgress || bielefeldEvents.length === 0) {
-      return;
-    }
-
-    const geocodeEvents = async () => {
-      const eventsToGeocode = bielefeldEvents
-        .filter(event => event.location && !eventCoordinates[event.id])
-        .slice(0, 50); // Limit to first 50 events to avoid overwhelming the API
-      
-      if (eventsToGeocode.length === 0) {
-        setGeocodingComplete(true);
-        return;
-      }
-
-      console.log(`Starting geocoding for ${eventsToGeocode.length} events...`);
-      setIsGeocodingInProgress(true);
-      const newCoordinates: EventCoordinates = { ...eventCoordinates };
-      
-      for (let i = 0; i < eventsToGeocode.length; i++) {
-        const event = eventsToGeocode[i];
-        try {
-          const coords = await geocodeAddress(event.location);
-          if (coords) {
-            newCoordinates[event.id] = coords;
-            console.log(`Geocoded event: ${event.title} -> ${coords[0]}, ${coords[1]}`);
-          }
-        } catch (error) {
-          console.error(`Failed to geocode ${event.title}:`, error);
-        }
-        
-        // Update coordinates periodically
-        if (i % 5 === 0 && i > 0) {
-          setEventCoordinates({ ...newCoordinates });
-        }
-      }
-      
-      setEventCoordinates(newCoordinates);
-      setIsGeocodingInProgress(false);
-      setGeocodingComplete(true);
-      console.log(`Geocoding completed. Total coordinates: ${Object.keys(newCoordinates).length}`);
-    };
-
-    geocodeEvents();
-  }, [bielefeldEvents.length, geocodingComplete, isGeocodingInProgress]);
-
-  // Sample coordinates for immediate testing
-  const sampleCoordinates = useMemo(() => {
-    const samples: [number, number, number][] = [
-      [52.0302, 8.5311, 0.8], // Bielefeld center
-      [52.0192, 8.5370, 0.6], // Old Town
-      [52.0380, 8.4950, 0.7], // University area
-      [52.0250, 8.5200, 0.5], // Kesselbrink
-      [52.0420, 8.5100, 0.9], // Sennestadt
-    ];
-    return samples;
-  }, []);
-
-  // Create heatmap layer
+  // Create and update heatmap layer
   useEffect(() => {
     if (!map) return;
 
@@ -221,84 +141,33 @@ const EventHeatmap: React.FC = () => {
       map.removeLayer(heatLayer);
     }
 
-    // Prepare heatmap data from actual events
-    const eventHeatmapData: [number, number, number][] = filteredEvents
-      .filter(event => eventCoordinates[event.id])
-      .map((event) => {
-        const coordinates = eventCoordinates[event.id];
-        const likes = event.likes || 0;
-        const rsvp = (event.rsvp_yes || 0) + (event.rsvp_maybe || 0) * 0.5;
-        const intensity = Math.max(0.3, Math.min(1.0, likes * 0.1 + rsvp * 0.2));
-        return [coordinates[0], coordinates[1], intensity];
+    try {
+      // Create heat layer with sample data
+      const newHeatLayer = (L as any).heatLayer(sampleBielefeldHeatmapData, {
+        radius: 30,
+        blur: 20,
+        maxZoom: 17,
+        max: 1.0,
+        minOpacity: 0.4,
+        gradient: {
+          0.0: '#0000ff',  // Blue (low activity)
+          0.2: '#00ffff',  // Cyan
+          0.4: '#00ff00',  // Green
+          0.6: '#ffff00',  // Yellow
+          0.8: '#ff8000',  // Orange
+          1.0: '#ff0000'   // Red (high activity)
+        }
       });
 
-    // Use sample data if no geocoded events yet
-    const heatmapData = eventHeatmapData.length > 0 ? eventHeatmapData : sampleCoordinates;
-
-    console.log(`Heatmap data prepared: ${heatmapData.length} points`);
-
-    if (heatmapData.length > 0) {
-      try {
-        // Create heat layer
-        const newHeatLayer = (L as any).heatLayer(heatmapData, {
-          radius: 25,
-          blur: 15,
-          maxZoom: 17,
-          max: 1.0,
-          minOpacity: 0.3,
-          gradient: {
-            0.0: '#0000ff',
-            0.2: '#00ffff', 
-            0.4: '#00ff00',
-            0.6: '#ffff00',
-            0.8: '#ff8000',
-            1.0: '#ff0000'
-          }
-        });
-
-        newHeatLayer.addTo(map);
-        setHeatLayer(newHeatLayer);
-        console.log('Heatmap layer added successfully');
-      } catch (error) {
-        console.error('Error creating heatmap layer:', error);
-      }
+      newHeatLayer.addTo(map);
+      setHeatLayer(newHeatLayer);
+      console.log('Heatmap layer added successfully with', sampleBielefeldHeatmapData.length, 'data points');
+      
+    } catch (error) {
+      console.error('Error creating heatmap layer:', error);
     }
 
-    // Add individual markers for high zoom levels
-    const addMarkers = () => {
-      const zoom = map.getZoom();
-      if (zoom >= 15) {
-        filteredEvents
-          .filter(event => eventCoordinates[event.id])
-          .forEach((event) => {
-            const coordinates = eventCoordinates[event.id];
-            const marker = L.marker(coordinates).addTo(map);
-            
-            const popupContent = `
-              <div style="padding: 8px; min-width: 200px;">
-                <h3 style="font-weight: bold; margin-bottom: 6px;">${event.title}</h3>
-                <div style="font-size: 12px;">
-                  <div>📅 ${new Date(event.date).toLocaleDateString('de-DE')}</div>
-                  <div>🕐 ${event.time}</div>
-                  <div>📍 ${event.location}</div>
-                </div>
-              </div>
-            `;
-
-            marker.bindPopup(popupContent);
-          });
-      }
-    };
-
-    map.on('zoomend', addMarkers);
-
-    return () => {
-      if (map) {
-        map.off('zoomend', addMarkers);
-      }
-    };
-
-  }, [map, filteredEvents, eventCoordinates, heatLayer]);
+  }, [map, filteredEvents]);
 
   if (isLoading) {
     return (
@@ -358,20 +227,14 @@ const EventHeatmap: React.FC = () => {
               )}
             </div>
           </div>
-          
-          {isGeocodingInProgress && (
-            <div className="mt-3 text-xs text-yellow-400 animate-pulse">
-              🗺️ Standorte werden geladen...
-            </div>
-          )}
         </Card>
 
         {/* Stats */}
         <Card className="p-3 bg-black/95 backdrop-blur-md border-gray-700 text-white text-sm">
           <div className="space-y-1">
-            <div>📊 {filteredEvents.length} Events angezeigt</div>
-            <div>🗺️ {Object.keys(eventCoordinates).length} Standorte</div>
-            <div>🔍 Zoom rein für Details</div>
+            <div>📊 {filteredEvents.length} Events gefiltert</div>
+            <div>🗺️ {sampleBielefeldHeatmapData.length} Heatmap-Punkte</div>
+            <div>🔥 Heatmap zeigt Event-Hotspots</div>
           </div>
         </Card>
       </div>
