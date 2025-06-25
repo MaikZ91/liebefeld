@@ -19,13 +19,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Extend the L namespace to include heatLayer
-declare global {
-  namespace L {
-    function heatLayer(latlngs: [number, number, number][], options?: any): any;
-  }
-}
-
 interface EventCoordinates {
   [eventId: string]: [number, number];
 }
@@ -75,10 +68,11 @@ const EventHeatmap: React.FC = () => {
     });
   }, [bielefeldEvents, selectedCategory, dateFilter]);
 
-  // Initialize map with enhanced styling
+  // Initialize map
   useEffect(() => {
     if (!mapRef.current || map) return;
 
+    console.log('Initializing map...');
     const leafletMap = L.map(mapRef.current, {
       zoomControl: false
     }).setView([52.0302, 8.5311], 13);
@@ -95,6 +89,7 @@ const EventHeatmap: React.FC = () => {
     }).addTo(leafletMap);
 
     setMap(leafletMap);
+    console.log('Map initialized successfully');
 
     return () => {
       leafletMap.remove();
@@ -140,6 +135,7 @@ const EventHeatmap: React.FC = () => {
       
       if (eventsToGeocode.length === 0) return;
 
+      console.log(`Starting geocoding for ${eventsToGeocode.length} events...`);
       setIsGeocodingInProgress(true);
       const newCoordinates: EventCoordinates = { ...eventCoordinates };
       
@@ -149,6 +145,7 @@ const EventHeatmap: React.FC = () => {
           const coords = await geocodeAddress(event.location);
           if (coords) {
             newCoordinates[event.id] = coords;
+            console.log(`Geocoded event: ${event.title} -> ${coords[0]}, ${coords[1]}`);
           }
         } catch (error) {
           console.error(`Failed to geocode ${event.title}:`, error);
@@ -162,6 +159,7 @@ const EventHeatmap: React.FC = () => {
       
       setEventCoordinates(newCoordinates);
       setIsGeocodingInProgress(false);
+      console.log(`Geocoding completed. Total coordinates: ${Object.keys(newCoordinates).length}`);
     };
 
     if (bielefeldEvents.length > 0) {
@@ -173,9 +171,12 @@ const EventHeatmap: React.FC = () => {
   useEffect(() => {
     if (!map) return;
 
+    console.log('Creating heatmap layer...');
+    
     // Remove existing heat layer
     if (heatLayer) {
       map.removeLayer(heatLayer);
+      console.log('Removed existing heatmap layer');
     }
 
     // Prepare heatmap data: [latitude, longitude, intensity]
@@ -186,48 +187,60 @@ const EventHeatmap: React.FC = () => {
         // Calculate intensity based on likes, RSVP, and recency
         const likes = event.likes || 0;
         const rsvp = (event.rsvp_yes || 0) + (event.rsvp_maybe || 0) * 0.5;
-        const baseIntensity = Math.max(0.1, likes * 0.1 + rsvp * 0.2);
+        const baseIntensity = Math.max(0.3, likes * 0.1 + rsvp * 0.2);
         
         // Boost intensity for recent events
         const eventDate = new Date(event.date);
         const now = new Date();
         const daysDiff = Math.abs((now.getTime() - eventDate.getTime()) / (1000 * 60 * 60 * 24));
-        const recencyBoost = daysDiff <= 7 ? 1.5 : daysDiff <= 30 ? 1.2 : 1.0;
+        const recencyBoost = daysDiff <= 7 ? 2.0 : daysDiff <= 30 ? 1.5 : 1.0;
         
         const intensity = Math.min(1.0, baseIntensity * recencyBoost);
         
         return [coordinates[0], coordinates[1], intensity];
       });
 
-    if (heatmapData.length > 0) {
-      // Create heat layer with custom options
-      const newHeatLayer = (L as any).heatLayer(heatmapData, {
-        radius: 25,
-        blur: 15,
-        maxZoom: 17,
-        max: 1.0,
-        gradient: {
-          0.0: '#313695',
-          0.1: '#4575b4',
-          0.2: '#74add1',
-          0.3: '#abd9e9',
-          0.4: '#e0f3f8',
-          0.5: '#ffffcc',
-          0.6: '#fee090',
-          0.7: '#fdae61',
-          0.8: '#f46d43',
-          0.9: '#d73027',
-          1.0: '#a50026'
-        }
-      }).addTo(map);
+    console.log(`Heatmap data prepared: ${heatmapData.length} points`);
+    console.log('Sample heatmap data:', heatmapData.slice(0, 3));
 
-      setHeatLayer(newHeatLayer);
+    if (heatmapData.length > 0) {
+      try {
+        // Create heat layer with custom options
+        const newHeatLayer = (L as any).heatLayer(heatmapData, {
+          radius: 30,
+          blur: 20,
+          maxZoom: 17,
+          max: 1.0,
+          minOpacity: 0.4,
+          gradient: {
+            0.0: '#313695',
+            0.1: '#4575b4',
+            0.2: '#74add1',
+            0.3: '#abd9e9',
+            0.4: '#e0f3f8',
+            0.5: '#ffffcc',
+            0.6: '#fee090',
+            0.7: '#fdae61',
+            0.8: '#f46d43',
+            0.9: '#d73027',
+            1.0: '#a50026'
+          }
+        });
+
+        newHeatLayer.addTo(map);
+        setHeatLayer(newHeatLayer);
+        console.log('Heatmap layer added successfully');
+      } catch (error) {
+        console.error('Error creating heatmap layer:', error);
+      }
+    } else {
+      console.log('No heatmap data available');
     }
 
     // Add individual markers for detailed view at high zoom levels
     const markers: L.Marker[] = [];
     
-    map.on('zoomend', () => {
+    const handleZoomEnd = () => {
       const zoom = map.getZoom();
       
       if (zoom >= 15) {
@@ -236,7 +249,6 @@ const EventHeatmap: React.FC = () => {
           .filter(event => eventCoordinates[event.id])
           .forEach((event) => {
             const coordinates = eventCoordinates[event.id];
-            const popularity = (event.likes || 0) + (event.rsvp_yes || 0) * 0.5;
             
             const marker = L.marker(coordinates).addTo(map);
             
@@ -264,7 +276,14 @@ const EventHeatmap: React.FC = () => {
         markers.forEach(marker => map.removeLayer(marker));
         markers.length = 0;
       }
-    });
+    };
+
+    map.on('zoomend', handleZoomEnd);
+
+    return () => {
+      map.off('zoomend', handleZoomEnd);
+      markers.forEach(marker => map.removeLayer(marker));
+    };
 
   }, [map, filteredEvents, eventCoordinates]);
 
