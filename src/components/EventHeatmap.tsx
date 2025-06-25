@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -7,6 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Filter, X, MapPin, Zap } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 
+// Import leaflet.heat plugin
+import 'leaflet.heat';
+
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -14,6 +18,13 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
+
+// Extend the L namespace to include heatLayer
+declare global {
+  namespace L {
+    function heatLayer(latlngs: [number, number, number][], options?: any): any;
+  }
+}
 
 interface EventCoordinates {
   [eventId: string]: [number, number];
@@ -24,7 +35,7 @@ const EventHeatmap: React.FC = () => {
   const [dateFilter, setDateFilter] = useState('');
   const [eventCoordinates, setEventCoordinates] = useState<EventCoordinates>({});
   const [map, setMap] = useState<L.Map | null>(null);
-  const [markers, setMarkers] = useState<L.Marker[]>([]);
+  const [heatLayer, setHeatLayer] = useState<any>(null);
   const [isGeocodingInProgress, setIsGeocodingInProgress] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
   
@@ -72,10 +83,9 @@ const EventHeatmap: React.FC = () => {
       zoomControl: false
     }).setView([52.0302, 8.5311], 13);
     
-    // Custom dark tile layer for better visibility
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: 'abcd',
+    // Use OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19
     }).addTo(leafletMap);
 
@@ -121,65 +131,6 @@ const EventHeatmap: React.FC = () => {
     return null;
   };
 
-  // Enhanced marker creation with popularity-based styling
-  const createCustomIcon = (event: any) => {
-    const popularity = (event.likes || 0) + (event.rsvp_yes || 0) * 0.5;
-    let color = '#22c55e';
-    let size = 16;
-    let pulse = '';
-
-    if (popularity >= 20) {
-      color = '#ef4444';
-      size = 24;
-      pulse = 'animation: pulse 2s infinite;';
-    } else if (popularity >= 10) {
-      color = '#f97316';
-      size = 20;
-    } else if (popularity >= 5) {
-      color = '#eab308';
-      size = 18;
-    }
-
-    // Add category-specific styling
-    const categoryColors: { [key: string]: string } = {
-      'Konzert': '#8b5cf6',
-      'Party': '#ec4899',
-      'Sport': '#10b981',
-      'Workshop': '#3b82f6',
-      'Kultur': '#f59e0b'
-    };
-
-    if (popularity < 5 && categoryColors[event.category]) {
-      color = categoryColors[event.category];
-    }
-
-    return L.divIcon({
-      className: 'custom-marker',
-      html: `<div style="
-        background-color: ${color};
-        width: ${size}px;
-        height: ${size}px;
-        border-radius: 50%;
-        border: 2px solid white;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-        ${pulse}
-        position: relative;
-      ">
-        <div style="
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          color: white;
-          font-size: ${Math.max(8, size * 0.4)}px;
-          font-weight: bold;
-        ">${popularity >= 1 ? Math.round(popularity) : '·'}</div>
-      </div>`,
-      iconSize: [size, size],
-      iconAnchor: [size / 2, size / 2],
-    });
-  };
-
   // Batch geocoding with progress tracking
   useEffect(() => {
     const geocodeEvents = async () => {
@@ -218,76 +169,103 @@ const EventHeatmap: React.FC = () => {
     }
   }, [bielefeldEvents, eventCoordinates]);
 
-  // Enhanced marker management with clustering
+  // Create heatmap layer
   useEffect(() => {
     if (!map) return;
 
-    // Clear existing markers
-    markers.forEach(marker => map.removeLayer(marker));
-    setMarkers([]);
+    // Remove existing heat layer
+    if (heatLayer) {
+      map.removeLayer(heatLayer);
+    }
 
-    const newMarkers: L.Marker[] = [];
-
-    filteredEvents
+    // Prepare heatmap data: [latitude, longitude, intensity]
+    const heatmapData: [number, number, number][] = filteredEvents
       .filter(event => eventCoordinates[event.id])
-      .forEach((event) => {
+      .map((event) => {
         const coordinates = eventCoordinates[event.id];
-        const customIcon = createCustomIcon(event);
-        const participants = event.rsvp_yes || 0;
+        // Calculate intensity based on likes, RSVP, and recency
         const likes = event.likes || 0;
-
-        const marker = L.marker(coordinates, { icon: customIcon });
+        const rsvp = (event.rsvp_yes || 0) + (event.rsvp_maybe || 0) * 0.5;
+        const baseIntensity = Math.max(0.1, likes * 0.1 + rsvp * 0.2);
         
-        // Enhanced popup with better formatting
-        const popupContent = `
-          <div style="padding: 16px; min-width: 280px; max-width: 320px;">
-            <h3 style="font-weight: bold; font-size: 18px; margin-bottom: 12px; color: #dc2626; line-height: 1.3;">${event.title}</h3>
-            <div style="font-size: 14px; line-height: 1.5;">
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                <span style="font-size: 16px;">📅</span>
-                <span style="font-weight: 500;">${new Date(event.date).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                <span style="font-size: 16px;">🕐</span>
-                <span>${event.time}</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                <span style="font-size: 16px;">📍</span>
-                <span style="color: #666;">${event.location}</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 16px; margin: 12px 0;">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <span style="font-size: 16px;">👥</span>
-                  <span style="font-weight: 500;">${participants}</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <span style="font-size: 16px;">❤️</span>
-                  <span style="font-weight: 500;">${likes}</span>
-                </div>
-              </div>
-              <div style="margin-bottom: 12px;">
-                <span style="padding: 6px 12px; background-color: #dc2626; color: white; font-size: 12px; border-radius: 16px; font-weight: 500;">
-                  ${event.category}
-                </span>
-              </div>
-              ${event.description ? `
-                <p style="margin-top: 12px; color: #666; font-size: 13px; line-height: 1.4; border-top: 1px solid #eee; padding-top: 8px;">
-                  ${event.description.length > 120 ? event.description.substring(0, 120) + '...' : event.description}
-                </p>
-              ` : ''}
-            </div>
-          </div>
-        `;
-
-        marker.bindPopup(popupContent, {
-          maxWidth: 350,
-          className: 'custom-popup'
-        });
-        marker.addTo(map);
-        newMarkers.push(marker);
+        // Boost intensity for recent events
+        const eventDate = new Date(event.date);
+        const now = new Date();
+        const daysDiff = Math.abs((now.getTime() - eventDate.getTime()) / (1000 * 60 * 60 * 24));
+        const recencyBoost = daysDiff <= 7 ? 1.5 : daysDiff <= 30 ? 1.2 : 1.0;
+        
+        const intensity = Math.min(1.0, baseIntensity * recencyBoost);
+        
+        return [coordinates[0], coordinates[1], intensity];
       });
 
-    setMarkers(newMarkers);
+    if (heatmapData.length > 0) {
+      // Create heat layer with custom options
+      const newHeatLayer = (L as any).heatLayer(heatmapData, {
+        radius: 25,
+        blur: 15,
+        maxZoom: 17,
+        max: 1.0,
+        gradient: {
+          0.0: '#313695',
+          0.1: '#4575b4',
+          0.2: '#74add1',
+          0.3: '#abd9e9',
+          0.4: '#e0f3f8',
+          0.5: '#ffffcc',
+          0.6: '#fee090',
+          0.7: '#fdae61',
+          0.8: '#f46d43',
+          0.9: '#d73027',
+          1.0: '#a50026'
+        }
+      }).addTo(map);
+
+      setHeatLayer(newHeatLayer);
+    }
+
+    // Add individual markers for detailed view at high zoom levels
+    const markers: L.Marker[] = [];
+    
+    map.on('zoomend', () => {
+      const zoom = map.getZoom();
+      
+      if (zoom >= 15) {
+        // Show individual markers at high zoom
+        filteredEvents
+          .filter(event => eventCoordinates[event.id])
+          .forEach((event) => {
+            const coordinates = eventCoordinates[event.id];
+            const popularity = (event.likes || 0) + (event.rsvp_yes || 0) * 0.5;
+            
+            const marker = L.marker(coordinates).addTo(map);
+            
+            const popupContent = `
+              <div style="padding: 12px; min-width: 240px;">
+                <h3 style="font-weight: bold; font-size: 16px; margin-bottom: 8px; color: #dc2626;">${event.title}</h3>
+                <div style="font-size: 13px; line-height: 1.4;">
+                  <div style="margin-bottom: 4px;">📅 ${new Date(event.date).toLocaleDateString('de-DE')}</div>
+                  <div style="margin-bottom: 4px;">🕐 ${event.time}</div>
+                  <div style="margin-bottom: 4px;">📍 ${event.location}</div>
+                  <div style="margin-bottom: 4px;">🏷️ ${event.category}</div>
+                  <div style="display: flex; gap: 12px; margin-top: 8px;">
+                    <span>👥 ${event.rsvp_yes || 0}</span>
+                    <span>❤️ ${event.likes || 0}</span>
+                  </div>
+                </div>
+              </div>
+            `;
+
+            marker.bindPopup(popupContent, { maxWidth: 280 });
+            markers.push(marker);
+          });
+      } else {
+        // Remove individual markers at low zoom
+        markers.forEach(marker => map.removeLayer(marker));
+        markers.length = 0;
+      }
+    });
+
   }, [map, filteredEvents, eventCoordinates]);
 
   if (isLoading) {
@@ -356,28 +334,24 @@ const EventHeatmap: React.FC = () => {
           )}
         </Card>
 
-        {/* Enhanced Legend */}
+        {/* Heatmap Legend */}
         <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 text-white text-sm shadow-xl">
           <h4 className="font-bold mb-3 flex items-center gap-2">
             <MapPin className="w-4 h-4" />
-            Popularitäts-Legende:
+            Heatmap Intensität:
           </h4>
           <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <span className="w-6 h-6 rounded-full bg-[#ef4444] border-2 border-white flex items-center justify-center text-xs font-bold animate-pulse">20</span>
-              <span>Sehr beliebt (20+)</span>
+            <div className="flex items-center justify-between">
+              <span>Niedrig</span>
+              <div className="w-16 h-3 bg-gradient-to-r from-blue-600 to-blue-400 rounded"></div>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="w-5 h-5 rounded-full bg-[#f97316] border-2 border-white flex items-center justify-center text-xs font-bold">10</span>
-              <span>Beliebt (10-19)</span>
+            <div className="flex items-center justify-between">
+              <span>Mittel</span>
+              <div className="w-16 h-3 bg-gradient-to-r from-yellow-400 to-orange-400 rounded"></div>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="w-4 h-4 rounded-full bg-[#eab308] border-2 border-white flex items-center justify-center text-xs">5</span>
-              <span>Moderat (5-9)</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="w-4 h-4 rounded-full bg-[#22c55e] border-2 border-white flex items-center justify-center text-xs">·</span>
-              <span>Neu/Gering (0-4)</span>
+            <div className="flex items-center justify-between">
+              <span>Hoch</span>
+              <div className="w-16 h-3 bg-gradient-to-r from-red-500 to-red-700 rounded"></div>
             </div>
           </div>
           
@@ -386,6 +360,8 @@ const EventHeatmap: React.FC = () => {
               📊 {filteredEvents.length} Events angezeigt
               <br />
               🗺️ {Object.keys(eventCoordinates).length} Standorte geladen
+              <br />
+              🔍 Zoom rein für Details
             </p>
           </div>
         </Card>
@@ -393,24 +369,6 @@ const EventHeatmap: React.FC = () => {
 
       {/* Map Container */}
       <div ref={mapRef} className="w-full h-full" />
-      
-      {/* Custom CSS for enhanced styling */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          .custom-popup .leaflet-popup-content-wrapper {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-          }
-          .custom-popup .leaflet-popup-tip {
-            background: white;
-          }
-          @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-          }
-        `
-      }} />
     </div>
   );
 };
