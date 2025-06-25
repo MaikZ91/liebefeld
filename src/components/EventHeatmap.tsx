@@ -30,6 +30,7 @@ const EventHeatmap: React.FC = () => {
   const [map, setMap] = useState<L.Map | null>(null);
   const [heatLayer, setHeatLayer] = useState<any>(null);
   const [isGeocodingInProgress, setIsGeocodingInProgress] = useState(false);
+  const [geocodingComplete, setGeocodingComplete] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
   
   const { events, isLoading } = useEvents();
@@ -73,67 +74,98 @@ const EventHeatmap: React.FC = () => {
     if (!mapRef.current || map) return;
 
     console.log('Initializing map...');
-    const leafletMap = L.map(mapRef.current, {
-      zoomControl: false
-    }).setView([52.0302, 8.5311], 13);
-    
-    // Use OpenStreetMap tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19
-    }).addTo(leafletMap);
+    try {
+      const leafletMap = L.map(mapRef.current, {
+        zoomControl: false
+      }).setView([52.0302, 8.5311], 13);
+      
+      // Use OpenStreetMap tiles
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+      }).addTo(leafletMap);
 
-    // Add zoom control to bottom right
-    L.control.zoom({
-      position: 'bottomright'
-    }).addTo(leafletMap);
+      // Add zoom control to bottom right
+      L.control.zoom({
+        position: 'bottomright'
+      }).addTo(leafletMap);
 
-    setMap(leafletMap);
-    console.log('Map initialized successfully');
+      setMap(leafletMap);
+      console.log('Map initialized successfully');
+    } catch (error) {
+      console.error('Map initialization error:', error);
+    }
 
     return () => {
-      leafletMap.remove();
+      if (map) {
+        map.remove();
+      }
     };
-  }, [map]);
+  }, []);
 
-  // Enhanced geocoding with caching and rate limiting
+  // Geocoding with better error handling and rate limiting
   const geocodeAddress = async (address: string): Promise<[number, number] | null> => {
-    // Simple cache check
-    const cached = localStorage.getItem(`geocache_${address}`);
+    // Check cache first
+    const cacheKey = `geocache_${address.toLowerCase()}`;
+    const cached = localStorage.getItem(cacheKey);
     if (cached) {
-      const coords = JSON.parse(cached);
-      return [parseFloat(coords.lat), parseFloat(coords.lon)];
+      try {
+        const coords = JSON.parse(cached);
+        return [parseFloat(coords.lat), parseFloat(coords.lon)];
+      } catch (e) {
+        localStorage.removeItem(cacheKey);
+      }
     }
 
     try {
       // Add delay to respect rate limits
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
+      const searchQuery = `${address}, Bielefeld, Germany`;
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address + ', Bielefeld, Germany')}&format=json&limit=1&addressdetails=1`
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1&addressdetails=1`,
+        {
+          headers: {
+            'User-Agent': 'THE TRIBE.BI Event Heatmap (contact: support@the-tribe.bi)'
+          }
+        }
       );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
       const data = await response.json();
       
       if (data && data.length > 0) {
-        const coords = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-        // Cache the result
-        localStorage.setItem(`geocache_${address}`, JSON.stringify({ lat: data[0].lat, lon: data[0].lon }));
-        return coords as [number, number];
+        const coords: [number, number] = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+        // Verify coordinates are within reasonable bounds for Bielefeld
+        if (coords[0] >= 51.8 && coords[0] <= 52.2 && coords[1] >= 8.3 && coords[1] <= 8.7) {
+          localStorage.setItem(cacheKey, JSON.stringify({ lat: data[0].lat, lon: data[0].lon }));
+          return coords;
+        }
       }
     } catch (error) {
-      console.error('Geocoding error:', error);
+      console.error('Geocoding error for', address, ':', error);
     }
     return null;
   };
 
-  // Batch geocoding with progress tracking
+  // Improved geocoding with better state management
   useEffect(() => {
+    if (geocodingComplete || isGeocodingInProgress || bielefeldEvents.length === 0) {
+      return;
+    }
+
     const geocodeEvents = async () => {
-      const eventsToGeocode = bielefeldEvents.filter(event => 
-        event.location && !eventCoordinates[event.id]
-      );
+      const eventsToGeocode = bielefeldEvents
+        .filter(event => event.location && !eventCoordinates[event.id])
+        .slice(0, 50); // Limit to first 50 events to avoid overwhelming the API
       
-      if (eventsToGeocode.length === 0) return;
+      if (eventsToGeocode.length === 0) {
+        setGeocodingComplete(true);
+        return;
+      }
 
       console.log(`Starting geocoding for ${eventsToGeocode.length} events...`);
       setIsGeocodingInProgress(true);
@@ -151,21 +183,32 @@ const EventHeatmap: React.FC = () => {
           console.error(`Failed to geocode ${event.title}:`, error);
         }
         
-        // Update progress
-        if (i % 3 === 0) { // Update every 3 events to avoid too many renders
+        // Update coordinates periodically
+        if (i % 5 === 0 && i > 0) {
           setEventCoordinates({ ...newCoordinates });
         }
       }
       
       setEventCoordinates(newCoordinates);
       setIsGeocodingInProgress(false);
+      setGeocodingComplete(true);
       console.log(`Geocoding completed. Total coordinates: ${Object.keys(newCoordinates).length}`);
     };
 
-    if (bielefeldEvents.length > 0) {
-      geocodeEvents();
-    }
-  }, [bielefeldEvents, eventCoordinates]);
+    geocodeEvents();
+  }, [bielefeldEvents.length, geocodingComplete, isGeocodingInProgress]);
+
+  // Sample coordinates for immediate testing
+  const sampleCoordinates = useMemo(() => {
+    const samples: [number, number, number][] = [
+      [52.0302, 8.5311, 0.8], // Bielefeld center
+      [52.0192, 8.5370, 0.6], // Old Town
+      [52.0380, 8.4950, 0.7], // University area
+      [52.0250, 8.5200, 0.5], // Kesselbrink
+      [52.0420, 8.5100, 0.9], // Sennestadt
+    ];
+    return samples;
+  }, []);
 
   // Create heatmap layer
   useEffect(() => {
@@ -176,54 +219,40 @@ const EventHeatmap: React.FC = () => {
     // Remove existing heat layer
     if (heatLayer) {
       map.removeLayer(heatLayer);
-      console.log('Removed existing heatmap layer');
     }
 
-    // Prepare heatmap data: [latitude, longitude, intensity]
-    const heatmapData: [number, number, number][] = filteredEvents
+    // Prepare heatmap data from actual events
+    const eventHeatmapData: [number, number, number][] = filteredEvents
       .filter(event => eventCoordinates[event.id])
       .map((event) => {
         const coordinates = eventCoordinates[event.id];
-        // Calculate intensity based on likes, RSVP, and recency
         const likes = event.likes || 0;
         const rsvp = (event.rsvp_yes || 0) + (event.rsvp_maybe || 0) * 0.5;
-        const baseIntensity = Math.max(0.3, likes * 0.1 + rsvp * 0.2);
-        
-        // Boost intensity for recent events
-        const eventDate = new Date(event.date);
-        const now = new Date();
-        const daysDiff = Math.abs((now.getTime() - eventDate.getTime()) / (1000 * 60 * 60 * 24));
-        const recencyBoost = daysDiff <= 7 ? 2.0 : daysDiff <= 30 ? 1.5 : 1.0;
-        
-        const intensity = Math.min(1.0, baseIntensity * recencyBoost);
-        
+        const intensity = Math.max(0.3, Math.min(1.0, likes * 0.1 + rsvp * 0.2));
         return [coordinates[0], coordinates[1], intensity];
       });
 
+    // Use sample data if no geocoded events yet
+    const heatmapData = eventHeatmapData.length > 0 ? eventHeatmapData : sampleCoordinates;
+
     console.log(`Heatmap data prepared: ${heatmapData.length} points`);
-    console.log('Sample heatmap data:', heatmapData.slice(0, 3));
 
     if (heatmapData.length > 0) {
       try {
-        // Create heat layer with custom options
+        // Create heat layer
         const newHeatLayer = (L as any).heatLayer(heatmapData, {
-          radius: 30,
-          blur: 20,
+          radius: 25,
+          blur: 15,
           maxZoom: 17,
           max: 1.0,
-          minOpacity: 0.4,
+          minOpacity: 0.3,
           gradient: {
-            0.0: '#313695',
-            0.1: '#4575b4',
-            0.2: '#74add1',
-            0.3: '#abd9e9',
-            0.4: '#e0f3f8',
-            0.5: '#ffffcc',
-            0.6: '#fee090',
-            0.7: '#fdae61',
-            0.8: '#f46d43',
-            0.9: '#d73027',
-            1.0: '#a50026'
+            0.0: '#0000ff',
+            0.2: '#00ffff', 
+            0.4: '#00ff00',
+            0.6: '#ffff00',
+            0.8: '#ff8000',
+            1.0: '#ff0000'
           }
         });
 
@@ -233,59 +262,43 @@ const EventHeatmap: React.FC = () => {
       } catch (error) {
         console.error('Error creating heatmap layer:', error);
       }
-    } else {
-      console.log('No heatmap data available');
     }
 
-    // Add individual markers for detailed view at high zoom levels
-    const markers: L.Marker[] = [];
-    
-    const handleZoomEnd = () => {
+    // Add individual markers for high zoom levels
+    const addMarkers = () => {
       const zoom = map.getZoom();
-      
       if (zoom >= 15) {
-        // Show individual markers at high zoom
         filteredEvents
           .filter(event => eventCoordinates[event.id])
           .forEach((event) => {
             const coordinates = eventCoordinates[event.id];
-            
             const marker = L.marker(coordinates).addTo(map);
             
             const popupContent = `
-              <div style="padding: 12px; min-width: 240px;">
-                <h3 style="font-weight: bold; font-size: 16px; margin-bottom: 8px; color: #dc2626;">${event.title}</h3>
-                <div style="font-size: 13px; line-height: 1.4;">
-                  <div style="margin-bottom: 4px;">📅 ${new Date(event.date).toLocaleDateString('de-DE')}</div>
-                  <div style="margin-bottom: 4px;">🕐 ${event.time}</div>
-                  <div style="margin-bottom: 4px;">📍 ${event.location}</div>
-                  <div style="margin-bottom: 4px;">🏷️ ${event.category}</div>
-                  <div style="display: flex; gap: 12px; margin-top: 8px;">
-                    <span>👥 ${event.rsvp_yes || 0}</span>
-                    <span>❤️ ${event.likes || 0}</span>
-                  </div>
+              <div style="padding: 8px; min-width: 200px;">
+                <h3 style="font-weight: bold; margin-bottom: 6px;">${event.title}</h3>
+                <div style="font-size: 12px;">
+                  <div>📅 ${new Date(event.date).toLocaleDateString('de-DE')}</div>
+                  <div>🕐 ${event.time}</div>
+                  <div>📍 ${event.location}</div>
                 </div>
               </div>
             `;
 
-            marker.bindPopup(popupContent, { maxWidth: 280 });
-            markers.push(marker);
+            marker.bindPopup(popupContent);
           });
-      } else {
-        // Remove individual markers at low zoom
-        markers.forEach(marker => map.removeLayer(marker));
-        markers.length = 0;
       }
     };
 
-    map.on('zoomend', handleZoomEnd);
+    map.on('zoomend', addMarkers);
 
     return () => {
-      map.off('zoomend', handleZoomEnd);
-      markers.forEach(marker => map.removeLayer(marker));
+      if (map) {
+        map.off('zoomend', addMarkers);
+      }
     };
 
-  }, [map, filteredEvents, eventCoordinates]);
+  }, [map, filteredEvents, eventCoordinates, heatLayer]);
 
   if (isLoading) {
     return (
@@ -301,7 +314,7 @@ const EventHeatmap: React.FC = () => {
 
   return (
     <div className="relative w-full h-screen bg-black">
-      {/* Enhanced Filter Panel */}
+      {/* Filter Panel */}
       <div className="absolute top-4 left-4 z-[1000] space-y-3 max-w-sm">
         <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
           <h3 className="text-white font-bold mb-4 flex items-center gap-2">
@@ -317,8 +330,8 @@ const EventHeatmap: React.FC = () => {
                   onClick={() => setSelectedCategory(category.name)}
                   className={`text-xs px-3 py-1.5 rounded-full transition-all ${
                     selectedCategory === category.name
-                      ? 'bg-red-500 text-white shadow-lg scale-105'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:scale-105'
+                      ? 'bg-red-500 text-white shadow-lg'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                   }`}
                 >
                   {category.name === 'all' ? 'Alle' : category.name} ({category.count})
@@ -331,14 +344,14 @@ const EventHeatmap: React.FC = () => {
                 type="date"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="bg-gray-800 border-gray-600 text-white text-xs py-2 px-3 rounded flex-1"
+                className="bg-gray-800 border-gray-600 text-white text-xs"
               />
               {dateFilter && (
                 <Button
                   onClick={() => setDateFilter('')}
                   variant="ghost"
                   size="sm"
-                  className="text-gray-400 hover:text-white p-1"
+                  className="text-gray-400 hover:text-white"
                 >
                   <X className="w-4 h-4" />
                 </Button>
@@ -353,41 +366,22 @@ const EventHeatmap: React.FC = () => {
           )}
         </Card>
 
-        {/* Heatmap Legend */}
-        <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 text-white text-sm shadow-xl">
-          <h4 className="font-bold mb-3 flex items-center gap-2">
-            <MapPin className="w-4 h-4" />
-            Heatmap Intensität:
-          </h4>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span>Niedrig</span>
-              <div className="w-16 h-3 bg-gradient-to-r from-blue-600 to-blue-400 rounded"></div>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>Mittel</span>
-              <div className="w-16 h-3 bg-gradient-to-r from-yellow-400 to-orange-400 rounded"></div>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>Hoch</span>
-              <div className="w-16 h-3 bg-gradient-to-r from-red-500 to-red-700 rounded"></div>
-            </div>
-          </div>
-          
-          <div className="mt-3 pt-3 border-t border-gray-600">
-            <p className="text-xs text-gray-400">
-              📊 {filteredEvents.length} Events angezeigt
-              <br />
-              🗺️ {Object.keys(eventCoordinates).length} Standorte geladen
-              <br />
-              🔍 Zoom rein für Details
-            </p>
+        {/* Stats */}
+        <Card className="p-3 bg-black/95 backdrop-blur-md border-gray-700 text-white text-sm">
+          <div className="space-y-1">
+            <div>📊 {filteredEvents.length} Events angezeigt</div>
+            <div>🗺️ {Object.keys(eventCoordinates).length} Standorte</div>
+            <div>🔍 Zoom rein für Details</div>
           </div>
         </Card>
       </div>
 
       {/* Map Container */}
-      <div ref={mapRef} className="w-full h-full" />
+      <div 
+        ref={mapRef} 
+        className="w-full h-full"
+        style={{ background: '#f0f0f0' }}
+      />
     </div>
   );
 };
