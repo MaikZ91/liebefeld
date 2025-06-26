@@ -63,34 +63,33 @@ serve(async (req) => {
      * EVENT RETRIEVAL AND FILTERING
      ***************************/
     console.log("[ai-event-chat] Fetching all events from database...");
-    const { data: dbEvents, error: eventsError } = await supabase
+    
+    let dbQuery = supabase
       .from("community_events")
       .select("*")
       .order("date", { ascending: true });
 
+    // Apply city filter directly in the database query
+    if (selectedCity) {
+      const targetCityName = selectedCity.toLowerCase();
+      // Corrected logic: if selectedCity is 'bielefeld' or 'bi', include events where city is null
+      if (targetCityName === 'bielefeld' || targetCityName === 'bi') {
+        dbQuery = dbQuery.or('city.is.null,city.eq.bielefeld,city.eq.bi');
+        console.log(`[ai-event-chat] Applying DB filter for 'Bielefeld' (includes null city and 'bi').`);
+      } else {
+        dbQuery = dbQuery.eq('city', targetCityName);
+      }
+    }
+    
+    const { data: dbEvents, error: eventsError } = await dbQuery;
+
     if (eventsError) {
       throw new Error(`[ai-event-chat] Datenbank‑Fehler: ${eventsError.message}`);
     }
-    console.log(`[ai-event-chat] Fetched ${dbEvents.length} total events from DB.`);
+    console.log(`[ai-event-chat] Fetched ${dbEvents.length} events from DB after initial city filter.`);
 
-    let cityFilteredDbEvents = dbEvents;
-    if (selectedCity) {
-      console.log(`[ai-event-chat] Filtering DB events by city: ${selectedCity}`);
-      const targetCityName = selectedCity.toLowerCase();
-      
-      if (targetCityName === 'bielefeld') {
-        cityFilteredDbEvents = dbEvents.filter(e => !e.city || e.city.toLowerCase() === 'bielefeld');
-        console.log(`[ai-event-chat] Special filter for 'Bielefeld' (includes null city).`);
-      } else {
-        cityFilteredDbEvents = dbEvents.filter(e => e.city && e.city.toLowerCase() === targetCityName);
-      }
-      console.log(`[ai-event-chat] After city filtering for "${selectedCity}": ${cityFilteredDbEvents.length} events remain.`);
-    } else {
-        console.log(`[ai-event-chat] No city selected. Using all ${dbEvents.length} events.`);
-    }
-    
     // KEY FIX: Always start with the city-filtered list from the database.
-    let filteredEvents = cityFilteredDbEvents;
+    let filteredEvents = dbEvents;
     console.log(`[ai-event-chat] Initial event pool for filtering has ${filteredEvents.length} events.`);
     
     const lowercaseQuery = query.toLowerCase();
@@ -306,8 +305,7 @@ serve(async (req) => {
       film: "Kino",
       lesung: "Lesung",
       reading: "Lesung",
-      literatur: "Lesung",
-      literature: "Lesung"
+      literatur: "Lesung"
     };
     
     let categoryFilter = null;
@@ -333,11 +331,35 @@ serve(async (req) => {
     
     // Falls die Filterung zu streng war und keine Events übrig sind, nehmen wir die letzten 20 Events
     if (filteredEvents.length === 0) {
-      console.log("Keine Events nach Filterung übrig, verwende die nächsten 20 anstehenden Events");
-      filteredEvents = cityFilteredDbEvents
+      console.log("Keine Events nach Filterung übrig, verwende die nächsten 20 anstehenden Events aus der Stadt-spezifischen Liste");
+      // Re-fetch only city-filtered events for fallback
+      let fallbackDbQuery = supabase
+        .from("community_events")
+        .select("*")
+        .order("date", { ascending: true });
+
+      if (selectedCity) {
+        const targetCityName = selectedCity.toLowerCase();
+        // Corrected fallback logic: if selectedCity is 'bielefeld' or 'bi', include events where city is null
+        if (targetCityName === 'bielefeld' || targetCityName === 'bi') {
+          fallbackDbQuery = fallbackDbQuery.or('city.is.null,city.eq.bielefeld,city.eq.bi');
+        } else {
+          fallbackDbQuery = fallbackDbQuery.eq('city', targetCityName);
+        }
+      }
+      const { data: fallbackEventsData, error: fallbackError } = await fallbackDbQuery;
+      
+      if (fallbackError) {
+        console.error('[ai-event-chat] Error fetching fallback events:', fallbackError);
+        throw new Error(`Datenbank‑Fehler beim Fallback: ${fallbackError.message}`);
+      }
+      
+      filteredEvents = (fallbackEventsData || [])
         .filter((e: any) => e.date >= today)
         .sort((a: any, b: any) => a.date.localeCompare(b.date))
         .slice(0, 20);
+      console.log(`[ai-event-chat] Nach Fallback: ${filteredEvents.length} Events übrig`);
+
     }
 
     // Sort all filtered events by date
@@ -381,7 +403,7 @@ serve(async (req) => {
       })
       .join("\n\n");
 
-    const totalEventsInfo = `Es gibt insgesamt ${cityFilteredDbEvents.length} Events in der Datenbank für die ausgewählte Stadt. Ich habe dir die ${filteredEvents.length} relevantesten basierend auf deiner Anfrage ausgewählt.\nDie Anzahl der Likes gibt an, wie beliebt ein Event ist.`;
+    const totalEventsInfo = `Es gibt insgesamt ${dbEvents.length} Events in der Datenbank für die ausgewählte Stadt. Ich habe dir die ${filteredEvents.length} relevantesten basierend auf deiner Anfrage ausgewählt.\nDie Anzahl der Likes gibt an, wie beliebt ein Event ist.`;
 
     const cityNameForPrompt = selectedCity || "Bielefeld";
     
@@ -423,7 +445,7 @@ serve(async (req) => {
       const germanMonthName = monthNames[currentMonth];
       
       systemMessage += `Der Nutzer hat nach Events in diesem Monat (${germanMonthName} ${currentYear}) gefragt. `;
-      systemMessage += `Stelle sicher, dass du nur Events vom ${firstDayOfMonth} bis ${lastDayOfMonth} erwähnst. `;
+      systemPrompt += `Stelle sicher, dass du nur Events vom ${firstDayOfMonth} bis ${lastDayOfMonth} erwähnst. `;
       
       if (thisMonthEvents.length === 0) {
         systemMessage += `Es wurden keine Events für diesen Monat gefunden. Informiere den Nutzer, dass keine Events für ${germanMonthName} ${currentYear} verfügbar sind und schlage vor, es mit einem anderen Zeitraum zu versuchen. `;
@@ -445,7 +467,7 @@ serve(async (req) => {
         { role: "system", content: systemMessage },
         { role: "user", content: query },
       ],
-      temperature: 0.7,
+      temperature: 0.3,
       max_tokens: 1024,
     };
 
