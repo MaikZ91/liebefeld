@@ -1,3 +1,4 @@
+// File: src/components/event-chat/ChatInput.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -25,8 +26,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   setInput, // This is the setter for the parent hook's input
   handleSendMessage,
   isTyping, // This is AI's processing status OR community sending status
-  handleKeyPress, // KeyPress from parent (e.g., for Enter key)
-  handleInputChange: parentHandleInputChange, // This is the onChange from parent, potentially unused
+  onKeyDown, // Renamed from handleKeyPress, now directly from props
+  onChange, // Renamed from parentHandleInputChange, now directly from props
   isHeartActive,
   handleHeartClick,
   globalQueries,
@@ -98,18 +99,16 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   // NEW: Local handler for input change
   const handleLocalInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLocalInput(e.target.value); // Update local state immediately
-    // If there's a parentHandleInputChange and it's not the default one from useChatLogic
-    // (which is now empty), we could call it here for other effects if needed.
-    // For AI Chat, it's not needed, for Community Chat, useMessageSending's onChange is called.
-    if (activeChatModeValue === 'community' && parentHandleInputChange) {
-      parentHandleInputChange(e); // Propagate to useMessageSending if in community mode
+    // If there's an onChange prop provided, call it
+    if (onChange) {
+      onChange(e); // Propagate to parent if in community mode
     }
   };
 
   // NEW: Local handler for sending message
   const handleLocalSendMessage = (eventData?: any) => {
     setInput(localInput); // Update parent hook's input state right before sending
-    handleSendMessage(localInput); // Send message using the parent's handler
+    handleSendMessage(localInput); // Pass localInput to handleSendMessage
     setLocalInput(''); // Clear local input field
   };
   
@@ -120,8 +119,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
       handleLocalSendMessage();
     } else {
       // If parent has a keyPress handler (e.g. for debug or other purposes), call it
-      if (handleKeyPress) {
-        handleKeyPress(e);
+      if (onKeyDown) {
+        onKeyDown(e);
       }
     }
   };
@@ -340,7 +339,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
       />
 
       <button
-        onClick={() => handleLocalSendMessage()} // Use local handler
+        onClick={() => handleLocalSendMessage()} // Call local send handler without event
         disabled={!localInput.trim() || isTyping} // Use localInput for validation
         className={cn(
           "absolute right-1 top-1/2 transform -translate-y-1/2 rounded-full p-1.5 flex-shrink-0",

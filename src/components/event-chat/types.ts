@@ -1,5 +1,4 @@
-
-// src/components/event-chat/types.ts
+// File: src/components/event-chat/types.ts
 import { LandingSlideData } from './SwipeableLandingPanel';
 
 export interface ChatMessage {
@@ -66,9 +65,13 @@ export interface MessageListProps {
 export interface ChatInputProps {
   input: string;
   setInput: (value: string) => void;
-  handleSendMessage: () => void;
+  // Updated signature to accept optional content argument
+  handleSendMessage: (content?: string | any) => Promise<void>; 
   isTyping: boolean;
-  handleKeyPress: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  // Updated event types for HTMLInputElement
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void; 
+  // Updated event types for HTMLInputElement
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void; 
   isHeartActive: boolean;
   handleHeartClick: () => void;
   globalQueries: any[];
@@ -107,4 +110,10 @@ export interface FullPageChatBotProps {
   communityGroupId: string;
   onAddEvent?: () => void;
   hideButtons?: boolean;
+  activeCategory?: string;
+  onCategoryChange?: (category: string) => void;
+  hideInput?: boolean;
+  externalInput?: string;
+  setExternalInput?: (value: string) => void;
+  onExternalSendHandlerChange?: (handler: (() => void) | null) => void;
 }

@@ -1,4 +1,4 @@
-// src/components/event-chat/FullPageChatBot.tsx
+// File: src/components/event-chat/FullPageChatBot.tsx
 import React, { useEffect } from 'react';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
@@ -84,8 +84,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     newMessage: communityInput,
     isSending: communitySending,
     handleSubmit: communitySendMessage,
-    handleInputChange: communityInputChange,
-    handleKeyDown: communityKeyDown,
+    handleInputChange: communityInputChangeFromHook, // Renamed to avoid conflict
+    handleKeyDown: communityKeyDownFromHook, // Renamed to avoid conflict
     setNewMessage: setCommunityInput
   } = useMessageSending(communityGroupId, username, addOptimisticMessage);
 
@@ -143,13 +143,22 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   };
 
+  // Wrapper functions for community chat input handlers to match ChatInput's HTMLInputElement type
+  const wrappedCommunityInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    communityInputChangeFromHook(e as React.ChangeEvent<HTMLTextAreaElement>);
+  };
+
+  const wrappedCommunityKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    communityKeyDownFromHook(e as React.KeyboardEvent<HTMLTextAreaElement>);
+  };
+
   // Unified functions to pass to ChatInput, based on activeChatModeValue
   const currentInput = activeChatModeValue === 'ai' ? aiInput : communityInput;
   const currentSetInput = activeChatModeValue === 'ai' ? setAiInput : setCommunityInput;
   const currentHandleSendMessage = activeChatModeValue === 'ai' ? aiSendMessage : communitySendMessage;
   const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending; // isTyping is AI processing, isSending is community sending
-  const currentHandleKeyPress = activeChatModeValue === 'ai' ? aiKeyPress : communityKeyDown;
-  const currentHandleInputChange = activeChatModeValue === 'ai' ? aiInputChange : communityInputChange;
+  const currentHandleKeyPress = activeChatModeValue === 'ai' ? aiKeyPress : wrappedCommunityKeyDown;
+  const currentHandleInputChange = activeChatModeValue === 'ai' ? aiInputChange : wrappedCommunityInputChange;
 
 
   useEffect(() => {
@@ -183,8 +192,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
             setInput={currentSetInput} // Pass unified setInput
             handleSendMessage={currentHandleSendMessage} // Pass unified handleSendMessage
             isTyping={currentIsTyping} // Pass unified isTyping/isSending
-            handleKeyPress={currentHandleKeyPress} // Pass unified handleKeyPress
-            handleInputChange={currentHandleInputChange} // Pass unified handleInputChange
+            onKeyDown={currentHandleKeyPress} // Pass unified handleKeyPress
+            onChange={currentHandleInputChange} // Pass unified handleInputChange
             isHeartActive={isHeartActive}
             handleHeartClick={handleHeartClick}
             globalQueries={globalQueries}
