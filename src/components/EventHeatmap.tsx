@@ -5,11 +5,8 @@ import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Filter, X, MapPin, Zap } from 'lucide-react';
+import { X, MapPin, Calendar, Users } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
-
-// Import leaflet.heat plugin
-import 'leaflet.heat';
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -19,150 +16,228 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+// Sample event locations in Bielefeld with coordinates
+const sampleEventLocations = [
+  { 
+    id: '1', 
+    title: 'Konzert im Forum', 
+    lat: 52.0210, 
+    lng: 8.5320, 
+    category: 'Konzert',
+    attendees: 45,
+    date: '2025-01-15',
+    location: 'Forum Bielefeld'
+  },
+  { 
+    id: '2', 
+    title: 'Stadtfest Altstadt', 
+    lat: 52.0192, 
+    lng: 8.5370, 
+    category: 'Festival',
+    attendees: 120,
+    date: '2025-01-20',
+    location: 'Bielefeld Altstadt'
+  },
+  { 
+    id: '3', 
+    title: 'Theater Premiere', 
+    lat: 52.0185, 
+    lng: 8.5355, 
+    category: 'Theater',
+    attendees: 67,
+    date: '2025-01-18',
+    location: 'Theater Bielefeld'
+  },
+  { 
+    id: '4', 
+    title: 'Uni Sportevent', 
+    lat: 52.0380, 
+    lng: 8.4950, 
+    category: 'Sport',
+    attendees: 89,
+    date: '2025-01-22',
+    location: 'Universität Bielefeld'
+  },
+  { 
+    id: '5', 
+    title: 'Lokschuppen Party', 
+    lat: 52.0195, 
+    lng: 8.5340, 
+    category: 'Party',
+    attendees: 156,
+    date: '2025-01-25',
+    location: 'Lokschuppen'
+  },
+  { 
+    id: '6', 
+    title: 'Kunstausstellung', 
+    lat: 52.0175, 
+    lng: 8.5380, 
+    category: 'Ausstellung',
+    attendees: 34,
+    date: '2025-01-28',
+    location: 'Kunsthalle Bielefeld'
+  }
+];
+
 const EventHeatmap: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [dateFilter, setDateFilter] = useState('');
   const [map, setMap] = useState<L.Map | null>(null);
-  const [heatLayer, setHeatLayer] = useState<any>(null);
+  const [markers, setMarkers] = useState<L.Marker[]>([]);
   const mapRef = useRef<HTMLDivElement>(null);
   
   const { events, isLoading } = useEvents();
 
-  // Sample heatmap data for Bielefeld with intensity values
-  const sampleBielefeldHeatmapData: [number, number, number][] = [
-    // City Center - High intensity
-    [52.0302, 8.5311, 0.9], // Bielefeld Hauptbahnhof
-    [52.0192, 8.5370, 0.8], // Altstadt
-    [52.0220, 8.5280, 0.7], // Kesselbrink
-    [52.0180, 8.5330, 0.6], // Niederwall
-    
-    // University Area
-    [52.0380, 8.4950, 0.8], // Universität Bielefeld
-    [52.0420, 8.4900, 0.5], // Campus Nähe
-    
-    // Districts
-    [52.0420, 8.5100, 0.7], // Sennestadt
-    [52.0150, 8.5200, 0.6], // Mitte-West
-    [52.0280, 8.5450, 0.5], // Brackwede
-    [52.0080, 8.5100, 0.4], // Schildesche
-    
-    // Event Locations - Medium to high intensity
-    [52.0210, 8.5320, 0.8], // Forum Bielefeld
-    [52.0185, 8.5355, 0.7], // Theater Bielefeld
-    [52.0195, 8.5340, 0.6], // Lokschuppen
-    [52.0175, 8.5380, 0.5], // Bunker Ulmenwall
-    [52.0230, 8.5290, 0.7], // Ravensberger Park
-    
-    // Nightlife - High intensity
-    [52.0200, 8.5350, 0.9], // Altstadt Kneipen
-    [52.0190, 8.5360, 0.8], // Goldschmiede
-    [52.0185, 8.5345, 0.7], // Club Area
-  ];
-
-  // Get unique categories with counts
-  const categoriesWithCounts = React.useMemo(() => {
-    const bielefeldEvents = events?.filter(
-      (event) => !event.city || 
-        event.city.toLowerCase().includes('bielefeld') || 
-        event.city.toLowerCase() === 'bi' ||
-        event.location?.toLowerCase().includes('bielefeld')
-    ) || [];
-
+  // Get categories with counts
+  const categories = React.useMemo(() => {
     const categoryMap = new Map<string, number>();
-    bielefeldEvents.forEach(event => {
-      const category = event.category || 'Sonstiges';
-      categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
+    sampleEventLocations.forEach(event => {
+      categoryMap.set(event.category, (categoryMap.get(event.category) || 0) + 1);
     });
     
     return [
-      { name: 'all', count: bielefeldEvents.length },
+      { name: 'all', count: sampleEventLocations.length },
       ...Array.from(categoryMap.entries()).map(([name, count]) => ({ name, count }))
     ];
-  }, [events]);
+  }, []);
+
+  // Filter events based on selected category and date
+  const filteredEvents = React.useMemo(() => {
+    let filtered = sampleEventLocations;
+    
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(event => event.category === selectedCategory);
+    }
+    
+    if (dateFilter) {
+      filtered = filtered.filter(event => event.date === dateFilter);
+    }
+    
+    return filtered;
+  }, [selectedCategory, dateFilter]);
 
   // Initialize map
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || map) return;
 
-    console.log('Initializing Bielefeld Event Heatmap Map...');
+    console.log('Initializing Bielefeld Map...');
     
-    try {
-      // Create map centered on Bielefeld
-      const leafletMap = L.map(mapRef.current, {
-        center: [52.0302, 8.5311], // Bielefeld coordinates
-        zoom: 13,
-        zoomControl: false,
-        attributionControl: true
-      });
-      
-      // Add OpenStreetMap tiles
-      const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19,
-        minZoom: 10
-      });
-      
-      tileLayer.addTo(leafletMap);
+    // Create map centered on Bielefeld
+    const leafletMap = L.map(mapRef.current, {
+      center: [52.0302, 8.5311], // Bielefeld coordinates
+      zoom: 13,
+      zoomControl: false
+    });
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }).addTo(leafletMap);
 
-      // Add zoom control to bottom right
-      L.control.zoom({
-        position: 'bottomright'
-      }).addTo(leafletMap);
+    // Add zoom control to bottom right
+    L.control.zoom({
+      position: 'bottomright'
+    }).addTo(leafletMap);
 
-      // Wait for tiles to load before creating heatmap
-      tileLayer.on('load', () => {
-        console.log('Tiles loaded, creating heatmap...');
-        
-        try {
-          // Create heat layer
-          const newHeatLayer = (L as any).heatLayer(sampleBielefeldHeatmapData, {
-            radius: 25,
-            blur: 15,
-            maxZoom: 17,
-            max: 1.0,
-            minOpacity: 0.3,
-            gradient: {
-              0.0: '#3388ff',  // Blue (low activity)
-              0.2: '#00ffff',  // Cyan
-              0.4: '#00ff00',  // Green
-              0.6: '#ffff00',  // Yellow
-              0.8: '#ff8000',  // Orange
-              1.0: '#ff0000'   // Red (high activity)
-            }
-          });
-
-          newHeatLayer.addTo(leafletMap);
-          setHeatLayer(newHeatLayer);
-          console.log('Heatmap layer added successfully');
-          
-        } catch (heatError) {
-          console.error('Error creating heatmap layer:', heatError);
-        }
-      });
-
-      setMap(leafletMap);
-      console.log('Map initialized successfully');
-      
-    } catch (error) {
-      console.error('Map initialization error:', error);
-    }
+    setMap(leafletMap);
+    console.log('Map initialized successfully');
 
     return () => {
-      if (map) {
-        console.log('Cleaning up map...');
-        map.remove();
-        setMap(null);
-        setHeatLayer(null);
+      if (leafletMap) {
+        leafletMap.remove();
       }
     };
   }, []);
+
+  // Update markers when filtered events change
+  useEffect(() => {
+    if (!map) return;
+
+    // Clear existing markers
+    markers.forEach(marker => {
+      map.removeLayer(marker);
+    });
+
+    // Create new markers for filtered events
+    const newMarkers: L.Marker[] = [];
+
+    filteredEvents.forEach(event => {
+      // Create custom icon with attendee count
+      const iconHtml = `
+        <div style="
+          background: #ef4444;
+          color: white;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: bold;
+          font-size: 12px;
+          border: 2px solid white;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        ">
+          ${event.attendees}
+        </div>
+      `;
+
+      const customIcon = L.divIcon({
+        html: iconHtml,
+        className: 'custom-marker',
+        iconSize: [40, 40],
+        iconAnchor: [20, 20],
+        popupAnchor: [0, -20]
+      });
+
+      // Create marker
+      const marker = L.marker([event.lat, event.lng], { icon: customIcon });
+
+      // Create popup content
+      const popupContent = `
+        <div style="min-width: 200px;">
+          <h3 style="margin: 0 0 8px 0; font-weight: bold; color: #1f2937;">${event.title}</h3>
+          <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280;">
+            <span style="margin-right: 8px;">📍</span>
+            <span>${event.location}</span>
+          </div>
+          <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280;">
+            <span style="margin-right: 8px;">📅</span>
+            <span>${new Date(event.date).toLocaleDateString('de-DE')}</span>
+          </div>
+          <div style="display: flex; align-items: center; margin-bottom: 8px; color: #6b7280;">
+            <span style="margin-right: 8px;">👥</span>
+            <span>${event.attendees} Teilnehmer</span>
+          </div>
+          <div style="
+            background: #ef4444;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            display: inline-block;
+          ">
+            ${event.category}
+          </div>
+        </div>
+      `;
+
+      marker.bindPopup(popupContent);
+      marker.addTo(map);
+      newMarkers.push(marker);
+    });
+
+    setMarkers(newMarkers);
+  }, [map, filteredEvents]);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-black text-white">
         <div className="text-center">
           <MapPin className="w-12 h-12 mx-auto mb-4 animate-bounce text-red-500" />
-          <h2 className="text-xl mb-2">Lade Event-Heatmap...</h2>
+          <h2 className="text-xl mb-2">Lade Event-Karte...</h2>
           <p className="text-gray-400">Bielefeld Events werden geladen...</p>
         </div>
       </div>
@@ -175,13 +250,13 @@ const EventHeatmap: React.FC = () => {
       <div className="absolute top-4 left-4 z-[1000] space-y-3 max-w-sm">
         <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
           <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-red-500" />
-            Event Heatmap Bielefeld
+            <MapPin className="w-5 h-5 text-red-500" />
+            Event-Karte Bielefeld
           </h3>
           
           <div className="space-y-3">
             <div className="flex flex-wrap gap-2">
-              {categoriesWithCounts.map((category) => (
+              {categories.map((category) => (
                 <Button
                   key={category.name}
                   onClick={() => setSelectedCategory(category.name)}
@@ -220,9 +295,14 @@ const EventHeatmap: React.FC = () => {
         {/* Stats */}
         <Card className="p-3 bg-black/95 backdrop-blur-md border-gray-700 text-white text-sm">
           <div className="space-y-1">
-            <div>📊 {sampleBielefeldHeatmapData.length} Heatmap-Punkte</div>
-            <div>🗺️ Bielefeld Event-Hotspots</div>
-            <div>🔥 Heatmap aktiv</div>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-red-500" />
+              {filteredEvents.length} Events gefiltert
+            </div>
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-red-500" />
+              {filteredEvents.reduce((sum, event) => sum + event.attendees, 0)} Teilnehmer gesamt
+            </div>
           </div>
         </Card>
       </div>
