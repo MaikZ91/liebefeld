@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { X, MapPin, Calendar, Users } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
+import { format } from 'date-fns';
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -19,29 +20,39 @@ L.Icon.Default.mergeOptions({
 const EventHeatmap: React.FC = () => {
   const { events, isLoading } = useEvents();
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [dateFilter, setDateFilter] = useState('');
   const [map, setMap] = useState<L.Map | null>(null);
   const [markers, setMarkers] = useState<L.Marker[]>([]);
   const mapRef = useRef<HTMLDivElement>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
-  // Filter events for Bielefeld and get coordinates
-  const bielefeldEvents = React.useMemo(() => {
-    return events
-      .filter(event => 
-        event.city?.toLowerCase().includes('bielefeld') || 
-        event.location?.toLowerCase().includes('bielefeld') ||
-        !event.city // Include events without specific city as they might be local
-      )
+  // Get today's date in YYYY-MM-DD format
+  const today = format(new Date(), 'yyyy-MM-dd');
+
+  // Filter events for Bielefeld and today only
+  const todaysBielefeldEvents = React.useMemo(() => {
+    console.log(`Filtering events for today (${today}) in Bielefeld...`);
+    
+    const filtered = events
+      .filter(event => {
+        const isToday = event.date === today;
+        const isBielefeld = event.city?.toLowerCase().includes('bielefeld') || 
+                           event.location?.toLowerCase().includes('bielefeld') ||
+                           !event.city; // Include events without specific city
+        
+        console.log(`Event: ${event.title}, Date: ${event.date}, City: ${event.city}, IsToday: ${isToday}, IsBielefeld: ${isBielefeld}`);
+        return isToday && isBielefeld;
+      })
       .map(event => ({
         ...event,
-        // Add coordinates for Bielefeld locations (you might want to use a geocoding service for real coordinates)
         lat: getCoordinatesForLocation(event.location || event.title),
         lng: getCoordinatesForLocation(event.location || event.title, true),
         attendees: (event.rsvp_yes || 0) + (event.rsvp_maybe || 0) + (event.likes || 0)
       }))
-      .filter(event => event.lat && event.lng); // Only include events with coordinates
-  }, [events]);
+      .filter(event => event.lat && event.lng);
+
+    console.log(`Found ${filtered.length} events for today in Bielefeld`);
+    return filtered;
+  }, [events, today]);
 
   // Simple coordinate mapping for Bielefeld locations
   function getCoordinatesForLocation(location: string, isLng: boolean = false): number {
@@ -73,37 +84,30 @@ const EventHeatmap: React.FC = () => {
     }
 
     // Add some random offset to center for unmapped locations
-    const offset = (Math.random() - 0.5) * 0.02; // Small random offset within ~1km
+    const offset = (Math.random() - 0.5) * 0.02;
     return isLng ? bielefeldCenter.lng + offset : bielefeldCenter.lat + offset;
   }
 
-  // Get categories with counts from real data
+  // Get categories with counts from today's events
   const categories = React.useMemo(() => {
     const categoryMap = new Map<string, number>();
-    bielefeldEvents.forEach(event => {
+    todaysBielefeldEvents.forEach(event => {
       categoryMap.set(event.category, (categoryMap.get(event.category) || 0) + 1);
     });
     
     return [
-      { name: 'all', count: bielefeldEvents.length },
+      { name: 'all', count: todaysBielefeldEvents.length },
       ...Array.from(categoryMap.entries()).map(([name, count]) => ({ name, count }))
     ];
-  }, [bielefeldEvents]);
+  }, [todaysBielefeldEvents]);
 
-  // Filter events based on selected category and date
+  // Filter events based on selected category
   const filteredEvents = React.useMemo(() => {
-    let filtered = bielefeldEvents;
-    
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(event => event.category === selectedCategory);
+    if (selectedCategory === 'all') {
+      return todaysBielefeldEvents;
     }
-    
-    if (dateFilter) {
-      filtered = filtered.filter(event => event.date === dateFilter);
-    }
-    
-    return filtered;
-  }, [bielefeldEvents, selectedCategory, dateFilter]);
+    return todaysBielefeldEvents.filter(event => event.category === selectedCategory);
+  }, [todaysBielefeldEvents, selectedCategory]);
 
   // Initialize map
   useEffect(() => {
@@ -112,14 +116,12 @@ const EventHeatmap: React.FC = () => {
     console.log('Initializing Bielefeld Map...');
     
     try {
-      // Create map centered on Bielefeld
       const leafletMap = L.map(mapRef.current, {
-        center: [52.0302, 8.5311], // Bielefeld coordinates
+        center: [52.0302, 8.5311],
         zoom: 13,
         zoomControl: true
       });
       
-      // Add OpenStreetMap tiles
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19
@@ -143,7 +145,7 @@ const EventHeatmap: React.FC = () => {
   useEffect(() => {
     if (!map || !isMapLoaded) return;
 
-    console.log('Updating markers for', filteredEvents.length, 'Bielefeld events');
+    console.log('Updating markers for', filteredEvents.length, "today's Bielefeld events");
 
     // Clear existing markers
     markers.forEach(marker => {
@@ -155,7 +157,6 @@ const EventHeatmap: React.FC = () => {
 
     filteredEvents.forEach(event => {
       try {
-        // Create custom icon with attendee count or likes
         const displayNumber = event.attendees > 0 ? event.attendees : (event.likes || 1);
         const iconHtml = `
           <div style="
@@ -184,10 +185,8 @@ const EventHeatmap: React.FC = () => {
           popupAnchor: [0, -20]
         });
 
-        // Create marker
         const marker = L.marker([event.lat, event.lng], { icon: customIcon });
 
-        // Create popup content with real data
         const popupContent = `
           <div style="min-width: 200px;">
             <h3 style="margin: 0 0 8px 0; font-weight: bold; color: #1f2937;">${event.title}</h3>
@@ -197,7 +196,7 @@ const EventHeatmap: React.FC = () => {
             </div>
             <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280;">
               <span style="margin-right: 8px;">📅</span>
-              <span>${new Date(event.date).toLocaleDateString('de-DE')}</span>
+              <span>Heute</span>
             </div>
             <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280;">
               <span style="margin-right: 8px;">⏰</span>
@@ -243,7 +242,7 @@ const EventHeatmap: React.FC = () => {
         <div className="text-center text-white">
           <MapPin className="w-12 h-12 mx-auto mb-4 animate-bounce text-red-500" />
           <h2 className="text-xl mb-2">Lade Events...</h2>
-          <p className="text-gray-400">Bielefeld Events werden geladen...</p>
+          <p className="text-gray-400">Heutige Events in Bielefeld werden geladen...</p>
         </div>
       </div>
     );
@@ -256,7 +255,7 @@ const EventHeatmap: React.FC = () => {
         <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
           <h3 className="text-white font-bold mb-4 flex items-center gap-2">
             <MapPin className="w-5 h-5 text-red-500" />
-            Events in Bielefeld
+            Events heute in Bielefeld
           </h3>
           
           <div className="space-y-3">
@@ -275,26 +274,6 @@ const EventHeatmap: React.FC = () => {
                 </Button>
               ))}
             </div>
-            
-            <div className="flex items-center gap-2">
-              <Input
-                type="date"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="bg-gray-800 border-gray-600 text-white text-xs"
-                placeholder="Datum filtern"
-              />
-              {dateFilter && (
-                <Button
-                  onClick={() => setDateFilter('')}
-                  variant="ghost"
-                  size="sm"
-                  className="text-gray-400 hover:text-white"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
           </div>
         </Card>
 
@@ -303,7 +282,7 @@ const EventHeatmap: React.FC = () => {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-red-500" />
-              {filteredEvents.length} Events in Bielefeld
+              {filteredEvents.length} Events heute in Bielefeld
             </div>
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-red-500" />
@@ -317,7 +296,7 @@ const EventHeatmap: React.FC = () => {
         </Card>
       </div>
 
-      {/* Map Container */}
+      {/* Map Container - This is the main focus */}
       <div 
         ref={mapRef} 
         className="w-full h-full"
