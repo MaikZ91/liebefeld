@@ -1,12 +1,11 @@
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { X, MapPin, Calendar, Users } from 'lucide-react';
-import { useEvents } from '@/hooks/useEvents';
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -16,7 +15,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Sample event locations in Bielefeld with coordinates
+// Sample event locations in Bielefeld
 const sampleEventLocations = [
   { 
     id: '1', 
@@ -86,8 +85,7 @@ const EventHeatmap: React.FC = () => {
   const [map, setMap] = useState<L.Map | null>(null);
   const [markers, setMarkers] = useState<L.Marker[]>([]);
   const mapRef = useRef<HTMLDivElement>(null);
-  
-  const { events, isLoading } = useEvents();
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   // Get categories with counts
   const categories = React.useMemo(() => {
@@ -123,37 +121,39 @@ const EventHeatmap: React.FC = () => {
 
     console.log('Initializing Bielefeld Map...');
     
-    // Create map centered on Bielefeld
-    const leafletMap = L.map(mapRef.current, {
-      center: [52.0302, 8.5311], // Bielefeld coordinates
-      zoom: 13,
-      zoomControl: false
-    });
-    
-    // Add OpenStreetMap tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19
-    }).addTo(leafletMap);
+    try {
+      // Create map centered on Bielefeld
+      const leafletMap = L.map(mapRef.current, {
+        center: [52.0302, 8.5311], // Bielefeld coordinates
+        zoom: 13,
+        zoomControl: true
+      });
+      
+      // Add OpenStreetMap tiles
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+      }).addTo(leafletMap);
 
-    // Add zoom control to bottom right
-    L.control.zoom({
-      position: 'bottomright'
-    }).addTo(leafletMap);
+      setMap(leafletMap);
+      setIsMapLoaded(true);
+      console.log('Map initialized successfully');
 
-    setMap(leafletMap);
-    console.log('Map initialized successfully');
-
-    return () => {
-      if (leafletMap) {
-        leafletMap.remove();
-      }
-    };
+      return () => {
+        if (leafletMap) {
+          leafletMap.remove();
+        }
+      };
+    } catch (error) {
+      console.error('Error initializing map:', error);
+    }
   }, []);
 
   // Update markers when filtered events change
   useEffect(() => {
-    if (!map) return;
+    if (!map || !isMapLoaded) return;
+
+    console.log('Updating markers for', filteredEvents.length, 'events');
 
     // Clear existing markers
     markers.forEach(marker => {
@@ -164,85 +164,77 @@ const EventHeatmap: React.FC = () => {
     const newMarkers: L.Marker[] = [];
 
     filteredEvents.forEach(event => {
-      // Create custom icon with attendee count
-      const iconHtml = `
-        <div style="
-          background: #ef4444;
-          color: white;
-          border-radius: 50%;
-          width: 40px;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: bold;
-          font-size: 12px;
-          border: 2px solid white;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-        ">
-          ${event.attendees}
-        </div>
-      `;
-
-      const customIcon = L.divIcon({
-        html: iconHtml,
-        className: 'custom-marker',
-        iconSize: [40, 40],
-        iconAnchor: [20, 20],
-        popupAnchor: [0, -20]
-      });
-
-      // Create marker
-      const marker = L.marker([event.lat, event.lng], { icon: customIcon });
-
-      // Create popup content
-      const popupContent = `
-        <div style="min-width: 200px;">
-          <h3 style="margin: 0 0 8px 0; font-weight: bold; color: #1f2937;">${event.title}</h3>
-          <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280;">
-            <span style="margin-right: 8px;">📍</span>
-            <span>${event.location}</span>
-          </div>
-          <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280;">
-            <span style="margin-right: 8px;">📅</span>
-            <span>${new Date(event.date).toLocaleDateString('de-DE')}</span>
-          </div>
-          <div style="display: flex; align-items: center; margin-bottom: 8px; color: #6b7280;">
-            <span style="margin-right: 8px;">👥</span>
-            <span>${event.attendees} Teilnehmer</span>
-          </div>
+      try {
+        // Create custom icon with attendee count
+        const iconHtml = `
           <div style="
             background: #ef4444;
             color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
             font-size: 12px;
-            display: inline-block;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
           ">
-            ${event.category}
+            ${event.attendees}
           </div>
-        </div>
-      `;
+        `;
 
-      marker.bindPopup(popupContent);
-      marker.addTo(map);
-      newMarkers.push(marker);
+        const customIcon = L.divIcon({
+          html: iconHtml,
+          className: 'custom-marker',
+          iconSize: [40, 40],
+          iconAnchor: [20, 20],
+          popupAnchor: [0, -20]
+        });
+
+        // Create marker
+        const marker = L.marker([event.lat, event.lng], { icon: customIcon });
+
+        // Create popup content
+        const popupContent = `
+          <div style="min-width: 200px;">
+            <h3 style="margin: 0 0 8px 0; font-weight: bold; color: #1f2937;">${event.title}</h3>
+            <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280;">
+              <span style="margin-right: 8px;">📍</span>
+              <span>${event.location}</span>
+            </div>
+            <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280;">
+              <span style="margin-right: 8px;">📅</span>
+              <span>${new Date(event.date).toLocaleDateString('de-DE')}</span>
+            </div>
+            <div style="display: flex; align-items: center; margin-bottom: 8px; color: #6b7280;">
+              <span style="margin-right: 8px;">👥</span>
+              <span>${event.attendees} Teilnehmer</span>
+            </div>
+            <div style="
+              background: #ef4444;
+              color: white;
+              padding: 2px 8px;
+              border-radius: 12px;
+              font-size: 12px;
+              display: inline-block;
+            ">
+              ${event.category}
+            </div>
+          </div>
+        `;
+
+        marker.bindPopup(popupContent);
+        marker.addTo(map);
+        newMarkers.push(marker);
+      } catch (error) {
+        console.error('Error creating marker for event:', event.title, error);
+      }
     });
 
     setMarkers(newMarkers);
-  }, [map, filteredEvents]);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-black text-white">
-        <div className="text-center">
-          <MapPin className="w-12 h-12 mx-auto mb-4 animate-bounce text-red-500" />
-          <h2 className="text-xl mb-2">Lade Event-Karte...</h2>
-          <p className="text-gray-400">Bielefeld Events werden geladen...</p>
-        </div>
-      </div>
-    );
-  }
+  }, [map, filteredEvents, isMapLoaded]);
 
   return (
     <div className="relative w-full h-screen bg-black">
@@ -316,6 +308,17 @@ const EventHeatmap: React.FC = () => {
           minHeight: '100vh'
         }}
       />
+
+      {/* Loading indicator */}
+      {!isMapLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-[2000]">
+          <div className="text-center text-white">
+            <MapPin className="w-12 h-12 mx-auto mb-4 animate-bounce text-red-500" />
+            <h2 className="text-xl mb-2">Lade Karte...</h2>
+            <p className="text-gray-400">OpenStreetMap wird geladen...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
