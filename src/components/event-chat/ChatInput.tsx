@@ -1,26 +1,22 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Heart, Send, Plus, Filter } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import RecentQueries from './RecentQueries';
-import TypewriterPrompt from './TypewriterPrompt';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Heart, History, CalendarPlus, Send, Calendar, ChevronDown } from 'lucide-react';
+import { ChatInputProps } from './types';
+import { useEventContext } from '@/contexts/EventContext';
 
-interface ExtendedChatInputProps {
-  input: string;
-  setInput: (value: string) => void;
-  handleSendMessage: () => void;
-  isTyping: boolean;
-  handleKeyPress: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  isHeartActive: boolean;
-  handleHeartClick: () => void;
-  globalQueries: any[];
-  toggleRecentQueries: () => void;
-  inputRef: React.RefObject<HTMLInputElement>;
-  onAddEvent?: () => void;
-  showAnimatedPrompts: boolean;
-  activeChatModeValue?: 'ai' | 'community';
+const AnimatedText = ({ text, className = '' }: { text: string; className?: string }) => {
+  return (
+    <span key={text} className={cn("inline-block whitespace-nowrap overflow-hidden animate-typing", className)}>
+      {text}
+    </span>
+  );
+};
+
+interface ExtendedChatInputProps extends ChatInputProps {
   activeCategory?: string;
   onCategoryChange?: (category: string) => void;
 }
@@ -38,187 +34,283 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   inputRef,
   onAddEvent,
   showAnimatedPrompts,
-  activeChatModeValue = 'ai',
-  activeCategory,
+  activeChatModeValue,
+  activeCategory = 'Ausgehen',
   onCategoryChange
 }) => {
-  const [showRecentQueries, setShowRecentQueries] = useState(false);
-  const [showCategories, setShowCategories] = useState(false);
-  const categoriesRef = useRef<HTMLDivElement>(null);
+  const { events } = useEventContext();
+  const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
 
-  const categories = [
-    'Alle', 'Konzert', 'Party', 'Ausstellung', 'Sport', 
-    'Workshop', 'Kultur', 'Networking', 'Sonstiges'
+  const suggestions = [
+    "Frage nach Events...",
+    "Welche Events gibt es heute?",
+    "Was kann ich am Wochenende machen?",
+    "Gibt es Konzerte im Lokschuppen?",
+    "❤️ Zeige mir Events, die zu mir passen"
   ];
 
-  const animatedPrompts = [
-    "Was ist heute los in der Stadt?",
-    "Zeige mir Events für morgen",
-    "Plane mir den perfekten Abend",
-    "Was läuft dieses Wochenende?",
-    "Empfiehl mir etwas Neues"
-  ];
+  const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
+  const [displayText, setDisplayText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (categoriesRef.current && !categoriesRef.current.contains(event.target as Node)) {
-        setShowCategories(false);
+    if (!showAnimatedPrompts) {
+      setDisplayText('');
+      return;
+    }
+
+    if (input.trim() !== '') {
+      setDisplayText('');
+      return;
+    }
+
+    const currentSuggestion = suggestions[currentSuggestionIndex];
+
+    const timer = setTimeout(() => {
+      if (!isDeleting) {
+        if (displayText.length < currentSuggestion.length) {
+          setDisplayText(currentSuggestion.slice(0, displayText.length + 1));
+        } else {
+          setTimeout(() => setIsDeleting(true), 2000);
+        }
+      } else {
+        if (displayText.length > 0) {
+          setDisplayText(displayText.slice(0, -1));
+        } else {
+          setIsDeleting(false);
+          setCurrentSuggestionIndex((prev) => (prev + 1) % suggestions.length);
+        }
       }
-    };
+    }, isDeleting ? 50 : 100);
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+    return () => clearTimeout(timer);
+  }, [displayText, isDeleting, currentSuggestionIndex, input, suggestions, showAnimatedPrompts]);
 
-  const toggleRecentQueriesInternal = () => {
-    setShowRecentQueries(!showRecentQueries);
-    toggleRecentQueries();
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
   };
 
-  const placeholderText = activeChatModeValue === 'community' 
-    ? "Verbinde dich mit der Community..."
-    : "Frage nach Events, Empfehlungen oder lass dir den perfekten Tag planen...";
-
-  const handleCategorySelect = (category: string) => {
-    const normalizedCategory = category === 'Alle' ? '' : category;
-    onCategoryChange?.(normalizedCategory);
-    setShowCategories(false);
+  const handleSuggestionClick = () => {
+    if (input.trim() === '' && displayText.trim() !== '') {
+      const currentSuggestion = suggestions[currentSuggestionIndex];
+      setInput(currentSuggestion);
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 0);
+    }
   };
 
-  const handlePromptClick = (prompt: string) => {
-    setInput(prompt);
+  const getDynamicPlaceholder = () => {
+    if (activeChatModeValue === 'ai') {
+      return showAnimatedPrompts && input.trim() === '' ? displayText : "Frage nach Events...";
+    } else {
+      return "Verbinde dich mit der Community...";
+    }
+  };
+
+  const placeholderText = getDynamicPlaceholder();
+
+  const eventSelectContent = (
+    <div className="max-h-[300px] overflow-y-auto">
+      {events && events.length > 0 ? (
+        <div className="space-y-2 p-2">
+          <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+            Events auswählen
+          </div>
+          {events.map((event) => (
+            <div
+              key={event.id}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-pointer border border-gray-200 dark:border-gray-700"
+              onClick={() => {
+                setInput(`Hier ist ein Event: ${event.title} am ${event.date} um ${event.time} in ${event.location}`);
+                setIsEventSelectOpen(false);
+                if (inputRef.current) {
+                  inputRef.current.focus();
+                }
+              }}
+            >
+              <div className="font-medium text-sm">{event.title}</div>
+              <div className="text-xs text-gray-500">
+                {event.date} • {event.location}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="p-4 text-sm text-gray-500 text-center">
+          Keine Events verfügbar
+        </div>
+      )}
+    </div>
+  );
+
+  const handleCategoryClick = (category: string) => {
+    if (onCategoryChange) {
+      onCategoryChange(category);
+    }
+    setTimeout(() => {
+        if (inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, 0);
+  };
+
+  // Calculate dynamic padding based on buttons
+  const getButtonWidth = () => {
+    if (activeChatModeValue === 'community') {
+      return 'pl-[120px]'; // Calendar + Category buttons
+    } else {
+      // AI mode: Heart + History (if available) + Add Event
+      const baseButtons = 2; // Heart + Add Event
+      const historyButton = globalQueries.length > 0 ? 1 : 0;
+      const totalButtons = baseButtons + historyButton;
+      return totalButtons === 2 ? 'pl-14' : 'pl-20';
+    }
   };
 
   return (
-    <div className="relative w-full">
-      {showRecentQueries && (
-        <div className="absolute bottom-full left-0 right-0 mb-2 z-50">
-          <RecentQueries 
-            showRecentQueries={showRecentQueries}
-            setShowRecentQueries={setShowRecentQueries}
-            queriesToRender={globalQueries}
-            handleExamplePromptClick={(query) => {
-              setInput(query);
-              setShowRecentQueries(false);
-            }}
-          />
-        </div>
-      )}
+    <div className="flex items-center relative w-full max-w-md">
+      <div className="absolute left-1 top-1/2 transform -translate-y-1/2 flex items-center gap-0.5 z-10">
+        {activeChatModeValue === 'ai' ? (
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleHeartClick}
+              className={`h-6 w-6 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`}
+              title={isHeartActive ? "Personalisierter Modus aktiv" : "Standard-Modus aktiv"}
+            >
+              <Heart className={`h-3 w-3 ${isHeartActive ? 'fill-red-500' : ''}`} />
+            </Button>
 
-      {activeChatModeValue === 'ai' && showCategories && (
-        <div 
-          ref={categoriesRef}
-          className="absolute bottom-full left-0 right-0 mb-2 z-50 bg-black/95 backdrop-blur-sm border border-gray-700 rounded-lg p-3"
-        >
-          <div className="grid grid-cols-3 gap-2">
-            {categories.map((category) => (
+            {globalQueries.length > 0 && (
               <Button
-                key={category}
-                onClick={() => handleCategorySelect(category)}
-                size="sm"
                 variant="ghost"
-                className={cn(
-                  "text-xs h-8 justify-start transition-colors",
-                  (activeCategory === category || (category === 'Alle' && !activeCategory))
-                    ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                    : 'text-gray-300 hover:text-white hover:bg-gray-700/50'
-                )}
+                size="icon"
+                onClick={toggleRecentQueries}
+                className="h-6 w-6 text-red-400"
+                title="Community Anfragen"
               >
-                {category}
+                <History className="h-3 w-3" />
               </Button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="flex items-center space-x-2 bg-black/50 backdrop-blur-sm border border-gray-700 rounded-lg p-2">
-        <div className="flex items-center space-x-1">
-          {activeChatModeValue === 'ai' && (
-            <Button
-              onClick={() => setShowCategories(!showCategories)}
-              size="sm"
-              variant="ghost"
-              className={cn(
-                "h-8 w-8 p-0 transition-colors",
-                showCategories || activeCategory
-                  ? 'text-red-400 bg-red-500/20'
-                  : 'text-gray-400 hover:text-white'
-              )}
-            >
-              <Filter className="h-4 w-4" />
-            </Button>
-          )}
-
-          <Button
-            onClick={handleHeartClick}
-            size="sm"
-            variant="ghost"
-            className={cn(
-              "h-8 w-8 p-0 transition-colors",
-              isHeartActive 
-                ? 'text-red-500 animate-pulse' 
-                : 'text-gray-400 hover:text-red-400'
             )}
-          >
-            <Heart className={cn("h-4 w-4", isHeartActive && "fill-current")} />
-          </Button>
 
-          {onAddEvent && (
-            <Button
-              onClick={onAddEvent}
-              size="sm"
-              variant="ghost"
-              className="h-8 w-8 p-0 text-gray-400 hover:text-green-400 transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+            {onAddEvent && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onAddEvent}
+                className="h-6 w-6 text-red-400"
+                title="Event hinzufügen"
+              >
+                <CalendarPlus className="h-3 w-3" />
+              </Button>
+            )}
+          </>
+        ) : (
+          <>
+            <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  type="button"
+                  className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
+                  title="Event teilen"
+                >
+                  <Calendar className="h-3 w-3" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0 max-h-[400px] overflow-y-auto" side="top" align="start" sideOffset={5}>
+                {eventSelectContent}
+              </PopoverContent>
+            </Popover>
 
-        <div className="relative flex-1">
-          <Input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder={placeholderText}
-            className="bg-transparent border-none text-white placeholder-gray-500 text-sm h-8 px-3 focus:ring-0 focus:border-none"
-            disabled={isTyping}
-          />
-          
-          {showAnimatedPrompts && input.length === 0 && (
-            <div className="absolute inset-0 pointer-events-none">
-              <TypewriterPrompt 
-                prompts={animatedPrompts}
-                onPromptClick={handlePromptClick}
-              />
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center space-x-1">
-          <Button
-            onClick={toggleRecentQueriesInternal}
-            size="sm"
-            variant="ghost"
-            className="h-8 px-2 text-xs text-gray-400 hover:text-white transition-colors"
-          >
-            Verlauf
-          </Button>
-          
-          <Button
-            onClick={handleSendMessage}
-            size="sm"
-            variant="ghost"
-            className="h-8 w-8 p-0 text-gray-400 hover:text-white transition-colors"
-            disabled={isTyping || !input.trim()}
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10 flex items-center gap-1 min-w-[70px]"
+                >
+                  {activeCategory}
+                  <ChevronDown className="h-2 w-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                className="bg-zinc-900 border-red-500/30 z-50"
+                side="top"
+                align="start"
+              >
+                <DropdownMenuItem
+                  onClick={() => handleCategoryClick('Kreativität')}
+                  className={cn(
+                    "text-white hover:bg-red-500/20 cursor-pointer",
+                    activeCategory === 'Kreativität' && "bg-red-500/20"
+                  )}
+                >
+                  Kreativität
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleCategoryClick('Ausgehen')}
+                  className={cn(
+                    "text-white hover:bg-red-500/20 cursor-pointer",
+                    activeCategory === 'Ausgehen' && "bg-red-500/20"
+                  )}
+                >
+                  Ausgehen
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleCategoryClick('Sport')}
+                  className={cn(
+                    "text-white hover:bg-red-500/20 cursor-pointer",
+                    activeCategory === 'Sport' && "bg-red-500/20"
+                  )}
+                >
+                  Sport
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        )}
       </div>
+      
+      <div 
+        className={cn(
+          "absolute inset-0 cursor-text z-5 pointer-events-none",
+          getButtonWidth().replace('pl-', 'left-')
+        )}
+        onClick={handleSuggestionClick}
+        style={{ pointerEvents: input.trim() === '' && displayText.trim() !== '' ? 'auto' : 'none' }}
+      />
+      
+      <input
+        ref={inputRef}
+        type="text"
+        value={input}
+        onChange={handleInputChange}
+        onKeyPress={handleKeyPress}
+        placeholder={placeholderText}
+        className={cn(
+          "w-full bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pr-10 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 text-left",
+          getButtonWidth()
+        )}
+      />
+
+      <button
+        onClick={() => handleSendMessage()}
+        disabled={!input.trim() || isTyping}
+        className={cn(
+          "absolute right-1 top-1/2 transform -translate-y-1/2 rounded-full p-1.5 flex-shrink-0",
+          input.trim() && !isTyping
+            ? "bg-red-500 hover:bg-red-600 text-white"
+            : "bg-zinc-800 text-zinc-500"
+        )}
+      >
+        <Send className="h-3 w-3" />
+      </button>
     </div>
   );
 };

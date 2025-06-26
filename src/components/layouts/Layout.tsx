@@ -1,3 +1,4 @@
+
 // src/components/layouts/Layout.tsx
 // Changed: Added ChatInput to header with proper spacing
 import React from "react";
@@ -94,7 +95,7 @@ export const Layout: React.FC<LayoutProps> = ({
         </div>
       </header>
       
-      <main className="pb-20 pt-[104px]"> {/* Adjusted pt-[104px] */}
+      <main className="pb-20">
         {children}
       </main>
       

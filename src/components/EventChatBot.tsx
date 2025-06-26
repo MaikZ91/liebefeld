@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useEventContext } from '@/contexts/EventContext';
 import { useToast } from '@/hooks/use-toast';
@@ -6,7 +7,7 @@ import { userService } from '@/services/userService';
 import ProfileEditor from './users/ProfileEditor';
 import FullPageChatBot from './event-chat/FullPageChatBot';
 import { useChatLogic } from './event-chat/useChatLogic';
-import { usePersonalization } from '@/hooks/chat/usePersonalization';
+import { usePersonalization } from './event-chat/usePersonalization';
 import { EventChatBotProps } from './event-chat/types';
 import { createCitySpecificGroupId } from '@/utils/groupIdUtils';
 
@@ -28,10 +29,6 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   
   const [activeCategory, setActiveCategory] = useState<string>('Ausgehen');
   
-  // External input state for header synchronization
-  const [externalInput, setExternalInput] = useState<string>('');
-  const [externalSendHandler, setExternalSendHandler] = useState<(() => void) | null>(null);
-  
   const { selectedCity } = useEventContext();
   const { toast } = useToast();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
@@ -39,15 +36,11 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   const communityGroupId = createCitySpecificGroupId(activeCategory, selectedCity);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
-  const chatLogic = useChatLogic(activeChatModeValue === 'ai');
+  const chatLogic = useChatLogic(fullPage, activeChatModeValue);
   
-  const personalization = usePersonalization(
-    chatLogic.handleSendMessage,
-    {
-      userProfile,
-      currentUser,
-      userService
-    }
+  const { sendPersonalizedQuery } = usePersonalization(
+    chatLogic.handleSendMessage, 
+    { userProfile, currentUser, userService }
   );
 
   const handleToggleChatMode = () => {
@@ -74,25 +67,13 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
     }
   };
 
-  // Function to handle external input changes
-  const handleExternalInputChange = (value: string) => {
-    setExternalInput(value);
-  };
-
-  // Function to handle external send
-  const handleExternalSend = () => {
-    if (externalSendHandler) {
-      externalSendHandler();
-    }
-  };
-
   // Provide chat input props to parent component
   useEffect(() => {
     if (onChatInputPropsChange && chatLogic) {
       onChatInputPropsChange({
-        input: activeChatModeValue === 'ai' ? chatLogic.input : externalInput,
-        setInput: activeChatModeValue === 'ai' ? chatLogic.setInput : handleExternalInputChange,
-        handleSendMessage: activeChatModeValue === 'ai' ? chatLogic.handleSendMessage : handleExternalSend,
+        input: chatLogic.input,
+        setInput: chatLogic.setInput,
+        handleSendMessage: chatLogic.handleSendMessage,
         isTyping: chatLogic.isTyping,
         handleKeyPress: chatLogic.handleKeyPress,
         isHeartActive: chatLogic.isHeartActive,
@@ -108,15 +89,12 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
     }
   }, [
     chatLogic.input,
-    externalInput,
     chatLogic.isTyping,
     chatLogic.isHeartActive,
     chatLogic.globalQueries.length,
     chatLogic.showAnimatedPrompts,
     activeCategory,
-    activeChatModeValue,
-    onChatInputPropsChange,
-    externalSendHandler
+    onChatInputPropsChange
   ]);
 
   if (!chatLogic.isVisible) return null;
@@ -124,21 +102,13 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   if (fullPage) {
     return (
       <FullPageChatBot
-        activeView={activeChatModeValue}
-        externalInput={externalInput}
-        externalSetInput={setExternalInput}
-        externalHandleSendMessage={externalSendHandler}
-        externalIsTyping={chatLogic.isTyping}
-        externalHandleKeyPress={chatLogic.handleKeyPress}
-        externalIsHeartActive={chatLogic.isHeartActive}
-        externalHandleHeartClick={chatLogic.handleHeartClick}
-        externalGlobalQueries={chatLogic.globalQueries}
-        externalToggleRecentQueries={chatLogic.toggleRecentQueries}
-        externalInputRef={chatLogic.inputRef}
-        externalOnAddEvent={onAddEvent}
-        externalShowAnimatedPrompts={chatLogic.showAnimatedPrompts}
-        externalActiveCategory={activeCategory}
-        externalOnCategoryChange={handleCategoryChange}
+        chatLogic={chatLogic}
+        activeChatModeValue={activeChatModeValue}
+        communityGroupId={communityGroupId}
+        onAddEvent={onAddEvent}
+        activeCategory={activeCategory}
+        onCategoryChange={handleCategoryChange}
+        hideInput={true}
       />
     );
   }

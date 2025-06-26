@@ -27,10 +27,10 @@ const ChatPage = () => {
   const [isUserDirectoryOpen, setIsUserDirectoryOpen] = useState(false);
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
-  
+
   // Chat bot reference to get input props
   const [chatInputProps, setChatInputProps] = useState<any>(null);
-  
+
   const {
     events,
     refreshEvents
@@ -129,7 +129,7 @@ const ChatPage = () => {
 
     try {
       const allMessages = await messageService.fetchMessages(messageService.DEFAULT_GROUP_ID);
-      const unreadCount = allMessages.filter(msg => 
+      const unreadCount = allMessages.filter(msg =>
         msg.user_name !== currentUser && (!msg.read_by || !msg.read_by.includes(currentUser))
       ).length;
       setUnreadMessageCount(unreadCount);
@@ -147,7 +147,7 @@ const ChatPage = () => {
         if (currentUser && currentUser !== 'Gast') {
           try {
             const allMessages = await messageService.fetchMessages(messageService.DEFAULT_GROUP_ID);
-            const unreadMessageIds = allMessages.filter(msg => 
+            const unreadMessageIds = allMessages.filter(msg =>
               msg.user_name !== currentUser && (!msg.read_by || !msg.read_by.includes(currentUser))
             ).map(msg => msg.id);
             if (unreadMessageIds.length > 0) {
@@ -198,7 +198,7 @@ const ChatPage = () => {
       <div className="w-full bg-black">
         <LiveTicker events={events} />
       </div>
-      <Layout 
+      <Layout
         hideFooter={true}
         activeView={activeView}
         setActiveView={setActiveView}
@@ -211,19 +211,19 @@ const ChatPage = () => {
         <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
           <div className="flex-grow rounded-lg overflow-hidden border border-black flex flex-col bg-black">
             <div className="flex-grow relative">
-              <EventChatBot 
-                fullPage={true} 
-                onAddEvent={handleAddEvent} 
-                onToggleCommunity={handleToggleCommunity} 
-                activeChatMode={activeView} 
+              <EventChatBot
+                fullPage={true}
+                onAddEvent={handleAddEvent}
+                onToggleCommunity={handleToggleCommunity}
+                activeChatMode={activeView}
                 setActiveChatMode={setActiveView}
-                hideButtons={true}
-                onChatInputPropsChange={setChatInputProps}
+                // Removed hideButtons prop as it's not used in FullPageChatBot
+                onChatInputPropsChange={setChatInputProps} // Correctly set the chatInputProps
               />
             </div>
           </div>
         </div>
-        
+
         {/* Add Event Sheet */}
         <Sheet open={isAddEventSheetOpen} onOpenChange={setIsAddEventSheetOpen}>
           <SheetContent className="sm:max-w-lg">
@@ -238,7 +238,7 @@ const ChatPage = () => {
             </div>
           </SheetContent>
         </Sheet>
-        
+
         {/* Event List Sheet */}
         <Sheet open={isEventListSheetOpen} onOpenChange={setIsEventListSheetOpen}>
           <SheetContent className="sm:max-w-lg overflow-hidden">
@@ -252,7 +252,7 @@ const ChatPage = () => {
             </div>
           </SheetContent>
         </Sheet>
-        
+
         {/* User Directory Sheet */}
         <Sheet open={isUserDirectoryOpen} onOpenChange={setIsUserDirectoryOpen}>
           <SheetContent className="sm:max-w-lg overflow-hidden">
@@ -263,7 +263,7 @@ const ChatPage = () => {
               </SheetDescription>
             </SheetHeader>
             <div className="mt-4 overflow-y-auto max-h-[80vh]">
-              <UserDirectory 
+              <UserDirectory
                 open={isUserDirectoryOpen}
                 onOpenChange={setIsUserDirectoryOpen}
                 onSelectUser={handleSelectUser}
@@ -272,7 +272,7 @@ const ChatPage = () => {
             </div>
           </SheetContent>
         </Sheet>
-        
+
         {/* Replace UsernameDialog with ProfileEditor */}
         <ProfileEditor open={isProfileEditorOpen} onOpenChange={setIsProfileEditorOpen} currentUser={userProfile} onProfileUpdate={handleProfileUpdate} />
       </Layout>

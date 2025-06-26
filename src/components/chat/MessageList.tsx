@@ -1,3 +1,4 @@
+
 // src/components/chat/MessageList.tsx
 import React, { useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -83,12 +84,12 @@ const MessageList: React.FC<MessageListProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 max-h-full overflow-hidden">
       {error && (
         <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 bg-black min-h-0 pb-20"> {/* Adjusted padding-bottom to account for Navbar */}
+      <div className="flex-1 overflow-y-auto p-4 bg-black min-h-0">
         <div className="flex flex-col space-y-1 w-full max-w-full">
           {messages.length === 0 && !loading && !error && (
             <div className="text-center text-gray-400 py-4">No messages yet. Start the conversation!</div>
