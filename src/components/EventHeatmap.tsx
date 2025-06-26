@@ -4,8 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { X, MapPin, Calendar, Users } from 'lucide-react';
+import { MapPin, Calendar, Users } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 import { format } from 'date-fns';
 
@@ -23,7 +22,6 @@ const EventHeatmap: React.FC = () => {
   const [map, setMap] = useState<L.Map | null>(null);
   const [markers, setMarkers] = useState<L.Marker[]>([]);
   const mapRef = useRef<HTMLDivElement>(null);
-  const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   // Get today's date in YYYY-MM-DD format
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -83,7 +81,7 @@ const EventHeatmap: React.FC = () => {
       }
     }
 
-    // Add some random offset to center for unmapped locations
+    // Add some random offset for unmapped locations
     const offset = (Math.random() - 0.5) * 0.02;
     return isLng ? bielefeldCenter.lng + offset : bielefeldCenter.lat + offset;
   }
@@ -113,24 +111,26 @@ const EventHeatmap: React.FC = () => {
   useEffect(() => {
     if (!mapRef.current || map) return;
 
-    console.log('Initializing Bielefeld Map...');
+    console.log('Initializing Leaflet Map...');
     
     try {
       const leafletMap = L.map(mapRef.current, {
-        center: [52.0302, 8.5311],
+        center: [52.0302, 8.5311], // Bielefeld center
         zoom: 13,
-        zoomControl: true
+        zoomControl: true,
+        preferCanvas: false
       });
       
+      // Add OpenStreetMap tiles
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        attribution: '© OpenStreetMap contributors',
         maxZoom: 19
       }).addTo(leafletMap);
 
       setMap(leafletMap);
-      setIsMapLoaded(true);
       console.log('Map initialized successfully');
 
+      // Cleanup function
       return () => {
         if (leafletMap) {
           leafletMap.remove();
@@ -139,13 +139,13 @@ const EventHeatmap: React.FC = () => {
     } catch (error) {
       console.error('Error initializing map:', error);
     }
-  }, []);
+  }, [mapRef.current]);
 
   // Update markers when filtered events change
   useEffect(() => {
-    if (!map || !isMapLoaded) return;
+    if (!map) return;
 
-    console.log('Updating markers for', filteredEvents.length, "today's Bielefeld events");
+    console.log('Updating markers for', filteredEvents.length, 'events');
 
     // Clear existing markers
     markers.forEach(marker => {
@@ -158,6 +158,8 @@ const EventHeatmap: React.FC = () => {
     filteredEvents.forEach(event => {
       try {
         const displayNumber = event.attendees > 0 ? event.attendees : (event.likes || 1);
+        
+        // Create custom marker icon
         const iconHtml = `
           <div style="
             background: #ef4444;
@@ -187,6 +189,7 @@ const EventHeatmap: React.FC = () => {
 
         const marker = L.marker([event.lat, event.lng], { icon: customIcon });
 
+        // Create popup content
         const popupContent = `
           <div style="min-width: 200px;">
             <h3 style="margin: 0 0 8px 0; font-weight: bold; color: #1f2937;">${event.title}</h3>
@@ -234,7 +237,7 @@ const EventHeatmap: React.FC = () => {
     });
 
     setMarkers(newMarkers);
-  }, [map, filteredEvents, isMapLoaded]);
+  }, [map, filteredEvents]);
 
   if (isLoading) {
     return (
@@ -249,7 +252,7 @@ const EventHeatmap: React.FC = () => {
   }
 
   return (
-    <div className="relative w-full h-screen bg-black">
+    <div className="relative w-full h-screen bg-gray-100">
       {/* Filter Panel */}
       <div className="absolute top-4 left-4 z-[1000] space-y-3 max-w-sm">
         <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
@@ -282,40 +285,29 @@ const EventHeatmap: React.FC = () => {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-red-500" />
-              {filteredEvents.length} Events heute in Bielefeld
+              {filteredEvents.length} Events heute
             </div>
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-red-500" />
-              {filteredEvents.reduce((sum, event) => sum + event.attendees, 0)} Interessierte gesamt
+              {filteredEvents.reduce((sum, event) => sum + event.attendees, 0)} Interessierte
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 text-red-500">❤️</span>
-              {filteredEvents.reduce((sum, event) => sum + (event.likes || 0), 0)} Likes gesamt
+              {filteredEvents.reduce((sum, event) => sum + (event.likes || 0), 0)} Likes
             </div>
           </div>
         </Card>
       </div>
 
-      {/* Map Container - This is the main focus */}
+      {/* Map Container */}
       <div 
         ref={mapRef} 
         className="w-full h-full"
         style={{ 
-          background: '#f0f0f0',
-          minHeight: '100vh'
+          minHeight: '100vh',
+          zIndex: 1
         }}
       />
-
-      {/* Loading indicator */}
-      {!isMapLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-[2000]">
-          <div className="text-center text-white">
-            <MapPin className="w-12 h-12 mx-auto mb-4 animate-bounce text-red-500" />
-            <h2 className="text-xl mb-2">Lade Karte...</h2>
-            <p className="text-gray-400">OpenStreetMap wird geladen...</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
