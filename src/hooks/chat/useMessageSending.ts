@@ -1,4 +1,4 @@
-// src/hooks/chat/useMessageSending.ts
+// File: src/hooks/chat/useMessageSending.ts
 // Changed: 'content' to 'text' and message payload
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { AVATAR_KEY, EventShare } from '@/types/chatTypes';
@@ -115,7 +115,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     }
   }, [groupId, username, newMessage, isSending, typing]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);
     setTyping(e.target.value.length > 0);
     
@@ -156,7 +156,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     }, 2000);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();

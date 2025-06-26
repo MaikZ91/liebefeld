@@ -145,11 +145,11 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   // Wrapper functions for community chat input handlers to match ChatInput's HTMLInputElement type
   const wrappedCommunityInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    communityInputChangeFromHook(e as React.ChangeEvent<HTMLTextAreaElement>);
+    communityInputChangeFromHook(e);
   };
 
   const wrappedCommunityKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    communityKeyDownFromHook(e as React.KeyboardEvent<HTMLTextAreaElement>);
+    communityKeyDownFromHook(e);
   };
 
   // Unified functions to pass to ChatInput, based on activeChatModeValue
