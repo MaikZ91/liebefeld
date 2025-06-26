@@ -1,4 +1,4 @@
-// src/components/layouts/Layout.tsx
+// File: src/components/layouts/Layout.tsx
 // Changed: Added ChatInput to header with proper spacing
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -25,7 +25,8 @@ interface LayoutProps {
     setInput: (value: string) => void;
     handleSendMessage: () => void;
     isTyping: boolean;
-    handleKeyPress: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+    // Corrected prop name from handleKeyPress to onKeyDown
+    onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
     isHeartActive: boolean;
     handleHeartClick: () => void;
     globalQueries: any[];
@@ -35,6 +36,7 @@ interface LayoutProps {
     showAnimatedPrompts: boolean;
     activeCategory?: string;
     onCategoryChange?: (category: string) => void;
+    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   };
 }
 
@@ -115,7 +117,7 @@ export const Layout: React.FC<LayoutProps> = ({
           <div className="container flex flex-col items-center justify-between gap-4 py-10 md:h-24 md:flex-row md:py-0">
             <div className="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
               <a href="/" className="flex items-center space-x-2">
-                <span className="font-bold inline-block">LIEBEFELD</span>
+                <span className="font-bold inline-block">THE TRIBE</span>
               </a>
               <p className="text-center text-sm leading-loose md:text-left">
                 &copy; {new Date().getFullYear()} Liebefeld. All rights reserved.
@@ -178,7 +180,8 @@ const MainNav: React.FC<MainNavProps> = ({ pathname, chatInputProps, activeView 
               setInput={chatInputProps.setInput}
               handleSendMessage={chatInputProps.handleSendMessage}
               isTyping={chatInputProps.isTyping}
-              handleKeyPress={chatInputProps.handleKeyPress}
+              // Corrected prop name
+              onKeyDown={chatInputProps.handleKeyPress}
               isHeartActive={chatInputProps.isHeartActive}
               handleHeartClick={chatInputProps.handleHeartClick}
               globalQueries={chatInputProps.globalQueries}
@@ -189,6 +192,7 @@ const MainNav: React.FC<MainNavProps> = ({ pathname, chatInputProps, activeView 
               activeChatModeValue={activeView || 'ai'}
               activeCategory={chatInputProps.activeCategory}
               onCategoryChange={chatInputProps.onCategoryChange}
+              onChange={chatInputProps.onChange}
             />
           </div>
         )}
