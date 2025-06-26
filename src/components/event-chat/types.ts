@@ -68,9 +68,9 @@ export interface ChatInputProps {
   // Updated signature to accept optional content argument
   handleSendMessage: (content?: string | any) => Promise<void>; 
   isTyping: boolean;
-  // Updated event types for HTMLInputElement
+  // Updated event types for HTMLInputElement as ChatInput uses <input>
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void; 
-  // Updated event types for HTMLInputElement
+  // Updated event types for HTMLInputElement as ChatInput uses <input>
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void; 
   isHeartActive: boolean;
   handleHeartClick: () => void;
