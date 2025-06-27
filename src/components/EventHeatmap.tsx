@@ -10,9 +10,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MapPin, Calendar, Users, Clock, ChevronDown } from 'lucide-react';
+import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 import { format } from 'date-fns';
+import SwipeableEventPanel from '@/components/event-chat/SwipeableEventPanel';
+import { PanelEventData, PanelEvent } from '@/components/event-chat/types';
+import { cn } from '@/lib/utils';
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -25,10 +28,12 @@ L.Icon.Default.mergeOptions({
 const EventHeatmap: React.FC = () => {
   const { events, isLoading } = useEvents();
   const [selectedCategory, setSelectedCategory] = useState('all');
-  // Set the initial timeRange to the current hour
   const [timeRange, setTimeRange] = useState([new Date().getHours()]); 
   const [map, setMap] = useState<L.Map | null>(null);
   const [markers, setMarkers] = useState<L.Marker[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [panelHeight, setPanelHeight] = useState<'collapsed' | 'partial' | 'full'>('collapsed');
   const mapRef = useRef<HTMLDivElement>(null);
 
   // Get today's date in YYYY-MM-DD format
@@ -181,6 +186,37 @@ const EventHeatmap: React.FC = () => {
     return filtered;
   }, [todaysBielefeldEvents, selectedCategory, timeRange]);
 
+  // Convert events to panel format
+  const panelEvents: PanelEvent[] = React.useMemo(() => {
+    return filteredEvents.map(event => ({
+      id: event.id || `${event.title}-${event.date}-${event.time}`,
+      title: event.title,
+      date: event.date,
+      time: event.time,
+      location: event.location || event.city || 'Bielefeld',
+      category: event.category,
+      description: event.description,
+      image_url: event.image_url || `https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop&q=80&auto=format`,
+      link: event.link,
+      likes: event.likes || 0,
+      rsvp_yes: event.rsvp_yes,
+      rsvp_maybe: event.rsvp_maybe,
+      price: event.price
+    }));
+  }, [filteredEvents]);
+
+  // Create panel data
+  const panelData: PanelEventData = React.useMemo(() => {
+    const selectedIndex = selectedEventId 
+      ? panelEvents.findIndex(event => event.id === selectedEventId)
+      : 0;
+    
+    return {
+      events: panelEvents,
+      currentIndex: selectedIndex >= 0 ? selectedIndex : 0
+    };
+  }, [panelEvents, selectedEventId]);
+
   // Initialize map
   useEffect(() => {
     if (!mapRef.current || map) return;
@@ -234,6 +270,8 @@ const EventHeatmap: React.FC = () => {
       
       try {
         const likes = event.likes || 0;
+        const eventId = event.id || `${event.title}-${event.date}-${event.time}`;
+        
         // Determine marker size based on likes
         let markerSize = 40; // Default size
         let fontSize = 12;
@@ -265,6 +303,8 @@ const EventHeatmap: React.FC = () => {
             font-size: ${fontSize}px;
             border: 2px solid white;
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.2s ease;
           ">
             ${displayNumber}
           </div>
@@ -279,6 +319,13 @@ const EventHeatmap: React.FC = () => {
         });
 
         const marker = L.marker([event.lat, event.lng], { icon: customIcon });
+
+        // Add click handler to open panel and select event
+        marker.on('click', () => {
+          setSelectedEventId(eventId);
+          setIsPanelOpen(true);
+          setPanelHeight('partial');
+        });
 
         // Create popup content with real location from database
         const popupContent = `
@@ -334,6 +381,38 @@ const EventHeatmap: React.FC = () => {
     setMarkers(newMarkers);
   }, [map, filteredEvents]);
 
+  // Handle event selection from panel
+  const handleEventSelect = (eventId: string) => {
+    setSelectedEventId(eventId);
+    
+    // Find the event and zoom to its location
+    const selectedEvent = filteredEvents.find(event => 
+      (event.id || `${event.title}-${event.date}-${event.time}`) === eventId
+    );
+    
+    if (selectedEvent && selectedEvent.lat && selectedEvent.lng && map) {
+      map.setView([selectedEvent.lat, selectedEvent.lng], 15);
+    }
+  };
+
+  // Handle panel height changes
+  const togglePanelHeight = () => {
+    if (panelHeight === 'collapsed') {
+      setPanelHeight('partial');
+      setIsPanelOpen(true);
+    } else if (panelHeight === 'partial') {
+      setPanelHeight('full');
+    } else {
+      setPanelHeight('collapsed');
+      setIsPanelOpen(false);
+    }
+  };
+
+  const closePanelCompletely = () => {
+    setPanelHeight('collapsed');
+    setIsPanelOpen(false);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
@@ -350,7 +429,7 @@ const EventHeatmap: React.FC = () => {
   const selectedCategoryDisplay = selectedCategory === 'all' ? 'Alle' : selectedCategory;
 
   return (
-    <div className="relative w-full h-screen bg-gray-100">
+    <div className="relative w-full h-screen bg-gray-100 overflow-hidden">
       {/* Filter Panel */}
       <div className="absolute top-4 left-4 z-[1000] space-y-3 max-w-sm">
         <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
@@ -428,6 +507,22 @@ const EventHeatmap: React.FC = () => {
         </Card>
       </div>
 
+      {/* Panel Toggle Button */}
+      {!isPanelOpen && filteredEvents.length > 0 && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000]">
+          <Button
+            onClick={() => {
+              setIsPanelOpen(true);
+              setPanelHeight('partial');
+            }}
+            className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-full shadow-lg"
+          >
+            <ChevronUp className="w-5 h-5 mr-2" />
+            {filteredEvents.length} Events anzeigen
+          </Button>
+        </div>
+      )}
+
       {/* Map Container */}
       <div 
         ref={mapRef} 
@@ -437,6 +532,62 @@ const EventHeatmap: React.FC = () => {
           zIndex: 1
         }}
       />
+
+      {/* Swipeable Event Panel */}
+      {isPanelOpen && panelEvents.length > 0 && (
+        <div className={cn(
+          "absolute bottom-0 left-0 right-0 z-[1000] bg-black/95 backdrop-blur-md transition-all duration-300 ease-in-out",
+          {
+            'h-32': panelHeight === 'collapsed',
+            'h-96': panelHeight === 'partial',
+            'h-full': panelHeight === 'full'
+          }
+        )}>
+          {/* Panel Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-700">
+            <div className="flex items-center gap-2">
+              <div 
+                className="w-8 h-1 bg-gray-500 rounded-full cursor-pointer"
+                onClick={togglePanelHeight}
+              />
+              <span className="text-white font-medium">
+                {panelEvents.length} Events
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={togglePanelHeight}
+                className="text-white hover:bg-gray-700"
+              >
+                {panelHeight === 'full' ? (
+                  <ChevronDown className="w-5 h-5" />
+                ) : (
+                  <ChevronUp className="w-5 h-5" />
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={closePanelCompletely}
+                className="text-white hover:bg-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Panel Content */}
+          <div className="p-4 overflow-hidden">
+            <SwipeableEventPanel
+              panelData={panelData}
+              onEventSelect={handleEventSelect}
+              className="w-full max-w-md mx-auto"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
