@@ -20,26 +20,39 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
   const { handleLikeEvent, events } = useEventContext();
   const [currentIndex, setCurrentIndex] = useState(panelData.currentIndex || 0);
   const [isLiking, setIsLiking] = useState(false);
-  
-  const currentPanelItem = panelData.events[currentIndex];
-  
+
+  // Sort events by likes in descending order
+  const sortedEvents = React.useMemo(() => {
+    const combinedItems = [...panelData.events]; // Create a mutable copy
+
+    combinedItems.sort((a, b) => {
+      const likesA = ('likes' in a && a.likes !== undefined) ? a.likes : 0;
+      const likesB = ('likes' in b && b.likes !== undefined) ? b.likes : 0;
+      return likesB - likesA; // Sort in descending order
+    });
+    return combinedItems;
+  }, [panelData.events]);
+
+
+  const currentPanelItem = sortedEvents[currentIndex];
+
   // Get the most up-to-date event data from the context if it's a regular event
   const currentItem = ('id' in currentPanelItem && currentPanelItem.id)
     ? events.find(e => e.id === currentPanelItem.id) || currentPanelItem
     : currentPanelItem;
 
   const handlePrevious = () => {
-    setCurrentIndex((prev) => 
-      prev === 0 ? panelData.events.length - 1 : prev - 1
+    setCurrentIndex((prev) =>
+      prev === 0 ? sortedEvents.length - 1 : prev - 1
     );
   };
-  
+
   const handleNext = () => {
-    setCurrentIndex((prev) => 
-      prev === panelData.events.length - 1 ? 0 : prev + 1
+    setCurrentIndex((prev) =>
+      (prev + 1) % sortedEvents.length
     );
   };
-  
+
   const handleClick = () => {
     // Type guard to check if currentItem is an AdEvent
     if ('imageUrl' in currentItem && (currentItem as AdEvent).link) { // It's an AdEvent and has a link
@@ -51,14 +64,14 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     if (!('id' in currentItem) || isLiking) return;
-    
+
     const eventId = (currentItem as PanelEvent).id;
     setIsLiking(true);
-    
+
     await handleLikeEvent(eventId);
-    
+
     setTimeout(() => setIsLiking(false), 250);
   };
 
@@ -67,7 +80,7 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
   // Determine if it's an AdEvent or PanelEvent
   const isAd = 'imageUrl' in currentItem;
   const isPanelEvent = 'id' in currentItem;
-  
+
   // Safely get itemType and link
   const itemType = isAd ? (currentItem as AdEvent).type || 'ad' : (currentItem as PanelEvent).category;
   const imageUrl = isAd ? (currentItem as AdEvent).imageUrl : (currentItem as PanelEvent).image_url;
@@ -92,7 +105,7 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-        
+
         {/* Sponsored Label */}
         {isAd && (
           <div className="absolute top-2 left-2 bg-yellow-500 text-black px-2 py-1 rounded-full text-xs font-semibold z-10">
@@ -128,7 +141,7 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
         )}
 
         {/* Navigation Arrows */}
-        {panelData.events.length > 1 && (
+        {sortedEvents.length > 1 && (
           <>
             <Button
               variant="ghost"
@@ -148,11 +161,11 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
             </Button>
           </>
         )}
-        
+
         {/* Event Index Indicator */}
-        {panelData.events.length > 1 && (
+        {sortedEvents.length > 1 && (
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-            {panelData.events.map((_, index) => (
+            {sortedEvents.map((_, index) => (
               <div
                 key={index}
                 className={cn(
@@ -164,14 +177,14 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
           </div>
         )}
       </div>
-      
+
       {/* Event/Ad Content */}
       <div className="p-4 space-y-3">
         {/* Title */}
         <h3 className="text-lg font-semibold text-white line-clamp-2">
           {currentItem.title}
         </h3>
-        
+
         {/* Details */}
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-gray-300">
@@ -182,16 +195,16 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
             )}
             <span className="text-sm">{currentItem.date} {('time' in currentItem && currentItem.time) ? `um ${currentItem.time}` : ''}</span>
           </div>
-          
+
           <div className="flex items-center gap-2 text-gray-300">
-            {itemType === 'music' || itemType === 'ad' || itemType === 'sponsored-ad' ? (
-              <UsersRound className="h-4 w-4 text-purple-400" />
+            {itemType === 'music' ? (
+              <ExternalLink className="h-4 w-4 text-purple-400" />
             ) : (
               <MapPin className="h-4 w-4 text-red-400" />
             )}
             <span className="text-sm line-clamp-1">{currentItem.location}</span>
           </div>
-          
+
           {('price' in currentItem && currentItem.price) && ( // Safely access price property
             <div className="flex items-center gap-2 text-gray-300">
               <Euro className="h-4 w-4 text-green-400" />
@@ -199,7 +212,7 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
             </div>
           )}
         </div>
-        
+
         {/* Action Button */}
         <Button
           onClick={handleClick}
