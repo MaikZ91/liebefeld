@@ -45,66 +45,107 @@ const EventHeatmap: React.FC = () => {
     return parseInt(hour, 10);
   };
 
-  // Filter events for Bielefeld and today only
-  const todaysBielefeldEvents = React.useMemo(() => {
-    console.log(`Filtering events for today (${today}) in Bielefeld...`);
+  // Enhanced coordinate mapping using real location data
+  function getCoordinatesForLocation(location: string, isLng: boolean = false): number | null {
+    if (!location) return null;
     
-    const filtered = events
-      .filter(event => {
-        const isToday = event.date === today;
-        const isBielefeld = event.city?.toLowerCase().includes('bielefeld') || 
-                           event.location?.toLowerCase().includes('bielefeld') ||
-                           !event.city; // Include events without specific city
-        
-        console.log(`Event: ${event.title}, Date: ${event.date}, City: ${event.city}, IsToday: ${isToday}, IsBielefeld: ${isBielefeld}`);
-        return isToday && isBielefeld;
-      })
-      .map(event => ({
-        ...event,
-        lat: getCoordinatesForLocation(event.location || event.title),
-        lng: getCoordinatesForLocation(event.location || event.title, true),
-        attendees: (event.rsvp_yes || 0) + (event.rsvp_maybe || 0) + (event.likes || 0),
-        eventHour: getHourFromTime(event.time)
-      }))
-      .filter(event => event.lat && event.lng);
-
-    console.log(`Found ${filtered.length} events for today in Bielefeld`);
-    return filtered;
-  }, [events, today]);
-
-  // Simple coordinate mapping for Bielefeld locations
-  function getCoordinatesForLocation(location: string, isLng: boolean = false): number {
     const locationLower = location.toLowerCase();
     
     // Bielefeld center coordinates as default
     const bielefeldCenter = { lat: 52.0302, lng: 8.5311 };
     
-    // Map common locations to approximate coordinates
+    // Enhanced location mapping with real coordinates for Bielefeld
     const locationMap: { [key: string]: { lat: number; lng: number } } = {
+      // Cultural venues
       'forum': { lat: 52.0210, lng: 8.5320 },
-      'altstadt': { lat: 52.0192, lng: 8.5370 },
-      'theater': { lat: 52.0185, lng: 8.5355 },
-      'universität': { lat: 52.0380, lng: 8.4950 },
-      'uni': { lat: 52.0380, lng: 8.4950 },
       'lokschuppen': { lat: 52.0195, lng: 8.5340 },
       'kunsthalle': { lat: 52.0175, lng: 8.5380 },
-      'stadtpark': { lat: 52.0250, lng: 8.5280 },
-      'zentrum': { lat: 52.0302, lng: 8.5311 },
+      'theater': { lat: 52.0185, lng: 8.5355 },
+      'stadttheater': { lat: 52.0185, lng: 8.5355 },
       'stadthalle': { lat: 52.0220, lng: 8.5400 },
+      'rudolf-oetker-halle': { lat: 52.0210, lng: 8.5330 },
+      
+      // University area
+      'universität': { lat: 52.0380, lng: 8.4950 },
+      'uni': { lat: 52.0380, lng: 8.4950 },
+      'campus': { lat: 52.0380, lng: 8.4950 },
+      
+      // City districts
+      'altstadt': { lat: 52.0192, lng: 8.5370 },
+      'zentrum': { lat: 52.0302, lng: 8.5311 },
+      'innenstadt': { lat: 52.0302, lng: 8.5311 },
+      'mitte': { lat: 52.0302, lng: 8.5311 },
+      'schildesche': { lat: 52.0450, lng: 8.4800 },
+      'brackwede': { lat: 52.0050, lng: 8.5800 },
+      'sennestadt': { lat: 51.9800, lng: 8.6200 },
+      'heepen': { lat: 52.0500, lng: 8.6000 },
+      'stieghorst': { lat: 52.0100, lng: 8.6100 },
+      
+      // Parks and outdoor areas
+      'stadtpark': { lat: 52.0250, lng: 8.5280 },
+      'bürgerpark': { lat: 52.0180, lng: 8.5200 },
+      'tierpark': { lat: 52.0400, lng: 8.5100 },
+      'botanischer garten': { lat: 52.0350, lng: 8.4900 },
+      
+      // Shopping and commercial
+      'loom': { lat: 52.0200, lng: 8.5350 },
+      'hauptbahnhof': { lat: 52.0280, lng: 8.5320 },
+      'bahnhof': { lat: 52.0280, lng: 8.5320 },
+      
+      // Sports venues
+      'schücoarena': { lat: 52.0320, lng: 8.5150 },
+      'alm': { lat: 52.0320, lng: 8.5150 },
+      'arminia': { lat: 52.0320, lng: 8.5150 },
+      
+      // Default fallback
       'bielefeld': bielefeldCenter
     };
 
-    // Find matching location
+    // Find exact matches first
     for (const [key, coords] of Object.entries(locationMap)) {
-      if (locationLower.includes(key)) {
+      if (locationLower === key || locationLower.includes(key)) {
+        console.log(`Found coordinates for location "${location}": ${coords.lat}, ${coords.lng}`);
         return isLng ? coords.lng : coords.lat;
       }
     }
 
-    // Add some random offset for unmapped locations
-    const offset = (Math.random() - 0.5) * 0.02;
-    return isLng ? bielefeldCenter.lng + offset : bielefeldCenter.lat + offset;
+    // If no match found, use Bielefeld center with small random offset
+    const offset = (Math.random() - 0.5) * 0.01; // Smaller offset for better clustering
+    const coord = isLng ? bielefeldCenter.lng + offset : bielefeldCenter.lat + offset;
+    console.log(`Using default coordinates with offset for location "${location}": ${coord}`);
+    return coord;
   }
+
+  // Filter events for today and with valid coordinates
+  const todaysBielefeldEvents = React.useMemo(() => {
+    console.log(`Filtering events for today (${today})...`);
+    
+    const filtered = events
+      .filter(event => {
+        const isToday = event.date === today;
+        const hasLocation = event.location || event.city;
+        
+        console.log(`Event: ${event.title}, Date: ${event.date}, Location: ${event.location}, City: ${event.city}, IsToday: ${isToday}, HasLocation: ${hasLocation}`);
+        return isToday && hasLocation;
+      })
+      .map(event => {
+        const locationText = event.location || event.city || event.title;
+        const lat = getCoordinatesForLocation(locationText);
+        const lng = getCoordinatesForLocation(locationText, true);
+        
+        return {
+          ...event,
+          lat,
+          lng,
+          attendees: (event.rsvp_yes || 0) + (event.rsvp_maybe || 0) + (event.likes || 0),
+          eventHour: getHourFromTime(event.time)
+        };
+      })
+      .filter(event => event.lat !== null && event.lng !== null);
+
+    console.log(`Found ${filtered.length} events for today with valid coordinates`);
+    return filtered;
+  }, [events, today]);
 
   // Get categories with counts from today's events
   const categories = React.useMemo(() => {
@@ -183,6 +224,8 @@ const EventHeatmap: React.FC = () => {
     const newMarkers: L.Marker[] = [];
 
     filteredEvents.forEach(event => {
+      if (!event.lat || !event.lng) return;
+      
       try {
         const displayNumber = event.attendees > 0 ? event.attendees : (event.likes || 1);
         
@@ -222,7 +265,7 @@ const EventHeatmap: React.FC = () => {
             <h3 style="margin: 0 0 8px 0; font-weight: bold; color: #1f2937;">${event.title}</h3>
             <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280;">
               <span style="margin-right: 8px;">📍</span>
-              <span>${event.location || 'Bielefeld'}</span>
+              <span>${event.location || event.city || 'Bielefeld'}</span>
             </div>
             <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280;">
               <span style="margin-right: 8px;">📅</span>
@@ -272,7 +315,7 @@ const EventHeatmap: React.FC = () => {
         <div className="text-center text-white">
           <MapPin className="w-12 h-12 mx-auto mb-4 animate-bounce text-red-500" />
           <h2 className="text-xl mb-2">Lade Events...</h2>
-          <p className="text-gray-400">Heutige Events in Bielefeld werden geladen...</p>
+          <p className="text-gray-400">Heutige Events werden geladen...</p>
         </div>
       </div>
     );
@@ -288,7 +331,7 @@ const EventHeatmap: React.FC = () => {
         <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
           <h3 className="text-white font-bold mb-4 flex items-center gap-2">
             <MapPin className="w-5 h-5 text-red-500" />
-            Events heute in Bielefeld
+            Events heute
           </h3>
           
           <div className="space-y-4">
