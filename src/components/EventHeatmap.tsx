@@ -5,7 +5,13 @@ import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
-import { MapPin, Calendar, Users, Clock } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { MapPin, Calendar, Users, Clock, ChevronDown } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 import { format } from 'date-fns';
 
@@ -272,6 +278,9 @@ const EventHeatmap: React.FC = () => {
     );
   }
 
+  const selectedCategoryData = categories.find(cat => cat.name === selectedCategory);
+  const selectedCategoryDisplay = selectedCategory === 'all' ? 'Alle' : selectedCategory;
+
   return (
     <div className="relative w-full h-screen bg-gray-100">
       {/* Filter Panel */}
@@ -283,21 +292,30 @@ const EventHeatmap: React.FC = () => {
           </h3>
           
           <div className="space-y-4">
-            {/* Category Filter */}
-            <div className="flex flex-wrap gap-2">
-              {categories.map((category) => (
-                <Button
-                  key={category.name}
-                  onClick={() => setSelectedCategory(category.name)}
-                  className={`text-xs px-3 py-1.5 rounded-full transition-all ${
-                    selectedCategory === category.name
-                      ? 'bg-red-500 text-white shadow-lg'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                  }`}
-                >
-                  {category.name === 'all' ? 'Alle' : category.name} ({category.count})
-                </Button>
-              ))}
+            {/* Category Dropdown */}
+            <div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                  >
+                    {selectedCategoryDisplay} ({selectedCategoryData?.count || 0})
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 bg-gray-800 border-gray-700">
+                  {categories.map((category) => (
+                    <DropdownMenuItem
+                      key={category.name}
+                      onClick={() => setSelectedCategory(category.name)}
+                      className="text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
+                    >
+                      {category.name === 'all' ? 'Alle' : category.name} ({category.count})
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             
             {/* Time Slider */}
