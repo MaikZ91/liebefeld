@@ -53,7 +53,7 @@ export const Layout: React.FC<LayoutProps> = ({
 }) => {
   const { pathname } = useLocation();
   const [isAddEventModalOpen, setIsAddEventModalOpen] = React.useState(false);
-
+  
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       window.triggerAddEvent = () => {
@@ -66,7 +66,7 @@ export const Layout: React.FC<LayoutProps> = ({
       }
     };
   }, []);
-
+  
   return (
     <>
       <Sheet open={isAddEventModalOpen} onOpenChange={setIsAddEventModalOpen}>
@@ -84,23 +84,22 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
         </SheetContent>
       </Sheet>
-
+      
       <header className="sticky top-0 z-50 w-full bg-black/90 backdrop-blur-sm border-b border-black">
         <div className="container flex h-16 items-center">
           <MainNav pathname={pathname} chatInputProps={chatInputProps} activeView={activeView} />
-          {(pathname !== '/chat' && pathname !== '/') && (
+          {(pathname !== '/chat' && pathname !== '/') && ( 
             <div className="ml-auto flex items-center space-x-4">
               <ThemeToggleButton />
             </div>
           )}
         </div>
       </header>
-
-      {/* Adjusted pt to match header + ticker height, removed pb */}
-      <main className="pt-[112px]">
+      
+      <main className="pb-20 pt-[104px]"> {/* Adjusted pt-[104px] */}
         {children}
       </main>
-
+      
       {/* Bottom Navigation for Chat and Root pages */}
       {(pathname === '/chat' || pathname === '/') && (
         <BottomNavigation
@@ -112,7 +111,7 @@ export const Layout: React.FC<LayoutProps> = ({
           newEventsCount={newEventsCount}
         />
       )}
-
+      
       {!hideFooter && (
         <footer className="border-t border-black bg-black">
           <div className="container flex flex-col items-center justify-between gap-4 py-10 md:h-24 md:flex-row md:py-0">
@@ -172,7 +171,7 @@ const MainNav: React.FC<MainNavProps> = ({ pathname, chatInputProps, activeView 
           </Link>
           <CitySelector />
         </div>
-
+        
         {/* Right side: Chat input - only show if props are provided */}
         {chatInputProps && (
           <div className="flex-1 min-w-0">
@@ -200,7 +199,7 @@ const MainNav: React.FC<MainNavProps> = ({ pathname, chatInputProps, activeView 
       </div>
     );
   }
-
+  
   // For other pages, show regular navigation
   return (
     <div className="mr-4 flex">

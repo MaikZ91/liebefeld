@@ -1,4 +1,4 @@
-// src/components/event-chat/FullPageChatBot.tsx
+// File: src/components/event-chat/FullPageChatBot.tsx
 import React, { useEffect } from 'react';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
@@ -174,11 +174,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   }, [communityMessages, communitySending, activeChatModeValue, chatBottomRef]);
 
   return (
-    // Removed h-screen and replaced with flex-1 to occupy remaining space
-    <div className="flex flex-col flex-1 min-h-0">
+    <div className="flex flex-col h-screen min-h-0">
       {/* Conditional sticky header - only show if input is not hidden */}
       {!hideInput && (
-        <div className="border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-2">
+        <div className="border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-2"> 
           {activeChatModeValue === 'ai' && (
             <RecentQueries
               showRecentQueries={showRecentQueries}
@@ -212,7 +211,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       {/* Main scroll container */}
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
         {activeChatModeValue === 'ai' ? (
-          <div className={hideInput ? "pt-4 px-3" : "pt-32 px-3"}>
+          <div className={hideInput ? "pt-4 px-3" : "pt-32 px-3"}> 
             <MessageList
               messages={aiMessages}
               isTyping={aiTyping}
