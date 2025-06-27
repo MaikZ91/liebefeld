@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -116,17 +115,20 @@ const EventHeatmap: React.FC = () => {
     return coord;
   }
 
-  // Filter events for today and with valid coordinates
+  // Filter events for today, Bielefeld, and with valid coordinates
   const todaysBielefeldEvents = React.useMemo(() => {
-    console.log(`Filtering events for today (${today})...`);
+    console.log(`Filtering events for today (${today}) in Bielefeld...`);
     
     const filtered = events
       .filter(event => {
         const isToday = event.date === today;
         const hasLocation = event.location || event.city;
+        const isBielefeld = !event.city || event.city.toLowerCase().includes('bielefeld') || 
+                          event.location?.toLowerCase().includes('bielefeld') ||
+                          event.title?.toLowerCase().includes('bielefeld');
         
-        console.log(`Event: ${event.title}, Date: ${event.date}, Location: ${event.location}, City: ${event.city}, IsToday: ${isToday}, HasLocation: ${hasLocation}`);
-        return isToday && hasLocation;
+        console.log(`Event: ${event.title}, Date: ${event.date}, Location: ${event.location}, City: ${event.city}, IsToday: ${isToday}, HasLocation: ${hasLocation}, IsBielefeld: ${isBielefeld}`);
+        return isToday && hasLocation && isBielefeld;
       })
       .map(event => {
         const locationText = event.location || event.city || event.title;
@@ -143,7 +145,7 @@ const EventHeatmap: React.FC = () => {
       })
       .filter(event => event.lat !== null && event.lng !== null);
 
-    console.log(`Found ${filtered.length} events for today with valid coordinates`);
+    console.log(`Found ${filtered.length} events for today in Bielefeld with valid coordinates`);
     return filtered;
   }, [events, today]);
 
@@ -331,7 +333,7 @@ const EventHeatmap: React.FC = () => {
         <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
           <h3 className="text-white font-bold mb-4 flex items-center gap-2">
             <MapPin className="w-5 h-5 text-red-500" />
-            Events heute
+            Events heute in Bielefeld
           </h3>
           
           <div className="space-y-4">
