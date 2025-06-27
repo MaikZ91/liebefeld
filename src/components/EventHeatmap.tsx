@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -26,7 +25,8 @@ L.Icon.Default.mergeOptions({
 const EventHeatmap: React.FC = () => {
   const { events, isLoading } = useEvents();
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [timeRange, setTimeRange] = useState([0]); // 0-23 hours
+  // Set the initial timeRange to the current hour
+  const [timeRange, setTimeRange] = useState([new Date().getHours()]); 
   const [map, setMap] = useState<L.Map | null>(null);
   const [markers, setMarkers] = useState<L.Marker[]>([]);
   const mapRef = useRef<HTMLDivElement>(null);
