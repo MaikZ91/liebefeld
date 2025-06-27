@@ -233,36 +233,21 @@ const EventHeatmap: React.FC = () => {
       if (!event.lat || !event.lng) return;
       
       try {
-        const likes = event.likes || 0;
-        // Determine marker size based on likes
-        let markerSize = 40; // Default size
-        let fontSize = 12;
-        if (likes >= 50) {
-          markerSize = 60;
-          fontSize = 18;
-        } else if (likes >= 20) {
-          markerSize = 50;
-          fontSize = 15;
-        } else if (likes >= 5) {
-          markerSize = 45;
-          fontSize = 13;
-        }
-
-        const displayNumber = likes > 0 ? likes : (event.rsvp_yes || 1); // Fallback to rsvp_yes if likes is 0
-
+        const displayNumber = event.attendees > 0 ? event.attendees : (event.likes || 1);
+        
         // Create custom marker icon
         const iconHtml = `
           <div style="
             background: #ef4444;
             color: white;
             border-radius: 50%;
-            width: ${markerSize}px;
-            height: ${markerSize}px;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: ${fontSize}px;
+            font-size: 12px;
             border: 2px solid white;
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
           ">
@@ -273,9 +258,9 @@ const EventHeatmap: React.FC = () => {
         const customIcon = L.divIcon({
           html: iconHtml,
           className: 'custom-marker',
-          iconSize: [markerSize, markerSize],
-          iconAnchor: [markerSize / 2, markerSize / 2],
-          popupAnchor: [0, -markerSize / 2]
+          iconSize: [40, 40],
+          iconAnchor: [20, 20],
+          popupAnchor: [0, -20]
         });
 
         const marker = L.marker([event.lat, event.lng], { icon: customIcon });
