@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -63,6 +64,10 @@ const EventHeatmap: React.FC = () => {
       'stadttheater': { lat: 52.0185, lng: 8.5355 },
       'stadthalle': { lat: 52.0220, lng: 8.5400 },
       'rudolf-oetker-halle': { lat: 52.0210, lng: 8.5330 },
+      'stereo bielefeld': { lat: 52.0200, lng: 8.5350 },
+      'stereo': { lat: 52.0200, lng: 8.5350 },
+      'nr.z.p': { lat: 52.0190, lng: 8.5370 },
+      'nrzp': { lat: 52.0190, lng: 8.5370 },
       
       // University area
       'universität': { lat: 52.0380, lng: 8.4950 },
@@ -115,7 +120,7 @@ const EventHeatmap: React.FC = () => {
     return coord;
   }
 
-  // Filter events for today, Bielefeld, and with valid coordinates
+  // Filter events for today, Bielefeld (using city column), and with valid coordinates
   const todaysBielefeldEvents = React.useMemo(() => {
     console.log(`Filtering events for today (${today}) in Bielefeld...`);
     
@@ -123,9 +128,8 @@ const EventHeatmap: React.FC = () => {
       .filter(event => {
         const isToday = event.date === today;
         const hasLocation = event.location || event.city;
-        const isBielefeld = !event.city || event.city.toLowerCase().includes('bielefeld') || 
-                          event.location?.toLowerCase().includes('bielefeld') ||
-                          event.title?.toLowerCase().includes('bielefeld');
+        // Filter specifically for Bielefeld using the city column
+        const isBielefeld = event.city && event.city.toLowerCase() === 'bielefeld';
         
         console.log(`Event: ${event.title}, Date: ${event.date}, Location: ${event.location}, City: ${event.city}, IsToday: ${isToday}, HasLocation: ${hasLocation}, IsBielefeld: ${isBielefeld}`);
         return isToday && hasLocation && isBielefeld;
@@ -261,13 +265,17 @@ const EventHeatmap: React.FC = () => {
 
         const marker = L.marker([event.lat, event.lng], { icon: customIcon });
 
-        // Create popup content
+        // Create popup content with real location from database
         const popupContent = `
           <div style="min-width: 200px;">
             <h3 style="margin: 0 0 8px 0; font-weight: bold; color: #1f2937;">${event.title}</h3>
             <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280;">
               <span style="margin-right: 8px;">📍</span>
-              <span>${event.location || event.city || 'Bielefeld'}</span>
+              <span>${event.location || 'Bielefeld'}</span>
+            </div>
+            <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280;">
+              <span style="margin-right: 8px;">🏙️</span>
+              <span>${event.city || 'Bielefeld'}</span>
             </div>
             <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280;">
               <span style="margin-right: 8px;">📅</span>
