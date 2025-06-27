@@ -4,7 +4,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { MapPin, Calendar, Users } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { MapPin, Calendar, Users, Clock } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 import { format } from 'date-fns';
 
@@ -19,12 +20,24 @@ L.Icon.Default.mergeOptions({
 const EventHeatmap: React.FC = () => {
   const { events, isLoading } = useEvents();
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [timeRange, setTimeRange] = useState([0]); // 0-23 hours
   const [map, setMap] = useState<L.Map | null>(null);
   const [markers, setMarkers] = useState<L.Marker[]>([]);
   const mapRef = useRef<HTMLDivElement>(null);
 
   // Get today's date in YYYY-MM-DD format
   const today = format(new Date(), 'yyyy-MM-dd');
+
+  // Convert hour slider value to time string
+  const getTimeFromSlider = (hour: number): string => {
+    return `${hour.toString().padStart(2, '0')}:00`;
+  };
+
+  // Convert time string to hour number
+  const getHourFromTime = (timeString: string): number => {
+    const [hour] = timeString.split(':');
+    return parseInt(hour, 10);
+  };
 
   // Filter events for Bielefeld and today only
   const todaysBielefeldEvents = React.useMemo(() => {
@@ -44,7 +57,8 @@ const EventHeatmap: React.FC = () => {
         ...event,
         lat: getCoordinatesForLocation(event.location || event.title),
         lng: getCoordinatesForLocation(event.location || event.title, true),
-        attendees: (event.rsvp_yes || 0) + (event.rsvp_maybe || 0) + (event.likes || 0)
+        attendees: (event.rsvp_yes || 0) + (event.rsvp_maybe || 0) + (event.likes || 0),
+        eventHour: getHourFromTime(event.time)
       }))
       .filter(event => event.lat && event.lng);
 
@@ -99,13 +113,20 @@ const EventHeatmap: React.FC = () => {
     ];
   }, [todaysBielefeldEvents]);
 
-  // Filter events based on selected category
+  // Filter events based on selected category and time
   const filteredEvents = React.useMemo(() => {
-    if (selectedCategory === 'all') {
-      return todaysBielefeldEvents;
+    let filtered = todaysBielefeldEvents;
+    
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(event => event.category === selectedCategory);
     }
-    return todaysBielefeldEvents.filter(event => event.category === selectedCategory);
-  }, [todaysBielefeldEvents, selectedCategory]);
+    
+    // Filter by time - show events at or after the selected hour
+    const selectedHour = timeRange[0];
+    filtered = filtered.filter(event => event.eventHour >= selectedHour);
+    
+    return filtered;
+  }, [todaysBielefeldEvents, selectedCategory, timeRange]);
 
   // Initialize map
   useEffect(() => {
@@ -261,7 +282,8 @@ const EventHeatmap: React.FC = () => {
             Events heute in Bielefeld
           </h3>
           
-          <div className="space-y-3">
+          <div className="space-y-4">
+            {/* Category Filter */}
             <div className="flex flex-wrap gap-2">
               {categories.map((category) => (
                 <Button
@@ -277,6 +299,27 @@ const EventHeatmap: React.FC = () => {
                 </Button>
               ))}
             </div>
+            
+            {/* Time Slider */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-white text-sm">
+                <Clock className="w-4 h-4 text-red-500" />
+                <span>Zeit: ab {getTimeFromSlider(timeRange[0])} Uhr</span>
+              </div>
+              <Slider
+                value={timeRange}
+                onValueChange={setTimeRange}
+                max={23}
+                min={0}
+                step={1}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-gray-400">
+                <span>00:00</span>
+                <span>12:00</span>
+                <span>23:00</span>
+              </div>
+            </div>
           </div>
         </Card>
 
@@ -285,7 +328,7 @@ const EventHeatmap: React.FC = () => {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-red-500" />
-              {filteredEvents.length} Events heute
+              {filteredEvents.length} Events ab {getTimeFromSlider(timeRange[0])} Uhr
             </div>
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-red-500" />
