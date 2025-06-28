@@ -578,8 +578,23 @@ const EventHeatmap: React.FC = () => {
         </Card>
       </div>
 
-      {/* Panel Toggle Button - Verbesserte Bedingung */}
-      {filteredEvents.length > 0 && panelHeight === 'collapsed' && (
+      {/* Events Button - Separater Button für Eventliste */}
+      <div className="absolute top-4 right-4 z-[1000]">
+        <Button
+          onClick={() => {
+            setIsPanelOpen(true);
+            setPanelHeight('partial');
+            setShowPerfectDayPanel(false);
+          }}
+          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2"
+        >
+          <Calendar className="w-4 h-4" />
+          Events ({filteredEvents.length})
+        </Button>
+      </div>
+
+      {/* Panel Toggle Button - Nur anzeigen wenn Panel geschlossen ist */}
+      {filteredEvents.length > 0 && panelHeight === 'collapsed' && !isPanelOpen && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000]">
           <Button
             onClick={() => {
