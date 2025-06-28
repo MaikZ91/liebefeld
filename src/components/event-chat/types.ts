@@ -23,12 +23,15 @@ export interface PanelEvent {
   title: string;
   date: string;
   time: string;
-  price: string;
+  price?: string; // Made optional since events from DB don't always have price
   location: string;
   image_url: string;
   category: string;
   link?: string; 
   likes?: number; // Added likes property
+  description?: string; // Added description for completeness
+  rsvp_yes?: number; // Added RSVP data
+  rsvp_maybe?: number; // Added RSVP data
 }
 
 export interface AdEvent {
