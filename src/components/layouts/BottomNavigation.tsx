@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Users, Map } from 'lucide-react';
+import { Calendar, MessageSquare, Users, User, Map } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -19,6 +19,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   activeView,
   setActiveView,
   handleOpenUserDirectory,
+  setIsEventListSheetOpen,
   newMessagesCount,
   newEventsCount
 }) => {
@@ -39,7 +40,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
             activeView === 'ai' ? 'bg-red-500 hover:bg-red-600 text-white' : 'text-gray-400 hover:text-white'
           )}
         >
-          <MessageSquare className="h-4 w-4" />
+          <Calendar className="h-4 w-4" />
           <span className="text-[10px]">AI</span>
           {newEventsCount > 0 && (
             <Badge className="absolute -top-1 -right-1 bg-green-600 text-white h-4 w-4 flex items-center justify-center rounded-full text-[8px] p-0">
@@ -90,6 +91,17 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         >
           <Users className="h-4 w-4" />
           <span className="text-[10px]">Nutzer</span>
+        </Button>
+        
+        {/* Calendar Events Button */}
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => setIsEventListSheetOpen?.(true)} 
+          className="flex flex-col items-center gap-1 px-2 py-2 h-auto text-gray-400 hover:text-white min-w-0"
+        >
+          <Calendar className="h-4 w-4" />
+          <span className="text-[10px]">Events</span>
         </Button>
       </div>
     </div>
