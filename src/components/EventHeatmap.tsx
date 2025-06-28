@@ -481,6 +481,14 @@ const EventHeatmap: React.FC = () => {
   const selectedCategoryData = categories.find(cat => cat.name === selectedCategory);
   const selectedCategoryDisplay = selectedCategory === 'all' ? 'Alle' : selectedCategory;
 
+  console.log('Render debug:', {
+    filteredEventsLength: filteredEvents.length,
+    isPanelOpen,
+    showPerfectDayPanel,
+    panelHeight,
+    shouldShowButton: filteredEvents.length > 0 && panelHeight === 'collapsed'
+  });
+
   return (
     <div className="relative w-full h-screen bg-gray-100 overflow-hidden">
       {/* Filter Panel */}
@@ -570,13 +578,14 @@ const EventHeatmap: React.FC = () => {
         </Card>
       </div>
 
-      {/* Panel Toggle Button */}
-      {!isPanelOpen && !showPerfectDayPanel && filteredEvents.length > 0 && (
+      {/* Panel Toggle Button - Verbesserte Bedingung */}
+      {filteredEvents.length > 0 && panelHeight === 'collapsed' && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000]">
           <Button
             onClick={() => {
               setIsPanelOpen(true);
               setPanelHeight('partial');
+              setShowPerfectDayPanel(false);
             }}
             className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-full shadow-lg"
           >
