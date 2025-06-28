@@ -10,12 +10,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 import { format } from 'date-fns';
 import SwipeableEventPanel from '@/components/event-chat/SwipeableEventPanel';
 import { PanelEventData, PanelEvent } from '@/components/event-chat/types';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -34,7 +36,11 @@ const EventHeatmap: React.FC = () => {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [panelHeight, setPanelHeight] = useState<'collapsed' | 'partial' | 'full'>('collapsed');
+  const [perfectDayMessage, setPerfectDayMessage] = useState<string | null>(null);
+  const [isPerfectDayLoading, setIsPerfectDayLoading] = useState(false);
+  const [showPerfectDayPanel, setShowPerfectDayPanel] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   // Get today's date in YYYY-MM-DD format
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -200,8 +206,7 @@ const EventHeatmap: React.FC = () => {
       link: event.link,
       likes: event.likes || 0,
       rsvp_yes: event.rsvp_yes,
-      rsvp_maybe: event.rsvp_maybe,
-      price: event.price
+      rsvp_maybe: event.rsvp_maybe
     }));
   }, [filteredEvents]);
 
@@ -216,6 +221,52 @@ const EventHeatmap: React.FC = () => {
       currentIndex: selectedIndex >= 0 ? selectedIndex : 0
     };
   }, [panelEvents, selectedEventId]);
+
+  // Generate Perfect Day message
+  const generatePerfectDay = async () => {
+    setIsPerfectDayLoading(true);
+    try {
+      // Get user profile data from localStorage
+      const username = localStorage.getItem('currentUsername') || 'Gast';
+      const userInterests = JSON.parse(localStorage.getItem('user_interests') || '[]');
+      const userLocations = JSON.parse(localStorage.getItem('user_locations') || '[]');
+      const weather = sessionStorage.getItem('weather') || 'partly_cloudy';
+
+      const { data, error } = await supabase.functions.invoke('generate-perfect-day', {
+        body: {
+          username,
+          weather,
+          interests: userInterests,
+          favorite_locations: userLocations
+        }
+      });
+
+      if (error) throw error;
+
+      setPerfectDayMessage(data.response);
+      setShowPerfectDayPanel(true);
+      
+      toast({
+        title: "Perfect Day generiert!",
+        description: "Deine personalisierte Tagesempfehlung ist bereit.",
+        variant: "default"
+      });
+    } catch (error) {
+      console.error('Error generating Perfect Day:', error);
+      toast({
+        title: "Fehler",
+        description: "Perfect Day konnte nicht generiert werden.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsPerfectDayLoading(false);
+    }
+  };
+
+  // Navigate to chat
+  const goToChat = () => {
+    window.location.href = '/chat';
+  };
 
   // Initialize map
   useEffect(() => {
@@ -325,6 +376,7 @@ const EventHeatmap: React.FC = () => {
           setSelectedEventId(eventId);
           setIsPanelOpen(true);
           setPanelHeight('partial');
+          setShowPerfectDayPanel(false);
         });
 
         // Create popup content with real location from database
@@ -411,6 +463,7 @@ const EventHeatmap: React.FC = () => {
   const closePanelCompletely = () => {
     setPanelHeight('collapsed');
     setIsPanelOpen(false);
+    setShowPerfectDayPanel(false);
   };
 
   if (isLoading) {
@@ -485,6 +538,16 @@ const EventHeatmap: React.FC = () => {
                 <span>23:00</span>
               </div>
             </div>
+
+            {/* Perfect Day Button */}
+            <Button
+              onClick={generatePerfectDay}
+              disabled={isPerfectDayLoading}
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              {isPerfectDayLoading ? 'Generiere...' : 'Perfect Day'}
+            </Button>
           </div>
         </Card>
 
@@ -508,7 +571,7 @@ const EventHeatmap: React.FC = () => {
       </div>
 
       {/* Panel Toggle Button */}
-      {!isPanelOpen && filteredEvents.length > 0 && (
+      {!isPanelOpen && !showPerfectDayPanel && filteredEvents.length > 0 && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000]">
           <Button
             onClick={() => {
@@ -533,8 +596,45 @@ const EventHeatmap: React.FC = () => {
         }}
       />
 
+      {/* Perfect Day Panel */}
+      {showPerfectDayPanel && perfectDayMessage && (
+        <div className="absolute bottom-0 left-0 right-0 z-[1000] bg-black/95 backdrop-blur-md h-96">
+          {/* Panel Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-700">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-400" />
+              <span className="text-white font-medium">Perfect Day</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={goToChat}
+                className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1"
+              >
+                Zum Chat
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowPerfectDayPanel(false)}
+                className="text-white hover:bg-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Panel Content */}
+          <div className="p-4 overflow-y-auto h-full">
+            <div 
+              className="text-white prose prose-invert max-w-none"
+              dangerouslySetInnerHTML={{ __html: perfectDayMessage }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Swipeable Event Panel */}
-      {isPanelOpen && panelEvents.length > 0 && (
+      {isPanelOpen && panelEvents.length > 0 && !showPerfectDayPanel && (
         <div className={cn(
           "absolute bottom-0 left-0 right-0 z-[1000] bg-black/95 backdrop-blur-md transition-all duration-300 ease-in-out",
           {
