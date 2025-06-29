@@ -676,9 +676,9 @@ const EventHeatmap: React.FC = () => {
         </Card>
       </div>
 
-      {/* Panel Toggle Button */}
+      {/* Panel Toggle Button - adjusted position to avoid overlap */}
       {!isPanelOpen && !showPerfectDayPanel && filteredEvents.length > 0 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000]">
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[1000]">
           <Button
             onClick={() => {
               setIsPanelOpen(true);
@@ -692,8 +692,8 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* Add Event Button - Bottom Right */}
-      <div className="absolute bottom-6 right-6 z-[1000]">
+      {/* Add Event Button - moved up to avoid overlap with bottom navigation */}
+      <div className="absolute bottom-24 right-6 z-[1000]">
         <Button
           onClick={() => setIsEventFormOpen(true)}
           className="bg-red-500 hover:bg-red-600 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center p-0"
@@ -827,7 +827,7 @@ const EventHeatmap: React.FC = () => {
       <EventChatDialog
         isOpen={eventChatDialog.isOpen}
         onClose={() => setEventChatDialog({ isOpen: false })}
-        event={eventChatDialog.event!}
+        event={eventChatDialog.event}
       />
     </div>
   );
