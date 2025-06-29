@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus } from 'lucide-react';
+import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, MessageSquare } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 import { format } from 'date-fns';
 import SwipeableEventPanel from '@/components/event-chat/SwipeableEventPanel';
@@ -25,17 +25,21 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import EventForm from '@/components/EventForm';
+import { useUserProfile } from '@/hooks/chat/useUserProfile';
+import { messageService } from '@/services/messageService';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/cdnjs/cloudflare/images/marker-shadow.png',
 });
 
 const EventHeatmap: React.FC = () => {
-  const { events, isLoading } = useEvents();
+  const { events, isLoading, refreshEvents } = useEvents();
+  const { currentUser, userProfile, refetchProfile } = useUserProfile();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [timeRange, setTimeRange] = useState([new Date().getHours()]); 
   const [map, setMap] = useState<L.Map | null>(null);
@@ -47,6 +51,8 @@ const EventHeatmap: React.FC = () => {
   const [isPerfectDayLoading, setIsPerfectDayLoading] = useState(false);
   const [showPerfectDayPanel, setShowPerfectDayPanel] = useState(false);
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
+  const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false); // New state for check-in dialog
+  const [checkInSearchTerm, setCheckInSearchTerm] = useState(''); // New state for search in check-in dialog
   const mapRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -235,7 +241,7 @@ const EventHeatmap: React.FC = () => {
     setIsPerfectDayLoading(true);
     try {
       // Get user profile data from localStorage
-      const username = localStorage.getItem('currentUsername') || 'Gast';
+      const username = localStorage.getItem('community_chat_username') || 'Gast';
       const userInterests = JSON.parse(localStorage.getItem('user_interests') || '[]');
       const userLocations = JSON.parse(localStorage.getItem('user_locations') || '[]');
       const weather = sessionStorage.getItem('weather') || 'partly_cloudy';
@@ -271,6 +277,66 @@ const EventHeatmap: React.FC = () => {
     }
   };
 
+  // Handle "Ich bin hier" check-in
+  const handleCheckIn = async (event: typeof todaysBielefeldEvents[0]) => {
+    if (!currentUser || currentUser === 'Gast') {
+      toast({
+        title: "Anmeldung erforderlich",
+        description: "Du musst angemeldet sein, um dich einzuchecken.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsCheckInDialogOpen(false); // Close the dialog immediately
+    toast.loading("Check-in wird verarbeitet...", { duration: 2000 });
+
+    try {
+      // 1. Send message to community chat
+      const communityMessage = `📍 ${currentUser} ist jetzt bei "${event.title}" in ${event.location}! Wer ist auch da?`;
+      
+      // We are hardcoding the 'ausgehen' group ID for Bielefeld as per the request
+      const bielefeldAusgehenGroupId = 'bi_ausgehen'; // This is a specific group ID, needs to be consistently managed.
+
+      const { error: messageError } = await messageService.sendMessage(
+        bielefeldAusgehenGroupId,
+        communityMessage,
+        currentUser,
+        localStorage.getItem('community_chat_avatar') || ''
+      );
+
+      if (messageError) {
+        console.error('Error sending check-in message:', messageError);
+        throw new Error('Could not post check-in message to chat.');
+      }
+
+      // 2. Update user's last_online and favorite_locations
+      const updatedLocations = userProfile?.favorite_locations 
+        ? [...userProfile.favorite_locations, event.location].filter((value, index, self) => self.indexOf(value) === index) // Add unique location
+        : [event.location];
+
+      await supabase.from('user_profiles')
+        .update({ 
+          last_online: new Date().toISOString(),
+          favorite_locations: updatedLocations
+        })
+        .eq('username', currentUser);
+      
+      // Refresh user profile in context
+      refetchProfile();
+
+      toast.success("Erfolgreich eingecheckt!", {
+        description: `Du bist jetzt bei "${event.title}" eingecheckt.`,
+      });
+
+    } catch (error: any) {
+      console.error('Check-in failed:', error);
+      toast.error("Check-in fehlgeschlagen", {
+        description: error.message || "Es gab ein Problem beim Einchecken.",
+      });
+    }
+  };
+
   // Navigate to chat
   const goToChat = () => {
     window.location.href = '/chat';
@@ -281,7 +347,7 @@ const EventHeatmap: React.FC = () => {
     try {
       // Add event to Supabase
       const { data, error } = await supabase
-        .from('events')
+        .from('community_events')
         .insert([{
           ...eventData,
           city: 'Bielefeld', // Default to Bielefeld for heatmap
@@ -297,7 +363,7 @@ const EventHeatmap: React.FC = () => {
         description: `${eventData.title} wurde hinzugefügt.`,
         variant: "default"
       });
-
+      refreshEvents(); // Refresh events to show new event on map
       setIsEventFormOpen(false);
     } catch (error) {
       console.error('Error adding event:', error);
@@ -522,6 +588,12 @@ const EventHeatmap: React.FC = () => {
   const selectedCategoryData = categories.find(cat => cat.name === selectedCategory);
   const selectedCategoryDisplay = selectedCategory === 'all' ? 'Alle' : selectedCategory;
 
+  const filteredCheckInEvents = todaysBielefeldEvents.filter(event => 
+    event.title.toLowerCase().includes(checkInSearchTerm.toLowerCase()) ||
+    event.location?.toLowerCase().includes(checkInSearchTerm.toLowerCase()) ||
+    event.category.toLowerCase().includes(checkInSearchTerm.toLowerCase())
+  );
+
   return (
     <div className="relative w-full h-screen bg-gray-100 overflow-hidden">
       {/* Filter Panel */}
@@ -627,14 +699,31 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* Add Event Button - Bottom Right */}
+      {/* Add Event / Check-in Button - Bottom Right */}
       <div className="absolute bottom-6 right-6 z-[1000]">
-        <Button
-          onClick={() => setIsEventFormOpen(true)}
-          className="bg-red-500 hover:bg-red-600 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center p-0"
-        >
-          <Plus className="w-6 h-6" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              className="bg-red-500 hover:bg-red-600 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center p-0"
+            >
+              <Plus className="w-6 h-6" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56 bg-gray-900 border border-gray-700 text-white">
+            <DropdownMenuItem 
+              onClick={() => setIsEventFormOpen(true)}
+              className="cursor-pointer hover:bg-gray-800"
+            >
+              <Calendar className="h-4 w-4 mr-2" /> Event hinzufügen
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => setIsCheckInDialogOpen(true)}
+              className="cursor-pointer hover:bg-gray-800"
+            >
+              <CheckCircle className="h-4 w-4 mr-2" /> Ich bin hier!
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Map Container */}
@@ -755,6 +844,49 @@ const EventHeatmap: React.FC = () => {
             onCancel={() => setIsEventFormOpen(false)}
             selectedDate={new Date()}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* Check-in Dialog */}
+      <Dialog open={isCheckInDialogOpen} onOpenChange={setIsCheckInDialogOpen}>
+        <DialogContent className="z-[1100] bg-black/95 backdrop-blur-md border-gray-700 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              Ich bin hier!
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-gray-300">Wähle das Event aus, bei dem du gerade bist, um es mit der Community zu teilen:</p>
+            <Input
+              placeholder="Event suchen..."
+              value={checkInSearchTerm}
+              onChange={(e) => setCheckInSearchTerm(e.target.value)}
+              className="bg-gray-800 border-gray-700 focus:ring-green-500 focus:border-green-500 text-white placeholder:text-gray-500"
+            />
+            <ScrollArea className="h-64">
+              {filteredCheckInEvents.length === 0 ? (
+                <div className="text-center text-gray-400 py-8">Keine Events gefunden.</div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredCheckInEvents.map(event => (
+                    <Button
+                      key={event.id}
+                      variant="outline"
+                      className="w-full justify-start text-left bg-gray-800 border-gray-700 hover:bg-gray-700 text-white h-auto p-3"
+                      onClick={() => handleCheckIn(event)}
+                    >
+                      <div className="flex flex-col items-start">
+                        <span className="font-medium text-base">{event.title}</span>
+                        <span className="text-xs text-gray-400">{event.time} Uhr @ {event.location}</span>
+                      </div>
+                      <MessageSquare className="ml-auto h-4 w-4 text-green-400" />
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
