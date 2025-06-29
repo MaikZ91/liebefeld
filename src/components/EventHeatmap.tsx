@@ -3,7 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
+import { Slider } => '@/components/ui/slider';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,24 +16,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, MessageSquare, Send } from 'lucide-react'; 
+import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, MessageSquare, Send, Heart } from 'lucide-react'; // Import Heart icon for likes display
 import { useEvents } from '@/hooks/useEvents';
 import { format } from 'date-fns';
 import SwipeableEventPanel from '@/components/event-chat/SwipeableEventPanel';
 import { PanelEventData, PanelEvent } from '@/components/event-chat/types';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } => '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast'; 
 import EventForm from '@/components/EventForm';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { messageService } from '@/services/messageService';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input'; 
-import { userService } from '@/services/userService'; 
+import { userService } => '@/services/userService'; 
 import { UserProfile } from '@/types/chatTypes'; 
 import { getInitials } from '@/utils/chatUIUtils'; 
 import PrivateChat from '@/components/users/PrivateChat'; 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } => '@/components/ui/avatar';
 
 
 // Fix Leaflet default icons
@@ -500,13 +500,65 @@ const EventHeatmap: React.FC = () => {
       if (!event.lat || !event.lng) return;
       
       const likes = event.likes || 0;
-      let markerSize = 40; 
+      let markerSize = 60; // Increased size to better show image/likes/title
       let fontSize = 12;
-      if (likes >= 50) { markerSize = 60; fontSize = 18; } 
-      else if (likes >= 20) { markerSize = 50; fontSize = 15; } 
-      else if (likes >= 5) { markerSize = 45; fontSize = 13; }
+      const imageSize = 40; // Size for the image within the marker
 
-      const displayNumber = likes > 0 ? likes : (event.rsvp_yes || 1); 
+      const iconHtml = `
+        <div style="
+          background: rgba(0,0,0,0.8); /* Dark background for the card */
+          color: white;
+          border-radius: 8px;
+          width: ${markerSize}px;
+          height: ${markerSize + 20}px; /* Adjust height for title/likes */
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: space-between;
+          padding: 5px;
+          border: 2px solid #ef4444; /* Red border */
+          box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+          cursor: pointer;
+          font-family: sans-serif;
+          overflow: hidden; /* Hide overflow for content */
+        ">
+          <img src="${event.image_url || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop;'}" 
+               onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';"
+               style="width: ${imageSize}px; height: ${imageSize}px; object-fit: cover; border-radius: 4px; margin-bottom: 4px;"/>
+          <div style="
+            font-size: 9px;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+            text-align: center;
+          ">
+            ${event.title}
+          </div>
+          <div style="font-size: 8px; margin-top: 2px; display: flex; align-items: center; justify-content: center; color: #ff9999;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 2px;"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+              ${likes}
+          </div>
+        </div>
+      `;
+
+      const customIcon = L.divIcon({
+        html: iconHtml,
+        className: 'custom-event-marker', // New class for event markers
+        iconSize: [markerSize, markerSize + 20], // Adjusted size
+        iconAnchor: [markerSize / 2, markerSize + 20], // Anchor at the bottom center
+        popupAnchor: [0, -markerSize - 20] // Adjust popup anchor
+      });
+
+      const marker = L.marker([event.lat, event.lng], { icon: customIcon });
+
+      marker.on('click', () => {
+        setSelectedEventId(event.id);
+        setIsPanelOpen(true);
+        setPanelHeight('partial');
+        setShowPerfectDayPanel(false);
+      });
 
       // Enhanced popup content with image and prominent title
       const popupContent = `
@@ -540,45 +592,6 @@ const EventHeatmap: React.FC = () => {
           ${event.link ? `<div style="margin-top: 8px;"><a href="${event.link}" target="_blank" style="color: #ef4444; text-decoration: underline; font-size: 12px;">Mehr Info</a></div>` : ''}
         </div>
       `;
-
-
-      const iconHtml = `
-        <div style="
-          background: #ef4444;
-          color: white;
-          border-radius: 50%;
-          width: ${markerSize}px;
-          height: ${markerSize}px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: bold;
-          font-size: ${fontSize}px;
-          border: 2px solid white;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-          cursor: pointer;
-          transition: transform 0.2s ease;
-        ">
-          ${displayNumber}
-        </div>
-      `;
-
-      const customIcon = L.divIcon({
-        html: iconHtml,
-        className: 'custom-marker',
-        iconSize: [markerSize, markerSize],
-        iconAnchor: [markerSize / 2, markerSize / 2],
-        popupAnchor: [0, -markerSize / 2]
-      });
-
-      const marker = L.marker([event.lat, event.lng], { icon: customIcon });
-
-      marker.on('click', () => {
-        setSelectedEventId(event.id);
-        setIsPanelOpen(true);
-        setPanelHeight('partial');
-        setShowPerfectDayPanel(false);
-      });
 
       marker.bindPopup(popupContent);
       marker.addTo(map);
