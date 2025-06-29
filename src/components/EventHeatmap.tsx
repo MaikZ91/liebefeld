@@ -805,31 +805,29 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* Event Form Dialog */}
-      <Dialog open={isEventFormOpen} onOpenChange={setIsEventFormOpen}>
-        <DialogContent className="z-[1100] bg-black/95 backdrop-blur-md border-gray-700 text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-white flex items-center gap-2">
-              <Plus className="w-5 h-5 text-red-500" />
-              Community Event hinzufügen
-            </DialogTitle>
-          </DialogHeader>
-          <EventForm 
-            onAddEvent={handleAddEvent}
-            onSuccess={() => setIsEventFormOpen(false)}
-            onCancel={() => setIsEventFormOpen(false)}
-            selectedDate={new Date()}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Event Chat Dialog */}
-      <Dialog open={eventChatDialog.isOpen} onOpenChange={() => setEventChatDialog({ isOpen: false })}>
-  <DialogContent className="z-[9999] bg-black/95 backdrop-blur-md border-gray-700 text-white max-w-md">
-    {/* dein Chat-Inhalt */}
+ {/* Event Form Dialog */}
+<Dialog open={isEventFormOpen} onOpenChange={setIsEventFormOpen}>
+  <DialogContent className="z-[1100] bg-black/95 backdrop-blur-md border-gray-700 text-white max-w-md">
+    <DialogHeader>
+      <DialogTitle className="text-white flex items-center gap-2">
+        <Plus className="w-5 h-5 text-red-500" />
+        Community Event hinzufügen
+      </DialogTitle>
+    </DialogHeader>
+    <EventForm 
+      onAddEvent={handleAddEvent}
+      onSuccess={() => setIsEventFormOpen(false)}
+      onCancel={() => setIsEventFormOpen(false)}
+      selectedDate={new Date()}
+    />
   </DialogContent>
 </Dialog>
-  );
-};
+
+{/* Event Chat Dialog */}
+<EventChatDialog
+  isOpen={eventChatDialog.isOpen}
+  onClose={() => setEventChatDialog({ isOpen: false })}
+  event={eventChatDialog.event}
+/>
 
 export default EventHeatmap;
