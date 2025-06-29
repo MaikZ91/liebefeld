@@ -27,12 +27,14 @@ import { useToast } from '@/hooks/use-toast';
 import EventForm from '@/components/EventForm';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { messageService } from '@/services/messageService';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } => '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input'; 
 import { userService } from '@/services/userService'; 
 import { UserProfile } from '@/types/chatTypes'; 
 import { getInitials } from '@/utils/chatUIUtils'; 
 import PrivateChat from '@/components/users/PrivateChat'; 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Import Avatar components
+
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -64,7 +66,7 @@ const EventHeatmap: React.FC = () => {
   const [selectedUserForPrivateChat, setSelectedUserForPrivateChat] = useState<UserProfile | null>(null); 
 
   const mapRef = useRef<HTMLDivElement>(null);
-  const { toast, dismiss } = useToast(); // Corrected: Get dismiss from useToast()
+  const { toast, dismiss } = useToast(); 
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -283,10 +285,10 @@ const EventHeatmap: React.FC = () => {
       // Update user's profile with live location and status message
       const updatedProfileData: Partial<UserProfile> = {
         last_online: new Date().toISOString(),
-        current_live_location_lat: userCurrentLat, 
-        current_live_location_lng: userCurrentLng, 
-        current_status_message: liveStatusMessage,     
-        current_checkin_timestamp: new Date().toISOString(), 
+        current_live_location_lat: userCurrentLat, // Assumed existence after type/schema update
+        current_live_location_lng: userCurrentLng, // Assumed existence after type/schema update
+        current_status_message: liveStatusMessage,     // Assumed existence after type/schema update
+        current_checkin_timestamp: new Date().toISOString(), // Assumed existence after type/schema update
       };
       
       await supabase.from('user_profiles')
@@ -313,7 +315,7 @@ const EventHeatmap: React.FC = () => {
 
       refetchProfile(); 
 
-      dismiss(checkInToastId); // Corrected: Call dismiss from useToast hook
+      dismiss(checkInToastId); 
       toast({ 
         title: "Erfolgreich eingecheckt!",
         description: liveStatusMessage ? `Dein Status: "${liveStatusMessage}" wurde geteilt.` : "Dein Standort wurde geteilt.",
@@ -322,7 +324,7 @@ const EventHeatmap: React.FC = () => {
 
     } catch (error: any) { 
       console.error('Check-in failed:', error);
-      dismiss(checkInToastId); // Corrected: Call dismiss from useToast hook
+      dismiss(checkInToastId); 
       toast({ 
         title: "Check-in fehlgeschlagen",
         description: error.message || "Es gab ein Problem beim Einchecken.", 
@@ -893,6 +895,16 @@ const EventHeatmap: React.FC = () => {
               Ich bin hier!
             </DialogTitle>
           </DialogHeader>
+          {/* Avatar display moved inside DialogContent */}
+          {userProfile && (
+            <div className="flex items-center gap-3 py-2 px-4 border-b border-gray-800">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.username} />
+                <AvatarFallback className="bg-red-500 text-white">{getInitials(userProfile.username)}</AvatarFallback>
+              </Avatar>
+              <span className="text-white text-lg font-semibold">{userProfile.username}</span>
+            </div>
+          )}
           <div className="space-y-4 py-4">
             <p className="text-gray-300">Setze deinen Status:</p>
             <div className="flex items-center relative w-full">
