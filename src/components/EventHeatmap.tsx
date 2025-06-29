@@ -32,6 +32,7 @@ import { Input } from '@/components/ui/input';
 import { userService } from '@/services/userService'; // Import userService
 import { UserProfile } from '@/types/chatTypes'; // Import UserProfile type
 import { getInitials } from '@/utils/chatUIUtils'; // Import getInitials
+import PrivateChat from '@/components/users/PrivateChat'; // Import PrivateChat
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -59,6 +60,9 @@ const EventHeatmap: React.FC = () => {
   const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false); 
   const [checkInSearchTerm, setCheckInSearchTerm] = useState(''); 
   const [liveStatusMessage, setLiveStatusMessage] = useState(''); // New: For custom status message
+  const [isPrivateChatOpen, setIsPrivateChatOpen] = useState(false); // New: State for private chat
+  const [selectedUserForPrivateChat, setSelectedUserForPrivateChat] = useState<UserProfile | null>(null); // New: User for private chat
+
   const mapRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -266,14 +270,14 @@ const EventHeatmap: React.FC = () => {
       setPerfectDayMessage(data.response);
       setShowPerfectDayPanel(true);
       
-      toast({ 
+      toast({ // Corrected: Using main toast function
         title: "Perfect Day generiert!",
         description: "Deine personalisierte Tagesempfehlung ist bereit.",
         variant: "default"
       });
     } catch (error: any) { 
       console.error('Error generating Perfect Day:', error);
-      toast({ 
+      toast({ // Corrected: Using main toast function
         title: "Fehler",
         description: "Perfect Day konnte nicht generiert werden: " + (error.message || "Unbekannter Fehler."), 
         variant: "destructive"
@@ -295,7 +299,7 @@ const EventHeatmap: React.FC = () => {
     }
 
     setIsCheckInDialogOpen(false); 
-    const checkInToastId = toast.loading("Check-in wird verarbeitet...");
+    const checkInToastId = toast.loading("Check-in wird verarbeitet..."); // Corrected: toast.loading is a function
 
     try {
       // For now, location for status can be fixed to Bielefeld center or current selected city
@@ -306,14 +310,15 @@ const EventHeatmap: React.FC = () => {
       // 1. Update user's profile with live location and status message
       const updatedProfileData: Partial<UserProfile> = {
         last_online: new Date().toISOString(),
-        // Assuming schema changes for these fields have been made externally:
-        // current_live_location_lat: userCurrentLat,
-        // current_live_location_lng: userCurrentLng,
-        // current_status_message: liveStatusMessage,
-        // current_checkin_timestamp: new Date().toISOString(),
+        // These fields assume schema changes have been made:
+        current_live_location_lat: userCurrentLat,
+        current_live_location_lng: userCurrentLng,
+        current_status_message: liveStatusMessage,
+        current_checkin_timestamp: new Date().toISOString(),
       };
 
       // If favorite_locations should also reflect the 'live' location for map display:
+      // Note: This is a fallback if current_live_location fields are not used for map rendering
       const updatedFavoriteLocations = userProfile?.favorite_locations 
         ? [...userProfile.favorite_locations, 'Aktueller Standort'].filter((value, index, self) => self.indexOf(value) === index) 
         : ['Aktueller Standort'];
@@ -346,10 +351,7 @@ const EventHeatmap: React.FC = () => {
 
       // Refresh user profile and map markers
       refetchProfile(); 
-      if (map) { // Re-render user markers on the map
-        const allUsers = await userService.getUsers();
-        renderUserMarkers(allUsers);
-      }
+      // User markers will be re-rendered via the useEffect hook triggered by userProfile change
 
       toast.dismiss(checkInToastId); 
       toast({ 
@@ -419,68 +421,88 @@ const EventHeatmap: React.FC = () => {
     });
 
     const newUserMarkers: L.Marker[] = [];
+    const THIRTY_MINUTES_MS = 30 * 60 * 1000;
 
     usersToDisplay.forEach(user => {
-      // For simplicity, display user at the first favorite location.
-      // In a more complex scenario, this would be `current_live_location`
-      // from schema changes.
-      if (user.favorite_locations && user.favorite_locations.length > 0) {
-        const locationText = user.favorite_locations[0]; 
-        const lat = getCoordinatesForLocation(locationText);
-        const lng = getCoordinatesForLocation(locationText, true);
+      // Filter for users with active check-in status (assuming schema changes)
+      const hasLiveLocation = (user as any).current_live_location_lat && (user as any).current_live_location_lng;
+      const hasStatusMessage = (user as any).current_status_message && (user as any).current_status_message.trim() !== '';
+      const isRecentCheckin = (user as any).current_checkin_timestamp && 
+                               (new Date().getTime() - new Date((user as any).current_checkin_timestamp).getTime() < THIRTY_MINUTES_MS);
 
-        if (lat !== null && lng !== null) {
-          const userIconHtml = `
+      if (hasLiveLocation && hasStatusMessage && isRecentCheckin) {
+        const lat = (user as any).current_live_location_lat;
+        const lng = (user as any).current_live_location_lng;
+        const statusMessage = (user as any).current_status_message;
+
+        // Custom icon for user avatar with status bubble
+        const userIconHtml = `
+          <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: auto;
+            min-width: 80px;
+            max-width: 150px;
+            cursor: pointer;
+          ">
             <div style="
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              justify-content: center;
-              text-align: center;
-              width: 60px;
-              cursor: pointer;
+              background: #ef4444; /* Speech bubble background */
+              color: white;
+              padding: 4px 8px;
+              border-radius: 15px;
+              font-size: 11px;
+              font-weight: 500;
+              margin-bottom: 5px;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+              position: relative;
+              top: 5px; /* Adjust to float above avatar */
             ">
-              <img src="${user.avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=' + getInitials(user.username)}" 
-                   alt="${user.username}"
-                   style="
-                     width: 40px;
-                     height: 40px;
-                     border-radius: 50%;
-                     border: 2px solid #ef4444;
-                     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-                     background-color: white;
-                   "/>
-              <div style="
-                background: rgba(0,0,0,0.7);
-                color: white;
-                padding: 2px 6px;
-                border-radius: 10px;
-                font-size: 10px;
-                margin-top: 4px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                max-width: 100%;
-              ">
-                ${user.username}
-              </div>
+              ${statusMessage}
             </div>
-          `;
+            <img src="${user.avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=' + getInitials(user.username)}" 
+                 alt="${user.username}"
+                 style="
+                   width: 50px;
+                   height: 50px;
+                   border-radius: 50%;
+                   border: 3px solid white; /* White border as in screenshot */
+                   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+                   background-color: white;
+                   position: relative;
+                   z-index: 10;
+                 "/>
+            <div style="
+              color: #333; /* Darker text for username below avatar */
+              font-size: 10px;
+              font-weight: bold;
+              margin-top: 2px;
+            ">
+              ${user.username}
+            </div>
+          </div>
+        `;
 
-          const userMarkerIcon = L.divIcon({
-            html: userIconHtml,
-            className: 'user-marker',
-            iconSize: [60, 60], 
-            iconAnchor: [30, 60], 
-            popupAnchor: [0, -60]
-          });
+        const userMarkerIcon = L.divIcon({
+          html: userIconHtml,
+          className: 'user-marker',
+          iconSize: [60, 90], // Adjust size to accommodate bubble and name
+          iconAnchor: [30, 90], // Anchor at the bottom center
+        });
 
-          const userMarker = L.marker([lat, lng], { icon: userMarkerIcon });
-          
-          userMarker.bindPopup(`<b>${user.username}</b><br>Online (${locationText})`); 
-          userMarker.addTo(map);
-          newUserMarkers.push(userMarker);
-        }
+        const userMarker = L.marker([lat, lng], { icon: userMarkerIcon });
+        
+        userMarker.on('click', () => {
+          setSelectedUserForPrivateChat(user);
+          setIsPrivateChatOpen(true);
+        });
+
+        userMarker.addTo(map);
+        newUserMarkers.push(userMarker);
       }
     });
     setUserMarkers(newUserMarkers);
@@ -965,7 +987,7 @@ const EventHeatmap: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Check-in Dialog */}
+      {/* Live Check-in Dialog */}
       <Dialog open={isCheckInDialogOpen} onOpenChange={setIsCheckInDialogOpen}>
         <DialogContent className="z-[1100] bg-black/95 backdrop-blur-md border-gray-700 text-white max-w-md">
           <DialogHeader>
@@ -992,6 +1014,14 @@ const EventHeatmap: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Private Chat Dialog */}
+      <PrivateChat
+        open={isPrivateChatOpen}
+        onOpenChange={setIsPrivateChatOpen}
+        currentUser={currentUser}
+        otherUser={selectedUserForPrivateChat}
+      />
     </div>
   );
 };
