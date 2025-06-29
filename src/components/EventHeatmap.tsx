@@ -3,7 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Slider } => '@/components/ui/slider';
+import { Slider } from '@/components/ui/slider'; // Corrected: Changed '=>' to 'from' in import
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,24 +16,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, MessageSquare, Send, Heart } from 'lucide-react'; // Import Heart icon for likes display
+import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, MessageSquare, Send, Heart } from 'lucide-react'; 
 import { useEvents } from '@/hooks/useEvents';
 import { format } from 'date-fns';
 import SwipeableEventPanel from '@/components/event-chat/SwipeableEventPanel';
 import { PanelEventData, PanelEvent } from '@/components/event-chat/types';
 import { cn } from '@/lib/utils';
-import { supabase } => '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast'; 
 import EventForm from '@/components/EventForm';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { messageService } from '@/services/messageService';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input'; 
-import { userService } => '@/services/userService'; 
+import { userService } from '@/services/userService'; 
 import { UserProfile } from '@/types/chatTypes'; 
 import { getInitials } from '@/utils/chatUIUtils'; 
 import PrivateChat from '@/components/users/PrivateChat'; 
-import { Avatar, AvatarFallback, AvatarImage } => '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
 // Fix Leaflet default icons
@@ -809,7 +809,6 @@ const EventHeatmap: React.FC = () => {
           {/* Panel Content */}
           <div className="p-4 overflow-y-auto h-full">
             <div 
-              className="text-white prose prose-invert max-w-none"
               dangerouslySetInnerHTML={{ __html: perfectDayMessage }}
             />
           </div>
