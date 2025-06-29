@@ -33,7 +33,7 @@ import { userService } from '@/services/userService';
 import { UserProfile } from '@/types/chatTypes'; 
 import { getInitials } from '@/utils/chatUIUtils'; 
 import PrivateChat from '@/components/users/PrivateChat'; 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Import Avatar components
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
 // Fix Leaflet default icons
@@ -508,6 +508,40 @@ const EventHeatmap: React.FC = () => {
 
       const displayNumber = likes > 0 ? likes : (event.rsvp_yes || 1); 
 
+      // Enhanced popup content with image and prominent title
+      const popupContent = `
+        <div style="min-width: 200px; max-width: 250px; font-family: sans-serif;">
+          ${event.image_url ? `<img src="${event.image_url}" onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;"/>` : ''}
+          <h3 style="margin: 0 0 4px 0; font-weight: bold; color: #1f2937; font-size: 16px;">${event.title}</h3>
+          
+          <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280; font-size: 12px;">
+            <span style="margin-right: 5px;">📍</span>
+            <span>${event.location || 'Bielefeld'}</span>
+          </div>
+          <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280; font-size: 12px;">
+            <span style="margin-right: 5px;">📅</span>
+            <span>Heute, ${event.time} Uhr</span>
+          </div>
+          <div style="display: flex; align-items: center; margin-bottom: 8px; color: #6b7280; font-size: 12px;">
+            <span style="margin-right: 5px;">❤️</span>
+            <span>${event.likes || 0} Likes</span>
+          </div>
+          ${event.description ? `<p style="margin-bottom: 8px; font-size: 11px; color: #4b5563; max-height: 60px; overflow: hidden;">${event.description}</p>` : ''}
+          <div style="
+            background: #ef4444;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            display: inline-block;
+          ">
+            ${event.category}
+          </div>
+          ${event.link ? `<div style="margin-top: 8px;"><a href="${event.link}" target="_blank" style="color: #ef4444; text-decoration: underline; font-size: 12px;">Mehr Info</a></div>` : ''}
+        </div>
+      `;
+
+
       const iconHtml = `
         <div style="
           background: #ef4444;
@@ -545,48 +579,6 @@ const EventHeatmap: React.FC = () => {
         setPanelHeight('partial');
         setShowPerfectDayPanel(false);
       });
-
-      const popupContent = `
-        <div style="min-width: 200px;">
-          <h3 style="margin: 0 0 8px 0; font-weight: bold; color: #1f2937;">${event.title}</h3>
-          <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280;">
-            <span style="margin-right: 8px;">📍</span>
-            <span>${event.location || 'Bielefeld'}</span>
-          </div>
-          <div style="display: flex; align-align-items: center; margin-bottom: 4px; color: #6b7280;">
-            <span style="margin-right: 8px;">🏙️</span>
-            <span>${event.city || 'Bielefeld'}</span>
-          </div>
-          <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280;">
-            <span style="margin-right: 8px;">📅</span>
-            <span>Heute</span>
-          </div>
-          <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280;">
-            <span style="margin-right: 8px;">⏰</span>
-            <span>${event.time}</span>
-          </div>
-          <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280;">
-            <span style="margin-right: 8px;">👥</span>
-            <span>${event.rsvp_yes || 0} Zusagen, ${event.rsvp_maybe || 0} Vielleicht</span>
-          </div>
-          <div style="display: flex; align-items: center; margin-bottom: 8px; color: #6b7280;">
-            <span style="margin-right: 8px;">❤️</span>
-            <span>${event.likes || 0} Likes</span>
-          </div>
-          ${event.description ? `<p style="margin-bottom: 8px; font-size: 14px; color: #4b5563;">${event.description}</p>` : ''}
-          <div style="
-            background: #ef4444;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            display: inline-block;
-          ">
-            ${event.category}
-          </div>
-          ${event.link ? `<div style="margin-top: 8px;"><a href="${event.link}" target="_blank" style="color: #ef4444; text-decoration: underline;">Mehr Info</a></div>` : ''}
-        </div>
-      `;
 
       marker.bindPopup(popupContent);
       marker.addTo(map);
