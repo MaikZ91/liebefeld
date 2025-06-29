@@ -742,7 +742,7 @@ const EventHeatmap: React.FC = () => {
 
       {/* Event Form Dialog */}
       <Dialog open={isEventFormOpen} onOpenChange={setIsEventFormOpen}>
-        <DialogContent className="bg-black/95 backdrop-blur-md border-gray-700 text-white max-w-md">
+        <DialogContent className="z-[1100] bg-black/95 backdrop-blur-md border-gray-700 text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <Plus className="w-5 h-5 text-red-500" />
