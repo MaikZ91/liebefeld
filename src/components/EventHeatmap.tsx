@@ -704,13 +704,10 @@ const EventHeatmap: React.FC = () => {
 
       {/* Map Container */}
       <div 
-        ref={mapRef} 
-        className="w-full h-full"
-        style={{ 
-          minHeight: '100vh',
-          zIndex: 1
-        }}
-      />
+  ref={mapRef} 
+  className="w-full h-full z-0"
+  style={{ minHeight: '100vh' }}
+/>
 
       {/* Perfect Day Panel */}
       {showPerfectDayPanel && perfectDayMessage && (
