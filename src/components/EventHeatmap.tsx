@@ -335,38 +335,38 @@ const EventHeatmap: React.FC = () => {
   };
 
   // Initialize map
-  useEffect(() => {
-    if (!mapRef.current || map) return;
+useEffect(() => {
+  if (!mapRef.current || map) return;
 
-    console.log('Initializing Leaflet Map...');
-    
-    try {
-      const leafletMap = L.map(mapRef.current, {
-        center: [52.0302, 8.5311], // Bielefeld center
-        zoom: 13,
-        zoomControl: true,
-        preferCanvas: false
-      });
-      
-      // Add OpenStreetMap tiles
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19
-      }).addTo(leafletMap);
+  console.log('Initializing Leaflet Map...');
 
-      setMap(leafletMap);
-      console.log('Map initialized successfully');
+  try {
+    const leafletMap = L.map(mapRef.current, {
+      center: [52.0302, 8.5311],
+      zoom: 13,
+      zoomControl: true,
+      preferCanvas: false,
+    });
 
-      // Cleanup function
-      return () => {
-        if (leafletMap) {
-          leafletMap.remove();
-        }
-      };
-    } catch (error) {
-      console.error('Error initializing map:', error);
-    }
-  }, [mapRef.current]);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(leafletMap);
+
+    setMap(leafletMap);
+
+    // 💡 Fix: Leaflet muss Größe neu berechnen
+    setTimeout(() => {
+      leafletMap.invalidateSize();
+    }, 200);
+
+    return () => {
+      leafletMap.remove();
+    };
+  } catch (error) {
+    console.error('Error initializing map:', error);
+  }
+}, [mapRef.current]);
 
   // Update markers when filtered events change
   useEffect(() => {
@@ -704,10 +704,13 @@ const EventHeatmap: React.FC = () => {
 
       {/* Map Container */}
       <div 
-  ref={mapRef} 
-  className="w-full h-full z-0"
-  style={{ minHeight: '100vh' }}
-/>
+        ref={mapRef} 
+        className="w-full h-full"
+        style={{ 
+          minHeight: '100vh',
+          zIndex: 1
+        }}
+      />
 
       {/* Perfect Day Panel */}
       {showPerfectDayPanel && perfectDayMessage && (
