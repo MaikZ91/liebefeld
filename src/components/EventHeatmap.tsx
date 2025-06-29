@@ -28,13 +28,17 @@ import EventForm from '@/components/EventForm';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { messageService } from '@/services/messageService';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input'; 
+import { userService } from '@/services/userService'; // Import userService
+import { UserProfile } from '@/types/chatTypes'; // Import UserProfile type
+import { getInitials } from '@/utils/chatUIUtils'; // Import getInitials
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/cdnjs/cloudflare/images/marker-shadow.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png', // Corrected path for marker icon
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png', // Corrected path for shadow icon
 });
 
 const EventHeatmap: React.FC = () => {
@@ -43,7 +47,8 @@ const EventHeatmap: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [timeRange, setTimeRange] = useState([new Date().getHours()]); 
   const [map, setMap] = useState<L.Map | null>(null);
-  const [markers, setMarkers] = useState<L.Marker[]>([]);
+  const [eventMarkers, setEventMarkers] = useState<L.Marker[]>([]); // Renamed for clarity
+  const [userMarkers, setUserMarkers] = useState<L.Marker[]>([]); // New state for user markers
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [panelHeight, setPanelHeight] = useState<'collapsed' | 'partial' | 'full'>('collapsed');
@@ -51,12 +56,13 @@ const EventHeatmap: React.FC = () => {
   const [isPerfectDayLoading, setIsPerfectDayLoading] = useState(false);
   const [showPerfectDayPanel, setShowPerfectDayPanel] = useState(false);
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
-  const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false); // New state for check-in dialog
-  const [checkInSearchTerm, setCheckInSearchTerm] = useState(''); // New state for search in check-in dialog
+  const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false); 
+  const [checkInSearchTerm, setCheckInSearchTerm] = useState(''); 
+  const [liveStatusMessage, setLiveStatusMessage] = useState(''); // New: For custom status message
   const mapRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Get today's date in YYYY-MM-DD format
+  // Get today's date in JL-MM-DD format
   const today = format(new Date(), 'yyyy-MM-dd');
 
   // Convert hour slider value to time string
@@ -139,7 +145,7 @@ const EventHeatmap: React.FC = () => {
     }
 
     // If no match found, use Bielefeld center with small random offset
-    const offset = (Math.random() - 0.5) * 0.01; // Smaller offset for better clustering
+    const offset = (Math.random() - 0.5) * 0.005; // Smaller offset for better clustering
     const coord = isLng ? bielefeldCenter.lng + offset : bielefeldCenter.lat + offset;
     console.log(`Using default coordinates with offset for location "${location}": ${coord}`);
     return coord;
@@ -260,16 +266,16 @@ const EventHeatmap: React.FC = () => {
       setPerfectDayMessage(data.response);
       setShowPerfectDayPanel(true);
       
-      toast({
+      toast({ 
         title: "Perfect Day generiert!",
         description: "Deine personalisierte Tagesempfehlung ist bereit.",
         variant: "default"
       });
-    } catch (error) {
+    } catch (error: any) { 
       console.error('Error generating Perfect Day:', error);
-      toast({
+      toast({ 
         title: "Fehler",
-        description: "Perfect Day konnte nicht generiert werden.",
+        description: "Perfect Day konnte nicht generiert werden: " + (error.message || "Unbekannter Fehler."), 
         variant: "destructive"
       });
     } finally {
@@ -277,63 +283,91 @@ const EventHeatmap: React.FC = () => {
     }
   };
 
-  // Handle "Ich bin hier" check-in
-  const handleCheckIn = async (event: typeof todaysBielefeldEvents[0]) => {
+  // Handle "Ich bin hier" check-in with custom status message
+  const handleCheckInWithStatus = async () => {
     if (!currentUser || currentUser === 'Gast') {
       toast({
         title: "Anmeldung erforderlich",
-        description: "Du musst angemeldet sein, um dich einzuchecken.",
+        description: "Du musst angemeldet sein, um dich einzuchecken und einen Status zu setzen.",
         variant: "destructive"
       });
       return;
     }
 
-    setIsCheckInDialogOpen(false); // Close the dialog immediately
-    toast.loading("Check-in wird verarbeitet...", { duration: 2000 });
+    setIsCheckInDialogOpen(false); 
+    const checkInToastId = toast.loading("Check-in wird verarbeitet...");
 
     try {
-      // 1. Send message to community chat
-      const communityMessage = `📍 ${currentUser} ist jetzt bei "${event.title}" in ${event.location}! Wer ist auch da?`;
-      
-      // We are hardcoding the 'ausgehen' group ID for Bielefeld as per the request
-      const bielefeldAusgehenGroupId = 'bi_ausgehen'; // This is a specific group ID, needs to be consistently managed.
+      // For now, location for status can be fixed to Bielefeld center or current selected city
+      // In a real app, this would come from user's actual location or map click
+      const userCurrentLat = getCoordinatesForLocation('Bielefeld') as number;
+      const userCurrentLng = getCoordinatesForLocation('Bielefeld', true) as number;
 
-      const { error: messageError } = await messageService.sendMessage(
-        bielefeldAusgehenGroupId,
-        communityMessage,
-        currentUser,
-        localStorage.getItem('community_chat_avatar') || ''
-      );
+      // 1. Update user's profile with live location and status message
+      const updatedProfileData: Partial<UserProfile> = {
+        last_online: new Date().toISOString(),
+        // Assuming schema changes for these fields have been made externally:
+        // current_live_location_lat: userCurrentLat,
+        // current_live_location_lng: userCurrentLng,
+        // current_status_message: liveStatusMessage,
+        // current_checkin_timestamp: new Date().toISOString(),
+      };
 
-      if (messageError) {
-        console.error('Error sending check-in message:', messageError);
-        throw new Error('Could not post check-in message to chat.');
-      }
-
-      // 2. Update user's last_online and favorite_locations
-      const updatedLocations = userProfile?.favorite_locations 
-        ? [...userProfile.favorite_locations, event.location].filter((value, index, self) => self.indexOf(value) === index) // Add unique location
-        : [event.location];
+      // If favorite_locations should also reflect the 'live' location for map display:
+      const updatedFavoriteLocations = userProfile?.favorite_locations 
+        ? [...userProfile.favorite_locations, 'Aktueller Standort'].filter((value, index, self) => self.indexOf(value) === index) 
+        : ['Aktueller Standort'];
 
       await supabase.from('user_profiles')
         .update({ 
-          last_online: new Date().toISOString(),
-          favorite_locations: updatedLocations
+          ...updatedProfileData,
+          favorite_locations: updatedFavoriteLocations // Still update favorite_locations for map display
         })
         .eq('username', currentUser);
       
-      // Refresh user profile in context
-      refetchProfile();
+      // 2. Send message to community chat (Ausgehen channel)
+      const communityMessage = liveStatusMessage 
+        ? `📍 ${currentUser} ist jetzt hier: "${liveStatusMessage}"`
+        : `📍 ${currentUser} ist jetzt in der Nähe!`;
+      
+      const bielefeldAusgehenGroupId = 'bi_ausgehen'; 
 
-      toast.success("Erfolgreich eingecheckt!", {
-        description: `Du bist jetzt bei "${event.title}" eingecheckt.`,
+      const messageResult = await messageService.sendMessage(
+        bielefeldAusgehenGroupId,
+        currentUser,
+        communityMessage,
+        localStorage.getItem('community_chat_avatar') || ''
+      );
+
+      if (!messageResult) {
+        console.error('Error sending check-in message: Message not sent or ID not returned.');
+        throw new Error('Could not post check-in message to chat.');
+      }
+
+      // Refresh user profile and map markers
+      refetchProfile(); 
+      if (map) { // Re-render user markers on the map
+        const allUsers = await userService.getUsers();
+        renderUserMarkers(allUsers);
+      }
+
+      toast.dismiss(checkInToastId); 
+      toast({ 
+        title: "Erfolgreich eingecheckt!",
+        description: liveStatusMessage ? `Dein Status: "${liveStatusMessage}" wurde geteilt.` : "Dein Standort wurde geteilt.",
+        variant: "success"
       });
 
-    } catch (error: any) {
+    } catch (error: any) { 
       console.error('Check-in failed:', error);
-      toast.error("Check-in fehlgeschlagen", {
-        description: error.message || "Es gab ein Problem beim Einchecken.",
+      toast.dismiss(checkInToastId); 
+      toast({ 
+        title: "Check-in fehlgeschlagen",
+        description: error.message || "Es gab ein Problem beim Einchecken.", 
+        variant: "destructive"
       });
+    } finally {
+      setLiveStatusMessage(''); // Clear status message
     }
   };
 
@@ -358,22 +392,100 @@ const EventHeatmap: React.FC = () => {
 
       if (error) throw error;
 
-      toast({
+      toast({ 
         title: "Event erfolgreich erstellt!",
         description: `${eventData.title} wurde hinzugefügt.`,
         variant: "default"
       });
-      refreshEvents(); // Refresh events to show new event on map
+      refreshEvents(); 
       setIsEventFormOpen(false);
-    } catch (error) {
+    } catch (error: any) { 
       console.error('Error adding event:', error);
-      toast({
+      toast({ 
         title: "Fehler",
         description: "Event konnte nicht erstellt werden.",
         variant: "destructive"
       });
     }
   };
+
+  // Function to render user markers
+  const renderUserMarkers = (usersToDisplay: UserProfile[]) => {
+    if (!map) return;
+
+    // Clear existing user markers
+    userMarkers.forEach(marker => {
+      map.removeLayer(marker);
+    });
+
+    const newUserMarkers: L.Marker[] = [];
+
+    usersToDisplay.forEach(user => {
+      // For simplicity, display user at the first favorite location.
+      // In a more complex scenario, this would be `current_live_location`
+      // from schema changes.
+      if (user.favorite_locations && user.favorite_locations.length > 0) {
+        const locationText = user.favorite_locations[0]; 
+        const lat = getCoordinatesForLocation(locationText);
+        const lng = getCoordinatesForLocation(locationText, true);
+
+        if (lat !== null && lng !== null) {
+          const userIconHtml = `
+            <div style="
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              text-align: center;
+              width: 60px;
+              cursor: pointer;
+            ">
+              <img src="${user.avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=' + getInitials(user.username)}" 
+                   alt="${user.username}"
+                   style="
+                     width: 40px;
+                     height: 40px;
+                     border-radius: 50%;
+                     border: 2px solid #ef4444;
+                     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+                     background-color: white;
+                   "/>
+              <div style="
+                background: rgba(0,0,0,0.7);
+                color: white;
+                padding: 2px 6px;
+                border-radius: 10px;
+                font-size: 10px;
+                margin-top: 4px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+              ">
+                ${user.username}
+              </div>
+            </div>
+          `;
+
+          const userMarkerIcon = L.divIcon({
+            html: userIconHtml,
+            className: 'user-marker',
+            iconSize: [60, 60], 
+            iconAnchor: [30, 60], 
+            popupAnchor: [0, -60]
+          });
+
+          const userMarker = L.marker([lat, lng], { icon: userMarkerIcon });
+          
+          userMarker.bindPopup(`<b>${user.username}</b><br>Online (${locationText})`); 
+          userMarker.addTo(map);
+          newUserMarkers.push(userMarker);
+        }
+      }
+    });
+    setUserMarkers(newUserMarkers);
+  };
+
 
   // Initialize map
   useEffect(() => {
@@ -409,19 +521,19 @@ const EventHeatmap: React.FC = () => {
     }
   }, [mapRef.current]);
 
-  // Update markers when filtered events change
+  // Update event markers when filtered events change
   useEffect(() => {
     if (!map) return;
 
-    console.log('Updating markers for', filteredEvents.length, 'events');
+    console.log('Updating event markers for', filteredEvents.length, 'events');
 
-    // Clear existing markers
-    markers.forEach(marker => {
+    // Clear existing event markers
+    eventMarkers.forEach(marker => {
       map.removeLayer(marker);
     });
 
     // Create new markers for filtered events
-    const newMarkers: L.Marker[] = [];
+    const newEventMarkers: L.Marker[] = [];
 
     filteredEvents.forEach(event => {
       if (!event.lat || !event.lng) return;
@@ -531,14 +643,36 @@ const EventHeatmap: React.FC = () => {
 
         marker.bindPopup(popupContent);
         marker.addTo(map);
-        newMarkers.push(marker);
+        newEventMarkers.push(marker);
       } catch (error) {
         console.error('Error creating marker for event:', event.title, error);
       }
     });
 
-    setMarkers(newMarkers);
+    setEventMarkers(newEventMarkers);
   }, [map, filteredEvents]);
+
+  // New useEffect to fetch and display user markers
+  useEffect(() => {
+    if (!map) return;
+
+    const fetchAndDisplayUsers = async () => {
+      console.log('Fetching and displaying user markers...');
+      const allUsers = await userService.getUsers();
+
+      renderUserMarkers(allUsers);
+    };
+
+    // Call this function when map is ready and whenever user data or locations might change
+    if (map) {
+      fetchAndDisplayUsers();
+    }
+
+    // Optionally, set up a refresh for user locations/status if needed (e.g., every minute)
+    const userRefreshInterval = setInterval(fetchAndDisplayUsers, 60 * 1000); // Refresh every 1 minute
+    return () => clearInterval(userRefreshInterval);
+
+  }, [map, events, userProfile]); // Re-run when userProfile or events change
 
   // Handle event selection from panel
   const handleEventSelect = (eventId: string) => {
@@ -699,31 +833,15 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* Add Event / Check-in Button - Bottom Right */}
+      {/* "Ich bin hier" Button (bottom right, floating) */}
       <div className="absolute bottom-6 right-6 z-[1000]">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              className="bg-red-500 hover:bg-red-600 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center p-0"
-            >
-              <Plus className="w-6 h-6" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 bg-gray-900 border border-gray-700 text-white">
-            <DropdownMenuItem 
-              onClick={() => setIsEventFormOpen(true)}
-              className="cursor-pointer hover:bg-gray-800"
-            >
-              <Calendar className="h-4 w-4 mr-2" /> Event hinzufügen
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => setIsCheckInDialogOpen(true)}
-              className="cursor-pointer hover:bg-gray-800"
-            >
-              <CheckCircle className="h-4 w-4 mr-2" /> Ich bin hier!
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button
+          onClick={() => setIsCheckInDialogOpen(true)}
+          className="bg-red-500 hover:bg-red-600 text-white w-28 h-16 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-sm font-bold"
+        >
+          <Plus className="w-6 h-6 mb-0.5" />
+          Ich bin hier!
+        </Button>
       </div>
 
       {/* Map Container */}
@@ -857,35 +975,20 @@ const EventHeatmap: React.FC = () => {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <p className="text-gray-300">Wähle das Event aus, bei dem du gerade bist, um es mit der Community zu teilen:</p>
+            <p className="text-gray-300">Setze deinen Status:</p>
             <Input
-              placeholder="Event suchen..."
-              value={checkInSearchTerm}
-              onChange={(e) => setCheckInSearchTerm(e.target.value)}
+              placeholder="Was machst du gerade? (z.B. Jetzt im Café Barcelona)"
+              value={liveStatusMessage}
+              onChange={(e) => setLiveStatusMessage(e.target.value)}
               className="bg-gray-800 border-gray-700 focus:ring-green-500 focus:border-green-500 text-white placeholder:text-gray-500"
             />
-            <ScrollArea className="h-64">
-              {filteredCheckInEvents.length === 0 ? (
-                <div className="text-center text-gray-400 py-8">Keine Events gefunden.</div>
-              ) : (
-                <div className="space-y-2">
-                  {filteredCheckInEvents.map(event => (
-                    <Button
-                      key={event.id}
-                      variant="outline"
-                      className="w-full justify-start text-left bg-gray-800 border-gray-700 hover:bg-gray-700 text-white h-auto p-3"
-                      onClick={() => handleCheckIn(event)}
-                    >
-                      <div className="flex flex-col items-start">
-                        <span className="font-medium text-base">{event.title}</span>
-                        <span className="text-xs text-gray-400">{event.time} Uhr @ {event.location}</span>
-                      </div>
-                      <MessageSquare className="ml-auto h-4 w-4 text-green-400" />
-                    </Button>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
+            <Button
+              onClick={handleCheckInWithStatus}
+              disabled={!liveStatusMessage.trim()}
+              className="w-full bg-green-500 hover:bg-green-600 text-white"
+            >
+              <CheckCircle className="w-5 h-5 mr-2" /> Status teilen
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
