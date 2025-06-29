@@ -71,6 +71,10 @@ export interface UserProfile {
   favorite_locations: string[] | null;
   created_at: string;
   last_online: string;
+  current_live_location_lat?: number | null; // Latitude
+  current_live_location_lng?: number | null; // Longitude
+  current_status_message?: string | null;     // Custom status message
+  current_checkin_timestamp?: string | null;  // Timestamp of last check-in
 }
 
 // Private Nachrichtentyp - updated to match database schema
