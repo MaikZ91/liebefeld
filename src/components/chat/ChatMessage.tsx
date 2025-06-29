@@ -17,6 +17,8 @@ interface ChatMessageProps {
   reactions: { emoji: string; users: string[] }[];
   onReact: (emoji: string) => void;
   currentUsername: string;
+  onDateSelect?: (date: string) => void;
+  showDateSelector?: boolean;
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -27,7 +29,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   messageId,
   reactions,
   onReact,
-  currentUsername
+  currentUsername,
+  onDateSelect,
+  showDateSelector
 }) => {
   const [showReactionBar, setShowReactionBar] = useState(false);
 
@@ -111,7 +115,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       {/* Reaction Bar */}
       {showReactionBar && (
         <div className="absolute top-0 right-0 transform -translate-y-full z-10">
-          <ReactionBar onReact={handleReactionClick} />
+          <ReactionBar 
+            reactions={reactions}
+            onReact={handleReactionClick}
+            currentUsername={currentUsername}
+          />
         </div>
       )}
 
