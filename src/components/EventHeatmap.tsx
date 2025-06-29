@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus } from 'lucide-react';
+import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, MessageCircle } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 import { format } from 'date-fns';
 import SwipeableEventPanel from '@/components/event-chat/SwipeableEventPanel';
@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import EventForm from '@/components/EventForm';
+import EventChatDialog from '@/components/event-chat/EventChatDialog';
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -47,6 +48,16 @@ const EventHeatmap: React.FC = () => {
   const [isPerfectDayLoading, setIsPerfectDayLoading] = useState(false);
   const [showPerfectDayPanel, setShowPerfectDayPanel] = useState(false);
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
+  const [eventChatDialog, setEventChatDialog] = useState<{
+    isOpen: boolean;
+    event?: {
+      id: string;
+      title: string;
+      date: string;
+      location: string;
+      image_url?: string;
+    };
+  }>({ isOpen: false });
   const mapRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -279,9 +290,9 @@ const EventHeatmap: React.FC = () => {
   // Handle adding new event
   const handleAddEvent = async (eventData: any) => {
     try {
-      // Add event to Supabase
+      // Add event to Supabase - use correct table name
       const { data, error } = await supabase
-        .from('events')
+        .from('community_events')
         .insert([{
           ...eventData,
           city: 'Bielefeld', // Default to Bielefeld for heatmap
@@ -307,6 +318,20 @@ const EventHeatmap: React.FC = () => {
         variant: "destructive"
       });
     }
+  };
+
+  // Open event chat
+  const openEventChat = (event: any) => {
+    setEventChatDialog({
+      isOpen: true,
+      event: {
+        id: event.id || `${event.title}-${event.date}-${event.time}`,
+        title: event.title,
+        date: event.date,
+        location: event.location || event.city || 'Bielefeld',
+        image_url: event.image_url
+      }
+    });
   };
 
   // Initialize map
@@ -378,7 +403,7 @@ const EventHeatmap: React.FC = () => {
           fontSize = 13;
         }
 
-        const displayNumber = likes > 0 ? likes : (event.rsvp_yes || 1); // Fallback to rsvp_yes if likes is 0
+        const displayNumber = likes > 0 ? likes : (event.rsvp_yes || 1);
 
         // Create custom marker icon
         const iconHtml = `
@@ -420,7 +445,7 @@ const EventHeatmap: React.FC = () => {
           setShowPerfectDayPanel(false);
         });
 
-        // Create popup content with real location from database
+        // Create popup content with chat button
         const popupContent = `
           <div style="min-width: 200px;">
             <h3 style="margin: 0 0 8px 0; font-weight: bold; color: #1f2937;">${event.title}</h3>
@@ -456,10 +481,34 @@ const EventHeatmap: React.FC = () => {
               border-radius: 12px;
               font-size: 12px;
               display: inline-block;
+              margin-bottom: 8px;
             ">
               ${event.category}
             </div>
-            ${event.link ? `<div style="margin-top: 8px;"><a href="${event.link}" target="_blank" style="color: #ef4444; text-decoration: underline;">Mehr Info</a></div>` : ''}
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+              <button onclick="window.openEventChat('${eventId}')" style="
+                background: #ef4444;
+                color: white;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 12px;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+              ">
+                💬 Chat
+              </button>
+              ${event.link ? `<a href="${event.link}" target="_blank" style="
+                background: #6b7280;
+                color: white;
+                text-decoration: none;
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-size: 12px;
+              ">Mehr Info</a>` : ''}
+            </div>
           </div>
         `;
 
@@ -473,6 +522,22 @@ const EventHeatmap: React.FC = () => {
 
     setMarkers(newMarkers);
   }, [map, filteredEvents]);
+
+  // Global function for popup buttons
+  useEffect(() => {
+    (window as any).openEventChat = (eventId: string) => {
+      const event = filteredEvents.find(e => 
+        (e.id || `${e.title}-${e.date}-${e.time}`) === eventId
+      );
+      if (event) {
+        openEventChat(event);
+      }
+    };
+
+    return () => {
+      delete (window as any).openEventChat;
+    };
+  }, [filteredEvents]);
 
   // Handle event selection from panel
   const handleEventSelect = (eventId: string) => {
@@ -757,6 +822,13 @@ const EventHeatmap: React.FC = () => {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Event Chat Dialog */}
+      <EventChatDialog
+        isOpen={eventChatDialog.isOpen}
+        onClose={() => setEventChatDialog({ isOpen: false })}
+        event={eventChatDialog.event!}
+      />
     </div>
   );
 };

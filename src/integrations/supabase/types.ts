@@ -67,6 +67,11 @@ export type Database = {
         Row: {
           avatar: string | null
           created_at: string
+          event_date: string | null
+          event_id: string | null
+          event_image_url: string | null
+          event_location: string | null
+          event_title: string | null
           group_id: string
           id: string
           media_url: string | null
@@ -78,6 +83,11 @@ export type Database = {
         Insert: {
           avatar?: string | null
           created_at?: string
+          event_date?: string | null
+          event_id?: string | null
+          event_image_url?: string | null
+          event_location?: string | null
+          event_title?: string | null
           group_id: string
           id?: string
           media_url?: string | null
@@ -89,6 +99,11 @@ export type Database = {
         Update: {
           avatar?: string | null
           created_at?: string
+          event_date?: string | null
+          event_id?: string | null
+          event_image_url?: string | null
+          event_location?: string | null
+          event_title?: string | null
           group_id?: string
           id?: string
           media_url?: string | null
