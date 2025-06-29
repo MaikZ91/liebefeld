@@ -335,38 +335,38 @@ const EventHeatmap: React.FC = () => {
   };
 
   // Initialize map
-useEffect(() => {
-  if (!mapRef.current || map) return;
+  useEffect(() => {
+    if (!mapRef.current || map) return;
 
-  console.log('Initializing Leaflet Map...');
+    console.log('Initializing Leaflet Map...');
+    
+    try {
+      const leafletMap = L.map(mapRef.current, {
+        center: [52.0302, 8.5311], // Bielefeld center
+        zoom: 13,
+        zoomControl: true,
+        preferCanvas: false
+      });
+      
+      // Add OpenStreetMap tiles
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+      }).addTo(leafletMap);
 
-  try {
-    const leafletMap = L.map(mapRef.current, {
-      center: [52.0302, 8.5311],
-      zoom: 13,
-      zoomControl: true,
-      preferCanvas: false,
-    });
+      setMap(leafletMap);
+      console.log('Map initialized successfully');
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19,
-    }).addTo(leafletMap);
-
-    setMap(leafletMap);
-
-    // 💡 Fix: Leaflet muss Größe neu berechnen
-    setTimeout(() => {
-      leafletMap.invalidateSize();
-    }, 200);
-
-    return () => {
-      leafletMap.remove();
-    };
-  } catch (error) {
-    console.error('Error initializing map:', error);
-  }
-}, [mapRef.current]);
+      // Cleanup function
+      return () => {
+        if (leafletMap) {
+          leafletMap.remove();
+        }
+      };
+    } catch (error) {
+      console.error('Error initializing map:', error);
+    }
+  }, [mapRef.current]);
 
   // Update markers when filtered events change
   useEffect(() => {
@@ -824,12 +824,11 @@ useEffect(() => {
       </Dialog>
 
       {/* Event Chat Dialog */}
-      <EventChatDialog
-        isOpen={eventChatDialog.isOpen}
-        onClose={() => setEventChatDialog({ isOpen: false })}
-        event={eventChatDialog.event}
-      />
-    </div>
+      <Dialog open={eventChatDialog.isOpen} onOpenChange={() => setEventChatDialog({ isOpen: false })}>
+  <DialogContent className="z-[9999] bg-black/95 backdrop-blur-md border-gray-700 text-white max-w-md">
+    {/* dein Chat-Inhalt */}
+  </DialogContent>
+</Dialog>
   );
 };
 
