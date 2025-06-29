@@ -3,14 +3,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { getInitials } from '@/utils/chatUIUtils';
-import { format } from 'date-fns';
 
-interface EventChatMessage {
+interface EventMessage {
   id: string;
   sender: string;
   text: string;
@@ -21,7 +18,7 @@ interface EventChatMessage {
 interface EventChatDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  event: {
+  event?: {
     id: string;
     title: string;
     date: string;
@@ -31,66 +28,71 @@ interface EventChatDialogProps {
 }
 
 const EventChatDialog: React.FC<EventChatDialogProps> = ({ isOpen, onClose, event }) => {
-  const [messages, setMessages] = useState<EventChatMessage[]>([]);
+  const [messages, setMessages] = useState<EventMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Get current user info
-  const username = localStorage.getItem('currentUsername') || 'Gast';
-  const userAvatar = localStorage.getItem('currentUserAvatar') || '';
+  // Get current user from localStorage
+  const currentUsername = localStorage.getItem('currentUsername') || 'Gast';
+  const currentAvatar = localStorage.getItem('currentAvatar') || '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png';
 
-  // Scroll to bottom of messages
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  // Fetch event messages
-  const fetchEventMessages = async () => {
+  // Fetch messages for this event
+  const fetchMessages = async () => {
+    if (!event?.id) return;
+    
+    setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('chat_messages')
-        .select('*')
+        .select('id, sender, text, avatar, created_at')
         .eq('event_id', event.id)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-
       setMessages(data || []);
     } catch (error) {
       console.error('Error fetching event messages:', error);
+      toast({
+        title: "Fehler",
+        description: "Chat-Nachrichten konnten nicht geladen werden.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Send message
   const sendMessage = async () => {
-    if (!newMessage.trim() || isLoading) return;
+    if (!newMessage.trim() || !event?.id || isSending) return;
 
-    setIsLoading(true);
+    setIsSending(true);
     try {
       const { error } = await supabase
         .from('chat_messages')
-        .insert([{
-          group_id: `event-${event.id}`,
-          sender: username,
+        .insert({
+          group_id: `event-${event.id}`, // Event-specific group
+          sender: currentUsername,
           text: newMessage,
-          avatar: userAvatar,
+          avatar: currentAvatar,
           event_id: event.id,
           event_title: event.title,
           event_date: event.date,
           event_location: event.location,
           event_image_url: event.image_url
-        }]);
+        });
 
       if (error) throw error;
 
       setNewMessage('');
-      await fetchEventMessages();
+      fetchMessages(); // Refresh messages
       
       toast({
         title: "Nachricht gesendet",
-        description: "Deine Nachricht wurde auch in der Ausgehen-Gruppe geteilt.",
+        description: "Deine Nachricht wurde erfolgreich gesendet.",
         variant: "default"
       });
     } catch (error) {
@@ -101,11 +103,23 @@ const EventChatDialog: React.FC<EventChatDialogProps> = ({ isOpen, onClose, even
         variant: "destructive"
       });
     } finally {
-      setIsLoading(false);
+      setIsSending(false);
     }
   };
 
-  // Handle key press
+  // Load messages when dialog opens
+  useEffect(() => {
+    if (isOpen && event?.id) {
+      fetchMessages();
+    }
+  }, [isOpen, event?.id]);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Handle enter key
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -113,95 +127,72 @@ const EventChatDialog: React.FC<EventChatDialogProps> = ({ isOpen, onClose, even
     }
   };
 
-  // Format time
-  const formatTime = (isoString: string) => {
-    try {
-      return format(new Date(isoString), 'HH:mm');
-    } catch {
-      return '';
-    }
-  };
-
-  // Subscribe to real-time updates
-  useEffect(() => {
-    if (!isOpen) return;
-
-    fetchEventMessages();
-
-    const channel = supabase
-      .channel(`event-chat-${event.id}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'chat_messages',
-        filter: `event_id=eq.${event.id}`
-      }, () => {
-        fetchEventMessages();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [isOpen, event.id]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  // Don't render if no event
+  if (!event) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-black/95 backdrop-blur-md border-gray-700 text-white max-w-md h-[600px] flex flex-col">
+      <DialogContent className="bg-black/95 backdrop-blur-md border-gray-700 text-white max-w-md max-h-[80vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-white flex items-center gap-2">
-              💬 Event Chat
-            </DialogTitle>
+          <DialogTitle className="text-white flex items-center gap-2">
+            <span className="text-2xl">💬</span>
+            <div className="flex-1">
+              <div className="font-bold text-sm">{event.title}</div>
+              <div className="text-xs text-gray-400">{event.date} • {event.location}</div>
+            </div>
             <Button
               variant="ghost"
               size="icon"
               onClick={onClose}
               className="text-white hover:bg-gray-700"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </Button>
-          </div>
-          
-          {/* Event Info */}
-          <div className="bg-gray-800 p-3 rounded-lg mt-2">
-            <h4 className="font-medium text-sm mb-1">{event.title}</h4>
-            <p className="text-xs text-gray-400">
-              📅 {event.date} • 📍 {event.location}
-            </p>
-          </div>
+          </DialogTitle>
         </DialogHeader>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-2 space-y-3 min-h-0">
-          {messages.length === 0 ? (
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
+          {isLoading ? (
             <div className="text-center text-gray-400 py-8">
+              <div className="animate-spin w-6 h-6 border-2 border-red-500 border-t-transparent rounded-full mx-auto mb-2"></div>
+              Lade Nachrichten...
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="text-center text-gray-400 py-8">
+              <span className="text-4xl mb-2 block">💬</span>
               <p>Noch keine Nachrichten.</p>
-              <p className="text-xs mt-1">Starte die Unterhaltung!</p>
+              <p className="text-sm">Sei der Erste, der etwas schreibt!</p>
             </div>
           ) : (
             messages.map((message) => (
-              <div key={message.id} className="flex items-start gap-2">
-                <Avatar className="w-8 h-8 flex-shrink-0">
-                  <AvatarImage src={message.avatar} alt={message.sender} />
-                  <AvatarFallback className="bg-red-500 text-white text-xs">
-                    {getInitials(message.sender)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline gap-2 mb-1">
-                    <span className="font-medium text-sm">{message.sender}</span>
-                    <span className="text-xs text-gray-500">
-                      {formatTime(message.created_at)}
-                    </span>
+              <div key={message.id} className="space-y-2">
+                <div className={`flex items-start gap-3 ${
+                  message.sender === currentUsername ? 'flex-row-reverse' : ''
+                }`}>
+                  <img 
+                    src={message.avatar || '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png'} 
+                    alt={message.sender}
+                    className="w-8 h-8 rounded-full flex-shrink-0"
+                  />
+                  <div className={`flex flex-col ${
+                    message.sender === currentUsername ? 'items-end' : 'items-start'
+                  }`}>
+                    <div className="text-xs text-gray-400 mb-1">{message.sender}</div>
+                    <div className={`max-w-xs p-3 rounded-lg break-words ${
+                      message.sender === currentUsername 
+                        ? 'bg-red-500 text-white' 
+                        : 'bg-gray-700 text-white'
+                    }`}>
+                      {message.text}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {new Date(message.created_at).toLocaleTimeString('de-DE', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </div>
                   </div>
-                  <p className="text-sm bg-gray-800 p-2 rounded-lg break-words">
-                    {message.text}
-                  </p>
                 </div>
               </div>
             ))
@@ -209,28 +200,29 @@ const EventChatDialog: React.FC<EventChatDialogProps> = ({ isOpen, onClose, even
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Message Input */}
-        <div className="flex-shrink-0 border-t border-gray-700 pt-3">
+        {/* Input Area */}
+        <div className="flex-shrink-0 p-4 border-t border-gray-700">
           <div className="flex gap-2">
             <Input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Schreibe eine Nachricht..."
               onKeyPress={handleKeyPress}
-              placeholder="Nachricht schreiben..."
-              className="flex-1 bg-gray-800 border-gray-600 text-white placeholder-gray-400"
-              disabled={isLoading}
+              disabled={isSending}
+              className="flex-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
             />
             <Button
               onClick={sendMessage}
-              disabled={!newMessage.trim() || isLoading}
+              disabled={!newMessage.trim() || isSending}
               className="bg-red-500 hover:bg-red-600 text-white"
             >
-              <Send className="w-4 h-4" />
+              {isSending ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
             </Button>
           </div>
-          <p className="text-xs text-gray-500 mt-1">
-            Nachrichten werden auch in der Ausgehen-Gruppe geteilt
-          </p>
         </div>
       </DialogContent>
     </Dialog>
