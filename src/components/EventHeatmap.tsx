@@ -27,7 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 import EventForm from '@/components/EventForm';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { messageService } from '@/services/messageService';
-import { ScrollArea } => '@/components/ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input'; 
 import { userService } from '@/services/userService'; 
 import { UserProfile } from '@/types/chatTypes'; 
@@ -276,19 +276,18 @@ const EventHeatmap: React.FC = () => {
     }
 
     setIsCheckInDialogOpen(false); 
-    const checkInToastId = toast({ id: "checkin-progress", title: "Check-in wird verarbeitet...", duration: Infinity }); // Corrected: Using general toast()
+    const checkInToastId = toast({ id: "checkin-progress", title: "Check-in wird verarbeitet...", duration: Infinity }); 
 
     try {
       const userCurrentLat = getCoordinatesForLocation('Bielefeld') as number;
       const userCurrentLng = getCoordinatesForLocation('Bielefeld', true) as number;
 
-      // Update user's profile with live location and status message
       const updatedProfileData: Partial<UserProfile> = {
         last_online: new Date().toISOString(),
-        current_live_location_lat: userCurrentLat, // Assumed existence after type/schema update
-        current_live_location_lng: userCurrentLng, // Assumed existence after type/schema update
-        current_status_message: liveStatusMessage,     // Assumed existence after type/schema update
-        current_checkin_timestamp: new Date().toISOString(), // Assumed existence after type/schema update
+        current_live_location_lat: userCurrentLat, 
+        current_live_location_lng: userCurrentLng, 
+        current_status_message: liveStatusMessage,     
+        current_checkin_timestamp: new Date().toISOString(), 
       };
       
       await supabase.from('user_profiles')
@@ -554,7 +553,7 @@ const EventHeatmap: React.FC = () => {
             <span style="margin-right: 8px;">📍</span>
             <span>${event.location || 'Bielefeld'}</span>
           </div>
-          <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280;">
+          <div style="display: flex; align-align-items: center; margin-bottom: 4px; color: #6b7280;">
             <span style="margin-right: 8px;">🏙️</span>
             <span>${event.city || 'Bielefeld'}</span>
           </div>
