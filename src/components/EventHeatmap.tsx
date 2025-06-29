@@ -16,14 +16,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, MessageSquare, Send } from 'lucide-react'; // Added Send icon
+import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, MessageSquare, Send } from 'lucide-react'; 
 import { useEvents } from '@/hooks/useEvents';
 import { format } from 'date-fns';
 import SwipeableEventPanel from '@/components/event-chat/SwipeableEventPanel';
 import { PanelEventData, PanelEvent } from '@/components/event-chat/types';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast'; 
 import EventForm from '@/components/EventForm';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { messageService } from '@/services/messageService';
@@ -64,7 +64,7 @@ const EventHeatmap: React.FC = () => {
   const [selectedUserForPrivateChat, setSelectedUserForPrivateChat] = useState<UserProfile | null>(null); 
 
   const mapRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
+  const { toast, dismiss } = useToast(); // Corrected: Get dismiss from useToast()
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -283,7 +283,6 @@ const EventHeatmap: React.FC = () => {
       // Update user's profile with live location and status message
       const updatedProfileData: Partial<UserProfile> = {
         last_online: new Date().toISOString(),
-        // These fields assume schema changes have been made in your Supabase DB:
         current_live_location_lat: userCurrentLat,
         current_live_location_lng: userCurrentLng,
         current_status_message: liveStatusMessage,
@@ -303,7 +302,7 @@ const EventHeatmap: React.FC = () => {
 
       const messageResult = await messageService.sendMessage(
         bielefeldAusgehenGroupId,
-        currentUser,
+        currentUser, // Corrected: Sender is the second argument
         communityMessage,
         localStorage.getItem('community_chat_avatar') || ''
       );
@@ -316,7 +315,7 @@ const EventHeatmap: React.FC = () => {
       // Refresh user profile and map markers
       refetchProfile(); 
 
-      toast.dismiss(checkInToastId); 
+      dismiss(checkInToastId); // Corrected: Call dismiss from useToast hook
       toast({ 
         title: "Erfolgreich eingecheckt!",
         description: liveStatusMessage ? `Dein Status: "${liveStatusMessage}" wurde geteilt.` : "Dein Standort wurde geteilt.",
@@ -325,7 +324,7 @@ const EventHeatmap: React.FC = () => {
 
     } catch (error: any) { 
       console.error('Check-in failed:', error);
-      toast.dismiss(checkInToastId); 
+      dismiss(checkInToastId); // Corrected: Call dismiss from useToast hook
       toast({ 
         title: "Check-in fehlgeschlagen",
         description: error.message || "Es gab ein Problem beim Einchecken.", 
@@ -382,15 +381,16 @@ const EventHeatmap: React.FC = () => {
     const THIRTY_MINUTES_MS = 30 * 60 * 1000;
 
     usersToDisplay.forEach(user => {
-      const hasLiveLocation = (user as any).current_live_location_lat && (user as any).current_live_location_lng;
-      const hasStatusMessage = (user as any).current_status_message && (user as any).current_status_message.trim() !== '';
-      const isRecentCheckin = (user as any).current_checkin_timestamp && 
-                               (new Date().getTime() - new Date((user as any).current_checkin_timestamp).getTime() < THIRTY_MINUTES_MS);
+      // Only display users who have explicitly checked in recently with a status message
+      const hasLiveLocation = user.current_live_location_lat && user.current_live_location_lng;
+      const hasStatusMessage = user.current_status_message && user.current_status_message.trim() !== '';
+      const isRecentCheckin = user.current_checkin_timestamp && 
+                               (new Date().getTime() - new Date(user.current_checkin_timestamp).getTime() < THIRTY_MINUTES_MS);
 
       if (hasLiveLocation && hasStatusMessage && isRecentCheckin) {
-        const lat = (user as any).current_live_location_lat;
-        const lng = (user as any).current_live_location_lng;
-        const statusMessage = (user as any).current_status_message;
+        const lat = user.current_live_location_lat as number;
+        const lng = user.current_live_location_lng as number;
+        const statusMessage = user.current_status_message as string;
 
         const userIconHtml = `
           <div style="
@@ -458,7 +458,7 @@ const EventHeatmap: React.FC = () => {
         });
 
         newUserMarkers.push(userMarker);
-        userMarker.addTo(map); // Add to map here
+        userMarker.addTo(map); 
       }
     });
     setUserMarkers(newUserMarkers);
@@ -468,7 +468,7 @@ const EventHeatmap: React.FC = () => {
     if (!mapRef.current || map) return;
 
     const leafletMap = L.map(mapRef.current, {
-      center: [52.0302, 8.5311], // Bielefeld center
+      center: [52.0302, 8.5311], 
       zoom: 13,
       zoomControl: true,
       preferCanvas: false
@@ -596,25 +596,6 @@ const EventHeatmap: React.FC = () => {
 
     setEventMarkers(newEventMarkers);
   }, [map, filteredEvents]);
-
-  // Use this useEffect to fetch and display user markers
-  useEffect(() => {
-    if (!map) return;
-
-    const fetchAndDisplayUsers = async () => {
-      console.log('Fetching and displaying user markers...');
-      const allUsers = await userService.getUsers();
-      renderUserMarkers(allUsers);
-    };
-
-    if (map) {
-      fetchAndDisplayUsers();
-    }
-
-    const userRefreshInterval = setInterval(fetchAndDisplayUsers, 60 * 1000); 
-    return () => clearInterval(userRefreshInterval);
-
-  }, [map, userProfile]); // Re-run when userProfile changes
 
 
   const handleEventSelect = (eventId: string) => {
