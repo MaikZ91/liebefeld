@@ -1,111 +1,41 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronUp, MessageCircle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import EventMessageCard from '@/components/event-chat/EventMessageCard';
-import EventChatDialog from '@/components/event-chat/EventChatDialog';
+import React from 'react';
+import { EventShare } from '@/types/chatTypes';
+import { Calendar, Clock, MapPin, Heart } from 'lucide-react';
 
-interface EventMessage {
-  id: string;
-  sender: string;
-  text: string;
-  avatar?: string;
-  created_at: string;
-}
-
-interface EventMessageFormatterProps {
-  message: {
-    id: string;
-    text: string;
-    event_id?: string;
-    event_title?: string;
-    event_date?: string;
-    event_location?: string;
-    event_image_url?: string;
-  };
-}
-
-const EventMessageFormatter: React.FC<EventMessageFormatterProps> = ({ message }) => {
-  const [eventMessages, setEventMessages] = useState<EventMessage[]>([]);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [chatDialog, setChatDialog] = useState<{
-    isOpen: boolean;
-    event?: {
-      id: string;
-      title: string;
-      date: string;
-      location: string;
-      image_url?: string;
-    };
-  }>({ isOpen: false });
-
-  // Only show event formatting if this message has event data
-  if (!message.event_id || !message.event_title) {
-    return <span>{message.text}</span>;
-  }
-
-  const event = {
-    id: message.event_id,
-    title: message.event_title,
-    date: message.event_date || '',
-    location: message.event_location || '',
-    image_url: message.event_image_url
-  };
-
-  // Fetch event messages
-  const fetchEventMessages = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .select('id, sender, text, avatar, created_at')
-        .eq('event_id', message.event_id)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-      setEventMessages(data || []);
-    } catch (error) {
-      console.error('Error fetching event messages:', error);
-    }
-  };
-
-  // Load messages when expanded
-  useEffect(() => {
-    if (isExpanded && message.event_id) {
-      fetchEventMessages();
-    }
-  }, [isExpanded, message.event_id]);
-
-  const openFullChat = () => {
-    setChatDialog({
-      isOpen: true,
-      event
-    });
-  };
-
+export const EventMessageFormatter: React.FC<{ event: EventShare }> = ({ event }) => {
   return (
-    <div className="w-full">
-      {/* Original message */}
-      <div className="mb-3">
-        <span>{message.text}</span>
+    <div className="bg-gray-800 rounded-lg p-4 border border-red-500/30 w-full max-w-full overflow-hidden break-words">
+      <div className="text-lg font-semibold text-white mb-1">Geteiltes Event</div>
+      <div className="text-xl font-bold text-white !opacity-100 break-words">{event.title}</div>
+      <div className="flex flex-col gap-1 mt-2">
+        <div className="flex items-center text-sm text-white">
+          <Calendar className="h-4 w-4 mr-1 flex-shrink-0" />
+          <span className="break-words overflow-hidden">{event.date}</span>
+        </div>
+        
+        {event.time && (
+          <div className="flex items-center text-sm text-white">
+            <Clock className="h-4 w-4 mr-1 flex-shrink-0" />
+            <span className="break-words overflow-hidden">{event.time}</span>
+          </div>
+        )}
+        
+        {event.location && (
+          <div className="flex items-center text-sm text-white">
+            <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
+            <span className="break-words overflow-hidden">{event.location}</span>
+          </div>
+        )}
       </div>
-
-      {/* Event message card */}
-      <EventMessageCard
-        event={event}
-        messages={eventMessages}
-        isExpanded={isExpanded}
-        onToggleExpanded={() => setIsExpanded(!isExpanded)}
-        onOpenFullChat={openFullChat}
-      />
-
-      {/* Event Chat Dialog */}
-      <EventChatDialog
-        isOpen={chatDialog.isOpen}
-        onClose={() => setChatDialog({ isOpen: false })}
-        event={chatDialog.event!}
-      />
+      <div className="flex justify-between items-center mt-2">
+        <div className="text-sm bg-red-500 text-white inline-block px-2 py-0.5 rounded">
+          {event.category || "Event"}
+        </div>
+        <div className="flex items-center">
+          <Heart className="h-5 w-5 text-red-500" />
+        </div>
+      </div>
     </div>
   );
 };

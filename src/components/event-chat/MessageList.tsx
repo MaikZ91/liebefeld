@@ -96,10 +96,8 @@ const MessageList: React.FC<MessageListProps> = ({
               <ChatMessage 
                 message={message.text} 
                 isGroup={false} 
-                messageId={message.id}
-                reactions={[]}
-                onReact={() => {}}
-                currentUsername="Guest"
+                onDateSelect={handleDateSelect}
+                showDateSelector={message.isUser && message.text.toLowerCase().includes('event')}
               />
             </div>
           );
