@@ -274,7 +274,7 @@ const EventHeatmap: React.FC = () => {
     }
 
     setIsCheckInDialogOpen(false); 
-    const checkInToastId = toast.loading("Check-in wird verarbeitet..."); 
+    const checkInToastId = toast({ id: "checkin-progress", title: "Check-in wird verarbeitet...", duration: Infinity }); // Corrected: Using general toast()
 
     try {
       const userCurrentLat = getCoordinatesForLocation('Bielefeld') as number;
@@ -283,17 +283,16 @@ const EventHeatmap: React.FC = () => {
       // Update user's profile with live location and status message
       const updatedProfileData: Partial<UserProfile> = {
         last_online: new Date().toISOString(),
-        current_live_location_lat: userCurrentLat,
-        current_live_location_lng: userCurrentLng,
-        current_status_message: liveStatusMessage,
-        current_checkin_timestamp: new Date().toISOString(),
+        current_live_location_lat: userCurrentLat, 
+        current_live_location_lng: userCurrentLng, 
+        current_status_message: liveStatusMessage,     
+        current_checkin_timestamp: new Date().toISOString(), 
       };
       
       await supabase.from('user_profiles')
         .update(updatedProfileData)
         .eq('username', currentUser);
       
-      // Send message to community chat (Ausgehen channel)
       const communityMessage = liveStatusMessage 
         ? `📍 ${currentUser} ist jetzt hier: "${liveStatusMessage}"`
         : `📍 ${currentUser} ist jetzt in der Nähe!`;
@@ -302,7 +301,7 @@ const EventHeatmap: React.FC = () => {
 
       const messageResult = await messageService.sendMessage(
         bielefeldAusgehenGroupId,
-        currentUser, // Corrected: Sender is the second argument
+        currentUser,
         communityMessage,
         localStorage.getItem('community_chat_avatar') || ''
       );
@@ -312,7 +311,6 @@ const EventHeatmap: React.FC = () => {
         throw new Error('Could not post check-in message to chat.');
       }
 
-      // Refresh user profile and map markers
       refetchProfile(); 
 
       dismiss(checkInToastId); // Corrected: Call dismiss from useToast hook
@@ -382,7 +380,7 @@ const EventHeatmap: React.FC = () => {
 
     usersToDisplay.forEach(user => {
       // Only display users who have explicitly checked in recently with a status message
-      const hasLiveLocation = user.current_live_location_lat && user.current_live_location_lng;
+      const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null && user.current_live_location_lat !== undefined && user.current_live_location_lng !== undefined;
       const hasStatusMessage = user.current_status_message && user.current_status_message.trim() !== '';
       const isRecentCheckin = user.current_checkin_timestamp && 
                                (new Date().getTime() - new Date(user.current_checkin_timestamp).getTime() < THIRTY_MINUTES_MS);
