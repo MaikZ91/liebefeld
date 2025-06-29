@@ -10,7 +10,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 import { format } from 'date-fns';
 import SwipeableEventPanel from '@/components/event-chat/SwipeableEventPanel';
@@ -18,6 +24,7 @@ import { PanelEventData, PanelEvent } from '@/components/event-chat/types';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import EventForm from '@/components/EventForm';
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -39,6 +46,7 @@ const EventHeatmap: React.FC = () => {
   const [perfectDayMessage, setPerfectDayMessage] = useState<string | null>(null);
   const [isPerfectDayLoading, setIsPerfectDayLoading] = useState(false);
   const [showPerfectDayPanel, setShowPerfectDayPanel] = useState(false);
+  const [isEventFormOpen, setIsEventFormOpen] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -266,6 +274,39 @@ const EventHeatmap: React.FC = () => {
   // Navigate to chat
   const goToChat = () => {
     window.location.href = '/chat';
+  };
+
+  // Handle adding new event
+  const handleAddEvent = async (eventData: any) => {
+    try {
+      // Add event to Supabase
+      const { data, error } = await supabase
+        .from('events')
+        .insert([{
+          ...eventData,
+          city: 'Bielefeld', // Default to Bielefeld for heatmap
+          created_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Event erfolgreich erstellt!",
+        description: `${eventData.title} wurde hinzugefügt.`,
+        variant: "default"
+      });
+
+      setIsEventFormOpen(false);
+    } catch (error) {
+      console.error('Error adding event:', error);
+      toast({
+        title: "Fehler",
+        description: "Event konnte nicht erstellt werden.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Initialize map
@@ -586,6 +627,16 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
+      {/* Add Event Button - Bottom Right */}
+      <div className="absolute bottom-6 right-6 z-[1000]">
+        <Button
+          onClick={() => setIsEventFormOpen(true)}
+          className="bg-red-500 hover:bg-red-600 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center p-0"
+        >
+          <Plus className="w-6 h-6" />
+        </Button>
+      </div>
+
       {/* Map Container */}
       <div 
         ref={mapRef} 
@@ -688,6 +739,24 @@ const EventHeatmap: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Event Form Dialog */}
+      <Dialog open={isEventFormOpen} onOpenChange={setIsEventFormOpen}>
+        <DialogContent className="bg-black/95 backdrop-blur-md border-gray-700 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Plus className="w-5 h-5 text-red-500" />
+              Community Event hinzufügen
+            </DialogTitle>
+          </DialogHeader>
+          <EventForm 
+            onAddEvent={handleAddEvent}
+            onSuccess={() => setIsEventFormOpen(false)}
+            onCancel={() => setIsEventFormOpen(false)}
+            selectedDate={new Date()}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
