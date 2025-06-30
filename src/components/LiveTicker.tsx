@@ -51,23 +51,17 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef, isLoadingEve
       }
     });
 
-    const eventsByDay: Record<string, Event[]> = {};
-    currentMonthEvents.forEach(event => {
-      if (!event.date) return;
-      try {
-        const eventDate = parseISO(event.date);
-        const dateKey = format(eventDate, 'yyyy-MM-dd');
-        if (!eventsByDay[dateKey]) eventsByDay[dateKey] = [];
-        eventsByDay[dateKey].push(event);
-      } catch { /* ignore */ }
-    });
+    // Sortiere alle relevanten Events nach Likes (absteigend) und dann nach Datum (aufsteigend).
+    // KEINE Beschränkung mehr auf die Top 5, um "alle Top Events" anzuzeigen.
+    return currentMonthEvents.sort((a, b) => {
+      const likesA = a.likes || 0;
+      const likesB = b.likes || 0;
 
-    const topEventsByDay = Object.keys(eventsByDay).map(dateKey => {
-      const dayEvents = eventsByDay[dateKey];
-      return dayEvents.sort((a, b) => (b.likes || 0) - (a.likes || 0))[0];
-    });
+      if (likesB !== likesA) {
+        return likesB - likesA; // Sortiere nach Likes (absteigend)
+      }
 
-    return topEventsByDay.sort((a, b) => {
+      // Bei gleichen Likes, sortiere nach Datum (aufsteigend)
       try {
         const dateA = parseISO(a.date);
         const dateB = parseISO(b.date);
@@ -127,9 +121,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef, isLoadingEve
                         <ThumbsUp className="w-3 h-3 mr-0.5" /> 
                         {event.likes || 0}
                       </span>
-                      {event.source === 'github' && (
-                        <span className="text-blue-400 text-xs ml-1">[GitHub]</span>
-                      )}
+                      {/* GitHub-Quellenangabe entfernt */}
                     </span>
                     <span className="mx-2 text-red-500">•</span>
                   </div>
