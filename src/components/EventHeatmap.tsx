@@ -1,3 +1,4 @@
+// src/components/EventHeatmap.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -35,7 +36,7 @@ import { getInitials } from '@/utils/chatUIUtils';
 import PrivateChat from '@/components/users/PrivateChat';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import HeatmapHeader from './HeatmapHeader';
-import { useEventContext, cities } from '@/contexts/EventContext'; // Import useEventContext and cities
+import { useEventContext, cities } from '@/contexts/EventContext';
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -47,7 +48,7 @@ L.Icon.Default.mergeOptions({
 
 const EventHeatmap: React.FC = () => {
   const { events, isLoading, refreshEvents } = useEvents();
-  const { selectedCity } = useEventContext(); // Correctly get selectedCity from useEventContext
+  const { selectedCity } = useEventContext();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [timeRange, setTimeRange] = useState([new Date().getHours()]);
@@ -82,37 +83,32 @@ const EventHeatmap: React.FC = () => {
     return parseInt(hour, 10);
   };
 
-  // Helper to get city center coordinates
   const getCityCenterCoordinates = (cityAbbr: string) => {
     const cityObject = cities.find(c => c.abbr.toLowerCase() === cityAbbr.toLowerCase());
     if (cityObject) {
-      // Hardcoded coordinates for now, ideally would fetch from a database or API
       const coords: { [key: string]: { lat: number; lng: number } } = {
-        'bi': { lat: 52.0302, lng: 8.5311 }, // Bielefeld
-        'bielefeld': { lat: 52.0302, lng: 8.5311 }, // Bielefeld (full name)
-        'berlin': { lat: 52.5200, lng: 13.4050 }, // Berlin
-        'hamburg': { lat: 53.5511, lng: 9.9937 }, // Hamburg
-        'köln': { lat: 50.935173, lng: 6.953101 }, // Köln
-        'munich': { lat: 48.1351, lng: 11.5820 }, // München
+        'bi': { lat: 52.0302, lng: 8.5311 },
+        'bielefeld': { lat: 52.0302, lng: 8.5311 },
+        'berlin': { lat: 52.5200, lng: 13.4050 },
+        'hamburg': { lat: 53.5511, lng: 9.9937 },
+        'köln': { lat: 50.935173, lng: 6.953101 },
+        'munich': { lat: 48.1351, lng: 11.5820 },
       };
-      return coords[cityObject.abbr.toLowerCase()] || coords['bi']; // Fallback to Bielefeld
+      return coords[cityObject.abbr.toLowerCase()] || { lat: 52.0302, lng: 8.5311 };
     }
-    return { lat: 52.0302, lng: 8.5311 }; // Default to Bielefeld if city not found or abbr invalid
+    return { lat: 52.0302, lng: 8.5311 };
   };
 
-  // Helper to get coordinates for specific locations within a city (approximate)
-  // This function must always return a valid coordinate pair, never null for lat/lng used by Leaflet.
-  function getCoordinatesForLocation(location: string, isLng: boolean = false): number { // Changed return type to number
+  function getCoordinatesForLocation(location: string, isLng: boolean = false): number {
     if (!location) {
         const currentCityCenter = getCityCenterCoordinates(selectedCity);
-        return isLng ? currentCityCenter.lng : currentCityCenter.lat; // Return city center if location is null
+        return isLng ? currentCityCenter.lng : currentCityCenter.lat;
     }
     
     const locationLower = location.toLowerCase();
     const currentCityCenter = getCityCenterCoordinates(selectedCity);
 
     const specificLocationMap: { [key: string]: { lat: number; lng: number } } = {
-      // Bielefeld specific locations
       'forum': { lat: 52.0210, lng: 8.5320 },
       'lokschuppen': { lat: 52.0195, lng: 8.5340 },
       'kunsthalle': { lat: 52.0175, lng: 8.5380 },
@@ -146,7 +142,6 @@ const EventHeatmap: React.FC = () => {
       'schücoarena': { lat: 52.0320, lng: 8.5150 },
       'alm': { lat: 52.0320, lng: 8.5150 },
       'arminia': { lat: 52.0320, lng: 8.5150 },
-      // Berlin specific locations (example)
       'brandenburger tor': { lat: 52.5162, lng: 13.3777 },
       'alexanderplatz': { lat: 52.5219, lng: 13.4135 },
       'reichstag': { lat: 52.5186, lng: 13.3762 },
@@ -179,10 +174,8 @@ const EventHeatmap: React.FC = () => {
 
         let isRelevantCity = false;
         if (selectedCityLower === 'bi' || selectedCityLower === 'bielefeld') {
-          // For Bielefeld, include events explicitly in Bielefeld OR events with no city specified (legacy)
           isRelevantCity = !eventCityLower || eventCityLower === 'bielefeld' || eventCityLower === 'bi';
         } else {
-          // For other cities, require an exact match
           isRelevantCity = eventCityLower === selectedCityLower;
         }
                                        
@@ -191,7 +184,7 @@ const EventHeatmap: React.FC = () => {
         return isTodayEvent && hasLocationData && isRelevantCity;
       })
       .map(event => {
-        const locationText = event.location || event.title; // Prioritize event.location
+        const locationText = event.location || event.title;
         const lat = getCoordinatesForLocation(locationText);
         const lng = getCoordinatesForLocation(locationText, true);
         
@@ -206,22 +199,22 @@ const EventHeatmap: React.FC = () => {
 
     console.log(`Found ${filtered.length} events for today in ${cityDisplayName} with valid coordinates`);
     return filtered;
-  }, [events, today, selectedCity]); // Add selectedCity to dependencies
+  }, [events, today, selectedCity]);
 
   const categories = React.useMemo(() => {
     const categoryMap = new Map<string, number>();
-    todaysFilteredEvents.forEach(event => { // Use todaysFilteredEvents
+    todaysFilteredEvents.forEach(event => {
       categoryMap.set(event.category, (categoryMap.get(event.category) || 0) + 1);
     });
     
     return [
-      { name: 'all', count: todaysFilteredEvents.length }, // Use todaysFilteredEvents
+      { name: 'all', count: todaysFilteredEvents.length },
       ...Array.from(categoryMap.entries()).map(([name, count]) => ({ name, count }))
     ];
-  }, [todaysFilteredEvents]); // Depend on todaysFilteredEvents
+  }, [todaysFilteredEvents]);
 
   const filteredEvents = React.useMemo(() => {
-    let filtered = todaysFilteredEvents; // Start with todaysFilteredEvents
+    let filtered = todaysFilteredEvents;
     
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(event => event.category === selectedCategory);
@@ -231,7 +224,7 @@ const EventHeatmap: React.FC = () => {
     filtered = filtered.filter(event => event.eventHour >= selectedHour);
     
     return filtered;
-  }, [todaysFilteredEvents, selectedCategory, timeRange]); // Depend on todaysFilteredEvents
+  }, [todaysFilteredEvents, selectedCategory, timeRange]);
 
   const panelEvents: PanelEvent[] = React.useMemo(() => {
     return filteredEvents.map(event => ({
@@ -240,7 +233,7 @@ const EventHeatmap: React.FC = () => {
       date: event.date,
       time: event.time,
       price: event.is_paid ? "Kostenpflichtig" : "Kostenlos",
-      location: event.location || event.city || 'Unknown Location', // Use event.city as fallback
+      location: event.location || event.city || 'Unknown Location',
       image_url: event.image_url || `https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop&q=80&auto=format`,
       category: event.category,
       link: event.link,
@@ -342,8 +335,8 @@ const EventHeatmap: React.FC = () => {
 
     try {
       const userCurrentCityCenter = getCityCenterCoordinates(selectedCity);
-      const userCurrentLat = userCurrentCityCenter.lat + (Math.random() - 0.5) * 0.005; // Small random offset
-      const userCurrentLng = userCurrentCityCenter.lng + (Math.random() - 0.5) * 0.005; // Small random offset
+      const userCurrentLat = userCurrentCityCenter.lat + (Math.random() - 0.5) * 0.005;
+      const userCurrentLng = userCurrentCityCenter.lng + (Math.random() - 0.5) * 0.005;
 
       const updatedProfileData: Partial<UserProfile> = {
         last_online: new Date().toISOString(),
@@ -361,7 +354,6 @@ const EventHeatmap: React.FC = () => {
         ? `📍 ${currentUser} ist jetzt hier: "${liveStatusMessage}"`
         : `📍 ${currentUser} ist jetzt in der Nähe!`;
       
-      // Get the correct group ID for the selected city and 'Ausgehen' category
       const cityCommunityGroupId = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.abbr.toLowerCase() + '_ausgehen' || 'bi_ausgehen';
 
       const messageResult = await messageService.sendMessage(
@@ -386,7 +378,7 @@ const EventHeatmap: React.FC = () => {
     } catch (error: any) {
       console.error('Check-in failed:', error);
       toast({
-        title: "Check-in fehlgeschlagen",
+        title: "Fehler",
         description: error.message || "Es gab ein Problem beim Einchecken.",
         variant: "destructive"
       });
@@ -405,7 +397,7 @@ const EventHeatmap: React.FC = () => {
         .from('community_events')
         .insert([{
           ...eventData,
-          city: cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity, // Save with full city name
+          city: cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity,
           created_at: new Date().toISOString()
         }])
         .select()
@@ -429,19 +421,202 @@ const EventHeatmap: React.FC = () => {
     }
   };
 
-  const renderUserMarkers = (usersToDisplay: UserProfile[]) => {
-    if (!map) return;
+  useEffect(() => {
+    if (!mapRef.current) {
+      if (map) {
+        map.remove();
+        setMap(null);
+      }
+      return;
+    }
 
-    userMarkers.forEach(marker => {
-      map.removeLayer(marker);
+    if (map) {
+      map.remove();
+      setMap(null);
+    }
+    
+    const initialCenter = getCityCenterCoordinates(selectedCity);
+
+    const leafletMap = L.map(mapRef.current, {
+      center: [initialCenter.lat, initialCenter.lng],
+      zoom: 13,
+      zoomControl: true,
+      preferCanvas: false
+    });
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(leafletMap);
+
+    setMap(leafletMap);
+
+    return () => {
+      if (leafletMap) {
+        leafletMap.remove();
+      }
+    };
+  }, [mapRef.current, selectedCity]);
+
+  useEffect(() => {
+    if (!map) {
+      eventMarkers.forEach(marker => {
+        try { map?.removeLayer(marker); } catch (e) {}
+      });
+      setEventMarkers([]);
+      return;
+    }
+
+    const markersToRemove = [...eventMarkers];
+    markersToRemove.forEach(marker => {
+      if (map.hasLayer(marker)) {
+        map.removeLayer(marker);
+      }
     });
 
+    const newEventMarkers: L.Marker[] = [];
+
+    filteredEvents.forEach(event => {
+      const lat = getCoordinatesForLocation(event.location || event.title);
+      const lng = getCoordinatesForLocation(event.location || event.title, true);
+      
+      if (typeof lat !== 'number' || isNaN(lat) || typeof lng !== 'number' || isNaN(lng)) {
+        console.warn(`Invalid coordinates for event ${event.title}: Lat ${lat}, Lng ${lng}. Skipping marker.`);
+        return;
+      }
+
+      const likes = event.likes || 0;
+      let markerSize = 60;
+      const imageSize = 40;
+
+      const iconHtml = `
+        <div style="
+          background: rgba(0,0,0,0.8);
+          color: white;
+          border-radius: 8px;
+          width: ${markerSize}px;
+          height: ${markerSize + 20}px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: space-between;
+          padding: 5px;
+          border: 2px solid #ef4444;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+          cursor: pointer;
+          font-family: sans-serif;
+          overflow: hidden;
+        ">
+          <img src="${event.image_url || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop;'}"
+               onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';"
+               style="width: ${imageSize}px; height: ${imageSize}px; object-fit: cover; border-radius: 4px; margin-bottom: 4px;"/>
+          <div style="
+            font-size: 9px;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+            text-align: center;
+          ">
+            ${event.title}
+          </div>
+          <div style="font-size: 8px; margin-top: 2px; display: flex; align-items: center; justify-content: center; color: #ff9999;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 2px;"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+              ${likes}
+          </div>
+        </div>
+      `;
+
+      const customIcon = L.divIcon({
+        html: iconHtml,
+        className: 'custom-event-marker',
+        iconSize: [markerSize, markerSize + 20],
+        iconAnchor: [markerSize / 2, markerSize + 20],
+        popupAnchor: [0, -markerSize - 20]
+      });
+
+      const marker = L.marker([lat, lng], { icon: customIcon });
+
+      marker.on('click', () => {
+        setSelectedEventId(event.id);
+        setIsPanelOpen(true);
+        setPanelHeight('partial');
+        setShowPerfectDayPanel(false);
+      });
+
+      const popupContent = `
+        <div style="min-width: 200px; max-width: 250px; font-family: sans-serif;">
+          ${event.image_url ? `<img src="${event.image_url}" onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;"/>` : ''}
+          <h3 style="margin: 0 0 4px 0; font-weight: bold; color: #1f2937; font-size: 16px;">${event.title}</h3>
+          
+          <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280; font-size: 12px;">
+            <span style="margin-right: 5px;">📍</span>
+            <span>${event.location || 'Bielefeld'}</span>
+          </div>
+          <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280; font-size: 12px;">
+            <span style="margin-right: 5px;">📅</span>
+            <span>Heute, ${event.time} Uhr</span>
+          </div>
+          <div style="display: flex; align-items: center; margin-bottom: 8px; color: #6b7280; font-size: 12px;">
+            <span style="margin-right: 5px;">❤️</span>
+            <span>${event.likes || 0} Likes</span>
+          </div>
+          ${event.description ? `<p style="margin-bottom: 8px; font-size: 11px; color: #4b5563; max-height: 60px; overflow: hidden;">${event.description}</p>` : ''}
+          <div style="
+            background: #ef4444;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            display: inline-block;
+          ">
+            ${event.category}
+          </div>
+          ${event.link ? `<div style="margin-top: 8px;"><a href="${event.link}" target="_blank" style="color: #ef4444; text-decoration: underline; font-size: 12px;">Mehr Info</a></div>` : ''}
+        </div>
+      `;
+
+      marker.bindPopup(popupContent);
+      marker.addTo(map);
+      newEventMarkers.push(marker);
+    });
+
+    setEventMarkers(newEventMarkers);
+
+    return () => {
+      newEventMarkers.forEach(marker => {
+        if (map && map.hasLayer(marker)) {
+          map.removeLayer(marker);
+        }
+      });
+    };
+  }, [map, filteredEvents, selectedCity]);
+
+  useEffect(() => {
+    if (!map) {
+      userMarkers.forEach(marker => {
+        try { map?.removeLayer(marker); } catch (e) {}
+      });
+      setUserMarkers([]);
+      return;
+    }
+
+    const markersToRemove = [...userMarkers];
+    markersToRemove.forEach(marker => {
+      if (map.hasLayer(marker)) {
+        map.removeLayer(marker);
+      }
+    });
+    
     const newUserMarkers: L.Marker[] = [];
     const THIRTY_MINUTES_MS = 30 * 60 * 1000;
 
+    // Assuming usersToDisplay is available from useUserProfile or another source
+    const usersToDisplay = [userProfile].filter(Boolean) as UserProfile[]; // Example, replace with actual user list
+
     usersToDisplay.forEach(user => {
-      // Filter users by current selected city
-      const userCity = user.favorite_locations?.[0]?.toLowerCase() || 'bielefeld'; // Assume first favorite location is user's city
+      const userCity = user.favorite_locations?.[0]?.toLowerCase() || 'bielefeld';
       const selectedCityName = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name?.toLowerCase() || selectedCity.toLowerCase();
       
       let isUserInCurrentCity = false;
@@ -451,7 +626,7 @@ const EventHeatmap: React.FC = () => {
         isUserInCurrentCity = userCity === selectedCityName;
       }
 
-      if (!isUserInCurrentCity) return; // Skip user if not in current city
+      if (!isUserInCurrentCity) return;
 
       const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null && user.current_live_location_lat !== undefined && user.current_live_location_lng !== undefined;
       const hasStatusMessage = user.current_status_message && user.current_status_message.trim() !== '';
@@ -521,18 +696,18 @@ const EventHeatmap: React.FC = () => {
           iconAnchor: [30, 90],
         });
 
-        const userMarker = L.marker([lat, lng], { 
+        const marker = L.marker([lat, lng], { 
           icon: userMarkerIcon,
           draggable: user.username === currentUser
         });
         
-        userMarker.on('click', () => {
+        marker.on('click', () => {
           setSelectedUserForPrivateChat(user);
           setIsPrivateChatOpen(true);
         });
 
         if (user.username === currentUser) {
-          userMarker.on('dragend', (e) => {
+          marker.on('dragend', (e) => {
             const marker = e.target;
             const position = marker.getLatLng();
             console.log(`User ${user.username} moved to:`, position.lat, position.lng);
@@ -541,174 +716,20 @@ const EventHeatmap: React.FC = () => {
           });
         }
 
-        newUserMarkers.push(userMarker);
-        userMarker.addTo(map);
+        newUserMarkers.push(marker);
+        map.addLayer(marker);
       }
     });
     setUserMarkers(newUserMarkers);
-  };
-
-  useEffect(() => {
-    if (!mapRef.current || map) return;
-
-    const initialCenter = getCityCenterCoordinates(selectedCity);
-
-    const leafletMap = L.map(mapRef.current, {
-      center: [initialCenter.lat, initialCenter.lng],
-      zoom: 13,
-      zoomControl: true,
-      preferCanvas: false
-    });
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19
-    }).addTo(leafletMap);
-
-    setMap(leafletMap);
 
     return () => {
-      if (leafletMap) {
-        leafletMap.remove();
-      }
-    };
-  }, [mapRef.current, selectedCity, map]); // Add selectedCity to dependency array
-
-  useEffect(() => {
-    if (!map) return;
-
-    // Clear existing markers when events or selectedCity change
-    eventMarkers.forEach(marker => {
-      map.removeLayer(marker);
-    });
-
-    const newEventMarkers: L.Marker[] = [];
-
-    filteredEvents.forEach(event => {
-      if (!event.lat || !event.lng) return;
-      
-      const likes = event.likes || 0;
-      let markerSize = 60;
-      let fontSize = 12;
-      const imageSize = 40;
-
-      const iconHtml = `
-        <div style="
-          background: rgba(0,0,0,0.8);
-          color: white;
-          border-radius: 8px;
-          width: ${markerSize}px;
-          height: ${markerSize + 20}px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: space-between;
-          padding: 5px;
-          border: 2px solid #ef4444;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-          cursor: pointer;
-          font-family: sans-serif;
-          overflow: hidden;
-        ">
-          <img src="${event.image_url || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop;'}"
-               onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';"
-               style="width: ${imageSize}px; height: ${imageSize}px; object-fit: cover; border-radius: 4px; margin-bottom: 4px;"/>
-          <div style="
-            font-size: 9px;
-            font-weight: bold;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            width: 100%;
-            text-align: center;
-          ">
-            ${event.title}
-          </div>
-          <div style="font-size: 8px; margin-top: 2px; display: flex; align-items: center; justify-content: center; color: #ff9999;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 2px;"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-              ${likes}
-          </div>
-        </div>
-      `;
-
-      const customIcon = L.divIcon({
-        html: iconHtml,
-        className: 'custom-event-marker',
-        iconSize: [markerSize, markerSize + 20],
-        iconAnchor: [markerSize / 2, markerSize + 20],
-        popupAnchor: [0, -markerSize - 20]
+      newUserMarkers.forEach(marker => {
+        if (map && map.hasLayer(marker)) {
+          map.removeLayer(marker);
+        }
       });
-
-      const marker = L.marker([event.lat, event.lng], { icon: customIcon });
-
-      marker.on('click', () => {
-        setSelectedEventId(event.id);
-        setIsPanelOpen(true);
-        setPanelHeight('partial');
-        setShowPerfectDayPanel(false);
-      });
-
-      const popupContent = `
-        <div style="min-width: 200px; max-width: 250px; font-family: sans-serif;">
-          ${event.image_url ? `<img src="${event.image_url}" onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;"/>` : ''}
-          <h3 style="margin: 0 0 4px 0; font-weight: bold; color: #1f2937; font-size: 16px;">${event.title}</h3>
-          
-          <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280; font-size: 12px;">
-            <span style="margin-right: 5px;">📍</span>
-            <span>${event.location || 'Bielefeld'}</span>
-          </div>
-          <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280; font-size: 12px;">
-            <span style="margin-right: 5px;">📅</span>
-            <span>Heute, ${event.time} Uhr</span>
-          </div>
-          <div style="display: flex; align-items: center; margin-bottom: 8px; color: #6b7280; font-size: 12px;">
-            <span style="margin-right: 5px;">❤️</span>
-            <span>${event.likes || 0} Likes</span>
-          </div>
-          ${event.description ? `<p style="margin-bottom: 8px; font-size: 11px; color: #4b5563; max-height: 60px; overflow: hidden;">${event.description}</p>` : ''}
-          <div style="
-            background: #ef4444;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 10px;
-            display: inline-block;
-          ">
-            ${event.category}
-          </div>
-          ${event.link ? `<div style="margin-top: 8px;"><a href="${event.link}" target="_blank" style="color: #ef4444; text-decoration: underline; font-size: 12px;">Mehr Info</a></div>` : ''}
-        </div>
-      `;
-
-      marker.bindPopup(popupContent);
-      marker.addTo(map);
-      newEventMarkers.push(marker);
-    });
-
-    setEventMarkers(newEventMarkers);
-  }, [map, filteredEvents, selectedCity]); // Add selectedCity to dependencies
-
-  useEffect(() => {
-    const fetchActiveUsers = async () => {
-      try {
-        const { data: users, error } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .not('current_live_location_lat', 'is', null)
-          .not('current_live_location_lng', 'is', null);
-
-        if (error) throw error;
-        
-        renderUserMarkers(users || []);
-      } catch (error) {
-        console.error('Error fetching active users:', error);
-      }
     };
-
-    if (map) {
-      fetchActiveUsers();
-    }
-  }, [map, userProfile, selectedCity]); // Add selectedCity to dependencies for user markers
+  }, [map, userProfile, selectedCity]);
 
   const handleEventSelect = (eventId: string) => {
     setSelectedEventId(eventId);
@@ -755,7 +776,7 @@ const EventHeatmap: React.FC = () => {
   const selectedCategoryData = categories.find(cat => cat.name === selectedCategory);
   const selectedCategoryDisplay = selectedCategory === 'all' ? 'Alle' : selectedCategory;
 
-  const filteredCheckInEvents = todaysFilteredEvents.filter(event => // Use todaysFilteredEvents
+  const filteredCheckInEvents = todaysFilteredEvents.filter(event =>
     event.title.toLowerCase().includes(checkInSearchTerm.toLowerCase()) ||
     event.location?.toLowerCase().includes(checkInSearchTerm.toLowerCase()) ||
     event.category.toLowerCase().includes(checkInSearchTerm.toLowerCase())
@@ -1041,7 +1062,7 @@ const EventHeatmap: React.FC = () => {
                 placeholder="Was machst du gerade? (z.B. Jetzt im Café Barcelona)"
                 value={liveStatusMessage}
                 onChange={(e) => setLiveStatusMessage(e.target.value)}
-                className="w-full bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pr-10 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600"
+                className="w-full bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pr-10 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-600"
                 onKeyPress={(e) => {
                     if (e.key === 'Enter') {
                         e.preventDefault();
