@@ -780,7 +780,7 @@ const EventHeatmap: React.FC = () => {
       )}
 
       {/* "Ich bin hier" Button (bottom right, floating) */}
-      <div className="absolute bottom-32 right-6 z-[1000]">
+      <div className="absolute bottom-48 right-6 z-[1000]"> {/* Changed bottom-32 to bottom-48 */}
         <Button
           onClick={() => setIsCheckInDialogOpen(true)}
           className="bg-red-500 hover:bg-red-600 text-white w-28 h-16 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-sm font-bold"
