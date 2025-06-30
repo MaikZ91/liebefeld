@@ -16,6 +16,8 @@ import { EventProvider } from "./contexts/EventContext";
 import { initializeSupabase } from "./utils/initSupabase";
 import Heatmap from '@/pages/Heatmap';
 import { Layout } from './components/layouts/Layout'; // Import the Layout component
+import UserDirectory from "./components/users/UserDirectory"; // Import UserDirectory
+import EventCalendar from "./components/EventCalendar"; // Import EventCalendar
 
 const queryClient = new QueryClient();
 
@@ -51,6 +53,10 @@ function App() {
               
               {/* Heatmap page now wrapped by Layout */}
               <Route path="/heatmap" element={<Layout><Heatmap /></Layout>} /> 
+
+              {/* New routes for Users and Events, wrapped by Layout */}
+              <Route path="/users" element={<Layout><UserDirectory open={true} onOpenChange={() => {}} onSelectUser={() => {}} /></Layout>} />
+              <Route path="/events" element={<Layout><EventCalendar /></Layout>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

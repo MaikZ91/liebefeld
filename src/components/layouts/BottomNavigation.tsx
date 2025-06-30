@@ -1,4 +1,4 @@
-
+// File: src/components/layouts/BottomNavigation.tsx
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,14 +18,17 @@ interface BottomNavigationProps {
 export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   activeView,
   setActiveView,
-  handleOpenUserDirectory,
-  setIsEventListSheetOpen,
+  handleOpenUserDirectory, // This prop will no longer be used for navigation
+  setIsEventListSheetOpen, // This prop will no longer be used for navigation
   newMessagesCount,
   newEventsCount
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const isOnHeatmap = location.pathname === '/heatmap';
+  const isOnUsersPage = location.pathname === '/users'; // New state
+  const isOnEventsPage = location.pathname === '/events'; // New state
+
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-t border-gray-700">
@@ -34,7 +37,10 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         <Button 
           variant={activeView === 'ai' ? "default" : "ghost"} 
           size="sm" 
-          onClick={() => setActiveView?.('ai')} 
+          onClick={() => {
+            setActiveView?.('ai');
+            navigate('/chat'); // Navigate to chat page and set AI view
+          }} 
           className={cn(
             "flex flex-col items-center gap-1 px-2 py-2 h-auto relative min-w-0",
             activeView === 'ai' ? 'bg-red-500 hover:bg-red-600 text-white' : 'text-gray-400 hover:text-white'
@@ -53,7 +59,10 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         <Button 
           variant={activeView === 'community' ? "default" : "ghost"} 
           size="sm" 
-          onClick={() => setActiveView?.('community')} 
+          onClick={() => {
+            setActiveView?.('community');
+            navigate('/chat'); // Navigate to chat page and set community view
+          }} 
           className={cn(
             "flex flex-col items-center gap-1 px-2 py-2 h-auto relative min-w-0",
             activeView === 'community' ? 'bg-red-500 hover:bg-red-600 text-white' : 'text-gray-400 hover:text-white'
@@ -82,23 +91,29 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           <span className="text-[10px]">Karte</span>
         </Button>
 
-        {/* User Directory Button */}
+        {/* User Directory Button (now navigates to /users) */}
         <Button 
-          variant="ghost" 
+          variant={isOnUsersPage ? "default" : "ghost"} 
           size="sm" 
-          onClick={handleOpenUserDirectory} 
-          className="flex flex-col items-center gap-1 px-2 py-2 h-auto text-gray-400 hover:text-white min-w-0"
+          onClick={() => navigate('/users')} 
+          className={cn(
+            "flex flex-col items-center gap-1 px-2 py-2 h-auto min-w-0",
+            isOnUsersPage ? 'bg-red-500 hover:bg-red-600 text-white' : 'text-gray-400 hover:text-white'
+          )}
         >
           <Users className="h-4 w-4" />
           <span className="text-[10px]">Nutzer</span>
         </Button>
         
-        {/* Calendar Events Button */}
+        {/* Calendar Events Button (now navigates to /events) */}
         <Button 
-          variant="ghost" 
+          variant={isOnEventsPage ? "default" : "ghost"} 
           size="sm" 
-          onClick={() => setIsEventListSheetOpen?.(true)} 
-          className="flex flex-col items-center gap-1 px-2 py-2 h-auto text-gray-400 hover:text-white min-w-0"
+          onClick={() => navigate('/events')} 
+          className={cn(
+            "flex flex-col items-center gap-1 px-2 py-2 h-auto min-w-0",
+            isOnEventsPage ? 'bg-red-500 hover:bg-red-600 text-white' : 'text-gray-400 hover:text-white'
+          )}
         >
           <Calendar className="h-4 w-4" />
           <span className="text-[10px]">Events</span>
