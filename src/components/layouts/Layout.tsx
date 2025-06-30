@@ -101,7 +101,7 @@ export const Layout: React.FC<LayoutProps> = ({
       </main>
       
       {/* Bottom Navigation for Chat and Root pages */}
-      {(pathname === '/chat' || pathname === '/') && (
+      {(pathname === '/chat' || pathname === '/' || pathname === '/heatmap') && (
         <BottomNavigation
           activeView={activeView}
           setActiveView={setActiveView}
