@@ -1,3 +1,4 @@
+// File: src/App.tsx
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,6 +15,7 @@ import Chat from "./pages/Chat";
 import { EventProvider } from "./contexts/EventContext";
 import { initializeSupabase } from "./utils/initSupabase";
 import Heatmap from '@/pages/Heatmap';
+import { Layout } from './components/layouts/Layout'; // Import the Layout component
 
 const queryClient = new QueryClient();
 
@@ -38,6 +40,7 @@ function App() {
           <Sonner position="top-center" />
           <BrowserRouter>
             <Routes>
+              {/* Wrap pages that should have the layout here */}
               <Route path="/" element={<Chat />} />
               <Route path="/index" element={<Index />} />
               <Route path="/about" element={<About />} />
@@ -45,7 +48,10 @@ function App() {
               <Route path="/impressum" element={<Impressum />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/policies" element={<CSAEPolicies />} />
-              <Route path="/heatmap" element={<Heatmap />} />
+              
+              {/* Heatmap page now wrapped by Layout */}
+              <Route path="/heatmap" element={<Layout><Heatmap /></Layout>} /> 
+              
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
