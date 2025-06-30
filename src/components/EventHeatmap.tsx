@@ -277,7 +277,8 @@ const EventHeatmap: React.FC = () => {
     }
 
     setIsCheckInDialogOpen(false); 
-    const checkInToastId = toast({ id: "checkin-progress", title: "Check-in wird verarbeitet...", duration: Infinity }); 
+    // FIX: Removed 'id' property as it's auto-generated, and used the returned object's id for dismiss.
+    const checkInToast = toast({ title: "Check-in wird verarbeitet...", duration: Infinity }); 
 
     try {
       const userCurrentLat = getCoordinatesForLocation('Bielefeld') as number;
@@ -315,7 +316,8 @@ const EventHeatmap: React.FC = () => {
 
       refetchProfile(); 
 
-      dismiss(checkInToastId); 
+      // FIX: Use checkInToast.id to dismiss the toast.
+      dismiss(checkInToast.id); 
       toast({ 
         title: "Erfolgreich eingecheckt!",
         description: liveStatusMessage ? `Dein Status: "${liveStatusMessage}" wurde geteilt.` : "Dein Standort wurde geteilt.",
@@ -324,7 +326,8 @@ const EventHeatmap: React.FC = () => {
 
     } catch (error: any) { 
       console.error('Check-in failed:', error);
-      dismiss(checkInToastId); 
+      // FIX: Use checkInToast.id to dismiss the toast.
+      dismiss(checkInToast.id); 
       toast({ 
         title: "Check-in fehlgeschlagen",
         description: error.message || "Es gab ein Problem beim Einchecken.", 
