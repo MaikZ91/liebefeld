@@ -89,6 +89,7 @@ const EventHeatmap: React.FC = () => {
       // Hardcoded coordinates for now, ideally would fetch from a database or API
       const coords: { [key: string]: { lat: number; lng: number } } = {
         'bi': { lat: 52.0302, lng: 8.5311 }, // Bielefeld
+        'bielefeld': { lat: 52.0302, lng: 8.5311 }, // Bielefeld (full name)
         'berlin': { lat: 52.5200, lng: 13.4050 }, // Berlin
         'hamburg': { lat: 53.5511, lng: 9.9937 }, // Hamburg
         'köln': { lat: 50.935173, lng: 6.953101 }, // Köln
@@ -96,22 +97,61 @@ const EventHeatmap: React.FC = () => {
       };
       return coords[cityObject.abbr.toLowerCase()] || coords['bi']; // Fallback to Bielefeld
     }
-    return { lat: 52.0302, lng: 8.5311 }; // Default to Bielefeld if city not found
+    return { lat: 52.0302, lng: 8.5311 }; // Default to Bielefeld if city not found or abbr invalid
   };
 
   // Helper to get coordinates for specific locations within a city (approximate)
-  function getCoordinatesForLocation(location: string, isLng: boolean = false): number | null {
-    if (!location) return null;
+  // This function must always return a valid coordinate pair, never null for lat/lng used by Leaflet.
+  function getCoordinatesForLocation(location: string, isLng: boolean = false): number { // Changed return type to number
+    if (!location) {
+        const currentCityCenter = getCityCenterCoordinates(selectedCity);
+        return isLng ? currentCityCenter.lng : currentCityCenter.lat; // Return city center if location is null
+    }
     
     const locationLower = location.toLowerCase();
     const currentCityCenter = getCityCenterCoordinates(selectedCity);
 
-    // Specific Bielefeld locations (can be extended for other cities)
     const specificLocationMap: { [key: string]: { lat: number; lng: number } } = {
+      // Bielefeld specific locations
       'forum': { lat: 52.0210, lng: 8.5320 },
       'lokschuppen': { lat: 52.0195, lng: 8.5340 },
       'kunsthalle': { lat: 52.0175, lng: 8.5380 },
-      // ... add more specific locations as needed for various cities
+      'theater': { lat: 52.0185, lng: 8.5355 },
+      'stadttheater': { lat: 52.0185, lng: 8.5355 },
+      'stadthalle': { lat: 52.0220, lng: 8.5400 },
+      'rudolf-oetker-halle': { lat: 52.0210, lng: 8.5330 },
+      'stereo bielefeld': { lat: 52.0200, lng: 8.5350 },
+      'stereo': { lat: 52.0200, lng: 8.5350 },
+      'nr.z.p': { lat: 52.0190, lng: 8.5370 },
+      'nrzp': { lat: 52.0190, lng: 8.5370 },
+      'universität': { lat: 52.0380, lng: 8.4950 },
+      'uni': { lat: 52.0380, lng: 8.4950 },
+      'campus': { lat: 52.0380, lng: 8.4950 },
+      'altstadt': { lat: 52.0192, lng: 8.5370 },
+      'zentrum': { lat: 52.0302, lng: 8.5311 },
+      'innenstadt': { lat: 52.0302, lng: 8.5311 },
+      'mitte': { lat: 52.0302, lng: 8.5311 },
+      'schildesche': { lat: 52.0450, lng: 8.4800 },
+      'brackwede': { lat: 52.0050, lng: 8.5800 },
+      'sennestadt': { lat: 51.9800, lng: 8.6200 },
+      'heepen': { lat: 52.0500, lng: 8.6000 },
+      'stieghorst': { lat: 52.0100, lng: 8.6100 },
+      'stadtpark': { lat: 52.0250, lng: 8.5280 },
+      'bürgerpark': { lat: 52.0180, lng: 8.5200 },
+      'tierpark': { lat: 52.0400, lng: 8.5100 },
+      'botanischer garten': { lat: 52.0350, lng: 8.4900 },
+      'loom': { lat: 52.0200, lng: 8.5350 },
+      'hauptbahnhof': { lat: 52.0280, lng: 8.5320 },
+      'bahnhof': { lat: 52.0280, lng: 8.5320 },
+      'schücoarena': { lat: 52.0320, lng: 8.5150 },
+      'alm': { lat: 52.0320, lng: 8.5150 },
+      'arminia': { lat: 52.0320, lng: 8.5150 },
+      // Berlin specific locations (example)
+      'brandenburger tor': { lat: 52.5162, lng: 13.3777 },
+      'alexanderplatz': { lat: 52.5219, lng: 13.4135 },
+      'reichstag': { lat: 52.5186, lng: 13.3762 },
+      'berlin wall memorial': { lat: 52.5350, lng: 13.3885 },
+      'east side gallery': { lat: 52.5020, lng: 13.4440 },
     };
 
     for (const [key, coords] of Object.entries(specificLocationMap)) {
@@ -120,8 +160,7 @@ const EventHeatmap: React.FC = () => {
       }
     }
 
-    // Default offset from city center if location is generic or unknown
-    const offset = (Math.random() - 0.5) * 0.005; // Small random offset for clustering
+    const offset = (Math.random() - 0.5) * 0.005;
     const coord = isLng ? currentCityCenter.lng + offset : currentCityCenter.lat + offset;
     return coord;
   }
@@ -163,8 +202,7 @@ const EventHeatmap: React.FC = () => {
           attendees: (event.rsvp_yes || 0) + (event.rsvp_maybe || 0) + (event.likes || 0),
           eventHour: getHourFromTime(event.time)
         };
-      })
-      .filter(event => event.lat !== null && event.lng !== null);
+      });
 
     console.log(`Found ${filtered.length} events for today in ${cityDisplayName} with valid coordinates`);
     return filtered;
