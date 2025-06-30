@@ -51,8 +51,9 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef, isLoadingEve
       }
     });
 
-    // Sortiere alle relevanten Events nach Likes (absteigend) und dann nach Datum (aufsteigend).
-    // KEINE Beschränkung mehr auf die Top 5, um "alle Top Events" anzuzeigen.
+    // Sortiere ALLE relevanten Events (des aktuellen Monats und der ausgewählten Stadt)
+    // zuerst nach Likes (absteigend), dann nach Datum (aufsteigend).
+    // Es wird hier NICHT mehr nach "Top Event pro Tag" gruppiert.
     return currentMonthEvents.sort((a, b) => {
       const likesA = a.likes || 0;
       const likesB = b.likes || 0;
@@ -99,6 +100,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef, isLoadingEve
             ) : tickerEvents.length > 0 ? (
               // Events sind da: Zeige die Events an
               <>
+                {/* Doppele die Liste, um einen nahtlosen Loop zu ermöglichen */}
                 {[...tickerEvents, ...tickerEvents].map((event, index) => (
                   <div 
                     key={`${event.id}-${index}`} 
@@ -121,7 +123,6 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef, isLoadingEve
                         <ThumbsUp className="w-3 h-3 mr-0.5" /> 
                         {event.likes || 0}
                       </span>
-                      {/* GitHub-Quellenangabe entfernt */}
                     </span>
                     <span className="mx-2 text-red-500">•</span>
                   </div>
