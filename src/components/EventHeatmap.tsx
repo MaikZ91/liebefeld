@@ -34,7 +34,7 @@ import { UserProfile } from '@/types/chatTypes';
 import { getInitials } from '@/utils/chatUIUtils';
 import PrivateChat from '@/components/users/PrivateChat';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-
+import HeatmapHeader from './HeatmapHeader';
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -605,7 +605,6 @@ const EventHeatmap: React.FC = () => {
     setEventMarkers(newEventMarkers);
   }, [map, filteredEvents]);
 
-
   const handleEventSelect = (eventId: string) => {
     setSelectedEventId(eventId);
     
@@ -658,9 +657,12 @@ const EventHeatmap: React.FC = () => {
   );
 
   return (
-    <div className="relative w-full h-screen overflow-hidden"> {/* REMOVED bg-gray-100 */}
+    <div className="relative w-full h-screen overflow-hidden">
+      {/* Live Ticker Header */}
+      <HeatmapHeader selectedCity="bielefeld" />
+
       {/* Button to toggle Filter Panel */}
-      <div className="absolute top-4 left-4 z-[1001]"> {/* Increased z-index slightly */}
+      <div className="absolute top-16 left-4 z-[1001]"> {/* Increased z-index slightly */}
         <Button
           variant="outline"
           size="icon"
@@ -674,7 +676,7 @@ const EventHeatmap: React.FC = () => {
 
       {/* Filter Panel (Conditional Rendering) */}
       {showFilterPanel && (
-        <div className="absolute top-16 left-4 z-[1000] space-y-3 max-w-sm animate-fade-in">
+        <div className="absolute top-28 left-4 z-[1000] space-y-3 max-w-sm animate-fade-in">
           <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
             <h3 className="text-white font-bold mb-4 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-red-500" />
@@ -763,7 +765,7 @@ const EventHeatmap: React.FC = () => {
 
       {/* Panel Toggle Button */}
       {!isPanelOpen && !showPerfectDayPanel && filteredEvents.length > 0 && (
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-[1000]">
+        <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-[1000]">
           <Button
             onClick={() => {
               setIsPanelOpen(true);
@@ -778,7 +780,7 @@ const EventHeatmap: React.FC = () => {
       )}
 
       {/* "Ich bin hier" Button (bottom right, floating) */}
-      <div className="absolute bottom-24 right-6 z-[1000]">
+      <div className="absolute bottom-32 right-6 z-[1000]">
         <Button
           onClick={() => setIsCheckInDialogOpen(true)}
           className="bg-red-500 hover:bg-red-600 text-white w-28 h-16 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-sm font-bold"

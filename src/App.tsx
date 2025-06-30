@@ -1,3 +1,4 @@
+
 // File: src/App.tsx
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -15,9 +16,9 @@ import Chat from "./pages/Chat";
 import { EventProvider } from "./contexts/EventContext";
 import { initializeSupabase } from "./utils/initSupabase";
 import Heatmap from '@/pages/Heatmap';
-import { Layout } from './components/layouts/Layout'; // Import the Layout component
-import UserDirectory from "./components/users/UserDirectory"; // Import UserDirectory
-import EventCalendar from "./components/EventCalendar"; // Import EventCalendar
+import { Layout } from './components/layouts/Layout';
+import UserDirectory from "./components/users/UserDirectory";
+import EventCalendar from "./components/EventCalendar";
 
 const queryClient = new QueryClient();
 
@@ -42,8 +43,11 @@ function App() {
           <Sonner position="top-center" />
           <BrowserRouter>
             <Routes>
-              {/* Wrap pages that should have the layout here */}
-              <Route path="/" element={<Chat />} />
+              {/* Heatmap als Hauptseite */}
+              <Route path="/" element={<Heatmap />} />
+              <Route path="/heatmap" element={<Heatmap />} />
+              
+              {/* Andere Seiten */}
               <Route path="/index" element={<Index />} />
               <Route path="/about" element={<About />} />
               <Route path="/chat" element={<Chat />} />
@@ -51,14 +55,10 @@ function App() {
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/policies" element={<CSAEPolicies />} />
               
-              {/* Heatmap page now wrapped by Layout */}
-              <Route path="/heatmap" element={<Layout><Heatmap /></Layout>} /> 
-
-              {/* New routes for Users and Events, wrapped by Layout */}
+              {/* Layout-wrapped pages */}
               <Route path="/users" element={<Layout><UserDirectory open={true} onOpenChange={() => {}} onSelectUser={() => {}} /></Layout>} />
               <Route path="/events" element={<Layout><EventCalendar /></Layout>} />
               
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
