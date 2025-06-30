@@ -1,4 +1,3 @@
-// File: src/components/EventHeatmap.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -65,7 +64,7 @@ const EventHeatmap: React.FC = () => {
   const [liveStatusMessage, setLiveStatusMessage] = useState('');
   const [isPrivateChatOpen, setIsPrivateChatOpen] = useState(false);
   const [selectedUserForPrivateChat, setSelectedUserForPrivateChat] = useState<UserProfile | null>(null);
-  const [showFilterPanel, setShowFilterPanel] = useState(false); // NEU: State für das Filter-Panel
+  const [showFilterPanel, setShowFilterPanel] = useState(true); // GEÄNDERT: Initialwert auf true
 
   const mapRef = useRef<HTMLDivElement>(null);
   const { toast, dismiss } = useToast();
@@ -206,10 +205,10 @@ const EventHeatmap: React.FC = () => {
       title: event.title,
       date: event.date,
       time: event.time,
+      price: event.is_paid ? "Kostenpflichtig" : "Kostenlos",
       location: event.location || event.city || 'Bielefeld',
-      category: event.category,
-      description: event.description,
       image_url: event.image_url || `https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop&q=80&auto=format`,
+      category: event.category,
       link: event.link,
       likes: event.likes || 0,
       rsvp_yes: event.rsvp_yes,
@@ -922,7 +921,7 @@ const EventHeatmap: React.FC = () => {
           {userProfile && (
             <div className="flex items-center gap-3 py-2 px-4 border-b border-gray-800">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.username} />
+                <AvatarImage src={userProfile.avatar || ''} alt={userProfile.username} />
                 <AvatarFallback className="bg-red-500 text-white">{getInitials(userProfile.username)}</AvatarFallback>
               </Avatar>
               <span className="text-white text-lg font-semibold">{userProfile.username}</span>
