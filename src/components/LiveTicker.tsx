@@ -149,7 +149,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef, isLoadingEve
               }
             }
             .ticker-scroll {
-              animation: ticker ${isLoadingEvents && tickerEvents.length === 0 ? '10s' : '20s'} linear infinite;
+              animation: ticker ${isLoadingEvents && tickerEvents.length === 0 ? '20s' : '60s'} linear infinite;
             }
             .ticker-paused {
               animation-play-state: paused;
