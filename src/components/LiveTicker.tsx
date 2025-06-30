@@ -1,7 +1,7 @@
 // src/components/LiveTicker.tsx
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Calendar, ThumbsUp } from 'lucide-react';
-import { format, parseISO, isSameMonth, startOfDay, isAfter, isToday, addDays } from 'date-fns';
+import { format, parseISO, isSameMonth, startOfDay, isAfter, isToday, addDays, isWithinInterval, endOfDay } from 'date-fns'; // Added isWithinInterval, endOfDay
 import { de } from 'date-fns/locale';
 import { type Event } from '../types/eventTypes';
 import { cities } from '@/contexts/EventContext'; // Importiere die Städte-Liste
@@ -20,8 +20,8 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef, isLoadingEve
     if (events.length === 0) return [];
 
     const currentDate = new Date();
-    const today = startOfDay(new Date());
-    const thirtyDaysFromNow = addDays(today, 30); // Calculate 30 days from now
+    const today = startOfDay(new Date()); // Start of today
+    const thirtyDaysFromTodayInclusiveEnd = endOfDay(addDays(today, 29)); // End of day for the 30th day (today + 29 more days)
 
     // Filter Events nach ausgewählter Stadt
     const cityFilteredEvents = events.filter(event => {
@@ -42,13 +42,14 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef, isLoadingEve
       return eventCity === targetCityName;
     });
 
-    const next30DaysEvents = cityFilteredEvents.filter(event => { // Filterung auf cityFilteredEvents anwenden
+    const next30DaysEvents = cityFilteredEvents.filter(event => {
       if (!event.date) return false;
       try {
         const eventDate = parseISO(event.date);
-        // NEU: Filtere Events, die heute oder in den nächsten 30 Tagen liegen
-        return (isAfter(eventDate, today) || isToday(eventDate)) && isBefore(eventDate, thirtyDaysFromNow);
-      } catch {
+        // NEU: Filtere Events, die im Intervall [today, thirtyDaysFromTodayInclusiveEnd] liegen
+        return isWithinInterval(eventDate, { start: today, end: thirtyDaysFromTodayInclusiveEnd });
+      } catch (e) {
+        console.error(`Error parsing event date ${event.date}:`, e); // Log parsing errors
         return false;
       }
     });
