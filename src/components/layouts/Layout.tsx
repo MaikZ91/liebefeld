@@ -1,4 +1,4 @@
-// File: src/components/layouts/Layout.tsx
+// src/components/layouts/Layout.tsx
 // Changed: Added ChatInput to header with proper spacing
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -67,8 +67,8 @@ export const Layout: React.FC<LayoutProps> = ({
     };
   }, []);
   
-  // Conditionally hide header for /heatmap
-  const hideHeader = pathname === '/heatmap';
+  // Conditionally hide header for /heatmap and / (root)
+  const hideHeader = pathname === '/heatmap' || pathname === '/';
 
   return (
     <>

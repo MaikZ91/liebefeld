@@ -1,5 +1,4 @@
-
-// File: src/App.tsx
+// src/App.tsx
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -43,9 +42,9 @@ function App() {
           <Sonner position="top-center" />
           <BrowserRouter>
             <Routes>
-              {/* Heatmap als Hauptseite */}
-              <Route path="/" element={<Heatmap />} />
-              <Route path="/heatmap" element={<Heatmap />} />
+              {/* Heatmap als Hauptseite, jetzt von Layout umhüllt */}
+              <Route path="/" element={<Layout><Heatmap /></Layout>} />
+              <Route path="/heatmap" element={<Layout><Heatmap /></Layout>} />
               
               {/* Andere Seiten */}
               <Route path="/index" element={<Index />} />
