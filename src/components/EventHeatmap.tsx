@@ -3,7 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider'; // Corrected: Changed '=>' to 'from' in import
+import { Slider } from '@/components/ui/slider';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,7 +35,6 @@ import { getInitials } from '@/utils/chatUIUtils';
 import PrivateChat from '@/components/users/PrivateChat'; 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -64,9 +63,11 @@ const EventHeatmap: React.FC = () => {
   const [liveStatusMessage, setLiveStatusMessage] = useState(''); 
   const [isPrivateChatOpen, setIsPrivateChatOpen] = useState(false); 
   const [selectedUserForPrivateChat, setSelectedUserForPrivateChat] = useState<UserProfile | null>(null); 
+  const [userAvatarMarker, setUserAvatarMarker] = useState<L.Marker | null>(null);
+  const [isDraggingAvatar, setIsDraggingAvatar] = useState(false);
 
   const mapRef = useRef<HTMLDivElement>(null);
-  const { toast, dismiss } = useToast(); 
+  const { toast } = useToast(); 
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -251,7 +252,6 @@ const EventHeatmap: React.FC = () => {
       toast({ 
         title: "Perfect Day generiert!",
         description: "Deine personalisierte Tagesempfehlung ist bereit.",
-        variant: "default"
       });
     } catch (error: any) { 
       console.error('Error generating Perfect Day:', error);
@@ -265,6 +265,102 @@ const EventHeatmap: React.FC = () => {
     }
   };
 
+  const createUserAvatarMarker = (lat: number, lng: number) => {
+    if (!map || !userProfile) return null;
+
+    const avatarIconHtml = `
+      <div style="
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        cursor: grab;
+        user-select: none;
+      ">
+        ${liveStatusMessage ? `
+          <div style="
+            background: #ef4444;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            position: relative;
+            top: 5px;
+          ">
+            ${liveStatusMessage}
+          </div>` : ''}
+        <img src="${userProfile.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(userProfile.username)}`}" 
+             alt="${userProfile.username}"
+             style="
+               width: 60px;
+               height: 60px;
+               border-radius: 50%;
+               border: 4px solid #ef4444;
+               box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+               background-color: white;
+             "/>
+        <div style="
+          color: #ef4444;
+          font-size: 12px;
+          font-weight: bold;
+          margin-top: 4px;
+          text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        ">
+          ${userProfile.username}
+        </div>
+      </div>
+    `;
+
+    const avatarIcon = L.divIcon({
+      html: avatarIconHtml,
+      className: 'user-avatar-marker',
+      iconSize: [80, 100],
+      iconAnchor: [40, 100],
+    });
+
+    const marker = L.marker([lat, lng], { 
+      icon: avatarIcon,
+      draggable: true 
+    });
+
+    marker.on('dragstart', () => {
+      setIsDraggingAvatar(true);
+    });
+
+    marker.on('dragend', async (e) => {
+      setIsDraggingAvatar(false);
+      const newPos = e.target.getLatLng();
+      
+      // Update user location in database
+      try {
+        await supabase.from('user_profiles')
+          .update({
+            current_live_location_lat: newPos.lat,
+            current_live_location_lng: newPos.lng,
+            current_checkin_timestamp: new Date().toISOString(),
+          })
+          .eq('username', currentUser);
+        
+        refetchProfile();
+      } catch (error) {
+        console.error('Error updating user location:', error);
+      }
+    });
+
+    marker.on('click', () => {
+      setIsCheckInDialogOpen(true);
+    });
+
+    return marker;
+  };
+
   const handleCheckInWithStatus = async () => {
     if (!currentUser || currentUser === 'Gast') {
       toast({
@@ -275,12 +371,16 @@ const EventHeatmap: React.FC = () => {
       return;
     }
 
-    setIsCheckInDialogOpen(false); 
-    const checkInToastId = toast({ id: "checkin-progress", title: "Check-in wird verarbeitet...", duration: Infinity }); 
+    setIsCheckInDialogOpen(false);
 
     try {
-      const userCurrentLat = getCoordinatesForLocation('Bielefeld') as number;
-      const userCurrentLng = getCoordinatesForLocation('Bielefeld', true) as number;
+      // Get current position or use default Bielefeld coordinates
+      let userCurrentLat = getCoordinatesForLocation('Bielefeld') as number;
+      let userCurrentLng = getCoordinatesForLocation('Bielefeld', true) as number;
+
+      // Add some randomization to avoid overlapping avatars
+      userCurrentLat += (Math.random() - 0.5) * 0.002;
+      userCurrentLng += (Math.random() - 0.5) * 0.002;
 
       const updatedProfileData: Partial<UserProfile> = {
         last_online: new Date().toISOString(),
@@ -293,6 +393,17 @@ const EventHeatmap: React.FC = () => {
       await supabase.from('user_profiles')
         .update(updatedProfileData)
         .eq('username', currentUser);
+      
+      // Create or update avatar marker
+      if (userAvatarMarker && map) {
+        map.removeLayer(userAvatarMarker);
+      }
+      
+      const newMarker = createUserAvatarMarker(userCurrentLat, userCurrentLng);
+      if (newMarker && map) {
+        newMarker.addTo(map);
+        setUserAvatarMarker(newMarker);
+      }
       
       const communityMessage = liveStatusMessage 
         ? `📍 ${currentUser} ist jetzt hier: "${liveStatusMessage}"`
@@ -314,16 +425,13 @@ const EventHeatmap: React.FC = () => {
 
       refetchProfile(); 
 
-      dismiss(checkInToastId); 
       toast({ 
         title: "Erfolgreich eingecheckt!",
         description: liveStatusMessage ? `Dein Status: "${liveStatusMessage}" wurde geteilt.` : "Dein Standort wurde geteilt.",
-        variant: "success"
       });
 
     } catch (error: any) { 
       console.error('Check-in failed:', error);
-      dismiss(checkInToastId); 
       toast({ 
         title: "Check-in fehlgeschlagen",
         description: error.message || "Es gab ein Problem beim Einchecken.", 
@@ -355,7 +463,6 @@ const EventHeatmap: React.FC = () => {
       toast({ 
         title: "Event erfolgreich erstellt!",
         description: `${eventData.title} wurde hinzugefügt.`,
-        variant: "default"
       });
       refreshEvents(); 
       setIsEventFormOpen(false);
@@ -380,13 +487,13 @@ const EventHeatmap: React.FC = () => {
     const THIRTY_MINUTES_MS = 30 * 60 * 1000;
 
     usersToDisplay.forEach(user => {
-      // Only display users who have explicitly checked in recently with a status message
-      const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null && user.current_live_location_lat !== undefined && user.current_live_location_lng !== undefined;
-      const hasStatusMessage = user.current_status_message && user.current_status_message.trim() !== '';
-      const isRecentCheckin = user.current_checkin_timestamp && 
-                               (new Date().getTime() - new Date(user.current_checkin_timestamp).getTime() < THIRTY_MINUTES_MS);
+      // Skip current user (they have their own draggable avatar)
+      if (user.username === currentUser) return;
 
-      if (hasLiveLocation && hasStatusMessage && isRecentCheckin) {
+      const hasLiveLocation = user.current_live_location_lat !== null && 
+                           user.current_live_location_lng !== null;
+
+      if (hasLiveLocation) {
         const lat = user.current_live_location_lat as number;
         const lng = user.current_live_location_lng as number;
         const statusMessage = user.current_status_message as string;
@@ -403,7 +510,7 @@ const EventHeatmap: React.FC = () => {
             cursor: pointer;
           ">
             <div style="
-              background: #ef4444; /* Speech bubble background */
+              background: #ef4444;
               color: white;
               padding: 4px 8px;
               border-radius: 15px;
@@ -415,7 +522,7 @@ const EventHeatmap: React.FC = () => {
               text-overflow: ellipsis;
               box-shadow: 0 2px 5px rgba(0,0,0,0.2);
               position: relative;
-              top: 5px; /* Adjust to float above avatar */
+              top: 5px;
             ">
               ${statusMessage}
             </div>
@@ -425,14 +532,14 @@ const EventHeatmap: React.FC = () => {
                    width: 50px;
                    height: 50px;
                    border-radius: 50%;
-                   border: 3px solid white; /* White border as in screenshot */
+                   border: 3px solid white;
                    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
                    background-color: white;
                    position: relative;
                    z-index: 10;
                  "/>
             <div style="
-              color: #333; /* Darker text for username below avatar */
+              color: #333;
               font-size: 10px;
               font-weight: bold;
               margin-top: 2px;
@@ -601,6 +708,30 @@ const EventHeatmap: React.FC = () => {
     setEventMarkers(newEventMarkers);
   }, [map, filteredEvents]);
 
+  useEffect(() => {
+    if (!map || !userProfile || !currentUser || currentUser === 'Gast') return;
+
+    const hasLiveLocation = userProfile.current_live_location_lat !== null && 
+                           userProfile.current_live_location_lng !== null;
+
+    if (hasLiveLocation) {
+      // Remove existing avatar marker
+      if (userAvatarMarker) {
+        map.removeLayer(userAvatarMarker);
+      }
+
+      // Create new avatar marker
+      const newMarker = createUserAvatarMarker(
+        userProfile.current_live_location_lat as number,
+        userProfile.current_live_location_lng as number
+      );
+      
+      if (newMarker) {
+        newMarker.addTo(map);
+        setUserAvatarMarker(newMarker);
+      }
+    }
+  }, [map, userProfile, currentUser, liveStatusMessage]);
 
   const handleEventSelect = (eventId: string) => {
     setSelectedEventId(eventId);
@@ -758,13 +889,18 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* "Ich bin hier" Button (bottom right, floating) */}
+      {/* Avatar Positioning Button */}
       <div className="absolute bottom-6 right-6 z-[1000]">
         <Button
           onClick={() => setIsCheckInDialogOpen(true)}
           className="bg-red-500 hover:bg-red-600 text-white w-28 h-16 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-sm font-bold"
         >
-          <Plus className="w-6 h-6 mb-0.5" />
+          <Avatar className="w-8 h-8 mb-1">
+            <AvatarImage src={userProfile?.avatar || undefined} alt={userProfile?.username || 'User'} />
+            <AvatarFallback className="bg-white text-red-500 text-xs">
+              {userProfile ? getInitials(userProfile.username) : 'U'}
+            </AvatarFallback>
+          </Avatar>
           Ich bin hier!
         </Button>
       </div>
@@ -889,19 +1025,18 @@ const EventHeatmap: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Live Check-in Dialog (with chat-like input) */}
+      {/* Avatar Status Dialog */}
       <Dialog open={isCheckInDialogOpen} onOpenChange={setIsCheckInDialogOpen}>
         <DialogContent className="z-[1100] bg-black/95 backdrop-blur-md border-gray-700 text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-green-500" />
-              Ich bin hier!
+              Avatar auf Karte setzen
             </DialogTitle>
           </DialogHeader>
-          {/* Avatar display moved inside DialogContent */}
           {userProfile && (
             <div className="flex items-center gap-3 py-2 px-4 border-b border-gray-800">
-              <Avatar className="h-10 w-10">
+              <Avatar className="h-12 w-12">
                 <AvatarImage src={userProfile.avatar || undefined} alt={userProfile.username} />
                 <AvatarFallback className="bg-red-500 text-white">{getInitials(userProfile.username)}</AvatarFallback>
               </Avatar>
@@ -909,7 +1044,7 @@ const EventHeatmap: React.FC = () => {
             </div>
           )}
           <div className="space-y-4 py-4">
-            <p className="text-gray-300">Setze deinen Status:</p>
+            <p className="text-gray-300">Setze deinen Status und positioniere dich auf der Karte:</p>
             <div className="flex items-center relative w-full">
                 <Input
                 placeholder="Was machst du gerade? (z.B. Jetzt im Café Barcelona)"
@@ -936,6 +1071,9 @@ const EventHeatmap: React.FC = () => {
                     <Send className="h-3 w-3" />
                 </button>
             </div>
+            <p className="text-xs text-gray-400">
+              Nach dem Einchecken kannst du deinen Avatar durch Ziehen auf der Karte bewegen.
+            </p>
           </div>
         </DialogContent>
       </Dialog>
