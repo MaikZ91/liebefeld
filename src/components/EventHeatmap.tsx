@@ -35,6 +35,7 @@ import { getInitials } from '@/utils/chatUIUtils';
 import PrivateChat from '@/components/users/PrivateChat';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import HeatmapHeader from './HeatmapHeader';
+import { cities } from '@/contexts/EventContext'; // Import cities for coordinate mapping
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -45,7 +46,7 @@ L.Icon.Default.mergeOptions({
 });
 
 const EventHeatmap: React.FC = () => {
-  const { events, isLoading, refreshEvents } = useEvents();
+  const { events, isLoading, refreshEvents, selectedCity } = useEvents(); // Use selectedCity from context
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [timeRange, setTimeRange] = useState([new Date().getHours()]);
@@ -80,83 +81,77 @@ const EventHeatmap: React.FC = () => {
     return parseInt(hour, 10);
   };
 
+  // Helper to get city center coordinates
+  const getCityCenterCoordinates = (cityAbbr: string) => {
+    const cityObject = cities.find(c => c.abbr.toLowerCase() === cityAbbr.toLowerCase());
+    if (cityObject) {
+      // Hardcoded coordinates for now, ideally would fetch from a database or API
+      const coords: { [key: string]: { lat: number; lng: number } } = {
+        'bi': { lat: 52.0302, lng: 8.5311 }, // Bielefeld
+        'berlin': { lat: 52.5200, lng: 13.4050 }, // Berlin
+        'hamburg': { lat: 53.5511, lng: 9.9937 }, // Hamburg
+        'köln': { lat: 50.935173, lng: 6.953101 }, // Köln
+        'munich': { lat: 48.1351, lng: 11.5820 }, // München
+      };
+      return coords[cityObject.abbr.toLowerCase()] || coords['bi']; // Fallback to Bielefeld
+    }
+    return { lat: 52.0302, lng: 8.5311 }; // Default to Bielefeld if city not found
+  };
+
+  // Helper to get coordinates for specific locations within a city (approximate)
   function getCoordinatesForLocation(location: string, isLng: boolean = false): number | null {
     if (!location) return null;
     
     const locationLower = location.toLowerCase();
-    
-    const bielefeldCenter = { lat: 52.0302, lng: 8.5311 };
-    
-    const locationMap: { [key: string]: { lat: number; lng: number } } = {
+    const currentCityCenter = getCityCenterCoordinates(selectedCity);
+
+    // Specific Bielefeld locations (can be extended for other cities)
+    const specificLocationMap: { [key: string]: { lat: number; lng: number } } = {
       'forum': { lat: 52.0210, lng: 8.5320 },
       'lokschuppen': { lat: 52.0195, lng: 8.5340 },
       'kunsthalle': { lat: 52.0175, lng: 8.5380 },
-      'theater': { lat: 52.0185, lng: 8.5355 },
-      'stadttheater': { lat: 52.0185, lng: 8.5355 },
-      'stadthalle': { lat: 52.0220, lng: 8.5400 },
-      'rudolf-oetker-halle': { lat: 52.0210, lng: 8.5330 },
-      'stereo bielefeld': { lat: 52.0200, lng: 8.5350 },
-      'stereo': { lat: 52.0200, lng: 8.5350 },
-      'nr.z.p': { lat: 52.0190, lng: 8.5370 },
-      'nrzp': { lat: 52.0190, lng: 8.5370 },
-      
-      'universität': { lat: 52.0380, lng: 8.4950 },
-      'uni': { lat: 52.0380, lng: 8.4950 },
-      'campus': { lat: 52.0380, lng: 8.4950 },
-      
-      'altstadt': { lat: 52.0192, lng: 8.5370 },
-      'zentrum': { lat: 52.0302, lng: 8.5311 },
-      'innenstadt': { lat: 52.0302, lng: 8.5311 },
-      'mitte': { lat: 52.0302, lng: 8.5311 },
-      'schildesche': { lat: 52.0450, lng: 8.4800 },
-      'brackwede': { lat: 52.0050, lng: 8.5800 },
-      'sennestadt': { lat: 51.9800, lng: 8.6200 },
-      'heepen': { lat: 52.0500, lng: 8.6000 },
-      'stieghorst': { lat: 52.0100, lng: 8.6100 },
-      
-      'stadtpark': { lat: 52.0250, lng: 8.5280 },
-      'bürgerpark': { lat: 52.0180, lng: 8.5200 },
-      'tierpark': { lat: 52.0400, lng: 8.5100 },
-      'botanischer garten': { lat: 52.0350, lng: 8.4900 },
-      
-      'loom': { lat: 52.0200, lng: 8.5350 },
-      'hauptbahnhof': { lat: 52.0280, lng: 8.5320 },
-      'bahnhof': { lat: 52.0280, lng: 8.5320 },
-      
-      'schücoarena': { lat: 52.0320, lng: 8.5150 },
-      'alm': { lat: 52.0320, lng: 8.5150 },
-      'arminia': { lat: 52.0320, lng: 8.5150 },
-      
-      'bielefeld': bielefeldCenter
+      // ... add more specific locations as needed for various cities
     };
 
-    for (const [key, coords] of Object.entries(locationMap)) {
-      if (locationLower === key || locationLower.includes(key)) {
-        console.log(`Found coordinates for location "${location}": ${coords.lat}, ${coords.lng}`);
+    for (const [key, coords] of Object.entries(specificLocationMap)) {
+      if (locationLower.includes(key)) {
         return isLng ? coords.lng : coords.lat;
       }
     }
 
-    const offset = (Math.random() - 0.5) * 0.005;
-    const coord = isLng ? bielefeldCenter.lng + offset : bielefeldCenter.lat + offset;
-    console.log(`Using default coordinates with offset for location "${location}": ${coord}`);
+    // Default offset from city center if location is generic or unknown
+    const offset = (Math.random() - 0.5) * 0.005; // Small random offset for clustering
+    const coord = isLng ? currentCityCenter.lng + offset : currentCityCenter.lat + offset;
     return coord;
   }
 
-  const todaysBielefeldEvents = React.useMemo(() => {
-    console.log(`Filtering events for today (${today}) in Bielefeld...`);
+  const todaysFilteredEvents = React.useMemo(() => {
+    const cityDisplayName = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity;
+    console.log(`Filtering events for today (${today}) in ${cityDisplayName}...`);
     
     const filtered = events
       .filter(event => {
-        const isToday = event.date === today;
-        const hasLocation = event.location || event.city;
-        const isBielefeld = event.city && event.city.toLowerCase() === 'bielefeld';
+        const isTodayEvent = event.date === today;
+        const hasLocationData = event.location || event.city;
         
-        console.log(`Event: ${event.title}, Date: ${event.date}, Location: ${event.location}, City: ${event.city}, IsToday: ${isToday}, HasLocation: ${hasLocation}, IsBielefeld: ${isBielefeld}`);
-        return isToday && hasLocation && isBielefeld;
+        const eventCityLower = event.city ? event.city.toLowerCase() : null;
+        const selectedCityLower = selectedCity.toLowerCase();
+
+        let isRelevantCity = false;
+        if (selectedCityLower === 'bi' || selectedCityLower === 'bielefeld') {
+          // For Bielefeld, include events explicitly in Bielefeld OR events with no city specified (legacy)
+          isRelevantCity = !eventCityLower || eventCityLower === 'bielefeld' || eventCityLower === 'bi';
+        } else {
+          // For other cities, require an exact match
+          isRelevantCity = eventCityLower === selectedCityLower;
+        }
+                                       
+        console.log(`Event: ${event.title}, Date: ${event.date}, Location: ${event.location}, City: ${event.city}, IsToday: ${isTodayEvent}, HasLocation: ${hasLocationData}, IsRelevantCity: ${isRelevantCity}`);
+        
+        return isTodayEvent && hasLocationData && isRelevantCity;
       })
       .map(event => {
-        const locationText = event.location || event.city || event.title;
+        const locationText = event.location || event.title; // Prioritize event.location
         const lat = getCoordinatesForLocation(locationText);
         const lng = getCoordinatesForLocation(locationText, true);
         
@@ -170,24 +165,24 @@ const EventHeatmap: React.FC = () => {
       })
       .filter(event => event.lat !== null && event.lng !== null);
 
-    console.log(`Found ${filtered.length} events for today in Bielefeld with valid coordinates`);
+    console.log(`Found ${filtered.length} events for today in ${cityDisplayName} with valid coordinates`);
     return filtered;
-  }, [events, today]);
+  }, [events, today, selectedCity]); // Add selectedCity to dependencies
 
   const categories = React.useMemo(() => {
     const categoryMap = new Map<string, number>();
-    todaysBielefeldEvents.forEach(event => {
+    todaysFilteredEvents.forEach(event => { // Use todaysFilteredEvents
       categoryMap.set(event.category, (categoryMap.get(event.category) || 0) + 1);
     });
     
     return [
-      { name: 'all', count: todaysBielefeldEvents.length },
+      { name: 'all', count: todaysFilteredEvents.length }, // Use todaysFilteredEvents
       ...Array.from(categoryMap.entries()).map(([name, count]) => ({ name, count }))
     ];
-  }, [todaysBielefeldEvents]);
+  }, [todaysFilteredEvents]); // Depend on todaysFilteredEvents
 
   const filteredEvents = React.useMemo(() => {
-    let filtered = todaysBielefeldEvents;
+    let filtered = todaysFilteredEvents; // Start with todaysFilteredEvents
     
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(event => event.category === selectedCategory);
@@ -197,7 +192,7 @@ const EventHeatmap: React.FC = () => {
     filtered = filtered.filter(event => event.eventHour >= selectedHour);
     
     return filtered;
-  }, [todaysBielefeldEvents, selectedCategory, timeRange]);
+  }, [todaysFilteredEvents, selectedCategory, timeRange]); // Depend on todaysFilteredEvents
 
   const panelEvents: PanelEvent[] = React.useMemo(() => {
     return filteredEvents.map(event => ({
@@ -206,7 +201,7 @@ const EventHeatmap: React.FC = () => {
       date: event.date,
       time: event.time,
       price: event.is_paid ? "Kostenpflichtig" : "Kostenlos",
-      location: event.location || event.city || 'Bielefeld',
+      location: event.location || event.city || 'Unknown Location', // Use event.city as fallback
       image_url: event.image_url || `https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop&q=80&auto=format`,
       category: event.category,
       link: event.link,
@@ -307,8 +302,9 @@ const EventHeatmap: React.FC = () => {
     });
 
     try {
-      const userCurrentLat = getCoordinatesForLocation('Bielefeld') as number;
-      const userCurrentLng = getCoordinatesForLocation('Bielefeld', true) as number;
+      const userCurrentCityCenter = getCityCenterCoordinates(selectedCity);
+      const userCurrentLat = userCurrentCityCenter.lat + (Math.random() - 0.5) * 0.005; // Small random offset
+      const userCurrentLng = userCurrentCityCenter.lng + (Math.random() - 0.5) * 0.005; // Small random offset
 
       const updatedProfileData: Partial<UserProfile> = {
         last_online: new Date().toISOString(),
@@ -326,10 +322,11 @@ const EventHeatmap: React.FC = () => {
         ? `📍 ${currentUser} ist jetzt hier: "${liveStatusMessage}"`
         : `📍 ${currentUser} ist jetzt in der Nähe!`;
       
-      const bielefeldAusgehenGroupId = 'bi_ausgehen';
+      // Get the correct group ID for the selected city and 'Ausgehen' category
+      const cityCommunityGroupId = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.abbr.toLowerCase() + '_ausgehen' || 'bi_ausgehen';
 
       const messageResult = await messageService.sendMessage(
-        bielefeldAusgehenGroupId,
+        cityCommunityGroupId,
         currentUser,
         communityMessage,
         localStorage.getItem('community_chat_avatar') || ''
@@ -369,7 +366,7 @@ const EventHeatmap: React.FC = () => {
         .from('community_events')
         .insert([{
           ...eventData,
-          city: 'Bielefeld',
+          city: cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity, // Save with full city name
           created_at: new Date().toISOString()
         }])
         .select()
@@ -404,6 +401,19 @@ const EventHeatmap: React.FC = () => {
     const THIRTY_MINUTES_MS = 30 * 60 * 1000;
 
     usersToDisplay.forEach(user => {
+      // Filter users by current selected city
+      const userCity = user.favorite_locations?.[0]?.toLowerCase() || 'bielefeld'; // Assume first favorite location is user's city
+      const selectedCityName = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name?.toLowerCase() || selectedCity.toLowerCase();
+      
+      let isUserInCurrentCity = false;
+      if (selectedCityName === 'bielefeld' || selectedCityName === 'bi') {
+        isUserInCurrentCity = userCity === 'bielefeld' || userCity === 'bi' || !user.favorite_locations || user.favorite_locations.length === 0;
+      } else {
+        isUserInCurrentCity = userCity === selectedCityName;
+      }
+
+      if (!isUserInCurrentCity) return; // Skip user if not in current city
+
       const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null && user.current_live_location_lat !== undefined && user.current_live_location_lng !== undefined;
       const hasStatusMessage = user.current_status_message && user.current_status_message.trim() !== '';
       const isRecentCheckin = user.current_checkin_timestamp &&
@@ -502,8 +512,10 @@ const EventHeatmap: React.FC = () => {
   useEffect(() => {
     if (!mapRef.current || map) return;
 
+    const initialCenter = getCityCenterCoordinates(selectedCity);
+
     const leafletMap = L.map(mapRef.current, {
-      center: [52.0302, 8.5311],
+      center: [initialCenter.lat, initialCenter.lng],
       zoom: 13,
       zoomControl: true,
       preferCanvas: false
@@ -521,11 +533,12 @@ const EventHeatmap: React.FC = () => {
         leafletMap.remove();
       }
     };
-  }, [mapRef.current]);
+  }, [mapRef.current, selectedCity, map]); // Add selectedCity to dependency array
 
   useEffect(() => {
     if (!map) return;
 
+    // Clear existing markers when events or selectedCity change
     eventMarkers.forEach(marker => {
       map.removeLayer(marker);
     });
@@ -634,7 +647,7 @@ const EventHeatmap: React.FC = () => {
     });
 
     setEventMarkers(newEventMarkers);
-  }, [map, filteredEvents]);
+  }, [map, filteredEvents, selectedCity]); // Add selectedCity to dependencies
 
   useEffect(() => {
     const fetchActiveUsers = async () => {
@@ -656,7 +669,7 @@ const EventHeatmap: React.FC = () => {
     if (map) {
       fetchActiveUsers();
     }
-  }, [map, userProfile]);
+  }, [map, userProfile, selectedCity]); // Add selectedCity to dependencies for user markers
 
   const handleEventSelect = (eventId: string) => {
     setSelectedEventId(eventId);
@@ -703,7 +716,7 @@ const EventHeatmap: React.FC = () => {
   const selectedCategoryData = categories.find(cat => cat.name === selectedCategory);
   const selectedCategoryDisplay = selectedCategory === 'all' ? 'Alle' : selectedCategory;
 
-  const filteredCheckInEvents = todaysBielefeldEvents.filter(event =>
+  const filteredCheckInEvents = todaysFilteredEvents.filter(event => // Use todaysFilteredEvents
     event.title.toLowerCase().includes(checkInSearchTerm.toLowerCase()) ||
     event.location?.toLowerCase().includes(checkInSearchTerm.toLowerCase()) ||
     event.category.toLowerCase().includes(checkInSearchTerm.toLowerCase())
@@ -712,7 +725,7 @@ const EventHeatmap: React.FC = () => {
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Live Ticker Header */}
-      <HeatmapHeader selectedCity="bielefeld" />
+      <HeatmapHeader selectedCity={selectedCity} />
 
       {/* Button to toggle Filter Panel */}
       <div className="absolute top-16 left-4 z-[1001]">
@@ -733,7 +746,7 @@ const EventHeatmap: React.FC = () => {
           <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
             <h3 className="text-white font-bold mb-4 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-red-500" />
-              Events heute in Bielefeld
+              Events heute in {cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity}
             </h3>
             
             <div className="space-y-4">
