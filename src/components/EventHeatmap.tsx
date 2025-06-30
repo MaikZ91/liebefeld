@@ -4,7 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
+import { Slider } from '@/components/ui/slider'; // Corrected: Changed '=>' to 'from' in import
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,23 +17,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, MessageSquare, Send, Heart } from 'lucide-react';
+import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, MessageSquare, Send, Heart } from 'lucide-react'; 
 import { useEvents } from '@/hooks/useEvents';
 import { format } from 'date-fns';
 import SwipeableEventPanel from '@/components/event-chat/SwipeableEventPanel';
 import { PanelEventData, PanelEvent } from '@/components/event-chat/types';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast'; 
 import EventForm from '@/components/EventForm';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { messageService } from '@/services/messageService';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Input } from '@/components/ui/input';
-import { userService } from '@/services/userService';
-import { UserProfile } from '@/types/chatTypes';
-import { getInitials } from '@/utils/chatUIUtils';
-import PrivateChat from '@/components/users/PrivateChat';
+import { Input } from '@/components/ui/input'; 
+import { userService } from '@/services/userService'; 
+import { UserProfile } from '@/types/chatTypes'; 
+import { getInitials } from '@/utils/chatUIUtils'; 
+import PrivateChat from '@/components/users/PrivateChat'; 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
@@ -41,18 +41,18 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png', 
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png', 
 });
 
 const EventHeatmap: React.FC = () => {
   const { events, isLoading, refreshEvents } = useEvents();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [timeRange, setTimeRange] = useState([new Date().getHours()]);
+  const [timeRange, setTimeRange] = useState([new Date().getHours()]); 
   const [map, setMap] = useState<L.Map | null>(null);
-  const [eventMarkers, setEventMarkers] = useState<L.Marker[]>([]);
-  const [userMarkers, setUserMarkers] = useState<L.Marker[]>([]);
+  const [eventMarkers, setEventMarkers] = useState<L.Marker[]>([]); 
+  const [userMarkers, setUserMarkers] = useState<L.Marker[]>([]); 
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [panelHeight, setPanelHeight] = useState<'collapsed' | 'partial' | 'full'>('collapsed');
@@ -60,15 +60,14 @@ const EventHeatmap: React.FC = () => {
   const [isPerfectDayLoading, setIsPerfectDayLoading] = useState(false);
   const [showPerfectDayPanel, setShowPerfectDayPanel] = useState(false);
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
-  const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false);
-  const [checkInSearchTerm, setSearchTerm] = useState('');
-  const [liveStatusMessage, setLiveStatusMessage] = useState('');
-  const [isPrivateChatOpen, setIsPrivateChatOpen] = useState(false);
-  const [selectedUserForPrivateChat, setSelectedUserForPrivateChat] = useState<UserProfile | null>(null);
-  const [isMapReady, setIsMapReady] = useState(false); // New state to track map readiness
+  const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false); 
+  const [checkInSearchTerm, setCheckInSearchTerm] = useState(''); 
+  const [liveStatusMessage, setLiveStatusMessage] = useState(''); 
+  const [isPrivateChatOpen, setIsPrivateChatOpen] = useState(false); 
+  const [selectedUserForPrivateChat, setSelectedUserForPrivateChat] = useState<UserProfile | null>(null); 
 
   const mapRef = useRef<HTMLDivElement>(null);
-  const { toast, dismiss } = useToast();
+  const { toast, dismiss } = useToast(); 
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -83,11 +82,11 @@ const EventHeatmap: React.FC = () => {
 
   function getCoordinatesForLocation(location: string, isLng: boolean = false): number | null {
     if (!location) return null;
-
+    
     const locationLower = location.toLowerCase();
-
+    
     const bielefeldCenter = { lat: 52.0302, lng: 8.5311 };
-
+    
     const locationMap: { [key: string]: { lat: number; lng: number } } = {
       'forum': { lat: 52.0210, lng: 8.5320 },
       'lokschuppen': { lat: 52.0195, lng: 8.5340 },
@@ -100,11 +99,11 @@ const EventHeatmap: React.FC = () => {
       'stereo': { lat: 52.0200, lng: 8.5350 },
       'nr.z.p': { lat: 52.0190, lng: 8.5370 },
       'nrzp': { lat: 52.0190, lng: 8.5370 },
-
+      
       'universität': { lat: 52.0380, lng: 8.4950 },
       'uni': { lat: 52.0380, lng: 8.4950 },
       'campus': { lat: 52.0380, lng: 8.4950 },
-
+      
       'altstadt': { lat: 52.0192, lng: 8.5370 },
       'zentrum': { lat: 52.0302, lng: 8.5311 },
       'innenstadt': { lat: 52.0302, lng: 8.5311 },
@@ -114,20 +113,20 @@ const EventHeatmap: React.FC = () => {
       'sennestadt': { lat: 51.9800, lng: 8.6200 },
       'heepen': { lat: 52.0500, lng: 8.6000 },
       'stieghorst': { lat: 52.0100, lng: 8.6100 },
-
+      
       'stadtpark': { lat: 52.0250, lng: 8.5280 },
       'bürgerpark': { lat: 52.0180, lng: 8.5200 },
       'tierpark': { lat: 52.0400, lng: 8.5100 },
       'botanischer garten': { lat: 52.0350, lng: 8.4900 },
-
+      
       'loom': { lat: 52.0200, lng: 8.5350 },
       'hauptbahnhof': { lat: 52.0280, lng: 8.5320 },
       'bahnhof': { lat: 52.0280, lng: 8.5320 },
-
+      
       'schücoarena': { lat: 52.0320, lng: 8.5150 },
       'alm': { lat: 52.0320, lng: 8.5150 },
       'arminia': { lat: 52.0320, lng: 8.5150 },
-
+      
       'bielefeld': bielefeldCenter
     };
 
@@ -138,7 +137,7 @@ const EventHeatmap: React.FC = () => {
       }
     }
 
-    const offset = (Math.random() - 0.5) * 0.005;
+    const offset = (Math.random() - 0.5) * 0.005; 
     const coord = isLng ? bielefeldCenter.lng + offset : bielefeldCenter.lat + offset;
     console.log(`Using default coordinates with offset for location "${location}": ${coord}`);
     return coord;
@@ -146,13 +145,13 @@ const EventHeatmap: React.FC = () => {
 
   const todaysBielefeldEvents = React.useMemo(() => {
     console.log(`Filtering events for today (${today}) in Bielefeld...`);
-
+    
     const filtered = events
       .filter(event => {
         const isToday = event.date === today;
         const hasLocation = event.location || event.city;
         const isBielefeld = event.city && event.city.toLowerCase() === 'bielefeld';
-
+        
         console.log(`Event: ${event.title}, Date: ${event.date}, Location: ${event.location}, City: ${event.city}, IsToday: ${isToday}, HasLocation: ${hasLocation}, IsBielefeld: ${isBielefeld}`);
         return isToday && hasLocation && isBielefeld;
       })
@@ -160,7 +159,7 @@ const EventHeatmap: React.FC = () => {
         const locationText = event.location || event.city || event.title;
         const lat = getCoordinatesForLocation(locationText);
         const lng = getCoordinatesForLocation(locationText, true);
-
+        
         return {
           ...event,
           lat,
@@ -180,7 +179,7 @@ const EventHeatmap: React.FC = () => {
     todaysBielefeldEvents.forEach(event => {
       categoryMap.set(event.category, (categoryMap.get(event.category) || 0) + 1);
     });
-
+    
     return [
       { name: 'all', count: todaysBielefeldEvents.length },
       ...Array.from(categoryMap.entries()).map(([name, count]) => ({ name, count }))
@@ -189,14 +188,14 @@ const EventHeatmap: React.FC = () => {
 
   const filteredEvents = React.useMemo(() => {
     let filtered = todaysBielefeldEvents;
-
+    
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(event => event.category === selectedCategory);
     }
-
+    
     const selectedHour = timeRange[0];
     filtered = filtered.filter(event => event.eventHour >= selectedHour);
-
+    
     return filtered;
   }, [todaysBielefeldEvents, selectedCategory, timeRange]);
 
@@ -206,7 +205,6 @@ const EventHeatmap: React.FC = () => {
       title: event.title,
       date: event.date,
       time: event.time,
-      price: event.is_paid ? "Kostenpflichtig" : "Kostenlos",
       location: event.location || event.city || 'Bielefeld',
       category: event.category,
       description: event.description,
@@ -219,10 +217,10 @@ const EventHeatmap: React.FC = () => {
   }, [filteredEvents]);
 
   const panelData: PanelEventData = React.useMemo(() => {
-    const selectedIndex = selectedEventId
+    const selectedIndex = selectedEventId 
       ? panelEvents.findIndex(event => event.id === selectedEventId)
       : 0;
-
+    
     return {
       events: panelEvents,
       currentIndex: selectedIndex >= 0 ? selectedIndex : 0
@@ -250,17 +248,17 @@ const EventHeatmap: React.FC = () => {
 
       setPerfectDayMessage(data.response);
       setShowPerfectDayPanel(true);
-
-      toast({
+      
+      toast({ 
         title: "Perfect Day generiert!",
         description: "Deine personalisierte Tagesempfehlung ist bereit.",
         variant: "default"
       });
-    } catch (error: any) {
+    } catch (error: any) { 
       console.error('Error generating Perfect Day:', error);
-      toast({
+      toast({ 
         title: "Fehler",
-        description: "Perfect Day konnte nicht generiert werden: " + (error.message || "Unbekannter Fehler."),
+        description: "Perfect Day konnte nicht generiert werden: " + (error.message || "Unbekannter Fehler."), 
         variant: "destructive"
       });
     } finally {
@@ -278,9 +276,8 @@ const EventHeatmap: React.FC = () => {
       return;
     }
 
-    setIsCheckInDialogOpen(false);
-    // FIX: Removed 'id' property as it's auto-generated, and used the returned object's id for dismiss.
-    const checkInToast = toast({ title: "Check-in wird verarbeitet...", duration: Infinity });
+    setIsCheckInDialogOpen(false); 
+    const checkInToastId = toast({ id: "checkin-progress", title: "Check-in wird verarbeitet...", duration: Infinity }); 
 
     try {
       const userCurrentLat = getCoordinatesForLocation('Bielefeld') as number;
@@ -288,21 +285,21 @@ const EventHeatmap: React.FC = () => {
 
       const updatedProfileData: Partial<UserProfile> = {
         last_online: new Date().toISOString(),
-        current_live_location_lat: userCurrentLat,
-        current_live_location_lng: userCurrentLng,
-        current_status_message: liveStatusMessage,
-        current_checkin_timestamp: new Date().toISOString(),
+        current_live_location_lat: userCurrentLat, 
+        current_live_location_lng: userCurrentLng, 
+        current_status_message: liveStatusMessage,     
+        current_checkin_timestamp: new Date().toISOString(), 
       };
-
+      
       await supabase.from('user_profiles')
         .update(updatedProfileData)
         .eq('username', currentUser);
-
-      const communityMessage = liveStatusMessage
+      
+      const communityMessage = liveStatusMessage 
         ? `📍 ${currentUser} ist jetzt hier: "${liveStatusMessage}"`
         : `📍 ${currentUser} ist jetzt in der Nähe!`;
-
-      const bielefeldAusgehenGroupId = 'bi_ausgehen';
+      
+      const bielefeldAusgehenGroupId = 'bi_ausgehen'; 
 
       const messageResult = await messageService.sendMessage(
         bielefeldAusgehenGroupId,
@@ -316,27 +313,25 @@ const EventHeatmap: React.FC = () => {
         throw new Error('Could not post check-in message to chat.');
       }
 
-      refetchProfile();
+      refetchProfile(); 
 
-      // FIX: Use checkInToast.id to dismiss the toast.
-      dismiss(checkInToast.id);
-      toast({
+      dismiss(checkInToastId); 
+      toast({ 
         title: "Erfolgreich eingecheckt!",
         description: liveStatusMessage ? `Dein Status: "${liveStatusMessage}" wurde geteilt.` : "Dein Standort wurde geteilt.",
         variant: "success"
       });
 
-    } catch (error: any) {
+    } catch (error: any) { 
       console.error('Check-in failed:', error);
-      // FIX: Use checkInToast.id to dismiss the toast.
-      dismiss(checkInToast.id);
-      toast({
+      dismiss(checkInToastId); 
+      toast({ 
         title: "Check-in fehlgeschlagen",
-        description: error.message || "Es gab ein Problem beim Einchecken.",
+        description: error.message || "Es gab ein Problem beim Einchecken.", 
         variant: "destructive"
       });
     } finally {
-      setLiveStatusMessage('');
+      setLiveStatusMessage(''); 
     }
   };
 
@@ -350,7 +345,7 @@ const EventHeatmap: React.FC = () => {
         .from('community_events')
         .insert([{
           ...eventData,
-          city: 'Bielefeld',
+          city: 'Bielefeld', 
           created_at: new Date().toISOString()
         }])
         .select()
@@ -358,16 +353,16 @@ const EventHeatmap: React.FC = () => {
 
       if (error) throw error;
 
-      toast({
+      toast({ 
         title: "Event erfolgreich erstellt!",
         description: `${eventData.title} wurde hinzugefügt.`,
         variant: "default"
       });
-      refreshEvents();
+      refreshEvents(); 
       setIsEventFormOpen(false);
-    } catch (error: any) {
+    } catch (error: any) { 
       console.error('Error adding event:', error);
-      toast({
+      toast({ 
         title: "Fehler",
         description: "Event konnte nicht erstellt werden.",
         variant: "destructive"
@@ -389,7 +384,7 @@ const EventHeatmap: React.FC = () => {
       // Only display users who have explicitly checked in recently with a status message
       const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null && user.current_live_location_lat !== undefined && user.current_live_location_lng !== undefined;
       const hasStatusMessage = user.current_status_message && user.current_status_message.trim() !== '';
-      const isRecentCheckin = user.current_checkin_timestamp &&
+      const isRecentCheckin = user.current_checkin_timestamp && 
                                (new Date().getTime() - new Date(user.current_checkin_timestamp).getTime() < THIRTY_MINUTES_MS);
 
       if (hasLiveLocation && hasStatusMessage && isRecentCheckin) {
@@ -425,7 +420,7 @@ const EventHeatmap: React.FC = () => {
             ">
               ${statusMessage}
             </div>
-            <img src="${user.avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=' + getInitials(user.username)}"
+            <img src="${user.avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=' + getInitials(user.username)}" 
                  alt="${user.username}"
                  style="
                    width: 50px;
@@ -451,63 +446,47 @@ const EventHeatmap: React.FC = () => {
         const userMarkerIcon = L.divIcon({
           html: userIconHtml,
           className: 'user-marker',
-          iconSize: [60, 90],
-          iconAnchor: [30, 90],
+          iconSize: [60, 90], 
+          iconAnchor: [30, 90], 
         });
 
         const userMarker = L.marker([lat, lng], { icon: userMarkerIcon });
-
+        
         userMarker.on('click', () => {
           setSelectedUserForPrivateChat(user);
           setIsPrivateChatOpen(true);
         });
 
         newUserMarkers.push(userMarker);
-        userMarker.addTo(map);
+        userMarker.addTo(map); 
       }
     });
     setUserMarkers(newUserMarkers);
   };
 
-  // Map Initialization useEffect
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || map) return;
 
-    // Only initialize map if it hasn't been initialized yet
-    if (!map) {
-      const leafletMap = L.map(mapRef.current, {
-        center: [52.0302, 8.5311],
-        zoom: 13,
-        zoomControl: true,
-        preferCanvas: false
-      });
+    const leafletMap = L.map(mapRef.current, {
+      center: [52.0302, 8.5311], 
+      zoom: 13,
+      zoomControl: true,
+      preferCanvas: false
+    });
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(leafletMap);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19
-      }).addTo(leafletMap);
+    setMap(leafletMap);
 
-      setMap(leafletMap);
-      setIsMapReady(true); // Set map as ready
-
-      // Invalidate size immediately after initialization and on window resize
-      leafletMap.invalidateSize();
-      const handleResize = () => {
-        leafletMap.invalidateSize();
-      };
-      window.addEventListener('resize', handleResize);
-
-      return () => {
-        window.removeEventListener('resize', handleResize);
-        if (leafletMap) {
-          leafletMap.remove();
-        }
-      };
-    } else {
-        // If map is already initialized, just ensure its size is correct
-        map.invalidateSize();
-    }
-  }, [mapRef, map]); // Dependencies: mapRef and map instance
+    return () => {
+      if (leafletMap) {
+        leafletMap.remove();
+      }
+    };
+  }, [mapRef.current]);
 
   useEffect(() => {
     if (!map) return;
@@ -520,7 +499,7 @@ const EventHeatmap: React.FC = () => {
 
     filteredEvents.forEach(event => {
       if (!event.lat || !event.lng) return;
-
+      
       const likes = event.likes || 0;
       let markerSize = 60; // Increased size to better show image/likes/title
       let fontSize = 12;
@@ -544,7 +523,7 @@ const EventHeatmap: React.FC = () => {
           font-family: sans-serif;
           overflow: hidden; /* Hide overflow for content */
         ">
-          <img src="${event.image_url || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop;'}"
+          <img src="${event.image_url || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop;'}" 
                onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';"
                style="width: ${imageSize}px; height: ${imageSize}px; object-fit: cover; border-radius: 4px; margin-bottom: 4px;"/>
           <div style="
@@ -567,10 +546,10 @@ const EventHeatmap: React.FC = () => {
 
       const customIcon = L.divIcon({
         html: iconHtml,
-        className: 'custom-event-marker',
-        iconSize: [markerSize, markerSize + 20],
-        iconAnchor: [markerSize / 2, markerSize + 20],
-        popupAnchor: [0, -markerSize - 20]
+        className: 'custom-event-marker', // New class for event markers
+        iconSize: [markerSize, markerSize + 20], // Adjusted size
+        iconAnchor: [markerSize / 2, markerSize + 20], // Anchor at the bottom center
+        popupAnchor: [0, -markerSize - 20] // Adjust popup anchor
       });
 
       const marker = L.marker([event.lat, event.lng], { icon: customIcon });
@@ -587,7 +566,7 @@ const EventHeatmap: React.FC = () => {
         <div style="min-width: 200px; max-width: 250px; font-family: sans-serif;">
           ${event.image_url ? `<img src="${event.image_url}" onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;"/>` : ''}
           <h3 style="margin: 0 0 4px 0; font-weight: bold; color: #1f2937; font-size: 16px;">${event.title}</h3>
-
+          
           <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280; font-size: 12px;">
             <span style="margin-right: 5px;">📍</span>
             <span>${event.location || 'Bielefeld'}</span>
@@ -626,11 +605,11 @@ const EventHeatmap: React.FC = () => {
 
   const handleEventSelect = (eventId: string) => {
     setSelectedEventId(eventId);
-
-    const selectedEvent = filteredEvents.find(event =>
+    
+    const selectedEvent = filteredEvents.find(event => 
       (event.id || `${event.title}-${event.date}-${event.time}`) === eventId
     );
-
+    
     if (selectedEvent && selectedEvent.lat && selectedEvent.lng && map) {
       map.setView([selectedEvent.lat, selectedEvent.lng], 15);
     }
@@ -669,7 +648,7 @@ const EventHeatmap: React.FC = () => {
   const selectedCategoryData = categories.find(cat => cat.name === selectedCategory);
   const selectedCategoryDisplay = selectedCategory === 'all' ? 'Alle' : selectedCategory;
 
-  const filteredCheckInEvents = todaysBielefeldEvents.filter(event =>
+  const filteredCheckInEvents = todaysBielefeldEvents.filter(event => 
     event.title.toLowerCase().includes(checkInSearchTerm.toLowerCase()) ||
     event.location?.toLowerCase().includes(checkInSearchTerm.toLowerCase()) ||
     event.category.toLowerCase().includes(checkInSearchTerm.toLowerCase())
@@ -684,7 +663,7 @@ const EventHeatmap: React.FC = () => {
             <MapPin className="w-5 h-5 text-red-500" />
             Events heute in Bielefeld
           </h3>
-
+          
           <div className="space-y-4">
             {/* Category Dropdown */}
             <div>
@@ -711,7 +690,7 @@ const EventHeatmap: React.FC = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-
+            
             {/* Time Slider */}
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-white text-sm">
@@ -792,10 +771,10 @@ const EventHeatmap: React.FC = () => {
       </div>
 
       {/* Map Container */}
-      <div
-        ref={mapRef}
+      <div 
+        ref={mapRef} 
         className="w-full h-full"
-        style={{
+        style={{ 
           minHeight: '100vh',
           zIndex: 1
         }}
@@ -830,7 +809,7 @@ const EventHeatmap: React.FC = () => {
 
           {/* Panel Content */}
           <div className="p-4 overflow-y-auto h-full">
-            <div
+            <div 
               dangerouslySetInnerHTML={{ __html: perfectDayMessage }}
             />
           </div>
@@ -850,7 +829,7 @@ const EventHeatmap: React.FC = () => {
           {/* Panel Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-700">
             <div className="flex items-center gap-2">
-              <div
+              <div 
                 className="w-8 h-1 bg-gray-500 rounded-full cursor-pointer"
                 onClick={togglePanelHeight}
               />
@@ -902,7 +881,7 @@ const EventHeatmap: React.FC = () => {
               Community Event hinzufügen
             </DialogTitle>
           </DialogHeader>
-          <EventForm
+          <EventForm 
             onAddEvent={handleAddEvent}
             onSuccess={() => setIsEventFormOpen(false)}
             onCancel={() => setIsEventFormOpen(false)}
