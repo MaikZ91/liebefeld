@@ -64,10 +64,10 @@ const EventHeatmap: React.FC = () => {
   const [liveStatusMessage, setLiveStatusMessage] = useState('');
   const [isPrivateChatOpen, setIsPrivateChatOpen] = useState(false);
   const [selectedUserForPrivateChat, setSelectedUserForPrivateChat] = useState<UserProfile | null>(null);
-  const [showFilterPanel, setShowFilterPanel] = useState(true); // GEÄNDERT: Initialwert auf true
+  const [showFilterPanel, setShowFilterPanel] = useState(true);
 
   const mapRef = useRef<HTMLDivElement>(null);
-  const { toast, dismiss } = useToast();
+  const { toast } = useToast();
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -252,7 +252,6 @@ const EventHeatmap: React.FC = () => {
       toast({
         title: "Perfect Day generiert!",
         description: "Deine personalisierte Tagesempfehlung ist bereit.",
-        variant: "default"
       });
     } catch (error: any) {
       console.error('Error generating Perfect Day:', error);
@@ -263,6 +262,30 @@ const EventHeatmap: React.FC = () => {
       });
     } finally {
       setIsPerfectDayLoading(false);
+    }
+  };
+
+  const updateUserPosition = async (username: string, newLat: number, newLng: number) => {
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({
+          current_live_location_lat: newLat,
+          current_live_location_lng: newLng,
+          last_online: new Date().toISOString()
+        })
+        .eq('username', username);
+      
+      if (error) throw error;
+      
+      console.log(`Updated position for ${username} to ${newLat}, ${newLng}`);
+    } catch (error: any) {
+      console.error('Error updating user position:', error);
+      toast({
+        title: "Fehler",
+        description: "Position konnte nicht aktualisiert werden.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -277,8 +300,11 @@ const EventHeatmap: React.FC = () => {
     }
 
     setIsCheckInDialogOpen(false);
-    // FIX: Removed 'id' property as it's auto-generated, and used the returned object's id for dismiss.
-    const checkInToast = toast({ title: "Check-in wird verarbeitet...", duration: Infinity });
+    
+    const checkInToast = toast({ 
+      title: "Check-in wird verarbeitet...", 
+      duration: Infinity 
+    });
 
     try {
       const userCurrentLat = getCoordinatesForLocation('Bielefeld') as number;
@@ -316,18 +342,13 @@ const EventHeatmap: React.FC = () => {
 
       refetchProfile();
 
-      // FIX: Use checkInToast.id to dismiss the toast.
-      dismiss(checkInToast.id);
       toast({
         title: "Erfolgreich eingecheckt!",
         description: liveStatusMessage ? `Dein Status: "${liveStatusMessage}" wurde geteilt.` : "Dein Standort wurde geteilt.",
-        variant: "success"
       });
 
     } catch (error: any) {
       console.error('Check-in failed:', error);
-      // FIX: Use checkInToast.id to dismiss the toast.
-      dismiss(checkInToast.id);
       toast({
         title: "Check-in fehlgeschlagen",
         description: error.message || "Es gab ein Problem beim Einchecken.",
@@ -359,7 +380,6 @@ const EventHeatmap: React.FC = () => {
       toast({
         title: "Event erfolgreich erstellt!",
         description: `${eventData.title} wurde hinzugefügt.`,
-        variant: "default"
       });
       refreshEvents();
       setIsEventFormOpen(false);
@@ -384,7 +404,6 @@ const EventHeatmap: React.FC = () => {
     const THIRTY_MINUTES_MS = 30 * 60 * 1000;
 
     usersToDisplay.forEach(user => {
-      // Only display users who have explicitly checked in recently with a status message
       const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null && user.current_live_location_lat !== undefined && user.current_live_location_lng !== undefined;
       const hasStatusMessage = user.current_status_message && user.current_status_message.trim() !== '';
       const isRecentCheckin = user.current_checkin_timestamp &&
@@ -404,10 +423,10 @@ const EventHeatmap: React.FC = () => {
             width: auto;
             min-width: 80px;
             max-width: 150px;
-            cursor: pointer;
+            cursor: move;
           ">
             <div style="
-              background: #ef4444; /* Speech bubble background */
+              background: #ef4444;
               color: white;
               padding: 4px 8px;
               border-radius: 15px;
@@ -419,7 +438,7 @@ const EventHeatmap: React.FC = () => {
               text-overflow: ellipsis;
               box-shadow: 0 2px 5px rgba(0,0,0,0.2);
               position: relative;
-              top: 5px; /* Adjust to float above avatar */
+              top: 5px;
             ">
               ${statusMessage}
             </div>
@@ -429,14 +448,14 @@ const EventHeatmap: React.FC = () => {
                    width: 50px;
                    height: 50px;
                    border-radius: 50%;
-                   border: 3px solid white; /* White border as in screenshot */
+                   border: 3px solid white;
                    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
                    background-color: white;
                    position: relative;
                    z-index: 10;
                  "/>
             <div style="
-              color: #333; /* Darker text for username below avatar */
+              color: #333;
               font-size: 10px;
               font-weight: bold;
               margin-top: 2px;
@@ -453,12 +472,25 @@ const EventHeatmap: React.FC = () => {
           iconAnchor: [30, 90],
         });
 
-        const userMarker = L.marker([lat, lng], { icon: userMarkerIcon });
+        const userMarker = L.marker([lat, lng], { 
+          icon: userMarkerIcon,
+          draggable: user.username === currentUser
+        });
         
         userMarker.on('click', () => {
           setSelectedUserForPrivateChat(user);
           setIsPrivateChatOpen(true);
         });
+
+        if (user.username === currentUser) {
+          userMarker.on('dragend', (e) => {
+            const marker = e.target;
+            const position = marker.getLatLng();
+            console.log(`User ${user.username} moved to:`, position.lat, position.lng);
+            
+            updateUserPosition(user.username, position.lat, position.lng);
+          });
+        }
 
         newUserMarkers.push(userMarker);
         userMarker.addTo(map);
@@ -504,27 +536,27 @@ const EventHeatmap: React.FC = () => {
       if (!event.lat || !event.lng) return;
       
       const likes = event.likes || 0;
-      let markerSize = 60; // Increased size to better show image/likes/title
+      let markerSize = 60;
       let fontSize = 12;
-      const imageSize = 40; // Size for the image within the marker
+      const imageSize = 40;
 
       const iconHtml = `
         <div style="
-          background: rgba(0,0,0,0.8); /* Dark background for the card */
+          background: rgba(0,0,0,0.8);
           color: white;
           border-radius: 8px;
           width: ${markerSize}px;
-          height: ${markerSize + 20}px; /* Adjust height for title/likes */
+          height: ${markerSize + 20}px;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: space-between;
           padding: 5px;
-          border: 2px solid #ef4444; /* Red border */
+          border: 2px solid #ef4444;
           box-shadow: 0 2px 8px rgba(0,0,0,0.4);
           cursor: pointer;
           font-family: sans-serif;
-          overflow: hidden; /* Hide overflow for content */
+          overflow: hidden;
         ">
           <img src="${event.image_url || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop;'}"
                onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';"
@@ -549,10 +581,10 @@ const EventHeatmap: React.FC = () => {
 
       const customIcon = L.divIcon({
         html: iconHtml,
-        className: 'custom-event-marker', // New class for event markers
-        iconSize: [markerSize, markerSize + 20], // Adjusted size
-        iconAnchor: [markerSize / 2, markerSize + 20], // Anchor at the bottom center
-        popupAnchor: [0, -markerSize - 20] // Adjust popup anchor
+        className: 'custom-event-marker',
+        iconSize: [markerSize, markerSize + 20],
+        iconAnchor: [markerSize / 2, markerSize + 20],
+        popupAnchor: [0, -markerSize - 20]
       });
 
       const marker = L.marker([event.lat, event.lng], { icon: customIcon });
@@ -564,7 +596,6 @@ const EventHeatmap: React.FC = () => {
         setShowPerfectDayPanel(false);
       });
 
-      // Enhanced popup content with image and prominent title
       const popupContent = `
         <div style="min-width: 200px; max-width: 250px; font-family: sans-serif;">
           ${event.image_url ? `<img src="${event.image_url}" onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;"/>` : ''}
@@ -604,6 +635,28 @@ const EventHeatmap: React.FC = () => {
 
     setEventMarkers(newEventMarkers);
   }, [map, filteredEvents]);
+
+  useEffect(() => {
+    const fetchActiveUsers = async () => {
+      try {
+        const { data: users, error } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .not('current_live_location_lat', 'is', null)
+          .not('current_live_location_lng', 'is', null);
+
+        if (error) throw error;
+        
+        renderUserMarkers(users || []);
+      } catch (error) {
+        console.error('Error fetching active users:', error);
+      }
+    };
+
+    if (map) {
+      fetchActiveUsers();
+    }
+  }, [map, userProfile]);
 
   const handleEventSelect = (eventId: string) => {
     setSelectedEventId(eventId);
@@ -662,7 +715,7 @@ const EventHeatmap: React.FC = () => {
       <HeatmapHeader selectedCity="bielefeld" />
 
       {/* Button to toggle Filter Panel */}
-      <div className="absolute top-16 left-4 z-[1001]"> {/* Increased z-index slightly */}
+      <div className="absolute top-16 left-4 z-[1001]">
         <Button
           variant="outline"
           size="icon"
@@ -780,7 +833,7 @@ const EventHeatmap: React.FC = () => {
       )}
 
       {/* "Ich bin hier" Button (bottom right, floating) */}
-      <div className="absolute bottom-48 right-6 z-[1000]"> {/* Changed bottom-32 to bottom-48 */}
+      <div className="absolute bottom-48 right-6 z-[1000]">
         <Button
           onClick={() => setIsCheckInDialogOpen(true)}
           className="bg-red-500 hover:bg-red-600 text-white w-28 h-16 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-sm font-bold"
