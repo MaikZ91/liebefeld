@@ -4,7 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider'; // Corrected: Changed '=>' to 'from' in import
+import { Slider } from '@/components/ui/slider';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,23 +17,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, MessageSquare, Send, Heart } from 'lucide-react'; 
+import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, MessageSquare, Send, Heart, Filter, FilterX } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 import { format } from 'date-fns';
 import SwipeableEventPanel from '@/components/event-chat/SwipeableEventPanel';
 import { PanelEventData, PanelEvent } from '@/components/event-chat/types';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast'; 
+import { useToast } from '@/hooks/use-toast';
 import EventForm from '@/components/EventForm';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { messageService } from '@/services/messageService';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Input } from '@/components/ui/input'; 
-import { userService } from '@/services/userService'; 
-import { UserProfile } from '@/types/chatTypes'; 
-import { getInitials } from '@/utils/chatUIUtils'; 
-import PrivateChat from '@/components/users/PrivateChat'; 
+import { Input } from '@/components/ui/input';
+import { userService } from '@/services/userService';
+import { UserProfile } from '@/types/chatTypes';
+import { getInitials } from '@/utils/chatUIUtils';
+import PrivateChat from '@/components/users/PrivateChat';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
@@ -41,18 +41,18 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png', 
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png', 
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
 const EventHeatmap: React.FC = () => {
   const { events, isLoading, refreshEvents } = useEvents();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [timeRange, setTimeRange] = useState([new Date().getHours()]); 
+  const [timeRange, setTimeRange] = useState([new Date().getHours()]);
   const [map, setMap] = useState<L.Map | null>(null);
-  const [eventMarkers, setEventMarkers] = useState<L.Marker[]>([]); 
-  const [userMarkers, setUserMarkers] = useState<L.Marker[]>([]); 
+  const [eventMarkers, setEventMarkers] = useState<L.Marker[]>([]);
+  const [userMarkers, setUserMarkers] = useState<L.Marker[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [panelHeight, setPanelHeight] = useState<'collapsed' | 'partial' | 'full'>('collapsed');
@@ -60,14 +60,15 @@ const EventHeatmap: React.FC = () => {
   const [isPerfectDayLoading, setIsPerfectDayLoading] = useState(false);
   const [showPerfectDayPanel, setShowPerfectDayPanel] = useState(false);
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
-  const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false); 
-  const [checkInSearchTerm, setCheckInSearchTerm] = useState(''); 
-  const [liveStatusMessage, setLiveStatusMessage] = useState(''); 
-  const [isPrivateChatOpen, setIsPrivateChatOpen] = useState(false); 
-  const [selectedUserForPrivateChat, setSelectedUserForPrivateChat] = useState<UserProfile | null>(null); 
+  const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false);
+  const [checkInSearchTerm, setCheckInSearchTerm] = useState('');
+  const [liveStatusMessage, setLiveStatusMessage] = useState('');
+  const [isPrivateChatOpen, setIsPrivateChatOpen] = useState(false);
+  const [selectedUserForPrivateChat, setSelectedUserForPrivateChat] = useState<UserProfile | null>(null);
+  const [showFilterPanel, setShowFilterPanel] = useState(false); // NEU: State für das Filter-Panel
 
   const mapRef = useRef<HTMLDivElement>(null);
-  const { toast, dismiss } = useToast(); 
+  const { toast, dismiss } = useToast();
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -137,7 +138,7 @@ const EventHeatmap: React.FC = () => {
       }
     }
 
-    const offset = (Math.random() - 0.5) * 0.005; 
+    const offset = (Math.random() - 0.5) * 0.005;
     const coord = isLng ? bielefeldCenter.lng + offset : bielefeldCenter.lat + offset;
     console.log(`Using default coordinates with offset for location "${location}": ${coord}`);
     return coord;
@@ -217,7 +218,7 @@ const EventHeatmap: React.FC = () => {
   }, [filteredEvents]);
 
   const panelData: PanelEventData = React.useMemo(() => {
-    const selectedIndex = selectedEventId 
+    const selectedIndex = selectedEventId
       ? panelEvents.findIndex(event => event.id === selectedEventId)
       : 0;
     
@@ -249,16 +250,16 @@ const EventHeatmap: React.FC = () => {
       setPerfectDayMessage(data.response);
       setShowPerfectDayPanel(true);
       
-      toast({ 
+      toast({
         title: "Perfect Day generiert!",
         description: "Deine personalisierte Tagesempfehlung ist bereit.",
         variant: "default"
       });
-    } catch (error: any) { 
+    } catch (error: any) {
       console.error('Error generating Perfect Day:', error);
-      toast({ 
+      toast({
         title: "Fehler",
-        description: "Perfect Day konnte nicht generiert werden: " + (error.message || "Unbekannter Fehler."), 
+        description: "Perfect Day konnte nicht generiert werden: " + (error.message || "Unbekannter Fehler."),
         variant: "destructive"
       });
     } finally {
@@ -276,9 +277,9 @@ const EventHeatmap: React.FC = () => {
       return;
     }
 
-    setIsCheckInDialogOpen(false); 
+    setIsCheckInDialogOpen(false);
     // FIX: Removed 'id' property as it's auto-generated, and used the returned object's id for dismiss.
-    const checkInToast = toast({ title: "Check-in wird verarbeitet...", duration: Infinity }); 
+    const checkInToast = toast({ title: "Check-in wird verarbeitet...", duration: Infinity });
 
     try {
       const userCurrentLat = getCoordinatesForLocation('Bielefeld') as number;
@@ -286,21 +287,21 @@ const EventHeatmap: React.FC = () => {
 
       const updatedProfileData: Partial<UserProfile> = {
         last_online: new Date().toISOString(),
-        current_live_location_lat: userCurrentLat, 
-        current_live_location_lng: userCurrentLng, 
-        current_status_message: liveStatusMessage,     
-        current_checkin_timestamp: new Date().toISOString(), 
+        current_live_location_lat: userCurrentLat,
+        current_live_location_lng: userCurrentLng,
+        current_status_message: liveStatusMessage,
+        current_checkin_timestamp: new Date().toISOString(),
       };
       
       await supabase.from('user_profiles')
         .update(updatedProfileData)
         .eq('username', currentUser);
       
-      const communityMessage = liveStatusMessage 
+      const communityMessage = liveStatusMessage
         ? `📍 ${currentUser} ist jetzt hier: "${liveStatusMessage}"`
         : `📍 ${currentUser} ist jetzt in der Nähe!`;
       
-      const bielefeldAusgehenGroupId = 'bi_ausgehen'; 
+      const bielefeldAusgehenGroupId = 'bi_ausgehen';
 
       const messageResult = await messageService.sendMessage(
         bielefeldAusgehenGroupId,
@@ -314,27 +315,27 @@ const EventHeatmap: React.FC = () => {
         throw new Error('Could not post check-in message to chat.');
       }
 
-      refetchProfile(); 
+      refetchProfile();
 
       // FIX: Use checkInToast.id to dismiss the toast.
-      dismiss(checkInToast.id); 
-      toast({ 
+      dismiss(checkInToast.id);
+      toast({
         title: "Erfolgreich eingecheckt!",
         description: liveStatusMessage ? `Dein Status: "${liveStatusMessage}" wurde geteilt.` : "Dein Standort wurde geteilt.",
         variant: "success"
       });
 
-    } catch (error: any) { 
+    } catch (error: any) {
       console.error('Check-in failed:', error);
       // FIX: Use checkInToast.id to dismiss the toast.
-      dismiss(checkInToast.id); 
-      toast({ 
+      dismiss(checkInToast.id);
+      toast({
         title: "Check-in fehlgeschlagen",
-        description: error.message || "Es gab ein Problem beim Einchecken.", 
+        description: error.message || "Es gab ein Problem beim Einchecken.",
         variant: "destructive"
       });
     } finally {
-      setLiveStatusMessage(''); 
+      setLiveStatusMessage('');
     }
   };
 
@@ -348,7 +349,7 @@ const EventHeatmap: React.FC = () => {
         .from('community_events')
         .insert([{
           ...eventData,
-          city: 'Bielefeld', 
+          city: 'Bielefeld',
           created_at: new Date().toISOString()
         }])
         .select()
@@ -356,16 +357,16 @@ const EventHeatmap: React.FC = () => {
 
       if (error) throw error;
 
-      toast({ 
+      toast({
         title: "Event erfolgreich erstellt!",
         description: `${eventData.title} wurde hinzugefügt.`,
         variant: "default"
       });
-      refreshEvents(); 
+      refreshEvents();
       setIsEventFormOpen(false);
-    } catch (error: any) { 
+    } catch (error: any) {
       console.error('Error adding event:', error);
-      toast({ 
+      toast({
         title: "Fehler",
         description: "Event konnte nicht erstellt werden.",
         variant: "destructive"
@@ -387,7 +388,7 @@ const EventHeatmap: React.FC = () => {
       // Only display users who have explicitly checked in recently with a status message
       const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null && user.current_live_location_lat !== undefined && user.current_live_location_lng !== undefined;
       const hasStatusMessage = user.current_status_message && user.current_status_message.trim() !== '';
-      const isRecentCheckin = user.current_checkin_timestamp && 
+      const isRecentCheckin = user.current_checkin_timestamp &&
                                (new Date().getTime() - new Date(user.current_checkin_timestamp).getTime() < THIRTY_MINUTES_MS);
 
       if (hasLiveLocation && hasStatusMessage && isRecentCheckin) {
@@ -423,7 +424,7 @@ const EventHeatmap: React.FC = () => {
             ">
               ${statusMessage}
             </div>
-            <img src="${user.avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=' + getInitials(user.username)}" 
+            <img src="${user.avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=' + getInitials(user.username)}"
                  alt="${user.username}"
                  style="
                    width: 50px;
@@ -449,8 +450,8 @@ const EventHeatmap: React.FC = () => {
         const userMarkerIcon = L.divIcon({
           html: userIconHtml,
           className: 'user-marker',
-          iconSize: [60, 90], 
-          iconAnchor: [30, 90], 
+          iconSize: [60, 90],
+          iconAnchor: [30, 90],
         });
 
         const userMarker = L.marker([lat, lng], { icon: userMarkerIcon });
@@ -461,7 +462,7 @@ const EventHeatmap: React.FC = () => {
         });
 
         newUserMarkers.push(userMarker);
-        userMarker.addTo(map); 
+        userMarker.addTo(map);
       }
     });
     setUserMarkers(newUserMarkers);
@@ -471,7 +472,7 @@ const EventHeatmap: React.FC = () => {
     if (!mapRef.current || map) return;
 
     const leafletMap = L.map(mapRef.current, {
-      center: [52.0302, 8.5311], 
+      center: [52.0302, 8.5311],
       zoom: 13,
       zoomControl: true,
       preferCanvas: false
@@ -526,7 +527,7 @@ const EventHeatmap: React.FC = () => {
           font-family: sans-serif;
           overflow: hidden; /* Hide overflow for content */
         ">
-          <img src="${event.image_url || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop;'}" 
+          <img src="${event.image_url || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop;'}"
                onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';"
                style="width: ${imageSize}px; height: ${imageSize}px; object-fit: cover; border-radius: 4px; margin-bottom: 4px;"/>
           <div style="
@@ -609,7 +610,7 @@ const EventHeatmap: React.FC = () => {
   const handleEventSelect = (eventId: string) => {
     setSelectedEventId(eventId);
     
-    const selectedEvent = filteredEvents.find(event => 
+    const selectedEvent = filteredEvents.find(event =>
       (event.id || `${event.title}-${event.date}-${event.time}`) === eventId
     );
     
@@ -651,100 +652,115 @@ const EventHeatmap: React.FC = () => {
   const selectedCategoryData = categories.find(cat => cat.name === selectedCategory);
   const selectedCategoryDisplay = selectedCategory === 'all' ? 'Alle' : selectedCategory;
 
-  const filteredCheckInEvents = todaysBielefeldEvents.filter(event => 
+  const filteredCheckInEvents = todaysBielefeldEvents.filter(event =>
     event.title.toLowerCase().includes(checkInSearchTerm.toLowerCase()) ||
     event.location?.toLowerCase().includes(checkInSearchTerm.toLowerCase()) ||
     event.category.toLowerCase().includes(checkInSearchTerm.toLowerCase())
   );
 
   return (
-    <div className="relative w-full h-screen bg-gray-100 overflow-hidden">
-      {/* Filter Panel */}
-      <div className="absolute top-4 left-4 z-[1000] space-y-3 max-w-sm">
-        <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
-          <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-red-500" />
-            Events heute in Bielefeld
-          </h3>
-          
-          <div className="space-y-4">
-            {/* Category Dropdown */}
-            <div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-between bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
-                  >
-                    {selectedCategoryDisplay} ({selectedCategoryData?.count || 0})
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-gray-800 border-gray-700">
-                  {categories.map((category) => (
-                    <DropdownMenuItem
-                      key={category.name}
-                      onClick={() => setSelectedCategory(category.name)}
-                      className="text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                    >
-                      {category.name === 'all' ? 'Alle' : category.name} ({category.count})
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            
-            {/* Time Slider */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-white text-sm">
-                <Clock className="w-4 h-4 text-red-500" />
-                <span>Zeit: ab {getTimeFromSlider(timeRange[0])} Uhr</span>
-              </div>
-              <Slider
-                value={timeRange}
-                onValueChange={setTimeRange}
-                max={23}
-                min={0}
-                step={1}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-gray-400">
-                <span>00:00</span>
-                <span>12:00</span>
-                <span>23:00</span>
-              </div>
-            </div>
-
-            {/* Perfect Day Button */}
-            <Button
-              onClick={generatePerfectDay}
-              disabled={isPerfectDayLoading}
-              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              {isPerfectDayLoading ? 'Generiere...' : 'Perfect Day'}
-            </Button>
-          </div>
-        </Card>
-
-        {/* Stats */}
-        <Card className="p-3 bg-black/95 backdrop-blur-md border-gray-700 text-white text-sm">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-red-500" />
-              {filteredEvents.length} Events ab {getTimeFromSlider(timeRange[0])} Uhr
-            </div>
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-red-500" />
-              {filteredEvents.reduce((sum, event) => sum + event.attendees, 0)} Interessierte
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-4 h-4 text-red-500">❤️</span>
-              {filteredEvents.reduce((sum, event) => sum + (event.likes || 0), 0)} Likes
-            </div>
-          </div>
-        </Card>
+    <div className="relative w-full h-screen overflow-hidden"> {/* REMOVED bg-gray-100 */}
+      {/* Button to toggle Filter Panel */}
+      <div className="absolute top-4 left-4 z-[1001]"> {/* Increased z-index slightly */}
+        <Button
+          variant="outline"
+          size="icon"
+          className="bg-black/95 text-white border-gray-700 hover:bg-gray-800"
+          onClick={() => setShowFilterPanel(prev => !prev)}
+          title={showFilterPanel ? "Filter ausblenden" : "Filter anzeigen"}
+        >
+          {showFilterPanel ? <FilterX className="h-5 w-5" /> : <Filter className="h-5 w-5" />}
+        </Button>
       </div>
+
+      {/* Filter Panel (Conditional Rendering) */}
+      {showFilterPanel && (
+        <div className="absolute top-16 left-4 z-[1000] space-y-3 max-w-sm animate-fade-in">
+          <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
+            <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-red-500" />
+              Events heute in Bielefeld
+            </h3>
+            
+            <div className="space-y-4">
+              {/* Category Dropdown */}
+              <div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                    >
+                      {selectedCategoryDisplay} ({selectedCategoryData?.count || 0})
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 bg-gray-800 border-gray-700">
+                    {categories.map((category) => (
+                      <DropdownMenuItem
+                        key={category.name}
+                        onClick={() => setSelectedCategory(category.name)}
+                        className="text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
+                      >
+                        {category.name === 'all' ? 'Alle' : category.name} ({category.count})
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              
+              {/* Time Slider */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-white text-sm">
+                  <Clock className="w-4 h-4 text-red-500" />
+                  <span>Zeit: ab {getTimeFromSlider(timeRange[0])} Uhr</span>
+                </div>
+                <Slider
+                  value={timeRange}
+                  onValueChange={setTimeRange}
+                  max={23}
+                  min={0}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-gray-400">
+                  <span>00:00</span>
+                  <span>12:00</span>
+                  <span>23:00</span>
+                </div>
+              </div>
+
+              {/* Perfect Day Button */}
+              <Button
+                onClick={generatePerfectDay}
+                disabled={isPerfectDayLoading}
+                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {isPerfectDayLoading ? 'Generiere...' : 'Perfect Day'}
+              </Button>
+            </div>
+          </Card>
+
+          {/* Stats */}
+          <Card className="p-3 bg-black/95 backdrop-blur-md border-gray-700 text-white text-sm">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-red-500" />
+                {filteredEvents.length} Events ab {getTimeFromSlider(timeRange[0])} Uhr
+              </div>
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-red-500" />
+                {filteredEvents.reduce((sum, event) => sum + event.attendees, 0)} Interessierte
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-4 text-red-500">❤️</span>
+                {filteredEvents.reduce((sum, event) => sum + (event.likes || 0), 0)} Likes
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Panel Toggle Button */}
       {!isPanelOpen && !showPerfectDayPanel && filteredEvents.length > 0 && (
@@ -774,10 +790,10 @@ const EventHeatmap: React.FC = () => {
       </div>
 
       {/* Map Container */}
-      <div 
-        ref={mapRef} 
+      <div
+        ref={mapRef}
         className="w-full h-full"
-        style={{ 
+        style={{
           minHeight: '100vh',
           zIndex: 1
         }}
@@ -812,7 +828,7 @@ const EventHeatmap: React.FC = () => {
 
           {/* Panel Content */}
           <div className="p-4 overflow-y-auto h-full">
-            <div 
+            <div
               dangerouslySetInnerHTML={{ __html: perfectDayMessage }}
             />
           </div>
@@ -832,7 +848,7 @@ const EventHeatmap: React.FC = () => {
           {/* Panel Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-700">
             <div className="flex items-center gap-2">
-              <div 
+              <div
                 className="w-8 h-1 bg-gray-500 rounded-full cursor-pointer"
                 onClick={togglePanelHeight}
               />
@@ -884,7 +900,7 @@ const EventHeatmap: React.FC = () => {
               Community Event hinzufügen
             </DialogTitle>
           </DialogHeader>
-          <EventForm 
+          <EventForm
             onAddEvent={handleAddEvent}
             onSuccess={() => setIsEventFormOpen(false)}
             onCancel={() => setIsEventFormOpen(false)}
