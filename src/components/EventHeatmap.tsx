@@ -35,7 +35,7 @@ import { getInitials } from '@/utils/chatUIUtils';
 import PrivateChat from '@/components/users/PrivateChat';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import HeatmapHeader from './HeatmapHeader';
-import { cities } from '@/contexts/EventContext'; // Import cities for coordinate mapping
+import { useEventContext, cities } from '@/contexts/EventContext'; // Import useEventContext and cities
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -46,7 +46,8 @@ L.Icon.Default.mergeOptions({
 });
 
 const EventHeatmap: React.FC = () => {
-  const { events, isLoading, refreshEvents, selectedCity } = useEvents(); // Use selectedCity from context
+  const { events, isLoading, refreshEvents } = useEvents();
+  const { selectedCity } = useEventContext(); // Correctly get selectedCity from useEventContext
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [timeRange, setTimeRange] = useState([new Date().getHours()]);
