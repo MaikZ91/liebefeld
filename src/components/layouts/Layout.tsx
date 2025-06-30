@@ -1,5 +1,5 @@
 // File: src/components/layouts/Layout.tsx
-// Changed: Added ChatInput to header with proper spacing
+// Changed: Made Layout a flex container and main content flex-1
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -7,14 +7,14 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Button } from "@/components/ui/button";
 import CitySelector from './CitySelector';
 import { BottomNavigation } from './BottomNavigation';
-import ChatInput from '@/components/event-chat/ChatInput';
+import ChatInput from '@/components/event-chat/ChatInput'; // Moved ChatInput to Layout for easier management
 
 interface LayoutProps {
   children: React.ReactNode;
   hideFooter?: boolean;
   // Chat-specific props
   activeView?: 'ai' | 'community';
-  setActiveView?: (view: 'ai' | 'community') => void;
+  setActiveView?: (mode: 'ai' | 'community') => void;
   handleOpenUserDirectory?: () => void;
   setIsEventListSheetOpen?: (open: boolean) => void;
   newMessagesCount?: number;
@@ -53,7 +53,7 @@ export const Layout: React.FC<LayoutProps> = ({
 }) => {
   const { pathname } = useLocation();
   const [isAddEventModalOpen, setIsAddEventModalOpen] = React.useState(false);
-  
+
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       window.triggerAddEvent = () => {
@@ -66,12 +66,13 @@ export const Layout: React.FC<LayoutProps> = ({
       }
     };
   }, []);
-  
+
   // Conditionally hide header for /heatmap
   const hideHeader = pathname === '/heatmap';
+  const showBottomNav = (pathname === '/chat' || pathname === '/' || pathname === '/heatmap' || pathname === '/users' || pathname === '/events');
 
   return (
-    <>
+    <div className="flex flex-col h-screen w-screen overflow-hidden"> {/* Ensure root div takes full screen and is flex */}
       <Sheet open={isAddEventModalOpen} onOpenChange={setIsAddEventModalOpen}>
         <SheetContent className="sm:max-w-lg">
           <SheetHeader>
@@ -87,12 +88,12 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
         </SheetContent>
       </Sheet>
-      
+
       {!hideHeader && ( // Header wird nur angezeigt, wenn hideHeader false ist
-        <header className="sticky top-0 z-50 w-full bg-black/90 backdrop-blur-sm border-b border-black">
+        <header className="flex-shrink-0 w-full bg-black/90 backdrop-blur-sm border-b border-black z-50"> {/* Use flex-shrink-0 for fixed height */}
           <div className="container flex h-16 items-center">
             <MainNav pathname={pathname} chatInputProps={chatInputProps} activeView={activeView} />
-            {(pathname !== '/chat' && pathname !== '/') && ( 
+            {(pathname !== '/chat' && pathname !== '/') && (
               <div className="ml-auto flex items-center space-x-4">
                 <ThemeToggleButton />
               </div>
@@ -100,14 +101,14 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
         </header>
       )}
-      
-      {/* Passe das paddingTop des main-Elements an, wenn der Header ausgeblendet ist */}
-      <main className={cn("pb-20", hideHeader ? "pt-0" : "pt-[104px]")}> 
+
+      {/* Main content area - flex-1 to fill remaining space */}
+      <main className="flex-1 overflow-y-auto relative flex flex-col"> {/* Added flex flex-col to allow children to grow */}
         {children}
       </main>
-      
+
       {/* Bottom Navigation for Chat and Root pages */}
-      {(pathname === '/chat' || pathname === '/' || pathname === '/heatmap' || pathname === '/users' || pathname === '/events') && (
+      {showBottomNav && (
         <BottomNavigation
           activeView={activeView}
           setActiveView={setActiveView}
@@ -117,9 +118,9 @@ export const Layout: React.FC<LayoutProps> = ({
           newEventsCount={newEventsCount}
         />
       )}
-      
-      {!hideFooter && (
-        <footer className="border-t border-black bg-black">
+
+      {!hideFooter && !showBottomNav && ( /* Only show footer if not hidden and bottom nav is not shown */
+        <footer className="flex-shrink-0 border-t border-black bg-black">
           <div className="container flex flex-col items-center justify-between gap-4 py-10 md:h-24 md:flex-row md:py-0">
             <div className="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
               <a href="/" className="flex items-center space-x-2">
@@ -143,7 +144,7 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
         </footer>
       )}
-    </>
+    </div>
   );
 };
 
@@ -177,7 +178,7 @@ const MainNav: React.FC<MainNavProps> = ({ pathname, chatInputProps, activeView 
           </Link>
           <CitySelector />
         </div>
-        
+
         {/* Right side: Chat input - only show if props are provided */}
         {chatInputProps && (
           <div className="flex-1 min-w-0">
@@ -205,7 +206,7 @@ const MainNav: React.FC<MainNavProps> = ({ pathname, chatInputProps, activeView 
       </div>
     );
   }
-  
+
   // For other pages, show regular navigation
   return (
     <div className="mr-4 flex">
