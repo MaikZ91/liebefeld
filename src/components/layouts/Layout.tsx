@@ -67,6 +67,9 @@ export const Layout: React.FC<LayoutProps> = ({
     };
   }, []);
   
+  // Conditionally hide header for /heatmap
+  const hideHeader = pathname === '/heatmap';
+
   return (
     <>
       <Sheet open={isAddEventModalOpen} onOpenChange={setIsAddEventModalOpen}>
@@ -85,23 +88,26 @@ export const Layout: React.FC<LayoutProps> = ({
         </SheetContent>
       </Sheet>
       
-      <header className="sticky top-0 z-50 w-full bg-black/90 backdrop-blur-sm border-b border-black">
-        <div className="container flex h-16 items-center">
-          <MainNav pathname={pathname} chatInputProps={chatInputProps} activeView={activeView} />
-          {(pathname !== '/chat' && pathname !== '/') && ( 
-            <div className="ml-auto flex items-center space-x-4">
-              <ThemeToggleButton />
-            </div>
-          )}
-        </div>
-      </header>
+      {!hideHeader && ( // Header wird nur angezeigt, wenn hideHeader false ist
+        <header className="sticky top-0 z-50 w-full bg-black/90 backdrop-blur-sm border-b border-black">
+          <div className="container flex h-16 items-center">
+            <MainNav pathname={pathname} chatInputProps={chatInputProps} activeView={activeView} />
+            {(pathname !== '/chat' && pathname !== '/') && ( 
+              <div className="ml-auto flex items-center space-x-4">
+                <ThemeToggleButton />
+              </div>
+            )}
+          </div>
+        </header>
+      )}
       
-      <main className="pb-20 pt-[104px]"> {/* Adjusted pt-[104px] */}
+      {/* Passe das paddingTop des main-Elements an, wenn der Header ausgeblendet ist */}
+      <main className={cn("pb-20", hideHeader ? "pt-0" : "pt-[104px]")}> 
         {children}
       </main>
       
       {/* Bottom Navigation for Chat and Root pages */}
-      {(pathname === '/chat' || pathname === '/' || pathname === '/heatmap') && (
+      {(pathname === '/chat' || pathname === '/' || pathname === '/heatmap' || pathname === '/users' || pathname === '/events') && (
         <BottomNavigation
           activeView={activeView}
           setActiveView={setActiveView}
