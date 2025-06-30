@@ -1,7 +1,7 @@
 // src/components/LiveTicker.tsx
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Calendar, ThumbsUp } from 'lucide-react';
-import { format, parseISO, isSameMonth, startOfDay, isAfter, isToday } from 'date-fns';
+import { format, parseISO, isSameMonth, startOfDay, isAfter, isToday, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { type Event } from '../types/eventTypes';
 import { cities } from '@/contexts/EventContext'; // Importiere die Städte-Liste
@@ -21,6 +21,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef, isLoadingEve
 
     const currentDate = new Date();
     const today = startOfDay(new Date());
+    const thirtyDaysFromNow = addDays(today, 30); // Calculate 30 days from now
 
     // Filter Events nach ausgewählter Stadt
     const cityFilteredEvents = events.filter(event => {
@@ -41,20 +42,20 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef, isLoadingEve
       return eventCity === targetCityName;
     });
 
-    const currentMonthEvents = cityFilteredEvents.filter(event => { // Filterung auf cityFilteredEvents anwenden
+    const next30DaysEvents = cityFilteredEvents.filter(event => { // Filterung auf cityFilteredEvents anwenden
       if (!event.date) return false;
       try {
         const eventDate = parseISO(event.date);
-        return isSameMonth(eventDate, currentDate) && (isAfter(eventDate, today) || isToday(eventDate));
+        // NEU: Filtere Events, die heute oder in den nächsten 30 Tagen liegen
+        return (isAfter(eventDate, today) || isToday(eventDate)) && isBefore(eventDate, thirtyDaysFromNow);
       } catch {
         return false;
       }
     });
 
-    // Sortiere ALLE relevanten Events (des aktuellen Monats und der ausgewählten Stadt)
+    // Sortiere ALLE relevanten Events (der nächsten 30 Tage und der ausgewählten Stadt)
     // zuerst nach Likes (absteigend), dann nach Datum (aufsteigend).
-    // Es wird hier NICHT mehr nach "Top Event pro Tag" gruppiert.
-    return currentMonthEvents.sort((a, b) => {
+    return next30DaysEvents.sort((a, b) => {
       const likesA = a.likes || 0;
       const likesB = b.likes || 0;
 
