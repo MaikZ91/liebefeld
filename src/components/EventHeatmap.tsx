@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, MessageSquare, Send, Heart, Filter, FilterX } from 'lucide-react';
+import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, Send, Filter, FilterX } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 import { format } from 'date-fns';
 import SwipeableEventPanel from '@/components/event-chat/SwipeableEventPanel';
@@ -28,13 +28,10 @@ import { useToast } from '@/hooks/use-toast';
 import EventForm from '@/components/EventForm';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { messageService } from '@/services/messageService';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
-import { userService } from '@/services/userService';
 import { UserProfile } from '@/types/chatTypes';
 import { getInitials } from '@/utils/chatUIUtils';
 import PrivateChat from '@/components/users/PrivateChat';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import HeatmapHeader from './HeatmapHeader';
 import { useEventContext, cities } from '@/contexts/EventContext';
 
@@ -62,12 +59,15 @@ const EventHeatmap: React.FC = () => {
   const [isPerfectDayLoading, setIsPerfectDayLoading] = useState(false);
   const [showPerfectDayPanel, setShowPerfectDayPanel] = useState(false);
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
-  const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false);
-  const [checkInSearchTerm, setCheckInSearchTerm] = useState('');
   const [liveStatusMessage, setLiveStatusMessage] = useState('');
   const [isPrivateChatOpen, setIsPrivateChatOpen] = useState(false);
   const [selectedUserForPrivateChat, setSelectedUserForPrivateChat] = useState<UserProfile | null>(null);
   const [showFilterPanel, setShowFilterPanel] = useState(true);
+
+  // New state for central avatar
+  const [showCentralAvatar, setShowCentralAvatar] = useState(false);
+  const [centralAvatarUsername, setCentralAvatarUsername] = useState('');
+  const [centralAvatarImage, setCentralAvatarImage] = useState('');
 
   const mapRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -316,17 +316,15 @@ const EventHeatmap: React.FC = () => {
     }
   };
 
+  // Updated check-in function to show central avatar
   const handleCheckInWithStatus = async () => {
-    if (!currentUser || currentUser === 'Gast') {
-      toast({
-        title: "Anmeldung erforderlich",
-        description: "Du musst angemeldet sein, um dich einzuchecken und einen Status zu setzen.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsCheckInDialogOpen(false);
+    const username = currentUser || localStorage.getItem('community_chat_username') || 'Gast';
+    const avatar = userProfile?.avatar || localStorage.getItem('community_chat_avatar') || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
+    
+    // Set central avatar data
+    setCentralAvatarUsername(username);
+    setCentralAvatarImage(avatar);
+    setShowCentralAvatar(true);
     
     const checkInToast = toast({ 
       title: "Check-in wird verarbeitet...", 
@@ -338,42 +336,120 @@ const EventHeatmap: React.FC = () => {
       const userCurrentLat = userCurrentCityCenter.lat + (Math.random() - 0.5) * 0.005;
       const userCurrentLng = userCurrentCityCenter.lng + (Math.random() - 0.5) * 0.005;
 
-      const updatedProfileData: Partial<UserProfile> = {
-        last_online: new Date().toISOString(),
-        current_live_location_lat: userCurrentLat,
-        current_live_location_lng: userCurrentLng,
-        current_status_message: liveStatusMessage,
-        current_checkin_timestamp: new Date().toISOString(),
-      };
-      
-      await supabase.from('user_profiles')
-        .update(updatedProfileData)
-        .eq('username', currentUser);
-      
+      // Only update database if user is logged in
+      if (currentUser && currentUser !== 'Gast') {
+        const updatedProfileData: Partial<UserProfile> = {
+          last_online: new Date().toISOString(),
+          current_live_location_lat: userCurrentLat,
+          current_live_location_lng: userCurrentLng,
+          current_status_message: liveStatusMessage,
+          current_checkin_timestamp: new Date().toISOString(),
+        };
+        
+        await supabase.from('user_profiles')
+          .update(updatedProfileData)
+          .eq('username', currentUser);
+        
+        refetchProfile();
+      }
+
+      // Send community message for all users
       const communityMessage = liveStatusMessage
-        ? `📍 ${currentUser} ist jetzt hier: "${liveStatusMessage}"`
-        : `📍 ${currentUser} ist jetzt in der Nähe!`;
+        ? `📍 ${username} ist jetzt hier: "${liveStatusMessage}"`
+        : `📍 ${username} ist jetzt in der Nähe!`;
       
       const cityCommunityGroupId = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.abbr.toLowerCase() + '_ausgehen' || 'bi_ausgehen';
 
-      const messageResult = await messageService.sendMessage(
+      await messageService.sendMessage(
         cityCommunityGroupId,
-        currentUser,
+        username,
         communityMessage,
-        localStorage.getItem('community_chat_avatar') || ''
+        avatar
       );
-
-      if (!messageResult) {
-        console.error('Error sending check-in message: Message not sent or ID not returned.');
-        throw new Error('Could not post check-in message to chat.');
-      }
-
-      refetchProfile();
 
       toast({
         title: "Erfolgreich eingecheckt!",
         description: liveStatusMessage ? `Dein Status: "${liveStatusMessage}" wurde geteilt.` : "Dein Standort wurde geteilt.",
       });
+
+      // Add user marker to map immediately
+      if (map) {
+        const userIconHtml = `
+          <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: auto;
+            min-width: 80px;
+            max-width: 150px;
+            cursor: move;
+          ">
+            <div style="
+              background: #ef4444;
+              color: white;
+              padding: 4px 8px;
+              border-radius: 15px;
+              font-size: 11px;
+              font-weight: 500;
+              margin-bottom: 5px;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+              position: relative;
+              top: 5px;
+            ">
+              ${liveStatusMessage}
+            </div>
+            <img src="${avatar}"
+                 alt="${username}"
+                 style="
+                   width: 50px;
+                   height: 50px;
+                   border-radius: 50%;
+                   border: 3px solid white;
+                   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+                   background-color: white;
+                   position: relative;
+                   z-index: 10;
+                 "/>
+            <div style="
+              color: #333;
+              font-size: 10px;
+              font-weight: bold;
+              margin-top: 2px;
+            ">
+              ${username}
+            </div>
+          </div>
+        `;
+
+        const userMarkerIcon = L.divIcon({
+          html: userIconHtml,
+          className: 'user-marker',
+          iconSize: [60, 90],
+          iconAnchor: [30, 90],
+        });
+
+        const marker = L.marker([userCurrentLat, userCurrentLng], { 
+          icon: userMarkerIcon,
+          draggable: true
+        });
+        
+        marker.on('dragend', (e) => {
+          const marker = e.target;
+          const position = marker.getLatLng();
+          console.log(`User ${username} moved to:`, position.lat, position.lng);
+          
+          if (currentUser && currentUser !== 'Gast') {
+            updateUserPosition(username, position.lat, position.lng);
+          }
+        });
+
+        map.addLayer(marker);
+        setUserMarkers(prev => [...prev, marker]);
+      }
 
     } catch (error: any) {
       console.error('Check-in failed:', error);
@@ -776,12 +852,6 @@ const EventHeatmap: React.FC = () => {
   const selectedCategoryData = categories.find(cat => cat.name === selectedCategory);
   const selectedCategoryDisplay = selectedCategory === 'all' ? 'Alle' : selectedCategory;
 
-  const filteredCheckInEvents = todaysFilteredEvents.filter(event =>
-    event.title.toLowerCase().includes(checkInSearchTerm.toLowerCase()) ||
-    event.location?.toLowerCase().includes(checkInSearchTerm.toLowerCase()) ||
-    event.category.toLowerCase().includes(checkInSearchTerm.toLowerCase())
-  );
-
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Live Ticker Header */}
@@ -908,7 +978,7 @@ const EventHeatmap: React.FC = () => {
       {/* "Ich bin hier" Button (bottom right, floating) */}
       <div className="absolute bottom-48 right-6 z-[1000]">
         <Button
-          onClick={() => setIsCheckInDialogOpen(true)}
+          onClick={() => setShowCentralAvatar(true)}
           className="bg-red-500 hover:bg-red-600 text-white w-28 h-16 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-sm font-bold"
         >
           <Plus className="w-6 h-6 mb-0.5" />
@@ -925,6 +995,79 @@ const EventHeatmap: React.FC = () => {
           zIndex: 1
         }}
       />
+
+      {/* Central Avatar Modal */}
+      {showCentralAvatar && (
+        <div className="fixed inset-0 z-[1200] bg-black/50 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-red-500 shadow-lg">
+                <img 
+                  src={centralAvatarImage || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(centralAvatarUsername)}`}
+                  alt={centralAvatarUsername}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">{centralAvatarUsername}</h2>
+              <p className="text-gray-600">Verbindec dich</p>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center relative w-full">
+                <Input
+                  placeholder="Was machst du gerade? (z.B. Jetzt im Café Barcelona)"
+                  value={liveStatusMessage}
+                  onChange={(e) => setLiveStatusMessage(e.target.value)}
+                  className="w-full bg-gray-50 border-2 border-red-500 rounded-full py-3 px-4 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-gray-800 placeholder-gray-500 pr-12"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleCheckInWithStatus();
+                      setShowCentralAvatar(false);
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    handleCheckInWithStatus();
+                    setShowCentralAvatar(false);
+                  }}
+                  disabled={!liveStatusMessage.trim()}
+                  className={cn(
+                    "absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full p-2 flex-shrink-0",
+                    liveStatusMessage.trim()
+                      ? "bg-red-500 hover:bg-red-600 text-white"
+                      : "bg-gray-300 text-gray-500"
+                  )}
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              </div>
+              
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => {
+                    handleCheckInWithStatus();
+                    setShowCentralAvatar(false);
+                  }}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-full py-3"
+                  disabled={!liveStatusMessage.trim()}
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Check-in
+                </Button>
+                <Button
+                  onClick={() => setShowCentralAvatar(false)}
+                  variant="outline"
+                  className="flex-1 border-gray-300 text-gray-700 rounded-full py-3"
+                >
+                  Abbrechen
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Perfect Day Panel */}
       {showPerfectDayPanel && perfectDayMessage && (
@@ -1033,57 +1176,6 @@ const EventHeatmap: React.FC = () => {
             onCancel={() => setIsEventFormOpen(false)}
             selectedDate={new Date()}
           />
-        </DialogContent>
-      </Dialog>
-
-      {/* Live Check-in Dialog (with chat-like input) */}
-      <Dialog open={isCheckInDialogOpen} onOpenChange={setIsCheckInDialogOpen}>
-        <DialogContent className="z-[1100] bg-black/95 backdrop-blur-md border-gray-700 text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-white flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-500" />
-              Ich bin hier!
-            </DialogTitle>
-          </DialogHeader>
-          {/* Avatar display moved inside DialogContent */}
-          {userProfile && (
-            <div className="flex items-center gap-3 py-2 px-4 border-b border-gray-800">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={userProfile.avatar || ''} alt={userProfile.username} />
-                <AvatarFallback className="bg-red-500 text-white">{getInitials(userProfile.username)}</AvatarFallback>
-              </Avatar>
-              <span className="text-white text-lg font-semibold">{userProfile.username}</span>
-            </div>
-          )}
-          <div className="space-y-4 py-4">
-            <p className="text-gray-300">Setze deinen Status:</p>
-            <div className="flex items-center relative w-full">
-                <Input
-                placeholder="Was machst du gerade? (z.B. Jetzt im Café Barcelona)"
-                value={liveStatusMessage}
-                onChange={(e) => setLiveStatusMessage(e.target.value)}
-                className="w-full bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pr-10 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-600"
-                onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleCheckInWithStatus();
-                    }
-                }}
-                />
-                <button
-                    onClick={handleCheckInWithStatus}
-                    disabled={!liveStatusMessage.trim()}
-                    className={cn(
-                        "absolute right-1 top-1/2 transform -translate-y-1/2 rounded-full p-1.5 flex-shrink-0",
-                        liveStatusMessage.trim()
-                            ? "bg-red-500 hover:bg-red-600 text-white"
-                            : "bg-zinc-800 text-zinc-500"
-                    )}
-                >
-                    <Send className="h-3 w-3" />
-                </button>
-            </div>
-          </div>
         </DialogContent>
       </Dialog>
 
