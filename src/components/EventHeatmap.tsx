@@ -383,7 +383,59 @@ const EventHeatmap: React.FC = () => {
 
       // Add user marker to map immediately
       if (map) {
-        const userMarkerIcon = L.divIcon({ // <-- Korrektur: userIconHtml muss hier L.divIcon() übergeben werden
+        // Definition von userIconHtml hinzugefügt
+        const userIconHtml = `
+          <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: auto;
+            min-width: 80px;
+            max-width: 150px;
+            cursor: move;
+          ">
+            <div style="
+              background: #ef4444;
+              color: white;
+              padding: 4px 8px;
+              border-radius: 15px;
+              font-size: 11px;
+              font-weight: 500;
+              margin-bottom: 5px;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+              position: relative;
+              top: 5px;
+            ">
+              ${liveStatusMessage}
+            </div>
+            <img src="${avatar}"
+                 alt="${username}"
+                 style="
+                   width: 50px;
+                   height: 50px;
+                   border-radius: 50%;
+                   border: 3px solid white;
+                   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+                   background-color: white;
+                   position: relative;
+                   z-index: 10;
+                 "/>
+            <div style="
+              color: #333;
+              font-size: 10px;
+              font-weight: bold;
+              margin-top: 2px;
+            ">
+              ${username}
+            </div>
+          </div>
+        `;
+
+        const userMarkerIcon = L.divIcon({
           html: userIconHtml,
           className: 'user-marker',
           iconSize: [60, 90],
@@ -391,7 +443,7 @@ const EventHeatmap: React.FC = () => {
         });
 
         const marker = L.marker([userCurrentLat, userCurrentLng], { 
-          icon: userMarkerIcon, // <-- Korrektur: Hier muss das L.divIcon()-Objekt übergeben werden
+          icon: userMarkerIcon, // <-- Korrektur: userMarkerIcon statt userIconHtml
           draggable: true
         });
         
@@ -493,12 +545,12 @@ const EventHeatmap: React.FC = () => {
   }, [mapRef.current, selectedCity]);
 
   // Funktion zur Behandlung des AIChat-Toggles
-  const handleAIChatToggle = useCallback(() => { // <-- Definition hinzugefügt
+  const handleAIChatToggle = useCallback(() => {
     setShowAIChat(prev => !prev);
   }, []);
 
   // Funktion zum Senden einer Nachricht im AI Chat
-  const handleAIChatSend = useCallback(() => { // <-- Definition hinzugefügt
+  const handleAIChatSend = useCallback(() => {
     if (aiChatInput.trim()) {
       chatLogic.setInput(aiChatInput);
       chatLogic.handleSendMessage();
@@ -507,7 +559,7 @@ const EventHeatmap: React.FC = () => {
   }, [aiChatInput, chatLogic]);
 
   // Funktion zum Umschalten der Panel-Höhe
-  const togglePanelHeight = useCallback(() => { // <-- Definition hinzugefügt
+  const togglePanelHeight = useCallback(() => {
     if (panelHeight === 'collapsed') {
       setPanelHeight('partial');
       setIsPanelOpen(true);
@@ -520,14 +572,14 @@ const EventHeatmap: React.FC = () => {
   }, [panelHeight]);
 
   // Funktion zum vollständigen Schließen des Panels
-  const closePanelCompletely = useCallback(() => { // <-- Definition hinzugefügt
+  const closePanelCompletely = useCallback(() => {
     setPanelHeight('collapsed');
     setIsPanelOpen(false);
     setShowPerfectDayPanel(false);
   }, []);
 
   // Funktion zur Auswahl eines Events im Panel
-  const handleEventSelect = useCallback((eventId: string) => { // <-- Definition hinzugefügt
+  const handleEventSelect = useCallback((eventId: string) => {
     setSelectedEventId(eventId);
     
     const selectedEvent = filteredEvents.find(event =>
@@ -690,14 +742,14 @@ const EventHeatmap: React.FC = () => {
         }
       });
     };
-  }, [map, filteredEvents, selectedCity, eventCoordinates, handleEventSelect]); // Hinzugefügt: handleEventSelect als Dependency
+  }, [map, filteredEvents, selectedCity, eventCoordinates, handleEventSelect]);
 
   // Definiere selectedCategoryDisplay und selectedCategoryData
-  const selectedCategoryData = useMemo(() => { // <-- Definition hinzugefügt
+  const selectedCategoryData = useMemo(() => {
     return categories.find(cat => cat.name === selectedCategory);
   }, [categories, selectedCategory]);
 
-  const selectedCategoryDisplay = useMemo(() => { // <-- Definition hinzugefügt
+  const selectedCategoryDisplay = useMemo(() => {
     return selectedCategory === 'all' ? 'Alle' : selectedCategory;
   }, [selectedCategory]);
 
@@ -813,7 +865,7 @@ const EventHeatmap: React.FC = () => {
                     />
                     <Button
                       onClick={handleAIChatSend}
-                      disabled={!aiChatInput.trim() || chatLogic.isTyping} // <-- Korrektur: chatLogic.isTyping statt handleAIChatSend
+                      disabled={!aiChatInput.trim() || chatLogic.isTyping}
                       size="icon"
                       className="bg-blue-500 hover:bg-blue-600"
                     >
