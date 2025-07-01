@@ -1,6 +1,6 @@
 // supabase/functions/ai-geocode-location/index.ts
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
+// Setup type definitions for built-in Supabase Runtime APIs
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -47,6 +47,10 @@ Output: {"lat": 52.0205, "lng": 8.5342}
 Beispiel 3:
 Input: "Bunker Ulmenwall"
 Output: {"lat": 52.0211, "lng": 8.5318}
+
+Beispiel 4:
+Input: "hochschulsport_bielefeld"
+Output: {"lat": 52.0357, "lng": 8.5042}
 
 Input: "${locationString}"
 Output: `;
