@@ -123,7 +123,16 @@ export const geocodeLocation = async (location: string, city: string = 'Bielefel
     return coordinateCache.get(cacheKey)!;
   }
 
-  // --- AUSSCHLIESSLICH KI-Geocoding-Funktion aufrufen ---
+  // --- HARDCODED MAPPING für Hochschulsport Bielefeld ---
+  if (location.toLowerCase() === 'hochschulsport_bielefeld' || location.toLowerCase() === 'universität bielefeld') {
+    const uniBielefeldCoords = { lat: 52.0357, lng: 8.5042, display_name: 'Universität Bielefeld' };
+    console.log(`[Geocoding] Hardcoded match for ${location}, returning University of Bielefeld coordinates.`);
+    coordinateCache.set(cacheKey, uniBielefeldCoords);
+    await cacheCoordinatesInDB(location, city, uniBielefeldCoords);
+    return uniBielefeldCoords;
+  }
+
+  // --- AUSSCHLIESSLICH KI-Geocoding-Funktion aufrufen (wenn nicht hartkodiert) ---
   try {
     console.log(`[Geocoding] Calling AI Edge function for "${location}" with city context "${city}"`);
     
