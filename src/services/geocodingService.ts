@@ -123,13 +123,64 @@ export const geocodeLocation = async (location: string, city: string = 'Bielefel
     return coordinateCache.get(cacheKey)!;
   }
 
-  // --- HARDCODED MAPPING für Hochschulsport Bielefeld ---
-  if (location.toLowerCase() === 'hochschulsport_bielefeld' || location.toLowerCase() === 'universität bielefeld') {
-    const uniBielefeldCoords = { lat: 52.0357, lng: 8.5042, display_name: 'Universität Bielefeld' };
-    console.log(`[Geocoding] Hardcoded match for ${location}, returning University of Bielefeld coordinates.`);
-    coordinateCache.set(cacheKey, uniBielefeldCoords);
-    await cacheCoordinatesInDB(location, city, uniBielefeldCoords);
-    return uniBielefeldCoords;
+  // --- HARDCODED MAPPINGS für spezifische Orte ---
+  const lowerCaseLocation = location.toLowerCase();
+  let hardcodedResult: GeocodeResult | null = null;
+
+  switch (lowerCaseLocation) {
+    case 'hochschulsport_bielefeld':
+    case 'universität bielefeld':
+      hardcodedResult = { lat: 52.0357, lng: 8.5042, display_name: 'Universität Bielefeld' };
+      break;
+    case 'forum bielefeld':
+      hardcodedResult = { lat: 52.0163, lng: 8.5298, display_name: 'Forum Bielefeld' };
+      break;
+    case 'nrzp':
+    case 'kulturzentrum nummer zu platz':
+      hardcodedResult = { lat: 52.027554, lng: 8.528664, display_name: 'NRZP' };
+      break;
+    case 'bunker ulmenwall':
+      hardcodedResult = { lat: 52.016027, lng: 8.531694, display_name: 'Bunker Ulmenwall' };
+      break;
+    case 'sams':
+    case 'club sams':
+      hardcodedResult = { lat: 52.021111, lng: 8.534722, display_name: 'Club Sam\'s' };
+      break;
+    case 'movie bielefeld':
+    case 'movie':
+      hardcodedResult = { lat: 52.021305, lng: 8.532611, display_name: 'Movie Bielefeld' };
+      break;
+    case 'platzhirsch':
+    case 'platzhirsch bielefeld':
+      hardcodedResult = { lat: 52.021111, lng: 8.534722, display_name: 'Platzhirsch Bielefeld' }; // Approximate, same as Sams
+      break;
+    case 'irish pub':
+    case 'irish pub bielefeld':
+      hardcodedResult = { lat: 52.0217, lng: 8.5332, display_name: 'Irish Pub Bielefeld' }; // Approximate
+      break;
+    case 'stereo bielefeld':
+    case 'stereo':
+      hardcodedResult = { lat: 52.0224, lng: 8.5330, display_name: 'Stereo Bielefeld' }; // Approximate
+      break;
+    case 'cafe europa':
+    case 'cafe europa bielefeld':
+      hardcodedResult = { lat: 52.022940, lng: 8.532826, display_name: 'Cafe Europa' };
+      break;
+    case 'arminia bielefeld':
+    case 'schücoarena':
+      hardcodedResult = { lat: 52.031389, lng: 8.516944, display_name: 'SchücoArena (Arminia Bielefeld)' };
+      break;
+    case 'cutie bielefeld':
+    case 'cutie':
+      hardcodedResult = { lat: 52.027474, lng: 8.528685, display_name: 'Cutie Bielefeld' };
+      break;
+  }
+
+  if (hardcodedResult) {
+    console.log(`[Geocoding] Hardcoded match for ${location}, returning ${hardcodedResult.display_name} coordinates.`);
+    coordinateCache.set(cacheKey, hardcodedResult);
+    await cacheCoordinatesInDB(location, city, hardcodedResult);
+    return hardcodedResult;
   }
 
   // --- AUSSCHLIESSLICH KI-Geocoding-Funktion aufrufen (wenn nicht hartkodiert) ---
