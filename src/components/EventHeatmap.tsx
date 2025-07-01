@@ -36,6 +36,7 @@ import HeatmapHeader from './HeatmapHeader';
 import { useEventContext, cities } from '@/contexts/EventContext';
 import FullPageChatBot from '@/components/event-chat/FullPageChatBot';
 import { useChatLogic } from '@/components/event-chat/useChatLogic';
+import { geocodeLocation, loadCachedCoordinates, geocodeMultipleLocations } from '@/services/geocodingService';
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -75,6 +76,9 @@ const EventHeatmap: React.FC = () => {
   const [showAIChat, setShowAIChat] = useState(false);
   const [aiChatInput, setAiChatInput] = useState('');
 
+  // State for geocoded coordinates
+  const [eventCoordinates, setEventCoordinates] = useState<Map<string, { lat: number; lng: number }>>(new Map());
+
   // Initialize chat logic for AI chat
   const chatLogic = useChatLogic();
 
@@ -82,6 +86,64 @@ const EventHeatmap: React.FC = () => {
   const { toast } = useToast();
 
   const today = format(new Date(), 'yyyy-MM-dd');
+
+  // Load cached coordinates on component mount
+  useEffect(() => {
+    loadCachedCoordinates();
+  }, []);
+
+  // Geocode all event locations when events change
+  useEffect(() => {
+    const geocodeEventLocations = async () => {
+      if (!events.length) return;
+
+      console.log('[EventHeatmap] Starting geocoding for events...');
+      
+      // Sammle alle einzigartigen Locations
+      const uniqueLocations = new Set<string>();
+      const locationData: Array<{ location: string; city?: string }> = [];
+
+      events.forEach(event => {
+        if (event.location && !uniqueLocations.has(event.location)) {
+          uniqueLocations.add(event.location);
+          locationData.push({
+            location: event.location,
+            city: event.city || selectedCity
+          });
+        }
+      });
+
+      if (locationData.length === 0) return;
+
+      try {
+        // Batch-Geocoding für bessere Performance
+        const coordinates = await geocodeMultipleLocations(locationData);
+        
+        // Erstelle neue Koordinaten-Map für Events
+        const newEventCoordinates = new Map<string, { lat: number; lng: number }>();
+        
+        events.forEach(event => {
+          if (event.location) {
+            const key = `${event.location}_${event.city || selectedCity}`;
+            const coords = coordinates.get(key);
+            if (coords) {
+              newEventCoordinates.set(event.id, {
+                lat: coords.lat,
+                lng: coords.lng
+              });
+            }
+          }
+        });
+
+        setEventCoordinates(newEventCoordinates);
+        console.log(`[EventHeatmap] Geocoded ${newEventCoordinates.size} event locations`);
+      } catch (error) {
+        console.error('[EventHeatmap] Error during batch geocoding:', error);
+      }
+    };
+
+    geocodeEventLocations();
+  }, [events, selectedCity]);
 
   const getTimeFromSlider = (hour: number): string => {
     return `${hour.toString().padStart(2, '0')}:00`;
@@ -108,67 +170,6 @@ const EventHeatmap: React.FC = () => {
     return { lat: 52.0302, lng: 8.5311 };
   };
 
-  function getCoordinatesForLocation(location: string, isLng: boolean = false): number {
-    if (!location) {
-        const currentCityCenter = getCityCenterCoordinates(selectedCity);
-        return isLng ? currentCityCenter.lng : currentCityCenter.lat;
-    }
-    
-    const locationLower = location.toLowerCase();
-    const currentCityCenter = getCityCenterCoordinates(selectedCity);
-
-    const specificLocationMap: { [key: string]: { lat: number; lng: number } } = {
-      'forum': { lat: 52.0210, lng: 8.5320 },
-      'lokschuppen': { lat: 52.0195, lng: 8.5340 },
-      'kunsthalle': { lat: 52.0175, lng: 8.5380 },
-      'theater': { lat: 52.0185, lng: 8.5355 },
-      'stadttheater': { lat: 52.0185, lng: 8.5355 },
-      'stadthalle': { lat: 52.0220, lng: 8.5400 },
-      'rudolf-oetker-halle': { lat: 52.0210, lng: 8.5330 },
-      'stereo bielefeld': { lat: 52.0200, lng: 8.5350 },
-      'stereo': { lat: 52.0200, lng: 8.5350 },
-      'nr.z.p': { lat: 52.0190, lng: 8.5370 },
-      'nrzp': { lat: 52.0190, lng: 8.5370 },
-      'universität': { lat: 52.0380, lng: 8.4950 },
-      'uni': { lat: 52.0380, lng: 8.4950 },
-      'campus': { lat: 52.0380, lng: 8.4950 },
-      'altstadt': { lat: 52.0192, lng: 8.5370 },
-      'zentrum': { lat: 52.0302, lng: 8.5311 },
-      'innenstadt': { lat: 52.0302, lng: 8.5311 },
-      'mitte': { lat: 52.0302, lng: 8.5311 },
-      'schildesche': { lat: 52.0450, lng: 8.4800 },
-      'brackwede': { lat: 52.0050, lng: 8.5800 },
-      'sennestadt': { lat: 51.9800, lng: 8.6200 },
-      'heepen': { lat: 52.0500, lng: 8.6000 },
-      'stieghorst': { lat: 52.0100, lng: 8.6100 },
-      'stadtpark': { lat: 52.0250, lng: 8.5280 },
-      'bürgerpark': { lat: 52.0180, lng: 8.5200 },
-      'tierpark': { lat: 52.0400, lng: 8.5100 },
-      'botanischer garten': { lat: 52.0350, lng: 8.4900 },
-      'loom': { lat: 52.0200, lng: 8.5350 },
-      'hauptbahnhof': { lat: 52.0280, lng: 8.5320 },
-      'bahnhof': { lat: 52.0280, lng: 8.5320 },
-      'schücoarena': { lat: 52.0320, lng: 8.5150 },
-      'alm': { lat: 52.0320, lng: 8.5150 },
-      'arminia': { lat: 52.0320, lng: 8.5150 },
-      'brandenburger tor': { lat: 52.5162, lng: 13.3777 },
-      'alexanderplatz': { lat: 52.5219, lng: 13.4135 },
-      'reichstag': { lat: 52.5186, lng: 13.3762 },
-      'berlin wall memorial': { lat: 52.5350, lng: 13.3885 },
-      'east side gallery': { lat: 52.5020, lng: 13.4440 },
-    };
-
-    for (const [key, coords] of Object.entries(specificLocationMap)) {
-      if (locationLower.includes(key)) {
-        return isLng ? coords.lng : coords.lat;
-      }
-    }
-
-    const offset = (Math.random() - 0.5) * 0.005;
-    const coord = isLng ? currentCityCenter.lng + offset : currentCityCenter.lat + offset;
-    return coord;
-  }
-
   const todaysFilteredEvents = React.useMemo(() => {
     const cityDisplayName = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity;
     console.log(`Filtering events for today (${today}) in ${cityDisplayName}...`);
@@ -193,9 +194,10 @@ const EventHeatmap: React.FC = () => {
         return isTodayEvent && hasLocationData && isRelevantCity;
       })
       .map(event => {
-        const locationText = event.location || event.title;
-        const lat = getCoordinatesForLocation(locationText);
-        const lng = getCoordinatesForLocation(locationText, true);
+        // Verwende geocodierte Koordinaten falls verfügbar
+        const coords = eventCoordinates.get(event.id);
+        const lat = coords?.lat || getCityCenterCoordinates(selectedCity).lat;
+        const lng = coords?.lng || getCityCenterCoordinates(selectedCity).lng;
         
         return {
           ...event,
@@ -206,9 +208,9 @@ const EventHeatmap: React.FC = () => {
         };
       });
 
-    console.log(`Found ${filtered.length} events for today in ${cityDisplayName} with valid coordinates`);
+    console.log(`Found ${filtered.length} events for today in ${cityDisplayName} with coordinates`);
     return filtered;
-  }, [events, today, selectedCity]);
+  }, [events, today, selectedCity, eventCoordinates]);
 
   const categories = React.useMemo(() => {
     const categoryMap = new Map<string, number>();
@@ -562,8 +564,10 @@ const EventHeatmap: React.FC = () => {
     const newEventMarkers: L.Marker[] = [];
 
     filteredEvents.forEach(event => {
-      const lat = getCoordinatesForLocation(event.location || event.title);
-      const lng = getCoordinatesForLocation(event.location || event.title, true);
+      // Verwende geocodierte Koordinaten
+      const coords = eventCoordinates.get(event.id);
+      const lat = coords?.lat || event.lat;
+      const lng = coords?.lng || event.lng;
       
       if (typeof lat !== 'number' || isNaN(lat) || typeof lng !== 'number' || isNaN(lng)) {
         console.warn(`Invalid coordinates for event ${event.title}: Lat ${lat}, Lng ${lng}. Skipping marker.`);
@@ -676,7 +680,7 @@ const EventHeatmap: React.FC = () => {
         }
       });
     };
-  }, [map, filteredEvents, selectedCity]);
+  }, [map, filteredEvents, selectedCity, eventCoordinates]);
 
   useEffect(() => {
     if (!map) {
