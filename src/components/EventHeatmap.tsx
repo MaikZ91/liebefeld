@@ -1,5 +1,5 @@
 // src/components/EventHeatmap.tsx
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
@@ -189,6 +189,8 @@ const EventHeatmap: React.FC = () => {
           isRelevantCity = eventCityLower === selectedCityLower;
         }
                                        
+        console.log(`Event: ${event.title}, Date: ${event.date}, Location: ${event.location}, City: ${event.city}, IsToday: ${isTodayEvent}, HasLocation: ${hasLocationData}, IsRelevantCity: ${isRelevantCity}`);
+        
         return isTodayEvent && hasLocationData && isRelevantCity;
       })
       .map(event => {
@@ -383,7 +385,6 @@ const EventHeatmap: React.FC = () => {
 
       // Add user marker to map immediately
       if (map) {
-        // Definition von userIconHtml hinzugefügt
         const userIconHtml = `
           <div style="
             display: flex;
@@ -443,7 +444,7 @@ const EventHeatmap: React.FC = () => {
         });
 
         const marker = L.marker([userCurrentLat, userCurrentLng], { 
-          icon: userMarkerIcon, // Korrektur: userMarkerIcon ist vom Typ L.DivIcon, dies behebt den TS2322 Fehler
+          icon: userMarkerIcon,
           draggable: true
         });
         
@@ -516,90 +517,33 @@ const EventHeatmap: React.FC = () => {
       return;
     }
 
-    // Korrektur: Entferne die Redundanz. Die Cleanup-Funktion kümmert sich um das Entfernen der Karte.
-    // Die Karte sollte nur initialisiert werden, wenn mapRef.current vorhanden ist UND noch keine Map instanziiert wurde.
-    // Wenn sich selectedCity ändert, wird der Effekt erneut ausgeführt und die Cleanup-Funktion entfernt die alte Karte.
-    if (!map) { // <-- Nur initialisieren, wenn 'map' noch null ist
-      const initialCenter = getCityCenterCoordinates(selectedCity);
-
-      const leafletMap = L.map(mapRef.current, {
-        center: [initialCenter.lat, initialCenter.lng],
-        zoom: 13,
-        zoomControl: true,
-        preferCanvas: false
-      });
-      
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19
-      }).addTo(leafletMap);
-
-      setMap(leafletMap); // Speichere die neue Map-Instanz im State
-
-      // Cleanup-Funktion: Wird beim Unmounten der Komponente oder bei Änderungen der Dependencies ausgeführt
-      return () => {
-        console.log("Map cleanup: removing map instance.");
-        if (leafletMap) {
-          leafletMap.remove(); // Entfernt die von DIESEM useEffect-Run erstellte Map-Instanz
-        }
-        setMap(null); // Setzt den Map-State zurück auf null
-      };
+    if (map) {
+      map.remove();
+      setMap(null);
     }
-    // Wenn 'map' bereits existiert, wurde die Karte bereits initialisiert.
-    // In diesem Fall tut der Effektkörper nichts weiter, wenn selectedCity sich ändert,
-    // außer die Cleanup-Funktion des VORHERIGEN Effektdurchlaufs aufzurufen.
-    // Wenn die Dependencies sich ändern und map nicht null ist, wird der alte Effekt
-    // aufgeräumt (map.remove()), dann wird dieser Effekt erneut ausgeführt.
-    // Wichtig ist, dass 'map' in der Dependency-Liste ist, damit der Cleanup korrekt triggert,
-    // wenn sich 'map' ändert (z.B. durch `setMap(null)` im Cleanup der vorherigen Ausführung).
-  }, [mapRef.current, selectedCity, map]); // 'map' muss hier als Dependency stehen
-
-  // Funktion zur Behandlung des AIChat-Toggles
-  const handleAIChatToggle = useCallback(() => {
-    setShowAIChat(prev => !prev);
-  }, []);
-
-  // Funktion zum Senden einer Nachricht im AI Chat
-  const handleAIChatSend = useCallback(() => {
-    if (aiChatInput.trim()) {
-      chatLogic.setInput(aiChatInput);
-      chatLogic.handleSendMessage();
-      setAiChatInput('');
-    }
-  }, [aiChatInput, chatLogic]);
-
-  // Funktion zum Umschalten der Panel-Höhe
-  const togglePanelHeight = useCallback(() => {
-    if (panelHeight === 'collapsed') {
-      setPanelHeight('partial');
-      setIsPanelOpen(true);
-    } else if (panelHeight === 'partial') {
-      setPanelHeight('full');
-    } else {
-      setPanelHeight('collapsed');
-      setIsPanelOpen(false);
-    }
-  }, [panelHeight]);
-
-  // Funktion zum vollständigen Schließen des Panels
-  const closePanelCompletely = useCallback(() => {
-    setPanelHeight('collapsed');
-    setIsPanelOpen(false);
-    setShowPerfectDayPanel(false);
-  }, []);
-
-  // Funktion zur Auswahl eines Events im Panel
-  const handleEventSelect = useCallback((eventId: string) => {
-    setSelectedEventId(eventId);
     
-    const selectedEvent = filteredEvents.find(event =>
-      (event.id || `${event.title}-${event.date}-${event.time}`) === eventId
-    );
+    const initialCenter = getCityCenterCoordinates(selectedCity);
+
+    const leafletMap = L.map(mapRef.current, {
+      center: [initialCenter.lat, initialCenter.lng],
+      zoom: 13,
+      zoomControl: true,
+      preferCanvas: false
+    });
     
-    if (selectedEvent && selectedEvent.lat && selectedEvent.lng && map) {
-      map.setView([selectedEvent.lat, selectedEvent.lng], 15);
-    }
-  }, [filteredEvents, map]);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(leafletMap);
+
+    setMap(leafletMap);
+
+    return () => {
+      if (leafletMap) {
+        leafletMap.remove();
+      }
+    };
+  }, [mapRef.current, selectedCity]);
 
   useEffect(() => {
     if (!map) {
@@ -618,33 +562,17 @@ const EventHeatmap: React.FC = () => {
     });
 
     const newEventMarkers: L.Marker[] = [];
-    const currentPlacedCoords = new Map<string, number>(); // Reset for each effect run
 
     filteredEvents.forEach(event => {
       // Verwende geocodierte Koordinaten
       const coords = eventCoordinates.get(event.id);
-      let lat = coords?.lat || event.lat;
-      let lng = coords?.lng || event.lng;
-
+      const lat = coords?.lat || event.lat;
+      const lng = coords?.lng || event.lng;
+      
       if (typeof lat !== 'number' || isNaN(lat) || typeof lng !== 'number' || isNaN(lng)) {
         console.warn(`Invalid coordinates for event ${event.title}: Lat ${lat}, Lng ${lng}. Skipping marker.`);
         return;
       }
-
-      // Logic to distribute overlapping markers
-      const originalKey = `${lat}-${lng}`;
-      let offsetCount = currentPlacedCoords.get(originalKey) || 0;
-
-      if (offsetCount > 0) {
-        const offsetMagnitude = 0.00005; // A small value for meters, adjust as needed
-        const angle = Math.random() * 2 * Math.PI; // Random angle for distribution
-        const distance = offsetMagnitude * Math.sqrt(offsetCount); // Increase distance slightly for more overlaps
-
-        lat += distance * Math.cos(angle);
-        lng += distance * Math.sin(angle);
-      }
-      currentPlacedCoords.set(originalKey, offsetCount + 1);
-      // End of new distribution logic
 
       const likes = event.likes || 0;
       let markerSize = 60;
@@ -752,16 +680,203 @@ const EventHeatmap: React.FC = () => {
         }
       });
     };
-  }, [map, filteredEvents, selectedCity, eventCoordinates, handleEventSelect]);
+  }, [map, filteredEvents, selectedCity, eventCoordinates]);
 
-  // Definiere selectedCategoryDisplay und selectedCategoryData
-  const selectedCategoryData = useMemo(() => {
-    return categories.find(cat => cat.name === selectedCategory);
-  }, [categories, selectedCategory]);
+  useEffect(() => {
+    if (!map) {
+      userMarkers.forEach(marker => {
+        try { map?.removeLayer(marker); } catch (e) {}
+      });
+      setUserMarkers([]);
+      return;
+    }
 
-  const selectedCategoryDisplay = useMemo(() => {
-    return selectedCategory === 'all' ? 'Alle' : selectedCategory;
-  }, [selectedCategory]);
+    const markersToRemove = [...userMarkers];
+    markersToRemove.forEach(marker => {
+      if (map.hasLayer(marker)) {
+        map.removeLayer(marker);
+      }
+    });
+    
+    const newUserMarkers: L.Marker[] = [];
+    const THIRTY_MINUTES_MS = 30 * 60 * 1000;
+
+    // Assuming usersToDisplay is available from useUserProfile or another source
+    const usersToDisplay = [userProfile].filter(Boolean) as UserProfile[]; // Example, replace with actual user list
+
+    usersToDisplay.forEach(user => {
+      const userCity = user.favorite_locations?.[0]?.toLowerCase() || 'bielefeld';
+      const selectedCityName = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name?.toLowerCase() || selectedCity.toLowerCase();
+      
+      let isUserInCurrentCity = false;
+      if (selectedCityName === 'bielefeld' || selectedCityName === 'bi') {
+        isUserInCurrentCity = userCity === 'bielefeld' || userCity === 'bi' || !user.favorite_locations || user.favorite_locations.length === 0;
+      } else {
+        isUserInCurrentCity = userCity === selectedCityName;
+      }
+
+      if (!isUserInCurrentCity) return;
+
+      const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null && user.current_live_location_lat !== undefined && user.current_live_location_lng !== undefined;
+      const hasStatusMessage = user.current_status_message && user.current_status_message.trim() !== '';
+      const isRecentCheckin = user.current_checkin_timestamp &&
+                               (new Date().getTime() - new Date(user.current_checkin_timestamp).getTime() < THIRTY_MINUTES_MS);
+
+      if (hasLiveLocation && hasStatusMessage && isRecentCheckin) {
+        const lat = user.current_live_location_lat as number;
+        const lng = user.current_live_location_lng as number;
+        const statusMessage = user.current_status_message as string;
+
+        const userIconHtml = `
+          <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: auto;
+            min-width: 80px;
+            max-width: 150px;
+            cursor: move;
+          ">
+            <div style="
+              background: #ef4444;
+              color: white;
+              padding: 4px 8px;
+              border-radius: 15px;
+              font-size: 11px;
+              font-weight: 500;
+              margin-bottom: 5px;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+              position: relative;
+              top: 5px;
+            ">
+              ${statusMessage}
+            </div>
+            <img src="${user.avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=' + getInitials(user.username)}"
+                 alt="${user.username}"
+                 style="
+                   width: 50px;
+                   height: 50px;
+                   border-radius: 50%;
+                   border: 3px solid white;
+                   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+                   background-color: white;
+                   position: relative;
+                   z-index: 10;
+                 "/>
+            <div style="
+              color: #333;
+              font-size: 10px;
+              font-weight: bold;
+              margin-top: 2px;
+            ">
+              ${user.username}
+            </div>
+          </div>
+        `;
+
+        const userMarkerIcon = L.divIcon({
+          html: userIconHtml,
+          className: 'user-marker',
+          iconSize: [60, 90],
+          iconAnchor: [30, 90],
+        });
+
+        const marker = L.marker([lat, lng], { 
+          icon: userMarkerIcon,
+          draggable: user.username === currentUser
+        });
+        
+        marker.on('click', () => {
+          setSelectedUserForPrivateChat(user);
+          setIsPrivateChatOpen(true);
+        });
+
+        if (user.username === currentUser) {
+          marker.on('dragend', (e) => {
+            const marker = e.target;
+            const position = marker.getLatLng();
+            console.log(`User ${user.username} moved to:`, position.lat, position.lng);
+            
+            updateUserPosition(user.username, position.lat, position.lng);
+          });
+        }
+
+        newUserMarkers.push(marker);
+        map.addLayer(marker);
+      }
+    });
+    setUserMarkers(newUserMarkers);
+
+    return () => {
+      newUserMarkers.forEach(marker => {
+        if (map && map.hasLayer(marker)) {
+          map.removeLayer(marker);
+        }
+      });
+    };
+  }, [map, userProfile, selectedCity]);
+
+  const handleEventSelect = (eventId: string) => {
+    setSelectedEventId(eventId);
+    
+    const selectedEvent = filteredEvents.find(event =>
+      (event.id || `${event.title}-${event.date}-${event.time}`) === eventId
+    );
+    
+    if (selectedEvent && selectedEvent.lat && selectedEvent.lng && map) {
+      map.setView([selectedEvent.lat, selectedEvent.lng], 15);
+    }
+  };
+
+  const togglePanelHeight = () => {
+    if (panelHeight === 'collapsed') {
+      setPanelHeight('partial');
+      setIsPanelOpen(true);
+    } else if (panelHeight === 'partial') {
+      setPanelHeight('full');
+    } else {
+      setPanelHeight('collapsed');
+      setIsPanelOpen(false);
+    }
+  };
+
+  const closePanelCompletely = () => {
+    setPanelHeight('collapsed');
+    setIsPanelOpen(false);
+    setShowPerfectDayPanel(false);
+  };
+
+  const handleAIChatToggle = () => {
+    setShowAIChat(!showAIChat);
+  };
+
+  const handleAIChatSend = () => {
+    if (aiChatInput.trim()) {
+      // Send the message to the AI chat logic
+      chatLogic.setInput(aiChatInput);
+      chatLogic.handleSendMessage();
+      setAiChatInput('');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black">
+        <div className="text-center text-white">
+          <MapPin className="w-12 h-12 mx-auto mb-4 animate-bounce text-red-500" />
+          <h2 className="text-xl mb-2">Lade Events...</h2>
+          <p className="text-gray-400">Heutige Events werden geladen...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const selectedCategoryData = categories.find(cat => cat.name === selectedCategory);
+  const selectedCategoryDisplay = selectedCategory === 'all' ? 'Alle' : selectedCategory;
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
@@ -875,7 +990,7 @@ const EventHeatmap: React.FC = () => {
                     />
                     <Button
                       onClick={handleAIChatSend}
-                      disabled={!aiChatInput.trim() || chatLogic.isTyping}
+                      disabled={!aiChatInput.trim()}
                       size="icon"
                       className="bg-blue-500 hover:bg-blue-600"
                     >
@@ -911,7 +1026,10 @@ const EventHeatmap: React.FC = () => {
       {!isPanelOpen && !showPerfectDayPanel && !showAIChat && filteredEvents.length > 0 && (
         <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-[1000]">
           <Button
-            onClick={togglePanelHeight}
+            onClick={() => {
+              setIsPanelOpen(true);
+              setPanelHeight('partial');
+            }}
             className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-full shadow-lg"
           >
             <ChevronUp className="w-5 h-5 mr-2" />
@@ -1062,7 +1180,7 @@ const EventHeatmap: React.FC = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={handleAIChatToggle}
+              onClick={() => setShowAIChat(false)}
               className="text-white hover:bg-gray-700"
             >
               <X className="w-5 h-5" />
