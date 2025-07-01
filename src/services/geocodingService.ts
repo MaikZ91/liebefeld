@@ -1,73 +1,14 @@
-
+// src/services/geocodingService.ts
 import { supabase } from "@/integrations/supabase/client";
 
 interface GeocodeResult {
-  lat: number;
-  lng: number;
+  lat: number | null;
+  lng: number | null;
   display_name?: string;
 }
 
 // Cache für bereits aufgelöste Koordinaten
 const coordinateCache = new Map<string, GeocodeResult>();
-
-// Nominatim Geocoding Service (kostenlos, keine API-Key erforderlich)
-export const geocodeLocation = async (location: string, city: string = 'Bielefeld'): Promise<GeocodeResult> => {
-  const cacheKey = `${location}_${city}`.toLowerCase();
-  
-  // Prüfe Cache zuerst
-  if (coordinateCache.has(cacheKey)) {
-    return coordinateCache.get(cacheKey)!;
-  }
-
-  try {
-    // Kombiniere Location mit Stadt für bessere Ergebnisse
-    const searchQuery = `${location}, ${city}, Germany`;
-    const encodedQuery = encodeURIComponent(searchQuery);
-    
-    console.log(`[Geocoding] Searching for: ${searchQuery}`);
-    
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodedQuery}&limit=1&countrycodes=de`,
-      {
-        headers: {
-          'User-Agent': 'Liebefeld-Event-App/1.0'
-        }
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Geocoding API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    if (data && data.length > 0) {
-      const result: GeocodeResult = {
-        lat: parseFloat(data[0].lat),
-        lng: parseFloat(data[0].lon),
-        display_name: data[0].display_name
-      };
-      
-      console.log(`[Geocoding] Found coordinates for ${location}: ${result.lat}, ${result.lng}`);
-      
-      // Cache das Ergebnis
-      coordinateCache.set(cacheKey, result);
-      
-      // Optional: Speichere in Datenbank für zukünftige Verwendung
-      await cacheCoordinatesInDB(location, city, result);
-      
-      return result;
-    } else {
-      console.warn(`[Geocoding] No results found for: ${searchQuery}`);
-      // Fallback auf Stadtzentrum
-      return getCityFallbackCoordinates(city);
-    }
-  } catch (error) {
-    console.error(`[Geocoding] Error geocoding ${location}:`, error);
-    // Fallback auf Stadtzentrum
-    return getCityFallbackCoordinates(city);
-  }
-};
 
 // Speichere geocodierte Koordinaten für Wiederverwendung
 const cacheCoordinatesInDB = async (location: string, city: string, coordinates: GeocodeResult) => {
@@ -171,4 +112,50 @@ export const geocodeMultipleLocations = async (
   }
   
   return results;
+};
+
+
+export const geocodeLocation = async (location: string, city: string = 'Bielefeld'): Promise<GeocodeResult> => {
+  const cacheKey = `${location}_${city}`.toLowerCase();
+  
+  // Prüfe Cache zuerst
+  if (coordinateCache.has(cacheKey)) {
+    return coordinateCache.get(cacheKey)!;
+  }
+
+  // --- AUSSCHLIESSLICH KI-Geocoding-Funktion aufrufen ---
+  try {
+    console.log(`[Geocoding] Calling AI Edge function for "${location}" with city context "${city}"`);
+    
+    // Aufruf Ihrer bereitgestellten Edge Function
+    const { data, error: aiError } = await supabase.functions.invoke('ai-geocode-location', {
+      body: { locationString: location, cityContext: city }
+    });
+
+    if (aiError) {
+      console.error('[Geocoding] AI Edge function invocation error:', aiError);
+      // Wenn die KI-Funktion selbst einen Fehler wirft, fällt die Funktion direkt auf den letzten Fallback zurück
+      return getCityFallbackCoordinates(city);
+    }
+
+    const aiResult: GeocodeResult = {
+      lat: data?.lat || null,
+      lng: data?.lng || null,
+      display_name: location // KI liefert keinen Displaynamen, hier Originalstring verwenden
+    };
+
+    if (aiResult.lat !== null && aiResult.lng !== null) {
+      console.log(`[Geocoding] AI successfully found coordinates for ${location}: ${aiResult.lat}, ${aiResult.lng}`);
+      coordinateCache.set(cacheKey, aiResult);
+      await cacheCoordinatesInDB(location, city, aiResult);
+      return aiResult; // Erfolg, Ergebnis zurückgeben
+    } else {
+      console.warn(`[Geocoding] AI found no valid coordinates for: ${location}. Using city fallback.`);
+      return getCityFallbackCoordinates(city); // KI konnte keine gültigen Koordinaten finden
+    }
+
+  } catch (aiCallException) {
+    console.error(`[Geocoding] Exception during AI geocoding call for ${location}:`, aiCallException);
+    return getCityFallbackCoordinates(city); // Unvorhergesehener Fehler beim KI-Aufruf
+  }
 };
