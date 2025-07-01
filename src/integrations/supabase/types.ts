@@ -209,39 +209,6 @@ export type Database = {
         }
         Relationships: []
       }
-      location_coordinates: {
-        Row: {
-          city: string
-          created_at: string
-          display_name: string | null
-          id: string
-          lat: number
-          lng: number
-          location: string
-          updated_at: string
-        }
-        Insert: {
-          city: string
-          created_at?: string
-          display_name?: string | null
-          id?: string
-          lat: number
-          lng: number
-          location: string
-          updated_at?: string
-        }
-        Update: {
-          city?: string
-          created_at?: string
-          display_name?: string | null
-          id?: string
-          lat?: number
-          lng?: number
-          location?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       perfect_day_subscriptions: {
         Row: {
           created_at: string

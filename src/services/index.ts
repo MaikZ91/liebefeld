@@ -5,4 +5,3 @@ export { messageService } from './messageService';
 export { reactionService } from './reactionService';
 export { subscriptionService } from './subscriptionService';
 export { typingService } from './typingService';
-export { geocodeLocation, loadCachedCoordinates, geocodeMultipleLocations } from './geocodingService';
