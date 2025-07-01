@@ -1,5 +1,5 @@
 // src/components/EventHeatmap.tsx
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'; // Hinzugefügt: useCallback, useMemo
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
@@ -443,7 +443,7 @@ const EventHeatmap: React.FC = () => {
         });
 
         const marker = L.marker([userCurrentLat, userCurrentLng], { 
-          icon: userMarkerIcon, // <-- Korrektur: userMarkerIcon statt userIconHtml
+          icon: userMarkerIcon, // Korrektur: userMarkerIcon ist vom Typ L.DivIcon, dies behebt den TS2322 Fehler
           draggable: true
         });
         
@@ -516,33 +516,43 @@ const EventHeatmap: React.FC = () => {
       return;
     }
 
-    if (map) {
-      map.remove();
-      setMap(null);
+    // Korrektur: Entferne die Redundanz. Die Cleanup-Funktion kümmert sich um das Entfernen der Karte.
+    // Die Karte sollte nur initialisiert werden, wenn mapRef.current vorhanden ist UND noch keine Map instanziiert wurde.
+    // Wenn sich selectedCity ändert, wird der Effekt erneut ausgeführt und die Cleanup-Funktion entfernt die alte Karte.
+    if (!map) { // <-- Nur initialisieren, wenn 'map' noch null ist
+      const initialCenter = getCityCenterCoordinates(selectedCity);
+
+      const leafletMap = L.map(mapRef.current, {
+        center: [initialCenter.lat, initialCenter.lng],
+        zoom: 13,
+        zoomControl: true,
+        preferCanvas: false
+      });
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+      }).addTo(leafletMap);
+
+      setMap(leafletMap); // Speichere die neue Map-Instanz im State
+
+      // Cleanup-Funktion: Wird beim Unmounten der Komponente oder bei Änderungen der Dependencies ausgeführt
+      return () => {
+        console.log("Map cleanup: removing map instance.");
+        if (leafletMap) {
+          leafletMap.remove(); // Entfernt die von DIESEM useEffect-Run erstellte Map-Instanz
+        }
+        setMap(null); // Setzt den Map-State zurück auf null
+      };
     }
-    
-    const initialCenter = getCityCenterCoordinates(selectedCity);
-
-    const leafletMap = L.map(mapRef.current, {
-      center: [initialCenter.lat, initialCenter.lng],
-      zoom: 13,
-      zoomControl: true,
-      preferCanvas: false
-    });
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19
-    }).addTo(leafletMap);
-
-    setMap(leafletMap);
-
-    return () => {
-      if (leafletMap) {
-        leafletMap.remove();
-      }
-    };
-  }, [mapRef.current, selectedCity]);
+    // Wenn 'map' bereits existiert, wurde die Karte bereits initialisiert.
+    // In diesem Fall tut der Effektkörper nichts weiter, wenn selectedCity sich ändert,
+    // außer die Cleanup-Funktion des VORHERIGEN Effektdurchlaufs aufzurufen.
+    // Wenn die Dependencies sich ändern und map nicht null ist, wird der alte Effekt
+    // aufgeräumt (map.remove()), dann wird dieser Effekt erneut ausgeführt.
+    // Wichtig ist, dass 'map' in der Dependency-Liste ist, damit der Cleanup korrekt triggert,
+    // wenn sich 'map' ändert (z.B. durch `setMap(null)` im Cleanup der vorherigen Ausführung).
+  }, [mapRef.current, selectedCity, map]); // 'map' muss hier als Dependency stehen
 
   // Funktion zur Behandlung des AIChat-Toggles
   const handleAIChatToggle = useCallback(() => {
