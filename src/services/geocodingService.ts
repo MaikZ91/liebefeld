@@ -72,7 +72,8 @@ export const geocodeLocation = async (location: string, city: string = 'Bielefel
 // Speichere geocodierte Koordinaten für Wiederverwendung
 const cacheCoordinatesInDB = async (location: string, city: string, coordinates: GeocodeResult) => {
   try {
-    await supabase
+    // Use type assertion to work with the new table
+    const { error } = await (supabase as any)
       .from('location_coordinates')
       .upsert({
         location: location.toLowerCase(),
@@ -84,6 +85,10 @@ const cacheCoordinatesInDB = async (location: string, city: string, coordinates:
       }, {
         onConflict: 'location,city'
       });
+
+    if (error) {
+      console.warn('[Geocoding] Could not cache coordinates in DB:', error);
+    }
   } catch (error) {
     console.warn('[Geocoding] Could not cache coordinates in DB:', error);
   }
@@ -92,7 +97,8 @@ const cacheCoordinatesInDB = async (location: string, city: string, coordinates:
 // Lade gecachte Koordinaten aus der Datenbank
 export const loadCachedCoordinates = async (): Promise<void> => {
   try {
-    const { data, error } = await supabase
+    // Use type assertion to work with the new table
+    const { data, error } = await (supabase as any)
       .from('location_coordinates')
       .select('*');
     
@@ -102,7 +108,7 @@ export const loadCachedCoordinates = async (): Promise<void> => {
     }
     
     if (data) {
-      data.forEach(coord => {
+      data.forEach((coord: any) => {
         const cacheKey = `${coord.location}_${coord.city}`;
         coordinateCache.set(cacheKey, {
           lat: coord.lat,
