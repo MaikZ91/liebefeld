@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, Send, Filter, FilterX } from 'lucide-react';
+import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, Send, Filter, FilterX, MessageSquare } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 import { format } from 'date-fns';
 import SwipeableEventPanel from '@/components/event-chat/SwipeableEventPanel';
@@ -34,6 +34,8 @@ import { getInitials } from '@/utils/chatUIUtils';
 import PrivateChat from '@/components/users/PrivateChat';
 import HeatmapHeader from './HeatmapHeader';
 import { useEventContext, cities } from '@/contexts/EventContext';
+import FullPageChatBot from '@/components/event-chat/FullPageChatBot';
+import { useChatLogic } from '@/components/event-chat/useChatLogic';
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -68,6 +70,13 @@ const EventHeatmap: React.FC = () => {
   const [showCentralAvatar, setShowCentralAvatar] = useState(false);
   const [centralAvatarUsername, setCentralAvatarUsername] = useState('');
   const [centralAvatarImage, setCentralAvatarImage] = useState('');
+
+  // New state for AI Chat integration
+  const [showAIChat, setShowAIChat] = useState(false);
+  const [aiChatInput, setAiChatInput] = useState('');
+
+  // Initialize chat logic for AI chat
+  const chatLogic = useChatLogic();
 
   const mapRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -837,6 +846,19 @@ const EventHeatmap: React.FC = () => {
     setShowPerfectDayPanel(false);
   };
 
+  const handleAIChatToggle = () => {
+    setShowAIChat(!showAIChat);
+  };
+
+  const handleAIChatSend = () => {
+    if (aiChatInput.trim()) {
+      // Send the message to the AI chat logic
+      chatLogic.setInput(aiChatInput);
+      chatLogic.handleSendMessage();
+      setAiChatInput('');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
@@ -936,6 +958,43 @@ const EventHeatmap: React.FC = () => {
                 <Sparkles className="w-4 h-4 mr-2" />
                 {isPerfectDayLoading ? 'Generiere...' : 'Perfect Day'}
               </Button>
+
+              {/* AI Chat Button */}
+              <Button
+                onClick={handleAIChatToggle}
+                className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-medium"
+              >
+                <MessageSquare className="w-4 h-4 mr-2" />
+                {showAIChat ? 'Chat schließen' : 'AI Chat'}
+              </Button>
+
+              {/* AI Chat Input (Conditional) */}
+              {showAIChat && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      placeholder="Frage mich nach Events in deiner Stadt..."
+                      value={aiChatInput}
+                      onChange={(e) => setAiChatInput(e.target.value)}
+                      className="flex-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAIChatSend();
+                        }
+                      }}
+                    />
+                    <Button
+                      onClick={handleAIChatSend}
+                      disabled={!aiChatInput.trim()}
+                      size="icon"
+                      className="bg-blue-500 hover:bg-blue-600"
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
 
@@ -960,7 +1019,7 @@ const EventHeatmap: React.FC = () => {
       )}
 
       {/* Panel Toggle Button */}
-      {!isPanelOpen && !showPerfectDayPanel && filteredEvents.length > 0 && (
+      {!isPanelOpen && !showPerfectDayPanel && !showAIChat && filteredEvents.length > 0 && (
         <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-[1000]">
           <Button
             onClick={() => {
@@ -1100,6 +1159,42 @@ const EventHeatmap: React.FC = () => {
           <div className="p-4 overflow-y-auto h-full">
             <div
               dangerouslySetInnerHTML={{ __html: perfectDayMessage }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* AI Chat Panel */}
+      {showAIChat && (
+        <div className="absolute bottom-0 left-0 right-0 z-[1000] bg-black/95 backdrop-blur-md h-96">
+          {/* Panel Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-700">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-blue-400" />
+              <span className="text-white font-medium">AI Event Chat</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowAIChat(false)}
+              className="text-white hover:bg-gray-700"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+
+          {/* AI Chat Content */}
+          <div className="h-full overflow-hidden">
+            <FullPageChatBot
+              chatLogic={chatLogic}
+              activeChatModeValue="ai"
+              communityGroupId=""
+              hideInput={true}
+              externalInput={aiChatInput}
+              setExternalInput={setAiChatInput}
+              onExternalSendHandlerChange={(handler) => {
+                // Store the external send handler if needed
+              }}
             />
           </div>
         </div>
