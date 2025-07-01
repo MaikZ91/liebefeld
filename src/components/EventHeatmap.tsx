@@ -1,5 +1,5 @@
 // src/components/EventHeatmap.tsx
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'; // Hinzugefügt: useCallback, useMemo
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
@@ -46,7 +46,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-const EventHeatmap: React.FC = () => { // <-- Start der Komponente
+const EventHeatmap: React.FC = () => {
   const { events, isLoading, refreshEvents } = useEvents();
   const { selectedCity } = useEventContext();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
@@ -383,58 +383,7 @@ const EventHeatmap: React.FC = () => { // <-- Start der Komponente
 
       // Add user marker to map immediately
       if (map) {
-        const userIconHtml = `
-          <div style="
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            width: auto;
-            min-width: 80px;
-            max-width: 150px;
-            cursor: move;
-          ">
-            <div style="
-              background: #ef4444;
-              color: white;
-              padding: 4px 8px;
-              border-radius: 15px;
-              font-size: 11px;
-              font-weight: 500;
-              margin-bottom: 5px;
-              white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-              position: relative;
-              top: 5px;
-            ">
-              ${liveStatusMessage}
-            </div>
-            <img src="${avatar}"
-                 alt="${username}"
-                 style="
-                   width: 50px;
-                   height: 50px;
-                   border-radius: 50%;
-                   border: 3px solid white;
-                   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-                   background-color: white;
-                   position: relative;
-                   z-index: 10;
-                 "/>
-            <div style="
-              color: #333;
-              font-size: 10px;
-              font-weight: bold;
-              margin-top: 2px;
-            ">
-              ${username}
-            </div>
-          </div>
-        `;
-
-        const userMarkerIcon = L.divIcon({
+        const userMarkerIcon = L.divIcon({ // <-- Korrektur: userIconHtml muss hier L.divIcon() übergeben werden
           html: userIconHtml,
           className: 'user-marker',
           iconSize: [60, 90],
@@ -442,7 +391,7 @@ const EventHeatmap: React.FC = () => { // <-- Start der Komponente
         });
 
         const marker = L.marker([userCurrentLat, userCurrentLng], { 
-          icon: userIconHtml, // Changed icon from userMarkerIcon to userIconHtml. This will cause an error.
+          icon: userMarkerIcon, // <-- Korrektur: Hier muss das L.divIcon()-Objekt übergeben werden
           draggable: true
         });
         
@@ -542,6 +491,53 @@ const EventHeatmap: React.FC = () => { // <-- Start der Komponente
       }
     };
   }, [mapRef.current, selectedCity]);
+
+  // Funktion zur Behandlung des AIChat-Toggles
+  const handleAIChatToggle = useCallback(() => { // <-- Definition hinzugefügt
+    setShowAIChat(prev => !prev);
+  }, []);
+
+  // Funktion zum Senden einer Nachricht im AI Chat
+  const handleAIChatSend = useCallback(() => { // <-- Definition hinzugefügt
+    if (aiChatInput.trim()) {
+      chatLogic.setInput(aiChatInput);
+      chatLogic.handleSendMessage();
+      setAiChatInput('');
+    }
+  }, [aiChatInput, chatLogic]);
+
+  // Funktion zum Umschalten der Panel-Höhe
+  const togglePanelHeight = useCallback(() => { // <-- Definition hinzugefügt
+    if (panelHeight === 'collapsed') {
+      setPanelHeight('partial');
+      setIsPanelOpen(true);
+    } else if (panelHeight === 'partial') {
+      setPanelHeight('full');
+    } else {
+      setPanelHeight('collapsed');
+      setIsPanelOpen(false);
+    }
+  }, [panelHeight]);
+
+  // Funktion zum vollständigen Schließen des Panels
+  const closePanelCompletely = useCallback(() => { // <-- Definition hinzugefügt
+    setPanelHeight('collapsed');
+    setIsPanelOpen(false);
+    setShowPerfectDayPanel(false);
+  }, []);
+
+  // Funktion zur Auswahl eines Events im Panel
+  const handleEventSelect = useCallback((eventId: string) => { // <-- Definition hinzugefügt
+    setSelectedEventId(eventId);
+    
+    const selectedEvent = filteredEvents.find(event =>
+      (event.id || `${event.title}-${event.date}-${event.time}`) === eventId
+    );
+    
+    if (selectedEvent && selectedEvent.lat && selectedEvent.lng && map) {
+      map.setView([selectedEvent.lat, selectedEvent.lng], 15);
+    }
+  }, [filteredEvents, map]);
 
   useEffect(() => {
     if (!map) {
@@ -694,18 +690,18 @@ const EventHeatmap: React.FC = () => { // <-- Start der Komponente
         }
       });
     };
-  }, [map, filteredEvents, selectedCity, eventCoordinates]);
+  }, [map, filteredEvents, selectedCity, eventCoordinates, handleEventSelect]); // Hinzugefügt: handleEventSelect als Dependency
 
-  // The error message from the user
-  // `plugin:vite:react-swc] x Expected '}', got '<eof>' at src/components/EventHeatmap.tsx:699:1`
-  // This means there's a missing closing brace in the code.
-  // The provided snippet ends with a `useEffect` closing brace.
-  // The error indicates a missing brace *after* this point.
-  // I must ensure the overall component structure is correct,
-  // which means the component's `return` statement and its closing `}`.
-  // Re-adding the full component structure with the missing closing brace.
+  // Definiere selectedCategoryDisplay und selectedCategoryData
+  const selectedCategoryData = useMemo(() => { // <-- Definition hinzugefügt
+    return categories.find(cat => cat.name === selectedCategory);
+  }, [categories, selectedCategory]);
 
-  return ( // <-- Start des return-Statements der Komponente
+  const selectedCategoryDisplay = useMemo(() => { // <-- Definition hinzugefügt
+    return selectedCategory === 'all' ? 'Alle' : selectedCategory;
+  }, [selectedCategory]);
+
+  return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Live Ticker Header */}
       <HeatmapHeader selectedCity={selectedCity} />
@@ -817,7 +813,7 @@ const EventHeatmap: React.FC = () => { // <-- Start der Komponente
                     />
                     <Button
                       onClick={handleAIChatSend}
-                      disabled={!aiChatInput.trim()}
+                      disabled={!aiChatInput.trim() || chatLogic.isTyping} // <-- Korrektur: chatLogic.isTyping statt handleAIChatSend
                       size="icon"
                       className="bg-blue-500 hover:bg-blue-600"
                     >
@@ -853,10 +849,7 @@ const EventHeatmap: React.FC = () => { // <-- Start der Komponente
       {!isPanelOpen && !showPerfectDayPanel && !showAIChat && filteredEvents.length > 0 && (
         <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-[1000]">
           <Button
-            onClick={() => {
-              setIsPanelOpen(true);
-              setPanelHeight('partial');
-            }}
+            onClick={togglePanelHeight}
             className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-full shadow-lg"
           >
             <ChevronUp className="w-5 h-5 mr-2" />
@@ -1007,7 +1000,7 @@ const EventHeatmap: React.FC = () => { // <-- Start der Komponente
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setShowAIChat(false)}
+              onClick={handleAIChatToggle}
               className="text-white hover:bg-gray-700"
             >
               <X className="w-5 h-5" />
@@ -1114,6 +1107,6 @@ const EventHeatmap: React.FC = () => { // <-- Start der Komponente
       />
     </div>
   );
-}; // <-- Richtige schließende Klammer der Komponente
+};
 
 export default EventHeatmap;
