@@ -59,7 +59,6 @@ export const CHAT_QUERIES_KEY = 'event-chat-queries';
 export interface MessageListProps {
   messages: ChatMessage[];
   isTyping: boolean;
-  onAddEvent?: () => void;
   handleDateSelect: (date: string) => void;
   messagesEndRef: React.RefObject<HTMLDivElement>;
   examplePrompts: string[];

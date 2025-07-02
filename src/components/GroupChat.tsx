@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import ChatGroup from './chat/ChatGroup';
 import { UserProfile } from '@/types/chatTypes';
@@ -79,7 +78,7 @@ const GroupChat: React.FC<GroupChatProps> = ({
   }
 
   return (
-    <div className="flex flex-col h-full pb-24"> {/* Added pb-24 for bottom navigation spacing */}
+    <div className="flex flex-col h-full">
       {/* Show login button if user is not logged in */}
       {(!currentUser || currentUser === 'Gast') ? (
         <div className="flex flex-col items-center justify-center h-full p-4 bg-black rounded-lg">
@@ -95,17 +94,15 @@ const GroupChat: React.FC<GroupChatProps> = ({
           </Button>
         </div>
       ) : (
-        <div className="flex-1 overflow-hidden">
-          <ChatGroup 
-            groupId={groupId} 
-            groupName={displayGroupName}
-            onOpenUserDirectory={handleOpenUserDirectory} 
-          />
-        </div>
+        <ChatGroup 
+          groupId={groupId} 
+          groupName={displayGroupName}
+          onOpenUserDirectory={handleOpenUserDirectory} 
+        />
       )}
 
-      {/* Login Status - Adjusted positioning to avoid bottom nav overlap */}
-      <div className="fixed bottom-20 right-4 bg-red-500/80 text-white rounded-full px-3 py-1 text-sm flex items-center shadow-lg z-40"> {/* Changed bottom-4 to bottom-20 and z-50 to z-40 */}
+      {/* Login Status */}
+      <div className="fixed bottom-4 right-4 bg-red-500/80 text-white rounded-full px-3 py-1 text-sm flex items-center shadow-lg z-50">
         <UserCircle className="w-4 h-4 mr-1" />
         <span>{loading ? "Verbinden..." : 
           currentUser && currentUser !== 'Gast' ? 

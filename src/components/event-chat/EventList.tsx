@@ -4,11 +4,10 @@ import EventPanel from './EventPanel';
 import './MessageList.css';
 
 interface EventListProps {
-  events?: any[];
-  onAddEvent?: () => void;
+  events: any[];
 }
 
-const EventList: React.FC<EventListProps> = ({ events = [], onAddEvent }) => {
+const EventList: React.FC<EventListProps> = ({ events }) => {
   return (
     <div className="event-list-container">
       {events.map((event, index) => (
