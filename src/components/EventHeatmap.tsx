@@ -441,6 +441,7 @@ const EventHeatmap: React.FC = () => {
           className: 'user-marker',
           iconSize: [60, 90],
           iconAnchor: [30, 90],
+          zIndexOffset: 1000, // Added to ensure user marker is on top
         });
 
         const marker = L.marker([userCurrentLat, userCurrentLng], { 
@@ -710,7 +711,7 @@ const EventHeatmap: React.FC = () => {
       
       let isUserInCurrentCity = false;
       if (selectedCityName === 'bielefeld' || selectedCityName === 'bi') {
-        isUserInCurrentCity = userCity === 'bielefeld' || userCity === 'bi' || !user.favorite_locations || user.favorite_locations.length === 0;
+        isUserInCurrentCity = !userCity || userCity === 'bielefeld' || userCity === 'bi';
       } else {
         isUserInCurrentCity = userCity === selectedCityName;
       }
@@ -783,6 +784,7 @@ const EventHeatmap: React.FC = () => {
           className: 'user-marker',
           iconSize: [60, 90],
           iconAnchor: [30, 90],
+          zIndexOffset: 1000, // Added to ensure user marker is on top
         });
 
         const marker = L.marker([lat, lng], { 
