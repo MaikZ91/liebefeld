@@ -77,7 +77,7 @@ const EventHeatmap: React.FC = () => {
   const [aiChatInput, setAiChatInput] = useState('');
 
   // State for geocoded coordinates
-  const [eventCoordinates, setEventCoordinates] = new Map();
+  const [eventCoordinates, setEventCoordinates] = useState<Map<string, { lat: number; lng: number }>>(new Map()); // Corrected line here!
 
   // Initialize chat logic for AI chat
   const chatLogic = useChatLogic();
@@ -100,8 +100,8 @@ const EventHeatmap: React.FC = () => {
       console.log('[EventHeatmap] Starting geocoding for events...');
       
       // Sammle alle einzigartigen Locations
-      const uniqueLocations = new Set();
-      const locationData = [];
+      const uniqueLocations = new Set<string>();
+      const locationData: Array<{ location: string; city?: string }> = [];
 
       events.forEach(event => {
         if (event.location && !uniqueLocations.has(event.location)) {
@@ -120,7 +120,7 @@ const EventHeatmap: React.FC = () => {
         const coordinates = await geocodeMultipleLocations(locationData);
         
         // Erstelle neue Koordinaten-Map für Events
-        const newEventCoordinates = new Map();
+        const newEventCoordinates = new Map<string, { lat: number; lng: number }>();
         
         events.forEach(event => {
           if (event.location) {
@@ -145,19 +145,19 @@ const EventHeatmap: React.FC = () => {
     geocodeEventLocations();
   }, [events, selectedCity]);
 
-  const getTimeFromSlider = (hour) => {
+  const getTimeFromSlider = (hour: number): string => {
     return `${hour.toString().padStart(2, '0')}:00`;
   };
 
-  const getHourFromTime = (timeString) => {
+  const getHourFromTime = (timeString: string): number => {
     const [hour] = timeString.split(':');
     return parseInt(hour, 10);
   };
 
-  const getCityCenterCoordinates = (cityAbbr) => {
+  const getCityCenterCoordinates = (cityAbbr: string) => {
     const cityObject = cities.find(c => c.abbr.toLowerCase() === cityAbbr.toLowerCase());
     if (cityObject) {
-      const coords = {
+      const coords: { [key: string]: { lat: number; lng: number } } = {
         'bi': { lat: 52.0302, lng: 8.5311 },
         'bielefeld': { lat: 52.0302, lng: 8.5311 },
         'berlin': { lat: 52.5200, lng: 13.4050 },
@@ -213,7 +213,7 @@ const EventHeatmap: React.FC = () => {
   }, [events, today, selectedCity, eventCoordinates]);
 
   const categories = React.useMemo(() => {
-    const categoryMap = new Map();
+    const categoryMap = new Map<string, number>();
     todaysFilteredEvents.forEach(event => {
       categoryMap.set(event.category, (categoryMap.get(event.category) || 0) + 1);
     });
@@ -237,7 +237,7 @@ const EventHeatmap: React.FC = () => {
     return filtered;
   }, [todaysFilteredEvents, selectedCategory, timeRange]);
 
-  const panelEvents = React.useMemo(() => {
+  const panelEvents: PanelEvent[] = React.useMemo(() => {
     return filteredEvents.map(event => ({
       id: event.id || `${event.title}-${event.date}-${event.time}`,
       title: event.title,
@@ -254,7 +254,7 @@ const EventHeatmap: React.FC = () => {
     }));
   }, [filteredEvents]);
 
-  const panelData = React.useMemo(() => {
+  const panelData: PanelEventData = React.useMemo(() => {
     const selectedIndex = selectedEventId
       ? panelEvents.findIndex(event => event.id === selectedEventId)
       : 0;
@@ -291,7 +291,7 @@ const EventHeatmap: React.FC = () => {
         title: "Perfect Day generiert!",
         description: "Deine personalisierte Tagesempfehlung ist bereit.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating Perfect Day:', error);
       toast({
         title: "Fehler",
@@ -303,7 +303,7 @@ const EventHeatmap: React.FC = () => {
     }
   };
 
-  const updateUserPosition = async (username, newLat, newLng) => {
+  const updateUserPosition = async (username: string, newLat: number, newLng: number) => {
     try {
       const { error } = await supabase
         .from('user_profiles')
@@ -317,7 +317,7 @@ const EventHeatmap: React.FC = () => {
       if (error) throw error;
       
       console.log(`Updated position for ${username} to ${newLat}, ${newLng}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating user position:', error);
       toast({
         title: "Fehler",
@@ -349,7 +349,7 @@ const EventHeatmap: React.FC = () => {
 
       // Only update database if user is logged in
       if (currentUser && currentUser !== 'Gast') {
-        const updatedProfileData = {
+        const updatedProfileData: Partial<UserProfile> = {
           last_online: new Date().toISOString(),
           current_live_location_lat: userCurrentLat,
           current_live_location_lng: userCurrentLng,
@@ -462,7 +462,7 @@ const EventHeatmap: React.FC = () => {
         setUserMarkers(prev => [...prev, marker]);
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Check-in failed:', error);
       toast({
         title: "Fehler",
@@ -478,7 +478,7 @@ const EventHeatmap: React.FC = () => {
     window.location.href = '/chat';
   };
 
-  const handleAddEvent = async (eventData) => {
+  const handleAddEvent = async (eventData: any) => {
     try {
       const { data, error } = await supabase
         .from('community_events')
@@ -498,7 +498,7 @@ const EventHeatmap: React.FC = () => {
       });
       refreshEvents();
       setIsEventFormOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding event:', error);
       toast({
         title: "Fehler",
@@ -561,7 +561,7 @@ const EventHeatmap: React.FC = () => {
       }
     });
 
-    const newEventMarkers = [];
+    const newEventMarkers: L.Marker[] = [];
 
     filteredEvents.forEach(event => {
       // Verwende geocodierte Koordinaten
@@ -698,11 +698,11 @@ const EventHeatmap: React.FC = () => {
       }
     });
     
-    const newUserMarkers = [];
+    const newUserMarkers: L.Marker[] = [];
     const THIRTY_MINUTES_MS = 30 * 60 * 1000;
 
     // Assuming usersToDisplay is available from useUserProfile or another source
-    const usersToDisplay = [userProfile].filter(Boolean); // Example, replace with actual user list
+    const usersToDisplay = [userProfile].filter(Boolean) as UserProfile[]; // Example, replace with actual user list
 
     usersToDisplay.forEach(user => {
       const userCity = user.favorite_locations?.[0]?.toLowerCase() || 'bielefeld';
@@ -723,9 +723,9 @@ const EventHeatmap: React.FC = () => {
                                (new Date().getTime() - new Date(user.current_checkin_timestamp).getTime() < THIRTY_MINUTES_MS);
 
       if (hasLiveLocation && hasStatusMessage && isRecentCheckin) {
-        const lat = user.current_live_location_lat;
-        const lng = user.current_live_location_lng;
-        const statusMessage = user.current_status_message;
+        const lat = user.current_live_location_lat as number;
+        const lng = user.current_live_location_lng as number;
+        const statusMessage = user.current_status_message as string;
 
         const userIconHtml = `
           <div style="
@@ -820,7 +820,7 @@ const EventHeatmap: React.FC = () => {
     };
   }, [map, userProfile, selectedCity]);
 
-  const handleEventSelect = (eventId) => {
+  const handleEventSelect = (eventId: string) => {
     setSelectedEventId(eventId);
     
     const selectedEvent = filteredEvents.find(event =>
