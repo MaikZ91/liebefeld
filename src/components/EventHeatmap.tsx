@@ -472,6 +472,8 @@ const EventHeatmap: React.FC = () => {
       });
     } finally {
       setLiveStatusMessage('');
+      checkInToast.dismiss(); // Dismiss the "processing" toast
+      setShowCentralAvatar(false); // Close the modal after processing
     }
   };
 
@@ -1088,15 +1090,11 @@ const EventHeatmap: React.FC = () => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
                       handleCheckInWithStatus();
-                      setShowCentralAvatar(false);
                     }
                   }}
                 />
                 <button
-                  onClick={() => {
-                    handleCheckInWithStatus();
-                    setShowCentralAvatar(false);
-                  }}
+                  onClick={handleCheckInWithStatus}
                   disabled={!liveStatusMessage.trim()}
                   className={cn(
                     "absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full p-2 flex-shrink-0",
@@ -1111,10 +1109,7 @@ const EventHeatmap: React.FC = () => {
               
               <div className="flex gap-3">
                 <Button
-                  onClick={() => {
-                    handleCheckInWithStatus();
-                    setShowCentralAvatar(false);
-                  }}
+                  onClick={handleCheckInWithStatus}
                   className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-full py-3"
                   disabled={!liveStatusMessage.trim()}
                 >
