@@ -79,7 +79,7 @@ const GroupChat: React.FC<GroupChatProps> = ({
   }
 
   return (
-    <div className="flex flex-col h-full pb-4"> {/* Added pb-4 for extra bottom spacing */}
+    <div className="flex flex-col h-full pb-24"> {/* Added pb-24 for bottom navigation spacing */}
       {/* Show login button if user is not logged in */}
       {(!currentUser || currentUser === 'Gast') ? (
         <div className="flex flex-col items-center justify-center h-full p-4 bg-black rounded-lg">
