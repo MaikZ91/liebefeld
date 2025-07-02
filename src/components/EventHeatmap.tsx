@@ -66,6 +66,8 @@ const EventHeatmap: React.FC = () => {
   const [isPrivateChatOpen, setIsPrivateChatOpen] = useState(false);
   const [selectedUserForPrivateChat, setSelectedUserForPrivateChat] = useState<UserProfile | null>(null);
   const [showFilterPanel, setShowFilterPanel] = useState(true);
+  // NEW: State to hold all user profiles
+  const [allUserProfiles, setAllUserProfiles] = useState<UserProfile[]>([]);
 
   // New state for central avatar
   const [showCentralAvatar, setShowCentralAvatar] = useState(false);
@@ -90,6 +92,52 @@ const EventHeatmap: React.FC = () => {
   // Load cached coordinates on component mount
   useEffect(() => {
     loadCachedCoordinates();
+  }, []);
+
+  // NEW: Fetch all user profiles and set up real-time listener
+  useEffect(() => {
+    const fetchAllUserProfiles = async () => {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*');
+
+      if (error) {
+        console.error('Error fetching all user profiles:', error);
+        return;
+      }
+      setAllUserProfiles(data || []);
+    };
+
+    fetchAllUserProfiles();
+
+    const usersSubscription = supabase
+      .channel('user_profiles_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_profiles' },
+        (payload) => {
+          console.log('User profile change received!', payload);
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            setAllUserProfiles(prevProfiles => {
+              const existingIndex = prevProfiles.findIndex(p => p.id === payload.new.id);
+              if (existingIndex > -1) {
+                // Update existing profile
+                return prevProfiles.map((p, i) => i === existingIndex ? payload.new as UserProfile : p);
+              } else {
+                // Add new profile
+                return [...prevProfiles, payload.new as UserProfile];
+              }
+            });
+          } else if (payload.eventType === 'DELETE') {
+            setAllUserProfiles(prevProfiles => prevProfiles.filter(p => p.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      usersSubscription.unsubscribe();
+    };
   }, []);
 
   // Geocode all event locations when events change
@@ -704,10 +752,18 @@ const EventHeatmap: React.FC = () => {
     const newUserMarkers: L.Marker[] = [];
     const THIRTY_MINUTES_MS = 30 * 60 * 1000;
 
-    // Assuming usersToDisplay is available from useUserProfile or another source
-    const usersToDisplay = [userProfile].filter(Boolean) as UserProfile[]; // Example, replace with actual user list
+    // NEW: Iterate over allUserProfiles instead of just userProfile
+    allUserProfiles.forEach(user => {
+      // Skip the current user if their profile is already handled by the check-in function
+      // Or if the current user is 'Gast' and not actually logged in
+      if (user.username === currentUser && currentUser !== 'Gast') {
+        // If the current user's marker is added immediately on check-in,
+        // we might want to skip it here to avoid duplicates.
+        // However, if the check-in only updates the DB and relies on this useEffect
+        // for rendering, then we should include the current user here.
+        // For now, let's include it and rely on the real-time updates to manage it.
+      }
 
-    usersToDisplay.forEach(user => {
       const userCity = user.favorite_locations?.[0]?.toLowerCase() || 'bielefeld';
       const selectedCityName = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name?.toLowerCase() || selectedCity.toLowerCase();
       
@@ -724,7 +780,8 @@ const EventHeatmap: React.FC = () => {
       const hasStatusMessage = user.current_status_message && user.current_status_message.trim() !== '';
       const isRecentCheckin = user.current_checkin_timestamp &&
                                (new Date().getTime() - new Date(user.current_checkin_timestamp).getTime() < THIRTY_MINUTES_MS);
-
+      
+      // Only display user if they have a recent check-in, live location, and status message
       if (hasLiveLocation && hasStatusMessage && isRecentCheckin) {
         const lat = user.current_live_location_lat as number;
         const lng = user.current_live_location_lng as number;
@@ -791,7 +848,7 @@ const EventHeatmap: React.FC = () => {
 
         const marker = L.marker([lat, lng], { 
           icon: userMarkerIcon,
-          draggable: user.username === currentUser
+          draggable: user.username === currentUser // Only current user can drag their marker
         });
         
         marker.on('click', () => {
@@ -822,7 +879,7 @@ const EventHeatmap: React.FC = () => {
         }
       });
     };
-  }, [map, userProfile, selectedCity]);
+  }, [map, allUserProfiles, currentUser, selectedCity]); // NEW: Added allUserProfiles to dependency array
 
   const handleEventSelect = (eventId: string) => {
     setSelectedEventId(eventId);
