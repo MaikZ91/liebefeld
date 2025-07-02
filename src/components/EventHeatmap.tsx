@@ -327,53 +327,32 @@ const EventHeatmap: React.FC = () => {
     }
   };
 
+  // Updated check-in function to show central avatar
   const handleCheckInWithStatus = async () => {
-  const checkInToast = toast({
-    title: "Check-in wird verarbeitet...",
-    duration: Infinity
-  });
-
-  try {
-    // MODIFIED: Ensure userProfile is the very latest before proceeding
-    const freshProfile = await refetchProfile(); // Re-fetch profile to get the absolute latest avatar URL
-
-    const username = freshProfile?.username || currentUser || localStorage.getItem('community_chat_username') || 'Gast';
-    const avatar = freshProfile?.avatar || localStorage.getItem('community_chat_avatar') || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
-
+    const username = currentUser || localStorage.getItem('community_chat_username') || 'Gast';
+    const avatar = userProfile?.avatar || localStorage.getItem('community_chat_avatar') || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
+    
     // Set central avatar data
     setCentralAvatarUsername(username);
     setCentralAvatarImage(avatar);
     setShowCentralAvatar(true);
+    
+    const checkInToast = toast({ 
+      title: "Check-in wird verarbeitet...", 
+      duration: Infinity 
+    });
 
     try {
-      let finalLat: number;
-      let finalLng: number;
-
-      if (liveStatusMessage.trim()) {
-        const geocodeResult = await geocodeLocation(liveStatusMessage, selectedCity);
-        if (geocodeResult.lat !== null && geocodeResult.lng !== null) {
-          finalLat = geocodeResult.lat;
-          finalLng = geocodeResult.lng;
-        } else {
-          // Fallback to city center if geocoding fails
-          const cityCenter = getCityCenterCoordinates(selectedCity);
-          finalLat = cityCenter.lat + (Math.random() - 0.5) * 0.005; // Add a small random offset
-          finalLng = cityCenter.lng + (Math.random() - 0.5) * 0.005;
-          console.warn(`Geocoding failed for "${liveStatusMessage}". Using city center with offset.`);
-        }
-      } else {
-        // If no status message, use current random location near city center
-        const cityCenter = getCityCenterCoordinates(selectedCity);
-        finalLat = cityCenter.lat + (Math.random() - 0.5) * 0.005;
-        finalLng = cityCenter.lng + (Math.random() - 0.5) * 0.005;
-      }
+      const userCurrentCityCenter = getCityCenterCoordinates(selectedCity);
+      const userCurrentLat = userCurrentCityCenter.lat + (Math.random() - 0.5) * 0.005;
+      const userCurrentLng = userCurrentCityCenter.lng + (Math.random() - 0.5) * 0.005;
 
       // Only update database if user is logged in
       if (currentUser && currentUser !== 'Gast') {
         const updatedProfileData: Partial<UserProfile> = {
           last_online: new Date().toISOString(),
-          current_live_location_lat: finalLat,
-          current_live_location_lng: finalLng,
+          current_live_location_lat: userCurrentLat,
+          current_live_location_lng: userCurrentLng,
           current_status_message: liveStatusMessage,
           current_checkin_timestamp: new Date().toISOString(),
         };
@@ -465,7 +444,7 @@ const EventHeatmap: React.FC = () => {
           zIndexOffset: 1000, // Added to ensure user marker is on top
         });
 
-        const marker = L.marker([finalLat, finalLng], { // Use geocoded coordinates
+        const marker = L.marker([userCurrentLat, userCurrentLng], { 
           icon: userMarkerIcon,
           draggable: true
         });
@@ -492,7 +471,7 @@ const EventHeatmap: React.FC = () => {
         variant: "destructive"
       });
     } finally {
-      toast.dismiss(checkInToast);
+      setLiveStatusMessage('');
     }
   };
 
