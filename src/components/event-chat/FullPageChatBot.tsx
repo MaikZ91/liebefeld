@@ -128,6 +128,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                 messages={chatLogic.messages}
                 isTyping={chatLogic.isTyping}
                 onAddEvent={onAddEvent}
+                handleDateSelect={() => {}} // Placeholder
+                messagesEndRef={messagesEndRef}
+                examplePrompts={[]}
+                handleExamplePromptClick={() => {}} // Placeholder
               />
               <div ref={messagesEndRef} />
             </div>

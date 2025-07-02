@@ -13,6 +13,7 @@ import './MessageList.css';
 const MessageList: React.FC<MessageListProps> = ({
   messages,
   isTyping,
+  onAddEvent,
   handleDateSelect,
   messagesEndRef,
   examplePrompts,
