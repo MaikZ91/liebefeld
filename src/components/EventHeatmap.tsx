@@ -491,10 +491,8 @@ const EventHeatmap: React.FC = () => {
         description: error.message || "Es gab ein Problem beim Einchecken.",
         variant: "destructive"
       });
-    } finally {
-      setLiveStatusMessage('');
     }
-  };
+  }; // Removed the 'finally' block from here.
 
   const goToChat = () => {
     window.location.href = '/chat';
