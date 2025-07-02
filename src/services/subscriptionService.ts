@@ -28,7 +28,7 @@ export const subscriptionService = {
         table: 'chat_messages',
         filter: `group_id=eq.${groupId}`
       }, (payload) => {
-        console.log('Received message via postgres changes:', payload);
+        console.log('Received INSERT message via postgres changes:', payload);
         if (payload.new) {
           const newPayload = payload.new as any;
           // Only process if this message belongs to our group
@@ -46,6 +46,16 @@ export const subscriptionService = {
             onNewMessage(newMsg);
           }
         }
+      })
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'chat_messages',
+        filter: `group_id=eq.${groupId}`
+      }, (payload) => {
+        console.log('Received UPDATE message via postgres changes:', payload);
+        // For reaction updates, we need to force refresh
+        onForceRefresh();
       })
       .on('broadcast', { event: 'force_refresh' }, (payload) => {
         console.log('Force refresh triggered:', payload);
