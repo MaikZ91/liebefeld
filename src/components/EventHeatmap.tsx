@@ -491,8 +491,10 @@ const EventHeatmap: React.FC = () => {
         description: error.message || "Es gab ein Problem beim Einchecken.",
         variant: "destructive"
       });
+    } finally {
+      toast.dismiss(checkInToast);
     }
-  }; // Removed the 'finally' block from here.
+  };
 
   const goToChat = () => {
     window.location.href = '/chat';
