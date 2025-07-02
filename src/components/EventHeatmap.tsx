@@ -55,8 +55,8 @@ const EventHeatmap: React.FC = () => {
   const [map, setMap] = useState<L.Map | null>(null);
   const [eventMarkers, setEventMarkers] = useState<L.Marker[]>([]);
   const [userMarkers, setUserMarkers] = useState<L.Marker[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(selectedEventId);
-  const [isPanelOpen, setIsPanelOpen] = useState(isPanelOpen);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [panelHeight, setPanelHeight] = useState<'collapsed' | 'partial' | 'full'>('collapsed');
   const [perfectDayMessage, setPerfectDayMessage] = useState<string | null>(null);
   const [isPerfectDayLoading, setIsPerfectDayLoading] = useState(false);
@@ -66,18 +66,22 @@ const EventHeatmap: React.FC = () => {
   const [isPrivateChatOpen, setIsPrivateChatOpen] = useState(false);
   const [selectedUserForPrivateChat, setSelectedUserForPrivateChat] = useState<UserProfile | null>(null);
   const [showFilterPanel, setShowFilterPanel] = useState(true);
-  // NEU: State für alle Benutzerprofile
+  // NEW: State to hold all user profiles
   const [allUserProfiles, setAllUserProfiles] = useState<UserProfile[]>([]);
 
+  // New state for central avatar
   const [showCentralAvatar, setShowCentralAvatar] = useState(false);
   const [centralAvatarUsername, setCentralAvatarUsername] = useState('');
   const [centralAvatarImage, setCentralAvatarImage] = useState('');
 
+  // New state for AI Chat integration
   const [showAIChat, setShowAIChat] = useState(false);
   const [aiChatInput, setAiChatInput] = useState('');
 
-  const [eventCoordinates, setEventCoordinates] = useState<Map<string, { lat: number; lng: number }>>(new Map());
+  // State for geocoded coordinates
+  const [eventCoordinates, setEventCoordinates] = useState<Map<string, { lat: number; lng: number }>>(new Map()); // Corrected line here!
 
+  // Initialize chat logic for AI chat
   const chatLogic = useChatLogic();
 
   const mapRef = useRef<HTMLDivElement>(null);
@@ -85,11 +89,12 @@ const EventHeatmap: React.FC = () => {
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
+  // Load cached coordinates on component mount
   useEffect(() => {
     loadCachedCoordinates();
   }, []);
 
-  // NEU: Hook zum Abrufen aller Benutzerprofile und Einrichten eines Echtzeit-Listeners
+  // NEW: Fetch all user profiles and set up real-time listener
   useEffect(() => {
     const fetchAllUserProfiles = async () => {
       const { data, error } = await supabase
@@ -97,7 +102,7 @@ const EventHeatmap: React.FC = () => {
         .select('*');
 
       if (error) {
-        console.error('Fehler beim Abrufen aller Benutzerprofile:', error);
+        console.error('Error fetching all user profiles:', error);
         return;
       }
       setAllUserProfiles(data || []);
@@ -106,20 +111,20 @@ const EventHeatmap: React.FC = () => {
     fetchAllUserProfiles();
 
     const usersSubscription = supabase
-      .channel('user_profiles_changes') // Ein eindeutiger Kanalname
+      .channel('user_profiles_changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'user_profiles' },
         (payload) => {
-          console.log('Benutzerprofil-Änderung empfangen!', payload);
+          console.log('User profile change received!', payload);
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             setAllUserProfiles(prevProfiles => {
               const existingIndex = prevProfiles.findIndex(p => p.id === payload.new.id);
               if (existingIndex > -1) {
-                // Vorhandenes Profil aktualisieren
+                // Update existing profile
                 return prevProfiles.map((p, i) => i === existingIndex ? payload.new as UserProfile : p);
               } else {
-                // Neues Profil hinzufügen
+                // Add new profile
                 return [...prevProfiles, payload.new as UserProfile];
               }
             });
@@ -131,17 +136,18 @@ const EventHeatmap: React.FC = () => {
       .subscribe();
 
     return () => {
-      usersSubscription.unsubscribe(); // Bei Komponente-Unmount abbestellen
+      usersSubscription.unsubscribe();
     };
-  }, []); // Leeres Abhängigkeits-Array, damit dies nur einmal beim Mounten ausgeführt wird
+  }, []);
 
-
+  // Geocode all event locations when events change
   useEffect(() => {
     const geocodeEventLocations = async () => {
       if (!events.length) return;
 
-      console.log('[EventHeatmap] Starte Geocodierung für Events...');
+      console.log('[EventHeatmap] Starting geocoding for events...');
       
+      // Sammle alle einzigartigen Locations
       const uniqueLocations = new Set<string>();
       const locationData: Array<{ location: string; city?: string }> = [];
 
@@ -158,8 +164,10 @@ const EventHeatmap: React.FC = () => {
       if (locationData.length === 0) return;
 
       try {
+        // Batch-Geocoding für bessere Performance
         const coordinates = await geocodeMultipleLocations(locationData);
         
+        // Erstelle neue Koordinaten-Map für Events
         const newEventCoordinates = new Map<string, { lat: number; lng: number }>();
         
         events.forEach(event => {
@@ -176,9 +184,9 @@ const EventHeatmap: React.FC = () => {
         });
 
         setEventCoordinates(newEventCoordinates);
-        console.log(`[EventHeatmap] Geocodiert ${newEventCoordinates.size} Event-Standorte`);
+        console.log(`[EventHeatmap] Geocoded ${newEventCoordinates.size} event locations`);
       } catch (error) {
-        console.error('[EventHeatmap] Fehler bei der Batch-Geocodierung:', error);
+        console.error('[EventHeatmap] Error during batch geocoding:', error);
       }
     };
 
@@ -212,7 +220,7 @@ const EventHeatmap: React.FC = () => {
 
   const todaysFilteredEvents = React.useMemo(() => {
     const cityDisplayName = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity;
-    console.log(`Filtern von Events für heute (${today}) in ${cityDisplayName}...`);
+    console.log(`Filtering events for today (${today}) in ${cityDisplayName}...`);
     
     const filtered = events
       .filter(event => {
@@ -229,11 +237,12 @@ const EventHeatmap: React.FC = () => {
           isRelevantCity = eventCityLower === selectedCityLower;
         }
                                        
-        console.log(`Event: ${event.title}, Datum: ${event.date}, Ort: ${event.location}, Stadt: ${event.city}, IsToday: ${isTodayEvent}, HasLocation: ${hasLocationData}, IsRelevantCity: ${isRelevantCity}`);
+        console.log(`Event: ${event.title}, Date: ${event.date}, Location: ${event.location}, City: ${event.city}, IsToday: ${isTodayEvent}, HasLocation: ${hasLocationData}, IsRelevantCity: ${isRelevantCity}`);
         
         return isTodayEvent && hasLocationData && isRelevantCity;
       })
       .map(event => {
+        // Verwende geocodierte Koordinaten falls verfügbar
         const coords = eventCoordinates.get(event.id);
         const lat = coords?.lat || getCityCenterCoordinates(selectedCity).lat;
         const lng = coords?.lng || getCityCenterCoordinates(selectedCity).lng;
@@ -247,7 +256,7 @@ const EventHeatmap: React.FC = () => {
         };
       });
 
-    console.log(`Gefunden ${filtered.length} Events für heute in ${cityDisplayName} mit Koordinaten`);
+    console.log(`Found ${filtered.length} events for today in ${cityDisplayName} with coordinates`);
     return filtered;
   }, [events, today, selectedCity, eventCoordinates]);
 
@@ -283,7 +292,7 @@ const EventHeatmap: React.FC = () => {
       date: event.date,
       time: event.time,
       price: event.is_paid ? "Kostenpflichtig" : "Kostenlos",
-      location: event.location || event.city || 'Unbekannter Ort',
+      location: event.location || event.city || 'Unknown Location',
       image_url: event.image_url || `https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop&q=80&auto=format`,
       category: event.category,
       link: event.link,
@@ -307,7 +316,7 @@ const EventHeatmap: React.FC = () => {
   const generatePerfectDay = async () => {
     setIsPerfectDayLoading(true);
     try {
-      const username = currentUser || localStorage.getItem('community_chat_username') || 'Gast';
+      const username = localStorage.getItem('community_chat_username') || 'Gast';
       const userInterests = JSON.parse(localStorage.getItem('user_interests') || '[]');
       const userLocations = JSON.parse(localStorage.getItem('user_locations') || '[]');
       const weather = sessionStorage.getItem('weather') || 'partly_cloudy';
@@ -331,7 +340,7 @@ const EventHeatmap: React.FC = () => {
         description: "Deine personalisierte Tagesempfehlung ist bereit.",
       });
     } catch (error: any) {
-      console.error('Fehler beim Generieren von Perfect Day:', error);
+      console.error('Error generating Perfect Day:', error);
       toast({
         title: "Fehler",
         description: "Perfect Day konnte nicht generiert werden: " + (error.message || "Unbekannter Fehler."),
@@ -355,9 +364,9 @@ const EventHeatmap: React.FC = () => {
       
       if (error) throw error;
       
-      console.log(`Position für ${username} aktualisiert auf ${newLat}, ${newLng}`);
+      console.log(`Updated position for ${username} to ${newLat}, ${newLng}`);
     } catch (error: any) {
-      console.error('Fehler beim Aktualisieren der Benutzerposition:', error);
+      console.error('Error updating user position:', error);
       toast({
         title: "Fehler",
         description: "Position konnte nicht aktualisiert werden.",
@@ -366,10 +375,12 @@ const EventHeatmap: React.FC = () => {
     }
   };
 
+  // Updated check-in function to show central avatar
   const handleCheckInWithStatus = async () => {
     const username = currentUser || localStorage.getItem('community_chat_username') || 'Gast';
     const avatar = userProfile?.avatar || localStorage.getItem('community_chat_avatar') || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
     
+    // Set central avatar data
     setCentralAvatarUsername(username);
     setCentralAvatarImage(avatar);
     setShowCentralAvatar(true);
@@ -381,10 +392,10 @@ const EventHeatmap: React.FC = () => {
 
     try {
       const userCurrentCityCenter = getCityCenterCoordinates(selectedCity);
-      // Fügen Sie eine leichte Zufallsverschiebung hinzu, um Marker zu stapeln
       const userCurrentLat = userCurrentCityCenter.lat + (Math.random() - 0.5) * 0.005;
       const userCurrentLng = userCurrentCityCenter.lng + (Math.random() - 0.5) * 0.005;
 
+      // Only update database if user is logged in
       if (currentUser && currentUser !== 'Gast') {
         const updatedProfileData: Partial<UserProfile> = {
           last_online: new Date().toISOString(),
@@ -398,9 +409,10 @@ const EventHeatmap: React.FC = () => {
           .update(updatedProfileData)
           .eq('username', currentUser);
         
-        refetchProfile(); // Aktualisiert das Profil des aktuellen Benutzers im Kontext
+        refetchProfile();
       }
 
+      // Send community message for all users
       const communityMessage = liveStatusMessage
         ? `📍 ${username} ist jetzt hier: "${liveStatusMessage}"`
         : `📍 ${username} ist jetzt in der Nähe!`;
@@ -419,11 +431,88 @@ const EventHeatmap: React.FC = () => {
         description: liveStatusMessage ? `Dein Status: "${liveStatusMessage}" wurde geteilt.` : "Dein Standort wurde geteilt.",
       });
 
-      // Marker-Aktualisierung wird jetzt durch den useEffect-Hook für allUserProfiles gehandhabt.
-      // Keine manuelle Marker-Erstellung hier, um Duplikate und Inkonsistenzen zu vermeiden.
+      // Add user marker to map immediately
+      if (map) {
+        const userIconHtml = `
+          <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: auto;
+            min-width: 80px;
+            max-width: 150px;
+            cursor: move;
+          ">
+            <div style="
+              background: #ef4444;
+              color: white;
+              padding: 4px 8px;
+              border-radius: 15px;
+              font-size: 11px;
+              font-weight: 500;
+              margin-bottom: 5px;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+              position: relative;
+              top: 5px;
+            ">
+              ${liveStatusMessage}
+            </div>
+            <img src="${avatar}"
+                 alt="${username}"
+                 style="
+                   width: 50px;
+                   height: 50px;
+                   border-radius: 50%;
+                   border: 3px solid white;
+                   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+                   background-color: white;
+                   position: relative;
+                   z-index: 10;
+                 "/>
+            <div style="
+              color: #333;
+              font-size: 10px;
+              font-weight: bold;
+              margin-top: 2px;
+            ">
+              ${username}
+            </div>
+          </div>
+        `;
+
+        const userMarkerIcon = L.divIcon({
+          html: userIconHtml,
+          className: 'user-marker',
+          iconSize: [60, 90],
+          iconAnchor: [30, 90],
+          zIndexOffset: 1000, // Added to ensure user marker is on top
+        });
+
+        const marker = L.marker([userCurrentLat, userCurrentLng], { 
+          icon: userMarkerIcon,
+          draggable: true
+        });
+        
+        marker.on('dragend', (e) => {
+          const marker = e.target;
+          const position = marker.getLatLng();
+          console.log(`User ${username} moved to:`, position.lat, position.lng);
+          
+          if (currentUser && currentUser !== 'Gast') {
+            updateUserPosition(username, position.lat, position.lng);
+          }
+        });
+
+        map.addLayer(marker);
+        setUserMarkers(prev => [...prev, marker]);
+      }
 
     } catch (error: any) {
-      console.error('Check-in fehlgeschlagen:', error);
+      console.error('Check-in failed:', error);
       toast({
         title: "Fehler",
         description: error.message || "Es gab ein Problem beim Einchecken.",
@@ -461,7 +550,7 @@ const EventHeatmap: React.FC = () => {
       refreshEvents();
       setIsEventFormOpen(false);
     } catch (error: any) {
-      console.error('Fehler beim Hinzufügen des Events:', error);
+      console.error('Error adding event:', error);
       toast({
         title: "Fehler",
         description: "Event konnte nicht erstellt werden.",
@@ -494,7 +583,7 @@ const EventHeatmap: React.FC = () => {
     });
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap-Mitwirkende',
+      attribution: '© OpenStreetMap contributors',
       maxZoom: 19
     }).addTo(leafletMap);
 
@@ -526,12 +615,13 @@ const EventHeatmap: React.FC = () => {
     const newEventMarkers: L.Marker[] = [];
 
     filteredEvents.forEach(event => {
+      // Verwende geocodierte Koordinaten
       const coords = eventCoordinates.get(event.id);
       const lat = coords?.lat || event.lat;
       const lng = coords?.lng || event.lng;
       
       if (typeof lat !== 'number' || isNaN(lat) || typeof lng !== 'number' || isNaN(lng)) {
-        console.warn(`Ungültige Koordinaten für Event ${event.title}: Lat ${lat}, Lng ${lng}. Marker wird übersprungen.`);
+        console.warn(`Invalid coordinates for event ${event.title}: Lat ${lat}, Lng ${lng}. Skipping marker.`);
         return;
       }
 
@@ -662,11 +752,16 @@ const EventHeatmap: React.FC = () => {
     const newUserMarkers: L.Marker[] = [];
     const THIRTY_MINUTES_MS = 30 * 60 * 1000;
 
-    // Iteriere über alle Benutzerprofile, nicht nur das des aktuellen Benutzers
+    // NEW: Iterate over allUserProfiles instead of just userProfile
     allUserProfiles.forEach(user => {
-      // Filtere den aktuellen Benutzer heraus, wenn er nicht eingecheckt ist
-      if (user.username === currentUser && !user.current_checkin_timestamp) {
-        return; 
+      // Skip the current user if their profile is already handled by the check-in function
+      // Or if the current user is 'Gast' and not actually logged in
+      if (user.username === currentUser && currentUser !== 'Gast') {
+        // If the current user's marker is added immediately on check-in,
+        // we might want to skip it here to avoid duplicates.
+        // However, if the check-in only updates the DB and relies on this useEffect
+        // for rendering, then we should include the current user here.
+        // For now, let's include it and rely on the real-time updates to manage it.
       }
 
       const userCity = user.favorite_locations?.[0]?.toLowerCase() || 'bielefeld';
@@ -686,6 +781,7 @@ const EventHeatmap: React.FC = () => {
       const isRecentCheckin = user.current_checkin_timestamp &&
                                (new Date().getTime() - new Date(user.current_checkin_timestamp).getTime() < THIRTY_MINUTES_MS);
       
+      // Only display user if they have a recent check-in, live location, and status message
       if (hasLiveLocation && hasStatusMessage && isRecentCheckin) {
         const lat = user.current_live_location_lat as number;
         const lng = user.current_live_location_lng as number;
@@ -747,12 +843,12 @@ const EventHeatmap: React.FC = () => {
           className: 'user-marker',
           iconSize: [60, 90],
           iconAnchor: [30, 90],
-          zIndexOffset: 1000,
+          zIndexOffset: 1000, // Added to ensure user marker is on top
         });
 
         const marker = L.marker([lat, lng], { 
           icon: userMarkerIcon,
-          draggable: user.username === currentUser
+          draggable: user.username === currentUser // Only current user can drag their marker
         });
         
         marker.on('click', () => {
@@ -764,7 +860,7 @@ const EventHeatmap: React.FC = () => {
           marker.on('dragend', (e) => {
             const marker = e.target;
             const position = marker.getLatLng();
-            console.log(`Benutzer ${user.username} verschoben nach:`, position.lat, position.lng);
+            console.log(`User ${user.username} moved to:`, position.lat, position.lng);
             
             updateUserPosition(user.username, position.lat, position.lng);
           });
@@ -783,7 +879,7 @@ const EventHeatmap: React.FC = () => {
         }
       });
     };
-  }, [map, allUserProfiles, currentUser, selectedCity]); // allUserProfiles als Abhängigkeit hinzugefügt
+  }, [map, allUserProfiles, currentUser, selectedCity]); // NEW: Added allUserProfiles to dependency array
 
   const handleEventSelect = (eventId: string) => {
     setSelectedEventId(eventId);
@@ -821,6 +917,7 @@ const EventHeatmap: React.FC = () => {
 
   const handleAIChatSend = () => {
     if (aiChatInput.trim()) {
+      // Send the message to the AI chat logic
       chatLogic.setInput(aiChatInput);
       chatLogic.handleSendMessage();
       setAiChatInput('');
@@ -1132,7 +1229,7 @@ const EventHeatmap: React.FC = () => {
           <div className="flex items-center justify-between p-4 border-b border-gray-700">
             <div className="flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-blue-400" />
-              <span className="text-white font-medium">KI Event Chat</span>
+              <span className="text-white font-medium">AI Event Chat</span>
             </div>
             <Button
               variant="ghost"
@@ -1154,14 +1251,14 @@ const EventHeatmap: React.FC = () => {
               externalInput={aiChatInput}
               setExternalInput={setAiChatInput}
               onExternalSendHandlerChange={(handler) => {
-                // Den externen Sende-Handler bei Bedarf speichern
+                // Store the external send handler if needed
               }}
             />
           </div>
         </div>
       )}
 
-      {/* Ausklappbares Event-Panel */}
+      {/* Swipeable Event Panel */}
       {isPanelOpen && panelEvents.length > 0 && !showPerfectDayPanel && (
         <div className={cn(
           "absolute bottom-0 left-0 right-0 z-[1000] bg-black/95 backdrop-blur-md transition-all duration-300 ease-in-out",
@@ -1206,7 +1303,7 @@ const EventHeatmap: React.FC = () => {
             </div>
           </div>
 
-          {/* Panel-Inhalt */}
+          {/* Panel Content */}
           <div className="p-4 overflow-hidden">
             <SwipeableEventPanel
               panelData={panelData}
@@ -1217,13 +1314,13 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* Event-Formular-Dialog */}
+      {/* Event Form Dialog */}
       <Dialog open={isEventFormOpen} onOpenChange={setIsEventFormOpen}>
         <DialogContent className="z-[1100] bg-black/95 backdrop-blur-md border-gray-700 text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <Plus className="w-5 h-5 text-red-500" />
-              Community-Event hinzufügen
+              Community Event hinzufügen
             </DialogTitle>
           </DialogHeader>
           <EventForm
@@ -1235,7 +1332,7 @@ const EventHeatmap: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Privater Chat-Dialog */}
+      {/* Private Chat Dialog */}
       <PrivateChat
         open={isPrivateChatOpen}
         onOpenChange={setIsPrivateChatOpen}
