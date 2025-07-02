@@ -327,20 +327,23 @@ const EventHeatmap: React.FC = () => {
     }
   };
 
-  // Updated check-in function to show central avatar
   const handleCheckInWithStatus = async () => {
-    const username = currentUser || localStorage.getItem('community_chat_username') || 'Gast';
-    const avatar = userProfile?.avatar || localStorage.getItem('community_chat_avatar') || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
-    
+  const checkInToast = toast({
+    title: "Check-in wird verarbeitet...",
+    duration: Infinity
+  });
+
+  try {
+    // MODIFIED: Ensure userProfile is the very latest before proceeding
+    const freshProfile = await refetchProfile(); // Re-fetch profile to get the absolute latest avatar URL
+
+    const username = freshProfile?.username || currentUser || localStorage.getItem('community_chat_username') || 'Gast';
+    const avatar = freshProfile?.avatar || localStorage.getItem('community_chat_avatar') || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
+
     // Set central avatar data
     setCentralAvatarUsername(username);
     setCentralAvatarImage(avatar);
     setShowCentralAvatar(true);
-    
-    const checkInToast = toast({ 
-      title: "Check-in wird verarbeitet...", 
-      duration: Infinity 
-    });
 
     try {
       let finalLat: number;
