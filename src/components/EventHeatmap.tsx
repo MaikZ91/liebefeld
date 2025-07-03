@@ -395,9 +395,11 @@ const EventHeatmap: React.FC = () => {
       const userCurrentLat = userCurrentCityCenter.lat + (Math.random() - 0.5) * 0.005;
       const userCurrentLng = userCurrentCityCenter.lng + (Math.random() - 0.5) * 0.005;
 
-      // Only update database if user is logged in
-      if (currentUser && currentUser !== 'Gast') {
-        const updatedProfileData: Partial<UserProfile> = {
+      // Create or update user profile in database for persistent avatar positioning
+      if (username && username !== 'Gast') {
+        const profileData = {
+          username,
+          avatar,
           last_online: new Date().toISOString(),
           current_live_location_lat: userCurrentLat,
           current_live_location_lng: userCurrentLng,
@@ -405,9 +407,25 @@ const EventHeatmap: React.FC = () => {
           current_checkin_timestamp: new Date().toISOString(),
         };
         
-        await supabase.from('user_profiles')
-          .update(updatedProfileData)
-          .eq('username', currentUser);
+        // First try to update existing profile
+        const { data: existingProfile } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .eq('username', username)
+          .maybeSingle();
+
+        if (existingProfile) {
+          // Update existing profile
+          await supabase
+            .from('user_profiles')
+            .update(profileData)
+            .eq('username', username);
+        } else {
+          // Create new profile
+          await supabase
+            .from('user_profiles')
+            .insert(profileData);
+        }
         
         refetchProfile();
       }
@@ -428,87 +446,8 @@ const EventHeatmap: React.FC = () => {
 
       toast({
         title: "Erfolgreich eingecheckt!",
-        description: liveStatusMessage ? `Dein Status: "${liveStatusMessage}" wurde geteilt.` : "Dein Standort wurde geteilt.",
+        description: liveStatusMessage ? `Dein Status: "${liveStatusMessage}" wurde geteilt.` : "Dein Standort wurde persistent gespeichert.",
       });
-
-      // Add user marker to map immediately
-      if (map) {
-        const userIconHtml = `
-          <div style="
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            width: auto;
-            min-width: 80px;
-            max-width: 150px;
-            cursor: move;
-          ">
-            <div style="
-              background: #ef4444;
-              color: white;
-              padding: 4px 8px;
-              border-radius: 15px;
-              font-size: 11px;
-              font-weight: 500;
-              margin-bottom: 5px;
-              white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-              position: relative;
-              top: 5px;
-            ">
-              ${liveStatusMessage}
-            </div>
-            <img src="${avatar}"
-                 alt="${username}"
-                 style="
-                   width: 50px;
-                   height: 50px;
-                   border-radius: 50%;
-                   border: 3px solid white;
-                   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-                   background-color: white;
-                   position: relative;
-                   z-index: 10;
-                 "/>
-            <div style="
-              color: #333;
-              font-size: 10px;
-              font-weight: bold;
-              margin-top: 2px;
-            ">
-              ${username}
-            </div>
-          </div>
-        `;
-
-        const userMarkerIcon = L.divIcon({
-          html: userIconHtml,
-          className: 'user-marker',
-          iconSize: [60, 90],
-          iconAnchor: [30, 90]
-        });
-
-        const marker = L.marker([userCurrentLat, userCurrentLng], { 
-          icon: userMarkerIcon,
-          draggable: true
-        });
-        
-        marker.on('dragend', (e) => {
-          const marker = e.target;
-          const position = marker.getLatLng();
-          console.log(`User ${username} moved to:`, position.lat, position.lng);
-          
-          if (currentUser && currentUser !== 'Gast') {
-            updateUserPosition(username, position.lat, position.lng);
-          }
-        });
-
-        map.addLayer(marker);
-        setUserMarkers(prev => [...prev, marker]);
-      }
 
     } catch (error: any) {
       console.error('Check-in failed:', error);
@@ -749,20 +688,10 @@ const EventHeatmap: React.FC = () => {
     });
     
     const newUserMarkers: L.Marker[] = [];
-    const THIRTY_MINUTES_MS = 30 * 60 * 1000;
+    const TWO_HOURS_MS = 2 * 60 * 60 * 1000; // Extended to 2 hours for persistent avatars
 
     // NEW: Iterate over allUserProfiles instead of just userProfile
     allUserProfiles.forEach(user => {
-      // Skip the current user if their profile is already handled by the check-in function
-      // Or if the current user is 'Gast' and not actually logged in
-      if (user.username === currentUser && currentUser !== 'Gast') {
-        // If the current user's marker is added immediately on check-in,
-        // we might want to skip it here to avoid duplicates.
-        // However, if the check-in only updates the DB and relies on this useEffect
-        // for rendering, then we should include the current user here.
-        // For now, let's include it and rely on the real-time updates to manage it.
-      }
-
       const userCity = user.favorite_locations?.[0]?.toLowerCase() || 'bielefeld';
       const selectedCityName = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name?.toLowerCase() || selectedCity.toLowerCase();
       
@@ -778,10 +707,10 @@ const EventHeatmap: React.FC = () => {
       const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null && user.current_live_location_lat !== undefined && user.current_live_location_lng !== undefined;
       const hasStatusMessage = user.current_status_message && user.current_status_message.trim() !== '';
       const isRecentCheckin = user.current_checkin_timestamp &&
-                               (new Date().getTime() - new Date(user.current_checkin_timestamp).getTime() < THIRTY_MINUTES_MS);
+                               (new Date().getTime() - new Date(user.current_checkin_timestamp).getTime() < TWO_HOURS_MS);
       
-      // Only display user if they have a recent check-in, live location, and status message
-      if (hasLiveLocation && hasStatusMessage && isRecentCheckin) {
+      // Display user if they have live location and status message (removed recent check-in requirement for persistence)
+      if (hasLiveLocation && hasStatusMessage) {
         const lat = user.current_live_location_lat as number;
         const lng = user.current_live_location_lng as number;
         const statusMessage = user.current_status_message as string;
