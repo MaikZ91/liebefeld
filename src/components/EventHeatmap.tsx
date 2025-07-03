@@ -17,9 +17,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, Send, Filter, FilterX, MessageSquare } from 'lucide-react';
+import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, Send, Filter, FilterX, MessageSquare, CalendarIcon } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import SwipeableEventPanel from '@/components/event-chat/SwipeableEventPanel';
 import { PanelEventData, PanelEvent } from '@/components/event-chat/types';
 import { cn } from '@/lib/utils';
@@ -52,6 +54,7 @@ const EventHeatmap: React.FC = () => {
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [timeRange, setTimeRange] = useState([new Date().getHours()]);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [map, setMap] = useState<L.Map | null>(null);
   const [eventMarkers, setEventMarkers] = useState<L.Marker[]>([]);
   const [userMarkers, setUserMarkers] = useState<L.Marker[]>([]);
@@ -87,7 +90,7 @@ const EventHeatmap: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const selectedDateString = format(selectedDate, 'yyyy-MM-dd');
 
   // Load cached coordinates on component mount
   useEffect(() => {
@@ -218,13 +221,13 @@ const EventHeatmap: React.FC = () => {
     return { lat: 52.0302, lng: 8.5311 };
   };
 
-  const todaysFilteredEvents = React.useMemo(() => {
+  const selectedDateFilteredEvents = React.useMemo(() => {
     const cityDisplayName = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity;
-    console.log(`Filtering events for today (${today}) in ${cityDisplayName}...`);
+    console.log(`Filtering events for ${selectedDateString} in ${cityDisplayName}...`);
     
     const filtered = events
       .filter(event => {
-        const isTodayEvent = event.date === today;
+        const isSelectedDateEvent = event.date === selectedDateString;
         const hasLocationData = event.location || event.city;
         
         const eventCityLower = event.city ? event.city.toLowerCase() : null;
@@ -237,9 +240,9 @@ const EventHeatmap: React.FC = () => {
           isRelevantCity = eventCityLower === selectedCityLower;
         }
                                        
-        console.log(`Event: ${event.title}, Date: ${event.date}, Location: ${event.location}, City: ${event.city}, IsToday: ${isTodayEvent}, HasLocation: ${hasLocationData}, IsRelevantCity: ${isRelevantCity}`);
+        console.log(`Event: ${event.title}, Date: ${event.date}, Location: ${event.location}, City: ${event.city}, IsSelectedDate: ${isSelectedDateEvent}, HasLocation: ${hasLocationData}, IsRelevantCity: ${isRelevantCity}`);
         
-        return isTodayEvent && hasLocationData && isRelevantCity;
+        return isSelectedDateEvent && hasLocationData && isRelevantCity;
       })
       .map(event => {
         // Verwende geocodierte Koordinaten falls verfügbar
@@ -256,24 +259,24 @@ const EventHeatmap: React.FC = () => {
         };
       });
 
-    console.log(`Found ${filtered.length} events for today in ${cityDisplayName} with coordinates`);
+    console.log(`Found ${filtered.length} events for ${selectedDateString} in ${cityDisplayName} with coordinates`);
     return filtered;
-  }, [events, today, selectedCity, eventCoordinates]);
+  }, [events, selectedDateString, selectedCity, eventCoordinates]);
 
   const categories = React.useMemo(() => {
     const categoryMap = new Map<string, number>();
-    todaysFilteredEvents.forEach(event => {
+    selectedDateFilteredEvents.forEach(event => {
       categoryMap.set(event.category, (categoryMap.get(event.category) || 0) + 1);
     });
     
     return [
-      { name: 'all', count: todaysFilteredEvents.length },
+      { name: 'all', count: selectedDateFilteredEvents.length },
       ...Array.from(categoryMap.entries()).map(([name, count]) => ({ name, count }))
     ];
-  }, [todaysFilteredEvents]);
+  }, [selectedDateFilteredEvents]);
 
   const filteredEvents = React.useMemo(() => {
-    let filtered = todaysFilteredEvents;
+    let filtered = selectedDateFilteredEvents;
     
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(event => event.category === selectedCategory);
@@ -283,7 +286,7 @@ const EventHeatmap: React.FC = () => {
     filtered = filtered.filter(event => event.eventHour >= selectedHour);
     
     return filtered;
-  }, [todaysFilteredEvents, selectedCategory, timeRange]);
+  }, [selectedDateFilteredEvents, selectedCategory, timeRange]);
 
   const panelEvents: PanelEvent[] = React.useMemo(() => {
     return filteredEvents.map(event => ({
@@ -890,10 +893,37 @@ const EventHeatmap: React.FC = () => {
           <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
             <h3 className="text-white font-bold mb-4 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-red-500" />
-              Events heute in {cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity}
+              Events für {format(selectedDate, 'dd.MM.yyyy')} in {cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity}
             </h3>
             
             <div className="space-y-4">
+              {/* Date Picker */}
+              <div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                    >
+                      <div className="flex items-center gap-2">
+                        <CalendarIcon className="h-4 w-4" />
+                        {format(selectedDate, 'dd.MM.yyyy')}
+                      </div>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-gray-800 border-gray-700" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => date && setSelectedDate(date)}
+                      initialFocus
+                      className="pointer-events-auto bg-gray-800 text-white"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
               {/* Category Dropdown */}
               <div>
                 <DropdownMenu>
