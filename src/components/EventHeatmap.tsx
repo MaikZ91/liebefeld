@@ -488,8 +488,7 @@ const EventHeatmap: React.FC = () => {
           html: userIconHtml,
           className: 'user-marker',
           iconSize: [60, 90],
-          iconAnchor: [30, 90],
-          zIndexOffset: 1000, // Added to ensure user marker is on top
+          iconAnchor: [30, 90]
         });
 
         const marker = L.marker([userCurrentLat, userCurrentLng], { 
@@ -842,8 +841,7 @@ const EventHeatmap: React.FC = () => {
           html: userIconHtml,
           className: 'user-marker',
           iconSize: [60, 90],
-          iconAnchor: [30, 90],
-          zIndexOffset: 1000, // Added to ensure user marker is on top
+          iconAnchor: [30, 90]
         });
 
         const marker = L.marker([lat, lng], { 
