@@ -115,7 +115,7 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-5xl bg-black text-white border-gray-800 p-0">
+        <DialogContent className="sm:max-w-5xl bg-black text-white border-gray-800 p-0 [&>button]:text-white [&>button]:hover:text-gray-300">
           <DialogHeader className="sr-only">
             <DialogTitle>Benutzer Verzeichnis</DialogTitle>
           </DialogHeader>
