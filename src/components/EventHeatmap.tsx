@@ -1,4 +1,3 @@
-// src/components/EventHeatmap.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -67,7 +66,7 @@ const EventHeatmap: React.FC = () => {
   const [map, setMap] = useState<L.Map | null>(null);
   const [eventMarkers, setEventMarkers] = useState<L.Marker[]>([]);
   const [tribeSpotMarkers, setTribeSpotMarkers] = useState<L.Marker[]>([]);
-  const currentTribeSpotMarkersRef = useRef<L.Marker[]>([]);
+  const currentTribeSpotMarkersRef = useRef<L.Marker[]>();
   const [userMarkers, setUserMarkers] = useState<L.Marker[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -526,11 +525,13 @@ const EventHeatmap: React.FC = () => {
   }, [mapRef.current, selectedCity]);
 
   useEffect(() => {
-    currentTribeSpotMarkersRef.current.forEach(marker => {
-      if (map && map.hasLayer(marker)) {
-        map.removeLayer(marker);
-      }
-    });
+    if (currentTribeSpotMarkersRef.current) {
+      currentTribeSpotMarkersRef.current.forEach(marker => {
+        if (map && map.hasLayer(marker)) {
+          map.removeLayer(marker);
+        }
+      });
+    }
     currentTribeSpotMarkersRef.current = [];
 
     if (!map || (selectedCity.toLowerCase() !== 'bi' && selectedCity.toLowerCase() !== 'bielefeld')) {
@@ -730,7 +731,7 @@ const EventHeatmap: React.FC = () => {
     currentTribeSpotMarkersRef.current = newTribeSpotMarkers;
 
     return () => {
-      currentTribeSpotMarkersRef.current.forEach(marker => {
+      newTribeSpotMarkers.forEach(marker => {
         if (map && map.hasLayer(marker)) {
           map.removeLayer(marker);
         }
@@ -1090,7 +1091,7 @@ const EventHeatmap: React.FC = () => {
       }} />
 
       {/* Button to toggle Filter Panel */}
-      <div className="absolute top-16 left-4 z-[1001]">
+      <div className="absolute top-20 left-4 z-[1001]">
         <Button
           variant="outline"
           size="icon"
