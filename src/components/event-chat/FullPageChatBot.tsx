@@ -26,7 +26,7 @@ interface FullPageChatBotProps {
   hideInput?: boolean;
   externalInput?: string;
   setExternalInput?: (value: string) => void;
-  onExternalSendHandlerChange?: (handler: (() => Promise<void>) | null) => void; // Corrected type
+  onExternalSendHandlerChange?: (handler: ((input?: string) => Promise<void>) | null) => void; // Corrected handler type
 }
 
 const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
@@ -43,8 +43,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 }) => {
   const {
     messages: aiMessages,
-    input: aiInput, // Renamed to aiInput
-    setInput: setAiInput, // Renamed to setAiInput
+    input: aiInput,
+    setInput: setAiInput,
     isTyping: aiTyping,
     globalQueries,
     showRecentQueries,
@@ -56,8 +56,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     handleSendMessage: aiSendMessage,
     handleDateSelect,
     handleExamplePromptClick,
-    handleKeyPress: aiKeyPress, // Renamed to aiKeyPress
-    handleInputChange: aiInputChange, // Renamed to aiInputChange
+    handleKeyPress: aiKeyPress,
+    handleInputChange: aiInputChange,
     handleHeartClick,
     toggleRecentQueries,
     showAnimatedPrompts 
@@ -84,32 +84,29 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     newMessage: communityInput,
     isSending: communitySending,
     handleSubmit: communitySendMessage,
-    handleInputChange: communityInputChangeFromHook, // Renamed to avoid conflict
-    handleKeyDown: communityKeyDownFromHook, // Renamed to avoid conflict
+    handleInputChange: communityInputChangeFromHook,
+    handleKeyDown: communityKeyDownFromHook,
     setNewMessage: setCommunityInput
   } = useMessageSending(communityGroupId, username, addOptimisticMessage);
 
-  // Only update external input when community input changes, not the other way around
   useEffect(() => {
     if (activeChatModeValue === 'community' && setExternalInput && communityInput !== externalInput) {
       setExternalInput(communityInput);
     }
-  }, [communityInput, activeChatModeValue, setExternalInput, externalInput]); // Added externalInput to dependency array
+  }, [communityInput, activeChatModeValue, setExternalInput, externalInput]);
 
-  // Only update community input from external when it's different and not empty
   useEffect(() => {
     if (activeChatModeValue === 'community' && externalInput !== communityInput && externalInput !== '') {
       setCommunityInput(externalInput);
     }
   }, [externalInput, activeChatModeValue, setCommunityInput, communityInput]);
 
-  // Provide external send handler
   useEffect(() => {
     if (onExternalSendHandlerChange) {
       if (activeChatModeValue === 'community') {
-        onExternalSendHandlerChange(() => communitySendMessage);
+        onExternalSendHandlerChange(communitySendMessage); // Pass the function directly
       } else if (activeChatModeValue === 'ai') {
-        onExternalSendHandlerChange(() => aiSendMessage);
+        onExternalSendHandlerChange(aiSendMessage); // Pass the function directly
       } else {
         onExternalSendHandlerChange(null);
       }
@@ -147,7 +144,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   };
 
-  // Wrapper functions for community chat input handlers to match ChatInput's HTMLInputElement type
   const wrappedCommunityInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     communityInputChangeFromHook(e);
   };
@@ -156,11 +152,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     communityKeyDownFromHook(e);
   };
 
-  // Unified functions to pass to ChatInput, based on activeChatModeValue
   const currentInput = activeChatModeValue === 'ai' ? aiInput : communityInput;
   const currentSetInput = activeChatModeValue === 'ai' ? setAiInput : setCommunityInput;
   const currentHandleSendMessage = activeChatModeValue === 'ai' ? aiSendMessage : communitySendMessage;
-  const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending; // isTyping is AI processing, isSending is community sending
+  const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending;
   const currentHandleKeyPress = activeChatModeValue === 'ai' ? aiKeyPress : wrappedCommunityKeyDown;
   const currentHandleInputChange = activeChatModeValue === 'ai' ? aiInputChange : wrappedCommunityInputChange;
 
@@ -179,7 +174,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   return (
     <div className="flex flex-col h-screen min-h-0">
-      {/* Conditional sticky header - only show if input is not hidden */}
       {!hideInput && (
         <div className="border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-2"> 
           {activeChatModeValue === 'ai' && (
@@ -193,11 +187,11 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
           <ChatInput
             input={currentInput}
-            setInput={currentSetInput} // Pass unified setInput
-            handleSendMessage={currentHandleSendMessage} // Pass unified handleSendMessage
-            isTyping={currentIsTyping} // Pass unified isTyping/isSending
-            onKeyDown={currentHandleKeyPress} // Pass unified handleKeyPress
-            onChange={currentHandleInputChange} // Pass unified handleInputChange
+            setInput={currentSetInput}
+            handleSendMessage={currentHandleSendMessage}
+            isTyping={currentIsTyping}
+            onKeyDown={currentHandleKeyPress}
+            onChange={currentHandleInputChange}
             isHeartActive={isHeartActive}
             handleHeartClick={handleHeartClick}
             globalQueries={globalQueries}
@@ -212,7 +206,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
         </div>
       )}
 
-      {/* Main scroll container */}
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
         {activeChatModeValue === 'ai' ? (
           <div className={hideInput ? "pt-4 px-3" : "pt-32 px-3"}> 
@@ -251,7 +244,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                   const timeAgo = formatTime(message.created_at);
 
                   return (
-                    <div key={message.id} className="w-full group">
+                    <div key={message.id} className="mb-1 w-full group">
                       {!isConsecutive && (
                         <div className="flex items-center mb-1">
                           <Avatar className="h-8 w-8 mr-2 flex-shrink-0 border-red-500">

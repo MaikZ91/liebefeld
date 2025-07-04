@@ -1,31 +1,25 @@
 // src/components/layouts/Layout.tsx
-// Changed: Removed ChatInput from header with proper spacing
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import CitySelector from './CitySelector';
-import { BottomNavigation } from './BottomNavigation';
-// ChatInput is now in HeatmapHeader, no need to import here directly for MainNav
+// CitySelector and ChatInput imports removed as they are now in HeatmapHeader
 
 interface LayoutProps {
   children: React.ReactNode;
   hideFooter?: boolean;
-  // Chat-specific props
   activeView?: 'ai' | 'community';
   setActiveView?: (view: 'ai' | 'community') => void;
   handleOpenUserDirectory?: () => void;
   setIsEventListSheetOpen?: (open: boolean) => void;
   newMessagesCount?: number;
   newEventsCount?: number;
-  // Chat input props (now passed to HeatmapHeader)
   chatInputProps?: {
     input: string;
     setInput: (value: string) => void;
-    handleSendMessage: () => void;
+    handleSendMessage: (input?: string) => Promise<void>; // Updated type for clarity
     isTyping: boolean;
-    // Corrected prop name from handleKeyPress to onKeyDown
     onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
     isHeartActive: boolean;
     handleHeartClick: () => void;
@@ -50,18 +44,15 @@ export const Layout: React.FC<LayoutProps> = ({
   setIsEventListSheetOpen,
   newMessagesCount = 0,
   newEventsCount = 0,
-  // chatInputProps is now passed directly to HeatmapHeader, not used in MainNav anymore
-  // so we remove it from here if MainNav doesn't need it.
-  // We keep it as a prop for Layout because Heatmap needs it.
   chatInputProps
 }) => {
   const { pathname } = useLocation();
-  const [isAddEventModalOpen, setIsAddEventModalOpen] = React.useState(false);
+  const [isAddEventModalOpen, setIsAddEventModalInLayout] = React.useState(false); // Renamed for clarity within Layout
   
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       window.triggerAddEvent = () => {
-        setIsAddEventModalOpen(true);
+        setIsAddEventModalInLayout(true); // Updated to use local state setter
       };
     }
     return () => {
@@ -71,12 +62,11 @@ export const Layout: React.FC<LayoutProps> = ({
     };
   }, []);
   
-  // Conditionally hide header for /heatmap and / (root)
   const hideHeader = pathname === '/heatmap' || pathname === '/';
 
   return (
     <>
-      <Sheet open={isAddEventModalOpen} onOpenChange={setIsAddEventModalOpen}>
+      <Sheet open={isAddEventModalInLayout} onOpenChange={setIsAddEventModalInLayout}> {/* Used local state */}
         <SheetContent className="sm:max-w-lg">
           <SheetHeader>
             <SheetTitle>Event hinzufügen</SheetTitle>
@@ -86,16 +76,14 @@ export const Layout: React.FC<LayoutProps> = ({
           </SheetHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              {/* Your form fields here */}
             </div>
           </div>
         </SheetContent>
       </Sheet>
       
-      {!hideHeader && ( // Header wird nur angezeigt, wenn hideHeader false ist
+      {!hideHeader && (
         <header className="sticky top-0 z-50 w-full bg-black/90 backdrop-blur-sm border-b border-black">
           <div className="container flex h-16 items-center">
-            {/* MainNav no longer needs chatInputProps directly here */}
             <MainNav pathname={pathname} activeView={activeView} /> 
             {(pathname !== '/chat' && pathname !== '/') && ( 
               <div className="ml-auto flex items-center space-x-4">
@@ -106,12 +94,10 @@ export const Layout: React.FC<LayoutProps> = ({
         </header>
       )}
       
-      {/* Passe das paddingTop des main-Elements an, wenn der Header ausgeblendet ist */}
       <main className={cn("pb-20", hideHeader ? "pt-0" : "pt-[104px]")}> 
         {children}
       </main>
       
-      {/* Bottom Navigation for Chat and Root pages */}
       {(pathname === '/chat' || pathname === '/' || pathname === '/heatmap' || pathname === '/users' || pathname === '/events') && (
         <BottomNavigation
           activeView={activeView}
@@ -166,30 +152,24 @@ const items: NavItem[] = [
 
 interface MainNavProps {
   pathname: string;
-  // Removed chatInputProps from here as it's now handled by HeatmapHeader
-  // chatInputProps?: any; 
   activeView?: 'ai' | 'community';
 }
 
 const MainNav: React.FC<MainNavProps> = ({ pathname, activeView }) => {
-  // If we're on chat page or the root path, show header with THE TRIBE + city selector
-  // The chat input is now directly in HeatmapHeader, so we remove it from here.
   if (pathname === '/chat' || pathname === '/') {
     return (
       <div className="flex items-center w-full gap-4">
-        {/* Left side: THE TRIBE + City selector */}
         <div className="flex flex-col items-start flex-shrink-0">
           <Link to="/" className="flex items-center">
             <span className="font-bold inline-block">THE TRIBE</span>
           </Link>
-          <CitySelector />
+          {/* CitySelector is now rendered within HeatmapHeader or other specific pages directly, not here. */}
+          {pathname !== '/' && <CitySelector />} {/* Conditionally render if not on root, for pages like /chat */}
         </div>
-        {/* ChatInput is no longer rendered here */}
       </div>
     );
   }
   
-  // For other pages, show regular navigation
   return (
     <div className="mr-4 flex">
       <Link to="/" className="mr-6 flex items-center space-x-2">

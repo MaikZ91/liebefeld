@@ -26,7 +26,7 @@ import SwipeableEventPanel from '@/components/event-chat/SwipeableEventPanel';
 import { PanelEventData, PanelEvent } from '@/components/event-chat/types';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast'; // Added useToast import
 import EventForm from '@/components/EventForm';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { messageService } from '@/services/messageService';
@@ -48,8 +48,17 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+// Define tribeSpots outside the component to ensure it's a constant and accessible
+const tribeSpots = [
+  { name: 'Sparrenburg', lat: 52.0323, lng: 8.5423 },
+  { name: 'Obersee', lat: 52.0448, lng: 8.5329 },
+  { name: 'Lutterviertel', lat: 52.0289, lng: 8.5291 },
+  { name: 'Gellershagen Park', lat: 52.0533, lng: 8.4872 },
+  { name: 'Klosterplatz', lat: 52.0205, lng: 8.5355 }
+];
+
 const EventHeatmap: React.FC = () => {
-  const { events, isLoading, refreshEvents, addUserEvent } = useEvents(); // Destructure addUserEvent
+  const { events, isLoading, refreshEvents, addUserEvent } = useEvents();
   const { selectedCity } = useEventContext();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -57,6 +66,8 @@ const EventHeatmap: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [map, setMap] = useState<L.Map | null>(null);
   const [eventMarkers, setEventMarkers] = useState<L.Marker[]>([]);
+  const [tribeSpotMarkers, setTribeSpotMarkers] = useState<L.Marker[]>([]); // Initialize state
+  const currentTribeSpotMarkersRef = useRef<L.Marker[]>([]); // Ref to hold current markers
   const [userMarkers, setUserMarkers] = useState<L.Marker[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -69,36 +80,25 @@ const EventHeatmap: React.FC = () => {
   const [isPrivateChatOpen, setIsPrivateChatOpen] = useState(false);
   const [selectedUserForPrivateChat, setSelectedUserForPrivateChat] = useState<UserProfile | null>(null);
   const [showFilterPanel, setShowFilterPanel] = useState(true);
-  // NEW: State to hold all user profiles
   const [allUserProfiles, setAllUserProfiles] = useState<UserProfile[]>([]);
 
-  // New state for central avatar
-  const [showCentralAvatar, setShowCentralAvatar] = useState(false);
-  const [centralAvatarUsername, setCentralAvatarUsername] = useState('');
-  const [centralAvatarImage, setCentralAvatarImage] = useState('');
-
-  // States for AI Chat integration
   const [showAIChat, setShowAIChat] = useState(false);
   const [aiChatInput, setAiChatInput] = useState('');
-  const [aiChatExternalSendHandler, setAiChatExternalSendHandler] = useState<(() => Promise<void>) | null>(null);
+  const [aiChatExternalSendHandler, setAiChatExternalSendHandler] = useState<((input?: string) => Promise<void>) | null>(null);
 
-  // State for geocoded coordinates
-  const [eventCoordinates, setEventCoordinates] = useState<Map<string, { lat: number; lng: number }>>(new Map()); // Corrected line here!
+  const [eventCoordinates, setEventCoordinates] = useState<Map<string, { lat: number; lng: number }>>(new Map());
 
-  // Initialize chat logic for AI chat
   const chatLogic = useChatLogic();
 
   const mapRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
+  // useToast already imported
 
   const selectedDateString = format(selectedDate, 'yyyy-MM-dd');
 
-  // Load cached coordinates on component mount
   useEffect(() => {
     loadCachedCoordinates();
   }, []);
 
-  // NEW: Fetch all user profiles and set up real-time listener
   useEffect(() => {
     const fetchAllUserProfiles = async () => {
       const { data, error } = await supabase
@@ -125,10 +125,8 @@ const EventHeatmap: React.FC = () => {
             setAllUserProfiles(prevProfiles => {
               const existingIndex = prevProfiles.findIndex(p => p.id === payload.new.id);
               if (existingIndex > -1) {
-                // Update existing profile
                 return prevProfiles.map((p, i) => i === existingIndex ? payload.new as UserProfile : p);
               } else {
-                // Add new profile
                 return [...prevProfiles, payload.new as UserProfile];
               }
             });
@@ -144,14 +142,12 @@ const EventHeatmap: React.FC = () => {
     };
   }, []);
 
-  // Geocode all event locations when events change
   useEffect(() => {
     const geocodeEventLocations = async () => {
       if (!events.length) return;
 
       console.log('[EventHeatmap] Starting geocoding for events...');
       
-      // Sammle alle einzigartigen Locations
       const uniqueLocations = new Set<string>();
       const locationData: Array<{ location: string; city?: string }> = [];
 
@@ -168,10 +164,8 @@ const EventHeatmap: React.FC = () => {
       if (locationData.length === 0) return;
 
       try {
-        // Batch-Geocoding für bessere Performance
         const coordinates = await geocodeMultipleLocations(locationData);
         
-        // Erstelle neue Koordinaten-Map für Events
         const newEventCoordinates = new Map<string, { lat: number; lng: number }>();
         
         events.forEach(event => {
@@ -246,7 +240,6 @@ const EventHeatmap: React.FC = () => {
         return isSelectedDateEvent && hasLocationData && isRelevantCity;
       })
       .map(event => {
-        // Verwende geocodierte Koordinaten falls verfügbar
         const coords = eventCoordinates.get(event.id);
         const lat = coords?.lat || getCityCenterCoordinates(selectedCity).lat;
         const lng = coords?.lng || getCityCenterCoordinates(selectedCity).lng;
@@ -379,12 +372,10 @@ const EventHeatmap: React.FC = () => {
     }
   };
 
-  // Updated check-in function to show central avatar
   const handleCheckInWithStatus = async () => {
     const username = currentUser || localStorage.getItem('community_chat_username') || 'Gast';
     const avatar = userProfile?.avatar || localStorage.getItem('community_chat_avatar') || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
     
-    // Set central avatar data
     setCentralAvatarUsername(username);
     setCentralAvatarImage(avatar);
     setShowCentralAvatar(true);
@@ -399,7 +390,6 @@ const EventHeatmap: React.FC = () => {
       const userCurrentLat = userCurrentCityCenter.lat + (Math.random() - 0.5) * 0.005;
       const userCurrentLng = userCurrentCityCenter.lng + (Math.random() - 0.5) * 0.005;
 
-      // Create or update user profile in database for persistent avatar positioning
       if (username && username !== 'Gast') {
         const profileData = {
           username,
@@ -411,7 +401,6 @@ const EventHeatmap: React.FC = () => {
           current_checkin_timestamp: new Date().toISOString(),
         };
         
-        // First try to update existing profile
         const { data: existingProfile } = await supabase
           .from('user_profiles')
           .select('id')
@@ -419,13 +408,11 @@ const EventHeatmap: React.FC = () => {
           .maybeSingle();
 
         if (existingProfile) {
-          // Update existing profile
           await supabase
             .from('user_profiles')
             .update(profileData)
             .eq('username', username);
         } else {
-          // Create new profile
           await supabase
             .from('user_profiles')
             .insert(profileData);
@@ -434,7 +421,6 @@ const EventHeatmap: React.FC = () => {
         refetchProfile();
       }
 
-      // Send community message for all users
       const communityMessage = liveStatusMessage
         ? `📍 ${username} ist jetzt hier: "${liveStatusMessage}"`
         : `📍 ${username} ist jetzt in der Nähe!`;
@@ -462,22 +448,40 @@ const EventHeatmap: React.FC = () => {
       });
     } finally {
       setLiveStatusMessage('');
-      checkInToast.dismiss(); // Dismiss the "processing" toast
-      setShowCentralAvatar(false); // Close the modal after processing
+      checkInToast.dismiss();
+      setShowCentralAvatar(false);
     }
   };
 
-  // Modified goToChat to ensure AI chat is shown
   const goToAIChat = () => {
     setShowAIChat(true);
-    // Optionally focus the input or send a default message
     chatLogic.handleExternalQuery("Hallo KI, welche Events gibt es heute?");
   };
 
-  // The local handleAddEvent is removed.
-  // Directly use `addUserEvent` from `useEvents` hook.
-  const handleAddEventClick = () => {
-    setIsEventFormOpen(true);
+  // Renamed to handleOpenEventForm to avoid conflict and align with its purpose
+  const handleOpenEventForm = async (eventData: any) => {
+    try {
+      const cityObject = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase());
+      const cityName = cityObject ? cityObject.name : selectedCity;
+      
+      const eventWithCity = { ...eventData, city: cityName };
+
+      console.log('Adding new event to database only:', eventWithCity);
+      await addUserEvent(eventWithCity); // Direct use of addUserEvent
+      toast({
+        title: "Event erfolgreich erstellt!",
+        description: `${eventData.title} wurde hinzugefügt.`,
+      });
+      refreshEvents();
+      setIsEventFormOpen(false);
+    } catch (error: any) {
+      console.error('Error adding event:', error);
+      toast({
+        title: "Fehler",
+        description: "Event konnte nicht erstellt werden.",
+        variant: "destructive"
+      });
+    }
   };
 
   useEffect(() => {
@@ -517,22 +521,19 @@ const EventHeatmap: React.FC = () => {
     };
   }, [mapRef.current, selectedCity]);
 
-  // Add Tribe Spots to map
   useEffect(() => {
-    if (!map || selectedCity.toLowerCase() !== 'bi' && selectedCity.toLowerCase() !== 'bielefeld') {
-      tribeSpotMarkers.forEach(marker => {
-        try { map?.removeLayer(marker); } catch (e) {}
-      });
-      setTribeSpotMarkers([]);
-      return;
-    }
-
-    const markersToRemove = [...tribeSpotMarkers];
-    markersToRemove.forEach(marker => {
-      if (map.hasLayer(marker)) {
+    // Clear previously added markers on re-render (or unmount)
+    currentTribeSpotMarkersRef.current.forEach(marker => {
+      if (map && map.hasLayer(marker)) {
         map.removeLayer(marker);
       }
     });
+    currentTribeSpotMarkersRef.current = []; // Clear the ref for new markers
+
+    if (!map || (selectedCity.toLowerCase() !== 'bi' && selectedCity.toLowerCase() !== 'bielefeld')) {
+      setTribeSpotMarkers([]); // Clear state if not in Bielefeld
+      return;
+    }
 
     const newTribeSpotMarkers: L.Marker[] = [];
 
@@ -596,7 +597,6 @@ const EventHeatmap: React.FC = () => {
         const avatar = userProfile?.avatar || localStorage.getItem('community_chat_avatar') || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
         
         try {
-          // Check in at tribe spot
           const profileData = {
             username,
             avatar,
@@ -624,6 +624,17 @@ const EventHeatmap: React.FC = () => {
               .insert(profileData);
           }
 
+          const usersAtSpot = allUserProfiles.filter(user => { // usersAtSpot defined here
+            const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null;
+            if (!hasLiveLocation) return false;
+            
+            const distance = Math.sqrt(
+              Math.pow(user.current_live_location_lat! - spot.lat, 2) + 
+              Math.pow(user.current_live_location_lng! - spot.lng, 2)
+            );
+            return distance < 0.002; // About 200m radius
+          });
+
           // Send community message
           const cityCommunityGroupId = 'bi_ausgehen';
           await messageService.sendMessage(
@@ -647,6 +658,17 @@ const EventHeatmap: React.FC = () => {
             variant: "destructive"
           });
         }
+      });
+
+      const usersAtSpot = allUserProfiles.filter(user => { // Redefine usersAtSpot for popup content
+        const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null;
+        if (!hasLiveLocation) return false;
+        
+        const distance = Math.sqrt(
+          Math.pow(user.current_live_location_lat! - spot.lat, 2) + 
+          Math.pow(user.current_live_location_lng! - spot.lng, 2)
+        );
+        return distance < 0.002;
       });
 
       const popupContent = `
@@ -703,9 +725,10 @@ const EventHeatmap: React.FC = () => {
     });
 
     setTribeSpotMarkers(newTribeSpotMarkers);
+    currentTribeSpotMarkersRef.current = newTribeSpotMarkers; // Update ref with new markers
 
     return () => {
-      newTribeSpotMarkers.forEach(marker => {
+      currentTribeSpotMarkersRef.current.forEach(marker => {
         if (map && map.hasLayer(marker)) {
           map.removeLayer(marker);
         }
@@ -732,7 +755,6 @@ const EventHeatmap: React.FC = () => {
     const newEventMarkers: L.Marker[] = [];
 
     filteredEvents.forEach(event => {
-      // Verwende geocodierte Koordinaten
       const coords = eventCoordinates.get(event.id);
       const lat = coords?.lat || event.lat;
       const lng = coords?.lng || event.lng;
@@ -869,7 +891,6 @@ const EventHeatmap: React.FC = () => {
     const newUserMarkers: L.Marker[] = [];
     const TWO_HOURS_MS = 2 * 60 * 60 * 1000; // Extended to 2 hours for persistent avatars
 
-    // NEW: Iterate over allUserProfiles instead of just userProfile
     allUserProfiles.forEach(user => {
       const userCity = user.favorite_locations?.[0]?.toLowerCase() || 'bielefeld';
       const selectedCityName = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name?.toLowerCase() || selectedCity.toLowerCase();
@@ -888,7 +909,6 @@ const EventHeatmap: React.FC = () => {
       const isRecentCheckin = user.current_checkin_timestamp &&
                                (new Date().getTime() - new Date(user.current_checkin_timestamp).getTime() < TWO_HOURS_MS);
       
-      // Display user if they have live location and status message (removed recent check-in requirement for persistence)
       if (hasLiveLocation && hasStatusMessage) {
         const lat = user.current_live_location_lat as number;
         const lng = user.current_live_location_lng as number;
@@ -954,7 +974,7 @@ const EventHeatmap: React.FC = () => {
 
         const marker = L.marker([lat, lng], { 
           icon: userMarkerIcon,
-          draggable: user.username === currentUser // Only current user can drag their marker
+          draggable: user.username === currentUser
         });
         
         marker.on('click', () => {
@@ -985,7 +1005,7 @@ const EventHeatmap: React.FC = () => {
         }
       });
     };
-  }, [map, allUserProfiles, currentUser, selectedCity]); // NEW: Added allUserProfiles to dependency array
+  }, [map, allUserProfiles, currentUser, selectedCity]);
 
   const handleEventSelect = (eventId: string) => {
     setSelectedEventId(eventId);
@@ -1017,22 +1037,39 @@ const EventHeatmap: React.FC = () => {
     setShowPerfectDayPanel(false);
   };
   
-  // NEW: handleAIChatSend function to trigger AI chat open
-  const handleAIChatSend = async () => {
-    if (aiChatInput.trim()) {
-      setShowAIChat(true); // Open AI Chat panel
+  const handleAIChatSend = async (messageContent?: string) => { // Modified signature to accept optional string
+    if ((messageContent && messageContent.trim()) || aiChatInput.trim()) {
+      setShowAIChat(true);
       if (aiChatExternalSendHandler) {
-        await aiChatExternalSendHandler(); // Trigger the actual message sending in the AI chat bot
+        await aiChatExternalSendHandler(aiChatInput); // Pass aiChatInput to the handler
       }
-      setAiChatInput(''); // Clear the input field
+      setAiChatInput('');
     }
   };
 
-  // The local handleAddEvent is removed.
-  // Directly use `addUserEvent` from `useEvents` hook.
-  // The function to open the form for adding an event.
-  const handleOpenEventForm = () => {
-    setIsEventFormOpen(true);
+  const handleOpenEventForm = async (eventData: any) => {
+    try {
+      const cityObject = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase());
+      const cityName = cityObject ? cityObject.name : selectedCity;
+      
+      const eventWithCity = { ...eventData, city: cityName };
+
+      console.log('Adding new event to database only:', eventWithCity);
+      await addUserEvent(eventWithCity);
+      toast({
+        title: "Event erfolgreich erstellt!",
+        description: `${eventData.title} wurde hinzugefügt.`,
+      });
+      refreshEvents();
+      setIsEventFormOpen(false);
+    } catch (error: any) {
+      console.error('Error adding event:', error);
+      toast({
+        title: "Fehler",
+        description: "Event konnte nicht erstellt werden.",
+        variant: "destructive"
+      });
+    }
   };
 
   if (isLoading) {
@@ -1056,7 +1093,7 @@ const EventHeatmap: React.FC = () => {
       <HeatmapHeader selectedCity={selectedCity} chatInputProps={{
         input: aiChatInput,
         setInput: setAiChatInput,
-        handleSendMessage: handleAIChatSend, // Use the new handler here
+        handleSendMessage: handleAIChatSend,
         isTyping: chatLogic.isTyping,
         onKeyDown: chatLogic.handleKeyPress,
         onChange: chatLogic.handleInputChange,
@@ -1065,9 +1102,9 @@ const EventHeatmap: React.FC = () => {
         globalQueries: chatLogic.globalQueries,
         toggleRecentQueries: chatLogic.toggleRecentQueries,
         inputRef: chatLogic.inputRef,
-        onAddEvent: handleOpenEventForm, // Changed to `handleOpenEventForm`
-        showAnimatedPrompts: !aiChatInput.trim(), // Show animated prompts if input is empty
-        activeChatModeValue: "ai" // Always AI mode for this input
+        onAddEvent: handleOpenEventForm,
+        showAnimatedPrompts: !aiChatInput.trim(),
+        activeChatModeValue: "ai"
       }} />
 
       {/* Button to toggle Filter Panel */}
@@ -1314,7 +1351,7 @@ const EventHeatmap: React.FC = () => {
             </div>
             <div className="flex items-center gap-2">
               <Button
-                onClick={goToAIChat} // Change to goToAIChat
+                onClick={goToAIChat}
                 className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1"
               >
                 Zum Chat
@@ -1364,10 +1401,10 @@ const EventHeatmap: React.FC = () => {
               chatLogic={chatLogic}
               activeChatModeValue="ai"
               communityGroupId=""
-              hideInput={true} // Hide the internal ChatInput
-              externalInput={aiChatInput} // Pass external input
-              setExternalInput={setAiChatInput} // Pass external setInput
-              onExternalSendHandlerChange={setAiChatExternalSendHandler} // Pass the handler setter
+              hideInput={true}
+              externalInput={aiChatInput}
+              setExternalInput={setAiChatInput}
+              onExternalSendHandlerChange={setAiChatExternalSendHandler} // Correct handler assignment
             />
           </div>
         </div>
@@ -1439,7 +1476,7 @@ const EventHeatmap: React.FC = () => {
             </DialogTitle>
           </DialogHeader>
           <EventForm
-            onAddEvent={addUserEvent} // Changed to `addUserEvent`
+            onAddEvent={addUserEvent}
             onSuccess={() => setIsEventFormOpen(false)}
             onCancel={() => setIsEventFormOpen(false)}
             selectedDate={new Date()}
