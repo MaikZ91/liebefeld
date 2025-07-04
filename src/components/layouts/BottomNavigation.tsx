@@ -44,7 +44,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           )}
         >
           <MessageSquare className="h-4 w-4" />
-          <span className="text-[10px]">Chat</span>
+          <span className="text-[10px]">Community Chat</span>
           {newMessagesCount > 0 && (
             <Badge className="absolute -top-1 -right-1 bg-green-600 text-white h-4 w-4 flex items-center justify-center rounded-full text-[8px] p-0">
               {newMessagesCount}
@@ -63,7 +63,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           )}
         >
           <Map className="h-4 w-4" />
-          <span className="text-[10px]">Karte</span>
+          <span className="text-[10px]">Social Map</span>
         </Button>
 
         {/* User Directory Button */}
@@ -77,7 +77,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           )}
         >
           <Users className="h-4 w-4" />
-          <span className="text-[10px]">Nutzer</span>
+          <span className="text-[10px]">Users</span>
         </Button>
         
         {/* Calendar Events Button */}
@@ -91,7 +91,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           )}
         >
           <Calendar className="h-4 w-4" />
-          <span className="text-[10px]">Events</span>
+          <span className="text-[10px]">Event Calendar</span>
           {newEventsCount > 0 && (
             <Badge className="absolute -top-1 -right-1 bg-green-600 text-white h-4 w-4 flex items-center justify-center rounded-full text-[8px] p-0">
               {newEventsCount}
