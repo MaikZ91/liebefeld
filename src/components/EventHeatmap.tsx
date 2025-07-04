@@ -569,53 +569,44 @@ const EventHeatmap: React.FC = () => {
     tribeSpots.forEach(spot => {
       const iconHtml = `
         <div style="
-          background: linear-gradient(135deg, #f59e0b, #d97706);
+          background: #000000;
           color: white;
           border-radius: 50%;
-          width: 80px;
-          height: 80px;
+          width: 50px;
+          height: 50px;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 8px;
-          border: 4px solid white;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+          border: 3px solid #d4af37;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
           cursor: pointer;
-          font-family: sans-serif;
+          font-family: 'Inter', sans-serif;
           text-align: center;
           position: relative;
-        ">
-          <div style="
-            font-size: 24px;
-            margin-bottom: 2px;
-          ">
-            🏛️
-          </div>
+          transition: all 0.3s ease;
+        " 
+        onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 4px 16px rgba(212,175,55,0.4)';"
+        onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.3)';">
           <div style="
             font-size: 10px;
-            font-weight: bold;
-            line-height: 1;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            line-height: 1.1;
             overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 40px;
           ">
-            ${spot.name}
+            ${spot.name.split(' ')[0]}
           </div>
           <div style="
-            position: absolute;
-            bottom: -8px;
-            right: -8px;
-            background: #ef4444;
-            color: white;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            border: 2px solid white;
+            font-size: 6px;
+            opacity: 0.8;
+            margin-top: 1px;
           ">
-            ✨
+            TRIBE
           </div>
         </div>
       `;
@@ -623,9 +614,9 @@ const EventHeatmap: React.FC = () => {
       const customIcon = L.divIcon({
         html: iconHtml,
         className: 'custom-tribe-spot-marker',
-        iconSize: [80, 80],
-        iconAnchor: [40, 40],
-        popupAnchor: [0, -40]
+        iconSize: [50, 50],
+        iconAnchor: [25, 25],
+        popupAnchor: [0, -25]
       });
 
       const marker = L.marker([spot.lat, spot.lng], { icon: customIcon });
