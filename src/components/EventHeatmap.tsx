@@ -49,7 +49,7 @@ L.Icon.Default.mergeOptions({
 });
 
 const EventHeatmap: React.FC = () => {
-  const { events, isLoading, refreshEvents } = useEvents();
+  const { events, isLoading, refreshEvents, addUserEvent } = useEvents(); // Destructure addUserEvent
   const { selectedCity } = useEventContext();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -474,29 +474,10 @@ const EventHeatmap: React.FC = () => {
     chatLogic.handleExternalQuery("Hallo KI, welche Events gibt es heute?");
   };
 
-  const handleAddEvent = async (eventData: any) => {
-    try {
-      const cityObject = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase());
-      const cityName = cityObject ? cityObject.name : selectedCity;
-      
-      const eventWithCity = { ...eventData, city: cityName };
-
-      console.log('Adding new event to database only:', eventWithCity);
-      await addUserEvent(eventWithCity);
-      toast({
-        title: "Event erfolgreich erstellt!",
-        description: `${eventData.title} wurde hinzugefügt.`,
-      });
-      refreshEvents();
-      setIsEventFormOpen(false);
-    } catch (error: any) {
-      console.error('Error adding event:', error);
-      toast({
-        title: "Fehler",
-        description: "Event konnte nicht erstellt werden.",
-        variant: "destructive"
-      });
-    }
+  // The local handleAddEvent is removed.
+  // Directly use `addUserEvent` from `useEvents` hook.
+  const handleAddEventClick = () => {
+    setIsEventFormOpen(true);
   };
 
   useEffect(() => {
@@ -1047,29 +1028,11 @@ const EventHeatmap: React.FC = () => {
     }
   };
 
-  const handleAddEvent = async (eventData: any) => {
-    try {
-      const cityObject = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase());
-      const cityName = cityObject ? cityObject.name : selectedCity;
-      
-      const eventWithCity = { ...eventData, city: cityName };
-
-      console.log('Adding new event to database only:', eventWithCity);
-      await addUserEvent(eventWithCity);
-      toast({
-        title: "Event erfolgreich erstellt!",
-        description: `${eventData.title} wurde hinzugefügt.`,
-      });
-      refreshEvents();
-      setIsEventFormOpen(false);
-    } catch (error: any) {
-      console.error('Error adding event:', error);
-      toast({
-        title: "Fehler",
-        description: "Event konnte nicht erstellt werden.",
-        variant: "destructive"
-      });
-    }
+  // The local handleAddEvent is removed.
+  // Directly use `addUserEvent` from `useEvents` hook.
+  // The function to open the form for adding an event.
+  const handleOpenEventForm = () => {
+    setIsEventFormOpen(true);
   };
 
   if (isLoading) {
@@ -1102,7 +1065,7 @@ const EventHeatmap: React.FC = () => {
         globalQueries: chatLogic.globalQueries,
         toggleRecentQueries: chatLogic.toggleRecentQueries,
         inputRef: chatLogic.inputRef,
-        onAddEvent: () => setIsEventFormOpen(true),
+        onAddEvent: handleOpenEventForm, // Changed to `handleOpenEventForm`
         showAnimatedPrompts: !aiChatInput.trim(), // Show animated prompts if input is empty
         activeChatModeValue: "ai" // Always AI mode for this input
       }} />
@@ -1476,7 +1439,7 @@ const EventHeatmap: React.FC = () => {
             </DialogTitle>
           </DialogHeader>
           <EventForm
-            onAddEvent={handleAddEvent}
+            onAddEvent={addUserEvent} // Changed to `addUserEvent`
             onSuccess={() => setIsEventFormOpen(false)}
             onCancel={() => setIsEventFormOpen(false)}
             selectedDate={new Date()}
