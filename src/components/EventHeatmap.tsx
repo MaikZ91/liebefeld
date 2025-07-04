@@ -26,7 +26,7 @@ import SwipeableEventPanel from '@/components/event-chat/SwipeableEventPanel';
 import { PanelEventData, PanelEvent } from '@/components/event-chat/types';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 import EventForm from '@/components/EventForm';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { messageService } from '@/services/messageService';
@@ -77,19 +77,10 @@ const EventHeatmap: React.FC = () => {
   const [centralAvatarUsername, setCentralAvatarUsername] = useState('');
   const [centralAvatarImage, setCentralAvatarImage] = useState('');
 
-  // Tribe Spots in Bielefeld
-  const tribeSpots = [
-    { name: 'Sparrenburg', lat: 52.0323, lng: 8.5423 },
-    { name: 'Obersee', lat: 52.0448, lng: 8.5329 },
-    { name: 'Lutterviertel', lat: 52.0289, lng: 8.5291 },
-    { name: 'Gellershagen Park', lat: 52.0533, lng: 8.4872 },
-    { name: 'Klosterplatz', lat: 52.0205, lng: 8.5355 }
-  ];
-  const [tribeSpotMarkers, setTribeSpotMarkers] = useState<L.Marker[]>([]);
-
-  // New state for AI Chat integration
+  // States for AI Chat integration
   const [showAIChat, setShowAIChat] = useState(false);
   const [aiChatInput, setAiChatInput] = useState('');
+  const [aiChatExternalSendHandler, setAiChatExternalSendHandler] = useState<(() => Promise<void>) | null>(null);
 
   // State for geocoded coordinates
   const [eventCoordinates, setEventCoordinates] = useState<Map<string, { lat: number; lng: number }>>(new Map()); // Corrected line here!
@@ -476,24 +467,22 @@ const EventHeatmap: React.FC = () => {
     }
   };
 
-  const goToChat = () => {
-    window.location.href = '/chat';
+  // Modified goToChat to ensure AI chat is shown
+  const goToAIChat = () => {
+    setShowAIChat(true);
+    // Optionally focus the input or send a default message
+    chatLogic.handleExternalQuery("Hallo KI, welche Events gibt es heute?");
   };
 
   const handleAddEvent = async (eventData: any) => {
     try {
-      const { data, error } = await supabase
-        .from('community_events')
-        .insert([{
-          ...eventData,
-          city: cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity,
-          created_at: new Date().toISOString()
-        }])
-        .select()
-        .single();
+      const cityObject = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase());
+      const cityName = cityObject ? cityObject.name : selectedCity;
+      
+      const eventWithCity = { ...eventData, city: cityName };
 
-      if (error) throw error;
-
+      console.log('Adding new event to database only:', eventWithCity);
+      await addUserEvent(eventWithCity);
       toast({
         title: "Event erfolgreich erstellt!",
         description: `${eventData.title} wurde hinzugefügt.`,
@@ -620,17 +609,6 @@ const EventHeatmap: React.FC = () => {
       });
 
       const marker = L.marker([spot.lat, spot.lng], { icon: customIcon });
-
-      const usersAtSpot = allUserProfiles.filter(user => {
-        const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null;
-        if (!hasLiveLocation) return false;
-        
-        const distance = Math.sqrt(
-          Math.pow(user.current_live_location_lat! - spot.lat, 2) + 
-          Math.pow(user.current_live_location_lng! - spot.lng, 2)
-        );
-        return distance < 0.002; // About 200m radius
-      });
 
       marker.on('click', async () => {
         const username = currentUser || localStorage.getItem('community_chat_username') || 'Gast';
@@ -1057,17 +1035,40 @@ const EventHeatmap: React.FC = () => {
     setIsPanelOpen(false);
     setShowPerfectDayPanel(false);
   };
-
-  const handleAIChatToggle = () => {
-    setShowAIChat(!showAIChat);
+  
+  // NEW: handleAIChatSend function to trigger AI chat open
+  const handleAIChatSend = async () => {
+    if (aiChatInput.trim()) {
+      setShowAIChat(true); // Open AI Chat panel
+      if (aiChatExternalSendHandler) {
+        await aiChatExternalSendHandler(); // Trigger the actual message sending in the AI chat bot
+      }
+      setAiChatInput(''); // Clear the input field
+    }
   };
 
-  const handleAIChatSend = () => {
-    if (aiChatInput.trim()) {
-      // Send the message to the AI chat logic
-      chatLogic.setInput(aiChatInput);
-      chatLogic.handleSendMessage();
-      setAiChatInput('');
+  const handleAddEvent = async (eventData: any) => {
+    try {
+      const cityObject = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase());
+      const cityName = cityObject ? cityObject.name : selectedCity;
+      
+      const eventWithCity = { ...eventData, city: cityName };
+
+      console.log('Adding new event to database only:', eventWithCity);
+      await addUserEvent(eventWithCity);
+      toast({
+        title: "Event erfolgreich erstellt!",
+        description: `${eventData.title} wurde hinzugefügt.`,
+      });
+      refreshEvents();
+      setIsEventFormOpen(false);
+    } catch (error: any) {
+      console.error('Error adding event:', error);
+      toast({
+        title: "Fehler",
+        description: "Event konnte nicht erstellt werden.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -1089,7 +1090,22 @@ const EventHeatmap: React.FC = () => {
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Live Ticker Header */}
-      <HeatmapHeader selectedCity={selectedCity} />
+      <HeatmapHeader selectedCity={selectedCity} chatInputProps={{
+        input: aiChatInput,
+        setInput: setAiChatInput,
+        handleSendMessage: handleAIChatSend, // Use the new handler here
+        isTyping: chatLogic.isTyping,
+        onKeyDown: chatLogic.handleKeyPress,
+        onChange: chatLogic.handleInputChange,
+        isHeartActive: chatLogic.isHeartActive,
+        handleHeartClick: chatLogic.handleHeartClick,
+        globalQueries: chatLogic.globalQueries,
+        toggleRecentQueries: chatLogic.toggleRecentQueries,
+        inputRef: chatLogic.inputRef,
+        onAddEvent: () => setIsEventFormOpen(true),
+        showAnimatedPrompts: !aiChatInput.trim(), // Show animated prompts if input is empty
+        activeChatModeValue: "ai" // Always AI mode for this input
+      }} />
 
       {/* Button to toggle Filter Panel */}
       <div className="absolute top-16 left-4 z-[1001]">
@@ -1198,42 +1214,6 @@ const EventHeatmap: React.FC = () => {
                 {isPerfectDayLoading ? 'Generiere...' : 'Perfect Day'}
               </Button>
 
-              {/* AI Chat Button */}
-              <Button
-                onClick={handleAIChatToggle}
-                className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-medium"
-              >
-                <MessageSquare className="w-4 h-4 mr-2" />
-                {showAIChat ? 'Chat schließen' : 'AI Chat'}
-              </Button>
-
-              {/* AI Chat Input (Conditional) */}
-              {showAIChat && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      placeholder="Frage mich nach Events in deiner Stadt..."
-                      value={aiChatInput}
-                      onChange={(e) => setAiChatInput(e.target.value)}
-                      className="flex-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAIChatSend();
-                        }
-                      }}
-                    />
-                    <Button
-                      onClick={handleAIChatSend}
-                      disabled={!aiChatInput.trim()}
-                      size="icon"
-                      className="bg-blue-500 hover:bg-blue-600"
-                    >
-                      <Send className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
             </div>
           </Card>
 
@@ -1371,7 +1351,7 @@ const EventHeatmap: React.FC = () => {
             </div>
             <div className="flex items-center gap-2">
               <Button
-                onClick={goToChat}
+                onClick={goToAIChat} // Change to goToAIChat
                 className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1"
               >
                 Zum Chat
@@ -1421,12 +1401,10 @@ const EventHeatmap: React.FC = () => {
               chatLogic={chatLogic}
               activeChatModeValue="ai"
               communityGroupId=""
-              hideInput={true}
-              externalInput={aiChatInput}
-              setExternalInput={setAiChatInput}
-              onExternalSendHandlerChange={(handler) => {
-                // Store the external send handler if needed
-              }}
+              hideInput={true} // Hide the internal ChatInput
+              externalInput={aiChatInput} // Pass external input
+              setExternalInput={setAiChatInput} // Pass external setInput
+              onExternalSendHandlerChange={setAiChatExternalSendHandler} // Pass the handler setter
             />
           </div>
         </div>

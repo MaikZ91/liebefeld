@@ -1,5 +1,5 @@
 // src/components/layouts/Layout.tsx
-// Changed: Added ChatInput to header with proper spacing
+// Changed: Removed ChatInput from header with proper spacing
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -7,7 +7,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Button } from "@/components/ui/button";
 import CitySelector from './CitySelector';
 import { BottomNavigation } from './BottomNavigation';
-import ChatInput from '@/components/event-chat/ChatInput';
+// ChatInput is now in HeatmapHeader, no need to import here directly for MainNav
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -19,7 +19,7 @@ interface LayoutProps {
   setIsEventListSheetOpen?: (open: boolean) => void;
   newMessagesCount?: number;
   newEventsCount?: number;
-  // Chat input props
+  // Chat input props (now passed to HeatmapHeader)
   chatInputProps?: {
     input: string;
     setInput: (value: string) => void;
@@ -34,6 +34,7 @@ interface LayoutProps {
     inputRef: React.RefObject<HTMLInputElement>;
     onAddEvent?: () => void;
     showAnimatedPrompts: boolean;
+    activeChatModeValue: 'ai' | 'community';
     activeCategory?: string;
     onCategoryChange?: (category: string) => void;
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -49,6 +50,9 @@ export const Layout: React.FC<LayoutProps> = ({
   setIsEventListSheetOpen,
   newMessagesCount = 0,
   newEventsCount = 0,
+  // chatInputProps is now passed directly to HeatmapHeader, not used in MainNav anymore
+  // so we remove it from here if MainNav doesn't need it.
+  // We keep it as a prop for Layout because Heatmap needs it.
   chatInputProps
 }) => {
   const { pathname } = useLocation();
@@ -91,7 +95,8 @@ export const Layout: React.FC<LayoutProps> = ({
       {!hideHeader && ( // Header wird nur angezeigt, wenn hideHeader false ist
         <header className="sticky top-0 z-50 w-full bg-black/90 backdrop-blur-sm border-b border-black">
           <div className="container flex h-16 items-center">
-            <MainNav pathname={pathname} chatInputProps={chatInputProps} activeView={activeView} />
+            {/* MainNav no longer needs chatInputProps directly here */}
+            <MainNav pathname={pathname} activeView={activeView} /> 
             {(pathname !== '/chat' && pathname !== '/') && ( 
               <div className="ml-auto flex items-center space-x-4">
                 <ThemeToggleButton />
@@ -161,12 +166,14 @@ const items: NavItem[] = [
 
 interface MainNavProps {
   pathname: string;
-  chatInputProps?: any;
+  // Removed chatInputProps from here as it's now handled by HeatmapHeader
+  // chatInputProps?: any; 
   activeView?: 'ai' | 'community';
 }
 
-const MainNav: React.FC<MainNavProps> = ({ pathname, chatInputProps, activeView }) => {
-  // If we're on chat page or the root path, show header with THE TRIBE + city selector + chat input
+const MainNav: React.FC<MainNavProps> = ({ pathname, activeView }) => {
+  // If we're on chat page or the root path, show header with THE TRIBE + city selector
+  // The chat input is now directly in HeatmapHeader, so we remove it from here.
   if (pathname === '/chat' || pathname === '/') {
     return (
       <div className="flex items-center w-full gap-4">
@@ -177,31 +184,7 @@ const MainNav: React.FC<MainNavProps> = ({ pathname, chatInputProps, activeView 
           </Link>
           <CitySelector />
         </div>
-        
-        {/* Right side: Chat input - only show if props are provided */}
-        {chatInputProps && (
-          <div className="flex-1 min-w-0">
-            <ChatInput
-              input={chatInputProps.input}
-              setInput={chatInputProps.setInput}
-              handleSendMessage={chatInputProps.handleSendMessage}
-              isTyping={chatInputProps.isTyping}
-              // Corrected prop name
-              onKeyDown={chatInputProps.handleKeyPress}
-              isHeartActive={chatInputProps.isHeartActive}
-              handleHeartClick={chatInputProps.handleHeartClick}
-              globalQueries={chatInputProps.globalQueries}
-              toggleRecentQueries={chatInputProps.toggleRecentQueries}
-              inputRef={chatInputProps.inputRef}
-              onAddEvent={chatInputProps.onAddEvent}
-              showAnimatedPrompts={chatInputProps.showAnimatedPrompts}
-              activeChatModeValue={activeView || 'ai'}
-              activeCategory={chatInputProps.activeCategory}
-              onCategoryChange={chatInputProps.onCategoryChange}
-              onChange={chatInputProps.onChange}
-            />
-          </div>
-        )}
+        {/* ChatInput is no longer rendered here */}
       </div>
     );
   }

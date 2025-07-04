@@ -19,6 +19,8 @@ const AnimatedText = ({ text, className = '' }: { text: string; className?: stri
 interface ExtendedChatInputProps extends ChatInputProps {
   activeCategory?: string;
   onCategoryChange?: (category: string) => void;
+  // NEW: Add custom placeholder prop
+  placeholder?: string;
 }
 
 const ChatInput: React.FC<ExtendedChatInputProps> = ({
@@ -37,7 +39,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   showAnimatedPrompts,
   activeChatModeValue,
   activeCategory = 'Ausgehen',
-  onCategoryChange
+  onCategoryChange,
+  placeholder // NEW: Receive placeholder prop
 }) => {
   const { events } = useEventContext();
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
@@ -106,17 +109,17 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   };
 
   // NEW: Local handler for sending message
-  const handleLocalSendMessage = (eventData?: any) => {
+  const handleLocalSendMessage = async (eventData?: any) => {
     setInput(localInput); // Update parent hook's input state right before sending
-    handleSendMessage(localInput); // Pass localInput to handleSendMessage
+    await handleSendMessage(eventData); // Pass localInput to handleSendMessage
     setLocalInput(''); // Clear local input field
   };
   
   // NEW: Local handler for key press (specifically for Enter)
   const handleLocalKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      e.preventDefault();
-      handleLocalSendMessage();
+      e.preventDefault(); // Verhindert einen Zeilenumbruch im Input-Feld
+      handleLocalSendMessage(); // Löst das Senden der Nachricht aus
     } else {
       // If parent has a keyPress handler (e.g. for debug or other purposes), call it
       if (onKeyDown) {
@@ -139,7 +142,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 
   const getDynamicPlaceholder = () => {
     if (activeChatModeValue === 'ai') {
-      return showAnimatedPrompts && localInput.trim() === '' ? displayText : "Frage nach Events..."; // Use localInput
+      // Use the provided placeholder if available, otherwise fallback
+      return placeholder || (showAnimatedPrompts && localInput.trim() === '' ? displayText : "Frage nach Events...");
     } else {
       return "Verbinde dich mit der Community...";
     }
@@ -160,7 +164,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-pointer border border-gray-200 dark:border-gray-700"
               onClick={() => {
                 // Pass event data to handleSendMessage for sharing
-                handleSendMessage({
+                handleLocalSendMessage({
                   title: event.title,
                   date: event.date,
                   time: event.time,

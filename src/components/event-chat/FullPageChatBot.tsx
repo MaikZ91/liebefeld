@@ -26,7 +26,7 @@ interface FullPageChatBotProps {
   hideInput?: boolean;
   externalInput?: string;
   setExternalInput?: (value: string) => void;
-  onExternalSendHandlerChange?: (handler: (() => void) | null) => void;
+  onExternalSendHandlerChange?: (handler: (() => Promise<void>) | null) => void; // Corrected type
 }
 
 const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
@@ -94,7 +94,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     if (activeChatModeValue === 'community' && setExternalInput && communityInput !== externalInput) {
       setExternalInput(communityInput);
     }
-  }, [communityInput, activeChatModeValue, setExternalInput]);
+  }, [communityInput, activeChatModeValue, setExternalInput, externalInput]); // Added externalInput to dependency array
 
   // Only update community input from external when it's different and not empty
   useEffect(() => {
@@ -105,10 +105,14 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   // Provide external send handler
   useEffect(() => {
-    if (activeChatModeValue === 'community' && onExternalSendHandlerChange) {
-      onExternalSendHandlerChange(() => communitySendMessage);
-    } else if (activeChatModeValue === 'ai' && onExternalSendHandlerChange) {
-      onExternalSendHandlerChange(() => aiSendMessage);
+    if (onExternalSendHandlerChange) {
+      if (activeChatModeValue === 'community') {
+        onExternalSendHandlerChange(() => communitySendMessage);
+      } else if (activeChatModeValue === 'ai') {
+        onExternalSendHandlerChange(() => aiSendMessage);
+      } else {
+        onExternalSendHandlerChange(null);
+      }
     }
     
     return () => {
