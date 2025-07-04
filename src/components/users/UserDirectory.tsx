@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "@/types/chatTypes";
 import UserGallery from './UserGallery';
@@ -116,6 +116,9 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-5xl bg-black text-white border-gray-800 p-0">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Benutzer Verzeichnis</DialogTitle>
+          </DialogHeader>
           <div className="p-6 pb-0">
             <DirectoryHeader 
               currentUsername={currentUsername}
