@@ -26,7 +26,7 @@ import SwipeableEventPanel from '@/components/event-chat/SwipeableEventPanel';
 import { PanelEventData, PanelEvent } from '@/components/event-chat/types';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast'; // Added useToast import
+import { toast } from '@/hooks/use-toast';
 import EventForm from '@/components/EventForm';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { messageService } from '@/services/messageService';
@@ -66,8 +66,8 @@ const EventHeatmap: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [map, setMap] = useState<L.Map | null>(null);
   const [eventMarkers, setEventMarkers] = useState<L.Marker[]>([]);
-  const [tribeSpotMarkers, setTribeSpotMarkers] = useState<L.Marker[]>([]); // Initialize state
-  const currentTribeSpotMarkersRef = useRef<L.Marker[]>([]); // Ref to hold current markers
+  const [tribeSpotMarkers, setTribeSpotMarkers] = useState<L.Marker[]>([]);
+  const currentTribeSpotMarkersRef = useRef<L.Marker[]>([]);
   const [userMarkers, setUserMarkers] = useState<L.Marker[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -79,19 +79,23 @@ const EventHeatmap: React.FC = () => {
   const [liveStatusMessage, setLiveStatusMessage] = useState('');
   const [isPrivateChatOpen, setIsPrivateChatOpen] = useState(false);
   const [selectedUserForPrivateChat, setSelectedUserForPrivateChat] = useState<UserProfile | null>(null);
-  const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [showFilterPanel, setShowFilterPanel] = useState(false); // Ändere dies von true zu false
   const [allUserProfiles, setAllUserProfiles] = useState<UserProfile[]>([]);
+
+  // Declare central avatar states at the top level to ensure scope
+  const [centralAvatarUsername, setCentralAvatarUsername] = useState('');
+  const [centralAvatarImage, setCentralAvatarImage] = useState('');
+  const [showCentralAvatar, setShowCentralAvatar] = useState(false); // Deklariere hier
 
   const [showAIChat, setShowAIChat] = useState(false);
   const [aiChatInput, setAiChatInput] = useState('');
-  const [aiChatExternalSendHandler, setAiChatExternalSendHandler] = useState<((input?: string) => Promise<void>) | null>(null);
+  const [aiChatExternalSendHandler, setAiChatExternalSendHandler] = useState<((input?: string | any) => Promise<void>) | null>(null); // Updated type
 
   const [eventCoordinates, setEventCoordinates] = useState<Map<string, { lat: number; lng: number }>>(new Map());
 
   const chatLogic = useChatLogic();
 
   const mapRef = useRef<HTMLDivElement>(null);
-  // useToast already imported
 
   const selectedDateString = format(selectedDate, 'yyyy-MM-dd');
 
@@ -376,9 +380,9 @@ const EventHeatmap: React.FC = () => {
     const username = currentUser || localStorage.getItem('community_chat_username') || 'Gast';
     const avatar = userProfile?.avatar || localStorage.getItem('community_chat_avatar') || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
     
-    setCentralAvatarUsername(username);
-    setCentralAvatarImage(avatar);
-    setShowCentralAvatar(true);
+    setCentralAvatarUsername(username); // Korrigiert
+    setCentralAvatarImage(avatar);     // Korrigiert
+    setShowCentralAvatar(true);         // Korrigiert
     
     const checkInToast = toast({ 
       title: "Check-in wird verarbeitet...", 
@@ -449,7 +453,7 @@ const EventHeatmap: React.FC = () => {
     } finally {
       setLiveStatusMessage('');
       checkInToast.dismiss();
-      setShowCentralAvatar(false);
+      setShowCentralAvatar(false); // Korrigiert
     }
   };
 
@@ -458,19 +462,20 @@ const EventHeatmap: React.FC = () => {
     chatLogic.handleExternalQuery("Hallo KI, welche Events gibt es heute?");
   };
 
-  // Renamed to handleOpenEventForm to avoid conflict and align with its purpose
-  const handleOpenEventForm = async (eventData: any) => {
+  // Nur eine Deklaration für handleOpenEventForm, um Redeklarationsfehler zu vermeiden.
+  // Diese Funktion wird an das EventForm-Modal übergeben.
+  const handleAddEventToDatabase = async (newEventData: Omit<Event, 'id'>) => {
     try {
       const cityObject = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase());
       const cityName = cityObject ? cityObject.name : selectedCity;
       
-      const eventWithCity = { ...eventData, city: cityName };
+      const eventWithCity = { ...newEventData, city: cityName };
 
       console.log('Adding new event to database only:', eventWithCity);
-      await addUserEvent(eventWithCity); // Direct use of addUserEvent
+      await addUserEvent(eventWithCity);
       toast({
         title: "Event erfolgreich erstellt!",
-        description: `${eventData.title} wurde hinzugefügt.`,
+        description: `${newEventData.title} wurde hinzugefügt.`,
       });
       refreshEvents();
       setIsEventFormOpen(false);
@@ -483,6 +488,7 @@ const EventHeatmap: React.FC = () => {
       });
     }
   };
+
 
   useEffect(() => {
     if (!mapRef.current) {
@@ -522,16 +528,15 @@ const EventHeatmap: React.FC = () => {
   }, [mapRef.current, selectedCity]);
 
   useEffect(() => {
-    // Clear previously added markers on re-render (or unmount)
     currentTribeSpotMarkersRef.current.forEach(marker => {
       if (map && map.hasLayer(marker)) {
         map.removeLayer(marker);
       }
     });
-    currentTribeSpotMarkersRef.current = []; // Clear the ref for new markers
+    currentTribeSpotMarkersRef.current = [];
 
     if (!map || (selectedCity.toLowerCase() !== 'bi' && selectedCity.toLowerCase() !== 'bielefeld')) {
-      setTribeSpotMarkers([]); // Clear state if not in Bielefeld
+      setTribeSpotMarkers([]);
       return;
     }
 
@@ -624,7 +629,7 @@ const EventHeatmap: React.FC = () => {
               .insert(profileData);
           }
 
-          const usersAtSpot = allUserProfiles.filter(user => { // usersAtSpot defined here
+          const usersAtSpot = allUserProfiles.filter(user => {
             const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null;
             if (!hasLiveLocation) return false;
             
@@ -632,10 +637,9 @@ const EventHeatmap: React.FC = () => {
               Math.pow(user.current_live_location_lat! - spot.lat, 2) + 
               Math.pow(user.current_live_location_lng! - spot.lng, 2)
             );
-            return distance < 0.002; // About 200m radius
+            return distance < 0.002;
           });
 
-          // Send community message
           const cityCommunityGroupId = 'bi_ausgehen';
           await messageService.sendMessage(
             cityCommunityGroupId,
@@ -660,7 +664,7 @@ const EventHeatmap: React.FC = () => {
         }
       });
 
-      const usersAtSpot = allUserProfiles.filter(user => { // Redefine usersAtSpot for popup content
+      const usersAtSpot = allUserProfiles.filter(user => {
         const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null;
         if (!hasLiveLocation) return false;
         
@@ -725,7 +729,7 @@ const EventHeatmap: React.FC = () => {
     });
 
     setTribeSpotMarkers(newTribeSpotMarkers);
-    currentTribeSpotMarkersRef.current = newTribeSpotMarkers; // Update ref with new markers
+    currentTribeSpotMarkersRef.current = newTribeSpotMarkers;
 
     return () => {
       currentTribeSpotMarkersRef.current.forEach(marker => {
@@ -889,7 +893,7 @@ const EventHeatmap: React.FC = () => {
     });
     
     const newUserMarkers: L.Marker[] = [];
-    const TWO_HOURS_MS = 2 * 60 * 60 * 1000; // Extended to 2 hours for persistent avatars
+    const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 
     allUserProfiles.forEach(user => {
       const userCity = user.favorite_locations?.[0]?.toLowerCase() || 'bielefeld';
@@ -1037,39 +1041,20 @@ const EventHeatmap: React.FC = () => {
     setShowPerfectDayPanel(false);
   };
   
-  const handleAIChatSend = async (messageContent?: string) => { // Modified signature to accept optional string
+  const handleAIChatSend = async (messageContent?: string) => {
     if ((messageContent && messageContent.trim()) || aiChatInput.trim()) {
       setShowAIChat(true);
       if (aiChatExternalSendHandler) {
-        await aiChatExternalSendHandler(aiChatInput); // Pass aiChatInput to the handler
+        // Pass aiChatInput to the handler, which expects a string or any
+        await aiChatExternalSendHandler(aiChatInput); 
       }
       setAiChatInput('');
     }
   };
 
-  const handleOpenEventForm = async (eventData: any) => {
-    try {
-      const cityObject = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase());
-      const cityName = cityObject ? cityObject.name : selectedCity;
-      
-      const eventWithCity = { ...eventData, city: cityName };
-
-      console.log('Adding new event to database only:', eventWithCity);
-      await addUserEvent(eventWithCity);
-      toast({
-        title: "Event erfolgreich erstellt!",
-        description: `${eventData.title} wurde hinzugefügt.`,
-      });
-      refreshEvents();
-      setIsEventFormOpen(false);
-    } catch (error: any) {
-      console.error('Error adding event:', error);
-      toast({
-        title: "Fehler",
-        description: "Event konnte nicht erstellt werden.",
-        variant: "destructive"
-      });
-    }
+  // Diese Funktion öffnet das EventForm-Modal
+  const handleOpenEventFormForModal = () => { 
+    setIsEventFormOpen(true);
   };
 
   if (isLoading) {
@@ -1102,7 +1087,7 @@ const EventHeatmap: React.FC = () => {
         globalQueries: chatLogic.globalQueries,
         toggleRecentQueries: chatLogic.toggleRecentQueries,
         inputRef: chatLogic.inputRef,
-        onAddEvent: handleOpenEventForm,
+        onAddEvent: handleOpenEventFormForModal, // Use the no-argument function here
         showAnimatedPrompts: !aiChatInput.trim(),
         activeChatModeValue: "ai"
       }} />
@@ -1404,7 +1389,7 @@ const EventHeatmap: React.FC = () => {
               hideInput={true}
               externalInput={aiChatInput}
               setExternalInput={setAiChatInput}
-              onExternalSendHandlerChange={setAiChatExternalSendHandler} // Correct handler assignment
+              onExternalSendHandlerChange={setAiChatExternalSendHandler}
             />
           </div>
         </div>
@@ -1476,7 +1461,7 @@ const EventHeatmap: React.FC = () => {
             </DialogTitle>
           </DialogHeader>
           <EventForm
-            onAddEvent={addUserEvent}
+            onAddEvent={handleAddEventToDatabase} // Korrigierte Zuweisung
             onSuccess={() => setIsEventFormOpen(false)}
             onCancel={() => setIsEventFormOpen(false)}
             selectedDate={new Date()}
