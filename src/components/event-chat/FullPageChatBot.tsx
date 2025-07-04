@@ -1,11 +1,11 @@
-// File: src/components/event-chat/FullPageChatBot.tsx
+// src/components/event-chat/FullPageChatBot.tsx
 import React, { useEffect } from 'react';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
 import RecentQueries from './RecentQueries';
 import { useChatMessages } from '@/hooks/chat/useChatMessages';
 import { useMessageSending } from '@/hooks/chat/useMessageSending';
-import { AVATAR_KEY, USERNAME_KEY } from '@/types/chatTypes';
+import { AVATAR_KEY, USERNAME_KEY, EventShare } from '@/types/chatTypes'; // Import EventShare
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/chatUIUtils'; 
 import TypingIndicator from '@/components/chat/TypingIndicator';
@@ -26,7 +26,7 @@ interface FullPageChatBotProps {
   hideInput?: boolean;
   externalInput?: string;
   setExternalInput?: (value: string) => void;
-  onExternalSendHandlerChange?: (handler: ((input?: string) => Promise<void>) | null) => void; // Corrected handler type
+  onExternalSendHandlerChange?: (handler: ((input?: string | any) => Promise<void>) | null) => void; // Updated handler type
 }
 
 const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
@@ -104,9 +104,9 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   useEffect(() => {
     if (onExternalSendHandlerChange) {
       if (activeChatModeValue === 'community') {
-        onExternalSendHandlerChange(communitySendMessage); // Pass the function directly
+        onExternalSendHandlerChange(communitySendMessage);
       } else if (activeChatModeValue === 'ai') {
-        onExternalSendHandlerChange(aiSendMessage); // Pass the function directly
+        onExternalSendHandlerChange(aiSendMessage);
       } else {
         onExternalSendHandlerChange(null);
       }

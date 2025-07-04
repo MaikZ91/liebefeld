@@ -1,5 +1,4 @@
-// File: src/hooks/chat/useMessageSending.ts
-// Changed: 'content' to 'text' and message payload
+// src/hooks/chat/useMessageSending.ts
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { AVATAR_KEY, EventShare } from '@/types/chatTypes';
 import { toast } from '@/hooks/use-toast';
@@ -14,13 +13,14 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = useCallback(async (event?: React.FormEvent, eventData?: EventShare) => {
-    if (event) {
-      event.preventDefault();
-    }
+  // Unified handleSubmit signature to match ChatInputProps['handleSendMessage'] and FullPageChatBot's external handler
+  const handleSubmit = useCallback(async (content?: string | EventShare) => { // Accept string or EventShare
+    // Determine if content is a string message or an eventData object
+    const isEventShare = typeof content === 'object' && content !== null && 'title' in content;
+    const messageToSend = isEventShare ? newMessage.trim() : (content as string || newMessage.trim());
+    const eventData = isEventShare ? (content as EventShare) : undefined;
 
-    const trimmedMessage = newMessage.trim();
-    if ((!trimmedMessage && !fileInputRef.current?.files?.length && !eventData) || isSending) {
+    if ((!messageToSend && !fileInputRef.current?.files?.length && !eventData) || isSending) {
       return;
     }
 
@@ -30,17 +30,15 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
       console.log('Sending message to group:', validGroupId);
       
-      let messageText = trimmedMessage; // Changed from messageContent
+      let messageText = messageToSend;
       
       if (eventData) {
         const { title, date, time, location, category } = eventData;
-        messageText = `🗓️ **Event: ${title}**\\nDatum: ${date} um ${time}\\nOrt: ${location || 'k.A.'}\\nKategorie: ${category}\\n\\n${trimmedMessage}`;
+        messageText = `🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${messageToSend}`;
       }
       
-      // Setzen Sie das Eingabefeld sofort zurück
-      setNewMessage('');
+      setNewMessage(''); // Clear message after determining content
       
-      // Setzen Sie den Tippstatus zurück
       if (typing) {
         const channel = supabase.channel(`typing:${validGroupId}`);
         channel.subscribe();
@@ -62,17 +60,15 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       let mediaUrl = null;
       if (fileInputRef.current?.files?.length) {
         const file = fileInputRef.current.files[0];
-        // Hier wäre die tatsächliche Dateiupload-Logik
-        mediaUrl = URL.createObjectURL(file); // Nur ein Mock-URL für jetzt
+        mediaUrl = URL.createObjectURL(file);
       }
       
-      // Senden Sie die Nachricht an die Datenbank
       const { data, error } = await supabase
         .from('chat_messages')
         .insert([{
           group_id: validGroupId,
           sender: username,
-          text: messageText, // Changed from messageContent
+          text: messageText,
           avatar: localStorage.getItem(AVATAR_KEY),
           media_url: mediaUrl,
           read_by: [username]
@@ -87,12 +83,11 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       
       console.log('Message sent successfully with ID:', data?.id);
       
-      // Senden Sie einen Broadcast für die neue Nachricht, um alle Clients zu aktualisieren
       await realtimeService.sendToChannel(`messages:${validGroupId}`, 'new_message', {
         message: {
           id: data?.id,
           created_at: new Date().toISOString(),
-          text: messageText, // Changed from content
+          text: messageText,
           user_name: username,
           user_avatar: localStorage.getItem(AVATAR_KEY) || '',
           group_id: validGroupId
@@ -115,7 +110,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     }
   }, [groupId, username, newMessage, isSending, typing]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);
     setTyping(e.target.value.length > 0);
     
@@ -154,14 +149,14 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         setTyping(false);
       }
     }, 2000);
-  };
+  }, [groupId, username, typing]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit();
+      handleSubmit(); // Call with no arguments, it will use newMessage
     }
-  };
+  }, [handleSubmit]);
 
   return {
     newMessage,

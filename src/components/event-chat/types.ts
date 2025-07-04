@@ -1,4 +1,4 @@
-// File: src/components/event-chat/types.ts
+// src/components/event-chat/types.ts
 import { LandingSlideData } from './SwipeableLandingPanel';
 
 export interface ChatMessage {
@@ -10,7 +10,7 @@ export interface ChatMessage {
   panelData?: PanelEventData;
   slideData?: LandingSlideData; 
   examplePrompts?: string[]; 
-  isEventNotification?: boolean; // NEW: Flag for event notifications
+  isEventNotification?: boolean;
 }
 
 export interface PanelEventData {
@@ -23,15 +23,15 @@ export interface PanelEvent {
   title: string;
   date: string;
   time: string;
-  price?: string; // Made optional since events from DB don't always have price
+  price?: string;
   location: string;
   image_url: string;
   category: string;
   link?: string; 
-  likes?: number; // Added likes property
-  description?: string; // Added description for completeness
-  rsvp_yes?: number; // Added RSVP data
-  rsvp_maybe?: number; // Added RSVP data
+  likes?: number;
+  description?: string;
+  rsvp_yes?: number;
+  rsvp_maybe?: number;
 }
 
 export interface AdEvent {
@@ -52,7 +52,6 @@ export interface EventChatBotProps {
   hideButtons?: boolean;
 }
 
-// Local storage keys
 export const CHAT_HISTORY_KEY = 'event-chat-history';
 export const CHAT_QUERIES_KEY = 'event-chat-queries';
 
@@ -68,19 +67,17 @@ export interface MessageListProps {
 export interface ChatInputProps {
   input: string;
   setInput: (value: string) => void;
-  // Updated signature to accept optional content argument
+  // This signature is flexible to accept string content or event data
   handleSendMessage: (content?: string | any) => Promise<void>; 
   isTyping: boolean;
-  // Updated event types for HTMLInputElement as ChatInput uses <input>
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void; 
-  // Updated event types for HTMLInputElement as ChatInput uses <input>
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void; 
   isHeartActive: boolean;
   handleHeartClick: () => void;
   globalQueries: any[];
   toggleRecentQueries: () => void;
   inputRef: React.RefObject<HTMLInputElement>;
-  onAddEvent?: () => void;
+  onAddEvent?: () => void; // This is a simple function to trigger the modal
   showAnimatedPrompts: boolean;
   activeChatModeValue: 'ai' | 'community';
   activeCategory?: string;
@@ -118,5 +115,6 @@ export interface FullPageChatBotProps {
   hideInput?: boolean;
   externalInput?: string;
   setExternalInput?: (value: string) => void;
-  onExternalSendHandlerChange?: (handler: (() => void) | null) => void;
+  // This handler will receive the standardized `handleSendMessage` from useMessageSending/useChatLogic
+  onExternalSendHandlerChange?: (handler: ((content?: string | any) => Promise<void>) | null) => void; 
 }

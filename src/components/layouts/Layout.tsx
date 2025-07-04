@@ -4,7 +4,8 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-// CitySelector and ChatInput imports removed as they are now in HeatmapHeader
+import CitySelector from './CitySelector'; // Import CitySelector
+import { BottomNavigation } from './BottomNavigation'; // Import BottomNavigation
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -18,7 +19,7 @@ interface LayoutProps {
   chatInputProps?: {
     input: string;
     setInput: (value: string) => void;
-    handleSendMessage: (input?: string) => Promise<void>; // Updated type for clarity
+    handleSendMessage: (input?: string) => Promise<void>;
     isTyping: boolean;
     onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
     isHeartActive: boolean;
@@ -47,12 +48,12 @@ export const Layout: React.FC<LayoutProps> = ({
   chatInputProps
 }) => {
   const { pathname } = useLocation();
-  const [isAddEventModalOpen, setIsAddEventModalInLayout] = React.useState(false); // Renamed for clarity within Layout
+  const [isAddEventModalOpen, setIsAddEventModalOpen] = React.useState(false); // Consistent naming
   
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       window.triggerAddEvent = () => {
-        setIsAddEventModalInLayout(true); // Updated to use local state setter
+        setIsAddEventModalOpen(true); // Updated to use consistent setter
       };
     }
     return () => {
@@ -66,7 +67,7 @@ export const Layout: React.FC<LayoutProps> = ({
 
   return (
     <>
-      <Sheet open={isAddEventModalInLayout} onOpenChange={setIsAddEventModalInLayout}> {/* Used local state */}
+      <Sheet open={isAddEventModalOpen} onOpenChange={setIsAddEventModalOpen}>
         <SheetContent className="sm:max-w-lg">
           <SheetHeader>
             <SheetTitle>Event hinzufügen</SheetTitle>
@@ -164,7 +165,7 @@ const MainNav: React.FC<MainNavProps> = ({ pathname, activeView }) => {
             <span className="font-bold inline-block">THE TRIBE</span>
           </Link>
           {/* CitySelector is now rendered within HeatmapHeader or other specific pages directly, not here. */}
-          {pathname !== '/' && <CitySelector />} {/* Conditionally render if not on root, for pages like /chat */}
+          {pathname !== '/' && <CitySelector />}
         </div>
       </div>
     );
