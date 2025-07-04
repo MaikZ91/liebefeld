@@ -49,7 +49,7 @@ export const Layout: React.FC<LayoutProps> = ({
 }) => {
   const { pathname } = useLocation();
   const [isAddEventModalOpen, setIsAddEventModalOpen] = React.useState(false); // Correct and consistent naming
-  
+
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       window.triggerAddEvent = () => {
@@ -62,7 +62,7 @@ export const Layout: React.FC<LayoutProps> = ({
       }
     };
   }, []);
-  
+
   const hideHeader = pathname === '/heatmap' || pathname === '/';
 
   return (
@@ -82,12 +82,12 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
         </SheetContent>
       </Sheet>
-      
+
       {!hideHeader && (
         <header className="sticky top-0 z-50 w-full bg-black/90 backdrop-blur-sm border-b border-black">
           <div className="container flex h-16 items-center">
             <MainNav pathname={pathname} chatInputProps={chatInputProps} activeView={activeView} />
-            {(pathname !== '/chat' && pathname !== '/') && ( 
+            {(pathname !== '/chat' && pathname !== '/') && (
               <div className="ml-auto flex items-center space-x-4">
                 <ThemeToggleButton />
               </div>
@@ -95,29 +95,27 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
         </header>
       )}
-      
-      <main className={cn("pb-20", hideHeader ? "pt-0" : "pt-[104px]")}> 
+
+      <main className={cn("pb-20", hideHeader ? "pt-0" : "pt-[104px]")}>
         {children}
       </main>
-      
+
       {(pathname === '/chat' || pathname === '/' || pathname === '/heatmap' || pathname === '/users' || pathname === '/events') && (
         <BottomNavigation
           activeView={activeView}
           setActiveView={setActiveView}
-          handleOpenUserDirectory={handleOpenUserDirectory}
-          setIsEventListSheetOpen={setIsEventListSheetOpen}
           newMessagesCount={newMessagesCount}
           newEventsCount={newEventsCount}
         />
       )}
-      
+
       {!hideFooter && (
         <footer className="border-t border-black bg-black">
           <div className="container flex flex-col items-center justify-between gap-4 py-10 md:h-24 md:flex-row md:py-0">
             <div className="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
-              <a href="/" className="flex items-center space-x-2">
-                <span className="font-sans text-2xl font-bold tracking-tight text-white inline-block">THE TRIBE</span> {/* Ensured consistent styling */}
-              </a>
+              <Link to="/" className="flex items-center space-x-2">
+                <span className="font-sans text-2xl font-bold tracking-tight text-white inline-block" style={{ fontFamily: 'Arial, sans-serif' }}>THE TRIBE</span>
+              </Link>
               <p className="text-center text-sm leading-loose md:text-left">
                 &copy; {new Date().getFullYear()} Liebefeld. All rights reserved.
               </p>
@@ -164,11 +162,11 @@ const MainNav: React.FC<MainNavProps> = ({ pathname, chatInputProps, activeView 
       <div className="flex items-center w-full gap-4">
         <div className="flex flex-col items-start flex-shrink-0">
           <Link to="/" className="flex items-center">
-            <span className="font-sans text-2xl font-bold tracking-tight text-white inline-block">THE TRIBE</span> {/* Ensured consistent styling */}
+            <span className="font-sans text-2xl font-bold tracking-tight text-white inline-block" style={{ fontFamily: 'Arial, sans-serif' }}>THE TRIBE</span>
           </Link>
-          <CitySelector /> {/* CitySelector import is now in Layout.tsx */}
+          <CitySelector />
         </div>
-        
+
         {chatInputProps && (
           <div className="flex-1 min-w-0">
             <ChatInput
@@ -194,11 +192,11 @@ const MainNav: React.FC<MainNavProps> = ({ pathname, chatInputProps, activeView 
       </div>
     );
   }
-  
+
   return (
     <div className="mr-4 flex">
       <Link to="/" className="mr-6 flex items-center space-x-2">
-        <span className="font-sans text-2xl font-bold tracking-tight text-white inline-block">THE TRIBE</span> {/* Ensured consistent styling */}
+        <span className="font-sans text-2xl font-bold tracking-tight text-white inline-block" style={{ fontFamily: 'Arial, sans-serif' }}>THE TRIBE</span>
       </Link>
       <nav className="flex items-center space-x-6 text-sm font-medium">
         {items.map((item, index) => (
