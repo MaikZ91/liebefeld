@@ -1,5 +1,6 @@
 // src/pages/Chat.tsx
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
 import LiveTicker from '@/components/LiveTicker';
@@ -21,7 +22,12 @@ import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { messageService } from '@/services/messageService';
 
 const ChatPage = () => {
-  const [activeView, setActiveView] = useState<'ai' | 'community'>('ai');
+  // Get view mode from URL search params or navigation state
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const initialView = searchParams.get('view') as 'ai' | 'community' || 'ai';
+  
+  const [activeView, setActiveView] = useState<'ai' | 'community'>(initialView);
   const [isAddEventSheetOpen, setIsAddEventSheetOpen] = useState(false);
   const [isEventListSheetOpen, setIsEventListSheetOpen] = useState(false);
   const [isUserDirectoryOpen, setIsUserDirectoryOpen] = useState(false);

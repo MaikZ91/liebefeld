@@ -61,7 +61,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           size="sm" 
           onClick={() => {
             setActiveView?.('community');
-            navigate('/chat'); // Navigate to chat page and set community view
+            navigate('/chat?view=community'); // Navigate to chat page with community view parameter
           }} 
           className={cn(
             "flex flex-col items-center gap-1 px-2 py-2 h-auto relative min-w-0",
