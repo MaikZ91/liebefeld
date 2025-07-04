@@ -33,12 +33,19 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
 
   return (
     <div className="absolute top-0 left-0 right-0 z-[1002] bg-black/90 backdrop-blur-sm border-b border-gray-800">
+      {/* Live Ticker at the very top */}
+      <LiveTicker 
+        events={events} 
+        isLoadingEvents={isLoading}
+        selectedCity={selectedCity}
+      />
+      
       {/* Top bar with THE TRIBE logo, City Selector, and Chat Input */}
       <div className="flex items-center justify-between h-16 px-4">
         {/* Left side: THE TRIBE + City Selector */}
         <div className="flex flex-col items-start flex-shrink-0">
           <Link to="/" className="flex items-center">
-            <h1 className="font-serif text-4xl font-bold tracking-tight text-white">THE TRIBE</h1>
+            <h1 className="font-sans text-2xl font-bold tracking-tight text-white">THE TRIBE</h1>
           </Link>
           <CitySelector />
         </div>
@@ -66,13 +73,6 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
           </div>
         )}
       </div>
-
-      {/* Live Ticker below the top bar */}
-      <LiveTicker 
-        events={events} 
-        isLoadingEvents={isLoading}
-        selectedCity={selectedCity}
-      />
     </div>
   );
 };
