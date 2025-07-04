@@ -2,10 +2,11 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import CitySelector from './CitySelector'; // Import CitySelector
-import { BottomNavigation } from './BottomNavigation'; // Import BottomNavigation
+import CitySelector from './CitySelector';
+import { BottomNavigation } from './BottomNavigation'; // Ensure BottomNavigation is imported
+import ChatInput from '@/components/event-chat/ChatInput'; // Ensure ChatInput is imported
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -29,7 +30,6 @@ interface LayoutProps {
     inputRef: React.RefObject<HTMLInputElement>;
     onAddEvent?: () => void;
     showAnimatedPrompts: boolean;
-    activeChatModeValue: 'ai' | 'community';
     activeCategory?: string;
     onCategoryChange?: (category: string) => void;
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -48,12 +48,12 @@ export const Layout: React.FC<LayoutProps> = ({
   chatInputProps
 }) => {
   const { pathname } = useLocation();
-  const [isAddEventModalOpen, setIsAddEventModalOpen] = React.useState(false); // Consistent naming
+  const [isAddEventModalOpen, setIsAddEventModalOpen] = React.useState(false); // Correct and consistent naming
   
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       window.triggerAddEvent = () => {
-        setIsAddEventModalOpen(true); // Updated to use consistent setter
+        setIsAddEventModalOpen(true);
       };
     }
     return () => {
@@ -77,6 +77,7 @@ export const Layout: React.FC<LayoutProps> = ({
           </SheetHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
+              {/* Your form fields here */}
             </div>
           </div>
         </SheetContent>
@@ -85,7 +86,7 @@ export const Layout: React.FC<LayoutProps> = ({
       {!hideHeader && (
         <header className="sticky top-0 z-50 w-full bg-black/90 backdrop-blur-sm border-b border-black">
           <div className="container flex h-16 items-center">
-            <MainNav pathname={pathname} activeView={activeView} /> 
+            <MainNav pathname={pathname} chatInputProps={chatInputProps} activeView={activeView} />
             {(pathname !== '/chat' && pathname !== '/') && ( 
               <div className="ml-auto flex items-center space-x-4">
                 <ThemeToggleButton />
@@ -115,7 +116,7 @@ export const Layout: React.FC<LayoutProps> = ({
           <div className="container flex flex-col items-center justify-between gap-4 py-10 md:h-24 md:flex-row md:py-0">
             <div className="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
               <a href="/" className="flex items-center space-x-2">
-                <span className="font-bold inline-block">THE TRIBE</span>
+                <span className="font-serif text-2xl font-bold tracking-tight text-white inline-block">THE TRIBE</span> {/* Ensured consistent styling */}
               </a>
               <p className="text-center text-sm leading-loose md:text-left">
                 &copy; {new Date().getFullYear()} Liebefeld. All rights reserved.
@@ -153,20 +154,43 @@ const items: NavItem[] = [
 
 interface MainNavProps {
   pathname: string;
+  chatInputProps?: any;
   activeView?: 'ai' | 'community';
 }
 
-const MainNav: React.FC<MainNavProps> = ({ pathname, activeView }) => {
+const MainNav: React.FC<MainNavProps> = ({ pathname, chatInputProps, activeView }) => {
   if (pathname === '/chat' || pathname === '/') {
     return (
       <div className="flex items-center w-full gap-4">
         <div className="flex flex-col items-start flex-shrink-0">
           <Link to="/" className="flex items-center">
-            <span className="font-bold inline-block">THE TRIBE</span>
+            <span className="font-serif text-2xl font-bold tracking-tight text-white inline-block">THE TRIBE</span> {/* Ensured consistent styling */}
           </Link>
-          {/* CitySelector is now rendered within HeatmapHeader or other specific pages directly, not here. */}
-          {pathname !== '/' && <CitySelector />}
+          <CitySelector /> {/* CitySelector import is now in Layout.tsx */}
         </div>
+        
+        {chatInputProps && (
+          <div className="flex-1 min-w-0">
+            <ChatInput
+              input={chatInputProps.input}
+              setInput={chatInputProps.setInput}
+              handleSendMessage={chatInputProps.handleSendMessage}
+              isTyping={chatInputProps.isTyping}
+              onKeyDown={chatInputProps.onKeyDown} // Corrected prop name
+              isHeartActive={chatInputProps.isHeartActive}
+              handleHeartClick={chatInputProps.handleHeartClick}
+              globalQueries={chatInputProps.globalQueries}
+              toggleRecentQueries={chatInputProps.toggleRecentQueries}
+              inputRef={chatInputProps.inputRef}
+              onAddEvent={chatInputProps.onAddEvent}
+              showAnimatedPrompts={chatInputProps.showAnimatedPrompts}
+              activeChatModeValue={activeView || 'ai'}
+              activeCategory={chatInputProps.activeCategory}
+              onCategoryChange={chatInputProps.onCategoryChange}
+              onChange={chatInputProps.onChange}
+            />
+          </div>
+        )}
       </div>
     );
   }
@@ -174,7 +198,7 @@ const MainNav: React.FC<MainNavProps> = ({ pathname, activeView }) => {
   return (
     <div className="mr-4 flex">
       <Link to="/" className="mr-6 flex items-center space-x-2">
-        <span className="font-bold inline-block">THE TRIBE</span>
+        <span className="font-serif text-2xl font-bold tracking-tight text-white inline-block">THE TRIBE</span> {/* Ensured consistent styling */}
       </Link>
       <nav className="flex items-center space-x-6 text-sm font-medium">
         {items.map((item, index) => (
