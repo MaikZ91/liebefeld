@@ -38,7 +38,7 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
         {/* Left side: THE TRIBE + City Selector */}
         <div className="flex flex-col items-start flex-shrink-0">
           <Link to="/" className="flex items-center">
-            <h1 className="font-serif text-2xl font-bold tracking-tight text-white">THE TRIBE</h1>
+            <h1 className="font-serif text-4xl font-bold tracking-tight text-white">THE TRIBE</h1>
           </Link>
           <CitySelector />
         </div>

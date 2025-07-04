@@ -164,7 +164,7 @@ const MainNav: React.FC<MainNavProps> = ({ pathname, chatInputProps, activeView 
       <div className="flex items-center w-full gap-4">
         <div className="flex flex-col items-start flex-shrink-0">
           <Link to="/" className="flex items-center">
-            <span className="font-serif text-2xl font-bold tracking-tight text-white inline-block">THE TRIBE</span> {/* Ensured consistent styling */}
+            <span className="font-serif text-4xl font-bold tracking-tight text-white inline-block">THE TRIBE</span> {/* Ensured consistent styling */}
           </Link>
           <CitySelector /> {/* CitySelector import is now in Layout.tsx */}
         </div>
@@ -198,7 +198,7 @@ const MainNav: React.FC<MainNavProps> = ({ pathname, chatInputProps, activeView 
   return (
     <div className="mr-4 flex">
       <Link to="/" className="mr-6 flex items-center space-x-2">
-        <span className="font-serif text-2xl font-bold tracking-tight text-white inline-block">THE TRIBE</span> {/* Ensured consistent styling */}
+        <span className="font-serif text-4xl font-bold tracking-tight text-white inline-block">THE TRIBE</span> {/* Ensured consistent styling */}
       </Link>
       <nav className="flex items-center space-x-6 text-sm font-medium">
         {items.map((item, index) => (
