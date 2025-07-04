@@ -77,6 +77,16 @@ const EventHeatmap: React.FC = () => {
   const [centralAvatarUsername, setCentralAvatarUsername] = useState('');
   const [centralAvatarImage, setCentralAvatarImage] = useState('');
 
+  // Tribe Spots in Bielefeld
+  const tribeSpots = [
+    { name: 'Sparrenburg', lat: 52.0323, lng: 8.5423 },
+    { name: 'Obersee', lat: 52.0448, lng: 8.5329 },
+    { name: 'Lutterviertel', lat: 52.0289, lng: 8.5291 },
+    { name: 'Gellershagen Park', lat: 52.0533, lng: 8.4872 },
+    { name: 'Klosterplatz', lat: 52.0205, lng: 8.5355 }
+  ];
+  const [tribeSpotMarkers, setTribeSpotMarkers] = useState<L.Marker[]>([]);
+
   // New state for AI Chat integration
   const [showAIChat, setShowAIChat] = useState(false);
   const [aiChatInput, setAiChatInput] = useState('');
@@ -536,6 +546,222 @@ const EventHeatmap: React.FC = () => {
       }
     };
   }, [mapRef.current, selectedCity]);
+
+  // Add Tribe Spots to map
+  useEffect(() => {
+    if (!map || selectedCity.toLowerCase() !== 'bi' && selectedCity.toLowerCase() !== 'bielefeld') {
+      tribeSpotMarkers.forEach(marker => {
+        try { map?.removeLayer(marker); } catch (e) {}
+      });
+      setTribeSpotMarkers([]);
+      return;
+    }
+
+    const markersToRemove = [...tribeSpotMarkers];
+    markersToRemove.forEach(marker => {
+      if (map.hasLayer(marker)) {
+        map.removeLayer(marker);
+      }
+    });
+
+    const newTribeSpotMarkers: L.Marker[] = [];
+
+    tribeSpots.forEach(spot => {
+      const iconHtml = `
+        <div style="
+          background: linear-gradient(135deg, #f59e0b, #d97706);
+          color: white;
+          border-radius: 50%;
+          width: 80px;
+          height: 80px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 8px;
+          border: 4px solid white;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+          cursor: pointer;
+          font-family: sans-serif;
+          text-align: center;
+          position: relative;
+        ">
+          <div style="
+            font-size: 24px;
+            margin-bottom: 2px;
+          ">
+            🏛️
+          </div>
+          <div style="
+            font-size: 10px;
+            font-weight: bold;
+            line-height: 1;
+            overflow: hidden;
+          ">
+            ${spot.name}
+          </div>
+          <div style="
+            position: absolute;
+            bottom: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            border: 2px solid white;
+          ">
+            ✨
+          </div>
+        </div>
+      `;
+
+      const customIcon = L.divIcon({
+        html: iconHtml,
+        className: 'custom-tribe-spot-marker',
+        iconSize: [80, 80],
+        iconAnchor: [40, 40],
+        popupAnchor: [0, -40]
+      });
+
+      const marker = L.marker([spot.lat, spot.lng], { icon: customIcon });
+
+      const usersAtSpot = allUserProfiles.filter(user => {
+        const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null;
+        if (!hasLiveLocation) return false;
+        
+        const distance = Math.sqrt(
+          Math.pow(user.current_live_location_lat! - spot.lat, 2) + 
+          Math.pow(user.current_live_location_lng! - spot.lng, 2)
+        );
+        return distance < 0.002; // About 200m radius
+      });
+
+      marker.on('click', async () => {
+        const username = currentUser || localStorage.getItem('community_chat_username') || 'Gast';
+        const avatar = userProfile?.avatar || localStorage.getItem('community_chat_avatar') || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
+        
+        try {
+          // Check in at tribe spot
+          const profileData = {
+            username,
+            avatar,
+            last_online: new Date().toISOString(),
+            current_live_location_lat: spot.lat,
+            current_live_location_lng: spot.lng,
+            current_status_message: `📍 @ ${spot.name}`,
+            current_checkin_timestamp: new Date().toISOString(),
+          };
+          
+          const { data: existingProfile } = await supabase
+            .from('user_profiles')
+            .select('id')
+            .eq('username', username)
+            .maybeSingle();
+
+          if (existingProfile) {
+            await supabase
+              .from('user_profiles')
+              .update(profileData)
+              .eq('username', username);
+          } else {
+            await supabase
+              .from('user_profiles')
+              .insert(profileData);
+          }
+
+          // Send community message
+          const cityCommunityGroupId = 'bi_ausgehen';
+          await messageService.sendMessage(
+            cityCommunityGroupId,
+            username,
+            `🏛️ ${username} ist jetzt am ${spot.name}!`,
+            avatar
+          );
+
+          toast({
+            title: `Check-in am ${spot.name}!`,
+            description: "Du bist jetzt am Tribe Spot eingecheckt.",
+          });
+
+          refetchProfile();
+        } catch (error: any) {
+          console.error('Tribe spot check-in failed:', error);
+          toast({
+            title: "Fehler",
+            description: "Check-in am Tribe Spot fehlgeschlagen.",
+            variant: "destructive"
+          });
+        }
+      });
+
+      const popupContent = `
+        <div style="min-width: 200px; max-width: 280px; font-family: sans-serif;">
+          <div style="text-align: center; margin-bottom: 12px;">
+            <div style="font-size: 32px; margin-bottom: 8px;">🏛️</div>
+            <h3 style="margin: 0 0 4px 0; font-weight: bold; color: #1f2937; font-size: 18px;">${spot.name}</h3>
+            <p style="margin: 0; color: #6b7280; font-size: 12px;">Tribe Spot • Einfach hier einchecken!</p>
+          </div>
+          
+          <div style="
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            text-align: center;
+            margin-bottom: 12px;
+            font-weight: 500;
+          ">
+            Klick hier für Check-in!
+          </div>
+
+          ${usersAtSpot.length > 0 ? `
+            <div style="margin-top: 12px;">
+              <h4 style="margin: 0 0 8px 0; font-size: 12px; font-weight: bold; color: #374151;">
+                🔥 Wer ist hier? (${usersAtSpot.length})
+              </h4>
+              <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                ${usersAtSpot.map(user => `
+                  <div style="
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    background: #f3f4f6;
+                    padding: 2px 6px;
+                    border-radius: 12px;
+                    font-size: 10px;
+                  ">
+                    <img src="${user.avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=' + getInitials(user.username)}"
+                         style="width: 16px; height: 16px; border-radius: 50%; border: 1px solid #d1d5db;"/>
+                    <span style="color: #374151; font-weight: 500;">${user.username}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+
+      marker.bindPopup(popupContent);
+      marker.addTo(map);
+      newTribeSpotMarkers.push(marker);
+    });
+
+    setTribeSpotMarkers(newTribeSpotMarkers);
+
+    return () => {
+      newTribeSpotMarkers.forEach(marker => {
+        if (map && map.hasLayer(marker)) {
+          map.removeLayer(marker);
+        }
+      });
+    };
+  }, [map, selectedCity, allUserProfiles, currentUser, userProfile, refetchProfile]);
 
   useEffect(() => {
     if (!map) {
