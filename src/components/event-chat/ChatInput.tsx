@@ -104,8 +104,10 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   };
 
   const handleLocalSendMessage = async (eventData?: any) => {
+    if (!localInput.trim() && !eventData) return; // Prevent empty sends
+    
     setInput(localInput);
-    await handleSendMessage(eventData || localInput); // Pass localInput if no eventData
+    await handleSendMessage(eventData || localInput);
     setLocalInput('');
   };
   
