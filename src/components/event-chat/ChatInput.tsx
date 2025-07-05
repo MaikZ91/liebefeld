@@ -106,6 +106,13 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   const handleLocalSendMessage = async (eventData?: any) => {
     if (!localInput.trim() && !eventData) return; // Prevent empty sends
     
+    if (activeChatModeValue === 'community') {
+      // For community mode, just update the external input and let the parent handle sending
+      setInput(localInput);
+      return;
+    }
+    
+    // For AI mode, handle sending directly
     setInput(localInput);
     await handleSendMessage(eventData || localInput);
     setLocalInput('');
@@ -114,7 +121,16 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   const handleLocalKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      handleLocalSendMessage();
+      if (activeChatModeValue === 'community') {
+        // For community mode, trigger the external send handler
+        setInput(localInput);
+        if (handleSendMessage) {
+          handleSendMessage(localInput);
+        }
+        setLocalInput('');
+      } else {
+        handleLocalSendMessage();
+      }
     } else {
       if (onKeyDown) {
         onKeyDown(e);
@@ -332,7 +348,19 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
       />
 
       <button
-        onClick={() => handleLocalSendMessage()}
+        onClick={() => {
+          if (activeChatModeValue === 'community') {
+            // For community mode, trigger the external send handler
+            setInput(localInput);
+            if (handleSendMessage) {
+              handleSendMessage(localInput);
+            }
+            setLocalInput('');
+          } else {
+            // For AI mode, use local send
+            handleLocalSendMessage();
+          }
+        }}
         disabled={!localInput.trim() || isTyping}
         className={cn(
           "absolute right-1 top-1/2 transform -translate-y-1/2 rounded-full p-1.5 flex-shrink-0",
