@@ -104,9 +104,9 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   useEffect(() => {
     if (onExternalSendHandlerChange) {
       if (activeChatModeValue === 'community') {
-        onExternalSendHandlerChange(() => communitySendMessage());
+        onExternalSendHandlerChange(communitySendMessage);
       } else if (activeChatModeValue === 'ai') {
-        onExternalSendHandlerChange(() => aiSendMessage());
+        onExternalSendHandlerChange(aiSendMessage);
       } else {
         onExternalSendHandlerChange(null);
       }
