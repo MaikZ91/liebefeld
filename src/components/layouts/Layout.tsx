@@ -104,8 +104,6 @@ export const Layout: React.FC<LayoutProps> = ({
         <BottomNavigation
           activeView={activeView}
           setActiveView={setActiveView}
-          handleOpenUserDirectory={handleOpenUserDirectory}
-          setIsEventListSheetOpen={setIsEventListSheetOpen}
           newMessagesCount={newMessagesCount}
           newEventsCount={newEventsCount}
         />

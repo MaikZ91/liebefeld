@@ -82,17 +82,6 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       }
       
       console.log('Message sent successfully with ID:', data?.id);
-      
-      await realtimeService.sendToChannel(`messages:${validGroupId}`, 'new_message', {
-        message: {
-          id: data?.id,
-          created_at: new Date().toISOString(),
-          text: messageText,
-          user_name: username,
-          user_avatar: localStorage.getItem(AVATAR_KEY) || '',
-          group_id: validGroupId
-        }
-      });
 
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
