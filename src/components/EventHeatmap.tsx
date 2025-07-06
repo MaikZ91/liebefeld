@@ -38,6 +38,7 @@ import { useEventContext, cities } from '@/contexts/EventContext';
 import FullPageChatBot from '@/components/event-chat/FullPageChatBot';
 import { useChatLogic } from '@/components/event-chat/useChatLogic';
 import { geocodeLocation, loadCachedCoordinates, geocodeMultipleLocations } from '@/services/geocodingService';
+import TribeFinder from './TribeFinder';
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -80,6 +81,7 @@ const EventHeatmap: React.FC = () => {
   const [selectedUserForPrivateChat, setSelectedUserForPrivateChat] = useState<UserProfile | null>(null);
   const [showFilterPanel, setShowFilterPanel] = useState(true);
   const [allUserProfiles, setAllUserProfiles] = useState<UserProfile[]>([]);
+  const [isTribeFinderOpen, setIsTribeFinderOpen] = useState(false);
 
   // Declare central avatar states at the top level to ensure scope
   const [centralAvatarUsername, setCentralAvatarUsername] = useState('');
@@ -1236,6 +1238,17 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
+      {/* "Find YOUR Tribe" Button (bottom right, floating above "Ich bin hier") */}
+      <div className="absolute bottom-72 right-6 z-[1000]">
+        <Button
+          onClick={() => setIsTribeFinderOpen(true)}
+          className="bg-gradient-to-r from-purple-600 to-red-600 hover:from-purple-700 hover:to-red-700 text-white w-32 h-16 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-sm font-bold border-2 border-white/20"
+        >
+          <Users className="w-6 h-6 mb-0.5" />
+          Find YOUR Tribe
+        </Button>
+      </div>
+
       {/* "Ich bin hier" Button (bottom right, floating) */}
       <div className="absolute bottom-48 right-6 z-[1000]">
         <Button
@@ -1473,6 +1486,12 @@ const EventHeatmap: React.FC = () => {
         onOpenChange={setIsPrivateChatOpen}
         currentUser={currentUser}
         otherUser={selectedUserForPrivateChat}
+      />
+
+      {/* Tribe Finder Dialog */}
+      <TribeFinder
+        open={isTribeFinderOpen}
+        onOpenChange={setIsTribeFinderOpen}
       />
     </div>
   );
