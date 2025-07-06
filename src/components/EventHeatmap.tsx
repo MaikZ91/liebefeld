@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, Send, Filter, FilterX, MessageSquare, CalendarIcon } from 'lucide-react';
+import TribeFinder from './TribeFinder';
 import { useEvents } from '@/hooks/useEvents';
 import { format, parseISO } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -89,6 +90,7 @@ const EventHeatmap: React.FC = () => {
   const [showAIChat, setShowAIChat] = useState(false);
   const [aiChatInput, setAiChatInput] = useState('');
   const [aiChatExternalSendHandler, setAiChatExternalSendHandler] = useState<((input?: string | any) => Promise<void>) | null>(null); // Updated type
+  const [showTribeFinder, setShowTribeFinder] = useState(false);
 
   const [eventCoordinates, setEventCoordinates] = useState<Map<string, { lat: number; lng: number }>>(new Map());
 
@@ -1236,6 +1238,17 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
+      {/* "Find YOUR Tribe" Button (bottom right, floating, above "Ich bin hier") */}
+      <div className="absolute bottom-64 right-6 z-[1000]">
+        <Button
+          onClick={() => setShowTribeFinder(true)}
+          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white w-32 h-16 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-xs font-bold border-2 border-white/20"
+        >
+          <Users className="w-5 h-5 mb-0.5" />
+          Find YOUR Tribe
+        </Button>
+      </div>
+
       {/* "Ich bin hier" Button (bottom right, floating) */}
       <div className="absolute bottom-48 right-6 z-[1000]">
         <Button
@@ -1473,6 +1486,12 @@ const EventHeatmap: React.FC = () => {
         onOpenChange={setIsPrivateChatOpen}
         currentUser={currentUser}
         otherUser={selectedUserForPrivateChat}
+      />
+
+      {/* Tribe Finder Dialog */}
+      <TribeFinder
+        open={showTribeFinder}
+        onOpenChange={setShowTribeFinder}
       />
     </div>
   );
