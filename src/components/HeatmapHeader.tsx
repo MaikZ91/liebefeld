@@ -41,8 +41,9 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
       />
       
       {/* Curved black header bar with THE TRIBE logo */}
-      <div className="relative bg-black">
-        <div className="h-16 px-6 flex items-center justify-between">
+      <div className="relative">
+        {/* Main header with rounded corners */}
+        <div className="bg-black rounded-b-[2rem] mx-4 px-6 py-4">
           <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center">
               <h1 className="font-sans text-2xl font-bold tracking-tight text-red-500">THE TRIBE</h1>
@@ -50,18 +51,12 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
             <CitySelector />
           </div>
         </div>
-        {/* Curved bottom border */}
-        <div className="absolute bottom-0 left-0 right-0 h-6 bg-red-500">
-          <svg className="w-full h-full" viewBox="0 0 1200 24" preserveAspectRatio="none">
-            <path d="M0,24 L0,8 Q600,24 1200,8 L1200,24 Z" fill="black"/>
-          </svg>
-        </div>
       </div>
       
       {/* Black search bar for AI Chat Input */}
       {chatInputProps && (
-        <div className="bg-black px-6 pb-4">
-          <div className="bg-black rounded-full border border-gray-700">
+        <div className="px-4 -mt-2 pb-4">
+          <div className="bg-black rounded-full border border-gray-700/50 mx-2">
             <ChatInput
               input={chatInputProps.input}
               setInput={chatInputProps.setInput}

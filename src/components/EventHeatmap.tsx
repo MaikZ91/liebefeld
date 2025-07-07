@@ -1268,9 +1268,22 @@ const EventHeatmap: React.FC = () => {
         style={{
           minHeight: '100vh',
           zIndex: 1,
-          filter: 'hue-rotate(340deg) saturate(2.5) brightness(0.9) contrast(1.4)',
         }}
       />
+
+      <style>{`
+        .map-container .leaflet-layer,
+        .map-container .leaflet-control-zoom-in,
+        .map-container .leaflet-control-zoom-out {
+          filter: sepia(100%) saturate(300%) hue-rotate(0deg) brightness(0.8) contrast(1.5) !important;
+        }
+        .map-container .leaflet-tile {
+          filter: sepia(100%) saturate(300%) hue-rotate(0deg) brightness(0.8) contrast(1.5) !important;
+        }
+        .map-container {
+          background-color: #ff4444 !important;
+        }
+      `}</style>
 
       {/* Central Avatar Modal */}
       {showCentralAvatar && (
