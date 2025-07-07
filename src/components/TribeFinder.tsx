@@ -27,7 +27,7 @@ const TribeFinder: React.FC<TribeFinderProps> = ({ open, onOpenChange }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { userProfile } = useUserProfile();
 
-  const username = userProfile?.username || 'Du';
+  const username = userProfile?.username || 'Maik Zschach';
   const userAvatar = userProfile?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
 
   useEffect(() => {
@@ -36,7 +36,7 @@ const TribeFinder: React.FC<TribeFinderProps> = ({ open, onOpenChange }) => {
       const welcomeMessage: ChatMessage = {
         id: 'welcome',
         sender: 'TribeBot',
-        message: 'Hey! Ich bin hier, um dir zu helfen, deine perfekte Tribe zu finden. Worauf hast du heute Lust?',
+        message: 'Hey Maik! Worauf hast du gerade Lust?',
         timestamp: new Date(),
         isBot: true
       };
@@ -104,112 +104,109 @@ const TribeFinder: React.FC<TribeFinderProps> = ({ open, onOpenChange }) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md h-[600px] flex flex-col p-0 bg-gradient-to-b from-gray-900 to-black border-red-500/20">
+      <DialogContent className="sm:max-w-md h-[700px] flex flex-col p-0 bg-white rounded-3xl border-0 shadow-2xl">
         {/* Header */}
-        <DialogHeader className="px-4 py-3 border-b border-red-500/20 bg-black/50 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
+        <DialogHeader className="px-4 py-4 bg-black text-white relative rounded-t-3xl">
+          <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => onOpenChange(false)}
-              className="h-8 w-8 text-white hover:bg-red-500/20"
+              className="h-8 w-8 text-white hover:bg-white/20"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-5 w-5" />
             </Button>
+            <DialogTitle className="text-white font-bold text-lg tracking-wider">
+              THE TRIBE
+            </DialogTitle>
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-red-500" />
-              <DialogTitle className="text-white font-bold text-lg">
-                THE TRIBE
-              </DialogTitle>
-            </div>
-            <div className="ml-auto flex items-center gap-1 text-sm text-gray-400">
-              <MessageSquare className="h-4 w-4" />
-              <span>Bot</span>
+              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm">?</span>
+              </div>
+              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs">👤👤</span>
+              </div>
             </div>
           </div>
         </DialogHeader>
 
+        {/* User Profile Section */}
+        <div className="px-6 py-6 bg-white flex flex-col items-center">
+          <Avatar className="h-24 w-24 border-4 border-red-500 mb-3">
+            <AvatarImage src={userAvatar} alt={username} />
+            <AvatarFallback className="bg-red-500 text-white text-lg font-bold">
+              {getInitials(username)}
+            </AvatarFallback>
+          </Avatar>
+          <h2 className="text-2xl font-bold text-black mb-1">{username}</h2>
+        </div>
+
         {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        <div className="flex-1 overflow-y-auto px-4 py-2 bg-white space-y-3">
           {messages.map((msg) => (
-            <div key={msg.id} className="space-y-2">
-              {!msg.isBot && (
-                <div className="flex items-center gap-2 mb-1">
-                  <Avatar className="h-8 w-8 border border-red-500/30">
-                    <AvatarImage src={userAvatar} alt={msg.sender} />
-                    <AvatarFallback className="bg-red-500 text-white text-xs">
-                      {getInitials(msg.sender)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium text-white">{msg.sender}</span>
-                  <span className="text-xs text-gray-400">{formatTime(msg.timestamp)}</span>
-                </div>
-              )}
-              
+            <div key={msg.id} className="space-y-1">
               <div className={`flex ${msg.isBot ? 'justify-start' : 'justify-end'}`}>
-                <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-2 ${
-                    msg.isBot
-                      ? 'bg-gray-800 text-white'
-                      : 'bg-red-500 text-white'
-                  }`}
-                >
-                  <p className="text-sm leading-relaxed">{msg.message}</p>
-                  {msg.isBot && (
-                    <div className="text-xs text-gray-400 mt-1">
-                      {formatTime(msg.timestamp)}
-                    </div>
-                  )}
+                <div className="max-w-[75%]">
+                  <div
+                    className={`rounded-2xl px-4 py-3 ${
+                      msg.isBot
+                        ? 'bg-gray-200 text-black'
+                        : 'bg-red-500 text-white'
+                    }`}
+                  >
+                    <p className="text-sm">{msg.message}</p>
+                  </div>
+                  <div className={`text-xs text-gray-500 mt-1 ${msg.isBot ? 'text-left' : 'text-right'}`}>
+                    {formatTime(msg.timestamp)}
+                  </div>
                 </div>
               </div>
             </div>
           ))}
           
           {isTyping && (
-            <div className="flex items-center gap-2">
-              <div className="bg-gray-800 rounded-2xl px-4 py-2">
+            <div className="flex justify-start">
+              <div className="bg-gray-200 rounded-2xl px-4 py-3">
                 <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-100"></div>
-                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-200"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
                 </div>
               </div>
             </div>
           )}
+
+          {/* Orange Quick Action Button */}
+          <div className="flex justify-center py-2">
+            <Button
+              onClick={() => setInputMessage('Soll ich ein neues Treffen für dich erstellen?')}
+              className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-6 py-3 flex items-center gap-2 font-medium"
+            >
+              <span className="text-lg">✏️</span>
+              Soll ich ein neues Treffen für dich erstellen?
+            </Button>
+          </div>
           
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Quick Actions */}
-        <div className="px-4 py-2 border-t border-red-500/20">
-          <div className="flex gap-2 mb-3">
-            <Button
-              size="sm"
-              variant="outline"
-              className="bg-orange-500/20 border-orange-500/30 text-orange-400 hover:bg-orange-500/30 text-xs"
-              onClick={() => setInputMessage('Soll ich ein neues Treffen für dich erstellen?')}
-            >
-              ✏️ Neues Treffen erstellen
-            </Button>
-          </div>
-        </div>
-
         {/* Input */}
-        <div className="p-4 border-t border-red-500/20 bg-gray-900/50">
-          <div className="flex gap-2">
+        <div className="p-4 bg-white border-t border-gray-100 rounded-b-3xl">
+          <div className="flex items-center gap-3 bg-gray-100 rounded-full px-4 py-3">
             <Input
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Nachricht schreiben..."
-              className="flex-1 bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-red-500 focus:ring-red-500/20"
+              className="flex-1 bg-transparent border-0 text-black placeholder-gray-500 focus:ring-0 focus:outline-none px-0"
             />
             <Button
               onClick={handleSendMessage}
               disabled={!inputMessage.trim() || isTyping}
-              className="bg-red-500 hover:bg-red-600 text-white p-2"
+              className="bg-red-500 hover:bg-red-600 text-white rounded-full h-10 w-10 p-0 flex items-center justify-center"
+              size="icon"
             >
-              <Send className="h-4 w-4" />
+              <Send className="h-5 w-5" />
             </Button>
           </div>
         </div>
