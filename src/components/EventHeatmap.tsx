@@ -79,7 +79,7 @@ const EventHeatmap: React.FC = () => {
   const [liveStatusMessage, setLiveStatusMessage] = useState('');
   const [isPrivateChatOpen, setIsPrivateChatOpen] = useState(false);
   const [selectedUserForPrivateChat, setSelectedUserForPrivateChat] = useState<UserProfile | null>(null);
-  const [showFilterPanel, setShowFilterPanel] = useState(true);
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [allUserProfiles, setAllUserProfiles] = useState<UserProfile[]>([]);
   const [isTribeFinderOpen, setIsTribeFinderOpen] = useState(false);
 
@@ -1094,7 +1094,7 @@ const EventHeatmap: React.FC = () => {
       }} />
 
       {/* Button to toggle Filter Panel */}
-      <div className="absolute top-20 left-4 z-[1001]">
+      <div className="absolute top-36 left-4 z-[1001]">
         <Button
           variant="outline"
           size="icon"
@@ -1108,7 +1108,7 @@ const EventHeatmap: React.FC = () => {
 
       {/* Filter Panel (Conditional Rendering) */}
       {showFilterPanel && (
-        <div className="absolute top-28 left-4 z-[1000] space-y-3 max-w-sm animate-fade-in">
+        <div className="absolute top-44 left-4 z-[1000] space-y-3 max-w-sm animate-fade-in">
           <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
             <h3 className="text-white font-bold mb-4 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-red-500" />
@@ -1272,16 +1272,23 @@ const EventHeatmap: React.FC = () => {
       />
 
       <style>{`
+        .map-container {
+          background-color: #ff3333 !important;
+        }
         .map-container .leaflet-layer,
+        .map-container .leaflet-tile-pane,
+        .map-container .leaflet-tile {
+          filter: sepia(100%) saturate(400%) hue-rotate(355deg) brightness(0.7) contrast(1.6) !important;
+        }
         .map-container .leaflet-control-zoom-in,
         .map-container .leaflet-control-zoom-out {
-          filter: sepia(100%) saturate(300%) hue-rotate(0deg) brightness(0.8) contrast(1.5) !important;
+          background-color: rgba(0,0,0,0.8) !important;
+          color: #ff3333 !important;
+          border: 1px solid #ff3333 !important;
         }
-        .map-container .leaflet-tile {
-          filter: sepia(100%) saturate(300%) hue-rotate(0deg) brightness(0.8) contrast(1.5) !important;
-        }
-        .map-container {
-          background-color: #ff4444 !important;
+        .map-container .leaflet-control-zoom a:hover {
+          background-color: #ff3333 !important;
+          color: white !important;
         }
       `}</style>
 
