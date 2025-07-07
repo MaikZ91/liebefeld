@@ -514,7 +514,8 @@ const EventHeatmap: React.FC = () => {
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
-      maxZoom: 19
+      maxZoom: 19,
+      className: 'map-tiles'
     }).addTo(leafletMap);
 
     setMap(leafletMap);
@@ -1242,7 +1243,7 @@ const EventHeatmap: React.FC = () => {
       <div className="absolute bottom-72 right-6 z-[1000]">
         <Button
           onClick={() => setIsTribeFinderOpen(true)}
-          className="bg-gradient-to-r from-purple-600 to-red-600 hover:from-purple-700 hover:to-red-700 text-white w-32 h-16 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-sm font-bold border-2 border-white/20"
+          className="bg-black hover:bg-gray-900 text-red-500 w-32 h-16 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-sm font-bold border-2 border-red-500/30"
         >
           <Users className="w-6 h-6 mb-0.5" />
           Find YOUR Tribe
@@ -1253,7 +1254,7 @@ const EventHeatmap: React.FC = () => {
       <div className="absolute bottom-48 right-6 z-[1000]">
         <Button
           onClick={() => setShowCentralAvatar(true)}
-          className="bg-red-500 hover:bg-red-600 text-white w-28 h-16 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-sm font-bold"
+          className="bg-black hover:bg-gray-900 text-red-500 w-28 h-16 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-sm font-bold border-2 border-red-500/30"
         >
           <Plus className="w-6 h-6 mb-0.5" />
           Ich bin hier!
@@ -1263,10 +1264,11 @@ const EventHeatmap: React.FC = () => {
       {/* Map Container */}
       <div
         ref={mapRef}
-        className="w-full h-full"
+        className="w-full h-full map-container"
         style={{
           minHeight: '100vh',
-          zIndex: 1
+          zIndex: 1,
+          filter: 'hue-rotate(340deg) saturate(2.5) brightness(0.9) contrast(1.4)',
         }}
       />
 

@@ -32,7 +32,7 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
   const { events, isLoading } = useEvents();
 
   return (
-    <div className="absolute top-0 left-0 right-0 z-[1002] bg-black/90 backdrop-blur-sm border-b border-gray-800">
+    <div className="absolute top-0 left-0 right-0 z-[1002]">
       {/* Live Ticker at the very top */}
       <LiveTicker 
         events={events} 
@@ -40,19 +40,28 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
         selectedCity={selectedCity}
       />
       
-      {/* Top bar with THE TRIBE logo, City Selector, and Chat Input */}
-      <div className="flex items-center justify-between h-16 px-4">
-        {/* Left side: THE TRIBE + City Selector */}
-        <div className="flex flex-col items-start flex-shrink-0">
-          <Link to="/" className="flex items-center">
-            <h1 className="font-sans text-2xl font-bold tracking-tight text-white">THE TRIBE</h1>
-          </Link>
-          <CitySelector />
+      {/* Curved black header bar with THE TRIBE logo */}
+      <div className="relative bg-black">
+        <div className="h-16 px-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link to="/" className="flex items-center">
+              <h1 className="font-sans text-2xl font-bold tracking-tight text-red-500">THE TRIBE</h1>
+            </Link>
+            <CitySelector />
+          </div>
         </div>
-        
-        {/* Right side: Chat Input (always AI mode for this header input) */}
-        {chatInputProps && (
-          <div className="flex-1 min-w-0 ml-4 max-w-md"> {/* Added ml-4 for spacing */}
+        {/* Curved bottom border */}
+        <div className="absolute bottom-0 left-0 right-0 h-6 bg-red-500">
+          <svg className="w-full h-full" viewBox="0 0 1200 24" preserveAspectRatio="none">
+            <path d="M0,24 L0,8 Q600,24 1200,8 L1200,24 Z" fill="black"/>
+          </svg>
+        </div>
+      </div>
+      
+      {/* Black search bar for AI Chat Input */}
+      {chatInputProps && (
+        <div className="bg-black px-6 pb-4">
+          <div className="bg-black rounded-full border border-gray-700">
             <ChatInput
               input={chatInputProps.input}
               setInput={chatInputProps.setInput}
@@ -67,12 +76,12 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
               inputRef={chatInputProps.inputRef}
               onAddEvent={chatInputProps.onAddEvent}
               showAnimatedPrompts={chatInputProps.showAnimatedPrompts}
-              activeChatModeValue="ai" // Fixed to "ai" for this header input
-              placeholder="Frage nach Events..." // Custom placeholder
+              activeChatModeValue="ai"
+              placeholder="Frage nach Events..."
             />
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
