@@ -1231,7 +1231,7 @@ const EventHeatmap: React.FC = () => {
               setIsPanelOpen(true);
               setPanelHeight('partial');
             }}
-            className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-full shadow-lg"
+            className="bg-black hover:bg-gray-900 text-red-500 px-6 py-3 rounded-full shadow-lg border border-red-500/30"
           >
             <ChevronUp className="w-5 h-5 mr-2" />
             {filteredEvents.length} Events anzeigen

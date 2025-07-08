@@ -104,7 +104,7 @@ const TribeFinder: React.FC<TribeFinderProps> = ({ open, onOpenChange }) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md h-[700px] flex flex-col p-0 bg-white rounded-3xl border-0 shadow-2xl">
+      <DialogContent className="sm:max-w-sm h-[500px] flex flex-col p-0 bg-black rounded-3xl border-0 shadow-2xl">
         {/* Header */}
         <DialogHeader className="px-4 py-4 bg-black text-white relative rounded-t-3xl">
           <div className="flex items-center justify-between">

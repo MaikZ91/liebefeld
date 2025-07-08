@@ -81,7 +81,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ events, tickerRef, isLoadingEve
   return (
     <div className="relative">
       <div 
-        className="text-white overflow-hidden py-0.5 relative"
+        className="text-white overflow-hidden py-0.5 relative bg-black"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         ref={tickerRef}
