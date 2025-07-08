@@ -1,10 +1,11 @@
 // src/components/layouts/BottomNavigation.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, MessageSquare, Users, Map } from 'lucide-react'; // Removed User icon as it might not be used
+import { Calendar, MessageSquare, Users, Map, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate, useLocation } from 'react-router-dom';
+import OnboardingChatbot from '@/components/OnboardingChatbot';
 
 interface BottomNavigationProps {
   activeView?: 'ai' | 'community';
@@ -25,6 +26,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   const isOnHeatmap = location.pathname === '/heatmap';
   const isOnUsersPage = location.pathname === '/users';
   const isOnEventsPage = location.pathname === '/events';
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
 
 
   return (
@@ -66,6 +68,17 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           <span className="text-[10px]">Social Map</span>
         </Button>
 
+        {/* User Button (Onboarding Trigger) */}
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => setIsOnboardingOpen(true)} 
+          className="flex flex-col items-center gap-1 px-2 py-2 h-auto min-w-0 text-gray-400 hover:text-white"
+        >
+          <User className="h-4 w-4" />
+          <span className="text-[10px]">User</span>
+        </Button>
+
         {/* User Directory Button */}
         <Button 
           variant={isOnUsersPage ? "default" : "ghost"} 
@@ -77,7 +90,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           )}
         >
           <Users className="h-4 w-4" />
-          <span className="text-[10px]">Users</span>
+          <span className="text-[10px]">Directory</span>
         </Button>
         
         {/* Calendar Events Button */}
@@ -99,6 +112,16 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           )}
         </Button>
       </div>
+      
+      {/* Onboarding Chatbot */}
+      <OnboardingChatbot 
+        open={isOnboardingOpen}
+        onOpenChange={setIsOnboardingOpen}
+        onComplete={() => {
+          // Refresh page or trigger profile reload
+          window.location.reload();
+        }}
+      />
     </div>
   );
 };
