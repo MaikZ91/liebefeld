@@ -18,29 +18,46 @@ interface ChatMessage {
   message: string;
   timestamp: Date;
   isBot?: boolean;
+  hasButtons?: boolean;
+  buttons?: Array<{
+    text: string;
+    action: () => void;
+    variant?: 'default' | 'outline';
+  }>;
 }
+
+type MatchingStep = 'start' | 'mood' | 'events' | 'create' | 'complete';
 
 const TribeFinder: React.FC<TribeFinderProps> = ({ open, onOpenChange }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [currentStep, setCurrentStep] = useState<MatchingStep>('start');
+  const [userPreferences, setUserPreferences] = useState({
+    activity: '',
+    mood: '',
+    selectedEvent: null
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { userProfile } = useUserProfile();
 
-  const username = userProfile?.username || 'Maik Zschach';
+  const username = userProfile?.username || 'Du';
   const userAvatar = userProfile?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
+
+  const activityButtons = [
+    'Tanzen', 'Chillen', 'Kaffee trinken', 'Spazieren', 
+    'Sport', 'Kino', 'Konzert', 'Brettspielabend'
+  ];
+
+  const moodButtons = [
+    { text: 'Ruhig', emoji: '🧘' },
+    { text: 'Gesellig', emoji: '🎉' },
+    { text: 'Abenteuerlich', emoji: '✨' }
+  ];
 
   useEffect(() => {
     if (open && messages.length === 0) {
-      // Welcome message when dialog opens
-      const welcomeMessage: ChatMessage = {
-        id: 'welcome',
-        sender: 'TribeBot',
-        message: 'Hey Maik! Worauf hast du gerade Lust?',
-        timestamp: new Date(),
-        isBot: true
-      };
-      setMessages([welcomeMessage]);
+      startMatchingFlow();
     }
   }, [open, messages.length]);
 
@@ -48,44 +65,199 @@ const TribeFinder: React.FC<TribeFinderProps> = ({ open, onOpenChange }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
+  const addBotMessage = (message: string, hasButtons: boolean = false, buttons: Array<{text: string; action: () => void; variant?: 'default' | 'outline'}> = []) => {
+    setTimeout(() => {
+      const botMessage: ChatMessage = {
+        id: Date.now().toString(),
+        sender: 'AI-Bot',
+        message,
+        timestamp: new Date(),
+        isBot: true,
+        hasButtons,
+        buttons
+      };
+      setMessages(prev => [...prev, botMessage]);
+      setIsTyping(false);
+    }, 1000);
+  };
 
+  const addUserMessage = (message: string) => {
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       sender: username,
-      message: inputMessage,
+      message,
       timestamp: new Date(),
       isBot: false
     };
-
     setMessages(prev => [...prev, userMessage]);
+  };
+
+  const startMatchingFlow = () => {
+    setIsTyping(true);
+    setCurrentStep('start');
+    addBotMessage('Hey, worauf hast du heute Lust? 😄', true, [
+      ...activityButtons.map(activity => ({
+        text: activity,
+        action: () => selectActivity(activity),
+        variant: 'outline' as const
+      }))
+    ]);
+  };
+
+  const selectActivity = (activity: string) => {
+    setUserPreferences(prev => ({ ...prev, activity }));
+    addUserMessage(activity);
+    setIsTyping(true);
+    setCurrentStep('mood');
+    addBotMessage('Wie fühlst du dich heute – eher ruhig, gesellig oder abenteuerlustig?', true, [
+      ...moodButtons.map(mood => ({
+        text: `${mood.emoji} ${mood.text}`,
+        action: () => selectMood(mood.text),
+        variant: 'outline' as const
+      }))
+    ]);
+  };
+
+  const selectMood = (mood: string) => {
+    setUserPreferences(prev => ({ ...prev, mood }));
+    addUserMessage(mood);
+    setIsTyping(true);
+    setCurrentStep('events');
+    
+    // Simulate event suggestions based on activity and mood
+    addBotMessage('Perfekt! Ich habe ein paar Events gefunden, die zu dir passen könnten:', true, [
+      {
+        text: '🎉 Salsa-Abend im Café Central',
+        action: () => selectEvent('Salsa-Abend'),
+        variant: 'outline'
+      },
+      {
+        text: '🎶 Live-Musik im Parkhaus',
+        action: () => selectEvent('Live-Musik'),
+        variant: 'outline'
+      },
+      {
+        text: '🍕 Pizza & Brettspiele bei Mario',
+        action: () => selectEvent('Pizza & Brettspiele'),
+        variant: 'outline'
+      },
+      {
+        text: 'Nix für mich',
+        action: () => noEventInterest(),
+        variant: 'default'
+      }
+    ]);
+  };
+
+  const selectEvent = (eventName: string) => {
+    addUserMessage(`Ich geh hin: ${eventName}`);
+    setIsTyping(true);
+    addBotMessage('Nice! Möchtest du mit jemandem gemeinsam hingehen?', true, [
+      {
+        text: 'Ja, connecten',
+        action: () => connectWithOthers(),
+        variant: 'default'
+      },
+      {
+        text: 'Nein, alleine los',
+        action: () => goAlone(),
+        variant: 'outline'
+      }
+    ]);
+  };
+
+  const connectWithOthers = () => {
+    addUserMessage('Ja, connecten');
+    setIsTyping(true);
+    addBotMessage('Super! Hier sind Leute, die auch hingehen:', true, [
+      {
+        text: '👩 Julia (25) - auch Tanzen',
+        action: () => connectToUser('Julia'),
+        variant: 'outline'
+      },
+      {
+        text: '👨 Max (28) - Musik-Fan',
+        action: () => connectToUser('Max'),
+        variant: 'outline'
+      },
+      {
+        text: 'Community-Chat beitreten',
+        action: () => joinCommunityChat(),
+        variant: 'default'
+      }
+    ]);
+  };
+
+  const connectToUser = (userName: string) => {
+    addUserMessage(`Mit ${userName} verbinden`);
+    setIsTyping(true);
+    addBotMessage(`Perfekt! Ich habe ${userName} eine Nachricht geschickt. Viel Spaß heute Abend! 🎉`);
+    setTimeout(() => onOpenChange(false), 2000);
+  };
+
+  const joinCommunityChat = () => {
+    addUserMessage('Community-Chat beitreten');
+    setIsTyping(true);
+    addBotMessage('Du bist jetzt im Event-Chat! Alle Teilnehmer können sich dort austauschen. Viel Spaß! ✨');
+    setTimeout(() => onOpenChange(false), 2000);
+  };
+
+  const goAlone = () => {
+    addUserMessage('Nein, alleine los');
+    setIsTyping(true);
+    addBotMessage('Alles klar! Ich hab dir die Event-Details geschickt. Hab einen tollen Abend! ✨');
+    setTimeout(() => onOpenChange(false), 2000);
+  };
+
+  const noEventInterest = () => {
+    addUserMessage('Nix für mich');
+    setIsTyping(true);
+    addBotMessage('Verstehe! Willst du was Eigenes starten und andere dazu holen?', true, [
+      {
+        text: 'Ja, Event erstellen',
+        action: () => createEvent(),
+        variant: 'default'
+      },
+      {
+        text: 'Nein',
+        action: () => endConversation(),
+        variant: 'outline'
+      }
+    ]);
+  };
+
+  const createEvent = () => {
+    addUserMessage('Ja, Event erstellen');
+    setIsTyping(true);
+    addBotMessage('Super! Ich helfe dir dabei. Was willst du machen?');
+    setCurrentStep('create');
+  };
+
+  const endConversation = () => {
+    addUserMessage('Nein');
+    setIsTyping(true);
+    addBotMessage('Alles klar, dann genieße deinen Tag. Ich bin später wieder für dich da ✨');
+    setTimeout(() => onOpenChange(false), 2000);
+  };
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim()) return;
+
+    if (currentStep === 'create') {
+      // Handle event creation input
+      addUserMessage(inputMessage);
+      setInputMessage('');
+      setIsTyping(true);
+      addBotMessage('Tolle Idee! Ich erstelle das Event für dich und lade andere aus der Community ein. 🎉');
+      setTimeout(() => onOpenChange(false), 2000);
+      return;
+    }
+
+    // For other steps, just echo the input
+    addUserMessage(inputMessage);
     setInputMessage('');
     setIsTyping(true);
-
-    // Simulate bot response
-    setTimeout(() => {
-      const botResponses = [
-        'Das klingt interessant! Ich schaue nach Events in deiner Nähe...',
-        'Cool! Lass mich schauen, wer noch Lust auf sowas hat.',
-        'Ein Bier trinken gehen ist immer eine gute Idee! 🍺',
-        'Soll ich ein neues Treffen für dich organisieren?',
-        'Ich habe ein paar Leute gefunden, die ähnliche Interessen haben!'
-      ];
-
-      const randomResponse = botResponses[Math.floor(Math.random() * botResponses.length)];
-      
-      const botMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        sender: 'TribeBot',
-        message: randomResponse,
-        timestamp: new Date(),
-        isBot: true
-      };
-
-      setMessages(prev => [...prev, botMessage]);
-      setIsTyping(false);
-    }, 1500);
+    addBotMessage('Verstehe! Lass mich das für dich organisieren...');
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -144,9 +316,9 @@ const TribeFinder: React.FC<TribeFinderProps> = ({ open, onOpenChange }) => {
         {/* Chat Messages */}
         <div className="flex-1 overflow-y-auto px-4 py-2 bg-white space-y-3">
           {messages.map((msg) => (
-            <div key={msg.id} className="space-y-1">
+            <div key={msg.id} className="space-y-2">
               <div className={`flex ${msg.isBot ? 'justify-start' : 'justify-end'}`}>
-                <div className="max-w-[75%]">
+                <div className="max-w-[85%]">
                   <div
                     className={`rounded-2xl px-4 py-3 ${
                       msg.isBot
@@ -161,6 +333,27 @@ const TribeFinder: React.FC<TribeFinderProps> = ({ open, onOpenChange }) => {
                   </div>
                 </div>
               </div>
+              
+              {/* Buttons */}
+              {msg.hasButtons && msg.buttons && (
+                <div className="flex flex-wrap gap-2 justify-start ml-2">
+                  {msg.buttons.map((button, index) => (
+                    <Button
+                      key={index}
+                      variant={button.variant || 'outline'}
+                      size="sm"
+                      onClick={button.action}
+                      className={`text-xs ${
+                        button.variant === 'default' 
+                          ? 'bg-red-500 hover:bg-red-600 text-white' 
+                          : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {button.text}
+                    </Button>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
           
