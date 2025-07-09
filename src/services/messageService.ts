@@ -161,6 +161,20 @@ export const messageService = {
       
       console.log(`Message sent successfully with ID: ${data?.id}`);
       
+      // Force a refresh by sending a broadcast to update everyone's view
+      const channel = supabase.channel(`force_refresh:${validGroupId}`);
+      await channel.subscribe();
+      await channel.send({
+        type: 'broadcast',
+        event: 'force_refresh',
+        payload: { message_id: data?.id, timestamp: new Date().toISOString() }
+      });
+      
+      // Remove the channel after use
+      setTimeout(() => {
+        supabase.removeChannel(channel);
+      }, 2000);
+      
       return data?.id || null;
     } catch (error) {
       console.error('Error in sendMessage:', error);
