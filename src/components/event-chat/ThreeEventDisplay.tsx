@@ -168,15 +168,14 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
                   
                   {/* Event Details */}
                   <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <h3 className="text-white font-bold text-lg mb-2 line-clamp-2">
+                    <h3 className="text-white font-bold text-xl mb-1 line-clamp-3 leading-tight">
                       {event.title}
                     </h3>
-                    <div className="text-gray-300 text-sm space-y-1">
-                      <div>{event.date}</div>
-                      {'time' in event && event.time && (
-                        <div>{event.time}</div>
-                      )}
-                    </div>
+                    {'time' in event && event.time && (
+                      <div className="text-gray-300 text-sm">
+                        {event.time}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
