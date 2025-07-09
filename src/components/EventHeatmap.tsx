@@ -1228,14 +1228,7 @@ const EventHeatmap: React.FC = () => {
 
       {/* Default Event Display - Show 3 Events at bottom */}
       {!showPerfectDayPanel && !showAIChat && filteredEvents.length > 0 && (
-        <div className="absolute bottom-0 left-0 right-0 z-[1000] bg-black/95 backdrop-blur-md">
-          {/* Event Counter Header */}
-          <div className="flex items-center justify-center p-2 border-b border-gray-700">
-            <span className="text-white text-sm font-medium">
-              {filteredEvents.length} Events
-            </span>
-          </div>
-          
+        <div className="absolute bottom-0 left-0 right-0 z-[1000]">
           {/* Default Event Panel Display */}
           <div className="p-4">
             <ThreeEventDisplay
