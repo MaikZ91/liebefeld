@@ -12,7 +12,7 @@ interface UserCardProps {
 }
 
 const getPlaceholderUrl = () => {
-  return '/placeholder.svg';
+  return '/lovable-uploads/7beda6d8-fab6-4174-9940-4f98999a6ce9.png';
 };
 
 

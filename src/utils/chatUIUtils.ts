@@ -28,6 +28,7 @@ export const getInitials = (name: string): string => {
  */
 export const getRandomAvatar = (): string => {
   const avatars = [
+    '/lovable-uploads/7beda6d8-fab6-4174-9940-4f98999a6ce9.png',
     '/lovable-uploads/764c9b33-5d7d-4134-b503-c77e23c469f9.png',
     '/lovable-uploads/8562fff2-2b62-4552-902b-cc62457a3402.png',
     '/lovable-uploads/c38064ee-a32f-4ecc-b148-f9c53c28d472.png',
