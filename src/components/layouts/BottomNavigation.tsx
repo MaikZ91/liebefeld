@@ -113,13 +113,15 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
               setIsUserDirectoryOpen(true);
             }
           }} 
-          className="flex flex-col items-center gap-1 px-2 py-2 h-auto min-w-0 text-gray-400 hover:text-white"
+          className={cn(
+            "flex flex-col items-center gap-1 px-2 py-2 h-auto min-w-0",
+            !hasCompletedOnboarding 
+              ? "text-red-500 hover:text-red-400" 
+              : "text-gray-400 hover:text-white"
+          )}
         >
           <User className="h-4 w-4" />
-          <span className={cn(
-            "text-[10px]", 
-            !hasCompletedOnboarding && "text-red-500"
-          )}>
+          <span className="text-[10px]">
             {hasCompletedOnboarding ? 'User' : 'Welcome'}
           </span>
         </Button>

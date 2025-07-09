@@ -27,6 +27,16 @@ const UserProfileButton: React.FC = () => {
   // Check if user has completed onboarding (has a username)
   const hasCompletedOnboarding = username !== 'User' && username !== 'Anonymous';
 
+  // Logout functionality
+  const handleLogout = () => {
+    localStorage.removeItem(USERNAME_KEY);
+    localStorage.removeItem(AVATAR_KEY);
+    localStorage.removeItem('selectedCityAbbr');
+    localStorage.removeItem('selectedCityName');
+    // Reload to trigger onboarding
+    window.location.reload();
+  };
+
   if (!hasCompletedOnboarding) {
     return null; // Don't show button if onboarding not completed
   }
@@ -70,7 +80,10 @@ const UserProfileButton: React.FC = () => {
             <span>Einstellungen</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator className="bg-red-500/30" />
-          <DropdownMenuItem className="text-white hover:bg-red-500/20 cursor-pointer">
+          <DropdownMenuItem 
+            className="text-white hover:bg-red-500/20 cursor-pointer"
+            onClick={handleLogout}
+          >
             <LogOut className="mr-2 h-4 w-4" />
             <span>Abmelden</span>
           </DropdownMenuItem>
