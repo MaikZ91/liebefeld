@@ -284,6 +284,13 @@ const EventHeatmap: React.FC = () => {
     const selectedHour = timeRange[0];
     filtered = filtered.filter(event => event.eventHour >= selectedHour);
     
+    // Sort events by likes in descending order
+    filtered = filtered.sort((a, b) => {
+      const likesA = (a.likes || 0) + (a.rsvp_yes || 0) + (a.rsvp_maybe || 0);
+      const likesB = (b.likes || 0) + (b.rsvp_yes || 0) + (b.rsvp_maybe || 0);
+      return likesB - likesA;
+    });
+    
     return filtered;
   }, [selectedDateFilteredEvents, selectedCategory, timeRange]);
 
@@ -1025,6 +1032,50 @@ const EventHeatmap: React.FC = () => {
     }
   };
 
+  const handleLikeEvent = async (eventId: string) => {
+    try {
+      // Find the event in the filtered events
+      const event = filteredEvents.find(e => 
+        (e.id || `${e.title}-${e.date}-${e.time}`) === eventId
+      );
+      
+      if (!event || !event.id) return;
+
+      // Update the event likes in Supabase
+      const { error } = await supabase
+        .from('community_events')
+        .update({ 
+          likes: (event.likes || 0) + 1 
+        })
+        .eq('id', event.id);
+
+      if (error) {
+        console.error('Error updating likes:', error);
+        toast({
+          title: "Fehler",
+          description: "Like konnte nicht gespeichert werden.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Refresh events to get updated likes
+      refreshEvents();
+      
+      toast({
+        title: "Event geliked!",
+        description: `Du hast "${event.title}" geliked.`,
+      });
+    } catch (error: any) {
+      console.error('Error liking event:', error);
+      toast({
+        title: "Fehler",
+        description: "Ein Fehler ist aufgetreten.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const togglePanelHeight = () => {
     if (panelHeight === 'collapsed') {
       setPanelHeight('partial');
@@ -1223,6 +1274,7 @@ const EventHeatmap: React.FC = () => {
             <ThreeEventDisplay
               panelData={panelData}
               onEventSelect={handleEventSelect}
+              onLikeEvent={handleLikeEvent}
               className="w-full"
             />
           </div>

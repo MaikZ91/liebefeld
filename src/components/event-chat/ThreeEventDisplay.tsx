@@ -1,18 +1,20 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Users, ChevronUp } from 'lucide-react';
+import { Users, ChevronUp, Heart } from 'lucide-react';
 import { PanelEventData, PanelEvent } from './types';
 import { cn } from '@/lib/utils';
 
 interface ThreeEventDisplayProps {
   panelData: PanelEventData;
   onEventSelect?: (eventId: string) => void;
+  onLikeEvent?: (eventId: string) => void;
   className?: string;
 }
 
 const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
   panelData,
   onEventSelect,
+  onLikeEvent,
   className
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -22,10 +24,13 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const totalEvents = panelData.events.length;
-  const maxIndex = Math.max(0, totalEvents - 3);
+  const eventsPerPage = 3;
+  const totalPages = Math.ceil(totalEvents / eventsPerPage);
 
-  // Get current 3 events to display
-  const displayEvents = panelData.events.slice(currentIndex, currentIndex + 3);
+  // Get current 3 events to display based on page
+  const currentPage = Math.floor(currentIndex / eventsPerPage);
+  const startIndex = currentPage * eventsPerPage;
+  const displayEvents = panelData.events.slice(startIndex, startIndex + eventsPerPage);
 
   const handleEventClick = (event: PanelEvent) => {
     if (Math.abs(translateX) > 10) return; // Prevent click during swipe
@@ -56,10 +61,12 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
     const threshold = 80;
     
     if (Math.abs(translateX) > threshold) {
-      if (translateX > 0 && currentIndex > 0) {
-        setCurrentIndex(prev => Math.max(0, prev - 1));
-      } else if (translateX < 0 && currentIndex < maxIndex) {
-        setCurrentIndex(prev => Math.min(maxIndex, prev + 1));
+      if (translateX > 0 && currentPage > 0) {
+        // Go to previous page (previous 3 events)
+        setCurrentIndex((currentPage - 1) * eventsPerPage);
+      } else if (translateX < 0 && currentPage < totalPages - 1) {
+        // Go to next page (next 3 events)
+        setCurrentIndex((currentPage + 1) * eventsPerPage);
       }
     }
     
@@ -87,10 +94,12 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
     const threshold = 80;
     
     if (Math.abs(translateX) > threshold) {
-      if (translateX > 0 && currentIndex > 0) {
-        setCurrentIndex(prev => Math.max(0, prev - 1));
-      } else if (translateX < 0 && currentIndex < maxIndex) {
-        setCurrentIndex(prev => Math.min(maxIndex, prev + 1));
+      if (translateX > 0 && currentPage > 0) {
+        // Go to previous page (previous 3 events)
+        setCurrentIndex((currentPage - 1) * eventsPerPage);
+      } else if (translateX < 0 && currentPage < totalPages - 1) {
+        // Go to next page (next 3 events)
+        setCurrentIndex((currentPage + 1) * eventsPerPage);
       }
     }
     
@@ -141,6 +150,22 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                   
+                  {/* Like Button */}
+                  {onLikeEvent && 'id' in event && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onLikeEvent(event.id);
+                      }}
+                    >
+                      <Heart className="w-4 h-4" />
+                      <span className="ml-1 text-sm">{'likes' in event ? event.likes || 0 : 0}</span>
+                    </Button>
+                  )}
+                  
                   {/* Event Details */}
                   <div className="absolute bottom-0 left-0 right-0 p-4">
                     <h3 className="text-white font-bold text-lg mb-2 line-clamp-2">
@@ -163,12 +188,12 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
       {/* Swipe Indicators */}
       {totalEvents > 3 && (
         <div className="flex justify-center gap-2">
-          {Array.from({ length: Math.ceil(totalEvents / 3) }).map((_, index) => (
+          {Array.from({ length: totalPages }).map((_, index) => (
             <div
               key={index}
               className={cn(
                 "w-2 h-2 rounded-full transition-all",
-                Math.floor(currentIndex / 3) === index ? "bg-white" : "bg-white/40"
+                currentPage === index ? "bg-white" : "bg-white/40"
               )}
             />
           ))}
