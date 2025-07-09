@@ -90,16 +90,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   } = useMessageSending(communityGroupId, username, addOptimisticMessage, activeCategory);
 
   useEffect(() => {
-    if (activeChatModeValue === 'community' && setExternalInput && communityInput !== externalInput) {
-      setExternalInput(communityInput);
-    }
-  }, [communityInput, activeChatModeValue, setExternalInput, externalInput]);
-
-  useEffect(() => {
-    if (activeChatModeValue === 'community' && externalInput !== communityInput && externalInput !== '') {
+    if (activeChatModeValue === 'community' && setExternalInput && externalInput !== communityInput) {
       setCommunityInput(externalInput);
     }
-  }, [externalInput, activeChatModeValue, setCommunityInput, communityInput]);
+  }, [externalInput, activeChatModeValue, setCommunityInput]);
 
   useEffect(() => {
     if (onExternalSendHandlerChange) {

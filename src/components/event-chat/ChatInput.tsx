@@ -122,11 +122,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     if (e.key === 'Enter') {
       e.preventDefault();
       if (activeChatModeValue === 'community') {
-        // For community mode, trigger the external send handler
+        // For community mode, only update external input
         setInput(localInput);
-        if (handleSendMessage) {
-          handleSendMessage(localInput);
-        }
         setLocalInput('');
       } else {
         handleLocalSendMessage();
@@ -350,11 +347,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
       <button
         onClick={() => {
           if (activeChatModeValue === 'community') {
-            // For community mode, trigger the external send handler
+            // For community mode, only update external input
             setInput(localInput);
-            if (handleSendMessage) {
-              handleSendMessage(localInput);
-            }
             setLocalInput('');
           } else {
             // For AI mode, use local send
