@@ -2,12 +2,21 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, MessageSquare, Map, User } from 'lucide-react';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator 
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Calendar, MessageSquare, Map, User, Settings, LogOut, UserIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate, useLocation } from 'react-router-dom';
 import OnboardingChatbot from '@/components/OnboardingChatbot';
 import UserDirectory from '@/components/users/UserDirectory';
-import { USERNAME_KEY } from '@/types/chatTypes';
+import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
+import { getInitials } from '@/utils/chatUIUtils';
 
 interface BottomNavigationProps {
   activeView?: 'ai' | 'community';
@@ -31,33 +40,118 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
   // Check if user has completed onboarding
   const username = localStorage.getItem(USERNAME_KEY);
+  const avatarUrl = localStorage.getItem(AVATAR_KEY);
   const hasCompletedOnboarding = username && username !== 'Anonymous' && username !== 'User' && username.trim().length > 0;
+
+  // Logout functionality
+  const handleLogout = () => {
+    localStorage.removeItem(USERNAME_KEY);
+    localStorage.removeItem(AVATAR_KEY);
+    localStorage.removeItem('selectedCityAbbr');
+    localStorage.removeItem('selectedCityName');
+    // Reload to trigger onboarding
+    window.location.reload();
+  };
 
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-t border-gray-700 min-h-16">
       <div className="flex items-center justify-around px-2 py-2 max-w-md mx-auto">
-        {/* Community Chat Button (replaces the AI button) */}
-        <Button 
-          variant={activeView === 'community' ? "default" : "ghost"} 
-          size="sm" 
-          onClick={() => {
-            setActiveView?.('community');
-            navigate('/chat?view=community');
-          }} 
-          className={cn(
-            "flex flex-col items-center gap-1 px-2 py-2 h-auto relative min-w-0",
-            activeView === 'community' ? 'bg-red-500 hover:bg-red-600 text-white' : 'text-gray-400 hover:text-white'
-          )}
-        >
-          <MessageSquare className="h-4 w-4" />
-          <span className="text-[10px]">Community Chat</span>
-          {newMessagesCount > 0 && (
-            <Badge className="absolute -top-1 -right-1 bg-green-600 text-white h-4 w-4 flex items-center justify-center rounded-full text-[8px] p-0">
-              {newMessagesCount}
-            </Badge>
-          )}
-        </Button>
+        {/* Community Chat Button with Profile Dropdown */}
+        {hasCompletedOnboarding ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant={activeView === 'community' ? "default" : "ghost"} 
+                size="sm" 
+                className={cn(
+                  "flex flex-col items-center gap-1 px-2 py-2 h-auto relative min-w-0",
+                  activeView === 'community' ? 'bg-red-500 hover:bg-red-600 text-white' : 'text-gray-400 hover:text-white'
+                )}
+              >
+                <Avatar className="h-4 w-4">
+                  <AvatarImage src={avatarUrl || undefined} alt={username || 'User'} />
+                  <AvatarFallback className="bg-red-500 text-white text-[8px]">
+                    {getInitials(username || 'User')}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-[10px]">Community Chat</span>
+                {newMessagesCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 bg-green-600 text-white h-4 w-4 flex items-center justify-center rounded-full text-[8px] p-0">
+                    {newMessagesCount}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56 bg-black border-red-500/30 mb-2" align="center" forceMount>
+              <div className="flex items-center justify-start gap-2 p-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={avatarUrl || undefined} alt={username || 'User'} />
+                  <AvatarFallback className="bg-red-500 text-white">
+                    {getInitials(username || 'User')}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col space-y-1 leading-none">
+                  <p className="font-medium text-white">{username}</p>
+                  <p className="w-[150px] truncate text-sm text-gray-400">
+                    Mitglied der Community
+                  </p>
+                </div>
+              </div>
+              <DropdownMenuSeparator className="bg-red-500/30" />
+              <DropdownMenuItem 
+                className="text-white hover:bg-red-500/20 cursor-pointer"
+                onClick={() => {
+                  setActiveView?.('community');
+                  navigate('/chat?view=community');
+                }}
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                <span>Community Chat</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-white hover:bg-red-500/20 cursor-pointer"
+                onClick={() => setIsUserDirectoryOpen(true)}
+              >
+                <UserIcon className="mr-2 h-4 w-4" />
+                <span>Profil bearbeiten</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-white hover:bg-red-500/20 cursor-pointer">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Einstellungen</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-red-500/30" />
+              <DropdownMenuItem 
+                className="text-white hover:bg-red-500/20 cursor-pointer"
+                onClick={handleLogout}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Abmelden</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button 
+            variant={activeView === 'community' ? "default" : "ghost"} 
+            size="sm" 
+            onClick={() => {
+              setActiveView?.('community');
+              navigate('/chat?view=community');
+            }} 
+            className={cn(
+              "flex flex-col items-center gap-1 px-2 py-2 h-auto relative min-w-0",
+              activeView === 'community' ? 'bg-red-500 hover:bg-red-600 text-white' : 'text-gray-400 hover:text-white'
+            )}
+          >
+            <MessageSquare className="h-4 w-4" />
+            <span className="text-[10px]">Community Chat</span>
+            {newMessagesCount > 0 && (
+              <Badge className="absolute -top-1 -right-1 bg-green-600 text-white h-4 w-4 flex items-center justify-center rounded-full text-[8px] p-0">
+                {newMessagesCount}
+              </Badge>
+            )}
+          </Button>
+        )}
 
         {/* Heatmap Button */}
         <Button 
