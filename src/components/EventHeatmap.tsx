@@ -1282,23 +1282,23 @@ const EventHeatmap: React.FC = () => {
       )}
 
       {/* "Find YOUR Tribe" Button (bottom left, above navbar) */}
-      <div className="absolute bottom-20 left-6 z-[1000]">
+      <div className="absolute bottom-24 left-6 z-[1000]">
         <Button
           onClick={() => setIsTribeFinderOpen(true)}
-          className="bg-black hover:bg-gray-900 text-red-500 w-32 h-16 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-sm font-bold border-2 border-red-500/30"
+          className="bg-black hover:bg-gray-900 text-red-500 w-24 h-12 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-xs font-bold border-2 border-red-500/30"
         >
-          <Users className="w-6 h-6 mb-0.5" />
-          Find YOUR Tribe
+          <Users className="w-4 h-4 mb-0.5" />
+          Find Tribe
         </Button>
       </div>
 
       {/* "Ich bin hier" Button (bottom right, above navbar) */}
-      <div className="absolute bottom-20 right-6 z-[1000]">
+      <div className="absolute bottom-24 right-6 z-[1000]">
         <Button
           onClick={() => setShowCentralAvatar(true)}
-          className="bg-black hover:bg-gray-900 text-red-500 w-28 h-16 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-sm font-bold border-2 border-red-500/30"
+          className="bg-black hover:bg-gray-900 text-red-500 w-24 h-12 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-xs font-bold border-2 border-red-500/30"
         >
-          <Plus className="w-6 h-6 mb-0.5" />
+          <Plus className="w-4 h-4 mb-0.5" />
           Ich bin hier!
         </Button>
       </div>
