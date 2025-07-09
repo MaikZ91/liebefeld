@@ -59,7 +59,7 @@ const tribeSpots = [
 ];
 
 const EventHeatmap: React.FC = () => {
-  const { events, isLoading, refreshEvents, addUserEvent } = useEvents();
+  const { events, isLoading, refreshEvents, addUserEvent, handleLikeEvent } = useEvents();
   const { selectedCity } = useEventContext();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -1061,7 +1061,7 @@ const EventHeatmap: React.FC = () => {
     }
   };
 
-  const handleLikeEvent = async (eventId: string) => {
+  const handleEventLike = async (eventId: string) => {
     try {
       // Find the event in the filtered events
       const event = filteredEvents.find(e => 
@@ -1070,12 +1070,7 @@ const EventHeatmap: React.FC = () => {
       
       if (!event || !event.id) return;
 
-      // Use the proper like service that handles both the counter and event_likes table
-      const username = localStorage.getItem('selectedUsername') || null;
-      const userId = null; // TODO: Get from auth context when available
-      const avatarUrl = null; // TODO: Get from user profile when available
-      
-      // Use the updated handleLikeEvent from useEvents hook
+      // Use the handleLikeEvent from useEvents hook (extracted above)
       await handleLikeEvent(event.id);
 
       
@@ -1313,7 +1308,7 @@ const EventHeatmap: React.FC = () => {
             <ThreeEventDisplay
               panelData={panelData}
               onEventSelect={handleEventSelect}
-              onLikeEvent={handleLikeEvent}
+              onLikeEvent={handleEventLike}
               className="w-full"
             />
           </div>
