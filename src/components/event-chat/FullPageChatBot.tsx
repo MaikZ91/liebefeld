@@ -34,7 +34,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   activeChatModeValue,
   communityGroupId,
   onAddEvent,
-  activeCategory = 'Kreativität',
+  activeCategory = 'Ausgehen',
   onCategoryChange,
   hideInput = false,
   externalInput = '',
@@ -87,7 +87,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     handleInputChange: communityInputChangeFromHook,
     handleKeyDown: communityKeyDownFromHook,
     setNewMessage: setCommunityInput
-  } = useMessageSending(communityGroupId, username, addOptimisticMessage);
+  } = useMessageSending(communityGroupId, username, addOptimisticMessage, activeCategory);
 
   useEffect(() => {
     if (activeChatModeValue === 'community' && setExternalInput && communityInput !== externalInput) {
@@ -234,7 +234,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               <div className="space-y-2 py-4 pb-24">
                 {communityMessages.length === 0 && !communityLoading && !communityError && (
                   <div className="text-center text-gray-400 py-4">
-                    Noch keine Nachrichten in {getCommunityDisplayName(activeCategory || 'Community', selectedCity)}. Starte die Unterhaltung!
+                    Noch keine Nachrichten im Community Chat. Starte die Unterhaltung!
                   </div>
                 )}
 

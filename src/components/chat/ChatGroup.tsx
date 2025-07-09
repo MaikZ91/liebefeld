@@ -29,6 +29,7 @@ interface Message {
   user_avatar: string;
   group_id: string;
   read_by?: string[];
+  category?: string; // Added category field for message labeling
 }
 
 const ChatGroup: React.FC<ChatGroupProps> = ({ 
@@ -48,6 +49,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   const [avatar, setAvatar] = useState<string | null>(() => localStorage.getItem(AVATAR_KEY));
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
   const [eventSearchQuery, setEventSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('Ausgehen');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -360,12 +362,19 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     try {
       setIsSending(true);
       
-      // Format message with event data if present
+      // Format message with category label and event data if present
       let messageText = newMessage.trim();
+      
+      // Add category label to the message
+      const categoryLabel = `#${selectedCategory.toLowerCase()}`;
+      
       if (eventData) {
         const { title, date, time, location, category } = eventData;
         // Use \\n for line breaks in the string to be parsed correctly by `EventMessageFormatter`
-        messageText = `🗓️ **Event: ${title}**\\nDatum: ${date} um ${time}\\nOrt: ${location || 'k.A.'}\\nKategorie: ${category}\\n\\n${messageText}`;
+        messageText = `${categoryLabel} 🗓️ **Event: ${title}**\\nDatum: ${date} um ${time}\\nOrt: ${location || 'k.A.'}\\nKategorie: ${category}\\n\\n${messageText}`;
+      } else {
+        // Add category label to regular messages
+        messageText = `${categoryLabel} ${messageText}`;
       }
       
       // Create optimistic message
@@ -572,6 +581,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           onKeyDown={handleKeyDownFromMessageInput}
           placeholder="Schreibe eine Nachricht..."
           mode="community"
+          onCategorySelect={setSelectedCategory}
+          activeCategory={selectedCategory}
         />
       </div>
     </div>

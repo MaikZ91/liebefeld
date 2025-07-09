@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { realtimeService } from '@/services/realtimeService';
 import { messageService } from '@/services/messageService';
 
-export const useMessageSending = (groupId: string, username: string, addOptimisticMessage: (message: any) => void) => {
+export const useMessageSending = (groupId: string, username: string, addOptimisticMessage: (message: any) => void, selectedCategory: string = 'Ausgehen') => {
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [typing, setTyping] = useState(false);
@@ -32,9 +32,15 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       
       let messageText = messageToSend;
       
+      // Add category label to the message
+      const categoryLabel = `#${selectedCategory.toLowerCase()}`;
+      
       if (eventData) {
         const { title, date, time, location, category } = eventData;
-        messageText = `🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${messageToSend}`;
+        messageText = `${categoryLabel} 🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${messageToSend}`;
+      } else {
+        // Add category label to regular messages
+        messageText = `${categoryLabel} ${messageToSend}`;
       }
       
       setNewMessage(''); // Clear message after determining content
@@ -97,7 +103,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     } finally {
       setIsSending(false);
     }
-  }, [groupId, username, newMessage, isSending, typing]);
+  }, [groupId, username, newMessage, isSending, typing, selectedCategory]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);
