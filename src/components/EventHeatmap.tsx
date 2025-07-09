@@ -1282,7 +1282,7 @@ const EventHeatmap: React.FC = () => {
       )}
 
       {/* "Find YOUR Tribe" Button (bottom left, above navbar) */}
-      <div className="absolute bottom-24 left-6 z-[1000]">
+      <div className="absolute bottom-32 left-6 z-[1000]">
         <Button
           onClick={() => setIsTribeFinderOpen(true)}
           className="bg-black hover:bg-gray-900 text-red-500 w-24 h-12 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-xs font-bold border-2 border-red-500/30"
@@ -1293,7 +1293,7 @@ const EventHeatmap: React.FC = () => {
       </div>
 
       {/* "Ich bin hier" Button (bottom right, above navbar) */}
-      <div className="absolute bottom-24 right-6 z-[1000]">
+      <div className="absolute bottom-32 right-6 z-[1000]">
         <Button
           onClick={() => setShowCentralAvatar(true)}
           className="bg-black hover:bg-gray-900 text-red-500 w-24 h-12 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-xs font-bold border-2 border-red-500/30"
