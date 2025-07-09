@@ -31,7 +31,7 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   
   // External input state for header synchronization
   const [externalInput, setExternalInput] = useState<string>('');
-  const [externalSendHandler, setExternalSendHandler] = useState<(() => void) | null>(null);
+  const [externalSendHandler, setExternalSendHandler] = useState<((content?: string) => Promise<void>) | null>(null);
   
   const { selectedCity } = useEventContext();
   const { toast } = useToast();
@@ -77,9 +77,9 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   };
 
   // Function to handle external send
-  const handleExternalSend = () => {
+  const handleExternalSend = (content?: string) => {
     if (externalSendHandler) {
-      externalSendHandler();
+      externalSendHandler(content || externalInput);
     }
   };
 
