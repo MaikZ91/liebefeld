@@ -21,6 +21,8 @@ const EventLikeAvatars: React.FC<EventLikeAvatarsProps> = ({
 }) => {
   const [likes, setLikes] = useState<EventLike[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const avatarSize = size === 'xs' ? 'w-4 h-4' : 'w-6 h-6';
 
   useEffect(() => {
     const fetchLikes = async () => {
@@ -34,13 +36,29 @@ const EventLikeAvatars: React.FC<EventLikeAvatarsProps> = ({
     fetchLikes();
   }, [eventId, refreshTrigger]); // Only refresh when eventId or refreshTrigger changes
 
-  if (loading || likes.length === 0) {
+  if (loading) {
+    console.log('[EventLikeAvatars] Still loading...');
     return null;
+  }
+
+  console.log('[EventLikeAvatars] Rendering with', likes.length, 'likes');
+
+  // Temporarily show test avatar if no likes yet
+  if (likes.length === 0) {
+    console.log('[EventLikeAvatars] No likes found, showing test avatar');
+    return (
+      <div className={cn("flex items-center -space-x-1", className)}>
+        <Avatar className={cn(avatarSize, "border border-white/30 bg-purple-600")}>
+          <AvatarFallback className="bg-purple-600 text-white text-[8px]">
+            ?
+          </AvatarFallback>
+        </Avatar>
+      </div>
+    );
   }
 
   const visibleLikes = likes.slice(0, maxVisible);
   const remainingCount = Math.max(0, likes.length - maxVisible);
-  const avatarSize = size === 'xs' ? 'w-4 h-4' : 'w-6 h-6';
 
   return (
     <div className={cn("flex items-center -space-x-1", className)}>
