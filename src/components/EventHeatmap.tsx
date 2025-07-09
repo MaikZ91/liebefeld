@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, Send, Filter, FilterX, MessageSquare, CalendarIcon } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
+import { likeEvent } from '@/services/eventLikeService';
 import { format, parseISO } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
@@ -1069,16 +1070,20 @@ const EventHeatmap: React.FC = () => {
       
       if (!event || !event.id) return;
 
-      // Update the event likes in Supabase
-      const { error } = await supabase
-        .from('community_events')
-        .update({ 
-          likes: (event.likes || 0) + 1 
-        })
-        .eq('id', event.id);
+      // Use the proper like service that handles both the counter and event_likes table
+      const username = localStorage.getItem('selectedUsername') || null;
+      const userId = null; // TODO: Get from auth context when available
+      const avatarUrl = null; // TODO: Get from user profile when available
+      
+      const { error } = await likeEvent({ 
+        eventId: event.id, 
+        userId, 
+        username,
+        avatarUrl 
+      });
 
       if (error) {
-        console.error('Error updating likes:', error);
+        console.error('Error liking event:', error);
         toast({
           title: "Fehler",
           description: "Like konnte nicht gespeichert werden.",
@@ -1087,7 +1092,7 @@ const EventHeatmap: React.FC = () => {
         return;
       }
 
-      // Refresh events to get updated likes
+      // Refresh events to get updated data including the new like
       refreshEvents();
       
       toast({
