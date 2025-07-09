@@ -22,6 +22,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [translateX, setTranslateX] = useState(0);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -158,9 +159,11 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
                       size="sm"
                       variant="ghost"
                       className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2"
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         e.stopPropagation();
-                        onLikeEvent(event.id);
+                        await onLikeEvent(event.id);
+                        // Trigger refresh of avatars after like
+                        setRefreshTrigger(prev => prev + 1);
                       }}
                     >
                       <Heart className="w-4 h-4" />
@@ -186,6 +189,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
                           maxVisible={3}
                           size="xs"
                           className="ml-2"
+                          refreshTrigger={refreshTrigger}
                         />
                       )}
                     </div>

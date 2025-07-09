@@ -9,13 +9,15 @@ interface EventLikeAvatarsProps {
   maxVisible?: number;
   size?: 'sm' | 'xs';
   className?: string;
+  refreshTrigger?: number; // Add trigger to force refresh
 }
 
 const EventLikeAvatars: React.FC<EventLikeAvatarsProps> = ({
   eventId,
   maxVisible = 4,
   size = 'xs',
-  className
+  className,
+  refreshTrigger
 }) => {
   const [likes, setLikes] = useState<EventLike[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,12 +32,7 @@ const EventLikeAvatars: React.FC<EventLikeAvatarsProps> = ({
     };
 
     fetchLikes();
-    
-    // Set up an interval to refresh likes periodically
-    const interval = setInterval(fetchLikes, 3000);
-    
-    return () => clearInterval(interval);
-  }, [eventId]);
+  }, [eventId, refreshTrigger]); // Only refresh when eventId or refreshTrigger changes
 
   if (loading || likes.length === 0) {
     return null;
