@@ -1093,8 +1093,20 @@ const EventHeatmap: React.FC = () => {
         activeChatModeValue: "ai"
       }} />
 
-      {/* Button to toggle Filter Panel */}
+      {/* Perfect Day Button */}
       <div className="absolute top-36 left-4 z-[1001]">
+        <Button
+          onClick={generatePerfectDay}
+          disabled={isPerfectDayLoading}
+          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium px-6 py-3 rounded-full shadow-lg"
+        >
+          <Sparkles className="w-4 h-4 mr-2" />
+          {isPerfectDayLoading ? 'Generiere...' : 'Perfect Day'}
+        </Button>
+      </div>
+
+      {/* Button to toggle Filter Panel */}
+      <div className="absolute top-52 left-4 z-[1001]">
         <Button
           variant="outline"
           size="icon"
@@ -1108,7 +1120,7 @@ const EventHeatmap: React.FC = () => {
 
       {/* Filter Panel (Conditional Rendering) */}
       {showFilterPanel && (
-        <div className="absolute top-44 left-4 z-[1000] space-y-3 max-w-sm animate-fade-in">
+        <div className="absolute top-60 left-4 z-[1000] space-y-3 max-w-sm animate-fade-in">
           <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
             <h3 className="text-white font-bold mb-4 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-red-500" />
@@ -1190,15 +1202,6 @@ const EventHeatmap: React.FC = () => {
                 </div>
               </div>
 
-              {/* Perfect Day Button */}
-              <Button
-                onClick={generatePerfectDay}
-                disabled={isPerfectDayLoading}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                {isPerfectDayLoading ? 'Generiere...' : 'Perfect Day'}
-              </Button>
 
             </div>
           </Card>
@@ -1223,19 +1226,24 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* Panel Toggle Button */}
-      {!isPanelOpen && !showPerfectDayPanel && !showAIChat && filteredEvents.length > 0 && (
-        <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-[1000]">
-          <Button
-            onClick={() => {
-              setIsPanelOpen(true);
-              setPanelHeight('partial');
-            }}
-            className="bg-black hover:bg-gray-900 text-red-500 px-6 py-3 rounded-full shadow-lg border border-red-500/30"
-          >
-            <ChevronUp className="w-5 h-5 mr-2" />
-            {filteredEvents.length} Events anzeigen
-          </Button>
+      {/* Default Event Display - Show 3 Events at bottom */}
+      {!showPerfectDayPanel && !showAIChat && filteredEvents.length > 0 && (
+        <div className="absolute bottom-0 left-0 right-0 z-[1000] bg-black/95 backdrop-blur-md">
+          {/* Event Counter Header */}
+          <div className="flex items-center justify-center p-2 border-b border-gray-700">
+            <span className="text-white text-sm font-medium">
+              {filteredEvents.length} Events
+            </span>
+          </div>
+          
+          {/* Default Event Panel Display */}
+          <div className="p-4">
+            <SwipeableEventPanel
+              panelData={panelData}
+              onEventSelect={handleEventSelect}
+              className="w-full max-w-md mx-auto"
+            />
+          </div>
         </div>
       )}
 
@@ -1428,61 +1436,6 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* Swipeable Event Panel */}
-      {isPanelOpen && panelEvents.length > 0 && !showPerfectDayPanel && (
-        <div className={cn(
-          "absolute bottom-0 left-0 right-0 z-[1000] bg-black/95 backdrop-blur-md transition-all duration-300 ease-in-out",
-          {
-            'h-32': panelHeight === 'collapsed',
-            'h-96': panelHeight === 'partial',
-            'h-full': panelHeight === 'full'
-          }
-        )}>
-          {/* Panel Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-700">
-            <div className="flex items-center gap-2">
-              <div
-                className="w-8 h-1 bg-gray-500 rounded-full cursor-pointer"
-                onClick={togglePanelHeight}
-              />
-              <span className="text-white font-medium">
-                {panelEvents.length} Events
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={togglePanelHeight}
-                className="text-white hover:bg-gray-700"
-              >
-                {panelHeight === 'full' ? (
-                  <ChevronDown className="w-5 h-5" />
-                ) : (
-                  <ChevronUp className="w-5 h-5" />
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={closePanelCompletely}
-                className="text-white hover:bg-gray-700"
-              >
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Panel Content */}
-          <div className="p-4 overflow-hidden">
-            <SwipeableEventPanel
-              panelData={panelData}
-              onEventSelect={handleEventSelect}
-              className="w-full max-w-md mx-auto"
-            />
-          </div>
-        </div>
-      )}
 
       {/* Event Form Dialog */}
       <Dialog open={isEventFormOpen} onOpenChange={setIsEventFormOpen}>
