@@ -307,6 +307,7 @@ const EventHeatmap: React.FC = () => {
       category: event.category,
       link: event.link,
       likes: event.likes || 0,
+      liked_by_users: event.liked_by_users || [],
       rsvp_yes: event.rsvp_yes,
       rsvp_maybe: event.rsvp_maybe
     }));
@@ -1302,7 +1303,7 @@ const EventHeatmap: React.FC = () => {
 
       {/* Default Event Display - Show 3 Events directly above navbar */}
       {!showPerfectDayPanel && !showAIChat && filteredEvents.length > 0 && (
-        <div className="absolute bottom-20 left-0 right-0 z-[1000]">
+        <div className="absolute bottom-32 left-0 right-0 z-[1000]">
           {/* Default Event Panel Display */}
           <div className="p-4">
             <ThreeEventDisplay
