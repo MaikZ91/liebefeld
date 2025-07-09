@@ -84,19 +84,49 @@ export const Layout: React.FC<LayoutProps> = ({
       </Sheet>
       
       {!hideHeader && (
-        <header className="sticky top-0 z-50 w-full bg-black/90 backdrop-blur-sm border-b border-black">
-          <div className="container flex h-16 items-center">
-            <MainNav pathname={pathname} chatInputProps={chatInputProps} activeView={activeView} />
-            {(pathname !== '/chat' && pathname !== '/') && ( 
-              <div className="ml-auto flex items-center space-x-4">
-                <ThemeToggleButton />
-              </div>
-            )}
+        <header className="sticky top-0 z-50 w-full">
+          {/* Curved black header bar with THE TRIBE logo - matching Heatmap design */}
+          <div className="relative">
+            <div className="bg-black mx-4 px-6 py-4 relative rounded-bl-[2rem]">
+              <MainNav pathname={pathname} chatInputProps={chatInputProps} activeView={activeView} />
+              {(pathname !== '/chat' && pathname !== '/') && ( 
+                <div className="ml-auto flex items-center space-x-4">
+                  <ThemeToggleButton />
+                </div>
+              )}
+            </div>
           </div>
+          
+          {/* Black search bar for Chat Input - matching Heatmap design */}
+          {chatInputProps && (pathname === '/chat' || pathname === '/') && (
+            <div className="px-4 pb-4">
+              <div className="bg-black rounded-full border border-gray-700/50 mx-2">
+                <ChatInput
+                  input={chatInputProps.input}
+                  setInput={chatInputProps.setInput}
+                  handleSendMessage={chatInputProps.handleSendMessage}
+                  isTyping={chatInputProps.isTyping}
+                  onKeyDown={chatInputProps.onKeyDown}
+                  isHeartActive={chatInputProps.isHeartActive}
+                  handleHeartClick={chatInputProps.handleHeartClick}
+                  globalQueries={chatInputProps.globalQueries}
+                  toggleRecentQueries={chatInputProps.toggleRecentQueries}
+                  inputRef={chatInputProps.inputRef}
+                  onAddEvent={chatInputProps.onAddEvent}
+                  showAnimatedPrompts={chatInputProps.showAnimatedPrompts}
+                  activeChatModeValue={activeView || 'ai'}
+                  activeCategory={chatInputProps.activeCategory}
+                  onCategoryChange={chatInputProps.onCategoryChange}
+                  onChange={chatInputProps.onChange}
+                  placeholder={activeView === 'community' ? "Verbinde dich mit der Community..." : "Frage nach Events..."}
+                />
+              </div>
+            </div>
+          )}
         </header>
       )}
       
-      <main className={cn("pb-20", hideHeader ? "pt-0" : "pt-[104px]")}> 
+      <main className={cn("pb-20", hideHeader ? "pt-0" : chatInputProps && (pathname === '/chat' || pathname === '/') ? "pt-32" : "pt-[104px]")}> 
         {children}
       </main>
       
@@ -159,36 +189,11 @@ interface MainNavProps {
 const MainNav: React.FC<MainNavProps> = ({ pathname, chatInputProps, activeView }) => {
   if (pathname === '/chat' || pathname === '/') {
     return (
-      <div className="flex items-center w-full gap-4">
-        <div className="flex flex-col items-start flex-shrink-0">
-          <Link to="/" className="flex items-center">
-            <span className="font-sans text-2xl font-bold tracking-tight text-white inline-block">THE TRIBE</span> {/* Ensured consistent styling */}
-          </Link>
-          <CitySelector /> {/* CitySelector import is now in Layout.tsx */}
-        </div>
-        
-        {chatInputProps && (
-          <div className="flex-1 min-w-0">
-            <ChatInput
-              input={chatInputProps.input}
-              setInput={chatInputProps.setInput}
-              handleSendMessage={chatInputProps.handleSendMessage}
-              isTyping={chatInputProps.isTyping}
-              onKeyDown={chatInputProps.onKeyDown} // Corrected prop name
-              isHeartActive={chatInputProps.isHeartActive}
-              handleHeartClick={chatInputProps.handleHeartClick}
-              globalQueries={chatInputProps.globalQueries}
-              toggleRecentQueries={chatInputProps.toggleRecentQueries}
-              inputRef={chatInputProps.inputRef}
-              onAddEvent={chatInputProps.onAddEvent}
-              showAnimatedPrompts={chatInputProps.showAnimatedPrompts}
-              activeChatModeValue={activeView || 'ai'}
-              activeCategory={chatInputProps.activeCategory}
-              onCategoryChange={chatInputProps.onCategoryChange}
-              onChange={chatInputProps.onChange}
-            />
-          </div>
-        )}
+      <div className="flex items-center gap-4 relative z-10">
+        <Link to="/" className="flex items-center">
+          <h1 className="font-sans text-2xl font-bold tracking-tight text-red-500">THE TRIBE</h1>
+        </Link>
+        <CitySelector />
       </div>
     );
   }
