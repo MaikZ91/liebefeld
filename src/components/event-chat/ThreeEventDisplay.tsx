@@ -101,23 +101,6 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
 
   return (
     <div className={cn("w-full space-y-4", className)}>
-      {/* Perfect Day Button and Action Buttons */}
-      <div className="flex justify-between items-center px-4">
-        <Button className="bg-black text-white hover:bg-gray-900 px-6 py-2 rounded-full font-semibold">
-          <span className="text-purple-400 mr-2">✨</span>
-          Perfect Day
-        </Button>
-        
-        <div className="flex gap-2">
-          <Button className="bg-black text-red-500 hover:bg-gray-900 px-4 py-2 rounded-full font-bold border border-red-500/30">
-            <Users className="w-4 h-4 mr-1" />
-            Find YOUR Tribe
-          </Button>
-          <Button className="bg-black text-red-500 hover:bg-gray-900 px-4 py-2 rounded-full font-bold border border-red-500/30">
-            Ich bin hier!
-          </Button>
-        </div>
-      </div>
 
       {/* Three Event Cards with Swipe */}
       <div 

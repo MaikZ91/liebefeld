@@ -1093,20 +1093,9 @@ const EventHeatmap: React.FC = () => {
         activeChatModeValue: "ai"
       }} />
 
-      {/* Perfect Day Button */}
-      <div className="absolute top-36 left-4 z-[1001]">
-        <Button
-          onClick={generatePerfectDay}
-          disabled={isPerfectDayLoading}
-          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium px-6 py-3 rounded-full shadow-lg"
-        >
-          <Sparkles className="w-4 h-4 mr-2" />
-          {isPerfectDayLoading ? 'Generiere...' : 'Perfect Day'}
-        </Button>
-      </div>
 
-      {/* Button to toggle Filter Panel */}
-      <div className="absolute top-52 left-4 z-[1001]">
+      {/* Button to toggle Filter Panel - moved up */}
+      <div className="absolute top-36 left-4 z-[1001]">
         <Button
           variant="outline"
           size="icon"
@@ -1226,9 +1215,9 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* Default Event Display - Show 3 Events at bottom */}
+      {/* Default Event Display - Show 3 Events at bottom, positioned higher */}
       {!showPerfectDayPanel && !showAIChat && filteredEvents.length > 0 && (
-        <div className="absolute bottom-0 left-0 right-0 z-[1000]">
+        <div className="absolute bottom-20 left-0 right-0 z-[1000]">
           {/* Default Event Panel Display */}
           <div className="p-4">
             <ThreeEventDisplay
