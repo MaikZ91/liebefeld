@@ -314,7 +314,7 @@ const TribeFinder: React.FC<TribeFinderProps> = ({ open, onOpenChange }) => {
         </div>
 
         {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 bg-white space-y-4 min-h-0">
+        <div className="flex-1 overflow-y-auto px-6 py-4 bg-white space-y-4 min-h-0 pb-6">
           {messages.map((msg) => (
             <div key={msg.id} className="space-y-2">
               <div className={`flex ${msg.isBot ? 'justify-start' : 'justify-end'}`}>
@@ -336,7 +336,7 @@ const TribeFinder: React.FC<TribeFinderProps> = ({ open, onOpenChange }) => {
               
               {/* Buttons */}
               {msg.hasButtons && msg.buttons && (
-                <div className="flex flex-wrap gap-2 justify-start ml-2">
+                <div className="flex flex-wrap gap-2 justify-start ml-0 mt-2">
                   {msg.buttons.map((button, index) => (
                     <Button
                       key={index}
@@ -369,17 +369,6 @@ const TribeFinder: React.FC<TribeFinderProps> = ({ open, onOpenChange }) => {
             </div>
           )}
 
-          {/* Orange Quick Action Button */}
-          <div className="flex justify-center py-3">
-            <Button
-              onClick={() => setInputMessage('Soll ich ein neues Treffen für dich erstellen?')}
-              className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-4 py-2 flex items-center gap-2 font-medium text-sm"
-            >
-              <span className="text-base">✏️</span>
-              Soll ich ein neues Treffen für dich erstellen?
-            </Button>
-          </div>
-          
           <div ref={messagesEndRef} />
         </div>
 
