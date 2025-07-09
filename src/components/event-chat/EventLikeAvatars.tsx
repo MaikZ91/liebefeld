@@ -26,35 +26,16 @@ const EventLikeAvatars: React.FC<EventLikeAvatarsProps> = ({
 
   useEffect(() => {
     const fetchLikes = async () => {
-      console.log('[EventLikeAvatars] Fetching likes for event:', eventId);
       const { data } = await getEventLikes(eventId);
-      console.log('[EventLikeAvatars] Received likes:', data);
       setLikes(data || []);
       setLoading(false);
     };
 
     fetchLikes();
-  }, [eventId, refreshTrigger]); // Only refresh when eventId or refreshTrigger changes
+  }, [eventId, refreshTrigger]);
 
-  if (loading) {
-    console.log('[EventLikeAvatars] Still loading...');
+  if (loading || likes.length === 0) {
     return null;
-  }
-
-  console.log('[EventLikeAvatars] Rendering with', likes.length, 'likes');
-
-  // Temporarily show test avatar if no likes yet
-  if (likes.length === 0) {
-    console.log('[EventLikeAvatars] No likes found, showing test avatar');
-    return (
-      <div className={cn("flex items-center -space-x-1", className)}>
-        <Avatar className={cn(avatarSize, "border border-white/30 bg-purple-600")}>
-          <AvatarFallback className="bg-purple-600 text-white text-[8px]">
-            ?
-          </AvatarFallback>
-        </Avatar>
-      </div>
-    );
   }
 
   const visibleLikes = likes.slice(0, maxVisible);
