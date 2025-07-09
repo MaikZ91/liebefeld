@@ -1131,7 +1131,7 @@ const EventHeatmap: React.FC = () => {
                       <ChevronDown className="h-4 w-4" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-gray-800 border-gray-700" align="start">
+                  <PopoverContent className="w-auto p-0 bg-gray-800 border-gray-700 z-[9999]" align="start">
                     <CalendarComponent
                       mode="single"
                       selected={selectedDate}
@@ -1155,7 +1155,7 @@ const EventHeatmap: React.FC = () => {
                       <ChevronDown className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 bg-gray-800 border-gray-700">
+                  <DropdownMenuContent className="w-56 bg-gray-800 border-gray-700 z-[9999]">
                     {categories.map((category) => (
                       <DropdownMenuItem
                         key={category.name}
