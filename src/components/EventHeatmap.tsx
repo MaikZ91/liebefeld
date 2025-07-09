@@ -498,41 +498,58 @@ const EventHeatmap: React.FC = () => {
 
   useEffect(() => {
     if (!mapRef.current) {
-      if (map) {
-        map.remove();
-        setMap(null);
-      }
       return;
     }
 
-    if (map) {
-      map.remove();
-      setMap(null);
+    if (!map) {
+      console.log('[EventHeatmap] Initializing map for city:', selectedCity);
+      const initialCenter = getCityCenterCoordinates(selectedCity);
+
+      const leafletMap = L.map(mapRef.current, {
+        center: [initialCenter.lat, initialCenter.lng],
+        zoom: 13,
+        zoomControl: true,
+        preferCanvas: false
+      });
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19,
+        className: 'map-tiles'
+      }).addTo(leafletMap);
+
+      setMap(leafletMap);
     }
-    
-    const initialCenter = getCityCenterCoordinates(selectedCity);
-
-    const leafletMap = L.map(mapRef.current, {
-      center: [initialCenter.lat, initialCenter.lng],
-      zoom: 13,
-      zoomControl: true,
-      preferCanvas: false
-    });
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19,
-      className: 'map-tiles'
-    }).addTo(leafletMap);
-
-    setMap(leafletMap);
 
     return () => {
-      if (leafletMap) {
-        leafletMap.remove();
+      // Cleanup only when component unmounts, not on city change
+    };
+  }, [mapRef.current]); // Remove selectedCity from dependencies
+
+  // Separate useEffect for handling city changes
+  useEffect(() => {
+    if (map && selectedCity) {
+      console.log('[EventHeatmap] City changed to:', selectedCity);
+      const newCenter = getCityCenterCoordinates(selectedCity);
+      
+      // Smoothly move to new city instead of recreating map
+      map.setView([newCenter.lat, newCenter.lng], 13, {
+        animate: true,
+        duration: 1.5
+      });
+    }
+  }, [map, selectedCity]);
+  
+  // Cleanup map when component unmounts
+  useEffect(() => {
+    return () => {
+      if (map) {
+        console.log('[EventHeatmap] Cleaning up map');
+        map.remove();
+        setMap(null);
       }
     };
-  }, [mapRef.current, selectedCity]);
+  }, []);
 
   useEffect(() => {
     if (currentTribeSpotMarkersRef.current) {
