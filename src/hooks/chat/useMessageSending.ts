@@ -14,16 +14,20 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Unified handleSubmit signature to match ChatInputProps['handleSendMessage'] and FullPageChatBot's external handler
-  const handleSubmit = useCallback(async (content?: string | EventShare) => { // Accept string or EventShare
+  const handleSubmit = useCallback(async (content?: string | EventShare) => { 
+    console.log('useMessageSending handleSubmit called with:', { content, newMessage, isSending });
+    
     // Determine if content is a string message or an eventData object
     const isEventShare = typeof content === 'object' && content !== null && 'title' in content;
     const messageToSend = isEventShare ? newMessage.trim() : (content as string || newMessage.trim());
     const eventData = isEventShare ? (content as EventShare) : undefined;
 
     if ((!messageToSend && !fileInputRef.current?.files?.length && !eventData) || isSending) {
+      console.log('Early return - no message or already sending');
       return;
     }
 
+    console.log('Proceeding with message send:', { messageToSend, eventData, isSending });
     setIsSending(true);
 
     try {
@@ -101,6 +105,7 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         variant: "destructive"
       });
     } finally {
+      console.log('Message sending completed, setting isSending to false');
       setIsSending(false);
     }
   }, [groupId, username, newMessage, isSending, typing, selectedCategory]);

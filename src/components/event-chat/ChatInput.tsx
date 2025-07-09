@@ -106,14 +106,20 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   const handleLocalSendMessage = async (eventData?: any) => {
     if (!localInput.trim() && !eventData) return; // Prevent empty sends
     
+    console.log('handleLocalSendMessage called with:', { localInput, eventData, activeChatModeValue });
+    
     if (activeChatModeValue === 'community') {
-      // For community mode, just update the external input and let the parent handle sending
-      setInput(localInput);
+      // For community mode, just call the external handler once
+      if (handleSendMessage) {
+        console.log('Calling external handleSendMessage for community');
+        await handleSendMessage(eventData || localInput);
+      }
+      setLocalInput('');
       return;
     }
     
     // For AI mode, handle sending directly
-    setInput(localInput);
+    console.log('Calling handleSendMessage for AI mode');
     await handleSendMessage(eventData || localInput);
     setLocalInput('');
   };
@@ -121,16 +127,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   const handleLocalKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (activeChatModeValue === 'community') {
-        // For community mode, trigger the external send handler
-        setInput(localInput);
-        if (handleSendMessage) {
-          handleSendMessage(localInput);
-        }
-        setLocalInput('');
-      } else {
-        handleLocalSendMessage();
-      }
+      console.log('Enter pressed, calling handleLocalSendMessage');
+      handleLocalSendMessage();
     } else {
       if (onKeyDown) {
         onKeyDown(e);
@@ -349,17 +347,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 
       <button
         onClick={() => {
-          if (activeChatModeValue === 'community') {
-            // For community mode, trigger the external send handler
-            setInput(localInput);
-            if (handleSendMessage) {
-              handleSendMessage(localInput);
-            }
-            setLocalInput('');
-          } else {
-            // For AI mode, use local send
-            handleLocalSendMessage();
-          }
+          console.log('Send button clicked');
+          handleLocalSendMessage();
         }}
         disabled={!localInput.trim() || isTyping}
         className={cn(
