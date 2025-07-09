@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Users, Heart } from 'lucide-react';
 import { PanelEventData, PanelEvent } from './types';
 import { cn } from '@/lib/utils';
+import EventLikeDetails from './EventLikeDetails';
 
 interface ThreeEventDisplayProps {
   panelData: PanelEventData;
@@ -21,6 +22,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [translateX, setTranslateX] = useState(0);
+  const [showLikeDetails, setShowLikeDetails] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const totalEvents = panelData.events.length;
@@ -152,18 +154,20 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
                   
                   {/* Like Button */}
                   {onLikeEvent && 'id' in event && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onLikeEvent(event.id);
-                      }}
-                    >
-                      <Heart className="w-4 h-4" />
-                      <span className="ml-1 text-sm">{'likes' in event ? event.likes || 0 : 0}</span>
-                    </Button>
+                    <div className="absolute top-2 right-2 flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="bg-black/50 hover:bg-black/70 text-white rounded-full p-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowLikeDetails(showLikeDetails === event.id ? null : event.id);
+                        }}
+                      >
+                        <Heart className="w-4 h-4" />
+                        <span className="ml-1 text-sm">{'likes' in event ? event.likes || 0 : 0}</span>
+                      </Button>
+                    </div>
                   )}
                   
                   {/* Event Details */}
@@ -196,6 +200,22 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
               )}
             />
           ))}
+        </div>
+      )}
+
+      {/* Like Details Overlay */}
+      {showLikeDetails && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <EventLikeDetails
+            eventId={showLikeDetails}
+            totalLikes={
+              (() => {
+                const event = panelData.events.find(e => 'id' in e && e.id === showLikeDetails);
+                return (event && 'likes' in event) ? event.likes || 0 : 0;
+              })()
+            }
+            onClose={() => setShowLikeDetails(null)}
+          />
         </div>
       )}
 

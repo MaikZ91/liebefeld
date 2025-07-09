@@ -7,6 +7,7 @@ import {
   addNewEvent
 } from '../services/eventService';
 import { updateEventLikesInDb } from '../services/singleEventService';
+import { likeEvent, unlikeEvent, hasUserLikedEvent } from '../services/eventLikeService';
 
 export const useEvents = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -54,7 +55,7 @@ export const useEvents = () => {
   }, []);
 
   const handleLikeEvent = useCallback(async (eventId: string) => {
-    console.log(`[handleLikeEvent] 💙 Funktion wurde für Event-ID aufgerufen: ${eventId}`);
+    console.log(`[handleLikeEvent] 💙 Community Like-Funktion wurde für Event-ID aufgerufen: ${eventId}`);
 
     if (!eventId || typeof eventId !== 'string') {
         console.error('[handleLikeEvent] 🛑 Ungültige oder fehlende eventId!', eventId);
@@ -67,37 +68,73 @@ export const useEvents = () => {
         return;
     }
 
-    const oldLikes = eventToLike.likes || 0;
-    const newLikes = oldLikes + 1;
-    
-    console.log(`[handleLikeEvent] 👍 Optimistisches Update: oldLikes=${oldLikes}, newLikes=${newLikes}`);
-    
-    setEvents(prevEvents =>
-        prevEvents.map(event =>
-            event.id === eventId ? { ...event, likes: newLikes } : event
-        )
-    );
-
     try {
-        console.log(`[handleLikeEvent] 🚀 Datenbank-Update wird für ${eventId} mit newLikes=${newLikes} aufgerufen...`);
-        const success = await updateEventLikesInDb(eventId, newLikes);
-        console.log(`[handleLikeEvent] 🛰️ Datenbank-Update Ergebnis: ${success ? '✅ ERFOLGREICH' : '❌ FEHLGESCHLAGEN'}`);
-
-        if (!success) {
-          console.log(`[handleLikeEvent] ⏪ Rollback wird ausgeführt. Likes werden auf ${oldLikes} zurückgesetzt.`);
-          setEvents(prevEvents =>
-            prevEvents.map(event =>
-              event.id === eventId ? { ...event, likes: oldLikes } : event
-            )
-          );
+        // Check if user is logged in (implement when auth is added)
+        const userId = null; // TODO: Get from auth context when available
+        const username = localStorage.getItem('selectedUsername') || null;
+        const avatarUrl = null; // TODO: Get from user profile when available
+        
+        // Check if user already liked this event
+        const alreadyLiked = await hasUserLikedEvent(eventId, userId);
+        
+        if (alreadyLiked) {
+            // Unlike the event
+            console.log(`[handleLikeEvent] 👎 Removing like for event ${eventId}`);
+            
+            // Optimistically update UI
+            const oldLikes = eventToLike.likes || 0;
+            const newLikes = Math.max(0, oldLikes - 1);
+            
+            setEvents(prevEvents =>
+                prevEvents.map(event =>
+                    event.id === eventId ? { ...event, likes: newLikes } : event
+                )
+            );
+            
+            const { error } = await unlikeEvent({ eventId, userId });
+            
+            if (error) {
+                console.error('[handleLikeEvent] Error unliking event:', error);
+                // Rollback on error
+                setEvents(prevEvents =>
+                    prevEvents.map(event =>
+                        event.id === eventId ? { ...event, likes: oldLikes } : event
+                    )
+                );
+            }
+        } else {
+            // Like the event
+            console.log(`[handleLikeEvent] 👍 Adding like for event ${eventId}`);
+            
+            // Optimistically update UI
+            const oldLikes = eventToLike.likes || 0;
+            const newLikes = oldLikes + 1;
+            
+            setEvents(prevEvents =>
+                prevEvents.map(event =>
+                    event.id === eventId ? { ...event, likes: newLikes } : event
+                )
+            );
+            
+            const { error } = await likeEvent({ 
+                eventId, 
+                userId, 
+                username,
+                avatarUrl 
+            });
+            
+            if (error) {
+                console.error('[handleLikeEvent] Error liking event:', error);
+                // Rollback on error
+                setEvents(prevEvents =>
+                    prevEvents.map(event =>
+                        event.id === eventId ? { ...event, likes: oldLikes } : event
+                    )
+                );
+            }
         }
     } catch (error) {
-        console.error('[handleLikeEvent] 💥 Unerwarteter Fehler im try-catch Block:', error);
-        setEvents(prevEvents =>
-            prevEvents.map(event =>
-              event.id === eventId ? { ...event, likes: oldLikes } : event
-            )
-        );
+        console.error('[handleLikeEvent] 💥 Unerwarteter Fehler:', error);
     }
   }, [events]);
 

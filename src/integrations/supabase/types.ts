@@ -214,6 +214,41 @@ export type Database = {
         }
         Relationships: []
       }
+      event_likes: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          event_id: string
+          id: string
+          user_id: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          event_id: string
+          id?: string
+          user_id?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          event_id?: string
+          id?: string
+          user_id?: string | null
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_likes_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "community_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       location_coordinates: {
         Row: {
           city: string
@@ -363,6 +398,14 @@ export type Database = {
       generate_daily_perfect_day_messages: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      get_event_like_count: {
+        Args: { event_uuid: string }
+        Returns: number
+      }
+      has_user_liked_event: {
+        Args: { event_uuid: string; user_uuid: string }
+        Returns: boolean
       }
       toggle_perfect_day_subscription: {
         Args: { p_username: string; p_subscribe: boolean }
