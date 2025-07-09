@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import CitySelector from './CitySelector';
 import { BottomNavigation } from './BottomNavigation'; // Ensure BottomNavigation is imported
 import ChatInput from '@/components/event-chat/ChatInput'; // Ensure ChatInput is imported
+import UserProfileButton from '@/components/UserProfileButton';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -87,13 +88,12 @@ export const Layout: React.FC<LayoutProps> = ({
         <header className="sticky top-0 z-50 w-full">
           {/* Curved black header bar with THE TRIBE logo - matching Heatmap design */}
           <div className="relative">
-            <div className="bg-black mx-4 px-6 py-4 relative rounded-bl-[2rem]">
+            <div className="bg-black mx-4 px-6 py-4 relative rounded-bl-[2rem] flex items-center justify-between">
               <MainNav pathname={pathname} chatInputProps={chatInputProps} activeView={activeView} />
-              {(pathname !== '/chat' && pathname !== '/') && ( 
-                <div className="ml-auto flex items-center space-x-4">
-                  <ThemeToggleButton />
-                </div>
-              )}
+              <div className="flex items-center space-x-4">
+                <UserProfileButton />
+                {(pathname !== '/chat' && pathname !== '/') && <ThemeToggleButton />}
+              </div>
             </div>
           </div>
           

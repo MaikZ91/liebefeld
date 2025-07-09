@@ -3,12 +3,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, ArrowLeft, Upload } from 'lucide-react';
+import { Send, ArrowLeft, Upload, Search } from 'lucide-react';
 import { getInitials } from '@/utils/chatUIUtils';
 import { userService } from '@/services/userService';
-import { cities } from '@/contexts/EventContext';
+import { cities, useEventContext } from '@/contexts/EventContext';
 import { toast } from '@/hooks/use-toast';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
+// Use the uploaded image
+const chatbotAvatar = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png';
 
 interface OnboardingChatbotProps {
   open: boolean;
@@ -44,8 +46,10 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
     avatar: '',
     wantsNotifications: false
   });
+  const [citySearch, setCitySearch] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { setSelectedCity } = useEventContext();
 
   const interests = [
     { emoji: '🎨', text: 'Kreativ' },
@@ -117,20 +121,19 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
     addUserMessage(name);
     setIsTyping(true);
     setCurrentStep('city');
-    addBotMessage('In welcher Stadt bist du unterwegs?', true, [
-      ...cities.map(city => ({
-        text: city.name,
-        action: () => selectCity(city.name),
-        variant: 'outline' as const
-      }))
-    ]);
+    addBotMessage('In welcher Stadt bist du unterwegs? Tippe einfach den Anfang deiner Stadt:', false);
   };
 
   const selectCity = (city: string) => {
+    const cityObject = cities.find(c => c.name.toLowerCase() === city.toLowerCase());
+    const cityAbbr = cityObject ? cityObject.abbr : city.toLowerCase().replace(/[^a-z]/g, '');
+    
     setUserData(prev => ({ ...prev, city }));
+    setSelectedCity(cityAbbr); // Update global city selection
     addUserMessage(city);
     setIsTyping(true);
     setCurrentStep('interests');
+    setCitySearch(''); // Reset search
     addBotMessage('Was interessiert dich besonders?', true, [
       ...interests.map(interest => ({
         text: `${interest.emoji} ${interest.text}`,
@@ -282,12 +285,33 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
   };
 
   const handleSendMessage = () => {
-    if (!inputMessage.trim()) return;
+    if (currentStep === 'name' && !inputMessage.trim()) return;
+    if (currentStep === 'city' && !citySearch.trim()) return;
 
     if (currentStep === 'name') {
       handleNameSubmit();
+    } else if (currentStep === 'city') {
+      handleCitySubmit();
     }
   };
+
+  const handleCitySubmit = () => {
+    const searchTerm = citySearch.trim().toLowerCase();
+    const matchingCity = cities.find(city => 
+      city.name.toLowerCase().startsWith(searchTerm)
+    );
+    
+    if (matchingCity) {
+      selectCity(matchingCity.name);
+    } else {
+      // If no exact match, use the input as custom city
+      selectCity(citySearch.trim());
+    }
+  };
+
+  const filteredCities = cities.filter(city =>
+    city.name.toLowerCase().startsWith(citySearch.toLowerCase())
+  ).slice(0, 6); // Show max 6 suggestions
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -329,6 +353,13 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
           {messages.map((msg) => (
             <div key={msg.id} className="space-y-2">
               <div className={`flex ${msg.isBot ? 'justify-start' : 'justify-end'}`}>
+                {msg.isBot && (
+                  <img 
+                    src={chatbotAvatar} 
+                    alt="Event Guide" 
+                    className="w-8 h-8 rounded-full mr-3 mt-1 object-cover"
+                  />
+                )}
                 <div className="max-w-[85%]">
                   <div
                     className={`rounded-2xl px-4 py-3 ${
@@ -383,26 +414,50 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input (nur bei Name-Eingabe) */}
-        {currentStep === 'name' && (
+        {/* Input (Name und Stadt) */}
+        {(currentStep === 'name' || currentStep === 'city') && (
           <div className="p-4 bg-white border-t border-gray-100 rounded-b-3xl shrink-0">
             <div className="flex items-center gap-3 bg-gray-100 rounded-full px-4 py-3">
+              {currentStep === 'city' && <Search className="h-5 w-5 text-gray-400" />}
               <Input
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
+                value={currentStep === 'city' ? citySearch : inputMessage}
+                onChange={(e) => {
+                  if (currentStep === 'city') {
+                    setCitySearch(e.target.value);
+                  } else {
+                    setInputMessage(e.target.value);
+                  }
+                }}
                 onKeyPress={handleKeyPress}
-                placeholder="Dein Name..."
+                placeholder={currentStep === 'city' ? "Stadt eingeben..." : "Dein Name..."}
                 className="flex-1 bg-transparent border-0 text-black placeholder-gray-500 focus:ring-0 focus:outline-none px-0"
               />
               <Button
                 onClick={handleSendMessage}
-                disabled={!inputMessage.trim() || isTyping}
+                disabled={currentStep === 'name' ? !inputMessage.trim() || isTyping : !citySearch.trim() || isTyping}
                 className="bg-red-500 hover:bg-red-600 text-white rounded-full h-10 w-10 p-0 flex items-center justify-center"
                 size="icon"
               >
                 <Send className="h-5 w-5" />
               </Button>
             </div>
+            
+            {/* City suggestions */}
+            {currentStep === 'city' && citySearch.length > 0 && filteredCities.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {filteredCities.map((city) => (
+                  <Button
+                    key={city.abbr}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => selectCity(city.name)}
+                    className="w-full justify-start text-left border-gray-300 hover:bg-gray-100"
+                  >
+                    {city.name}
+                  </Button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
