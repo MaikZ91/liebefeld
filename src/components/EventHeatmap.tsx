@@ -21,7 +21,7 @@ import { useEvents } from '@/hooks/useEvents';
 import { format, parseISO } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import SwipeableEventPanel from '@/components/event-chat/SwipeableEventPanel';
+import ThreeEventDisplay from '@/components/event-chat/ThreeEventDisplay';
 import { PanelEventData, PanelEvent } from '@/components/event-chat/types';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -1238,10 +1238,10 @@ const EventHeatmap: React.FC = () => {
           
           {/* Default Event Panel Display */}
           <div className="p-4">
-            <SwipeableEventPanel
+            <ThreeEventDisplay
               panelData={panelData}
               onEventSelect={handleEventSelect}
-              className="w-full max-w-md mx-auto"
+              className="w-full"
             />
           </div>
         </div>
