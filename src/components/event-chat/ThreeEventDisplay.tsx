@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Users, Heart } from 'lucide-react';
 import { PanelEventData, PanelEvent } from './types';
 import { cn } from '@/lib/utils';
-import EventLikeDetails from './EventLikeDetails';
+import EventLikeAvatars from './EventLikeAvatars';
 
 interface ThreeEventDisplayProps {
   panelData: PanelEventData;
@@ -22,7 +22,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [translateX, setTranslateX] = useState(0);
-  const [showLikeDetails, setShowLikeDetails] = useState<string | null>(null);
+  
   const containerRef = useRef<HTMLDivElement>(null);
 
   const totalEvents = panelData.events.length;
@@ -154,32 +154,41 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
                   
                   {/* Like Button */}
                   {onLikeEvent && 'id' in event && (
-                    <div className="absolute top-2 right-2 flex gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="bg-black/50 hover:bg-black/70 text-white rounded-full p-2"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowLikeDetails(showLikeDetails === event.id ? null : event.id);
-                        }}
-                      >
-                        <Heart className="w-4 h-4" />
-                        <span className="ml-1 text-sm">{'likes' in event ? event.likes || 0 : 0}</span>
-                      </Button>
-                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onLikeEvent(event.id);
+                      }}
+                    >
+                      <Heart className="w-4 h-4" />
+                      <span className="ml-1 text-sm">{'likes' in event ? event.likes || 0 : 0}</span>
+                    </Button>
                   )}
                   
-                  {/* Event Details */}
+                  {/* Event Details mit Like Avatars */}
                   <div className="absolute bottom-0 left-0 right-0 p-3">
                     <h3 className="text-white font-bold text-base mb-1 line-clamp-4 leading-tight">
                       {event.title}
                     </h3>
-                    {'time' in event && event.time && (
+                    
+                    <div className="flex items-center justify-between">
                       <div className="text-gray-300 text-xs">
-                        {event.time}
+                        {'time' in event && event.time && event.time}
                       </div>
-                    )}
+                      
+                      {/* Like Avatars */}
+                      {'id' in event && (
+                        <EventLikeAvatars 
+                          eventId={event.id} 
+                          maxVisible={3}
+                          size="xs"
+                          className="ml-2"
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -200,22 +209,6 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
               )}
             />
           ))}
-        </div>
-      )}
-
-      {/* Like Details Overlay */}
-      {showLikeDetails && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <EventLikeDetails
-            eventId={showLikeDetails}
-            totalLikes={
-              (() => {
-                const event = panelData.events.find(e => 'id' in e && e.id === showLikeDetails);
-                return (event && 'likes' in event) ? event.likes || 0 : 0;
-              })()
-            }
-            onClose={() => setShowLikeDetails(null)}
-          />
         </div>
       )}
 
