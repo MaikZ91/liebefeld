@@ -108,19 +108,12 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     
     console.log('handleLocalSendMessage called with:', { localInput, eventData, activeChatModeValue });
     
-    if (activeChatModeValue === 'community') {
-      // For community mode, just call the external handler once
-      if (handleSendMessage) {
-        console.log('Calling external handleSendMessage for community');
-        await handleSendMessage(eventData || localInput);
-      }
-      setLocalInput('');
-      return;
+    // Always call handleSendMessage with the message content
+    if (handleSendMessage) {
+      console.log('Calling handleSendMessage with:', eventData || localInput);
+      await handleSendMessage(eventData || localInput);
     }
     
-    // For AI mode, handle sending directly
-    console.log('Calling handleSendMessage for AI mode');
-    await handleSendMessage(eventData || localInput);
     setLocalInput('');
   };
   
