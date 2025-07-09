@@ -129,23 +129,32 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
     const cityAbbr = cityObject ? cityObject.abbr : city.toLowerCase().replace(/[^a-z]/g, '');
     
     setUserData(prev => ({ ...prev, city }));
-    setSelectedCity(cityAbbr); // Update global city selection
+    
+    // Update global city selection with delay to prevent conflicts
+    setTimeout(() => {
+      setSelectedCity(cityAbbr);
+    }, 100);
+    
     addUserMessage(city);
     setIsTyping(true);
     setCurrentStep('interests');
     setCitySearch(''); // Reset search
-    addBotMessage('Was interessiert dich besonders?', true, [
-      ...interests.map(interest => ({
-        text: `${interest.emoji} ${interest.text}`,
-        action: () => toggleInterest(interest.text),
-        variant: userData.interests.includes(interest.text) ? 'default' as const : 'outline' as const
-      })),
-      {
-        text: 'Weiter →',
-        action: () => proceedToAvatar(),
-        variant: 'default' as const
-      }
-    ]);
+    
+    // Add small delay before showing interests to ensure smooth transition
+    setTimeout(() => {
+      addBotMessage('Was interessiert dich besonders?', true, [
+        ...interests.map(interest => ({
+          text: `${interest.emoji} ${interest.text}`,
+          action: () => toggleInterest(interest.text),
+          variant: userData.interests.includes(interest.text) ? 'default' as const : 'outline' as const
+        })),
+        {
+          text: 'Weiter →',
+          action: () => proceedToAvatar(),
+          variant: 'default' as const
+        }
+      ]);
+    }, 200);
   };
 
   const toggleInterest = (interest: string) => {

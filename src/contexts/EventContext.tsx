@@ -68,6 +68,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const topEventsPerDay = useTopEvents(events);
   
   const setSelectedCity = useCallback((abbr: string) => {
+    console.log('Setting selected city to:', abbr);
     setSelectedCityState(abbr);
     localStorage.setItem('selectedCityAbbr', abbr);
     const cityObject = cities.find(c => c.abbr.toLowerCase() === abbr.toLowerCase());
