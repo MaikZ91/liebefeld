@@ -3,7 +3,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { AVATAR_KEY, EventShare } from '@/types/chatTypes';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { realtimeService } from '@/services/realtimeService';
+
 import { messageService } from '@/services/messageService';
 
 export const useMessageSending = (groupId: string, username: string, addOptimisticMessage: (message: any) => void, selectedCategory: string = 'Ausgehen') => {
