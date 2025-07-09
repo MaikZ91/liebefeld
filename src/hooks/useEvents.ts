@@ -118,12 +118,14 @@ export const useEvents = () => {
                 )
             );
             
-            const { error } = await likeEvent({ 
+            const { data, error } = await likeEvent({ 
                 eventId, 
                 userId, 
                 username,
                 avatarUrl 
             });
+            
+            console.log('[handleLikeEvent] likeEvent result:', { data, error });
             
             if (error) {
                 console.error('[handleLikeEvent] Error liking event:', error);
@@ -133,6 +135,8 @@ export const useEvents = () => {
                         event.id === eventId ? { ...event, likes: oldLikes } : event
                     )
                 );
+            } else {
+                console.log('[handleLikeEvent] ✅ Successfully liked event!');
             }
         }
     } catch (error) {
