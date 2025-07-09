@@ -1266,7 +1266,29 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* Default Event Display - Show 3 Events at bottom, positioned higher */}
+      {/* "Find YOUR Tribe" Button (above event panels) */}
+      <div className="absolute bottom-44 left-6 z-[1000]">
+        <Button
+          onClick={() => setIsTribeFinderOpen(true)}
+          className="bg-black hover:bg-gray-900 text-red-500 w-24 h-12 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-xs font-bold border-2 border-red-500/30"
+        >
+          <Users className="w-4 h-4 mb-0.5" />
+          Find Tribe
+        </Button>
+      </div>
+
+      {/* "Ich bin hier" Button (above event panels) */}
+      <div className="absolute bottom-44 right-6 z-[1000]">
+        <Button
+          onClick={() => setShowCentralAvatar(true)}
+          className="bg-black hover:bg-gray-900 text-red-500 w-24 h-12 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-xs font-bold border-2 border-red-500/30"
+        >
+          <Plus className="w-4 h-4 mb-0.5" />
+          Ich bin hier!
+        </Button>
+      </div>
+
+      {/* Default Event Display - Show 3 Events directly above navbar */}
       {!showPerfectDayPanel && !showAIChat && filteredEvents.length > 0 && (
         <div className="absolute bottom-20 left-0 right-0 z-[1000]">
           {/* Default Event Panel Display */}
@@ -1280,28 +1302,6 @@ const EventHeatmap: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* "Find YOUR Tribe" Button (bottom left, above navbar) */}
-      <div className="absolute bottom-32 left-6 z-[1000]">
-        <Button
-          onClick={() => setIsTribeFinderOpen(true)}
-          className="bg-black hover:bg-gray-900 text-red-500 w-24 h-12 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-xs font-bold border-2 border-red-500/30"
-        >
-          <Users className="w-4 h-4 mb-0.5" />
-          Find Tribe
-        </Button>
-      </div>
-
-      {/* "Ich bin hier" Button (bottom right, above navbar) */}
-      <div className="absolute bottom-32 right-6 z-[1000]">
-        <Button
-          onClick={() => setShowCentralAvatar(true)}
-          className="bg-black hover:bg-gray-900 text-red-500 w-24 h-12 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-xs font-bold border-2 border-red-500/30"
-        >
-          <Plus className="w-4 h-4 mb-0.5" />
-          Ich bin hier!
-        </Button>
-      </div>
 
       {/* Map Container */}
       <div
