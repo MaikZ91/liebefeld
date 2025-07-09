@@ -276,9 +276,9 @@ const TribeFinder: React.FC<TribeFinderProps> = ({ open, onOpenChange }) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm h-[500px] flex flex-col p-0 bg-black rounded-3xl border-0 shadow-2xl">
+      <DialogContent className="sm:max-w-md h-[600px] flex flex-col p-0 bg-black rounded-3xl border-0 shadow-2xl">
         {/* Header */}
-        <DialogHeader className="px-4 py-4 bg-black text-white relative rounded-t-3xl">
+        <DialogHeader className="px-4 py-3 bg-black text-white relative rounded-t-3xl shrink-0">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
@@ -302,19 +302,19 @@ const TribeFinder: React.FC<TribeFinderProps> = ({ open, onOpenChange }) => {
           </div>
         </DialogHeader>
 
-        {/* User Profile Section */}
-        <div className="px-6 py-6 bg-white flex flex-col items-center">
-          <Avatar className="h-24 w-24 border-4 border-red-500 mb-3">
+        {/* User Profile Section - Kompakter */}
+        <div className="px-4 py-3 bg-white flex items-center gap-3 border-b border-gray-100 shrink-0">
+          <Avatar className="h-12 w-12 border-2 border-red-500">
             <AvatarImage src={userAvatar} alt={username} />
-            <AvatarFallback className="bg-red-500 text-white text-lg font-bold">
+            <AvatarFallback className="bg-red-500 text-white text-sm font-bold">
               {getInitials(username)}
             </AvatarFallback>
           </Avatar>
-          <h2 className="text-2xl font-bold text-black mb-1">{username}</h2>
+          <h2 className="text-lg font-bold text-black">{username}</h2>
         </div>
 
         {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-2 bg-white space-y-3">
+        <div className="flex-1 overflow-y-auto px-6 py-4 bg-white space-y-4 min-h-0">
           {messages.map((msg) => (
             <div key={msg.id} className="space-y-2">
               <div className={`flex ${msg.isBot ? 'justify-start' : 'justify-end'}`}>
@@ -370,12 +370,12 @@ const TribeFinder: React.FC<TribeFinderProps> = ({ open, onOpenChange }) => {
           )}
 
           {/* Orange Quick Action Button */}
-          <div className="flex justify-center py-2">
+          <div className="flex justify-center py-3">
             <Button
               onClick={() => setInputMessage('Soll ich ein neues Treffen für dich erstellen?')}
-              className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-6 py-3 flex items-center gap-2 font-medium"
+              className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-4 py-2 flex items-center gap-2 font-medium text-sm"
             >
-              <span className="text-lg">✏️</span>
+              <span className="text-base">✏️</span>
               Soll ich ein neues Treffen für dich erstellen?
             </Button>
           </div>
@@ -384,7 +384,7 @@ const TribeFinder: React.FC<TribeFinderProps> = ({ open, onOpenChange }) => {
         </div>
 
         {/* Input */}
-        <div className="p-4 bg-white border-t border-gray-100 rounded-b-3xl">
+        <div className="p-4 bg-white border-t border-gray-100 rounded-b-3xl shrink-0">
           <div className="flex items-center gap-3 bg-gray-100 rounded-full px-4 py-3">
             <Input
               value={inputMessage}

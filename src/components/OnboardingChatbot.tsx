@@ -305,9 +305,9 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm h-[500px] flex flex-col p-0 bg-black rounded-3xl border-0 shadow-2xl">
+      <DialogContent className="sm:max-w-md h-[600px] flex flex-col p-0 bg-black rounded-3xl border-0 shadow-2xl">
         {/* Header */}
-        <DialogHeader className="px-4 py-4 bg-black text-white relative rounded-t-3xl">
+        <DialogHeader className="px-4 py-3 bg-black text-white relative rounded-t-3xl shrink-0">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
@@ -317,7 +317,7 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <DialogTitle className="text-white font-bold text-lg tracking-wider">
+            <DialogTitle className="text-white font-bold text-base tracking-wider">
               THE TRIBE ONBOARDING
             </DialogTitle>
             <div className="w-8 h-8" /> {/* Spacer */}
@@ -325,7 +325,7 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
         </DialogHeader>
 
         {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-2 bg-white space-y-3">
+        <div className="flex-1 overflow-y-auto px-6 py-4 bg-white space-y-4 min-h-0">
           {messages.map((msg) => (
             <div key={msg.id} className="space-y-2">
               <div className={`flex ${msg.isBot ? 'justify-start' : 'justify-end'}`}>
@@ -385,7 +385,7 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
 
         {/* Input (nur bei Name-Eingabe) */}
         {currentStep === 'name' && (
-          <div className="p-4 bg-white border-t border-gray-100 rounded-b-3xl">
+          <div className="p-4 bg-white border-t border-gray-100 rounded-b-3xl shrink-0">
             <div className="flex items-center gap-3 bg-gray-100 rounded-full px-4 py-3">
               <Input
                 value={inputMessage}
