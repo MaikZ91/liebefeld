@@ -29,6 +29,7 @@ export const fetchSupabaseEvents = async (): Promise<Event[]> => {
         image_url: event.image_url,
         image_urls: event.image_url ? [event.image_url] : [], // Shim for backward compatibility
         likes: event.likes || 0,
+        liked_by_users: Array.isArray(event.liked_by_users) ? event.liked_by_users as Array<{username: string; avatar_url?: string | null; timestamp: string}> : [],
         rsvp_yes: event.rsvp_yes || 0,
         rsvp_no: event.rsvp_no || 0,
         rsvp_maybe: event.rsvp_maybe || 0,
@@ -53,20 +54,67 @@ export const fetchSupabaseEvents = async (): Promise<Event[]> => {
   }
 };
 
-// Update event likes
-export const updateEventLikes = async (eventId: string, newLikesValue: number): Promise<void> => {
+// Update event likes and liked_by_users
+export const updateEventLikes = async (
+  eventId: string, 
+  action: 'like' | 'unlike', 
+  userData: { username?: string | null; avatar_url?: string | null }
+): Promise<void> => {
   try {
-    console.log(`Updating likes for event ${eventId} to ${newLikesValue}`);
+    console.log(`${action === 'like' ? 'Liking' : 'Unliking'} event ${eventId} for user:`, userData);
+    
+    // First get current event data
+    const { data: currentEvent, error: fetchError } = await supabase
+      .from('community_events')
+      .select('likes, liked_by_users')
+      .eq('id', eventId)
+      .single();
+      
+    if (fetchError) {
+      console.error('Error fetching current event data:', fetchError);
+      return;
+    }
+    
+    const currentLikes = currentEvent.likes || 0;
+    const currentLikedBy = Array.isArray(currentEvent.liked_by_users) ? currentEvent.liked_by_users : [];
+    
+    let newLikes = currentLikes;
+    let newLikedBy = [...currentLikedBy];
+    
+    if (action === 'like') {
+      // Check if user already liked (by username)
+      const alreadyLiked = currentLikedBy.some((user: any) => 
+        user.username === userData.username
+      );
+      
+      if (!alreadyLiked) {
+        newLikes = currentLikes + 1;
+        newLikedBy.push({
+          username: userData.username || 'Anonymous',
+          avatar_url: userData.avatar_url || null,
+          timestamp: new Date().toISOString()
+        });
+      }
+    } else {
+      // Remove user from liked_by_users
+      newLikedBy = currentLikedBy.filter((user: any) => 
+        user.username !== userData.username
+      );
+      newLikes = Math.max(0, currentLikes - 1);
+    }
     
     const { error } = await supabase
       .from('community_events')
-      .update({ likes: newLikesValue })
+      .update({ 
+        likes: newLikes,
+        liked_by_users: newLikedBy
+      })
       .eq('id', eventId);
       
     if (error) {
       console.error('Error updating likes in Supabase:', error);
     } else {
-      console.log(`Successfully updated likes for event ${eventId}`);
+      console.log(`Successfully ${action}d event ${eventId}`);
     }
   } catch (error) {
     console.error('Error updating likes:', error);

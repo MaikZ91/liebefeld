@@ -29,6 +29,11 @@ export interface PanelEvent {
   category: string;
   link?: string; 
   likes?: number;
+  liked_by_users?: Array<{
+    username: string;
+    avatar_url?: string | null;
+    timestamp: string;
+  }>;
   description?: string;
   rsvp_yes?: number;
   rsvp_maybe?: number;

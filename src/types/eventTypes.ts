@@ -12,6 +12,11 @@ export interface Event {
   image_url?: string;
   image_urls?: string[];
   likes?: number;
+  liked_by_users?: Array<{
+    username: string;
+    avatar_url?: string | null;
+    timestamp: string;
+  }>;
   rsvp_yes?: number;
   rsvp_no?: number;
   rsvp_maybe?: number;

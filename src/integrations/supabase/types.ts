@@ -157,6 +157,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_paid: boolean | null
+          liked_by_users: Json | null
           likes: number | null
           link: string | null
           location: string | null
@@ -179,6 +180,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_paid?: boolean | null
+          liked_by_users?: Json | null
           likes?: number | null
           link?: string | null
           location?: string | null
@@ -201,6 +203,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_paid?: boolean | null
+          liked_by_users?: Json | null
           likes?: number | null
           link?: string | null
           location?: string | null

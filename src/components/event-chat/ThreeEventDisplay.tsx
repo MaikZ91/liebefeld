@@ -183,14 +183,13 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
                       </div>
                       
                       {/* Like Avatars */}
-                      {'id' in event && (
+                      {'liked_by_users' in event && event.liked_by_users && (
                         <div>
                           <EventLikeAvatars 
-                            eventId={event.id} 
+                            likedByUsers={event.liked_by_users} 
                             maxVisible={3}
                             size="xs"
                             className="ml-2"
-                            refreshTrigger={refreshTrigger}
                           />
                         </div>
                       )}

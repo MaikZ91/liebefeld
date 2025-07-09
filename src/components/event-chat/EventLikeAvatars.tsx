@@ -1,51 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getEventLikes, type EventLike } from '@/services/eventLikeService';
 import { getInitials } from '@/utils/chatUIUtils';
 import { cn } from '@/lib/utils';
 
+interface LikedUser {
+  username: string;
+  avatar_url?: string | null;
+  timestamp: string;
+}
+
 interface EventLikeAvatarsProps {
-  eventId: string;
+  likedByUsers?: LikedUser[];
   maxVisible?: number;
   size?: 'sm' | 'xs';
   className?: string;
-  refreshTrigger?: number; // Add trigger to force refresh
 }
 
 const EventLikeAvatars: React.FC<EventLikeAvatarsProps> = ({
-  eventId,
+  likedByUsers = [],
   maxVisible = 4,
   size = 'xs',
-  className,
-  refreshTrigger
+  className
 }) => {
-  const [likes, setLikes] = useState<EventLike[]>([]);
-  const [loading, setLoading] = useState(true);
-  
   const avatarSize = size === 'xs' ? 'w-4 h-4' : 'w-6 h-6';
 
-  useEffect(() => {
-    const fetchLikes = async () => {
-      const { data } = await getEventLikes(eventId);
-      setLikes(data || []);
-      setLoading(false);
-    };
-
-    fetchLikes();
-  }, [eventId, refreshTrigger]);
-
-  if (loading || likes.length === 0) {
+  if (likedByUsers.length === 0) {
     return null;
   }
 
-  const visibleLikes = likes.slice(0, maxVisible);
-  const remainingCount = Math.max(0, likes.length - maxVisible);
+  const visibleLikes = likedByUsers.slice(0, maxVisible);
+  const remainingCount = Math.max(0, likedByUsers.length - maxVisible);
 
   return (
     <div className={cn("flex items-center -space-x-1", className)}>
-      {visibleLikes.map((like, index) => (
+      {visibleLikes.map((user, index) => (
         <Avatar 
-          key={like.id} 
+          key={`${user.username}-${user.timestamp}`}
           className={cn(
             avatarSize, 
             "border border-white/30 bg-black/50",
@@ -53,9 +43,9 @@ const EventLikeAvatars: React.FC<EventLikeAvatarsProps> = ({
           )}
           style={{ zIndex: visibleLikes.length - index }}
         >
-          <AvatarImage src={like.avatar_url || undefined} />
+          <AvatarImage src={user.avatar_url || undefined} />
           <AvatarFallback className="bg-purple-600 text-white text-[8px]">
-            {like.username ? getInitials(like.username) : '?'}
+            {user.username ? getInitials(user.username) : '?'}
           </AvatarFallback>
         </Avatar>
       ))}

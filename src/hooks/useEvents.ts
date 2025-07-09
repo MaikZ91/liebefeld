@@ -3,11 +3,11 @@ import { Event, RsvpOption } from '../types/eventTypes';
 import { 
   fetchSupabaseEvents, 
   updateEventRsvp,
+  updateEventLikes,
   syncGitHubEvents,
   addNewEvent
 } from '../services/eventService';
 import { updateEventLikesInDb } from '../services/singleEventService';
-import { likeEvent, unlikeEvent, hasUserLikedEvent } from '../services/eventLikeService';
 
 export const useEvents = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -69,15 +69,16 @@ export const useEvents = () => {
     }
 
     try {
-        // Check if user is logged in (implement when auth is added)
-        const userId = null; // TODO: Get from auth context when available
         const username = localStorage.getItem('selectedUsername') || null;
         const avatarUrl = null; // TODO: Get from user profile when available
         
-        console.log('[handleLikeEvent] Using username:', username, 'userId:', userId);
+        console.log('[handleLikeEvent] Using username:', username);
         
-        // Check if user already liked this event
-        const alreadyLiked = await hasUserLikedEvent(eventId, userId);
+        // Check if user already liked this event (check in liked_by_users)
+        const currentLikedBy = eventToLike.liked_by_users || [];
+        const alreadyLiked = currentLikedBy.some((user: any) => 
+            user.username === username
+        );
         
         if (alreadyLiked) {
             // Unlike the event
@@ -86,24 +87,23 @@ export const useEvents = () => {
             // Optimistically update UI
             const oldLikes = eventToLike.likes || 0;
             const newLikes = Math.max(0, oldLikes - 1);
+            const newLikedBy = currentLikedBy.filter((user: any) => 
+                user.username !== username
+            );
             
             setEvents(prevEvents =>
                 prevEvents.map(event =>
-                    event.id === eventId ? { ...event, likes: newLikes } : event
+                    event.id === eventId ? { 
+                        ...event, 
+                        likes: newLikes,
+                        liked_by_users: newLikedBy
+                    } : event
                 )
             );
             
-            const { error } = await unlikeEvent({ eventId, userId });
+            // Update in database
+            await updateEventLikes(eventId, 'unlike', { username, avatar_url: avatarUrl });
             
-            if (error) {
-                console.error('[handleLikeEvent] Error unliking event:', error);
-                // Rollback on error
-                setEvents(prevEvents =>
-                    prevEvents.map(event =>
-                        event.id === eventId ? { ...event, likes: oldLikes } : event
-                    )
-                );
-            }
         } else {
             // Like the event
             console.log(`[handleLikeEvent] 👍 Adding like for event ${eventId}`);
@@ -111,38 +111,36 @@ export const useEvents = () => {
             // Optimistically update UI
             const oldLikes = eventToLike.likes || 0;
             const newLikes = oldLikes + 1;
+            const newLikedBy = [
+                ...currentLikedBy,
+                {
+                    username: username || 'Anonymous',
+                    avatar_url: avatarUrl,
+                    timestamp: new Date().toISOString()
+                }
+            ];
             
             setEvents(prevEvents =>
                 prevEvents.map(event =>
-                    event.id === eventId ? { ...event, likes: newLikes } : event
+                    event.id === eventId ? { 
+                        ...event, 
+                        likes: newLikes,
+                        liked_by_users: newLikedBy
+                    } : event
                 )
             );
             
-            const { data, error } = await likeEvent({ 
-                eventId, 
-                userId, 
-                username,
-                avatarUrl 
-            });
-            
-            console.log('[handleLikeEvent] likeEvent result:', { data, error });
-            
-            if (error) {
-                console.error('[handleLikeEvent] Error liking event:', error);
-                // Rollback on error
-                setEvents(prevEvents =>
-                    prevEvents.map(event =>
-                        event.id === eventId ? { ...event, likes: oldLikes } : event
-                    )
-                );
-            } else {
-                console.log('[handleLikeEvent] ✅ Successfully liked event!');
-            }
+            // Update in database
+            await updateEventLikes(eventId, 'like', { username, avatar_url: avatarUrl });
         }
+        
+        console.log('[handleLikeEvent] ✅ Successfully updated like!');
     } catch (error) {
         console.error('[handleLikeEvent] 💥 Unerwarteter Fehler:', error);
+        // Refresh events to get correct state
+        refreshEvents();
     }
-  }, [events]);
+  }, [events, refreshEvents]);
 
   const handleRsvpEvent = useCallback(async (eventId: string, option: RsvpOption) => {
     try {
