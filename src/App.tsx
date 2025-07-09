@@ -56,7 +56,7 @@ function App() {
               
               {/* Layout-wrapped pages */}
               <Route path="/users" element={<Layout><UserDirectory open={true} onOpenChange={() => {}} onSelectUser={() => {}} /></Layout>} />
-              <Route path="/events" element={<Layout><EventCalendar /></Layout>} />
+              <Route path="/events" element={<EventCalendar />} />
               
               <Route path="*" element={<NotFound />} />
             </Routes>

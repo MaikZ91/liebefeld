@@ -186,8 +186,8 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   }, [filter]);
 
   return (
-    <div className="container mx-auto px-2 py-4 max-w-[1280px] animate-fade-in">
-      <div className="flex flex-col space-y-2">
+    <div className="min-h-screen bg-black text-white px-2 py-2 animate-fade-in">
+      <div className="flex flex-col space-y-2 h-full">
         <CalendarHeader 
           currentDate={currentDate}
           prevMonth={prevMonth}
