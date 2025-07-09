@@ -74,6 +74,8 @@ export const useEvents = () => {
         const username = localStorage.getItem('selectedUsername') || null;
         const avatarUrl = null; // TODO: Get from user profile when available
         
+        console.log('[handleLikeEvent] Using username:', username, 'userId:', userId);
+        
         // Check if user already liked this event
         const alreadyLiked = await hasUserLikedEvent(eventId, userId);
         

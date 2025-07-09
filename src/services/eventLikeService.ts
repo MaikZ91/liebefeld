@@ -25,6 +25,8 @@ export const likeEvent = async ({ eventId, userId, username, avatarUrl }: LikeEv
     // For anonymous users, generate a random avatar
     const finalAvatarUrl = avatarUrl || (userId ? null : getRandomAvatar());
     
+    console.log('[likeEvent] Creating like with:', { eventId, userId, username, finalAvatarUrl });
+    
     const { data, error } = await supabase
       .from('event_likes')
       .insert({

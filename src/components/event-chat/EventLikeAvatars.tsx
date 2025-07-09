@@ -22,12 +22,19 @@ const EventLikeAvatars: React.FC<EventLikeAvatarsProps> = ({
 
   useEffect(() => {
     const fetchLikes = async () => {
+      console.log('[EventLikeAvatars] Fetching likes for event:', eventId);
       const { data } = await getEventLikes(eventId);
+      console.log('[EventLikeAvatars] Received likes:', data);
       setLikes(data || []);
       setLoading(false);
     };
 
     fetchLikes();
+    
+    // Set up an interval to refresh likes periodically
+    const interval = setInterval(fetchLikes, 3000);
+    
+    return () => clearInterval(interval);
   }, [eventId]);
 
   if (loading || likes.length === 0) {
