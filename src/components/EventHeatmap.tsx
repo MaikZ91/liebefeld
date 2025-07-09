@@ -526,17 +526,28 @@ const EventHeatmap: React.FC = () => {
     };
   }, [mapRef.current]); // Remove selectedCity from dependencies
 
-  // Separate useEffect for handling city changes
+  // Separate useEffect for handling city changes with smooth animation
   useEffect(() => {
     if (map && selectedCity) {
       console.log('[EventHeatmap] City changed to:', selectedCity);
       const newCenter = getCityCenterCoordinates(selectedCity);
       
-      // Smoothly move to new city instead of recreating map
-      map.setView([newCenter.lat, newCenter.lng], 13, {
+      // Deutschland center coordinates for zoom out effect
+      const germanyCenter = { lat: 51.1657, lng: 10.4515 }; 
+      
+      // Step 1: Zoom out to show all of Germany
+      map.setView([germanyCenter.lat, germanyCenter.lng], 6, {
         animate: true,
-        duration: 1.5
+        duration: 0.8
       });
+      
+      // Step 2: After zoom out, zoom into the new city
+      setTimeout(() => {
+        map.setView([newCenter.lat, newCenter.lng], 13, {
+          animate: true,
+          duration: 1.2
+        });
+      }, 900); // Wait for zoom out to complete
     }
   }, [map, selectedCity]);
   

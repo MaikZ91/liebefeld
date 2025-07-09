@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Users, ChevronUp, Heart } from 'lucide-react';
+import { Users, Heart } from 'lucide-react';
 import { PanelEventData, PanelEvent } from './types';
 import { cn } from '@/lib/utils';
 
@@ -200,14 +200,6 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
         </div>
       )}
 
-
-      {/* Events Counter with Arrow */}
-      <div className="flex items-center justify-between px-4 py-2">
-        <span className="text-white font-semibold text-lg">
-          {totalEvents} Events
-        </span>
-        <ChevronUp className="w-6 h-6 text-white" />
-      </div>
     </div>
   );
 };
