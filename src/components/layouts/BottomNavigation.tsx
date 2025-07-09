@@ -2,15 +2,16 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, MessageSquare, Users, Map, User } from 'lucide-react';
+import { Calendar, MessageSquare, Map, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate, useLocation } from 'react-router-dom';
 import OnboardingChatbot from '@/components/OnboardingChatbot';
+import UserDirectory from '@/components/users/UserDirectory';
+import { USERNAME_KEY } from '@/types/chatTypes';
 
 interface BottomNavigationProps {
   activeView?: 'ai' | 'community';
   setActiveView?: (view: 'ai' | 'community') => void;
-  // handleOpenUserDirectory and setIsEventListSheetOpen are removed as they are no longer used for navigation directly from here
   newMessagesCount: number;
   newEventsCount: number;
 }
@@ -24,9 +25,13 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const isOnHeatmap = location.pathname === '/heatmap';
-  const isOnUsersPage = location.pathname === '/users';
   const isOnEventsPage = location.pathname === '/events';
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [isUserDirectoryOpen, setIsUserDirectoryOpen] = useState(false);
+
+  // Check if user has completed onboarding
+  const username = localStorage.getItem(USERNAME_KEY);
+  const hasCompletedOnboarding = username && username !== 'Anonymous' && username !== 'User' && username.trim().length > 0;
 
 
   return (
@@ -68,29 +73,26 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           <span className="text-[10px]">Social Map</span>
         </Button>
 
-        {/* User Button (Onboarding Trigger) */}
+        {/* User/Welcome Button */}
         <Button 
           variant="ghost" 
           size="sm" 
-          onClick={() => setIsOnboardingOpen(true)} 
+          onClick={() => {
+            if (!hasCompletedOnboarding) {
+              setIsOnboardingOpen(true);
+            } else {
+              setIsUserDirectoryOpen(true);
+            }
+          }} 
           className="flex flex-col items-center gap-1 px-2 py-2 h-auto min-w-0 text-gray-400 hover:text-white"
         >
           <User className="h-4 w-4" />
-          <span className="text-[10px]">User</span>
-        </Button>
-
-        {/* User Directory Button */}
-        <Button 
-          variant={isOnUsersPage ? "default" : "ghost"} 
-          size="sm" 
-          onClick={() => navigate('/users')} 
-          className={cn(
-            "flex flex-col items-center gap-1 px-2 py-2 h-auto min-w-0",
-            isOnUsersPage ? 'bg-red-500 hover:bg-red-600 text-white' : 'text-gray-400 hover:text-white'
-          )}
-        >
-          <Users className="h-4 w-4" />
-          <span className="text-[10px]">Directory</span>
+          <span className={cn(
+            "text-[10px]", 
+            !hasCompletedOnboarding && "text-red-500"
+          )}>
+            {hasCompletedOnboarding ? 'User' : 'Welcome'}
+          </span>
         </Button>
         
         {/* Calendar Events Button */}
@@ -121,6 +123,13 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           // Refresh page or trigger profile reload
           window.location.reload();
         }}
+      />
+
+      {/* User Directory */}
+      <UserDirectory 
+        open={isUserDirectoryOpen}
+        onOpenChange={setIsUserDirectoryOpen}
+        onSelectUser={() => {}} // Empty function since we don't need user selection in this context
       />
     </div>
   );
