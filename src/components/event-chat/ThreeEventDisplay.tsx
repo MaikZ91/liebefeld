@@ -101,10 +101,21 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
 
   return (
     <div className={cn("w-full space-y-4", className)}>
-      {/* AI Recommendations Header */}
-      <div className="text-center">
-        <div className="bg-black text-white px-8 py-3 rounded-full inline-block font-semibold text-lg">
-          AI Recommendations
+      {/* Perfect Day Button and Action Buttons */}
+      <div className="flex justify-between items-center px-4">
+        <Button className="bg-black text-white hover:bg-gray-900 px-6 py-2 rounded-full font-semibold">
+          <span className="text-purple-400 mr-2">✨</span>
+          Perfect Day
+        </Button>
+        
+        <div className="flex gap-2">
+          <Button className="bg-black text-red-500 hover:bg-gray-900 px-4 py-2 rounded-full font-bold border border-red-500/30">
+            <Users className="w-4 h-4 mr-1" />
+            Find YOUR Tribe
+          </Button>
+          <Button className="bg-black text-red-500 hover:bg-gray-900 px-4 py-2 rounded-full font-bold border border-red-500/30">
+            Ich bin hier!
+          </Button>
         </div>
       </div>
 
@@ -181,13 +192,6 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
         </div>
       )}
 
-      {/* Find YOUR Tribe Button */}
-      <div className="text-center px-4">
-        <Button className="bg-black text-red-500 hover:bg-gray-900 px-8 py-3 rounded-full font-bold text-lg border-2 border-red-500/30">
-          <Users className="w-5 h-5 mr-2" />
-          Find YOUR Tribe
-        </Button>
-      </div>
 
       {/* Events Counter with Arrow */}
       <div className="flex items-center justify-between px-4 py-2">
