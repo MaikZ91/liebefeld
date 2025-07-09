@@ -305,7 +305,7 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md h-[600px] flex flex-col p-0 bg-black rounded-3xl border-0 shadow-2xl">
+      <DialogContent className="sm:max-w-md h-[600px] flex flex-col p-0 bg-black rounded-3xl border-0 shadow-2xl z-[9999] fixed">
         {/* Header */}
         <DialogHeader className="px-4 py-3 bg-black text-white relative rounded-t-3xl shrink-0">
           <div className="flex items-center justify-between">
