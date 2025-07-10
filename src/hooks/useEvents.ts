@@ -8,15 +8,18 @@ import {
   addNewEvent
 } from '../services/eventService';
 import { updateEventLikesInDb } from '../services/singleEventService';
-import { useEventContext } from '../contexts/EventContext'; // Import useEventContext
 
-export const useEvents = () => {
-  const { selectedCity } = useEventContext(); // Access selectedCity from context
+// Remove the import of useEventContext from here
+// import { useEventContext } from '../contexts/EventContext';
+
+// Accept selectedCity as a parameter
+export const useEvents = (selectedCity: string) => {
+  // const { selectedCity } = useEventContext(); // This line should be removed
 
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true); // Ladezustand standardmäßig auf true
 
-  // Dieser useEffect wird nur einmal beim Start der App ausgeführt.
+  // This useEffect will now re-run when selectedCity changes
   useEffect(() => {
     const initialLoad = async () => {
       setIsLoading(true);
@@ -28,7 +31,7 @@ export const useEvents = () => {
 
         // alle Events aus der Datenbank laden, JETZT MIT CITY FILTER
         const allEvents = await fetchSupabaseEvents(selectedCity, today); // Pass selectedCity and currentDate
-        
+
         console.log(`🔄 [useEvents] Einmaliger Ladevorgang abgeschlossen. ${allEvents.length} Events geladen.`);
         console.log('🔄 [useEvents] First 3 events:', allEvents.slice(0, 3));
         console.log('🔄 [useEvents] Events for today (2025-07-10):', allEvents.filter(e => e.date === '2025-07-10'));
