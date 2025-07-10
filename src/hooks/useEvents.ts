@@ -26,6 +26,8 @@ export const useEvents = () => {
         const allEvents = await fetchSupabaseEvents();
         
         console.log(`🔄 [useEvents] Einmaliger Ladevorgang abgeschlossen. ${allEvents.length} Events geladen.`);
+        console.log('🔄 [useEvents] First 3 events:', allEvents.slice(0, 3));
+        console.log('🔄 [useEvents] Events for today (2025-07-10):', allEvents.filter(e => e.date === '2025-07-10'));
         setEvents(allEvents);
         
       } catch (error) {

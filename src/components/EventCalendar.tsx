@@ -89,16 +89,25 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
   
   const eventsToDisplay = React.useMemo(() => {
+    console.log('📅 [EventCalendar] Computing eventsToDisplay...');
+    console.log('📅 [EventCalendar] eventsFilteredByCity.length:', eventsFilteredByCity.length);
+    console.log('📅 [EventCalendar] showFavorites:', showFavorites, 'showNewEvents:', showNewEvents);
+    console.log('📅 [EventCalendar] currentDate:', currentDate);
+    
     if (showNewEvents) {
       return []; // No new events tracking for now
     } else if (showFavorites) {
-      return eventsFilteredByCity.filter(event => 
+      const favoriteFiltered = eventsFilteredByCity.filter(event => 
         event.date && 
         topEventsPerDay[event.date] === event.id && 
         (event.likes && event.likes > 0)
       );
+      console.log('📅 [EventCalendar] favoriteFiltered.length:', favoriteFiltered.length);
+      return favoriteFiltered;
     } else {
-      return getMonthOrFavoriteEvents(eventsFilteredByCity, currentDate, false, {});
+      const monthFiltered = getMonthOrFavoriteEvents(eventsFilteredByCity, currentDate, false, {});
+      console.log('📅 [EventCalendar] monthFiltered.length:', monthFiltered.length);
+      return monthFiltered;
     }
   }, [eventsFilteredByCity, currentDate, showFavorites, showNewEvents, topEventsPerDay]);
   
