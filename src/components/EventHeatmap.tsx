@@ -243,7 +243,8 @@ const EventHeatmap: React.FC = () => {
                                        
         console.log(`Event: ${event.title}, Date: ${event.date}, Location: ${event.location}, City: ${event.city}, IsSelectedDate: ${isSelectedDateEvent}, HasLocation: ${hasLocationData}, IsRelevantCity: ${isRelevantCity}`);
         
-        return isSelectedDateEvent && hasLocationData && isRelevantCity;
+        // Modified to show events even without geocoding working
+        return isSelectedDateEvent && isRelevantCity;
       })
       .map(event => {
         const coords = eventCoordinates.get(event.id);
