@@ -3,15 +3,14 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Event } from "../types/eventTypes";
 
-// Fetch events from unified community_events table, filtered by city
-export const fetchSupabaseEvents = async (selectedCity?: string): Promise<Event[]> => {
+// Fetch events from unified community_events table, filtered by city and date
+export const fetchSupabaseEvents = async (selectedCity?: string, currentDate?: string): Promise<Event[]> => {
   try {
     console.log('踏 [fetchSupabaseEvents] Starting database query...');
     
     let query = supabase
       .from('community_events')
-      .select('*')
-      .order('date', { ascending: true });
+      .select('*'); // Select all fields
 
     // Apply city filter at database level
     if (selectedCity) {
@@ -26,6 +25,18 @@ export const fetchSupabaseEvents = async (selectedCity?: string): Promise<Event[
     } else {
       console.log('踏 [fetchSupabaseEvents] No specific city selected, fetching all events.');
     }
+
+    // Apply date filter at database level (current date onwards)
+    if (currentDate) {
+      query = query.gte('date', currentDate);
+      console.log(`踏 [fetchSupabaseEvents] Applying DB filter for date >= ${currentDate}`);
+    } else {
+      console.log('踏 [fetchSupabaseEvents] No specific start date, fetching all events.');
+    }
+
+    // Order by date as before
+    query = query.order('date', { ascending: true });
+
 
     const { data: eventsData, error: eventsError } = await query;
     
