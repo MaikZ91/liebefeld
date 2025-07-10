@@ -157,7 +157,17 @@ const EventHeatmap: React.FC = () => {
       const uniqueLocations = new Set<string>();
       const locationData: Array<{ location: string; city?: string }> = [];
 
-      events.forEach(event => {
+      // Filter events by selected city BEFORE sending for geocoding
+      const currentCityEvents = events.filter(event => {
+        const eventCityLower = event.city ? event.city.toLowerCase() : null;
+        const selectedCityLower = selectedCity.toLowerCase();
+        if (selectedCityLower === 'bi' || selectedCityLower === 'bielefeld') {
+          return !eventCityLower || eventCityLower === 'bielefeld' || eventCityLower === 'bi';
+        }
+        return eventCityLower === selectedCityLower;
+      });
+
+      currentCityEvents.forEach(event => {
         if (event.location && !uniqueLocations.has(event.location)) {
           uniqueLocations.add(event.location);
           locationData.push({
@@ -174,7 +184,7 @@ const EventHeatmap: React.FC = () => {
         
         const newEventCoordinates = new Map<string, { lat: number; lng: number }>();
         
-        events.forEach(event => {
+        currentCityEvents.forEach(event => { // Use currentCityEvents here as well
           if (event.location) {
             const key = `${event.location}_${event.city || selectedCity}`;
             const coords = coordinates.get(key);
@@ -188,7 +198,7 @@ const EventHeatmap: React.FC = () => {
         });
 
         setEventCoordinates(newEventCoordinates);
-        console.log(`[EventHeatmap] Geocoded ${newEventCoordinates.size} event locations`);
+        console.log(`[EventHeatmap] Geocoded ${newEventCoordinates.size} event locations for selected city.`);
       } catch (error) {
         console.error('[EventHeatmap] Error during batch geocoding:', error);
       }
@@ -680,7 +690,7 @@ const EventHeatmap: React.FC = () => {
             return distance < 0.002;
           });
 
-          const cityCommunityGroupId = 'bi_ausgehen';
+          const cityCommunityGroupId = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.abbr.toLowerCase() + '_ausgehen' || 'bi_ausgehen';
           await messageService.sendMessage(
             cityCommunityGroupId,
             username,
