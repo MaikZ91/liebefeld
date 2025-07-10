@@ -22,7 +22,7 @@ export const useEvents = () => {
       try {
         console.log('🔄 [useEvents] Starte einmaligen Sync und Ladevorgang...');
         // 1. Zuerst die Events von GitHub synchronisieren.
-        //await syncGitHubEvents();
+        await syncGitHubEvents();
         
         // 2. Danach alle Events aus der Datenbank laden.
         const allEvents = await fetchSupabaseEvents();
