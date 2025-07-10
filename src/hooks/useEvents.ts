@@ -17,6 +17,8 @@ export const useEvents = () => {
   useEffect(() => {
     const initialLoad = async () => {
       setIsLoading(true);
+      const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+      console.log('🔄 [useEvents] Today is:', today);
       try {
         console.log('🔄 [useEvents] Starte einmaligen Sync und Ladevorgang...');
         // 1. Zuerst die Events von GitHub synchronisieren.

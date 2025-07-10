@@ -178,16 +178,33 @@ export const getEventsForDay = (events: Event[], selectedDate: Date | null, filt
 };
 
 export const getMonthOrFavoriteEvents = (events: Event[], currentDate: Date, showFavorites: boolean = false, eventLikes: Record<string, number> = {}): Event[] => {
+  console.log('🗓️ [getMonthOrFavoriteEvents] Input:', { 
+    eventsLength: events.length, 
+    currentDate: currentDate.toISOString(), 
+    showFavorites 
+  });
+  
   if (showFavorites) {
-    return events.filter(event => (event.likes || 0) > 0);
+    const favoriteEvents = events.filter(event => (event.likes || 0) > 0);
+    console.log('🗓️ [getMonthOrFavoriteEvents] Favorite events:', favoriteEvents.length);
+    return favoriteEvents;
   }
   
   const monthStart = format(startOfWeek(currentDate), 'yyyy-MM-dd');
   const monthEnd = format(endOfWeek(addDays(currentDate, 30)), 'yyyy-MM-dd');
   
-  return events.filter(event => {
-    return event.date >= monthStart && event.date <= monthEnd;
+  console.log('🗓️ [getMonthOrFavoriteEvents] Date range:', { monthStart, monthEnd });
+  
+  const filteredEvents = events.filter(event => {
+    const isInRange = event.date >= monthStart && event.date <= monthEnd;
+    if (!isInRange) {
+      console.log('🗓️ [getMonthOrFavoriteEvents] Event outside range:', event.title, event.date);
+    }
+    return isInRange;
   });
+  
+  console.log('🗓️ [getMonthOrFavoriteEvents] Filtered events:', filteredEvents.length);
+  return filteredEvents;
 };
 
 export const groupFutureEventsByDate = (events: Event[]): Record<string, Event[]> => {
