@@ -1,22 +1,40 @@
+// src/services/eventService.ts
 
 import { supabase } from "@/integrations/supabase/client";
 import { Event } from "../types/eventTypes";
 
-// Fetch all events from unified community_events table
-export const fetchSupabaseEvents = async (): Promise<Event[]> => {
+// Fetch events from unified community_events table, filtered by city
+export const fetchSupabaseEvents = async (selectedCity?: string): Promise<Event[]> => {
   try {
-    console.log('📥 [fetchSupabaseEvents] Starting database query...');
-    const { data: eventsData, error: eventsError } = await supabase
+    console.log('踏 [fetchSupabaseEvents] Starting database query...');
+    
+    let query = supabase
       .from('community_events')
       .select('*')
       .order('date', { ascending: true });
+
+    // Apply city filter at database level
+    if (selectedCity) {
+      const targetCityName = selectedCity.toLowerCase();
+      // Special handling for "Bielefeld" to include events without explicit city
+      if (targetCityName === 'bi' || targetCityName === 'bielefeld') {
+        query = query.or('city.is.null,city.ilike.bielefeld,city.ilike.bi');
+      } else {
+        query = query.ilike('city', targetCityName);
+      }
+      console.log(`踏 [fetchSupabaseEvents] Applying DB filter for city: ${selectedCity}`);
+    } else {
+      console.log('踏 [fetchSupabaseEvents] No specific city selected, fetching all events.');
+    }
+
+    const { data: eventsData, error: eventsError } = await query;
     
     if (eventsError) {
-      console.error('📥 [fetchSupabaseEvents] DATABASE ERROR:', eventsError);
+      console.error('踏 [fetchSupabaseEvents] DATABASE ERROR:', eventsError);
       throw eventsError;
     }
     
-    console.log('📥 [fetchSupabaseEvents] Raw data received:', eventsData?.length || 0, 'events');
+    console.log('踏 [fetchSupabaseEvents] Raw data received:', eventsData?.length || 0, 'events');
     
     if (eventsData) {
       const transformedEvents = eventsData.map(event => ({
@@ -52,7 +70,7 @@ export const fetchSupabaseEvents = async (): Promise<Event[]> => {
     
     return [];
   } catch (error) {
-    console.error('📥 [fetchSupabaseEvents] EXCEPTION:', error);
+    console.error('踏 [fetchSupabaseEvents] EXCEPTION:', error);
     return [];
   }
 };
