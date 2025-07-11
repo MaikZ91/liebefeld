@@ -39,7 +39,6 @@ import { useEventContext, cities } from '@/contexts/EventContext';
 import FullPageChatBot from '@/components/event-chat/FullPageChatBot';
 import { useChatLogic } from '@/components/event-chat/useChatLogic';
 import { geocodeLocation, loadCachedCoordinates, geocodeMultipleLocations } from '@/services/geocodingService';
-import TribeFinder from './TribeFinder';
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -216,19 +215,21 @@ const EventHeatmap: React.FC = () => {
     return parseInt(hour, 10);
   };
 
-  const getCityCenterCoordinates = (cityAbbr: string) => {
+  // Corrected getCityCenterCoordinates to use geocodingService
+  const getCityCenterCoordinates = async (cityAbbr: string) => {
     const cityObject = cities.find(c => c.abbr.toLowerCase() === cityAbbr.toLowerCase());
-    if (cityObject) {
-      const coords: { [key: string]: { lat: number; lng: number } } = {
-        'bi': { lat: 52.0302, lng: 8.5311 },
-        'bielefeld': { lat: 52.0302, lng: 8.5311 },
-        'berlin': { lat: 52.5200, lng: 13.4050 },
-        'hamburg': { lat: 53.5511, lng: 9.9937 },
-        'köln': { lat: 50.935173, lng: 6.953101 },
-        'munich': { lat: 48.1351, lng: 11.5820 },
-      };
-      return coords[cityObject.abbr.toLowerCase()] || { lat: 52.0302, lng: 8.5311 };
+    const cityName = cityObject ? cityObject.name : cityAbbr; // Use full name for geocoding
+    
+    try {
+      const result = await geocodeLocation(cityName, cityName); // Use city name for both location and cityContext
+      if (result.lat !== null && result.lng !== null) {
+        return { lat: result.lat, lng: result.lng };
+      }
+    } catch (error) {
+      console.error(`Error geocoding ${cityName}:`, error);
     }
+    
+    // Fallback to Bielefeld if geocoding fails or returns null
     return { lat: 52.0302, lng: 8.5311 };
   };
 
@@ -258,8 +259,8 @@ const EventHeatmap: React.FC = () => {
       })
       .map(event => {
         const coords = eventCoordinates.get(event.id);
-        const lat = coords?.lat || getCityCenterCoordinates(selectedCity).lat;
-        const lng = coords?.lng || getCityCenterCoordinates(selectedCity).lng;
+        const lat = coords?.lat || getCityCenterCoordinates(selectedCity).lat; // This will still use old sync version
+        const lng = coords?.lng || getCityCenterCoordinates(selectedCity).lng; // This will still use old sync version
         
         return {
           ...event,
@@ -411,9 +412,10 @@ const EventHeatmap: React.FC = () => {
     });
 
     try {
-      const userCurrentCityCenter = getCityCenterCoordinates(selectedCity);
-      const userCurrentLat = userCurrentCityCenter.lat + (Math.random() - 0.5) * 0.005;
-      const userCurrentLng = userCurrentCityCenter.lng + (Math.random() - 0.5) * 0.005;
+      // Use geocoding service for user's selected city center
+      const userCityCoordinates = await getCityCenterCoordinates(selectedCity);
+      const userCurrentLat = userCityCoordinates.lat + (Math.random() - 0.5) * 0.005;
+      const userCurrentLng = userCityCoordinates.lng + (Math.random() - 0.5) * 0.005;
 
       if (username && username !== 'Gast') {
         const profileData = {
@@ -516,10 +518,10 @@ const EventHeatmap: React.FC = () => {
 
     if (!map) {
       console.log('[EventHeatmap] Initializing map for city:', selectedCity);
-      const initialCenter = getCityCenterCoordinates(selectedCity);
-
+      
+      // Initial center will be updated by the next useEffect
       const leafletMap = L.map(mapRef.current, {
-        center: [initialCenter.lat, initialCenter.lng],
+        center: [52.0302, 8.5311], // Default to Bielefeld initially
         zoom: 13,
         zoomControl: true,
         preferCanvas: false
@@ -537,31 +539,34 @@ const EventHeatmap: React.FC = () => {
     return () => {
       // Cleanup only when component unmounts, not on city change
     };
-  }, [mapRef.current]); // Remove selectedCity from dependencies
+  }, [mapRef.current]);
 
   // Separate useEffect for handling city changes with smooth animation
   useEffect(() => {
-    if (map && selectedCity) {
-      console.log('[EventHeatmap] City changed to:', selectedCity);
-      const newCenter = getCityCenterCoordinates(selectedCity);
-      
-      // Deutschland center coordinates for zoom out effect
-      const germanyCenter = { lat: 51.1657, lng: 10.4515 }; 
-      
-      // Step 1: Zoom out to show all of Germany
-      map.setView([germanyCenter.lat, germanyCenter.lng], 6, {
-        animate: true,
-        duration: 0.8
-      });
-      
-      // Step 2: After zoom out, zoom into the new city
-      setTimeout(() => {
-        map.setView([newCenter.lat, newCenter.lng], 13, {
+    const updateMapCenter = async () => {
+      if (map && selectedCity) {
+        console.log('[EventHeatmap] City changed to:', selectedCity);
+        const newCenter = await getCityCenterCoordinates(selectedCity);
+        
+        // Deutschland center coordinates for zoom out effect
+        const germanyCenter = { lat: 51.1657, lng: 10.4515 }; 
+        
+        // Step 1: Zoom out to show all of Germany
+        map.setView([germanyCenter.lat, germanyCenter.lng], 6, {
           animate: true,
-          duration: 1.2
+          duration: 0.8
         });
-      }, 900); // Wait for zoom out to complete
-    }
+        
+        // Step 2: After zoom out, zoom into the new city
+        setTimeout(() => {
+          map.setView([newCenter.lat, newCenter.lng], 13, {
+            animate: true,
+            duration: 1.2
+          });
+        }, 900); // Wait for zoom out to complete
+      }
+    };
+    updateMapCenter();
   }, [map, selectedCity]);
   
   // Cleanup map when component unmounts
@@ -810,8 +815,8 @@ const EventHeatmap: React.FC = () => {
 
     filteredEvents.forEach(event => {
       const coords = eventCoordinates.get(event.id);
-      const lat = coords?.lat || event.lat;
-      const lng = coords?.lng || event.lng;
+      const lat = coords?.lat || getCityCenterCoordinates(selectedCity).lat;
+      const lng = coords?.lng || getCityCenterCoordinates(selectedCity).lng;
       
       if (typeof lat !== 'number' || isNaN(lat) || typeof lng !== 'number' || isNaN(lng)) {
         console.warn(`Invalid coordinates for event ${event.title}: Lat ${lat}, Lng ${lng}. Skipping marker.`);
