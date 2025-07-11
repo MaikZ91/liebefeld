@@ -75,7 +75,8 @@ export const messageService = {
         user_name: msg.sender,
         user_avatar: msg.avatar || '',
         group_id: msg.group_id,
-        // We no longer add event_data directly here
+        reactions: msg.reactions || [], // <-- KORREKTUR: reactions-Feld hinzugefügt!
+        read_by: msg.read_by || [] // Sicherstellen, dass read_by auch kopiert wird
       }));
       
       return formattedMessages;
