@@ -148,64 +148,53 @@ const EventHeatmap: React.FC = () => {
     };
   }, []);
 
-  useEffect(() => {
-    const geocodeEventLocations = async () => {
-      if (!events.length) return;
+useEffect(() => {
+       const geocodeEventLocations = async () => {
+         if (!events.length) return;
 
-      console.log('[EventHeatmap] Starting geocoding for events...');
-      
-      const uniqueLocations = new Set<string>();
-      const locationData: Array<{ location: string; city?: string }> = [];
+         console.log('[EventHeatmap] Starting geocoding for events...');
 
-      // Filter events by selected city BEFORE sending for geocoding
-      const currentCityEvents = events.filter(event => {
-        const eventCityLower = event.city ? event.city.toLowerCase() : null;
-        const selectedCityLower = selectedCity.toLowerCase();
-        if (selectedCityLower === 'bi' || selectedCityLower === 'bielefeld') {
-          return !eventCityLower || eventCityLower === 'bielefeld' || eventCityLower === 'bi';
-        }
-        return eventCityLower === selectedCityLower;
-      });
+         const uniqueLocations = new Set<string>();
+         const locationData: Array<{ location: string; city?: string }> = [];
 
-      currentCityEvents.forEach(event => {
-        if (event.location && !uniqueLocations.has(event.location)) {
-          uniqueLocations.add(event.location);
-          locationData.push({
-            location: event.location,
-            city: event.city || selectedCity
-          });
-        }
-      });
+         // --- 1) Stadt + Datum filtern -----------------------------------
+         const currentCityEvents = events.filter(event => {
+           const eventCityLower     = event.city ? event.city.toLowerCase() : null;
+           const selectedCityLower  = selectedCity.toLowerCase();
++          const isSelectedDateEvent = event.date === selectedDateString;
 
-      if (locationData.length === 0) return;
+           let isRelevantCity = false;
+           if (selectedCityLower === 'bi' || selectedCityLower === 'bielefeld') {
+             isRelevantCity = !eventCityLower || eventCityLower === 'bielefeld' || eventCityLower === 'bi';
+           } else {
+             isRelevantCity = eventCityLower === selectedCityLower;
+           }
 
-      try {
-        const coordinates = await geocodeMultipleLocations(locationData);
-        
-        const newEventCoordinates = new Map<string, { lat: number; lng: number }>();
-        
-        currentCityEvents.forEach(event => { // Use currentCityEvents here as well
-          if (event.location) {
-            const key = `${event.location}_${event.city || selectedCity}`;
-            const coords = coordinates.get(key);
-            if (coords) {
-              newEventCoordinates.set(event.id, {
-                lat: coords.lat,
-                lng: coords.lng
-              });
-            }
-          }
-        });
+-          return isRelevantCity;
++          return isRelevantCity && isSelectedDateEvent;   // <-- Datum dazu
+         });
 
-        setEventCoordinates(newEventCoordinates);
-        console.log(`[EventHeatmap] Geocoded ${newEventCoordinates.size} event locations for selected city.`);
-      } catch (error) {
-        console.error('[EventHeatmap] Error during batch geocoding:', error);
-      }
-    };
+         // --- 2) nur Events mit location sammeln -------------------------
+         currentCityEvents.forEach(event => {
+           if (event.location && !uniqueLocations.has(event.location)) {
+             uniqueLocations.add(event.location);
+             locationData.push({
+               location: event.location,
+               city: event.city || selectedCity
+             });
+           }
+         });
 
-    geocodeEventLocations();
-  }, [events, selectedCity]);
+         if (locationData.length === 0) return;
+
+         try {
+           const coordinates = await geocodeMultipleLocations(locationData);
+           …
+         } catch (error) { … }
+       };
+
+       geocodeEventLocations();
+  }, [events, selectedCity,selectedDateString]);
 
   const getTimeFromSlider = (hour: number): string => {
     return `${hour.toString().padStart(2, '0')}:00`;
@@ -1187,7 +1176,7 @@ const EventHeatmap: React.FC = () => {
 
       {/* Filter Panel (Conditional Rendering) */}
       {showFilterPanel && (
-        <div className="absolute top-60 left-4 z-[1003] space-y-3 max-w-sm animate-fade-in">
+        <div className="absolute top-60 left-4 z-[1000] space-y-3 max-w-sm animate-fade-in">
           <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
             <h3 className="text-white font-bold mb-4 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-red-500" />
