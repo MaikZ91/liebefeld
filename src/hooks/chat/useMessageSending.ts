@@ -1,276 +1,167 @@
-// src/hooks/chat/useChatMessages.ts
-// Changed: 'content' to 'text' in message type and 'Message' import
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Message } from '@/types/chatTypes';
-import { useMessageFetching } from '@/hooks/chat/useMessageFetching';
-import { useReconnection } from '@/hooks/chat/useReconnection';
-import { useScrollManagement } from '@/hooks/chat/useScrollManagement';
-import { messageService } from '@/services/messageService';
+// src/hooks/chat/useMessageSending.ts
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { AVATAR_KEY, EventShare } from '@/types/chatTypes';
+import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { realtimeService } from '@/services/realtimeService';
+import { messageService } from '@/services/messageService';
 
-export const useChatMessages = (groupId: string, username: string) => {
-  // Use a valid UUID for groupId, default to general if not provided
-  const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
-  
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [lastSeen, setLastSeen] = useState<Date>(new Date());
-  const [typingUsers, setTypingUsers] = useState<any[]>([]);
-  const messagesRef = useRef<Message[]>(messages);
-  const channelsRef = useRef<any[]>([]);
-  const timeoutsRef = useRef<{[key: string]: NodeJS.Timeout}>({});
-  const processedMessageIds = useRef<Set<string>>(new Set());
-  
-  const { fetchMessages, loading, error, setError } = useMessageFetching(validGroupId);
-  
-  // Update the messages ref whenever messages change
-  useEffect(() => {
-    messagesRef.current = messages;
-  }, [messages]);
-  
-  // Handle new message
-  const handleNewMessage = useCallback((newMsg: Message) => {
-    console.log('New message received (useChatMessages):', newMsg); // <-- NEU
-    
-    // Check if this message has already been processed
-    if (processedMessageIds.current.has(newMsg.id)) {
-      console.log('Duplicate message detected (useChatMessages), skipping:', newMsg.id); // <-- NEU
+export const useMessageSending = (groupId: string, username: string, addOptimisticMessage: (message: any) => void, selectedCategory: string = 'Ausgehen') => {
+  const [newMessage, setNewMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [typing, setTyping] = useState(false);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Unified handleSubmit signature to match ChatInputProps['handleSendMessage'] and FullPageChatBot's external handler
+  const handleSubmit = useCallback(async (content?: string | EventShare) => { // Accept string or EventShare
+    // Determine if content is a string message or an eventData object
+    const isEventShare = typeof content === 'object' && content !== null && 'title' in content;
+    const messageToSend = isEventShare ? newMessage.trim() : (content as string || newMessage.trim());
+    const eventData = isEventShare ? (content as EventShare) : undefined;
+
+    if ((!messageToSend && !fileInputRef.current?.files?.length && !eventData) || isSending) {
       return;
     }
-    
-    // Add the message ID to the processed set
-    processedMessageIds.current.add(newMsg.id);
-    
-    setMessages((oldMessages) => {
-      // Double check if this message already exists to avoid duplicates
-      if (oldMessages.some(msg => msg.id === newMsg.id)) {
-        console.log('Duplicate message detected in state (useChatMessages), skipping:', newMsg.id); // <-- NEU
-        return oldMessages;
-      }
-      
-      console.log('Adding new message to state (useChatMessages):', newMsg); // <-- NEU
-      
-      // Mark message as read if from someone else
-      if (newMsg.user_name !== username && username) {
-        messageService.markMessagesAsRead(validGroupId, [newMsg.id], username);
-      }
-      
-      // Process and parse event data before adding to messages
-      try {
-        const processedMsg = {
-          ...newMsg,
-          // We'll parse event data from text in the MessageList component
-        };
-        return [...oldMessages, processedMsg];
-      } catch (error) {
-        console.error('Error processing message (useChatMessages):', error); // <-- NEU
-        return [...oldMessages, newMsg];
-      }
-    });
-    
-    setLastSeen(new Date());
-  }, [validGroupId, username]);
-  
-  // Setup typing indicators
-  useEffect(() => {
-    if (!validGroupId || !username) return;
-    
-    console.log('Setting up typing indicator (useChatMessages) for group:', validGroupId); // <-- NEU
-    
-    const typingChannel = supabase
-      .channel(`typing:${validGroupId}`)
-      .on('broadcast', { event: 'typing' }, (payload) => {
-        console.log('Typing status update received (useChatMessages):', payload); // <-- NEU
-        
-        if (payload.payload && payload.payload.username !== username) {
-          const { username: typingUsername, avatar, isTyping } = payload.payload;
-          
-          setTypingUsers(prev => {
-            // Clone current typing list
-            const currentUsers = [...prev];
-            
-            // Find existing user
-            const existingIndex = currentUsers.findIndex(u => u.username === typingUsername);
-            
-            if (isTyping) {
-              // If a timeout exists for this user, clear it
-              if (timeoutsRef.current[typingUsername]) {
-                clearTimeout(timeoutsRef.current[typingUsername]);
-              }
-              
-              // Set new timeout to remove user after 3 seconds
-              timeoutsRef.current[typingUsername] = setTimeout(() => {
-                setTypingUsers(prev => prev.filter(u => u.username !== typingUsername));
-              }, 3000);
-              
-              // Update or add user
-              const user = {
-                username: typingUsername,
-                avatar: avatar,
-                lastTyped: new Date()
-              };
-              
-              if (existingIndex >= 0) {
-                currentUsers[existingIndex] = user;
-              } else {
-                currentUsers.push(user);
-              }
-            } else {
-              // Remove user from list
-              if (existingIndex >= 0) {
-                currentUsers.splice(existingIndex, 1);
-              }
-            }
-            
-            return currentUsers;
-          });
-        }
-      })
-      .subscribe((status) => {
-        console.log('Typing channel subscription status (useChatMessages):', status); // <-- NEU
-      });
-      
-    channelsRef.current.push(typingChannel);
-    
-    return () => {
-      if (typingChannel) {
-        supabase.removeChannel(typingChannel);
-      }
-    };
-  }, [validGroupId, username]);
-  
-  // Setup message listener
-  useEffect(() => {
-    if (!validGroupId || !username) {
-      console.log('No group ID or username (useChatMessages), skipping message subscription'); // <-- NEU
-      return;
-    }
-    
-    console.log('Setting up message listener (useChatMessages) for group:', validGroupId); // <-- NEU
-    
-    // Clear the set of processed message IDs when changing groups
-    processedMessageIds.current.clear();
-    
-    // Set up message listener using the realtimeService
-    const channels = realtimeService.setupMessageListener(validGroupId, handleNewMessage);
-    channelsRef.current = [...channelsRef.current, ...channels];
-    
-    return () => {
-      console.log('Cleaning up message subscription (useChatMessages)'); // <-- NEU
-      channels.forEach(channel => {
-        if (channel) {
-          try {
-            supabase.removeChannel(channel);
-          } catch (e) {
-            console.error('Error removing channel (useChatMessages):', e); // <-- NEU
-          }
-        }
-      });
-    };
-  }, [validGroupId, username, handleNewMessage]);
-  
-  // Fetch messages when group changes
-  useEffect(() => {
-    if (validGroupId) {
-      console.log(`Group ID changed (useChatMessages), fetching messages for: ${validGroupId}`); // <-- NEU
-      fetchAndSetMessages();
-    }
-  }, [validGroupId]);
-  
-  const fetchAndSetMessages = useCallback(async () => {
-    if (!validGroupId) return;
-    
-    console.log(`[useChatMessages] fetchAndSetMessages gestartet für Gruppe: ${validGroupId}`); // <-- NEU
-    
+
+    setIsSending(true);
+
     try {
-      console.log(`Fetching messages (useChatMessages) for group: ${validGroupId}`); // <-- NEU
-      const fetchedMessages = await messageService.fetchMessages(validGroupId);
-      console.log(`Fetched ${fetchedMessages.length} messages (useChatMessages) nach forced refresh.`); // <-- NEU
+      const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
+      console.log('Sending message to group:', validGroupId);
       
-      // Process messages to parse event data from text if needed
-      const processedMessages = fetchedMessages.map(msg => ({
-        ...msg,
-        // We'll parse event data from text in the MessageList component
-      }));
-
-      // Add all fetched message IDs to the processed set
-      fetchedMessages.forEach(msg => {
-        processedMessageIds.current.add(msg.id);
-      });
+      let messageText = messageToSend;
       
-      setMessages(processedMessages);
-      setLastSeen(new Date());
+      // Add category label to the message
+      const categoryLabel = `#${selectedCategory.toLowerCase()}`;
       
-      // Mark messages as read
-      if (fetchedMessages.length > 0 && username) {
-        const unreadMessages = fetchedMessages.filter(
-          msg => msg.user_name !== username
-        );
-        
-        if (unreadMessages.length > 0) {
-          messageService.markMessagesAsRead(
-            validGroupId,
-            unreadMessages.map(msg => msg.id),
-            username
-          );
-        }
+      if (eventData) {
+        const { title, date, time, location, category } = eventData;
+        messageText = `${categoryLabel} 🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${messageToSend}`;
+      } else {
+        // Add category label to regular messages
+        messageText = `${categoryLabel} ${messageToSend}`;
       }
-    } catch (err) {
-      console.error('[useChatMessages] Fehler beim Abrufen der Nachrichten nach forced refresh:', err); // <-- NEU
-    } finally {
-      console.log('[useChatMessages] fetchAndSetMessages beendet.'); // <-- NEU
-    }
-  }, [validGroupId, username, fetchMessages]);
-  
-  // Reconnection handling
-  const { isReconnecting, handleReconnect } = useReconnection(fetchAndSetMessages);
-  
-  // Scroll management
-  const { chatBottomRef, chatContainerRef, initializeScrollPosition } = 
-    useScrollManagement(messages, typingUsers);
-  
-  // Clean up all timeouts and channels on unmount
-  useEffect(() => {
-    return () => {
-      // Clear all timeouts
-      Object.values(timeoutsRef.current).forEach(timeout => {
-        clearTimeout(timeout);
-      });
       
-      // Remove all channels
-      channelsRef.current.forEach(channel => {
-        if (channel) {
-          try {
-            supabase.removeChannel(channel);
-          } catch (e) {
-            console.error('Error removing channel (useChatMessages, cleanup):', e); // <-- NEU
-          }
-        }
-      });
-    };
-  }, []);
+      setNewMessage(''); // Clear message after determining content
+      
+      if (typing) {
+        const channel = supabase.channel(`typing:${validGroupId}`);
+        channel.subscribe();
+        
+        setTimeout(() => {
+          channel.send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: {
+              username,
+              avatar: localStorage.getItem(AVATAR_KEY),
+              isTyping: false
+            }
+          });
+          setTyping(false);
+        }, 100);
+      }
+      
+      let mediaUrl = null;
+      if (fileInputRef.current?.files?.length) {
+        const file = fileInputRef.current.files[0];
+        mediaUrl = URL.createObjectURL(file);
+      }
+      
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .insert([{
+          group_id: validGroupId,
+          sender: username,
+          text: messageText,
+          avatar: localStorage.getItem(AVATAR_KEY),
+          media_url: mediaUrl,
+          read_by: [username]
+        }])
+        .select('id')
+        .single();
+        
+      if (error) {
+        console.error('Error sending message:', error);
+        throw error;
+      }
+      
+      console.log('Message sent successfully with ID:', data?.id);
 
-  // Function to add optimistic messages
-  const addOptimisticMessage = useCallback((message: Message) => {
-    console.log('Adding optimistic message (useChatMessages):', message); // <-- NEU
-    // Add the message ID to the processed set to prevent duplication
-    processedMessageIds.current.add(message.id);
-    setMessages(prev => [...prev, message]);
-  }, []);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
+    } catch (err: any) {
+      console.error('Error sending message:', err);
+      toast({
+        title: "Error sending",
+        description: err.message || "Your message couldn't be sent",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSending(false);
+    }
+  }, [groupId, username, newMessage, isSending, typing, selectedCategory]);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setNewMessage(e.target.value);
+    setTyping(e.target.value.length > 0);
+    
+    if (!typing && e.target.value.trim()) {
+      setTyping(true);
+      supabase
+        .channel(`typing:${groupId}`)
+        .send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: {
+            username,
+            avatar: localStorage.getItem(AVATAR_KEY),
+            isTyping: true
+          }
+        });
+    }
+    
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    typingTimeoutRef.current = setTimeout(() => {
+      if (typing) {
+        supabase
+          .channel(`typing:${groupId}`)
+          .send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: {
+              username,
+              avatar: localStorage.getItem(AVATAR_KEY),
+              isTyping: false
+            }
+          });
+        setTyping(false);
+      }
+    }, 2000);
+  }, [groupId, username, typing]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(); // Call with no arguments, it will use newMessage
+    }
+  }, [handleSubmit]);
 
   return {
-    messages,
-    loading,
-    error,
-    typingUsers,
-    isReconnecting,
-    setMessages,
-    setError,
-    handleReconnect,
-    chatBottomRef,
-    chatContainerRef,
-    initializeScrollPosition,
-    fetchAndSetMessages,
-    addOptimisticMessage
+    newMessage,
+    isSending,
+    fileInputRef,
+    handleSubmit,
+    handleInputChange,
+    handleKeyDown,
+    setNewMessage,
+    typing,
+    typingTimeoutRef
   };
 };

@@ -1,8 +1,7 @@
 // src/services/messageService.ts
 // Changed: 'content' to 'text'
 import { supabase } from '@/integrations/supabase/client';
-import { Message } from '@/types/chatTypes'; // Sicherstellen, dass Message hier importiert wird
-import { Json } from '@/integrations/supabase/types'; // Importieren des Json-Typs
+import { Message } from '@/types/chatTypes';
 
 /**
  * Service for message-related operations
@@ -68,7 +67,7 @@ export const messageService = {
       
       console.log(`${data?.length || 0} messages received for group ${validGroupId}`);
       
-      // Convert messages to expected format with explicit type casting for reactions
+      // Convert messages to expected format
       const formattedMessages: Message[] = (data || []).map(msg => ({
         id: msg.id,
         created_at: msg.created_at,
@@ -76,9 +75,7 @@ export const messageService = {
         user_name: msg.sender,
         user_avatar: msg.avatar || '',
         group_id: msg.group_id,
-        // Explizites Type Casting, um den Typ-Fehler zu beheben
-        reactions: (msg.reactions as { emoji: string; users: string[] }[] | null) || [], 
-        read_by: msg.read_by || [] 
+        // We no longer add event_data directly here
       }));
       
       return formattedMessages;
@@ -133,7 +130,7 @@ export const messageService = {
   async sendMessage(
     groupId: string, 
     username: string, 
-    text: string, 
+    text: string, // Changed from 'content' to 'text'
     avatar: string | null = null,
     mediaUrl: string | null = null
   ): Promise<string | null> {
@@ -143,15 +140,16 @@ export const messageService = {
       
       console.log(`Sending message to group ${validGroupId} from ${username}`);
       
+      // Remove any event_data related fields to avoid schema issues
       const { data, error } = await supabase
         .from('chat_messages')
         .insert([{
           group_id: validGroupId,
           sender: username,
-          text: text, 
+          text: text, // Changed from 'content' to 'text'
           avatar: avatar,
           media_url: mediaUrl,
-          read_by: [username] 
+          read_by: [username] // The sending person has already read the message
         }])
         .select('id')
         .single();

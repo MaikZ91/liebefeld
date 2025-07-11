@@ -1,7 +1,7 @@
-// src/services/realtimeService.ts
+// src/services/subscriptionService.ts
 // Changed: 'content' to 'text'
 import { supabase } from '@/integrations/supabase/client';
-import { Message, TypingUser } from '@/types/chatTypes'; // <-- KORREKTUR: TypingUser hinzugefügt!
+import { Message, TypingUser } from '@/types/chatTypes';
 
 /**
  * Service for real-time subscription operations
@@ -28,7 +28,7 @@ export const subscriptionService = {
         table: 'chat_messages',
         filter: `group_id=eq.${groupId}`
       }, (payload) => {
-        console.log('Received INSERT message via postgres changes (SubscriptionService):', payload);
+        console.log('Received INSERT message via postgres changes:', payload);
         if (payload.new) {
           const newPayload = payload.new as any;
           // Only process if this message belongs to our group
@@ -42,7 +42,7 @@ export const subscriptionService = {
               group_id: newPayload.group_id,
             };
             
-            console.log('New message received via subscription (SubscriptionService):', newMsg);
+            console.log('New message received via subscription:', newMsg);
             onNewMessage(newMsg);
           }
         }
@@ -53,17 +53,16 @@ export const subscriptionService = {
         table: 'chat_messages',
         filter: `group_id=eq.${groupId}`
       }, (payload) => {
-        console.log('Received UPDATE message via postgres changes (SubscriptionService):', payload);
+        console.log('Received UPDATE message via postgres changes:', payload);
         // For reaction updates, we need to force refresh
         onForceRefresh();
-        console.log('onForceRefresh called due to UPDATE event (SubscriptionService)');
       })
       .on('broadcast', { event: 'force_refresh' }, (payload) => {
-        console.log('Force refresh triggered (SubscriptionService):', payload);
+        console.log('Force refresh triggered:', payload);
         onForceRefresh();
       })
       .subscribe((status) => {
-        console.log('Subscription status for messages (SubscriptionService):', status);
+        console.log('Subscription status for messages:', status);
       });
 
     // We'll only use the direct table subscription for better performance
@@ -83,7 +82,7 @@ export const subscriptionService = {
     const typingChannel = supabase
       .channel(`typing:${groupId}`)
       .on('broadcast', { event: 'typing' }, (payload) => {
-        console.log('Typing status update received (SubscriptionService):', payload);
+        console.log('Typing status update received:', payload);
         
         if (payload.payload && payload.payload.username !== username) {
           const { username: typingUsername, avatar, isTyping } = payload.payload;
@@ -97,7 +96,7 @@ export const subscriptionService = {
         }
       })
       .subscribe((status) => {
-        console.log('Subscription status for typing (SubscriptionService):', status);
+        console.log('Subscription status for typing:', status);
       });
       
     return typingChannel;

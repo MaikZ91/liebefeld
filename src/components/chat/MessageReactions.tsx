@@ -24,6 +24,8 @@ const MessageReactions: React.FC<MessageReactionsProps> = ({
   }
 
   return (
+    // Add flex-wrap and items-center to ensure reactions wrap correctly
+    // and are vertically aligned within the container.
     <div className="flex flex-wrap items-center gap-1">
       {hasReactions && (
         <ReactionBar
