@@ -16,6 +16,7 @@ export const cities = [
   { name: "Frankfurt", abbr: "frankfurt" },
   { name: "Hamburg", abbr: "hamburg" },
   { name: "Hannover", abbr: "hannover" },
+  { name: "Kopenhagen", abbr: "kopenhagen" },
   { name: "Köln", abbr: "köln" },
   { name: "Leipzig", abbr: "leipzig" },
   { name: "Lübeck", abbr: "lübeck" },
@@ -23,6 +24,7 @@ export const cities = [
   { name: "Münster", abbr: "münster" },
   { name: "Nürnberg", abbr: "nürnberg" },
   { name: "Stuttgart", abbr: "stuttgart" },
+  
 ];
 
 interface EventContextProps {
