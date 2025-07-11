@@ -224,8 +224,11 @@ const EventHeatmap: React.FC = () => {
         'bielefeld': { lat: 52.0302, lng: 8.5311 },
         'berlin': { lat: 52.5200, lng: 13.4050 },
         'hamburg': { lat: 53.5511, lng: 9.9937 },
+        'kopenhagen': { lat: 55.6833, lng: 12.5833 },
         'köln': { lat: 50.935173, lng: 6.953101 },
         'munich': { lat: 48.1351, lng: 11.5820 },
+        
+        
       };
       return coords[cityObject.abbr.toLowerCase()] || { lat: 52.0302, lng: 8.5311 };
     }
