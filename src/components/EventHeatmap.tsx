@@ -157,7 +157,10 @@ const EventHeatmap: React.FC = () => {
       const uniqueLocations = new Set<string>();
       const locationData: Array<{ location: string; city?: string }> = [];
 
-      // Filter events by selected city BEFORE sending for geocoding
+
+      const currentCityEvents = events
+        .filter(event => event.date === selectedDateString)   
+        .filter(event => {  
       const currentCityEvents = events.filter(event => {
         const eventCityLower = event.city ? event.city.toLowerCase() : null;
         const selectedCityLower = selectedCity.toLowerCase();
@@ -205,7 +208,7 @@ const EventHeatmap: React.FC = () => {
     };
 
     geocodeEventLocations();
-  }, [events, selectedCity]);
+  }, [events, selectedCity,selectedDateString]);
 
   const getTimeFromSlider = (hour: number): string => {
     return `${hour.toString().padStart(2, '0')}:00`;
@@ -1187,7 +1190,7 @@ const EventHeatmap: React.FC = () => {
 
       {/* Filter Panel (Conditional Rendering) */}
       {showFilterPanel && (
-        <div className="absolute top-60 left-4 z-[1003] space-y-3 max-w-sm animate-fade-in">
+        <div className="absolute top-60 left-4 z-[1000] space-y-3 max-w-sm animate-fade-in">
           <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
             <h3 className="text-white font-bold mb-4 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-red-500" />
