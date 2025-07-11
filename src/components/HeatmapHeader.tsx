@@ -29,7 +29,7 @@ interface HeatmapHeaderProps {
 }
 
 const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld', chatInputProps }) => {
-  const { events, isLoading } = useEvents();
+  const { events, isLoading } = useEvents(selectedCity);
 
   return (
     <div className="absolute top-0 left-0 right-0 z-[1002]">

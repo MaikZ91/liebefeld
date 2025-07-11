@@ -49,6 +49,12 @@ interface EventContextProps {
 const EventContext = createContext<EventContextProps | undefined>(undefined);
 
 export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [selectedDate, setSelectedDate] = useState<Date | null>(() => startOfDay(new Date()));
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [filter, setFilter] = useState<string | null>(null);
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [selectedCity, setSelectedCityState] = useState(() => localStorage.getItem('selectedCityAbbr') || 'BI');
+
   const {
     events,
     setEvents,
@@ -57,13 +63,7 @@ export const EventProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     handleLikeEvent,
     handleRsvpEvent,
     addUserEvent,
-  } = useEvents();
-
-  const [selectedDate, setSelectedDate] = useState<Date | null>(() => startOfDay(new Date()));
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [filter, setFilter] = useState<string | null>(null);
-  const [showFavorites, setShowFavorites] = useState(false);
-  const [selectedCity, setSelectedCityState] = useState(() => localStorage.getItem('selectedCityAbbr') || 'BI');
+  } = useEvents(selectedCity);
   
   const topEventsPerDay = useTopEvents(events);
   

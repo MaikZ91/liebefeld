@@ -41,6 +41,27 @@ serve(async (req) => {
     const today = new Date().toISOString().split('T')[0];
     console.log(`🗓️ [Daily Top Event] Looking for events on ${today}`);
 
+    // Check if we already sent a message today to prevent duplicates
+    const { data: existingMessages, error: checkError } = await supabaseClient
+      .from('chat_messages')
+      .select('id')
+      .eq('group_id', 'ausgehen-bielefeld')
+      .eq('sender', 'MIA - Event Assistentin')
+      .gte('created_at', `${today}T00:00:00`)
+      .lt('created_at', `${today}T23:59:59`);
+
+    if (checkError) {
+      console.error('❌ [Daily Top Event] Error checking existing messages:', checkError);
+    } else if (existingMessages && existingMessages.length > 0) {
+      console.log('✅ [Daily Top Event] Message already sent today, skipping...');
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: 'Message already sent today' 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Find today's events with the highest likes
     const { data: events, error: eventsError } = await supabaseClient
       .from('community_events')

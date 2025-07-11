@@ -59,8 +59,8 @@ const tribeSpots = [
 ];
 
 const EventHeatmap: React.FC = () => {
-  const { events, isLoading, refreshEvents, addUserEvent, handleLikeEvent } = useEvents();
   const { selectedCity } = useEventContext();
+  const { events, isLoading, refreshEvents, addUserEvent, handleLikeEvent } = useEvents(selectedCity);
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [timeRange, setTimeRange] = useState([new Date().getHours()]);
