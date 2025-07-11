@@ -36,10 +36,38 @@ export const realtimeService = {
     const channelName = `messages:${groupId}`;
     
     // Set up the broadcast channel
-    const broadcastChannel = this.setupChannel(channelName, (payload) => {
+    const broadcastChannel = this.setupChannel(channelName, async (payload) => {
       if (payload?.payload?.message) {
         console.log(`Received message via broadcast:`, payload.payload.message);
-        onMessage(payload.payload.message);
+        
+        // Write the message to database
+        try {
+          const { data, error } = await supabase
+            .from('chat_messages')
+            .insert([payload.payload.message])
+            .select('*')
+            .single();
+          
+          if (error) {
+            console.error('Error writing message to DB:', error);
+            return;
+          }
+          
+          // Convert DB format to Message format and notify UI
+          const message = {
+            id: data.id,
+            created_at: data.created_at,
+            text: data.text,
+            user_name: data.sender,
+            user_avatar: data.avatar || '',
+            group_id: data.group_id,
+          };
+          
+          console.log('Message written to DB and forwarding to UI:', message);
+          onMessage(message);
+        } catch (err) {
+          console.error('Exception writing message to DB:', err);
+        }
       }
     });
     

@@ -69,25 +69,23 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         mediaUrl = URL.createObjectURL(file);
       }
       
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .insert([{
-          group_id: validGroupId,
-          sender: username,
-          text: messageText,
-          avatar: localStorage.getItem(AVATAR_KEY),
-          media_url: mediaUrl,
-          read_by: [username]
-        }])
-        .select('id')
-        .single();
-        
-      if (error) {
-        console.error('Error sending message:', error);
-        throw error;
-      }
+      // Send message via realtime broadcast instead of direct DB insert
+      const messagePayload = {
+        group_id: validGroupId,
+        sender: username,
+        text: messageText,
+        avatar: localStorage.getItem(AVATAR_KEY),
+        media_url: mediaUrl,
+        read_by: [username]
+      };
+
+      await realtimeService.sendToChannel(
+        `messages:${validGroupId}`,
+        'new_message',
+        { message: messagePayload }
+      );
       
-      console.log('Message sent successfully with ID:', data?.id);
+      console.log('Message sent via broadcast successfully');
 
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
