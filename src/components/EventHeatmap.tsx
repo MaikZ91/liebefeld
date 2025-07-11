@@ -39,6 +39,7 @@ import { useEventContext, cities } from '@/contexts/EventContext';
 import FullPageChatBot from '@/components/event-chat/FullPageChatBot';
 import { useChatLogic } from '@/components/event-chat/useChatLogic';
 import { geocodeLocation, loadCachedCoordinates, geocodeMultipleLocations } from '@/services/geocodingService';
+import TribeFinder from './TribeFinder'; // Import TribeFinder
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
