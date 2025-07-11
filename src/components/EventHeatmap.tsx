@@ -149,66 +149,60 @@ const EventHeatmap: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const geocodeEventLocations = async () => {
-      if (!events.length) return;
+  // ⇢ nur Events des aktuell gewählten Datums und der aktuellen Stadt geokodieren
+  const geocodeEventLocations = async () => {
+    if (!events.length) return;
 
-      console.log('[EventHeatmap] Starting geocoding for events...');
-      
-      const uniqueLocations = new Set<string>();
-      const locationData: Array<{ location: string; city?: string }> = [];
+    console.log('[EventHeatmap] Starting geocoding for events…');
 
+    const uniqueLocations = new Set<string>();
+    const locationData: Array<{ location: string; city?: string }> = [];
 
-      const currentCityEvents = events
-        .filter(event => event.date === selectedDateString)   
-        .filter(event => {  
-      const currentCityEvents = events.filter(event => {
-        const eventCityLower = event.city ? event.city.toLowerCase() : null;
-        const selectedCityLower = selectedCity.toLowerCase();
-        if (selectedCityLower === 'bi' || selectedCityLower === 'bielefeld') {
-          return !eventCityLower || eventCityLower === 'bielefeld' || eventCityLower === 'bi';
-        }
-        return eventCityLower === selectedCityLower;
-      });
+    // ► zuerst Events auf Stadt und Datum filtern
+    const currentCityEvents = events.filter(event => {
+      const eventCityLower    = event.city ? event.city.toLowerCase() : null;
+      const selectedCityLower = selectedCity.toLowerCase();
+      const sameCity =
+        selectedCityLower === 'bi' || selectedCityLower === 'bielefeld'
+          ? !eventCityLower || eventCityLower === 'bielefeld' || eventCityLower === 'bi'
+          : eventCityLower === selectedCityLower;
 
-      currentCityEvents.forEach(event => {
-        if (event.location && !uniqueLocations.has(event.location)) {
-          uniqueLocations.add(event.location);
-          locationData.push({
-            location: event.location,
-            city: event.city || selectedCity
-          });
-        }
-      });
+      return sameCity && event.date === selectedDateString;   // <-- nur ausgewähltes Datum!
+    });
 
-      if (locationData.length === 0) return;
-
-      try {
-        const coordinates = await geocodeMultipleLocations(locationData);
-        
-        const newEventCoordinates = new Map<string, { lat: number; lng: number }>();
-        
-        currentCityEvents.forEach(event => { // Use currentCityEvents here as well
-          if (event.location) {
-            const key = `${event.location}_${event.city || selectedCity}`;
-            const coords = coordinates.get(key);
-            if (coords) {
-              newEventCoordinates.set(event.id, {
-                lat: coords.lat,
-                lng: coords.lng
-              });
-            }
-          }
-        });
-
-        setEventCoordinates(newEventCoordinates);
-        console.log(`[EventHeatmap] Geocoded ${newEventCoordinates.size} event locations for selected city.`);
-      } catch (error) {
-        console.error('[EventHeatmap] Error during batch geocoding:', error);
+    // ► nur eindeutige Locations sammeln
+    currentCityEvents.forEach(ev => {
+      if (ev.location && !uniqueLocations.has(ev.location)) {
+        uniqueLocations.add(ev.location);
+        locationData.push({ location: ev.location, city: ev.city || selectedCity });
       }
-    };
+    });
 
-    geocodeEventLocations();
-  }, [events, selectedCity,selectedDateString]);
+    if (!locationData.length) return;
+
+    try {
+      const coordinates = await geocodeMultipleLocations(locationData);
+
+      const newEventCoordinates = new Map<string, { lat: number; lng: number }>();
+      currentCityEvents.forEach(ev => {
+        if (ev.location) {
+          const key    = `${ev.location}_${ev.city || selectedCity}`;
+          const coords = coordinates.get(key);
+          if (coords) {
+            newEventCoordinates.set(ev.id, { lat: coords.lat, lng: coords.lng });
+          }
+        }
+      });
+
+      setEventCoordinates(newEventCoordinates);
+      console.log(`[EventHeatmap] Geocoded ${newEventCoordinates.size} event locations for ${selectedDateString}.`);
+    } catch (err) {
+      console.error('[EventHeatmap] Error during batch geocoding:', err);
+    }
+  };
+
+  geocodeEventLocations();
+}, [events, selectedCity, selectedDateString]);
 
   const getTimeFromSlider = (hour: number): string => {
     return `${hour.toString().padStart(2, '0')}:00`;
