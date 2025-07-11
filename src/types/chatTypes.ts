@@ -47,7 +47,6 @@ export interface Message {
   event_data?: EventShare;
   read_by?: string[];
   reactions?: { emoji: string; users: string[] }[]; // Added reactions
-  tempId?: string; // [RESULT] Added tempId to handle optimistic updates
 }
 
 export interface ChatGroup {
