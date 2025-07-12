@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 
 interface EventCalendarProps {
   defaultView?: "calendar" | "list";
+  onJoinEventChat?: (eventId: string, eventTitle: string) => void;
 }
 
 const categoryIcons = {
@@ -40,7 +41,7 @@ export const isTribeEvent = (title: string): boolean => {
   );
 };
 
-const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
+const EventCalendar = ({ defaultView = "list", onJoinEventChat }: EventCalendarProps) => {
   const { 
     events, 
     selectedDate, 
@@ -283,6 +284,7 @@ const EventCalendar = ({ defaultView = "list" }: EventCalendarProps) => {
                   onEventClose={() => setSelectedEvent(null)}
                   onShowEventForm={toggleEventForm}
                   showFavorites={showFavorites}
+                  onJoinChat={onJoinEventChat}
                 />
               </div>
             </div>
