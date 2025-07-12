@@ -1,7 +1,10 @@
 
 import React from 'react';
+import { MessageSquare } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Event {
+  id?: string;
   title: string;
   date?: string;
   time?: string;
@@ -11,9 +14,15 @@ interface Event {
 
 interface EventPanelProps {
   event: Event;
+  onJoinChat?: (eventId: string, eventTitle: string) => void;
 }
 
-const EventPanel: React.FC<EventPanelProps> = ({ event }) => {
+const EventPanel: React.FC<EventPanelProps> = ({ event, onJoinChat }) => {
+  const handleJoinChat = () => {
+    if (onJoinChat && event.id) {
+      onJoinChat(event.id, event.title);
+    }
+  };
   return (
     <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-2 mb-2 relative">
       <div className="font-bold text-sm mb-1 text-white !important" style={{color: 'white !important'}}>
@@ -48,8 +57,16 @@ const EventPanel: React.FC<EventPanelProps> = ({ event }) => {
         </div>
         
         {/* Action buttons positioned higher up, before category badge */}
-        <div className="flex justify-end mt-0.5">
-          <button className="bg-red-800/50 hover:bg-red-700/60 text-white text-xs px-2 py-0.5 rounded mr-1">
+        <div className="flex justify-end gap-1 mt-0.5">
+          <Button 
+            onClick={handleJoinChat}
+            className="bg-red-800/50 hover:bg-red-700/60 text-white text-xs px-2 py-0.5 h-auto rounded"
+            disabled={!event.id}
+          >
+            <MessageSquare className="w-3 h-3 mr-1" />
+            Join Chat
+          </Button>
+          <button className="bg-red-800/50 hover:bg-red-700/60 text-white text-xs px-2 py-0.5 rounded">
             Share
           </button>
           <button className="bg-red-800/50 hover:bg-red-700/60 text-white text-xs px-2 py-0.5 rounded">

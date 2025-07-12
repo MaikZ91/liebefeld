@@ -1,6 +1,10 @@
 // src/components/event-chat/types.ts
 import { LandingSlideData } from './SwipeableLandingPanel';
 
+// Constants
+export const CHAT_HISTORY_KEY = 'lovableui_chat_history';
+export const CHAT_QUERIES_KEY = 'lovableui_chat_queries';
+
 export interface ChatMessage {
   id: string;
   isUser: boolean;
@@ -51,32 +55,28 @@ export interface AdEvent {
 export interface EventChatBotProps {
   fullPage?: boolean;
   onAddEvent?: () => void;
-  onToggleCommunity?: () => void; 
+  onToggleCommunity?: () => void;
   activeChatMode?: 'ai' | 'community';
   setActiveChatMode?: (mode: 'ai' | 'community') => void;
   hideButtons?: boolean;
 }
 
-export const CHAT_HISTORY_KEY = 'event-chat-history';
-export const CHAT_QUERIES_KEY = 'event-chat-queries';
-
-export interface MessageListProps {
-  messages: ChatMessage[];
-  isTyping: boolean;
-  handleDateSelect: (date: string) => void;
-  messagesEndRef: React.RefObject<HTMLDivElement>;
-  examplePrompts: string[];
-  handleExamplePromptClick: (prompt: string) => void;
+export interface EventShare {
+  eventId?: string;
+  title: string;
+  date: string;
+  time: string;
+  location: string;
+  category: string;
 }
 
 export interface ChatInputProps {
   input: string;
-  setInput: (value: string) => void;
-  // This signature is flexible to accept string content or event data
-  handleSendMessage: (content?: string | any) => Promise<void>; 
+  setInput: (input: string) => void;
+  handleSendMessage: (content?: string | EventShare) => Promise<void>;
   isTyping: boolean;
-  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void; 
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void; 
+  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isHeartActive: boolean;
   handleHeartClick: () => void;
   globalQueries: any[];
@@ -87,6 +87,16 @@ export interface ChatInputProps {
   activeChatModeValue: 'ai' | 'community';
   activeCategory?: string;
   onCategoryChange?: (category: string) => void;
+}
+
+export interface MessageListProps {
+  messages: ChatMessage[];
+  isTyping: boolean;
+  handleDateSelect?: (date: string) => void;
+  messagesEndRef?: React.RefObject<HTMLDivElement>;
+  examplePrompts?: string[];
+  handleExamplePromptClick?: (prompt: string) => void;
+  onJoinEventChat?: (eventId: string, eventTitle: string) => void;
 }
 
 export interface RecentQueriesProps {
@@ -120,6 +130,6 @@ export interface FullPageChatBotProps {
   hideInput?: boolean;
   externalInput?: string;
   setExternalInput?: (value: string) => void;
-  // This handler will receive the standardized `handleSendMessage` from useMessageSending/useChatLogic
   onExternalSendHandlerChange?: (handler: ((content?: string | any) => Promise<void>) | null) => void; 
+  onJoinEventChat?: (eventId: string, eventTitle: string) => void;
 }

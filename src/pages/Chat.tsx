@@ -20,6 +20,7 @@ import ProfileEditor from '@/components/users/ProfileEditor';
 import UserDirectory from '@/components/users/UserDirectory';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { messageService } from '@/services/messageService';
+import { eventChatService } from '@/services/eventChatService';
 
 const ChatPage = () => {
   // Get view mode from URL search params or navigation state
@@ -69,6 +70,37 @@ const ChatPage = () => {
   // Function to handle user selection from directory
   const handleSelectUser = (user: any) => {
     setIsUserDirectoryOpen(false);
+  };
+
+  // Function to handle joining event chat
+  const handleJoinEventChat = async (eventId: string, eventTitle: string) => {
+    try {
+      const groupId = await eventChatService.joinEventChat(eventId, eventTitle);
+      
+      if (groupId) {
+        // Switch to community view to show the chat
+        setActiveView('community');
+        
+        toast({
+          title: "Event Chat beigetreten",
+          description: `Du bist dem Chat für "${eventTitle}" beigetreten`,
+          variant: "default"
+        });
+      } else {
+        toast({
+          title: "Fehler",
+          description: "Event Chat konnte nicht erstellt werden",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error joining event chat:', error);
+      toast({
+        title: "Fehler",
+        description: "Ein Fehler ist aufgetreten",
+        variant: "destructive"
+      });
+    }
   };
 
   // Updated function for profile completion
@@ -225,6 +257,7 @@ const ChatPage = () => {
                 setActiveChatMode={setActiveView}
                 hideButtons={true}
                 onChatInputPropsChange={setChatInputProps}
+                onJoinEventChat={handleJoinEventChat}
               />
             </div>
           </div>

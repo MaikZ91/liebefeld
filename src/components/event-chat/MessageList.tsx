@@ -16,7 +16,8 @@ const MessageList: React.FC<MessageListProps> = ({
   handleDateSelect,
   messagesEndRef,
   examplePrompts,
-  handleExamplePromptClick
+  handleExamplePromptClick,
+  onJoinEventChat
 }) => {
   // Es wird explizit nach dem statischen Willkommensprompt gesucht
   const welcomeMessage = messages.find(m => m.id === 'welcome');
@@ -68,6 +69,7 @@ const MessageList: React.FC<MessageListProps> = ({
                     onEventSelect={(eventId) => {
                       console.log('Event selected:', eventId);
                     }}
+                    onJoinEventChat={onJoinEventChat}
                   />
                 </div>
               </div>

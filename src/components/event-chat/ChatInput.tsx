@@ -20,6 +20,7 @@ interface ExtendedChatInputProps extends ChatInputProps {
   activeCategory?: string;
   onCategoryChange?: (category: string) => void;
   placeholder?: string; // Add placeholder prop
+  onJoinEventChat?: (eventId: string, eventTitle: string) => void;
 }
 
 const ChatInput: React.FC<ExtendedChatInputProps> = ({
@@ -39,7 +40,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   activeChatModeValue,
   activeCategory = 'Ausgehen',
   onCategoryChange,
-  placeholder // Receive placeholder prop
+  placeholder, // Receive placeholder prop
+  onJoinEventChat
 }) => {
   const { events } = useEventContext();
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);

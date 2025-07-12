@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, MapPin, Heart, Link } from 'lucide-react';
+import { CalendarIcon, MapPin, Heart, Link, MessageSquare } from 'lucide-react';
 import EventCard from '@/components/EventCard';
 import { useEventContext } from '@/contexts/EventContext';
 import { cn } from '@/lib/utils';
@@ -18,6 +18,7 @@ interface EventPanelProps {
   onEventClose: () => void;
   onShowEventForm: () => void;
   showFavorites: boolean;
+  onJoinChat?: (eventId: string, eventTitle: string) => void;
 }
 
 const EventPanel: React.FC<EventPanelProps> = ({
@@ -28,7 +29,8 @@ const EventPanel: React.FC<EventPanelProps> = ({
   onEventSelect,
   onEventClose,
   onShowEventForm,
-  showFavorites
+  showFavorites,
+  onJoinChat
 }) => {
   const { handleLikeEvent } = useEventContext();
   const [isLiking, setIsLiking] = useState(false);
@@ -138,7 +140,7 @@ const EventPanel: React.FC<EventPanelProps> = ({
             )}
           </div>
           
-          <div className="mt-auto flex justify-between items-center">
+          <div className="mt-auto flex justify-between items-center gap-2">
             <Button 
               variant="outline" 
               className="bg-black/50 text-white hover:bg-black/70 text-xs h-7 px-2"
@@ -147,6 +149,14 @@ const EventPanel: React.FC<EventPanelProps> = ({
             >
               <Heart className={cn("mr-1 h-3 w-3", selectedEvent.likes && selectedEvent.likes > 0 ? "fill-white" : "none")} />
               {selectedEvent.likes || 0}
+            </Button>
+            <Button 
+              onClick={() => onJoinChat && onJoinChat(selectedEvent.id, selectedEvent.title)}
+              className="bg-red-500 hover:bg-red-600 text-white text-xs h-7 px-2"
+              disabled={!onJoinChat}
+            >
+              <MessageSquare className="mr-1 h-3 w-3" />
+              Join Chat
             </Button>
             <Button onClick={onShowEventForm} className="text-xs h-7 px-2">Bearbeiten</Button>
           </div>

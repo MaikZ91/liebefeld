@@ -1,7 +1,7 @@
 
 // src/components/event-chat/SwipeableEventPanel.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, MapPin, Clock, Euro, UsersRound, Calendar, ExternalLink, Music, Heart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, Clock, Euro, UsersRound, Calendar, ExternalLink, Music, Heart, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { PanelEventData, PanelEvent, AdEvent } from './types';
@@ -10,12 +10,14 @@ import { useEventContext } from '@/contexts/EventContext';
 interface SwipeableEventPanelProps {
   panelData: PanelEventData;
   onEventSelect?: (eventId: string) => void;
+  onJoinEventChat?: (eventId: string, eventTitle: string) => void;
   className?: string;
 }
 
 const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
   panelData,
   onEventSelect,
+  onJoinEventChat,
   className
 }) => {
   const { handleLikeEvent, events } = useEventContext();
@@ -346,27 +348,45 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
             )}
           </div>
 
-          {/* Action Button */}
-          <Button
-            onClick={handleClick}
-            className={cn(
-              "w-full font-medium mt-4",
-              itemType === 'music' ? "bg-blue-500 hover:bg-blue-600 text-white" : "bg-red-500 hover:bg-red-600 text-white"
+          {/* Action Buttons */}
+          <div className="flex gap-2 mt-4">
+            {/* Join Chat Button for Events (not ads) */}
+            {isPanelEvent && onJoinEventChat && (
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onJoinEventChat((currentItem as PanelEvent).id, currentItem.title);
+                }}
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium"
+              >
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Join Chat
+              </Button>
             )}
-          >
-            {itemType === 'music' ? (
-              <>
-                <Music className="w-4 h-4 mr-2" /> Jetzt anhören
-              </>
-            ) : isAd ? (
-              <>
-                <UsersRound className="w-4 h-4 mr-2" /> Community beitreten
-              </>
-            ) : (
-              'Event Details anzeigen'
-            )}
-            {displayLink && <ExternalLink className="w-4 h-4 ml-2" />}
-          </Button>
+            
+            {/* Main Action Button */}
+            <Button
+              onClick={handleClick}
+              className={cn(
+                "font-medium",
+                isPanelEvent && onJoinEventChat ? "flex-1" : "w-full",
+                itemType === 'music' ? "bg-blue-500 hover:bg-blue-600 text-white" : "bg-gray-700 hover:bg-gray-600 text-white"
+              )}
+            >
+              {itemType === 'music' ? (
+                <>
+                  <Music className="w-4 h-4 mr-2" /> Anhören
+                </>
+              ) : isAd ? (
+                <>
+                  <UsersRound className="w-4 h-4 mr-2" /> Beitreten
+                </>
+              ) : (
+                'Details'
+              )}
+              {displayLink && <ExternalLink className="w-4 h-4 ml-2" />}
+            </Button>
+          </div>
         </div>
       </div>
 

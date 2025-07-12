@@ -23,6 +23,7 @@ interface FullPageChatBotProps {
   hideButtons?: boolean;
   activeCategory?: string;
   onCategoryChange?: (category: string) => void;
+  onJoinEventChat?: (eventId: string, eventTitle: string) => void;
   hideInput?: boolean;
   externalInput?: string;
   setExternalInput?: (value: string) => void;
@@ -36,6 +37,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   onAddEvent,
   activeCategory = 'Ausgehen',
   onCategoryChange,
+  onJoinEventChat,
   hideInput = false,
   externalInput = '',
   setExternalInput,
@@ -196,6 +198,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
             activeChatModeValue={activeChatModeValue}
             activeCategory={activeCategory}
             onCategoryChange={onCategoryChange}
+            onJoinEventChat={onJoinEventChat}
           />
         </div>
       )}

@@ -4,7 +4,7 @@ import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, MapPin, User, Heart, Check, X, HelpCircle, Sparkles } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Heart, Check, X, HelpCircle, Sparkles, MessageSquare } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -14,6 +14,7 @@ interface EventDetailsProps {
   event: Event;
   onClose: () => void;
   onRsvp?: (option: RsvpOption) => void;
+  onJoinChat?: (eventId: string, eventTitle: string) => void;
 }
 
 const categoryColors: Record<string, string> = {
@@ -28,7 +29,7 @@ const categoryColors: Record<string, string> = {
   'Ausstellung': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300',
 };
 
-const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onRsvp }) => {
+const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onRsvp, onJoinChat }) => {
   const { handleLikeEvent } = useEventContext();
   const [isOpen, setIsOpen] = useState(true);
   const [showSparkle, setShowSparkle] = useState(false);
@@ -187,6 +188,14 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onRsvp }) =
         </div>
         
         <DialogFooter className="flex justify-between">
+          <Button 
+            onClick={() => onJoinChat && onJoinChat(event.id, event.title)}
+            className="bg-red-500 hover:bg-red-600 text-white rounded-full border-none transition-all duration-300"
+            disabled={!onJoinChat}
+          >
+            <MessageSquare className="mr-2 h-4 w-4" />
+            Join Chat
+          </Button>
           <Button onClick={handleClose} className="rounded-full bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 border-none transition-all duration-300">
             Schließen
           </Button>
