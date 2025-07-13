@@ -71,9 +71,8 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setSelectedCity } = useEventContext();
-  
-  useEffect(() => {
-   const initAnonUser = async () => {
+
+  const initAnonUser = async () => {
   let { data: session } = await supabase.auth.getSession();
   if (!session?.session) {
     const { data, error } = await supabase.auth.signInAnonymously();
