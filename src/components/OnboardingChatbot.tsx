@@ -11,6 +11,26 @@ import { toast } from '@/hooks/use-toast';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
 // Use the uploaded image
 const chatbotAvatar = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png';
+import { supabase } from '@/lib/supabaseClient';
+
+const trackStep = async (
+  step: string,
+  value?: any,
+  includeTimestamp = false
+) => {
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData?.user?.id;
+  if (!userId) return;
+
+  const payload: Record<string, any> = { step };
+  if (value !== undefined) payload.value = value;
+  if (includeTimestamp) payload.timestamp = new Date().toISOString();
+
+  await supabase.rpc('append_onboarding_step_jsonb', {
+    uid: userId,
+    new_step: payload
+  });
+};
 
 interface OnboardingChatbotProps {
   open: boolean;
@@ -110,6 +130,7 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
   const startOnboarding = () => {
     setIsTyping(true);
     setCurrentStep('name');
+    await trackStep('onboarding_started', null, true);
     addBotMessage('Wie möchtest du genannt werden?');
   };
 
@@ -119,6 +140,7 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
     const name = inputMessage.trim();
     setUserData(prev => ({ ...prev, username: name }));
     addUserMessage(name);
+    await trackStep('name_entered', name);
     setIsTyping(true);
     setCurrentStep('city');
     addBotMessage('In welcher Stadt bist du unterwegs? Tippe einfach den Anfang deiner Stadt:', false);
@@ -189,6 +211,7 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
   };
 
   const proceedToAvatar = () => {
+    await trackStep('interests_submitted', userData.interests);
     if (userData.interests.length > 0) {
       addUserMessage(`Ausgewählt: ${userData.interests.join(', ')}`);
     }
@@ -215,6 +238,7 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
     try {
       const avatarUrl = await userService.uploadProfileImage(file);
       setUserData(prev => ({ ...prev, avatar: avatarUrl }));
+      await trackStep('avatar_uploaded', 'yes');
       addUserMessage('Profilbild hochgeladen ✓');
       proceedToNotifications();
     } catch (error) {
@@ -250,6 +274,7 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
   };
 
   const finishOnboarding = async () => {
+    await trackStep('onboarding_completed');
     setIsTyping(true);
     setCurrentStep('complete');
 
