@@ -127,14 +127,14 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
     setInputMessage('');
   };
 
-  const startOnboarding = () => {
+  const startOnboarding = async () => {
     setIsTyping(true);
     setCurrentStep('name');
-    await trackStep('onboarding_started', null, true);
+    await trackStep('onboarding_started', null, true); 
     addBotMessage('Wie möchtest du genannt werden?');
   };
 
-  const handleNameSubmit = () => {
+  const handleNameSubmit = async () => {
     if (!inputMessage.trim()) return;
     
     const name = inputMessage.trim();
@@ -210,7 +210,7 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
     }));
   };
 
-  const proceedToAvatar = () => {
+  const proceedToAvatar = async () => {
     await trackStep('interests_submitted', userData.interests);
     if (userData.interests.length > 0) {
       addUserMessage(`Ausgewählt: ${userData.interests.join(', ')}`);
