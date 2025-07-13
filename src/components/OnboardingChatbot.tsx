@@ -11,7 +11,8 @@ import { toast } from '@/hooks/use-toast';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
 // Use the uploaded image
 const chatbotAvatar = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '../integrations/supabase/client';
+
 
 const trackStep = async (
   step: string,
