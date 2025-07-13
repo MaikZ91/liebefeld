@@ -1,5 +1,5 @@
 // src/components/event-chat/FullPageChatBot.tsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
 import RecentQueries from './RecentQueries';
@@ -14,6 +14,7 @@ import MessageReactions from '@/components/chat/MessageReactions';
 import { chatService } from '@/services/chatService';
 import { useEventContext, cities } from '@/contexts/EventContext';
 import { createGroupDisplayName } from '@/utils/groupIdUtils';
+import { Button } from '@/components/ui/button';
 
 interface FullPageChatBotProps {
   chatLogic: any;
@@ -90,6 +91,9 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     handleKeyDown: communityKeyDownFromHook,
     setNewMessage: setCommunityInput
   } = useMessageSending(communityGroupId, username, addOptimisticMessage, activeCategory);
+
+  // Filter state for community chat
+  const [messageFilter, setMessageFilter] = useState<string[]>(['alle']);
 
   useEffect(() => {
     if (activeChatModeValue === 'community' && setExternalInput && externalInput !== communityInput) {
@@ -168,6 +172,21 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   }, [communityMessages, communitySending, activeChatModeValue, chatBottomRef]);
 
+  // Filter messages based on selected categories
+  const filteredCommunityMessages = useMemo(() => {
+    if (messageFilter.includes('alle')) {
+      return communityMessages;
+    }
+    
+    return communityMessages.filter(message => {
+      // Check if message contains any of the selected hashtags
+      const messageText = message.text.toLowerCase();
+      return messageFilter.some(category => 
+        messageText.includes(`#${category.toLowerCase()}`)
+      );
+    });
+  }, [communityMessages, messageFilter]);
+
   return (
     <div className="flex flex-col h-screen min-h-0">
       {!hideInput && (
@@ -203,6 +222,43 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
         </div>
       )}
 
+      {/* Filter UI für Community Chat */}
+      {activeChatModeValue === 'community' && (
+        <div className="px-4 py-2 border-b border-gray-800 bg-black sticky top-[60px] z-10">
+          <div className="flex flex-wrap gap-2">
+            {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => (
+              <Button
+                key={category}
+                variant="ghost"
+                size="sm"
+                className={`h-6 px-2 text-xs rounded-full ${
+                  messageFilter.includes(category)
+                    ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                }`}
+                onClick={() => {
+                  if (category === 'alle') {
+                    setMessageFilter(['alle']);
+                  } else {
+                    setMessageFilter(prev => {
+                      const newFilter = prev.filter(f => f !== 'alle');
+                      if (newFilter.includes(category)) {
+                        const result = newFilter.filter(f => f !== category);
+                        return result.length === 0 ? ['alle'] : result;
+                      } else {
+                        return [...newFilter, category];
+                      }
+                    });
+                  }
+                }}
+              >
+                #{category}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
         {activeChatModeValue === 'ai' ? (
           <div className={hideInput ? "pt-4 px-3" : "pt-32 px-3"}> 
@@ -229,15 +285,18 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4"
             >
               <div className="space-y-2 py-4 pb-24">
-                {communityMessages.length === 0 && !communityLoading && !communityError && (
+                {filteredCommunityMessages.length === 0 && !communityLoading && !communityError && (
                   <div className="text-center text-gray-400 py-4">
-                    Noch keine Nachrichten im Community Chat. Starte die Unterhaltung!
+                    {messageFilter.includes('alle') 
+                      ? 'Noch keine Nachrichten im Community Chat. Starte die Unterhaltung!'
+                      : `Keine Nachrichten in den gewählten Kategorien gefunden.`
+                    }
                   </div>
                 )}
 
-                {communityMessages.map((message, index) => {
+                {filteredCommunityMessages.map((message, index) => {
                   const isConsecutive =
-                    index > 0 && communityMessages[index - 1].user_name === message.user_name;
+                    index > 0 && filteredCommunityMessages[index - 1].user_name === message.user_name;
                   const timeAgo = formatTime(message.created_at);
 
                   return (
