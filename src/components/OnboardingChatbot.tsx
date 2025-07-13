@@ -13,6 +13,19 @@ import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
 const chatbotAvatar = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png';
 import { supabase } from '../integrations/supabase/client';
 
+useEffect(() => {
+  const initAnonUser = async () => {
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.session) {
+      const { error } = await supabase.auth.signInAnonymously();
+      if (error) console.error('❌ Anonyme Anmeldung fehlgeschlagen:', error);
+      else console.log('✅ Anonymer Supabase-User erstellt');
+    }
+  };
+
+  initAnonUser();
+}, []);
+
 
 const trackStep = async (
   step: string,
