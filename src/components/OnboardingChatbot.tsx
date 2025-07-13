@@ -14,6 +14,25 @@ const chatbotAvatar = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png
 import { supabase } from '../integrations/supabase/client';
 
 
+const trackStep = async (
+  step: string,
+  value?: any,
+  includeTimestamp = false
+) => {
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData?.user?.id;
+  if (!userId) return;
+
+  const payload: Record<string, any> = { step };
+  if (value !== undefined) payload.value = value;
+  if (includeTimestamp) payload.timestamp = new Date().toISOString();
+
+  await (supabase as any).rpc('append_onboarding_step_jsonb', {
+    uid: userId,
+    new_step: payload
+  });
+};
+
 interface OnboardingChatbotProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -55,33 +74,19 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
   
   useEffect(() => {
     const initAnonUser = async () => {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session) {
-        const { error } = await supabase.auth.signInAnonymously();
-        if (error) console.error('❌ Anonyme Anmeldung fehlgeschlagen:', error);
-        else console.log('✅ Anonymer Supabase-User erstellt');
-      }
-    };
-    initAnonUser();
-  }, []);
+  let { data: session } = await supabase.auth.getSession();
+  if (!session?.session) {
+    const { data, error } = await supabase.auth.signInAnonymously();
+    if (error) { console.error('❌ Anonyme Anmeldung fehlgeschlagen:', error); return; }
+    session = data;
+  }
 
-  const trackStep = async (
-  step: string,
-  value?: any,
-  includeTimestamp = false
-) => {
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData?.user?.id;
-  if (!userId) return;
-
-  const payload: Record<string, any> = { step };
-  if (value !== undefined) payload.value = value;
-  if (includeTimestamp) payload.timestamp = new Date().toISOString();
-
-  await (supabase as any).rpc('append_onboarding_step_jsonb', {
-    uid: userId,
-    new_step: payload
-  });
+  const uid = session.session.user.id;
+  await supabase
+    .from('profiles')
+    .insert({ id: uid })            // weitere Default-Felder nach Wunsch
+    .onConflict('id')
+    .ignore();
 };
 
   const interests = [
