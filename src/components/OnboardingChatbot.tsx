@@ -73,7 +73,7 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
   const { setSelectedCity } = useEventContext();
   
   useEffect(() => {
-    const initAnonUser = async () => {
+   const initAnonUser = async () => {
   let { data: session } = await supabase.auth.getSession();
   if (!session?.session) {
     const { data, error } = await supabase.auth.signInAnonymously();
@@ -81,6 +81,7 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
     session = data;
   }
 
+  // ► Profil-Stub anlegen, falls noch nicht vorhanden
   const uid = session.session.user.id;
   await supabase
     .from('profiles')
