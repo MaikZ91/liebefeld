@@ -14,25 +14,6 @@ const chatbotAvatar = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png
 import { supabase } from '../integrations/supabase/client';
 
 
-const trackStep = async (
-  step: string,
-  value?: any,
-  includeTimestamp = false
-) => {
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData?.user?.id;
-  if (!userId) return;
-
-  const payload: Record<string, any> = { step };
-  if (value !== undefined) payload.value = value;
-  if (includeTimestamp) payload.timestamp = new Date().toISOString();
-
-  await (supabase as any).rpc('append_onboarding_step_jsonb', {
-    uid: userId,
-    new_step: payload
-  });
-};
-
 interface OnboardingChatbotProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -83,6 +64,25 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
     };
     initAnonUser();
   }, []);
+
+  const trackStep = async (
+  step: string,
+  value?: any,
+  includeTimestamp = false
+) => {
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData?.user?.id;
+  if (!userId) return;
+
+  const payload: Record<string, any> = { step };
+  if (value !== undefined) payload.value = value;
+  if (includeTimestamp) payload.timestamp = new Date().toISOString();
+
+  await (supabase as any).rpc('append_onboarding_step_jsonb', {
+    uid: userId,
+    new_step: payload
+  });
+};
 
   const interests = [
     { emoji: '🎨', text: 'Kreativ' },
