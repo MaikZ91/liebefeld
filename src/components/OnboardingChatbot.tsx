@@ -33,7 +33,7 @@ const initAnonUser = async () => {
     .upsert({ id: uid, onboarding_steps: [] }, { onConflict: 'id' });
 };
 
--------------------------------------------------- */
+
 const trackStep = async (
   step: string,
   value?: any,
