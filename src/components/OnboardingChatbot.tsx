@@ -27,35 +27,6 @@ const trackStep = async (
   if (value !== undefined) payload.value = value;
   if (includeTimestamp) payload.timestamp = new Date().toISOString();
 
-  import React, { useState, useRef, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, ArrowLeft, Upload, Search } from 'lucide-react';
-import { getInitials } from '@/utils/chatUIUtils';
-import { userService } from '@/services/userService';
-import { cities, useEventContext } from '@/contexts/EventContext';
-import { toast } from '@/hooks/use-toast';
-import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
-// Use the uploaded image
-const chatbotAvatar = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png';
-import { supabase } from '../integrations/supabase/client';
-
-
-const trackStep = async (
-  step: string,
-  value?: any,
-  includeTimestamp = false
-) => {
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData?.user?.id;
-  if (!userId) return;
-
-  const payload: Record<string, any> = { step };
-  if (value !== undefined) payload.value = value;
-  if (includeTimestamp) payload.timestamp = new Date().toISOString();
-
   await supabase.rpc('append_onboarding_step_jsonb', {
   uid: userId,
   new_step: payload
