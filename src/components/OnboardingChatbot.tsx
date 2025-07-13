@@ -1,25 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, ArrowLeft, Search } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Send, ArrowLeft, Upload, Search } from 'lucide-react';
+import { getInitials } from '@/utils/chatUIUtils';
 import { userService } from '@/services/userService';
 import { cities, useEventContext } from '@/contexts/EventContext';
 import { toast } from '@/hooks/use-toast';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
+// Use the uploaded image
+const chatbotAvatar = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png';
 import { supabase } from '../integrations/supabase/client';
 
-const chatbotAvatar =
-  '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png';
-
-/* ------------------------------------------------------------------ */
-/* Anonym anmelden + Profil-Stub (user_profiles) sicherstellen         */
-/* ------------------------------------------------------------------ */
 const initAnonUser = async () => {
   const { data: session } = await supabase.auth.getSession();
   let uid = session?.session?.user?.id;
@@ -40,9 +33,7 @@ const initAnonUser = async () => {
     .upsert({ id: uid, onboarding_steps: [] }, { onConflict: 'id' });
 };
 
-/* ------------------------------------------------------------------ */
-/* Tracking-Step in onboarding_steps anhängen                          */
-/* ------------------------------------------------------------------ */
+-------------------------------------------------- */
 const trackStep = async (
   step: string,
   value?: any,
@@ -63,11 +54,9 @@ const trackStep = async (
   });
 };
 
-/* ================================================================== */
-
 interface OnboardingChatbotProps {
   open: boolean;
-  onOpenChange: (o: boolean) => void;
+  onOpenChange: (open: boolean) => void;
   onComplete?: () => void;
 }
 
@@ -85,38 +74,37 @@ interface ChatMessage {
   }>;
 }
 
-type Step =
-  | 'start'
-  | 'name'
-  | 'city'
-  | 'interests'
-  | 'avatar'
-  | 'notifications'
-  | 'complete';
+type OnboardingStep = 'start' | 'name' | 'city' | 'interests' | 'avatar' | 'notifications' | 'complete';
 
-const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({
-  open,
-  onOpenChange,
-  onComplete,
-}) => {
-  /* ---------------- state / refs ---------------------------------- */
+const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChange, onComplete }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [step, setStep] = useState<Step>('start');
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>('start');
   const [userData, setUserData] = useState({
     username: '',
     city: '',
     interests: [] as string[],
     avatar: '',
-    wantsNotifications: false,
+    wantsNotifications: false
   });
   const [citySearch, setCitySearch] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setSelectedCity } = useEventContext();
+  
+  useEffect(() => {
+    const initAnonUser = async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session) {
+        const { error } = await supabase.auth.signInAnonymously();
+        if (error) console.error('❌ Anonyme Anmeldung fehlgeschlagen:', error);
+        else console.log('✅ Anonymer Supabase-User erstellt');
+      }
+    };
+    initAnonUser();
+  }, []);
 
-  /* ---------------- Konstanten ------------------------------------ */
   const interests = [
     { emoji: '🎨', text: 'Kreativ' },
     { emoji: '🏃', text: 'Sport' },
@@ -124,271 +112,294 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({
     { emoji: '🧘', text: 'Entspannen' },
     { emoji: '🎶', text: 'Musik' },
     { emoji: '🎬', text: 'Film & Kultur' },
-    { emoji: '🧑‍🤝‍🧑', text: 'Leute treffen' },
+    { emoji: '🧑‍🤝‍🧑', text: 'Leute treffen' }
   ];
 
-  /* ---------------- einmal beim Mount ----------------------------- */
-  useEffect(() => {
-    initAnonUser();
-  }, []);
-
-  /* ---------------- Dialog öffnet ---------------- */
   useEffect(() => {
     if (open && messages.length === 0) {
       addBotMessage(
-        'Hey du! Willkommen bei THE TRIBE. Ich bin Mia, deine Event-Assistentin. Bereit?',
+        'Hey du! Willkommen bei THE TRIBE. Ich bin Mia, deine persönliche Event-Assistentin. Ich helfe dir, coole Leute und Veranstaltungen in deiner Stadt zu finden. Du liebst reale Verbindungen?Dann mach dich bereit!',
         true,
-        [
-          {
-            text: "Los geht's! 🚀",
-            action: startOnboarding,
-            variant: 'default',
-          },
-        ]
+        [{
+          text: 'Los geht\'s! 🚀',
+          action: () => startOnboarding(),
+          variant: 'default'
+        }]
       );
     }
   }, [open, messages.length]);
 
-  /* ---------------- Auto-Scroll ------------------ */
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  /* ================================================================ */
-  /*                         Helper-Funktionen                        */
-  /* ================================================================ */
-
-  const addBotMessage = (
-    message: string,
-    hasButtons = false,
-    buttons: ChatMessage['buttons'] = []
-  ) => {
+  const addBotMessage = (message: string, hasButtons: boolean = false, buttons: Array<{text: string; action: () => void; variant?: 'default' | 'outline'}> = []) => {
     setTimeout(() => {
-      setMessages((p) => [
-        ...p,
-        {
-          id: Date.now().toString(),
-          sender: 'Event-Guide',
-          message,
-          timestamp: new Date(),
-          isBot: true,
-          hasButtons,
-          buttons,
-        },
-      ]);
+      const botMessage: ChatMessage = {
+        id: Date.now().toString(),
+        sender: 'Event-Guide',
+        message,
+        timestamp: new Date(),
+        isBot: true,
+        hasButtons,
+        buttons
+      };
+      setMessages(prev => [...prev, botMessage]);
       setIsTyping(false);
-    }, 700);
+    }, 1000);
   };
 
-  const addUserMessage = (msg: string) => {
-    setMessages((p) => [
-      ...p,
-      {
-        id: Date.now().toString(),
-        sender: userData.username || 'Du',
-        message: msg,
-        timestamp: new Date(),
-        isBot: false,
-      },
-    ]);
+  const addUserMessage = (message: string) => {
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      sender: userData.username || 'Du',
+      message,
+      timestamp: new Date(),
+      isBot: false
+    };
+    setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
   };
 
-  const rebuildInterestButtons = (current: string[]) => {
-    setMessages((prev) =>
-      prev.map((m) =>
-        m.hasButtons && m.message.includes('interessiert')
-          ? {
-              ...m,
-              buttons: [
-                ...interests.map((i) => ({
-                  text: `${i.emoji} ${i.text}`,
-                  action: () => toggleInterest(i.text),
-                  variant: current.includes(i.text) ? 'default' : 'outline',
-                })),
-                {
-                  text: 'Weiter →',
-                  action: proceedToAvatar,
-                  variant: 'default',
-                },
-              ],
-            }
-          : m
-      )
-    );
-  };
-
-  /* ================================================================ */
-  /*                       Onboarding-Flow                            */
-  /* ================================================================ */
-
   const startOnboarding = async () => {
-    await initAnonUser();
     setIsTyping(true);
-    setStep('name');
-    await trackStep('onboarding_started', null, true);
+    setCurrentStep('name');
+    await trackStep('onboarding_started', null, true); 
     addBotMessage('Wie möchtest du genannt werden?');
   };
 
   const handleNameSubmit = async () => {
     if (!inputMessage.trim()) return;
+    
     const name = inputMessage.trim();
-    setUserData((p) => ({ ...p, username: name }));
+    setUserData(prev => ({ ...prev, username: name }));
     addUserMessage(name);
     await trackStep('name_entered', name);
-
     setIsTyping(true);
-    setStep('city');
-    addBotMessage('In welcher Stadt bist du unterwegs?');
+    setCurrentStep('city');
+    addBotMessage('In welcher Stadt bist du unterwegs? Tippe einfach den Anfang deiner Stadt:', false);
   };
 
   const selectCity = (city: string) => {
-    const abbr =
-      cities.find((c) => c.name.toLowerCase() === city.toLowerCase())?.abbr ??
-      city.toLowerCase().replace(/[^a-z]/g, '');
-
-    setUserData((p) => ({ ...p, city }));
-    setSelectedCity(abbr);
+    const cityObject = cities.find(c => c.name.toLowerCase() === city.toLowerCase());
+    const cityAbbr = cityObject ? cityObject.abbr : city.toLowerCase().replace(/[^a-z]/g, '');
+    
+    setUserData(prev => ({ ...prev, city }));
+    
+    // Update global city selection with delay to prevent conflicts
+    setTimeout(() => {
+      setSelectedCity(cityAbbr);
+    }, 100);
+    
     addUserMessage(city);
-
     setIsTyping(true);
-    setStep('interests');
-    setCitySearch('');
-    rebuildInterestButtons(userData.interests);
-    addBotMessage('Was interessiert dich besonders?', true);
+    setCurrentStep('interests');
+    setCitySearch(''); // Reset search
+    
+    // Add small delay before showing interests to ensure smooth transition
+    setTimeout(() => {
+      addBotMessage('Was interessiert dich besonders?', true, [
+        ...interests.map(interest => ({
+          text: `${interest.emoji} ${interest.text}`,
+          action: () => toggleInterest(interest.text),
+          variant: userData.interests.includes(interest.text) ? 'default' as const : 'outline' as const
+        })),
+        {
+          text: 'Weiter →',
+          action: () => proceedToAvatar(),
+          variant: 'default' as const
+        }
+      ]);
+    }, 200);
   };
 
   const toggleInterest = (interest: string) => {
-    setUserData((p) => {
-      const current = p.interests.includes(interest)
-        ? p.interests.filter((i) => i !== interest)
-        : [...p.interests, interest];
-      rebuildInterestButtons(current);
-      return { ...p, interests: current };
+    setUserData(prev => {
+      const newInterests = prev.interests.includes(interest)
+        ? prev.interests.filter(i => i !== interest)
+        : [...prev.interests, interest];
+      return { ...prev, interests: newInterests };
     });
+    
+    // Update the message buttons to reflect selection
+    setMessages(prev => prev.map(msg => {
+      if (msg.hasButtons && msg.message.includes('Was interessiert dich')) {
+        return {
+          ...msg,
+          buttons: [
+            ...interests.map(int => ({
+              text: `${int.emoji} ${int.text}`,
+              action: () => toggleInterest(int.text),
+              variant: userData.interests.includes(int.text) ? 'default' as const : 'outline' as const
+            })),
+            {
+              text: 'Weiter →',
+              action: () => proceedToAvatar(),
+              variant: 'default' as const
+            }
+          ]
+        };
+      }
+      return msg;
+    }));
   };
 
   const proceedToAvatar = async () => {
     await trackStep('interests_submitted', userData.interests);
-    if (userData.interests.length)
+    if (userData.interests.length > 0) {
       addUserMessage(`Ausgewählt: ${userData.interests.join(', ')}`);
-
+    }
     setIsTyping(true);
-    setStep('avatar');
-    addBotMessage(
-      'Möchtest du ein Profilbild hinzufügen?',
-      true,
-      [
-        { text: 'Bild hochladen', action: () => fileInputRef.current?.click(), variant: 'default' },
-        { text: 'Überspringen', action: proceedToNotifications, variant: 'outline' },
-      ]
-    );
+    setCurrentStep('avatar');
+    addBotMessage('Möchtest du ein Profilbild hinzufügen? Optional – hilft dir beim Connecten 😊', true, [
+      {
+        text: 'Bild hochladen',
+        action: () => fileInputRef.current?.click(),
+        variant: 'default'
+      },
+      {
+        text: 'Überspringen',
+        action: () => proceedToNotifications(),
+        variant: 'outline'
+      }
+    ]);
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
+
     try {
-      const url = await userService.uploadProfileImage(file);
-      setUserData((p) => ({ ...p, avatar: url }));
+      const avatarUrl = await userService.uploadProfileImage(file);
+      setUserData(prev => ({ ...prev, avatar: avatarUrl }));
       await trackStep('avatar_uploaded', 'yes');
       addUserMessage('Profilbild hochgeladen ✓');
       proceedToNotifications();
-    } catch {
+    } catch (error) {
       toast({
         title: 'Fehler',
-        description: 'Bild-Upload fehlgeschlagen',
-        variant: 'destructive',
+        description: 'Fehler beim Hochladen des Bildes',
+        variant: 'destructive'
       });
     }
   };
 
   const proceedToNotifications = () => {
     setIsTyping(true);
-    setStep('notifications');
+    setCurrentStep('notifications');
     addBotMessage('Darf ich dir Events vorschlagen, die zu dir passen?', true, [
-      { text: 'Ja klar!', action: () => enableNotifications(true), variant: 'default' },
-      { text: 'Später vielleicht', action: () => enableNotifications(false), variant: 'outline' },
+      {
+        text: 'Ja klar!',
+        action: () => enableNotifications(true),
+        variant: 'default'
+      },
+      {
+        text: 'Später vielleicht',
+        action: () => enableNotifications(false),
+        variant: 'outline'
+      }
     ]);
   };
 
-  const enableNotifications = (ok: boolean) => {
-    setUserData((p) => ({ ...p, wantsNotifications: ok }));
-    addUserMessage(ok ? 'Ja klar!' : 'Später vielleicht');
+  const enableNotifications = (enabled: boolean) => {
+    setUserData(prev => ({ ...prev, wantsNotifications: enabled }));
+    addUserMessage(enabled ? 'Ja klar!' : 'Später vielleicht');
     finishOnboarding();
   };
 
   const finishOnboarding = async () => {
     await trackStep('onboarding_completed');
     setIsTyping(true);
-    setStep('complete');
+    setCurrentStep('complete');
 
     try {
+      // Save user profile to database
+      localStorage.setItem(USERNAME_KEY, userData.username);
+      if (userData.avatar) {
+        localStorage.setItem(AVATAR_KEY, userData.avatar);
+      }
+
       await userService.createOrUpdateProfile({
         username: userData.username,
         avatar: userData.avatar || null,
         interests: userData.interests,
         favorite_locations: userData.city ? [userData.city] : [],
-        hobbies: [],
+        hobbies: []
       });
 
-      localStorage.setItem(USERNAME_KEY, userData.username);
-      if (userData.avatar) localStorage.setItem(AVATAR_KEY, userData.avatar);
-
-      addBotMessage(
-        `Du bist bereit! 🎉 Ich finde jetzt passende Events für dich in ${userData.city}.`,
-        true,
-        [
-          {
-            text: "Los geht's!",
-            action: () => {
-              onOpenChange(false);
-              onComplete?.();
-            },
-            variant: 'default',
+      addBotMessage(`Du bist bereit! 🎉 Ich finde jetzt passende Events und Leute für dich in ${userData.city}.`, true, [
+        {
+          text: 'Los geht\'s!',
+          action: () => {
+            onOpenChange(false);
+            onComplete?.();
           },
-        ]
-      );
+          variant: 'default'
+        }
+      ]);
 
       toast({
         title: `Willkommen ${userData.username}!`,
-        description: 'Dein Profil wurde gespeichert.',
-        variant: 'success',
+        description: 'Dein Profil wurde erfolgreich erstellt.',
+        variant: 'success'
       });
-    } catch {
+    } catch (error) {
       toast({
         title: 'Fehler',
-        description: 'Profil konnte nicht gespeichert werden.',
-        variant: 'destructive',
+        description: 'Fehler beim Speichern des Profils',
+        variant: 'destructive'
       });
     }
   };
 
-  /* ---------------- Input-Handling ---------------- */
-  const handleSend = () => {
-    if (step === 'name') handleNameSubmit();
-    if (step === 'city') handleCitySubmit();
+  const handleSendMessage = () => {
+    if (currentStep === 'name' && !inputMessage.trim()) return;
+    if (currentStep === 'city' && !citySearch.trim()) return;
+
+    if (currentStep === 'name') {
+      handleNameSubmit();
+    } else if (currentStep === 'city') {
+      handleCitySubmit();
+    }
   };
 
   const handleCitySubmit = () => {
-    const term = citySearch.trim().toLowerCase();
-    const match = cities.find((c) => c.name.toLowerCase().startsWith(term));
-    selectCity(match ? match.name : citySearch.trim());
+    const searchTerm = citySearch.trim().toLowerCase();
+    const matchingCity = cities.find(city => 
+      city.name.toLowerCase().startsWith(searchTerm)
+    );
+    
+    if (matchingCity) {
+      selectCity(matchingCity.name);
+    } else {
+      // If no exact match, use the input as custom city
+      selectCity(citySearch.trim());
+    }
   };
 
-  /* ---------------- Render ------------------------ */
-  const filteredCities = cities
-    .filter((c) => c.name.toLowerCase().startsWith(citySearch.toLowerCase()))
-    .slice(0, 6);
+  const filteredCities = cities.filter(city =>
+    city.name.toLowerCase().startsWith(citySearch.toLowerCase())
+  ).slice(0, 6); // Show max 6 suggestions
 
-  const fmt = (d: Date) =>
-    d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('de-DE', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md h-[600px] flex flex-col p-0 bg-black rounded-3xl">
+      <DialogContent className="sm:max-w-md h-[600px] flex flex-col p-0 bg-black rounded-3xl border-0 shadow-2xl z-[9999] fixed">
         {/* Header */}
-        <DialogHeader className="px-4 py-3 bg-black text-white rounded-t-3xl">
+        <DialogHeader className="px-4 py-3 bg-black text-white relative rounded-t-3xl shrink-0">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
@@ -398,67 +409,64 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <DialogTitle className="text-white font-bold text-base">
+            <DialogTitle className="text-white font-bold text-base tracking-wider">
               THE TRIBE ONBOARDING
             </DialogTitle>
-            <div className="w-8 h-8" />
+            <div className="w-8 h-8" /> {/* Spacer */}
           </div>
         </DialogHeader>
 
-        {/* Chat */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 bg-white space-y-4">
-          {messages.map((m) => (
-            <div key={m.id} className="space-y-2">
-              <div className={`flex ${m.isBot ? 'justify-start' : 'justify-end'}`}>
-                {m.isBot && (
-                  <img
-                    src={chatbotAvatar}
-                    alt="Event-Guide"
+        {/* Chat Messages */}
+        <div className="flex-1 overflow-y-auto px-6 py-4 bg-white space-y-4 min-h-0">
+          {messages.map((msg) => (
+            <div key={msg.id} className="space-y-2">
+              <div className={`flex ${msg.isBot ? 'justify-start' : 'justify-end'}`}>
+                {msg.isBot && (
+                  <img 
+                    src={chatbotAvatar} 
+                    alt="Event Guide" 
                     className="w-8 h-8 rounded-full mr-3 mt-1 object-cover"
                   />
                 )}
                 <div className="max-w-[85%]">
                   <div
                     className={`rounded-2xl px-4 py-3 ${
-                      m.isBot ? 'bg-gray-200 text-black' : 'bg-red-500 text-white'
+                      msg.isBot
+                        ? 'bg-gray-200 text-black'
+                        : 'bg-red-500 text-white'
                     }`}
                   >
-                    <p className="text-sm">{m.message}</p>
+                    <p className="text-sm">{msg.message}</p>
                   </div>
-                  <div
-                    className={`text-xs text-gray-500 mt-1 ${
-                      m.isBot ? 'text-left' : 'text-right'
-                    }`}
-                  >
-                    {fmt(m.timestamp)}
+                  <div className={`text-xs text-gray-500 mt-1 ${msg.isBot ? 'text-left' : 'text-right'}`}>
+                    {formatTime(msg.timestamp)}
                   </div>
                 </div>
               </div>
-
+              
               {/* Buttons */}
-              {m.hasButtons && m.buttons && (
+              {msg.hasButtons && msg.buttons && (
                 <div className="flex flex-wrap gap-2 justify-start ml-2">
-                  {m.buttons.map((b, i) => (
+                  {msg.buttons.map((button, index) => (
                     <Button
-                      key={i}
-                      variant={b.variant}
+                      key={index}
+                      variant={button.variant || 'outline'}
                       size="sm"
-                      onClick={b.action}
+                      onClick={button.action}
                       className={`text-xs ${
-                        b.variant === 'default'
-                          ? 'bg-red-500 hover:bg-red-600 text-white'
+                        button.variant === 'default' 
+                          ? 'bg-red-500 hover:bg-red-600 text-white' 
                           : 'border-gray-300 text-gray-700 hover:bg-gray-100'
                       }`}
                     >
-                      {b.text}
+                      {button.text}
                     </Button>
                   ))}
                 </div>
               )}
             </div>
           ))}
-
-          {/* Typing */}
+          
           {isTyping && (
             <div className="flex justify-start">
               <div className="bg-gray-200 rounded-2xl px-4 py-3">
@@ -470,66 +478,58 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({
               </div>
             </div>
           )}
-
+          
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input */}
-        {(step === 'name' || step === 'city') && (
-          <div className="p-4 bg-white border-t border-gray-100 rounded-b-3xl">
+        {/* Input (Name und Stadt) */}
+        {(currentStep === 'name' || currentStep === 'city') && (
+          <div className="p-4 bg-white border-t border-gray-100 rounded-b-3xl shrink-0">
             <div className="flex items-center gap-3 bg-gray-100 rounded-full px-4 py-3">
-              {step === 'city' && <Search className="h-5 w-5 text-gray-400" />}
+              {currentStep === 'city' && <Search className="h-5 w-5 text-gray-400" />}
               <Input
-                value={step === 'city' ? citySearch : inputMessage}
-                onChange={(e) =>
-                  step === 'city'
-                    ? setCitySearch(e.target.value)
-                    : setInputMessage(e.target.value)
-                }
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
+                value={currentStep === 'city' ? citySearch : inputMessage}
+                onChange={(e) => {
+                  if (currentStep === 'city') {
+                    setCitySearch(e.target.value);
+                  } else {
+                    setInputMessage(e.target.value);
                   }
                 }}
-                placeholder={step === 'city' ? 'Stadt eingeben…' : 'Dein Name…'}
-                className="flex-1 bg-transparent border-0 text-black placeholder-gray-500 focus:ring-0"
+                onKeyPress={handleKeyPress}
+                placeholder={currentStep === 'city' ? "Stadt eingeben..." : "Dein Name..."}
+                className="flex-1 bg-transparent border-0 text-black placeholder-gray-500 focus:ring-0 focus:outline-none px-0"
               />
               <Button
-                onClick={handleSend}
-                disabled={
-                  isTyping ||
-                  (step === 'name' ? !inputMessage.trim() : !citySearch.trim())
-                }
-                className="bg-red-500 hover:bg-red-600 text-white rounded-full h-10 w-10"
+                onClick={handleSendMessage}
+                disabled={currentStep === 'name' ? !inputMessage.trim() || isTyping : !citySearch.trim() || isTyping}
+                className="bg-red-500 hover:bg-red-600 text-white rounded-full h-10 w-10 p-0 flex items-center justify-center"
                 size="icon"
               >
                 <Send className="h-5 w-5" />
               </Button>
             </div>
-
-            {/* City-Suggestions */}
-            {step === 'city' &&
-              citySearch &&
-              filteredCities.length > 0 && (
-                <div className="mt-3 space-y-2">
-                  {filteredCities.map((c) => (
-                    <Button
-                      key={c.abbr}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => selectCity(c.name)}
-                      className="w-full justify-start text-left border-gray-300 hover:bg-gray-100"
-                    >
-                      {c.name}
-                    </Button>
-                  ))}
-                </div>
-              )}
+            
+            {/* City suggestions */}
+            {currentStep === 'city' && citySearch.length > 0 && filteredCities.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {filteredCities.map((city) => (
+                  <Button
+                    key={city.abbr}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => selectCity(city.name)}
+                    className="w-full justify-start text-left border-gray-300 hover:bg-gray-100"
+                  >
+                    {city.name}
+                  </Button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
-        {/* verstecktes File-Input */}
+        {/* Hidden file input */}
         <input
           ref={fileInputRef}
           type="file"
