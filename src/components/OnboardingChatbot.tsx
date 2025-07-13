@@ -28,9 +28,10 @@ const trackStep = async (
   if (includeTimestamp) payload.timestamp = new Date().toISOString();
 
   await (supabase as any).rpc('append_onboarding_step_jsonb', {
-  uid: userId,
-  new_step: payload
-});
+    uid: userId,
+    new_step: payload
+  });
+};
 
 interface OnboardingChatbotProps {
   open: boolean;
@@ -70,18 +71,6 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setSelectedCity } = useEventContext();
-
-  useEffect(() => {
-    const initAnonUser = async () => {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session) {
-        const { error } = await supabase.auth.signInAnonymously();
-        if (error) console.error('❌ Anonyme Anmeldung fehlgeschlagen:', error);
-        else console.log('✅ Anonymer Supabase-User erstellt');
-      }
-    };
-    initAnonUser();
-  }, []);
 
   const interests = [
     { emoji: '🎨', text: 'Kreativ' },
