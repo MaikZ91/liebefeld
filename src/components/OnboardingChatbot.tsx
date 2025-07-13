@@ -71,7 +71,7 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setSelectedCity } = useEventContext();
-
+  
   const initAnonUser = async () => {
   let { data: session } = await supabase.auth.getSession();
   if (!session?.session) {
@@ -146,6 +146,7 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
   };
 
   const startOnboarding = async () => {
+    await initAnonUser(); 
     setIsTyping(true);
     setCurrentStep('name');
     await trackStep('onboarding_started', null, true); 
