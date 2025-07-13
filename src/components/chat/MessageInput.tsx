@@ -151,7 +151,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
     if (onCategorySelect) {
       onCategorySelect(category);
     }
-    // Removed automatic text insertion - only change category
+    // Synchronize the filter with selected category when sending messages
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('categoryChanged', { detail: { category } }));
+    }
   };
 
   // Event-Inhalt für das Popover

@@ -50,6 +50,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
   const [eventSearchQuery, setEventSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('Ausgehen');
+  const [messageFilter, setMessageFilter] = useState<string[]>(['alle']); // New filter state
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -473,6 +474,37 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     handleSubmit(eventData);
   };
 
+  // Listen for category changes from MessageInput and sync filter
+  useEffect(() => {
+    const handleCategoryChange = (event: any) => {
+      const category = event.detail.category;
+      // Auto-sync filter when user changes category for sending
+      if (category && messageFilter.includes('alle')) {
+        setMessageFilter([category.toLowerCase()]);
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('categoryChanged', handleCategoryChange);
+      return () => window.removeEventListener('categoryChanged', handleCategoryChange);
+    }
+  }, [messageFilter]);
+
+  // Filter messages based on selected categories
+  const filteredMessages = React.useMemo(() => {
+    if (messageFilter.includes('alle')) {
+      return messages;
+    }
+    
+    return messages.filter(message => {
+      // Check if message contains any of the selected hashtags
+      const messageText = message.text.toLowerCase();
+      return messageFilter.some(category => 
+        messageText.includes(`#${category.toLowerCase()}`)
+      );
+    });
+  }, [messages, messageFilter]);
+
   return (
     <div className="flex flex-col h-full max-h-full bg-black overflow-hidden">
       <div className="border-b border-gray-800 bg-black py-3 px-4 flex-shrink-0">
@@ -483,7 +515,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
             </div>
             <div>
               <h3 className="font-semibold text-white">{groupName}</h3>
-              <p className="text-sm text-gray-400">{messages.length} Nachrichten</p>
+              <p className="text-sm text-gray-400">{filteredMessages.length} Nachrichten</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -511,10 +543,45 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
             </Button>
           </div>
         </div>
+        
+        {/* Filter UI */}
+        <div className="px-0 py-2 border-b border-gray-800">
+          <div className="flex flex-wrap gap-2">
+            {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => (
+              <Button
+                key={category}
+                variant="ghost"
+                size="sm"
+                className={`h-6 px-2 text-xs rounded-full ${
+                  messageFilter.includes(category)
+                    ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                }`}
+                onClick={() => {
+                  if (category === 'alle') {
+                    setMessageFilter(['alle']);
+                  } else {
+                    setMessageFilter(prev => {
+                      const newFilter = prev.filter(f => f !== 'alle');
+                      if (newFilter.includes(category)) {
+                        const result = newFilter.filter(f => f !== category);
+                        return result.length === 0 ? ['alle'] : result;
+                      } else {
+                        return [...newFilter, category];
+                      }
+                    });
+                  }
+                }}
+              >
+                #{category}
+              </Button>
+            ))}
+          </div>
+        </div>
       </div>
       
       <MessageList
-        messages={messages.map(msg => ({
+        messages={filteredMessages.map(msg => ({
           id: msg.id,
           created_at: msg.created_at,
           text: msg.text, // Use 'text' instead of 'content'
