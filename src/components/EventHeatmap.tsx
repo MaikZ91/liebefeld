@@ -40,6 +40,7 @@ import FullPageChatBot from '@/components/event-chat/FullPageChatBot';
 import { useChatLogic } from '@/components/event-chat/useChatLogic';
 import { geocodeLocation, loadCachedCoordinates, geocodeMultipleLocations } from '@/services/geocodingService';
 import TribeFinder from './TribeFinder';
+import { eventChatService } from '@/services/eventChatService';
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -373,6 +374,32 @@ const EventHeatmap: React.FC = () => {
       });
     } finally {
       setIsPerfectDayLoading(false);
+    }
+  };
+
+  const handleJoinEventChat = async (eventId: string, eventTitle: string) => {
+    try {
+      const groupId = await eventChatService.joinEventChat(eventId, eventTitle);
+      
+      if (groupId) {
+        toast({
+          title: "Event Chat beigetreten",
+          description: `Du bist dem Chat für "${eventTitle}" beigetreten`,
+        });
+      } else {
+        toast({
+          title: "Fehler",
+          description: "Event Chat konnte nicht erstellt werden",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error joining event chat:', error);
+      toast({
+        title: "Fehler",
+        description: "Ein Fehler ist aufgetreten",
+        variant: "destructive"
+      });
     }
   };
 
@@ -1324,6 +1351,7 @@ const EventHeatmap: React.FC = () => {
               panelData={panelData}
               onEventSelect={handleEventSelect}
               onLikeEvent={handleEventLike}
+              onJoinEventChat={handleJoinEventChat}
               className="w-full"
             />
           </div>

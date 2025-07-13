@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Users, Heart } from 'lucide-react';
+import { Users, Heart, MessageSquare } from 'lucide-react';
 import { PanelEventData, PanelEvent } from './types';
 import { cn } from '@/lib/utils';
 import EventLikeAvatars from './EventLikeAvatars';
@@ -9,6 +9,7 @@ interface ThreeEventDisplayProps {
   panelData: PanelEventData;
   onEventSelect?: (eventId: string) => void;
   onLikeEvent?: (eventId: string) => void;
+  onJoinEventChat?: (eventId: string, eventTitle: string) => void;
   className?: string;
 }
 
@@ -16,6 +17,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
   panelData,
   onEventSelect,
   onLikeEvent,
+  onJoinEventChat,
   className
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -153,23 +155,42 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                   
-                  {/* Like Button */}
-                  {onLikeEvent && 'id' in event && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2"
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        await onLikeEvent(event.id);
-                        // Trigger refresh of avatars after like
-                        setRefreshTrigger(prev => prev + 1);
-                      }}
-                    >
-                      <Heart className="w-4 h-4" />
-                      <span className="ml-1 text-sm">{'likes' in event ? event.likes || 0 : 0}</span>
-                    </Button>
-                  )}
+                  {/* Action Buttons */}
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    {/* Join Chat Button */}
+                    {onJoinEventChat && 'id' in event && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="bg-red-800/50 hover:bg-red-700/60 text-white text-xs px-2 py-1 h-auto rounded"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          await onJoinEventChat(event.id, event.title);
+                        }}
+                      >
+                        <MessageSquare className="w-3 h-3 mr-1" />
+                        Join Chat
+                      </Button>
+                    )}
+                    
+                    {/* Like Button */}
+                    {onLikeEvent && 'id' in event && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="bg-black/50 hover:bg-black/70 text-white rounded-full p-2"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          await onLikeEvent(event.id);
+                          // Trigger refresh of avatars after like
+                          setRefreshTrigger(prev => prev + 1);
+                        }}
+                      >
+                        <Heart className="w-4 h-4" />
+                        <span className="ml-1 text-sm">{'likes' in event ? event.likes || 0 : 0}</span>
+                      </Button>
+                    )}
+                  </div>
                   
                   {/* Event Details mit Like Avatars */}
                   <div className="absolute bottom-0 left-0 right-0 p-3">
