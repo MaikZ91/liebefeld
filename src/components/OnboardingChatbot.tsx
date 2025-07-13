@@ -14,8 +14,6 @@ const chatbotAvatar = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png
 import { supabase } from '../integrations/supabase/client';
 
 
-
-
 const trackStep = async (
   step: string,
   value?: any,
