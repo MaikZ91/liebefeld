@@ -219,43 +219,43 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
             onCategoryChange={onCategoryChange}
             onJoinEventChat={onJoinEventChat}
           />
-        </div>
-      )}
 
-      {/* Filter UI für Community Chat */}
-      {activeChatModeValue === 'community' && (
-        <div className="px-4 py-2 border-b border-gray-800 bg-black sticky top-[60px] z-10">
-          <div className="flex flex-wrap gap-2">
-            {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => (
-              <Button
-                key={category}
-                variant="ghost"
-                size="sm"
-                className={`h-6 px-2 text-xs rounded-full ${
-                  messageFilter.includes(category)
-                    ? 'bg-red-500/20 text-red-300 border border-red-500/30'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                }`}
-                onClick={() => {
-                  if (category === 'alle') {
-                    setMessageFilter(['alle']);
-                  } else {
-                    setMessageFilter(prev => {
-                      const newFilter = prev.filter(f => f !== 'alle');
-                      if (newFilter.includes(category)) {
-                        const result = newFilter.filter(f => f !== category);
-                        return result.length === 0 ? ['alle'] : result;
+          {/* Filter UI für Community Chat - direkt unter dem Input */}
+          {activeChatModeValue === 'community' && (
+            <div className="px-4 py-2 border-b border-gray-800 bg-black">
+              <div className="flex flex-wrap gap-2">
+                {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => (
+                  <Button
+                    key={category}
+                    variant="ghost"
+                    size="sm"
+                    className={`h-6 px-2 text-xs rounded-full ${
+                      messageFilter.includes(category)
+                        ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                        : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                    }`}
+                    onClick={() => {
+                      if (category === 'alle') {
+                        setMessageFilter(['alle']);
                       } else {
-                        return [...newFilter, category];
+                        setMessageFilter(prev => {
+                          const newFilter = prev.filter(f => f !== 'alle');
+                          if (newFilter.includes(category)) {
+                            const result = newFilter.filter(f => f !== category);
+                            return result.length === 0 ? ['alle'] : result;
+                          } else {
+                            return [...newFilter, category];
+                          }
+                        });
                       }
-                    });
-                  }
-                }}
-              >
-                #{category}
-              </Button>
-            ))}
-          </div>
+                    }}
+                  >
+                    #{category}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

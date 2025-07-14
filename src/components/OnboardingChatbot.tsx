@@ -30,7 +30,11 @@ const initAnonUser = async () => {
   /* ▼ Tabelle heißt laut generierten Typen user_profiles  */
   await supabase
     .from('user_profiles')
-    .upsert({ id: uid, onboarding_steps: [] }, { onConflict: 'id' });
+    .upsert({ 
+      id: uid, 
+      username: `user_${uid.slice(0, 8)}`,
+      onboarding_steps: [] 
+    }, { onConflict: 'id' });
 };
 
 

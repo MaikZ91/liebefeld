@@ -352,6 +352,7 @@ export type Database = {
           id: string
           interests: string[] | null
           last_online: string | null
+          onboarding_steps: Json[] | null
           username: string
         }
         Insert: {
@@ -366,6 +367,7 @@ export type Database = {
           id?: string
           interests?: string[] | null
           last_online?: string | null
+          onboarding_steps?: Json[] | null
           username: string
         }
         Update: {
@@ -380,6 +382,7 @@ export type Database = {
           id?: string
           interests?: string[] | null
           last_online?: string | null
+          onboarding_steps?: Json[] | null
           username?: string
         }
         Relationships: []
@@ -394,6 +397,10 @@ export type Database = {
       }
     }
     Functions: {
+      append_onboarding_step_jsonb: {
+        Args: { uid: string; new_step: Json }
+        Returns: undefined
+      }
       check_perfect_day_subscription: {
         Args: { p_username: string }
         Returns: boolean
