@@ -423,7 +423,34 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
               </div>
               
               {/* Buttons */}
-              {msg.hasButtons && msg.buttons && (
+              {/* Conditional rendering for interests buttons */}
+              {currentStep === 'interests' && msg.message.includes('Was interessiert dich besonders?') ? (
+                  <div className="flex flex-wrap gap-2 justify-start ml-2">
+                    {interests.map((interest, index) => (
+                      <Button
+                        key={index}
+                        variant={'outline'} // Always use outline, color set by className
+                        size="sm"
+                        onClick={() => toggleInterest(interest.text)}
+                        className={`text-xs ${
+                          userData.interests.includes(interest.text)
+                            ? 'bg-red-500 hover:bg-red-600 text-white'
+                            : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        {`${interest.emoji} ${interest.text}`}
+                      </Button>
+                    ))}
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={proceedToAvatar}
+                      className={`text-xs bg-red-500 hover:bg-red-600 text-white`}
+                    >
+                      Weiter →
+                    </Button>
+                  </div>
+              ) : msg.hasButtons && msg.buttons && ( // Original button rendering for other steps
                 <div className="flex flex-wrap gap-2 justify-start ml-2">
                   {msg.buttons.map((button, index) => (
                     <Button
@@ -431,11 +458,10 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
                       variant={button.variant || 'outline'}
                       size="sm"
                       onClick={button.action}
-                      // Corrected: Dynamically apply classes based on current userData.interests state
                       className={`text-xs ${
-                        userData.interests.includes(button.text.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\s/g, '').trim()) // Check text without emoji/spaces
+                        button.variant === 'default'
                           ? 'bg-red-500 hover:bg-red-600 text-white'
-                          : 'border-gray-300 text-white-700 hover:bg-gray-100'
+                          : 'border-gray-300 text-gray-700 hover:bg-gray-100'
                       }`}
                     >
                       {button.text}
