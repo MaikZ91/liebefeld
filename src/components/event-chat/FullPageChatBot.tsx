@@ -324,9 +324,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                           reactions={message.reactions || []}
                           onReact={(emoji) => handleReaction(message.id, emoji)}
                           currentUsername={username}
-                          eventId={(message as any).event_id}
-                          eventTitle={(message as any).event_title}
-                          onJoinEventChat={onJoinEventChat}
                         />
                       </div>
                     </div>

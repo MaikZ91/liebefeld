@@ -1,7 +1,6 @@
 import { setupService } from './setupService';
 import { chatService } from './chatService';
 import { USERNAME_KEY } from '@/types/chatTypes';
-import { supabase } from '@/integrations/supabase/client';
 
 export const eventChatService = {
   /**
@@ -9,6 +8,8 @@ export const eventChatService = {
    */
   async joinEventChat(eventId: string, eventTitle: string): Promise<string | null> {
     try {
+      const username = localStorage.getItem(USERNAME_KEY) || 'Gast';
+      
       // Ensure the event group exists
       const groupId = await setupService.ensureEventGroupExists(eventId, eventTitle);
       
@@ -17,42 +18,20 @@ export const eventChatService = {
         return null;
       }
 
+      // Check if this is the user's first message in this group
+      // If so, send a mirror message to community chat
+      const messages = await chatService.getMessages(groupId, 1);
+      const userMessages = messages.filter(msg => msg.sender === username);
+      
+      if (userMessages.length === 0) {
+        // This would be the user's first message, so send mirror message
+        await setupService.sendEventJoinMessage(username, eventTitle, eventId);
+      }
+
       return groupId;
     } catch (error) {
       console.error('Error joining event chat:', error);
       return null;
-    }
-  },
-
-  /**
-   * Check if a user is posting their first message in an event group
-   * and send mirror message to community chat
-   */
-  async handleFirstEventMessage(groupId: string, username: string): Promise<void> {
-    try {
-      if (!this.isEventGroup(groupId)) return;
-      
-      const eventId = this.extractEventId(groupId);
-      if (!eventId) return;
-
-      // Check if this is the user's first message in this group
-      const messages = await chatService.getMessages(groupId, 50);
-      const userMessages = messages.filter(msg => msg.sender === username);
-      
-      if (userMessages.length === 1) {
-        // This is the user's first message, get event details and send mirror message
-        const { data: event } = await supabase
-          .from('community_events')
-          .select('title')
-          .eq('id', eventId)
-          .single();
-          
-        if (event) {
-          await setupService.sendEventJoinMessage(username, event.title, eventId);
-        }
-      }
-    } catch (error) {
-      console.error('Error handling first event message:', error);
     }
   },
 
