@@ -1,3 +1,4 @@
+// src/components/OnboardingChatbot.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -195,7 +196,9 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
         ...interests.map(interest => ({
           text: `${interest.emoji} ${interest.text}`,
           action: () => toggleInterest(interest.text),
-          variant: userData.interests.includes(interest.text) ? 'default' as const : 'outline' as const
+          // Here, we rely on the component re-rendering to pick up the latest userData.interests
+          // The variant will be determined at render time based on the current state.
+          variant: 'outline' as const // Default to outline, color will be set by `className` based on selection
         })),
         {
           text: 'Weiter →',
@@ -211,30 +214,12 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
       const newInterests = prev.interests.includes(interest)
         ? prev.interests.filter(i => i !== interest)
         : [...prev.interests, interest];
-      return { ...prev, interests: newInterests };
+      return { ...prev, interests: newInterests }; // This correctly updates the state
     });
-    
-    // Update the message buttons to reflect selection
-    setMessages(prev => prev.map(msg => {
-      if (msg.hasButtons && msg.message.includes('Was interessiert dich')) {
-        return {
-          ...msg,
-          buttons: [
-            ...interests.map(int => ({
-              text: `${int.emoji} ${int.text}`,
-              action: () => toggleInterest(int.text),
-              variant: userData.interests.includes(int.text) ? 'default' as const : 'outline' as const
-            })),
-            {
-              text: 'Weiter →',
-              action: () => proceedToAvatar(),
-              variant: 'default' as const
-            }
-          ]
-        };
-      }
-      return msg;
-    }));
+
+    // REMOVED: This direct `setMessages` call was causing the visual desync.
+    // The component will now re-render naturally when `userData` changes,
+    // and the buttons will pick up the updated `userData.interests` in the JSX.
   };
 
   const proceedToAvatar = async () => {
@@ -315,7 +300,7 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
       await userService.createOrUpdateProfile({
         username: userData.username,
         avatar: userData.avatar || null,
-        interests: userData.interests,
+        interests: userData.interests, // Interests are passed here
         favorite_locations: userData.city ? [userData.city] : [],
         hobbies: []
       });
@@ -446,10 +431,11 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
                       variant={button.variant || 'outline'}
                       size="sm"
                       onClick={button.action}
+                      // Corrected: Dynamically apply classes based on current userData.interests state
                       className={`text-xs ${
-                        button.variant === 'default' 
-                          ? 'bg-red-500 hover:bg-red-600 text-white' 
-                          : 'border-gray-300 text-white-700 hover:bg-white-100'
+                        userData.interests.includes(button.text.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\s/g, '').trim()) // Check text without emoji/spaces
+                          ? 'bg-red-500 hover:bg-red-600 text-white'
+                          : 'border-gray-300 text-gray-700 hover:bg-gray-100'
                       }`}
                     >
                       {button.text}
