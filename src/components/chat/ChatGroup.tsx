@@ -19,6 +19,7 @@ interface ChatGroupProps {
   groupId: string;
   groupName: string;
   onOpenUserDirectory?: () => void;
+  onJoinEventChat?: (eventId: string, eventTitle: string) => void;
 }
 
 interface Message {
@@ -35,7 +36,8 @@ interface Message {
 const ChatGroup: React.FC<ChatGroupProps> = ({ 
   groupId, 
   groupName, 
-  onOpenUserDirectory 
+  onOpenUserDirectory,
+  onJoinEventChat
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -598,6 +600,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         isGroup={isGroup}
         groupType={groupType}
         chatBottomRef={scrollManagement.chatBottomRef}
+        onJoinEventChat={onJoinEventChat}
       />
         
       <div className="p-3 bg-black border-t border-gray-800 flex-shrink-0">

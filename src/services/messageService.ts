@@ -2,6 +2,7 @@
 // Changed: 'content' to 'text'
 import { supabase } from '@/integrations/supabase/client';
 import { Message } from '@/types/chatTypes';
+import { eventChatService } from './eventChatService';
 
 /**
  * Service for message-related operations
@@ -160,6 +161,11 @@ export const messageService = {
       }
       
       console.log(`Message sent successfully with ID: ${data?.id}`);
+      
+      // Check if this is a first message in an event group and send mirror message
+      if (data?.id) {
+        await eventChatService.handleFirstEventMessage(validGroupId, username);
+      }
       
       // Force a refresh by sending a broadcast to update everyone's view
       const channel = supabase.channel(`force_refresh:${validGroupId}`);

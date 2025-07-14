@@ -19,6 +19,7 @@ interface MessageListProps {
   isGroup: boolean;
   groupType: 'ausgehen' | 'sport' | 'kreativität';
   chatBottomRef: React.RefObject<HTMLDivElement>;
+  onJoinEventChat?: (eventId: string, eventTitle: string) => void;
 }
 
 const MessageList: React.FC<MessageListProps> = ({
@@ -30,7 +31,8 @@ const MessageList: React.FC<MessageListProps> = ({
   formatTime,
   isGroup,
   groupType,
-  chatBottomRef
+  chatBottomRef,
+  onJoinEventChat
 }) => {
   const isMobile = useIsMobile();
 
@@ -135,6 +137,9 @@ const MessageList: React.FC<MessageListProps> = ({
                     reactions={message.reactions || []} // Pass reactions directly
                     onReact={handleReaction(message.id)}
                     currentUsername={username}
+                    eventId={(message as any).event_id}
+                    eventTitle={(message as any).event_title}
+                    onJoinEventChat={onJoinEventChat}
                   />
                 </div>
               </div>

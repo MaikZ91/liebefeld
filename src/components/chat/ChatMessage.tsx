@@ -22,6 +22,9 @@ interface ChatMessageProps {
   onReact?: (emoji: string) => void;
   currentUsername?: string;
   messageId?: string;
+  eventId?: string;
+  eventTitle?: string;
+  onJoinEventChat?: (eventId: string, eventTitle: string) => void;
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -34,7 +37,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   reactions = [],
   onReact,
   currentUsername = '',
-  messageId
+  messageId,
+  eventId,
+  eventTitle,
+  onJoinEventChat
 }) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -45,6 +51,15 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     const eventKeywords = ['um', 'uhr', 'findet', 'statt', 'kategorie', 'veranstaltung', 'event'];
     const lowerText = text.toLowerCase();
     return eventKeywords.some(keyword => lowerText.includes(keyword));
+  };
+
+  // Check if this is an event join message from EventBot
+  const isEventJoinMessage = typeof message === 'string' && message.includes('hat gerade einen Chat für das Event') && eventId && eventTitle;
+
+  const handleEventClick = () => {
+    if (isEventJoinMessage && onJoinEventChat && eventId && eventTitle) {
+      onJoinEventChat(eventId, eventTitle);
+    }
   };
 
   // Function to convert URLs to clickable links
@@ -165,8 +180,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       className={cn(
         "group p-3 rounded-lg relative",
         isConsecutive ? 'mt-0.5' : 'mt-1',
-        "bg-black text-white shadow-md w-full max-w-full overflow-hidden hover:bg-gray-900/50 transition-colors duration-200"
+        "bg-black text-white shadow-md w-full max-w-full overflow-hidden transition-colors duration-200",
+        isEventJoinMessage ? "hover:bg-red-900/50 cursor-pointer border border-red-500/30" : "hover:bg-gray-900/50"
       )}
+      onClick={isEventJoinMessage ? handleEventClick : undefined}
     >
       {/* Outer flex container for text and reactions */}
       <div className="flex flex-col">
