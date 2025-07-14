@@ -7,7 +7,7 @@ import { useChatMessages } from '@/hooks/chat/useChatMessages';
 import { useMessageSending } from '@/hooks/chat/useMessageSending';
 import { AVATAR_KEY, USERNAME_KEY, EventShare } from '@/types/chatTypes'; // Import EventShare
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getInitials } from '@/utils/chatUIUtils';
+import { getInitials } from '@/utils/chatUIUtils'; 
 import TypingIndicator from '@/components/chat/TypingIndicator';
 import ChatMessage from '@/components/chat/ChatMessage';
 import MessageReactions from '@/components/chat/MessageReactions';
@@ -15,7 +15,6 @@ import { chatService } from '@/services/chatService';
 import { useEventContext, cities } from '@/contexts/EventContext';
 import { createGroupDisplayName } from '@/utils/groupIdUtils';
 import { Button } from '@/components/ui/button';
-import GroupChat from '@/components/GroupChat'; // Import the GroupChat component
 
 interface FullPageChatBotProps {
   chatLogic: any;
@@ -64,7 +63,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     handleInputChange: aiInputChange,
     handleHeartClick,
     toggleRecentQueries,
-    showAnimatedPrompts
+    showAnimatedPrompts 
   } = chatLogic;
 
   const { selectedCity } = useEventContext();
@@ -274,12 +273,68 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
             <div ref={messagesEndRef} />
           </div>
         ) : (
-          // Corrected: Render GroupChat component for community mode
-          <GroupChat
-            groupId={communityGroupId}
-            groupName={getCommunityDisplayName(activeCategory, selectedCity)} // Pass the display name
-            compact={false} // Ensure it's not compact if it's the full page chatbot
-          />
+          <div className="h-full min-h-0 flex flex-col">
+            {communityError && (
+              <div className="text-center text-red-500 text-lg font-semibold py-4">
+                Error: {communityError}
+              </div>
+            )}
+
+            <div
+              ref={chatContainerRef}
+              className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4"
+            >
+              <div className="space-y-2 py-4 pb-24">
+                {filteredCommunityMessages.length === 0 && !communityLoading && !communityError && (
+                  <div className="text-center text-gray-400 py-4">
+                    {messageFilter.includes('alle') 
+                      ? 'Noch keine Nachrichten im Community Chat. Starte die Unterhaltung!'
+                      : `Keine Nachrichten in den gewählten Kategorien gefunden.`
+                    }
+                  </div>
+                )}
+
+                {filteredCommunityMessages.map((message, index) => {
+                  const isConsecutive =
+                    index > 0 && filteredCommunityMessages[index - 1].user_name === message.user_name;
+                  const timeAgo = formatTime(message.created_at);
+
+                  return (
+                    <div key={message.id} className="mb-1 w-full group">
+                      {!isConsecutive && (
+                        <div className="flex items-center mb-1">
+                          <Avatar className="h-8 w-8 mr-2 flex-shrink-0 border-red-500">
+                            <AvatarImage src={message.user_avatar} alt={message.user_name} />
+                            <AvatarFallback className="bg-red-500 text-white">
+                              {getInitials(message.user_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="text-lg font-medium text-white mr-2">
+                            {message.user_name}
+                          </div>
+                          <span className="text-sm text-gray-400">{timeAgo}</span>
+                        </div>
+                      )}
+                      <div className="break-words">
+                        <ChatMessage
+                          message={message.text}
+                          isConsecutive={isConsecutive}
+                          isGroup
+                          messageId={message.id}
+                          reactions={message.reactions || []}
+                          onReact={(emoji) => handleReaction(message.id, emoji)}
+                          currentUsername={username}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+
+                <TypingIndicator typingUsers={typingUsers} />
+                <div ref={chatBottomRef} />
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
