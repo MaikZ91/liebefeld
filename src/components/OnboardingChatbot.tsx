@@ -435,7 +435,7 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
                       className={`text-xs ${
                         userData.interests.includes(button.text.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\s/g, '').trim()) // Check text without emoji/spaces
                           ? 'bg-red-500 hover:bg-red-600 text-white'
-                          : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                          : 'border-gray-300 text-white-700 hover:bg-gray-100'
                       }`}
                     >
                       {button.text}
