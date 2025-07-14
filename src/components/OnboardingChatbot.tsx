@@ -449,7 +449,7 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
                       className={`text-xs ${
                         button.variant === 'default' 
                           ? 'bg-red-500 hover:bg-red-600 text-white' 
-                          : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                          : 'border-gray-300 text-white-700 hover:bg-white-100'
                       }`}
                     >
                       {button.text}
