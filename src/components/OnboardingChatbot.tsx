@@ -112,7 +112,7 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
   useEffect(() => {
     if (open && messages.length === 0) {
       addBotMessage(
-        'Hey du! Willkommen bei THE TRIBE. Ich bin Mia, deine persönliche Event-Assistentin. Ich helfe dir, coole Leute und Veranstaltungen in deiner Stadt zu finden. Du liebst reale Verbindungen?Dann mach dich bereit!',
+        'Hey du! Willkommen bei THE TRIBE. Ich bin Mia, deine persönliche Event-Assistentin. Ich helfe dir, coole Leute und Veranstaltungen in deiner Stadt zu finden. Du liebst reale Verbindungen? Dann mach dich bereit!',
         true,
         [{
           text: 'Los geht\'s! 🚀',
