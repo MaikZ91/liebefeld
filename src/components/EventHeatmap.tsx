@@ -650,12 +650,10 @@ const EventHeatmap: React.FC = () => {
             letter-spacing: 0.5px;
             text-transform: uppercase;
             line-height: 1.1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            word-break: break-word;
             max-width: 40px;
           ">
-            ${spot.name.split(' ')[0]}
+            ${spot.name}
 
       `;
 
