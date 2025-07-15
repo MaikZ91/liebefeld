@@ -56,9 +56,10 @@ const tribeSpots = [
   { name: 'Obersee', lat: 52.056974, lng: 8.563763 },
   { name: 'Lutterviertel', lat: 52.0289, lng: 8.5291 },
   { name: 'Gellershagen Park', lat: 52.05, lng: 8.5167 },
-  { name: 'Klosterplatz', lat: 52.0208, lng: 8.5286 }
+  { name: 'Klosterplatz', lat: 52.0208, lng: 8.5286 },
   { name: 'Nordpark', lat: 52.0368, lng: 8.5290 },
-  { name: 'Universität Bielefeld', lat: 52.0378, lng: 8.4931 }
+  { name: 'Universität Bielefeld', lat: 52.0378, lng: 8.4931 },
+{ name: 'Schwedenschanze', lat: 52.068540, lng: 8.369610 }
 ];
 
 const EventHeatmap: React.FC = () => {
