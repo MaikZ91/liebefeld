@@ -1,4 +1,3 @@
-// src/components/event-chat/ThreeEventDisplay.tsx
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Users, Heart, MessageSquare } from 'lucide-react';
@@ -307,13 +306,15 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
                   
                   {/* Event Details mit Like Avatars */}
                   <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <h3 className="text-white font-bold text-sm mb-1 line-clamp-4 leading-tight">
+                    <h3 className="text-white font-bold text-base mb-1 line-clamp-4 leading-tight">
                       {event.title}
                     </h3>
                     
                     <div className="flex items-center justify-between">
                       <div className="text-gray-300 text-xs">
                         {'time' in event && event.time && event.time}
+                        {'location' in event && event.location && ` • ${event.location}`}
+                        
                       </div>
                       
                       {/* Like Avatars */}
