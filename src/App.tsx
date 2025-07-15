@@ -45,7 +45,7 @@ function App() {
             <BrowserRouter>
               <Routes>
                 {/* Heatmap als Hauptseite, jetzt von Layout umhüllt */}
-                <Route path="/" element={<Layout><Heatmap /></Layout>} />
+                <Route path="/" element={<Layout><Chat /></Layout>} />
                 <Route path="/heatmap" element={<Layout><Heatmap /></Layout>} />
                 
                 {/* Andere Seiten */}
