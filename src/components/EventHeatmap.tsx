@@ -1497,7 +1497,7 @@ const EventHeatmap: React.FC = () => {
               variant="ghost"
               size="icon"
               onClick={() => setShowAIChat(false)}
-              className="text-white hover:bg-gray-700"
+              className="text-white hover:bg-black-700"
             >
               <X className="w-5 h-5" />
             </Button>
