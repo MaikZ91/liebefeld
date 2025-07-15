@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Users, Heart, MessageSquare } from 'lucide-react';
 import { PanelEventData, PanelEvent } from './types';
@@ -63,7 +63,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
     if (!isDragging || totalEvents <= 3) return;
     setIsDragging(false);
     
-    const threshold = 80; // Minimum swipe distance
+    const threshold = 80;
     
     if (Math.abs(translateX) > threshold) {
       if (translateX > 0 && currentPage > 0) {
@@ -177,7 +177,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
         onMouseUp={handleMouseUp}
       >
         <div 
-          className="flex gap-3 transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing select-none" // Changed gap-1 to gap-3
+          className="flex gap-1 transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing select-none"
           style={{
             transform: `translateX(${translateX}px)`,
             transition: isDragging ? 'none' : 'transform 0.3s ease-out'
