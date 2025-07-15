@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Heart, History, CalendarPlus, Send, Calendar, ChevronDown } from 'lucide-react';
@@ -98,7 +99,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     return () => clearTimeout(timer);
   }, [displayText, isDeleting, currentSuggestionIndex, localInput, suggestions, showAnimatedPrompts]);
 
-  const handleLocalInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLocalInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setLocalInput(e.target.value);
     if (onChange) {
       onChange(e);
@@ -120,8 +121,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     setLocalInput('');
   };
   
-  const handleLocalKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+  const handleLocalKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       if (activeChatModeValue === 'community') {
         // For community mode, only update external input
@@ -218,8 +219,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   };
 
   return (
-    <div className="flex items-center relative w-full max-w-md">
-      <div className="absolute left-1 top-1/2 transform -translate-y-1/2 flex items-center gap-0.5 z-10">
+    <div className="flex items-end relative w-full max-w-md">{/* Changed from items-center to items-end */}
+      <div className="absolute left-1 bottom-1 flex items-center gap-0.5 z-10">{/* Changed from top-1/2 to bottom-1 */}
         {activeChatModeValue === 'ai' ? (
           <>
             <Button
@@ -333,15 +334,14 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         style={{ pointerEvents: localInput.trim() === '' && displayText.trim() !== '' ? 'auto' : 'none' }}
       />
       
-      <input
+      <Textarea
         ref={inputRef}
-        type="text"
         value={localInput}
         onChange={handleLocalInputChange}
-        onKeyPress={handleLocalKeyPress}
+        onKeyDown={handleLocalKeyPress}
         placeholder={placeholderText}
         className={cn(
-          "w-full bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-gray-700/50 rounded-full py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pr-10 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 text-left",
+          "w-full bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-gray-700/50 rounded-xl py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pr-10 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 text-left min-h-[40px] max-h-[120px] resize-none",
           getButtonWidth()
         )}
       />
@@ -359,7 +359,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         }}
         disabled={!localInput.trim() || isTyping}
         className={cn(
-          "absolute right-1 top-1/2 transform -translate-y-1/2 rounded-full p-1.5 flex-shrink-0",
+          "absolute right-1 bottom-1 rounded-full p-1.5 flex-shrink-0",
           localInput.trim() && !isTyping
             ? "bg-red-500 hover:bg-red-600 text-white"
             : "bg-zinc-800 text-zinc-500"

@@ -35,7 +35,7 @@ export const useChatLogic = (
   const [hasUserSentFirstMessage, setHasUserSentFirstMessage] = useState(false); 
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const welcomeMessageShownRef = useRef(false);
   const appLaunchedBeforeRef = useRef(false); 
   // Removed typingTimeoutRef as it's not needed for AI typing simulation during user input
@@ -458,13 +458,13 @@ export const useChatLogic = (
   };
 
   // Minimalistische handleInputChange für flüssiges Tippen
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
     // isTyping wird hier NICHT manipuliert, da es den KI-Verarbeitungsstatus anzeigt.
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault(); // Verhindert einen Zeilenumbruch im Input-Feld
       handleSendMessage(); // Löst das Senden der Nachricht aus
     }

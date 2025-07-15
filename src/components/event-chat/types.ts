@@ -75,13 +75,13 @@ export interface ChatInputProps {
   setInput: (input: string) => void;
   handleSendMessage: (content?: string | EventShare) => Promise<void>;
   isTyping: boolean;
-  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   isHeartActive: boolean;
   handleHeartClick: () => void;
   globalQueries: any[];
   toggleRecentQueries: () => void;
-  inputRef: React.RefObject<HTMLInputElement>;
+  inputRef: React.RefObject<HTMLTextAreaElement>;
   onAddEvent?: () => void; // This is a simple function to trigger the modal
   showAnimatedPrompts: boolean;
   activeChatModeValue: 'ai' | 'community';

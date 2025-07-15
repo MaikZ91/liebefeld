@@ -144,11 +144,11 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   };
 
-  const wrappedCommunityInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const wrappedCommunityInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     communityInputChangeFromHook(e);
   };
 
-  const wrappedCommunityKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const wrappedCommunityKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     communityKeyDownFromHook(e);
   };
 

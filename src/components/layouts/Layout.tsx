@@ -23,17 +23,17 @@ interface LayoutProps {
     setInput: (value: string) => void;
     handleSendMessage: (input?: string) => Promise<void>;
     isTyping: boolean;
-    onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+    onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+    onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
     isHeartActive: boolean;
     handleHeartClick: () => void;
     globalQueries: any[];
     toggleRecentQueries: () => void;
-    inputRef: React.RefObject<HTMLInputElement>;
+    inputRef: React.RefObject<HTMLTextAreaElement>;
     onAddEvent?: () => void;
     showAnimatedPrompts: boolean;
     activeCategory?: string;
     onCategoryChange?: (category: string) => void;
-    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   };
 }
 

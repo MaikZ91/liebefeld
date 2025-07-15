@@ -13,13 +13,13 @@ interface HeatmapHeaderProps {
     setInput: (value: string) => void;
     handleSendMessage: (input?: string) => Promise<void>; // Updated signature to accept optional string
     isTyping: boolean;
-    onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+    onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
     isHeartActive: boolean;
     handleHeartClick: () => void;
     globalQueries: any[];
     toggleRecentQueries: () => void;
-    inputRef: React.RefObject<HTMLInputElement>;
+    inputRef: React.RefObject<HTMLTextAreaElement>;
     onAddEvent?: () => void;
     showAnimatedPrompts: boolean;
     activeChatModeValue: 'ai' | 'community';
