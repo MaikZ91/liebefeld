@@ -1,4 +1,3 @@
-// src/components/HeatmapHeader.tsx
 import React from 'react';
 import LiveTicker from './LiveTicker';
 import { useEvents } from '@/hooks/useEvents';
@@ -32,15 +31,15 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
   const { events, isLoading } = useEvents(selectedCity);
 
   return (
-    <div className="absolute top-0 left-0 right-0 z-[1002] bg-black opacity-100">
+    <div className="absolute top-0 left-0 right-0 z-[1002]">
       {/* Curved black header bar with THE TRIBE logo */}
       <div className="relative">
-        {/* Main header with speech bubble shape - removed rounded bottom corners */}
-        <div className="bg-black mx-4 px-6 py-4 relative"> {/* Removed rounded-bl-[2rem] rounded-br-[2rem] */}
+        {/* Main header with speech bubble shape - rounded both bottom corners */}
+        <div className="bg-black mx-4 px-6 py-4 relative rounded-bl-[2rem] rounded-br-[2rem]">
           {/* Main content */}
           <div className="flex items-center gap-4 relative z-10">
             <Link to="/" className="flex items-center">
-              <h1 className="font-sans text-2xl font-bold tracking-tight text-red-500">THE TRIBE</h1>
+              <h1 className="font-sans text-2xl font-bold tracking-tight text-white-500">THE TRIBE</h1>
             </Link>
             <CitySelector />
           </div>
@@ -49,8 +48,8 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
       
       {/* Black search bar for AI Chat Input */}
       {chatInputProps && (
-        <div className="px-4 pb-4 pt-2 bg-black">
-          <div className="bg-black rounded-xl mx-2"> {/* Changed rounded-full to rounded-xl */}
+        <div className="px-4 pb-4 pt-2"> {/* Added pt-2 here */}
+          <div className="bg-black rounded-full mx-2">
             
             <ChatInput
               input={chatInputProps.input}
