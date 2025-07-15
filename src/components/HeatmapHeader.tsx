@@ -1,4 +1,3 @@
-// src/components/HeatmapHeader.tsx
 import React from 'react';
 import LiveTicker from './LiveTicker';
 import { useEvents } from '@/hooks/useEvents';
@@ -49,7 +48,7 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
       
       {/* Black search bar for AI Chat Input */}
       {chatInputProps && (
-        <div className="px-4 pb-4">
+        <div className="px-4 pb-4 pt-2"> {/* Added pt-2 here */}
           <div className="bg-black rounded-full mx-2">
             
             <ChatInput
