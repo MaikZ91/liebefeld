@@ -656,15 +656,7 @@ const EventHeatmap: React.FC = () => {
             max-width: 40px;
           ">
             ${spot.name.split(' ')[0]}
-          </div>
-          <div style="
-            font-size: 6px;
-            opacity: 0.8;
-            margin-top: 1px;
-          ">
-            TRIBE
-          </div>
-        </div>
+
       `;
 
       const customIcon = L.divIcon({
