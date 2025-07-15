@@ -355,7 +355,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         placeholder={placeholderText}
         rows={1} // Start with 1 row
         className={cn(
-          "w-full bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-gray-700/50 rounded-xl py-2 focus:outline-none focus:ring-0 focus:border-gray-700/50 text-sm text-red-200 placeholder-red-500 pr-10 shadow-md transition-all duration-200 hover:border-gray-600 text-left min-h-[40px] overflow-hidden",
+          "w-full bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-gray-700/50 rounded-xl py-2 focus:outline-none focus:ring-0 focus:border-gray-700/50 text-sm text-red-200 placeholder-red-500 pr-10 shadow-md transition-all duration-200 hover:border-gray-600 text-left overflow-hidden", // REMOVED min-h-[40px]
           getButtonWidth()
         )}
       />
