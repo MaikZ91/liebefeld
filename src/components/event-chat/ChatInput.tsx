@@ -119,25 +119,25 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     }
   };
 
-  const handleLocalSendMessage = async (content?: string | EventShare) => {
-    const isEventShare = typeof content === 'object' && content !== null && 'title' in content;
+  const handleLocalSendMessage = async (contentParam?: string | EventShare) => {
+    const isEventShare = typeof contentParam === 'object' && contentParam !== null && 'title' in contentParam;
     
     let messageToSend: string;
 
-    // Ensure localInput is a string before trimming
-    const currentLocalInput = localInput ?? ''; 
+    // Use nullish coalescing to ensure .trim() is called on a string
+    const trimmedLocalInput = (localInput ?? '').trim();
 
     if (isEventShare) {
-      messageToSend = currentLocalInput.trim();
+      messageToSend = trimmedLocalInput;
     } else {
-      // Ensure 'content' is treated as a string, providing an empty string fallback
-      // if 'content' itself is undefined or null, before calling .trim().
-      // Then, if the result is empty, fall back to currentLocalInput.trim().
-      const trimmedContent = (typeof content === 'string' ? content : '').trim();
-      messageToSend = trimmedContent || currentLocalInput.trim();
+      // Get the trimmed string from contentParam, defaulting to empty string if not a valid string
+      const contentString = typeof contentParam === 'string' ? contentParam : '';
+      const trimmedContentParam = contentString.trim();
+      // If trimmedContentParam is empty, use trimmedLocalInput as fallback
+      messageToSend = trimmedContentParam || trimmedLocalInput;
     }
 
-    const eventData = isEventShare ? (content as EventShare) : undefined;
+    const eventData = isEventShare ? (contentParam as EventShare) : undefined;
 
     if ((!messageToSend && !fileInputRef.current?.files?.length && !eventData) || isSending) {
       return;
@@ -152,7 +152,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     
     // For AI mode, handle sending directly
     setInput(messageToSend); // Use messageToSend derived above
-    await handleSendMessage(content || messageToSend); // Pass original content or derived messageToSend
+    await handleSendMessage(contentParam || messageToSend); // Pass original content or derived messageToSend
     setLocalInput('');
   };
   
@@ -360,7 +360,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           getButtonWidth().replace('pl-', 'left-')
         )}
         onClick={handleSuggestionClick}
-        style={{ pointerEvents: (localInput ?? '').trim() === '' && displayText.trim() !== '' ? 'auto' : 'none' }}
+        style={{ pointerEvents: ((localInput ?? '').trim() === '' && displayText.trim() !== '') ? 'auto' : 'none' }}
       />
       
       <Textarea
@@ -387,10 +387,10 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
             handleLocalSendMessage();
           }
         }}
-        disabled={!(localInput ?? '').trim() || isTyping}
+        disabled={!((localInput ?? '').trim()) || isTyping}
         className={cn(
           "absolute right-1 bottom-1 rounded-full p-1.5 flex-shrink-0",
-          (localInput ?? '').trim() && !isTyping
+          ((localInput ?? '').trim()) && !isTyping
             ? "bg-red-500 hover:bg-red-600 text-white"
             : "bg-zinc-800 text-zinc-500"
         )}
