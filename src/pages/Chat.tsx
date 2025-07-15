@@ -37,7 +37,24 @@ const ChatPage = () => {
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
   // Chat bot reference to get input props
-  const [chatInputProps, setChatInputProps] = useState<any>(null);
+  const [chatInputProps, setChatInputProps] = useState<any>(() => ({
+    input: '',
+    setInput: () => {},
+    handleSendMessage: async () => {},
+    isTyping: false,
+    onKeyDown: () => {},
+    onChange: () => {},
+    isHeartActive: false,
+    handleHeartClick: () => {},
+    globalQueries: [],
+    toggleRecentQueries: () => {},
+    inputRef: { current: null },
+    onAddEvent: () => {},
+    showAnimatedPrompts: false,
+    activeChatModeValue: 'ai', // Default to 'ai' as per common use
+    activeCategory: 'Ausgehen',
+    onCategoryChange: () => {},
+  }));
   
   const {
     events,
