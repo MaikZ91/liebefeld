@@ -111,6 +111,55 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
     setTranslateX(0);
   };
 
+  // Add global mouse event listeners
+  React.useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (!isDragging || totalEvents <= 3) return;
+      const diffX = e.clientX - startX;
+      setTranslateX(diffX);
+    };
+
+    const handleGlobalMouseUp = () => {
+      if (!isDragging || totalEvents <= 3) return;
+      setIsDragging(false);
+      
+      const threshold = 80;
+      
+      if (Math.abs(translateX) > threshold) {
+        if (translateX > 0) {
+          handlePrevious();
+        } else {
+          handleNext();
+        }
+      }
+      
+      setTranslateX(0);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isDragging, startX, translateX, totalEvents]);
+  
+  const handleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (!('id' in event) || isLiking) return;
+
+    const eventId = (event as PanelEvent).id;
+    setIsLiking(true);
+
+    await onLikeEvent(eventId);
+
+    setTimeout(() => setIsLiking(false), 250);
+  };
+
   if (displayEvents.length === 0) return null;
 
   return (
@@ -119,7 +168,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
       {/* Three Event Cards with Swipe */}
       <div 
         ref={containerRef}
-        className="overflow-hidden px-4"
+        className="overflow-hidden px-1"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -128,7 +177,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
         onMouseUp={handleMouseUp}
       >
         <div 
-          className="flex gap-4 transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing select-none"
+          className="flex gap-1 transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing select-none"
           style={{
             transform: `translateX(${translateX}px)`,
             transition: isDragging ? 'none' : 'transform 0.3s ease-out'
