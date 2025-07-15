@@ -36,8 +36,7 @@ const ChatPage = () => {
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
-  // Chat bot reference to get input props
-  const [chatInputProps, setChatInputProps] = useState<any>(null);
+  // Chat bot reference to get input props - REMOVED: chatInputProps state and setChatInputProps
   
   const {
     events,
@@ -245,7 +244,8 @@ const ChatPage = () => {
         setIsEventListSheetOpen={setIsEventListSheetOpen}
         newMessagesCount={unreadMessageCount}
         newEventsCount={0}
-        chatInputProps={chatInputProps}
+        // REMOVED: chatInputProps={chatInputProps}
+        activeChatModeValue={activeView} // ADDED: Pass activeView directly
       >
         <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
           <div className="flex-grow rounded-lg overflow-hidden border border-black flex flex-col bg-black">
@@ -257,7 +257,7 @@ const ChatPage = () => {
                 activeChatMode={activeView} 
                 setActiveChatMode={setActiveView}
                 hideButtons={true}
-                onChatInputPropsChange={setChatInputProps}
+                // REMOVED: onChatInputPropsChange={setChatInputProps}
                 onJoinEventChat={handleJoinEventChat}
               />
             </div>

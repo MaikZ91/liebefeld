@@ -1,144 +1,150 @@
-
-import React, { useState, useRef, useEffect } from 'react';
+// src/components/EventChatBot.tsx
+import React, { useState, useEffect, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Send, PlusCircle, MessageSquare, Bot } from 'lucide-react';
+import ChatInput from '@/components/event-chat/ChatInput';
+import { supabase } from '@/integrations/supabase/client';
 import { useEventContext } from '@/contexts/EventContext';
-import { useToast } from '@/hooks/use-toast';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
-import { userService } from '@/services/userService';
-import ProfileEditor from './users/ProfileEditor';
-import FullPageChatBot from './event-chat/FullPageChatBot';
-import { useChatLogic } from './event-chat/useChatLogic';
-import { usePersonalization } from './event-chat/usePersonalization';
-import { EventChatBotProps } from './event-chat/types';
-import { createCitySpecificGroupId } from '@/utils/groupIdUtils';
+import { messageService } from '@/services/messageService';
+import { eventChatService } from '@/services/eventChatService';
+import { GroupChatMessages } from '@/components/chat/GroupChatMessages';
+import { AiChatMessages } from '@/components/chat/AiChatMessages';
+import { cn } from '@/lib/utils';
 
-interface ExtendedEventChatBotProps extends EventChatBotProps {
-  onChatInputPropsChange?: (props: any) => void;
+interface EventChatBotProps {
+  fullPage?: boolean;
+  onAddEvent?: () => void;
+  onToggleCommunity?: () => void;
+  activeChatMode?: 'ai' | 'community';
+  setActiveChatMode?: (mode: 'ai' | 'community') => void;
+  hideButtons?: boolean;
+  // REMOVED: onChatInputPropsChange?: (props: any) => void;
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
 }
 
-const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({ 
-  fullPage = false, 
-  onAddEvent, 
+const EventChatBot: React.FC<EventChatBotProps> = ({
+  fullPage = false,
+  onAddEvent,
   onToggleCommunity,
   activeChatMode,
   setActiveChatMode,
-  onChatInputPropsChange,
+  hideButtons = false,
+  // REMOVED: onChatInputPropsChange,
   onJoinEventChat
 }) => {
-  const [internalActiveChatMode, setInternalActiveChatMode] = useState<'ai' | 'community'>('ai');
-  const activeChatModeValue = activeChatMode !== undefined ? activeChatMode : internalActiveChatMode;
-  const setActiveChatModeValue = setActiveChatMode || setInternalActiveChatMode;
-  
-  const [activeCategory, setActiveCategory] = useState<string>('Ausgehen');
-  
-  // External input state for header synchronization
-  const [externalInput, setExternalInput] = useState<string>('');
-  const [externalSendHandler, setExternalSendHandler] = useState<(() => void) | null>(null);
-  
-  const { selectedCity } = useEventContext();
-  const { toast } = useToast();
-  const { currentUser, userProfile, refetchProfile } = useUserProfile();
-  
-  const communityGroupId = createCitySpecificGroupId('ausgehen', selectedCity); // Fixed to always use 'ausgehen' channel
-  const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
-  
-  const chatLogic = useChatLogic(fullPage, activeChatModeValue);
-  
-  const { sendPersonalizedQuery } = usePersonalization(
-    chatLogic.handleSendMessage, 
-    { userProfile, currentUser, userService }
-  );
+  const [currentMessage, setCurrentMessage] = useState('');
+  const [messages, setMessages] = useState<any[]>([]);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { currentUser, userProfile } = useUserProfile();
+  const { events } = useEventContext();
+  const [selectedGroupId, setSelectedGroupId] = useState<string>(messageService.DEFAULT_GROUP_ID);
+  const [selectedGroupTitle, setSelectedGroupTitle] = useState<string>('Allgemeiner Chat');
+  const [isAiTyping, setIsAiTyping] = useState(false);
 
-  const handleToggleChatMode = () => {
-    const newMode = activeChatModeValue === 'ai' ? 'community' : 'ai';
-    setActiveChatModeValue(newMode);
-    
-    if (activeChatModeValue === 'ai' && onToggleCommunity) {
-      onToggleCommunity();
-    }
-  };
-
-  const handleCategoryChange = (category: string) => {
-    setActiveCategory(category);
-  };
-
-  const handleProfileUpdate = () => {
-    if (userProfile) {
-      refetchProfile();
-      toast({
-        title: "Willkommen " + userProfile.username + "!",
-        description: "Du kannst jetzt in den Gruppen chatten.",
-        variant: "success"
-      });
-    }
-  };
-
-  // Function to handle external input changes
-  const handleExternalInputChange = (value: string) => {
-    setExternalInput(value);
-  };
-
-  // Function to handle external send
-  const handleExternalSend = () => {
-    if (externalSendHandler) {
-      externalSendHandler();
-    }
-  };
-
-  // Provide chat input props to parent component
   useEffect(() => {
-    if (onChatInputPropsChange && chatLogic) {
-      onChatInputPropsChange({
-        input: activeChatModeValue === 'ai' ? chatLogic.input : externalInput,
-        setInput: activeChatModeValue === 'ai' ? chatLogic.setInput : handleExternalInputChange,
-        handleSendMessage: activeChatModeValue === 'ai' ? chatLogic.handleSendMessage : handleExternalSend,
-        isTyping: chatLogic.isTyping,
-        handleKeyPress: chatLogic.handleKeyPress,
-        isHeartActive: chatLogic.isHeartActive,
-        handleHeartClick: chatLogic.handleHeartClick,
-        globalQueries: chatLogic.globalQueries,
-        toggleRecentQueries: chatLogic.toggleRecentQueries,
-        inputRef: chatLogic.inputRef,
-        onAddEvent: onAddEvent,
-        showAnimatedPrompts: chatLogic.showAnimatedPrompts,
-        activeCategory: activeCategory,
-        onCategoryChange: handleCategoryChange
-      });
+    const fetchAndSetMessages = async () => {
+      if (selectedGroupId) {
+        const fetchedMessages = await messageService.fetchMessages(selectedGroupId);
+        setMessages(fetchedMessages);
+      }
+    };
+
+    fetchAndSetMessages();
+
+    const subscription = supabase
+      .channel(`chat_messages_group_${selectedGroupId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `group_id=eq.${selectedGroupId}` }, (payload) => {
+        setMessages((prevMessages) => [...prevMessages, payload.new]);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [selectedGroupId]);
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
-  }, [
-    chatLogic.input,
-    externalInput,
-    chatLogic.isTyping,
-    chatLogic.isHeartActive,
-    chatLogic.globalQueries.length,
-    chatLogic.showAnimatedPrompts,
-    activeCategory,
-    activeChatModeValue,
-    onChatInputPropsChange,
-    externalSendHandler
-  ]);
+  }, [messages]);
 
-  if (!chatLogic.isVisible) return null;
+  const handleSendMessage = async () => {
+    if (currentMessage.trim() && currentUser) {
+      if (activeChatMode === 'ai') {
+        setIsAiTyping(true);
+        const aiResponse = await eventChatService.sendAiMessage(currentMessage, events, currentUser);
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { id: Date.now(), sender: currentUser, content: currentMessage, group_id: 'ai', created_at: new Date().toISOString() },
+          { id: Date.now() + 1, sender: 'AI', content: aiResponse, group_id: 'ai', created_at: new Date().toISOString() }
+        ]);
+        setIsAiTyping(false);
+      } else {
+        await messageService.sendMessage(selectedGroupId, currentUser, currentMessage);
+      }
+      setCurrentMessage('');
+    }
+  };
 
-  if (fullPage) {
-    return (
-      <FullPageChatBot
-        chatLogic={chatLogic}
-        activeChatModeValue={activeChatModeValue}
-        communityGroupId={communityGroupId}
-        onAddEvent={onAddEvent}
-        activeCategory={activeCategory}
-        onCategoryChange={handleCategoryChange}
-        hideInput={true}
-        externalInput={externalInput}
-        setExternalInput={setExternalInput}
-        onExternalSendHandlerChange={setExternalSendHandler}
-        onJoinEventChat={onJoinEventChat}
-      />
-    );
-  }
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
 
-  return null;
+  // REMOVED: useEffect to pass chatInputProps up to parent
+  // useEffect(() => {
+  //   if (onChatInputPropsChange) {
+  //     onChatInputPropsChange({
+  //       currentMessage,
+  //       setCurrentMessage,
+  //       handleSendMessage,
+  //       handleKeyDown,
+  //       activeChatModeValue: activeChatMode,
+  //       selectedGroupId,
+  //       setSelectedGroupId,
+  //       selectedGroupTitle,
+  //       setSelectedGroupTitle,
+  //       onJoinEventChat,
+  //       userProfile,
+  //       currentUser,
+  //     });
+  //   }
+  // }, [currentMessage, activeChatMode, selectedGroupId, selectedGroupTitle, onChatInputPropsChange, onJoinEventChat, userProfile, currentUser]);
+
+  return (
+    <div className={cn("flex flex-col h-full", { "border rounded-lg": !fullPage })}>
+      {!hideButtons && (
+        <div className="flex justify-center space-x-2 p-2 border-b">
+          <Button
+            onClick={() => setActiveChatMode && setActiveChatMode('community')}
+            variant={activeChatMode === 'community' ? 'default' : 'outline'}
+          >
+            <MessageSquare className="mr-2 h-4 w-4" /> Community Chat
+          </Button>
+          <Button
+            onClick={() => setActiveChatMode && setActiveChatMode('ai')}
+            variant={activeChatMode === 'ai' ? 'default' : 'outline'}
+          >
+            <Bot className="mr-2 h-4 w-4" /> AI Chat
+          </Button>
+        </div>
+      )}
+      <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
+        {activeChatMode === 'ai' ? (
+          <AiChatMessages messages={messages} isAiTyping={isAiTyping} />
+        ) : (
+          <GroupChatMessages messages={messages} currentUser={currentUser} />
+        )}
+      </ScrollArea>
+      {/* ChatInput is now rendered in Layout, no longer here */}
+    </div>
+  );
 };
 
 export default EventChatBot;
