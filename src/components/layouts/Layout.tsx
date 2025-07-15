@@ -1,13 +1,13 @@
 // src/components/layouts/Layout.tsx
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Home, MessageSquare, Calendar, Users, Info, BookOpen, ShieldCheck, Mail, Map } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import ChatInput from '@/components/event-chat/ChatInput'; // Import ChatInput
-import { cn } from '@/lib/utils'; // Import cn for conditional classnames
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import CitySelector from './CitySelector';
+import { BottomNavigation } from './BottomNavigation'; // Ensure BottomNavigation is imported
+import ChatInput from '@/components/event-chat/ChatInput'; // Ensure ChatInput is imported
+import UserProfileButton from '@/components/UserProfileButton';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -18,7 +18,23 @@ interface LayoutProps {
   setIsEventListSheetOpen?: (open: boolean) => void;
   newMessagesCount?: number;
   newEventsCount?: number;
-  activeChatModeValue?: 'ai' | 'community'; // ADDED: Prop for active chat mode
+  chatInputProps?: {
+    input: string;
+    setInput: (value: string) => void;
+    handleSendMessage: (input?: string) => Promise<void>;
+    isTyping: boolean;
+    onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+    onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+    isHeartActive: boolean;
+    handleHeartClick: () => void;
+    globalQueries: any[];
+    toggleRecentQueries: () => void;
+    inputRef: React.RefObject<HTMLTextAreaElement>;
+    onAddEvent?: () => void;
+    showAnimatedPrompts: boolean;
+    activeCategory?: string;
+    onCategoryChange?: (category: string) => void;
+  };
 }
 
 export const Layout: React.FC<LayoutProps> = ({
@@ -30,112 +46,196 @@ export const Layout: React.FC<LayoutProps> = ({
   setIsEventListSheetOpen,
   newMessagesCount = 0,
   newEventsCount = 0,
-  activeChatModeValue // ADDED: Destructure activeChatModeValue
+  chatInputProps
 }) => {
-  const location = useLocation();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const navItems = [
-    { name: 'Startseite', path: '/', icon: Home },
-    { name: 'Community Chat', path: '/chat', icon: MessageSquare, badge: newMessagesCount > 0 ? newMessagesCount : undefined },
-    { name: 'Events', path: '/events', icon: Calendar, action: () => setIsEventListSheetOpen && setIsEventListSheetOpen(true), badge: newEventsCount > 0 ? newEventsCount : undefined },
-    { name: 'Benutzer', path: '/users', icon: Users, action: handleOpenUserDirectory },
-    { name: 'Social Map', path: '/heatmap', icon: Map },
-    { name: 'Über Uns', path: '/about', icon: Info },
-    { name: 'Impressum', path: '/impressum', icon: BookOpen },
-    { name: 'Datenschutz', path: '/privacy', icon: ShieldCheck },
-    { name: 'CSA-E Richtlinien', path: '/policies', icon: ShieldCheck },
-    { name: 'Kontakt', path: 'mailto:info@liebefeld.ch', icon: Mail },
-  ];
-
-  const isActive = (path: string) => {
-    if (path === '/') {
-      return location.pathname === '/' || location.pathname === '/chat';
+  const { pathname } = useLocation();
+  const [isAddEventModalOpen, setIsAddEventModalOpen] = React.useState(false); // Correct and consistent naming
+  
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.triggerAddEvent = () => {
+        setIsAddEventModalOpen(true);
+      };
     }
-    return location.pathname.startsWith(path);
-  };
-
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [location.pathname]);
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete window.triggerAddEvent;
+      }
+    };
+  }, []);
+  
+  const hideHeader = pathname === '/heatmap' || pathname === '/';
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <header className="w-full border-b bg-black text-white p-4 flex items-center justify-between">
-        <div className="flex items-center">
-          <Link to="/" className="flex items-center">
-            <img src="/logo.png" alt="Liebefeld Logo" className="h-8 mr-2" />
-            <span className="text-xl font-bold">Liebefeld</span>
-          </Link>
-        </div>
-        <div className="hidden md:flex items-center space-x-4">
-          {navItems.map((item) => (
-            <React.Fragment key={item.name}>
-              {item.action ? (
-                <Button variant="ghost" onClick={item.action} className={cn("text-white hover:text-red-500", { "text-red-500": isActive(item.path) })}>
-                  <item.icon className="h-5 w-5 mr-1" />
-                  {item.name}
-                  {item.badge && <Badge variant="destructive" className="ml-1">{item.badge}</Badge>}
-                </Button>
-              ) : (
-                <Button asChild variant="ghost" className={cn("text-white hover:text-red-500", { "text-red-500": isActive(item.path) })}>
-                  <Link to={item.path}>
-                    <item.icon className="h-5 w-5 mr-1" />
-                    {item.name}
-                    {item.badge && <Badge variant="destructive" className="ml-1">{item.badge}</Badge>}
-                  </Link>
-                </Button>
-              )}
-            </React.Fragment>
-          ))}
-        </div>
-        <div className="md:hidden">
-          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-white">
-                <Home className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[250px] sm:w-[300px] bg-black text-white">
-              <nav className="flex flex-col gap-4 py-6">
-                {navItems.map((item) => (
-                  <React.Fragment key={item.name}>
-                    {item.action ? (
-                      <Button variant="ghost" onClick={item.action} className={cn("justify-start text-white hover:text-red-500", { "text-red-500": isActive(item.path) })}>
-                        <item.icon className="h-5 w-5 mr-2" />
-                        {item.name}
-                        {item.badge && <Badge variant="destructive" className="ml-auto">{item.badge}</Badge>}
-                      </Button>
-                    ) : (
-                      <Button asChild variant="ghost" className={cn("justify-start text-white hover:text-red-500", { "text-red-500": isActive(item.path) })}>
-                        <Link to={item.path}>
-                          <item.icon className="h-5 w-5 mr-2" />
-                          {item.name}
-                          {item.badge && <Badge variant="destructive" className="ml-auto">{item.badge}</Badge>}
-                        </Link>
-                      </Button>
-                    )}
-                  </React.Fragment>
-                ))}
-              </nav>
-            </SheetContent>
-          </Sheet>
-        </div>
-      </header>
-      <main className="flex-grow">
+    <>
+      <Sheet open={isAddEventModalOpen} onOpenChange={setIsAddEventModalOpen}>
+        <SheetContent className="sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle>Event hinzufügen</SheetTitle>
+            <SheetDescription>
+              Erstelle ein neues Event für die Community.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              {/* Your form fields here */}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+      
+      {!hideHeader && (
+        <header className="sticky top-0 z-50 w-full">
+          {/* Curved black header bar with THE TRIBE logo - matching Heatmap design */}
+          <div className="relative">
+            <div className="bg-black mx-4 px-6 py-4 relative rounded-bl-[2rem] flex items-center justify-between">
+              <MainNav pathname={pathname} chatInputProps={chatInputProps} activeView={activeView} />
+              <div className="flex items-center space-x-4">
+                <UserProfileButton />
+                {(pathname !== '/chat' && pathname !== '/') && <ThemeToggleButton />}
+              </div>
+            </div>
+          </div>
+          
+          {/* Black search bar for Chat Input - matching Heatmap design */}
+          {chatInputProps && (pathname === '/chat' || pathname === '/') && (
+            <div className="px-4 pb-4">
+              <div className="bg-black rounded-full border border-gray-700/50 mx-2">
+                <ChatInput
+                  input={chatInputProps.input}
+                  setInput={chatInputProps.setInput}
+                  handleSendMessage={chatInputProps.handleSendMessage}
+                  isTyping={chatInputProps.isTyping}
+                  onKeyDown={chatInputProps.onKeyDown}
+                  isHeartActive={chatInputProps.isHeartActive}
+                  handleHeartClick={chatInputProps.handleHeartClick}
+                  globalQueries={chatInputProps.globalQueries}
+                  toggleRecentQueries={chatInputProps.toggleRecentQueries}
+                  inputRef={chatInputProps.inputRef}
+                  onAddEvent={chatInputProps.onAddEvent}
+                  showAnimatedPrompts={chatInputProps.showAnimatedPrompts}
+                  activeChatModeValue={activeView || 'ai'}
+                  activeCategory={chatInputProps.activeCategory}
+                  onCategoryChange={chatInputProps.onCategoryChange}
+                  onChange={chatInputProps.onChange}
+                  placeholder={activeView === 'community' ? "Verbinde dich mit der Community..." : "Frage nach Events..."}
+                />
+              </div>
+            </div>
+          )}
+        </header>
+      )}
+      
+      <main className={cn("pb-20", hideHeader ? "pt-0" : chatInputProps && (pathname === '/chat' || pathname === '/') ? "pt-32" : "pt-[104px]")}> 
         {children}
       </main>
+      
+      {(pathname === '/chat' || pathname === '/' || pathname === '/heatmap' || pathname === '/users' || pathname === '/events') && (
+        <BottomNavigation
+          activeView={activeView}
+          setActiveView={setActiveView}
+          newMessagesCount={newMessagesCount}
+          newEventsCount={newEventsCount}
+        />
+      )}
+      
       {!hideFooter && (
-        <footer className="w-full border-t bg-black text-white p-4 text-center text-sm">
-          © 2023 Liebefeld. Alle Rechte vorbehalten.
+        <footer className="border-t border-black bg-black">
+          <div className="container flex flex-col items-center justify-between gap-4 py-10 md:h-24 md:flex-row md:py-0">
+            <div className="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
+              <a href="/" className="flex items-center space-x-2">
+                <span className="font-sans text-2xl font-bold tracking-tight text-white inline-block">THE TRIBE</span> {/* Ensured consistent styling */}
+              </a>
+              <p className="text-center text-sm leading-loose md:text-left">
+                &copy; {new Date().getFullYear()} Liebefeld. All rights reserved.
+              </p>
+            </div>
+            <div className="flex gap-4">
+              <a href="/impressum" className="text-sm font-medium">
+                Impressum
+              </a>
+              <a href="/privacy" className="text-sm font-medium">
+                Datenschutz
+              </a>
+              <a href="/about" className="text-sm font-medium">
+                Über uns
+              </a>
+            </div>
+          </div>
         </footer>
       )}
-      {/* Render ChatInput directly, passing activeChatModeValue */}
-      {activeChatModeValue && ( // Ensure activeChatModeValue is present before rendering
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-black p-2 md:p-4">
-          <ChatInput activeChatModeValue={activeChatModeValue} />
-        </div>
-      )}
+    </>
+  );
+};
+
+interface NavItem {
+  title: string;
+  href: string;
+  external?: boolean;
+}
+
+const items: NavItem[] = [
+  { title: "Home", href: "/" },
+  { title: "Chat", href: "/chat" },
+  { title: "Über uns", href: "/about" }
+];
+
+interface MainNavProps {
+  pathname: string;
+  chatInputProps?: any;
+  activeView?: 'ai' | 'community';
+}
+
+const MainNav: React.FC<MainNavProps> = ({ pathname, chatInputProps, activeView }) => {
+  if (pathname === '/chat' || pathname === '/') {
+    return (
+      <div className="flex items-center gap-4 relative z-10">
+        <Link to="/" className="flex items-center">
+          <h1 className="font-sans text-2xl font-bold tracking-tight text-red-500">THE TRIBE</h1>
+        </Link>
+        <CitySelector />
+      </div>
+    );
+  }
+  
+  return (
+    <div className="mr-4 flex">
+      <Link to="/" className="mr-6 flex items-center space-x-2">
+        <span className="font-sans text-2xl font-bold tracking-tight text-white inline-block">THE TRIBE</span> {/* Ensured consistent styling */}
+      </Link>
+      <nav className="flex items-center space-x-6 text-sm font-medium">
+        {items.map((item, index) => (
+          <Link
+            key={index}
+            to={item.href}
+            className={cn(
+              "transition-colors hover:text-foreground/80",
+              pathname === item.href ? "text-foreground" : "text-foreground/60"
+            )}
+          >
+            {item.title}
+          </Link>
+        ))}
+      </nav>
     </div>
+  );
+};
+
+const ThemeToggleButton = () => {
+  return (
+    <Button variant="ghost" size="icon" className="rounded-full">
+      <span className="sr-only">Toggle theme</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <circle cx="12" cy="12" r="4"></circle>
+        <path d="M12 2v2"></path>
+        <path d="M12 20v2"></path>
+        <path d="m4.93 4.93 1.41 1.41"></path>
+        <path d="m17.66 17.66 1.41 1.41"></path>
+        <path d="M2 12h2"></path>
+        <path d="M20 12h2"></path>
+        <path d="m6.34 17.66-1.41 1.41"></path>
+        <path d="m19.07 4.93-1.41 1.41"></path>
+      </svg>
+    </Button>
   );
 };
