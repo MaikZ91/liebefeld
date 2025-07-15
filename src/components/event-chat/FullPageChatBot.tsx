@@ -5,7 +5,7 @@ import ChatInput from './ChatInput';
 import RecentQueries from './RecentQueries';
 import { useChatMessages } from '@/hooks/chat/useChatMessages';
 import { useMessageSending } from '@/hooks/chat/useMessageSending';
-import { AVATAR_KEY, USERNAME_KEY, EventShare } from '@/types/chatTypes'; 
+import { AVATAR_KEY, USERNAME_KEY, EventShare } from '@/types/chatTypes'; // Import EventShare
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/chatUIUtils'; 
 import TypingIndicator from '@/components/chat/TypingIndicator';
@@ -28,7 +28,7 @@ interface FullPageChatBotProps {
   hideInput?: boolean;
   externalInput?: string;
   setExternalInput?: (value: string) => void;
-  onExternalSendHandlerChange?: (handler: ((input?: string | any) => Promise<void>) | null) => void; 
+  onExternalSendHandlerChange?: (handler: ((input?: string | any) => Promise<void>) | null) => void; // Updated handler type
 }
 
 const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
@@ -92,6 +92,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     setNewMessage: setCommunityInput
   } = useMessageSending(communityGroupId, username, addOptimisticMessage, activeCategory);
 
+  // Filter state for community chat
   const [messageFilter, setMessageFilter] = useState<string[]>(['alle']);
 
   useEffect(() => {
@@ -103,7 +104,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   useEffect(() => {
     if (onExternalSendHandlerChange) {
       if (activeChatModeValue === 'community') {
-        onExternalSendHandlerChange(communitySendMessage); 
+        onExternalSendHandlerChange(communitySendMessage);
       } else if (activeChatModeValue === 'ai') {
         onExternalSendHandlerChange(aiSendMessage);
       } else {
@@ -171,12 +172,14 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   }, [communityMessages, communitySending, activeChatModeValue, chatBottomRef]);
 
+  // Filter messages based on selected categories
   const filteredCommunityMessages = useMemo(() => {
     if (messageFilter.includes('alle')) {
       return communityMessages;
     }
     
     return communityMessages.filter(message => {
+      // Check if message contains any of the selected hashtags
       const messageText = message.text.toLowerCase();
       return messageFilter.some(category => 
         messageText.includes(`#${category.toLowerCase()}`)
@@ -186,9 +189,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   return (
     <div className="flex flex-col h-screen min-h-0">
-      {/* Korrektur für "Zwei Chat-Inputs": Direkte Style-Anweisung hinzugefügt */}
-      <div className="sticky top-0 z-10 bg-black" style={{ display: hideInput ? 'none' : 'block' }}> 
-        <div className="px-[13px] py-2 border-b border-red-500/20"> 
+      {!hideInput && (
+        <div className="border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-2"> 
           {activeChatModeValue === 'ai' && (
             <RecentQueries
               showRecentQueries={showRecentQueries}
@@ -218,43 +220,44 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
             onJoinEventChat={onJoinEventChat}
           />
         </div>
+      )}
 
-        {activeChatModeValue === 'community' && (
-          <div className="px-4 py-2 border-b border-gray-800"> 
-            <div className="flex flex-wrap gap-2">
-              {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => (
-                <Button
-                  key={category}
-                  variant="ghost"
-                  size="sm"
-                  className={`h-6 px-2 text-xs rounded-full ${
-                    messageFilter.includes(category)
-                      ? 'bg-red-500/20 text-red-300 border border-red-500/30'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                  }`}
-                  onClick={() => {
-                    if (category === 'alle') {
-                      setMessageFilter(['alle']);
-                    } else {
-                      setMessageFilter(prev => {
-                        const newFilter = prev.filter(f => f !== 'alle');
-                        if (newFilter.includes(category)) {
-                          const result = newFilter.filter(f => f !== category);
-                          return result.length === 0 ? ['alle'] : result;
-                        } else {
-                          return [...newFilter, category];
-                        }
-                      });
-                    }
-                  }}
-                >
-                  #{category}
-                </Button>
-              ))}
-            </div>
+      {/* Filter UI für Community Chat - immer sichtbar wenn Community Chat aktiv */}
+      {activeChatModeValue === 'community' && (
+        <div className="px-4 py-2 border-b border-gray-800 bg-black sticky top-0 z-10">
+          <div className="flex flex-wrap gap-2">
+            {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => (
+              <Button
+                key={category}
+                variant="ghost"
+                size="sm"
+                className={`h-6 px-2 text-xs rounded-full ${
+                  messageFilter.includes(category)
+                    ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                }`}
+                onClick={() => {
+                  if (category === 'alle') {
+                    setMessageFilter(['alle']);
+                  } else {
+                    setMessageFilter(prev => {
+                      const newFilter = prev.filter(f => f !== 'alle');
+                      if (newFilter.includes(category)) {
+                        const result = newFilter.filter(f => f !== category);
+                        return result.length === 0 ? ['alle'] : result;
+                      } else {
+                        return [...newFilter, category];
+                      }
+                    });
+                  }
+                }}
+              >
+                #{category}
+              </Button>
+            ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
         {activeChatModeValue === 'ai' ? (

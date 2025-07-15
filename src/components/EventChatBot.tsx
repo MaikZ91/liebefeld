@@ -1,4 +1,4 @@
-// src/components/EventChatBot.tsx
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useEventContext } from '@/contexts/EventContext';
 import { useToast } from '@/hooks/use-toast';
@@ -16,9 +16,9 @@ interface ExtendedEventChatBotProps extends EventChatBotProps {
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
 }
 
-const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
-  fullPage = false,
-  onAddEvent,
+const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({ 
+  fullPage = false, 
+  onAddEvent, 
   onToggleCommunity,
   activeChatMode,
   setActiveChatMode,
@@ -28,31 +28,31 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   const [internalActiveChatMode, setInternalActiveChatMode] = useState<'ai' | 'community'>('ai');
   const activeChatModeValue = activeChatMode !== undefined ? activeChatMode : internalActiveChatMode;
   const setActiveChatModeValue = setActiveChatMode || setInternalActiveChatMode;
-
+  
   const [activeCategory, setActiveCategory] = useState<string>('Ausgehen');
-
+  
   // External input state for header synchronization
   const [externalInput, setExternalInput] = useState<string>('');
   const [externalSendHandler, setExternalSendHandler] = useState<(() => void) | null>(null);
-
+  
   const { selectedCity } = useEventContext();
   const { toast } = useToast();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
-
+  
   const communityGroupId = createCitySpecificGroupId('ausgehen', selectedCity); // Fixed to always use 'ausgehen' channel
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
-
+  
   const chatLogic = useChatLogic(fullPage, activeChatModeValue);
-
+  
   const { sendPersonalizedQuery } = usePersonalization(
-    chatLogic.handleSendMessage,
+    chatLogic.handleSendMessage, 
     { userProfile, currentUser, userService }
   );
 
   const handleToggleChatMode = () => {
     const newMode = activeChatModeValue === 'ai' ? 'community' : 'ai';
     setActiveChatModeValue(newMode);
-
+    
     if (activeChatModeValue === 'ai' && onToggleCommunity) {
       onToggleCommunity();
     }
@@ -87,13 +87,8 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
 
   // Provide chat input props to parent component
   useEffect(() => {
-    // Capture onChatInputPropsChange and externalSendHandler from props/state
-    // within the effect's closure to satisfy TypeScript's strict checks
-    const currentOnChatInputPropsChange = onChatInputPropsChange;
-    const currentExternalSendHandler = externalSendHandler;
-
-    if (currentOnChatInputPropsChange && chatLogic) {
-      currentOnChatInputPropsChange({
+    if (onChatInputPropsChange && chatLogic) {
+      onChatInputPropsChange({
         input: activeChatModeValue === 'ai' ? chatLogic.input : externalInput,
         setInput: activeChatModeValue === 'ai' ? chatLogic.setInput : handleExternalInputChange,
         handleSendMessage: activeChatModeValue === 'ai' ? chatLogic.handleSendMessage : handleExternalSend,
@@ -106,7 +101,6 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
         inputRef: chatLogic.inputRef,
         onAddEvent: onAddEvent,
         showAnimatedPrompts: chatLogic.showAnimatedPrompts,
-        activeChatModeValue: activeChatModeValue,
         activeCategory: activeCategory,
         onCategoryChange: handleCategoryChange
       });
@@ -120,12 +114,8 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
     chatLogic.showAnimatedPrompts,
     activeCategory,
     activeChatModeValue,
-    onAddEvent, // This prop also needs to be in dependencies if used inside effect
-    chatLogic, // Add chatLogic itself as a dependency as its properties are accessed
-    onChatInputPropsChange, // Keep this here
-    externalSendHandler, // Keep this here, as its value is used directly in currentExternalSendHandler
-    handleExternalInputChange, // Function used in callback
-    handleExternalSend // Function used in callback
+    onChatInputPropsChange,
+    externalSendHandler
   ]);
 
   if (!chatLogic.isVisible) return null;
@@ -139,7 +129,7 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
         onAddEvent={onAddEvent}
         activeCategory={activeCategory}
         onCategoryChange={handleCategoryChange}
-        // Removed: hideInput={true} to allow the Layout to control visibility
+        hideInput={true}
         externalInput={externalInput}
         setExternalInput={setExternalInput}
         onExternalSendHandlerChange={setExternalSendHandler}

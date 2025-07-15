@@ -26,8 +26,7 @@ const ChatPage = () => {
   // Get view mode from URL search params or navigation state
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  // Set initialView to 'community' by default, regardless of search params
-  const initialView = 'community'; 
+  const initialView = searchParams.get('view') as 'ai' | 'community' || 'ai';
   
   const [activeView, setActiveView] = useState<'ai' | 'community'>(initialView);
   const [isAddEventSheetOpen, setIsAddEventSheetOpen] = useState(false);
@@ -37,24 +36,7 @@ const ChatPage = () => {
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
   // Chat bot reference to get input props
-  const [chatInputProps, setChatInputProps] = useState<any>(() => ({
-    input: '',
-    setInput: () => {},
-    handleSendMessage: async () => {},
-    isTyping: false,
-    onKeyDown: () => {},
-    onChange: () => {},
-    isHeartActive: false,
-    handleHeartClick: () => {},
-    globalQueries: [],
-    toggleRecentQueries: () => {},
-    inputRef: { current: null },
-    onAddEvent: () => {},
-    showAnimatedPrompts: false,
-    activeChatModeValue: 'ai', // Default to 'ai' as per common use
-    activeCategory: 'Ausgehen',
-    onCategoryChange: () => {},
-  }));
+  const [chatInputProps, setChatInputProps] = useState<any>(null);
   
   const {
     events,
