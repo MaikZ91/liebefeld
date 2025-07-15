@@ -175,7 +175,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   const eventSelectContent = (
     <div className="max-h-[300px] overflow-y-auto">
       {events && events.length > 0 ? (
-        <div className className="space-y-2 p-2">
+        <div className="space-y-2 p-2">
           <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
             Events auswählen
           </div>
@@ -355,7 +355,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         placeholder={placeholderText}
         rows={1} // Start with 1 row
         className={cn(
-          "w-full bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-gray-700/50 rounded-xl py-2 focus:outline-none focus:ring-0 focus:border-gray-700/50 text-sm text-red-200 placeholder-red-500 pr-10 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-gray-600 text-left min-h-[40px] overflow-hidden", // REMOVED: focus:ring-2 focus:ring-red-500, focus:border-red-500. CHANGED: hover:border-red-600 to hover:border-gray-600.
+          "w-full bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-gray-700/50 rounded-xl py-2 focus:outline-none focus:ring-0 focus:border-gray-700/50 text-sm text-red-200 placeholder-red-500 pr-10 shadow-md transition-all duration-200 hover:border-gray-600 text-left min-h-[40px] overflow-hidden",
           getButtonWidth()
         )}
       />
