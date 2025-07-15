@@ -9,41 +9,53 @@
     --background: 0 0% 0%;
     --foreground: 0 0% 100%;
 
-    --card: 0 0% 0%;
-    --card-foreground: 0 0% 100%;
+    --card: 0 0% 3%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 0%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 0 100% 55%;
+    --primary: 0 84% 65%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 90%;
+    --secondary: 220 30% 8%;
+    --secondary-foreground: 210 20% 90%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 70%;
+    --muted: 220 30% 12%;
+    --muted-foreground: 210 15% 70%;
 
-    --accent: 0 100% 95%;
-    --accent-foreground: 12 83% 30%;
+    --accent: 270 60% 60%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 0 100% 55%;
+    --border: 220 30% 15%;
+    --input: 220 30% 12%;
+    --ring: 0 84% 65%;
 
-    --radius: 0.5rem;
+    --radius: 1rem;
 
-    --sidebar-background: 0 0% 5%;
-    --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 0 100% 55%;
+    /* Premium Event Map Colors */
+    --event-bg: 220 30% 10%;
+    --event-card: 220 30% 8%;
+    --event-border: 220 30% 20%;
+    --event-accent: 280 100% 70%;
+    --event-premium: 45 100% 60%;
+    
+    /* Glassmorphism Effects */
+    --glass-bg: 220 30% 8% / 0.8;
+    --glass-border: 220 30% 25% / 0.3;
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+    --sidebar-background: 220 30% 5%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 0 84% 65%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 0 100% 55%;
+    --sidebar-accent: 220 30% 10%;
+    --sidebar-accent-foreground: 210 20% 90%;
+    --sidebar-border: 220 30% 15%;
+    --sidebar-ring: 0 84% 65%;
   }
 
   .dark {

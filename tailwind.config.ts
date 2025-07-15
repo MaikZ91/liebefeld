@@ -71,11 +71,16 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				community: {
-					primary: '#9b87f5',
-					hover: '#8a76e5',
-					light: '#e5deff',
-					dark: '#1A1F2C'
+				event: {
+					bg: 'hsl(var(--event-bg))',
+					card: 'hsl(var(--event-card))',
+					border: 'hsl(var(--event-border))',
+					accent: 'hsl(var(--event-accent))',
+					premium: 'hsl(var(--event-premium))'
+				},
+				glass: {
+					bg: 'hsla(var(--glass-bg))',
+					border: 'hsla(var(--glass-border))'
 				}
 			},
 			borderRadius: {
