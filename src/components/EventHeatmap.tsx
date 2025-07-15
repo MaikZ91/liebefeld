@@ -52,11 +52,11 @@ L.Icon.Default.mergeOptions({
 
 // Define tribeSpots outside the component to ensure it's a constant and accessible
 const tribeSpots = [
-  { name: 'Sparrenburg', lat: 52.0323, lng: 8.5423 },
-  { name: 'Obersee', lat: 52.0448, lng: 8.5329 },
+  { name: 'Sparrenburg', lat: 52.0149, lng: 8.52678 },
+  { name: 'Obersee', lat: 52.056974, lng: 8.563763 },
   { name: 'Lutterviertel', lat: 52.0289, lng: 8.5291 },
-  { name: 'Gellershagen Park', lat: 52.0533, lng: 8.4872 },
-  { name: 'Klosterplatz', lat: 52.0205, lng: 8.5355 }
+  { name: 'Gellershagen Park', lat: 52.05, lng: 8.5167 },
+  { name: 'Klosterplatz', lat: 52.0208, lng: 8.5286 }
 ];
 
 const EventHeatmap: React.FC = () => {
