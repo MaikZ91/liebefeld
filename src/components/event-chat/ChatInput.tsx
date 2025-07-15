@@ -57,7 +57,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     "Welche Events gibt es heute?",
     "Was kann ich am Wochenende machen?",
     "Gibt es Konzerte im Lokschuppen?",
-    "Zeige mir Events, die zu mir passen"
+    "❤️ Zeige mir Events, die zu mir passen"
   ];
 
   const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
