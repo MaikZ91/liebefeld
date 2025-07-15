@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 import ChatMessage from '@/components/chat/ChatMessage';
@@ -52,7 +51,7 @@ const MessageList: React.FC<MessageListProps> = ({
         {landingSlideMessage && landingSlideMessage.slideData && (
           <div className="flex justify-center">
             <div className="w-full max-w-md mx-auto">
-              <SwipeableLandingPanel slideData={landingSlideMessage.slideData} />
+              <SwipeableLandingPanel slideData={landingSlideData} />
             </div>
           </div>
         )}
