@@ -65,7 +65,6 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
     setTranslateX(0);
     setInitialClientY(e.touches[0].clientY); // Capture initial Y for vertical swipe
     setIsVerticalDragging(false); // Reset vertical dragging state
-    console.log('Touch Start: initialY =', initialClientY);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -78,21 +77,19 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
     if (!isDragging && !isVerticalDragging) {
       if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
         setIsDragging(true); // Confirm horizontal
-        console.log('Confirmed horizontal drag');
       } else if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 10) {
         setIsVerticalDragging(true); // Confirm vertical
-        e.preventDefault(); // Prevent page scroll only if truly vertical drag
-        console.log('Confirmed vertical drag, preventing default');
+        e.preventDefault(); // Crucial: Prevent page scroll only if truly vertical drag
       } else {
-        return; // Not enough movement to determine yet
+        return; 
       }
     }
 
     if (isDragging) { // Handle horizontal drag
       setTranslateX(diffX);
     } else if (isVerticalDragging) {
-      // Prevent default to avoid scrolling background while vertically dragging the panel itself
-      e.preventDefault(); 
+      e.preventDefault(); // Keep preventing default if confirmed vertical
+      // No visual translation for now, just detection.
     }
   };
 
@@ -114,10 +111,8 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
 
       if (swipeDistanceY > verticalSwipeThreshold) { // Swiped down
         onSwipeDownToHide?.();
-        console.log('Swiped down, calling onSwipeDownToHide');
       } else if (swipeDistanceY < -verticalSwipeThreshold) { // Swiped up
         onSwipeUpToShow?.();
-        console.log('Swiped up, calling onSwipeUpToShow');
       }
     }
     
@@ -125,7 +120,6 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
     setIsDragging(false);
     setIsVerticalDragging(false);
     setTranslateX(0);
-    console.log('Touch End: Drag states reset');
   };
 
   // Mouse handlers for desktop
@@ -139,7 +133,6 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
     setTranslateX(0);
     setInitialClientY(e.clientY); // Capture initial Y for vertical swipe
     setIsVerticalDragging(false); // Reset vertical dragging state
-    console.log('Mouse Down: initialY =', initialClientY);
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -151,11 +144,9 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
     if (!isDragging && !isVerticalDragging) {
       if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
         setIsDragging(true); // Confirm horizontal
-        console.log('Confirmed horizontal drag (mouse)');
       } else if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 10) {
         setIsVerticalDragging(true); // Confirm vertical
         e.preventDefault(); // Prevent text selection
-        console.log('Confirmed vertical drag (mouse), preventing default');
       } else {
         return;
       }
@@ -164,13 +155,13 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
     if (isDragging) {
       setTranslateX(diffX);
     } else if (isVerticalDragging) {
-      e.preventDefault(); // Prevent text selection while dragging vertically
+      e.preventDefault(); // Keep preventing default if confirmed vertical
     }
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
     const horizontalSwipeThreshold = 80;
-    const verticalSwipeThreshold = 50; // pixels
+    const verticalSwipeThreshold = 50;
 
     if (isDragging) { // Horizontal swipe completed
       if (Math.abs(translateX) > horizontalSwipeThreshold) {
@@ -186,18 +177,15 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
 
       if (swipeDistanceY > verticalSwipeThreshold) { // Swiped down
         onSwipeDownToHide?.();
-        console.log('Swiped down (mouse), calling onSwipeDownToHide');
       } else if (swipeDistanceY < -verticalSwipeThreshold) { // Swiped up
         onSwipeUpToShow?.();
-        console.log('Swiped up (mouse), calling onSwipeUpToShow');
       }
     }
-    
+
     // Reset all dragging states
     setIsDragging(false);
     setIsVerticalDragging(false);
     setTranslateX(0);
-    console.log('Mouse Up: Drag states reset');
   };
 
   // Add global mouse event listeners
@@ -220,11 +208,9 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
       if (isDragging) {
         setIsDragging(false);
         setTranslateX(0); // Snap back if not released over the component
-        console.log('Global Mouse Up: Horizontal drag reset');
       }
       if (isVerticalDragging) {
         setIsVerticalDragging(false);
-        console.log('Global Mouse Up: Vertical drag reset');
       }
     };
 
@@ -325,7 +311,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
                   
                   {/* Event Details mit Like Avatars */}
                   <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <h3 className="text-white font-bold text-sm mb-1 line-clamp-4 leading-tight">
+                    <h3 className="text-white font-bold text-base mb-1 line-clamp-4 leading-tight">
                       {event.title}
                     </h3>
                     
