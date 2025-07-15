@@ -1,4 +1,4 @@
-// src/components/event-chat/ChatInput.tsx
+// File: src/components/event-chat/ChatInput.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -85,7 +85,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
       return;
     }
 
-    if (localInput.trim() !== '') {
+    if ((localInput ?? '').trim() !== '') { // Defensive check for localInput
       setDisplayText('');
       return;
     }
@@ -119,31 +119,47 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     }
   };
 
-  const handleLocalSendMessage = async (eventData?: any) => {
-    if (!localInput.trim() && !eventData) return; // Prevent empty sends
+  const handleLocalSendMessage = async (content?: string | EventShare) => {
+    const isEventShare = typeof content === 'object' && content !== null && 'title' in content;
+    
+    let messageToSend: string;
+
+    // Ensure localInput is a string before trimming
+    const currentLocalInput = localInput ?? ''; 
+
+    if (isEventShare) {
+      messageToSend = currentLocalInput.trim();
+    } else {
+      // Ensure 'content' is treated as a string, providing an empty string fallback
+      // if 'content' itself is undefined or null, before calling .trim().
+      // Then, if the result is empty, fall back to currentLocalInput.trim().
+      const trimmedContent = (typeof content === 'string' ? content : '').trim();
+      messageToSend = trimmedContent || currentLocalInput.trim();
+    }
+
+    const eventData = isEventShare ? (content as EventShare) : undefined;
+
+    if ((!messageToSend && !fileInputRef.current?.files?.length && !eventData) || isSending) {
+      return;
+    }
     
     if (activeChatModeValue === 'community') {
       // For community mode, just update the external input and let the parent handle sending
-      setInput(localInput);
+      setInput(messageToSend); // Use messageToSend derived above
+      setLocalInput('');
       return;
     }
     
     // For AI mode, handle sending directly
-    setInput(localInput);
-    await handleSendMessage(eventData || localInput);
+    setInput(messageToSend); // Use messageToSend derived above
+    await handleSendMessage(content || messageToSend); // Pass original content or derived messageToSend
     setLocalInput('');
   };
   
   const handleLocalKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (activeChatModeValue === 'community') {
-        // For community mode, only update external input
-        setInput(localInput);
-        setLocalInput('');
-      } else {
-        handleLocalSendMessage();
-      }
+      handleLocalSendMessage();
     } else {
       if (onKeyDown) {
         onKeyDown(e);
@@ -152,7 +168,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   };
 
   const handleSuggestionClick = () => {
-    if (localInput.trim() === '' && displayText.trim() !== '') {
+    if ((localInput ?? '').trim() === '' && displayText.trim() !== '') { // Defensive check
       setLocalInput(displayText);
       setTimeout(() => {
         if (inputRef.current) {
@@ -164,7 +180,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 
   const getDynamicPlaceholder = () => {
     if (activeChatModeValue === 'ai') {
-      return placeholder || (showAnimatedPrompts && localInput.trim() === '' ? displayText : "Frage nach Events...");
+      return placeholder || (showAnimatedPrompts && (localInput ?? '').trim() === '' ? displayText : "Frage nach Events..."); // Defensive check
     } else {
       return "Verbinde dich mit der Community...";
     }
@@ -344,7 +360,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           getButtonWidth().replace('pl-', 'left-')
         )}
         onClick={handleSuggestionClick}
-        style={{ pointerEvents: localInput.trim() === '' && displayText.trim() !== '' ? 'auto' : 'none' }}
+        style={{ pointerEvents: (localInput ?? '').trim() === '' && displayText.trim() !== '' ? 'auto' : 'none' }}
       />
       
       <Textarea
@@ -371,10 +387,10 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
             handleLocalSendMessage();
           }
         }}
-        disabled={!localInput.trim() || isTyping}
+        disabled={!(localInput ?? '').trim() || isTyping}
         className={cn(
           "absolute right-1 bottom-1 rounded-full p-1.5 flex-shrink-0",
-          localInput.trim() && !isTyping
+          (localInput ?? '').trim() && !isTyping
             ? "bg-red-500 hover:bg-red-600 text-white"
             : "bg-zinc-800 text-zinc-500"
         )}
