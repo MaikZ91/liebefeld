@@ -1,3 +1,4 @@
+// src/components/event-chat/FullPageChatBot.tsx
 import React, { useEffect, useState, useMemo } from 'react';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
@@ -189,75 +190,72 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   return (
     <div className="flex flex-col h-screen min-h-0">
       {!hideInput && (
-        <div className="sticky top-0 z-10 bg-black"> {/* New single sticky container */}
-          <div className="px-[13px] py-2 border-b border-red-500/20">
-            {activeChatModeValue === 'ai' && (
-              <RecentQueries
-                showRecentQueries={showRecentQueries}
-                setShowRecentQueries={setShowRecentQueries}
-                queriesToRender={queriesToRender}
-                handleExamplePromptClick={handleExamplePromptClick}
-              />
-            )}
-
-            <ChatInput
-              input={currentInput}
-              setInput={currentSetInput}
-              handleSendMessage={currentHandleSendMessage}
-              isTyping={currentIsTyping}
-              onKeyDown={currentHandleKeyPress}
-              onChange={currentHandleInputChange}
-              isHeartActive={isHeartActive}
-              handleHeartClick={handleHeartClick}
-              globalQueries={globalQueries}
-              toggleRecentQueries={toggleRecentQueries}
-              inputRef={inputRef}
-              onAddEvent={onAddEvent}
-              showAnimatedPrompts={showAnimatedPrompts}
-              activeChatModeValue={activeChatModeValue}
-              activeCategory={activeCategory}
-              onCategoryChange={onCategoryChange}
-              onJoinEventChat={onJoinEventChat}
+        <div className="border-b border-red-500/20 sticky top-0 z-10 bg-black px-[13px] py-2"> 
+          {activeChatModeValue === 'ai' && (
+            <RecentQueries
+              showRecentQueries={showRecentQueries}
+              setShowRecentQueries={setShowRecentQueries}
+              queriesToRender={queriesToRender}
+              handleExamplePromptClick={handleExamplePromptClick}
             />
-          </div>
-
-          {/* Filter UI für Community Chat - moved inside the sticky parent */}
-          {activeChatModeValue === 'community' && (
-            <div className="px-4 py-2 border-b border-gray-800"> {/* Removed sticky top-0 from here */}
-              <div className="flex flex-wrap gap-2">
-                {/* Filter buttons */}
-                {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => (
-                  <Button
-                    key={category}
-                    variant="ghost"
-                    size="sm"
-                    className={`h-6 px-2 text-xs rounded-full ${
-                      messageFilter.includes(category)
-                        ? 'bg-red-500/20 text-red-300 border border-red-500/30'
-                        : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                    }`}
-                    onClick={() => {
-                      if (category === 'alle') {
-                        setMessageFilter(['alle']);
-                      } else {
-                        setMessageFilter(prev => {
-                          const newFilter = prev.filter(f => f !== 'alle');
-                          if (newFilter.includes(category)) {
-                            const result = newFilter.filter(f => f !== category);
-                            return result.length === 0 ? ['alle'] : result;
-                          } else {
-                            return [...newFilter, category];
-                          }
-                        });
-                      }
-                    }}
-                  >
-                    #{category}
-                  </Button>
-                ))}
-              </div>
-            </div>
           )}
+
+          <ChatInput
+            input={currentInput}
+            setInput={currentSetInput}
+            handleSendMessage={currentHandleSendMessage}
+            isTyping={currentIsTyping}
+            onKeyDown={currentHandleKeyPress}
+            onChange={currentHandleInputChange}
+            isHeartActive={isHeartActive}
+            handleHeartClick={handleHeartClick}
+            globalQueries={globalQueries}
+            toggleRecentQueries={toggleRecentQueries}
+            inputRef={inputRef}
+            onAddEvent={onAddEvent}
+            showAnimatedPrompts={showAnimatedPrompts}
+            activeChatModeValue={activeChatModeValue}
+            activeCategory={activeCategory}
+            onCategoryChange={onCategoryChange}
+            onJoinEventChat={onJoinEventChat}
+          />
+        </div>
+      )}
+
+      {/* Filter UI für Community Chat - immer sichtbar wenn Community Chat aktiv */}
+      {activeChatModeValue === 'community' && (
+        <div className="px-4 py-2 border-b border-gray-800 bg-black sticky top-0 z-10">
+          <div className="flex flex-wrap gap-2">
+            {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => (
+              <Button
+                key={category}
+                variant="ghost"
+                size="sm"
+                className={`h-6 px-2 text-xs rounded-full ${
+                  messageFilter.includes(category)
+                    ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                }`}
+                onClick={() => {
+                  if (category === 'alle') {
+                    setMessageFilter(['alle']);
+                  } else {
+                    setMessageFilter(prev => {
+                      const newFilter = prev.filter(f => f !== 'alle');
+                      if (newFilter.includes(category)) {
+                        const result = newFilter.filter(f => f !== category);
+                        return result.length === 0 ? ['alle'] : result;
+                      } else {
+                        return [...newFilter, category];
+                      }
+                    });
+                  }
+                }}
+              >
+                #{category}
+              </Button>
+            ))}
+          </div>
         </div>
       )}
 
