@@ -306,7 +306,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
                   
                   {/* Event Details mit Like Avatars */}
                   <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <h3 className="text-white font-bold text-base mb-1 line-clamp-4 leading-tight">
+                    <h3 className="text-white font-bold text-sm mb-1 line-clamp-4 leading-tight">
                       {event.title}
                     </h3>
                     
