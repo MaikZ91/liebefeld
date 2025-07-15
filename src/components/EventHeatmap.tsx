@@ -645,7 +645,7 @@ const EventHeatmap: React.FC = () => {
         onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 4px 16px rgba(212,175,55,0.4)';"
         onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.3)';">
           <div style="
-            font-size: 10px;
+            font-size: 8px;
             font-weight: 600;
             letter-spacing: 0.5px;
             text-transform: uppercase;
