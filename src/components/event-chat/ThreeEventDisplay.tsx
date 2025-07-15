@@ -63,30 +63,32 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
     
     setStartX(e.touches[0].clientX);
     setTranslateX(0);
-    setIsVerticalDragging(false); // Assume horizontal until proven vertical
-    setInitialClientY(e.touches[0].clientY);
+    setInitialClientY(e.touches[0].clientY); // Capture initial Y for vertical swipe
+    setIsVerticalDragging(false); // Reset vertical dragging state
+    console.log('Touch Start: initialY =', initialClientY);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging && !isVerticalDragging) {
-      // Determine swipe direction if not already set
-      const currentX = e.touches[0].clientX;
-      const currentY = e.touches[0].clientY;
-      const diffX = currentX - startX;
-      const diffY = currentY - initialClientY;
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const diffX = currentX - startX;
+    const diffY = currentY - initialClientY;
 
-      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) { // Small threshold to confirm horizontal
-        setIsDragging(true); // Confirm horizontal dragging
-      } else if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 10) { // Small threshold to confirm vertical
-        setIsVerticalDragging(true); // Confirm vertical dragging
+    // If a swipe direction isn't confirmed yet
+    if (!isDragging && !isVerticalDragging) {
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
+        setIsDragging(true); // Confirm horizontal
+        console.log('Confirmed horizontal drag');
+      } else if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 10) {
+        setIsVerticalDragging(true); // Confirm vertical
+        e.preventDefault(); // Prevent page scroll only if truly vertical drag
+        console.log('Confirmed vertical drag, preventing default');
       } else {
-        return; // Not enough movement to determine direction yet
+        return; // Not enough movement to determine yet
       }
     }
 
-    const currentX = e.touches[0].clientX;
-    const diffX = currentX - startX;
-    if (isDragging) {
+    if (isDragging) { // Handle horizontal drag
       setTranslateX(diffX);
     } else if (isVerticalDragging) {
       // Prevent default to avoid scrolling background while vertically dragging the panel itself
@@ -94,7 +96,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
     }
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
     const horizontalSwipeThreshold = 80;
     const verticalSwipeThreshold = 50; // pixels
 
@@ -107,13 +109,15 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
         }
       }
     } else if (isVerticalDragging) { // Vertical swipe completed
-      const finalY = initialClientY + window.pageYOffset; // Adjust finalY for scroll position if needed
+      const finalY = e.changedTouches[0].clientY; // Use changedTouches for end
       const swipeDistanceY = finalY - initialClientY;
 
       if (swipeDistanceY > verticalSwipeThreshold) { // Swiped down
         onSwipeDownToHide?.();
+        console.log('Swiped down, calling onSwipeDownToHide');
       } else if (swipeDistanceY < -verticalSwipeThreshold) { // Swiped up
         onSwipeUpToShow?.();
+        console.log('Swiped up, calling onSwipeUpToShow');
       }
     }
     
@@ -121,6 +125,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
     setIsDragging(false);
     setIsVerticalDragging(false);
     setTranslateX(0);
+    console.log('Touch End: Drag states reset');
   };
 
   // Mouse handlers for desktop
@@ -132,28 +137,30 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
     }
     setStartX(e.clientX);
     setTranslateX(0);
-    setIsVerticalDragging(false); // Assume horizontal until proven vertical
-    setInitialClientY(e.clientY);
+    setInitialClientY(e.clientY); // Capture initial Y for vertical swipe
+    setIsVerticalDragging(false); // Reset vertical dragging state
+    console.log('Mouse Down: initialY =', initialClientY);
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging && !isVerticalDragging) {
-      // Determine swipe direction if not already set
-      const currentX = e.clientX;
-      const currentY = e.clientY;
-      const diffX = currentX - startX;
-      const diffY = currentY - initialClientY;
+    const currentX = e.clientX;
+    const currentY = e.clientY;
+    const diffX = currentX - startX;
+    const diffY = currentY - initialClientY;
 
-      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) { // Small threshold to confirm horizontal
-        setIsDragging(true); // Confirm horizontal dragging
-      } else if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 10) { // Small threshold to confirm vertical
-        setIsVerticalDragging(true); // Confirm vertical dragging
+    if (!isDragging && !isVerticalDragging) {
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
+        setIsDragging(true); // Confirm horizontal
+        console.log('Confirmed horizontal drag (mouse)');
+      } else if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 10) {
+        setIsVerticalDragging(true); // Confirm vertical
+        e.preventDefault(); // Prevent text selection
+        console.log('Confirmed vertical drag (mouse), preventing default');
       } else {
-        return; // Not enough movement to determine direction yet
+        return;
       }
     }
 
-    const diffX = e.clientX - startX;
     if (isDragging) {
       setTranslateX(diffX);
     } else if (isVerticalDragging) {
@@ -161,7 +168,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
     }
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: React.MouseEvent) => {
     const horizontalSwipeThreshold = 80;
     const verticalSwipeThreshold = 50; // pixels
 
@@ -174,13 +181,15 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
         }
       }
     } else if (isVerticalDragging) { // Vertical swipe completed
-      const finalY = initialClientY + window.pageYOffset; // Adjust finalY for scroll position if needed
+      const finalY = e.clientY;
       const swipeDistanceY = finalY - initialClientY;
 
       if (swipeDistanceY > verticalSwipeThreshold) { // Swiped down
         onSwipeDownToHide?.();
+        console.log('Swiped down (mouse), calling onSwipeDownToHide');
       } else if (swipeDistanceY < -verticalSwipeThreshold) { // Swiped up
         onSwipeUpToShow?.();
+        console.log('Swiped up (mouse), calling onSwipeUpToShow');
       }
     }
     
@@ -188,33 +197,39 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
     setIsDragging(false);
     setIsVerticalDragging(false);
     setTranslateX(0);
+    console.log('Mouse Up: Drag states reset');
   };
 
   // Add global mouse event listeners
   React.useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
-      if (!isDragging || totalEvents <= eventsPerPage) return;
-      const diffX = e.clientX - startX;
-      setTranslateX(diffX);
+      // This listener is primarily for when the mouse is dragged outside the component before release.
+      // It only needs to track if dragging is ongoing, not trigger page changes directly.
+      if (isDragging && containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        const diffX = e.clientX - startX;
+        setTranslateX(diffX);
+      }
+      // If vertical dragging started within this component and mouse moves globally,
+      // it should ideally still be tracked by the local component's mousemove, but its end should be handled.
+      // For simplicity, we assume mouseup will happen on the element or globally.
     };
 
     const handleGlobalMouseUp = () => {
-      if (!isDragging || totalEvents <= eventsPerPage) return;
-      setIsDragging(false);
-      
-      const threshold = 80;
-      
-      if (Math.abs(translateX) > threshold) {
-        // Global mouse move/up should only reset dragging state, not trigger page changes directly.
-        // Page changes are handled in local handleMouseUp/handleTouchEnd.
-        // This is primarily for when the mouse is dragged outside the component before release.
-        // No action here other than resetting isDragging.
+      // This handles the case where the mouse button is released outside the component
+      // after a drag started inside it.
+      if (isDragging) {
+        setIsDragging(false);
+        setTranslateX(0); // Snap back if not released over the component
+        console.log('Global Mouse Up: Horizontal drag reset');
       }
-      
-      setTranslateX(0);
+      if (isVerticalDragging) {
+        setIsVerticalDragging(false);
+        console.log('Global Mouse Up: Vertical drag reset');
+      }
     };
 
-    if (isDragging) {
+
+    if (isDragging || isVerticalDragging) {
       document.addEventListener('mousemove', handleGlobalMouseMove);
       document.addEventListener('mouseup', handleGlobalMouseUp);
     }
@@ -223,10 +238,8 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
       document.removeEventListener('mousemove', handleGlobalMouseMove);
       document.removeEventListener('mouseup', handleGlobalMouseUp);
     };
-  }, [isDragging, startX, translateX, totalEvents]);
+  }, [isDragging, isVerticalDragging, startX, translateX, totalEvents]);
   
-  // These are now internal helper functions, not global event handlers.
-  // Original `handlePrevious` and `handleNext` were removed as logic is now inline.
 
   if (displayEvents.length === 0) return null;
 
@@ -312,7 +325,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
                   
                   {/* Event Details mit Like Avatars */}
                   <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <h3 className="text-white font-bold text-base mb-1 line-clamp-4 leading-tight">
+                    <h3 className="text-white font-bold text-sm mb-1 line-clamp-4 leading-tight">
                       {event.title}
                     </h3>
                     
