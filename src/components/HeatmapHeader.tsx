@@ -33,17 +33,10 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
 
   return (
     <div className="absolute top-0 left-0 right-0 z-[1002]">
-      {/* Live Ticker at the very top */}
-      <LiveTicker 
-        events={events} 
-        isLoadingEvents={isLoading}
-        selectedCity={selectedCity}
-      />
-      
       {/* Curved black header bar with THE TRIBE logo */}
       <div className="relative">
-        {/* Main header with speech bubble shape - only rounded bottom left */}
-        <div className="bg-black mx-4 px-6 py-4 relative rounded-bl-[2rem]">
+        {/* Main header with speech bubble shape - rounded both bottom corners */}
+        <div className="bg-black mx-4 px-6 py-4 relative rounded-bl-[2rem] rounded-br-[2rem]">
           {/* Main content */}
           <div className="flex items-center gap-4 relative z-10">
             <Link to="/" className="flex items-center">
@@ -57,7 +50,7 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
       {/* Black search bar for AI Chat Input */}
       {chatInputProps && (
         <div className="px-4 pb-4">
-          <div className="bg-black rounded-full border border-gray-700/50 mx-2">
+          <div className="bg-black rounded-full mx-2">
             
             <ChatInput
               input={chatInputProps.input}

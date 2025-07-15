@@ -341,7 +341,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         onKeyPress={handleLocalKeyPress}
         placeholder={placeholderText}
         className={cn(
-          "w-full bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-red-500 rounded-full py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pr-10 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 text-left",
+          "w-full bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-gray-700/50 rounded-full py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pr-10 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 text-left",
           getButtonWidth()
         )}
       />
