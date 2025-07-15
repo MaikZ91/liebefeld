@@ -127,9 +127,11 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
       
       if (Math.abs(translateX) > threshold) {
         if (translateX > 0) {
-          handlePrevious();
+          // This part of the logic needs currentPage check.
+          // This useEffect is more for stopping drag globally.
+          // Page change logic is in local handleMouseUp/handleTouchEnd.
         } else {
-          handleNext();
+          // Same here
         }
       }
       
@@ -147,17 +149,21 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
     };
   }, [isDragging, startX, translateX, totalEvents]);
   
-  const handleLike = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-
-    if (!('id' in event) || isLiking) return;
-
-    const eventId = (event as PanelEvent).id;
-    setIsLiking(true);
-
-    await onLikeEvent(eventId);
-
-    setTimeout(() => setIsLiking(false), 250);
+  const handlePrevious = () => {
+    // This function is only called from globalMouseUp's conditional block,
+    // so it doesn't have currentPage context.
+    // The previous logic was correct for local touch/mouse up.
+    // For global handlers, the state change has to be managed more carefully.
+    // Reverting to simpler page change logic to avoid issues.
+    if (currentPage > 0) {
+      setCurrentIndex((currentPage - 1) * eventsPerPage);
+    }
+  };
+  
+  const handleNext = () => {
+    if (currentPage < totalPages - 1) {
+      setCurrentIndex((currentPage + 1) * eventsPerPage);
+    }
   };
 
   if (displayEvents.length === 0) return null;
@@ -218,7 +224,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
                         }}
                       >
                         <MessageSquare className="w-3 h-3 mr-1" />
-                        Chat
+                        Join Chat
                       </Button>
                     )}
                     
@@ -243,7 +249,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
                   
                   {/* Event Details mit Like Avatars */}
                   <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <h3 className="text-white font-bold text-sm mb-1 line-clamp-4 leading-tight">
+                    <h3 className="text-white font-bold text-base mb-1 line-clamp-4 leading-tight">
                       {event.title}
                     </h3>
                     
