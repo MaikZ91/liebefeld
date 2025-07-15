@@ -59,7 +59,7 @@ const tribeSpots = [
   { name: 'Klosterplatz', lat: 52.0208, lng: 8.5286 },
   { name: 'Nordpark', lat: 52.0368, lng: 8.5290 },
   { name: 'Universität Bielefeld', lat: 52.0378, lng: 8.4931 },
-  { name: 'Schwedenschanze', lat: 52.068540, lng: 8.369610 }
+{ name: 'Schwedenschanze', lat: 52.068540, lng: 8.369610 }
 ];
 
 const EventHeatmap: React.FC = () => {
@@ -74,11 +74,9 @@ const EventHeatmap: React.FC = () => {
   const [tribeSpotMarkers, setTribeSpotMarkers] = useState<L.Marker[]>([]);
   const currentTribeSpotMarkersRef = useRef<L.Marker[]>();
   const [userMarkers, setUserMarkers] = useState<L.Marker[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(selectedEventId);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [panelHeight, setPanelHeight] = useState<'collapsed' | 'partial' | 'full'>('partial'); // Start in partial view
-  const [isVerticalSwiping, setIsVerticalSwiping] = useState(false);
-  const [initialTouchY, setInitialTouchY] = useState(0);
+  const [panelHeight, setPanelHeight] = useState<'collapsed' | 'partial' | 'full'>('collapsed');
   const [perfectDayMessage, setPerfectDayMessage] = useState<string | null>(null);
   const [isPerfectDayLoading, setIsPerfectDayLoading] = useState(false);
   const [showPerfectDayPanel, setShowPerfectDayPanel] = useState(false);
@@ -316,6 +314,24 @@ const EventHeatmap: React.FC = () => {
   }, [selectedDateFilteredEvents, selectedCategory, timeRange]);
 
   const panelEvents: PanelEvent[] = React.useMemo(() => {
+    return filteredEvents.map(event => ({
+      id: event.id || `${event.title}-${event.date}-${event.time}`,
+      title: event.title,
+      date: event.date,
+      time: event.time,
+      price: event.is_paid ? "Kostenpflichtig" : "Kostenlos",
+      location: event.location || event.city || 'Unknown Location',
+      image_url: event.image_url || `https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop&q=80&auto=format`,
+      category: event.category,
+      link: event.link,
+      likes: event.likes || 0,
+      liked_by_users: event.liked_by_users || [],
+      rsvp_yes: event.rsvp_yes,
+      rsvp_maybe: event.rsvp_maybe
+    }));
+  }, [filteredEvents]);
+
+  const panelData: PanelEventData = React.useMemo(() => {
     const selectedIndex = selectedEventId
       ? panelEvents.findIndex(event => event.id === selectedEventId)
       : 0;
@@ -637,13 +653,11 @@ const EventHeatmap: React.FC = () => {
             letter-spacing: 0.5px;
             text-transform: uppercase;
             line-height: 1.1;
+            word-break: break-word;
             max-width: 40px;
-            word-break: break-word; /* Allows long words to break */
-            overflow-wrap: break-word; /* Ensures text wraps within the box */
           ">
             ${spot.name}
-          </div>
-        </div>
+
       `;
 
       const customIcon = L.divIcon({
@@ -1138,17 +1152,6 @@ const EventHeatmap: React.FC = () => {
     }
   };
 
-  // Handlers to be passed to ThreeEventDisplay for vertical swipe
-  const handleSwipeDownToHidePanels = () => {
-    setPanelHeight('collapsed');
-    setIsPanelOpen(false);
-  };
-
-  const handleSwipeUpToShowPanels = () => {
-    setPanelHeight('partial'); // Swiping up brings it to partial view
-    setIsPanelOpen(true);
-  };
-
   const handleOpenEventFormForModal = () => { // Renamed to clearly differentiate it from handleOpenEventForm
     setIsEventFormOpen(true);
   };
@@ -1332,33 +1335,9 @@ const EventHeatmap: React.FC = () => {
         </Button>
       </div>
 
-      {/* MIA Button (above event panels) */}
-      <div className="absolute bottom-56 left-1/2 -translate-x-1/2 z-[1000]">
-        <Button
-          onClick={() => {
-            setShowAIChat(prev => !prev);
-            // Ensure other panels are hidden if AI chat is shown
-            setShowPerfectDayPanel(false);
-            setPanelHeight('collapsed'); // Collapse ThreeEventDisplay
-            setIsPanelOpen(false); // Close logical state for ThreeEventDisplay
-          }}
-          className="bg-purple-800 hover:bg-purple-700 text-white w-24 h-12 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-xs font-bold border-2 border-purple-500/30"
-          title="MIA Chatbot"
-        >
-          <Sparkles className="w-4 h-4 mb-0.5" />
-          MIA
-        </Button>
-      </div>
-
       {/* Default Event Display - Show 3 Events directly above navbar */}
       {!showPerfectDayPanel && !showAIChat && filteredEvents.length > 0 && (
-        <div 
-          className={cn(
-            "absolute left-0 right-0 z-[1000] transition-all duration-300 ease-out",
-            getPanelBottomClass(),
-            getPanelVisibilityClasses()
-          )}
-        >
+        <div className="absolute bottom-20 left-0 right-0 z-[1000]">
           {/* Default Event Panel Display */}
           <div className="p-4">
             <ThreeEventDisplay
@@ -1367,8 +1346,6 @@ const EventHeatmap: React.FC = () => {
               onLikeEvent={handleEventLike}
               onJoinEventChat={handleJoinEventChat}
               className="w-full"
-              onSwipeDownToHide={handleSwipeDownToHidePanels} // Pass the handler
-              onSwipeUpToShow={handleSwipeUpToShowPanels}     // Pass the handler
             />
           </div>
         </div>
@@ -1508,42 +1485,38 @@ const EventHeatmap: React.FC = () => {
       )}
 
       {/* AI Chat Panel */}
-      {/* Always rendered for animation, visibility controlled by classes */}
-      <div
-        className={cn(
-          "absolute left-0 right-0 z-[1000] bg-black/95 backdrop-blur-md h-96 transition-all duration-500 ease-in-out",
-          showAIChat ? 'bottom-0 opacity-100 pointer-events-auto' : 'bottom-[-96] opacity-0 pointer-events-none'
-        )}
-      >
-        {/* Panel Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-700">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-purple-400" /> {/* Changed icon for MIA chat */}
-            <span className="text-white font-medium">MIA Chat</span>
+      {showAIChat && (
+        <div className="absolute bottom-0 left-0 right-0 z-[1000] bg-black/95 backdrop-blur-md h-96">
+          {/* Panel Header */}
+          <div className="flex items-center justify-between p-4 border-b border-black-700">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-white-400" />
+              <span className="text-white font-medium">AI Event Chat</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowAIChat(false)}
+              className="text-white hover:bg-black-700"
+            >
+              <X className="w-5 h-5" />
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowAIChat(false)}
-            className="text-white hover:bg-gray-700"
-          >
-            <X className="w-5 h-5" />
-          </Button>
-        </div>
 
-        {/* AI Chat Content */}
-        <div className="h-full overflow-hidden">
-          <FullPageChatBot
-            chatLogic={chatLogic}
-            activeChatModeValue="ai"
-            communityGroupId=""
-            hideInput={true}
-            externalInput={aiChatInput}
-            setExternalInput={setAiChatInput}
-            onExternalSendHandlerChange={setAiChatExternalSendHandler}
-          />
+          {/* AI Chat Content */}
+          <div className="h-full overflow-hidden">
+            <FullPageChatBot
+              chatLogic={chatLogic}
+              activeChatModeValue="ai"
+              communityGroupId=""
+              hideInput={true}
+              externalInput={aiChatInput}
+              setExternalInput={setAiChatInput}
+              onExternalSendHandlerChange={setAiChatExternalSendHandler}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
 
       {/* Event Form Dialog */}
