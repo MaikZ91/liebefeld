@@ -1,4 +1,4 @@
-
+// src/components/event-chat/EventChatBot.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { useEventContext } from '@/contexts/EventContext';
 import { useToast } from '@/hooks/use-toast';
@@ -101,6 +101,7 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
         inputRef: chatLogic.inputRef,
         onAddEvent: onAddEvent,
         showAnimatedPrompts: chatLogic.showAnimatedPrompts,
+        activeChatModeValue: activeChatModeValue, // Changed to use dynamic state
         activeCategory: activeCategory,
         onCategoryChange: handleCategoryChange
       });
@@ -129,10 +130,10 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
         onAddEvent={onAddEvent}
         activeCategory={activeCategory}
         onCategoryChange={handleCategoryChange}
-        hideInput={true}
+        // REMOVED: hideInput={true}
         externalInput={externalInput}
         setExternalInput={setExternalInput}
-        onExternalSendHandlerChange={setExternalSendHandler}
+        onExternalSendHandlerChange={onExternalSendHandlerChange}
         onJoinEventChat={onJoinEventChat}
       />
     );
