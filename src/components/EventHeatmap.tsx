@@ -551,7 +551,7 @@ const EventHeatmap: React.FC = () => {
       const leafletMap = L.map(mapRef.current, {
         center: [initialCenter.lat, initialCenter.lng],
         zoom: 13,
-        zoomControl: true,
+        zoomControl: false,
         preferCanvas: false
       });
       
