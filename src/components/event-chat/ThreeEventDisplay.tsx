@@ -11,6 +11,8 @@ interface ThreeEventDisplayProps {
   onLikeEvent?: (eventId: string) => void;
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
   className?: string;
+  onSwipeDownToHide?: () => void; // New prop for swipe down gesture
+  onSwipeUpToShow?: () => void;   // New prop for swipe up gesture
 }
 
 const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
@@ -18,12 +20,15 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
   onEventSelect,
   onLikeEvent,
   onJoinEventChat,
-  className
+  className,
+  onSwipeDownToHide, // Destructure new prop
+  onSwipeUpToShow    // Destructure new prop
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [translateX, setTranslateX] = useState(0);
+  const [initialClientY, setInitialClientY] = useState(0); // New state for vertical swipe
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   const containerRef = useRef<HTMLDivElement>(null);
@@ -44,93 +49,166 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
     }
   };
 
+  // New state for vertical dragging
+  const [isVerticalDragging, setIsVerticalDragging] = useState(false);
+
   // Touch handlers
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (totalEvents <= 3) return;
-    setIsDragging(true);
+    // If horizontal event count is too low, disable horizontal dragging
+    if (totalEvents <= eventsPerPage) {
+      setIsDragging(false);
+    } else {
+      setIsDragging(true);
+    }
+    
     setStartX(e.touches[0].clientX);
     setTranslateX(0);
+    setIsVerticalDragging(false); // Assume horizontal until proven vertical
+    setInitialClientY(e.touches[0].clientY);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || totalEvents <= 3) return;
+    if (!isDragging && !isVerticalDragging) {
+      // Determine swipe direction if not already set
+      const currentX = e.touches[0].clientX;
+      const currentY = e.touches[0].clientY;
+      const diffX = currentX - startX;
+      const diffY = currentY - initialClientY;
+
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) { // Small threshold to confirm horizontal
+        setIsDragging(true); // Confirm horizontal dragging
+      } else if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 10) { // Small threshold to confirm vertical
+        setIsVerticalDragging(true); // Confirm vertical dragging
+      } else {
+        return; // Not enough movement to determine direction yet
+      }
+    }
+
     const currentX = e.touches[0].clientX;
     const diffX = currentX - startX;
-    setTranslateX(diffX);
+    if (isDragging) {
+      setTranslateX(diffX);
+    } else if (isVerticalDragging) {
+      // Prevent default to avoid scrolling background while vertically dragging the panel itself
+      e.preventDefault(); 
+    }
   };
 
   const handleTouchEnd = () => {
-    if (!isDragging || totalEvents <= 3) return;
-    setIsDragging(false);
-    
-    const threshold = 80;
-    
-    if (Math.abs(translateX) > threshold) {
-      if (translateX > 0 && currentPage > 0) {
-        // Go to previous page (previous 3 events)
-        setCurrentIndex((currentPage - 1) * eventsPerPage);
-      } else if (translateX < 0 && currentPage < totalPages - 1) {
-        // Go to next page (next 3 events)
-        setCurrentIndex((currentPage + 1) * eventsPerPage);
+    const horizontalSwipeThreshold = 80;
+    const verticalSwipeThreshold = 50; // pixels
+
+    if (isDragging) { // Horizontal swipe completed
+      if (Math.abs(translateX) > horizontalSwipeThreshold) {
+        if (translateX > 0 && currentPage > 0) {
+          setCurrentIndex((currentPage - 1) * eventsPerPage);
+        } else if (translateX < 0 && currentPage < totalPages - 1) {
+          setCurrentIndex((currentPage + 1) * eventsPerPage);
+        }
+      }
+    } else if (isVerticalDragging) { // Vertical swipe completed
+      const finalY = initialClientY + window.pageYOffset; // Adjust finalY for scroll position if needed
+      const swipeDistanceY = finalY - initialClientY;
+
+      if (swipeDistanceY > verticalSwipeThreshold) { // Swiped down
+        onSwipeDownToHide?.();
+      } else if (swipeDistanceY < -verticalSwipeThreshold) { // Swiped up
+        onSwipeUpToShow?.();
       }
     }
     
+    // Reset all dragging states
+    setIsDragging(false);
+    setIsVerticalDragging(false);
     setTranslateX(0);
   };
 
   // Mouse handlers for desktop
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (totalEvents <= 3) return;
-    setIsDragging(true);
+    if (totalEvents <= eventsPerPage) {
+      setIsDragging(false);
+    } else {
+      setIsDragging(true);
+    }
     setStartX(e.clientX);
     setTranslateX(0);
+    setIsVerticalDragging(false); // Assume horizontal until proven vertical
+    setInitialClientY(e.clientY);
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || totalEvents <= 3) return;
+    if (!isDragging && !isVerticalDragging) {
+      // Determine swipe direction if not already set
+      const currentX = e.clientX;
+      const currentY = e.clientY;
+      const diffX = currentX - startX;
+      const diffY = currentY - initialClientY;
+
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) { // Small threshold to confirm horizontal
+        setIsDragging(true); // Confirm horizontal dragging
+      } else if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 10) { // Small threshold to confirm vertical
+        setIsVerticalDragging(true); // Confirm vertical dragging
+      } else {
+        return; // Not enough movement to determine direction yet
+      }
+    }
+
     const diffX = e.clientX - startX;
-    setTranslateX(diffX);
+    if (isDragging) {
+      setTranslateX(diffX);
+    } else if (isVerticalDragging) {
+      e.preventDefault(); // Prevent text selection while dragging vertically
+    }
   };
 
   const handleMouseUp = () => {
-    if (!isDragging || totalEvents <= 3) return;
-    setIsDragging(false);
-    
-    const threshold = 80;
-    
-    if (Math.abs(translateX) > threshold) {
-      if (translateX > 0 && currentPage > 0) {
-        // Go to previous page (previous 3 events)
-        setCurrentIndex((currentPage - 1) * eventsPerPage);
-      } else if (translateX < 0 && currentPage < totalPages - 1) {
-        // Go to next page (next 3 events)
-        setCurrentIndex((currentPage + 1) * eventsPerPage);
+    const horizontalSwipeThreshold = 80;
+    const verticalSwipeThreshold = 50; // pixels
+
+    if (isDragging) { // Horizontal swipe completed
+      if (Math.abs(translateX) > horizontalSwipeThreshold) {
+        if (translateX > 0 && currentPage > 0) {
+          setCurrentIndex((currentPage - 1) * eventsPerPage);
+        } else if (translateX < 0 && currentPage < totalPages - 1) {
+          setCurrentIndex((currentPage + 1) * eventsPerPage);
+        }
+      }
+    } else if (isVerticalDragging) { // Vertical swipe completed
+      const finalY = initialClientY + window.pageYOffset; // Adjust finalY for scroll position if needed
+      const swipeDistanceY = finalY - initialClientY;
+
+      if (swipeDistanceY > verticalSwipeThreshold) { // Swiped down
+        onSwipeDownToHide?.();
+      } else if (swipeDistanceY < -verticalSwipeThreshold) { // Swiped up
+        onSwipeUpToShow?.();
       }
     }
     
+    // Reset all dragging states
+    setIsDragging(false);
+    setIsVerticalDragging(false);
     setTranslateX(0);
   };
 
   // Add global mouse event listeners
   React.useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
-      if (!isDragging || totalEvents <= 3) return;
+      if (!isDragging || totalEvents <= eventsPerPage) return;
       const diffX = e.clientX - startX;
       setTranslateX(diffX);
     };
 
     const handleGlobalMouseUp = () => {
-      if (!isDragging || totalEvents <= 3) return;
+      if (!isDragging || totalEvents <= eventsPerPage) return;
       setIsDragging(false);
       
       const threshold = 80;
       
       if (Math.abs(translateX) > threshold) {
-        if (translateX > 0) {
-          handlePrevious();
-        } else {
-          handleNext();
-        }
+        // Global mouse move/up should only reset dragging state, not trigger page changes directly.
+        // Page changes are handled in local handleMouseUp/handleTouchEnd.
+        // This is primarily for when the mouse is dragged outside the component before release.
+        // No action here other than resetting isDragging.
       }
       
       setTranslateX(0);
@@ -147,18 +225,8 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
     };
   }, [isDragging, startX, translateX, totalEvents]);
   
-  const handleLike = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-
-    if (!('id' in event) || isLiking) return;
-
-    const eventId = (event as PanelEvent).id;
-    setIsLiking(true);
-
-    await onLikeEvent(eventId);
-
-    setTimeout(() => setIsLiking(false), 250);
-  };
+  // These are now internal helper functions, not global event handlers.
+  // Original `handlePrevious` and `handleNext` were removed as logic is now inline.
 
   if (displayEvents.length === 0) return null;
 
@@ -230,6 +298,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
                         className="bg-black/50 hover:bg-black/70 text-white rounded-full p-2"
                         onClick={async (e) => {
                           e.stopPropagation();
+                          // No 'isLiking' state here, using EventHeatmap's handleLikeEvent
                           await onLikeEvent(event.id);
                           // Trigger refresh of avatars after like
                           setRefreshTrigger(prev => prev + 1);
@@ -243,7 +312,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
                   
                   {/* Event Details mit Like Avatars */}
                   <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <h3 className="text-white font-bold text-sm mb-1 line-clamp-4 leading-tight">
+                    <h3 className="text-white font-bold text-base mb-1 line-clamp-4 leading-tight">
                       {event.title}
                     </h3>
                     
