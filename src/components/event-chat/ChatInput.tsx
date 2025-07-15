@@ -48,9 +48,22 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
   const [localInput, setLocalInput] = useState(input);
 
+  // Reference for the textarea to dynamically adjust height
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+
   useEffect(() => {
     setLocalInput(input);
   }, [input]);
+
+  // Effect to adjust textarea height
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'; // Reset height to recalculate
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'; // Set height to scrollHeight
+    }
+  }, [localInput]); // Re-run when localInput changes
+
 
   const suggestions = [
     "Frage nach Events...",
@@ -219,8 +232,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   };
 
   return (
-    <div className="flex items-end relative w-full max-w-md">{/* Changed from items-center to items-end */}
-      <div className="absolute left-1 bottom-1 flex items-center gap-0.5 z-10">{/* Changed from top-1/2 to bottom-1 */}
+    <div className="flex items-end relative w-full max-w-md">
+      <div className="absolute left-1 bottom-1 flex items-center gap-0.5 z-10">
         {activeChatModeValue === 'ai' ? (
           <>
             <Button
@@ -335,13 +348,14 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
       />
       
       <Textarea
-        ref={inputRef}
+        ref={textareaRef} // Assign the ref here
         value={localInput}
         onChange={handleLocalInputChange}
         onKeyDown={handleLocalKeyPress}
         placeholder={placeholderText}
+        rows={1} // Start with 1 row
         className={cn(
-          "w-full bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-gray-700/50 rounded-xl py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pr-10 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 text-left min-h-[40px] max-h-[120px] resize-none",
+          "w-full bg-zinc-900/50 dark:bg-zinc-800/50 border-2 border-gray-700/50 rounded-xl py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pr-10 shadow-md shadow-red-500/10 transition-all duration-200 hover:border-red-600 text-left min-h-[40px] overflow-hidden", // Removed max-h and resize-none. Added overflow-hidden.
           getButtonWidth()
         )}
       />
