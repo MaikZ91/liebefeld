@@ -26,7 +26,8 @@ const ChatPage = () => {
   // Get view mode from URL search params or navigation state
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const initialView = searchParams.get('view') as 'ai' | 'community' || 'ai';
+  // Set initialView to 'community' by default, regardless of search params
+  const initialView = 'community'; 
   
   const [activeView, setActiveView] = useState<'ai' | 'community'>(initialView);
   const [isAddEventSheetOpen, setIsAddEventSheetOpen] = useState(false);
