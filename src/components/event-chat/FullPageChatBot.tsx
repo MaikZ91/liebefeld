@@ -138,9 +138,11 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   const handleReaction = async (messageId: string, emoji: string) => {
     try {
+      console.log('FullPageChatBot: Toggling reaction', { messageId, emoji, username });
       await chatService.toggleReaction(messageId, emoji, username);
+      console.log('FullPageChatBot: Reaction toggled successfully');
     } catch (error) {
-      console.error('Error toggling reaction:', error);
+      console.error('FullPageChatBot: Error toggling reaction:', error);
     }
   };
 

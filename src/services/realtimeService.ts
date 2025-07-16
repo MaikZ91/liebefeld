@@ -29,7 +29,7 @@ export const realtimeService = {
   /**
    * Setup a direct message listener for a specific group
    */
-  setupMessageListener(groupId: string, onMessage: (message: Message) => void) {
+  setupMessageListener(groupId: string, onMessage: (message: Message) => void, onMessageUpdate?: (message: Message) => void) {
     console.log(`Setting up message listener for group: ${groupId}`);
     
     // Create a channel name based on the group ID
@@ -43,7 +43,7 @@ export const realtimeService = {
       }
     });
     
-    // Set up a direct database listener
+    // Set up a direct database listener for INSERT
     const dbChannel = supabase
       .channel(`db-changes:${groupId}`)
       .on('postgres_changes', {
@@ -52,7 +52,7 @@ export const realtimeService = {
         table: 'chat_messages',
         filter: `group_id=eq.${groupId}`
       }, (payload) => {
-        console.log('Database change detected:', payload);
+        console.log('Database INSERT detected:', payload);
         if (payload.new) {
           const message: Message = {
             id: (payload.new as any).id,
@@ -61,10 +61,33 @@ export const realtimeService = {
             user_name: (payload.new as any).sender,
             user_avatar: (payload.new as any).avatar || '',
             group_id: (payload.new as any).group_id,
+            reactions: (payload.new as any).reactions || [],
           };
           
           console.log('Converted message from DB change:', message);
           onMessage(message);
+        }
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `group_id=eq.${groupId}`
+      }, (payload) => {
+        console.log('Database UPDATE detected:', payload);
+        if (payload.new && onMessageUpdate) {
+          const message: Message = {
+            id: (payload.new as any).id,
+            created_at: (payload.new as any).created_at,
+            text: (payload.new as any).text,
+            user_name: (payload.new as any).sender,
+            user_avatar: (payload.new as any).avatar || '',
+            group_id: (payload.new as any).group_id,
+            reactions: (payload.new as any).reactions || [],
+          };
+          
+          console.log('Converted updated message from DB change:', message);
+          onMessageUpdate(message);
         }
       })
       .subscribe();

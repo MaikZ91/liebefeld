@@ -70,6 +70,21 @@ export const useChatMessages = (groupId: string, username: string) => {
     
     setLastSeen(new Date());
   }, [validGroupId, username]);
+
+  // Handle message updates (e.g., reactions)
+  const handleMessageUpdate = useCallback((updatedMsg: Message) => {
+    console.log('Message update received:', updatedMsg);
+    
+    setMessages((oldMessages) => {
+      return oldMessages.map(msg => {
+        if (msg.id === updatedMsg.id) {
+          console.log('Updating message reactions:', { messageId: msg.id, reactions: updatedMsg.reactions });
+          return { ...msg, reactions: updatedMsg.reactions };
+        }
+        return msg;
+      });
+    });
+  }, []);
   
   // Setup typing indicators
   useEffect(() => {
@@ -152,7 +167,7 @@ export const useChatMessages = (groupId: string, username: string) => {
     processedMessageIds.current.clear();
     
     // Set up message listener using the realtimeService
-    const channels = realtimeService.setupMessageListener(validGroupId, handleNewMessage);
+    const channels = realtimeService.setupMessageListener(validGroupId, handleNewMessage, handleMessageUpdate);
     channelsRef.current = [...channelsRef.current, ...channels];
     
     return () => {
@@ -167,7 +182,7 @@ export const useChatMessages = (groupId: string, username: string) => {
         }
       });
     };
-  }, [validGroupId, username, handleNewMessage]);
+  }, [validGroupId, username, handleNewMessage, handleMessageUpdate]);
   
   // Fetch messages when group changes
   useEffect(() => {
