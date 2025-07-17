@@ -305,6 +305,9 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
         hobbies: []
       });
 
+      // Send welcome message to community chat
+      await sendWelcomeMessageToChat();
+
       addBotMessage(`Du bist bereit! 🎉 Ich finde jetzt passende Events und Leute für dich in ${userData.city}.`, true, [
         {
           text: 'Los geht\'s!',
@@ -327,6 +330,34 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
         description: 'Fehler beim Speichern des Profils',
         variant: 'destructive'
       });
+    }
+  };
+
+  const sendWelcomeMessageToChat = async () => {
+    try {
+      // Get the city abbreviation for the group ID
+      const cityObject = cities.find(c => c.name.toLowerCase() === userData.city.toLowerCase());
+      const cityAbbr = cityObject ? cityObject.abbr : userData.city.toLowerCase().replace(/[^a-z]/g, '');
+      
+      // Create welcome message from MIA
+      const welcomeMessage = `Hallo ${userData.username}, willkommen bei uns in der Community! Stelle dich gerne vor. 
+
+Liebe Grüße
+Mia 💕`;
+
+      // Send message to city's community chat
+      await supabase
+        .from('chat_messages')
+        .insert({
+          group_id: cityAbbr,
+          sender: 'MIA',
+          text: welcomeMessage,
+          avatar: '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png'
+        });
+      
+      console.log(`Welcome message sent to ${cityAbbr} community chat for ${userData.username}`);
+    } catch (error) {
+      console.error('Error sending welcome message to chat:', error);
     }
   };
 
