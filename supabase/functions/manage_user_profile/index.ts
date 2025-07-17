@@ -69,6 +69,8 @@ async function getProfile(supabaseClient, username) {
 // Create or update user profile
 async function createOrUpdateProfile(supabaseClient, profile) {
   try {
+    console.log('CreateOrUpdateProfile called with:', JSON.stringify(profile, null, 2));
+    
     // Check if profile exists
     const { data: existingProfile } = await supabaseClient
       .from('user_profiles')
@@ -76,10 +78,13 @@ async function createOrUpdateProfile(supabaseClient, profile) {
       .eq('username', profile.username)
       .maybeSingle();
 
+    console.log('Existing profile found:', existingProfile ? 'Yes' : 'No');
+    
     let result;
 
     if (existingProfile) {
       // Update existing profile
+      console.log('Updating existing profile with avatar:', profile.avatar);
       const { data, error } = await supabaseClient
         .from('user_profiles')
         .update({
@@ -93,10 +98,15 @@ async function createOrUpdateProfile(supabaseClient, profile) {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Update error:', error);
+        throw error;
+      }
+      console.log('Profile updated successfully:', JSON.stringify(data, null, 2));
       result = data;
     } else {
       // Create new profile
+      console.log('Creating new profile with avatar:', profile.avatar);
       const { data, error } = await supabaseClient
         .from('user_profiles')
         .insert({
@@ -110,7 +120,11 @@ async function createOrUpdateProfile(supabaseClient, profile) {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Insert error:', error);
+        throw error;
+      }
+      console.log('Profile created successfully:', JSON.stringify(data, null, 2));
       result = data;
     }
 

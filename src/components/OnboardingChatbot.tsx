@@ -297,6 +297,8 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
         localStorage.setItem(AVATAR_KEY, userData.avatar);
       }
 
+      console.log('Onboarding: Saving profile with avatar URL:', userData.avatar);
+      
       await userService.createOrUpdateProfile({
         username: userData.username,
         avatar: userData.avatar || null,
@@ -304,6 +306,8 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
         favorite_locations: userData.city ? [userData.city] : [],
         hobbies: []
       });
+      
+      console.log('Onboarding: Profile saved successfully');
 
       // Send welcome message to community chat
       await sendWelcomeMessageToChat();
