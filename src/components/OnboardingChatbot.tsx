@@ -337,7 +337,8 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
     try {
       // Get the city abbreviation for the group ID
       const cityObject = cities.find(c => c.name.toLowerCase() === userData.city.toLowerCase());
-      const cityAbbr = cityObject ? cityObject.abbr : userData.city.toLowerCase().replace(/[^a-z]/g, '');
+      const cityAbbr = cityObject ? cityObject.abbr.toLowerCase() : userData.city.toLowerCase().replace(/[^a-z]/g, '');
+      const groupId = `${cityAbbr}_ausgehen`; // Use the correct format: cityAbbr_ausgehen
       
       // Create welcome message from MIA
       const welcomeMessage = `Hallo ${userData.username}, willkommen bei uns in der Community! Stelle dich gerne vor. 
@@ -345,17 +346,19 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
 Liebe Grüße
 Mia 💕`;
 
+      console.log(`Sending welcome message to group: ${groupId} for user: ${userData.username}`);
+
       // Send message to city's community chat
       await supabase
         .from('chat_messages')
         .insert({
-          group_id: cityAbbr,
+          group_id: groupId,
           sender: 'MIA',
           text: welcomeMessage,
           avatar: '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png'
         });
       
-      console.log(`Welcome message sent to ${cityAbbr} community chat for ${userData.username}`);
+      console.log(`Welcome message sent to ${groupId} community chat for ${userData.username}`);
     } catch (error) {
       console.error('Error sending welcome message to chat:', error);
     }
