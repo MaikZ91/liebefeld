@@ -73,16 +73,23 @@ export const useChatMessages = (groupId: string, username: string) => {
 
   // Handle message updates (e.g., reactions)
   const handleMessageUpdate = useCallback((updatedMsg: Message) => {
-    console.log('Message update received:', updatedMsg);
+    console.log('useChatMessages: Message update received:', updatedMsg);
     
     setMessages((oldMessages) => {
-      return oldMessages.map(msg => {
+      console.log('useChatMessages: Current messages before update:', oldMessages.length);
+      const updatedMessages = oldMessages.map(msg => {
         if (msg.id === updatedMsg.id) {
-          console.log('Updating message reactions:', { messageId: msg.id, reactions: updatedMsg.reactions });
+          console.log('useChatMessages: Updating message reactions:', { 
+            messageId: msg.id, 
+            oldReactions: msg.reactions, 
+            newReactions: updatedMsg.reactions 
+          });
           return { ...msg, reactions: updatedMsg.reactions };
         }
         return msg;
       });
+      console.log('useChatMessages: Messages after update:', updatedMessages.length);
+      return updatedMessages;
     });
   }, []);
   

@@ -77,6 +77,7 @@ export const reactionService = {
         }
         
         console.log('Reactions updated successfully in database');
+        console.log('Updated message reactions in DB:', { messageId, reactions });
       }
       
       return true;

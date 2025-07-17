@@ -75,6 +75,7 @@ export const messageService = {
         user_name: msg.sender,
         user_avatar: msg.avatar || '',
         group_id: msg.group_id,
+        reactions: Array.isArray(msg.reactions) ? msg.reactions as { emoji: string; users: string[] }[] : [], // Include reactions in formatted messages
         // We no longer add event_data directly here
       }));
       

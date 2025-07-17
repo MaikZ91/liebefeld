@@ -80,7 +80,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     typingUsers,
     chatBottomRef,
     chatContainerRef,
-    addOptimisticMessage
+    addOptimisticMessage,
+    setMessages
   } = useChatMessages(communityGroupId, username);
 
   const {
@@ -139,10 +140,48 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const handleReaction = async (messageId: string, emoji: string) => {
     try {
       console.log('FullPageChatBot: Toggling reaction', { messageId, emoji, username });
+      
+      // Optimistic update - update UI immediately
+      setMessages(prevMessages => {
+        return prevMessages.map(msg => {
+          if (msg.id === messageId) {
+            const reactions = Array.isArray(msg.reactions) ? [...msg.reactions] : [];
+            const existingReactionIndex = reactions.findIndex((r: any) => r.emoji === emoji);
+            
+            if (existingReactionIndex >= 0) {
+              // Reaction exists, toggle user
+              const reaction = reactions[existingReactionIndex];
+              const users = reaction.users || [];
+              const userIndex = users.indexOf(username);
+              
+              if (userIndex >= 0) {
+                // Remove user
+                users.splice(userIndex, 1);
+                if (users.length === 0) {
+                  reactions.splice(existingReactionIndex, 1);
+                }
+              } else {
+                // Add user
+                users.push(username);
+              }
+            } else {
+              // Add new reaction
+              reactions.push({ emoji, users: [username] });
+            }
+            
+            console.log('FullPageChatBot: Optimistic update applied', { messageId, reactions });
+            return { ...msg, reactions };
+          }
+          return msg;
+        });
+      });
+      
+      // Then update the database
       await chatService.toggleReaction(messageId, emoji, username);
       console.log('FullPageChatBot: Reaction toggled successfully');
     } catch (error) {
       console.error('FullPageChatBot: Error toggling reaction:', error);
+      // TODO: Revert optimistic update on error
     }
   };
 
