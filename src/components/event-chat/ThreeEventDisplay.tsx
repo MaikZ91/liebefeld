@@ -239,7 +239,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
         onMouseUp={handleMouseUp}
       >
         <div 
-          className="flex gap-2 transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing select-none"
+          className="flex gap-1.5 transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing select-none"
           style={{
             transform: `translateX(${translateX}px)`,
             transition: isDragging ? 'none' : 'transform 0.3s ease-out'
