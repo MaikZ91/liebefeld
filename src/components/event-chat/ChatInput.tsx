@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Heart, History, CalendarPlus, Send, Calendar, ChevronDown } from 'lucide-react';
 import { ChatInputProps } from './types';
 import { useEventContext } from '@/contexts/EventContext';
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
 
 const AnimatedText = ({ text, className = '' }: { text: string; className?: string }) => {
   return (
@@ -44,6 +45,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   placeholder, // Receive placeholder prop
   onJoinEventChat
 }) => {
+  const miaAvatarUrl = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png'
   const { events } = useEventContext();
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
   const [localInput, setLocalInput] = useState(input);
@@ -228,6 +230,11 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   return (
     <div className="flex items-end relative w-full max-w-md">
       <div className="absolute left-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 z-10">
+        {/* NEU: MIA Avatar */}
+        <Avatar className="h-6 w-6 border-2 border-white/50">
+          <AvatarImage src={miaAvatarUrl} />
+        </Avatar>
+        
         {activeChatModeValue === 'ai' ? (
           <>
             <Button
