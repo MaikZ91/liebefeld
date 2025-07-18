@@ -65,13 +65,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   }, [localInput]); // Re-run when localInput changes
 
 
-  const suggestions = [
-    "Frage nach Events...",
-    "Welche Events gibt es heute?",
-    "Was kann ich am Wochenende machen?",
-    "Gibt es Konzerte im Lokschuppen?",
-    "❤️ Zeige mir Events, die zu mir passen"
-  ];
+  const suggestions = [];
 
   const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
   const [displayText, setDisplayText] = useState('');
@@ -355,7 +349,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         placeholder={placeholderText}
         rows={1} // Start with 1 row
         className={cn(
-          "w-full bg-zinc-900 dark:bg-zinc-800 border-2 border-gray-700/50 rounded-xl py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-red-200 placeholder-red-500 pr-10 transition-all duration-200 hover:border-red-600 text-left min-h-[40px] overflow-hidden", // Removed shadow-md shadow-red-500/10
+          "w-full bg-black border-2 border-gray-700/50 rounded-xl py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-white placeholder-gray-400 pr-10 transition-all duration-200 hover:border-red-600 text-left min-h-[40px] overflow-hidden",
           getButtonWidth()
         )}
       />
