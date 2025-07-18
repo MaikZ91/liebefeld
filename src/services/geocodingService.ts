@@ -135,7 +135,7 @@ export const geocodeLocation = async (location: string, city: string = 'Bielefel
     case 'forum bielefeld':
       hardcodedResult = { lat: 52.0163, lng: 8.5298, display_name: 'Forum Bielefeld' };
       break;
-    case 'nrzp':
+    case 'nr.z.p':
     case 'kulturzentrum nummer zu platz':
       hardcodedResult = { lat: 52.027554, lng: 8.528664, display_name: 'NRZP' };
       break;
@@ -158,19 +158,19 @@ export const geocodeLocation = async (location: string, city: string = 'Bielefel
     case 'irish pub bielefeld':
       hardcodedResult = { lat: 52.0217, lng: 8.5332, display_name: 'Irish Pub Bielefeld' }; // Approximate
       break;
-    case 'stereo bielefeld':
+    case 'stereobielefeld':
     case 'stereo':
       hardcodedResult = { lat: 52.0224, lng: 8.5330, display_name: 'Stereo Bielefeld' }; // Approximate
       break;
     case 'cafe europa':
-    case 'cafe europa bielefeld':
+    case 'cafe_europa_bielefeld':
       hardcodedResult = { lat: 52.022940, lng: 8.532826, display_name: 'Cafe Europa' };
       break;
     case 'arminia bielefeld':
     case 'schücoarena':
       hardcodedResult = { lat: 52.031389, lng: 8.516944, display_name: 'SchücoArena (Arminia Bielefeld)' };
       break;
-    case 'cutie bielefeld':
+    case 'cutiebielefeld':
     case 'cutie':
       hardcodedResult = { lat: 52.027474, lng: 8.528685, display_name: 'Cutie Bielefeld' };
       break;
