@@ -45,6 +45,12 @@
     --sidebar-border: 0 0% 15%;
     --sidebar-ring: 0 100% 55%;
   }
+    /* Placeholder text color override */
+  textarea::placeholder,
+  input::placeholder {
+    color: white !important;
+    opacity: 1 !important;
+  }
 
   .dark {
     --background: 12 30% 10%;
