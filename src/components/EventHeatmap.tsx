@@ -100,12 +100,6 @@ const EventHeatmap: React.FC = () => {
   const [eventCoordinates, setEventCoordinates] = useState<Map<string, { lat: number; lng: number }>>(new Map());
 
   const chatLogic = useChatLogic();
- 
-  const handleChatInputFocus = () => {
-    setShowAIChat(true); // Open AI chat panel, which hides ThreeEventDisplay
-    setShowPerfectDayPanel(false); // Ensure perfect day panel is also hidden
-  };
-
 
   const mapRef = useRef<HTMLDivElement>(null);
 
