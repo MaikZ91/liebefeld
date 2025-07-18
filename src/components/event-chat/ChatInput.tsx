@@ -39,6 +39,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   inputRef,
   onAddEvent,
   showAnimatedPrompts,
+  onChatInputFocus,
   activeChatModeValue,
   activeCategory = 'Ausgehen',
   onCategoryChange,
@@ -355,6 +356,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         value={localInput}
         onChange={handleLocalInputChange}
         onKeyDown={handleLocalKeyPress}
+        onFocus={onChatInputFocus}
         placeholder={placeholderText}
         rows={1} // Start with 1 row
         className={cn(

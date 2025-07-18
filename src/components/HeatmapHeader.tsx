@@ -21,6 +21,7 @@ interface HeatmapHeaderProps {
     inputRef: React.RefObject<HTMLTextAreaElement>;
     onAddEvent?: () => void;
     showAnimatedPrompts: boolean;
+    onChatInputFocus?: () => void;
     activeChatModeValue: 'ai' | 'community';
     activeCategory?: string;
     onCategoryChange?: (category: string) => void;

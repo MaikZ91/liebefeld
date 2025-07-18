@@ -114,6 +114,7 @@ export const Layout: React.FC<LayoutProps> = ({
                   inputRef={chatInputProps.inputRef}
                   onAddEvent={chatInputProps.onAddEvent}
                   showAnimatedPrompts={chatInputProps.showAnimatedPrompts}
+                  onChatInputFocus={chatInputProps.onChatInputFocus}
                   activeChatModeValue={activeView || 'ai'}
                   activeCategory={chatInputProps.activeCategory}
                   onCategoryChange={chatInputProps.onCategoryChange}

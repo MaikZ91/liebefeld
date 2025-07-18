@@ -101,6 +101,7 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
         inputRef: chatLogic.inputRef,
         onAddEvent: onAddEvent,
         showAnimatedPrompts: chatLogic.showAnimatedPrompts,
+        onChatInputFocus: handleChatInputFocus, 
         activeCategory: activeCategory,
         onCategoryChange: handleCategoryChange
       });
