@@ -74,7 +74,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   const loopTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!showAnimatedPrompts) {
+    if (!showAnimatedPrompts || suggestions.length === 0) {
       setDisplayText('');
       return;
     }

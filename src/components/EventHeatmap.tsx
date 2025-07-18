@@ -547,30 +547,44 @@ const EventHeatmap: React.FC = () => {
       return;
     }
 
-    if (!map) {
-      console.log('[EventHeatmap] Initializing map for city:', selectedCity);
-      const initialCenter = getCityCenterCoordinates(selectedCity);
-
-      const leafletMap = L.map(mapRef.current, {
-        center: [initialCenter.lat, initialCenter.lng],
-        zoom: 13,
-        zoomControl: false,
-        preferCanvas: false
-      });
-      
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19,
-        className: 'map-tiles'
-      }).addTo(leafletMap);
-
-      setMap(leafletMap);
+    // Always reinitialize the map to prevent layout issues when switching between pages
+    if (map) {
+      map.remove();
+      setMap(null);
     }
 
+    console.log('[EventHeatmap] Initializing map for city:', selectedCity);
+    const initialCenter = getCityCenterCoordinates(selectedCity);
+
+    const leafletMap = L.map(mapRef.current, {
+      center: [initialCenter.lat, initialCenter.lng],
+      zoom: 13,
+      zoomControl: false,
+      preferCanvas: false
+    });
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19,
+      className: 'map-tiles'
+    }).addTo(leafletMap);
+
+    setMap(leafletMap);
+
+    // Force map to invalidate size after a short delay
+    setTimeout(() => {
+      leafletMap.invalidateSize();
+    }, 100);
+
     return () => {
-      // Cleanup only when component unmounts, not on city change
+      // Cleanup function to properly remove the map when component unmounts
+      if (map) {
+        console.log('[EventHeatmap] Cleaning up map...');
+        map.remove();
+        setMap(null);
+      }
     };
-  }, [mapRef.current]); // Remove selectedCity from dependencies
+  }, [mapRef.current, selectedCity]); // Add selectedCity back to ensure proper reinitialization
 
   // Separate useEffect for handling city changes with smooth animation
   useEffect(() => {
