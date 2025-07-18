@@ -10,6 +10,14 @@ import { ChatInputProps } from './types';
 import { useEventContext } from '@/contexts/EventContext';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 
+const AnimatedText = ({ text, className = '' }: { text: string; className?: string }) => {
+  return (
+    <span key={text} className={cn("inline-block whitespace-nowrap overflow-hidden animate-typing", className)}>
+      {text}
+    </span>
+  );
+};
+
 interface ExtendedChatInputProps extends ChatInputProps {
   activeCategory?: string;
   onCategoryChange?: (category: string) => void;
@@ -212,23 +220,20 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     if (activeChatModeValue === 'community') {
       return 'pl-[120px]';
     } else {
-      // Adjusted based on whether MIA avatar is present
-      const baseButtons = 2; // Heart, History
-      const addEventButton = onAddEvent ? 1 : 0;
-      const totalButtons = baseButtons + addEventButton;
-      return `pl-[${70 + (totalButtons * 30)}px]`; // Approximate pixel width
+      const baseButtons = 2;
+      const historyButton = globalQueries.length > 0 ? 1 : 0;
+      const totalButtons = baseButtons + historyButton;
+      return 'pl-[110px]';
     }
   };
 
   return (
     <div className="flex items-end relative w-full max-w-md">
       <div className="absolute left-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 z-10">
-        {/* Conditional rendering for MIA Avatar */}
-        {activeChatModeValue === 'ai' && (
-          <Avatar className="h-6 w-6 border-2 border-white/50">
-            <AvatarImage src={miaAvatarUrl} />
-          </Avatar>
-        )}
+        {/* NEU: MIA Avatar */}
+        <Avatar className="h-6 w-6 border-2 border-white/50">
+          <AvatarImage src={miaAvatarUrl} />
+        </Avatar>
         
         {activeChatModeValue === 'ai' ? (
           <>
@@ -271,7 +276,6 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
             <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
               <PopoverTrigger asChild>
                 <Button
-                  onClick={handleShareEvent}
                   variant="outline"
                   size="icon"
                   type="button"
@@ -376,7 +380,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
             : "bg-zinc-800 text-zinc-500"
         )}
       >
-        <Send className="h-4 w-4" />
+        <Send className="h-3 w-3" />
       </button>
     </div>
   );
