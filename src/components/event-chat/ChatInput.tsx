@@ -375,8 +375,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           }
         }}
         disabled={!localInput.trim() || isTyping}
-        className={cn( // Adjusted for height and vertical alignment
-          "absolute right-1 top-1/2 -translate-y-1/2 rounded-full p-0 flex-shrink-0 h-8 w-8",
+          className={cn( // Adjusted for height, vertical alignment and horizontal position
+          "absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-0 flex-shrink-0 h-8 w-8",
           localInput.trim() && !isTyping
             ? "bg-red-500 hover:bg-red-600 text-white"
             : "bg-zinc-800 text-zinc-500"
