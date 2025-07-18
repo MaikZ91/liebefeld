@@ -8,6 +8,7 @@ import {
   addNewEvent
 } from '../services/eventService';
 import { updateEventLikesInDb } from '../services/singleEventService';
+import { useUserProfile } from './chat/useUserProfile';
 
 // Remove the import of useEventContext from here
 // import { useEventContext } from '../contexts/EventContext';
@@ -18,6 +19,7 @@ export const useEvents = (selectedCity: string) => {
 
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true); // Ladezustand standardmäßig auf true
+  const { userProfile } = useUserProfile();
 
   // This useEffect will now re-run when selectedCity changes
   useEffect(() => {
@@ -74,9 +76,9 @@ export const useEvents = (selectedCity: string) => {
 
     try {
         const username = localStorage.getItem('selectedUsername') || null;
-        const avatarUrl = null; // TODO: Get from user profile when available
+        const avatarUrl = userProfile?.avatar || null; // Get avatar from user profile
 
-        console.log('[handleLikeEvent] Using username:', username);
+        console.log('[handleLikeEvent] Using username:', username, 'avatar:', avatarUrl);
 
         // Use setEvents with functional update to access current state
         setEvents(prevEvents => {
@@ -147,7 +149,7 @@ export const useEvents = (selectedCity: string) => {
         // Refresh events to get correct state
         refreshEvents();
     }
-  }, [refreshEvents]);
+  }, [refreshEvents, userProfile]);
 
   const handleRsvpEvent = useCallback(async (eventId: string, option: RsvpOption) => {
     try {
