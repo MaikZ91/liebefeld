@@ -228,7 +228,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   };
 
   return (
-    <div className="flex items-end relative w-full max-w-md">
+    <div className="flex items-center relative w-full max-w-md">
       <div className="absolute left-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 z-10">
                 {/* MIA Avatar (only shown in AI chat mode) */}
         {activeChatModeValue === 'ai' && (
