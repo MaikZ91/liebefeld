@@ -1391,7 +1391,7 @@ const EventHeatmap: React.FC = () => {
           top: 0,
           left: 0,
           right: 0,
-          bottom: '80px', // Bottom navigation space
+          bottom: '64px', // Bottom navigation space
         }}
       />
 
