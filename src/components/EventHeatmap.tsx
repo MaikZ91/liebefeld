@@ -1350,7 +1350,7 @@ const EventHeatmap: React.FC = () => {
       {!showPerfectDayPanel && !showAIChat && filteredEvents.length > 0 && (
         <div className="absolute bottom-0 left-0 right-0 z-[1000]">
           {/* Default Event Panel Display */}
-          <div className="p-4">
+          <div className="px-2 py-4">
             <ThreeEventDisplay
               panelData={panelData}
               onEventSelect={handleEventSelect}
