@@ -1186,7 +1186,7 @@ const EventHeatmap: React.FC = () => {
   const selectedCategoryDisplay = selectedCategory === 'all' ? 'Alle' : selectedCategory;
 
   return (
-    <div className="relative w-full h-screen overflow-hidden">
+    <div className="relative w-full h-full overflow-hidden" style={{ height: 'calc(100vh - 80px)' }}>
       {/* Live Ticker Header */}
       <HeatmapHeader selectedCity={selectedCity} chatInputProps={{
         input: aiChatInput,
@@ -1370,8 +1370,14 @@ const EventHeatmap: React.FC = () => {
         ref={mapRef}
         className="w-full h-full map-container"
         style={{
-          minHeight: '100vh',
+          height: 'calc(100vh - 80px)', // Subtract bottom navigation + padding
+          minHeight: 'calc(100vh - 80px)',
           zIndex: 1,
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: '80px', // Bottom navigation space
         }}
       />
 
