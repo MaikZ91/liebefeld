@@ -80,7 +80,7 @@ const EventHeatmap: React.FC = () => {
   const [perfectDayMessage, setPerfectDayMessage] = useState<string | null>(null);
   const [isPerfectDayLoading, setIsPerfectDayLoading] = useState(false);
   const [showPerfectDayPanel, setShowPerfectDayPanel] = useState(false);
-  const [isEventFormOpen, setIsEventFormOpen] = useState(false);
+  c0onst [isEventFormOpen, setIsEventFormOpen] = useState(false);
   const [liveStatusMessage, setLiveStatusMessage] = useState('');
   const [isPrivateChatOpen, setIsPrivateChatOpen] = useState(false);
   const [selectedUserForPrivateChat, setSelectedUserForPrivateChat] = useState<UserProfile | null>(null);
@@ -1364,7 +1364,7 @@ const EventHeatmap: React.FC = () => {
 
       {/* Default Event Display - Show 3 Events directly above navbar */}
       {!showPerfectDayPanel && !showAIChat && filteredEvents.length > 0 && showEventPanels && (
-        <div className="absolute bottom-16 left-0 right-0 z-[1000]">
+        <div className="absolute bottom-[72px] left-0 right-0 z-[1000]">
           {/* Default Event Panel Display */}
           <div className="px-2 py-4">
             <ThreeEventDisplay
