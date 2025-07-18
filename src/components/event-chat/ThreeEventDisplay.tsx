@@ -251,7 +251,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
             return (
               <div 
                 key={`${currentIndex}-${index}`}
-                className="flex-shrink-0 w-[35%] bg-black rounded-2xl overflow-hidden cursor-pointer transform transition-transform hover:scale-105"
+                className="flex-shrink-0 w-[32%] bg-black rounded-2xl overflow-hidden cursor-pointer transform transition-transform hover:scale-105"
                 onClick={() => handleEventClick(event as PanelEvent)}
               >
                 {/* Event Image */}
