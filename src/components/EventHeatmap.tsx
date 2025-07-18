@@ -1124,10 +1124,6 @@ const EventHeatmap: React.FC = () => {
       await handleLikeEvent(event.id);
 
       
-      toast({
-        title: "Event geliked!",
-        description: `Du hast "${event.title}" geliked.`,
-      });
     } catch (error: any) {
       console.error('Error liking event:', error);
       toast({
