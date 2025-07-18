@@ -1,9 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Users, Heart, MessageSquare, Calendar, ExternalLink, Music, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Users, Heart, MessageSquare } from 'lucide-react';
-import { PanelEventData, PanelEvent } from './types';
 import { cn } from '@/lib/utils';
+import { PanelEventData, PanelEvent } from './types';
+import { useEventContext } from '@/contexts/EventContext';
 import EventLikeAvatars from './EventLikeAvatars';
+import { motion } from 'framer-motion';
 
 interface ThreeEventDisplayProps {
   panelData: PanelEventData;
@@ -11,8 +13,8 @@ interface ThreeEventDisplayProps {
   onLikeEvent?: (eventId: string) => void;
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
   className?: string;
-  onSwipeDownToHide?: () => void; // New prop for swipe down gesture
-  onSwipeUpToShow?: () => void;   // New prop for swipe up gesture
+  onSwipeDownToHide?: () => void;
+  onSwipeUpToShow?: () => void;
 }
 
 const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
@@ -21,14 +23,16 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
   onLikeEvent,
   onJoinEventChat,
   className,
-  onSwipeDownToHide, // Destructure new prop
-  onSwipeUpToShow    // Destructure new prop
+  onSwipeDownToHide,
+  onSwipeUpToShow
 }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isDragging, setIsDragging] = useState(false); // Flag for horizontal dragging
+  const { handleLikeEvent, events } = useEventContext();
+  const [currentIndex, setCurrentIndex] = useState(panelData.currentIndex || 0);
+  const [isLiking, setIsLiking] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [translateX, setTranslateX] = useState(0);
-  const [initialClientY, setInitialClientY] = useState(0); // For vertical swipe
+  const [initialClientY, setInitialClientY] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   const containerRef = useRef<HTMLDivElement>(null);
@@ -37,27 +41,24 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
   const eventsPerPage = 3;
   const totalPages = Math.ceil(totalEvents / eventsPerPage);
 
-  // Get current 3 events to display based on page
   const currentPage = Math.floor(currentIndex / eventsPerPage);
   const startIndex = currentPage * eventsPerPage;
   const displayEvents = panelData.events.slice(startIndex, startIndex + eventsPerPage);
 
   const handleEventClick = (event: PanelEvent) => {
-    if (Math.abs(translateX) > 10) return; // Prevent click during swipe
+    if (Math.abs(translateX) > 10) return;
     if ('id' in event && onEventSelect) {
       onEventSelect(event.id);
     }
   };
 
-  // New state to track the primary drag direction
   const [dragDirection, setDragDirection] = useState<'none' | 'horizontal' | 'vertical'>('none');
 
-  // Touch handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     setStartX(e.touches[0].clientX);
     setInitialClientY(e.touches[0].clientY);
-    setTranslateX(0); // Reset translation on new touch
-    setDragDirection('none'); // Reset drag direction
+    setTranslateX(0);
+    setDragDirection('none');
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -66,15 +67,14 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
       const currentY = e.touches[0].clientY;
       const diffX = currentX - startX;
       const diffY = currentY - initialClientY;
-      const sensitivity = 10; // Minimum movement to determine direction
+      const sensitivity = 10;
 
       if (Math.abs(diffX) > sensitivity || Math.abs(diffY) > sensitivity) {
         if (Math.abs(diffX) > Math.abs(diffY)) {
           setDragDirection('horizontal');
-          setIsDragging(true); // Enable horizontal dragging
+          setIsDragging(true);
         } else {
           setDragDirection('vertical');
-          // Important: prevent default only when vertical drag is determined
           e.preventDefault(); 
         }
       }
@@ -85,14 +85,13 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
       const diffX = currentX - startX;
       setTranslateX(diffX);
     } else if (dragDirection === 'vertical') {
-      // Keep preventing default if confirmed vertical
       e.preventDefault(); 
     }
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     const horizontalSwipeThreshold = 80;
-    const verticalSwipeThreshold = 50; // pixels
+    const verticalSwipeThreshold = 50;
 
     if (dragDirection === 'horizontal') {
       if (Math.abs(translateX) > horizontalSwipeThreshold) {
@@ -106,25 +105,23 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
       const finalY = e.changedTouches[0].clientY;
       const swipeDistanceY = finalY - initialClientY;
 
-      if (swipeDistanceY > verticalSwipeThreshold) { // Swiped down
+      if (swipeDistanceY > verticalSwipeThreshold) {
         onSwipeDownToHide?.();
-      } else if (swipeDistanceY < -verticalSwipeThreshold) { // Swiped up
+      } else if (swipeDistanceY < -verticalSwipeThreshold) {
         onSwipeUpToShow?.();
       }
     }
     
-    // Reset all dragging states and direction
     setIsDragging(false);
     setTranslateX(0);
     setDragDirection('none');
   };
 
-  // Mouse handlers for desktop (similar logic to touch handlers)
   const handleMouseDown = (e: React.MouseEvent) => {
     setStartX(e.clientX);
     setInitialClientY(e.clientY);
-    setTranslateX(0); // Reset translation on new click
-    setDragDirection('none'); // Reset drag direction
+    setTranslateX(0);
+    setDragDirection('none');
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -133,15 +130,14 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
       const currentY = e.clientY;
       const diffX = currentX - startX;
       const diffY = currentY - initialClientY;
-      const sensitivity = 10; // Minimum movement to determine direction
+      const sensitivity = 10;
 
       if (Math.abs(diffX) > sensitivity || Math.abs(diffY) > sensitivity) {
         if (Math.abs(diffX) > Math.abs(diffY)) {
           setDragDirection('horizontal');
-          setIsDragging(true); // Enable horizontal dragging
+          setIsDragging(true);
         } else {
           setDragDirection('vertical');
-          // Important: prevent text selection for vertical drag
           e.preventDefault(); 
         }
       }
@@ -152,14 +148,13 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
       const diffX = currentX - startX;
       setTranslateX(diffX);
     } else if (dragDirection === 'vertical') {
-      // Keep preventing default if confirmed vertical
       e.preventDefault(); 
     }
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
     const horizontalSwipeThreshold = 80;
-    const verticalSwipeThreshold = 50; // pixels
+    const verticalSwipeThreshold = 50;
 
     if (dragDirection === 'horizontal') {
       if (Math.abs(translateX) > horizontalSwipeThreshold) {
@@ -173,44 +168,36 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
       const finalY = e.clientY;
       const swipeDistanceY = finalY - initialClientY;
 
-      if (swipeDistanceY > verticalSwipeThreshold) { // Swiped down
+      if (swipeDistanceY > verticalSwipeThreshold) {
         onSwipeDownToHide?.();
-      } else if (swipeDistanceY < -verticalSwipeThreshold) { // Swiped up
+      } else if (swipeDistanceY < -verticalSwipeThreshold) {
         onSwipeUpToShow?.();
       }
     }
 
-    // Reset all dragging states and direction
     setIsDragging(false);
     setTranslateX(0);
     setDragDirection('none');
   };
 
-  // Add global mouse event listeners (for when drag ends outside the component)
   React.useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
-      // This listener is primarily for when the mouse is dragged outside the component before release.
-      // It only needs to track if dragging is ongoing, not trigger page changes directly.
       if (dragDirection === 'horizontal' && containerRef.current && !containerRef.current.contains(e.target as Node)) {
         const diffX = e.clientX - startX;
         setTranslateX(diffX);
       }
-      // Vertical dragging is handled by local mousemove, and its end is also local.
     };
 
     const handleGlobalMouseUp = () => {
-      // This handles the case where the mouse button is released outside the component
-      // after a drag started inside it.
       if (dragDirection === 'horizontal') {
         setIsDragging(false);
-        setTranslateX(0); // Snap back if not released over the component
+        setTranslateX(0);
       }
-      // Vertical drag reset is handled by the local mouseUp, so no need here.
-      setDragDirection('none'); // Ensure direction is reset if mouseup happens globally
+      setDragDirection('none');
     };
 
 
-    if (dragDirection !== 'none') { // Only attach if a drag is potentially active
+    if (dragDirection !== 'none') {
       document.addEventListener('mousemove', handleGlobalMouseMove);
       document.addEventListener('mouseup', handleGlobalMouseUp);
     }
@@ -225,12 +212,18 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
   if (displayEvents.length === 0) return null;
 
   return (
-    <div className={cn("w-full space-y-4", className)}>
-
-      {/* Three Event Cards with Swipe */}
-      <div 
-        ref={containerRef}
-        className="overflow-hidden px-1"
+    <div className={cn(
+      "relative bg-gradient-to-br from-gray-900 to-black rounded-xl overflow-hidden shadow-2xl max-w-md mx-auto select-none",
+      className
+    )}>
+      {/* Swipeable Card Container */}
+      <div
+        ref={panelRef}
+        className="transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing"
+        style={{
+          transform: `translateX(${translateX}px)`,
+          transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+        }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -238,120 +231,137 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
       >
-        <div 
-          className="flex gap-1.5 transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing select-none"
-          style={{
-            transform: `translateX(${translateX}px)`,
-            transition: isDragging ? 'none' : 'transform 0.3s ease-out'
-          }}
-        >
-          {displayEvents.map((event, index) => {
-            const imageUrl = 'image_url' in event ? event.image_url : '/placeholder-event.jpg';
-            
-            return (
-              <div 
-                key={`${currentIndex}-${index}`}
-                className="flex-shrink-0 w-[32%] bg-black rounded-2xl overflow-hidden cursor-pointer transform transition-transform hover:scale-105"
-                onClick={() => handleEventClick(event as PanelEvent)}
+        {/* Slide Image */}
+        <div className="relative h-48 overflow-hidden">
+          <img
+            src={currentSlide.imageUrl}
+            alt={currentSlide.title}
+            className="w-full h-full object-cover pointer-events-none"
+            onError={(e) => {
+              e.currentTarget.src = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          
+          {/* Navigation Arrows */}
+          {slideData.slides.length > 1 && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/40 text-white rounded-full h-8 w-8"
+                onClick={handlePrevious}
               >
-                {/* Event Image */}
-                <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={imageUrl}
-                    alt={event.title}
-                    className="w-full h-full object-cover pointer-events-none"
-                    onError={(e) => {
-                      e.currentTarget.src = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                  
-                  {/* Action Buttons */}
-                  <div className="absolute top-2 right-2 flex gap-1">
-                    {/* Join Chat Button */}
-                    {onJoinEventChat && 'id' in event && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="bg-red-800/50 hover:bg-red-700/60 text-white text-xs px-2 py-1 h-auto rounded"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          await onJoinEventChat(event.id, event.title);
-                        }}
-                      >
-                        <MessageSquare className="w-3 h-3 mr-1" />
-                        Chat
-                      </Button>
-                    )}
-                    
-                    {/* Like Button */}
-                    {onLikeEvent && 'id' in event && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="bg-black/50 hover:bg-black/70 text-white rounded-full p-2"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          // No 'isLiking' state here, using EventHeatmap's handleLikeEvent
-                          await onLikeEvent(event.id);
-                          // Trigger refresh of avatars after like
-                          setRefreshTrigger(prev => prev + 1);
-                        }}
-                      >
-                        <Heart className="w-4 h-4" />
-                        <span className="ml-1 text-sm">{'likes' in event ? event.likes || 0 : 0}</span>
-                      </Button>
-                    )}
-                  </div>
-                  
-                  {/* Event Details mit Like Avatars */}
-                  <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <h3 className="text-white font-bold text-sm mb-1 line-clamp-4 leading-tight">
-                      {event.title}
-                    </h3>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="text-gray-300 text-xs">
-                        {'time' in event && event.time && event.time}
-                        {'location' in event && event.location && ` • ${event.location}`}
-                        
-                      </div>
-                      
-                      {/* Like Avatars */}
-                      {'liked_by_users' in event && event.liked_by_users && (
-                        <div>
-                          <EventLikeAvatars 
-                            likedByUsers={event.liked_by_users} 
-                            maxVisible={3}
-                            size="xs"
-                            className="ml-2"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/40 text-white rounded-full h-8 w-8"
+                onClick={handleNext}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+          
+          {/* Slide Index Indicator */}
+          {slideData.slides.length > 1 && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+              {slideData.slides.map((_, index) => (
+                <div
+                  key={index}
+                  className={cn(
+                    "w-2 h-2 rounded-full transition-all cursor-pointer",
+                    index === currentIndex ? "bg-white" : "bg-white/40"
+                  )}
+                  onClick={() => setCurrentIndex(index)}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Swipe Indicators */}
+          {slideData.slides.length > 1 && isDragging && (
+            <>
+              <div className={cn(
+                "absolute left-4 top-1/2 -translate-y-1/2 transition-opacity",
+                translateX > 50 ? "opacity-100" : "opacity-30"
+              )}>
+                <div className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                  Zurück
                 </div>
               </div>
-            );
-          })}
+              <div className={cn(
+                "absolute right-4 top-1/2 -translate-y-1/2 transition-opacity",
+                translateX < -50 ? "opacity-100" : "opacity-30"
+              )}>
+                <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                  Weiter
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+        
+        {/* Slide Content */}
+        <div className="p-4 space-y-3">
+          {/* Icon and Title */}
+          <div className="flex items-center gap-3">
+            {currentSlide.iconType && (
+              <div className="text-red-400">
+                {renderIcon(currentSlide.iconType)}
+              </div>
+            )}
+            <h3 className="text-lg font-semibold text-white line-clamp-2">
+              {currentSlide.title}
+            </h3>
+          </div>
+          
+          {/* Description */}
+          <p className="text-gray-300 text-sm line-clamp-3">
+            {currentSlide.description}
+          </p>
+          
+          {/* Action Button */}
+          <Button
+            onClick={handleClick}
+            className="w-full font-medium mt-4 bg-red-500 hover:bg-red-600 text-white"
+          >
+            {currentSlide.buttonText}
+            <ExternalLink className="w-4 h-4 ml-2" />
+          </Button>
         </div>
       </div>
 
-      {/* Swipe Indicators */}
-      {totalEvents > 3 && (
-        <div className="flex justify-center gap-2">
-          {Array.from({ length: totalPages }).map((_, index) => (
-            <div
-              key={index}
-              className={cn(
-                "w-2 h-2 rounded-full transition-all",
-                currentPage === index ? "bg-white" : "bg-white/40"
-              )}
-            />
-          ))}
+      {/* Swipe Instructions (Horizontal) */}
+      {sortedEvents.length > 1 && !isDragging && dragDirection !== 'vertical' && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-gray-400 opacity-70">
+          ← Wischen zum Navigieren →
         </div>
       )}
 
+      {/* Subtle Swipe Down to Hide Indicator */}
+      {onSwipeDownToHide && !isDragging && (
+        <motion.div
+          className="absolute bottom-1 right-1/2 translate-x-1/2 text-gray-500 opacity-50 flex flex-col items-center select-none"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            opacity: { duration: 0.5, delay: 1 },
+            y: {
+              duration: 1.5,
+              repeat: Infinity,
+              repeatType: "reverse",
+              ease: "easeInOut",
+              delay: 1
+            }
+          }}
+        >
+          <ChevronDown className="h-4 w-4" />
+          <span className="text-[9px] mt-0.5 whitespace-nowrap">nach unten wischen</span>
+        </motion.div>
+      )}
     </div>
   );
 };
