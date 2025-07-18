@@ -98,6 +98,10 @@ const EventHeatmap: React.FC = () => {
   const [aiChatExternalSendHandler, setAiChatExternalSendHandler] = useState<((input?: string | any) => Promise<void>) | null>(null); // Updated type
 
   const [eventCoordinates, setEventCoordinates] = useState<Map<string, { lat: number; lng: number }>>(new Map());
+  
+  // NEW STATE FOR PANELS VISIBILITY
+  const [showEventPanels, setShowEventPanels] = useState(true);
+
 
   const chatLogic = useChatLogic();
 
@@ -1128,7 +1132,7 @@ const EventHeatmap: React.FC = () => {
       console.error('Error liking event:', error);
       toast({
         title: "Fehler",
-        description: "Ein Fehler ist aufgetreten.",
+        description: "Ein Fehler ist aufgetreten",
         variant: "destructive"
       });
     }
@@ -1345,9 +1349,21 @@ const EventHeatmap: React.FC = () => {
           Ich bin hier!
         </Button>
       </div>
+      
+      {/* Button to show events panel again if hidden */}
+      {!showEventPanels && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000]">
+          <Button
+            onClick={() => setShowEventPanels(true)}
+            className="bg-red-500 hover:bg-red-600 text-white rounded-full px-4 py-2 text-sm"
+          >
+            Events anzeigen
+          </Button>
+        </div>
+      )}
 
       {/* Default Event Display - Show 3 Events directly above navbar */}
-      {!showPerfectDayPanel && !showAIChat && filteredEvents.length > 0 && (
+      {!showPerfectDayPanel && !showAIChat && filteredEvents.length > 0 && showEventPanels && (
         <div className="absolute bottom-0 left-0 right-0 z-[1000]">
           {/* Default Event Panel Display */}
           <div className="px-2 py-4">
@@ -1357,6 +1373,7 @@ const EventHeatmap: React.FC = () => {
               onLikeEvent={handleEventLike}
               onJoinEventChat={handleJoinEventChat}
               className="w-full"
+              onSwipeDownToHide={() => setShowEventPanels(false)} // Pass the prop
             />
           </div>
         </div>
