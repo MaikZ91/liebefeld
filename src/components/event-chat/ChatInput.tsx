@@ -232,7 +232,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
       <div className="absolute left-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 z-10">
                 {/* MIA Avatar (only shown in AI chat mode) */}
         {activeChatModeValue === 'ai' && (
-          <Avatar className="h-6 w-6 border-2 border-white/50">
+          <Avatar className="h-8 w-8 border-2 border-white/50">
             <AvatarImage src={miaAvatarUrl} />
           </Avatar>
         )}
