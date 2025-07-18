@@ -66,7 +66,7 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
               onAddEvent={chatInputProps.onAddEvent}
               showAnimatedPrompts={chatInputProps.showAnimatedPrompts}
               activeChatModeValue="ai"
-              placeholder="Frage nach Events..."
+              placeholder="Frage MIA nach Events..."
             />
           </div>
         </div>
