@@ -158,9 +158,9 @@ export const geocodeLocation = async (location: string, city: string = 'Bielefel
     case 'irish pub bielefeld':
       hardcodedResult = { lat: 52.0217, lng: 8.5332, display_name: 'Irish Pub Bielefeld' }; // Approximate
       break;
-    case 'stereobielefeld':
-      hardcodedResult = { lat: 52.0224, lng: 8.5330, display_name: 'Stereo Bielefeld' }; // Approximate
-      break;
+    //case 'stereobielefeld':
+     //hardcodedResult = { lat: 52.0224, lng: 8.5330, display_name: 'Stereo Bielefeld' }; // Approximate
+      //break;
     case 'cafe europa':
     case 'cafe_europa_bi':
       hardcodedResult = { lat: 52.022940, lng: 8.532826, display_name: 'Cafe Europa' };
