@@ -126,7 +126,7 @@ export const Layout: React.FC<LayoutProps> = ({
         </header>
       )}
       
-      <main className={cn("pb-20", hideHeader ? "pt-0" : chatInputProps && (pathname === '/chat' || pathname === '/') ? "pt-32" : "pt-[104px]")}> 
+      main className={cn("pb-16", hideHeader ? "pt-0" : chatInputProps && (pathname === '/chat' || pathname === '/') ? "pt-32" : "pt-[104px]")}>  
         {children}
       </main>
       
