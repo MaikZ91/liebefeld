@@ -564,7 +564,7 @@ const EventHeatmap: React.FC = () => {
     });
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
+      attribution: '',
       maxZoom: 19,
       className: 'map-tiles'
     }).addTo(leafletMap);
