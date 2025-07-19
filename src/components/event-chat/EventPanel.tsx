@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, Clock, MapPin, Heart, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface Event {
@@ -24,63 +24,53 @@ const EventPanel: React.FC<EventPanelProps> = ({ event, onJoinChat }) => {
     }
   };
   return (
-    <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-2 mb-2 relative">
-      <div className="font-bold text-sm mb-1 text-white !important" style={{color: 'white !important'}}>
-        {event.title}
-      </div>
-      <div className="flex flex-col gap-1">
-        {/* Combined date/time and location in a single row */}
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-1 text-xs">
-            {(event.date || event.time) && (
-              <div className="flex items-center text-xs">
-                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1 flex-shrink-0">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-                <span style={{color: 'white'}}>{event.date ? `${event.date} ` : ''}{event.time || ''}</span>
-              </div>
-            )}
-            
-            <span style={{color: 'white'}} className="mx-1">•</span>
-            
-            {event.location && (
-              <div className="flex items-center text-xs">
-                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1 flex-shrink-0">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                  <circle cx="12" cy="10" r="3"></circle>
-                </svg>
-                <span style={{color: 'white'}} className="truncate max-w-[120px]">{event.location}</span>
-              </div>
-            )}
-          </div>
+    <div className="bg-card border border-border rounded-lg p-4 mb-3 hover:bg-card/80 transition-colors">
+      <div className="flex items-start gap-4">
+        {/* Event Image Placeholder */}
+        <div className="w-16 h-16 bg-primary rounded-full flex-shrink-0 flex items-center justify-center">
+          <span className="text-primary-foreground font-bold text-sm">
+            {event.title.substring(0, 2).toUpperCase()}
+          </span>
         </div>
         
-        {/* Action buttons positioned higher up, before category badge */}
-        <div className="flex justify-end gap-1 mt-0.5">
-          <Button 
-            onClick={handleJoinChat}
-            className="bg-red-800/50 hover:bg-red-700/60 text-white text-xs px-2 py-0.5 h-auto rounded"
-            disabled={!event.id}
-          >
-            <MessageSquare className="w-3 h-3 mr-1" />
-            Join Chat
-          </Button>
-          <button className="bg-red-800/50 hover:bg-red-700/60 text-white text-xs px-2 py-0.5 rounded">
-            Share
-          </button>
-          <button className="bg-red-800/50 hover:bg-red-700/60 text-white text-xs px-2 py-0.5 rounded">
-            Add
-          </button>
-        </div>
-        
-        {event.category && (
-          <div>
-            <span className="bg-red-500/70 text-white text-xs px-2 py-0.5 rounded inline-block">
-              {event.category}
-            </span>
+        {/* Event Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-foreground text-base mb-1 line-clamp-2">
+                {event.title}
+              </h3>
+              
+              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
+                {(event.date || event.time) && (
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    <span>{event.time || ''} • {event.location || ''}</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Users className="w-3 h-3" />
+                <span>6 Zusagen</span>
+              </div>
+            </div>
+            
+            {/* Right side - Heart and stats */}
+            <div className="flex flex-col items-end gap-2 ml-4">
+              <button className="p-1 hover:bg-muted rounded">
+                <Heart className="w-5 h-5 text-primary fill-primary" />
+              </button>
+              <span className="text-lg font-bold text-foreground">6</span>
+              
+              {event.category && (
+                <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
+                  Neu
+                </span>
+              )}
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
