@@ -21,6 +21,7 @@ import UserDirectory from '@/components/users/UserDirectory';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { messageService } from '@/services/messageService';
 import { eventChatService } from '@/services/eventChatService';
+import EventChatWindow from '@/components/event-chat/EventChatWindow';
 
 const ChatPage = () => {
   // Get view mode from URL search params or navigation state
@@ -51,6 +52,13 @@ const ChatPage = () => {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const lastReadMessageTimestamps = useRef<Map<string, string>>(new Map());
   const messageSubscriptionChannelRef = useRef<any>(null);
+  
+  // Event chat window state
+  const [eventChatWindow, setEventChatWindow] = useState<{
+    eventId: string;
+    eventTitle: string;
+    isOpen: boolean;
+  } | null>(null);
 
   // Function to show add event modal
   const handleAddEvent = () => {
@@ -78,8 +86,12 @@ const ChatPage = () => {
       const groupId = await eventChatService.joinEventChat(eventId, eventTitle);
       
       if (groupId) {
-        // Switch to community view to show the chat
-        setActiveView('community');
+        // Open event chat window
+        setEventChatWindow({
+          eventId,
+          eventTitle,
+          isOpen: true
+        });
         
         toast({
           title: "Event Chat beigetreten",
@@ -101,6 +113,11 @@ const ChatPage = () => {
         variant: "destructive"
       });
     }
+  };
+
+  // Function to close event chat window
+  const handleCloseEventChat = () => {
+    setEventChatWindow(null);
   };
 
   // Updated function for profile completion
@@ -314,6 +331,16 @@ const ChatPage = () => {
         
         {/* Replace UsernameDialog with ProfileEditor */}
         <ProfileEditor open={isProfileEditorOpen} onOpenChange={setIsProfileEditorOpen} currentUser={userProfile} onProfileUpdate={handleProfileUpdate} />
+        
+        {/* Event Chat Window */}
+        {eventChatWindow && (
+          <EventChatWindow
+            eventId={eventChatWindow.eventId}
+            eventTitle={eventChatWindow.eventTitle}
+            isOpen={eventChatWindow.isOpen}
+            onClose={handleCloseEventChat}
+          />
+        )}
       </Layout>
     </>
   );

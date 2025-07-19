@@ -18,15 +18,8 @@ export const eventChatService = {
         return null;
       }
 
-      // Check if this is the user's first message in this group
-      // If so, send a mirror message to community chat
-      const messages = await chatService.getMessages(groupId, 1);
-      const userMessages = messages.filter(msg => msg.sender === username);
-      
-      if (userMessages.length === 0) {
-        // This would be the user's first message, so send mirror message
-        await setupService.sendEventJoinMessage(username, eventTitle, eventId);
-      }
+      // Always send join message to community chat when joining event chat
+      await setupService.sendEventJoinMessage(username, eventTitle, eventId);
 
       return groupId;
     } catch (error) {
