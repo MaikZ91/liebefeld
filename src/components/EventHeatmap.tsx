@@ -54,7 +54,7 @@ L.Icon.Default.mergeOptions({
 const tribeSpots = [
   { name: 'Sparrenburg', lat: 52.0149, lng: 8.52678 },
   { name: 'Obersee', lat: 52.056974, lng: 8.563763 },
-  { name: 'Lutterviertel', lat: 52.02197, lng: 8.53974 },
+  { name: 'Lutterviertel', lat: 52.017241, lng: 8.538027 },
   { name: 'Gellershagen Park', lat: 52.05, lng: 8.5167 },
   { name: 'Klosterplatz', lat: 52.0208, lng: 8.5286 },
   { name: 'Nordpark', lat: 52.0368, lng: 8.5290 },
