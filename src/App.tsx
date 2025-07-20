@@ -23,8 +23,8 @@ import OnboardingManager from './components/OnboardingManager';
 
 const queryClient = new QueryClient();
 
-function App() {
-  // Initialize Supabase and Firebase FCM when the app loads
+// Separate component for initialization that runs inside Router context
+function AppInitializer() {
   useEffect(() => {
     // Initialize Supabase
     initializeSupabase()
@@ -40,6 +40,10 @@ function App() {
     initializeFCM();
   }, []);
 
+  return null;
+}
+
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -48,6 +52,7 @@ function App() {
             <Toaster />
             <Sonner position="top-center" />
             <BrowserRouter>
+              <AppInitializer />
               <Routes>
                 {/* Heatmap als Hauptseite, jetzt von Layout umhüllt */}
                 <Route path="/" element={<Layout><Heatmap /></Layout>} />
