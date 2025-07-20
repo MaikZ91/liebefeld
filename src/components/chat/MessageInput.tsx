@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Loader2, Send, Calendar, ChevronDown } from 'lucide-react';
+import { Loader2, Send, Calendar, ChevronDown, Bell } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { EventShare } from '@/types/chatTypes';
 import { messageService } from '@/services/messageService';
 import { useEventContext } from '@/contexts/EventContext';
+import { initializeFCM } from '@/services/firebaseMessaging';
+import { useToast } from '@/hooks/use-toast';
 
 interface MessageInputProps {
   username: string;
@@ -49,6 +51,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { events } = useEventContext(); // Zugriff auf Events
+  const { toast } = useToast();
 
   // Ensure we have a valid UUID for groupId
   const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
@@ -157,6 +160,39 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
+  const handleEnablePushNotifications = async () => {
+    try {
+      const token = await initializeFCM();
+      if (token) {
+        // Save token to database
+        const { error } = await supabase
+          .from('push_tokens')
+          .insert({ token });
+
+        if (error) {
+          console.error('Error saving push token:', error);
+          toast({
+            title: "Fehler",
+            description: "Push-Token konnte nicht gespeichert werden.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Erfolgreich!",
+            description: "Push-Benachrichtigungen wurden aktiviert.",
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error enabling push notifications:', error);
+      toast({
+        title: "Fehler", 
+        description: "Push-Benachrichtigungen konnten nicht aktiviert werden.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Event-Inhalt für das Popover
   const realEventSelectContent = (
     <div className="max-h-[300px] overflow-y-auto">
@@ -221,7 +257,19 @@ const MessageInput: React.FC<MessageInputProps> = ({
         {/* Buttons auf der linken Seite des Inputs (absolute Positionierung) */}
         {mode === 'community' && ( // Only show in community mode
           <div className="flex items-center gap-1 absolute left-1 top-1">
-            {/* Event teilen Button (jetzt zuerst) */}
+            {/* Push Notification Button */}
+            <Button
+              onClick={handleEnablePushNotifications}
+              variant="outline"
+              size="icon"
+              type="button"
+              className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
+              title="Push-Benachrichtigungen aktivieren"
+            >
+              <Bell className="h-3 w-3" />
+            </Button>
+
+            {/* Event teilen Button */}
             <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
               <PopoverTrigger asChild>
                 <Button
