@@ -14,6 +14,7 @@ import CSAEPolicies from "./pages/CSAEPolicies";
 import Chat from "./pages/Chat";
 import { EventProvider } from "./contexts/EventContext";
 import { initializeSupabase } from "./utils/initSupabase";
+import { initializeFCM } from "./services/firebaseMessaging";
 import Heatmap from '@/pages/Heatmap';
 import { Layout } from './components/layouts/Layout';
 import UserDirectory from "./components/users/UserDirectory";
@@ -23,8 +24,9 @@ import OnboardingManager from './components/OnboardingManager';
 const queryClient = new QueryClient();
 
 function App() {
-  // Initialize Supabase when the app loads
+  // Initialize Supabase and Firebase FCM when the app loads
   useEffect(() => {
+    // Initialize Supabase
     initializeSupabase()
       .then(success => {
         if (success) {
@@ -33,6 +35,9 @@ function App() {
           console.warn("Supabase initialization had issues");
         }
       });
+
+    // Initialize Firebase Cloud Messaging
+    initializeFCM();
   }, []);
 
   return (
