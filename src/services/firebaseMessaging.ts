@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken } from "firebase/messaging";
+import { supabase } from "@/integrations/supabase/client";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAoSNvosYckg1hCRIbmEOkVVAXEEB6qAUI",
@@ -24,8 +25,9 @@ export const initializeFCM = async () => {
     });
 
     if (token) {
+      const { data, error } = await supabase .from('push_tokens').insert({ token });
       console.log("✅ FCM Token:", token);
-      alert("Dein Firebase Push-Token:\n" + token);
+      //alert("Dein Firebase Push-Token:\n" + token);
       return token;
     } else {
       console.warn("⚠️ Kein Token erhalten. Berechtigungen fehlen?");
