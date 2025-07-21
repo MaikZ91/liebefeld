@@ -14,6 +14,9 @@ verify_jwt = false
 [functions.send-push]
 verify_jwt = false
 
+[functions.weekly-mia-message]
+verify_jwt = false
+
 [db]
 port = 54322
 
