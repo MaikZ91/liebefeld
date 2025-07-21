@@ -96,15 +96,19 @@ export const setupService = {
    */
   async sendEventJoinMessage(username: string, eventTitle: string, eventId: string): Promise<boolean> {
     try {
+      // Determine the community chat group based on the current location/context
+      // For now, default to bi_ausgehen, but this could be made dynamic based on user's city
+      const communityGroupId = 'bi_ausgehen'; // This could be dynamic in the future
+      
       const message = `${username} ist dem Eventchannel "${eventTitle}" beigetreten 🎉`;
       
       const { error } = await supabase
         .from('chat_messages')
         .insert({
-          group_id: messageService.DEFAULT_GROUP_ID,
+          group_id: communityGroupId,
           text: message,
           sender: 'System',
-          avatar: null,
+          avatar: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png',
           event_id: eventId,
           event_title: eventTitle
         });
@@ -114,7 +118,7 @@ export const setupService = {
         return false;
       }
 
-      console.log('Event join message sent to community chat');
+      console.log('Event join message sent to community chat:', communityGroupId);
       return true;
     } catch (error) {
       console.error('Error in sendEventJoinMessage:', error);
