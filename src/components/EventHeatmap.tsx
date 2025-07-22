@@ -424,7 +424,6 @@ const EventHeatmap: React.FC = () => {
       });
     }
   };
-  };
 
   const updateUserPosition = async (username: string, newLat: number, newLng: number) => {
     try {
