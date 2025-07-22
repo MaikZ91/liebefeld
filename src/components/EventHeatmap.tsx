@@ -41,6 +41,7 @@ import { useChatLogic } from '@/components/event-chat/useChatLogic';
 import { geocodeLocation, loadCachedCoordinates, geocodeMultipleLocations } from '@/services/geocodingService';
 import TribeFinder from './TribeFinder';
 import { eventChatService } from '@/services/eventChatService';
+import EventChatWindow from '@/components/event-chat/EventChatWindow';
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -101,6 +102,13 @@ const EventHeatmap: React.FC = () => {
   
   // NEW STATE FOR PANELS VISIBILITY
   const [showEventPanels, setShowEventPanels] = useState(true);
+
+  // Event Chat Window State
+  const [eventChatWindow, setEventChatWindow] = useState<{
+    eventId: string;
+    eventTitle: string;
+    isOpen: boolean;
+  } | null>(null);
 
 
   const chatLogic = useChatLogic();
@@ -389,9 +397,16 @@ const EventHeatmap: React.FC = () => {
       const groupId = await eventChatService.joinEventChat(eventId, eventTitle);
       
       if (groupId) {
+        // Open event chat window
+        setEventChatWindow({
+          eventId,
+          eventTitle,
+          isOpen: true
+        });
+        
         toast({
-          title: "Event Chat beigetreten",
-          description: `Du bist dem Chat für "${eventTitle}" beigetreten`,
+          title: "Event Chat geöffnet",
+          description: `Chat für "${eventTitle}" wurde geöffnet`,
         });
       } else {
         toast({
@@ -408,6 +423,7 @@ const EventHeatmap: React.FC = () => {
         variant: "destructive"
       });
     }
+  };
   };
 
   const updateUserPosition = async (username: string, newLat: number, newLng: number) => {
@@ -1584,6 +1600,16 @@ const EventHeatmap: React.FC = () => {
         open={isTribeFinderOpen}
         onOpenChange={setIsTribeFinderOpen}
       />
+
+      {/* Event Chat Window */}
+      {eventChatWindow && (
+        <EventChatWindow
+          eventId={eventChatWindow.eventId}
+          eventTitle={eventChatWindow.eventTitle}
+          isOpen={eventChatWindow.isOpen}
+          onClose={() => setEventChatWindow(null)}
+        />
+      )}
     </div>
   );
 };
