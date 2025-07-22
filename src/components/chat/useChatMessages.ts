@@ -28,6 +28,28 @@ export const useChatMessages = (groupId: string, username: string) => {
     messagesRef.current = messages;
   }, [messages]);
   
+  // Handle message updates (e.g., reactions)
+  const handleMessageUpdate = useCallback((updatedMsg: Message) => {
+    console.log('useChatMessages: Message update received:', updatedMsg);
+    
+    setMessages((oldMessages) => {
+      console.log('useChatMessages: Current messages before update:', oldMessages.length);
+      const updatedMessages = oldMessages.map(msg => {
+        if (msg.id === updatedMsg.id) {
+          console.log('useChatMessages: Updating message reactions:', { 
+            messageId: msg.id, 
+            oldReactions: msg.reactions, 
+            newReactions: updatedMsg.reactions 
+          });
+          return { ...msg, reactions: updatedMsg.reactions };
+        }
+        return msg;
+      });
+      console.log('useChatMessages: Messages after update:', updatedMessages.length);
+      return updatedMessages;
+    });
+  }, []);
+
   // Handle new message
   const handleNewMessage = useCallback((newMsg: Message) => {
     console.log('New message received:', newMsg);
@@ -152,7 +174,7 @@ export const useChatMessages = (groupId: string, username: string) => {
     processedMessageIds.current.clear();
     
     // Set up message listener using the realtimeService
-    const channels = realtimeService.setupMessageListener(validGroupId, handleNewMessage);
+    const channels = realtimeService.setupMessageListener(validGroupId, handleNewMessage, handleMessageUpdate);
     channelsRef.current = [...channelsRef.current, ...channels];
     
     return () => {
@@ -167,7 +189,7 @@ export const useChatMessages = (groupId: string, username: string) => {
         }
       });
     };
-  }, [validGroupId, username, handleNewMessage]);
+  }, [validGroupId, username, handleNewMessage, handleMessageUpdate]);
   
   // Fetch messages when group changes
   useEffect(() => {
