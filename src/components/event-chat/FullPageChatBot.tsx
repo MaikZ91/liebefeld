@@ -230,6 +230,45 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   return (
     <div className="flex flex-col h-screen min-h-0">
+      {/* Filter UI für Community Chat - immer sichtbar wenn Community-Modus */}
+      {activeChatModeValue === 'community' && (
+        <div className="sticky top-0 z-10 bg-black border-b border-gray-800">
+          <div className="px-4 py-2">
+            <div className="flex flex-wrap gap-2">
+              {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => (
+                <Button
+                  key={category}
+                  variant="ghost"
+                  size="sm"
+                  className={`h-6 px-2 text-xs rounded-full ${
+                    messageFilter.includes(category)
+                      ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  }`}
+                  onClick={() => {
+                    if (category === 'alle') {
+                      setMessageFilter(['alle']);
+                    } else {
+                      setMessageFilter(prev => {
+                        const newFilter = prev.filter(f => f !== 'alle');
+                        if (newFilter.includes(category)) {
+                          const result = newFilter.filter(f => f !== category);
+                          return result.length === 0 ? ['alle'] : result;
+                        } else {
+                          return [...newFilter, category];
+                        }
+                      });
+                    }
+                  }}
+                >
+                  #{category}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {!hideInput && (
         <div className="sticky top-0 z-10 bg-black">
           <div className="border-b border-red-500/20 px-[13px] py-2">
@@ -262,43 +301,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               onJoinEventChat={onJoinEventChat}
             />
           </div>
-
-          {/* Filter UI für Community Chat - direkt unter ChatInput */}
-          {activeChatModeValue === 'community' && (
-            <div className="px-4 py-2 border-b border-gray-800">
-              <div className="flex flex-wrap gap-2">
-                {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => (
-                  <Button
-                    key={category}
-                    variant="ghost"
-                    size="sm"
-                    className={`h-6 px-2 text-xs rounded-full ${
-                      messageFilter.includes(category)
-                        ? 'bg-red-500/20 text-red-300 border border-red-500/30'
-                        : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                    }`}
-                    onClick={() => {
-                      if (category === 'alle') {
-                        setMessageFilter(['alle']);
-                      } else {
-                        setMessageFilter(prev => {
-                          const newFilter = prev.filter(f => f !== 'alle');
-                          if (newFilter.includes(category)) {
-                            const result = newFilter.filter(f => f !== category);
-                            return result.length === 0 ? ['alle'] : result;
-                          } else {
-                            return [...newFilter, category];
-                          }
-                        });
-                      }
-                    }}
-                  >
-                    #{category}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
 
