@@ -507,8 +507,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
 
   return (
     <div className="flex flex-col h-full max-h-full bg-black overflow-hidden">
-      <div className="border-b border-gray-800 bg-black pt-3 pb-0 px-4 flex-shrink-0">
-        <div className="flex items-center justify-between">
+      <div className="border-b border-gray-800 bg-black py-3 px-4 flex-shrink-0">
+        <div className="flex items-center justify-between mb-0">
           <div className="flex items-center">
             <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center mr-3">
               <span className="text-white font-bold">{groupName.slice(0, 1).toUpperCase()}</span>
