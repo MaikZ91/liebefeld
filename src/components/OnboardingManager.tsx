@@ -1,12 +1,15 @@
+// src/components/OnboardingManager.tsx
 import React, { useState, useEffect } from 'react';
 import OnboardingChatbot from './OnboardingChatbot';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
 
 interface OnboardingManagerProps {
   children: React.ReactNode;
+  // New prop to receive the callback from App.tsx
+  onFinalAction: (action: 'community_chat' | 'event_heatmap') => void;
 }
 
-const OnboardingManager: React.FC<OnboardingManagerProps> = ({ children }) => {
+const OnboardingManager: React.FC<OnboardingManagerProps> = ({ children, onFinalAction }) => {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
@@ -37,8 +40,11 @@ const OnboardingManager: React.FC<OnboardingManagerProps> = ({ children }) => {
     }
   }, []);
 
-  const handleOnboardingComplete = () => {
+  // Modify handleOnboardingComplete to accept the action from OnboardingChatbot
+  const handleOnboardingComplete = (action: 'community_chat' | 'event_heatmap') => {
     setShowOnboarding(false);
+    // Call the onFinalAction prop passed from App.tsx with the action
+    onFinalAction(action);
   };
 
   return (
@@ -47,6 +53,7 @@ const OnboardingManager: React.FC<OnboardingManagerProps> = ({ children }) => {
       <OnboardingChatbot 
         open={showOnboarding}
         onOpenChange={setShowOnboarding}
+        // Pass the modified handleOnboardingComplete to OnboardingChatbot
         onComplete={handleOnboardingComplete}
       />
     </>

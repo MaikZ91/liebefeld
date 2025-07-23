@@ -3,8 +3,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom"; // Import useNavigate
+import { useEffect, useState } from "react"; // Import useState
 import Index from "./pages/Index";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
@@ -43,22 +43,66 @@ function AppInitializer() {
   return null;
 }
 
+// New component to handle navigation after onboarding, rendered inside BrowserRouter
+const PostOnboardingNavigator = ({ 
+  onboardingAction, 
+  onNavigated 
+}: { 
+  onboardingAction: 'community_chat' | 'event_heatmap' | null; 
+  onNavigated: () => void; 
+}) => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (onboardingAction) {
+      let targetPath = '/'; // Default to homepage/heatmap
+      if (onboardingAction === 'community_chat') {
+        targetPath = '/chat'; // Navigate to the Community Chat page
+      } else if (onboardingAction === 'event_heatmap') {
+        targetPath = '/heatmap'; // Navigate to the Event Heatmap page
+      }
+      navigate(targetPath);
+      onNavigated(); // Reset the state in the parent (App) after navigation
+    }
+  }, [onboardingAction, navigate, onNavigated]);
+  return null;
+};
+
+
 function App() {
+  // State to hold the desired redirection target after onboarding
+  const [onboardingRedirectTarget, setOnboardingRedirectTarget] = useState<'community_chat' | 'event_heatmap' | null>(null);
+
+  // Callback function to be passed to OnboardingManager
+  const handleOnboardingFinalAction = (action: 'community_chat' | 'event_heatmap') => {
+    setOnboardingRedirectTarget(action);
+  };
+
+  // Callback to reset the redirect state after navigation
+  const resetOnboardingRedirect = () => {
+    setOnboardingRedirectTarget(null);
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <EventProvider>
-          <OnboardingManager>
+          {/* Pass the new callback prop to OnboardingManager */}
+          <OnboardingManager onFinalAction={handleOnboardingFinalAction}>
             <Toaster />
             <Sonner position="top-center" />
             <BrowserRouter>
               <AppInitializer />
+              {/* Render the navigator component inside BrowserRouter */}
+              <PostOnboardingNavigator
+                onboardingAction={onboardingRedirectTarget}
+                onNavigated={resetOnboardingRedirect}
+              />
               <Routes>
-                {/* Heatmap als Hauptseite, jetzt von Layout umhüllt */}
+                {/* Heatmap as main page, now wrapped by Layout */}
                 <Route path="/" element={<Layout><Heatmap /></Layout>} />
                 <Route path="/heatmap" element={<Layout><Heatmap /></Layout>} />
                 
-                {/* Andere Seiten */}
+                {/* Other pages */}
                 <Route path="/index" element={<Index />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/chat" element={<Chat />} />
