@@ -507,7 +507,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
 
   return (
     <div className="flex flex-col h-full max-h-full bg-black overflow-hidden">
-      <div className="border-b border-gray-800 bg-black py-3 px-4 flex-shrink-0">
+      <div className="border-b border-gray-800 bg-black pt-3 pb-0 px-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center mr-3">
@@ -555,7 +555,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
                 className={`h-6 px-2 text-xs rounded-full ${
                   messageFilter.includes(category)
                     ? 'bg-red-500/20 text-red-300 border border-red-500/30'
-                    : 'text-red-400 hover:text-white hover:bg-red-800'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
                 }`}
                 onClick={() => {
                   if (category === 'alle') {
