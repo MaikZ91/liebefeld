@@ -62,7 +62,7 @@ const trackStep = async (
 interface OnboardingChatbotProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onComplete?: () => void;
+  onComplete?: (action: 'community_chat' | 'event_heatmap') => void; // Updated to pass action
 }
 
 interface ChatMessage {
@@ -91,7 +91,8 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
     city: '',
     interests: [] as string[],
     avatar: '',
-    wantsNotifications: false
+    wantsNotifications: false, // This field remains but might not be directly used for the final decision anymore
+    finalOnboardingAction: '' as 'community_chat' | 'event_heatmap' | '' // New field to store the final choice
   });
   const [citySearch, setCitySearch] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -216,10 +217,6 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
         : [...prev.interests, interest];
       return { ...prev, interests: newInterests }; // This correctly updates the state
     });
-
-    // REMOVED: This direct `setMessages` call was causing the visual desync.
-    // The component will now re-render naturally when `userData` changes,
-    // and the buttons will pick up the updated `userData.interests` in the JSX.
   };
 
   const proceedToAvatar = async () => {
@@ -262,77 +259,86 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
     }
   };
 
+  // Modified function for new notification preference
   const proceedToNotifications = () => {
     setIsTyping(true);
     setCurrentStep('notifications');
-    addBotMessage('Darf ich dir Events vorschlagen, die zu dir passen?', true, [
+    addBotMessage('Möchtest du dich mit anderen Tribes verbinden oder passende Events vorgeschlagen bekommen?', true, [
       {
-        text: 'Ja klar!',
-        action: () => enableNotifications(true),
+        text: 'Mit Tribes verbinden',
+        action: () => handleFinalChoice('community_chat'),
         variant: 'default'
       },
       {
-        text: 'Später vielleicht',
-        action: () => enableNotifications(false),
+        text: 'Events entdecken',
+        action: () => handleFinalChoice('event_heatmap'),
         variant: 'outline'
       }
     ]);
   };
 
-  const enableNotifications = (enabled: boolean) => {
-    setUserData(prev => ({ ...prev, wantsNotifications: enabled }));
-    addUserMessage(enabled ? 'Ja klar!' : 'Später vielleicht');
-    finishOnboarding();
+  // New function to handle the final choice and trigger onboarding completion
+  const handleFinalChoice = (choice: 'community_chat' | 'event_heatmap') => {
+    setUserData(prev => ({ ...prev, finalOnboardingAction: choice })); // Store the choice
+    addUserMessage(choice === 'community_chat' ? 'Mit Tribes verbinden' : 'Events entdecken');
+    finishOnboarding(choice); // Pass the choice to finishOnboarding
   };
 
-  const finishOnboarding = async () => {
-    await trackStep('onboarding_completed');
+  // Modified finishOnboarding to accept the final action
+  const finishOnboarding = async (finalAction: 'community_chat' | 'event_heatmap') => {
+    await trackStep('onboarding_completed', finalAction); // Track the final choice
     setIsTyping(true);
-    setCurrentStep('complete');
+    setCurrentStep('complete'); //
 
     try {
       // Save user profile to database
-      localStorage.setItem(USERNAME_KEY, userData.username);
+      localStorage.setItem(USERNAME_KEY, userData.username); //
       if (userData.avatar) {
-        localStorage.setItem(AVATAR_KEY, userData.avatar);
+        localStorage.setItem(AVATAR_KEY, userData.avatar); //
       }
 
-      console.log('Onboarding: Saving profile with avatar URL:', userData.avatar);
+      console.log('Onboarding: Saving profile with avatar URL:', userData.avatar); //
       
       await userService.createOrUpdateProfile({
         username: userData.username,
         avatar: userData.avatar || null,
         interests: userData.interests, // Interests are passed here
-        favorite_locations: userData.city ? [userData.city] : [],
-        hobbies: []
+        favorite_locations: userData.city ? [userData.city] : [], //
+        hobbies: [] //
       });
       
-      console.log('Onboarding: Profile saved successfully');
+      console.log('Onboarding: Profile saved successfully'); //
 
-      // Send welcome message to community chat
-      await sendWelcomeMessageToChat();
+      // Conditionally send welcome message based on finalAction
+      if (finalAction === 'community_chat') { // Only send welcome message if connecting with tribes
+        await sendWelcomeMessageToChat(); //
+      }
 
-      addBotMessage(`Du bist bereit! 🎉 Ich finde jetzt passende Events und Leute für dich in ${userData.city}.`, true, [
+      const successMessage = finalAction === 'community_chat'
+        ? `Super! Du bist bereit, dich mit anderen Tribes zu verbinden. Wir sehen uns im Community-Chat! 🎉`
+        : `Du bist bereit! 🎉 Ich finde jetzt passende Events und Leute für dich in ${userData.city}.`;
+
+      addBotMessage(successMessage, true, [
         {
           text: 'Los geht\'s!',
           action: () => {
-            onOpenChange(false);
-            onComplete?.();
+            onOpenChange(false); //
+            onComplete?.(finalAction); // Pass the action back to the parent
           },
-          variant: 'default'
+          variant: 'default' //
         }
       ]);
 
       toast({
-        title: `Willkommen ${userData.username}!`,
-        description: 'Dein Profil wurde erfolgreich erstellt.',
-        variant: 'success'
+        title: `Willkommen ${userData.username}!`, //
+        description: 'Dein Profil wurde erfolgreich erstellt.', //
+        variant: 'success' //
       });
     } catch (error) {
       toast({
-        title: 'Fehler',
-        description: 'Fehler beim Speichern des Profils',
-        variant: 'destructive'
+        title: 'Fehler', //
+        description: 'Fehler beim Speichern des Profils', //
+        variant: 'destructive' //
       });
     }
   };
@@ -340,31 +346,31 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
   const sendWelcomeMessageToChat = async () => {
     try {
       // Get the city abbreviation for the group ID
-      const cityObject = cities.find(c => c.name.toLowerCase() === userData.city.toLowerCase());
-      const cityAbbr = cityObject ? cityObject.abbr.toLowerCase() : userData.city.toLowerCase().replace(/[^a-z]/g, '');
+      const cityObject = cities.find(c => c.name.toLowerCase() === userData.city.toLowerCase()); //
+      const cityAbbr = cityObject ? cityObject.abbr.toLowerCase() : userData.city.toLowerCase().replace(/[^a-z]/g, ''); //
       const groupId = `${cityAbbr}_ausgehen`; // Use the correct format: cityAbbr_ausgehen
       
       // Create welcome message from MIA
       const welcomeMessage = `Hallo ${userData.username}, willkommen bei uns in der Community! Stelle dich gerne vor. 
 
 Liebe Grüße
-Mia 💕`;
+Mia 💕`; //
 
-      console.log(`Sending welcome message to group: ${groupId} for user: ${userData.username}`);
+      console.log(`Sending welcome message to group: ${groupId} for user: ${userData.username}`); //
 
       // Send message to city's community chat
       await supabase
-        .from('chat_messages')
+        .from('chat_messages') //
         .insert({
-          group_id: groupId,
-          sender: 'MIA',
-          text: welcomeMessage,
-          avatar: '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png'
+          group_id: groupId, //
+          sender: 'MIA', //
+          text: welcomeMessage, //
+          avatar: '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png' //
         });
       
-      console.log(`Welcome message sent to ${groupId} community chat for ${userData.username}`);
+      console.log(`Welcome message sent to ${groupId} community chat for ${userData.username}`); //
     } catch (error) {
-      console.error('Error sending welcome message to chat:', error);
+      console.error('Error sending welcome message to chat:', error); //
     }
   };
 
