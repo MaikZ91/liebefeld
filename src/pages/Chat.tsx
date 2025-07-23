@@ -263,7 +263,7 @@ const ChatPage = () => {
         newEventsCount={0}
         chatInputProps={chatInputProps}
       >
-        <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)]">
+        <div className="container mx-auto px-2 md:px-4 flex flex-col h-[calc(100vh-48px)] !mt-0 !pt-0">
           <div className="flex-grow rounded-lg overflow-hidden border border-black flex flex-col bg-black">
             <div className="flex-grow relative">
               <EventChatBot 
