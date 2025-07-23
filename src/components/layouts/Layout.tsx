@@ -64,7 +64,7 @@ export const Layout: React.FC<LayoutProps> = ({
     };
   }, []);
   
-  const hideHeader = pathname === '/heatmap';
+  const hideHeader = pathname === '/heatmap' || pathname === '/';
 
   return (
     <>
