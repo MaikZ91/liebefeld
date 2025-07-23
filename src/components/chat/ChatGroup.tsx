@@ -545,7 +545,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         </div>
         
         {/* Filter UI */}
-        <div className="px-0 py-2 border-b border-red-800">
+        <div className="px-0 py-2 border-b border-gray-800">
           <div className="flex flex-wrap gap-2">
             {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => (
               <Button
@@ -555,7 +555,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
                 className={`h-6 px-2 text-xs rounded-full ${
                   messageFilter.includes(category)
                     ? 'bg-red-500/20 text-red-300 border border-red-500/30'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                    : 'text-red-400 hover:text-white hover:bg-red-800'
                 }`}
                 onClick={() => {
                   if (category === 'alle') {
