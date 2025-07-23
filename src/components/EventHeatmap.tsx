@@ -568,81 +568,106 @@ const EventHeatmap: React.FC = () => {
       return;
     }
 
-    // Always reinitialize the map to prevent layout issues when switching between pages
+    // Always cleanup any existing map first
     if (map) {
-      map.remove();
+      console.log('[EventHeatmap] Cleaning up existing map before creating new one');
+      try {
+        map.remove();
+      } catch (error) {
+        console.warn('[EventHeatmap] Error removing existing map:', error);
+      }
       setMap(null);
     }
 
-    console.log('[EventHeatmap] Initializing map for city:', selectedCity);
-    const initialCenter = getCityCenterCoordinates(selectedCity);
+    // Small delay to ensure cleanup is complete
+    const initializeMap = () => {
+      if (!mapRef.current) return;
 
-    const leafletMap = L.map(mapRef.current, {
-      center: [initialCenter.lat, initialCenter.lng],
-      zoom: 13,
-      attributionControl: false,
-      zoomControl: false,
-      preferCanvas: false
-    });
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '',
-      maxZoom: 19,
-      className: 'map-tiles'
-    }).addTo(leafletMap);
+      console.log('[EventHeatmap] Initializing map for city:', selectedCity);
+      const initialCenter = getCityCenterCoordinates(selectedCity);
 
-    setMap(leafletMap);
+      try {
+        const leafletMap = L.map(mapRef.current, {
+          center: [initialCenter.lat, initialCenter.lng],
+          zoom: 13,
+          attributionControl: false,
+          zoomControl: false,
+          preferCanvas: false
+        });
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '',
+          maxZoom: 19,
+          className: 'map-tiles'
+        }).addTo(leafletMap);
 
-    // Force map to invalidate size after a short delay
-    setTimeout(() => {
-      leafletMap.invalidateSize();
-    }, 100);
+        setMap(leafletMap);
+
+        // Force map to invalidate size after a short delay
+        setTimeout(() => {
+          leafletMap.invalidateSize();
+        }, 100);
+      } catch (error) {
+        console.error('[EventHeatmap] Error initializing map:', error);
+      }
+    };
+
+    // Initialize map with a small delay to ensure cleanup is complete
+    const timeoutId = setTimeout(initializeMap, 50);
 
     return () => {
-      // Cleanup function to properly remove the map when component unmounts
-      if (map) {
-        console.log('[EventHeatmap] Cleaning up map...');
-        map.remove();
-        setMap(null);
-      }
+      clearTimeout(timeoutId);
     };
   }, [mapRef.current, selectedCity]); // Add selectedCity back to ensure proper reinitialization
 
   // Separate useEffect for handling city changes with smooth animation
   useEffect(() => {
-    if (map && selectedCity) {
-      console.log('[EventHeatmap] City changed to:', selectedCity);
-      const newCenter = getCityCenterCoordinates(selectedCity);
-      
-      // Deutschland center coordinates for zoom out effect
-      const germanyCenter = { lat: 51.1657, lng: 10.4515 }; 
-      
-      // Step 1: Zoom out to show all of Germany
-      map.setView([germanyCenter.lat, germanyCenter.lng], 6, {
-        animate: true,
-        duration: 0.8
-      });
-      
-      // Step 2: After zoom out, zoom into the new city
-      setTimeout(() => {
-        map.setView([newCenter.lat, newCenter.lng], 13, {
+    if (!map || !selectedCity) return;
+    
+    console.log('[EventHeatmap] City changed to:', selectedCity);
+    const newCenter = getCityCenterCoordinates(selectedCity);
+    
+    // Check if map is still valid before animating
+    try {
+      if (map.getContainer()) {
+        // Deutschland center coordinates for zoom out effect
+        const germanyCenter = { lat: 51.1657, lng: 10.4515 }; 
+        
+        // Step 1: Zoom out to show all of Germany
+        map.setView([germanyCenter.lat, germanyCenter.lng], 6, {
           animate: true,
-          duration: 1.2
+          duration: 0.8
         });
-      }, 900); // Wait for zoom out to complete
+        
+        // Step 2: After zoom out, zoom into the new city
+        setTimeout(() => {
+          if (map && map.getContainer()) {
+            map.setView([newCenter.lat, newCenter.lng], 13, {
+              animate: true,
+              duration: 1.2
+            });
+          }
+        }, 900); // Wait for zoom out to complete
+      }
+    } catch (error) {
+      console.warn('[EventHeatmap] Error during city change animation:', error);
     }
-  }, [map, selectedCity]);
+  }, [map]); // Remove selectedCity from deps to prevent conflicts
   
-  // Cleanup map when component unmounts
+  // Final cleanup when component unmounts
   useEffect(() => {
     return () => {
       if (map) {
-        console.log('[EventHeatmap] Cleaning up map');
-        map.remove();
+        console.log('[EventHeatmap] Final cleanup on unmount');
+        try {
+          map.remove();
+        } catch (error) {
+          console.warn('[EventHeatmap] Error during final cleanup:', error);
+        }
         setMap(null);
       }
     };
-  }, []);
+  }, []); // Empty dependency array for unmount only
 
   useEffect(() => {
     if (currentTribeSpotMarkersRef.current) {
