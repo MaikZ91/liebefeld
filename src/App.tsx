@@ -2,7 +2,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } => "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import Index from "./pages/Index";
@@ -10,7 +10,7 @@ import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import Impressum from "./pages/Impressum";
 import Privacy from "./pages/Privacy";
-import CSAEPolicies from "./pages/CSAEPicolicies";
+import CSAEPolicies from "./pages/CSAEPolicies"; // Pfad korrigiert
 import Chat from "./pages/Chat";
 import { EventProvider } from "./contexts/EventContext";
 import { initializeSupabase } from "./utils/initSupabase";
@@ -48,8 +48,8 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <EventProvider>
-          <BrowserRouter> {/* BrowserRouter ist jetzt hier */}
-            <OnboardingManager> {/* OnboardingManager ist jetzt innerhalb des Routers */}
+          <BrowserRouter>
+            <OnboardingManager>
               <Toaster />
               <Sonner position="top-center" />
               <AppInitializer />
