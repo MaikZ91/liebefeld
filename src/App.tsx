@@ -56,9 +56,10 @@ const PostOnboardingNavigator = ({
     if (onboardingAction) {
       let targetPath = '/'; // Default to homepage/heatmap
       if (onboardingAction === 'community_chat') {
-        targetPath = '/chat'; // Navigate to the Community Chat page
+        // *** HIER IST DIE WICHTIGE ÄNDERUNG: Füge ?view=community hinzu ***
+        targetPath = '/chat?view=community'; 
       } else if (onboardingAction === 'event_heatmap') {
-        targetPath = '/heatmap'; // Navigate to the Event Heatmap page
+        targetPath = '/heatmap'; 
       }
       navigate(targetPath);
       onNavigated(); // Reset the state in the parent (App) after navigation
