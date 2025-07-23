@@ -1,4 +1,3 @@
-// src/components/event-chat/ChatInput.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -218,6 +217,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 
   const getButtonWidth = () => {
     if (activeChatModeValue === 'community') {
+      // Increased padding for the filter button's width
       return 'pl-[120px]';
     } else {
       const baseButtons = 2;
@@ -297,10 +297,11 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10 flex items-center gap-1 min-w-[70px]"
+                  // Updated classes for a more input-like appearance with red border
+                  className="rounded-xl h-6 px-2 text-xs border-2 border-red-500 bg-black hover:border-red-600 flex items-center gap-1 min-w-[70px] text-white"
                 >
                   {activeCategory}
-                  <ChevronDown className="h-2 w-2" />
+                  <ChevronDown className="h-3 w-3" /> {/* Adjusted size for consistency if needed */}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
@@ -308,6 +309,15 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
                 side="top"
                 align="start"
               >
+                <DropdownMenuItem
+                  onClick={() => handleCategoryClick('Alle')}
+                  className={cn(
+                    "text-white hover:bg-red-500/20 cursor-pointer",
+                    activeCategory === 'Alle' && "bg-red-500/20"
+                  )}
+                >
+                  Alle
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => handleCategoryClick('Kreativität')}
                   className={cn(
