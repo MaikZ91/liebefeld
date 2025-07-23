@@ -428,7 +428,7 @@ Mia 💕`;
               variant="ghost"
               size="icon"
               onClick={() => onOpenChange(false)}
-              className="h-8 w-8 text-grey hover:bg-white/20"
+              className="h-8 w-8 text-grey hover:bg-grey/20"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
