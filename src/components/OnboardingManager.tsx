@@ -1,8 +1,6 @@
-// src/components/OnboardingManager.tsx
 import React, { useState, useEffect } from 'react';
 import OnboardingChatbot from './OnboardingChatbot';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
-import { useNavigate } from 'react-router-dom'; // Importiere useNavigate für die Navigation
 
 interface OnboardingManagerProps {
   children: React.ReactNode;
@@ -10,7 +8,6 @@ interface OnboardingManagerProps {
 
 const OnboardingManager: React.FC<OnboardingManagerProps> = ({ children }) => {
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const navigate = useNavigate(); // Initialisiere den navigate Hook
 
   useEffect(() => {
     // Clean up any conflicting localStorage data from old profile system
@@ -40,16 +37,8 @@ const OnboardingManager: React.FC<OnboardingManagerProps> = ({ children }) => {
     }
   }, []);
 
-  // Angepasste handleOnboardingComplete Funktion, um die Aktion zu empfangen
-  const handleOnboardingComplete = (action: 'community_chat' | 'event_heatmap') => {
-    setShowOnboarding(false); // Schließt das Onboarding-Fenster
-    
-    // Leitet basierend auf der ausgewählten Aktion weiter
-    if (action === 'community_chat') {
-      navigate('/chat'); // Navigiert zum Community Chat
-    } else if (action === 'event_heatmap') {
-      navigate('/heatmap'); // Navigiert zur Event Heatmap
-    }
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
   };
 
   return (
@@ -58,7 +47,7 @@ const OnboardingManager: React.FC<OnboardingManagerProps> = ({ children }) => {
       <OnboardingChatbot 
         open={showOnboarding}
         onOpenChange={setShowOnboarding}
-        onComplete={handleOnboardingComplete} // Übergibt die angepasste Funktion
+        onComplete={handleOnboardingComplete}
       />
     </>
   );
