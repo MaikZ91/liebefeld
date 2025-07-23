@@ -10,7 +10,7 @@ import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import Impressum from "./pages/Impressum";
 import Privacy from "./pages/Privacy";
-import CSAEPolicies from "./pages/CSAEPolicies";
+import CSAEPolicies from "./pages/CSAEPicolicies";
 import Chat from "./pages/Chat";
 import { EventProvider } from "./contexts/EventContext";
 import { initializeSupabase } from "./utils/initSupabase";
@@ -48,10 +48,10 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <EventProvider>
-          <OnboardingManager>
-            <Toaster />
-            <Sonner position="top-center" />
-            <BrowserRouter>
+          <BrowserRouter> {/* BrowserRouter ist jetzt hier */}
+            <OnboardingManager> {/* OnboardingManager ist jetzt innerhalb des Routers */}
+              <Toaster />
+              <Sonner position="top-center" />
               <AppInitializer />
               <Routes>
                 {/* Heatmap als Hauptseite, jetzt von Layout umhüllt */}
@@ -72,8 +72,8 @@ function App() {
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </BrowserRouter>
-          </OnboardingManager>
+            </OnboardingManager>
+          </BrowserRouter>
         </EventProvider>
       </TooltipProvider>
     </QueryClientProvider>
