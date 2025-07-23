@@ -89,6 +89,7 @@ export const Layout: React.FC<LayoutProps> = ({
           {/* Curved black header bar with THE TRIBE logo - matching Heatmap design */}
           <div className="relative">
             <div className="bg-black mx-4 px-6 py-4 relative rounded-bl-[2rem] flex items-center justify-between">
+              {/* MainNav and other header elements */}
               <MainNav pathname={pathname} chatInputProps={chatInputProps} activeView={activeView} />
               <div className="flex items-center space-x-4">
                 <UserProfileButton />
@@ -97,32 +98,8 @@ export const Layout: React.FC<LayoutProps> = ({
             </div>
           </div>
           
-          {/* Black search bar for Chat Input - matching Heatmap design */}
-          {chatInputProps && (pathname === '/chat' || pathname === '/') && (
-            <div className="px-4 pb-4">
-              <div className="bg-black rounded-full border border-gray-700/50 mx-2">
-                <ChatInput
-                  input={chatInputProps.input}
-                  setInput={chatInputProps.setInput}
-                  handleSendMessage={chatInputProps.handleSendMessage}
-                  isTyping={chatInputProps.isTyping}
-                  onKeyDown={chatInputProps.onKeyDown}
-                  isHeartActive={chatInputProps.isHeartActive}
-                  handleHeartClick={chatInputProps.handleHeartClick}
-                  globalQueries={chatInputProps.globalQueries}
-                  toggleRecentQueries={chatInputProps.toggleRecentQueries}
-                  inputRef={chatInputProps.inputRef}
-                  onAddEvent={chatInputProps.onAddEvent}
-                  showAnimatedPrompts={chatInputProps.showAnimatedPrompts}
-                  activeChatModeValue={activeView || 'ai'}
-                  activeCategory={chatInputProps.activeCategory}
-                  onCategoryChange={chatInputProps.onCategoryChange}
-                  onChange={chatInputProps.onChange}
-                  placeholder={activeView === 'community' ? "Verbinde dich" : "Frage nach Events..."}
-                />
-              </div>
-            </div>
-          )}
+          {/* REMOVED: Black search bar for Chat Input from here */}
+          {/* It will now be moved above the BottomNavigation */}
         </header>
       )}
       
@@ -130,6 +107,34 @@ export const Layout: React.FC<LayoutProps> = ({
         {children}
       </main>
       
+      {/* NEW: Chat Input directly above BottomNavigation */}
+      {/* Conditionally render ChatInput only on /chat or / and when activeView is 'community' */}
+      {chatInputProps && (pathname === '/chat' || pathname === '/') && activeView === 'community' && (
+        <div className="fixed bottom-16 left-0 right-0 z-50 px-4 pb-4 bg-black/95 backdrop-blur-sm">
+          <div className="bg-black rounded-full border border-gray-700/50 mx-2">
+            <ChatInput
+              input={chatInputProps.input}
+              setInput={chatInputProps.setInput}
+              handleSendMessage={chatInputProps.handleSendMessage}
+              isTyping={chatInputProps.isTyping}
+              onKeyDown={chatInputProps.onKeyDown}
+              isHeartActive={chatInputProps.isHeartActive}
+              handleHeartClick={chatInputProps.handleHeartClick}
+              globalQueries={chatInputProps.globalQueries}
+              toggleRecentQueries={chatInputProps.toggleRecentQueries}
+              inputRef={chatInputProps.inputRef}
+              onAddEvent={chatInputProps.onAddEvent}
+              showAnimatedPrompts={chatInputProps.showAnimatedPrompts}
+              activeChatModeValue={activeView || 'ai'} // Ensures the correct mode is passed
+              activeCategory={chatInputProps.activeCategory}
+              onCategoryChange={chatInputProps.onCategoryChange}
+              onChange={chatInputProps.onChange}
+              placeholder={activeView === 'community' ? "Verbinde dich" : "Frage nach Events..."}
+            />
+          </div>
+        </div>
+      )}
+
       {(pathname === '/chat' || pathname === '/' || pathname === '/heatmap' || pathname === '/users' || pathname === '/events') && (
         <BottomNavigation
           activeView={activeView}
