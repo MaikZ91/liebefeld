@@ -88,6 +88,8 @@ const EventHeatmap: React.FC = () => {
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [allUserProfiles, setAllUserProfiles] = useState<UserProfile[]>([]);
   const [isTribeFinderOpen, setIsTribeFinderOpen] = useState(false);
+  const [selectedTribeSpot, setSelectedTribeSpot] = useState<{name: string, lat: number, lng: number} | null>(null);
+  const [isTribeSpotDialogOpen, setIsTribeSpotDialogOpen] = useState(false);
 
   // Declare central avatar states at the top level to ensure scope
   const [centralAvatarUsername, setCentralAvatarUsername] = useState('');
@@ -704,71 +706,9 @@ const EventHeatmap: React.FC = () => {
 
       const marker = L.marker([spot.lat, spot.lng], { icon: customIcon });
 
-      marker.on('click', async () => {
-        const username = currentUser || localStorage.getItem('community_chat_username') || 'Gast';
-        const avatar = userProfile?.avatar || localStorage.getItem('community_chat_avatar') || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
-        
-        try {
-          const profileData = {
-            username,
-            avatar,
-            last_online: new Date().toISOString(),
-            current_live_location_lat: spot.lat,
-            current_live_location_lng: spot.lng,
-            current_status_message: `📍 @ ${spot.name}`,
-            current_checkin_timestamp: new Date().toISOString(),
-          };
-          
-          const { data: existingProfile } = await supabase
-            .from('user_profiles')
-            .select('id')
-            .eq('username', username)
-            .maybeSingle();
-
-          if (existingProfile) {
-            await supabase
-              .from('user_profiles')
-              .update(profileData)
-              .eq('username', username);
-          } else {
-            await supabase
-              .from('user_profiles')
-              .insert(profileData);
-          }
-
-          const usersAtSpot = allUserProfiles.filter(user => {
-            const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null;
-            if (!hasLiveLocation) return false;
-            
-            const distance = Math.sqrt(
-              Math.pow(user.current_live_location_lat! - spot.lat, 2) + 
-              Math.pow(user.current_live_location_lng! - spot.lng, 2)
-            );
-            return distance < 0.002;
-          });
-
-          const cityCommunityGroupId = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.abbr.toLowerCase() + '_ausgehen' || 'bi_ausgehen';
-          await messageService.sendMessage(
-            cityCommunityGroupId,
-            username,
-            `🏛️ ${username} ist jetzt am ${spot.name}!`,
-            avatar
-          );
-
-          toast({
-            title: `Check-in am ${spot.name}!`,
-            description: "Du bist jetzt am Tribe Spot eingecheckt.",
-          });
-
-          refetchProfile();
-        } catch (error: any) {
-          console.error('Tribe spot check-in failed:', error);
-          toast({
-            title: "Fehler",
-            description: "Check-in am Tribe Spot fehlgeschlagen.",
-            variant: "destructive"
-          });
-        }
+      marker.on('click', () => {
+        setSelectedTribeSpot(spot);
+        setIsTribeSpotDialogOpen(true);
       });
 
       const usersAtSpot = allUserProfiles.filter(user => {
@@ -782,55 +722,6 @@ const EventHeatmap: React.FC = () => {
         return distance < 0.002;
       });
 
-      const popupContent = `
-        <div style="min-width: 200px; max-width: 280px; font-family: sans-serif;">
-          <div style="text-align: center; margin-bottom: 12px;">
-            <div style="font-size: 32px; margin-bottom: 8px;">🏛️</div>
-            <h3 style="margin: 0 0 4px 0; font-weight: bold; color: #1f2937; font-size: 18px;">${spot.name}</h3>
-            <p style="margin: 0; color: #6b7280; font-size: 12px;">Tribe Spot • Einfach hier einchecken!</p>
-          </div>
-          
-          <div style="
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            text-align: center;
-            margin-bottom: 12px;
-            font-weight: 500;
-          ">
-            Klick hier für Check-in!
-          </div>
-
-          ${usersAtSpot.length > 0 ? `
-            <div style="margin-top: 12px;">
-              <h4 style="margin: 0 0 8px 0; font-size: 12px; font-weight: bold; color: #374151;">
-                🔥 Wer ist hier? (${usersAtSpot.length})
-              </h4>
-              <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                ${usersAtSpot.map(user => `
-                  <div style="
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
-                    background: #f3f4f6;
-                    padding: 2px 6px;
-                    border-radius: 12px;
-                    font-size: 10px;
-                  ">
-                    <img src="${user.avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=' + getInitials(user.username)}"
-                         style="width: 16px; height: 16px; border-radius: 50%; border: 1px solid #d1d5db;"/>
-                    <span style="color: #374151; font-weight: 500;">${user.username}</span>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-          ` : ''}
-        </div>
-      `;
-
-      marker.bindPopup(popupContent);
       marker.addTo(map);
       newTribeSpotMarkers.push(marker);
     });
@@ -1179,6 +1070,65 @@ const EventHeatmap: React.FC = () => {
         await aiChatExternalSendHandler(aiChatInput); 
       }
       setAiChatInput('');
+    }
+  };
+
+  const handleTribeSpotCheckIn = async () => {
+    if (!selectedTribeSpot) return;
+    
+    const username = currentUser || localStorage.getItem('community_chat_username') || 'Gast';
+    const avatar = userProfile?.avatar || localStorage.getItem('community_chat_avatar') || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
+    
+    try {
+      const profileData = {
+        username,
+        avatar,
+        last_online: new Date().toISOString(),
+        current_live_location_lat: selectedTribeSpot.lat,
+        current_live_location_lng: selectedTribeSpot.lng,
+        current_status_message: `📍 @ ${selectedTribeSpot.name}`,
+        current_checkin_timestamp: new Date().toISOString(),
+      };
+      
+      const { data: existingProfile } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('username', username)
+        .maybeSingle();
+
+      if (existingProfile) {
+        await supabase
+          .from('user_profiles')
+          .update(profileData)
+          .eq('username', username);
+      } else {
+        await supabase
+          .from('user_profiles')
+          .insert(profileData);
+      }
+
+      const cityCommunityGroupId = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.abbr.toLowerCase() + '_ausgehen' || 'bi_ausgehen';
+      await messageService.sendMessage(
+        cityCommunityGroupId,
+        username,
+        `🏛️ ${username} ist jetzt am ${selectedTribeSpot.name}!`,
+        avatar
+      );
+
+      toast({
+        title: `Check-in am ${selectedTribeSpot.name}!`,
+        description: "Du bist jetzt am Tribe Spot eingecheckt.",
+      });
+
+      refetchProfile();
+      setIsTribeSpotDialogOpen(false);
+    } catch (error: any) {
+      console.error('Tribe spot check-in failed:', error);
+      toast({
+        title: "Fehler",
+        description: "Check-in am Tribe Spot fehlgeschlagen.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -1599,6 +1549,86 @@ const EventHeatmap: React.FC = () => {
         open={isTribeFinderOpen}
         onOpenChange={setIsTribeFinderOpen}
       />
+
+      {/* Tribe Spot Dialog */}
+      <Dialog open={isTribeSpotDialogOpen} onOpenChange={setIsTribeSpotDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center">
+              <div className="text-4xl mb-2">🏛️</div>
+              <div className="text-xl font-bold">{selectedTribeSpot?.name}</div>
+              <div className="text-sm text-muted-foreground font-normal">Tribe Spot • Einfach hier einchecken!</div>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex flex-col gap-4 mt-4">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-4">
+                Möchtest du dich am {selectedTribeSpot?.name} einchecken?<br/>
+                Dein Check-in wird im Community Chat geteilt!
+              </p>
+              
+              {/* Users currently at this spot */}
+              {selectedTribeSpot && (
+                <div className="mb-4">
+                  {(() => {
+                    const usersAtSpot = allUserProfiles.filter(user => {
+                      const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null;
+                      if (!hasLiveLocation) return false;
+                      
+                      const distance = Math.sqrt(
+                        Math.pow(user.current_live_location_lat! - selectedTribeSpot.lat, 2) + 
+                        Math.pow(user.current_live_location_lng! - selectedTribeSpot.lng, 2)
+                      );
+                      return distance < 0.002;
+                    });
+
+                    return usersAtSpot.length > 0 ? (
+                      <div>
+                        <h4 className="text-sm font-semibold mb-2">
+                          🔥 Wer ist hier? ({usersAtSpot.length})
+                        </h4>
+                        <div className="flex flex-wrap gap-2 justify-center">
+                          {usersAtSpot.map(user => (
+                            <div
+                              key={user.id}
+                              className="flex items-center gap-2 bg-muted px-2 py-1 rounded-full text-xs"
+                            >
+                              <img
+                                src={user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(user.username)}`}
+                                className="w-4 h-4 rounded-full border"
+                                alt={user.username}
+                              />
+                              <span className="font-medium">{user.username}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
+                </div>
+              )}
+            </div>
+            
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsTribeSpotDialogOpen(false)}
+                className="flex-1"
+              >
+                Abbrechen
+              </Button>
+              <Button
+                onClick={handleTribeSpotCheckIn}
+                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Check-in!
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Event Chat Window */}
       {eventChatWindow && (
