@@ -129,7 +129,7 @@ export const Layout: React.FC<LayoutProps> = ({
               activeCategory={chatInputProps.activeCategory}
               onCategoryChange={chatInputProps.onCategoryChange}
               onChange={chatInputProps.onChange}
-              placeholder={activeView === 'community' ? "Verbinde dich" : "Frage nach Events..."}
+              placeholder={activeView === 'community' ? "Chatte in der Community" : "Frage nach Events..."}
             />
           </div>
         </div>
