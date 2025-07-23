@@ -162,7 +162,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     if (activeChatModeValue === 'ai') {
       return placeholder || (showAnimatedPrompts && localInput.trim() === '' ? displayText : "Frage nach Events...");
     } else {
-      return "Chatte mit der Community";
+      return "Schreibe hier...";
     }
   };
 
