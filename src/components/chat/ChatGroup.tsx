@@ -545,7 +545,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         </div>
         
         {/* Filter UI */}
-        <div className="px-0 py-0 border-b border-gray-800">
+                <div className="px-0 pt-0 pb-2 border-b border-gray-800">
           <div className="flex flex-wrap gap-2">
             {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => (
               <Button
