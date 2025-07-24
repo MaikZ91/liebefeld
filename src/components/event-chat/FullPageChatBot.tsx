@@ -354,9 +354,9 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                               {getInitials(message.user_name)}
                             </AvatarFallback>
                           </Avatar>
-                          <div className="text-lg font-medium text-white mr-2">
-                            {message.user_name}
-                          </div>
+                           <div className="text-base font-medium text-white mr-2">
+                             {message.user_name}
+                           </div>
                           <span className="text-sm text-gray-400">{timeAgo}</span>
                         </div>
                        )}
