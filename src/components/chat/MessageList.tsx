@@ -116,8 +116,8 @@ const MessageList: React.FC<MessageListProps> = ({
             return (
               <div key={message.id} className="mb-1 w-full max-w-full overflow-hidden">
                 {!isConsecutive && (
-                  <div className="flex items-center mb-0">
-                    <Avatar className={`h-6 w-6 mr-2 flex-shrink-0 ${isGroup ? 'border-red-500' : ''}`}>
+                  <div className="flex items-center -mb-1">
+                    <Avatar className={`h-5 w-5 mr-2 flex-shrink-0 ${isGroup ? 'border-red-500' : ''}`}>
                       <AvatarImage src={message.user_avatar} alt={message.user_name} />
                       <AvatarFallback className="bg-red-500 text-white">{getInitials(message.user_name)}</AvatarFallback>
                     </Avatar>
@@ -125,7 +125,7 @@ const MessageList: React.FC<MessageListProps> = ({
                     <span className="text-sm text-gray-400">{timeAgo}</span>
                   </div>
                 )}
-                <div className="w-full max-w-full overflow-hidden break-words">
+                <div className="w-full max-w-full overflow-hidden break-words -mt-1">
                   <ChatMessage 
                     message={messageContent} 
                     isConsecutive={isConsecutive}
