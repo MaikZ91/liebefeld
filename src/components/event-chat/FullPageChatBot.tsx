@@ -348,7 +348,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                      <div key={message.id} className="mb-1 w-full group">
                        {!isConsecutive && (
                          <div className="flex items-center -mb-2">
-                           <Avatar className="h-5 w-5 mr-2 flex-shrink-0 border-red-500">
+                           <Avatar className="h-6 w-6 mr-2 flex-shrink-0 border-red-500">
                             <AvatarImage src={message.user_avatar} alt={message.user_name} />
                             <AvatarFallback className="bg-red-500 text-white">
                               {getInitials(message.user_name)}
