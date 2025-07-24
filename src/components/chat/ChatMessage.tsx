@@ -176,7 +176,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 
         {/* Reactions container, now explicitly below the text content */}
         {(reactions && reactions.length > 0) || (onReact && messageId && isGroup) ? (
-          <div className="message-reactions-container mt-2">
+          <div className="message-reactions-container mt-1">
             <MessageReactions
               reactions={reactions}
               onReact={handleReact}
