@@ -345,10 +345,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                   const timeAgo = formatTime(message.created_at);
 
                   return (
-                    <div key={message.id} className="mb-1 w-full group">
-                      {!isConsecutive && (
-                        <div className="flex items-center mb-1">
-                          <Avatar className="h-8 w-8 mr-2 flex-shrink-0 border-red-500">
+                     <div key={message.id} className="mb-1 w-full group">
+                       {!isConsecutive && (
+                         <div className="flex items-center -mb-1">
+                           <Avatar className="h-5 w-5 mr-2 flex-shrink-0 border-red-500">
                             <AvatarImage src={message.user_avatar} alt={message.user_name} />
                             <AvatarFallback className="bg-red-500 text-white">
                               {getInitials(message.user_name)}
@@ -359,8 +359,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                           </div>
                           <span className="text-sm text-gray-400">{timeAgo}</span>
                         </div>
-                      )}
-                      <div className="break-words">
+                       )}
+                       <div className="break-words -mt-1">
                         <ChatMessage
                           message={message.text}
                           isConsecutive={isConsecutive}
