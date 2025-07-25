@@ -39,7 +39,7 @@ const MentionInput: React.FC<MentionInputProps> = ({
   const [mentionStart, setMentionStart] = useState(0);
   const [currentMention, setCurrentMention] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const suggestionsRef = useRef<HTMLDivLement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
 
   // Debounce function
   const debounce = useRef<NodeJS.Timeout>();
@@ -152,14 +152,14 @@ const MentionInput: React.FC<MentionInputProps> = ({
     setMessage(newMessage);
     setShowSuggestions(false);
     
-    // Focus back to textarea and set cursor position
-    setTimeout(() => {
-      if (textareaRef.current) {
-        const newCursorPos = mentionStart + suggestion.username.length + 2;
-        textareaRef.current.focus();
-        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
-      }
-    }, 0);
+    // Focus back to textarea and set cursor position using requestAnimationFrame
+    if (textareaRef.current) {
+      const newCursorPos = mentionStart + suggestion.username.length + 2;
+      textareaRef.current.focus();
+      requestAnimationFrame(() => {
+        textareaRef.current?.setSelectionRange(newCursorPos, newCursorPos);
+      });
+    }
   };
 
   // Extract mentions from message
