@@ -3,8 +3,8 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
 import RecentQueries from './RecentQueries';
-import { useChatMessages } from '@/hooks/chat/useChatMessages'; // BLEIBT AKTIV
-import { useMessageSending } from '@/hooks/chat/useMessageSending'; // BLEIBT BYPASSED FÜR INPUT
+import { useChatMessages } from '@/hooks/chat/useChatMessages';
+import { useMessageSending } from '@/hooks/chat/useMessageSending';
 import { AVATAR_KEY, USERNAME_KEY, EventShare } from '@/types/chatTypes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/chatUIUtils'; 
@@ -77,7 +77,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       ? localStorage.getItem(USERNAME_KEY) || 'Anonymous'
       : 'Anonymous';
 
-  // WIEDER AKTIVIERT: useChatMessages für Community Chat Nachrichten
   const {
     messages: communityMessages,
     loading: communityLoading,
@@ -86,12 +85,12 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     chatBottomRef,
     chatContainerRef,
     addOptimisticMessage,
-    setMessages // WICHTIG: setMessages bleibt hier aktiv für Reaktionen
+    setMessages
   } = useChatMessages(communityGroupId, username);
 
-  // useMessageSending bleibt vorerst nur für die Hooks selbst, nicht für die Input-Kontrolle
   const {
-    // newMessage: realCommunityInput, // Nicht direkt für Input-State genutzt
+    newMessage: realCommunityInput,
+    isSending: communitySending, // HIER WURDE isSending HINZUGEFÜGT
     setNewMessage: realSetCommunityInput,
     handleSubmit: realCommunitySendMessage,
     handleInputChange: realCommunityInputChangeFromHook,
@@ -115,7 +114,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     if (testCommunityInput.trim()) {
       console.log('Test sending message (no actual send):', testCommunityInput);
       setTestCommunityInput('');
-      // HINWEIS: Hier kann später realCommunitySendMessage aufgerufen werden, wenn der Input getestet ist.
     }
   };
   const handleTestCommunityKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -134,7 +132,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   useEffect(() => {
     if (onExternalSendHandlerChange) {
-      // Weiterhin den Test-Send-Handler für Community nutzen
       if (activeChatModeValue === 'community') {
         onExternalSendHandlerChange(handleTestCommunitySendMessage);
       } else if (activeChatModeValue === 'ai') {
@@ -188,8 +185,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     try {
       console.log('FullPageChatBot: Toggling reaction', { messageId, emoji, username });
       
-      // Optmistische Aktualisierung beibehalten
-      setMessages(prevMessages => { // setMessages aus useChatMessages
+      setMessages(prevMessages => {
         return prevMessages.map(msg => {
           if (msg.id === messageId) {
             const reactions = Array.isArray(msg.reactions) ? [...msg.reactions] : [];
@@ -221,15 +217,14 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       console.log('FullPageChatBot: Reaction toggled successfully');
     } catch (error) {
       console.error('FullPageChatBot: Error toggling reaction:', error);
-      // TODO: Revert optimistic update on error
     }
   };
 
-  // Zuweisung der Test-Handler für den Community-Modus bleibt
+  // Zuweisung der Handler für den Community-Modus - jetzt mit korrekt definiertem communitySending
   const currentInput = activeChatModeValue === 'ai' ? aiInput : testCommunityInput;
   const currentSetInput = activeChatModeValue === 'ai' ? setAiInput : setTestCommunityInput;
   const currentHandleSendMessage = activeChatModeValue === 'ai' ? aiSendMessage : handleTestCommunitySendMessage;
-  const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : false; // Forcieren auf false für Test
+  const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending; // HIER KORRIGIERT
   const currentHandleKeyPress = activeChatModeValue === 'ai' ? aiKeyPress : handleTestCommunityKeyDown;
   const currentHandleInputChange = activeChatModeValue === 'ai' ? aiInputChange : handleTestCommunityInputChange;
 
@@ -240,20 +235,18 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   }, [aiMessages, aiTyping, activeChatModeValue, messagesEndRef]);
 
-  // AKTIVIERT: Auto-Scrolling für Community-Nachrichten wieder aktivieren
   useEffect(() => {
     if (activeChatModeValue === 'community' && chatBottomRef?.current) {
       chatBottomRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
     }
-  }, [communityMessages, communitySending, activeChatModeValue, chatBottomRef]); // Abhängigkeit von communityMessages
+  }, [communityMessages, communitySending, activeChatModeValue, chatBottomRef]);
 
-  // Filter messages based on selected categories (operiert auf echten communityMessages)
   const filteredCommunityMessages = useMemo(() => {
     if (messageFilter.includes('alle')) {
-      return communityMessages; // Nutzt echte Nachrichten
+      return communityMessages;
     }
     
-    return communityMessages.filter(message => { // Nutzt echte Nachrichten
+    return communityMessages.filter(message => {
       const messageText = message.text.toLowerCase();
       return messageFilter.some(category => 
         messageText.includes(`#${category.toLowerCase()}`)
@@ -358,7 +351,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               </div>
             )}
 
-            {/* AKTIVIERT: Nachrichtenliste anzeigen */}
             <div
               ref={chatContainerRef}
               className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4"
