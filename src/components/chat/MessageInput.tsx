@@ -41,7 +41,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   value,
   onChange,
   onKeyDown,
-  placeholder = "Schreibe eine Nachricht..",
+  placeholder = "Schreibe eine Nachricht...",
   mode = 'community', // Default to community mode
   onCategorySelect, // Hinzugefügte Prop
   activeCategory = 'Ausgehen' // Default category changed to Ausgehen
@@ -211,10 +211,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
                   onClick={() => handleCategoryClick('Kreativität')}
                   className={cn(
                     "text-white hover:bg-red-500/20 cursor-pointer",
-                    activeCategory === 'Kreativität' && "bg-red-500/20"
+                    activeCategory === 'Kr' && "bg-red-500/20"
                   )}
                 >
-                  Kreativität
+                  Kre
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => handleCategoryClick('Ausgehen')}
