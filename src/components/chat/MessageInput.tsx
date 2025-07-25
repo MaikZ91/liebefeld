@@ -145,6 +145,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
+  const handleShareEvent = () => {
+    setIsEventSelectOpen(true);
+  };
+
   const handleCategoryClick = (category: string) => {
     if (onCategorySelect) {
       onCategorySelect(category);
@@ -181,14 +185,14 @@ const MessageInput: React.FC<MessageInputProps> = ({
     } catch (error) {
       console.error('Error enabling push notifications:', error);
       toast({
-        title: "Fehler",
+        title: "Fehler", 
         description: "Push-Benachrichtigungen konnten nicht aktiviert werden.",
         variant: "destructive"
       });
     }
   };
 
-  // Event-Inhalt für das Popover - This content is no longer needed but kept for completeness based on original file context.
+  // Event-Inhalt für das Popover
   const realEventSelectContent = (
     <div className="max-h-[300px] overflow-y-auto">
       {events && events.length > 0 ? (
@@ -237,12 +241,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
   }, []);
 
   // Dynamisches padding-left basierend auf dem Modus
-  const leftPadding = mode === 'community' ? 'pl-[100px]' : 'pl-4';
+  const leftPadding = mode === 'community' ? 'pl-[100px]' : 'pl-4'; 
 
   return (
     <div className="w-full space-y-2">
       <div className="flex items-center gap-2 relative">
-        <Textarea
+        <Textarea 
           placeholder={placeholder}
           value={value !== undefined ? value : newMessage}
           onChange={handleMessageChange}
@@ -264,7 +268,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
                   <ChevronDown className="h-2 w-2" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent
+              <DropdownMenuContent 
                 className="bg-zinc-900 border-red-500/30 z-50"
                 side="top"
                 align="start"
@@ -299,7 +303,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Push Notification Button (The Bell) */}
+            {/* Push Notification Button */}
             <Button
               onClick={handleEnablePushNotifications}
               variant="outline"
@@ -310,8 +314,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
             >
               <Bell className="h-3 w-3" />
             </Button>
-
-            {/* Event teilen Button - REMOVED */}
           </div>
         )}
         {/* Send button on the right */}
