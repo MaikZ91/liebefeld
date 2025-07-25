@@ -1,3 +1,4 @@
+// src/components/chat/MentionInput.tsx
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,11 @@ const MentionInput: React.FC<MentionInputProps> = ({
   const [mentionStart, setMentionStart] = useState(0);
   const [currentMention, setCurrentMention] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const suggestionsRef = useRef<HTMLDivLement>(null);
+
+  // Debounce function
+  const debounce = useRef<NodeJS.Timeout>();
+  const debounceDelay = 300; // milliseconds
 
   // Fetch users for suggestions
   const fetchUsers = useCallback(async (query: string) => {
@@ -72,6 +77,11 @@ const MentionInput: React.FC<MentionInputProps> = ({
     const textBeforeCursor = value.substring(0, cursorPosition);
     const lastAtSymbol = textBeforeCursor.lastIndexOf('@');
 
+    // Clear previous debounce timeout
+    if (debounce.current) {
+      clearTimeout(debounce.current);
+    }
+
     if (lastAtSymbol !== -1) {
       const textAfterAt = textBeforeCursor.substring(lastAtSymbol + 1);
       
@@ -81,12 +91,18 @@ const MentionInput: React.FC<MentionInputProps> = ({
         setCurrentMention(textAfterAt);
         setShowSuggestions(true);
         setSelectedIndex(0);
-        fetchUsers(textAfterAt);
+
+        // Debounce the fetchUsers call
+        debounce.current = setTimeout(() => {
+          fetchUsers(textAfterAt);
+        }, debounceDelay);
       } else {
         setShowSuggestions(false);
+        setSuggestions([]); // Clear suggestions if mention context is lost
       }
     } else {
       setShowSuggestions(false);
+      setSuggestions([]); // Clear suggestions if no @ symbol
     }
   };
 
@@ -187,6 +203,15 @@ const MentionInput: React.FC<MentionInputProps> = ({
       return part;
     });
   };
+
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (debounce.current) {
+        clearTimeout(debounce.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="w-full space-y-2 relative">
