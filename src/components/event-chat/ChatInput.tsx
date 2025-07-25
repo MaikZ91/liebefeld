@@ -3,12 +3,20 @@ import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+// Popover is no longer needed if event sharing is completely removed from this input,
+// but leaving it in case 'eventSelectContent' or 'isEventSelectOpen' are used by a parent.
+// For now, only the PopoverTrigger (Calendar button) is removed.
+import { Popover, PopoverContent } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Heart, History, CalendarPlus, Send, Calendar, ChevronDown } from 'lucide-react';
+// Removed Calendar import, added Bell import
+import { Heart, History, CalendarPlus, Send, ChevronDown, Bell } from 'lucide-react';
 import { ChatInputProps } from './types';
 import { useEventContext } from '@/contexts/EventContext';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
+// Imports needed for Push Notifications
+import { initializeFCM } from '@/services/firebaseMessaging';
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from '@/hooks/use-toast'; // Import useToast
 
 const AnimatedText = ({ text, className = '' }: { text: string; className?: string }) => {
   return (
@@ -47,12 +55,15 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 }) => {
   const miaAvatarUrl = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png'
   const { events } = useEventContext();
+  // isEventSelectOpen state and setIsEventSelectOpen prop are kept as they might be used by parent,
+  // but the PopoverTrigger button for it is removed from here.
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
   const [localInput, setLocalInput] = useState(input);
 
   // Reference for the textarea to dynamically adjust height
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const { toast } = useToast(); // Initialize toast
 
   useEffect(() => {
     setLocalInput(input);
@@ -117,19 +128,19 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 
   const handleLocalSendMessage = async (eventData?: any) => {
     if (!localInput.trim() && !eventData) return; // Prevent empty sends
-    
+
     if (activeChatModeValue === 'community') {
       // For community mode, just update the external input and let the parent handle sending
       setInput(localInput);
       return;
     }
-    
+
     // For AI mode, handle sending directly
     setInput(localInput);
     await handleSendMessage(eventData || localInput);
     setLocalInput('');
   };
-  
+
   const handleLocalKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -168,7 +179,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 
   const placeholderText = getDynamicPlaceholder();
 
-  const eventSelectContent = (
+  // The eventSelectContent is still present as a prop, but its trigger button is removed.
+  const eventSelectContentDisplay = (
     <div className="max-h-[300px] overflow-y-auto">
       {events && events.length > 0 ? (
         <div className="space-y-2 p-2">
@@ -187,6 +199,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
                   location: event.location,
                   category: event.category
                 });
+                // Ensure setIsEventSelectOpen is called to close the popover if it was opened by other means
                 setIsEventSelectOpen(false);
               }}
             >
@@ -205,6 +218,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     </div>
   );
 
+
   const handleCategoryClick = (category: string) => {
     if (onCategoryChange) {
       onCategoryChange(category);
@@ -218,7 +232,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 
   const getButtonWidth = () => {
     if (activeChatModeValue === 'community') {
-      return 'pl-[120px]';
+      return 'pl-[120px]'; // Adjusted padding for new button
     } else {
       const baseButtons = 2;
       const historyButton = globalQueries.length > 0 ? 1 : 0;
@@ -227,16 +241,50 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     }
   };
 
+  const handleEnablePushNotifications = async () => {
+    try {
+      const token = await initializeFCM();
+      if (token) {
+        // Save token to database
+        const { error } = await supabase
+          .from('push_tokens')
+          .insert({ token });
+
+        if (error) {
+          console.error('Error saving push token:', error);
+          toast({
+            title: "Fehler",
+            description: "Push-Token konnte nicht gespeichert werden.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Erfolgreich!",
+            description: "Push-Benachrichtigungen wurden aktiviert.",
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error enabling push notifications:', error);
+      toast({
+        title: "Fehler",
+        description: "Push-Benachrichtigungen konnten nicht aktiviert werden.",
+        variant: "destructive"
+      });
+    }
+  };
+
+
   return (
     <div className="flex items-center relative w-full max-w-md">
       <div className="absolute left-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 z-10">
-                {/* MIA Avatar (only shown in AI chat mode) */}
+        {/* MIA Avatar (only shown in AI chat mode) */}
         {activeChatModeValue === 'ai' && (
           <Avatar className="h-8 w-8 border-2 border-white/50">
             <AvatarImage src={miaAvatarUrl} />
           </Avatar>
         )}
-        
+
         {activeChatModeValue === 'ai' ? (
           <>
             <Button
@@ -275,35 +323,30 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           </>
         ) : (
           <>
-            <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  type="button"
-                  className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
-                  title="Event teilen"
-                >
-                  <Calendar className="h-3 w-3" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 p-0 max-h-[400px] overflow-y-auto" side="top" align="start" sideOffset={5}>
-                {eventSelectContent}
-              </PopoverContent>
-            </Popover>
+            {/* Push Notification Button (The Bell) */}
+            <Button
+              onClick={handleEnablePushNotifications}
+              variant="outline"
+              size="icon"
+              type="button"
+              className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10 bg-white/90 dark:bg-zinc-800/90"
+              title="Push-Benachrichtigungen aktivieren"
+            >
+              <Bell className="h-3 w-3" />
+            </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10 flex items-center gap-1 min-w-[70px]"
+                  className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10 flex items-center gap-1 min-w-[70px] bg-white/90 dark:bg-zinc-800/90"
                 >
                   {activeCategory}
                   <ChevronDown className="h-2 w-2" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent 
+              <DropdownMenuContent
                 className="bg-zinc-900 border-red-500/30 z-50"
                 side="top"
                 align="start"
@@ -340,8 +383,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           </>
         )}
       </div>
-      
-      <div 
+
+      <div
         className={cn(
           "absolute inset-0 cursor-text z-5 pointer-events-none",
           getButtonWidth().replace('pl-', 'left-')
@@ -349,7 +392,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         onClick={handleSuggestionClick}
         style={{ pointerEvents: localInput.trim() === '' && displayText.trim() !== '' ? 'auto' : 'none' }}
       />
-      
+
       <Textarea
         ref={textareaRef} // Assign the ref here
         value={localInput}
