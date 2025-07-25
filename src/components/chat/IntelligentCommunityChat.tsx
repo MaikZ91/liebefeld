@@ -1,12 +1,15 @@
+// src/components/chat/IntelligentCommunityChat.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Message } from '@/types/chatTypes';
 import { chatService } from '@/services/chatService';
 import { messageService } from '@/services/messageService';
 import ChatMessage from './ChatMessage';
-import MentionInput from './MentionInput';
-import { Loader2 } from 'lucide-react';
+// import MentionInput from './MentionInput'; // Auskommentiert
+import { Loader2, Send, X, Reply } from 'lucide-react'; // X und Reply hinzugefügt für temporäre UI
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { Textarea } from '@/components/ui/textarea'; // Textarea hinzugefügt
+import { Button } from '@/components/ui/button'; // Button hinzugefügt
 
 interface IntelligentCommunityChatProps {
   groupId: string;
@@ -28,6 +31,9 @@ const IntelligentCommunityChat: React.FC<IntelligentCommunityChatProps> = ({
   const [replyToMessageData, setReplyToMessageData] = useState<{[key: string]: Message}>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<any>(null);
+
+  // Temporärer State für die Nachricht (ersetzt MentionInput)
+  const [currentMessageText, setCurrentMessageText] = useState("");
 
   // Scroll to bottom
   const scrollToBottom = useCallback(() => {
@@ -97,7 +103,7 @@ const IntelligentCommunityChat: React.FC<IntelligentCommunityChatProps> = ({
             return updated;
           });
           
-          // Show notification for mentions
+          // Show notification for mentions - HINWEIS: Mentions sind jetzt deaktiviert
           if (newMessage.mentions?.includes(username) && newMessage.user_name !== username) {
             toast.success(`${newMessage.user_name} hat dich erwähnt!`);
           }
@@ -115,24 +121,25 @@ const IntelligentCommunityChat: React.FC<IntelligentCommunityChatProps> = ({
     }
   };
 
-  // Send message with reply and mentions
-  const handleSendMessage = async (text: string, replyToId?: string, mentions?: string[]) => {
-    if (!text.trim()) return;
+  // Send message without reply and mentions for now
+  const handleSendMessage = async () => {
+    if (!currentMessageText.trim()) return;
     
     try {
       setSending(true);
       await messageService.sendMessage(
         groupId,
         username,
-        text,
+        currentMessageText,
         avatar,
         null, // mediaUrl
-        replyToId,
-        mentions
+        replyToMessage?.id, // replyToId
+        undefined // mentions, da Mentions deaktiviert sind
       );
       
-      // Clear reply state
+      // Clear reply state and input
       setReplyToMessage(null);
+      setCurrentMessageText("");
       
     } catch (error) {
       console.error('Error sending message:', error);
@@ -217,17 +224,54 @@ const IntelligentCommunityChat: React.FC<IntelligentCommunityChatProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input area */}
+      {/* Temporärer Input-Bereich (ersetzt MentionInput) */}
       <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-        <MentionInput
-          username={username}
-          groupId={groupId}
-          onSendMessage={handleSendMessage}
-          isSending={sending}
-          placeholder="Schreibe eine Nachricht... (nutze @ um Nutzer zu erwähnen)"
-          replyToMessage={replyToMessage}
-          onCancelReply={cancelReply}
-        />
+        {replyToMessage && (
+          <div className="flex items-center gap-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-t-lg border-l-4 border-blue-500 mb-2">
+            <Reply className="h-4 w-4 text-blue-500" />
+            <div className="flex-1 text-sm">
+              <span className="font-medium text-blue-600 dark:text-blue-400">
+                Antwort an {replyToMessage.user_name}:
+              </span>
+              <div className="text-gray-600 dark:text-gray-300 truncate">
+                {replyToMessage.text}
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={cancelReply}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+        <div className="relative">
+          <Textarea
+            placeholder="Schreibe eine Nachricht..."
+            value={currentMessageText}
+            onChange={(e) => setCurrentMessageText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+              }
+            }}
+            className="min-h-[60px] resize-none pr-14 border-2 border-red-500 focus:border-red-600 focus:ring-2 focus:ring-red-500"
+          />
+          <Button
+            onClick={handleSendMessage}
+            disabled={sending || !currentMessageText.trim()}
+            className="rounded-full min-w-[32px] h-8 w-8 absolute right-2 bottom-2 p-0 bg-red-500 hover:bg-red-600 text-white"
+          >
+            {sending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );
