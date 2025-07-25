@@ -15,6 +15,10 @@ import { chatService } from '@/services/chatService';
 import { useEventContext, cities } from '@/contexts/EventContext';
 import { createGroupDisplayName } from '@/utils/groupIdUtils';
 import { Button } from '@/components/ui/button';
+import UserProfileDialog from '@/components/users/UserProfileDialog';
+import { userService } from '@/services/userService';
+import { UserProfile } from '@/types/chatTypes';
+import { toast } from 'sonner';
 
 interface FullPageChatBotProps {
   chatLogic: any;
@@ -95,6 +99,11 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   // Filter state for community chat
   const [messageFilter, setMessageFilter] = useState<string[]>(['alle']);
+  
+  // User profile dialog state
+  const [selectedUserProfile, setSelectedUserProfile] = useState<UserProfile | null>(null);
+  const [showUserProfileDialog, setShowUserProfileDialog] = useState(false);
+  const [loadingUserProfile, setLoadingUserProfile] = useState(false);
 
   useEffect(() => {
     if (activeChatModeValue === 'community' && setExternalInput && externalInput !== communityInput) {
@@ -135,6 +144,22 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   const getCommunityDisplayName = (category: string, cityAbbr: string): string => {
     return createGroupDisplayName(category, cityAbbr, cities);
+  };
+
+  const handleAvatarClick = async (username: string) => {
+    setLoadingUserProfile(true);
+    setShowUserProfileDialog(true);
+    
+    try {
+      const profile = await userService.getUserByUsername(username);
+      setSelectedUserProfile(profile);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      toast.error('Fehler beim Laden des Profils');
+      setShowUserProfileDialog(false);
+    } finally {
+      setLoadingUserProfile(false);
+    }
   };
 
   const handleReaction = async (messageId: string, emoji: string) => {
@@ -348,12 +373,15 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                      <div key={message.id} className="mb-1 w-full group">
                        {!isConsecutive && (
                          <div className="flex items-center -mb-2">
-                           <Avatar className="h-6 w-6 mr-2 flex-shrink-0 border-red-500">
-                            <AvatarImage src={message.user_avatar} alt={message.user_name} />
-                            <AvatarFallback className="bg-red-500 text-white">
-                              {getInitials(message.user_name)}
-                            </AvatarFallback>
-                          </Avatar>
+                            <Avatar 
+                              className="h-6 w-6 mr-2 flex-shrink-0 border-red-500 cursor-pointer hover:opacity-80 transition-opacity"
+                              onClick={() => handleAvatarClick(message.user_name)}
+                            >
+                             <AvatarImage src={message.user_avatar} alt={message.user_name} />
+                             <AvatarFallback className="bg-red-500 text-white">
+                               {getInitials(message.user_name)}
+                             </AvatarFallback>
+                           </Avatar>
                            <div className="text-base font-medium text-white mr-2">
                              {message.user_name}
                            </div>
@@ -382,6 +410,13 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
           </div>
         )}
       </div>
+
+      <UserProfileDialog
+        open={showUserProfileDialog}
+        onOpenChange={setShowUserProfileDialog}
+        userProfile={selectedUserProfile}
+        loading={loadingUserProfile}
+      />
     </div>
   );
 };
