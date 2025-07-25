@@ -2,14 +2,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Loader2, Send, Calendar, ChevronDown, Bell } from 'lucide-react';
+import { Loader2, Send, ChevronDown, Bell } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { supabase } from "@/integrations/supabase/client";
-import { EventShare } from '@/types/chatTypes';
 import { messageService } from '@/services/messageService';
-import { useEventContext } from '@/contexts/EventContext';
 import { initializeFCM } from '@/services/firebaseMessaging';
 import { useToast } from '@/hooks/use-toast';
 
@@ -17,9 +15,6 @@ interface MessageInputProps {
   username: string;
   groupId: string;
   handleSendMessage: (eventData?: any) => Promise<void>;
-  isEventSelectOpen: boolean;
-  setIsEventSelectOpen: (open: boolean) => void;
-  eventSelectContent: React.ReactNode;
   isSending: boolean;
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -34,9 +29,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
   username,
   groupId,
   handleSendMessage,
-  isEventSelectOpen,
-  setIsEventSelectOpen,
-  eventSelectContent,
   isSending,
   value,
   onChange,
@@ -47,7 +39,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
   activeCategory = 'Ausgehen' // Default category changed to Ausgehen
 }) => {
   const [newMessage, setNewMessage] = useState("");
-  const { events } = useEventContext(); // Zugriff auf Events
   const { toast } = useToast();
 
   // Sicherstellen, dass wir eine gültige UUID für groupId haben
@@ -85,10 +76,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
         console.error('Error in message submission:', error);
       }
     }
-  };
-
-  const handleShareEvent = () => {
-    setIsEventSelectOpen(true);
   };
 
   const handleCategoryClick = (category: string) => {
@@ -133,46 +120,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
       });
     }
   };
-
-  // Event-Inhalt für das Popover
-  const realEventSelectContent = (
-    <div className="max-h-[300px] overflow-y-auto">
-      {events && events.length > 0 ? (
-        <div className="space-y-2 p-2">
-          <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-            Events auswählen
-          </div>
-          {events.map((event) => (
-            <div
-              key={event.id}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-pointer border border-gray-200 dark:border-gray-700"
-              onClick={() => {
-                // Event-Daten in die Nachricht einfügen
-                const eventMessage = `Schaut euch dieses Event an: ${event.title} am ${event.date} um ${event.time} in ${event.location}`;
-                if (onChange) {
-                  // Simuliere ein change event
-                  const fakeEvent = { target: { value: eventMessage } } as React.ChangeEvent<HTMLTextAreaElement>;
-                  onChange(fakeEvent);
-                } else {
-                  setNewMessage(eventMessage);
-                }
-                setIsEventSelectOpen(false);
-              }}
-            >
-              <div className="font-medium text-sm">{event.title}</div>
-              <div className="text-xs text-gray-500">
-                {event.date} • {event.location}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="p-4 text-sm text-gray-500 text-center">
-          Keine Events verfügbar
-        </div>
-      )}
-    </div>
-  );
 
   // Dynamisches padding-left basierend auf dem Modus
   const leftPadding = mode === 'community' ? 'pl-[100px]' : 'pl-4';
