@@ -41,7 +41,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   value,
   onChange,
   onKeyDown,
-  placeholder = "Schreibe eine Nachricht...",
+  placeholder = "Schreibe eine Nachricht..",
   mode = 'community', // Default to community mode
   onCategorySelect, // Hinzugefügte Prop
   activeCategory = 'Ausgehen' // Default category changed to Ausgehen
