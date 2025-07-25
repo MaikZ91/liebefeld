@@ -10,6 +10,8 @@ export interface ChatMessage {
   media_url?: string | null;
   reactions?: { emoji: string; users: string[] }[] | null;
   read_by?: string[] | null;
+  reply_to?: string | null; // ID of the message being replied to
+  mentions?: string[] | null; // Array of mentioned usernames
 }
 
 export interface TypingUser {
@@ -47,6 +49,8 @@ export interface Message {
   event_data?: EventShare;
   read_by?: string[];
   reactions?: { emoji: string; users: string[] }[]; // Added reactions
+  reply_to?: string | null; // ID of the message being replied to
+  mentions?: string[] | null; // Array of mentioned usernames
 }
 
 export interface ChatGroup {

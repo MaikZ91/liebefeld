@@ -6,7 +6,7 @@ import { subscriptionService } from './subscriptionService';
 import { typingService } from './typingService';
 
 export const chatService = {
-  async sendMessage(groupId: string, content: string, username: string, avatar?: string) {
+  async sendMessage(groupId: string, content: string, username: string, avatar?: string, replyToId?: string, mentions?: string[]) {
     try {
       const { data, error } = await supabase
         .from('chat_messages')
@@ -15,6 +15,8 @@ export const chatService = {
           text: content, // Use 'text' instead of 'content'
           sender: username, // Use 'sender' instead of 'user_name'
           avatar: avatar || null,
+          reply_to: replyToId || null,
+          mentions: mentions || null,
         })
         .select()
         .single();

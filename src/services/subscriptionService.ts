@@ -40,6 +40,8 @@ export const subscriptionService = {
               user_name: newPayload.sender,
               user_avatar: newPayload.avatar || '',
               group_id: newPayload.group_id,
+              reply_to: newPayload.reply_to || null,
+              mentions: newPayload.mentions || null,
             };
             
             console.log('New message received via subscription:', newMsg);
