@@ -8,7 +8,7 @@ import { useMessageSending } from '@/hooks/chat/useMessageSending';
 import { AVATAR_KEY, USERNAME_KEY, EventShare } from '@/types/chatTypes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/chatUIUtils'; 
-import TypingIndicator from '@/components/chat/TypingIndicator';
+// import TypingIndicator from '@/components/chat/TypingIndicator'; // Bleibt auskommentiert
 import ChatMessage from '@/components/chat/ChatMessage';
 import MessageReactions from '@/components/chat/MessageReactions';
 import { chatService } from '@/services/chatService';
@@ -90,22 +90,19 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   const {
     newMessage: realCommunityInput,
-    isSending: communitySending, // HIER WURDE isSending HINZUGEFÜGT
+    isSending: communitySending,
     setNewMessage: realSetCommunityInput,
     handleSubmit: realCommunitySendMessage,
     handleInputChange: realCommunityInputChangeFromHook,
     handleKeyDown: realCommunityKeyDownFromHook,
   } = useMessageSending(communityGroupId, username, addOptimisticMessage, activeCategory);
 
-  // Filter state für Community Chat
   const [messageFilter, setMessageFilter] = useState<string[]>(['alle']);
   
-  // User profile dialog state
   const [selectedUserProfile, setSelectedUserProfile] = useState<UserProfile | null>(null);
   const [showUserProfileDialog, setShowUserProfileDialog] = useState(false);
   const [loadingUserProfile, setLoadingUserProfile] = useState(false);
 
-  // TEMPORÄRE TEST VARIABLEN FÜR INPUT bleiben weiterhin aktiv zur Isolation des Inputs
   const [testCommunityInput, setTestCommunityInput] = useState('');
   const handleTestCommunityInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setTestCommunityInput(e.target.value);
@@ -220,11 +217,11 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   };
 
-  // Zuweisung der Handler für den Community-Modus - jetzt mit korrekt definiertem communitySending
   const currentInput = activeChatModeValue === 'ai' ? aiInput : testCommunityInput;
   const currentSetInput = activeChatModeValue === 'ai' ? setAiInput : setTestCommunityInput;
   const currentHandleSendMessage = activeChatModeValue === 'ai' ? aiSendMessage : handleTestCommunitySendMessage;
-  const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending; // HIER KORRIGIERT
+  // HIER WIRD isTyping KONTROLLIERT: false für Community, aiTyping für AI
+  const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : false; 
   const currentHandleKeyPress = activeChatModeValue === 'ai' ? aiKeyPress : handleTestCommunityKeyDown;
   const currentHandleInputChange = activeChatModeValue === 'ai' ? aiInputChange : handleTestCommunityInputChange;
 
@@ -311,7 +308,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               input={currentInput}
               setInput={currentSetInput}
               handleSendMessage={currentHandleSendMessage}
-              isTyping={currentIsTyping}
+              isTyping={currentIsTyping} // currentIsTyping wird hier übergeben
               onKeyDown={currentHandleKeyPress}
               onChange={currentHandleInputChange}
               isHeartActive={isHeartActive}
@@ -335,7 +332,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
           <div className={hideInput ? "pt-4 px-3" : "pt-32 px-3"}> 
             <MessageList
               messages={aiMessages}
-              isTyping={aiTyping}
+              isTyping={aiTyping} // aiTyping wird hier an MessageList übergeben
               handleDateSelect={handleDateSelect}
               messagesEndRef={messagesEndRef}
               examplePrompts={examplePrompts}
@@ -401,8 +398,17 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                   );
                 })}
 
-                <TypingIndicator typingUsers={typingUsers} />
-                <div ref={chatBottomRef} />
+                <MessageList
+                  messages={filteredCommunityMessages}
+                  isTyping={false} // HIER wird isTyping auf false gesetzt für Community
+                  handleDateSelect={handleDateSelect}
+                  messagesEndRef={chatBottomRef} // messagesEndRef sollte hier chatBottomRef sein
+                  examplePrompts={[]} // Keine Prompts im Community Chat
+                  handleExamplePromptClick={() => {}} // Dummy-Funktion
+                  onJoinEventChat={onJoinEventChat}
+                />
+
+                <div ref={chatBottomRef} /> {/* Dies ist der echte chatBottomRef */}
               </div>
             </div>
           </div>
