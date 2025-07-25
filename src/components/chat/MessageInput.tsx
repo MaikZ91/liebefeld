@@ -47,22 +47,19 @@ const MessageInput: React.FC<MessageInputProps> = ({
   activeCategory = 'Ausgehen' // Default category changed to Ausgehen
 }) => {
   const [newMessage, setNewMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { events } = useEventContext(); // Zugriff auf Events
   const { toast } = useToast();
 
-  // Ensure we have a valid UUID for groupId
+  // Sicherstellen, dass wir eine gültige UUID für groupId haben
   const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
 
-  const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (onChange) {
       onChange(e);
-      return;
+    } else {
+      setNewMessage(e.target.value);
     }
-
-    setNewMessage(e.target.value);
-
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (onKeyDown) {
@@ -98,7 +95,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
     if (onCategorySelect) {
       onCategorySelect(category);
     }
-    // Synchronize the filter with selected category when sending messages
+    // Synchronisiere den Filter mit der ausgewählten Kategorie beim Senden von Nachrichten
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('categoryChanged', { detail: { category } }));
     }
@@ -108,7 +105,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
     try {
       const token = await initializeFCM();
       if (token) {
-        // Save token to database
+        // Token in Datenbank speichern
         const { error } = await supabase
           .from('push_tokens')
           .insert({ token });
@@ -130,7 +127,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
     } catch (error) {
       console.error('Error enabling push notifications:', error);
       toast({
-        title: "Fehler", 
+        title: "Fehler",
         description: "Push-Benachrichtigungen konnten nicht aktiviert werden.",
         variant: "destructive"
       });
@@ -177,24 +174,16 @@ const MessageInput: React.FC<MessageInputProps> = ({
     </div>
   );
 
-  useEffect(() => {
-    return () => {
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-    };
-  }, []);
-
   // Dynamisches padding-left basierend auf dem Modus
-  const leftPadding = mode === 'community' ? 'pl-[100px]' : 'pl-4'; 
+  const leftPadding = mode === 'community' ? 'pl-[100px]' : 'pl-4';
 
   return (
     <div className="w-full space-y-2">
       <div className="flex items-center gap-2 relative">
-        <Textarea 
+        <Textarea
           placeholder={placeholder}
           value={value !== undefined ? value : newMessage}
-          onChange={handleMessageChange}
+          onChange={handleTextareaChange}
           onKeyDown={handleKeyDown}
           className={`min-h-[50px] flex-grow resize-none pr-14 border-2 border-red-500 focus:border-red-600 focus:ring-2 focus:ring-red-500 shadow-md shadow-red-500/10 transition-all duration-200 placeholder-red-500 ${leftPadding}`}
         />
@@ -213,7 +202,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
                   <ChevronDown className="h-2 w-2" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent 
+              <DropdownMenuContent
                 className="bg-zinc-900 border-red-500/30 z-50"
                 side="top"
                 align="start"
