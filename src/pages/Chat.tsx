@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
-import LiveTicker from '@/components/LiveTicker';
+// import LiveTicker from '@/components/LiveTicker'; // Auskommentiert
 import { Button } from '@/components/ui/button';
 import { Calendar, MessageSquare, List, Users, User } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
@@ -233,9 +233,9 @@ const ChatPage = () => {
   if (!isPageLoaded) {
     return (
       <>
-        <div className="w-full bg-black">
-          <LiveTicker events={events} />
-        </div>
+        {/* <div className="w-full bg-black"> */}
+        {/* <LiveTicker events={events} /> */}
+        {/* </div> */}
         <Layout hideFooter={true}>
           <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)] items-center justify-center">
             <div className="flex flex-col items-center gap-4">
@@ -250,9 +250,9 @@ const ChatPage = () => {
 
   return (
     <>
-      <div className="w-full bg-black">
-        <LiveTicker events={events} />
-      </div>
+      {/* <div className="w-full bg-black"> */}
+      {/* <LiveTicker events={events} /> */}
+      {/* </div> */}
       <Layout 
         hideFooter={true}
         activeView={activeView}
