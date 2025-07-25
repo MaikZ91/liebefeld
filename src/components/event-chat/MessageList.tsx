@@ -1,6 +1,6 @@
 // src/components/event-chat/MessageList.tsx
 import React from 'react';
-import { cn } => '@/lib/utils';
+import { cn } from '@/lib/utils'; // HIER KORRIGIERT: 'from' statt '=>'
 import ChatMessage from '@/components/chat/ChatMessage';
 import { Button } from '@/components/ui/button';
 import { MessageListProps } from './types';
