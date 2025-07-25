@@ -1,3 +1,4 @@
+
 // src/components/chat/MessageInput.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Textarea } from "@/components/ui/textarea";
@@ -314,6 +315,30 @@ const MessageInput: React.FC<MessageInputProps> = ({
             >
               <Bell className="h-3 w-3" />
             </Button>
+
+            {/* Event teilen Button */}
+            <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  onClick={handleShareEvent}
+                  variant="outline"
+                  size="icon"
+                  type="button"
+                  className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10 bg-white/90 dark:bg-zinc-800/90"
+                  title="Event teilen"
+                >
+                  <Calendar className="h-3 w-3" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-80 p-0 max-h-[400px] overflow-y-auto"
+                side="top"
+                align="start"
+                sideOffset={5}
+              >
+                {realEventSelectContent}
+              </PopoverContent>
+            </Popover>
           </div>
         )}
         {/* Send button on the right */}

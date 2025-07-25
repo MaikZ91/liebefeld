@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Layout } from '@/components/layouts/Layout';
-import EventChatBot from '@/components/EventChatBot'; // RE-AKTIVIERT
-// import LiveTicker from '@/components/LiveTicker'; // Bleibt auskommentiert
+import EventChatBot from '@/components/EventChatBot';
+import LiveTicker from '@/components/LiveTicker';
 import { Button } from '@/components/ui/button';
 import { Calendar, MessageSquare, List, Users, User } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
@@ -33,7 +33,7 @@ const ChatPage = () => {
   const [isAddEventSheetOpen, setIsAddEventSheetOpen] = useState(false);
   const [isEventListSheetOpen, setIsEventListSheetOpen] = useState(false);
   const [isUserDirectoryOpen, setIsUserDirectoryOpen] = useState(false);
-  const [isPageLoaded, setIsPageLoaded] = useState(false); // Zurück auf false
+  const [isPageLoaded, setIsPageLoaded] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
   // Chat bot reference to get input props
@@ -149,7 +149,7 @@ const ChatPage = () => {
           .channel('public:chat_messages')
           .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
             if (payload.new && payload.new.sender !== currentUser) {
-              // setUnreadMessageCount(prev => prev + 1); // BLEIBT AUSKOMMENTIERT FÜR JETZT
+              setUnreadMessageCount(prev => prev + 1);
             }
           })
           .subscribe();
@@ -233,9 +233,9 @@ const ChatPage = () => {
   if (!isPageLoaded) {
     return (
       <>
-        {/* <div className="w-full bg-black"> */}
-        {/* <LiveTicker events={events} /> */}
-        {/* </div> */}
+        <div className="w-full bg-black">
+          <LiveTicker events={events} />
+        </div>
         <Layout hideFooter={true}>
           <div className="container mx-auto py-4 px-2 md:px-4 flex flex-col h-[calc(100vh-64px)] items-center justify-center">
             <div className="flex flex-col items-center gap-4">
@@ -250,9 +250,9 @@ const ChatPage = () => {
 
   return (
     <>
-      {/* <div className="w-full bg-black"> */}
-      {/* <LiveTicker events={events} /> */}
-      {/* </div> */}
+      <div className="w-full bg-black">
+        <LiveTicker events={events} />
+      </div>
       <Layout 
         hideFooter={true}
         activeView={activeView}
@@ -266,7 +266,6 @@ const ChatPage = () => {
         <div className="container mx-auto px-2 md:px-4 flex flex-col h-[calc(100vh-48px)] !mt-0 !pt-0">
           <div className="flex-grow rounded-lg overflow-hidden border border-black flex flex-col bg-black">
             <div className="flex-grow relative">
-              {/* RE-AKTIVIERT: EventChatBot für beide Modi */}
               <EventChatBot 
                 fullPage={true} 
                 onAddEvent={handleAddEvent} 

@@ -1,17 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
-import { EventShare, Message } from '@/types/chatTypes';
+import { EventShare } from '@/types/chatTypes';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { CalendarIcon, Link as LinkIcon, Reply } from 'lucide-react';
+import { CalendarIcon, Link as LinkIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import EventMessageFormatter from './EventMessageFormatter';
 import MessageContextMenu from './MessageContextMenu';
 import MessageReactions from './MessageReactions';
-import ReplyMessage from './ReplyMessage';
-import MentionRenderer from './MentionRenderer';
 
 interface ChatMessageProps {
   message: string | React.ReactNode;
@@ -24,9 +22,6 @@ interface ChatMessageProps {
   onReact?: (emoji: string) => void;
   currentUsername?: string;
   messageId?: string;
-  replyToMessage?: Message | null;
-  onReply?: (message: Message) => void;
-  fullMessage?: Message; // Full message object for reply functionality
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -39,10 +34,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   reactions = [],
   onReact,
   currentUsername = '',
-  messageId,
-  replyToMessage,
-  onReply,
-  fullMessage
+  messageId
 }) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -146,11 +138,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         );
       }
       return (
-        <MentionRenderer 
-          text={renderMessageWithLinks(message) as string}
-          currentUsername={currentUsername}
-          className="chat-message-content"
-        />
+        <span className="whitespace-pre-wrap chat-message-content">
+          {renderMessageWithLinks(message)}
+        </span>
       );
     }
 
@@ -170,12 +160,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     }
   };
 
-  const handleReply = () => {
-    if (onReply && fullMessage) {
-      onReply(fullMessage);
-    }
-  };
-
   const messageContent = (
     <div
       className={cn(
@@ -184,29 +168,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         "bg-black text-white shadow-md w-full max-w-full overflow-hidden hover:bg-gray-900/50 transition-colors duration-200"
       )}
     >
-      {/* Reply indicator */}
-      {replyToMessage && (
-        <ReplyMessage replyToMessage={replyToMessage} className="mb-2" />
-      )}
-
       {/* Outer flex container for text and reactions */}
       <div className="flex flex-col">
         <div className="chat-message-bubble">
           {formatContent()}
         </div>
-
-        {/* Reply button - only show in group mode */}
-        {isGroup && onReply && fullMessage && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleReply}
-            className="self-start mt-1 h-6 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <Reply className="h-3 w-3 mr-1" />
-            Antworten
-          </Button>
-        )}
 
         {/* Reactions container, now explicitly below the text content */}
         {(reactions && reactions.length > 0) || (onReact && messageId && isGroup) ? (

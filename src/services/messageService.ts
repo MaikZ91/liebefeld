@@ -76,8 +76,6 @@ export const messageService = {
         user_avatar: msg.avatar || '',
         group_id: msg.group_id,
         reactions: Array.isArray(msg.reactions) ? msg.reactions as { emoji: string; users: string[] }[] : [], // Include reactions in formatted messages
-        reply_to: (msg as any).reply_to || null,
-        mentions: Array.isArray((msg as any).mentions) ? (msg as any).mentions : null,
         // We no longer add event_data directly here
       }));
       
@@ -135,9 +133,7 @@ export const messageService = {
     username: string, 
     text: string, // Changed from 'content' to 'text'
     avatar: string | null = null,
-    mediaUrl: string | null = null,
-    replyToId: string | null = null,
-    mentions: string[] | null = null
+    mediaUrl: string | null = null
   ): Promise<string | null> {
     try {
       // Ensure we have a valid UUID for group_id
@@ -154,8 +150,6 @@ export const messageService = {
           text: text, // Changed from 'content' to 'text'
           avatar: avatar,
           media_url: mediaUrl,
-          reply_to: replyToId,
-          mentions: mentions,
           read_by: [username] // The sending person has already read the message
         }])
         .select('id')
