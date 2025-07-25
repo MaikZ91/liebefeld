@@ -105,16 +105,40 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const [showUserProfileDialog, setShowUserProfileDialog] = useState(false);
   const [loadingUserProfile, setLoadingUserProfile] = useState(false);
 
+  // === START TEMPORARY TEST VARIABLES AND HANDLERS ===
+  const [testCommunityInput, setTestCommunityInput] = useState('');
+  const handleTestCommunityInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setTestCommunityInput(e.target.value);
+  };
+  const handleTestCommunitySendMessage = async () => {
+    if (testCommunityInput.trim()) {
+      // Simulate sending logic, for testing input fluidity
+      console.log('Test sending message:', testCommunityInput);
+      setTestCommunityInput(''); // Clear input
+      // No actual messageService call here to isolate input
+    }
+  };
+  const handleTestCommunityKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleTestCommunitySendMessage();
+    }
+  };
+  // === END TEMPORARY TEST VARIABLES AND HANDLERS ===
+
+
   useEffect(() => {
     if (activeChatModeValue === 'community' && setExternalInput && externalInput !== communityInput) {
+      // Only sync if there's a real change to avoid unnecessary updates
       setCommunityInput(externalInput);
     }
   }, [externalInput, activeChatModeValue, setCommunityInput]);
 
   useEffect(() => {
     if (onExternalSendHandlerChange) {
+      // === USE TEST SEND HANDLER FOR COMMUNITY MODE ===
       if (activeChatModeValue === 'community') {
-        onExternalSendHandlerChange(communitySendMessage);
+        onExternalSendHandlerChange(handleTestCommunitySendMessage); // Changed to test handler
       } else if (activeChatModeValue === 'ai') {
         onExternalSendHandlerChange(aiSendMessage);
       } else {
@@ -127,7 +151,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
         onExternalSendHandlerChange(null);
       }
     };
-  }, [activeChatModeValue, communitySendMessage, aiSendMessage, onExternalSendHandlerChange]);
+  }, [activeChatModeValue, handleTestCommunitySendMessage, aiSendMessage, onExternalSendHandlerChange]); // Dependency change
 
   const queriesToRender = globalQueries.length > 0 ? globalQueries : [];
 
@@ -210,20 +234,13 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   };
 
-  const wrappedCommunityInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    communityInputChangeFromHook(e);
-  };
-
-  const wrappedCommunityKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    communityKeyDownFromHook(e);
-  };
-
-  const currentInput = activeChatModeValue === 'ai' ? aiInput : communityInput;
-  const currentSetInput = activeChatModeValue === 'ai' ? setAiInput : setCommunityInput;
-  const currentHandleSendMessage = activeChatModeValue === 'ai' ? aiSendMessage : communitySendMessage;
-  const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending;
-  const currentHandleKeyPress = activeChatModeValue === 'ai' ? aiKeyPress : wrappedCommunityKeyDown;
-  const currentHandleInputChange = activeChatModeValue === 'ai' ? aiInputChange : wrappedCommunityInputChange;
+  // Temporarily use test handlers for community mode
+  const currentInput = activeChatModeValue === 'ai' ? aiInput : testCommunityInput; // Changed
+  const currentSetInput = activeChatModeValue === 'ai' ? setAiInput : setTestCommunityInput; // Changed
+  const currentHandleSendMessage = activeChatModeValue === 'ai' ? aiSendMessage : handleTestCommunitySendMessage; // Changed
+  const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : false; // Force false for test
+  const currentHandleKeyPress = activeChatModeValue === 'ai' ? aiKeyPress : handleTestCommunityKeyDown; // Changed
+  const currentHandleInputChange = activeChatModeValue === 'ai' ? aiInputChange : handleTestCommunityInputChange; // Changed
 
 
   useEffect(() => {
@@ -350,6 +367,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               </div>
             )}
 
+            {/* REMOVED THE TEMPORARY INPUT FROM INTELLIGENTCOMMUNITYCHAT.TSX, THIS BLOCK IS FOR MESSAGE DISPLAY ONLY */}
             <div
               ref={chatContainerRef}
               className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4"
