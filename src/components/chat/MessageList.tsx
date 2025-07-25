@@ -140,9 +140,6 @@ const MessageList: React.FC<MessageListProps> = ({
               </div>
             );
           })}
-          
-          <TypingIndicator typingUsers={typingUsers} />
-          
           <div ref={chatBottomRef} />
         </div>
       </div>
