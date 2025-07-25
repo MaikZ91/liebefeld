@@ -2,13 +2,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { RefreshCw, Users } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { USERNAME_KEY, AVATAR_KEY, TypingUser } from '@/types/chatTypes';
-import { useEventContext } from '@/contexts/EventContext';
 import { toast } from '@/hooks/use-toast';
 import { getInitials } from '@/utils/chatUIUtils';
 import MessageInput from './MessageInput';
@@ -44,11 +40,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   const [isSending, setIsSending] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
-  // const [isTyping, setIsTyping] = useState(false); // Diese Zeile wurde entfernt
   const [username, setUsername] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || 'Gast');
   const [avatar, setAvatar] = useState<string | null>(() => localStorage.getItem(AVATAR_KEY));
-  const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
-  const [eventSearchQuery, setEventSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('Ausgehen');
   const [messageFilter, setMessageFilter] = useState<string[]>(['alle']); // New filter state
 
@@ -57,8 +50,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   const messagesRef = useRef<Message[]>(messages);
   const channelsRef = useRef<any[]>([]);
   const sentMessageIds = useRef<Set<string>>(new Set());
-
-  const { events } = useEventContext();
 
   // Use scroll management hook
   const scrollManagement = useScrollManagement(messages, typingUsers);
@@ -313,28 +304,20 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   };
 
   // Handle sending messages
-  const handleSubmit = async (eventData?: any) => {
-    if ((!newMessage.trim() && !fileInputRef.current?.files?.length && !eventData) || !username || !groupId) {
+  const handleSubmit = async () => { // Removed eventData parameter as it's no longer used for sharing events directly
+    if ((!newMessage.trim() && !fileInputRef.current?.files?.length) || !username || !groupId) {
       return;
     }
 
     try {
       setIsSending(true);
 
-      // Format message with category label and event data if present
+      // Format message with category label
       let messageText = newMessage.trim();
 
       // Add category label to the message
       const categoryLabel = `#${selectedCategory.toLowerCase()}`;
-
-      if (eventData) {
-        const { title, date, time, location, category } = eventData;
-        // Use \\n for line breaks in the string to be parsed correctly by `EventMessageFormatter`
-        messageText = `${categoryLabel} 🗓️ **Event: ${title}**\\nDatum: ${date} um ${time}\\nOrt: ${location || 'k.A.'}\\nKategorie: ${category}\\n\\n${messageText}`;
-      } else {
-        // Add category label to regular messages
-        messageText = `${categoryLabel} ${messageText}`;
-      }
+      messageText = `${categoryLabel} ${messageText}`;
 
       // Create optimistic message
       const tempId = `temp-${Date.now()}`;
@@ -404,32 +387,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       e.preventDefault();
       handleSubmit();
     }
-  };
-
-  // Filter events for sharing based on search query
-  const filteredEvents = events.filter(event => {
-    if (!eventSearchQuery) return true;
-
-    const query = eventSearchQuery.toLowerCase();
-    return (
-      event.title?.toLowerCase().includes(query) ||
-      event.description?.toLowerCase().includes(query) ||
-      event.location?.toLowerCase().includes(query) ||
-      event.category?.toLowerCase().includes(query)
-    );
-  });
-
-  const handleSelectEventToShare = (event: any) => {
-    const eventData = {
-      title: event.title,
-      date: event.date,
-      time: event.time,
-      location: event.location,
-      category: event.category
-    };
-
-    setIsEventSelectOpen(false);
-    handleSubmit(eventData);
   };
 
   // Listen for category changes from MessageInput and sync filter
@@ -563,43 +520,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           username={username}
           groupId={groupId}
           handleSendMessage={handleSubmit}
-          isEventSelectOpen={isEventSelectOpen}
-          setIsEventSelectOpen={setIsEventSelectOpen}
-          eventSelectContent={
-            <>
-              <div className="p-2 border-b border-gray-800">
-                <div className="flex items-center gap-2">
-                  <Search className="h-5 w-5 text-gray-400" />
-                  <Input
-                    value={eventSearchQuery}
-                    onChange={(e) => setEventSearchQuery(e.target.value)}
-                    placeholder="Event suchen..."
-                    className="bg-black border-gray-800"
-                  />
-                </div>
-              </div>
-              <ScrollArea className="h-[350px]">
-                <div className="p-2 space-y-2">
-                  {filteredEvents.length === 0 ? (
-                    <p className="text-gray-400 text-center py-4">Keine Events gefunden</p>
-                  ) : (
-                    filteredEvents.map((event) => (
-                      <div
-                        key={event.id}
-                        className="p-2 bg-black rounded-md hover:bg-gray-900 cursor-pointer border border-gray-800"
-                        onClick={() => handleSelectEventToShare(event)}
-                      >
-                        <p className="font-medium text-white">{event.title}</p>
-                        <p className="text-sm text-gray-400">
-                          {event.date} um {event.time} • {event.category}
-                        </p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </ScrollArea>
-            </>
-          }
           isSending={isSending}
           value={newMessage}
           onChange={handleInputChangeFromMessageInput}
