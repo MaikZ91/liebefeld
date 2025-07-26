@@ -1582,14 +1582,14 @@ const EventHeatmap: React.FC = () => {
             <DialogTitle className="text-center">
               <div className="text-4xl mb-2">🏛️</div>
               <div className="text-xl font-bold">{selectedTribeSpot?.name}</div>
-              <div className="text-sm text-muted-foreground font-normal">Tribe Spot • Einfach hier einchecken!</div>
+              <div className="text-sm text-muted-foreground font-normal">Tribe Spot • Spontane Treffpunkte für deine Community!</div>
             </DialogTitle>
           </DialogHeader>
           
           <div className="flex flex-col gap-4 mt-4">
             <div className="text-center">
               <p className="text-sm text-muted-foreground mb-4">
-                Möchtest du dich am {selectedTribeSpot?.name} einchecken?<br/>
+                Möchtest du dich am {selectedTribeSpot?.name} einchecken und dich mit anderen Tribes spotan verbinden?<br/>
                 Dein Check-in wird im Community Chat geteilt!
               </p>
               
