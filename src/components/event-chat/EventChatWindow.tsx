@@ -91,10 +91,38 @@ const EventChatWindow: React.FC<EventChatWindowProps> = ({
     if (!inputValue.trim()) return;
 
     try {
+      // Check if this is the first message in the event chat
+      const isFirstMessage = messages.length === 0;
+      
       await chatService.sendMessage(groupId, inputValue, currentUsername);
+      
+      // If this was the first message, send notification to community chat
+      if (isFirstMessage) {
+        await sendFirstMessageNotification();
+      }
+      
       setInputValue('');
     } catch (error) {
       console.error('Error sending message:', error);
+    }
+  };
+
+  const sendFirstMessageNotification = async () => {
+    try {
+      // Send notification to community chat that the event chat has been opened
+      const communityGroupId = 'bi_ausgehen'; // Default community group
+      const message = `${currentUsername} hat das Event Chat "${eventTitle}" eröffnet! 💬`;
+      
+      await chatService.sendMessage(
+        communityGroupId, 
+        message, 
+        'System',
+        '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png'
+      );
+      
+      console.log('First message notification sent to community chat');
+    } catch (error) {
+      console.error('Error sending first message notification:', error);
     }
   };
 
@@ -108,7 +136,7 @@ const EventChatWindow: React.FC<EventChatWindowProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4">
       <Card className="w-full max-w-2xl h-[600px] bg-background border-border flex flex-col">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div className="flex items-center space-x-3">
