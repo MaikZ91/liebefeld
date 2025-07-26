@@ -1577,7 +1577,7 @@ const EventHeatmap: React.FC = () => {
 
       {/* Tribe Spot Dialog */}
       <Dialog open={isTribeSpotDialogOpen} onOpenChange={setIsTribeSpotDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md z-[9999]">
           <DialogHeader>
             <DialogTitle className="text-center">
               <div className="text-4xl mb-2">🏛️</div>
