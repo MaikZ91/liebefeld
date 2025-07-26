@@ -1218,7 +1218,6 @@ const EventHeatmap: React.FC = () => {
               className="bg-black/95 text-white border-gray-700 hover:bg-gray-800 flex items-center gap-2"
             >
               <Users className="h-5 w-5" />
-              Community Features
               <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
