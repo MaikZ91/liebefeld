@@ -28,7 +28,10 @@ export const fetchSupabaseEvents = async (selectedCity?: string, currentDate?: s
 
     // Apply date filter at database level (current date onwards)
     if (currentDate) {
-      query = query.gte('date', currentDate);
+      const yesterday = new Date(currentDate);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      query = query.gte('date', yesterdayStr);
       console.log(`踏 [fetchSupabaseEvents] Applying DB filter for date >= ${currentDate}`);
     } else {
       console.log('踏 [fetchSupabaseEvents] No specific start date, fetching all events.');
