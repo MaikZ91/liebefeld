@@ -1216,7 +1216,6 @@ const EventHeatmap: React.FC = () => {
             <Button
               variant="outline"
               className="bg-black/95 text-white border-gray-700 hover:bg-gray-800 flex items-center gap-2"
-              title="Community Features"
             >
               <Users className="h-5 w-5" />
               Community Features
