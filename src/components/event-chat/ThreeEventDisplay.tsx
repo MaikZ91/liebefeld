@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Users, Heart, MessageSquare } from 'lucide-react';
+import { Users, Heart, MessageSquare, ChevronDown} from 'lucide-react';
 import { PanelEventData, PanelEvent } from './types';
 import { cn } from '@/lib/utils';
 import EventLikeAvatars from './EventLikeAvatars';
