@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Users, Heart, MessageSquare,ChevronDown  } from 'lucide-react';
+import { Users, Heart, MessageSquare } from 'lucide-react';
 import { PanelEventData, PanelEvent } from './types';
 import { cn } from '@/lib/utils';
 import EventLikeAvatars from './EventLikeAvatars';
@@ -238,10 +238,20 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
       >
-<div className="flex flex-col items-center justify-center pt-2 pb-1.5 cursor-grab active:cursor-grabbing">
-          <div className="w-8 h-1 bg-gray-500 rounded-full opacity-70 mb-1" /> {/* Der Griff-Balken */}
-          <ChevronDown className="h-4 w-4 text-gray-400 opacity-60" /> {/* Der Pfeil */}
+<div className="flex justify-center pt-2 pb-1">
+          <div className="w-8 h-1 bg-white-500 rounded-full cursor-grab active:cursor-grabbing opacity-70" />
         </div>
+        {/* Optional: A subtle down arrow to reinforce the swipe direction */}
+        <div className="flex justify-center -mt-1 pb-2">
+            <ChevronDown className="h-4 w-4 text-white-400 opacity-60" />
+        </div>
+        <div
+          className="flex gap-1.5 transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing select-none"
+          style={{
+            transform: `translateX(${translateX}px)`,
+            transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+          }}
+        >
           {displayEvents.map((event, index) => {
             const imageUrl = 'image_url' in event ? event.image_url : '/placeholder-event.jpg';
             
