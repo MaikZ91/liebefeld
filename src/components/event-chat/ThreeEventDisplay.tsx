@@ -238,7 +238,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
       >
-        <div className="flex justify-center pt-2 pb-1">
+<div className="flex justify-center pt-2 pb-1">
           <div className="w-8 h-1 bg-gray-500 rounded-full cursor-grab active:cursor-grabbing opacity-70" />
         </div>
         {/* Optional: A subtle down arrow to reinforce the swipe direction */}
@@ -246,13 +246,6 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
             <ChevronDown className="h-4 w-4 text-gray-400 opacity-60" />
         </div>
         <div
-          className="flex gap-1.5 transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing select-none"
-          style={{
-            transform: `translateX(${translateX}px)`,
-            transition: isDragging ? 'none' : 'transform 0.3s ease-out'
-          }}
-        >
-        <div 
           className="flex gap-1.5 transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing select-none"
           style={{
             transform: `translateX(${translateX}px)`,
