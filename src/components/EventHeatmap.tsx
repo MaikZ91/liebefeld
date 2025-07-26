@@ -101,7 +101,7 @@ const EventHeatmap: React.FC = () => {
   const [aiChatExternalSendHandler, setAiChatExternalSendHandler] = useState<((input?: string | any) => Promise<void>) | null>(null); // Updated type
 
   const [eventCoordinates, setEventCoordinates] = useState<Map<string, { lat: number; lng: number }>>(new Map());
-  
+
   // NEW STATE FOR PANELS VISIBILITY
   const [showEventPanels, setShowEventPanels] = useState(true);
 
@@ -171,7 +171,7 @@ const EventHeatmap: React.FC = () => {
       if (!events.length) return;
 
       console.log('[EventHeatmap] Starting geocoding for events...');
-      
+
       const uniqueLocations = new Set<string>();
       const locationData: Array<{ location: string; city?: string }> = [];
 
@@ -199,9 +199,9 @@ const EventHeatmap: React.FC = () => {
 
       try {
         const coordinates = await geocodeMultipleLocations(locationData);
-        
+
         const newEventCoordinates = new Map<string, { lat: number; lng: number }>();
-        
+
         currentCityEvents.forEach(event => { // Use currentCityEvents here as well
           if (event.location) {
             const key = `${event.location}_${event.city || selectedCity}`;
@@ -245,8 +245,8 @@ const EventHeatmap: React.FC = () => {
         'kopenhagen': { lat: 55.6833, lng: 12.5833 },
         'köln': { lat: 50.935173, lng: 6.953101 },
         'munich': { lat: 48.1351, lng: 11.5820 },
-        
-        
+
+
       };
       return coords[cityObject.abbr.toLowerCase()] || { lat: 52.0302, lng: 8.5311 };
     }
@@ -256,12 +256,12 @@ const EventHeatmap: React.FC = () => {
   const selectedDateFilteredEvents = React.useMemo(() => {
     const cityDisplayName = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity;
     console.log(`Filtering events for ${selectedDateString} in ${cityDisplayName}...`);
-    
+
     const filtered = events
       .filter(event => {
         const isSelectedDateEvent = event.date === selectedDateString;
         const hasLocationData = event.location || event.city;
-        
+
         const eventCityLower = event.city ? event.city.toLowerCase() : null;
         const selectedCityLower = selectedCity.toLowerCase();
 
@@ -271,9 +271,9 @@ const EventHeatmap: React.FC = () => {
         } else {
           isRelevantCity = eventCityLower === selectedCityLower;
         }
-                                       
+
         console.log(`Event: ${event.title}, Date: ${event.date}, Location: ${event.location}, City: ${event.city}, IsSelectedDate: ${isSelectedDateEvent}, HasLocation: ${hasLocationData}, IsRelevantCity: ${isRelevantCity}`);
-        
+
         // Modified to show events even without geocoding working
         return isSelectedDateEvent && isRelevantCity;
       })
@@ -281,7 +281,7 @@ const EventHeatmap: React.FC = () => {
         const coords = eventCoordinates.get(event.id);
         const lat = coords?.lat || getCityCenterCoordinates(selectedCity).lat;
         const lng = coords?.lng || getCityCenterCoordinates(selectedCity).lng;
-        
+
         return {
           ...event,
           lat,
@@ -300,7 +300,7 @@ const EventHeatmap: React.FC = () => {
     selectedDateFilteredEvents.forEach(event => {
       categoryMap.set(event.category, (categoryMap.get(event.category) || 0) + 1);
     });
-    
+
     return [
       { name: 'all', count: selectedDateFilteredEvents.length },
       ...Array.from(categoryMap.entries()).map(([name, count]) => ({ name, count }))
@@ -309,21 +309,21 @@ const EventHeatmap: React.FC = () => {
 
   const filteredEvents = React.useMemo(() => {
     let filtered = selectedDateFilteredEvents;
-    
+
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(event => event.category === selectedCategory);
     }
-    
+
     const selectedHour = timeRange[0];
     filtered = filtered.filter(event => event.eventHour >= selectedHour);
-    
+
     // Sort events by likes in descending order
     filtered = filtered.sort((a, b) => {
       const likesA = (a.likes || 0) + (a.rsvp_yes || 0) + (a.rsvp_maybe || 0);
       const likesB = (b.likes || 0) + (b.rsvp_yes || 0) + (b.rsvp_maybe || 0);
       return likesB - likesA;
     });
-    
+
     return filtered;
   }, [selectedDateFilteredEvents, selectedCategory, timeRange]);
 
@@ -349,7 +349,7 @@ const EventHeatmap: React.FC = () => {
     const selectedIndex = selectedEventId
       ? panelEvents.findIndex(event => event.id === selectedEventId)
       : 0;
-    
+
     return {
       events: panelEvents,
       currentIndex: selectedIndex >= 0 ? selectedIndex : 0
@@ -377,7 +377,7 @@ const EventHeatmap: React.FC = () => {
 
       setPerfectDayMessage(data.response);
       setShowPerfectDayPanel(true);
-      
+
       toast({
         title: "Perfect Day generiert!",
         description: "Deine personalisierte Tagesempfehlung ist bereit.",
@@ -397,7 +397,7 @@ const EventHeatmap: React.FC = () => {
   const handleJoinEventChat = async (eventId: string, eventTitle: string) => {
     try {
       const groupId = await eventChatService.joinEventChat(eventId, eventTitle);
-      
+
       if (groupId) {
         // Open event chat window
         setEventChatWindow({
@@ -405,7 +405,7 @@ const EventHeatmap: React.FC = () => {
           eventTitle,
           isOpen: true
         });
-        
+
         toast({
           title: "Event Chat geöffnet",
           description: `Chat für "${eventTitle}" wurde geöffnet`,
@@ -437,9 +437,9 @@ const EventHeatmap: React.FC = () => {
           last_online: new Date().toISOString()
         })
         .eq('username', username);
-      
+
       if (error) throw error;
-      
+
       console.log(`Updated position for ${username} to ${newLat}, ${newLng}`);
     } catch (error: any) {
       console.error('Error updating user position:', error);
@@ -454,14 +454,14 @@ const EventHeatmap: React.FC = () => {
   const handleCheckInWithStatus = async () => {
     const username = currentUser || localStorage.getItem('community_chat_username') || 'Gast';
     const avatar = userProfile?.avatar || localStorage.getItem('community_chat_avatar') || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
-    
+
     setCentralAvatarUsername(username);
     setCentralAvatarImage(avatar);
     setShowCentralAvatar(true);
-    
-    const checkInToast = toast({ 
-      title: "Check-in wird verarbeitet...", 
-      duration: Infinity 
+
+    const checkInToast = toast({
+      title: "Check-in wird verarbeitet...",
+      duration: Infinity
     });
 
     try {
@@ -479,7 +479,7 @@ const EventHeatmap: React.FC = () => {
           current_status_message: liveStatusMessage,
           current_checkin_timestamp: new Date().toISOString(),
         };
-        
+
         const { data: existingProfile } = await supabase
           .from('user_profiles')
           .select('id')
@@ -496,14 +496,14 @@ const EventHeatmap: React.FC = () => {
             .from('user_profiles')
             .insert(profileData);
         }
-        
+
         refetchProfile();
       }
 
       const communityMessage = liveStatusMessage
         ? `📍 ${username} ist jetzt hier: "${liveStatusMessage}"`
         : `📍 ${username} ist jetzt in der Nähe!`;
-      
+
       const cityCommunityGroupId = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.abbr.toLowerCase() + '_ausgehen' || 'bi_ausgehen';
 
       await messageService.sendMessage(
@@ -542,7 +542,7 @@ const EventHeatmap: React.FC = () => {
     try {
       const cityObject = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase());
       const cityName = cityObject ? cityObject.name : selectedCity;
-      
+
       const eventWithCity = { ...eventData, city: cityName };
 
       console.log('Adding new event to database only:', eventWithCity);
@@ -594,7 +594,7 @@ const EventHeatmap: React.FC = () => {
           zoomControl: false,
           preferCanvas: false
         });
-        
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '',
           maxZoom: 19,
@@ -623,22 +623,22 @@ const EventHeatmap: React.FC = () => {
   // Separate useEffect for handling city changes with smooth animation
   useEffect(() => {
     if (!map || !selectedCity) return;
-    
+
     console.log('[EventHeatmap] City changed to:', selectedCity);
     const newCenter = getCityCenterCoordinates(selectedCity);
-    
+
     // Check if map is still valid before animating
     try {
       if (map.getContainer()) {
         // Deutschland center coordinates for zoom out effect
-        const germanyCenter = { lat: 51.1657, lng: 10.4515 }; 
-        
+        const germanyCenter = { lat: 51.1657, lng: 10.4515 };
+
         // Step 1: Zoom out to show all of Germany
         map.setView([germanyCenter.lat, germanyCenter.lng], 6, {
           animate: true,
           duration: 0.8
         });
-        
+
         // Step 2: After zoom out, zoom into the new city
         setTimeout(() => {
           if (map && map.getContainer()) {
@@ -653,7 +653,7 @@ const EventHeatmap: React.FC = () => {
       console.warn('[EventHeatmap] Error during city change animation:', error);
     }
   }, [map]); // Remove selectedCity from deps to prevent conflicts
-  
+
   // Final cleanup when component unmounts
   useEffect(() => {
     return () => {
@@ -705,7 +705,7 @@ const EventHeatmap: React.FC = () => {
           text-align: center;
           position: relative;
           transition: all 0.3s ease;
-        " 
+        "
         onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 4px 16px rgba(212,175,55,0.4)';"
         onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.3)';">
           <div style="
@@ -739,9 +739,9 @@ const EventHeatmap: React.FC = () => {
       const usersAtSpot = allUserProfiles.filter(user => {
         const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null;
         if (!hasLiveLocation) return false;
-        
+
         const distance = Math.sqrt(
-          Math.pow(user.current_live_location_lat! - spot.lat, 2) + 
+          Math.pow(user.current_live_location_lat! - spot.lat, 2) +
           Math.pow(user.current_live_location_lng! - spot.lng, 2)
         );
         return distance < 0.002;
@@ -785,7 +785,7 @@ const EventHeatmap: React.FC = () => {
       const coords = eventCoordinates.get(event.id);
       const lat = coords?.lat || event.lat;
       const lng = coords?.lng || event.lng;
-      
+
       if (typeof lat !== 'number' || isNaN(lat) || typeof lng !== 'number' || isNaN(lng)) {
         console.warn(`Invalid coordinates for event ${event.title}: Lat ${lat}, Lng ${lng}. Skipping marker.`);
         return;
@@ -838,8 +838,7 @@ const EventHeatmap: React.FC = () => {
         html: iconHtml,
         className: 'custom-event-marker',
         iconSize: [markerSize, markerSize + 20],
-        iconAnchor: [markerSize / 2, markerSize + 20],
-        popupAnchor: [0, -markerSize - 20]
+        iconAnchor: [markerSize / 2, markerSize + 20]
       });
 
       const marker = L.marker([lat, lng], { icon: customIcon });
@@ -855,7 +854,7 @@ const EventHeatmap: React.FC = () => {
         <div style="min-width: 200px; max-width: 250px; font-family: sans-serif;">
           ${event.image_url ? `<img src="${event.image_url}" onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;"/>` : ''}
           <h3 style="margin: 0 0 4px 0; font-weight: bold; color: #1f2937; font-size: 16px;">${event.title}</h3>
-          
+
           <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280; font-size: 12px;">
             <span style="margin-right: 5px;">📍</span>
             <span>${event.location || 'Bielefeld'}</span>
@@ -914,14 +913,14 @@ const EventHeatmap: React.FC = () => {
         map.removeLayer(marker);
       }
     });
-    
+
     const newUserMarkers: L.Marker[] = [];
     const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 
     allUserProfiles.forEach(user => {
       const userCity = user.favorite_locations?.[0]?.toLowerCase() || 'bielefeld';
       const selectedCityName = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name?.toLowerCase() || selectedCity.toLowerCase();
-      
+
       let isUserInCurrentCity = false;
       if (selectedCityName === 'bielefeld' || selectedCityName === 'bi') {
         isUserInCurrentCity = !userCity || userCity === 'bielefeld' || userCity === 'bi';
@@ -935,7 +934,7 @@ const EventHeatmap: React.FC = () => {
       const hasStatusMessage = user.current_status_message && user.current_status_message.trim() !== '';
       const isRecentCheckin = user.current_checkin_timestamp &&
                                (new Date().getTime() - new Date(user.current_checkin_timestamp).getTime() < TWO_HOURS_MS);
-      
+
       if (hasLiveLocation && hasStatusMessage) {
         const lat = user.current_live_location_lat as number;
         const lng = user.current_live_location_lng as number;
@@ -999,11 +998,11 @@ const EventHeatmap: React.FC = () => {
           iconAnchor: [30, 90]
         });
 
-        const marker = L.marker([lat, lng], { 
+        const marker = L.marker([lat, lng], {
           icon: userMarkerIcon,
           draggable: user.username === currentUser
         });
-        
+
         marker.on('click', () => {
           setSelectedUserForPrivateChat(user);
           setIsPrivateChatOpen(true);
@@ -1014,7 +1013,7 @@ const EventHeatmap: React.FC = () => {
             const marker = e.target;
             const position = marker.getLatLng();
             console.log(`User ${user.username} moved to:`, position.lat, position.lng);
-            
+
             updateUserPosition(user.username, position.lat, position.lng);
           });
         }
@@ -1036,11 +1035,11 @@ const EventHeatmap: React.FC = () => {
 
   const handleEventSelect = (eventId: string) => {
     setSelectedEventId(eventId);
-    
+
     const selectedEvent = filteredEvents.find(event =>
       (event.id || `${event.title}-${event.date}-${event.time}`) === eventId
     );
-    
+
     if (selectedEvent && selectedEvent.lat && selectedEvent.lng && map) {
       map.setView([selectedEvent.lat, selectedEvent.lng], 15);
     }
@@ -1049,16 +1048,16 @@ const EventHeatmap: React.FC = () => {
   const handleEventLike = async (eventId: string) => {
     try {
       // Find the event in the filtered events
-      const event = filteredEvents.find(e => 
+      const event = filteredEvents.find(e =>
         (e.id || `${e.title}-${e.date}-${e.time}`) === eventId
       );
-      
+
       if (!event || !event.id) return;
 
       // Use the handleLikeEvent from useEvents hook (extracted above)
       await handleLikeEvent(event.id);
 
-      
+
     } catch (error: any) {
       console.error('Error liking event:', error);
       toast({
@@ -1086,13 +1085,13 @@ const EventHeatmap: React.FC = () => {
     setIsPanelOpen(false);
     setShowPerfectDayPanel(false);
   };
-  
+
   const handleAIChatSend = async (messageContent?: string) => {
     if ((messageContent && messageContent.trim()) || aiChatInput.trim()) {
       setShowAIChat(true);
       if (aiChatExternalSendHandler) {
         // Pass aiChatInput to the handler, which expects a string or any
-        await aiChatExternalSendHandler(aiChatInput); 
+        await aiChatExternalSendHandler(aiChatInput);
       }
       setAiChatInput('');
     }
@@ -1100,10 +1099,10 @@ const EventHeatmap: React.FC = () => {
 
   const handleTribeSpotCheckIn = async () => {
     if (!selectedTribeSpot) return;
-    
+
     const username = currentUser || localStorage.getItem('community_chat_username') || 'Gast';
     const avatar = userProfile?.avatar || localStorage.getItem('community_chat_avatar') || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
-    
+
     try {
       const profileData = {
         username,
@@ -1114,7 +1113,7 @@ const EventHeatmap: React.FC = () => {
         current_status_message: `📍 @ ${selectedTribeSpot.name}`,
         current_checkin_timestamp: new Date().toISOString(),
       };
-      
+
       const { data: existingProfile } = await supabase
         .from('user_profiles')
         .select('id')
@@ -1210,6 +1209,39 @@ const EventHeatmap: React.FC = () => {
         </Button>
       </div>
 
+      {/* NEW: Community Features Button with Dropdown */}
+      <div className="absolute top-48 left-4 z-[1001]">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              className="bg-black/95 text-white border-gray-700 hover:bg-gray-800 flex items-center gap-2"
+              title="Community Features"
+            >
+              <Users className="h-5 w-5" />
+              Community Features
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56 bg-gray-800 border-gray-700 z-[1002]">
+            <DropdownMenuItem
+              onClick={() => setIsTribeFinderOpen(true)}
+              className="text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer flex items-center gap-2"
+            >
+              <Users className="h-4 w-4" />
+              Find Tribe
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setShowCentralAvatar(true)}
+              className="text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Ich bin hier!
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       {/* Filter Panel (Conditional Rendering) */}
       {showFilterPanel && (
         <div className="absolute top-60 left-4 z-[1003] space-y-3 max-w-sm animate-fade-in">
@@ -1218,7 +1250,7 @@ const EventHeatmap: React.FC = () => {
               <MapPin className="w-5 h-5 text-red-500" />
               Events für {format(selectedDate, 'dd.MM.yyyy')} in {cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity}
             </h3>
-            
+
             <div className="space-y-4">
               {/* Date Picker */}
               <div>
@@ -1272,7 +1304,7 @@ const EventHeatmap: React.FC = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              
+
               {/* Time Slider */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-white text-sm">
@@ -1318,28 +1350,9 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* "Find YOUR Tribe" Button (above event panels) */}
-      <div className="absolute bottom-44 left-6 z-[1000]">
-        <Button
-          onClick={() => setIsTribeFinderOpen(true)}
-          className="bg-black hover:bg-gray-900 text-red-500 w-24 h-12 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-xs font-bold border-2 border-red-500/30"
-        >
-          <Users className="w-4 h-4 mb-0.5" />
-          Find Tribe
-        </Button>
-      </div>
+      {/* Removed "Find YOUR Tribe" Button (now part of Community Features) */}
+      {/* Removed "Ich bin hier" Button (now part of Community Features) */}
 
-      {/* "Ich bin hier" Button (above event panels) */}
-      <div className="absolute bottom-44 right-6 z-[1000]">
-        <Button
-          onClick={() => setShowCentralAvatar(true)}
-          className="bg-black hover:bg-gray-900 text-red-500 w-24 h-12 rounded-full shadow-lg flex flex-col items-center justify-center p-0 text-xs font-bold border-2 border-red-500/30"
-        >
-          <Plus className="w-4 h-4 mb-0.5" />
-          Ich bin hier!
-        </Button>
-      </div>
-      
       {/* Button to show events panel again if hidden */}
       {!showEventPanels && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000]">
@@ -1412,7 +1425,7 @@ const EventHeatmap: React.FC = () => {
           <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
             <div className="text-center mb-6">
               <div className="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-red-500 shadow-lg">
-                <img 
+                <img
                   src={centralAvatarImage || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(centralAvatarUsername)}`}
                   alt={centralAvatarUsername}
                   className="w-full h-full object-cover"
@@ -1421,7 +1434,7 @@ const EventHeatmap: React.FC = () => {
               <h2 className="text-2xl font-bold text-gray-800 mb-2">{centralAvatarUsername}</h2>
               <p className="text-gray-600">Was machst du gerade? Setze deinen Status und verbinde dich mit anderen Tribes!</p>
             </div>
-            
+
             <div className="space-y-4">
               <div className="flex items-center relative w-full">
                 <Input
@@ -1449,7 +1462,7 @@ const EventHeatmap: React.FC = () => {
                   <Send className="h-4 w-4" />
                 </button>
               </div>
-              
+
               <div className="flex gap-3">
                 <Button
                   onClick={handleCheckInWithStatus}
@@ -1577,21 +1590,25 @@ const EventHeatmap: React.FC = () => {
 
       {/* Tribe Spot Dialog */}
       <Dialog open={isTribeSpotDialogOpen} onOpenChange={setIsTribeSpotDialogOpen}>
+        {/* Added z-[9999] for correct layering as discussed previously */}
         <DialogContent className="sm:max-w-md z-[9999]">
           <DialogHeader>
             <DialogTitle className="text-center">
               <div className="text-4xl mb-2">🏛️</div>
               <div className="text-xl font-bold">{selectedTribeSpot?.name}</div>
-              <div className="text-sm text-muted-foreground font-normal">Tribe Spot • Spontane Treffpunkte für deine Community!</div>
+              {/* Corrected Text 1: Changed subtitle for clearer understanding */}
+              <div className="text-sm text-muted-foreground font-normal">Tribe Spot • Treffpunkt für deine Community!</div>
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="flex flex-col gap-4 mt-4">
             <div className="text-center">
+              {/* Corrected Text 2: Changed descriptive paragraph for clearer understanding of purpose */}
               <p className="text-sm text-muted-foreground mb-4">
-                Checke dich am {selectedTribeSpot?.name} ein und zeige anderen, dass du hier bist!<br/>Dein Check-in wird im Community Chat geteilt, damit du dich mit Gleichgesinnten verbinden kannst!
+                Checke dich am {selectedTribeSpot?.name} ein und zeige anderen, dass du hier bist!<br/>
+                Dein Check-in wird im Community Chat geteilt, damit du dich mit Gleichgesinnten verbinden kannst.
               </p>
-              
+
               {/* Users currently at this spot */}
               {selectedTribeSpot && (
                 <div className="mb-4">
@@ -1599,9 +1616,9 @@ const EventHeatmap: React.FC = () => {
                     const usersAtSpot = allUserProfiles.filter(user => {
                       const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null;
                       if (!hasLiveLocation) return false;
-                      
+
                       const distance = Math.sqrt(
-                        Math.pow(user.current_live_location_lat! - selectedTribeSpot.lat, 2) + 
+                        Math.pow(user.current_live_location_lat! - selectedTribeSpot.lat, 2) +
                         Math.pow(user.current_live_location_lng! - selectedTribeSpot.lng, 2)
                       );
                       return distance < 0.002;
@@ -1633,7 +1650,7 @@ const EventHeatmap: React.FC = () => {
                 </div>
               )}
             </div>
-            
+
             <div className="flex gap-3">
               <Button
                 variant="outline"
