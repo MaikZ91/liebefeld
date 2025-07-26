@@ -1589,8 +1589,7 @@ const EventHeatmap: React.FC = () => {
           <div className="flex flex-col gap-4 mt-4">
             <div className="text-center">
               <p className="text-sm text-muted-foreground mb-4">
-                Möchtest du dich am {selectedTribeSpot?.name} einchecken und dich mit anderen Tribes spotan verbinden?<br/>
-                Dein Check-in wird im Community Chat geteilt!
+                Checke dich am {selectedTribeSpot?.name} ein und zeige anderen, dass du hier bist!<br/>Dein Check-in wird im Community Chat geteilt, damit du dich mit Gleichgesinnten verbinden kannst!
               </p>
               
               {/* Users currently at this spot */}
