@@ -1227,14 +1227,14 @@ const EventHeatmap: React.FC = () => {
               className="text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer flex items-center gap-2"
             >
               <Users className="h-4 w-4" />
-              Find Tribe
+              Find Tribe (beta)
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => setShowCentralAvatar(true)}
               className="text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer flex items-center gap-2"
             >
               <Plus className="h-4 w-4" />
-              Ich bin hier!
+              Ich bin hier! (beta)
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
