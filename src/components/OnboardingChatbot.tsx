@@ -351,7 +351,16 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
           text: 'Los geht\'s!',
           action: () => {
             onOpenChange(false);
-            onComplete?.(finalAction); // Pass the action back to the parent
+            // Only redirect to challenge page if coaching was enabled
+            if (userData.wantsNotifications && finalAction === 'community_chat') {
+              // Redirect to challenge page instead of community chat when coaching is enabled
+              onComplete?.('event_heatmap'); // This will redirect to heatmap, then navigate to challenge
+              setTimeout(() => {
+                window.location.href = '/challenge';
+              }, 100);
+            } else {
+              onComplete?.(finalAction); // Normal flow
+            }
           },
           variant: 'default'
         }
