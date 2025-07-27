@@ -10,6 +10,7 @@ import { userService } from '@/services/userService';
 import { cities, useEventContext } from '@/contexts/EventContext';
 import { toast } from '@/hooks/use-toast';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
+import { setCoachingEnabled } from '@/services/challengeService';
 // Use the uploaded image
 const chatbotAvatar = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png';
 import { supabase } from '../integrations/supabase/client';
@@ -263,6 +264,35 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
   const proceedToNotifications = () => {
     setIsTyping(true);
     setCurrentStep('notifications');
+    addBotMessage('Perfekt! Eine letzte Frage: Möchtest du MIA Coach aktivieren? Das ist dein persönlicher Growth-Coach für soziale Herausforderungen! 🚀', true, [
+      {
+        text: 'Ja, MIA Coach aktivieren',
+        action: () => handleCoachingChoice(true),
+        variant: 'default'
+      },
+      {
+        text: 'Nein, überspringen',
+        action: () => handleCoachingChoice(false),
+        variant: 'outline'
+      }
+    ]);
+  };
+
+  const handleCoachingChoice = async (enableCoaching: boolean) => {
+    setUserData(prev => ({ ...prev, wantsNotifications: enableCoaching }));
+    addUserMessage(enableCoaching ? 'MIA Coach aktivieren' : 'Überspringen');
+    
+    // Save coaching preference to database
+    if (userData.username) {
+      try {
+        await setCoachingEnabled(userData.username, enableCoaching);
+      } catch (error) {
+        console.error('Error saving coaching preference:', error);
+      }
+    }
+    
+    setIsTyping(true);
+    // Now proceed to final choice
     addBotMessage('Möchtest du dich mit anderen Tribes verbinden oder passende Events vorgeschlagen bekommen?', true, [
       {
         text: 'Mit Tribes verbinden',

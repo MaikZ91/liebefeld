@@ -357,9 +357,82 @@ export type Database = {
         }
         Relationships: []
       }
+      user_challenges: {
+        Row: {
+          challenge_text: string
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          date: string
+          id: string
+          user_id: string | null
+          username: string
+        }
+        Insert: {
+          challenge_text: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          user_id?: string | null
+          username: string
+        }
+        Update: {
+          challenge_text?: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          user_id?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
+      user_levels: {
+        Row: {
+          challenges_completed_this_level: number
+          created_at: string
+          current_ep: number
+          id: string
+          last_completed_date: string | null
+          streak: number
+          total_challenges_completed: number
+          updated_at: string
+          user_id: string | null
+          username: string
+        }
+        Insert: {
+          challenges_completed_this_level?: number
+          created_at?: string
+          current_ep?: number
+          id?: string
+          last_completed_date?: string | null
+          streak?: number
+          total_challenges_completed?: number
+          updated_at?: string
+          user_id?: string | null
+          username: string
+        }
+        Update: {
+          challenges_completed_this_level?: number
+          created_at?: string
+          current_ep?: number
+          id?: string
+          last_completed_date?: string | null
+          streak?: number
+          total_challenges_completed?: number
+          updated_at?: string
+          user_id?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           avatar: string | null
+          coaching_enabled: boolean | null
           created_at: string | null
           current_checkin_timestamp: string | null
           current_live_location_lat: number | null
@@ -375,6 +448,7 @@ export type Database = {
         }
         Insert: {
           avatar?: string | null
+          coaching_enabled?: boolean | null
           created_at?: string | null
           current_checkin_timestamp?: string | null
           current_live_location_lat?: number | null
@@ -390,6 +464,7 @@ export type Database = {
         }
         Update: {
           avatar?: string | null
+          coaching_enabled?: boolean | null
           created_at?: string | null
           current_checkin_timestamp?: string | null
           current_live_location_lat?: number | null

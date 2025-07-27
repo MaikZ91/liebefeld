@@ -202,5 +202,25 @@ export const userService = {
       const fallbackUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${Math.random().toString(36).substring(2, 10)}`;
       return fallbackUrl;
     }
+  },
+
+  // Set coaching enabled/disabled for a user
+  async setCoachingEnabled(username: string, enabled: boolean): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ coaching_enabled: enabled })
+        .eq('username', username);
+
+      if (error) {
+        console.error('Error updating coaching setting:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in setCoachingEnabled:', error);
+      return false;
+    }
   }
 };

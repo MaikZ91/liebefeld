@@ -12,6 +12,7 @@ import Impressum from "./pages/Impressum";
 import Privacy from "./pages/Privacy";
 import CSAEPolicies from "./pages/CSAEPolicies";
 import Chat from "./pages/Chat";
+import Challenge from "./pages/Challenge";
 import { EventProvider } from "./contexts/EventContext";
 import { initializeSupabase } from "./utils/initSupabase";
 import { initializeFCM } from "./services/firebaseMessaging";
@@ -107,6 +108,7 @@ function App() {
                 <Route path="/index" element={<Index />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/chat" element={<Chat />} />
+                <Route path="/challenge" element={<Challenge />} />
                 <Route path="/impressum" element={<Impressum />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/policies" element={<CSAEPolicies />} />

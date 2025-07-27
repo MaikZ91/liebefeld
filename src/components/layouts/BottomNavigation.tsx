@@ -1,5 +1,5 @@
 // src/components/layouts/BottomNavigation.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -10,13 +10,14 @@ import {
   DropdownMenuSeparator 
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Calendar, MessageSquare, Map, User, Settings, LogOut, UserIcon } from 'lucide-react';
+import { Calendar, MessageSquare, Map, User, Settings, LogOut, UserIcon, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate, useLocation } from 'react-router-dom';
 import OnboardingChatbot from '@/components/OnboardingChatbot';
 import UserDirectory from '@/components/users/UserDirectory';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
 import { getInitials } from '@/utils/chatUIUtils';
+import { isCoachingEnabled } from '@/services/challengeService';
 
 interface BottomNavigationProps {
   activeView?: 'ai' | 'community';
@@ -35,13 +36,31 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   const location = useLocation();
   const isOnHeatmap = location.pathname === '/heatmap';
   const isOnEventsPage = location.pathname === '/events';
+  const isOnChallengePage = location.pathname === '/challenge';
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isUserDirectoryOpen, setIsUserDirectoryOpen] = useState(false);
+  const [showChallenge, setShowChallenge] = useState(false);
 
   // Check if user has completed onboarding
   const username = localStorage.getItem(USERNAME_KEY);
   const avatarUrl = localStorage.getItem(AVATAR_KEY);
   const hasCompletedOnboarding = username && username !== 'Anonymous' && username !== 'User' && username.trim().length > 0;
+
+  useEffect(() => {
+    const checkCoachingStatus = async () => {
+      if (!hasCompletedOnboarding || !username) return;
+      
+      try {
+        const enabled = await isCoachingEnabled(username);
+        setShowChallenge(enabled);
+      } catch (error) {
+        console.error('Error checking coaching status:', error);
+        setShowChallenge(false);
+      }
+    };
+
+    checkCoachingStatus();
+  }, [username, hasCompletedOnboarding]);
 
   // Logout functionality
   const handleLogout = () => {
@@ -101,6 +120,22 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           <Map className="h-4 w-4" />
           <span className="text-[10px]">Social Map</span>
         </Button>
+
+        {/* Challenge Button (conditionally rendered) */}
+        {showChallenge && (
+          <Button 
+            variant={isOnChallengePage ? "default" : "ghost"} 
+            size="sm" 
+            onClick={() => navigate('/challenge')} 
+            className={cn(
+              "flex flex-col items-center gap-1 px-2 py-2 h-auto min-w-0",
+              isOnChallengePage ? 'bg-red-500 hover:bg-red-600 text-white' : 'text-gray-400 hover:text-white'
+            )}
+          >
+            <Target className="h-4 w-4" />
+            <span className="text-[10px]">Challenge</span>
+          </Button>
+        )}
 
         {/* User/Welcome Button */}
         <Button 
