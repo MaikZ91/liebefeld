@@ -1,9 +1,16 @@
 
 import React from 'react';
 import { EventShare } from '@/types/chatTypes';
-import { Calendar, Clock, MapPin, Heart } from 'lucide-react';
+import { Calendar, Clock, MapPin, Heart, MessageCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-export const EventMessageFormatter: React.FC<{ event: EventShare }> = ({ event }) => {
+interface EventMessageFormatterProps {
+  event: EventShare;
+  eventId?: string;
+  onJoinEventChat?: (eventId: string, eventTitle: string) => void;
+}
+
+export const EventMessageFormatter: React.FC<EventMessageFormatterProps> = ({ event, eventId, onJoinEventChat }) => {
   return (
     <div className="bg-gray-800 rounded-lg p-4 border border-red-500/30 w-full max-w-full overflow-hidden break-words">
       <div className="text-lg font-semibold text-white mb-1">Geteiltes Event</div>
@@ -32,7 +39,18 @@ export const EventMessageFormatter: React.FC<{ event: EventShare }> = ({ event }
         <div className="text-sm bg-red-500 text-white inline-block px-2 py-0.5 rounded">
           {event.category || "Event"}
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center gap-2">
+          {eventId && onJoinEventChat && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onJoinEventChat(eventId, event.title)}
+              className="h-7 px-2 text-xs border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+            >
+              <MessageCircle className="h-3 w-3 mr-1" />
+              Event Chat
+            </Button>
+          )}
           <Heart className="h-5 w-5 text-red-500" />
         </div>
       </div>

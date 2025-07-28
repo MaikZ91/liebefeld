@@ -10,6 +10,8 @@ import { getInitials } from '@/utils/chatUIUtils';
 import MessageInput from './MessageInput';
 import MessageList from './MessageList';
 import { useScrollManagement } from '@/hooks/chat/useScrollManagement';
+import { eventChatService } from '@/services/eventChatService';
+import { useNavigate } from 'react-router-dom';
 
 interface ChatGroupProps {
   groupId: string;
@@ -24,6 +26,8 @@ interface Message {
   user_name: string;
   user_avatar: string;
   group_id: string;
+  event_id?: string; // Added event_id for event messages
+  event_title?: string; // Added event_title for event messages
   read_by?: string[];
   category?: string; // Added category field for message labeling
 }
@@ -33,6 +37,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   groupName,
   onOpenUserDirectory
 }) => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,6 +110,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           user_name: msg.sender,
           user_avatar: msg.avatar || '',
           group_id: msg.group_id,
+          event_id: msg.event_id,
+          event_title: msg.event_title,
           read_by: msg.read_by || []
         }));
 
@@ -167,6 +174,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
             user_name: msg.sender,
             user_avatar: msg.avatar || '',
             group_id: msg.group_id,
+            event_id: msg.event_id,
+            event_title: msg.event_title,
             read_by: msg.read_by || []
           };
 
@@ -255,6 +264,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         user_name: msg.sender,
         user_avatar: msg.avatar || '',
         group_id: msg.group_id,
+        event_id: msg.event_id,
+        event_title: msg.event_title,
         read_by: msg.read_by || []
       }));
 
@@ -420,6 +431,31 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     });
   }, [messages, messageFilter]);
 
+  // Handle joining event chat
+  const handleJoinEventChat = async (eventId: string, eventTitle: string) => {
+    try {
+      const groupId = await eventChatService.joinEventChat(eventId, eventTitle);
+      if (groupId) {
+        // Navigate to the event chat page or show modal
+        toast({
+          title: "Event Chat beigetreten",
+          description: `Du bist dem Event-Chat für "${eventTitle}" beigetreten.`,
+        });
+        // You could implement navigation to a specific event chat route here
+        // For now, we'll just show the success message
+      } else {
+        throw new Error('Failed to join event chat');
+      }
+    } catch (error) {
+      console.error('Error joining event chat:', error);
+      toast({
+        title: "Fehler",
+        description: "Event-Chat konnte nicht beigetreten werden.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col h-full max-h-full bg-black overflow-hidden">
       <div className="border-b border-gray-800 bg-black py-3 px-4 flex-shrink-0">
@@ -503,6 +539,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           user_name: msg.user_name,
           user_avatar: msg.user_avatar,
           group_id: msg.group_id,
+          event_id: msg.event_id,
+          event_title: msg.event_title,
           reactions: []
         }))}
         loading={loading}
@@ -513,6 +551,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         isGroup={isGroup}
         groupType={groupType}
         chatBottomRef={scrollManagement.chatBottomRef}
+        onJoinEventChat={handleJoinEventChat}
       />
 
       <div className="p-3 bg-black border-t border-gray-800 flex-shrink-0">

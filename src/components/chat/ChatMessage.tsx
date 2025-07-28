@@ -16,12 +16,14 @@ interface ChatMessageProps {
   isConsecutive?: boolean;
   isGroup?: boolean;
   eventData?: EventShare;
+  eventId?: string;
   onDateSelect?: (date: string) => void;
   showDateSelector?: boolean;
   reactions?: { emoji: string; users: string[] }[];
   onReact?: (emoji: string) => void;
   currentUsername?: string;
   messageId?: string;
+  onJoinEventChat?: (eventId: string, eventTitle: string) => void;
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -29,12 +31,14 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   isConsecutive = false,
   isGroup = false,
   eventData,
+  eventId,
   onDateSelect,
   showDateSelector = false,
   reactions = [],
   onReact,
   currentUsername = '',
-  messageId
+  messageId,
+  onJoinEventChat
 }) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -125,7 +129,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   // Format message content - extract event data if present
   const formatContent = () => {
     if (eventData) {
-      return <EventMessageFormatter event={eventData} />;
+      return <EventMessageFormatter event={eventData} eventId={eventId} onJoinEventChat={onJoinEventChat} />;
     }
 
     if (typeof message === 'string') {

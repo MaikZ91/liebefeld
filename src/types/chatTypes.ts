@@ -45,6 +45,8 @@ export interface Message {
   user_avatar: string;
   group_id: string;
   event_data?: EventShare;
+  event_id?: string; // Added event_id for joining event chats
+  event_title?: string; // Added event_title for display
   read_by?: string[];
   reactions?: { emoji: string; users: string[] }[]; // Added reactions
 }
