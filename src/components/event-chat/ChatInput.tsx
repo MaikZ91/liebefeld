@@ -5,10 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Heart, History, CalendarPlus, Send, Calendar, ChevronDown } from 'lucide-react';
+import { Heart, History, CalendarPlus, Send, Calendar, ChevronDown, Bell } from 'lucide-react';
 import { ChatInputProps } from './types';
 import { useEventContext } from '@/contexts/EventContext';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
+import { supabase } from "@/integrations/supabase/client";
+import { initializeFCM } from '@/services/firebaseMessaging';
+import { useToast } from '@/hooks/use-toast';
 
 const AnimatedText = ({ text, className = '' }: { text: string; className?: string }) => {
   return (
@@ -49,6 +52,40 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   const { events } = useEventContext();
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
   const [localInput, setLocalInput] = useState(input);
+  const { toast } = useToast();
+
+  const handleEnablePushNotifications = async () => {
+    try {
+      const token = await initializeFCM();
+      if (token) {
+        // Token in Datenbank speichern
+        const { error } = await supabase
+          .from('push_tokens')
+          .insert({ token });
+
+        if (error) {
+          console.error('Error saving push token:', error);
+          toast({
+            title: "Fehler",
+            description: "Push-Token konnte nicht gespeichert werden.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Erfolgreich!",
+            description: "Push-Benachrichtigungen wurden aktiviert.",
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error enabling push notifications:', error);
+      toast({
+        title: "Fehler",
+        description: "Push-Benachrichtigungen konnten nicht aktiviert werden.",
+        variant: "destructive"
+      });
+    }
+  };
 
   // Reference for the textarea to dynamically adjust height
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -275,22 +312,17 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           </>
         ) : (
           <>
-            <Popover open={isEventSelectOpen} onOpenChange={setIsEventSelectOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  type="button"
-                  className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
-                  title="Event teilen"
-                >
-                  <Calendar className="h-3 w-3" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 p-0 max-h-[400px] overflow-y-auto" side="top" align="start" sideOffset={5}>
-                {eventSelectContent}
-              </PopoverContent>
-            </Popover>
+            {/* Push Notification Button (replacing Event Share Button) */}
+            <Button
+              onClick={handleEnablePushNotifications}
+              variant="outline"
+              size="icon"
+              type="button"
+              className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
+              title="Push-Benachrichtigungen aktivieren"
+            >
+              <Bell className="h-3 w-3" />
+            </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
