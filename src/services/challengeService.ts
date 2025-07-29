@@ -1,28 +1,69 @@
 import { supabase } from '@/integrations/supabase/client';
 
-// Challenge pool für zufällige Auswahl
-const DAILY_CHALLENGES = [
-  "Geh raus & sprich eine fremde Person an",
-  "Frag jemanden nach einer Buchempfehlung", 
-  "Komplimentiere heute 3 Menschen aufrichtig",
-  "Starte ein Gespräch mit jemandem im Café",
-  "Rufe einen alten Freund an, den du lange nicht gesprochen hast",
-  "Frag jemanden nach seinem Lieblingshobby",
-  "Teile deine Meinung in einer Gruppendiskussion mit",
-  "Lade jemanden spontan auf einen Kaffee ein",
-  "Hilf einem Fremden ohne Gegenleistung",
-  "Erzähle jemandem von einem deiner Träume",
-  "Frag jemanden nach seinem besten Reiseerlebnis",
-  "Gib jemandem ehrliches Feedback",
-  "Entschuldige dich bei jemandem, wenn nötig",
-  "Teile ein persönliches Erlebnis mit neuen Leuten",
-  "Frag jemanden, was ihn glücklich macht",
-  "Organisiere ein spontanes Treffen mit Freunden",
-  "Sprich über deine Ängste mit jemandem",
-  "Biete deine Hilfe einem Nachbarn an",
-  "Frag jemanden nach seinem größten Lernerlebnis",
-  "Starte den Tag mit einem ehrlichen Gespräch"
+// 12-Wochenprogramm MIA Challenges mit Tipps
+const WEEKLY_CHALLENGES = [
+  // Woche 1 – Selbstwahrnehmung & Achtsamkeit
+  {
+    week: 1,
+    theme: "Selbstwahrnehmung & Achtsamkeit",
+    challenges: [
+      { text: "Geh 15 Minuten ohne Handy spazieren", tip: "Lass deine Augen wandern." },
+      { text: "Nimm 3 Geräusche bewusst wahr, die du sonst übersiehst", tip: "Präsenz beginnt mit Zuhören." },
+      { text: "Mach 3 ehrliche innere Komplimente über andere", tip: "Trainiere deinen Fokus." },
+      { text: "Beobachte bewusst dein Umfeld für 10 Minuten ohne Ablenkung", tip: "Werde zum Beobachter." },
+      { text: "Schreib 3 Dinge auf, die du heute gut gemacht hast", tip: "Selbstwert beginnt innen." },
+      { text: "Setz dich allein in ein Café und bleib präsent", tip: "Alleinsein = nicht einsam." },
+      { text: "Mach jemandem ein inneres Kompliment und halte Augenkontakt", tip: "Verbindungen beginnen innen." }
+    ]
+  },
+  // Woche 2 – Kontaktaufnahme & Mut
+  {
+    week: 2,
+    theme: "Kontaktaufnahme & Mut",
+    challenges: [
+      { text: "Sag 3 fremden Menschen 'Hi'", tip: "Ein Lächeln öffnet Türen." },
+      { text: "Halte mit 3 Menschen kurz Augenkontakt", tip: "Zeig dich im Blick." },
+      { text: "Frag jemanden nach dem Weg – auch wenn du ihn kennst", tip: "Übe das erste Wort." },
+      { text: "Frag jemanden, wie sein Tag war", tip: "Interesse weckt Nähe." },
+      { text: "Gib jemandem ein echtes Kompliment", tip: "Ehrlich. Direkt. Echt." },
+      { text: "Bitte jemanden um Hilfe bei etwas Kleinem", tip: "Es verbindet." },
+      { text: "Frag jemanden nach einem Café-Tipp", tip: "Ein Türöffner mit Leichtigkeit." }
+    ]
+  }
 ];
+
+// Hilfsfunktion: Berechne Tag im Programm (1-84 für 12 Wochen)
+const getDayInProgram = (startDate: Date): number => {
+  const today = new Date();
+  const diffTime = today.getTime() - startDate.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  return Math.max(1, Math.min(84, diffDays));
+};
+
+// Hilfsfunktion: Hole Challenge für bestimmten Tag
+const getChallengeForDay = (day: number): { challenge: string; tip: string; week: number; theme: string } => {
+  const weekIndex = Math.floor((day - 1) / 7);
+  const dayInWeek = ((day - 1) % 7);
+  
+  if (weekIndex < WEEKLY_CHALLENGES.length) {
+    const weekData = WEEKLY_CHALLENGES[weekIndex];
+    const challengeData = weekData.challenges[dayInWeek];
+    return {
+      challenge: challengeData.text,
+      tip: challengeData.tip,
+      week: weekData.week,
+      theme: weekData.theme
+    };
+  }
+  
+  // Fallback für Wochen die noch nicht definiert sind
+  return {
+    challenge: "Heute ist ein guter Tag, um mutig zu sein",
+    tip: "Jeder kleine Schritt zählt.",
+    week: weekIndex + 1,
+    theme: "Persönliches Wachstum"
+  };
+};
 
 export interface UserChallenge {
   id: string;
@@ -30,6 +71,9 @@ export interface UserChallenge {
   username: string;
   date: string;
   challenge_text: string;
+  mia_tip: string;
+  week_number: number;
+  week_theme: string;
   completed: boolean;
   completed_at: string | null;
   created_at: string;
@@ -64,15 +108,23 @@ export const getTodaysChallenge = async (username: string): Promise<UserChalleng
     return existingChallenge;
   }
 
-  // Erstelle neues Challenge für heute
-  const randomChallenge = DAILY_CHALLENGES[Math.floor(Math.random() * DAILY_CHALLENGES.length)];
+  // Hole User Level für Programm-Start
+  const userLevel = await getUserLevel(username);
+  const startDate = userLevel?.created_at ? new Date(userLevel.created_at) : new Date();
+  
+  // Berechne Tag im 12-Wochenprogramm
+  const dayInProgram = getDayInProgram(startDate);
+  const challengeData = getChallengeForDay(dayInProgram);
   
   const { data: newChallenge, error: insertError } = await supabase
     .from('user_challenges')
     .insert({
       username,
       date: today,
-      challenge_text: randomChallenge,
+      challenge_text: challengeData.challenge,
+      mia_tip: challengeData.tip,
+      week_number: challengeData.week,
+      week_theme: challengeData.theme,
       completed: false
     })
     .select()
