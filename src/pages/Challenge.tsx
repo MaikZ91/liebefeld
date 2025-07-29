@@ -128,7 +128,10 @@ const ChallengePage: React.FC = () => {
         {/* Header */}
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold text-foreground">MIA Coach</h1>
-          <p className="text-sm text-muted-foreground">Heute bist du wieder 1% mutiger ✨</p>
+          <p className="text-sm text-muted-foreground">
+            Woche {challenge?.week_number || 1}: {challenge?.week_theme || "Persönliches Wachstum"}
+          </p>
+          <p className="text-xs text-muted-foreground">Heute bist du wieder 1% mutiger ✨</p>
         </div>
 
         {/* Level Card */}
@@ -190,9 +193,17 @@ const ChallengePage: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="p-4 rounded-lg bg-muted/30 border border-muted">
-              <p className="text-center font-medium text-foreground leading-relaxed">
+              <p className="text-center font-medium text-foreground leading-relaxed mb-3">
                 {challenge?.challenge_text || "Lade Challenge..."}
               </p>
+              {challenge?.mia_tip && (
+                <div className="flex items-start gap-2 p-2 rounded bg-primary/5 border border-primary/20">
+                  <span className="text-primary font-semibold text-sm">💡</span>
+                  <p className="text-sm text-muted-foreground italic">
+                    {challenge.mia_tip}
+                  </p>
+                </div>
+              )}
             </div>
             
             {challenge?.completed ? (

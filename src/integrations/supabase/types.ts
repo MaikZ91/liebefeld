@@ -365,8 +365,11 @@ export type Database = {
           created_at: string
           date: string
           id: string
+          mia_tip: string | null
           user_id: string | null
           username: string
+          week_number: number | null
+          week_theme: string | null
         }
         Insert: {
           challenge_text: string
@@ -375,8 +378,11 @@ export type Database = {
           created_at?: string
           date?: string
           id?: string
+          mia_tip?: string | null
           user_id?: string | null
           username: string
+          week_number?: number | null
+          week_theme?: string | null
         }
         Update: {
           challenge_text?: string
@@ -385,8 +391,11 @@ export type Database = {
           created_at?: string
           date?: string
           id?: string
+          mia_tip?: string | null
           user_id?: string | null
           username?: string
+          week_number?: number | null
+          week_theme?: string | null
         }
         Relationships: []
       }

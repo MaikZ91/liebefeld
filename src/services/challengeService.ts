@@ -105,7 +105,13 @@ export const getTodaysChallenge = async (username: string): Promise<UserChalleng
     .single();
 
   if (existingChallenge) {
-    return existingChallenge;
+    // Abwärtskompatibilität: fehlende Felder mit Standardwerten füllen
+    return {
+      ...existingChallenge,
+      mia_tip: existingChallenge.mia_tip || "Jeder kleine Schritt zählt.",
+      week_number: existingChallenge.week_number || 1,
+      week_theme: existingChallenge.week_theme || "Persönliches Wachstum"
+    };
   }
 
   // Hole User Level für Programm-Start
@@ -135,7 +141,13 @@ export const getTodaysChallenge = async (username: string): Promise<UserChalleng
     return null;
   }
 
-  return newChallenge;
+  // Sicherstellen dass alle Felder vorhanden sind
+  return {
+    ...newChallenge,
+    mia_tip: newChallenge.mia_tip || challengeData.tip,
+    week_number: newChallenge.week_number || challengeData.week,
+    week_theme: newChallenge.week_theme || challengeData.theme
+  };
 };
 
 // Markiere Challenge als abgeschlossen
