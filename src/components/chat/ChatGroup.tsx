@@ -54,7 +54,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const messagesRef = useRef<Message[]>(messages);
   const channelsRef = useRef<any[]>([]);
-  const sentMessageIds = useRef<Set<string>>(new Set());
 
   // Use scroll management hook
   const scrollManagement = useScrollManagement(messages, typingUsers);
@@ -179,13 +178,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
             read_by: msg.read_by || []
           };
 
-          // Don't add duplicate messages
-          setMessages(prevMessages => {
-            if (prevMessages.some(m => m.id === newMessage.id)) {
-              return prevMessages;
-            }
-            return [...prevMessages, newMessage];
-          });
+          // Add all messages from realtime - no duplicate check needed
+          setMessages(prevMessages => [...prevMessages, newMessage]);
 
           // Mark message as read if it's from someone else
           if (msg.sender !== username && username) {
@@ -315,8 +309,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   };
 
   // Handle sending messages
-  const handleSubmit = async () => { // Removed eventData parameter as it's no longer used for sharing events directly
-    if ((!newMessage.trim() && !fileInputRef.current?.files?.length) || !username || !groupId) {
+  const handleSubmit = async () => {
+    if (!newMessage.trim() || !username || !groupId) {
       return;
     }
 
@@ -330,36 +324,11 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       const categoryLabel = `#${selectedCategory.toLowerCase()}`;
       messageText = `${categoryLabel} ${messageText}`;
 
-      // Create optimistic message
-      const tempId = `temp-${Date.now()}`;
-
-      // Check if this message was already sent (prevent duplicates)
-      if (sentMessageIds.current.has(tempId)) {
-        console.log('Duplicate submission detected, ignoring');
-        return;
-      }
-
-      // Track this message ID
-      sentMessageIds.current.add(tempId);
-
-      const optimisticMessage: Message = {
-        id: tempId,
-        created_at: new Date().toISOString(),
-        text: messageText, // Use 'text' instead of 'content'
-        user_name: username,
-        user_avatar: localStorage.getItem(AVATAR_KEY) || '',
-        group_id: groupId,
-        read_by: [username]
-      };
-
-      // Add optimistic message immediately
-      setMessages(prev => [...prev, optimisticMessage]);
-
-      // Clear input
+      // Clear input immediately
       setNewMessage('');
 
-      // Send message to database
-      const { data, error } = await supabase
+      // Send message directly to database - no optimistic UI
+      const { error } = await supabase
         .from('chat_messages')
         .insert({
           group_id: groupId,
@@ -367,13 +336,14 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           text: messageText,
           avatar: localStorage.getItem(AVATAR_KEY),
           read_by: [username]
-        })
-        .select('id');
+        });
 
       if (error) {
         console.error('Error sending message:', error);
         throw error;
       }
+
+      // Message will appear via realtime listener
 
     } catch (error) {
       console.error('Error sending message:', error);
