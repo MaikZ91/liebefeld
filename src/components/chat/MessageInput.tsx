@@ -65,22 +65,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   const handleSubmit = async () => {
-    // Only used for Enter key when no external onKeyDown handler is provided
-    const messageToSend = value !== undefined ? value : newMessage;
-    if (messageToSend.trim() && !isSending) {
-      try {
-        await handleSendMessage();
-        if (value === undefined) {
-          setNewMessage("");
-        }
-      } catch (error) {
-        console.error('Error in message submission:', error);
-      }
-    }
-  };
-
-  const handleSendButtonClick = async () => {
-    // Direct handler for send button to avoid double submission
     const messageToSend = value !== undefined ? value : newMessage;
     if (messageToSend.trim() && !isSending) {
       try {
@@ -215,7 +199,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         )}
         {/* Send button on the right */}
         <Button
-          onClick={handleSendButtonClick}
+          onClick={handleSubmit}
           disabled={isSending || (!value?.trim() && !newMessage.trim())}
           className="rounded-full min-w-[32px] h-8 w-8 absolute right-1 top-1 p-0 bg-red-500 hover:bg-red-600 text-white"
         >
