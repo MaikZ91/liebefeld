@@ -58,23 +58,25 @@ const MessageInput: React.FC<MessageInputProps> = ({
       return;
     }
 
+    // Fallback nur wenn kein externer onKeyDown Handler vorhanden ist
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit();
+      handleSendButtonClick();
     }
   };
 
-  const handleSubmit = async () => {
-    const messageToSend = value !== undefined ? value : newMessage;
-    if (messageToSend.trim() && !isSending) {
-      try {
-        await handleSendMessage();
-        if (value === undefined) {
-          setNewMessage("");
-        }
-      } catch (error) {
-        console.error('Error in message submission:', error);
+  const handleSendButtonClick = async () => {
+    if ((!value?.trim() && !newMessage.trim()) || isSending) {
+      return;
+    }
+    
+    try {
+      await handleSendMessage();
+      if (value === undefined) {
+        setNewMessage("");
       }
+    } catch (error) {
+      console.error('Error in message submission:', error);
     }
   };
 
@@ -199,7 +201,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         )}
         {/* Send button on the right */}
         <Button
-          onClick={handleSubmit}
+          onClick={handleSendButtonClick}
           disabled={isSending || (!value?.trim() && !newMessage.trim())}
           className="rounded-full min-w-[32px] h-8 w-8 absolute right-1 top-1 p-0 bg-red-500 hover:bg-red-600 text-white"
         >
