@@ -343,7 +343,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         throw error;
       }
 
-      // Message will appear via realtime listener
+      console.log('Message sent successfully from ChatGroup');
 
     } catch (error) {
       console.error('Error sending message:', error);
