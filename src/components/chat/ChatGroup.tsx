@@ -37,6 +37,10 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   groupName,
   onOpenUserDirectory
 }) => {
+  // Debug: Eindeutige Instanz-ID für diese ChatGroup-Instanz
+  const instanceId = useRef(`ChatGroup-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+  console.log(`ChatGroup instance created: ${instanceId.current} for group: ${groupName}`);
+  
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -343,7 +347,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         throw error;
       }
 
-      console.log('Message sent successfully from ChatGroup');
+      console.log(`Message sent successfully from ${instanceId.current} (${groupName})`);
 
     } catch (error) {
       console.error('Error sending message:', error);
