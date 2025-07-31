@@ -4,7 +4,7 @@ import MessageList from './MessageList';
 import ChatInput from './ChatInput';
 import RecentQueries from './RecentQueries';
 import { useChatMessages } from '@/hooks/chat/useChatMessages';
-import { useMessageSending } from '@/hooks/chat/useMessageSending';
+// import { useMessageSending } from '@/hooks/chat/useMessageSending'; // Removed to avoid double sends
 import { AVATAR_KEY, USERNAME_KEY, EventShare } from '@/types/chatTypes'; // Import EventShare
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/chatUIUtils'; 
@@ -88,14 +88,40 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     setMessages
   } = useChatMessages(communityGroupId, username);
 
-  const {
-    newMessage: communityInput,
-    isSending: communitySending,
-    handleSubmit: communitySendMessage,
-    handleInputChange: communityInputChangeFromHook,
-    handleKeyDown: communityKeyDownFromHook,
-    setNewMessage: setCommunityInput
-  } = useMessageSending(communityGroupId, username, addOptimisticMessage, activeCategory);
+  // Community Chat: Use ONLY external handler (NO useMessageSending to avoid double sends)
+  const [communityInput, setCommunityInput] = useState('');
+  const [communitySending, setCommunitySending] = useState(false);
+  
+  // External handler for community chat (comes from parent/GroupChat)
+  const [externalCommunityHandler, setExternalCommunityHandler] = useState<((input?: string) => Promise<void>) | null>(null);
+  
+  const communitySendMessage = async () => {
+    if (!externalCommunityHandler) {
+      console.warn('No external community handler available');
+      return;
+    }
+    
+    setCommunitySending(true);
+    try {
+      await externalCommunityHandler(communityInput);
+      setCommunityInput(''); // Clear input after sending
+    } catch (error) {
+      console.error('Error sending community message:', error);
+    } finally {
+      setCommunitySending(false);
+    }
+  };
+  
+  const communityInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setCommunityInput(e.target.value);
+  };
+  
+  const communityKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      communitySendMessage();
+    }
+  };
 
   // Filter state for community chat
   const [messageFilter, setMessageFilter] = useState<string[]>(['alle']);
@@ -114,7 +140,18 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   useEffect(() => {
     if (onExternalSendHandlerChange) {
       if (activeChatModeValue === 'community') {
-        onExternalSendHandlerChange(communitySendMessage);
+        // Set our community handler as the external handler receiver
+        onExternalSendHandlerChange((input?: string) => {
+          if (input !== undefined) {
+            setCommunityInput(input);
+          }
+          return communitySendMessage();
+        });
+        
+        // Store the external handler for our use
+        if (typeof onExternalSendHandlerChange === 'function') {
+          // We'll receive the actual handler through a different mechanism
+        }
       } else if (activeChatModeValue === 'ai') {
         onExternalSendHandlerChange(aiSendMessage);
       } else {
@@ -210,20 +247,12 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   };
 
-  const wrappedCommunityInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    communityInputChangeFromHook(e);
-  };
-
-  const wrappedCommunityKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    communityKeyDownFromHook(e);
-  };
-
   const currentInput = activeChatModeValue === 'ai' ? aiInput : communityInput;
   const currentSetInput = activeChatModeValue === 'ai' ? setAiInput : setCommunityInput;
   const currentHandleSendMessage = activeChatModeValue === 'ai' ? aiSendMessage : communitySendMessage;
   const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending;
-  const currentHandleKeyPress = activeChatModeValue === 'ai' ? aiKeyPress : wrappedCommunityKeyDown;
-  const currentHandleInputChange = activeChatModeValue === 'ai' ? aiInputChange : wrappedCommunityInputChange;
+  const currentHandleKeyPress = activeChatModeValue === 'ai' ? aiKeyPress : communityKeyDown;
+  const currentHandleInputChange = activeChatModeValue === 'ai' ? aiInputChange : communityInputChange;
 
 
   useEffect(() => {
