@@ -320,6 +320,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
 
     try {
       setIsSending(true);
+      console.log(`🔴 ChatGroup.handleSubmit START: ${instanceId.current} sending message: "${newMessage}"`);
 
       // Format message with category label
       let messageText = newMessage.trim();
@@ -331,6 +332,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       // Clear input immediately
       setNewMessage('');
 
+      console.log(`🔴 ChatGroup.handleSubmit: About to insert message to DB: "${messageText}"`);
+      
       // Send message directly to database - no optimistic UI
       const { error } = await supabase
         .from('chat_messages')
@@ -347,10 +350,10 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         throw error;
       }
 
-      console.log(`Message sent successfully from ${instanceId.current} (${groupName})`);
+      console.log(`🔴 ChatGroup.handleSubmit SUCCESS: Message sent from ${instanceId.current} (${groupName})`);
 
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('🔴 ChatGroup.handleSubmit ERROR:', error);
       toast({
         title: "Fehler beim Senden",
         description: "Die Nachricht konnte nicht gesendet werden.",

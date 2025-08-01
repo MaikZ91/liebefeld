@@ -92,31 +92,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const [communityInput, setCommunityInput] = useState('');
   const [communitySending, setCommunitySending] = useState(false);
   
-  // Create send function directly instead of using external component
-  const communitySendMessage = async () => {
-    if (!communityInput.trim() || !username) return;
-    
-    try {
-      setCommunitySending(true);
-      
-      // Format message with category label
-      let messageText = communityInput.trim();
-      const categoryLabel = `#${activeCategory.toLowerCase()}`;
-      messageText = `${categoryLabel} ${messageText}`;
-      
-      // Clear input immediately
-      setCommunityInput('');
-      
-      // Send directly to database via chatService
-      await chatService.sendMessage(communityGroupId, messageText, username);
-      
-    } catch (error) {
-      console.error('Error sending community message:', error);
-      toast.error('Nachricht konnte nicht gesendet werden');
-    } finally {
-      setCommunitySending(false);
-    }
-  };
+  // No direct message sending for community - let ChatGroup handle it
+  const communitySendMessage = null;
 
   // Filter state for community chat
   const [messageFilter, setMessageFilter] = useState<string[]>(['alle']);
@@ -134,11 +111,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   useEffect(() => {
     if (onExternalSendHandlerChange) {
-      if (activeChatModeValue === 'community') {
-        onExternalSendHandlerChange(communitySendMessage);
-      } else if (activeChatModeValue === 'ai') {
+      if (activeChatModeValue === 'ai') {
         onExternalSendHandlerChange(aiSendMessage);
       } else {
+        // For community mode, set to null - ChatGroup will handle sending
         onExternalSendHandlerChange(null);
       }
     }
@@ -148,7 +124,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
         onExternalSendHandlerChange(null);
       }
     };
-  }, [activeChatModeValue, communitySendMessage, aiSendMessage, onExternalSendHandlerChange]);
+  }, [activeChatModeValue, aiSendMessage, onExternalSendHandlerChange]);
 
   const queriesToRender = globalQueries.length > 0 ? globalQueries : [];
 
@@ -236,9 +212,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   };
 
   const wrappedCommunityKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey && communitySendMessage) {
+    // Community message sending handled by ChatGroup - do nothing here
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      communitySendMessage();
+      // No action - let ChatGroup handle this
     }
   };
 
