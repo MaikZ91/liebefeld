@@ -361,6 +361,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     }
   };
 
+
   // Handle input change from MessageInput
   const handleInputChangeFromMessageInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);

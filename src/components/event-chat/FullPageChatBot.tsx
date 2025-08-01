@@ -4,7 +4,7 @@ import MessageList from './MessageList';
 import ChatInput from './ChatInput';
 import RecentQueries from './RecentQueries';
 import { useChatMessages } from '@/hooks/chat/useChatMessages';
-import { useMessageSending } from '@/hooks/chat/useMessageSending';
+
 import { AVATAR_KEY, USERNAME_KEY, EventShare } from '@/types/chatTypes'; // Import EventShare
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/chatUIUtils'; 
@@ -88,14 +88,35 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     setMessages
   } = useChatMessages(communityGroupId, username);
 
-  const {
-    newMessage: communityInput,
-    isSending: communitySending,
-    handleSubmit: communitySendMessage,
-    handleInputChange: communityInputChangeFromHook,
-    handleKeyDown: communityKeyDownFromHook,
-    setNewMessage: setCommunityInput
-  } = useMessageSending(communityGroupId, username, addOptimisticMessage, activeCategory);
+  // Community chat state - managed externally via props
+  const [communityInput, setCommunityInput] = useState('');
+  const [communitySending, setCommunitySending] = useState(false);
+  
+  // Create send function directly instead of using external component
+  const communitySendMessage = async () => {
+    if (!communityInput.trim() || !username) return;
+    
+    try {
+      setCommunitySending(true);
+      
+      // Format message with category label
+      let messageText = communityInput.trim();
+      const categoryLabel = `#${activeCategory.toLowerCase()}`;
+      messageText = `${categoryLabel} ${messageText}`;
+      
+      // Clear input immediately
+      setCommunityInput('');
+      
+      // Send directly to database via chatService
+      await chatService.sendMessage(communityGroupId, messageText, username);
+      
+    } catch (error) {
+      console.error('Error sending community message:', error);
+      toast.error('Nachricht konnte nicht gesendet werden');
+    } finally {
+      setCommunitySending(false);
+    }
+  };
 
   // Filter state for community chat
   const [messageFilter, setMessageFilter] = useState<string[]>(['alle']);
@@ -211,16 +232,19 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   };
 
   const wrappedCommunityInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    communityInputChangeFromHook(e);
+    setCommunityInput(e.target.value);
   };
 
   const wrappedCommunityKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    communityKeyDownFromHook(e);
+    if (e.key === 'Enter' && !e.shiftKey && communitySendMessage) {
+      e.preventDefault();
+      communitySendMessage();
+    }
   };
 
   const currentInput = activeChatModeValue === 'ai' ? aiInput : communityInput;
   const currentSetInput = activeChatModeValue === 'ai' ? setAiInput : setCommunityInput;
-  const currentHandleSendMessage = activeChatModeValue === 'ai' ? aiSendMessage : communitySendMessage;
+  const currentHandleSendMessage = activeChatModeValue === 'ai' ? aiSendMessage : (communitySendMessage || (() => Promise.resolve()));
   const currentIsTyping = activeChatModeValue === 'ai' ? aiTyping : communitySending;
   const currentHandleKeyPress = activeChatModeValue === 'ai' ? aiKeyPress : wrappedCommunityKeyDown;
   const currentHandleInputChange = activeChatModeValue === 'ai' ? aiInputChange : wrappedCommunityInputChange;
@@ -365,46 +389,47 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                 )}
 
                 {filteredCommunityMessages.map((message, index) => {
-                  const isConsecutive =
-                    index > 0 && filteredCommunityMessages[index - 1].user_name === message.user_name;
-                  const timeAgo = formatTime(message.created_at);
+                   const isConsecutive =
+                     index > 0 && filteredCommunityMessages[index - 1].user_name === message.user_name;
+                   const timeAgo = formatTime(message.created_at);
 
-                  return (
-                     <div key={message.id} className="mb-1 w-full group">
-                       {!isConsecutive && (
-                         <div className="flex items-center -mb-2">
-                            <Avatar 
-                              className="h-7 w-7 mr-2 flex-shrink-0 border-red-500 cursor-pointer hover:opacity-80 transition-opacity"
-                              onClick={() => handleAvatarClick(message.user_name)}
-                            >
-                             <AvatarImage src={message.user_avatar} alt={message.user_name} />
-                             <AvatarFallback className="bg-red-500 text-white">
-                               {getInitials(message.user_name)}
-                             </AvatarFallback>
-                           </Avatar>
-                           <div className="text-base font-medium text-white mr-2">
-                             {message.user_name}
-                           </div>
-                          <span className="text-sm text-gray-400">{timeAgo}</span>
-                        </div>
-                       )}
-                       <div className="break-words -mt-2">
-                        <ChatMessage
-                          message={message.text}
-                          isConsecutive={isConsecutive}
-                          isGroup
-                          messageId={message.id}
-                          reactions={message.reactions || []}
-                          onReact={(emoji) => handleReaction(message.id, emoji)}
-                          currentUsername={username}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+                   return (
+                      <div key={message.id} className="mb-1 w-full group">
+                        {!isConsecutive && (
+                          <div className="flex items-center -mb-2">
+                             <Avatar 
+                               className="h-7 w-7 mr-2 flex-shrink-0 border-red-500 cursor-pointer hover:opacity-80 transition-opacity"
+                               onClick={() => handleAvatarClick(message.user_name)}
+                             >
+                              <AvatarImage src={message.user_avatar} alt={message.user_name} />
+                              <AvatarFallback className="bg-red-500 text-white">
+                                {getInitials(message.user_name)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="text-base font-medium text-white mr-2">
+                              {message.user_name}
+                            </div>
+                           <span className="text-sm text-gray-400">{timeAgo}</span>
+                         </div>
+                        )}
+                        <div className="break-words -mt-2">
+                         <ChatMessage
+                           message={message.text}
+                           isConsecutive={isConsecutive}
+                           isGroup
+                           messageId={message.id}
+                           reactions={message.reactions || []}
+                           onReact={(emoji) => handleReaction(message.id, emoji)}
+                           currentUsername={username}
+                         />
+                       </div>
+                     </div>
+                   );
+                 })}
 
-                <TypingIndicator typingUsers={typingUsers} />
-                <div ref={chatBottomRef} />
+                 <TypingIndicator typingUsers={typingUsers} />
+                 <div ref={chatBottomRef} />
+
               </div>
             </div>
           </div>
