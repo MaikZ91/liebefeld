@@ -16,23 +16,58 @@ const messaging = getMessaging(app);
 
 export const initializeFCM = async () => {
   try {
-    const registration = await navigator.serviceWorker.register("/sw.js");
+    console.log("🚀 Starting FCM initialization...");
     
+    // Check if service worker is supported
+    if (!('serviceWorker' in navigator)) {
+      console.error("❌ Service Worker not supported");
+      return null;
+    }
+
+    // Check if push messaging is supported
+    if (!('PushManager' in window)) {
+      console.error("❌ Push messaging not supported");
+      return null;
+    }
+
+    console.log("📋 Registering service worker...");
+    const registration = await navigator.serviceWorker.register("/sw.js");
+    console.log("✅ Service worker registered:", registration);
+    
+    console.log("🔑 Getting FCM token...");
     const token = await getToken(messaging, {
       vapidKey: "BAa8eG9roLbc_UZg9P7qRDSWEbEwG4H79z1La5Q1-PiTdLUcpJwTIhHbL49oL3zteBHYAtwWufuGsyhqPpd1Xi0",
       serviceWorkerRegistration: registration
     });
 
     if (token) {
-      console.log("✅ FCM Token:", token);
-      alert("Dein Firebase Push-Token:\n" + token);
+      console.log("✅ FCM Token obtained:", token);
       return token;
     } else {
-      console.warn("⚠️ Kein Token erhalten. Berechtigungen fehlen?");
+      console.warn("⚠️ No token received. Permissions missing?");
+      
+      // Check notification permission
+      const permission = Notification.permission;
+      console.log("🔔 Notification permission:", permission);
+      
+      if (permission === 'denied') {
+        console.error("❌ Notification permission denied");
+        alert("Benachrichtigungen sind blockiert. Bitte aktiviere sie in den Browser-Einstellungen.");
+      } else if (permission === 'default') {
+        console.log("📋 Requesting notification permission...");
+        const newPermission = await Notification.requestPermission();
+        console.log("🔔 New notification permission:", newPermission);
+        
+        if (newPermission === 'granted') {
+          // Try again after permission granted
+          return initializeFCM();
+        }
+      }
+      
       return null;
     }
   } catch (err) {
-    console.error("❌ Fehler beim Token holen:", err);
+    console.error("❌ Error during FCM initialization:", err);
     return null;
   }
 };
