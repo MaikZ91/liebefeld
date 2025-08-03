@@ -94,24 +94,16 @@ const MessageInput: React.FC<MessageInputProps> = ({
     try {
       const token = await initializeFCM();
       if (token) {
-        // Token in Datenbank speichern
-        const { error } = await supabase
-          .from('push_tokens')
-          .insert({ token });
-
-        if (error) {
-          console.error('Error saving push token:', error);
-          toast({
-            title: "Fehler",
-            description: "Push-Token konnte nicht gespeichert werden.",
-            variant: "destructive"
-          });
-        } else {
-          toast({
-            title: "Erfolgreich!",
-            description: "Push-Benachrichtigungen wurden aktiviert.",
-          });
-        }
+        toast({
+          title: "Erfolgreich!",
+          description: "Push-Benachrichtigungen wurden aktiviert. Token: " + token.substring(0, 20) + "...",
+        });
+      } else {
+        toast({
+          title: "Fehler",
+          description: "Push-Benachrichtigungen konnten nicht aktiviert werden.",
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error('Error enabling push notifications:', error);
