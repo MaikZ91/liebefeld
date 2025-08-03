@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getMessaging, getToken } from "firebase/messaging";
+import { getMessaging, getToken, deleteToken } from "firebase/messaging";
 import { supabase } from "@/integrations/supabase/client";
 
 const firebaseConfig = {
@@ -35,7 +35,15 @@ export const initializeFCM = async () => {
     const registration = await navigator.serviceWorker.register("/sw.js");
     console.log("✅ Service worker registered:", registration);
     
-    console.log("🔑 Getting FCM token...");
+    console.log("🔑 Getting NEW FCM token...");
+    // Force a new token by deleting existing tokens first
+    try {
+      await deleteToken(messaging);
+      console.log("🗑️ Deleted old token");
+    } catch (deleteError) {
+      console.log("ℹ️ No old token to delete:", deleteError);
+    }
+    
     const token = await getToken(messaging, {
       vapidKey: "BAa8eG9roLbc_UZg9P7qRDSWEbEwG4H79z1La5Q1-PiTdLUcpJwTIhHbL49oL3zteBHYAtwWufuGsyhqPpd1Xi0",
       serviceWorkerRegistration: registration
