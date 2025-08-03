@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken } from "firebase/messaging";
+import { supabase } from "@/integrations/supabase/client";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAoSNvosYckg1hCRIbmEOkVVAXEEB6qAUI",
@@ -46,13 +47,6 @@ export const initializeFCM = async () => {
       // Token in der Datenbank speichern
       try {
         console.log("💾 Saving token to database...");
-        
-        // Import hier, um zirkuläre Abhängigkeiten zu vermeiden
-        const { createClient } = await import('@supabase/supabase-js');
-        const supabase = createClient(
-          "https://ykleosfvtqcmqxqihnod.supabase.co",
-          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrbGVvc2Z2dHFjbXF4cWlobm9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA5MzQ0NjIsImV4cCI6MjA1NjUxMDQ2Mn0.70wsZ-c7poYFnbTyXbKrG0b6YPSe-BonMN6kjZ2a2Wo"
-        );
         
         const { error } = await supabase
           .from('push_tokens')
