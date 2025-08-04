@@ -260,19 +260,20 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
     }
   };
 
-  // Modified function for new notification preference
+  // Modified function - skip coaching question temporarily
   const proceedToNotifications = () => {
     setIsTyping(true);
     setCurrentStep('notifications');
-    addBotMessage('Perfekt! Eine letzte Frage: Möchtest du MIA Coach aktivieren? Das ist dein persönlicher Growth-Coach für soziale Herausforderungen! 🚀', true, [
+    // Skip coaching question and go directly to final choice
+    addBotMessage('Möchtest du dich mit anderen Tribes verbinden oder passende Events vorgeschlagen bekommen?', true, [
       {
-        text: 'Ja, MIA Coach aktivieren',
-        action: () => handleCoachingChoice(true),
+        text: 'Mit Tribes verbinden',
+        action: () => handleFinalChoice('community_chat'),
         variant: 'default'
       },
       {
-        text: 'Nein, überspringen',
-        action: () => handleCoachingChoice(false),
+        text: 'Events entdecken',
+        action: () => handleFinalChoice('event_heatmap'),
         variant: 'outline'
       }
     ]);

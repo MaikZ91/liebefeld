@@ -102,19 +102,21 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           <span className="text-[10px]">Social Map</span>
         </Button>
 
-        {/* Challenge Button */}
-        <Button 
-          variant={isOnChallengePage ? "default" : "ghost"} 
-          size="sm" 
-          onClick={() => navigate('/challenge')} 
-          className={cn(
-            "flex flex-col items-center gap-1 px-2 py-2 h-auto min-w-0",
-            isOnChallengePage ? 'bg-red-500 hover:bg-red-600 text-white' : 'text-gray-400 hover:text-white'
-          )}
-        >
-          <Target className="h-4 w-4" />
-          <span className="text-[10px]">Challenge</span>
-        </Button>
+        {/* Challenge Button - temporarily hidden */}
+        {false && (
+          <Button 
+            variant={isOnChallengePage ? "default" : "ghost"} 
+            size="sm" 
+            onClick={() => navigate('/challenge')} 
+            className={cn(
+              "flex flex-col items-center gap-1 px-2 py-2 h-auto min-w-0",
+              isOnChallengePage ? 'bg-red-500 hover:bg-red-600 text-white' : 'text-gray-400 hover:text-white'
+            )}
+          >
+            <Target className="h-4 w-4" />
+            <span className="text-[10px]">Challenge</span>
+          </Button>
+        )}
 
         {/* User/Welcome Button */}
         <Button 
