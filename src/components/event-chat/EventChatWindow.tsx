@@ -117,7 +117,9 @@ const EventChatWindow: React.FC<EventChatWindowProps> = ({
         communityGroupId, 
         message, 
         'System',
-        '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png'
+        '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png',
+        eventId, // Pass the eventId
+        eventTitle // Pass the eventTitle
       );
       
       console.log('First message notification sent to community chat');
