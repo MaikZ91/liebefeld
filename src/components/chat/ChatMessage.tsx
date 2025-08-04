@@ -133,28 +133,32 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 
   // Format event chat system message
   const formatEventChatSystemMessage = (text: string) => {
-    if (!eventId || !onJoinEventChat) {
-      return <span>{text}</span>;
-    }
-
     const parts = text.split('hat das Event Chat');
     const beforeText = parts[0];
     const afterParts = parts[1].split('eröffnet! 💬');
     const eventTitlePart = afterParts[0].replace(/["""]/g, '').trim();
 
+    // If we have eventId and onJoinEventChat, show clickable version
+    if (eventId && onJoinEventChat) {
+      return (
+        <div className="flex flex-col gap-2">
+          <span>{beforeText}hat das Event Chat "<strong>{eventTitlePart}</strong>" eröffnet! 💬</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onJoinEventChat(eventId, eventTitlePart)}
+            className="w-fit h-7 px-3 text-xs border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+          >
+            <MessageCircle className="h-3 w-3 mr-1" />
+            Event Chat beitreten
+          </Button>
+        </div>
+      );
+    }
+
+    // Fallback: show as formatted text without button
     return (
-      <div className="flex flex-col gap-2">
-        <span>{beforeText}hat das Event Chat "<strong>{eventTitlePart}</strong>" eröffnet! 💬</span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onJoinEventChat(eventId, eventTitlePart)}
-          className="w-fit h-7 px-3 text-xs border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
-        >
-          <MessageCircle className="h-3 w-3 mr-1" />
-          Event Chat beitreten
-        </Button>
-      </div>
+      <span>{beforeText}hat das Event Chat "<strong>{eventTitlePart}</strong>" eröffnet! 💬</span>
     );
   };
 
