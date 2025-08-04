@@ -5,7 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { CalendarIcon, Link as LinkIcon, MessageCircle } from 'lucide-react';
+import { CalendarIcon, Link as LinkIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import EventMessageFormatter from './EventMessageFormatter';
 import MessageContextMenu from './MessageContextMenu';
@@ -126,45 +126,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     return formattedContent;
   };
 
-  // Check if message is a system message about event chat
-  const isEventChatSystemMessage = (text: string): boolean => {
-    return text.includes('hat das Event Chat') && text.includes('eröffnet! 💬');
-  };
-
-  // Format event chat system message
-  const formatEventChatSystemMessage = (text: string) => {
-    const parts = text.split('hat das Event Chat');
-    const beforeText = parts[0];
-    const afterParts = parts[1].split('eröffnet! 💬');
-    const eventTitlePart = afterParts[0].replace(/["""]/g, '').trim();
-
-    console.log('System message detected:', { text, eventId, hasOnJoinEventChat: !!onJoinEventChat });
-
-    // Always show clickable version - if eventId is missing, we'll extract it or use a fallback
-    const finalEventId = eventId || 'unknown-event';
-    const finalEventTitle = eventTitlePart;
-
-    return (
-      <div className="flex flex-col gap-2">
-        <span>{beforeText}hat das Event Chat "<strong>{finalEventTitle}</strong>" eröffnet! 💬</span>
-        {onJoinEventChat && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              console.log('Clicking event chat button:', { eventId: finalEventId, eventTitle: finalEventTitle });
-              onJoinEventChat(finalEventId, finalEventTitle);
-            }}
-            className="w-fit h-7 px-3 text-xs border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
-          >
-            <MessageCircle className="h-3 w-3 mr-1" />
-            Event Chat beitreten
-          </Button>
-        )}
-      </div>
-    );
-  };
-
   // Format message content - extract event data if present
   const formatContent = () => {
     if (eventData) {
@@ -172,11 +133,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     }
 
     if (typeof message === 'string') {
-      // Check for event chat system message first
-      if (isEventChatSystemMessage(message)) {
-        return formatEventChatSystemMessage(message);
-      }
-
       if (containsEventInfo(message)) {
         return (
           <div
