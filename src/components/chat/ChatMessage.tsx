@@ -138,27 +138,30 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     const afterParts = parts[1].split('eröffnet! 💬');
     const eventTitlePart = afterParts[0].replace(/["""]/g, '').trim();
 
-    // If we have eventId and onJoinEventChat, show clickable version
-    if (eventId && onJoinEventChat) {
-      return (
-        <div className="flex flex-col gap-2">
-          <span>{beforeText}hat das Event Chat "<strong>{eventTitlePart}</strong>" eröffnet! 💬</span>
+    console.log('System message detected:', { text, eventId, hasOnJoinEventChat: !!onJoinEventChat });
+
+    // Always show clickable version - if eventId is missing, we'll extract it or use a fallback
+    const finalEventId = eventId || 'unknown-event';
+    const finalEventTitle = eventTitlePart;
+
+    return (
+      <div className="flex flex-col gap-2">
+        <span>{beforeText}hat das Event Chat "<strong>{finalEventTitle}</strong>" eröffnet! 💬</span>
+        {onJoinEventChat && (
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onJoinEventChat(eventId, eventTitlePart)}
+            onClick={() => {
+              console.log('Clicking event chat button:', { eventId: finalEventId, eventTitle: finalEventTitle });
+              onJoinEventChat(finalEventId, finalEventTitle);
+            }}
             className="w-fit h-7 px-3 text-xs border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
           >
             <MessageCircle className="h-3 w-3 mr-1" />
             Event Chat beitreten
           </Button>
-        </div>
-      );
-    }
-
-    // Fallback: show as formatted text without button
-    return (
-      <span>{beforeText}hat das Event Chat "<strong>{eventTitlePart}</strong>" eröffnet! 💬</span>
+        )}
+      </div>
     );
   };
 
