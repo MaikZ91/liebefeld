@@ -2,47 +2,43 @@ export const getChannelColor = (groupType: 'ausgehen' | 'sport' | 'kreativität'
   switch (groupType) {
     case 'sport':
       return {
-        primary: 'sport-primary',
-        secondary: 'sport-secondary',
-        border: 'border-sport-primary',
-        bg: 'bg-sport-primary',
-        hover: 'hover:bg-sport-secondary',
-        focus: 'focus:border-sport-secondary focus:ring-sport-primary',
-        text: 'text-sport-primary',
-        shadow: 'shadow-sport-primary/10'
+        primary: 'hsl(var(--sport-primary))',
+        secondary: 'hsl(var(--sport-secondary))',
+        borderStyle: { borderColor: 'hsl(var(--sport-primary))' },
+        bgStyle: { backgroundColor: 'hsl(var(--sport-primary))' },
+        hoverStyle: { backgroundColor: 'hsl(var(--sport-secondary))' },
+        textStyle: { color: 'hsl(var(--sport-primary))' },
+        shadowStyle: { boxShadow: '0 4px 6px -1px hsl(var(--sport-primary) / 0.1)' }
       };
     case 'kreativität':
       return {
-        primary: 'kreativität-primary',
-        secondary: 'kreativität-secondary',
-        border: 'border-kreativität-primary',
-        bg: 'bg-kreativität-primary',
-        hover: 'hover:bg-kreativität-secondary',
-        focus: 'focus:border-kreativität-secondary focus:ring-kreativität-primary',
-        text: 'text-kreativität-primary',
-        shadow: 'shadow-kreativität-primary/10'
+        primary: 'hsl(var(--kreativität-primary))',
+        secondary: 'hsl(var(--kreativität-secondary))',
+        borderStyle: { borderColor: 'hsl(var(--kreativität-primary))' },
+        bgStyle: { backgroundColor: 'hsl(var(--kreativität-primary))' },
+        hoverStyle: { backgroundColor: 'hsl(var(--kreativität-secondary))' },
+        textStyle: { color: 'hsl(var(--kreativität-primary))' },
+        shadowStyle: { boxShadow: '0 4px 6px -1px hsl(var(--kreativität-primary) / 0.1)' }
       };
     case 'ausgehen':
       return {
-        primary: 'ausgehen-primary',
-        secondary: 'ausgehen-secondary',
-        border: 'border-ausgehen-primary',
-        bg: 'bg-ausgehen-primary',
-        hover: 'hover:bg-ausgehen-secondary',
-        focus: 'focus:border-ausgehen-secondary focus:ring-ausgehen-primary',
-        text: 'text-ausgehen-primary',
-        shadow: 'shadow-ausgehen-primary/10'
+        primary: 'hsl(var(--ausgehen-primary))',
+        secondary: 'hsl(var(--ausgehen-secondary))',
+        borderStyle: { borderColor: 'hsl(var(--ausgehen-primary))' },
+        bgStyle: { backgroundColor: 'hsl(var(--ausgehen-primary))' },
+        hoverStyle: { backgroundColor: 'hsl(var(--ausgehen-secondary))' },
+        textStyle: { color: 'hsl(var(--ausgehen-primary))' },
+        shadowStyle: { boxShadow: '0 4px 6px -1px hsl(var(--ausgehen-primary) / 0.1)' }
       };
     default:
       return {
-        primary: 'primary',
-        secondary: 'primary',
-        border: 'border-primary',
-        bg: 'bg-primary',
-        hover: 'hover:bg-primary',
-        focus: 'focus:border-primary focus:ring-primary',
-        text: 'text-primary',
-        shadow: 'shadow-primary/10'
+        primary: 'hsl(var(--primary))',
+        secondary: 'hsl(var(--primary))',
+        borderStyle: { borderColor: 'hsl(var(--primary))' },
+        bgStyle: { backgroundColor: 'hsl(var(--primary))' },
+        hoverStyle: { backgroundColor: 'hsl(var(--primary))' },
+        textStyle: { color: 'hsl(var(--primary))' },
+        shadowStyle: { boxShadow: '0 4px 6px -1px hsl(var(--primary) / 0.1)' }
       };
   }
 };

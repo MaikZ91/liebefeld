@@ -134,13 +134,13 @@ const MessageInput: React.FC<MessageInputProps> = ({
           onKeyDown={handleKeyDown}
           className={cn(
             "min-h-[50px] flex-grow resize-none pr-14 border-2 transition-all duration-200",
-            `border-${colors.primary}`,
-            `focus:border-${colors.secondary}`,
-            `focus:ring-2 focus:ring-${colors.primary}`,
-            `shadow-md ${colors.shadow}`,
-            `placeholder-${colors.primary}`,
             leftPadding
           )}
+          style={{
+            ...colors.borderStyle,
+            ...colors.shadowStyle,
+            '--placeholder-color': colors.primary
+          } as React.CSSProperties & { '--placeholder-color': string }}
         />
         {/* Buttons auf der linken Seite des Inputs (absolute Positionierung) */}
         {mode === 'community' && ( // Only show in community mode
@@ -151,53 +151,36 @@ const MessageInput: React.FC<MessageInputProps> = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  className={cn(
-                    "rounded-full h-6 px-2 text-[10px] flex items-center gap-1 min-w-[70px] bg-white/90 dark:bg-zinc-800/90",
-                    `border-${colors.primary}/30`,
-                    `hover:bg-${colors.primary}/10`
-                  )}
+                  className="rounded-full h-6 px-2 text-[10px] flex items-center gap-1 min-w-[70px] bg-white/90 dark:bg-zinc-800/90"
+                  style={colors.borderStyle}
                 >
                   {activeCategory}
                   <ChevronDown className="h-2 w-2" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className={cn(
-                  "bg-zinc-900 z-50",
-                  `border-${colors.primary}/30`
-                )}
+                className="bg-zinc-900 z-50"
+                style={colors.borderStyle}
                 side="top"
                 align="start"
               >
                 <DropdownMenuItem
                   onClick={() => handleCategoryClick('Kreativität')}
-                  className={cn(
-                    "text-white cursor-pointer",
-                    `hover:bg-${getChannelColor('kreativität').primary}/20`,
-                    activeCategory === 'Kreativität' && `bg-${getChannelColor('kreativität').primary}/20`
-                  )}
+                  className="text-white cursor-pointer hover:bg-zinc-800"
                 >
-                  <span className={`text-${getChannelColor('kreativität').primary}`}>#kreativität</span>
+                  <span style={getChannelColor('kreativität').textStyle}>#kreativität</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => handleCategoryClick('Ausgehen')}
-                  className={cn(
-                    "text-white cursor-pointer",
-                    `hover:bg-${getChannelColor('ausgehen').primary}/20`,
-                    activeCategory === 'Ausgehen' && `bg-${getChannelColor('ausgehen').primary}/20`
-                  )}
+                  className="text-white cursor-pointer hover:bg-zinc-800"
                 >
-                  <span className={`text-${getChannelColor('ausgehen').primary}`}>#ausgehen</span>
+                  <span style={getChannelColor('ausgehen').textStyle}>#ausgehen</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => handleCategoryClick('Sport')}
-                  className={cn(
-                    "text-white cursor-pointer",
-                    `hover:bg-${getChannelColor('sport').primary}/20`,
-                    activeCategory === 'Sport' && `bg-${getChannelColor('sport').primary}/20`
-                  )}
+                  className="text-white cursor-pointer hover:bg-zinc-800"
                 >
-                  <span className={`text-${getChannelColor('sport').primary}`}>#sport</span>
+                  <span style={getChannelColor('sport').textStyle}>#sport</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -208,11 +191,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
               variant="outline"
               size="icon"
               type="button"
-              className={cn(
-                "rounded-full h-6 w-6 bg-white/90 dark:bg-zinc-800/90",
-                `border-${colors.primary}/30`,
-                `hover:bg-${colors.primary}/10`
-              )}
+              className="rounded-full h-6 w-6 bg-white/90 dark:bg-zinc-800/90"
+              style={colors.borderStyle}
               title="Push-Benachrichtigungen aktivieren"
             >
               <Bell className="h-3 w-3" />
@@ -223,11 +203,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
         <Button
           onClick={handleSendButtonClick}
           disabled={isSending || (!value?.trim() && !newMessage.trim())}
-          className={cn(
-            "rounded-full min-w-[32px] h-8 w-8 absolute right-1 top-1 p-0 text-white",
-            colors.bg,
-            colors.hover
-          )}
+          className="rounded-full min-w-[32px] h-8 w-8 absolute right-1 top-1 p-0 text-white"
+          style={colors.bgStyle}
         >
           {isSending ? (
             <Loader2 className="h-4 w-4 animate-spin" />

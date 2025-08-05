@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import EventMessageFormatter from './EventMessageFormatter';
 import MessageContextMenu from './MessageContextMenu';
 import MessageReactions from './MessageReactions';
+import { colorizeHashtags } from '@/utils/hashtagUtils';
 
 interface ChatMessageProps {
   message: string | React.ReactNode;
@@ -143,7 +144,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       }
       return (
         <span className="whitespace-pre-wrap chat-message-content">
-          {renderMessageWithLinks(message)}
+          {colorizeHashtags(message)}
         </span>
       );
     }

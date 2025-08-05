@@ -53,6 +53,12 @@
     --ausgehen-primary: 217 91% 60%;
     --ausgehen-secondary: 217 91% 50%;
   }
+  
+  /* Custom placeholder colors for channel inputs */
+  .sport-input::placeholder { color: hsl(var(--sport-primary)) !important; }
+  .kreativität-input::placeholder { color: hsl(var(--kreativität-primary)) !important; }
+  .ausgehen-input::placeholder { color: hsl(var(--ausgehen-primary)) !important; }
+  
     /* Placeholder text color override */
   textarea::placeholder,
   input::placeholder {
