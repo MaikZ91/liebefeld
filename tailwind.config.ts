@@ -76,6 +76,18 @@ export default {
 					hover: '#8a76e5',
 					light: '#e5deff',
 					dark: '#1A1F2C'
+				},
+				sport: {
+					primary: 'hsl(var(--sport-primary))',
+					secondary: 'hsl(var(--sport-secondary))'
+				},
+				kreativität: {
+					primary: 'hsl(var(--kreativität-primary))',
+					secondary: 'hsl(var(--kreativität-secondary))'
+				},
+				ausgehen: {
+					primary: 'hsl(var(--ausgehen-primary))',
+					secondary: 'hsl(var(--ausgehen-secondary))'
 				}
 			},
 			borderRadius: {

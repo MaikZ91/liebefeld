@@ -542,6 +542,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           mode="community"
           onCategorySelect={setSelectedCategory}
           activeCategory={selectedCategory}
+          groupType={groupType}
         />
       </div>
     </div>

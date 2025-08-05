@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Users, ChevronDown } from 'lucide-react';
+import { getChannelColor } from '@/utils/channelColors';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -28,14 +29,26 @@ export const GroupSelector: React.FC<GroupSelectorProps> = ({
   handleGroupSelect,
   mobile = false
 }) => {
+  // Determine group type based on active group name
+  const getGroupType = (groupName: string): 'ausgehen' | 'sport' | 'kreativität' => {
+    const lowerName = groupName.toLowerCase();
+    if (lowerName.includes('sport')) return 'sport';
+    if (lowerName.includes('kreativität')) return 'kreativität';
+    return 'ausgehen';
+  };
+  
+  const groupType = getGroupType(activeGroupName);
+  const colors = getChannelColor(groupType);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button className={cn(
-          "bg-red-500 text-white hover:bg-red-600",
+          "text-white",
+          colors.bg,
+          colors.hover,
           mobile && "flex-grow"
         )}>
-          {activeGroupName} <ChevronDown className="ml-2 h-4 w-4" />
+          <span className={`text-${colors.primary}`}>#{activeGroupName.toLowerCase()}</span> <ChevronDown className="ml-2 h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 bg-gray-900 border border-gray-700 text-white z-50">
