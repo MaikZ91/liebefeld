@@ -12,6 +12,7 @@ import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from "@/integrations/supabase/client";
 import { initializeFCM } from '@/services/firebaseMessaging';
 import { useToast } from '@/hooks/use-toast';
+import { getChannelColor } from '@/utils/channelColors';
 
 const AnimatedText = ({ text, className = '' }: { text: string; className?: string }) => {
   return (
@@ -253,6 +254,17 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     }, 0);
   };
 
+  // Get channel colors based on active category
+  const getGroupType = (category: string): 'ausgehen' | 'sport' | 'kreativität' => {
+    const lowerCategory = category.toLowerCase();
+    if (lowerCategory.includes('sport')) return 'sport';
+    if (lowerCategory.includes('kreativität')) return 'kreativität';
+    return 'ausgehen';
+  };
+  
+  const groupType = getGroupType(activeCategory);
+  const colors = getChannelColor(groupType);
+
   const getButtonWidth = () => {
     if (activeChatModeValue === 'community') {
       return 'pl-[120px]';
@@ -318,7 +330,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
               variant="outline"
               size="icon"
               type="button"
-              className="rounded-full h-6 w-6 border-red-500/30 hover:bg-red-500/10"
+              className="rounded-full h-6 w-6"
+              style={colors.borderStyle}
               title="Push-Benachrichtigungen aktivieren"
             >
               <Bell className="h-3 w-3" />
@@ -329,43 +342,36 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-full h-6 px-2 text-[10px] border-red-500/30 hover:bg-red-500/10 flex items-center gap-1 min-w-[70px]"
+                  className="rounded-full h-6 px-2 text-[10px] flex items-center gap-1 min-w-[70px]"
+                  style={{...colors.borderStyle, ...colors.textStyle}}
                 >
                   {activeCategory}
                   <ChevronDown className="h-2 w-2" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
-                className="bg-zinc-900 border-red-500/30 z-50"
+                className="bg-zinc-900 z-50"
+                style={colors.borderStyle}
                 side="top"
                 align="start"
               >
                 <DropdownMenuItem
                   onClick={() => handleCategoryClick('Kreativität')}
-                  className={cn(
-                    "text-white hover:bg-red-500/20 cursor-pointer",
-                    activeCategory === 'Kreativität' && "bg-red-500/20"
-                  )}
+                  className="text-white cursor-pointer hover:bg-zinc-800"
                 >
-                  Kreativität
+                  <span style={getChannelColor('kreativität').textStyle}>#kreativität</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => handleCategoryClick('Ausgehen')}
-                  className={cn(
-                    "text-white hover:bg-red-500/20 cursor-pointer",
-                    activeCategory === 'Ausgehen' && "bg-red-500/20"
-                  )}
+                  className="text-white cursor-pointer hover:bg-zinc-800"
                 >
-                  Ausgehen
+                  <span style={getChannelColor('ausgehen').textStyle}>#ausgehen</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => handleCategoryClick('Sport')}
-                  className={cn(
-                    "text-white hover:bg-red-500/20 cursor-pointer",
-                    activeCategory === 'Sport' && "bg-red-500/20"
-                  )}
+                  className="text-white cursor-pointer hover:bg-zinc-800"
                 >
-                  Sport
+                  <span style={getChannelColor('sport').textStyle}>#sport</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -390,9 +396,17 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         placeholder={placeholderText}
         rows={1} // Start with 1 row
         className={cn(
-          "w-full bg-black border-2 border-red-500 rounded-xl py-2 focus:outline-none text-sm text-white placeholder-white-400 pr-10 transition-all duration-200 hover:border-red-600 text-left min-h-[40px] overflow-hidden",
+          "w-full bg-black border-2 rounded-xl py-2 focus:outline-none text-sm text-white pr-10 transition-all duration-200 text-left min-h-[40px] overflow-hidden",
           getButtonWidth()
         )}
+        style={activeChatModeValue === 'community' ? {
+          ...colors.borderStyle,
+          ...colors.shadowStyle,
+          '--placeholder-color': colors.primary
+        } as React.CSSProperties & { '--placeholder-color': string } : {
+          borderColor: 'hsl(var(--primary))',
+          '--placeholder-color': 'hsl(var(--primary))'
+        } as React.CSSProperties & { '--placeholder-color': string }}
       />
 
       <button
@@ -407,12 +421,11 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           }
         }}
         disabled={!localInput.trim() || isTyping}
-          className={cn( // Adjusted for height, vertical alignment, horizontal position, and icon centering
-          "absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-0 flex-shrink-0 h-8 w-8 flex items-center justify-center",
-          localInput.trim() && !isTyping
-            ? "bg-red-500 hover:bg-red-600 text-white"
-            : "bg-zinc-800 text-zinc-500"
-        )}
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-0 flex-shrink-0 h-8 w-8 flex items-center justify-center text-white"
+          style={localInput.trim() && !isTyping
+            ? (activeChatModeValue === 'community' ? colors.bgStyle : { backgroundColor: 'hsl(var(--primary))' })
+            : { backgroundColor: '#374151', color: '#6b7280' }
+          }
       >
         <Send className="h-4 w-4" />
       </button>
