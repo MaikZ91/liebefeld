@@ -312,9 +312,12 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     }
   };
 
-  // Handle sending messages
+  // Handle sending messages using useMessageSending hook
   const handleSubmit = async () => {
+    console.log('ChatGroup.handleSubmit called', { newMessage, username, groupId, selectedCategory });
+    
     if (!newMessage.trim() || !username || !groupId) {
+      console.log('ChatGroup.handleSubmit: early return due to missing data');
       return;
     }
 
@@ -327,6 +330,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       // Add category label to the message
       const categoryLabel = `#${selectedCategory.toLowerCase()}`;
       messageText = `${categoryLabel} ${messageText}`;
+
+      console.log('ChatGroup.handleSubmit: sending message', { messageText, groupId });
 
       // Clear input immediately
       setNewMessage('');

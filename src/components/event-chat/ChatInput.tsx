@@ -154,15 +154,20 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   };
 
   const handleLocalSendMessage = async (eventData?: any) => {
+    console.log('ChatInput.handleLocalSendMessage called', { activeChatModeValue, localInput, eventData });
+    
     if (!localInput.trim() && !eventData) return; // Prevent empty sends
     
     if (activeChatModeValue === 'community') {
-      // For community mode, just update the external input and let the parent handle sending
+      // For community mode, ONLY update external input - parent handles sending
+      console.log('Community mode: updating external input only');
       setInput(localInput);
+      setLocalInput(''); // Clear local input after updating external
       return;
     }
     
     // For AI mode, handle sending directly
+    console.log('AI mode: handling send directly');
     setInput(localInput);
     await handleSendMessage(eventData || localInput);
     setLocalInput('');
@@ -171,11 +176,15 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   const handleLocalKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      console.log('Enter pressed in ChatInput', { activeChatModeValue, localInput });
+      
       if (activeChatModeValue === 'community') {
-        // For community mode, only update external input
+        // For community mode, ONLY update external input - let parent handle sending
+        console.log('Community mode: Enter key - updating external input only');
         setInput(localInput);
         setLocalInput('');
       } else {
+        console.log('AI mode: Enter key - handling send directly');
         handleLocalSendMessage();
       }
     } else {
@@ -411,12 +420,16 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 
       <button
         onClick={() => {
+          console.log('Send button clicked in ChatInput', { activeChatModeValue, localInput });
+          
           if (activeChatModeValue === 'community') {
-            // For community mode, only update external input
+            // For community mode, ONLY update external input - let parent handle sending
+            console.log('Community mode: Send button - updating external input only');
             setInput(localInput);
             setLocalInput('');
           } else {
             // For AI mode, use local send
+            console.log('AI mode: Send button - handling send directly');
             handleLocalSendMessage();
           }
         }}
