@@ -90,7 +90,7 @@ const MessageList: React.FC<MessageListProps> = ({
         <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 bg-black min-h-0 pb-24"> {/* Increased padding-bottom for better avatar visibility */}
+      <div className="flex-1 overflow-y-auto p-4 bg-black min-h-0 pb-20"> {/* Adjusted padding-bottom to account for Navbar */}
         <div className="flex flex-col space-y-1 w-full max-w-full">
           {messages.length === 0 && !loading && !error && (
             <div className="text-center text-gray-400 py-4">No messages yet. Start the conversation!</div>
@@ -119,9 +119,9 @@ const MessageList: React.FC<MessageListProps> = ({
               <div key={message.id} className="mb-1 w-full max-w-full overflow-hidden">
                 {!isConsecutive && (
                   <div className="flex items-center -mb-1">
-                    <Avatar className={`h-8 w-8 mr-2 flex-shrink-0 ${isGroup ? 'border-red-500' : ''}`}>
+                    <Avatar className={`h-5 w-5 mr-2 flex-shrink-0 ${isGroup ? 'border-red-500' : ''}`}>
                       <AvatarImage src={message.user_avatar} alt={message.user_name} />
-                      <AvatarFallback className="bg-red-500 text-white text-xs">{getInitials(message.user_name)}</AvatarFallback>
+                      <AvatarFallback className="bg-red-500 text-white">{getInitials(message.user_name)}</AvatarFallback>
                     </Avatar>
                     <div className="text-lg font-medium text-white mr-2">{message.user_name}</div>
                     <span className="text-sm text-gray-400">{timeAgo}</span>
