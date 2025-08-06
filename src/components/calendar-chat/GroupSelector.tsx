@@ -49,7 +49,7 @@ export const GroupSelector: React.FC<GroupSelectorProps> = ({
           )}
           style={colors.bgStyle}
         >
-          <span style={colors.textStyle}>#{activeGroupName.toLowerCase()}</span> <ChevronDown className="ml-2 h-4 w-4" />
+          <span className="text-white">#{activeGroupName.toLowerCase()}</span> <ChevronDown className="ml-2 h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 bg-gray-900 border border-gray-700 text-white z-50">

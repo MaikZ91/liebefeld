@@ -2,13 +2,13 @@ export const getChannelColor = (groupType: 'ausgehen' | 'sport' | 'kreativität'
   switch (groupType) {
     case 'sport':
       return {
-        primary: 'hsl(var(--sport-primary))',
-        secondary: 'hsl(var(--sport-secondary))',
-        borderStyle: { borderColor: 'hsl(var(--sport-primary))' },
-        bgStyle: { backgroundColor: 'hsl(var(--sport-primary))' },
-        hoverStyle: { backgroundColor: 'hsl(var(--sport-secondary))' },
-        textStyle: { color: 'hsl(var(--sport-primary))' },
-        shadowStyle: { boxShadow: '0 4px 6px -1px hsl(var(--sport-primary) / 0.1)' }
+        primary: 'hsl(var(--ausgehen-primary))',
+        secondary: 'hsl(var(--ausgehen-secondary))',
+        borderStyle: { borderColor: 'hsl(var(--ausgehen-primary))' },
+        bgStyle: { backgroundColor: 'hsl(var(--ausgehen-primary))' },
+        hoverStyle: { backgroundColor: 'hsl(var(--ausgehen-secondary))' },
+        textStyle: { color: 'hsl(var(--ausgehen-primary))' },
+        shadowStyle: { boxShadow: '0 4px 6px -1px hsl(var(--ausgehen-primary) / 0.1)' }
       };
     case 'kreativität':
       return {
@@ -22,13 +22,13 @@ export const getChannelColor = (groupType: 'ausgehen' | 'sport' | 'kreativität'
       };
     case 'ausgehen':
       return {
-        primary: 'hsl(var(--ausgehen-primary))',
-        secondary: 'hsl(var(--ausgehen-secondary))',
-        borderStyle: { borderColor: 'hsl(var(--ausgehen-primary))' },
-        bgStyle: { backgroundColor: 'hsl(var(--ausgehen-primary))' },
-        hoverStyle: { backgroundColor: 'hsl(var(--ausgehen-secondary))' },
-        textStyle: { color: 'hsl(var(--ausgehen-primary))' },
-        shadowStyle: { boxShadow: '0 4px 6px -1px hsl(var(--ausgehen-primary) / 0.1)' }
+        primary: 'hsl(var(--sport-primary))',
+        secondary: 'hsl(var(--sport-secondary))',
+        borderStyle: { borderColor: 'hsl(var(--sport-primary))' },
+        bgStyle: { backgroundColor: 'hsl(var(--sport-primary))' },
+        hoverStyle: { backgroundColor: 'hsl(var(--sport-secondary))' },
+        textStyle: { color: 'hsl(var(--sport-primary))' },
+        shadowStyle: { boxShadow: '0 4px 6px -1px hsl(var(--sport-primary) / 0.1)' }
       };
     default:
       return {
