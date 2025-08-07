@@ -21,6 +21,12 @@
       "sizes": "512x512",
       "purpose": "maskable"
     }
+    {
+      "src": "/monochrome_icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "monochrome"
+    }
   ],
   "launch_handler": {
     "client_mode": "auto"
