@@ -4,6 +4,7 @@ import { reactionService } from './reactionService';
 import { messageService } from './messageService';
 import { subscriptionService } from './subscriptionService';
 import { typingService } from './typingService';
+import { pushNotificationService } from './pushNotificationService';
 
 export const chatService = {
   async sendMessage(groupId: string, content: string, username: string, avatar?: string) {
@@ -20,6 +21,12 @@ export const chatService = {
         .single();
 
       if (error) throw error;
+
+      // Fire-and-forget push notification (do not block send)
+      pushNotificationService.sendPush(username, content, data?.id).catch((e) => {
+        console.error('[chatService] push send failed:', e);
+      });
+
       return data;
     } catch (error) {
       console.error('Error sending message:', error);

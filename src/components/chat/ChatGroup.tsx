@@ -4,6 +4,7 @@ import { RefreshCw, Users } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
+import { pushNotificationService } from '@/services/pushNotificationService';
 import { USERNAME_KEY, AVATAR_KEY, TypingUser } from '@/types/chatTypes';
 import { toast } from '@/hooks/use-toast';
 import { getInitials } from '@/utils/chatUIUtils';
@@ -352,8 +353,12 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         throw error;
       }
 
-      console.log(`Message sent successfully from ${instanceId.current} (${groupName})`);
+      // Trigger push notification (non-blocking)
+      pushNotificationService.sendPush(username, messageText).catch((e) => {
+        console.error('[ChatGroup] push send failed:', e);
+      });
 
+      console.log(`Message sent successfully from ${instanceId.current} (${groupName})`);
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
