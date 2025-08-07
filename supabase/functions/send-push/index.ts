@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -27,6 +28,8 @@ Deno.serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log('FCM_SERVER_KEY found, length:', fcmServerKey.length);
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -65,6 +68,7 @@ Deno.serve(async (req) => {
     // Send push notification to each token
     let successCount = 0;
     let failureCount = 0;
+    const errorDetails = [];
 
     for (const tokenRow of tokens as PushTokenRow[]) {
       try {
@@ -78,6 +82,8 @@ Deno.serve(async (req) => {
         };
 
         console.log('Sending push to token:', tokenRow.token.substring(0, 20) + '...');
+        console.log('Using FCM URL: https://fcm.googleapis.com/fcm/send');
+        console.log('Authorization header starts with:', `key=${fcmServerKey.substring(0, 10)}...`);
 
         const response = await fetch('https://fcm.googleapis.com/fcm/send', {
           method: 'POST',
@@ -88,17 +94,41 @@ Deno.serve(async (req) => {
           body: JSON.stringify(pushPayload)
         });
 
-        const result = await response.json();
+        console.log('FCM Response status:', response.status);
+        console.log('FCM Response headers:', Object.fromEntries(response.headers.entries()));
         
-        if (response.ok) {
+        const responseText = await response.text();
+        console.log('FCM Response body (first 200 chars):', responseText.substring(0, 200));
+
+        let result;
+        try {
+          result = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('Failed to parse FCM response as JSON:', parseError);
+          console.error('Response was:', responseText);
+          errorDetails.push({
+            token: tokenRow.token.substring(0, 20) + '...',
+            error: 'Invalid JSON response from FCM',
+            response: responseText.substring(0, 100)
+          });
+          failureCount++;
+          continue;
+        }
+        
+        if (response.ok && result.success === 1) {
           console.log('Push sent successfully to token:', tokenRow.token.substring(0, 20) + '...');
           successCount++;
         } else {
           console.error('Failed to send push to token:', tokenRow.token.substring(0, 20) + '...', result);
           failureCount++;
+          errorDetails.push({
+            token: tokenRow.token.substring(0, 20) + '...',
+            error: result.results?.[0]?.error || result.error || 'Unknown error',
+            response: result
+          });
           
-          // If token is invalid, you might want to remove it from database
-          if (result.error === 'InvalidRegistration' || result.error === 'NotRegistered') {
+          // If token is invalid, remove it from database
+          if (result.results?.[0]?.error === 'InvalidRegistration' || result.results?.[0]?.error === 'NotRegistered') {
             console.log('Removing invalid token from database');
             await supabase
               .from('push_tokens')
@@ -109,6 +139,11 @@ Deno.serve(async (req) => {
       } catch (error) {
         console.error('Error sending push to token:', tokenRow.token.substring(0, 20) + '...', error);
         failureCount++;
+        errorDetails.push({
+          token: tokenRow.token.substring(0, 20) + '...',
+          error: error.message || 'Network error',
+          details: error
+        });
       }
     }
 
@@ -119,7 +154,10 @@ Deno.serve(async (req) => {
         message: 'Push notifications processed',
         sent: successCount,
         failed: failureCount,
-        total_tokens: tokens.length
+        total_tokens: tokens.length,
+        error_details: errorDetails.slice(0, 5), // Limit to first 5 errors for debugging
+        fcm_key_configured: !!fcmServerKey,
+        fcm_key_length: fcmServerKey?.length || 0
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -127,7 +165,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Error in send-push function:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: 'Internal server error', details: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
