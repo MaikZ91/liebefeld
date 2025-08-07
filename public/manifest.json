@@ -20,7 +20,7 @@
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
-    }
+    },
     {
       "src": "/monochrome_icon.png",
       "sizes": "512x512",
