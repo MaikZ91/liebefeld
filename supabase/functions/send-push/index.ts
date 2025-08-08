@@ -71,9 +71,30 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
-    const sender = String(payload?.sender ?? 'TRIBE');
-    const text = String(payload?.text ?? '');
+    const sender = typeof payload?.sender === 'string' ? payload.sender : 'TRIBE';
+    const text = typeof payload?.text === 'string' ? payload.text : '';
     const message_id = payload?.message_id ?? null;
+
+    // Resolve sender/text from DB if missing and message_id is provided
+    let finalSender = (sender || 'TRIBE').toString().trim() || 'TRIBE';
+    let finalText = (text || '').toString().trim();
+
+    if ((!finalText || finalText.length === 0) && message_id) {
+      const { data: msgRow, error: msgErr } = await supabase
+        .from('chat_messages')
+        .select('sender, text, event_title')
+        .eq('id', message_id)
+        .maybeSingle();
+
+      if (!msgErr && msgRow) {
+        finalSender = (msgRow.sender || finalSender).toString();
+        finalText = (msgRow.text || (msgRow.event_title ? `Neues Event: ${msgRow.event_title}` : finalText)).toString();
+      }
+    }
+
+    if (!finalText || finalText.length === 0) {
+      finalText = 'Neue Nachricht';
+    }
 
     // Tokens holen
     const { data: tokens, error: tokensError } = await supabase
@@ -107,9 +128,23 @@ Deno.serve(async (req) => {
         const v1Payload = {
           message: {
             token,
-            notification: { title: sender, body: text },
-            // Optional:
-            // data: { message_id: String(message_id ?? '') }
+            notification: { title: finalSender, body: finalText },
+            data: {
+              message_id: String(message_id ?? ''),
+              sender: finalSender,
+              text: finalText
+            },
+            webpush: {
+              notification: {
+                title: finalSender,
+                body: finalText,
+                icon: '/icon-192.svg',
+                badge: '/icon-192.svg'
+              },
+              fcmOptions: {
+                link: 'https://liebefeld.lovable.app/'
+              }
+            }
           }
         };
 
