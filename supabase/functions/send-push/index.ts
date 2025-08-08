@@ -1,172 +1,181 @@
-
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { importPKCS8, SignJWT } from 'https://esm.sh/jose@4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
+};
 
-interface PushTokenRow {
-  token: string;
-  created_at: string;
-  updated_at: string;
+// Firebase Project ID fest eintragen
+const projectId = 'the-tribe-bi';
+
+// ---- OAuth2 Access Token aus Service Account für FCM v1 holen ----
+async function getAccessToken(): Promise<string> {
+  const saJson = Deno.env.get('FCM_SERVICE_ACCOUNT');
+  if (!saJson) throw new Error('FCM_SERVICE_ACCOUNT not set in ENV');
+  const sa = JSON.parse(saJson);
+  if (!sa.private_key || !sa.client_email) {
+    throw new Error('Service account JSON missing private_key or client_email');
+  }
+
+  const privateKey = await importPKCS8(sa.private_key, 'RS256');
+
+  const jwt = await new SignJWT({
+    iss: sa.client_email,
+    scope: 'https://www.googleapis.com/auth/firebase.messaging',
+    aud: 'https://oauth2.googleapis.com/token'
+  })
+    .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
+    .setIssuedAt()
+    .setExpirationTime('1h')
+    .sign(privateKey);
+
+  const resp = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion: jwt
+    })
+  });
+
+  const raw = await resp.text();
+  let data: any;
+  try { data = JSON.parse(raw); } catch { throw new Error(`Token JSON parse failed: ${raw}`); }
+  if (!resp.ok) throw new Error(`Token fetch failed ${resp.status}: ${raw}`);
+  if (!data.access_token) throw new Error('No access_token in token response');
+  return data.access_token as string;
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
+  // CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Get the FCM Server Key from environment
-    const fcmServerKey = Deno.env.get('FCM_SERVER_KEY');
-    if (!fcmServerKey) {
-      console.error('FCM_SERVER_KEY not found in environment variables');
-      return new Response(
-        JSON.stringify({ error: 'FCM_SERVER_KEY not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Supabase Client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!supabaseUrl || !supabaseKey) {
+      return new Response(JSON.stringify({ error: 'SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY missing' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
-
-    console.log('FCM_SERVER_KEY found, length:', fcmServerKey.length);
-
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Parse request body
-    const { sender, text, message_id } = await req.json();
-    
-    console.log('Processing push notification for message:', message_id);
-    console.log('Sender:', sender, 'Text:', text);
+    // Request-Body
+    let payload: any = {};
+    try { payload = await req.json(); } catch {
+      return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    const sender = String(payload?.sender ?? 'TRIBE');
+    const text = String(payload?.text ?? '');
+    const message_id = payload?.message_id ?? null;
 
-    // Get all push tokens from database
+    // Tokens holen
     const { data: tokens, error: tokensError } = await supabase
       .from('push_tokens')
       .select('token');
 
     if (tokensError) {
       console.error('Error fetching push tokens:', tokensError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch push tokens' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Failed to fetch push tokens' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    if (!tokens?.length) {
+      return new Response(JSON.stringify({ message: 'No push tokens found', sent: 0, failed: 0, total_tokens: 0 }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
-    if (!tokens || tokens.length === 0) {
-      console.log('No push tokens found');
-      return new Response(
-        JSON.stringify({ message: 'No push tokens found', sent: 0 }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Access Token holen (v1)
+    const accessToken = await getAccessToken();
+    const fcmUrl = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
 
-    console.log(`Found ${tokens.length} push tokens`);
-
-    // Send push notification to each token
     let successCount = 0;
     let failureCount = 0;
-    const errorDetails = [];
+    const errorDetails: Array<Record<string, any>> = [];
 
-    for (const tokenRow of tokens as PushTokenRow[]) {
+    // Senden
+    for (const row of tokens) {
+      const token: string = (row as any).token;
       try {
-        const pushPayload = {
-          to: tokenRow.token,
-          notification: {
-            title: sender,
-            body: text,
-            icon: '/icon-192.svg'
+        const v1Payload = {
+          message: {
+            token,
+            notification: { title: sender, body: text },
+            // Optional:
+            // data: { message_id: String(message_id ?? '') }
           }
         };
 
-        console.log('Sending push to token:', tokenRow.token.substring(0, 20) + '...');
-        console.log('Using FCM URL: https://fcm.googleapis.com/fcm/send');
-        console.log('Authorization header starts with:', `key=${fcmServerKey.substring(0, 10)}...`);
-
-        const response = await fetch('https://fcm.googleapis.com/fcm/send', {
+        const resp = await fetch(fcmUrl, {
           method: 'POST',
           headers: {
-            'Authorization': `key=${fcmServerKey}`,
+            'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(pushPayload)
+          body: JSON.stringify(v1Payload)
         });
 
-        console.log('FCM Response status:', response.status);
-        console.log('FCM Response headers:', Object.fromEntries(response.headers.entries()));
-        
-        const responseText = await response.text();
-        console.log('FCM Response body (first 200 chars):', responseText.substring(0, 200));
+        const raw = await resp.text();
+        let parsed: any;
+        try { parsed = JSON.parse(raw); } catch { parsed = { non_json: true, raw }; }
 
-        let result;
-        try {
-          result = JSON.parse(responseText);
-        } catch (parseError) {
-          console.error('Failed to parse FCM response as JSON:', parseError);
-          console.error('Response was:', responseText);
-          errorDetails.push({
-            token: tokenRow.token.substring(0, 20) + '...',
-            error: 'Invalid JSON response from FCM',
-            response: responseText.substring(0, 100)
-          });
+        if (!resp.ok) {
           failureCount++;
+          const code = parsed?.error?.status || parsed?.error?.message || 'Unknown FCM v1 error';
+          errorDetails.push({
+            token: token.slice(0, 24) + '...',
+            error: code,
+            details: parsed?.error ?? parsed
+          });
+
+          // Häufige invalid Token-Hinweise: UNREGISTERED / INVALID_ARGUMENT
+          const blob = JSON.stringify(parsed);
+          if (blob.includes('UNREGISTERED') || blob.includes('INVALID_ARGUMENT')) {
+            try {
+              await supabase.from('push_tokens').delete().eq('token', token);
+            } catch (_e) { /* ignore */ }
+          }
           continue;
         }
-        
-        if (response.ok && result.success === 1) {
-          console.log('Push sent successfully to token:', tokenRow.token.substring(0, 20) + '...');
-          successCount++;
-        } else {
-          console.error('Failed to send push to token:', tokenRow.token.substring(0, 20) + '...', result);
-          failureCount++;
-          errorDetails.push({
-            token: tokenRow.token.substring(0, 20) + '...',
-            error: result.results?.[0]?.error || result.error || 'Unknown error',
-            response: result
-          });
-          
-          // If token is invalid, remove it from database
-          if (result.results?.[0]?.error === 'InvalidRegistration' || result.results?.[0]?.error === 'NotRegistered') {
-            console.log('Removing invalid token from database');
-            await supabase
-              .from('push_tokens')
-              .delete()
-              .eq('token', tokenRow.token);
-          }
-        }
-      } catch (error) {
-        console.error('Error sending push to token:', tokenRow.token.substring(0, 20) + '...', error);
+
+        // Erfolg
+        successCount++;
+      } catch (err: any) {
         failureCount++;
         errorDetails.push({
-          token: tokenRow.token.substring(0, 20) + '...',
-          error: error.message || 'Network error',
-          details: error
+          token: token.slice(0, 24) + '...',
+          error: err?.message || 'Network error'
         });
       }
     }
 
-    console.log(`Push notifications sent. Success: ${successCount}, Failures: ${failureCount}`);
+    return new Response(JSON.stringify({
+      message: 'Push notifications processed (v1)',
+      sent: successCount,
+      failed: failureCount,
+      total_tokens: tokens.length,
+      error_details: errorDetails.slice(0, 10),
+      meta: { projectId, message_id }
+    }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
 
-    return new Response(
-      JSON.stringify({ 
-        message: 'Push notifications processed',
-        sent: successCount,
-        failed: failureCount,
-        total_tokens: tokens.length,
-        error_details: errorDetails.slice(0, 5), // Limit to first 5 errors for debugging
-        fcm_key_configured: !!fcmServerKey,
-        fcm_key_length: fcmServerKey?.length || 0
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in send-push function:', error);
-    return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({
+      error: 'Internal server error',
+      details: error?.message
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
   }
 });
