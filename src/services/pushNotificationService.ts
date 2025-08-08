@@ -4,11 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 export const pushNotificationService = {
   async sendPush(sender: string, text: string, messageId?: string) {
     try {
-      if (!text?.trim()) return;
-      console.log('[pushNotificationService] invoking send-push', { sender, messageId });
-      const { data, error } = await supabase.functions.invoke('send-push', {
-        body: { sender, text, message_id: messageId },
-      });
+      if (!messageId && !text?.trim()) {
+        console.warn('[pushNotificationService] Missing text and messageId; not sending.');
+        return;
+      }
+      const body: any = { sender: sender || 'TRIBE', message_id: messageId ?? null };
+      if (text && text.trim()) body.text = text;
+      console.log('[pushNotificationService] invoking send-push', body);
+      const { data, error } = await supabase.functions.invoke('send-push', { body });
       if (error) {
         console.error('[pushNotificationService] send-push error:', error);
       } else {
