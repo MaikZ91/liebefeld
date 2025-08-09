@@ -28,15 +28,15 @@ const MemoizedEventCard = memo(({ event, date, onSelectEvent, isTopEvent, isNewE
   return (
     <div key={event.id} className={`relative ${isTopEvent ? 'transform transition-all' : ''} w-full`}>
       {isTopEvent && (
-        <div className="absolute -left-1 top-0 bottom-0 w-1 bg-gradient-to-b from-[#E53935] to-[#C62828] rounded-full"></div>
+        <div className="absolute -left-1 top-0 bottom-0 w-1 bg-gradient-to-b from-white to-gray-300 rounded-full"></div>
       )}
       {isNewEvent && !isTopEvent && (
-        <div className="absolute -left-1 top-0 bottom-0 w-1 bg-gradient-to-b from-green-500 to-green-700 rounded-full"></div>
+        <div className="absolute -left-1 top-0 bottom-0 w-1 bg-gradient-to-b from-gray-400 to-gray-600 rounded-full"></div>
       )}
-      <div className={`${isTopEvent ? 'bg-gradient-to-r from-[#C62828]/20 to-transparent rounded-lg w-full' : isNewEvent ? 'bg-gradient-to-r from-green-600/10 to-transparent rounded-lg w-full' : 'w-full'}`}>
+      <div className={`${isTopEvent ? 'bg-gradient-to-r from-white/10 to-transparent rounded-lg w-full' : isNewEvent ? 'bg-gradient-to-r from-gray-600/10 to-transparent rounded-lg w-full' : 'w-full'}`}>
         {isTopEvent && (
-          <div className="absolute right-1 top-1 bg-[#E53935] text-white px-1 py-0.5 rounded-full text-[10px] flex items-center z-20">
-            <Star className="w-2 h-2 mr-0.5 fill-white" />
+          <div className="absolute right-1 top-1 bg-white text-black px-1 py-0.5 rounded-full text-[10px] flex items-center z-20">
+            <Star className="w-2 h-2 mr-0.5 fill-black" />
             <span>Top</span>
           </div>
         )}
@@ -44,7 +44,7 @@ const MemoizedEventCard = memo(({ event, date, onSelectEvent, isTopEvent, isNewE
           event={event}
           compact={true}
           onClick={handleClick}
-          className={`${isTopEvent ? 'border-l-2 border-[#E53935]' : isNewEvent ? 'border-l-2 border-green-500' : ''} relative w-full`}
+          className={`${isTopEvent ? 'border-l-2 border-white' : isNewEvent ? 'border-l-2 border-gray-400' : ''} relative w-full`}
         />
       </div>
     </div>
@@ -188,7 +188,7 @@ const EventList: React.FC<EventListProps> = memo(({
   }, [showFavorites, showNewEvents, filter]);
 
   return (
-    <div className="dark-glass-card rounded-xl p-3 overflow-hidden w-full max-w-full">
+    <div className="bg-black/90 border border-white/20 rounded-xl p-3 overflow-hidden w-full max-w-full backdrop-blur-md">
       <div className="flex items-center justify-between mb-1">
         <h3 className="text-xl font-medium text-white">
           {showFavorites 
@@ -215,7 +215,7 @@ const EventList: React.FC<EventListProps> = memo(({
                   className={`w-full ${isCurrentDay ? 'scroll-mt-12' : ''}`}
                   id={isCurrentDay ? "today-section" : undefined}
                 >
-                  <h4 className="text-sm font-medium mb-0.5 text-white sticky top-0 bg-[#131722]/95 backdrop-blur-sm py-0.5 z-10 rounded-md flex items-center w-full">
+                  <h4 className="text-sm font-medium mb-0.5 text-white sticky top-0 bg-black/95 backdrop-blur-sm py-0.5 z-10 rounded-md flex items-center w-full border-b border-white/10">
                     {format(date, 'EEEE, d. MMMM', { locale: de })}
                   </h4>
                   <div className="space-y-0.5 w-full">
@@ -240,7 +240,7 @@ const EventList: React.FC<EventListProps> = memo(({
             })}
           </div>
         ) : (
-          <div className="flex items-center justify-center h-40 text-gray-400 w-full">
+          <div className="flex items-center justify-center h-40 text-white/60 w-full">
             {showFavorites 
               ? "Du hast noch keine Favoriten" 
               : showNewEvents
