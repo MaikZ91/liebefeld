@@ -6,6 +6,10 @@ import { subscriptionService } from './subscriptionService';
 import { typingService } from './typingService';
 import { pushNotificationService } from './pushNotificationService';
 
+// Simple client-side de-duplication to avoid double inserts
+const recentSends = new Map<string, number>();
+const DUP_WINDOW_MS = 2000;
+
 export const chatService = {
   async sendMessage(groupId: string, content: string, username: string, avatar?: string) {
     try {
