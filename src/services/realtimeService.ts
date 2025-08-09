@@ -35,13 +35,12 @@ export const realtimeService = {
     // Create a channel name based on the group ID
     const channelName = `messages:${groupId}`;
     
-    // Set up the broadcast channel
-    const broadcastChannel = this.setupChannel(channelName, (payload) => {
-      if (payload?.payload?.message) {
-        console.log(`Received message via broadcast:`, payload.payload.message);
-        onMessage(payload.payload.message);
-      }
-    });
+    // Broadcast channel removed to avoid duplicate deliveries. We rely solely on DB changes.
+    // const broadcastChannel = this.setupChannel(channelName, (payload) => {
+    //   if (payload?.payload?.message) {
+    //     onMessage(payload.payload.message);
+    //   }
+    // });
     
     // Set up a direct database listener for INSERT
     const dbChannel = supabase
@@ -92,7 +91,7 @@ export const realtimeService = {
       })
       .subscribe();
       
-    return [broadcastChannel, dbChannel];
+    return [dbChannel];
   },
   
   /**
