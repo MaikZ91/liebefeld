@@ -1197,7 +1197,7 @@ const EventHeatmap: React.FC = () => {
 
 
       {/* Button to toggle Filter Panel - moved up */}
-      <div className="absolute top-36 left-4 z-[1001]">
+      <div className="fixed top-36 left-4 z-[1001]">
         <Button
           variant="outline"
           size="icon"
@@ -1210,7 +1210,7 @@ const EventHeatmap: React.FC = () => {
       </div>
 
       {/* NEW: Community Features Button with Dropdown */}
-      <div className="absolute top-48 left-4 z-[1001]">
+      <div className="fixed top-48 left-4 z-[1001]">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -1242,7 +1242,7 @@ const EventHeatmap: React.FC = () => {
 
       {/* Filter Panel (Conditional Rendering) */}
       {showFilterPanel && (
-        <div className="absolute top-60 left-4 z-[1003] space-y-3 max-w-sm animate-fade-in">
+        <div className="fixed top-60 left-4 z-[1003] space-y-3 max-w-sm animate-fade-in">
           <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
             <h3 className="text-white font-bold mb-4 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-red-500" />
@@ -1353,7 +1353,7 @@ const EventHeatmap: React.FC = () => {
 
       {/* Button to show events panel again if hidden */}
       {!showEventPanels && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000]">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[1000]">
           <Button
             onClick={() => setShowEventPanels(true)}
             className="bg-red-500 hover:bg-red-600 text-white rounded-full px-4 py-2 text-sm"
