@@ -1176,7 +1176,7 @@ const EventHeatmap: React.FC = () => {
   const selectedCategoryDisplay = selectedCategory === 'all' ? 'Alle' : selectedCategory;
 
   return (
-    <div className="relative w-full h-full overflow-hidden" style={{ height: 'calc(100vh - 80px)' }}>
+    <div className="relative w-full h-full overflow-hidden" style={{ height: '100dvh' }}>>
       {/* Live Ticker Header */}
       <HeatmapHeader selectedCity={selectedCity} chatInputProps={{
         input: aiChatInput,
