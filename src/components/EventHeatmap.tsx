@@ -1176,7 +1176,7 @@ const EventHeatmap: React.FC = () => {
   const selectedCategoryDisplay = selectedCategory === 'all' ? 'Alle' : selectedCategory;
 
   return (
-    <div className="relative w-full h-full overflow-hidden" style={{ height: 'calc(100vh - 80px)' }}>
+    <div className="relative w-full h-full overflow-hidden" style={{ height: '100vh' }}>
       {/* Live Ticker Header */}
       <HeatmapHeader selectedCity={selectedCity} chatInputProps={{
         input: aiChatInput,
@@ -1365,7 +1365,7 @@ const EventHeatmap: React.FC = () => {
 
       {/* Default Event Display - Show 3 Events directly above navbar */}
       {!showPerfectDayPanel && !showAIChat && filteredEvents.length > 0 && showEventPanels && (
-        <div className="absolute bottom-[68px] left-0 right-0 z-[1000]">
+        <div className="absolute left-0 right-0 z-[1000]" style={{ bottom: 'calc(var(--navbar-height, 64px) + env(safe-area-inset-bottom) + 8px)' }}>
           {/* Default Event Panel Display */}
           <div className="px-2 py-4">
             <ThreeEventDisplay
