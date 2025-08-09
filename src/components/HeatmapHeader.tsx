@@ -33,7 +33,7 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
   return (
     <div className="fixed top-0 left-0 right-0 z-[1002]">
       {/* Curved black header bar with THE TRIBE logo */}
-      <div className="relative pt-4">
+      <div className="relative pt-2">
         {/* Main header with speech bubble shape - rounded all corners */}
         <div className="bg-black mx-4 px-6 py-4 relative rounded-[2rem]">
           {/* Main content */}
