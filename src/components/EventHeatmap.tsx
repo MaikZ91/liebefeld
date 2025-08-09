@@ -1365,7 +1365,7 @@ const EventHeatmap: React.FC = () => {
 
       {/* Default Event Display - Show 3 Events directly above navbar */}
       {!showPerfectDayPanel && !showAIChat && filteredEvents.length > 0 && showEventPanels && (
-        <div className="absolute bottom-1 left-0 right-0 z-[1000]">
+        <div className="absolute bottom-[68px] left-0 right-0 z-[1000]">
           {/* Default Event Panel Display */}
           <div className="px-2 py-4">
             <ThreeEventDisplay
