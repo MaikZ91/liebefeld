@@ -13,6 +13,7 @@ import MessageList from './MessageList';
 import { useScrollManagement } from '@/hooks/chat/useScrollManagement';
 import { eventChatService } from '@/services/eventChatService';
 import { useNavigate } from 'react-router-dom';
+import { chatService } from '@/services/chatService';
 
 interface ChatGroupProps {
   groupId: string;
@@ -313,7 +314,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     }
   };
 
-  // Handle sending messages using useMessageSending hook
+  // Handle sending messages using chatService instead of direct insert
   const handleSubmit = async () => {
     console.log('ChatGroup.handleSubmit called', { newMessage, username, groupId, selectedCategory });
     
@@ -332,31 +333,13 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       const categoryLabel = `#${selectedCategory.toLowerCase()}`;
       messageText = `${categoryLabel} ${messageText}`;
 
-      console.log('ChatGroup.handleSubmit: sending message', { messageText, groupId });
+      console.log('ChatGroup.handleSubmit: sending message via chatService', { messageText, groupId });
 
       // Clear input immediately
       setNewMessage('');
 
-      // Send message directly to database - no optimistic UI
-      const { error } = await supabase
-        .from('chat_messages')
-        .insert({
-          group_id: groupId,
-          sender: username,
-          text: messageText,
-          avatar: localStorage.getItem(AVATAR_KEY),
-          read_by: [username]
-        });
-
-      if (error) {
-        console.error('Error sending message:', error);
-        throw error;
-      }
-
-      // Trigger push notification (non-blocking)
-      pushNotificationService.sendPush(username, messageText).catch((e) => {
-        console.error('[ChatGroup] push send failed:', e);
-      });
+      // Use chatService instead of direct insert to avoid duplicates
+      await chatService.sendMessage(groupId, messageText, username, localStorage.getItem(AVATAR_KEY) || undefined);
 
       console.log(`Message sent successfully from ${instanceId.current} (${groupName})`);
     } catch (error) {
@@ -370,7 +353,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       setIsSending(false);
     }
   };
-
 
   // Handle input change from MessageInput
   const handleInputChangeFromMessageInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
