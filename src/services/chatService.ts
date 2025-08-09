@@ -13,6 +13,16 @@ const DUP_WINDOW_MS = 2000;
 export const chatService = {
   async sendMessage(groupId: string, content: string, username: string, avatar?: string) {
     try {
+      // Client-side de-duplication to avoid double inserts within a short window
+      const key = `${groupId}:${username}:${content.trim()}`;
+      const now = Date.now();
+      const last = recentSends.get(key);
+      if (last && now - last < DUP_WINDOW_MS) {
+        console.warn('[chatService] Duplicate send prevented', { key });
+        return null;
+      }
+      recentSends.set(key, now);
+
       const { data, error } = await supabase
         .from('chat_messages')
         .insert({

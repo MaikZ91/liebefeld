@@ -200,6 +200,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       })
       .subscribe();
 
+    // Track channel for proper cleanup
+    channelsRef.current.push(messageChannel);
 
     // Interval to clean up typing indicators that have been inactive
     const typingInterval = setInterval(() => {
