@@ -61,13 +61,6 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				event: {
-					card: 'hsl(var(--event-card))',
-					'card-hover': 'hsl(var(--event-card-hover))',
-					border: 'hsl(var(--event-card-border))',
-					highlight: 'hsl(var(--event-highlight))',
-					accent: 'hsl(var(--event-accent))'
-				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',

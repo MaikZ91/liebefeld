@@ -10,7 +10,7 @@ import { getEventsForDay, getMonthOrFavoriteEvents } from '@/utils/eventUtils';
 import { normalizeDate } from '@/utils/dateUtils';
 import CalendarHeader from './calendar/CalendarHeader';
 import CalendarDays from './calendar/CalendarDays';
-import ModernEventList from './calendar/ModernEventList';
+import EventList from './calendar/EventList';
 import EventPanel from './calendar/EventPanel';
 import FavoritesView from './calendar/FavoritesView';
 import EventForm from './EventForm';
@@ -236,7 +236,7 @@ const EventCalendar = ({ defaultView = "list", onJoinEventChat }: EventCalendarP
           <TabsContent value="list" className="w-full">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
               <div className="md:col-span-3">
-                <ModernEventList 
+                <EventList 
                   events={eventsToDisplay}
                   showFavorites={showFavorites}
                   showNewEvents={showNewEvents}
