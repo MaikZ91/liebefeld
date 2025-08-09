@@ -1385,14 +1385,14 @@ const EventHeatmap: React.FC = () => {
         ref={mapRef}
         className="w-full h-full map-container"
         style={{
-          height: 'calc(100vh - 80px)', // Subtract bottom navigation + padding
-          minHeight: 'calc(100vh - 80px)',
+          height: '100vh', // Fill full viewport height
+          minHeight: '100vh',
           zIndex: 1,
           position: 'fixed',
           top: 0,
           left: 0,
           right: 0,
-          bottom: '64px', // Bottom navigation space
+          bottom: 0, // Extend behind BottomNavigation for seamless edge
         }}
       />
 
