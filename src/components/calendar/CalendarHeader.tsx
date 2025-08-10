@@ -64,7 +64,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   };
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-0.5 mb-0">
+    <div className="sticky top-0 z-40 bg-black/80 backdrop-blur-md border-b border-white/10 px-2 py-2">
       <div className="flex items-center justify-between md:justify-start">
         <Button 
           variant="outline" 
