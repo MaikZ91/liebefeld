@@ -88,9 +88,7 @@ const MessageList: React.FC<MessageListProps> = ({
               key={message.id}
               className={cn(
                 "w-full rounded-lg mx-auto",
-                message.isUser
-                  ? "bg-black border border-black ml-auto"
-                  : "bg-black border border-black",
+                message.isUser ? "ml-auto" : "",
                 message.isEventNotification && "border-red-500/50 bg-red-900/10"
               )}
             >
@@ -98,7 +96,8 @@ const MessageList: React.FC<MessageListProps> = ({
                 message={message.text} 
                 isGroup={false} 
                 onDateSelect={handleDateSelect}
-                showDateSelector={message.isUser && message.text.toLowerCase().includes('event')}
+                showDateSelector={message.isUser && message.text.toLowerCase().includes("event")}
+                transparentBg
               />
             </div>
           );
