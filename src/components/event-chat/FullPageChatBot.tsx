@@ -279,9 +279,9 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   return (
     <div className="flex flex-col h-screen min-h-0">
-      {/* Fixed Filter UI Container für Community Chat */}
-      {activeChatModeValue === 'community' && (
-        <div className="flex-shrink-0 bg-black border-b border-gray-800 min-h-[3.5rem]">
+      {/* Fixed Filter UI Container für Community Chat - always reserve space */}
+      <div className={`flex-shrink-0 bg-black border-b border-gray-800 transition-all duration-200 ${activeChatModeValue === 'community' ? 'min-h-[3.5rem] opacity-100' : 'h-0 opacity-0 overflow-hidden'}`}>
+        {activeChatModeValue === 'community' && (
           <div className="px-4 py-2 min-h-[3.5rem] flex items-center">
             <div className="flex flex-wrap gap-2">
               {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => (
@@ -315,11 +315,11 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               ))}
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {!hideInput && (
-        <div className="sticky top-0 z-10 bg-black">
+        <div className="flex-shrink-0 bg-black">
           <div className="border-b border-red-500/20 px-[13px] py-2">
             {activeChatModeValue === 'ai' && (
               <RecentQueries
