@@ -111,7 +111,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
               <img
                 src={event.image_url}
                 alt={event.title}
-                className={cn("w-full h-full object-cover", monochrome && "grayscale")}
+                className="w-full h-full object-cover"
               />
             </div>
           )}
@@ -270,7 +270,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
             <img
               src={event.image_url}
               alt={event.title}
-              className={cn("w-full h-full object-cover", monochrome && "grayscale")}
+              className="w-full h-full object-cover"
             />
           </div>
         )}
