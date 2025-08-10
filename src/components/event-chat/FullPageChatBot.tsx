@@ -412,7 +412,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                            <span className="text-sm text-gray-400">{timeAgo}</span>
                          </div>
                         )}
-                        <div className="break-words ml-8">
+                        <div className="break-words ml-9">  {/* ml-9 to align exactly under the username text */}
                          <ChatMessage
                            message={message.text}
                            isConsecutive={isConsecutive}
