@@ -1521,9 +1521,9 @@ const EventHeatmap: React.FC = () => {
 
       {/* AI Chat Panel */}
       {showAIChat && (
-        <div className="absolute bottom-0 left-0 right-0 z-[1000] bg-black/95 backdrop-blur-md h-96">
+        <div className="absolute bottom-0 left-0 right-0 z-[1000] h-96 pointer-events-none">
           {/* Panel Header */}
-          <div className="flex items-center justify-between p-4 border-b border-black-700">
+          <div className="flex items-center justify-between p-4 bg-black/80 backdrop-blur-sm rounded-t-xl pointer-events-auto">
             <div className="flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-white-400" />
               <span className="text-white font-medium">AI Event Chat</span>
@@ -1539,7 +1539,7 @@ const EventHeatmap: React.FC = () => {
           </div>
 
           {/* AI Chat Content */}
-          <div className="h-full overflow-hidden">
+          <div className="h-full overflow-hidden pointer-events-auto">
             <div className="max-w-[92vw] md:max-w-md mx-auto h-full px-3">
               <FullPageChatBot
                 chatLogic={chatLogic}
