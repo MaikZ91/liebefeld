@@ -70,7 +70,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           variant="outline" 
           size="icon" 
           onClick={prevMonth} 
-          className="rounded-full hover:scale-105 transition-transform bg-red-500 text-white border-red-600"
+          className="rounded-full hover:scale-105 transition-transform bg-white/10 text-white border-white/20 hover:bg-white/20"
         >
           <ChevronLeft className="h-5 w-5" />
         </Button>
@@ -86,7 +86,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           variant="outline" 
           size="icon" 
           onClick={nextMonth} 
-          className="rounded-full hover:scale-105 transition-transform bg-red-500 text-white border-red-600"
+          className="rounded-full hover:scale-105 transition-transform bg-white/10 text-white border-white/20 hover:bg-white/20"
           disabled={showFavorites || showNewEvents}
         >
           <ChevronRight className="h-5 w-5" />
@@ -145,13 +145,13 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           
           {/* Favorites button positioned at the beginning of the filter list */}
           <Button 
-            className={cn(
-              "flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all",
-              showFavorites ? "bg-red-500 text-white hover:bg-red-600" : "bg-black text-red-500 border-red-500 hover:bg-black/90 hover:text-red-500"
-            )}
+          className={cn(
+            "flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all",
+            showFavorites ? "bg-white text-black hover:bg-white" : "bg-black/70 text-white border-white/20 hover:bg-black/90 hover:text-white"
+          )}
             onClick={toggleFavorites}
           >
-            <Heart className={cn("h-4 w-4", showFavorites ? "fill-white" : "")} />
+            <Heart className={cn("h-4 w-4", showFavorites ? "fill-black" : "")} />
             <span className="hidden sm:inline">
               {showFavorites ? "Alle" : "Favoriten"}
             </span>
@@ -164,10 +164,10 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           
           {/* New events button with NEW text */}
           <Button 
-            className={cn(
-              "flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all",
-              showNewEvents ? "bg-green-600 text-white hover:bg-green-700" : "bg-black text-green-500 border-green-500 hover:bg-black/90 hover:text-green-500"
-            )}
+          className={cn(
+            "flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all",
+            showNewEvents ? "bg-white text-black hover:bg-white" : "bg-black/70 text-white border-white/20 hover:bg-black/90 hover:text-white"
+          )}
             onClick={toggleNewEvents}
           >
             <span className="font-bold">NEW</span>
@@ -182,11 +182,11 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <Button
-                className={cn(
-                  "rounded-full whitespace-nowrap flex items-center gap-2",
-                  filter ? "bg-red-500 text-white hover:bg-red-600" : 
-                  "bg-black/70 text-white border-gray-700 hover:bg-black/60 hover:text-white dark-button"
-                )}
+          className={cn(
+            "rounded-full whitespace-nowrap flex items-center gap-2",
+            filter ? "bg-white text-black hover:bg-white" : 
+            "bg-black/70 text-white border-gray-700 hover:bg-black/60 hover:text-white dark-button"
+          )}
               >
                 {filter ? <FilterX className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
                 <span className="hidden sm:inline">
@@ -245,7 +245,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           
           {/* Add Event button - Now positioned at the end and styled red */}
           <Button 
-            className="rounded-full whitespace-nowrap flex items-center gap-2 bg-red-500 text-white border-red-600 hover:bg-red-600 hover:text-white"
+            className="rounded-full whitespace-nowrap flex items-center gap-2 bg-white text-black border-white/20 hover:bg-white/90 hover:text-black"
             onClick={onShowEventForm}
           >
             <Plus className="h-4 w-4" />

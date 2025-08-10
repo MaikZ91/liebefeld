@@ -270,7 +270,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
             <img
               src={event.image_url}
               alt={event.title}
-              className="w-full h-full object-cover"
+              className={cn("w-full h-full object-cover", monochrome && "grayscale")}
             />
           </div>
         )}
@@ -278,12 +278,14 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
         <div className="flex flex-col items-end gap-3 w-1/5">
           <Badge className={cn(
             "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
-            event.category in categoryColors
-              ? categoryColors[event.category]
-              : "bg-orange-400/70 text-orange-50"
+            monochrome
+              ? "border border-white/30 text-white/80 bg-transparent"
+              : event.category in categoryColors
+                ? categoryColors[event.category]
+                : "bg-orange-400/70 text-orange-50"
           )}>
             {icon}
-            {event.category}
+            {!monochrome && event.category}
           </Badge>
 
           <div className="flex flex-col items-end gap-2">

@@ -37,12 +37,12 @@ const MemoizedEventCard = memo(({ event, date, onSelectEvent, isTopEvent, isNewE
         <div className="absolute -left-1 top-0 bottom-0 w-1 bg-gradient-to-b from-gray-400 to-gray-600 rounded-full"></div>
       )}
       <div className={`${isTopEvent ? 'bg-gradient-to-r from-white/10 to-transparent rounded-lg w-full' : isNewEvent ? 'bg-gradient-to-r from-gray-600/10 to-transparent rounded-lg w-full' : 'w-full'}`}>
-        {isTopEvent && (
-          <div className="absolute right-1 top-1 bg-white text-black px-1 py-0.5 rounded-full text-[10px] flex items-center z-20">
-            <Star className="w-2 h-2 mr-0.5 fill-black" />
-            <span>Top</span>
-          </div>
-        )}
+      {isTopEvent && (
+        <div className="absolute right-1 top-1 bg-white text-black px-1 py-0.5 rounded-full text-[10px] flex items-center z-20">
+          <Star className="w-2 h-2 mr-0.5 fill-black" />
+          <span>Top</span>
+        </div>
+      )}
         <EventCard 
           event={event}
           compact={true}
@@ -204,7 +204,7 @@ const EventList: React.FC<EventListProps> = memo(({
   }, [showFavorites, showNewEvents, filter, groupFilter]);
 
   return (
-    <div className="bg-black/90 border border-white/20 rounded-xl p-3 overflow-hidden w-full max-w-full backdrop-blur-md">
+    <div className="bg-black/80 border border-white/15 rounded-xl p-3 overflow-hidden w-full max-w-full backdrop-blur-md">
       <div className="flex items-center justify-between mb-1">
         <h3 className="text-xl font-medium text-white">
           {showFavorites 
