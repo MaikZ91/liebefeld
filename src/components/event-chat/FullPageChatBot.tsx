@@ -349,7 +349,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
         {activeChatModeValue === 'ai' ? (
           <div className={hideInput ? "pt-4 px-3" : "pt-32 px-3"}>
-            <div className="max-w-md mx-auto w-full">
+            <div className="max-w-[92vw] md:max-w-md mx-auto w-full">
               <MessageList
                 messages={aiMessages}
                 isTyping={aiTyping}

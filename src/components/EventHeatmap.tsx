@@ -1540,7 +1540,7 @@ const EventHeatmap: React.FC = () => {
 
           {/* AI Chat Content */}
           <div className="h-full overflow-hidden">
-            <div className="max-w-md mx-auto h-full px-3">
+            <div className="max-w-[92vw] md:max-w-md mx-auto h-full px-3">
               <FullPageChatBot
                 chatLogic={chatLogic}
                 activeChatModeValue="ai"
