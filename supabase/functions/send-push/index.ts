@@ -132,7 +132,8 @@ Deno.serve(async (req) => {
             data: {
               message_id: String(message_id ?? ''),
               sender: finalSender,
-              text: finalText
+              text: finalText,
+              link: '/chat?view=community'
             },
             webpush: {
               notification: {
@@ -142,7 +143,7 @@ Deno.serve(async (req) => {
                 badge: '/icon-192.svg'
               },
               fcmOptions: {
-                link: 'https://liebefeld.lovable.app/'
+                link: 'https://liebefeld.lovable.app/chat?view=community'
               }
             }
           }

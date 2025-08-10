@@ -35,7 +35,14 @@ const ChatPage = () => {
   const [isUserDirectoryOpen, setIsUserDirectoryOpen] = useState(false);
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
-  
+  // Sync active view with URL query param (?view=community|ai)
+  useEffect(() => {
+    const sp = new URLSearchParams(location.search);
+    const v = sp.get('view');
+    if (v === 'community') setActiveView('community');
+    else if (v === 'ai') setActiveView('ai');
+  }, [location.search]);
+
   // Chat bot reference to get input props
   const [chatInputProps, setChatInputProps] = useState<any>(null);
   
