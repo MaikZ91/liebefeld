@@ -250,9 +250,11 @@ const ChatPage = () => {
 
   return (
     <>
-      <div className="w-full bg-black">
-        <LiveTicker events={events} />
-      </div>
+{activeView === 'community' && (
+  <div className="w-full bg-black">
+    <LiveTicker events={events} />
+  </div>
+)}
       <Layout 
         hideFooter={true}
         activeView={activeView}

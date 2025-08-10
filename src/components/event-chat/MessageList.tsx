@@ -97,7 +97,8 @@ const MessageList: React.FC<MessageListProps> = ({
                 isGroup={false} 
                 onDateSelect={handleDateSelect}
                 showDateSelector={message.isUser && message.text.toLowerCase().includes("event")}
-                transparentBg
+                transparentBg={false}
+                fitContent
               />
             </div>
           );
