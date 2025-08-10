@@ -277,21 +277,19 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     });
   }, [communityMessages, messageFilter]);
 
-  console.log('FullPageChatBot Debug:', { activeChatModeValue, communityLoading, messageCount: communityMessages?.length });
-
   return (
     <div className="flex flex-col h-screen min-h-0">
-      {/* Fixed Filter UI Container für Community Chat - only show after loading */}
+      {/* Filter UI für Community Chat - immer sichtbar wenn Community-Modus */}
       {activeChatModeValue === 'community' && (
-        <div className="flex-shrink-0 bg-black border-b border-gray-800 min-h-[3.5rem]">
-          <div className="px-4 py-2 min-h-[3.5rem] flex items-center">
+        <div className="sticky top-0 z-10 bg-black border-b border-gray-800">
+          <div className="px-4 py-2">
             <div className="flex flex-wrap gap-2">
               {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => (
                 <Button
                   key={category}
                   variant="ghost"
                   size="sm"
-                  className={`h-6 px-2 text-xs rounded-full flex-shrink-0 ${
+                  className={`h-6 px-2 text-xs rounded-full ${
                     messageFilter.includes(category)
                       ? 'bg-red-500/20 text-red-300 border border-red-500/30'
                       : 'text-gray-400 hover:text-white hover:bg-gray-800'
@@ -321,7 +319,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       )}
 
       {!hideInput && (
-        <div className="flex-shrink-0 bg-black">
+        <div className="sticky top-0 z-10 bg-black">
           <div className="border-b border-red-500/20 px-[13px] py-2">
             {activeChatModeValue === 'ai' && (
               <RecentQueries
