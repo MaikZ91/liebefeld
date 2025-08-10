@@ -203,24 +203,24 @@ const EventList: React.FC<EventListProps> = memo(({
     setHasScrolledToToday(false);
   }, [showFavorites, showNewEvents, filter, groupFilter]);
 
-  return (
-    <div className="bg-black/80 border border-white/15 rounded-xl p-3 overflow-hidden w-full max-w-full backdrop-blur-md">
-      <div className="flex items-center justify-between mb-1">
-        <h3 className="text-xl font-medium text-white">
-          {showFavorites 
-            ? "Top Events" 
-            : showNewEvents 
-              ? "Neue Events" 
-              : groupFilter !== 'Alle'
-                ? `${groupFilter} Events`
-                : filter 
-                  ? `${filter} Events` 
-                  : "Alle Events"}
-        </h3>
-        <FilterBar value={groupFilter} onChange={(v) => setGroupFilter(v)} />
-      </div>
-      
-      <div ref={listRef} className="overflow-y-auto max-h-[650px] pr-1 scrollbar-thin w-full">
+    return (
+      <div className="bg-white text-black rounded-3xl border border-gray-200 shadow-xl p-4 overflow-hidden w-full max-w-full">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xl font-semibold text-gray-900">
+            {showFavorites 
+              ? "Top Events" 
+              : showNewEvents 
+                ? "Neue Events" 
+                : groupFilter !== 'Alle'
+                  ? `${groupFilter} Events`
+                  : filter 
+                    ? `${filter} Events` 
+                    : "Alle Events"}
+          </h3>
+          <FilterBar value={groupFilter} onChange={(v) => setGroupFilter(v)} variant="light" />
+        </div>
+        
+        <div ref={listRef} className="overflow-y-auto max-h-[650px] pr-1 scrollbar-thin w-full">
         {Object.keys(eventsByDate).length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-2 gap-y-1">
             {Object.keys(eventsByDate).sort().map(dateStr => {
@@ -234,7 +234,7 @@ const EventList: React.FC<EventListProps> = memo(({
                   className={`w-full ${isCurrentDay ? 'scroll-mt-12' : ''}`}
                   id={isCurrentDay ? "today-section" : undefined}
                 >
-                  <h4 className="text-sm font-medium mb-0.5 text-white sticky top-0 bg-black/95 backdrop-blur-sm py-0.5 z-10 rounded-md flex items-center w-full border-b border-white/10">
+                  <h4 className="text-sm font-semibold mb-1 text-gray-900 sticky top-0 bg-white py-1 z-10 flex items-center w-full border-b border-gray-200">
                     {format(date, 'EEEE, d. MMMM', { locale: de })}
                   </h4>
                   <div className="space-y-0.5 w-full">
@@ -259,7 +259,7 @@ const EventList: React.FC<EventListProps> = memo(({
             })}
           </div>
         ) : (
-          <div className="flex items-center justify-center h-40 text-white/60 w-full">
+          <div className="flex items-center justify-center h-40 text-gray-500 w-full">
             {showFavorites 
               ? "Du hast noch keine Favoriten" 
               : showNewEvents
