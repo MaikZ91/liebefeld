@@ -314,7 +314,7 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
         </div>
 
         {/* Event/Ad Content */}
-        <div className="mx-3 mt-2 mb-3 rounded-2xl bg-black/75 p-4 space-y-3 backdrop-blur-sm border border-white/10">
+        <div className="mx-3 mt-2 mb-3 space-y-3">
           {/* Title */}
           <h3 className="text-lg font-semibold text-white line-clamp-2">
             {currentItem.title}
