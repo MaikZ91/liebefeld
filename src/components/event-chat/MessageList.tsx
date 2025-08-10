@@ -30,7 +30,7 @@ const MessageList: React.FC<MessageListProps> = ({
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="space-y-3 pb-2 px-1">
+      <div className="space-y-3 pb-2 px-1 max-w-md mx-auto w-full">
         {/* Optisch schöne Welcome Nachricht */}
         {welcomeMessage && welcomeMessage.html && (
           <div className="flex justify-center animate-fade-in-fast">
@@ -62,7 +62,7 @@ const MessageList: React.FC<MessageListProps> = ({
           // Panel
           if (message.panelData) {
             return (
-              <div key={message.id} className={cn("max-w-[85%] rounded-lg bg-black border border-black", message.isEventNotification && "border-red-500/50 bg-red-900/10")}>
+              <div key={message.id} className={cn("w-full rounded-lg bg-black border border-black", message.isEventNotification && "border-red-500/50 bg-red-900/10")}>
                 <div className="p-3">
                   <SwipeableEventPanel 
                     panelData={message.panelData}
@@ -78,7 +78,7 @@ const MessageList: React.FC<MessageListProps> = ({
           // HTML Message
           if (message.html) {
             return (
-              <div key={message.id} className="max-w-[85%] rounded-lg bg-black border border-black">
+              <div key={message.id} className="w-full rounded-lg bg-black border border-black">
                 <div dangerouslySetInnerHTML={{ __html: message.html }} className="p-3 event-list-container" />
               </div>
             );
@@ -88,7 +88,7 @@ const MessageList: React.FC<MessageListProps> = ({
             <div
               key={message.id}
               className={cn(
-                "max-w-[85%] rounded-lg",
+                "w-full rounded-lg",
                 message.isUser
                   ? "bg-black border border-black ml-auto"
                   : "bg-black border border-black",
@@ -105,7 +105,7 @@ const MessageList: React.FC<MessageListProps> = ({
           );
         })}
         {isTyping && (
-          <div className="bg-black max-w-[85%] rounded-lg p-3 border border-black">
+          <div className="bg-black w-full rounded-lg p-3 border border-black">
             <div className="flex space-x-2 items-center">
               <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
               <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
