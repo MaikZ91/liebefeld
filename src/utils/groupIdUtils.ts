@@ -1,6 +1,5 @@
 // src/utils/groupIdUtils.ts
 import { v5 as uuidv5 } from 'uuid';
-import { cities } from '@/contexts/EventContext';
 
 // Namespace UUID for THE TRIBE community groups (randomly generated, but consistent)
 const TRIBE_NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
@@ -8,19 +7,14 @@ const TRIBE_NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
 /**
  * Creates a deterministic, readable string for city-specific group IDs.
  * This ensures the same city-category combination always produces the same ID.
- * Example: Bielefeld + "ausgehen" -> "bielefeld_ausgehen"
+ * Example: createCitySpecificGroupId('Sport', 'BI') returns 'bi_sport'
  */
-export const createCitySpecificGroupId = (category: string, cityCode: string): string => {
-  // Resolve cityCode which may be an abbreviation (e.g., "BI") or a city name (e.g., "Bielefeld")
-  const lower = (cityCode || '').toLowerCase();
-  const match = cities.find(
-    (c) => c.abbr.toLowerCase() === lower || c.name.toLowerCase() === lower
-  );
-  // Normalize to letters-only city slug, preferring the canonical city name when known
-  const normalizedCity = (match ? match.name : cityCode)
-    .toLowerCase()
-    .replace(/[^a-z]/g, '');
+export const createCitySpecificGroupId = (category: string, cityAbbr: string): string => {
+  // Normalize city and category to create a URL-safe, predictable ID
+  const normalizedCity = cityAbbr.toLowerCase();
   const normalizedCategory = category.toLowerCase();
+  
+  // Create a deterministic string identifier, e.g., "bi_sport"
   return `${normalizedCity}_${normalizedCategory}`;
 };
 

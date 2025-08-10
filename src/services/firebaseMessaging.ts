@@ -52,8 +52,10 @@ export const initializeFCM = async () => {
     if (token) {
       console.log("✅ FCM Token obtained:", token);
       
+      // Token in der Datenbank speichern
       try {
         console.log("💾 Saving token to database...");
+        
         const { error } = await supabase
           .from('push_tokens')
           .insert({ token });
@@ -65,12 +67,6 @@ export const initializeFCM = async () => {
         }
       } catch (saveError) {
         console.error("❌ Error during token save:", saveError);
-      }
-
-      try {
-        localStorage.setItem('fcm_token', token);
-      } catch (e) {
-        console.warn('Could not persist FCM token to localStorage:', e);
       }
       
       return token;
@@ -100,57 +96,6 @@ export const initializeFCM = async () => {
   } catch (err) {
     console.error("❌ Error during FCM initialization:", err);
     return null;
-  }
-};
-
-export const disableFCM = async () => {
-  try {
-    const storedToken = (() => {
-      try { return localStorage.getItem('fcm_token'); } catch { return null; }
-    })();
-
-    // Delete token from FCM
-    try {
-      await deleteToken(messaging);
-      console.log('🗑️ FCM token deleted');
-    } catch (e) {
-      console.warn('⚠️ Failed to delete FCM token from messaging:', e);
-    }
-
-    // Remove from database if we know the token
-    if (storedToken) {
-      try {
-        const { error } = await supabase
-          .from('push_tokens')
-          .delete()
-          .eq('token', storedToken);
-        if (error) {
-          console.warn('⚠️ Failed to delete token from database:', error);
-        } else {
-          console.log('✅ Token removed from database');
-        }
-      } catch (dbErr) {
-        console.warn('⚠️ Error during DB token deletion:', dbErr);
-      }
-    }
-
-    // Clean local storage
-    try { localStorage.removeItem('fcm_token'); } catch {}
-
-    return true;
-  } catch (err) {
-    console.error('❌ Error during FCM disable:', err);
-    return false;
-  }
-};
-
-export const isPushActive = (): boolean => {
-  try {
-    return typeof Notification !== 'undefined' &&
-      Notification.permission === 'granted' &&
-      !!localStorage.getItem('fcm_token');
-  } catch {
-    return false;
   }
 };
 

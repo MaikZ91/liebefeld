@@ -93,20 +93,17 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const [communitySending, setCommunitySending] = useState(false);
   
   // Stable send function for community mode
-  const communitySendMessage = useCallback(async (optionalText?: string) => {
-    const textToSend = (optionalText ?? communityInput).trim();
-    if (!textToSend || !username) return;
+  const communitySendMessage = useCallback(async () => {
+    if (!communityInput.trim() || !username) return;
     try {
-      console.log('Community send initiated', { groupId: communityGroupId, username, text: textToSend, activeCategory });
       setCommunitySending(true);
       // Format message with category label
       const categoryLabel = `#${activeCategory.toLowerCase()}`;
-      const messageText = `${categoryLabel} ${textToSend}`;
+      const messageText = `${categoryLabel} ${communityInput.trim()}`;
       // Clear input immediately
       setCommunityInput('');
       // Send directly to database via chatService
       await chatService.sendMessage(communityGroupId, messageText, username);
-      console.log('Community send success');
     } catch (error) {
       console.error('Error sending community message:', error);
       toast.error('Nachricht konnte nicht gesendet werden');

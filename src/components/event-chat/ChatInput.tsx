@@ -9,8 +9,8 @@ import { Heart, History, CalendarPlus, Send, Calendar, ChevronDown, Bell } from 
 import { ChatInputProps } from './types';
 import { useEventContext } from '@/contexts/EventContext';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
-
-import { initializeFCM, disableFCM } from '@/services/firebaseMessaging';
+import { supabase } from "@/integrations/supabase/client";
+import { initializeFCM } from '@/services/firebaseMessaging';
 import { useToast } from '@/hooks/use-toast';
 import { getChannelColor } from '@/utils/channelColors';
 
@@ -54,24 +54,38 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
   const [localInput, setLocalInput] = useState(input);
   const { toast } = useToast();
-  const [pushEnabled, setPushEnabled] = useState<boolean>(false);
-
-  useEffect(() => {
-    try {
-      const hasToken = typeof window !== 'undefined' ? !!localStorage.getItem('fcm_token') : false;
-      setPushEnabled(typeof Notification !== 'undefined' && Notification.permission === 'granted' && hasToken);
-    } catch {
-      setPushEnabled(false);
-    }
-  }, []);
 
   const handleEnablePushNotifications = async () => {
-    // Deprecated: replaced by inline toggle above. Keeping stub for compatibility.
     try {
-      if (typeof Notification === 'undefined') return;
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') await initializeFCM();
-    } catch {}
+      const token = await initializeFCM();
+      if (token) {
+        // Token in Datenbank speichern
+        const { error } = await supabase
+          .from('push_tokens')
+          .insert({ token });
+
+        if (error) {
+          console.error('Error saving push token:', error);
+          toast({
+            title: "Fehler",
+            description: "Push-Token konnte nicht gespeichert werden.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Erfolgreich!",
+            description: "Push-Benachrichtigungen wurden aktiviert.",
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error enabling push notifications:', error);
+      toast({
+        title: "Fehler",
+        description: "Push-Benachrichtigungen konnten nicht aktiviert werden.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Reference for the textarea to dynamically adjust height
@@ -145,11 +159,10 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     if (!localInput.trim() && !eventData) return; // Prevent empty sends
     
     if (activeChatModeValue === 'community') {
-      // Community mode: update external input and trigger send in parent with explicit text
-      console.log('Community mode: sending via parent handler');
+      // For community mode, ONLY update external input - parent handles sending
+      console.log('Community mode: updating external input only');
       setInput(localInput);
-      await handleSendMessage(localInput);
-      setLocalInput('');
+      setLocalInput(''); // Clear local input after updating external
       return;
     }
     
@@ -166,10 +179,9 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
       console.log('Enter pressed in ChatInput', { activeChatModeValue, localInput });
       
       if (activeChatModeValue === 'community') {
-        // Community mode: update external input and trigger send in parent with explicit text
-        console.log('Community mode: Enter key - sending via parent handler');
+        // For community mode, ONLY update external input - let parent handle sending
+        console.log('Community mode: Enter key - updating external input only');
         setInput(localInput);
-        handleSendMessage(localInput);
         setLocalInput('');
       } else {
         console.log('AI mode: Enter key - handling send directly');
@@ -323,48 +335,15 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           <>
             {/* Push Notification Button (replacing Event Share Button) */}
             <Button
-              onClick={async () => {
-                try {
-                  if (typeof Notification === 'undefined') {
-                    toast({ title: 'Nicht unterstützt', description: 'Benachrichtigungen werden von diesem Browser nicht unterstützt.', variant: 'destructive' });
-                    return;
-                  }
-                  if (!pushEnabled) {
-                    const permission = await Notification.requestPermission();
-                    if (permission === 'granted') {
-                      const token = await initializeFCM();
-                      if (token) {
-                        try { localStorage.setItem('fcm_token', token); } catch {}
-                        setPushEnabled(true);
-                        toast({ title: 'Aktiviert', description: 'Push-Benachrichtigungen wurden aktiviert.' });
-                      } else {
-                        toast({ title: 'Fehler', description: 'Token konnte nicht geholt werden.', variant: 'destructive' });
-                      }
-                    } else if (permission === 'denied') {
-                      toast({ title: 'Blockiert', description: 'Bitte aktiviere Benachrichtigungen in den Browser-Einstellungen.', variant: 'destructive' });
-                    }
-                  } else {
-                    const ok = await disableFCM();
-                    if (ok) {
-                      setPushEnabled(false);
-                      toast({ title: 'Deaktiviert', description: 'Push-Benachrichtigungen wurden deaktiviert.' });
-                    } else {
-                      toast({ title: 'Fehler', description: 'Deaktivierung fehlgeschlagen.', variant: 'destructive' });
-                    }
-                  }
-                } catch (err) {
-                  console.error('Error toggling push notifications:', err);
-                  toast({ title: 'Fehler', description: 'Unerwarteter Fehler beim Umschalten.', variant: 'destructive' });
-                }
-              }}
+              onClick={handleEnablePushNotifications}
               variant="outline"
               size="icon"
               type="button"
               className="rounded-full h-6 w-6"
               style={colors.borderStyle}
-              title={pushEnabled ? 'Push aktiviert – klicken zum Deaktivieren' : 'Push-Benachrichtigungen aktivieren'}
+              title="Push-Benachrichtigungen aktivieren"
             >
-              <Bell className={cn('h-3 w-3', pushEnabled ? 'text-primary' : 'text-muted-foreground')} />
+              <Bell className="h-3 w-3" />
             </Button>
 
             <DropdownMenu>
@@ -444,10 +423,9 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           console.log('Send button clicked in ChatInput', { activeChatModeValue, localInput });
           
           if (activeChatModeValue === 'community') {
-            // Community mode: update external input and trigger send in parent with explicit text
-            console.log('Community mode: Send button - sending via parent handler');
+            // For community mode, ONLY update external input - let parent handle sending
+            console.log('Community mode: Send button - updating external input only');
             setInput(localInput);
-            handleSendMessage(localInput);
             setLocalInput('');
           } else {
             // For AI mode, use local send
