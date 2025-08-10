@@ -396,7 +396,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                    return (
                       <div key={message.id} className="mb-1 w-full group">
                         {!isConsecutive && (
-                          <div className="flex items-center -mb-2">
+                          <div className="flex items-center mb-1">
                              <Avatar 
                                className="h-7 w-7 mr-2 flex-shrink-0 border-red-500 cursor-pointer hover:opacity-80 transition-opacity"
                                onClick={() => handleAvatarClick(message.user_name)}
@@ -412,7 +412,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                            <span className="text-sm text-gray-400">{timeAgo}</span>
                          </div>
                         )}
-                        <div className="break-words -mt-2">
+                        <div className="break-words">
                          <ChatMessage
                            message={message.text}
                            isConsecutive={isConsecutive}
