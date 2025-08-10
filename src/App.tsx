@@ -15,7 +15,7 @@ import Chat from "./pages/Chat";
 import Challenge from "./pages/Challenge";
 import { EventProvider } from "./contexts/EventContext";
 import { initializeSupabase } from "./utils/initSupabase";
-
+import { initializeFCM } from "./services/firebaseMessaging";
 import Heatmap from '@/pages/Heatmap';
 import { Layout } from './components/layouts/Layout';
 import UserDirectory from "./components/users/UserDirectory";
@@ -37,6 +37,8 @@ function AppInitializer() {
         }
       });
 
+    // Initialize Firebase Cloud Messaging
+    initializeFCM();
   }, []);
 
   return null;

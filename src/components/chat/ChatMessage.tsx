@@ -25,7 +25,6 @@ interface ChatMessageProps {
   currentUsername?: string;
   messageId?: string;
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
-  transparentBg?: boolean;
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -40,8 +39,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   onReact,
   currentUsername = '',
   messageId,
-  onJoinEventChat,
-  transparentBg = false
+  onJoinEventChat
 }) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -172,9 +170,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       className={cn(
         "group p-3 rounded-lg relative",
         isConsecutive ? 'mt-0.5' : 'mt-1',
-        transparentBg
-          ? "bg-transparent text-white shadow-none w-full max-w-full overflow-visible"
-          : "bg-black text-white shadow-md w-full max-w-full overflow-hidden hover:bg-gray-900/50 transition-colors duration-200"
+        "bg-black text-white shadow-md w-full max-w-full overflow-hidden hover:bg-gray-900/50 transition-colors duration-200"
       )}
     >
       {/* Outer flex container for text and reactions */}

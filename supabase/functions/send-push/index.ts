@@ -74,7 +74,6 @@ Deno.serve(async (req) => {
     const sender = typeof payload?.sender === 'string' ? payload.sender : 'TRIBE';
     const text = typeof payload?.text === 'string' ? payload.text : '';
     const message_id = payload?.message_id ?? null;
-    let group_id: string | null = payload?.group_id ?? null;
 
     // Resolve sender/text from DB if missing and message_id is provided
     let finalSender = (sender || 'TRIBE').toString().trim() || 'TRIBE';
@@ -83,16 +82,13 @@ Deno.serve(async (req) => {
     if ((!finalText || finalText.length === 0) && message_id) {
       const { data: msgRow, error: msgErr } = await supabase
         .from('chat_messages')
-        .select('sender, text, event_title, group_id')
+        .select('sender, text, event_title')
         .eq('id', message_id)
         .maybeSingle();
 
       if (!msgErr && msgRow) {
         finalSender = (msgRow.sender || finalSender).toString();
         finalText = (msgRow.text || (msgRow.event_title ? `Neues Event: ${msgRow.event_title}` : finalText)).toString();
-        if (msgRow.group_id) {
-          group_id = msgRow.group_id;
-        }
       }
     }
 
@@ -135,10 +131,8 @@ Deno.serve(async (req) => {
             notification: { title: finalSender, body: finalText },
             data: {
               message_id: String(message_id ?? ''),
-              group_id: String(group_id ?? ''),
               sender: finalSender,
-              text: finalText,
-              link: '/chat?view=community'
+              text: finalText
             },
             webpush: {
               notification: {
@@ -148,7 +142,7 @@ Deno.serve(async (req) => {
                 badge: '/icon-192.svg'
               },
               fcmOptions: {
-                link: 'https://liebefeld.lovable.app/chat?view=community'
+                link: 'https://liebefeld.lovable.app/'
               }
             }
           }

@@ -16,7 +16,6 @@ import FavoritesView from './calendar/FavoritesView';
 import EventForm from './EventForm';
 import { useEventContext, cities } from '@/contexts/EventContext';
 import { toast } from 'sonner';
-import { BottomNavigation } from '@/components/layouts/BottomNavigation';
 
 interface EventCalendarProps {
   defaultView?: "calendar" | "list";
@@ -197,7 +196,7 @@ const EventCalendar = ({ defaultView = "list", onJoinEventChat }: EventCalendarP
   }, [filter]);
 
   return (
-    <div className="min-h-screen bg-black text-white px-2 py-2 animate-fade-in pb-20">
+    <div className="min-h-screen bg-black text-white px-2 py-2 animate-fade-in">
       <div className="flex flex-col space-y-2 h-full">
         <CalendarHeader 
           currentDate={currentDate}
@@ -291,14 +290,6 @@ const EventCalendar = ({ defaultView = "list", onJoinEventChat }: EventCalendarP
             </div>
           </TabsContent>
         </Tabs>
-      </div>
-      
-      {/* Bottom Navigation for Event Calendar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50">
-        <BottomNavigation
-          newMessagesCount={0}
-          newEventsCount={0}
-        />
       </div>
     </div>
   );

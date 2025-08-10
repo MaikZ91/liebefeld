@@ -30,16 +30,16 @@ const categoryIcons: Record<string, React.ReactNode> = {
 };
 
 const categoryColors: Record<string, string> = {
-  'Konzert': 'bg-white/10 text-white border border-white/20',
-  'Party': 'bg-white/10 text-white border border-white/20',
-  'Festival': 'bg-white/10 text-white border border-white/20',
-  'Ausstellung': 'bg-white/10 text-white border border-white/20',
-  'Sport': 'bg-white/10 text-white border border-white/20',
-  'Workshop': 'bg-white/10 text-white border border-white/20',
-  'Theater': 'bg-white/10 text-white border border-white/20',
-  'Kino': 'bg-white/10 text-white border border-white/20',
-  'Lesung': 'bg-white/10 text-white border border-white/20',
-  'Sonstiges': 'bg-white/10 text-white border border-white/20'
+  'Konzert': 'bg-purple-500/70 text-purple-50',
+  'Party': 'bg-pink-500/70 text-pink-50',
+  'Festival': 'bg-indigo-500/70 text-indigo-50',
+  'Ausstellung': 'bg-teal-500/70 text-teal-50',
+  'Sport': 'bg-green-500/70 text-green-50',
+  'Workshop': 'bg-blue-500/70 text-blue-50',
+  'Theater': 'bg-red-500/70 text-red-50',
+  'Kino': 'bg-yellow-500/70 text-yellow-50',
+  'Lesung': 'bg-gray-500/70 text-gray-50',
+  'Sonstiges': 'bg-orange-400/70 text-orange-50'
 };
 
 const isTribeEvent = (title: string): boolean => {
@@ -98,8 +98,8 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     return (
       <div
         className={cn(
-          "bg-black/90 border border-white/20 rounded-lg p-1.5 cursor-pointer hover-scale mb-0.5 w-full backdrop-blur-md",
-          isTribe && "border-l-2 border-white bg-gradient-to-r from-white/10 to-transparent",
+          "dark-glass-card rounded-lg p-1.5 cursor-pointer hover-scale mb-0.5 w-full",
+          isTribe && "border-l-2 border-purple-500 bg-gradient-to-r from-purple-900/20 to-transparent",
           className
         )}
         onClick={onClick}
@@ -117,18 +117,18 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1 flex-wrap">
               {isNewEvent && (
-                <Badge className="bg-white text-black text-[10px] flex items-center gap-0.5 h-3 px-1">
+                <Badge className="bg-green-600 text-white text-[10px] flex items-center gap-0.5 h-3 px-1">
                   <BadgePlus className="w-2 h-2" />
                   <span>Neu</span>
                 </Badge>
               )}
               {event.is_paid && (
-                <Badge className="bg-gray-300 text-black text-[10px] flex items-center gap-0.5 h-3 px-1">
+                <Badge className="bg-amber-500 text-white text-[10px] flex items-center gap-0.5 h-3 px-1">
                   <DollarSign className="w-2 h-2" />
                 </Badge>
               )}
               {isTribe && (
-                <Badge className="bg-white/20 text-white text-[10px] flex items-center gap-0.5 h-3 px-1 border border-white/30">
+                <Badge className="bg-purple-600 text-white text-[10px] flex items-center gap-0.5 h-3 px-1">
                   <Users className="w-2 h-2" />
                   <span>Tribe</span>
                 </Badge>
@@ -137,7 +137,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
                 <h4
                   className={cn(
                     "font-medium text-xs text-white break-words line-clamp-1 text-left hover:underline cursor-pointer flex items-center gap-1",
-                    isTribe && "text-white"
+                    isTribe && "text-purple-300"
                   )}
                   onClick={handleLinkClick}
                 >
@@ -147,7 +147,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
               ) : (
                 <h4 className={cn(
                   "font-medium text-xs text-white break-words line-clamp-1 text-left",
-                  isTribe && "text-white"
+                  isTribe && "text-purple-300"
                 )}>
                   {event.title}
                 </h4>
@@ -172,7 +172,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
               "flex-shrink-0 flex items-center gap-0.5 text-[8px] font-medium whitespace-nowrap px-1 py-0 h-3",
               event.category in categoryColors
                 ? categoryColors[event.category]
-                : "bg-white/10 text-white border border-white/20"
+                : "bg-orange-400/70 text-orange-50"
             )}>
               {icon}
             </Badge>
@@ -204,8 +204,8 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
   return (
     <div
       className={cn(
-        "bg-black/90 border border-white/20 rounded-xl p-4 cursor-pointer hover-scale w-full backdrop-blur-md",
-        isTribe && "border-l-4 border-white bg-gradient-to-r from-white/10 to-transparent",
+        "dark-glass-card rounded-xl p-4 cursor-pointer hover-scale w-full",
+        isTribe && "border-l-4 border-purple-500 bg-gradient-to-r from-purple-900/20 to-transparent",
         className
       )}
       onClick={onClick}
@@ -214,19 +214,19 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
         <div className="flex flex-col w-4/5">
           <div className="flex flex-wrap gap-1 mb-1">
             {isNewEvent && (
-              <Badge className="bg-white text-black text-xs flex items-center gap-1 h-5 px-2 self-start">
+              <Badge className="bg-green-600 text-white text-xs flex items-center gap-1 h-5 px-2 self-start">
                 <BadgePlus className="w-3 h-3" />
                 <span>Neu</span>
               </Badge>
             )}
             {event.is_paid && (
-              <Badge className="bg-gray-300 text-black text-xs flex items-center gap-1 h-5 px-2 self-start">
+              <Badge className="bg-amber-500 text-white text-xs flex items-center gap-1 h-5 px-2 self-start">
                 <DollarSign className="w-3 h-3" />
                 <span>Kostenpflichtig</span>
               </Badge>
             )}
             {isTribe && (
-              <Badge className="bg-white/20 text-white text-xs flex items-center gap-1 h-5 px-2 self-start border border-white/30">
+              <Badge className="bg-purple-600 text-white text-xs flex items-center gap-1 h-5 px-2 self-start">
                 <Users className="w-3 h-3" />
                 <span>Tribe</span>
               </Badge>
@@ -236,7 +236,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
             <h4
               className={cn(
                 "font-medium text-xl text-white break-words hover:underline cursor-pointer flex items-center gap-1",
-                isTribe && "text-white"
+                isTribe && "text-purple-300"
               )}
               onClick={handleLinkClick}
             >
@@ -246,7 +246,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
           ) : (
             <h4 className={cn(
               "font-medium text-xl text-white break-words",
-              isTribe && "text-white"
+              isTribe && "text-purple-300"
             )}>
               {event.title}
             </h4>
@@ -268,7 +268,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
             "flex-shrink-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap",
             event.category in categoryColors
               ? categoryColors[event.category]
-              : "bg-white/10 text-white border border-white/20"
+              : "bg-orange-400/70 text-orange-50"
           )}>
             {icon}
             {event.category}

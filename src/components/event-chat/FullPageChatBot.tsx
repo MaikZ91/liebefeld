@@ -1,5 +1,5 @@
 // src/components/event-chat/FullPageChatBot.tsx
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
 import RecentQueries from './RecentQueries';
@@ -92,28 +92,31 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const [communityInput, setCommunityInput] = useState('');
   const [communitySending, setCommunitySending] = useState(false);
   
-  // Stable send function for community mode
-  const communitySendMessage = useCallback(async (optionalText?: string) => {
-    const textToSend = (optionalText ?? communityInput).trim();
-    if (!textToSend || !username) return;
+  // Create send function directly instead of using external component
+  const communitySendMessage = async () => {
+    if (!communityInput.trim() || !username) return;
+    
     try {
-      console.log('Community send initiated', { groupId: communityGroupId, username, text: textToSend, activeCategory });
       setCommunitySending(true);
+      
       // Format message with category label
+      let messageText = communityInput.trim();
       const categoryLabel = `#${activeCategory.toLowerCase()}`;
-      const messageText = `${categoryLabel} ${textToSend}`;
+      messageText = `${categoryLabel} ${messageText}`;
+      
       // Clear input immediately
       setCommunityInput('');
+      
       // Send directly to database via chatService
       await chatService.sendMessage(communityGroupId, messageText, username);
-      console.log('Community send success');
+      
     } catch (error) {
       console.error('Error sending community message:', error);
       toast.error('Nachricht konnte nicht gesendet werden');
     } finally {
       setCommunitySending(false);
     }
-  }, [communityInput, username, activeCategory, communityGroupId]);
+  };
 
   // Filter state for community chat
   const [messageFilter, setMessageFilter] = useState<string[]>(['alle']);
@@ -139,12 +142,13 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
         onExternalSendHandlerChange(null);
       }
     }
+    
     return () => {
       if (onExternalSendHandlerChange) {
         onExternalSendHandlerChange(null);
       }
     };
-  }, [activeChatModeValue]);
+  }, [activeChatModeValue, communitySendMessage, aiSendMessage, onExternalSendHandlerChange]);
 
   const queriesToRender = globalQueries.length > 0 ? globalQueries : [];
 
@@ -274,7 +278,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   }, [communityMessages, messageFilter]);
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex flex-col h-screen min-h-0">
       {/* Filter UI für Community Chat - immer sichtbar wenn Community-Modus */}
       {activeChatModeValue === 'community' && (
         <div className="sticky top-0 z-10 bg-black border-b border-gray-800">
@@ -351,18 +355,16 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
         {activeChatModeValue === 'ai' ? (
-          <div className={hideInput ? "pt-4 px-3" : "pt-32 px-3"}>
-            <div className="max-w-[92vw] md:max-w-md mx-auto w-full">
-              <MessageList
-                messages={aiMessages}
-                isTyping={aiTyping}
-                handleDateSelect={handleDateSelect}
-                messagesEndRef={messagesEndRef}
-                examplePrompts={examplePrompts}
-                handleExamplePromptClick={handleExamplePromptClick}
-              />
-              <div ref={messagesEndRef} />
-            </div>
+          <div className={hideInput ? "pt-4 px-3" : "pt-32 px-3"}> 
+            <MessageList
+              messages={aiMessages}
+              isTyping={aiTyping}
+              handleDateSelect={handleDateSelect}
+              messagesEndRef={messagesEndRef}
+              examplePrompts={examplePrompts}
+              handleExamplePromptClick={handleExamplePromptClick}
+            />
+            <div ref={messagesEndRef} />
           </div>
         ) : (
           <div className="h-full min-h-0 flex flex-col">
@@ -373,14 +375,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
             )}
 
             <div
-              className="flex-1 min-h-0 overflow-y-auto px-4 pointer-events-auto"
-              style={{ 
-                touchAction: 'pan-y',
-                WebkitOverflowScrolling: 'touch',
-                overscrollBehavior: 'contain'
-              }}
+              ref={chatContainerRef}
+              className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4"
             >
-              <div className="space-y-2 py-4 pb-40"> {/* Increased bottom padding significantly to prevent avatar clipping */}
+              <div className="space-y-2 py-4 pb-24">
                 {filteredCommunityMessages.length === 0 && !communityLoading && !communityError && (
                   <div className="text-center text-gray-400 py-4">
                     {messageFilter.includes('alle') 
@@ -396,45 +394,36 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                    const timeAgo = formatTime(message.created_at);
 
                    return (
-                      <div key={message.id} className="mb-2 w-full group">
-                        <div className="flex">
-                          {/* Left column keeps avatar width to align text under the name */}
-                          <div className="w-8 flex-shrink-0">
-                            {!isConsecutive && (
-                              <Avatar 
-                                className="h-7 w-7 mt-0.5 cursor-pointer hover:opacity-80 transition-opacity"
-                                onClick={() => handleAvatarClick(message.user_name)}
-                              >
-                                <AvatarImage src={message.user_avatar} alt={message.user_name} />
-                                <AvatarFallback className="bg-red-500 text-white">
-                                  {getInitials(message.user_name)}
-                                </AvatarFallback>
-                              </Avatar>
-                            )}
-                          </div>
-
-                          {/* Right column: name/time on first message, message always below */}
-                          <div className="flex-1 min-w-0">
-                            {!isConsecutive && (
-                              <div className="flex items-baseline gap-2">
-                                <div className="text-base font-medium text-white">{message.user_name}</div>
-                                <span className="text-sm text-gray-400">{timeAgo}</span>
-                              </div>
-                            )}
-                            <div className={isConsecutive ? "break-words" : "break-words mt-0.5"}>
-                              <ChatMessage
-                                message={message.text}
-                                isConsecutive={isConsecutive}
-                                isGroup
-                                messageId={message.id}
-                                reactions={message.reactions || []}
-                                onReact={(emoji) => handleReaction(message.id, emoji)}
-                                currentUsername={username}
-                              />
+                      <div key={message.id} className="mb-1 w-full group">
+                        {!isConsecutive && (
+                          <div className="flex items-center -mb-2">
+                             <Avatar 
+                               className="h-7 w-7 mr-2 flex-shrink-0 border-red-500 cursor-pointer hover:opacity-80 transition-opacity"
+                               onClick={() => handleAvatarClick(message.user_name)}
+                             >
+                              <AvatarImage src={message.user_avatar} alt={message.user_name} />
+                              <AvatarFallback className="bg-red-500 text-white">
+                                {getInitials(message.user_name)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="text-base font-medium text-white mr-2">
+                              {message.user_name}
                             </div>
-                          </div>
-                        </div>
-                      </div>
+                           <span className="text-sm text-gray-400">{timeAgo}</span>
+                         </div>
+                        )}
+                        <div className="break-words -mt-2">
+                         <ChatMessage
+                           message={message.text}
+                           isConsecutive={isConsecutive}
+                           isGroup
+                           messageId={message.id}
+                           reactions={message.reactions || []}
+                           onReact={(emoji) => handleReaction(message.id, emoji)}
+                           currentUsername={username}
+                         />
+                       </div>
+                     </div>
                    );
                  })}
 

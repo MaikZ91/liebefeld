@@ -1,6 +1,6 @@
 // src/pages/Chat.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
 import LiveTicker from '@/components/LiveTicker';
@@ -21,7 +21,6 @@ import UserDirectory from '@/components/users/UserDirectory';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { messageService } from '@/services/messageService';
 import { eventChatService } from '@/services/eventChatService';
-import { reactionService } from '@/services/reactionService';
 import EventChatWindow from '@/components/event-chat/EventChatWindow';
 
 const ChatPage = () => {
@@ -36,16 +35,7 @@ const ChatPage = () => {
   const [isUserDirectoryOpen, setIsUserDirectoryOpen] = useState(false);
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
-  // Sync active view with URL query param (?view=community|ai)
-  useEffect(() => {
-    const sp = new URLSearchParams(location.search);
-    const v = sp.get('view');
-    if (v === 'community') setActiveView('community');
-    else if (v === 'ai') setActiveView('ai');
-  }, [location.search]);
-
-  const navigate = useNavigate();
-
+  
   // Chat bot reference to get input props
   const [chatInputProps, setChatInputProps] = useState<any>(null);
   
@@ -227,62 +217,6 @@ const ChatPage = () => {
     }
   }, [activeView, currentUser]);
 
-  // Handle notification actions from URL params
-  useEffect(() => {
-    const sp = new URLSearchParams(location.search);
-    const action = sp.get('action');
-    if (!action) return;
-
-    // Always switch to community view
-    setActiveView('community');
-
-    const clearParams = () => {
-      const url = new URL(window.location.href);
-      url.searchParams.delete('action');
-      url.searchParams.delete('emoji');
-      url.searchParams.delete('messageId');
-      url.searchParams.delete('groupId');
-      url.searchParams.delete('text');
-      url.searchParams.delete('replyTo');
-      window.history.replaceState({}, '', url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : ''));
-    };
-
-    const handle = async () => {
-      try {
-        if (action === 'like') {
-          const emoji = sp.get('emoji') || '❤️';
-          const messageId = sp.get('messageId');
-          if (!messageId || !currentUser) return;
-          const ok = await reactionService.toggleReaction(messageId, emoji, currentUser);
-          if (ok) {
-            toast({ title: 'Reaktion gesendet', description: `${emoji} wurde hinzugefügt.` });
-          } else {
-            toast({ title: 'Fehler', description: 'Reaktion fehlgeschlagen.', variant: 'destructive' });
-          }
-        } else if (action === 'quick-reply') {
-          const text = sp.get('text') || 'Bin dabei!';
-          const groupId = sp.get('groupId') || messageService.DEFAULT_GROUP_ID;
-          if (currentUser && text) {
-            const id = await messageService.sendMessage(groupId, currentUser, text);
-            if (id) {
-              toast({ title: 'Nachricht gesendet', description: 'Deine Antwort wurde gesendet.' });
-            } else {
-              toast({ title: 'Fehler', description: 'Senden fehlgeschlagen.', variant: 'destructive' });
-            }
-          }
-        }
-      } catch (e) {
-        console.error('Notification action handling error', e);
-        toast({ title: 'Fehler', description: 'Aktion konnte nicht ausgeführt werden.', variant: 'destructive' });
-      } finally {
-        clearParams();
-      }
-    };
-
-    handle();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.search, currentUser]);
-
   // Check if we're on mobile for responsive design adjustments
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -330,8 +264,8 @@ const ChatPage = () => {
         chatInputProps={chatInputProps}
       >
         <div className="container mx-auto px-2 md:px-4 flex flex-col h-[calc(100vh-48px)] !mt-0 !pt-0">
-          <div className="flex-grow min-h-0 rounded-lg overflow-hidden border border-black flex flex-col bg-black">
-            <div className="flex-grow min-h-0 relative">
+          <div className="flex-grow rounded-lg overflow-hidden border border-black flex flex-col bg-black">
+            <div className="flex-grow relative">
               <EventChatBot 
                 fullPage={true} 
                 onAddEvent={handleAddEvent} 

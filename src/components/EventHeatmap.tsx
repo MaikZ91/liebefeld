@@ -1521,9 +1521,9 @@ const EventHeatmap: React.FC = () => {
 
       {/* AI Chat Panel */}
       {showAIChat && (
-        <div className="absolute bottom-0 left-0 right-0 z-[1000] h-96 pointer-events-none">
+        <div className="absolute bottom-0 left-0 right-0 z-[1000] bg-black/95 backdrop-blur-md h-96">
           {/* Panel Header */}
-          <div className="flex items-center justify-between p-4 bg-black/90 backdrop-blur-sm rounded-t-xl pointer-events-auto">
+          <div className="flex items-center justify-between p-4 border-b border-black-700">
             <div className="flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-white-400" />
               <span className="text-white font-medium">AI Event Chat</span>
@@ -1532,25 +1532,23 @@ const EventHeatmap: React.FC = () => {
               variant="ghost"
               size="icon"
               onClick={() => setShowAIChat(false)}
-              className="text-white hover:bg-black/20"
+              className="text-white hover:bg-black-700"
             >
               <X className="w-5 h-5" />
             </Button>
           </div>
 
           {/* AI Chat Content */}
-          <div className="h-full overflow-hidden pointer-events-auto">
-            <div className="max-w-[92vw] md:max-w-md mx-auto h-full px-3">
-              <FullPageChatBot
-                chatLogic={chatLogic}
-                activeChatModeValue="ai"
-                communityGroupId=""
-                hideInput={true}
-                externalInput={aiChatInput}
-                setExternalInput={setAiChatInput}
-                onExternalSendHandlerChange={setAiChatExternalSendHandler}
-              />
-            </div>
+          <div className="h-full overflow-hidden">
+            <FullPageChatBot
+              chatLogic={chatLogic}
+              activeChatModeValue="ai"
+              communityGroupId=""
+              hideInput={true}
+              externalInput={aiChatInput}
+              setExternalInput={setAiChatInput}
+              onExternalSendHandlerChange={setAiChatExternalSendHandler}
+            />
           </div>
         </div>
       )}
