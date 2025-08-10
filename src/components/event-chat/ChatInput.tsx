@@ -57,26 +57,34 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 
   const handleEnablePushNotifications = async () => {
     try {
-      const token = await initializeFCM();
-      if (token) {
-        // Token in Datenbank speichern
-        const { error } = await supabase
-          .from('push_tokens')
-          .insert({ token });
+      if (typeof Notification === 'undefined') {
+        toast({
+          title: "Nicht unterstützt",
+          description: "Benachrichtigungen werden von diesem Browser nicht unterstützt.",
+          variant: "destructive"
+        });
+        return;
+      }
 
-        if (error) {
-          console.error('Error saving push token:', error);
-          toast({
-            title: "Fehler",
-            description: "Push-Token konnte nicht gespeichert werden.",
-            variant: "destructive"
-          });
-        } else {
-          toast({
-            title: "Erfolgreich!",
-            description: "Push-Benachrichtigungen wurden aktiviert.",
-          });
-        }
+      const permission = await Notification.requestPermission();
+
+      if (permission === 'granted') {
+        await initializeFCM();
+        toast({
+          title: "Aktiviert",
+          description: "Push-Benachrichtigungen wurden aktiviert.",
+        });
+      } else if (permission === 'denied') {
+        toast({
+          title: "Blockiert",
+          description: "Bitte aktiviere Benachrichtigungen in den Browser-Einstellungen.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Abgebrochen",
+          description: "Du kannst die Glocke erneut klicken, um Benachrichtigungen zu erlauben.",
+        });
       }
     } catch (error) {
       console.error('Error enabling push notifications:', error);

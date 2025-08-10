@@ -95,17 +95,33 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
   const handleEnablePushNotifications = async () => {
     try {
-      const token = await initializeFCM();
-      if (token) {
+      if (typeof Notification === 'undefined') {
         toast({
-          title: "Erfolgreich!",
-          description: "Push-Benachrichtigungen wurden aktiviert. Token: " + token.substring(0, 20) + "...",
+          title: "Nicht unterstützt",
+          description: "Benachrichtigungen werden von diesem Browser nicht unterstützt.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const permission = await Notification.requestPermission();
+
+      if (permission === 'granted') {
+        await initializeFCM();
+        toast({
+          title: "Aktiviert",
+          description: "Push-Benachrichtigungen wurden aktiviert.",
+        });
+      } else if (permission === 'denied') {
+        toast({
+          title: "Blockiert",
+          description: "Bitte aktiviere Benachrichtigungen in den Browser-Einstellungen.",
+          variant: "destructive"
         });
       } else {
         toast({
-          title: "Fehler",
-          description: "Push-Benachrichtigungen konnten nicht aktiviert werden.",
-          variant: "destructive"
+          title: "Abgebrochen",
+          description: "Du kannst die Glocke erneut klicken, um Benachrichtigungen zu erlauben.",
         });
       }
     } catch (error) {
