@@ -26,7 +26,6 @@ interface ChatMessageProps {
   messageId?: string;
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
   transparentBg?: boolean;
-  fitContent?: boolean;
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -42,8 +41,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   currentUsername = '',
   messageId,
   onJoinEventChat,
-  transparentBg = false,
-  fitContent = false
+  transparentBg = false
 }) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -170,16 +168,13 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   };
 
   const messageContent = (
-  <div
+    <div
       className={cn(
         "group p-3 rounded-lg relative",
         isConsecutive ? 'mt-0.5' : 'mt-1',
         transparentBg
           ? "bg-transparent text-white shadow-none w-full max-w-full overflow-visible"
-          : (fitContent
-              ? "bg-black text-white shadow-md inline-block max-w-[90%] break-words overflow-hidden hover:bg-gray-900/50 transition-colors duration-200"
-              : "bg-black text-white shadow-md w-full max-w-full overflow-hidden hover:bg-gray-900/50 transition-colors duration-200"
-            )
+          : "bg-black text-white shadow-md w-full max-w-full overflow-hidden hover:bg-gray-900/50 transition-colors duration-200"
       )}
     >
       {/* Outer flex container for text and reactions */}
