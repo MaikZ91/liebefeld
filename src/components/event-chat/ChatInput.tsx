@@ -10,6 +10,7 @@ import { ChatInputProps } from './types';
 import { useEventContext } from '@/contexts/EventContext';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from "@/integrations/supabase/client";
+import EmojiPicker from '@/components/chat/EmojiPicker';
 import { initializeFCM } from '@/services/firebaseMessaging';
 import { useToast } from '@/hooks/use-toast';
 import { getChannelColor } from '@/utils/channelColors';
@@ -90,8 +91,6 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 
   // Reference for the textarea to dynamically adjust height
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-
   useEffect(() => {
     setLocalInput(input);
   }, [input]);
@@ -104,14 +103,95 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     }
   }, [localInput]); // Re-run when localInput changes
 
+  // ---- Hashtag Autocomplete (categories) ----
+  const HASHTAG_OPTIONS = [
+    { label: '#kreativität', value: 'kreativität' as const },
+    { label: '#ausgehen', value: 'ausgehen' as const },
+    { label: '#sport', value: 'sport' as const },
+  ];
 
-  const suggestions = [];
+  const [tagQuery, setTagQuery] = useState('');
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
+  const [activeTagIndex, setActiveTagIndex] = useState(0);
+  const [filteredTags, setFilteredTags] = useState(HASHTAG_OPTIONS);
+  const tagCtxRef = useRef<{ start: number; end: number } | null>(null);
 
+  const getCaretPos = () => {
+    const el = textareaRef.current;
+    if (!el) return localInput.length;
+    return el.selectionStart ?? localInput.length;
+  };
+
+  const computeTagContext = () => {
+    const pos = getCaretPos();
+    const left = localInput.slice(0, pos);
+    const match = left.match(/(^|\s)(#[^\s#@]*)$/);
+    if (match) {
+      const token = match[2] || '';
+      const start = pos - token.length;
+      return { start, end: pos, query: token.slice(1) };
+    }
+    return null;
+  };
+
+  const updateTagSuggestions = () => {
+    const ctx = computeTagContext();
+    if (!ctx || ctx.query.length === 0) {
+      setShowTagSuggestions(false);
+      tagCtxRef.current = null;
+      return;
+    }
+    tagCtxRef.current = { start: ctx.start, end: ctx.end };
+    const q = ctx.query.toLowerCase();
+    const next = HASHTAG_OPTIONS.filter((o) => o.value.startsWith(q));
+    setFilteredTags(next);
+    setActiveTagIndex(0);
+    setTagQuery(q);
+    setShowTagSuggestions(next.length > 0);
+  };
+
+  const applyTag = (value: 'kreativität' | 'ausgehen' | 'sport') => {
+    if (!tagCtxRef.current) return;
+    const el = textareaRef.current;
+    const { start, end } = tagCtxRef.current;
+    const before = localInput.slice(0, start);
+    const after = localInput.slice(end);
+    const inserted = `#${value} `;
+    const next = before + inserted + after;
+    setLocalInput(next);
+    setShowTagSuggestions(false);
+    setTimeout(() => {
+      if (el) {
+        const caret = (before + inserted).length;
+        el.focus();
+        el.setSelectionRange(caret, caret);
+      }
+    }, 0);
+  };
+
+  const insertAtCursor = (text: string) => {
+    const el = textareaRef.current;
+    if (!el) {
+      setLocalInput((prev) => prev + text);
+      return;
+    }
+    const start = el.selectionStart ?? localInput.length;
+    const end = el.selectionEnd ?? localInput.length;
+    const next = localInput.slice(0, start) + text + localInput.slice(end);
+    setLocalInput(next);
+    setTimeout(() => {
+      const pos = start + text.length;
+      el.focus();
+      el.setSelectionRange(pos, pos);
+    }, 0);
+  };
   const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
   const [displayText, setDisplayText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const typingTimeout = useRef<NodeJS.Timeout | null>(null);
   const loopTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const suggestions: string[] = [];
 
   useEffect(() => {
     if (!showAnimatedPrompts || suggestions.length === 0) {
@@ -148,11 +228,11 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 
   const handleLocalInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setLocalInput(e.target.value);
+    updateTagSuggestions();
     if (onChange) {
       onChange(e);
     }
   };
-
   const handleLocalSendMessage = async (eventData?: any) => {
     console.log('ChatInput.handleLocalSendMessage called', { activeChatModeValue, localInput, eventData });
     
@@ -174,12 +254,33 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   };
   
   const handleLocalKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Hashtag suggestions keyboard navigation
+    if (showTagSuggestions) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActiveTagIndex((prev) => {
+          const max = filteredTags.length;
+          if (e.key === 'ArrowDown') return (prev + 1) % max;
+          return (prev - 1 + max) % max;
+        });
+        return;
+      }
+      if ((e.key === 'Enter' && !e.shiftKey) || e.key === 'Tab') {
+        e.preventDefault();
+        const tag = filteredTags[activeTagIndex];
+        if (tag) applyTag(tag.value);
+        return;
+      }
+      if (e.key === 'Escape') {
+        setShowTagSuggestions(false);
+        return;
+      }
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       console.log('Enter pressed in ChatInput', { activeChatModeValue, localInput });
-      
       if (activeChatModeValue === 'community') {
-        // For community mode, ONLY update external input - let parent handle sending
         console.log('Community mode: Enter key - updating external input only');
         setInput(localInput);
         setLocalInput('');
@@ -188,12 +289,9 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         handleLocalSendMessage();
       }
     } else {
-      if (onKeyDown) {
-        onKeyDown(e);
-      }
+      if (onKeyDown) onKeyDown(e);
     }
   };
-
   const handleSuggestionClick = () => {
     if (localInput.trim() === '' && displayText.trim() !== '') {
       setLocalInput(displayText);
@@ -405,7 +503,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         placeholder={placeholderText}
         rows={1} // Start with 1 row
           className={cn(
-            "w-full bg-background/60 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md border rounded-xl py-2 focus:outline-none text-sm text-foreground placeholder:text-muted-foreground pr-10 transition-all duration-200 text-left min-h-[40px] overflow-hidden",
+            "w-full bg-background/60 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md border rounded-xl py-2 focus:outline-none text-sm text-foreground placeholder:text-muted-foreground pr-20 transition-all duration-200 text-left min-h-[40px] overflow-hidden",
             getButtonWidth()
           )}
           style={activeChatModeValue === 'community' ? {
@@ -417,6 +515,43 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
             '--placeholder-color': 'hsl(var(--muted-foreground))'
           } as React.CSSProperties & { '--placeholder-color': string }}
       />
+
+      {showTagSuggestions && (
+        <div className="absolute bottom-12 left-2 z-50 w-56 rounded-md border bg-popover shadow-md">
+          {filteredTags.map((t, i) => (
+            <button
+              key={t.value}
+              className={cn(
+                "w-full text-left px-3 py-2 text-sm hover:bg-accent",
+                i === activeTagIndex ? "bg-accent" : undefined
+              )}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                applyTag(t.value);
+              }}
+            >
+              <span style={getChannelColor(t.value).textStyle}>{t.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="absolute right-10 top-1/2 -translate-y-1/2">
+        <EmojiPicker
+          onEmojiSelect={(emoji) => insertAtCursor(emoji)}
+          trigger={
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              type="button"
+              aria-label="Emoji hinzufügen"
+            >
+              <span className="text-lg leading-none">😊</span>
+            </Button>
+          }
+        />
+      </div>
 
       <button
         onClick={() => {
