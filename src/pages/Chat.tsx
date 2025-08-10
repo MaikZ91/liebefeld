@@ -264,8 +264,8 @@ const ChatPage = () => {
         chatInputProps={chatInputProps}
       >
         <div className="container mx-auto px-2 md:px-4 flex flex-col h-[calc(100vh-48px)] !mt-0 !pt-0">
-          <div className="flex-grow rounded-lg overflow-hidden border border-black flex flex-col bg-black">
-            <div className="flex-grow relative">
+          <div className="flex-grow min-h-0 rounded-lg overflow-hidden border border-black flex flex-col bg-black">
+            <div className="flex-grow min-h-0 relative">
               <EventChatBot 
                 fullPage={true} 
                 onAddEvent={handleAddEvent} 
