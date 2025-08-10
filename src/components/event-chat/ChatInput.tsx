@@ -404,18 +404,18 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         onKeyDown={handleLocalKeyPress}
         placeholder={placeholderText}
         rows={1} // Start with 1 row
-        className={cn(
-          "w-full bg-black border-2 rounded-xl py-2 focus:outline-none text-sm text-white pr-10 transition-all duration-200 text-left min-h-[40px] overflow-hidden",
-          getButtonWidth()
-        )}
-        style={activeChatModeValue === 'community' ? {
-          ...colors.borderStyle,
-          ...colors.shadowStyle,
-          '--placeholder-color': colors.primary
-        } as React.CSSProperties & { '--placeholder-color': string } : {
-          borderColor: 'transparent',
-          '--placeholder-color': 'hsl(var(--muted-foreground))'
-        } as React.CSSProperties & { '--placeholder-color': string }}
+          className={cn(
+            "w-full bg-background/60 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md border rounded-xl py-2 focus:outline-none text-sm text-foreground placeholder:text-muted-foreground pr-10 transition-all duration-200 text-left min-h-[40px] overflow-hidden",
+            getButtonWidth()
+          )}
+          style={activeChatModeValue === 'community' ? {
+            ...colors.borderStyle,
+            ...colors.shadowStyle,
+            '--placeholder-color': colors.primary
+          } as React.CSSProperties & { '--placeholder-color': string } : {
+            borderColor: 'hsl(var(--border))',
+            '--placeholder-color': 'hsl(var(--muted-foreground))'
+          } as React.CSSProperties & { '--placeholder-color': string }}
       />
 
       <button
@@ -437,7 +437,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-0 flex-shrink-0 h-8 w-8 flex items-center justify-center text-white"
           style={localInput.trim() && !isTyping
             ? (activeChatModeValue === 'community' ? colors.bgStyle : { backgroundColor: 'hsl(var(--primary))' })
-            : { backgroundColor: '#374151', color: '#6b7280' }
+            : { backgroundColor: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }
           }
       >
         <Send className="h-4 w-4" />

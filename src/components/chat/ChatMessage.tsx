@@ -11,6 +11,7 @@ import EventMessageFormatter from './EventMessageFormatter';
 import MessageContextMenu from './MessageContextMenu';
 import MessageReactions from './MessageReactions';
 import { colorizeHashtags } from '@/utils/hashtagUtils';
+import { getChannelColor } from '@/utils/channelColors';
 
 interface ChatMessageProps {
   message: string | React.ReactNode;
@@ -73,7 +74,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                 href={matches[i]}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-red-400 hover:text-red-300 underline break-all flex items-center"
+                className="text-primary hover:opacity-90 underline break-all flex items-center"
                 onClick={(e) => {
                   e.stopPropagation();
                 }}
@@ -111,7 +112,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           if (match) {
               const [_, title, time, location, category] = match;
               formattedContent += `
-                  <div class="bg-black border border-black rounded-lg p-2 mb-2">
+                  <div class="bg-muted/30 border border-border rounded-lg p-2 mb-2">
                       <div class="font-bold">${title}</div>
                       <div>Zeit: ${time}, Ort: ${location}, Kategorie: ${category}</div>
                   </div>
@@ -165,13 +166,24 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     }
   };
 
+  const detectGroupType = (text: string): 'ausgehen' | 'sport' | 'kreativität' => {
+    const t = (text || '').toLowerCase();
+    if (t.includes('#sport')) return 'sport';
+    if (t.includes('#kreativität') || t.includes('#kreativ')) return 'kreativität';
+    return 'ausgehen';
+  };
+
+  const groupType = typeof message === 'string' ? detectGroupType(message) : 'ausgehen';
+  const colors = getChannelColor(groupType);
+
   const messageContent = (
     <div
       className={cn(
-        "group p-3 rounded-lg relative",
+        "group p-3 rounded-2xl relative border w-full max-w-full overflow-hidden transition",
         isConsecutive ? 'mt-0.5' : 'mt-1',
-        "bg-black text-white shadow-md w-full max-w-full overflow-hidden hover:bg-gray-900/50 transition-colors duration-200"
+        "bg-background/70 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md text-foreground shadow-sm hover:shadow-md"
       )}
+      style={{ borderLeftWidth: 3, borderLeftColor: colors.primary, ...(colors.shadowStyle as React.CSSProperties) }}
     >
       {/* Outer flex container for text and reactions */}
       <div className="flex flex-col">

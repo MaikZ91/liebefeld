@@ -125,6 +125,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const [selectedUserProfile, setSelectedUserProfile] = useState<UserProfile | null>(null);
   const [showUserProfileDialog, setShowUserProfileDialog] = useState(false);
   const [loadingUserProfile, setLoadingUserProfile] = useState(false);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
   useEffect(() => {
     if (activeChatModeValue === 'community' && setExternalInput && externalInput !== communityInput) {
@@ -262,6 +263,20 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   }, [communityMessages, communitySending, activeChatModeValue, chatBottomRef]);
 
+  useEffect(() => {
+    if (activeChatModeValue !== 'community') return;
+    const el = chatContainerRef?.current;
+    if (!el) return;
+    const handler = () => {
+      const threshold = 80;
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+      setShowScrollToBottom(!atBottom);
+    };
+    handler();
+    el.addEventListener('scroll', handler);
+    return () => el.removeEventListener('scroll', handler);
+  }, [chatContainerRef, activeChatModeValue, filteredCommunityMessages.length, typingUsers.length]);
+
   // Filter messages based on selected categories
   const filteredCommunityMessages = useMemo(() => {
     if (messageFilter.includes('alle')) {
@@ -281,18 +296,18 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     <div className="flex flex-col h-screen min-h-0">
       {/* Filter UI für Community Chat - immer sichtbar wenn Community-Modus */}
       {activeChatModeValue === 'community' && (
-        <div className="sticky top-0 z-10 bg-black border-b border-gray-800">
+        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur supports-[backdrop-filter]:backdrop-blur-sm border-b border-border">
           <div className="px-4 py-2">
-            <div className="flex flex-wrap gap-2">
+            <div className="flex gap-2 overflow-x-auto scrollbar-none flex-nowrap">
               {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => (
                 <Button
                   key={category}
                   variant="ghost"
                   size="sm"
-                  className={`h-6 px-2 text-xs rounded-full ${
+                  className={`h-7 px-3 text-xs rounded-full ${
                     messageFilter.includes(category)
-                      ? 'bg-red-500/20 text-red-300 border border-red-500/30'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                      ? 'bg-primary/15 text-primary border border-primary/30'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
                   }`}
                   onClick={() => {
                     if (category === 'alle') {
@@ -318,40 +333,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
         </div>
       )}
 
-      {!hideInput && (
-        <div className="sticky top-0 z-10 bg-black">
-          <div className="border-b border-red-500/20 px-[13px] py-2">
-            {activeChatModeValue === 'ai' && (
-              <RecentQueries
-                showRecentQueries={showRecentQueries}
-                setShowRecentQueries={setShowRecentQueries}
-                queriesToRender={queriesToRender}
-                handleExamplePromptClick={handleExamplePromptClick}
-              />
-            )}
-
-            <ChatInput
-              input={currentInput}
-              setInput={currentSetInput}
-              handleSendMessage={currentHandleSendMessage}
-              isTyping={currentIsTyping}
-              onKeyDown={currentHandleKeyPress}
-              onChange={currentHandleInputChange}
-              isHeartActive={isHeartActive}
-              handleHeartClick={handleHeartClick}
-              globalQueries={globalQueries}
-              toggleRecentQueries={toggleRecentQueries}
-              inputRef={inputRef}
-              onAddEvent={onAddEvent}
-              showAnimatedPrompts={showAnimatedPrompts}
-              activeChatModeValue={activeChatModeValue}
-              activeCategory={activeCategory}
-              onCategoryChange={onCategoryChange}
-              onJoinEventChat={onJoinEventChat}
-            />
-          </div>
-        </div>
-      )}
 
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
         {activeChatModeValue === 'ai' ? (
@@ -378,7 +359,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               ref={chatContainerRef}
               className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4"
             >
-              <div className="space-y-2 py-4 pb-24">
+              <div className="space-y-2 py-4 pb-28">
                 {filteredCommunityMessages.length === 0 && !communityLoading && !communityError && (
                   <div className="text-center text-gray-400 py-4">
                     {messageFilter.includes('alle') 
@@ -398,18 +379,18 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                         {!isConsecutive && (
                           <div className="flex items-center mb-1">
                              <Avatar 
-                               className="h-7 w-7 mr-2 flex-shrink-0 border-red-500 cursor-pointer hover:opacity-80 transition-opacity"
+                               className="h-7 w-7 mr-2 flex-shrink-0 ring-1 ring-border cursor-pointer hover:opacity-80 transition-opacity"
                                onClick={() => handleAvatarClick(message.user_name)}
                              >
                               <AvatarImage src={message.user_avatar} alt={message.user_name} />
-                              <AvatarFallback className="bg-red-500 text-white">
+                              <AvatarFallback className="bg-muted text-foreground">
                                 {getInitials(message.user_name)}
                               </AvatarFallback>
                             </Avatar>
                             <div className="text-base font-medium text-white mr-2">
                               {message.user_name}
                             </div>
-                           <span className="text-sm text-gray-400">{timeAgo}</span>
+                            <span className="text-sm text-muted-foreground">{timeAgo}</span>
                          </div>
                         )}
                         <div className="break-words">
@@ -435,6 +416,52 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
           </div>
         )}
       </div>
+
+      {activeChatModeValue === 'community' && showScrollToBottom && (
+        <button
+          onClick={() => chatBottomRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })}
+          className="fixed right-4 bottom-28 z-20 rounded-full bg-background/80 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md border border-border shadow-md px-3 py-2 text-xs text-foreground hover:bg-muted transition"
+          aria-label="Nach unten scrollen"
+        >
+          Zum Ende
+        </button>
+      )}
+
+      {!hideInput && (
+        <div className="sticky bottom-0 z-10 bg-background/80 backdrop-blur supports-[backdrop-filter]:backdrop-blur-sm border-t border-border">
+          <div className="px-4 pt-2 pb-3">
+            {activeChatModeValue === 'ai' && (
+              <RecentQueries
+                showRecentQueries={showRecentQueries}
+                setShowRecentQueries={setShowRecentQueries}
+                queriesToRender={queriesToRender}
+                handleExamplePromptClick={handleExamplePromptClick}
+              />
+            )}
+            <div className="flex justify-center">
+              <ChatInput
+                input={currentInput}
+                setInput={currentSetInput}
+                handleSendMessage={currentHandleSendMessage}
+                isTyping={currentIsTyping}
+                onKeyDown={currentHandleKeyPress}
+                onChange={currentHandleInputChange}
+                isHeartActive={isHeartActive}
+                handleHeartClick={handleHeartClick}
+                globalQueries={globalQueries}
+                toggleRecentQueries={toggleRecentQueries}
+                inputRef={inputRef}
+                onAddEvent={onAddEvent}
+                showAnimatedPrompts={showAnimatedPrompts}
+                activeChatModeValue={activeChatModeValue}
+                activeCategory={activeCategory}
+                onCategoryChange={onCategoryChange}
+                onJoinEventChat={onJoinEventChat}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       <UserProfileDialog
         open={showUserProfileDialog}
