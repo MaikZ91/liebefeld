@@ -1,5 +1,5 @@
 // src/components/event-chat/FullPageChatBot.tsx
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
 import RecentQueries from './RecentQueries';
@@ -92,31 +92,25 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const [communityInput, setCommunityInput] = useState('');
   const [communitySending, setCommunitySending] = useState(false);
   
-  // Create send function directly instead of using external component
-  const communitySendMessage = async () => {
+  // Stable send function for community mode
+  const communitySendMessage = useCallback(async () => {
     if (!communityInput.trim() || !username) return;
-    
     try {
       setCommunitySending(true);
-      
       // Format message with category label
-      let messageText = communityInput.trim();
       const categoryLabel = `#${activeCategory.toLowerCase()}`;
-      messageText = `${categoryLabel} ${messageText}`;
-      
+      const messageText = `${categoryLabel} ${communityInput.trim()}`;
       // Clear input immediately
       setCommunityInput('');
-      
       // Send directly to database via chatService
       await chatService.sendMessage(communityGroupId, messageText, username);
-      
     } catch (error) {
       console.error('Error sending community message:', error);
       toast.error('Nachricht konnte nicht gesendet werden');
     } finally {
       setCommunitySending(false);
     }
-  };
+  }, [communityInput, username, activeCategory, communityGroupId]);
 
   // Filter state for community chat
   const [messageFilter, setMessageFilter] = useState<string[]>(['alle']);
@@ -142,13 +136,12 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
         onExternalSendHandlerChange(null);
       }
     }
-    
     return () => {
       if (onExternalSendHandlerChange) {
         onExternalSendHandlerChange(null);
       }
     };
-  }, [activeChatModeValue, communitySendMessage, aiSendMessage, onExternalSendHandlerChange]);
+  }, [activeChatModeValue]);
 
   const queriesToRender = globalQueries.length > 0 ? globalQueries : [];
 
