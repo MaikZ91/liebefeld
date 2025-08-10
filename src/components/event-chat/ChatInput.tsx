@@ -405,7 +405,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         placeholder={placeholderText}
         rows={1} // Start with 1 row
         className={cn(
-          "w-full bg-black border-2 rounded-xl py-2 focus:outline-none text-sm text-white pr-10 transition-all duration-200 text-left min-h-[40px] overflow-hidden",
+          "w-full bg-black rounded-xl py-2 focus:outline-none text-sm text-white pr-10 transition-all duration-200 text-left min-h-[40px] overflow-hidden",
+          activeChatModeValue === 'ai' ? 'border-0' : 'border-2',
           getButtonWidth()
         )}
         style={activeChatModeValue === 'community' ? {
@@ -413,7 +414,6 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           ...colors.shadowStyle,
           '--placeholder-color': colors.primary
         } as React.CSSProperties & { '--placeholder-color': string } : {
-          borderColor: 'hsl(var(--primary))',
           '--placeholder-color': 'hsl(var(--primary))'
         } as React.CSSProperties & { '--placeholder-color': string }}
       />
