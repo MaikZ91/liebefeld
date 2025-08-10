@@ -1523,7 +1523,7 @@ const EventHeatmap: React.FC = () => {
       {showAIChat && (
         <div className="absolute bottom-0 left-0 right-0 z-[1000] h-96 pointer-events-none">
           {/* Panel Header */}
-          <div className="flex items-center justify-between p-4 bg-transparent pointer-events-auto">
+          <div className="flex items-center justify-between p-4 bg-black/90 backdrop-blur-sm rounded-t-xl pointer-events-auto">
             <div className="flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-white-400" />
               <span className="text-white font-medium">AI Event Chat</span>
