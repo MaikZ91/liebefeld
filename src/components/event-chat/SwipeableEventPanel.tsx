@@ -189,7 +189,7 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
 
   return (
     <div className={cn(
-      "relative bg-gradient-to-br from-gray-900 to-black rounded-xl overflow-hidden shadow-2xl max-w-md mx-auto select-none",
+      "relative rounded-xl overflow-visible max-w-md mx-auto select-none",
       className
     )}>
       {/* Swipeable Card Container */}
@@ -314,7 +314,7 @@ const SwipeableEventPanel: React.FC<SwipeableEventPanelProps> = ({
         </div>
 
         {/* Event/Ad Content */}
-        <div className="p-4 space-y-3">
+        <div className="mx-3 mt-2 mb-3 rounded-2xl bg-black/75 p-4 space-y-3 backdrop-blur-sm border border-white/10">
           {/* Title */}
           <h3 className="text-lg font-semibold text-white line-clamp-2">
             {currentItem.title}
