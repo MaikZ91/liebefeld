@@ -277,10 +277,12 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     });
   }, [communityMessages, messageFilter]);
 
+  console.log('FullPageChatBot Debug:', { activeChatModeValue, communityLoading, messageCount: communityMessages?.length });
+
   return (
     <div className="flex flex-col h-screen min-h-0">
       {/* Fixed Filter UI Container für Community Chat - only show after loading */}
-      {activeChatModeValue === 'community' && !communityLoading && (
+      {activeChatModeValue === 'community' && (
         <div className="flex-shrink-0 bg-black border-b border-gray-800 min-h-[3.5rem]">
           <div className="px-4 py-2 min-h-[3.5rem] flex items-center">
             <div className="flex flex-wrap gap-2">
