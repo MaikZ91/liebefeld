@@ -62,16 +62,15 @@ const MessageList: React.FC<MessageListProps> = ({
           // Panel
           if (message.panelData) {
             return (
-              <div key={message.id} className={cn("w-full rounded-lg bg-black border border-black mx-auto", message.isEventNotification && "border-red-500/50 bg-red-900/10")}>
-                <div className="p-3">
-                  <SwipeableEventPanel 
-                    panelData={message.panelData}
-                    onEventSelect={(eventId) => {
-                      console.log('Event selected:', eventId);
-                    }}
-                    onJoinEventChat={onJoinEventChat}
-                  />
-                </div>
+              <div key={message.id} className="w-full mx-auto">
+                <SwipeableEventPanel 
+                  panelData={message.panelData}
+                  onEventSelect={(eventId) => {
+                    console.log('Event selected:', eventId);
+                  }}
+                  onJoinEventChat={onJoinEventChat}
+                  className="w-full"
+                />
               </div>
             );
           }
