@@ -85,7 +85,7 @@ const MessageList: React.FC<MessageListProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden">
       {error && (
         <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>
       )}
@@ -116,7 +116,7 @@ const MessageList: React.FC<MessageListProps> = ({
             }
 
             return (
-              <div key={message.id} className="mb-1 w-full max-w-full overflow-hidden">
+              <div key={message.id} className="mb-1 w-full max-w-full overflow-visible">
                 {!isConsecutive && (
                   <div className="flex items-center -mb-1 relative z-20">
                     <Avatar className={`h-5 w-5 mr-2 flex-shrink-0 relative z-30 ${isGroup ? 'border-red-500' : ''}`}>
