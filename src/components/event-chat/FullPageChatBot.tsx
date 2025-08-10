@@ -279,17 +279,17 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   return (
     <div className="flex flex-col h-screen min-h-0">
-      {/* Filter UI für Community Chat - immer sichtbar wenn Community-Modus */}
+      {/* Fixed Filter UI Container für Community Chat */}
       {activeChatModeValue === 'community' && (
-        <div className="sticky top-0 z-10 bg-black border-b border-gray-800">
-          <div className="px-4 py-2">
+        <div className="flex-shrink-0 bg-black border-b border-gray-800 min-h-[3.5rem]">
+          <div className="px-4 py-2 min-h-[3.5rem] flex items-center">
             <div className="flex flex-wrap gap-2">
               {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => (
                 <Button
                   key={category}
                   variant="ghost"
                   size="sm"
-                  className={`h-6 px-2 text-xs rounded-full ${
+                  className={`h-6 px-2 text-xs rounded-full flex-shrink-0 ${
                     messageFilter.includes(category)
                       ? 'bg-red-500/20 text-red-300 border border-red-500/30'
                       : 'text-gray-400 hover:text-white hover:bg-gray-800'
