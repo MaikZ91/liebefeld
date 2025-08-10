@@ -6,9 +6,9 @@ import { Loader2, Send, ChevronDown, Bell } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { supabase } from "@/integrations/supabase/client";
+
 import { messageService } from '@/services/messageService';
-import { initializeFCM } from '@/services/firebaseMessaging';
+import { initializeFCM, disableFCM } from '@/services/firebaseMessaging';
 import { useToast } from '@/hooks/use-toast';
 import { getChannelColor } from '@/utils/channelColors';
 
@@ -43,6 +43,16 @@ const MessageInput: React.FC<MessageInputProps> = ({
 }) => {
   const [newMessage, setNewMessage] = useState("");
   const { toast } = useToast();
+  const [pushEnabled, setPushEnabled] = useState<boolean>(false);
+
+  useEffect(() => {
+    try {
+      const hasToken = typeof window !== 'undefined' ? !!localStorage.getItem('fcm_token') : false;
+      setPushEnabled(typeof Notification !== 'undefined' && Notification.permission === 'granted' && hasToken);
+    } catch {
+      setPushEnabled(false);
+    }
+  }, []);
 
   // Sicherstellen, dass wir eine gültige UUID für groupId haben
   const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
@@ -95,26 +105,41 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
   const handleEnablePushNotifications = async () => {
     try {
-      const token = await initializeFCM();
-      if (token) {
+      if (typeof Notification === 'undefined') {
         toast({
-          title: "Erfolgreich!",
-          description: "Push-Benachrichtigungen wurden aktiviert. Token: " + token.substring(0, 20) + "...",
-        });
-      } else {
-        toast({
-          title: "Fehler",
-          description: "Push-Benachrichtigungen konnten nicht aktiviert werden.",
+          title: "Nicht unterstützt",
+          description: "Benachrichtigungen werden von diesem Browser nicht unterstützt.",
           variant: "destructive"
         });
+        return;
+      }
+
+      if (!pushEnabled) {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          const token = await initializeFCM();
+          if (token) {
+            try { localStorage.setItem('fcm_token', token); } catch {}
+            setPushEnabled(true);
+            toast({ title: "Aktiviert", description: "Push-Benachrichtigungen wurden aktiviert." });
+          } else {
+            toast({ title: "Fehler", description: "Token konnte nicht geholt werden.", variant: "destructive" });
+          }
+        } else if (permission === 'denied') {
+          toast({ title: "Blockiert", description: "Bitte aktiviere Benachrichtigungen in den Browser-Einstellungen.", variant: "destructive" });
+        }
+      } else {
+        const ok = await disableFCM();
+        if (ok) {
+          setPushEnabled(false);
+          toast({ title: "Deaktiviert", description: "Push-Benachrichtigungen wurden deaktiviert." });
+        } else {
+          toast({ title: "Fehler", description: "Deaktivierung fehlgeschlagen.", variant: "destructive" });
+        }
       }
     } catch (error) {
-      console.error('Error enabling push notifications:', error);
-      toast({
-        title: "Fehler",
-        description: "Push-Benachrichtigungen konnten nicht aktiviert werden.",
-        variant: "destructive"
-      });
+      console.error('Error toggling push notifications:', error);
+      toast({ title: "Fehler", description: "Unerwarteter Fehler beim Umschalten.", variant: "destructive" });
     }
   };
 
@@ -185,7 +210,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Push Notification Button */}
             <Button
               onClick={handleEnablePushNotifications}
               variant="outline"
@@ -193,9 +217,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
               type="button"
               className="rounded-full h-6 w-6 bg-white/90 dark:bg-zinc-800/90"
               style={colors.borderStyle}
-              title="Push-Benachrichtigungen aktivieren"
+              title={pushEnabled ? "Push aktiviert – klicken zum Deaktivieren" : "Push-Benachrichtigungen aktivieren"}
             >
-              <Bell className="h-3 w-3" />
+              <Bell className={cn("h-3 w-3", pushEnabled ? "text-primary" : "text-muted-foreground")} />
             </Button>
           </div>
         )}
