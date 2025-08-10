@@ -426,7 +426,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full max-h-full bg-black overflow-hidden">
+    <div className="flex flex-col h-full max-h-full bg-black overflow-hidden relative z-10">
       <div className="border-b border-gray-800 bg-black py-3 px-4 flex-shrink-0">
         <div className="flex items-center justify-between mb-0">
           <div className="flex items-center">
