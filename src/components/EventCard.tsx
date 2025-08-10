@@ -13,6 +13,7 @@ interface EventCardProps {
   onClick?: () => void;
   className?: string;
   compact?: boolean;
+  monochrome?: boolean;
 }
 
 // Category icon mappings
@@ -57,7 +58,7 @@ const isEventNew = (event: Event): boolean => {
   return new Date(event.created_at) > twentyFourHoursAgo;
 };
 
-const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, compact = false }) => {
+const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, compact = false, monochrome = false }) => {
   const { handleLikeEvent } = useEventContext();
   const [isLiking, setIsLiking] = useState(false);
 
@@ -110,25 +111,34 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
               <img
                 src={event.image_url}
                 alt={event.title}
-                className="w-full h-full object-cover"
+                className={cn("w-full h-full object-cover", monochrome && "grayscale")}
               />
             </div>
           )}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1 flex-wrap">
               {isNewEvent && (
-                <Badge className="bg-green-600 text-white text-[10px] flex items-center gap-0.5 h-3 px-1">
+                <Badge className={cn(
+                  "text-[10px] flex items-center gap-0.5 h-3 px-1",
+                  monochrome ? "bg-white/10 text-white border border-white/20" : "bg-green-600 text-white"
+                )}>
                   <BadgePlus className="w-2 h-2" />
                   <span>Neu</span>
                 </Badge>
               )}
               {event.is_paid && (
-                <Badge className="bg-amber-500 text-white text-[10px] flex items-center gap-0.5 h-3 px-1">
+                <Badge className={cn(
+                  "text-[10px] flex items-center gap-0.5 h-3 px-1",
+                  monochrome ? "bg-white/10 text-white border border-white/20" : "bg-amber-500 text-white"
+                )}>
                   <DollarSign className="w-2 h-2" />
                 </Badge>
               )}
               {isTribe && (
-                <Badge className="bg-purple-600 text-white text-[10px] flex items-center gap-0.5 h-3 px-1">
+                <Badge className={cn(
+                  "text-[10px] flex items-center gap-0.5 h-3 px-1",
+                  monochrome ? "bg-white/10 text-white border border-white/20" : "bg-purple-600 text-white"
+                )}>
                   <Users className="w-2 h-2" />
                   <span>Tribe</span>
                 </Badge>
@@ -170,9 +180,11 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
           <div className="flex flex-col items-end gap-1">
             <Badge className={cn(
               "flex-shrink-0 flex items-center gap-0.5 text-[8px] font-medium whitespace-nowrap px-1 py-0 h-3",
-              event.category in categoryColors
-                ? categoryColors[event.category]
-                : "bg-orange-400/70 text-orange-50"
+              monochrome
+                ? "border border-white/30 text-white/80 bg-transparent"
+                : event.category in categoryColors
+                  ? categoryColors[event.category]
+                  : "bg-orange-400/70 text-orange-50"
             )}>
               {icon}
             </Badge>

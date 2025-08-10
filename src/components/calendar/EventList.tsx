@@ -6,6 +6,8 @@ import EventCard from '@/components/EventCard';
 import { groupEventsByDate } from '@/utils/eventUtils';
 import { Star } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
+import FilterBar, { type FilterGroup } from '@/components/calendar/FilterBar';
+import { isInGroup } from '@/utils/eventCategoryGroups';
 
 interface EventListProps {
   events: Event[];
@@ -13,6 +15,7 @@ interface EventListProps {
   showNewEvents?: boolean;
   onSelectEvent: (event: Event, date: Date) => void;
 }
+
 
 const MemoizedEventCard = memo(({ event, date, onSelectEvent, isTopEvent, isNewEvent }: {
   event: Event;
@@ -45,6 +48,7 @@ const MemoizedEventCard = memo(({ event, date, onSelectEvent, isTopEvent, isNewE
           compact={true}
           onClick={handleClick}
           className={`${isTopEvent ? 'border-l-2 border-white' : isNewEvent ? 'border-l-2 border-gray-400' : ''} relative w-full`}
+          monochrome
         />
       </div>
     </div>
@@ -64,11 +68,23 @@ const EventList: React.FC<EventListProps> = memo(({
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
   const { filter, topEventsPerDay } = useEventContext();
+  const [groupFilter, setGroupFilter] = useState<FilterGroup>('Alle');
 
   const filteredEvents = useMemo(() => {
-    if (!filter) return events;
-    return events.filter(event => event.category === filter);
-  }, [events, filter]);
+    let base = events;
+
+    if (groupFilter !== 'Alle') {
+      base = base.filter((event) => isInGroup(event.category, groupFilter as any));
+    } else if (filter) {
+      // If context filter matches a group label, map categories; otherwise, use category equality
+      const isGroup = filter === 'Ausgehen' || filter === 'Kreativität' || filter === 'Sport';
+      base = base.filter((event) =>
+        isGroup ? isInGroup(event.category, filter as any) : event.category === filter
+      );
+    }
+
+    return base;
+  }, [events, filter, groupFilter]);
 
   const displayEvents = useMemo(() => {
     if (!showFavorites) return filteredEvents;
@@ -185,7 +201,7 @@ const EventList: React.FC<EventListProps> = memo(({
 
   useEffect(() => {
     setHasScrolledToToday(false);
-  }, [showFavorites, showNewEvents, filter]);
+  }, [showFavorites, showNewEvents, filter, groupFilter]);
 
   return (
     <div className="bg-black/90 border border-white/20 rounded-xl p-3 overflow-hidden w-full max-w-full backdrop-blur-md">
@@ -195,10 +211,13 @@ const EventList: React.FC<EventListProps> = memo(({
             ? "Top Events" 
             : showNewEvents 
               ? "Neue Events" 
-              : filter 
-                ? `${filter} Events` 
-                : "Alle Events"}
+              : groupFilter !== 'Alle'
+                ? `${groupFilter} Events`
+                : filter 
+                  ? `${filter} Events` 
+                  : "Alle Events"}
         </h3>
+        <FilterBar value={groupFilter} onChange={(v) => setGroupFilter(v)} />
       </div>
       
       <div ref={listRef} className="overflow-y-auto max-h-[650px] pr-1 scrollbar-thin w-full">
