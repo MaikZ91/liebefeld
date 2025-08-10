@@ -77,7 +77,7 @@ const MessageList: React.FC<MessageListProps> = ({
           // HTML Message
           if (message.html) {
             return (
-              <div key={message.id} className="w-full rounded-lg bg-black border border-black mx-auto">
+              <div key={message.id} className="w-full mx-auto">
                 <div dangerouslySetInnerHTML={{ __html: message.html }} className="p-3 event-list-container" />
               </div>
             );
