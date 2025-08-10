@@ -398,7 +398,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                         {!isConsecutive && (
                           <div className="flex items-center mb-0 relative z-10">
                              <Avatar 
-                               className="h-7 w-7 mr-2 flex-shrink-0 border-red-500 cursor-pointer hover:opacity-80 transition-opacity"
+                               className="h-7 w-7 mr-1 flex-shrink-0 border-red-500 cursor-pointer hover:opacity-80 transition-opacity"
                                onClick={() => handleAvatarClick(message.user_name)}
                              >
                               <AvatarImage src={message.user_avatar} alt={message.user_name} />
