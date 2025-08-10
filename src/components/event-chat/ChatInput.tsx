@@ -145,10 +145,11 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     if (!localInput.trim() && !eventData) return; // Prevent empty sends
     
     if (activeChatModeValue === 'community') {
-      // For community mode, ONLY update external input - parent handles sending
-      console.log('Community mode: updating external input only');
+      // Community mode: update external input and trigger send in parent with explicit text
+      console.log('Community mode: sending via parent handler');
       setInput(localInput);
-      setLocalInput(''); // Clear local input after updating external
+      await handleSendMessage(localInput);
+      setLocalInput('');
       return;
     }
     
@@ -165,9 +166,10 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
       console.log('Enter pressed in ChatInput', { activeChatModeValue, localInput });
       
       if (activeChatModeValue === 'community') {
-        // For community mode, ONLY update external input - let parent handle sending
-        console.log('Community mode: Enter key - updating external input only');
+        // Community mode: update external input and trigger send in parent with explicit text
+        console.log('Community mode: Enter key - sending via parent handler');
         setInput(localInput);
+        handleSendMessage(localInput);
         setLocalInput('');
       } else {
         console.log('AI mode: Enter key - handling send directly');
@@ -442,9 +444,10 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           console.log('Send button clicked in ChatInput', { activeChatModeValue, localInput });
           
           if (activeChatModeValue === 'community') {
-            // For community mode, ONLY update external input - let parent handle sending
-            console.log('Community mode: Send button - updating external input only');
+            // Community mode: update external input and trigger send in parent with explicit text
+            console.log('Community mode: Send button - sending via parent handler');
             setInput(localInput);
+            handleSendMessage(localInput);
             setLocalInput('');
           } else {
             // For AI mode, use local send
