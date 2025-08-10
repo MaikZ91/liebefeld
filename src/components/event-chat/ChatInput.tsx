@@ -413,7 +413,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           ...colors.shadowStyle,
           '--placeholder-color': colors.primary
         } as React.CSSProperties & { '--placeholder-color': string } : {
-          borderColor: 'hsl(var(--border))',
+          borderColor: 'transparent',
           '--placeholder-color': 'hsl(var(--muted-foreground))'
         } as React.CSSProperties & { '--placeholder-color': string }}
       />
