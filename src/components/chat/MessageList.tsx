@@ -79,16 +79,18 @@ const MessageList: React.FC<MessageListProps> = ({
     };
   };
 
-  // Show loading skeleton during initial load
-  if (loading) {
-    return <ChatLoadingSkeleton />;
-  }
-
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden">
       {error && (
         <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>
       )}
+
+      {/* Show loading skeleton during initial load with fixed height */}
+      {loading ? (
+        <div className="flex-1 min-h-0">
+          <ChatLoadingSkeleton />
+        </div>
+      ) : (
 
       <div className="flex-1 overflow-y-auto p-4 bg-black min-h-0 pb-20 overflow-x-visible"> {/* Changed overflow-x to visible */}
         <div className="flex flex-col space-y-1 w-full max-w-full">
@@ -147,6 +149,7 @@ const MessageList: React.FC<MessageListProps> = ({
           <div ref={chatBottomRef} />
         </div>
       </div>
+      )}
     </div>
   );
 };

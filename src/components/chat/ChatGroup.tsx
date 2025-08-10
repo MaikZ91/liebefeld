@@ -426,53 +426,56 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full max-h-full bg-black overflow-y-auto overflow-x-hidden">
-      <div className="border-b border-gray-800 bg-black py-3 px-4 flex-shrink-0">
-        <div className="flex items-center justify-between mb-0">
-          <div className="flex items-center">
-            <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center mr-3">
-              <span className="text-white font-bold">{groupName.slice(0, 1).toUpperCase()}</span>
+    <div className="flex flex-col h-full max-h-full bg-black">
+      {/* Fixed Header Container */}
+      <div className="flex-shrink-0 bg-black">
+        <div className="border-b border-gray-800 py-3 px-4">
+          <div className="flex items-center justify-between mb-0">
+            <div className="flex items-center">
+              <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center mr-3">
+                <span className="text-white font-bold">{groupName.slice(0, 1).toUpperCase()}</span>
+              </div>
+              <div>
+                <h3 className="font-semibold text-white">{groupName}</h3>
+                <p className="text-sm text-gray-400">{filteredMessages.length} Nachrichten</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-semibold text-white">{groupName}</h3>
-              <p className="text-sm text-gray-400">{filteredMessages.length} Nachrichten</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Benutzerverzeichnis-Button */}
-            {onOpenUserDirectory && (
+            <div className="flex items-center gap-2">
+              {/* Benutzerverzeichnis-Button */}
+              {onOpenUserDirectory && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 rounded-full p-0 px-2 text-red-300 hover:text-red-200 hover:bg-red-900/20"
+                  onClick={onOpenUserDirectory}
+                >
+                  <Users className="h-4 w-4 mr-1" />
+                  <span className="text-xs">Benutzer</span>
+                </Button>
+              )}
+
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 rounded-full p-0 px-2 text-red-300 hover:text-red-200 hover:bg-red-900/20"
-                onClick={onOpenUserDirectory}
+                className="h-8 w-8 rounded-full p-0"
+                onClick={handleReconnect}
+                disabled={isReconnecting}
               >
-                <Users className="h-4 w-4 mr-1" />
-                <span className="text-xs">Benutzer</span>
+                <RefreshCw className={`h-4 w-4 ${isReconnecting ? 'animate-spin' : ''}`} />
               </Button>
-            )}
-
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 rounded-full p-0"
-              onClick={handleReconnect}
-              disabled={isReconnecting}
-            >
-              <RefreshCw className={`h-4 w-4 ${isReconnecting ? 'animate-spin' : ''}`} />
-            </Button>
+            </div>
           </div>
         </div>
 
-        {/* Filter UI */}
-        <div className="px-0 py-2 border-b border-gray-800">
+        {/* Fixed Filter UI Container */}
+        <div className="px-4 py-2 border-b border-gray-800 min-h-[3rem] flex items-center">
           <div className="flex flex-wrap gap-2">
             {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => (
               <Button
                 key={category}
                 variant="ghost"
                 size="sm"
-                className={`h-6 px-2 text-xs rounded-full ${
+                className={`h-6 px-2 text-xs rounded-full flex-shrink-0 ${
                   messageFilter.includes(category)
                     ? 'bg-red-500/20 text-red-300 border border-red-500/30'
                     : 'text-gray-400 hover:text-white hover:bg-gray-800'
