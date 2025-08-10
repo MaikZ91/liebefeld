@@ -263,20 +263,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   }, [communityMessages, communitySending, activeChatModeValue, chatBottomRef]);
 
-  useEffect(() => {
-    if (activeChatModeValue !== 'community') return;
-    const el = chatContainerRef?.current;
-    if (!el) return;
-    const handler = () => {
-      const threshold = 80;
-      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
-      setShowScrollToBottom(!atBottom);
-    };
-    handler();
-    el.addEventListener('scroll', handler);
-    return () => el.removeEventListener('scroll', handler);
-  }, [chatContainerRef, activeChatModeValue, filteredCommunityMessages.length, typingUsers.length]);
-
   // Filter messages based on selected categories
   const filteredCommunityMessages = useMemo(() => {
     if (messageFilter.includes('alle')) {
@@ -291,6 +277,20 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       );
     });
   }, [communityMessages, messageFilter]);
+
+  useEffect(() => {
+    if (activeChatModeValue !== 'community') return;
+    const el = chatContainerRef?.current;
+    if (!el) return;
+    const handler = () => {
+      const threshold = 80;
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+      setShowScrollToBottom(!atBottom);
+    };
+    handler();
+    el.addEventListener('scroll', handler);
+    return () => el.removeEventListener('scroll', handler);
+  }, [chatContainerRef, activeChatModeValue, filteredCommunityMessages.length, typingUsers.length]);
 
   return (
     <div className="flex flex-col h-screen min-h-0">
