@@ -370,12 +370,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
             )}
 
             <div
-              ref={chatContainerRef}
-              className="flex-1 min-h-0 overflow-y-scroll px-4"
+              className="flex-1 min-h-0 overflow-y-auto px-4"
               style={{ 
                 touchAction: 'pan-y',
-                WebkitOverflowScrolling: 'touch',
-                overscrollBehavior: 'contain'
+                WebkitOverflowScrolling: 'touch'
               }}
             >
               <div className="space-y-2 py-4 pb-40"> {/* Increased bottom padding significantly to prevent avatar clipping */}
