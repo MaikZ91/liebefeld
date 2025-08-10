@@ -394,36 +394,45 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                    const timeAgo = formatTime(message.created_at);
 
                    return (
-                      <div key={message.id} className="mb-1 w-full group">
-                        {!isConsecutive && (
-                          <div className="flex items-center mb-0 relative z-10">
-                             <Avatar 
-                               className="h-7 w-7 mr-1 flex-shrink-0 border-red-500 cursor-pointer hover:opacity-80 transition-opacity"
-                               onClick={() => handleAvatarClick(message.user_name)}
-                             >
-                              <AvatarImage src={message.user_avatar} alt={message.user_name} />
-                              <AvatarFallback className="bg-red-500 text-white">
-                                {getInitials(message.user_name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="text-base font-medium text-white mr-2">
-                              {message.user_name}
+                      <div key={message.id} className="mb-2 w-full group">
+                        <div className="flex">
+                          {/* Left column keeps avatar width to align text under the name */}
+                          <div className="w-8 flex-shrink-0">
+                            {!isConsecutive && (
+                              <Avatar 
+                                className="h-7 w-7 mt-0.5 cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => handleAvatarClick(message.user_name)}
+                              >
+                                <AvatarImage src={message.user_avatar} alt={message.user_name} />
+                                <AvatarFallback className="bg-red-500 text-white">
+                                  {getInitials(message.user_name)}
+                                </AvatarFallback>
+                              </Avatar>
+                            )}
+                          </div>
+
+                          {/* Right column: name/time on first message, message always below */}
+                          <div className="flex-1 min-w-0">
+                            {!isConsecutive && (
+                              <div className="flex items-baseline gap-2">
+                                <div className="text-base font-medium text-white">{message.user_name}</div>
+                                <span className="text-sm text-gray-400">{timeAgo}</span>
+                              </div>
+                            )}
+                            <div className={isConsecutive ? "break-words" : "break-words mt-0.5"}>
+                              <ChatMessage
+                                message={message.text}
+                                isConsecutive={isConsecutive}
+                                isGroup
+                                messageId={message.id}
+                                reactions={message.reactions || []}
+                                onReact={(emoji) => handleReaction(message.id, emoji)}
+                                currentUsername={username}
+                              />
                             </div>
-                           <span className="text-sm text-gray-400">{timeAgo}</span>
-                         </div>
-                        )}
-                        <div className="break-words ml-9">  {/* ml-9 to align exactly under the username text */}
-                         <ChatMessage
-                           message={message.text}
-                           isConsecutive={isConsecutive}
-                           isGroup
-                           messageId={message.id}
-                           reactions={message.reactions || []}
-                           onReact={(emoji) => handleReaction(message.id, emoji)}
-                           currentUsername={username}
-                         />
-                       </div>
-                     </div>
+                          </div>
+                        </div>
+                      </div>
                    );
                  })}
 
