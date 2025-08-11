@@ -241,6 +241,10 @@ const EventCalendar = ({ defaultView = "list", onJoinEventChat }: EventCalendarP
                   showFavorites={showFavorites}
                   showNewEvents={showNewEvents}
                   onSelectEvent={handleSelectEventFromList}
+                  toggleFavorites={toggleFavorites}
+                  toggleNewEvents={toggleNewEvents}
+                  favoriteCount={favoriteEvents.length}
+                  onShowEventForm={toggleEventForm}
                 />
               </div>
             </div>

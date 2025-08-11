@@ -4,16 +4,22 @@ import { de } from 'date-fns/locale';
 import { Event } from '@/types/eventTypes';
 import EventCard from '@/components/EventCard';
 import { groupEventsByDate } from '@/utils/eventUtils';
-import { Star } from 'lucide-react';
+import { Star, Heart, Filter, FilterX, Plus } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
 import FilterBar, { type FilterGroup } from '@/components/calendar/FilterBar';
 import { isInGroup } from '@/utils/eventCategoryGroups';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 
 interface EventListProps {
   events: Event[];
   showFavorites: boolean;
   showNewEvents?: boolean;
   onSelectEvent: (event: Event, date: Date) => void;
+  toggleFavorites: () => void;
+  toggleNewEvents: () => void;
+  favoriteCount?: number;
+  onShowEventForm?: () => void;
 }
 
 
@@ -61,14 +67,19 @@ const EventList: React.FC<EventListProps> = memo(({
   events,
   showFavorites,
   showNewEvents = false,
-  onSelectEvent
+  onSelectEvent,
+  toggleFavorites,
+  toggleNewEvents,
+  favoriteCount = 0,
+  onShowEventForm
 }) => {
   const listRef = useRef<HTMLDivElement>(null);
   const todayRef = useRef<HTMLDivElement>(null);
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
-  const { filter, topEventsPerDay } = useEventContext();
-  const [groupFilter, setGroupFilter] = useState<FilterGroup>('Alle');
+const { filter, setFilter, topEventsPerDay } = useEventContext();
+const [groupFilter, setGroupFilter] = useState<FilterGroup>('Alle');
+const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).filter(Boolean))) as string[], [events]);
 
   const filteredEvents = useMemo(() => {
     let base = events;
@@ -205,7 +216,7 @@ const EventList: React.FC<EventListProps> = memo(({
 
     return (
       <div className="bg-white text-black rounded-3xl border border-gray-200 shadow-xl p-4 overflow-hidden w-full max-w-full">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-2 gap-2">
           <h3 className="text-xl font-semibold text-gray-900">
             {showFavorites 
               ? "Top Events" 
@@ -217,7 +228,89 @@ const EventList: React.FC<EventListProps> = memo(({
                     ? `${filter} Events` 
                     : "Alle Events"}
           </h3>
-          <FilterBar value={groupFilter} onChange={(v) => setGroupFilter(v)} variant="light" />
+          <div className="flex items-center gap-2">
+            <FilterBar value={groupFilter} onChange={(v) => setGroupFilter(v)} variant="light" />
+            <div className="inline-flex rounded-full p-0.5 bg-white/80 border border-gray-200">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={toggleFavorites}
+                className={`${showFavorites ? 'bg-gray-900 text-white hover:bg-gray-900' : 'text-gray-700 hover:bg-gray-100'} px-3 h-7 text-xs rounded-full transition-colors`}
+                aria-label="Favoriten"
+              >
+                <Heart className="w-3 h-3 mr-1" />
+                <span className="hidden sm:inline">Favoriten</span>
+                {!showFavorites && favoriteCount > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-500 rounded-full">
+                    {favoriteCount}
+                  </span>
+                )}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={toggleNewEvents}
+                className={`${showNewEvents ? 'bg-gray-900 text-white hover:bg-gray-900' : 'text-gray-700 hover:bg-gray-100'} px-3 h-7 text-xs rounded-full transition-colors`}
+                aria-label="Neue Events"
+              >
+                <span className="font-semibold">NEW</span>
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className={`${filter ? 'bg-gray-900 text-white hover:bg-gray-900' : 'text-gray-700 hover:bg-gray-100'} px-3 h-7 text-xs rounded-full transition-colors`}
+                    aria-label="Filter"
+                  >
+                    {filter ? <FilterX className="w-3 h-3 mr-1" /> : <Filter className="w-3 h-3 mr-1" />}
+                    <span className="hidden sm:inline">{filter || 'Filter'}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-white text-black border border-gray-200 rounded-xl p-2 shadow-xl min-w-48 z-50">
+                  <DropdownMenuLabel className="text-center text-gray-700">Veranstaltungstyp</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-gray-200" />
+                  {filter && (
+                    <DropdownMenuCheckboxItem
+                      checked={false}
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setFilter(null);
+                      }}
+                      className="cursor-pointer hover:bg-gray-100 rounded-lg flex items-center gap-2"
+                    >
+                      <FilterX className="h-4 w-4 mr-1" />
+                      Alle anzeigen
+                    </DropdownMenuCheckboxItem>
+                  )}
+                  {categories.map((cat) => (
+                    <DropdownMenuCheckboxItem
+                      key={cat as string}
+                      checked={filter === cat}
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setFilter((prev) => (prev === cat ? null : (cat as string)));
+                      }}
+                      className="cursor-pointer hover:bg-gray-100 rounded-lg flex items-center gap-2"
+                    >
+                      {cat as string}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              {onShowEventForm && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={onShowEventForm}
+                  className="px-3 h-7 text-xs rounded-full transition-colors text-gray-700 hover:bg-gray-100"
+                  aria-label="Neues Event"
+                >
+                  <Plus className="w-3 h-3" />
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
         
         <div ref={listRef} className="overflow-y-auto max-h-[650px] pr-1 scrollbar-thin w-full">

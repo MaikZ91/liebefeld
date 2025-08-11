@@ -142,117 +142,120 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
               </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          
-          {/* Favorites button positioned at the beginning of the filter list */}
-          <Button 
-          className={cn(
-            "flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all",
-            showFavorites ? "bg-white text-black hover:bg-white" : "bg-black/70 text-white border-white/20 hover:bg-black/90 hover:text-white"
-          )}
-            onClick={toggleFavorites}
-          >
-            <Heart className={cn("h-4 w-4", showFavorites ? "fill-black" : "")} />
-            <span className="hidden sm:inline">
-              {showFavorites ? "Alle" : "Favoriten"}
-            </span>
-            {!showFavorites && favoriteEvents > 0 && (
-              <span className="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
-                {favoriteEvents}
-              </span>
-            )}
-          </Button>
-          
-          {/* New events button with NEW text */}
-          <Button 
-          className={cn(
-            "flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all",
-            showNewEvents ? "bg-white text-black hover:bg-white" : "bg-black/70 text-white border-white/20 hover:bg-black/90 hover:text-white"
-          )}
-            onClick={toggleNewEvents}
-          >
-            <span className="font-bold">NEW</span>
-            {!showNewEvents && newEventsCount > 0 && (
-              <span className="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-green-600 rounded-full">
-                {newEventsCount}
-              </span>
-            )}
-          </Button>
-          
-          {/* Category filter dropdown */}
-          <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
-            <DropdownMenuTrigger asChild>
-              <Button
-          className={cn(
-            "rounded-full whitespace-nowrap flex items-center gap-2",
-            filter ? "bg-white text-black hover:bg-white" : 
-            "bg-black/70 text-white border-gray-700 hover:bg-black/60 hover:text-white dark-button"
-          )}
+          {view === "calendar" && (
+            <>
+              {/* Favorites button positioned at the beginning of the filter list */}
+              <Button 
+              className={cn(
+                "flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all",
+                showFavorites ? "bg-white text-black hover:bg-white" : "bg-black/70 text-white border-white/20 hover:bg-black/90 hover:text-white"
+              )}
+                onClick={toggleFavorites}
               >
-                {filter ? <FilterX className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
+                <Heart className={cn("h-4 w-4", showFavorites ? "fill-black" : "")} />
                 <span className="hidden sm:inline">
-                  {filter || "Kategorien"}
+                  {showFavorites ? "Alle" : "Favoriten"}
                 </span>
-                {filter && (
-                  <div className="ml-1 flex items-center">
-                    {categoryIcons[filter] && categoryIcons[filter]}
-                  </div>
+                {!showFavorites && favoriteEvents > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
+                    {favoriteEvents}
+                  </span>
                 )}
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              className="bg-black/90 border-gray-700 text-white rounded-xl p-2 shadow-xl min-w-48 z-50"
-              align="center"
-            >
-              <DropdownMenuLabel className="text-center text-gray-300">Veranstaltungstyp</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-gray-700" />
               
-              {/* Add "All" option at the top if a filter is active */}
-              {filter && (
-                <>
-                  <DropdownMenuCheckboxItem
-                    checked={false}
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      clearFilter();
-                      setIsDropdownOpen(false);
-                    }}
-                    className="cursor-pointer hover:bg-gray-800 rounded-lg flex items-center gap-2"
-                  >
-                    <FilterX className="h-4 w-4 mr-1" />
-                    Alle anzeigen
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuSeparator className="bg-gray-700" />
-                </>
+              {/* New events button with NEW text */}
+              <Button 
+              className={cn(
+                "flex items-center space-x-2 rounded-full shadow-md hover:shadow-lg transition-all",
+                showNewEvents ? "bg-white text-black hover:bg-white" : "bg-black/70 text-white border-white/20 hover:bg-black/90 hover:text-white"
               )}
+                onClick={toggleNewEvents}
+              >
+                <span className="font-bold">NEW</span>
+                {!showNewEvents && newEventsCount > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-green-600 rounded-full">
+                    {newEventsCount}
+                  </span>
+                )}
+              </Button>
               
-              {categories.map(category => (
-                <DropdownMenuCheckboxItem
-                  key={category}
-                  checked={filter === category}
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    toggleFilter(category);
-                    setIsDropdownOpen(false);
-                  }}
-                  className="cursor-pointer hover:bg-gray-800 rounded-lg flex items-center gap-2"
+              {/* Category filter dropdown */}
+              <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+              className={cn(
+                "rounded-full whitespace-nowrap flex items-center gap-2",
+                filter ? "bg-white text-black hover:bg-white" : 
+                "bg-black/70 text-white border-gray-700 hover:bg-black/60 hover:text-white dark-button"
+              )}
+                  >
+                    {filter ? <FilterX className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
+                    <span className="hidden sm:inline">
+                      {filter || "Kategorien"}
+                    </span>
+                    {filter && (
+                      <div className="ml-1 flex items-center">
+                        {categoryIcons[filter] && categoryIcons[filter]}
+                      </div>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  className="bg-black/90 border-gray-700 text-white rounded-xl p-2 shadow-xl min-w-48 z-50"
+                  align="center"
                 >
-                  {category in categoryIcons ? categoryIcons[category] : null}
-                  {category}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-          {/* Add Event button - Now positioned at the end and styled red */}
-          <Button 
-            className="rounded-full whitespace-nowrap flex items-center gap-2 bg-white text-black border-white/20 hover:bg-white/90 hover:text-black"
-            onClick={onShowEventForm}
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">
-              {showEventForm ? "Schließen" : "Neu"}
-            </span>
-          </Button>
+                  <DropdownMenuLabel className="text-center text-gray-300">Veranstaltungstyp</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-gray-700" />
+                  
+                  {/* Add "All" option at the top if a filter is active */}
+                  {filter && (
+                    <>
+                      <DropdownMenuCheckboxItem
+                        checked={false}
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          clearFilter();
+                          setIsDropdownOpen(false);
+                        }}
+                        className="cursor-pointer hover:bg-gray-800 rounded-lg flex items-center gap-2"
+                      >
+                        <FilterX className="h-4 w-4 mr-1" />
+                        Alle anzeigen
+                      </DropdownMenuCheckboxItem>
+                      <DropdownMenuSeparator className="bg-gray-700" />
+                    </>
+                  )}
+                  
+                  {categories.map(category => (
+                    <DropdownMenuCheckboxItem
+                      key={category}
+                      checked={filter === category}
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        toggleFilter(category);
+                        setIsDropdownOpen(false);
+                      }}
+                      className="cursor-pointer hover:bg-gray-800 rounded-lg flex items-center gap-2"
+                    >
+                      {category in categoryIcons ? categoryIcons[category] : null}
+                      {category}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              {/* Add Event button - Now positioned at the end and styled red */}
+              <Button 
+                className="rounded-full whitespace-nowrap flex items-center gap-2 bg-white text-black border-white/20 hover:bg-white/90 hover:text-black"
+                onClick={onShowEventForm}
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  {showEventForm ? "Schließen" : "Neu"}
+                </span>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>
