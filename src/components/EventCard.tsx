@@ -99,7 +99,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     return (
       <div
         className={cn(
-          "dark-glass-card rounded-lg p-1.5 cursor-pointer hover-scale mb-0.5 w-full",
+          "bg-card text-card-foreground border border-border rounded-lg p-1.5 cursor-pointer hover-scale mb-0.5 w-full",
           isTribe && "border-l-2 border-purple-500 bg-gradient-to-r from-purple-900/20 to-transparent",
           className
         )}
@@ -216,7 +216,7 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
   return (
     <div
       className={cn(
-        "dark-glass-card rounded-xl p-4 cursor-pointer hover-scale w-full",
+        "bg-card text-card-foreground border border-border rounded-xl p-4 cursor-pointer hover-scale w-full",
         isTribe && "border-l-4 border-purple-500 bg-gradient-to-r from-purple-900/20 to-transparent",
         className
       )}
