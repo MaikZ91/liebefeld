@@ -50,33 +50,25 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   onJoinEventChat
 }) => {
   const miaAvatarUrl = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png'
-  const { events } = useEventContext();
+  const { events, selectedCity } = useEventContext();
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
   const [localInput, setLocalInput] = useState(input);
   const { toast } = useToast();
 
   const handleEnablePushNotifications = async () => {
     try {
-      const token = await initializeFCM();
+      const token = await initializeFCM(selectedCity, true);
       if (token) {
-        // Token in Datenbank speichern
-        const { error } = await supabase
-          .from('push_tokens')
-          .insert({ token });
-
-        if (error) {
-          console.error('Error saving push token:', error);
-          toast({
-            title: "Fehler",
-            description: "Push-Token konnte nicht gespeichert werden.",
-            variant: "destructive"
-          });
-        } else {
-          toast({
-            title: "Erfolgreich!",
-            description: "Push-Benachrichtigungen wurden aktiviert.",
-          });
-        }
+        toast({
+          title: "Erfolgreich!",
+          description: "Push-Benachrichtigungen wurden aktiviert.",
+        });
+      } else {
+        toast({
+          title: "Fehler",
+          description: "Push-Benachrichtigungen konnten nicht aktiviert werden.",
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error('Error enabling push notifications:', error);

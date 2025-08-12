@@ -16,6 +16,7 @@ import Challenge from "./pages/Challenge";
 import { EventProvider } from "./contexts/EventContext";
 import { initializeSupabase } from "./utils/initSupabase";
 import { initializeFCM } from "./services/firebaseMessaging";
+import { useEventContext } from "./contexts/EventContext";
 import Heatmap from '@/pages/Heatmap';
 import { Layout } from './components/layouts/Layout';
 import UserDirectory from "./components/users/UserDirectory";
@@ -26,6 +27,8 @@ const queryClient = new QueryClient();
 
 // Separate component for initialization that runs inside Router context
 function AppInitializer() {
+  const { selectedCity } = useEventContext();
+
   useEffect(() => {
     // Initialize Supabase
     initializeSupabase()
@@ -37,9 +40,9 @@ function AppInitializer() {
         }
       });
 
-    // Initialize Firebase Cloud Messaging
-    initializeFCM();
-  }, []);
+    // Initialize or update Firebase Cloud Messaging token with city preference
+    initializeFCM(selectedCity);
+  }, [selectedCity]);
 
   return null;
 }

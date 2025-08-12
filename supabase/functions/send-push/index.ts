@@ -74,6 +74,7 @@ Deno.serve(async (req) => {
     const sender = typeof payload?.sender === 'string' ? payload.sender : 'TRIBE';
     const text = typeof payload?.text === 'string' ? payload.text : '';
     const message_id = payload?.message_id ?? null;
+    const city = typeof payload?.city === 'string' && payload.city.trim().length > 0 ? payload.city : null;
 
     // Resolve sender/text from DB if missing and message_id is provided
     let finalSender = (sender || 'TRIBE').toString().trim() || 'TRIBE';
@@ -96,10 +97,20 @@ Deno.serve(async (req) => {
       finalText = 'Neue Nachricht';
     }
 
-    // Tokens holen
-    const { data: tokens, error: tokensError } = await supabase
-      .from('push_tokens')
-      .select('token');
+    // Tokens holen (optional gefiltert nach Stadt)
+    let tokensResp;
+    if (city) {
+      tokensResp = await supabase
+        .from('push_tokens')
+        .select('token')
+        .eq('city', city);
+    } else {
+      tokensResp = await supabase
+        .from('push_tokens')
+        .select('token');
+    }
+    const { data: tokens, error: tokensError } = tokensResp as { data: Array<{ token: string }> | null, error: any };
+
 
     if (tokensError) {
       console.error('Error fetching push tokens:', tokensError);

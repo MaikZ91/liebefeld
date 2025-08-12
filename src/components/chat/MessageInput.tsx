@@ -11,6 +11,7 @@ import { messageService } from '@/services/messageService';
 import { initializeFCM } from '@/services/firebaseMessaging';
 import { useToast } from '@/hooks/use-toast';
 import { getChannelColor } from '@/utils/channelColors';
+import { useEventContext } from '@/contexts/EventContext';
 
 interface MessageInputProps {
   username: string;
@@ -43,6 +44,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 }) => {
   const [newMessage, setNewMessage] = useState("");
   const { toast } = useToast();
+  const { selectedCity } = useEventContext();
 
   // Sicherstellen, dass wir eine gültige UUID für groupId haben
   const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
@@ -95,11 +97,11 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
   const handleEnablePushNotifications = async () => {
     try {
-      const token = await initializeFCM();
+      const token = await initializeFCM(selectedCity, true);
       if (token) {
         toast({
           title: "Erfolgreich!",
-          description: "Push-Benachrichtigungen wurden aktiviert. Token: " + token.substring(0, 20) + "...",
+          description: "Push-Benachrichtigungen wurden aktiviert.",
         });
       } else {
         toast({

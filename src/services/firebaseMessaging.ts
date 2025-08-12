@@ -15,7 +15,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 
-export const initializeFCM = async () => {
+export const initializeFCM = async (city?: string, forceRefresh: boolean = false) => {
   try {
     console.log("🚀 Starting FCM initialization...");
     
@@ -35,13 +35,15 @@ export const initializeFCM = async () => {
     const registration = await navigator.serviceWorker.register("/sw.js");
     console.log("✅ Service worker registered:", registration);
     
-    console.log("🔑 Getting NEW FCM token...");
-    // Force a new token by deleting existing tokens first
-    try {
-      await deleteToken(messaging);
-      console.log("🗑️ Deleted old token");
-    } catch (deleteError) {
-      console.log("ℹ️ No old token to delete:", deleteError);
+    console.log("🔑 Getting FCM token...");
+    // Optionally refresh token
+    if (forceRefresh) {
+      try {
+        await deleteToken(messaging);
+        console.log("🗑️ Deleted old token (forceRefresh=true)");
+      } catch (deleteError) {
+        console.log("ℹ️ No old token to delete:", deleteError);
+      }
     }
     
     const token = await getToken(messaging, {
@@ -58,7 +60,7 @@ export const initializeFCM = async () => {
         
         const { error } = await supabase
           .from('push_tokens')
-          .insert({ token });
+          .upsert({ token, city: city ?? null }, { onConflict: 'token' });
 
         if (error) {
           console.error("❌ Error saving push token:", error);
@@ -87,7 +89,7 @@ export const initializeFCM = async () => {
         
         if (newPermission === 'granted') {
           // Try again after permission granted
-          return initializeFCM();
+          return initializeFCM(city, true);
         }
       }
       
