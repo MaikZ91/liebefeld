@@ -8,7 +8,11 @@ export const pushNotificationService = {
         console.warn('[pushNotificationService] Missing text and messageId; not sending.');
         return;
       }
-      const body: any = { sender: sender || 'TRIBE', message_id: messageId ?? null };
+      const cityName = (typeof localStorage !== 'undefined'
+        ? (localStorage.getItem('selectedCityName') || localStorage.getItem('selectedCityAbbr'))
+        : null);
+      const normalizedCity = cityName === 'BI' ? 'Bielefeld' : (cityName || null);
+      const body: any = { sender: sender || 'TRIBE', message_id: messageId ?? null, city: normalizedCity };
       if (text && text.trim()) body.text = text;
       console.log('[pushNotificationService] invoking send-push', body);
       const { data, error } = await supabase.functions.invoke('send-push', { body });

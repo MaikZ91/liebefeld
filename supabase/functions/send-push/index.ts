@@ -100,10 +100,27 @@ Deno.serve(async (req) => {
     // Tokens holen (optional gefiltert nach Stadt)
     let tokensResp;
     if (city) {
+      const lower = city.toString().trim();
+      const variants = new Set<string>([city, lower, lower.toLowerCase(), lower.toUpperCase()]);
+      // Handle common abbreviations/mappings
+      const norm = lower.toLowerCase();
+      if (norm === 'bi' || norm === 'bielefeld') {
+        variants.add('Bielefeld');
+        variants.add('bielefeld');
+        variants.add('BI');
+        variants.add('bi');
+      }
+      // Optional: add de-accented variant (e.g., Köln -> Koln)
+      const deAccented = norm.normalize('NFD').replace(/\p{Diacritic}+/gu, '');
+      if (deAccented && deAccented !== norm) {
+        variants.add(deAccented);
+        variants.add(deAccented.charAt(0).toUpperCase() + deAccented.slice(1));
+      }
+
       tokensResp = await supabase
         .from('push_tokens')
         .select('token')
-        .eq('city', city);
+        .in('city', Array.from(variants));
     } else {
       tokensResp = await supabase
         .from('push_tokens')

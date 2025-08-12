@@ -58,9 +58,13 @@ export const initializeFCM = async (city?: string, forceRefresh: boolean = false
       try {
         console.log("💾 Saving token to database...");
         
+        const nameFromLS = (typeof localStorage !== 'undefined') ? localStorage.getItem('selectedCityName') : null;
+        const abbrFromLS = (typeof localStorage !== 'undefined') ? localStorage.getItem('selectedCityAbbr') : null;
+        const cityToStore = nameFromLS || (city && city.toUpperCase() === 'BI' ? 'Bielefeld' : city) || abbrFromLS || null;
+
         const { error } = await supabase
           .from('push_tokens')
-          .upsert({ token, city: city ?? null }, { onConflict: 'token' });
+          .upsert({ token, city: cityToStore }, { onConflict: 'token' });
 
         if (error) {
           console.error("❌ Error saving push token:", error);
