@@ -75,7 +75,7 @@ const EventList: React.FC<EventListProps> = memo(({
 }) => {
   const listRef = useRef<HTMLDivElement>(null);
   const todayRef = useRef<HTMLDivElement>(null);
-  const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
+  
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
 const { filter, setFilter, topEventsPerDay } = useEventContext();
 const [groupFilter, setGroupFilter] = useState<FilterGroup>('Alle');
@@ -171,48 +171,7 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
     }
   }, [displayEvents]);
 
-  useEffect(() => {
-    if (todayRef.current && listRef.current && !hasScrolledToToday && Object.keys(eventsByDate).length > 0) {
-      console.log('EventList: Waiting for animations to complete before scrolling to today');
-      
-      const scrollTimer = setTimeout(() => {
-        if (todayRef.current && listRef.current) {
-          const targetScrollTop = todayRef.current.offsetTop - 80;
-          const currentScrollTop = listRef.current.scrollTop;
-          
-          const duration = 800;
-          const startTime = performance.now();
-          
-          const animateScroll = (currentTime: number) => {
-            if (!listRef.current) {
-              return; // Guard against component unmount
-            }
-            
-            const elapsedTime = currentTime - startTime;
-            
-            if (elapsedTime < duration) {
-              const progress = 1 - Math.pow(1 - elapsedTime / duration, 2);
-              const scrollValue = currentScrollTop + (targetScrollTop - currentScrollTop) * progress;
-              listRef.current.scrollTop = scrollValue;
-              requestAnimationFrame(animateScroll);
-            } else {
-              listRef.current.scrollTop = targetScrollTop;
-              console.log('EventList: Smooth scroll completed after animations');
-              setHasScrolledToToday(true);
-            }
-          };
-          
-          requestAnimationFrame(animateScroll);
-        }
-      }, 5500);
-      
-      return () => clearTimeout(scrollTimer);
-    }
-  }, [eventsByDate, hasScrolledToToday]);
 
-  useEffect(() => {
-    setHasScrolledToToday(false);
-  }, [showFavorites, showNewEvents, filter, groupFilter]);
 
     return (
       <div className="bg-white text-black rounded-3xl border border-gray-200 shadow-xl p-4 overflow-hidden w-full max-w-full">
