@@ -294,7 +294,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   }, [chatContainerRef, activeChatModeValue, filteredCommunityMessages.length, typingUsers.length]);
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex flex-col h-screen min-h-0">
       {/* Filter UI für Community Chat - immer sichtbar wenn Community-Modus */}
       {activeChatModeValue === 'community' && (
         <div className="sticky top-0 z-10 bg-background/80 backdrop-blur supports-[backdrop-filter]:backdrop-blur-sm border-b border-border">
