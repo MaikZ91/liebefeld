@@ -15,6 +15,7 @@ import { chatService } from '@/services/chatService';
 import { useEventContext, cities } from '@/contexts/EventContext';
 import { createGroupDisplayName } from '@/utils/groupIdUtils';
 import { Button } from '@/components/ui/button';
+import { getChannelColor } from '@/utils/channelColors';
 import UserProfileDialog from '@/components/users/UserProfileDialog';
 import { userService } from '@/services/userService';
 import { UserProfile } from '@/types/chatTypes';
@@ -299,20 +300,33 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
         <div className="sticky top-0 z-10 bg-background/80 backdrop-blur supports-[backdrop-filter]:backdrop-blur-sm border-b border-border">
           <div className="px-4 py-2">
             <div className="flex gap-2 overflow-x-auto scrollbar-none flex-nowrap">
-              {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => (
-                <Button
-                  key={category}
-                  variant="ghost"
-                  size="sm"
-                  className={`h-7 px-3 text-xs rounded-full ${
-                    messageFilter.includes(category)
-                      ? 'bg-primary/15 text-primary border border-primary/30'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
-                  }`}
-                  onClick={() => {
-                    if (category === 'alle') {
-                      setMessageFilter(['alle']);
-                    } else {
+              {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => {
+                const isActive = messageFilter.includes(category);
+                const isAll = category === 'alle';
+                const chipBase = 'h-7 px-3 text-xs rounded-full transition-colors';
+                if (isAll) {
+                  return (
+                    <Button
+                      key={category}
+                      variant="ghost"
+                      size="sm"
+                      className={`${chipBase} ${isActive ? 'bg-white/10 text-white border border-white/20' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                      onClick={() => setMessageFilter(['alle'])}
+                    >
+                      #{category}
+                    </Button>
+                  );
+                }
+                const type = (category as 'ausgehen' | 'kreativität' | 'sport');
+                const colors = getChannelColor(type);
+                return (
+                  <Button
+                    key={category}
+                    variant="ghost"
+                    size="sm"
+                    style={isActive ? { ...colors.bgStyle, ...colors.borderStyle, color: 'hsl(var(--foreground))' } : { ...colors.borderStyle, ...colors.textStyle }}
+                    className={`${chipBase} border ${!isActive ? 'hover:bg-white/5' : ''}`}
+                    onClick={() => {
                       setMessageFilter(prev => {
                         const newFilter = prev.filter(f => f !== 'alle');
                         if (newFilter.includes(category)) {
@@ -322,12 +336,12 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                           return [...newFilter, category];
                         }
                       });
-                    }
-                  }}
-                >
-                  #{category}
-                </Button>
-              ))}
+                    }}
+                  >
+                    #{category}
+                  </Button>
+                );
+              })}
             </div>
           </div>
         </div>

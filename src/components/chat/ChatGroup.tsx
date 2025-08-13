@@ -14,6 +14,7 @@ import { useScrollManagement } from '@/hooks/chat/useScrollManagement';
 import { eventChatService } from '@/services/eventChatService';
 import { useNavigate } from 'react-router-dom';
 import { chatService } from '@/services/chatService';
+import { getChannelColor } from '@/utils/channelColors';
 
 interface ChatGroupProps {
   groupId: string;
@@ -467,20 +468,37 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         {/* Filter UI */}
         <div className="px-0 py-2 border-b border-gray-800">
           <div className="flex flex-wrap gap-2">
-            {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => (
-              <Button
-                key={category}
-                variant="ghost"
-                size="sm"
-                className={`h-6 px-2 text-xs rounded-full ${
-                  messageFilter.includes(category)
-                    ? 'bg-red-500/20 text-red-300 border border-red-500/30'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                }`}
-                onClick={() => {
-                  if (category === 'alle') {
-                    setMessageFilter(['alle']);
-                  } else {
+            {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => {
+              const isActive = messageFilter.includes(category);
+              const isAll = category === 'alle';
+              const chipBase = 'h-6 px-2 text-xs rounded-full transition-colors';
+              if (isAll) {
+                return (
+                  <Button
+                    key={category}
+                    variant="ghost"
+                    size="sm"
+                    className={`${chipBase} ${isActive ? 'bg-white/10 text-white border border-white/20' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}
+                    onClick={() => {
+                      if (category === 'alle') {
+                        setMessageFilter(['alle']);
+                      }
+                    }}
+                  >
+                    #{category}
+                  </Button>
+                );
+              }
+              const type = (category as 'ausgehen' | 'kreativität' | 'sport');
+              const colors = getChannelColor(type);
+              return (
+                <Button
+                  key={category}
+                  variant="ghost"
+                  size="sm"
+                  style={isActive ? { ...colors.bgStyle, ...colors.borderStyle, color: 'hsl(var(--foreground))' } : { ...colors.borderStyle, ...colors.textStyle }}
+                  className={`${chipBase} border ${!isActive ? 'hover:bg-white/5' : ''}`}
+                  onClick={() => {
                     setMessageFilter(prev => {
                       const newFilter = prev.filter(f => f !== 'alle');
                       if (newFilter.includes(category)) {
@@ -490,12 +508,12 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
                         return [...newFilter, category];
                       }
                     });
-                  }
-                }}
-              >
-                #{category}
-              </Button>
-            ))}
+                  }}
+                >
+                  #{category}
+                </Button>
+              );
+            })}
           </div>
         </div>
       </div>
