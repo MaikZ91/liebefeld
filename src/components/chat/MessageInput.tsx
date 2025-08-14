@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Loader2, Send, ChevronDown, Bell } from 'lucide-react';
+import { Loader2, Send, ChevronDown, Mic, ImagePlus } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
@@ -120,100 +120,114 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
-  // Dynamisches padding-left basierend auf dem Modus
-  const leftPadding = mode === 'community' ? 'pl-[100px]' : 'pl-4';
-  
   // Get channel-specific colors
   const colors = getChannelColor(groupType);
 
   return (
-    <div className="w-full space-y-2">
-      <div className="flex items-center gap-2 relative">
-        <Textarea
-          placeholder={placeholder}
-          value={value !== undefined ? value : newMessage}
-          onChange={handleTextareaChange}
-          onKeyDown={handleKeyDown}
-          className={cn(
-            "min-h-[50px] flex-grow resize-none pr-14 border-2 transition-all duration-200",
-            leftPadding
-          )}
-          style={{
-            ...colors.borderStyle,
-            ...colors.shadowStyle,
-            '--placeholder-color': colors.primary
-          } as React.CSSProperties & { '--placeholder-color': string }}
-        />
-        {/* Buttons auf der linken Seite des Inputs (absolute Positionierung) */}
-        {mode === 'community' && ( // Only show in community mode
-          <div className="flex items-center gap-1 absolute left-1 top-1 z-10">
-            {/* Kategorie-Dropdown (jetzt erster) */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full h-6 px-2 text-[10px] flex items-center gap-1 min-w-[70px] bg-white/90 dark:bg-zinc-800/90"
-                  style={colors.borderStyle}
+    <div className="w-full px-4 pb-6">
+      <div className="bg-background/95 backdrop-blur-sm rounded-3xl border shadow-lg p-1" style={colors.borderStyle}>
+        <div className="flex items-center gap-2 relative">
+          {/* Left side icons */}
+          {mode === 'community' && (
+            <div className="flex items-center gap-2 pl-3">
+              {/* Category Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-xs rounded-full bg-muted/50 hover:bg-muted"
+                    style={{ color: colors.primary }}
+                  >
+                    #{activeCategory.toLowerCase()}
+                    <ChevronDown className="h-3 w-3 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="bg-zinc-900 border-zinc-700"
+                  side="top"
+                  align="start"
                 >
-                  {activeCategory}
-                  <ChevronDown className="h-2 w-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="bg-zinc-900 z-50"
-                style={colors.borderStyle}
-                side="top"
-                align="start"
-              >
-                <DropdownMenuItem
-                  onClick={() => handleCategoryClick('Kreativität')}
-                  className="text-white cursor-pointer hover:bg-zinc-800"
-                >
-                  <span style={getChannelColor('kreativität').textStyle}>#kreativität</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleCategoryClick('Ausgehen')}
-                  className="text-white cursor-pointer hover:bg-zinc-800"
-                >
-                  <span style={getChannelColor('ausgehen').textStyle}>#ausgehen</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleCategoryClick('Sport')}
-                  className="text-white cursor-pointer hover:bg-zinc-800"
-                >
-                  <span style={getChannelColor('sport').textStyle}>#sport</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuItem
+                    onClick={() => handleCategoryClick('Kreativität')}
+                    className="text-white cursor-pointer hover:bg-zinc-800"
+                  >
+                    <span style={getChannelColor('kreativität').textStyle}>#kreativität</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleCategoryClick('Ausgehen')}
+                    className="text-white cursor-pointer hover:bg-zinc-800"
+                  >
+                    <span style={getChannelColor('ausgehen').textStyle}>#ausgehen</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleCategoryClick('Sport')}
+                    className="text-white cursor-pointer hover:bg-zinc-800"
+                  >
+                    <span style={getChannelColor('sport').textStyle}>#sport</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-            {/* Push Notification Button */}
+              {/* Image upload button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full hover:bg-muted"
+                style={{ color: colors.primary }}
+                title="Bild hinzufügen"
+              >
+                <ImagePlus className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
+          {/* Input field */}
+          <div className="flex-1 relative">
+            <Textarea
+              placeholder={placeholder}
+              value={value !== undefined ? value : newMessage}
+              onChange={handleTextareaChange}
+              onKeyDown={handleKeyDown}
+              className={cn(
+                "min-h-[44px] max-h-32 resize-none border-0 bg-transparent px-4 py-3 text-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0",
+                mode === 'ai' && "pl-4"
+              )}
+              style={{
+                '--placeholder-color': colors.primary
+              } as React.CSSProperties & { '--placeholder-color': string }}
+            />
+          </div>
+
+          {/* Right side actions */}
+          <div className="flex items-center gap-2 pr-3">
+            {/* Microphone button */}
             <Button
-              onClick={handleEnablePushNotifications}
-              variant="outline"
+              variant="ghost"
               size="icon"
-              type="button"
-              className="rounded-full h-6 w-6 bg-white/90 dark:bg-zinc-800/90"
-              style={colors.borderStyle}
-              title="Push-Benachrichtigungen aktivieren"
+              className="h-8 w-8 rounded-full hover:bg-muted"
+              style={{ color: colors.primary }}
+              title="Sprachnachricht"
             >
-              <Bell className="h-3 w-3" />
+              <Mic className="h-4 w-4" />
+            </Button>
+
+            {/* Send button */}
+            <Button
+              onClick={handleSendButtonClick}
+              disabled={isSending || (!value?.trim() && !newMessage.trim())}
+              size="icon"
+              className="h-8 w-8 rounded-full text-white shadow-sm disabled:opacity-50"
+              style={colors.bgStyle}
+            >
+              {isSending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </Button>
           </div>
-        )}
-        {/* Send button on the right */}
-        <Button
-          onClick={handleSendButtonClick}
-          disabled={isSending || (!value?.trim() && !newMessage.trim())}
-          className="rounded-full min-w-[32px] h-8 w-8 absolute right-1 top-1 p-0 text-white"
-          style={colors.bgStyle}
-        >
-          {isSending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
-        </Button>
+        </div>
       </div>
     </div>
   );
