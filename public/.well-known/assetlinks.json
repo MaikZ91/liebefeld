@@ -1,8 +1,16 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "co.median.android.yadezx",
-        "sha256_cert_fingerprints": ["47:8D:E9:C1:47:B4:44:28:D4:09:8C:85:56:38:8E:8E:A5:F6:E0:45:BC:A2:03:43:BB:14:3B:87:2B:8E:C8:66"]
-      }
-    }]
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "co.median.android.yadezx",
+      "sha256_cert_fingerprints": [
+        "47:8D:E9:C1:47:B4:44:28:D4:09:8C:85:56:38:8E:8E:A5:F6:E0:45:BC:A2:03:43:BB:14:3B:87:2B:8E:C8:66",
+        "62:8B:DC:BA:FD:A2:88:19:18:B1:A6:91:61:E2:96:D2:0E:09:EB:3B:06:C1:62:D9:4A:77:D4:49:43:8B:A3:3F"
+      ]
+    }
+  }
+]
