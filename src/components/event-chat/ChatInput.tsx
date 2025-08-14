@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Heart, History, CalendarPlus, Send, Calendar, ChevronDown, Bell } from 'lucide-react';
+import { Heart, History, CalendarPlus, Send, Calendar, ChevronDown, Mic, ImagePlus } from 'lucide-react';
 import { ChatInputProps } from './types';
 import { useEventContext } from '@/contexts/EventContext';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
@@ -55,34 +55,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   const [localInput, setLocalInput] = useState(input);
   const { toast } = useToast();
 
-  const handleEnablePushNotifications = async () => {
-    try {
-      const token = await initializeFCM(selectedCity, true);
-      if (token) {
-        toast({
-          title: "Erfolgreich!",
-          description: "Push-Benachrichtigungen wurden aktiviert.",
-        });
-      } else {
-        toast({
-          title: "Fehler",
-          description: "Push-Benachrichtigungen konnten nicht aktiviert werden.",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error('Error enabling push notifications:', error);
-      toast({
-        title: "Fehler",
-        description: "Push-Benachrichtigungen konnten nicht aktiviert werden.",
-        variant: "destructive"
-      });
-    }
-  };
-
   // Reference for the textarea to dynamically adjust height
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
 
   useEffect(() => {
     setLocalInput(input);
@@ -95,7 +69,6 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
       textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'; // Set height to scrollHeight
     }
   }, [localInput]); // Re-run when localInput changes
-
 
   const suggestions = [];
 
@@ -207,43 +180,6 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 
   const placeholderText = getDynamicPlaceholder();
 
-  const eventSelectContent = (
-    <div className="max-h-[300px] overflow-y-auto">
-      {events && events.length > 0 ? (
-        <div className="space-y-2 p-2">
-          <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-            Events auswählen
-          </div>
-          {events.map((event) => (
-            <div
-              key={event.id}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-pointer border border-gray-200 dark:border-gray-700"
-              onClick={() => {
-                handleLocalSendMessage({
-                  title: event.title,
-                  date: event.date,
-                  time: event.time,
-                  location: event.location,
-                  category: event.category
-                });
-                setIsEventSelectOpen(false);
-              }}
-            >
-              <div className="font-medium text-sm">{event.title}</div>
-              <div className="text-xs text-gray-500">
-                {event.date} • {event.location}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="p-4 text-sm text-gray-500 text-center">
-          Keine Events verfügbar
-        </div>
-      )}
-    </div>
-  );
-
   const handleCategoryClick = (category: string) => {
     if (onCategoryChange) {
       onCategoryChange(category);
@@ -266,174 +202,171 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   const groupType = getGroupType(activeCategory);
   const colors = getChannelColor(groupType);
 
-  const getButtonWidth = () => {
-    if (activeChatModeValue === 'community') {
-      return 'pl-[120px]';
-    } else {
-      const baseButtons = 2;
-      const historyButton = globalQueries.length > 0 ? 1 : 0;
-      const totalButtons = baseButtons + historyButton;
-      return 'pl-[110px]';
-    }
-  };
-
   return (
-    <div className="flex items-center relative w-full max-w-md">
-      <div className="absolute left-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 z-10">
-                {/* MIA Avatar (only shown in AI chat mode) */}
-        {activeChatModeValue === 'ai' && (
-          <Avatar className="h-8 w-8 border-2 border-white/50">
-            <AvatarImage src={miaAvatarUrl} />
-          </Avatar>
-        )}
-        
-        {activeChatModeValue === 'ai' ? (
-          <>
+    <div className="w-full px-4 pb-6">
+      <div className="bg-background/95 backdrop-blur-sm rounded-3xl border shadow-lg p-1" style={activeChatModeValue === 'community' ? colors.borderStyle : { borderColor: 'hsl(var(--border))' }}>
+        <div className="flex items-center gap-2 relative">
+          {/* Left side icons */}
+          {activeChatModeValue === 'ai' ? (
+            <div className="flex items-center gap-2 pl-3">
+              {/* MIA Avatar */}
+              <Avatar className="h-8 w-8 border-2 border-white/50">
+                <AvatarImage src={miaAvatarUrl} />
+              </Avatar>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleHeartClick}
+                className={`h-8 w-8 rounded-full hover:bg-muted ${isHeartActive ? 'text-red-500' : 'text-red-400'}`}
+                title={isHeartActive ? "Personalisierter Modus aktiv" : "Standard-Modus aktiv"}
+              >
+                <Heart className={`h-4 w-4 ${isHeartActive ? 'fill-red-500' : ''}`} />
+              </Button>
+
+              {globalQueries.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleRecentQueries}
+                  className="h-8 w-8 rounded-full hover:bg-muted text-red-400"
+                  title="Community Anfragen"
+                >
+                  <History className="h-4 w-4" />
+                </Button>
+              )}
+
+              {onAddEvent && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onAddEvent}
+                  className="h-8 w-8 rounded-full hover:bg-muted text-red-400"
+                  title="Event hinzufügen"
+                >
+                  <CalendarPlus className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 pl-3">
+              {/* Category Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-xs rounded-full bg-muted/50 hover:bg-muted"
+                    style={{ color: colors.primary }}
+                  >
+                    #{activeCategory.toLowerCase()}
+                    <ChevronDown className="h-3 w-3 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="bg-zinc-900 border-zinc-700"
+                  side="top"
+                  align="start"
+                >
+                  <DropdownMenuItem
+                    onClick={() => handleCategoryClick('Kreativität')}
+                    className="text-white cursor-pointer hover:bg-zinc-800"
+                  >
+                    <span style={getChannelColor('kreativität').textStyle}>#kreativität</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleCategoryClick('Ausgehen')}
+                    className="text-white cursor-pointer hover:bg-zinc-800"
+                  >
+                    <span style={getChannelColor('ausgehen').textStyle}>#ausgehen</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleCategoryClick('Sport')}
+                    className="text-white cursor-pointer hover:bg-zinc-800"
+                  >
+                    <span style={getChannelColor('sport').textStyle}>#sport</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Image upload button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full hover:bg-muted"
+                style={{ color: colors.primary }}
+                title="Bild hinzufügen"
+              >
+                <ImagePlus className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
+          {/* Input field */}
+          <div className="flex-1 relative">
+            <Textarea
+              ref={textareaRef}
+              placeholder={placeholderText}
+              value={localInput}
+              onChange={handleLocalInputChange}
+              onKeyDown={handleLocalKeyPress}
+              rows={1}
+              className={cn(
+                "min-h-[44px] max-h-32 resize-none border-0 bg-transparent px-4 py-3 text-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0",
+                activeChatModeValue === 'ai' && "pl-4"
+              )}
+              style={{
+                '--placeholder-color': activeChatModeValue === 'community' ? colors.primary : 'hsl(var(--muted-foreground))'
+              } as React.CSSProperties & { '--placeholder-color': string }}
+            />
+          </div>
+
+          {/* Right side actions */}
+          <div className="flex items-center gap-2 pr-3">
+            {/* Microphone button */}
             <Button
               variant="ghost"
               size="icon"
-              onClick={handleHeartClick}
-              className={`h-6 w-6 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`}
-              title={isHeartActive ? "Personalisierter Modus aktiv" : "Standard-Modus aktiv"}
+              className="h-8 w-8 rounded-full hover:bg-muted"
+              style={{ color: activeChatModeValue === 'community' ? colors.primary : 'hsl(var(--muted-foreground))' }}
+              title="Sprachnachricht"
             >
-              <Heart className={`h-3 w-3 ${isHeartActive ? 'fill-red-500' : ''}`} />
+              <Mic className="h-4 w-4" />
             </Button>
 
-            {globalQueries.length > 0 && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleRecentQueries}
-                className="h-6 w-6 text-red-400"
-                title="Community Anfragen"
-              >
-                <History className="h-3 w-3" />
-              </Button>
-            )}
-
-            {onAddEvent && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onAddEvent}
-                className="h-6 w-6 text-red-400"
-                title="Event hinzufügen"
-              >
-                <CalendarPlus className="h-3 w-3" />
-              </Button>
-            )}
-          </>
-        ) : (
-          <>
-            {/* Push Notification Button (replacing Event Share Button) */}
+            {/* Send button */}
             <Button
-              onClick={handleEnablePushNotifications}
-              variant="outline"
+              onClick={() => {
+                console.log('Send button clicked in ChatInput', { activeChatModeValue, localInput });
+                
+                if (activeChatModeValue === 'community') {
+                  // For community mode, ONLY update external input - let parent handle sending
+                  console.log('Community mode: Send button - updating external input only');
+                  setInput(localInput);
+                  setLocalInput('');
+                } else {
+                  // For AI mode, use local send
+                  console.log('AI mode: Send button - handling send directly');
+                  handleLocalSendMessage();
+                }
+              }}
+              disabled={!localInput.trim() || isTyping}
               size="icon"
-              type="button"
-              className="rounded-full h-6 w-6"
-              style={colors.borderStyle}
-              title="Push-Benachrichtigungen aktivieren"
+              className="h-8 w-8 rounded-full text-white shadow-sm disabled:opacity-50"
+              style={localInput.trim() && !isTyping
+                ? (activeChatModeValue === 'community' ? colors.bgStyle : { backgroundColor: 'hsl(var(--primary))' })
+                : { backgroundColor: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }
+              }
             >
-              <Bell className="h-3 w-3" />
+              {isTyping ? (
+                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </Button>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full h-6 px-2 text-[10px] flex items-center gap-1 min-w-[70px]"
-                  style={{...colors.borderStyle, ...colors.textStyle}}
-                >
-                  {activeCategory}
-                  <ChevronDown className="h-2 w-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                className="bg-zinc-900 z-50"
-                style={colors.borderStyle}
-                side="top"
-                align="start"
-              >
-                <DropdownMenuItem
-                  onClick={() => handleCategoryClick('Kreativität')}
-                  className="text-white cursor-pointer hover:bg-zinc-800"
-                >
-                  <span style={getChannelColor('kreativität').textStyle}>#kreativität</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleCategoryClick('Ausgehen')}
-                  className="text-white cursor-pointer hover:bg-zinc-800"
-                >
-                  <span style={getChannelColor('ausgehen').textStyle}>#ausgehen</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleCategoryClick('Sport')}
-                  className="text-white cursor-pointer hover:bg-zinc-800"
-                >
-                  <span style={getChannelColor('sport').textStyle}>#sport</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </>
-        )}
+          </div>
+        </div>
       </div>
-      
-      <div 
-        className={cn(
-          "absolute inset-0 cursor-text z-5 pointer-events-none",
-          getButtonWidth().replace('pl-', 'left-')
-        )}
-        onClick={handleSuggestionClick}
-        style={{ pointerEvents: localInput.trim() === '' && displayText.trim() !== '' ? 'auto' : 'none' }}
-      />
-      
-      <Textarea
-        ref={textareaRef} // Assign the ref here
-        value={localInput}
-        onChange={handleLocalInputChange}
-        onKeyDown={handleLocalKeyPress}
-        placeholder={placeholderText}
-        rows={1} // Start with 1 row
-          className={cn(
-            "w-full bg-background/60 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md border rounded-xl py-2 focus:outline-none text-sm text-foreground placeholder:text-muted-foreground pr-10 transition-all duration-200 text-left min-h-[40px] overflow-hidden",
-            getButtonWidth()
-          )}
-          style={activeChatModeValue === 'community' ? {
-            ...colors.borderStyle,
-            ...colors.shadowStyle,
-            '--placeholder-color': colors.primary
-          } as React.CSSProperties & { '--placeholder-color': string } : {
-            borderColor: 'hsl(var(--border))',
-            '--placeholder-color': 'hsl(var(--muted-foreground))'
-          } as React.CSSProperties & { '--placeholder-color': string }}
-      />
-
-      <button
-        onClick={() => {
-          console.log('Send button clicked in ChatInput', { activeChatModeValue, localInput });
-          
-          if (activeChatModeValue === 'community') {
-            // For community mode, ONLY update external input - let parent handle sending
-            console.log('Community mode: Send button - updating external input only');
-            setInput(localInput);
-            setLocalInput('');
-          } else {
-            // For AI mode, use local send
-            console.log('AI mode: Send button - handling send directly');
-            handleLocalSendMessage();
-          }
-        }}
-        disabled={!localInput.trim() || isTyping}
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-0 flex-shrink-0 h-8 w-8 flex items-center justify-center text-white"
-          style={localInput.trim() && !isTyping
-            ? (activeChatModeValue === 'community' ? colors.bgStyle : { backgroundColor: 'hsl(var(--primary))' })
-            : { backgroundColor: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }
-          }
-      >
-        <Send className="h-4 w-4" />
-      </button>
     </div>
   );
 };
