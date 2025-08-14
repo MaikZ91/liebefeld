@@ -389,7 +389,7 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
       const groupId = `${cityAbbr}_ausgehen`; // Use the correct format: cityAbbr_ausgehen
       
       // Create welcome message from MIA
-      const welcomeMessage = `Hallo ${userData.username}, willkommen bei uns in der Community! Stelle dich gerne vor. 
+      const welcomeMessage = `Hey ${userData.username},willkommen bei uns in der Community 🎉 Erzähl doch kurz: 1️⃣ Was machst du in Bielefeld? 2️⃣ Deine Lieblingsaktivität (#sport, #ausgehen …)? 3️⃣ Fun Fact über dich 😄 
 
 Liebe Grüße
 Mia 💕`;
