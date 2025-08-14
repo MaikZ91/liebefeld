@@ -288,17 +288,6 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-
-              {/* Image upload button */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-full hover:bg-muted"
-                style={{ color: colors.primary }}
-                title="Bild hinzufügen"
-              >
-                <ImagePlus className="h-4 w-4" />
-              </Button>
             </div>
           )}
 
@@ -312,8 +301,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
               onKeyDown={handleLocalKeyPress}
               rows={1}
               className={cn(
-                "min-h-[44px] max-h-32 resize-none border-0 bg-transparent px-4 py-3 text-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0",
-                activeChatModeValue === 'ai' && "pl-4"
+                "min-h-[44px] max-h-32 resize-none border-0 bg-transparent px-4 py-3 text-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
               )}
               style={{
                 '--placeholder-color': activeChatModeValue === 'community' ? colors.primary : 'hsl(var(--muted-foreground))'
@@ -321,20 +309,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
             />
           </div>
 
-          {/* Right side actions */}
-          <div className="flex items-center gap-2 pr-3">
-            {/* Microphone button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full hover:bg-muted"
-              style={{ color: activeChatModeValue === 'community' ? colors.primary : 'hsl(var(--muted-foreground))' }}
-              title="Sprachnachricht"
-            >
-              <Mic className="h-4 w-4" />
-            </Button>
-
-            {/* Send button */}
+          {/* Send button */}
+          <div className="flex items-center pr-3">
             <Button
               onClick={() => {
                 console.log('Send button clicked in ChatInput', { activeChatModeValue, localInput });
