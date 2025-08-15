@@ -33,8 +33,11 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
     // Load from localStorage on component mount
     try {
       const { getActiveCategory } = require('@/utils/chatPreferences');
-      return getActiveCategory();
-    } catch {
+      const result = getActiveCategory();
+      console.log('EventChatBot: loading stored category =', result);
+      return result;
+    } catch (error) {
+      console.error('EventChatBot: error loading category =', error);
       return 'Ausgehen';
     }
   });
@@ -67,13 +70,14 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   };
 
   const handleCategoryChange = (category: string) => {
+    console.log('EventChatBot: changing category from', activeCategory, 'to', category);
     setActiveCategory(category);
     // Save to localStorage
     try {
       const { saveActiveCategory } = require('@/utils/chatPreferences');
       saveActiveCategory(category);
     } catch (error) {
-      console.error('Error saving category preference:', error);
+      console.error('EventChatBot: error saving category preference:', error);
     }
   };
 

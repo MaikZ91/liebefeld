@@ -58,8 +58,11 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
     // Load from localStorage on component mount
     try {
       const { getActiveCategory } = require('@/utils/chatPreferences');
-      return getActiveCategory();
-    } catch {
+      const result = getActiveCategory();
+      console.log('ChatGroup: loading stored category =', result);
+      return result;
+    } catch (error) {
+      console.error('ChatGroup: error loading category =', error);
       return 'Ausgehen';
     }
   });

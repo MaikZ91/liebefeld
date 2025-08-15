@@ -14,13 +14,16 @@ const DEFAULT_PREFERENCES: ChatPreferences = {
 export const getChatPreferences = (): ChatPreferences => {
   try {
     const stored = localStorage.getItem(CHAT_PREFERENCES_KEY);
+    console.log('getChatPreferences: stored =', stored);
     if (stored) {
       const parsed = JSON.parse(stored);
+      console.log('getChatPreferences: parsed =', parsed);
       return { ...DEFAULT_PREFERENCES, ...parsed };
     }
   } catch (error) {
     console.error('Error loading chat preferences:', error);
   }
+  console.log('getChatPreferences: returning default =', DEFAULT_PREFERENCES);
   return DEFAULT_PREFERENCES;
 };
 
@@ -32,6 +35,7 @@ export const saveChatPreferences = (preferences: Partial<ChatPreferences>) => {
       ...preferences,
       lastActivity: Date.now()
     };
+    console.log('saveChatPreferences: saving =', updated);
     localStorage.setItem(CHAT_PREFERENCES_KEY, JSON.stringify(updated));
   } catch (error) {
     console.error('Error saving chat preferences:', error);
@@ -39,9 +43,12 @@ export const saveChatPreferences = (preferences: Partial<ChatPreferences>) => {
 };
 
 export const saveActiveCategory = (category: string) => {
+  console.log('saveActiveCategory: category =', category);
   saveChatPreferences({ activeCategory: category });
 };
 
 export const getActiveCategory = (): string => {
-  return getChatPreferences().activeCategory;
+  const result = getChatPreferences().activeCategory;
+  console.log('getActiveCategory: result =', result);
+  return result;
 };

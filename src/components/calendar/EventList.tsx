@@ -78,7 +78,17 @@ const EventList: React.FC<EventListProps> = memo(({
   
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
 const { filter, setFilter, topEventsPerDay } = useEventContext();
-const [groupFilter, setGroupFilter] = useState<FilterGroup>('Alle');
+const [groupFilter, setGroupFilter] = useState<FilterGroup>(() => {
+  // Load from localStorage on component mount
+  try {
+    const { getActiveCategory } = require('@/utils/chatPreferences');
+    const stored = getActiveCategory();
+    console.log('EventList: loading stored category =', stored);
+    return (stored === 'Ausgehen' || stored === 'Kreativität' || stored === 'Sport') ? stored as FilterGroup : 'Alle';
+  } catch {
+    return 'Alle';
+  }
+});
 const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).filter(Boolean))) as string[], [events]);
 
   const filteredEvents = useMemo(() => {

@@ -86,6 +86,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   const handleCategoryClick = (category: string) => {
+    console.log('MessageInput: changing category to', category);
     if (onCategorySelect) {
       onCategorySelect(category);
     }
@@ -94,7 +95,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
       const { saveActiveCategory } = require('@/utils/chatPreferences');
       saveActiveCategory(category);
     } catch (error) {
-      console.error('Error saving category preference:', error);
+      console.error('MessageInput: error saving category preference:', error);
     }
     // Synchronisiere den Filter mit der ausgewählten Kategorie beim Senden von Nachrichten
     if (typeof window !== 'undefined') {

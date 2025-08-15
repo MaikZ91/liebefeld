@@ -16,6 +16,21 @@ interface FilterBarProps {
 const options: FilterGroup[] = ['Alle', 'Ausgehen', 'Kreativität', 'Sport'];
 
 const FilterBar: React.FC<FilterBarProps> = ({ value, onChange, className, variant = 'dark' }) => {
+  const handleChange = (newValue: FilterGroup) => {
+    console.log('FilterBar: changing from', value, 'to', newValue);
+    onChange(newValue);
+    
+    // Save to localStorage if not "Alle"
+    if (newValue !== 'Alle') {
+      try {
+        const { saveActiveCategory } = require('@/utils/chatPreferences');
+        saveActiveCategory(newValue);
+      } catch (error) {
+        console.error('Error saving filter preference:', error);
+      }
+    }
+  };
+
   return (
     <div className={cn('w-full flex items-center gap-1', className)}>
       <div
@@ -36,7 +51,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ value, onChange, className, varia
                 key={opt}
                 size="sm"
                 variant="ghost"
-                onClick={() => onChange(opt)}
+                onClick={() => handleChange(opt)}
                 className={cn(
                   chipBase,
                   isActive
@@ -59,7 +74,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ value, onChange, className, varia
               key={opt}
               size="sm"
               variant="ghost"
-              onClick={() => onChange(opt)}
+              onClick={() => handleChange(opt)}
               style={isActive ? { ...colors.bgStyle, ...colors.borderStyle, color: 'hsl(var(--foreground))' } : { ...colors.borderStyle, ...colors.textStyle }}
               className={cn(chipBase, 'border', !isActive && 'hover:bg-white/5')}
             >
