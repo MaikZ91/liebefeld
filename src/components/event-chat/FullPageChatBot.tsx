@@ -41,14 +41,50 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   activeChatModeValue,
   communityGroupId,
   onAddEvent,
-  activeCategory = 'Ausgehen',
-  onCategoryChange,
+  activeCategory: externalActiveCategory = 'Ausgehen',
+  onCategoryChange: externalOnCategoryChange,
   onJoinEventChat,
   hideInput = false,
   externalInput = '',
   setExternalInput,
   onExternalSendHandlerChange
 }) => {
+  // Internal state for activeCategory with localStorage persistence
+  const [internalActiveCategory, setInternalActiveCategory] = useState<string>(() => {
+    // Load from localStorage on component mount
+    try {
+      const { getActiveCategory } = require('@/utils/chatPreferences');
+      const result = getActiveCategory();
+      console.log('FullPageChatBot: loading stored category =', result);
+      return result;
+    } catch (error) {
+      console.error('FullPageChatBot: error loading category =', error);
+      return 'Ausgehen';
+    }
+  });
+
+  // Use external prop if provided, otherwise use internal state
+  const activeCategory = externalActiveCategory !== 'Ausgehen' ? externalActiveCategory : internalActiveCategory;
+  
+  // Handle category changes
+  const handleCategoryChange = (category: string) => {
+    console.log('FullPageChatBot: changing category from', activeCategory, 'to', category);
+    setInternalActiveCategory(category);
+    
+    // Save to localStorage
+    try {
+      const { saveActiveCategory } = require('@/utils/chatPreferences');
+      saveActiveCategory(category);
+    } catch (error) {
+      console.error('FullPageChatBot: error saving category preference:', error);
+    }
+    
+    // Call external handler if provided
+    if (externalOnCategoryChange) {
+      externalOnCategoryChange(category);
+    }
+  };
+  
   const {
     messages: aiMessages,
     input: aiInput,
@@ -469,7 +505,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                 showAnimatedPrompts={showAnimatedPrompts}
                 activeChatModeValue={activeChatModeValue}
                 activeCategory={activeCategory}
-                onCategoryChange={onCategoryChange}
+                onCategoryChange={handleCategoryChange}
                 onJoinEventChat={onJoinEventChat}
               />
             </div>
