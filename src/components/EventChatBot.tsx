@@ -29,7 +29,15 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   const activeChatModeValue = activeChatMode !== undefined ? activeChatMode : internalActiveChatMode;
   const setActiveChatModeValue = setActiveChatMode || setInternalActiveChatMode;
   
-  const [activeCategory, setActiveCategory] = useState<string>('Ausgehen');
+  const [activeCategory, setActiveCategory] = useState<string>(() => {
+    // Load from localStorage on component mount
+    try {
+      const { getActiveCategory } = require('@/utils/chatPreferences');
+      return getActiveCategory();
+    } catch {
+      return 'Ausgehen';
+    }
+  });
   
   // External input state for header synchronization
   const [externalInput, setExternalInput] = useState<string>('');
@@ -60,6 +68,13 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
 
   const handleCategoryChange = (category: string) => {
     setActiveCategory(category);
+    // Save to localStorage
+    try {
+      const { saveActiveCategory } = require('@/utils/chatPreferences');
+      saveActiveCategory(category);
+    } catch (error) {
+      console.error('Error saving category preference:', error);
+    }
   };
 
   const handleProfileUpdate = () => {

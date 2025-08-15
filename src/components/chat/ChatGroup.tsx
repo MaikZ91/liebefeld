@@ -54,7 +54,15 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const [username, setUsername] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || 'Gast');
   const [avatar, setAvatar] = useState<string | null>(() => localStorage.getItem(AVATAR_KEY));
-  const [selectedCategory, setSelectedCategory] = useState<string>('Ausgehen');
+  const [selectedCategory, setSelectedCategory] = useState<string>(() => {
+    // Load from localStorage on component mount
+    try {
+      const { getActiveCategory } = require('@/utils/chatPreferences');
+      return getActiveCategory();
+    } catch {
+      return 'Ausgehen';
+    }
+  });
   const [messageFilter, setMessageFilter] = useState<string[]>(['alle']); // New filter state
 
   const fileInputRef = useRef<HTMLInputElement>(null);
