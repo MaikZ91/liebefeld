@@ -84,11 +84,22 @@ const [groupFilter, setGroupFilter] = useState<FilterGroup>(() => {
     const { getActiveCategory } = require('@/utils/chatPreferences');
     const stored = getActiveCategory();
     console.log('EventList: loading stored category =', stored);
-    return (stored === 'Ausgehen' || stored === 'Kreativität' || stored === 'Sport') ? stored as FilterGroup : 'Alle';
+    return (stored === 'Alle' || stored === 'Ausgehen' || stored === 'Kreativität' || stored === 'Sport') ? stored as FilterGroup : 'Alle';
   } catch {
     return 'Alle';
   }
 });
+
+// Update localStorage when groupFilter changes
+useEffect(() => {
+  try {
+    const { saveActiveCategory } = require('@/utils/chatPreferences');
+    saveActiveCategory(groupFilter);
+    console.log('EventList: saved groupFilter to localStorage:', groupFilter);
+  } catch (error) {
+    console.error('EventList: error saving groupFilter:', error);
+  }
+}, [groupFilter]);
 const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).filter(Boolean))) as string[], [events]);
 
   const filteredEvents = useMemo(() => {

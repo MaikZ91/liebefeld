@@ -20,14 +20,13 @@ const FilterBar: React.FC<FilterBarProps> = ({ value, onChange, className, varia
     console.log('FilterBar: changing from', value, 'to', newValue);
     onChange(newValue);
     
-    // Save to localStorage if not "Alle"
-    if (newValue !== 'Alle') {
-      try {
-        const { saveActiveCategory } = require('@/utils/chatPreferences');
-        saveActiveCategory(newValue);
-      } catch (error) {
-        console.error('Error saving filter preference:', error);
-      }
+    // Save to localStorage - always save, even "Alle"
+    try {
+      const { saveActiveCategory } = require('@/utils/chatPreferences');
+      saveActiveCategory(newValue);
+      console.log('FilterBar: saved category to localStorage:', newValue);
+    } catch (error) {
+      console.error('Error saving filter preference:', error);
     }
   };
 

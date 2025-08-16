@@ -7,7 +7,7 @@ export interface ChatPreferences {
 }
 
 const DEFAULT_PREFERENCES: ChatPreferences = {
-  activeCategory: 'Ausgehen',
+  activeCategory: 'Alle',
   lastActivity: Date.now()
 };
 

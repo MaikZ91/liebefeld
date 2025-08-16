@@ -63,8 +63,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   });
 
-  // Use external prop if provided, otherwise use internal state
-  const activeCategory = externalActiveCategory !== 'Ausgehen' ? externalActiveCategory : internalActiveCategory;
+  // Use internal state to maintain persistence
+  const activeCategory = internalActiveCategory;
   
   // Handle category changes
   const handleCategoryChange = (category: string) => {
