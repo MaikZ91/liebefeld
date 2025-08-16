@@ -53,14 +53,17 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const [internalActiveCategory, setInternalActiveCategory] = useState<string>(() => {
     // Load from localStorage on component mount
     try {
-      const { getActiveCategory } = require('@/utils/chatPreferences');
-      const result = getActiveCategory();
-      console.log('FullPageChatBot: loading stored category =', result);
-      return result;
+      const stored = localStorage.getItem('communityChat_preferences');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        console.log('FullPageChatBot: loading stored category =', parsed.activeCategory);
+        return parsed.activeCategory || 'alle';
+      }
     } catch (error) {
       console.error('FullPageChatBot: error loading category =', error);
-      return 'Ausgehen';
     }
+    console.log('FullPageChatBot: using default category = alle');
+    return 'alle';
   });
 
   // Use internal state to maintain persistence
@@ -71,10 +74,17 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     console.log('FullPageChatBot: changing category from', activeCategory, 'to', category);
     setInternalActiveCategory(category);
     
-    // Save to localStorage
+    // Save to localStorage directly
     try {
-      const { saveActiveCategory } = require('@/utils/chatPreferences');
-      saveActiveCategory(category);
+      const current = localStorage.getItem('communityChat_preferences');
+      const currentData = current ? JSON.parse(current) : {};
+      const updated = {
+        ...currentData,
+        activeCategory: category,
+        lastActivity: Date.now()
+      };
+      localStorage.setItem('communityChat_preferences', JSON.stringify(updated));
+      console.log('FullPageChatBot: saved category to localStorage:', category);
     } catch (error) {
       console.error('FullPageChatBot: error saving category preference:', error);
     }
@@ -155,8 +165,28 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   };
 
-  // Filter state for community chat
-  const [messageFilter, setMessageFilter] = useState<string[]>(['alle']);
+  // Filter state for community chat - use localStorage persistence
+  const [messageFilter, setMessageFilter] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem('communityChat_preferences');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const category = parsed.activeCategory || 'alle';
+        console.log('FullPageChatBot: loading messageFilter from localStorage:', category);
+        return [category];
+      }
+    } catch (error) {
+      console.error('FullPageChatBot: error loading messageFilter:', error);
+    }
+    return ['alle'];
+  });
+
+  // Update messageFilter when activeCategory changes
+  useEffect(() => {
+    const newFilter = [activeCategory];
+    console.log('FullPageChatBot: updating messageFilter to:', newFilter);
+    setMessageFilter(newFilter);
+  }, [activeCategory]);
   
   // User profile dialog state
   const [selectedUserProfile, setSelectedUserProfile] = useState<UserProfile | null>(null);
@@ -347,7 +377,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                       variant="ghost"
                       size="sm"
                       className={`${chipBase} ${isActive ? 'bg-white/10 text-white border border-white/20' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
-                      onClick={() => setMessageFilter(['alle'])}
+                      onClick={() => handleCategoryChange('alle')}
                     >
                       #{category}
                     </Button>
@@ -363,15 +393,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                     style={isActive ? { ...colors.bgStyle, ...colors.borderStyle, color: 'hsl(var(--foreground))' } : { ...colors.borderStyle, ...colors.textStyle }}
                     className={`${chipBase} border ${!isActive ? 'hover:bg-white/5' : ''}`}
                     onClick={() => {
-                      setMessageFilter(prev => {
-                        const newFilter = prev.filter(f => f !== 'alle');
-                        if (newFilter.includes(category)) {
-                          const result = newFilter.filter(f => f !== category);
-                          return result.length === 0 ? ['alle'] : result;
-                        } else {
-                          return [...newFilter, category];
-                        }
-                      });
+                      // Update category and save to localStorage
+                      handleCategoryChange(category);
                     }}
                   >
                     #{category}
