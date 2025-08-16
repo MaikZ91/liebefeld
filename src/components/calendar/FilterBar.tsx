@@ -3,30 +3,33 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getChannelColor } from '@/utils/channelColors';
+import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
 
-export type FilterGroup = 'Alle' | 'Ausgehen' | 'Kreativität' | 'Sport';
+export type FilterGroup = 'alle' | 'ausgehen' | 'kreativität' | 'sport';
 
 interface FilterBarProps {
-  value: FilterGroup;
-  onChange: (value: FilterGroup) => void;
+  value?: FilterGroup;
+  onChange?: (value: FilterGroup) => void;
   className?: string;
   variant?: 'dark' | 'light';
 }
 
-const options: FilterGroup[] = ['Alle', 'Ausgehen', 'Kreativität', 'Sport'];
+const options: FilterGroup[] = ['alle', 'ausgehen', 'kreativität', 'sport'];
 
-const FilterBar: React.FC<FilterBarProps> = ({ value, onChange, className, variant = 'dark' }) => {
+const FilterBar: React.FC<FilterBarProps> = ({ value: externalValue, onChange: externalOnChange, className, variant = 'dark' }) => {
+  // Use context for persistence, with optional external control
+  const { activeCategory, setActiveCategory } = useChatPreferences();
+  const value = externalValue || (activeCategory as FilterGroup);
+  
   const handleChange = (newValue: FilterGroup) => {
     console.log('FilterBar: changing from', value, 'to', newValue);
-    onChange(newValue);
     
-    // Save to localStorage - always save, even "Alle"
-    try {
-      const { saveActiveCategory } = require('@/utils/chatPreferences');
-      saveActiveCategory(newValue);
-      console.log('FilterBar: saved category to localStorage:', newValue);
-    } catch (error) {
-      console.error('Error saving filter preference:', error);
+    // Update context
+    setActiveCategory(newValue);
+    
+    // Call external handler if provided
+    if (externalOnChange) {
+      externalOnChange(newValue);
     }
   };
 
@@ -42,7 +45,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ value, onChange, className, varia
       >
         {options.map((opt) => {
           const isActive = value === opt;
-          const isAll = opt === 'Alle';
+          const isAll = opt === 'alle';
           const chipBase = 'px-3 h-7 text-xs rounded-full transition-colors';
           if (isAll) {
             return (
@@ -66,7 +69,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ value, onChange, className, varia
               </Button>
             );
           }
-          const type = (opt === 'Ausgehen' ? 'ausgehen' : opt === 'Kreativität' ? 'kreativität' : 'sport') as 'ausgehen' | 'kreativität' | 'sport';
+          const type = (opt === 'ausgehen' ? 'ausgehen' : opt === 'kreativität' ? 'kreativität' : 'sport') as 'ausgehen' | 'kreativität' | 'sport';
           const colors = getChannelColor(type);
           return (
             <Button

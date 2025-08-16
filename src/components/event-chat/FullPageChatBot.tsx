@@ -20,6 +20,7 @@ import UserProfileDialog from '@/components/users/UserProfileDialog';
 import { userService } from '@/services/userService';
 import { UserProfile } from '@/types/chatTypes';
 import { toast } from 'sonner';
+import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
 
 interface FullPageChatBotProps {
   chatLogic: any;
@@ -49,51 +50,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   setExternalInput,
   onExternalSendHandlerChange
 }) => {
-  // Internal state for activeCategory with localStorage persistence
-  const [internalActiveCategory, setInternalActiveCategory] = useState<string>(() => {
-    // Load from localStorage on component mount
-    try {
-      const stored = localStorage.getItem('communityChat_preferences');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        console.log('FullPageChatBot: loading stored category =', parsed.activeCategory);
-        return parsed.activeCategory || 'alle';
-      }
-    } catch (error) {
-      console.error('FullPageChatBot: error loading category =', error);
-    }
-    console.log('FullPageChatBot: using default category = alle');
-    return 'alle';
-  });
-
-  // Use internal state to maintain persistence
-  const activeCategory = internalActiveCategory;
-  
-  // Handle category changes
-  const handleCategoryChange = (category: string) => {
-    console.log('FullPageChatBot: changing category from', activeCategory, 'to', category);
-    setInternalActiveCategory(category);
-    
-    // Save to localStorage directly
-    try {
-      const current = localStorage.getItem('communityChat_preferences');
-      const currentData = current ? JSON.parse(current) : {};
-      const updated = {
-        ...currentData,
-        activeCategory: category,
-        lastActivity: Date.now()
-      };
-      localStorage.setItem('communityChat_preferences', JSON.stringify(updated));
-      console.log('FullPageChatBot: saved category to localStorage:', category);
-    } catch (error) {
-      console.error('FullPageChatBot: error saving category preference:', error);
-    }
-    
-    // Call external handler if provided
-    if (externalOnCategoryChange) {
-      externalOnCategoryChange(category);
-    }
-  };
+  // Use global chat preferences context
+  const { activeCategory, setActiveCategory } = useChatPreferences();
   
   const {
     messages: aiMessages,
@@ -165,21 +123,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   };
 
-  // Filter state for community chat - use localStorage persistence
-  const [messageFilter, setMessageFilter] = useState<string[]>(() => {
-    try {
-      const stored = localStorage.getItem('communityChat_preferences');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const category = parsed.activeCategory || 'alle';
-        console.log('FullPageChatBot: loading messageFilter from localStorage:', category);
-        return [category];
-      }
-    } catch (error) {
-      console.error('FullPageChatBot: error loading messageFilter:', error);
-    }
-    return ['alle'];
-  });
+  // Filter state for community chat - use context
+  const [messageFilter, setMessageFilter] = useState<string[]>([activeCategory]);
 
   // Update messageFilter when activeCategory changes
   useEffect(() => {
@@ -377,7 +322,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                       variant="ghost"
                       size="sm"
                       className={`${chipBase} ${isActive ? 'bg-white/10 text-white border border-white/20' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
-                      onClick={() => handleCategoryChange('alle')}
+                      onClick={() => setActiveCategory('alle')}
                     >
                       #{category}
                     </Button>
@@ -393,8 +338,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                     style={isActive ? { ...colors.bgStyle, ...colors.borderStyle, color: 'hsl(var(--foreground))' } : { ...colors.borderStyle, ...colors.textStyle }}
                     className={`${chipBase} border ${!isActive ? 'hover:bg-white/5' : ''}`}
                     onClick={() => {
-                      // Update category and save to localStorage
-                      handleCategoryChange(category);
+                      // Update category using context
+                      setActiveCategory(category);
                     }}
                   >
                     #{category}
@@ -528,7 +473,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                 showAnimatedPrompts={showAnimatedPrompts}
                 activeChatModeValue={activeChatModeValue}
                 activeCategory={activeCategory}
-                onCategoryChange={handleCategoryChange}
+                onCategoryChange={setActiveCategory}
                 onJoinEventChat={onJoinEventChat}
               />
             </div>

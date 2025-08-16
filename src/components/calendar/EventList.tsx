@@ -10,6 +10,7 @@ import FilterBar, { type FilterGroup } from '@/components/calendar/FilterBar';
 import { isInGroup } from '@/utils/eventCategoryGroups';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
+import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
 
 interface EventListProps {
   events: Event[];
@@ -78,38 +79,18 @@ const EventList: React.FC<EventListProps> = memo(({
   
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
 const { filter, setFilter, topEventsPerDay } = useEventContext();
-const [groupFilter, setGroupFilter] = useState<FilterGroup>(() => {
-  // Load from localStorage on component mount
-  try {
-    const { getActiveCategory } = require('@/utils/chatPreferences');
-    const stored = getActiveCategory();
-    console.log('EventList: loading stored category =', stored);
-    return (stored === 'Alle' || stored === 'Ausgehen' || stored === 'Kreativität' || stored === 'Sport') ? stored as FilterGroup : 'Alle';
-  } catch {
-    return 'Alle';
-  }
-});
-
-// Update localStorage when groupFilter changes
-useEffect(() => {
-  try {
-    const { saveActiveCategory } = require('@/utils/chatPreferences');
-    saveActiveCategory(groupFilter);
-    console.log('EventList: saved groupFilter to localStorage:', groupFilter);
-  } catch (error) {
-    console.error('EventList: error saving groupFilter:', error);
-  }
-}, [groupFilter]);
+const { activeCategory } = useChatPreferences();
+const groupFilter = activeCategory as FilterGroup;
 const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).filter(Boolean))) as string[], [events]);
 
   const filteredEvents = useMemo(() => {
     let base = events;
 
-    if (groupFilter !== 'Alle') {
+    if (groupFilter !== 'alle') {
       base = base.filter((event) => isInGroup(event.category, groupFilter as any));
     } else if (filter) {
       // If context filter matches a group label, map categories; otherwise, use category equality
-      const isGroup = filter === 'Ausgehen' || filter === 'Kreativität' || filter === 'Sport';
+      const isGroup = filter === 'ausgehen' || filter === 'kreativität' || filter === 'sport';
       base = base.filter((event) =>
         isGroup ? isInGroup(event.category, filter as any) : event.category === filter
       );
@@ -202,14 +183,14 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
               ? "Top Events" 
               : showNewEvents 
                 ? "Neue Events" 
-                : groupFilter !== 'Alle'
+                : groupFilter !== 'alle'
                   ? `${groupFilter} Events`
                   : filter 
                     ? `${filter} Events` 
                     : "Alle Events"}
           </h3>
           <div className="flex items-center gap-2">
-            <FilterBar value={groupFilter} onChange={(v) => setGroupFilter(v)} variant="light" />
+            <FilterBar value={groupFilter} className="flex-shrink-0" variant="light" />
             <div className="inline-flex rounded-full p-0.5 bg-white/80 border border-gray-200">
               <Button
                 size="sm"
