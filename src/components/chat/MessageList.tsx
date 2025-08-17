@@ -2,18 +2,12 @@
 import React, { useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/chatUIUtils';
-import { Button } from '@/components/ui/button';
 import ChatMessage from './ChatMessage';
 import TypingIndicator from './TypingIndicator';
-import { ThreadButton } from './ThreadButton';
-import { ThreadList } from './ThreadList';
-import { ReplyInput } from './ReplyInput';
-import { useThreads } from '@/hooks/chat/useThreads';
 import { Message, TypingUser, EventShare } from '@/types/chatTypes';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ChatLoadingSkeleton from './ChatLoadingSkeleton';
 import { reactionService } from '@/services/reactionService';
-import { Reply } from 'lucide-react';
 
 interface MessageListProps {
   messages: Message[];
@@ -26,7 +20,6 @@ interface MessageListProps {
   groupType: 'ausgehen' | 'sport' | 'kreativität';
   chatBottomRef: React.RefObject<HTMLDivElement>;
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
-  groupId: string;
 }
 
 const MessageList: React.FC<MessageListProps> = ({
@@ -39,36 +32,9 @@ const MessageList: React.FC<MessageListProps> = ({
   isGroup,
   groupType,
   chatBottomRef,
-  onJoinEventChat,
-  groupId
+  onJoinEventChat
 }) => {
   const isMobile = useIsMobile();
-  
-  const {
-    threadMessages,
-    threadCounts,
-    expandedThreads,
-    replyingTo,
-    toggleThread,
-    startReply,
-    cancelReply,
-    sendReply,
-    initializeThreadCounts
-  } = useThreads(groupId, username);
-
-  // Initialize thread counts when messages change
-  useEffect(() => {
-    const topLevelMessageIds = messages
-      .filter(msg => !msg.parent_id)
-      .map(msg => msg.id);
-    
-    if (topLevelMessageIds.length > 0) {
-      initializeThreadCounts(topLevelMessageIds);
-    }
-  }, [messages, initializeThreadCounts]);
-
-  // Filter out thread messages from main message list
-  const topLevelMessages = messages.filter(msg => !msg.parent_id);
 
   // Parse event data from message text
   const parseEventData = (message: Message): EventShare | undefined => {
@@ -130,11 +96,9 @@ const MessageList: React.FC<MessageListProps> = ({
             <div className="text-center text-gray-400 py-4">No messages yet. Start the conversation!</div>
           )}
           
-          {topLevelMessages.map((message, index) => {
-            const isConsecutive = index > 0 && topLevelMessages[index - 1].user_name === message.user_name;
+          {messages.map((message, index) => {
+            const isConsecutive = index > 0 && messages[index - 1].user_name === message.user_name;
             const timeAgo = formatTime(message.created_at);
-            const messageThreadCount = threadCounts[message.id] || 0;
-            const isThreadExpanded = expandedThreads.has(message.id);
             
             // Parse event data
             let eventData: EventShare | undefined;
@@ -164,58 +128,18 @@ const MessageList: React.FC<MessageListProps> = ({
                   </div>
                 )}
                 <div className="w-full max-w-full overflow-hidden break-words -mt-1 relative z-10">
-                  <div className="flex items-start justify-between group/message">
-                    <div className="flex-1">
-                      <ChatMessage 
-                        message={messageContent} 
-                        isConsecutive={isConsecutive}
-                        isGroup={isGroup}
-                        eventData={eventData}
-                        eventId={message.event_id}
-                        messageId={message.id}
-                        reactions={message.reactions || []}
-                        onReact={handleReaction(message.id)}
-                        currentUsername={username}
-                        onJoinEventChat={onJoinEventChat}
-                      />
-                    </div>
-                    
-                    {/* Reply Button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => startReply(message.id)}
-                      className="opacity-0 group-hover/message:opacity-100 transition-opacity h-6 w-6 p-0 ml-2"
-                    >
-                      <Reply className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  
-                  {/* Thread Button */}
-                  <ThreadButton
-                    threadCount={messageThreadCount}
-                    onThreadClick={() => toggleThread(message.id)}
-                    isExpanded={isThreadExpanded}
+                  <ChatMessage 
+                    message={messageContent} 
+                    isConsecutive={isConsecutive}
+                    isGroup={isGroup}
+                    eventData={eventData}
+                    eventId={message.event_id}
+                    messageId={message.id}
+                    reactions={message.reactions || []} // Pass reactions directly
+                    onReact={handleReaction(message.id)}
+                    currentUsername={username}
+                    onJoinEventChat={onJoinEventChat}
                   />
-                  
-                  {/* Thread Messages */}
-                  {isThreadExpanded && threadMessages[message.id] && (
-                    <ThreadList
-                      threadMessages={threadMessages[message.id]}
-                      formatTime={formatTime}
-                      onReply={(parentId) => startReply(parentId)}
-                      isExpanded={isThreadExpanded}
-                    />
-                  )}
-                  
-                  {/* Reply Input */}
-                  {replyingTo === message.id && (
-                    <ReplyInput
-                      onSend={(content) => sendReply(message.id, content)}
-                      onCancel={cancelReply}
-                      placeholder={`Antwort auf ${message.user_name}...`}
-                    />
-                  )}
                 </div>
               </div>
             );

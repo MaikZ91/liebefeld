@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
+  // Allows to automatically instanciate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -80,7 +80,6 @@ export type Database = {
           group_id: string
           id: string
           media_url: string | null
-          parent_id: string | null
           reactions: Json | null
           read_by: string[] | null
           sender: string
@@ -97,7 +96,6 @@ export type Database = {
           group_id: string
           id?: string
           media_url?: string | null
-          parent_id?: string | null
           reactions?: Json | null
           read_by?: string[] | null
           sender: string
@@ -114,7 +112,6 @@ export type Database = {
           group_id?: string
           id?: string
           media_url?: string | null
-          parent_id?: string | null
           reactions?: Json | null
           read_by?: string[] | null
           sender?: string
@@ -126,13 +123,6 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "chat_groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "chat_messages_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "chat_messages"
             referencedColumns: ["id"]
           },
         ]
@@ -351,19 +341,16 @@ export type Database = {
       }
       push_tokens: {
         Row: {
-          city: string | null
           created_at: string | null
           token: string
           updated_at: string | null
         }
         Insert: {
-          city?: string | null
           created_at?: string | null
           token: string
           updated_at?: string | null
         }
         Update: {
-          city?: string | null
           created_at?: string | null
           token?: string
           updated_at?: string | null
@@ -513,7 +500,7 @@ export type Database = {
     }
     Functions: {
       append_onboarding_step_jsonb: {
-        Args: { new_step: Json; uid: string }
+        Args: { uid: string; new_step: Json }
         Returns: undefined
       }
       check_perfect_day_subscription: {
@@ -528,16 +515,12 @@ export type Database = {
         Args: { event_uuid: string }
         Returns: number
       }
-      get_thread_count: {
-        Args: { message_id: string }
-        Returns: number
-      }
       has_user_liked_event: {
         Args: { event_uuid: string; user_uuid: string }
         Returns: boolean
       }
       toggle_perfect_day_subscription: {
-        Args: { p_subscribe: boolean; p_username: string }
+        Args: { p_username: string; p_subscribe: boolean }
         Returns: boolean
       }
     }
