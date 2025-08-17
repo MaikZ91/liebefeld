@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -341,16 +341,19 @@ export type Database = {
       }
       push_tokens: {
         Row: {
+          city: string | null
           created_at: string | null
           token: string
           updated_at: string | null
         }
         Insert: {
+          city?: string | null
           created_at?: string | null
           token: string
           updated_at?: string | null
         }
         Update: {
+          city?: string | null
           created_at?: string | null
           token?: string
           updated_at?: string | null
@@ -500,7 +503,7 @@ export type Database = {
     }
     Functions: {
       append_onboarding_step_jsonb: {
-        Args: { uid: string; new_step: Json }
+        Args: { new_step: Json; uid: string }
         Returns: undefined
       }
       check_perfect_day_subscription: {
@@ -520,7 +523,7 @@ export type Database = {
         Returns: boolean
       }
       toggle_perfect_day_subscription: {
-        Args: { p_username: string; p_subscribe: boolean }
+        Args: { p_subscribe: boolean; p_username: string }
         Returns: boolean
       }
     }
