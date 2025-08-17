@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { initializeFCM } from '@/services/firebaseMessaging';
 import { useToast } from '@/hooks/use-toast';
 import { getChannelColor } from '@/utils/channelColors';
+import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
 
 const AnimatedText = ({ text, className = '' }: { text: string; className?: string }) => {
   return (
@@ -244,10 +245,19 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     </div>
   );
 
+  const { setActiveCategory } = useChatPreferences();
+  
   const handleCategoryClick = (category: string) => {
+    console.log('ChatInput: changing category to:', category);
+    
+    // Save to context (which persists to localStorage)
+    setActiveCategory(category.toLowerCase());
+    
+    // Also call external handler if provided
     if (onCategoryChange) {
       onCategoryChange(category);
     }
+    
     setTimeout(() => {
         if (inputRef.current) {
             inputRef.current.focus();
