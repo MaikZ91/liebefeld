@@ -33,6 +33,8 @@ interface Message {
   event_title?: string; // Added event_title for event messages
   read_by?: string[];
   category?: string; // Added category field for message labeling
+  reactions?: { emoji: string; users: string[] }[]; // Added reactions
+  parent_id?: string; // Added for thread support
 }
 
 const ChatGroup: React.FC<ChatGroupProps> = ({
@@ -539,7 +541,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           group_id: msg.group_id,
           event_id: msg.event_id,
           event_title: msg.event_title,
-          reactions: []
+          reactions: msg.reactions || [],
+          parent_id: msg.parent_id
         }))}
         loading={loading}
         error={error}
@@ -550,6 +553,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         groupType={groupType}
         chatBottomRef={scrollManagement.chatBottomRef}
         onJoinEventChat={handleJoinEventChat}
+        groupId={groupId}
       />
 
       <div className="p-3 bg-black border-t border-gray-800 flex-shrink-0">

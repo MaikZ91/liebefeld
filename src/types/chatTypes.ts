@@ -49,6 +49,7 @@ export interface Message {
   event_title?: string; // Added event_title for display
   read_by?: string[];
   reactions?: { emoji: string; users: string[] }[]; // Added reactions
+  parent_id?: string; // Added for thread support
 }
 
 export interface ChatGroup {
