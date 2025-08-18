@@ -57,10 +57,12 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>(() => {
     // Load from localStorage on component mount
     try {
-      const { getActiveCategory } = require('@/utils/chatPreferences');
-      const result = getActiveCategory();
-      console.log('ChatGroup: loading stored category =', result);
-      return result;
+      import('@/utils/chatPreferences').then(({ getActiveCategory }) => {
+        const result = getActiveCategory();
+        console.log('ChatGroup: loading stored category =', result);
+        setSelectedCategory(result);
+      });
+      return 'Ausgehen';
     } catch (error) {
       console.error('ChatGroup: error loading category =', error);
       return 'Ausgehen';
@@ -439,7 +441,11 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
 
   return (
     <div className="flex flex-col h-full max-h-full bg-black overflow-y-auto overflow-x-hidden">
-      <div className="border-b border-gray-800 bg-black py-3 px-4 flex-shrink-0">
+      <div className="py-3 px-4 flex-shrink-0" style={{
+        background: 'rgba(0, 0, 0, 0.6)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255, 140, 0, 0.2)'
+      }}>
         <div className="flex items-center justify-between mb-0">
           <div className="flex items-center">
             <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center mr-3">
@@ -489,7 +495,12 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
                     key={category}
                     variant="ghost"
                     size="sm"
-                    className={`${chipBase} ${isActive ? 'bg-white/10 text-white border border-white/20' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}
+                    className={`${chipBase} ${isActive ? 'text-white border-0' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                    style={isActive ? {
+                      background: 'rgba(255, 140, 0, 0.3)',
+                      border: '1px solid rgba(255, 140, 0, 0.5)',
+                      backdropFilter: 'blur(10px)'
+                    } : {}}
                     onClick={() => {
                       if (category === 'alle') {
                         setMessageFilter(['alle']);

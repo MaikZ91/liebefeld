@@ -92,8 +92,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
     // Save to localStorage
     try {
-      const { saveActiveCategory } = require('@/utils/chatPreferences');
-      saveActiveCategory(category);
+      import('@/utils/chatPreferences').then(({ saveActiveCategory }) => {
+        saveActiveCategory(category);
+      });
     } catch (error) {
       console.error('MessageInput: error saving category preference:', error);
     }
@@ -143,10 +144,16 @@ const MessageInput: React.FC<MessageInputProps> = ({
           onChange={handleTextareaChange}
           onKeyDown={handleKeyDown}
           className={cn(
-            "min-h-[50px] flex-grow resize-none pr-14 border-2 transition-all duration-200 bg-gray-900/50 border-gray-700 text-white",
+            "min-h-[50px] flex-grow resize-none pr-14 transition-all duration-200 text-white border-0",
             leftPadding,
-            "focus:border-gray-600 focus:ring-0"
+            "focus:ring-0 focus:outline-none"
           )}
+          style={{
+            background: 'linear-gradient(135deg, rgba(255, 140, 0, 0.08) 0%, rgba(255, 69, 0, 0.05) 100%)',
+            border: '1px solid rgba(255, 140, 0, 0.2)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '20px'
+          }}
         />
         {/* Buttons auf der linken Seite des Inputs (absolute Positionierung) */}
         {mode === 'community' && ( // Only show in community mode
@@ -157,14 +164,25 @@ const MessageInput: React.FC<MessageInputProps> = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-full h-6 px-2 text-[10px] flex items-center gap-1 min-w-[70px] bg-gray-800 border-gray-600 text-white"
+                  className="rounded-full h-6 px-2 text-[10px] flex items-center gap-1 min-w-[70px] text-white border-0"
+                  style={{
+                    background: 'rgba(255, 140, 0, 0.2)',
+                    border: '1px solid rgba(255, 140, 0, 0.3)',
+                    backdropFilter: 'blur(15px)'
+                  }}
                 >
                   {activeCategory}
                   <ChevronDown className="h-2 w-2" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="bg-gray-900 border-gray-700 z-50"
+                className="z-50 border-0"
+                style={{
+                  background: 'rgba(0, 0, 0, 0.8)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 140, 0, 0.2)',
+                  borderRadius: '12px'
+                }}
                 side="top"
                 align="start"
               >
@@ -195,7 +213,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
               variant="outline"
               size="icon"
               type="button"
-              className="rounded-full h-6 w-6 bg-gray-800 border-gray-600 text-white"
+              className="rounded-full h-6 w-6 text-white border-0"
+              style={{
+                background: 'rgba(255, 140, 0, 0.2)',
+                border: '1px solid rgba(255, 140, 0, 0.3)',
+                backdropFilter: 'blur(15px)'
+              }}
               title="Push-Benachrichtigungen aktivieren"
             >
               <Bell className="h-3 w-3" />
@@ -208,7 +231,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
           disabled={isSending || (!value?.trim() && !newMessage.trim())}
           className="rounded-full min-w-[32px] h-8 w-8 absolute right-1 top-1 p-0 text-white border-0"
           style={{
-            background: colors.primary
+            background: 'linear-gradient(45deg, #FF8C00, #FF4500)',
+            boxShadow: '0 4px 12px rgba(255, 140, 0, 0.4)'
           }}
         >
           {isSending ? (

@@ -181,10 +181,13 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       className={cn(
         "group p-4 rounded-2xl relative w-full max-w-full overflow-hidden transition-all duration-200",
         isConsecutive ? 'mt-1' : 'mt-2',
-        "bg-gray-900/50 border border-gray-800 text-white"
+        "text-white"
       )}
       style={{ 
-        borderLeft: `3px solid ${colors.primary}`
+        background: 'linear-gradient(135deg, rgba(255, 140, 0, 0.2) 0%, rgba(255, 69, 0, 0.15) 50%, rgba(139, 69, 19, 0.1) 100%)',
+        border: '1px solid rgba(255, 140, 0, 0.3)',
+        backdropFilter: 'blur(20px)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
       }}
     >
       {/* Outer flex container for text and reactions */}
