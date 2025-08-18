@@ -179,15 +179,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   const messageContent = (
     <div
       className={cn(
-        "group p-3 rounded-2xl relative w-full max-w-full overflow-hidden transition-all duration-300",
-        isConsecutive ? 'mt-0.5' : 'mt-1',
-        "glass-message-bubble bubble-hover glass-shimmer text-foreground"
+        "group p-4 rounded-2xl relative w-full max-w-full overflow-hidden transition-all duration-200",
+        isConsecutive ? 'mt-1' : 'mt-2',
+        "bg-gray-900/50 border border-gray-800 text-white"
       )}
       style={{ 
-        borderLeft: `3px solid ${colors.primary}`,
-        background: `linear-gradient(135deg, 
-          rgba(255, 255, 255, 0.05) 0%, 
-          rgba(255, 255, 255, 0.02) 100%)`
+        borderLeft: `3px solid ${colors.primary}`
       }}
     >
       {/* Outer flex container for text and reactions */}

@@ -439,7 +439,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
 
   return (
     <div className="flex flex-col h-full max-h-full bg-black overflow-y-auto overflow-x-hidden">
-      <div className="glass-header py-3 px-4 flex-shrink-0 liquid-glass-border">
+      <div className="border-b border-gray-800 bg-black py-3 px-4 flex-shrink-0">
         <div className="flex items-center justify-between mb-0">
           <div className="flex items-center">
             <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center mr-3">
@@ -477,7 +477,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         </div>
 
         {/* Filter UI */}
-        <div className="px-0 py-2 border-b border-white/5">
+        <div className="px-0 py-2 border-b border-gray-800">
           <div className="flex flex-wrap gap-2">
             {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => {
               const isActive = messageFilter.includes(category);
@@ -489,7 +489,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
                     key={category}
                     variant="ghost"
                     size="sm"
-                    className={`${chipBase} ${isActive ? 'liquid-glass glass-shimmer text-white border-0' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                    className={`${chipBase} ${isActive ? 'bg-white/10 text-white border border-white/20' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}
                     onClick={() => {
                       if (category === 'alle') {
                         setMessageFilter(['alle']);

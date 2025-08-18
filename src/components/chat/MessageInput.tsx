@@ -143,17 +143,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
           onChange={handleTextareaChange}
           onKeyDown={handleKeyDown}
           className={cn(
-            "min-h-[50px] flex-grow resize-none pr-14 transition-all duration-300 glass-input border-0",
+            "min-h-[50px] flex-grow resize-none pr-14 border-2 transition-all duration-200 bg-gray-900/50 border-gray-700 text-white",
             leftPadding,
-            "focus:ring-2 focus:ring-white/20 focus:ring-offset-0"
+            "focus:border-gray-600 focus:ring-0"
           )}
-          style={{
-            background: 'rgba(255, 255, 255, 0.03)',
-            backdropFilter: 'blur(25px)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
-            color: 'white'
-          }}
         />
         {/* Buttons auf der linken Seite des Inputs (absolute Positionierung) */}
         {mode === 'community' && ( // Only show in community mode
@@ -164,24 +157,14 @@ const MessageInput: React.FC<MessageInputProps> = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-full h-6 px-2 text-[10px] flex items-center gap-1 min-w-[70px] liquid-glass glass-shimmer border-0 text-white"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)'
-                  }}
+                  className="rounded-full h-6 px-2 text-[10px] flex items-center gap-1 min-w-[70px] bg-gray-800 border-gray-600 text-white"
                 >
                   {activeCategory}
                   <ChevronDown className="h-2 w-2" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="liquid-glass border-0 z-50"
-                style={{
-                  background: 'rgba(0, 0, 0, 0.8)',
-                  backdropFilter: 'blur(30px)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)'
-                }}
+                className="bg-gray-900 border-gray-700 z-50"
                 side="top"
                 align="start"
               >
@@ -212,12 +195,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
               variant="outline"
               size="icon"
               type="button"
-              className="rounded-full h-6 w-6 liquid-glass glass-shimmer border-0 text-white"
-              style={{
-                background: 'rgba(255, 255, 255, 0.08)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)'
-              }}
+              className="rounded-full h-6 w-6 bg-gray-800 border-gray-600 text-white"
               title="Push-Benachrichtigungen aktivieren"
             >
               <Bell className="h-3 w-3" />
@@ -228,11 +206,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
         <Button
           onClick={handleSendButtonClick}
           disabled={isSending || (!value?.trim() && !newMessage.trim())}
-          className="rounded-full min-w-[32px] h-8 w-8 absolute right-1 top-1 p-0 text-white liquid-glass glass-shimmer border-0 bubble-hover"
+          className="rounded-full min-w-[32px] h-8 w-8 absolute right-1 top-1 p-0 text-white border-0"
           style={{
-            background: colors.primary,
-            boxShadow: `0 4px 16px ${colors.primary}40, 0 2px 8px rgba(0, 0, 0, 0.3)`,
-            backdropFilter: 'blur(10px)'
+            background: colors.primary
           }}
         >
           {isSending ? (
