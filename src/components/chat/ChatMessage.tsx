@@ -179,11 +179,16 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   const messageContent = (
     <div
       className={cn(
-        "group p-3 rounded-2xl relative border w-full max-w-full overflow-hidden transition",
+        "group p-3 rounded-2xl relative w-full max-w-full overflow-hidden transition-all duration-300",
         isConsecutive ? 'mt-0.5' : 'mt-1',
-        "bg-background/70 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md text-foreground shadow-sm hover:shadow-md"
+        "glass-message-bubble bubble-hover glass-shimmer text-foreground"
       )}
-      style={{ borderLeftWidth: 3, borderLeftColor: colors.primary, ...(colors.shadowStyle as React.CSSProperties) }}
+      style={{ 
+        borderLeft: `3px solid ${colors.primary}`,
+        background: `linear-gradient(135deg, 
+          rgba(255, 255, 255, 0.05) 0%, 
+          rgba(255, 255, 255, 0.02) 100%)`
+      }}
     >
       {/* Outer flex container for text and reactions */}
       <div className="flex flex-col">

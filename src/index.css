@@ -45,13 +45,37 @@
     --sidebar-border: 0 0% 15%;
     --sidebar-ring: 0 100% 55%;
 
-    /* Channel colors */
+    /* Liquid Glass Design Tokens */
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-blur: 20px;
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    --glass-gradient-start: rgba(255, 255, 255, 0.1);
+    --glass-gradient-end: rgba(255, 255, 255, 0.01);
+    
+    /* Gradient borders */
+    --liquid-gradient: linear-gradient(135deg, 
+      rgba(255, 111, 97, 0.8) 0%,
+      rgba(255, 185, 0, 0.6) 25%,
+      rgba(139, 69, 19, 0.4) 50%,
+      rgba(255, 111, 97, 0.8) 75%,
+      rgba(255, 185, 0, 0.6) 100%);
+    
+    /* Channel colors with glass effect */
     --sport-primary: 0 84% 60%;
     --sport-secondary: 0 84% 50%;
+    --sport-glass: rgba(220, 38, 38, 0.15);
+    --sport-border: rgba(220, 38, 38, 0.3);
+    
     --kreativität-primary: 45 93% 58%;
     --kreativität-secondary: 45 93% 48%;
+    --kreativität-glass: rgba(245, 158, 11, 0.15);
+    --kreativität-border: rgba(245, 158, 11, 0.3);
+    
     --ausgehen-primary: 217 91% 60%;
     --ausgehen-secondary: 217 91% 50%;
+    --ausgehen-glass: rgba(59, 130, 246, 0.15);
+    --ausgehen-border: rgba(59, 130, 246, 0.3);
   }
   
   /* Custom placeholder colors for channel inputs */
@@ -132,12 +156,15 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Roboto', sans-serif;
-    background-color: #000000;
+    font-family: 'Inter', 'Roboto', sans-serif;
+    background: #000000;
     background-image:
-      radial-gradient(circle at 100% 100%, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
-      radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.04) 0%, transparent 40%);
+      radial-gradient(circle at 20% 50%, rgba(255, 111, 97, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 185, 0, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 80%, rgba(139, 69, 19, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 0% 100%, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
     background-attachment: fixed;
+    background-size: 100% 100%, 80% 80%, 120% 120%, 90% 90%;
   }
   
   h1, h2, h3, h4, h5, h6 {
@@ -169,28 +196,91 @@
     padding-top: 48px !important;
   }
 
-  .glass-effect {
-    @apply bg-white/80 dark:bg-black/80 backdrop-blur-md border border-white/20 dark:border-black/20 shadow-lg;
+  /* Liquid Glass Components */
+  .liquid-glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    position: relative;
+    overflow: hidden;
   }
   
-  .dark-glass-effect {
-    @apply bg-black/50 backdrop-blur-md border border-white/20 shadow-lg;
+  .liquid-glass::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--liquid-gradient);
+    opacity: 0.1;
+    pointer-events: none;
+    z-index: -1;
   }
   
-  .glass-card {
-    @apply bg-white/70 dark:bg-black/70 backdrop-blur-md shadow-sm border border-white/30 dark:border-white/10 transition-all duration-300;
+  .liquid-glass-border {
+    position: relative;
+    padding: 1px;
+    background: var(--liquid-gradient);
+    border-radius: inherit;
   }
   
-  .dark-glass-card {
-    @apply bg-black/60 backdrop-blur-md shadow-md border border-white/15 transition-all duration-300 w-full;
+  .liquid-glass-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    background: var(--liquid-gradient);
+    border-radius: inherit;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: xor;
+    -webkit-mask-composite: xor;
   }
   
-  .dark-glass-card:hover {
-    @apply bg-black/70 shadow-md;
+  .liquid-glass-content {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    border-radius: inherit;
+    position: relative;
+    z-index: 1;
   }
   
-  .glass-card:hover {
-    @apply bg-white/80 dark:bg-black/80 shadow-md;
+  .glass-message-bubble {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .glass-message-bubble::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  }
+  
+  .glass-input {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  
+  .glass-header {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(30px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   }
   
   .hover-scale {
@@ -343,6 +433,63 @@
     display: inline-block; /* allows setting width */
     max-width: calc(100% - 60px); /* Adjust based on padding/margin/reaction button width */
     vertical-align: top; /* Align with the top of the flex container */
+  }
+
+  /* Liquid Glass Animations */
+  @keyframes liquid-flow {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+  
+  @keyframes glass-shimmer {
+    0% {
+      background-position: -100% 0;
+    }
+    100% {
+      background-position: 100% 0;
+    }
+  }
+  
+  @keyframes bubble-float {
+    0%, 100% {
+      transform: translateY(0) scale(1);
+      opacity: 0.6;
+    }
+    50% {
+      transform: translateY(-2px) scale(1.02);
+      opacity: 0.8;
+    }
+  }
+  
+  .liquid-animate {
+    background-size: 200% 200%;
+    animation: liquid-flow 8s ease-in-out infinite;
+  }
+  
+  .glass-shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    background-size: 200% 100%;
+    animation: glass-shimmer 3s ease-in-out infinite;
+    pointer-events: none;
+  }
+  
+  .bubble-hover:hover {
+    animation: bubble-float 0.6s ease-in-out;
   }
 
   /* Enhanced animations */
