@@ -15,10 +15,10 @@ import { getChannelColor } from '@/utils/channelColors';
 
 const getGroupColor = (groupType: string) => {
   switch (groupType.toLowerCase()) {
-    case 'sport': return 'hsl(217, 91%, 60%)'; // Blue
-    case 'ausgehen': return 'hsl(0, 84%, 60%)'; // Red  
-    case 'kreativität': return 'hsl(45, 93%, 58%)'; // Yellow
-    default: return 'hsl(0, 84%, 60%)'; // Default red for ausgehen
+    case 'sport': return { border: 'hsl(217, 91%, 60%)', bg: 'rgba(54, 144, 255, 0.08)' }; // Blue
+    case 'ausgehen': return { border: 'hsl(0, 84%, 60%)', bg: 'rgba(255, 77, 77, 0.08)' }; // Red  
+    case 'kreativität': return { border: 'hsl(45, 93%, 58%)', bg: 'rgba(255, 193, 7, 0.08)' }; // Yellow
+    default: return { border: 'hsl(0, 84%, 60%)', bg: 'rgba(255, 77, 77, 0.08)' }; // Default red for ausgehen
   }
 };
 

@@ -132,8 +132,17 @@ const MessageInput: React.FC<MessageInputProps> = ({
   // Dynamisches padding-left basierend auf dem Modus
   const leftPadding = mode === 'community' ? 'pl-[100px]' : 'pl-4';
   
-  // Get channel-specific colors
-  const colors = getChannelColor(groupType);
+  // Get channel-specific colors for liquid glass effect
+  const getInputColors = (type: string) => {
+    switch (type) {
+      case 'sport': return { bg: 'rgba(54, 144, 255, 0.08)', border: 'rgba(54, 144, 255, 0.2)' };
+      case 'kreativität': return { bg: 'rgba(255, 193, 7, 0.08)', border: 'rgba(255, 193, 7, 0.2)' };
+      case 'ausgehen': return { bg: 'rgba(255, 77, 77, 0.08)', border: 'rgba(255, 77, 77, 0.2)' };
+      default: return { bg: 'rgba(255, 77, 77, 0.08)', border: 'rgba(255, 77, 77, 0.2)' };
+    }
+  };
+  
+  const inputColors = getInputColors(groupType);
 
   return (
     <div className="w-full space-y-2">
