@@ -193,9 +193,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         "text-white"
       )}
       style={{ 
-        background: 'rgba(255, 255, 255, 0.05)',
+        background: getGroupColor(groupType).bg,
         border: `1px solid rgba(255, 255, 255, 0.1)`,
-        borderLeft: `3px solid ${getGroupColor(groupType)}`,
+        borderLeft: `3px solid ${getGroupColor(groupType).border}`,
         backdropFilter: 'blur(20px) saturate(180%)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
         WebkitBackdropFilter: 'blur(20px) saturate(180%)'
