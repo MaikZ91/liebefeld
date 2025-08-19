@@ -46,12 +46,12 @@
     --sidebar-ring: 0 100% 55%;
 
     /* Channel colors */
-    --sport-primary: 0 84% 60%;
-    --sport-secondary: 0 84% 50%;
+    --sport-primary: 217 91% 60%;
+    --sport-secondary: 217 91% 50%;
     --kreativität-primary: 45 93% 58%;
     --kreativität-secondary: 45 93% 48%;
-    --ausgehen-primary: 217 91% 60%;
-    --ausgehen-secondary: 217 91% 50%;
+    --ausgehen-primary: 0 84% 60%;
+    --ausgehen-secondary: 0 84% 50%;
   }
   
   /* Custom placeholder colors for channel inputs */
@@ -105,12 +105,12 @@
     --sidebar-ring: 0 100% 55%;
 
     /* Channel colors */
-    --sport-primary: 0 84% 60%;
-    --sport-secondary: 0 84% 50%;
+    --sport-primary: 217 91% 60%;
+    --sport-secondary: 217 91% 50%;
     --kreativität-primary: 45 93% 58%;
     --kreativität-secondary: 45 93% 48%;
-    --ausgehen-primary: 217 91% 60%;
-    --ausgehen-secondary: 217 91% 50%;
+    --ausgehen-primary: 0 84% 60%;
+    --ausgehen-secondary: 0 84% 50%;
   }
 
   /* WICHTIG: Globales Scrolling deaktivieren */
