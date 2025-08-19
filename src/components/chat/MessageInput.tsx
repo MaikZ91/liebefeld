@@ -135,10 +135,30 @@ const MessageInput: React.FC<MessageInputProps> = ({
   // Get channel-specific colors for liquid glass effect
   const getInputColors = (type: string) => {
     switch (type) {
-      case 'sport': return { bg: 'rgba(54, 144, 255, 0.08)', border: 'rgba(54, 144, 255, 0.2)' };
-      case 'kreativität': return { bg: 'rgba(255, 193, 7, 0.08)', border: 'rgba(255, 193, 7, 0.2)' };
-      case 'ausgehen': return { bg: 'rgba(255, 77, 77, 0.08)', border: 'rgba(255, 77, 77, 0.2)' };
-      default: return { bg: 'rgba(255, 77, 77, 0.08)', border: 'rgba(255, 77, 77, 0.2)' };
+      case 'sport': 
+        return { 
+          bg: 'linear-gradient(135deg, rgba(54, 144, 255, 0.08) 0%, rgba(54, 144, 255, 0.05) 100%)', 
+          border: 'rgba(54, 144, 255, 0.2)',
+          glow: 'rgba(54, 144, 255, 0.1)'
+        };
+      case 'kreativität': 
+        return { 
+          bg: 'linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, rgba(255, 193, 7, 0.05) 100%)', 
+          border: 'rgba(255, 193, 7, 0.2)',
+          glow: 'rgba(255, 193, 7, 0.1)'
+        };
+      case 'ausgehen': 
+        return { 
+          bg: 'linear-gradient(135deg, rgba(255, 77, 77, 0.08) 0%, rgba(255, 77, 77, 0.05) 100%)', 
+          border: 'rgba(255, 77, 77, 0.2)',
+          glow: 'rgba(255, 77, 77, 0.1)'
+        };
+      default: 
+        return { 
+          bg: 'linear-gradient(135deg, rgba(255, 77, 77, 0.08) 0%, rgba(255, 77, 77, 0.05) 100%)', 
+          border: 'rgba(255, 77, 77, 0.2)',
+          glow: 'rgba(255, 77, 77, 0.1)'
+        };
     }
   };
   

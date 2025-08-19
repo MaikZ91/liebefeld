@@ -15,10 +15,30 @@ import { getChannelColor } from '@/utils/channelColors';
 
 const getGroupColor = (groupType: string) => {
   switch (groupType.toLowerCase()) {
-    case 'sport': return { border: 'hsl(217, 91%, 60%)', bg: 'rgba(54, 144, 255, 0.08)' }; // Blue
-    case 'ausgehen': return { border: 'hsl(0, 84%, 60%)', bg: 'rgba(255, 77, 77, 0.08)' }; // Red  
-    case 'kreativität': return { border: 'hsl(45, 93%, 58%)', bg: 'rgba(255, 193, 7, 0.08)' }; // Yellow
-    default: return { border: 'hsl(0, 84%, 60%)', bg: 'rgba(255, 77, 77, 0.08)' }; // Default red for ausgehen
+    case 'sport': 
+      return { 
+        bg: 'linear-gradient(135deg, rgba(54, 144, 255, 0.12) 0%, rgba(54, 144, 255, 0.08) 50%, rgba(54, 144, 255, 0.05) 100%)',
+        border: 'rgba(54, 144, 255, 0.25)',
+        glow: 'rgba(54, 144, 255, 0.15)'
+      };
+    case 'ausgehen': 
+      return { 
+        bg: 'linear-gradient(135deg, rgba(255, 77, 77, 0.12) 0%, rgba(255, 77, 77, 0.08) 50%, rgba(255, 77, 77, 0.05) 100%)',
+        border: 'rgba(255, 77, 77, 0.25)',
+        glow: 'rgba(255, 77, 77, 0.15)'
+      };
+    case 'kreativität': 
+      return { 
+        bg: 'linear-gradient(135deg, rgba(255, 193, 7, 0.12) 0%, rgba(255, 193, 7, 0.08) 50%, rgba(255, 193, 7, 0.05) 100%)',
+        border: 'rgba(255, 193, 7, 0.25)',
+        glow: 'rgba(255, 193, 7, 0.15)'
+      };
+    default: 
+      return { 
+        bg: 'linear-gradient(135deg, rgba(255, 77, 77, 0.12) 0%, rgba(255, 77, 77, 0.08) 50%, rgba(255, 77, 77, 0.05) 100%)',
+        border: 'rgba(255, 77, 77, 0.25)',
+        glow: 'rgba(255, 77, 77, 0.15)'
+      };
   }
 };
 
@@ -201,6 +221,14 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         WebkitBackdropFilter: 'blur(20px) saturate(180%)'
       }}
     >
+      {/* Liquid glass shine effect */}
+      <div 
+        className="absolute inset-0 opacity-30 pointer-events-none"
+        style={{
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%)',
+          borderRadius: '24px'
+        }}
+      />
       {/* Outer flex container for text and reactions */}
       <div className="flex flex-col">
         <div className="chat-message-bubble">
