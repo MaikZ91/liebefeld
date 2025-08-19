@@ -18,7 +18,7 @@ const getGroupColor = (groupType: string) => {
     case 'sport': return 'hsl(217, 91%, 60%)'; // Blue
     case 'ausgehen': return 'hsl(0, 84%, 60%)'; // Red  
     case 'kreativität': return 'hsl(45, 93%, 58%)'; // Yellow
-    default: return 'hsl(0, 84%, 60%)'; // Default red
+    default: return 'hsl(0, 84%, 60%)'; // Default red for ausgehen
   }
 };
 
@@ -193,11 +193,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         "text-white"
       )}
       style={{ 
-        background: 'linear-gradient(135deg, rgba(255, 140, 0, 0.2) 0%, rgba(255, 69, 0, 0.15) 50%, rgba(139, 69, 19, 0.1) 100%)',
-        border: `1px solid ${getGroupColor(groupType)}`,
-        borderLeft: `4px solid ${getGroupColor(groupType)}`,
-        backdropFilter: 'blur(20px)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+        background: 'rgba(255, 255, 255, 0.05)',
+        border: `1px solid rgba(255, 255, 255, 0.1)`,
+        borderLeft: `3px solid ${getGroupColor(groupType)}`,
+        backdropFilter: 'blur(20px) saturate(180%)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)'
       }}
     >
       {/* Outer flex container for text and reactions */}
