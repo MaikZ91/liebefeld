@@ -352,6 +352,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       console.log('ChatGroup.handleSubmit: sending message via chatService', { messageText, groupId });
 
       // Clear input immediately
+      console.log('ChatGroup: clearing newMessage, was:', newMessage);
       setNewMessage('');
 
       // Use chatService instead of direct insert to avoid duplicates

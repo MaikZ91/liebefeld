@@ -79,15 +79,30 @@ const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   const handleSendButtonClick = async () => {
+    console.log('MessageInput: handleSendButtonClick called', { 
+      value, 
+      newMessage, 
+      valueTrim: value?.trim(), 
+      newMessageTrim: newMessage.trim(),
+      isSending 
+    });
+    
     if ((!value?.trim() && !newMessage.trim()) || isSending) {
+      console.log('MessageInput: early return - empty message or sending');
       return;
     }
     
     try {
+      console.log('MessageInput: calling handleSendMessage');
       await handleSendMessage();
+      console.log('MessageInput: handleSendMessage completed, resetting...');
+      
       // Reset internal message state only if no external value is controlled
       if (value === undefined) {
+        console.log('MessageInput: resetting internal newMessage state');
         setNewMessage("");
+      } else {
+        console.log('MessageInput: value is controlled externally, not resetting internal state');
       }
     } catch (error) {
       console.error('Error in message submission:', error);
