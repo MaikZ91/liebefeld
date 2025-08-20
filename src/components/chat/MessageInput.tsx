@@ -77,6 +77,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
     
     try {
       await handleSendMessage();
+      // Reset internal message state only if no external value is controlled
       if (value === undefined) {
         setNewMessage("");
       }
