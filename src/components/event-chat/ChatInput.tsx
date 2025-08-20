@@ -361,8 +361,15 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
-                className="bg-zinc-900 z-50"
-                style={colors.borderStyle}
+                className="z-[99999] border-0 fixed"
+                style={{
+                  background: 'rgba(0, 0, 0, 0.9)',
+                  backdropFilter: 'blur(20px) saturate(180%)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '12px',
+                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                  position: 'fixed'
+                }}
                 side="top"
                 align="start"
               >

@@ -207,13 +207,14 @@ const MessageInput: React.FC<MessageInputProps> = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="z-[9999] border-0"
+                className="z-[99999] border-0 fixed"
                 style={{
-                  background: 'rgba(0, 0, 0, 0.7)',
+                  background: 'rgba(0, 0, 0, 0.9)',
                   backdropFilter: 'blur(20px) saturate(180%)',
                   border: '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '12px',
-                  WebkitBackdropFilter: 'blur(20px) saturate(180%)'
+                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                  position: 'fixed'
                 }}
                 side="top"
                 align="start"
