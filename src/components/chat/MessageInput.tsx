@@ -48,7 +48,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
   // Sync internal state with external value prop
   useEffect(() => {
-    if (value !== undefined) {
+    if (value !== undefined && value !== newMessage) {
+      console.log('MessageInput: syncing internal state with external value', { value, newMessage });
       setNewMessage(value);
     }
   }, [value]);
