@@ -46,14 +46,22 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const { toast } = useToast();
   const { selectedCity } = useEventContext();
 
+  // Sync internal state with external value prop
+  useEffect(() => {
+    if (value !== undefined) {
+      setNewMessage(value);
+    }
+  }, [value]);
+
   // Sicherstellen, dass wir eine gültige UUID für groupId haben
   const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
     if (onChange) {
       onChange(e);
     } else {
-      setNewMessage(e.target.value);
+      setNewMessage(newValue);
     }
   };
 
