@@ -207,7 +207,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="z-50 border-0"
+                className="z-[9999] border-0"
                 style={{
                   background: 'rgba(0, 0, 0, 0.7)',
                   backdropFilter: 'blur(20px) saturate(180%)',
