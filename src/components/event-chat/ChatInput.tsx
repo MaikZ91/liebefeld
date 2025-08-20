@@ -155,7 +155,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
       // For community mode, ONLY update external input - parent handles sending
       console.log('Community mode: updating external input only');
       setInput(localInput);
-      setLocalInput(''); // Clear local input after updating external
+      // Don't clear local input here - let parent handle clearing after successful send
       return;
     }
     
@@ -175,7 +175,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         // For community mode, ONLY update external input - let parent handle sending
         console.log('Community mode: Enter key - updating external input only');
         setInput(localInput);
-        setLocalInput('');
+        // Don't clear local input here - let parent handle clearing after successful send
       } else {
         console.log('AI mode: Enter key - handling send directly');
         handleLocalSendMessage();
@@ -435,7 +435,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
             // For community mode, ONLY update external input - let parent handle sending
             console.log('Community mode: Send button - updating external input only');
             setInput(localInput);
-            setLocalInput('');
+            // Don't clear local input here - let parent handle clearing after successful send
           } else {
             // For AI mode, use local send
             console.log('AI mode: Send button - handling send directly');
