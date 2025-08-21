@@ -103,6 +103,7 @@ const EventCalendar = ({ defaultView = "list", onJoinEventChat }: EventCalendarP
     console.log('📅 [EventCalendar] eventsFilteredByCity.length:', eventsFilteredByCity.length);
     console.log('📅 [EventCalendar] showFavorites:', showFavorites, 'showNewEvents:', showNewEvents);
     console.log('📅 [EventCalendar] currentDate:', currentDate);
+    console.log('📅 [EventCalendar] view:', view);
     
     if (showNewEvents) {
       return []; // No new events tracking for now
@@ -204,6 +205,8 @@ const EventCalendar = ({ defaultView = "list", onJoinEventChat }: EventCalendarP
     }
   }, [filter]);
 
+  console.log('📅 [EventCalendar] Rendering with view:', view, 'eventsToDisplay.length:', eventsToDisplay.length);
+  
   return (
     <div className="min-h-screen bg-black text-white px-2 py-2 animate-fade-in">
       <div className="flex flex-col space-y-2 h-full">

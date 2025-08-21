@@ -74,6 +74,8 @@ const EventList: React.FC<EventListProps> = memo(({
   favoriteCount = 0,
   onShowEventForm
 }) => {
+  console.log('📋 [EventList] Rendering with events.length:', events.length, 'showFavorites:', showFavorites);
+  
   const listRef = useRef<HTMLDivElement>(null);
   const todayRef = useRef<HTMLDivElement>(null);
   
