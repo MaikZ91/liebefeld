@@ -49,6 +49,10 @@ export const Layout: React.FC<LayoutProps> = ({
   chatInputProps
 }) => {
   const { pathname } = useLocation();
+  console.log('🏗️ [Layout] Rendering with pathname:', pathname);
+  console.log('🏗️ [Layout] Children type:', typeof children);
+  console.log('🏗️ [Layout] ActiveView:', activeView);
+  
   const [isAddEventModalOpen, setIsAddEventModalOpen] = React.useState(false); // Correct and consistent naming
   
   React.useEffect(() => {

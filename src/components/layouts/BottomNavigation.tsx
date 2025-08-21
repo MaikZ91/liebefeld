@@ -142,11 +142,14 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           </span>
         </Button>
         
-        {/* Calendar Events Button */}
+        {/* Event Calendar Button */}
         <Button 
           variant={isOnEventsPage ? "default" : "ghost"} 
           size="sm" 
-          onClick={() => navigate('/events')} 
+          onClick={() => {
+            console.log('🔥 [BottomNav] Event Calendar button clicked, navigating to /events');
+            navigate('/events');
+          }} 
           className={cn(
             "flex flex-col items-center gap-1 px-2 py-2 h-auto min-w-0",
             isOnEventsPage ? 'bg-red-500 hover:bg-red-600 text-white' : 'text-gray-400 hover:text-white'
