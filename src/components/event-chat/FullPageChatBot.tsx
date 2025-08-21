@@ -308,7 +308,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     <div className="flex flex-col h-screen min-h-0">
       {/* Filter UI für Community Chat - immer sichtbar wenn Community-Modus */}
       {activeChatModeValue === 'community' && (
-        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur supports-[backdrop-filter]:backdrop-blur-sm border-b border-border">
+        <div className="sticky top-0 z-[60] bg-background/80 backdrop-blur supports-[backdrop-filter]:backdrop-blur-sm border-b border-border">
           <div className="px-4 py-2">
             <div className="flex gap-2 overflow-x-auto scrollbar-none flex-nowrap">
               {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => {
