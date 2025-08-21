@@ -63,6 +63,15 @@ const EventCalendar = ({ defaultView = "list", onJoinEventChat }: EventCalendarP
   const [showEventForm, setShowEventForm] = useState(false);
   const [showNewEvents, setShowNewEvents] = useState(false);
   
+  // Reset component state when mounting to ensure proper display
+  useEffect(() => {
+    setView(defaultView);
+    setShowEventForm(false);
+    setShowNewEvents(false);
+    // Clear any selected events or dates to start fresh
+    setSelectedEvent(null);
+  }, [defaultView, setSelectedEvent]);
+  
   const eventsFilteredByCity = React.useMemo(() => {
     if (!selectedCity) return events;
     const cityObject = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase());
@@ -237,6 +246,7 @@ const EventCalendar = ({ defaultView = "list", onJoinEventChat }: EventCalendarP
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
               <div className="md:col-span-3">
                 <EventList 
+                  key={`eventlist-${view}-${showFavorites}-${filter || 'none'}`}
                   events={eventsToDisplay}
                   showFavorites={showFavorites}
                   showNewEvents={showNewEvents}
