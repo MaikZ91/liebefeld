@@ -10,6 +10,7 @@ import FilterBar, { type FilterGroup } from '@/components/calendar/FilterBar';
 import { isInGroup } from '@/utils/eventCategoryGroups';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
+import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
 
 interface EventListProps {
   events: Event[];
@@ -79,15 +80,16 @@ const EventList: React.FC<EventListProps> = memo(({
   const todayRef = useRef<HTMLDivElement>(null);
   
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
-  const [eventFilter, setEventFilter] = useState<FilterGroup>('alle'); // Separate filter state for events
 const { filter, setFilter, topEventsPerDay } = useEventContext();
+const { activeCategory } = useChatPreferences();
+const groupFilter = activeCategory as FilterGroup;
 const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).filter(Boolean))) as string[], [events]);
 
   const filteredEvents = useMemo(() => {
     let base = events;
 
-    if (eventFilter !== 'alle') {
-      base = base.filter((event) => isInGroup(event.category, eventFilter as any));
+    if (groupFilter !== 'alle') {
+      base = base.filter((event) => isInGroup(event.category, groupFilter as any));
     } else if (filter) {
       // If context filter matches a group label, map categories; otherwise, use category equality
       const isGroup = filter === 'ausgehen' || filter === 'kreativität' || filter === 'sport';
@@ -97,7 +99,7 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
     }
 
     return base;
-  }, [events, filter, eventFilter]);
+  }, [events, filter, groupFilter]);
 
   const displayEvents = useMemo(() => {
     if (!showFavorites) return filteredEvents;
@@ -176,27 +178,27 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
 
 
     return (
-      <div className="bg-black/90 text-white rounded-3xl border border-gray-700/50 shadow-xl p-4 overflow-hidden w-full max-w-full backdrop-blur-sm">
+      <div className="bg-white text-black rounded-3xl border border-gray-200 shadow-xl p-4 overflow-hidden w-full max-w-full">
         <div className="flex items-center justify-between mb-2 gap-2">
-          <h3 className="text-xl font-semibold text-white">
+          <h3 className="text-xl font-semibold text-gray-900">
             {showFavorites 
               ? "Top Events" 
               : showNewEvents 
                 ? "Neue Events" 
-                : eventFilter !== 'alle'
-                  ? `${eventFilter} Events`
+                : groupFilter !== 'alle'
+                  ? `${groupFilter} Events`
                   : filter 
                     ? `${filter} Events` 
                     : "Alle Events"}
           </h3>
           <div className="flex items-center gap-2">
-            <FilterBar value={eventFilter} onChange={setEventFilter} className="flex-shrink-0" variant="light" />
-            <div className="inline-flex rounded-full p-0.5 bg-white/10 border border-gray-700/50">
+            <FilterBar value={groupFilter} className="flex-shrink-0" variant="light" />
+            <div className="inline-flex rounded-full p-0.5 bg-white/80 border border-gray-200">
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={toggleFavorites}
-                className={`${showFavorites ? 'bg-white text-black hover:bg-gray-100' : 'text-gray-300 hover:bg-white/10'} px-3 h-7 text-xs rounded-full transition-colors`}
+                className={`${showFavorites ? 'bg-gray-900 text-white hover:bg-gray-900' : 'text-gray-700 hover:bg-gray-100'} px-3 h-7 text-xs rounded-full transition-colors`}
                 aria-label="Favoriten"
               >
                 <Heart className="w-3 h-3 mr-1" />
@@ -211,7 +213,7 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
                 size="sm"
                 variant="ghost"
                 onClick={toggleNewEvents}
-                className={`${showNewEvents ? 'bg-white text-black hover:bg-gray-100' : 'text-gray-300 hover:bg-white/10'} px-3 h-7 text-xs rounded-full transition-colors`}
+                className={`${showNewEvents ? 'bg-gray-900 text-white hover:bg-gray-900' : 'text-gray-700 hover:bg-gray-100'} px-3 h-7 text-xs rounded-full transition-colors`}
                 aria-label="Neue Events"
               >
                 <span className="font-semibold">NEW</span>
@@ -221,16 +223,16 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
                   <Button
                     size="sm"
                     variant="ghost"
-                    className={`${filter ? 'bg-white text-black hover:bg-gray-100' : 'text-gray-300 hover:bg-white/10'} px-3 h-7 text-xs rounded-full transition-colors`}
+                    className={`${filter ? 'bg-gray-900 text-white hover:bg-gray-900' : 'text-gray-700 hover:bg-gray-100'} px-3 h-7 text-xs rounded-full transition-colors`}
                     aria-label="Filter"
                   >
                     {filter ? <FilterX className="w-3 h-3 mr-1" /> : <Filter className="w-3 h-3 mr-1" />}
                     <span className="hidden sm:inline">{filter || 'Filter'}</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-black/95 text-white border border-gray-700/50 rounded-xl p-2 shadow-xl min-w-48 z-50 backdrop-blur-sm">
-                  <DropdownMenuLabel className="text-center text-gray-300">Veranstaltungstyp</DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-gray-700/50" />
+                <DropdownMenuContent className="bg-white text-black border border-gray-200 rounded-xl p-2 shadow-xl min-w-48 z-50">
+                  <DropdownMenuLabel className="text-center text-gray-700">Veranstaltungstyp</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-gray-200" />
                   {filter && (
                     <DropdownMenuCheckboxItem
                       checked={false}
@@ -238,7 +240,7 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
                         e.preventDefault();
                         setFilter(null);
                       }}
-                      className="cursor-pointer hover:bg-white/10 rounded-lg flex items-center gap-2"
+                      className="cursor-pointer hover:bg-gray-100 rounded-lg flex items-center gap-2"
                     >
                       <FilterX className="h-4 w-4 mr-1" />
                       Alle anzeigen
@@ -252,7 +254,7 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
                         e.preventDefault();
                         setFilter((prev) => (prev === cat ? null : (cat as string)));
                       }}
-                      className="cursor-pointer hover:bg-white/10 rounded-lg flex items-center gap-2"
+                      className="cursor-pointer hover:bg-gray-100 rounded-lg flex items-center gap-2"
                     >
                       {cat as string}
                     </DropdownMenuCheckboxItem>
@@ -264,7 +266,7 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
                   size="sm"
                   variant="ghost"
                   onClick={onShowEventForm}
-                  className="px-3 h-7 text-xs rounded-full transition-colors text-gray-300 hover:bg-white/10"
+                  className="px-3 h-7 text-xs rounded-full transition-colors text-gray-700 hover:bg-gray-100"
                   aria-label="Neues Event"
                 >
                   <Plus className="w-3 h-3" />
@@ -288,7 +290,7 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
                   className={`w-full ${isCurrentDay ? 'scroll-mt-12' : ''}`}
                   id={isCurrentDay ? "today-section" : undefined}
                 >
-                  <h4 className="text-sm font-semibold mb-1 text-white sticky top-0 bg-black/90 py-1 z-10 flex items-center w-full border-b border-gray-700/50">
+                  <h4 className="text-sm font-semibold mb-1 text-gray-900 sticky top-0 bg-white py-1 z-10 flex items-center w-full border-b border-gray-200">
                     {format(date, 'EEEE, d. MMMM', { locale: de })}
                   </h4>
                   <div className="space-y-0.5 w-full">
@@ -313,7 +315,7 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
             })}
           </div>
         ) : (
-          <div className="flex items-center justify-center h-40 text-gray-300 w-full">
+          <div className="flex items-center justify-center h-40 text-gray-500 w-full">
             {showFavorites 
               ? "Du hast noch keine Favoriten" 
               : showNewEvents
