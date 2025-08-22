@@ -10,7 +10,6 @@ import FilterBar, { type FilterGroup } from '@/components/calendar/FilterBar';
 import { isInGroup } from '@/utils/eventCategoryGroups';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
-import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
 
 interface EventListProps {
   events: Event[];
@@ -80,16 +79,15 @@ const EventList: React.FC<EventListProps> = memo(({
   const todayRef = useRef<HTMLDivElement>(null);
   
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
+  const [eventFilter, setEventFilter] = useState<FilterGroup>('alle'); // Separate filter state for events
 const { filter, setFilter, topEventsPerDay } = useEventContext();
-const { activeCategory } = useChatPreferences();
-const groupFilter = activeCategory as FilterGroup;
 const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).filter(Boolean))) as string[], [events]);
 
   const filteredEvents = useMemo(() => {
     let base = events;
 
-    if (groupFilter !== 'alle') {
-      base = base.filter((event) => isInGroup(event.category, groupFilter as any));
+    if (eventFilter !== 'alle') {
+      base = base.filter((event) => isInGroup(event.category, eventFilter as any));
     } else if (filter) {
       // If context filter matches a group label, map categories; otherwise, use category equality
       const isGroup = filter === 'ausgehen' || filter === 'kreativität' || filter === 'sport';
@@ -99,7 +97,7 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
     }
 
     return base;
-  }, [events, filter, groupFilter]);
+  }, [events, filter, eventFilter]);
 
   const displayEvents = useMemo(() => {
     if (!showFavorites) return filteredEvents;
@@ -185,14 +183,14 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
               ? "Top Events" 
               : showNewEvents 
                 ? "Neue Events" 
-                : groupFilter !== 'alle'
-                  ? `${groupFilter} Events`
+                : eventFilter !== 'alle'
+                  ? `${eventFilter} Events`
                   : filter 
                     ? `${filter} Events` 
                     : "Alle Events"}
           </h3>
           <div className="flex items-center gap-2">
-            <FilterBar value={groupFilter} className="flex-shrink-0" variant="light" />
+            <FilterBar value={eventFilter} onChange={setEventFilter} className="flex-shrink-0" variant="light" />
             <div className="inline-flex rounded-full p-0.5 bg-white/10 border border-gray-700/50">
               <Button
                 size="sm"
