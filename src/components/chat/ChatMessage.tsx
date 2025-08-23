@@ -215,9 +215,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       style={{ 
         background: getGroupColor(groupType).bg,
         border: `1px solid rgba(255, 255, 255, 0.1)`,
-        borderLeft: `3px solid ${getGroupColor(groupType).border}`,
+        borderLeft: `4px solid ${getGroupColor(groupType).border}`,
+        borderRadius: '16px',
         backdropFilter: 'blur(20px) saturate(180%)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+        boxShadow: `0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05), -2px 0 8px ${getGroupColor(groupType).glow}`,
         WebkitBackdropFilter: 'blur(20px) saturate(180%)'
       }}
     >
