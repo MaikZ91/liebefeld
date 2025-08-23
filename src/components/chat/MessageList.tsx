@@ -85,7 +85,7 @@ const MessageList: React.FC<MessageListProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden">
+    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-visible">
       {error && (
         <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>
       )}
@@ -127,7 +127,7 @@ const MessageList: React.FC<MessageListProps> = ({
                     <span className="text-sm text-gray-400">{timeAgo}</span>
                   </div>
                 )}
-                <div className="w-full max-w-full overflow-hidden break-words -mt-1 relative z-10">
+                <div className="w-full max-w-full overflow-visible break-words -mt-1 relative z-10">
                   <ChatMessage 
                     message={messageContent} 
                     isConsecutive={isConsecutive}
