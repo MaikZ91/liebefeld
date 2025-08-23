@@ -208,7 +208,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   const messageContent = (
     <div
       className={cn(
-        "group p-4 rounded-2xl relative w-full max-w-full overflow-hidden transition-all duration-200",
+        "group p-3 rounded-2xl relative w-full max-w-full overflow-hidden transition-all duration-200",
         isConsecutive ? 'mt-1' : 'mt-2',
         "text-white"
       )}
@@ -231,8 +231,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         }}
       />
       {/* Outer flex container for text and reactions */}
-      <div className="flex flex-col">
-        <div className="chat-message-bubble">
+      <div className="flex flex-col -m-1">
+        <div className="chat-message-bubble p-1">
           {formatContent()}
         </div>
 
