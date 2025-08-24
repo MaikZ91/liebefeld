@@ -7,7 +7,7 @@ import {
   syncGitHubEvents,
   addNewEvent
 } from '../services/eventService';
-import { updateEventLikesInDb } from '../services/singleEventService';
+
 import { useUserProfile } from './chat/useUserProfile';
 
 // Remove the import of useEventContext from here
@@ -199,9 +199,6 @@ export const useEvents = (selectedCity: string) => {
 
       await updateEventRsvp(eventId, newRsvp);
       console.log(`Successfully updated RSVP in database for event ${eventId}`);
-
-      await updateEventLikesInDb(eventId, newLikesValue);
-      console.log(`Successfully updated likes in database for event ${eventId} to ${newLikesValue}`);
 
     } catch (error) {
       console.error('Error updating RSVP:', error);

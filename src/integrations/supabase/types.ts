@@ -227,41 +227,6 @@ export type Database = {
         }
         Relationships: []
       }
-      event_likes: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          event_id: string
-          id: string
-          user_id: string | null
-          username: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          event_id: string
-          id?: string
-          user_id?: string | null
-          username?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          event_id?: string
-          id?: string
-          user_id?: string | null
-          username?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "event_likes_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "community_events"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       location_coordinates: {
         Row: {
           city: string
