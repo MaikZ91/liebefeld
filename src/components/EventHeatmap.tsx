@@ -31,6 +31,7 @@ import EventForm from '@/components/EventForm';
 import FilterBar, { FilterGroup } from '@/components/calendar/FilterBar';
 import { getCategoryGroup, CategoryGroup } from '@/utils/eventCategoryGroups';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
+import { getSelectedCategory, saveSelectedCategory } from '@/utils/heatmapPreferences';
 import { messageService } from '@/services/messageService';
 import { Input } from '@/components/ui/input';
 import { UserProfile } from '@/types/chatTypes';
@@ -69,7 +70,7 @@ const EventHeatmap: React.FC = () => {
   const { selectedCity } = useEventContext();
   const { events, isLoading, refreshEvents, addUserEvent, handleLikeEvent } = useEvents(selectedCity);
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
-  const [selectedCategory, setSelectedCategory] = useState<FilterGroup>('alle');
+  const [selectedCategory, setSelectedCategory] = useState<FilterGroup>(() => getSelectedCategory() as FilterGroup);
   const [timeRange, setTimeRange] = useState([new Date().getHours()]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [map, setMap] = useState<L.Map | null>(null);
@@ -97,6 +98,12 @@ const EventHeatmap: React.FC = () => {
   const [centralAvatarUsername, setCentralAvatarUsername] = useState('');
   const [centralAvatarImage, setCentralAvatarImage] = useState('');
   const [showCentralAvatar, setShowCentralAvatar] = useState(false);
+
+  // Handle category change with persistence
+  const handleCategoryChange = (category: FilterGroup) => {
+    setSelectedCategory(category);
+    saveSelectedCategory(category);
+  };
 
   const [showAIChat, setShowAIChat] = useState(false);
   const [aiChatInput, setAiChatInput] = useState('');
@@ -1305,7 +1312,7 @@ const EventHeatmap: React.FC = () => {
               <div>
                 <FilterBar 
                   value={selectedCategory}
-                  onChange={setSelectedCategory}
+                  onChange={handleCategoryChange}
                   variant="light"
                   className="w-full"
                 />
