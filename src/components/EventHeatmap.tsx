@@ -28,6 +28,8 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import EventForm from '@/components/EventForm';
+import FilterBar, { FilterGroup } from '@/components/calendar/FilterBar';
+import { getCategoryGroup, CategoryGroup } from '@/utils/eventCategoryGroups';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { messageService } from '@/services/messageService';
 import { Input } from '@/components/ui/input';
@@ -67,7 +69,7 @@ const EventHeatmap: React.FC = () => {
   const { selectedCity } = useEventContext();
   const { events, isLoading, refreshEvents, addUserEvent, handleLikeEvent } = useEvents(selectedCity);
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState<FilterGroup>('alle');
   const [timeRange, setTimeRange] = useState([new Date().getHours()]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [map, setMap] = useState<L.Map | null>(null);
@@ -310,8 +312,22 @@ const EventHeatmap: React.FC = () => {
   const filteredEvents = React.useMemo(() => {
     let filtered = selectedDateFilteredEvents;
 
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(event => event.category === selectedCategory);
+    if (selectedCategory !== 'alle') {
+      // Map FilterGroup to CategoryGroup for filtering
+      const categoryGroupMap: Record<FilterGroup, CategoryGroup | null> = {
+        'alle': null,
+        'ausgehen': 'Ausgehen',
+        'sport': 'Sport',
+        'kreativität': 'Kreativität'
+      };
+      
+      const targetCategoryGroup = categoryGroupMap[selectedCategory];
+      if (targetCategoryGroup) {
+        filtered = filtered.filter(event => {
+          const eventCategoryGroup = getCategoryGroup(event.category);
+          return eventCategoryGroup === targetCategoryGroup;
+        });
+      }
     }
 
     const selectedHour = timeRange[0];
@@ -1172,8 +1188,8 @@ const EventHeatmap: React.FC = () => {
     );
   }
 
-  const selectedCategoryData = categories.find(cat => cat.name === selectedCategory);
-  const selectedCategoryDisplay = selectedCategory === 'all' ? 'Alle' : selectedCategory;
+  const selectedCategoryData = categories.find(cat => cat.name === 'alle');
+  const selectedCategoryDisplay = selectedCategory === 'alle' ? 'Alle' : selectedCategory;
 
   return (
     <div className="relative w-full h-full overflow-hidden" style={{ height: '100dvh' }}>
@@ -1277,30 +1293,14 @@ const EventHeatmap: React.FC = () => {
                 </Popover>
               </div>
 
-              {/* Category Dropdown */}
+              {/* Filter Bar */}
               <div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-between bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
-                    >
-                      {selectedCategoryDisplay} ({selectedCategoryData?.count || 0})
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 bg-gray-800 border-gray-700 z-[9999]">
-                    {categories.map((category) => (
-                      <DropdownMenuItem
-                        key={category.name}
-                        onClick={() => setSelectedCategory(category.name)}
-                        className="text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                      >
-                        {category.name === 'all' ? 'Alle' : category.name} ({category.count})
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <FilterBar 
+                  value={selectedCategory}
+                  onChange={setSelectedCategory}
+                  variant="light"
+                  className="w-full"
+                />
               </div>
 
               {/* Time Slider */}
