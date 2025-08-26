@@ -313,20 +313,28 @@ const EventHeatmap: React.FC = () => {
     let filtered = selectedDateFilteredEvents;
 
     if (selectedCategory !== 'alle') {
-      // Map FilterGroup to CategoryGroup for filtering
-      const categoryGroupMap: Record<FilterGroup, CategoryGroup | null> = {
-        'alle': null,
-        'ausgehen': 'Ausgehen',
-        'sport': 'Sport',
-        'kreativität': 'Kreativität'
-      };
-      
-      const targetCategoryGroup = categoryGroupMap[selectedCategory];
-      if (targetCategoryGroup) {
+      // Special case: "ausgehen" shows all events EXCEPT sport events
+      if (selectedCategory === 'ausgehen') {
         filtered = filtered.filter(event => {
           const eventCategoryGroup = getCategoryGroup(event.category);
-          return eventCategoryGroup === targetCategoryGroup;
+          return eventCategoryGroup !== 'Sport';
         });
+      } else {
+        // For 'sport' and 'kreativität', filter to specific category group
+        const categoryGroupMap: Record<FilterGroup, CategoryGroup | null> = {
+          'alle': null,
+          'ausgehen': 'Ausgehen',
+          'sport': 'Sport',
+          'kreativität': 'Kreativität'
+        };
+        
+        const targetCategoryGroup = categoryGroupMap[selectedCategory];
+        if (targetCategoryGroup) {
+          filtered = filtered.filter(event => {
+            const eventCategoryGroup = getCategoryGroup(event.category);
+            return eventCategoryGroup === targetCategoryGroup;
+          });
+        }
       }
     }
 

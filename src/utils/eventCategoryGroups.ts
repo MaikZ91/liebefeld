@@ -36,6 +36,13 @@ export const getCategoryGroup = (category?: string | null): CategoryGroup | null
 };
 
 export const isInGroup = (category: string | undefined, group: CategoryGroup): boolean => {
+  if (!category) return false;
+  
+  // Special case: "ausgehen" shows all events EXCEPT sport events
+  if (group === 'Ausgehen') {
+    return !SPORT.has(category);
+  }
+  
   const mapped = getCategoryGroup(category);
   return mapped === group;
 };
