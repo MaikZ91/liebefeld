@@ -7,7 +7,7 @@ import { groupEventsByDate } from '@/utils/eventUtils';
 import { Star, Heart, Filter, FilterX, Plus } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
 import FilterBar, { type FilterGroup } from '@/components/calendar/FilterBar';
-import { isInGroup } from '@/utils/eventCategoryGroups';
+import { isInGroup, CategoryGroup } from '@/utils/eventCategoryGroups';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
@@ -89,7 +89,18 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
     let base = events;
 
     if (groupFilter !== 'alle') {
-      base = base.filter((event) => isInGroup(event.category, groupFilter as any));
+      // Map FilterGroup to CategoryGroup for filtering
+      const categoryGroupMap: Record<FilterGroup, CategoryGroup | null> = {
+        'alle': null,
+        'ausgehen': 'Ausgehen',
+        'sport': 'Sport',
+        'kreativität': 'Kreativität'
+      };
+      
+      const targetCategoryGroup = categoryGroupMap[groupFilter];
+      if (targetCategoryGroup) {
+        base = base.filter((event) => isInGroup(event.category, targetCategoryGroup));
+      }
     } else if (filter) {
       // If context filter matches a group label, map categories; otherwise, use category equality
       const isGroup = filter === 'ausgehen' || filter === 'kreativität' || filter === 'sport';
