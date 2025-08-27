@@ -285,19 +285,7 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
           </DropdownMenu>
         </div>
         
-        <h3 className="text-xl font-semibold text-gray-900 mb-4">
-          {showFavorites 
-            ? "Top Events" 
-            : showNewEvents 
-              ? "Neue Events" 
-              : groupFilter !== 'alle'
-                ? `${groupFilter} Events`
-                : filter 
-                  ? `${filter} Events` 
-                  : "Alle Events"}
-        </h3>
-        
-        <div ref={listRef} className="overflow-y-auto max-h-[650px] pr-1 scrollbar-thin w-full">
+        <div ref={listRef} className="overflow-y-auto max-h-[650px] pr-1 scrollbar-thin w-full mt-2">
         {Object.keys(eventsByDate).length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-2 gap-y-1">
             {Object.keys(eventsByDate).sort().map(dateStr => {
