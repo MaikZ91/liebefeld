@@ -191,101 +191,111 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
     return (
       <div className="bg-white text-black rounded-3xl border border-gray-200 shadow-xl p-4 overflow-hidden w-full max-w-full">
         <div className="flex items-center justify-between mb-2 gap-2">
-          <h3 className="text-xl font-semibold text-gray-900">
-            {showFavorites 
-              ? "Top Events" 
-              : showNewEvents 
-                ? "Neue Events" 
-                : groupFilter !== 'alle'
-                  ? `${groupFilter} Events`
-                  : filter 
-                    ? `${filter} Events` 
-                    : "Alle Events"}
-          </h3>
-          <div className="flex items-center gap-2">
-            <FilterBar value={groupFilter} className="flex-shrink-0" variant="light" />
-            <div className="inline-flex rounded-full p-0.5 bg-white/80 border border-gray-200">
+          <FilterBar value={groupFilter} className="flex-shrink-0" variant="light" />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button
                 size="sm"
-                variant="ghost"
-                onClick={toggleFavorites}
-                className={`${showFavorites ? 'bg-gray-900 text-white hover:bg-gray-900' : 'text-gray-700 hover:bg-gray-100'} px-3 h-7 text-xs rounded-full transition-colors`}
-                aria-label="Favoriten"
+                variant="outline"
+                className="px-3 h-8 text-sm rounded-full border-gray-300 hover:bg-gray-50"
               >
-                <Heart className="w-3 h-3 mr-1" />
-                <span className="hidden sm:inline">Favoriten</span>
-                {!showFavorites && favoriteCount > 0 && (
-                  <span className="ml-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-500 rounded-full">
+                Einstellungen
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-white text-black border border-gray-200 rounded-xl p-2 shadow-xl min-w-48 z-50">
+              <DropdownMenuLabel className="text-center text-gray-700">Ansicht</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-gray-200" />
+              
+              <DropdownMenuCheckboxItem
+                checked={showFavorites}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  toggleFavorites();
+                }}
+                className="cursor-pointer hover:bg-gray-100 rounded-lg flex items-center gap-2"
+              >
+                <Heart className="w-4 h-4 mr-1" />
+                Top Events
+                {favoriteCount > 0 && (
+                  <span className="ml-auto inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-500 rounded-full">
                     {favoriteCount}
                   </span>
                 )}
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={toggleNewEvents}
-                className={`${showNewEvents ? 'bg-gray-900 text-white hover:bg-gray-900' : 'text-gray-700 hover:bg-gray-100'} px-3 h-7 text-xs rounded-full transition-colors`}
-                aria-label="Neue Events"
+              </DropdownMenuCheckboxItem>
+              
+              <DropdownMenuCheckboxItem
+                checked={showNewEvents}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  toggleNewEvents();
+                }}
+                className="cursor-pointer hover:bg-gray-100 rounded-lg flex items-center gap-2"
               >
-                <span className="font-semibold">NEW</span>
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className={`${filter ? 'bg-gray-900 text-white hover:bg-gray-900' : 'text-gray-700 hover:bg-gray-100'} px-3 h-7 text-xs rounded-full transition-colors`}
-                    aria-label="Filter"
-                  >
-                    {filter ? <FilterX className="w-3 h-3 mr-1" /> : <Filter className="w-3 h-3 mr-1" />}
-                    <span className="hidden sm:inline">{filter || 'Filter'}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-white text-black border border-gray-200 rounded-xl p-2 shadow-xl min-w-48 z-50">
-                  <DropdownMenuLabel className="text-center text-gray-700">Veranstaltungstyp</DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-gray-200" />
-                  {filter && (
-                    <DropdownMenuCheckboxItem
-                      checked={false}
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        setFilter(null);
-                      }}
-                      className="cursor-pointer hover:bg-gray-100 rounded-lg flex items-center gap-2"
-                    >
-                      <FilterX className="h-4 w-4 mr-1" />
-                      Alle anzeigen
-                    </DropdownMenuCheckboxItem>
-                  )}
-                  {categories.map((cat) => (
-                    <DropdownMenuCheckboxItem
-                      key={cat as string}
-                      checked={filter === cat}
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        setFilter((prev) => (prev === cat ? null : (cat as string)));
-                      }}
-                      className="cursor-pointer hover:bg-gray-100 rounded-lg flex items-center gap-2"
-                    >
-                      {cat as string}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              {onShowEventForm && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={onShowEventForm}
-                  className="px-3 h-7 text-xs rounded-full transition-colors text-gray-700 hover:bg-gray-100"
-                  aria-label="Neues Event"
+                Neue Events
+              </DropdownMenuCheckboxItem>
+              
+              <DropdownMenuSeparator className="bg-gray-200" />
+              <DropdownMenuLabel className="text-center text-gray-700">Kategorien</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-gray-200" />
+              
+              {filter && (
+                <DropdownMenuCheckboxItem
+                  checked={false}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setFilter(null);
+                  }}
+                  className="cursor-pointer hover:bg-gray-100 rounded-lg flex items-center gap-2"
                 >
-                  <Plus className="w-3 h-3" />
-                </Button>
+                  <FilterX className="h-4 w-4 mr-1" />
+                  Alle anzeigen
+                </DropdownMenuCheckboxItem>
               )}
-            </div>
-          </div>
+              {categories.map((cat) => (
+                <DropdownMenuCheckboxItem
+                  key={cat as string}
+                  checked={filter === cat}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setFilter((prev) => (prev === cat ? null : (cat as string)));
+                  }}
+                  className="cursor-pointer hover:bg-gray-100 rounded-lg flex items-center gap-2"
+                >
+                  {cat as string}
+                </DropdownMenuCheckboxItem>
+              ))}
+              
+              {onShowEventForm && (
+                <>
+                  <DropdownMenuSeparator className="bg-gray-200" />
+                  <DropdownMenuCheckboxItem
+                    checked={false}
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      onShowEventForm();
+                    }}
+                    className="cursor-pointer hover:bg-gray-100 rounded-lg flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Neues Event erstellen
+                  </DropdownMenuCheckboxItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+        
+        <h3 className="text-xl font-semibold text-gray-900 mb-4">
+          {showFavorites 
+            ? "Top Events" 
+            : showNewEvents 
+              ? "Neue Events" 
+              : groupFilter !== 'alle'
+                ? `${groupFilter} Events`
+                : filter 
+                  ? `${filter} Events` 
+                  : "Alle Events"}
+        </h3>
         
         <div ref={listRef} className="overflow-y-auto max-h-[650px] pr-1 scrollbar-thin w-full">
         {Object.keys(eventsByDate).length > 0 ? (
