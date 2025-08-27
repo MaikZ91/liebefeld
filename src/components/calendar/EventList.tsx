@@ -189,7 +189,7 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
 
 
     return (
-      <div className="bg-white text-black rounded-3xl border border-gray-200 shadow-xl p-4 overflow-hidden w-full max-w-full">
+      <div className="bg-white text-black rounded-3xl border border-gray-200 shadow-xl p-4 overflow-hidden w-full max-w-full -mt-4">
         <div className="flex items-center justify-between mb-2 gap-2">
           <FilterBar value={groupFilter} className="flex-shrink-0" variant="light" />
           <DropdownMenu>
