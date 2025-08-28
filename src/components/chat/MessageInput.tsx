@@ -198,7 +198,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
           onChange={handleTextareaChange}
           onKeyDown={handleKeyDown}
           className={cn(
-            "min-h-[50px] flex-grow resize-none pr-14 transition-all duration-200 text-white border-0 flex items-center",
+            "min-h-[50px] flex-grow resize-none pr-14 transition-all duration-200 text-white border-0 py-3",
             leftPadding,
             "focus:ring-0 focus:outline-none"
           )}
