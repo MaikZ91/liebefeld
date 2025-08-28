@@ -401,7 +401,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         placeholder={placeholderText}
         rows={1} // Start with 1 row
           className={cn(
-            "w-full bg-background/60 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md border rounded-xl pt-4 pb-2 focus:outline-none text-sm text-foreground placeholder:text-muted-foreground pr-10 transition-all duration-200 text-left min-h-[40px] overflow-hidden flex items-center",
+            "w-full bg-background/60 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md border rounded-xl py-2 focus:outline-none text-sm text-foreground placeholder:text-muted-foreground pr-10 transition-all duration-200 text-left min-h-[40px] overflow-hidden flex items-center",
             getButtonWidth()
           )}
           style={activeChatModeValue === 'community' ? {
