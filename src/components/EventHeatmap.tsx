@@ -1240,43 +1240,6 @@ const EventHeatmap: React.FC = () => {
         </Button>
       </div>
 
-      {/* NEW: Community Features Button with Dropdown */}
-      <div className="fixed top-48 left-4 z-[1001]">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              className="bg-black/95 text-white border-gray-700 hover:bg-gray-800 flex items-center gap-2"
-            >
-              <Users className="h-5 w-5" />
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 bg-gray-800 border-gray-700 z-[1002]">
-            <DropdownMenuItem
-              onClick={() => setIsTribeFinderOpen(true)}
-              className="text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer flex items-center gap-2"
-            >
-              <Users className="h-4 w-4" />
-              Find Tribe (beta)
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => setShowCentralAvatar(true)}
-              className="text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Ich bin hier! (beta)
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => window.location.href = '/'}
-              className="text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer flex items-center gap-2"
-            >
-              <MessageSquare className="h-4 w-4" />
-              Community Chat
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
 
       {/* Filter Panel (Conditional Rendering) */}
       {showFilterPanel && (
