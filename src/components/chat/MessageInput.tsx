@@ -155,7 +155,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   // Dynamisches padding-left basierend auf dem Modus
-  const leftPadding = mode === 'community' ? 'pl-[100px]' : 'pl-4';
+  const leftPadding = mode === 'community' ? 'pl-[80px]' : 'pl-4';
   
   // Get channel-specific colors for liquid glass effect
   const getInputColors = (type: string) => {
@@ -198,7 +198,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
           onChange={handleTextareaChange}
           onKeyDown={handleKeyDown}
           className={cn(
-            "min-h-[50px] flex-grow resize-none pr-14 transition-all duration-200 text-white border-0",
+            "min-h-[50px] flex-grow resize-none pr-14 transition-all duration-200 text-white border-0 flex items-center",
             leftPadding,
             "focus:ring-0 focus:outline-none"
           )}
@@ -264,23 +264,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* Push Notification Button */}
-            <Button
-              onClick={handleEnablePushNotifications}
-              variant="outline"
-              size="icon"
-              type="button"
-              className="rounded-full h-6 w-6 text-white border-0"
-              style={{
-                background: 'rgba(255, 140, 0, 0.2)',
-                border: '1px solid rgba(255, 140, 0, 0.3)',
-                backdropFilter: 'blur(15px)'
-              }}
-              title="Push-Benachrichtigungen aktivieren"
-            >
-              <Bell className="h-3 w-3" />
-            </Button>
           </div>
         )}
         {/* Send button on the right */}

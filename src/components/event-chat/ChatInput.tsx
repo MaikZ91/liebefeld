@@ -278,7 +278,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 
   const getButtonWidth = () => {
     if (activeChatModeValue === 'community') {
-      return 'pl-[120px]';
+      return 'pl-[90px]';
     } else {
       const baseButtons = 2;
       const historyButton = globalQueries.length > 0 ? 1 : 0;
@@ -335,19 +335,6 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           </>
         ) : (
           <>
-            {/* Push Notification Button (replacing Event Share Button) */}
-            <Button
-              onClick={handleEnablePushNotifications}
-              variant="outline"
-              size="icon"
-              type="button"
-              className="rounded-full h-6 w-6"
-              style={colors.borderStyle}
-              title="Push-Benachrichtigungen aktivieren"
-            >
-              <Bell className="h-3 w-3" />
-            </Button>
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -414,7 +401,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         placeholder={placeholderText}
         rows={1} // Start with 1 row
           className={cn(
-            "w-full bg-background/60 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md border rounded-xl py-2 focus:outline-none text-sm text-foreground placeholder:text-muted-foreground pr-10 transition-all duration-200 text-left min-h-[40px] overflow-hidden",
+            "w-full bg-background/60 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md border rounded-xl py-0 flex items-center focus:outline-none text-sm text-foreground placeholder:text-muted-foreground pr-10 transition-all duration-200 text-left min-h-[40px] overflow-hidden",
             getButtonWidth()
           )}
           style={activeChatModeValue === 'community' ? {
