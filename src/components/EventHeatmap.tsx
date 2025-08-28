@@ -1267,6 +1267,13 @@ const EventHeatmap: React.FC = () => {
               <Plus className="h-4 w-4" />
               Ich bin hier! (beta)
             </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => window.location.href = '/'}
+              className="text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer flex items-center gap-2"
+            >
+              <MessageSquare className="h-4 w-4" />
+              Community Chat
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
