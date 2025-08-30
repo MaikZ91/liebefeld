@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const miaMessage = `Hallo liebe Tribes,
+    const miaMessage = `#ausgehen Hallo liebe Tribes,
 
 hier kommen meine Empfehlungen für eure nächste Woche:
 
