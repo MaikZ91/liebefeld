@@ -21,20 +21,16 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
   className
 }) => {
   return (
-    <div className={cn("flex gap-2 overflow-x-auto scrollbar-none py-2", className)}>
+    <div className={cn("flex gap-3 overflow-x-auto scrollbar-none", className)}>
       {categories.map((category) => (
         <button
           key={category.id}
           onClick={() => onCategoryChange(category.id)}
           className={cn(
-            "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 flex-shrink-0",
+            "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 flex-shrink-0 border",
             selectedCategory === category.id
-              ? "bg-foreground text-background shadow-md"
-              : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground",
-            // Category-specific colors when active
-            selectedCategory === category.id && category.id === 'sport' && "bg-sport-primary text-white",
-            selectedCategory === category.id && category.id === 'ausgehen' && "bg-ausgehen-primary text-white", 
-            selectedCategory === category.id && category.id === 'kreativität' && "bg-kreativität-primary text-white"
+              ? "bg-green-500 text-black border-green-500"
+              : "bg-neutral-800/80 text-white border-neutral-700 hover:bg-neutral-700"
           )}
         >
           {category.label}
