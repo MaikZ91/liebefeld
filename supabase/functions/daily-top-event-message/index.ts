@@ -80,7 +80,7 @@ serve(async (req) => {
       console.log('📭 [Daily Top Event] No events with likes found for today');
       
       // Post a message that there are no top events today
-      const noEventMessage = `🌅 **Guten Morgen, Bielefeld!** 
+      const noEventMessage = `#ausgehen 🌅 **Guten Morgen, Bielefeld!** 
 
 Heute scheint ein ruhiger Tag zu sein - ich habe kein besonders beliebtes Event für heute gefunden. 
 
@@ -133,7 +133,7 @@ _- MIA, eure Event-Assistentin_`;
     }
 
     // Create the message
-    const messageText = `🌅 **Guten Morgen, Bielefeld!** 
+    const messageText = `#ausgehen 🌅 **Guten Morgen, Bielefeld!** 
 
 🏆 **Das Top Event von heute ist:**
 
