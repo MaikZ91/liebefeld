@@ -11,7 +11,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { USERNAME_KEY } from '@/types/chatTypes';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import CategorySelector from '@/components/CategorySelector';
 import EventCalendar from '@/components/EventCalendar';
 import EventForm from '@/components/EventForm';
 import { setupService } from '@/services/setupService';
@@ -264,29 +263,10 @@ const ChatPage = () => {
         newEventsCount={0}
         chatInputProps={chatInputProps}
       >
-        <div className="flex flex-col h-[calc(100vh-64px)] !mt-0 !pt-0">
-          {/* Spotify-style category header */}
-          <div className="w-full bg-black px-4 py-3 flex-shrink-0">
-            <CategorySelector
-              categories={[
-                { id: 'alle', label: 'Alle' },
-                { id: 'sport', label: 'Sport' },
-                { id: 'ausgehen', label: 'Ausgehen' },
-                { id: 'kreativität', label: 'Kreativität' },
-                { id: 'musik', label: 'Musik' },
-                { id: 'kunst', label: 'Kunst' },
-              ]}
-              selectedCategory="alle"
-              onCategoryChange={() => {}}
-              className="max-w-full"
-            />
-          </div>
-          
-          {/* Chat content */}
-          <div className="container mx-auto px-2 md:px-4 flex-grow">
-            <div className="flex-grow rounded-2xl overflow-hidden border border-white/10 flex flex-col bg-gradient-to-br from-black via-black to-black/95 shadow-2xl backdrop-blur-xl h-full">
-              <div className="flex-grow relative">
-                <EventChatBot
+        <div className="container mx-auto px-2 md:px-4 flex flex-col h-[calc(100vh-48px)] !mt-0 !pt-0">
+          <div className="flex-grow rounded-lg overflow-hidden border border-black flex flex-col bg-black">
+            <div className="flex-grow relative">
+              <EventChatBot 
                 fullPage={true} 
                 onAddEvent={handleAddEvent} 
                 onToggleCommunity={handleToggleCommunity} 
@@ -296,7 +276,6 @@ const ChatPage = () => {
                 onChatInputPropsChange={setChatInputProps}
                 onJoinEventChat={handleJoinEventChat}
               />
-              </div>
             </div>
           </div>
         </div>

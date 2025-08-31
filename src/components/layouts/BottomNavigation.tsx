@@ -55,100 +55,114 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/60 backdrop-blur-xl border-t border-white/10">
-      <div className="flex items-center justify-center px-6 py-2">
-        <div className="flex items-center gap-1 bg-black/40 backdrop-blur-md rounded-full px-2 py-1 border border-white/10">
-          {/* Community Chat Button */}
-          <Button 
-            variant="ghost"
-            size="icon" 
-            onClick={() => {
-              setActiveView?.('community');
-              navigate('/chat?view=community');
-            }} 
-            className={cn(
-              "relative h-12 w-12 rounded-full transition-all duration-300",
-              activeView === 'community' 
-                ? 'bg-primary text-white shadow-lg shadow-primary/25' 
-                : 'text-white/60 hover:text-white hover:bg-white/10'
-            )}
-          >
-            {hasCompletedOnboarding ? (
-              <Avatar className="h-6 w-6">
-                <AvatarImage src={avatarUrl || undefined} alt={username || 'User'} />
-                <AvatarFallback className="bg-primary text-white text-xs">
-                  {getInitials(username || 'User')}
-                </AvatarFallback>
-              </Avatar>
-            ) : (
-              <MessageSquare className="h-5 w-5" />
-            )}
-            {newMessagesCount > 0 && (
-              <Badge className="absolute -top-1 -right-1 bg-green-500 text-white h-5 w-5 flex items-center justify-center rounded-full text-[10px] p-0">
-                {newMessagesCount}
-              </Badge>
-            )}
-          </Button>
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-t border-gray-700 min-h-16">
+      <div className="flex items-center justify-around px-2 py-2 max-w-md mx-auto">
+        {/* Community Chat Button */}
+        <Button 
+          variant={activeView === 'community' ? "default" : "ghost"} 
+          size="sm" 
+          onClick={() => {
+            setActiveView?.('community');
+            navigate('/chat?view=community');
+          }} 
+          className={cn(
+            "flex flex-col items-center gap-1 px-2 py-2 h-auto relative min-w-0",
+            activeView === 'community' ? 'bg-red-500 hover:bg-red-600 text-white' : 'text-gray-400 hover:text-white'
+          )}
+        >
+          {hasCompletedOnboarding ? (
+            <Avatar className="h-4 w-4">
+              <AvatarImage src={avatarUrl || undefined} alt={username || 'User'} />
+              <AvatarFallback className="bg-red-500 text-white text-[8px]">
+                {getInitials(username || 'User')}
+              </AvatarFallback>
+            </Avatar>
+          ) : (
+            <MessageSquare className="h-4 w-4" />
+          )}
+          <span className="text-[10px]">Community Chat</span>
+          {newMessagesCount > 0 && (
+            <Badge className="absolute -top-1 -right-1 bg-green-600 text-white h-4 w-4 flex items-center justify-center rounded-full text-[8px] p-0">
+              {newMessagesCount}
+            </Badge>
+          )}
+        </Button>
 
-          {/* Heatmap Button */}
-          <Button 
-            variant="ghost"
-            size="icon" 
-            onClick={() => navigate('/heatmap')} 
-            className={cn(
-              "h-12 w-12 rounded-full transition-all duration-300",
-              isOnHeatmap 
-                ? 'bg-primary text-white shadow-lg shadow-primary/25' 
-                : 'text-white/60 hover:text-white hover:bg-white/10'
-            )}
-          >
-            <Map className="h-5 w-5" />
-          </Button>
+        {/* Heatmap Button */}
+        <Button 
+          variant={isOnHeatmap ? "default" : "ghost"} 
+          size="sm" 
+          onClick={() => navigate('/heatmap')} 
+          className={cn(
+            "flex flex-col items-center gap-1 px-2 py-2 h-auto min-w-0",
+            isOnHeatmap ? 'bg-red-500 hover:bg-red-600 text-white' : 'text-gray-400 hover:text-white'
+          )}
+        >
+          <Map className="h-4 w-4" />
+          <span className="text-[10px]">Social Map</span>
+        </Button>
 
-          {/* User/Welcome Button */}
+        {/* Challenge Button - temporarily hidden */}
+        {false && (
           <Button 
-            variant="ghost"
-            size="icon" 
-            onClick={() => {
-              if (!hasCompletedOnboarding) {
-                setIsOnboardingOpen(true);
-              } else {
-                setIsUserDirectoryOpen(true);
-              }
-            }} 
+            variant={isOnChallengePage ? "default" : "ghost"} 
+            size="sm" 
+            onClick={() => navigate('/challenge')} 
             className={cn(
-              "h-12 w-12 rounded-full transition-all duration-300",
-              !hasCompletedOnboarding 
-                ? "text-primary hover:text-primary-foreground hover:bg-primary/20" 
-                : "text-white/60 hover:text-white hover:bg-white/10"
+              "flex flex-col items-center gap-1 px-2 py-2 h-auto min-w-0",
+              isOnChallengePage ? 'bg-red-500 hover:bg-red-600 text-white' : 'text-gray-400 hover:text-white'
             )}
           >
-            <User className="h-5 w-5" />
+            <Target className="h-4 w-4" />
+            <span className="text-[10px]">Challenge</span>
           </Button>
-          
-          {/* Event Calendar Button */}
-          <Button 
-            variant="ghost"
-            size="icon" 
-            onClick={() => {
-              console.log('🔥 [BottomNav] Event Calendar button clicked, navigating to /events');
-              navigate('/events');
-            }} 
-            className={cn(
-              "relative h-12 w-12 rounded-full transition-all duration-300",
-              isOnEventsPage 
-                ? 'bg-primary text-white shadow-lg shadow-primary/25' 
-                : 'text-white/60 hover:text-white hover:bg-white/10'
-            )}
-          >
-            <Calendar className="h-5 w-5" />
-            {newEventsCount > 0 && (
-              <Badge className="absolute -top-1 -right-1 bg-green-500 text-white h-5 w-5 flex items-center justify-center rounded-full text-[10px] p-0">
-                {newEventsCount}
-              </Badge>
-            )}
-          </Button>
-        </div>
+        )}
+
+        {/* User/Welcome Button */}
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => {
+            if (!hasCompletedOnboarding) {
+              setIsOnboardingOpen(true);
+            } else {
+              setIsUserDirectoryOpen(true);
+            }
+          }} 
+          className={cn(
+            "flex flex-col items-center gap-1 px-2 py-2 h-auto min-w-0",
+            !hasCompletedOnboarding 
+              ? "text-red-500 hover:text-red-400" 
+              : "text-gray-400 hover:text-white"
+          )}
+        >
+          <User className="h-4 w-4" />
+          <span className="text-[10px]">
+            {hasCompletedOnboarding ? 'User' : 'Welcome'}
+          </span>
+        </Button>
+        
+        {/* Event Calendar Button */}
+        <Button 
+          variant={isOnEventsPage ? "default" : "ghost"} 
+          size="sm" 
+          onClick={() => {
+            console.log('🔥 [BottomNav] Event Calendar button clicked, navigating to /events');
+            navigate('/events');
+          }} 
+          className={cn(
+            "flex flex-col items-center gap-1 px-2 py-2 h-auto min-w-0",
+            isOnEventsPage ? 'bg-red-500 hover:bg-red-600 text-white' : 'text-gray-400 hover:text-white'
+          )}
+        >
+          <Calendar className="h-4 w-4" />
+          <span className="text-[10px]">Event Calendar</span>
+          {newEventsCount > 0 && (
+            <Badge className="absolute -top-1 -right-1 bg-green-600 text-white h-4 w-4 flex items-center justify-center rounded-full text-[8px] p-0">
+              {newEventsCount}
+            </Badge>
+          )}
+        </Button>
       </div>
       
       {/* Onboarding Chatbot */}

@@ -389,7 +389,7 @@ const OnboardingChatbot: React.FC<OnboardingChatbotProps> = ({ open, onOpenChang
       const groupId = `${cityAbbr}_ausgehen`; // Use the correct format: cityAbbr_ausgehen
       
       // Create welcome message from MIA
-      const welcomeMessage = `#ausgehen Hey ${userData.username},willkommen bei uns in der Community 🎉 Erzähl doch kurz: 1️⃣ Was machst du in Bielefeld? 2️⃣ Deine Lieblingsaktivität (#sport, #ausgehen,#kreativität…)? 3️⃣ Fun Fact über dich 😄 
+      const welcomeMessage = `Hey ${userData.username},willkommen bei uns in der Community 🎉 Erzähl doch kurz: 1️⃣ Was machst du in Bielefeld? 2️⃣ Deine Lieblingsaktivität (#sport, #ausgehen,#kreativität…)? 3️⃣ Fun Fact über dich 😄 
 
 Liebe Grüße
 Mia 💕`;
@@ -458,102 +458,95 @@ Mia 💕`;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="sm:max-w-lg h-[80vh] max-h-[700px] flex flex-col p-0 bg-black/95 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl z-[9999] fixed overflow-hidden"
-        showCloseButton={false}
+        className="sm:max-w-md h-[600px] flex flex-col p-0 bg-black rounded-3xl border-0 shadow-2xl z-[9999] fixed"
+        showCloseButton={false} // Hier wird der Schließen-Button deaktiviert
       >
-        {/* Gradient Background Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-kreativität-primary/10 pointer-events-none" />
-        
         {/* Header */}
-        <DialogHeader className="relative px-6 py-4 shrink-0 border-b border-white/10">
+        <DialogHeader className="px-4 py-3 bg-black text-white relative rounded-t-3xl shrink-0">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => onOpenChange(false)}
-              className="h-10 w-10 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              className="h-8 w-8 text-grey hover:bg-grey/20"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <DialogTitle className="text-white font-serif text-xl tracking-wide bg-gradient-to-r from-white to-white/80 bg-clip-text">
-              THE TRIBE
+            <DialogTitle className="text-white font-bold text-base tracking-wider">
+              THE TRIBE ONBOARDING
             </DialogTitle>
-            <div className="w-10 h-10" />
+            <div className="w-8 h-8" /> {/* Spacer */}
           </div>
         </DialogHeader>
 
         {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 min-h-0 scrollbar-thin relative">
-          {messages.map((msg, index) => (
-            <div key={msg.id} className="space-y-3 animate-fade-in" style={{animationDelay: `${index * 0.1}s`}}>
+        <div className="flex-1 overflow-y-auto px-6 py-4 bg-white space-y-4 min-h-0">
+          {messages.map((msg) => (
+            <div key={msg.id} className="space-y-2">
               <div className={`flex ${msg.isBot ? 'justify-start' : 'justify-end'}`}>
                 {msg.isBot && (
-                  <div className="relative mr-3 mt-1 shrink-0">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 p-0.5">
-                      <img 
-                        src={chatbotAvatar} 
-                        alt="Event Guide" 
-                        className="w-full h-full rounded-full object-cover"
-                      />
-                    </div>
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-black/90" />
-                  </div>
+                  <img 
+                    src={chatbotAvatar} 
+                    alt="Event Guide" 
+                    className="w-8 h-8 rounded-full mr-3 mt-1 object-cover"
+                  />
                 )}
                 <div className="max-w-[85%]">
                   <div
-                    className={`rounded-3xl px-6 py-4 backdrop-blur-md transition-all duration-300 hover-scale ${
+                    className={`rounded-2xl px-4 py-3 ${
                       msg.isBot
-                        ? 'bg-white/95 text-gray-800 shadow-lg border border-white/20'
-                        : 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg'
+                        ? 'bg-gray-200 text-black'
+                        : 'bg-red-500 text-white'
                     }`}
                   >
-                    <p className="text-sm leading-relaxed font-medium">{msg.message}</p>
+                    <p className="text-sm">{msg.message}</p>
                   </div>
-                  <p className="text-xs text-white/50 mt-2 px-2 font-mono">
+                  <div className={`text-xs text-gray-500 mt-1 ${msg.isBot ? 'text-left' : 'text-right'}`}>
                     {formatTime(msg.timestamp)}
-                  </p>
+                  </div>
                 </div>
               </div>
               
-              {/* Interest buttons with special handling */}
+              {/* Buttons */}
+              {/* Conditional rendering for interests buttons */}
               {currentStep === 'interests' && msg.message.includes('Was interessiert dich besonders?') ? (
-                <div className="flex flex-wrap gap-3 ml-13 animate-fade-in" style={{animationDelay: `${(index + 1) * 0.1}s`}}>
-                  {interests.map((interest, buttonIndex) => (
+                  <div className="flex flex-wrap gap-2 justify-start ml-2">
+                    {interests.map((interest, index) => (
+                      <Button
+                        key={index}
+                        variant={'outline'} // Always use outline, color set by className
+                        size="sm"
+                        onClick={() => toggleInterest(interest.text)}
+                        className={`text-xs ${
+                          userData.interests.includes(interest.text)
+                            ? 'bg-red-500 hover:bg-red-600 text-white'
+                            : 'border-gray-300 text-white-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        {`${interest.emoji} ${interest.text}`}
+                      </Button>
+                    ))}
                     <Button
-                      key={buttonIndex}
-                      onClick={() => toggleInterest(interest.text)}
-                      variant="outline"
+                      variant="default"
                       size="sm"
-                      className={`text-sm transition-all duration-300 hover-scale backdrop-blur-md border-2 font-medium ${
-                        userData.interests.includes(interest.text)
-                          ? 'bg-gradient-to-r from-primary to-primary/90 text-white border-primary shadow-lg shadow-primary/20'
-                          : 'bg-white/10 border-white/30 text-white hover:bg-white/20'
-                      }`}
+                      onClick={proceedToAvatar}
+                      className={`text-xs bg-red-500 hover:bg-red-600 text-white`}
                     >
-                      {`${interest.emoji} ${interest.text}`}
+                      Weiter →
                     </Button>
-                  ))}
-                  <Button
-                    onClick={proceedToAvatar}
-                    variant="default"
-                    size="sm"
-                    className="text-sm transition-all duration-300 hover-scale backdrop-blur-md border-2 font-medium bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-white border-primary shadow-lg shadow-primary/20"
-                  >
-                    Weiter →
-                  </Button>
-                </div>
-              ) : msg.hasButtons && msg.buttons && (
-                <div className="flex flex-wrap gap-3 ml-13 animate-fade-in" style={{animationDelay: `${(index + 1) * 0.1}s`}}>
-                  {msg.buttons.map((button, buttonIndex) => (
+                  </div>
+              ) : msg.hasButtons && msg.buttons && ( // Original button rendering for other steps
+                <div className="flex flex-wrap gap-2 justify-start ml-2">
+                  {msg.buttons.map((button, index) => (
                     <Button
-                      key={buttonIndex}
-                      onClick={button.action}
-                      variant={button.variant}
+                      key={index}
+                      variant={button.variant || 'outline'}
                       size="sm"
-                      className={`text-sm transition-all duration-300 hover-scale backdrop-blur-md border-2 font-medium ${
+                      onClick={button.action}
+                      className={`text-xs ${
                         button.variant === 'default'
-                          ? 'bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-white border-primary shadow-lg shadow-primary/20'
-                          : 'bg-white/10 border-white/30 text-white hover:bg-white/20'
+                          ? 'bg-red-500 hover:bg-red-600 text-white'
+                          : 'bg-red-500 hover:bg-red-600 text-white' // Sicherstellen, dass dies korrekt ist.
                       }`}
                     >
                       {button.text}
@@ -564,25 +557,13 @@ Mia 💕`;
             </div>
           ))}
           
-          {/* Typing Indicator */}
           {isTyping && (
-            <div className="flex justify-start animate-fade-in">
-              <div className="relative mr-3 mt-1 shrink-0">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 p-0.5">
-                  <img 
-                    src={chatbotAvatar} 
-                    alt="Event Guide" 
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full border-2 border-black/90 animate-pulse" />
-              </div>
-              <div className="bg-white/95 backdrop-blur-md rounded-3xl px-6 py-4 max-w-[85%] shadow-lg border border-white/20">
-                <div className="flex space-x-2 items-center">
+            <div className="flex justify-start">
+              <div className="bg-gray-200 rounded-2xl px-4 py-3">
+                <div className="flex gap-1">
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                  <span className="text-gray-500 text-xs ml-2">Mia tippt...</span>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
                 </div>
               </div>
             </div>
@@ -591,13 +572,12 @@ Mia 💕`;
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
+        {/* Input (Name und Stadt) */}
         {(currentStep === 'name' || currentStep === 'city') && (
-          <div className="p-6 shrink-0 border-t border-white/10 backdrop-blur-md relative">
-            <div className="flex items-center space-x-3">
-              {currentStep === 'city' && <Search className="h-5 w-5 text-white/60 absolute left-9 z-10" />}
+          <div className="p-4 bg-white border-t border-gray-100 rounded-b-3xl shrink-0">
+            <div className="flex items-center gap-3 bg-gray-100 rounded-full px-4 py-3">
+              {currentStep === 'city' && <Search className="h-5 w-5 text-gray-400" />}
               <Input
-                placeholder={currentStep === 'city' ? "In welcher Stadt bist du?" : "Wie heißt du?"}
                 value={currentStep === 'city' ? citySearch : inputMessage}
                 onChange={(e) => {
                   if (currentStep === 'city') {
@@ -607,15 +587,14 @@ Mia 💕`;
                   }
                 }}
                 onKeyPress={handleKeyPress}
-                className={`flex-1 bg-white/10 backdrop-blur-md border-2 border-white/20 rounded-2xl py-4 text-white placeholder:text-white/60 focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 font-medium ${
-                  currentStep === 'city' ? 'pl-12 pr-5' : 'px-5'
-                }`}
+                placeholder={currentStep === 'city' ? "Stadt eingeben..." : "Dein Name..."}
+                className="flex-1 bg-transparent border-0 text-black placeholder-gray-500 focus:ring-0 focus:outline-none px-0"
               />
               <Button
                 onClick={handleSendMessage}
-                disabled={currentStep === 'name' ? !inputMessage.trim() : !citySearch.trim()}
+                disabled={currentStep === 'name' ? !inputMessage.trim() || isTyping : !citySearch.trim() || isTyping}
+                className="bg-red-500 hover:bg-red-600 text-white rounded-full h-10 w-10 p-0 flex items-center justify-center"
                 size="icon"
-                className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-white rounded-2xl h-12 w-12 shadow-lg shadow-primary/30 transition-all duration-300 disabled:opacity-50 disabled:shadow-none hover-scale border-2 border-primary"
               >
                 <Send className="h-5 w-5" />
               </Button>
@@ -623,24 +602,24 @@ Mia 💕`;
             
             {/* City suggestions */}
             {currentStep === 'city' && citySearch.length > 0 && filteredCities.length > 0 && (
-              <div className="mt-4 space-y-2 max-h-40 overflow-y-auto scrollbar-thin">
-                {filteredCities.map((city, index) => (
-                  <button
-                    key={city.name}
+              <div className="mt-3 space-y-2">
+                {filteredCities.map((city) => (
+                  <Button
+                    key={city.abbr}
+                    variant="outline"
+                    size="sm"
                     onClick={() => selectCity(city.name)}
-                    className="w-full text-left px-4 py-3 hover:bg-white/10 rounded-2xl text-sm flex items-center text-white/80 hover:text-white transition-all duration-300 backdrop-blur-md border border-white/10 hover:border-white/20 animate-fade-in"
-                    style={{animationDelay: `${index * 0.05}s`}}
+                    className="w-full justify-start text-left border-gray-300 hover:bg-gray-100"
                   >
-                    <Search className="h-4 w-4 mr-3 text-primary" />
-                    <span className="font-medium">{city.name}</span>
-                  </button>
+                    {city.name}
+                  </Button>
                 ))}
               </div>
             )}
           </div>
         )}
 
-        {/* Hidden file input for image upload */}
+        {/* Hidden file input */}
         <input
           ref={fileInputRef}
           type="file"
