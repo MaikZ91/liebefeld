@@ -16,6 +16,7 @@ import FavoritesView from './calendar/FavoritesView';
 import EventForm from './EventForm';
 import { useEventContext, cities } from '@/contexts/EventContext';
 import { toast } from 'sonner';
+import CategorySelector from './CategorySelector';
 
 interface EventCalendarProps {
   defaultView?: "calendar" | "list";
@@ -205,11 +206,36 @@ const EventCalendar = ({ defaultView = "list", onJoinEventChat }: EventCalendarP
     }
   }, [filter]);
 
+  const [selectedCategory, setSelectedCategory] = useState('alle');
+
+  const categories = [
+    { id: 'alle', label: 'Alle' },
+    { id: 'sport', label: 'Sport' },
+    { id: 'ausgehen', label: 'Ausgehen' },
+    { id: 'kreativität', label: 'Kreativität' },
+    { id: 'musik', label: 'Musik' },
+    { id: 'kunst', label: 'Kunst' },
+  ];
+
   console.log('📅 [EventCalendar] Rendering with view:', view, 'eventsToDisplay.length:', eventsToDisplay.length);
   
   return (
-    <div className="min-h-screen bg-black text-white px-2 py-2 animate-fade-in">
-      <div className="flex flex-col space-y-2 h-full">
+    <div className="min-h-screen bg-black text-white">
+      {/* Spotify-style category header */}
+      <header className="w-full bg-black">
+        <div className="px-4 py-3">
+          <CategorySelector
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+            className="max-w-full"
+          />
+        </div>
+      </header>
+      
+      {/* Main content */}
+      <div className="px-2 py-2 animate-fade-in">
+        <div className="flex flex-col space-y-2 h-full">
         <CalendarHeader 
           currentDate={currentDate}
           prevMonth={prevMonth}
@@ -307,6 +333,7 @@ const EventCalendar = ({ defaultView = "list", onJoinEventChat }: EventCalendarP
             </div>
           </TabsContent>
         </Tabs>
+        </div>
       </div>
     </div>
   );
