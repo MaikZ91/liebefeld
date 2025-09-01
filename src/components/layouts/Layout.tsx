@@ -68,7 +68,7 @@ export const Layout: React.FC<LayoutProps> = ({
     };
   }, []);
   
-  const hideHeader = pathname === '/heatmap' || pathname === '/' || pathname === '/events';
+  const hideHeader = pathname === '/heatmap' || pathname === '/' || pathname === '/events' || pathname === '/chat';
 
   return (
     <>
@@ -196,7 +196,12 @@ interface MainNavProps {
 }
 
 const MainNav: React.FC<MainNavProps> = ({ pathname, chatInputProps, activeView }) => {
-  if (pathname === '/chat' || pathname === '/') {
+  if (pathname === '/chat') {
+    // No header for chat page to give more space to community chat
+    return null;
+  }
+  
+  if (pathname === '/') {
     return (
       <div className="flex items-center gap-4 relative z-10">
         <Link to="/" className="flex items-center">
