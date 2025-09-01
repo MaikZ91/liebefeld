@@ -57,7 +57,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/1 backdrop-blur-md border-t border-white/5">
       <div className="flex items-center justify-center px-6 py-2">
-        <div className="flex items-center gap-1 bg-black/100 backdrop-blur-md rounded-full px-2 py-1 border border-white/5">
+        <div className="flex items-center gap-1 bg-transparent backdrop-blur-md rounded-full px-2 py-1 border border-white/5">
           {/* Community Chat Button */}
           <Button 
             variant="ghost"
