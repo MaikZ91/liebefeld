@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Event, RsvpOption } from '../types/eventTypes';
+import { USERNAME_KEY } from '../types/chatTypes';
 import {
   fetchSupabaseEvents,
   updateEventRsvp,
@@ -75,7 +76,7 @@ export const useEvents = (selectedCity: string) => {
     }
 
     try {
-        const username = localStorage.getItem('selectedUsername') || null;
+        const username = localStorage.getItem(USERNAME_KEY) || null;
         const avatarUrl = userProfile?.avatar || null;
 
         console.log('[handleLikeEvent] Using username:', username, 'avatar:', avatarUrl);
