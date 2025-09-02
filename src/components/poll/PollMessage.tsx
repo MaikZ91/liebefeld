@@ -59,7 +59,7 @@ const PollMessage: React.FC<PollMessageProps> = ({
       const { error } = await supabase
         .from('chat_messages')
         .update({ 
-          poll_votes: newVotes 
+          poll_votes: newVotes as any
         })
         .eq('id', messageId);
 
