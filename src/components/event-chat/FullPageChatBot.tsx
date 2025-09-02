@@ -111,6 +111,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       
       // Clear input immediately
       setCommunityInput('');
+      // Also clear external input to sync with header
+      if (setExternalInput) {
+        setExternalInput('');
+      }
       
       // Send directly to database via chatService
       await chatService.sendMessage(communityGroupId, messageText, username);

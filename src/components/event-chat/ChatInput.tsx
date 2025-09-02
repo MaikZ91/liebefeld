@@ -87,6 +87,10 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 
   useEffect(() => {
     setLocalInput(input);
+    // Clear local input when parent input is cleared (after sending)
+    if (input === '' && localInput !== '') {
+      setLocalInput('');
+    }
   }, [input]);
 
   // Effect to adjust textarea height
