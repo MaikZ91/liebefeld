@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Heart, History, CalendarPlus, Send, Calendar, ChevronDown, Bell, Plus, BarChart3 } from 'lucide-react';
+import { Heart, History, CalendarPlus, Send, Calendar, ChevronDown, Bell } from 'lucide-react';
 import { ChatInputProps } from './types';
 import { useEventContext } from '@/contexts/EventContext';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
@@ -14,9 +14,6 @@ import { initializeFCM } from '@/services/firebaseMessaging';
 import { useToast } from '@/hooks/use-toast';
 import { getChannelColor } from '@/utils/channelColors';
 import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
-import PollCreator from '@/components/poll/PollCreator';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import EventForm from '@/components/EventForm';
 
 const AnimatedText = ({ text, className = '' }: { text: string; className?: string }) => {
   return (
@@ -31,7 +28,6 @@ interface ExtendedChatInputProps extends ChatInputProps {
   onCategoryChange?: (category: string) => void;
   placeholder?: string; // Add placeholder prop
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
-  onCreatePoll?: (poll: { question: string; options: string[] }) => void;
 }
 
 const ChatInput: React.FC<ExtendedChatInputProps> = ({
@@ -52,15 +48,12 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   activeCategory = 'Ausgehen',
   onCategoryChange,
   placeholder, // Receive placeholder prop
-  onJoinEventChat,
-  onCreatePoll
+  onJoinEventChat
 }) => {
   const miaAvatarUrl = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png'
   const { events, selectedCity } = useEventContext();
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
   const [localInput, setLocalInput] = useState(input);
-  const [isPollCreatorOpen, setIsPollCreatorOpen] = useState(false);
-  const [isEventFormOpen, setIsEventFormOpen] = useState(false);
   const { toast } = useToast();
 
   const handleEnablePushNotifications = async () => {
@@ -332,51 +325,20 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
               </Button>
             )}
 
+            {onAddEvent && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onAddEvent}
+                className="h-6 w-6 text-red-400"
+                title="Event hinzufügen"
+              >
+                <CalendarPlus className="h-3 w-3" />
+              </Button>
+            )}
           </>
         ) : (
           <>
-            {/* Community Chat Plus Button */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-primary mr-1"
-                  title="Erstellen"
-                >
-                  <Plus className="h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                className="z-[99999] border-0 fixed"
-                style={{
-                  background: 'rgba(0, 0, 0, 0.9)',
-                  backdropFilter: 'blur(20px) saturate(180%)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '12px',
-                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                  position: 'fixed'
-                }}
-                side="top"
-                align="start"
-              >
-                <DropdownMenuItem
-                  onClick={() => setIsPollCreatorOpen(true)}
-                  className="text-white cursor-pointer hover:bg-zinc-800"
-                >
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Umfrage erstellen
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setIsEventFormOpen(true)}
-                  className="text-white cursor-pointer hover:bg-zinc-800"
-                >
-                  <CalendarPlus className="h-4 w-4 mr-2" />
-                  Event erstellen
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -480,40 +442,6 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
       >
         <Send className="h-4 w-4" />
       </button>
-      
-      {/* Poll Creator Dialog */}
-      <PollCreator
-        open={isPollCreatorOpen}
-        onOpenChange={setIsPollCreatorOpen}
-        onCreatePoll={(poll) => {
-          if (onCreatePoll) {
-            onCreatePoll(poll);
-          }
-        }}
-      />
-      
-      {/* Event Form Sheet */}
-      <Sheet open={isEventFormOpen} onOpenChange={setIsEventFormOpen}>
-        <SheetContent className="sm:max-w-lg">
-          <SheetHeader>
-            <SheetTitle>Event hinzufügen</SheetTitle>
-            <SheetDescription>
-              Erstelle ein neues Event für die Community.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="mt-4 overflow-y-auto max-h-[80vh]">
-            <EventForm 
-              onSuccess={() => {
-                setIsEventFormOpen(false);
-                toast({
-                  title: "Event erstellt!",
-                  description: "Dein Event wurde erfolgreich erstellt.",
-                });
-              }} 
-            />
-          </div>
-        </SheetContent>
-      </Sheet>
     </div>
   );
 };

@@ -81,9 +81,6 @@ export type Database = {
           id: string
           media_url: string | null
           parent_id: string | null
-          poll_options: Json | null
-          poll_question: string | null
-          poll_votes: Json | null
           reactions: Json | null
           read_by: string[] | null
           sender: string
@@ -101,9 +98,6 @@ export type Database = {
           id?: string
           media_url?: string | null
           parent_id?: string | null
-          poll_options?: Json | null
-          poll_question?: string | null
-          poll_votes?: Json | null
           reactions?: Json | null
           read_by?: string[] | null
           sender: string
@@ -121,9 +115,6 @@ export type Database = {
           id?: string
           media_url?: string | null
           parent_id?: string | null
-          poll_options?: Json | null
-          poll_question?: string | null
-          poll_votes?: Json | null
           reactions?: Json | null
           read_by?: string[] | null
           sender?: string
