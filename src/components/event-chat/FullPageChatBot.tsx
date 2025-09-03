@@ -153,10 +153,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     try {
       setCommunitySending(true);
       
-      // Format message with category label
+      // Send message without hashtags
       let messageText = communityInput.trim();
-      const categoryLabel = `#${activeCategory.toLowerCase()}`;
-      messageText = `${categoryLabel} ${messageText}`;
       
       // Clear input immediately
       setCommunityInput('');
@@ -328,20 +326,11 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   }, [communityMessages, communitySending, activeChatModeValue, chatBottomRef]);
 
-  // Filter messages based on selected categories
+  // Filter messages based on selected categories - now no filtering needed since we switch groups
   const filteredCommunityMessages = useMemo(() => {
-    if (messageFilter.includes('alle')) {
-      return communityMessages;
-    }
-    
-    return communityMessages.filter(message => {
-      // Check if message contains any of the selected hashtags
-      const messageText = message.text.toLowerCase();
-      return messageFilter.some(category => 
-        messageText.includes(`#${category.toLowerCase()}`)
-      );
-    });
-  }, [communityMessages, messageFilter]);
+    // Return all messages since we now use different group IDs per category
+    return communityMessages;
+  }, [communityMessages]);
 
   useEffect(() => {
     if (activeChatModeValue !== 'community') return;

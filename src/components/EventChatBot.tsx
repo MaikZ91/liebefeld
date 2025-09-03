@@ -52,7 +52,7 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   const { toast } = useToast();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   
-  const communityGroupId = createCitySpecificGroupId('ausgehen', selectedCity); // Fixed to always use 'ausgehen' channel
+  const communityGroupId = createCitySpecificGroupId(activeCategory.toLowerCase(), selectedCity);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
   const chatLogic = useChatLogic(fullPage, activeChatModeValue);
