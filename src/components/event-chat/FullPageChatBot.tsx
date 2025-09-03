@@ -101,6 +101,12 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const [communityInput, setCommunityInput] = useState('');
   const [communitySending, setCommunitySending] = useState(false);
   
+  // User profile dialog state
+  const [selectedUserProfile, setSelectedUserProfile] = useState<UserProfile | null>(null);
+  const [showUserProfileDialog, setShowUserProfileDialog] = useState(false);
+  const [loadingUserProfile, setLoadingUserProfile] = useState(false);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  
   // Handle poll creation
   const handleCreatePoll = async (poll: { question: string; options: string[] }) => {
     if (!username) return;
@@ -153,8 +159,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     try {
       setCommunitySending(true);
       
-      // Send message without hashtags
-      let messageText = communityInput.trim();
+      // Add category tag to message for filtering
+      let messageText = `[${activeCategory.toUpperCase()}] ${communityInput.trim()}`;
       
       // Clear input immediately
       setCommunityInput('');
@@ -174,21 +180,20 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
   };
 
-  // Filter state for community chat - use context
-  const [messageFilter, setMessageFilter] = useState<string[]>([activeCategory]);
+  // Filter messages based on selected categories - filter by category tags
+  const filteredCommunityMessages = useMemo(() => {
+    if (activeCategory === 'alle') {
+      return communityMessages;
+    }
+    
+    return communityMessages.filter(message => {
+      // Check if message contains the category tag
+      const messageText = message.text;
+      return messageText.includes(`[${activeCategory.toUpperCase()}]`);
+    });
+  }, [communityMessages, activeCategory]);
 
-  // Update messageFilter when activeCategory changes
-  useEffect(() => {
-    const newFilter = [activeCategory];
-    console.log('FullPageChatBot: updating messageFilter to:', newFilter);
-    setMessageFilter(newFilter);
-  }, [activeCategory]);
-  
-  // User profile dialog state
-  const [selectedUserProfile, setSelectedUserProfile] = useState<UserProfile | null>(null);
-  const [showUserProfileDialog, setShowUserProfileDialog] = useState(false);
-  const [loadingUserProfile, setLoadingUserProfile] = useState(false);
-  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  // Remove the messageFilter state and useEffect since we don't need it anymore
 
   useEffect(() => {
     if (activeChatModeValue === 'community' && setExternalInput && externalInput !== communityInput) {
@@ -313,7 +318,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const currentHandleKeyPress = activeChatModeValue === 'ai' ? aiKeyPress : wrappedCommunityKeyDown;
   const currentHandleInputChange = activeChatModeValue === 'ai' ? aiInputChange : wrappedCommunityInputChange;
 
-
   useEffect(() => {
     if (activeChatModeValue === 'ai' && messagesEndRef?.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
@@ -325,12 +329,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       chatBottomRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
     }
   }, [communityMessages, communitySending, activeChatModeValue, chatBottomRef]);
-
-  // Filter messages based on selected categories - now no filtering needed since we switch groups
-  const filteredCommunityMessages = useMemo(() => {
-    // Return all messages since we now use different group IDs per category
-    return communityMessages;
-  }, [communityMessages]);
 
   useEffect(() => {
     if (activeChatModeValue !== 'community') return;
@@ -354,7 +352,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
           <div className="px-4 py-2">
             <div className="flex gap-2 overflow-x-auto scrollbar-none flex-nowrap">
               {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => {
-                const isActive = messageFilter.includes(category);
+                const isActive = activeCategory === category;
                 const isAll = category === 'alle';
                 const chipBase = 'h-7 px-3 text-xs rounded-full transition-colors';
                 if (isAll) {
@@ -422,9 +420,9 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               <div className="space-y-2 py-4 pb-28">
                 {filteredCommunityMessages.length === 0 && !communityLoading && !communityError && (
                   <div className="text-center text-gray-400 py-4">
-                    {messageFilter.includes('alle') 
+                    {activeCategory === 'alle' 
                       ? 'Noch keine Nachrichten im Community Chat. Starte die Unterhaltung!'
-                      : `Keine Nachrichten in den gewählten Kategorien gefunden.`
+                      : `Keine Nachrichten in der Kategorie "${activeCategory}" gefunden.`
                     }
                   </div>
                 )}

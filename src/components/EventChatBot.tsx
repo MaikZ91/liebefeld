@@ -52,7 +52,7 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   const { toast } = useToast();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   
-  const communityGroupId = createCitySpecificGroupId(activeCategory.toLowerCase(), selectedCity);
+  const communityGroupId = createCitySpecificGroupId('alle', selectedCity); // Use single group for all categories
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
   const chatLogic = useChatLogic(fullPage, activeChatModeValue);
