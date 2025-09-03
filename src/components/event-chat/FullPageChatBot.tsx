@@ -108,21 +108,27 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     try {
       setCommunitySending(true);
       
+      // Get user avatar from localStorage
+      const avatar = localStorage.getItem(AVATAR_KEY) || null;
+      
       // Create poll message
       const pollMessage = {
         group_id: communityGroupId,
         sender: username,
-        avatar: null, // Will be handled by the database/service
+        avatar: avatar,
         text: `📊 ${poll.question}`,
         poll_question: poll.question,
         poll_options: poll.options,
         poll_votes: {} as any
       };
 
+      console.log('Creating poll:', pollMessage);
+
       // Send to database
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('chat_messages')
-        .insert([pollMessage]);
+        .insert([pollMessage])
+        .select();
 
       if (error) {
         console.error('Error creating poll:', error);
@@ -130,6 +136,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
         return;
       }
 
+      console.log('Poll created successfully:', data);
       toast.success('Umfrage erstellt!');
     } catch (error) {
       console.error('Error in handleCreatePoll:', error);
