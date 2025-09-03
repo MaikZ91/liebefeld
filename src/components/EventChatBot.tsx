@@ -14,6 +14,7 @@ import { createCitySpecificGroupId } from '@/utils/groupIdUtils';
 interface ExtendedEventChatBotProps extends EventChatBotProps {
   onChatInputPropsChange?: (props: any) => void;
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
+  onCreatePoll?: (poll: { question: string; options: string[] }) => void;
 }
 
 const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({ 
@@ -23,7 +24,8 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   activeChatMode,
   setActiveChatMode,
   onChatInputPropsChange,
-  onJoinEventChat
+  onJoinEventChat,
+  onCreatePoll
 }) => {
   const [internalActiveChatMode, setInternalActiveChatMode] = useState<'ai' | 'community'>('ai');
   const activeChatModeValue = activeChatMode !== undefined ? activeChatMode : internalActiveChatMode;
@@ -153,6 +155,7 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
         setExternalInput={setExternalInput}
         onExternalSendHandlerChange={setExternalSendHandler}
         onJoinEventChat={onJoinEventChat}
+        onCreatePoll={onCreatePoll}
       />
     );
   }

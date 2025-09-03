@@ -21,6 +21,8 @@ import { userService } from '@/services/userService';
 import { UserProfile } from '@/types/chatTypes';
 import { toast } from 'sonner';
 import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
+import PollMessage from '@/components/poll/PollMessage';
+import { supabase } from '@/integrations/supabase/client';
 
 interface FullPageChatBotProps {
   chatLogic: any;
@@ -31,6 +33,7 @@ interface FullPageChatBotProps {
   activeCategory?: string;
   onCategoryChange?: (category: string) => void;
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
+  onCreatePoll?: (poll: { question: string; options: string[] }) => void;
   hideInput?: boolean;
   externalInput?: string;
   setExternalInput?: (value: string) => void;
@@ -45,6 +48,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   activeCategory: externalActiveCategory = 'Ausgehen',
   onCategoryChange: externalOnCategoryChange,
   onJoinEventChat,
+  onCreatePoll,
   hideInput = false,
   externalInput = '',
   setExternalInput,
@@ -96,6 +100,44 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   // Community chat state - managed externally via props
   const [communityInput, setCommunityInput] = useState('');
   const [communitySending, setCommunitySending] = useState(false);
+  
+  // Handle poll creation
+  const handleCreatePoll = async (poll: { question: string; options: string[] }) => {
+    if (!username) return;
+
+    try {
+      setCommunitySending(true);
+      
+      // Create poll message
+      const pollMessage = {
+        group_id: communityGroupId,
+        sender: username,
+        avatar: null, // Will be handled by the database/service
+        text: `📊 ${poll.question}`,
+        poll_question: poll.question,
+        poll_options: poll.options,
+        poll_votes: {} as any
+      };
+
+      // Send to database
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert([pollMessage]);
+
+      if (error) {
+        console.error('Error creating poll:', error);
+        toast.error('Umfrage konnte nicht erstellt werden');
+        return;
+      }
+
+      toast.success('Umfrage erstellt!');
+    } catch (error) {
+      console.error('Error in handleCreatePoll:', error);
+      toast.error('Fehler beim Erstellen der Umfrage');
+    } finally {
+      setCommunitySending(false);
+    }
+  };
   
   // Create send function directly instead of using external component
   const communitySendMessage = async () => {
@@ -397,35 +439,55 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                    const timeAgo = formatTime(message.created_at);
 
                    return (
-                      <div key={message.id} className="mb-1 w-full group">
-                        {!isConsecutive && (
-                          <div className="flex items-center mb-1">
-                             <Avatar 
-                               className="h-7 w-7 mr-2 flex-shrink-0 ring-1 ring-border cursor-pointer hover:opacity-80 transition-opacity"
-                               onClick={() => handleAvatarClick(message.user_name)}
-                             >
-                              <AvatarImage src={message.user_avatar} alt={message.user_name} />
-                              <AvatarFallback className="bg-muted text-foreground">
-                                {getInitials(message.user_name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="text-base font-medium text-white mr-2">
-                              {message.user_name}
-                            </div>
-                            <span className="text-sm text-muted-foreground">{timeAgo}</span>
-                         </div>
-                        )}
-                        <div className="break-words">
-                         <ChatMessage
-                           message={message.text}
-                           isConsecutive={isConsecutive}
-                           isGroup
-                           messageId={message.id}
-                           reactions={message.reactions || []}
-                           onReact={(emoji) => handleReaction(message.id, emoji)}
-                           currentUsername={username}
-                         />
-                       </div>
+                       <div key={message.id} className="mb-1 w-full group">
+                         {!isConsecutive && (
+                           <div className="flex items-center mb-1">
+                              <Avatar 
+                                className="h-7 w-7 mr-2 flex-shrink-0 ring-1 ring-border cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => handleAvatarClick(message.user_name)}
+                              >
+                               <AvatarImage src={message.user_avatar} alt={message.user_name} />
+                               <AvatarFallback className="bg-muted text-foreground">
+                                 {getInitials(message.user_name)}
+                               </AvatarFallback>
+                             </Avatar>
+                             <div className="text-base font-medium text-white mr-2">
+                               {message.user_name}
+                             </div>
+                             <span className="text-sm text-muted-foreground">{timeAgo}</span>
+                          </div>
+                         )}
+                         <div className="break-words">
+                           {/* Handle different message types */}
+                           {(message as any).poll_question ? (
+                             // Poll message
+                             <div className="w-full max-w-sm ml-9">
+                               <PollMessage 
+                                 pollData={{
+                                   question: (message as any).poll_question,
+                                   options: (message as any).poll_options || [],
+                                   votes: (message as any).poll_votes || {}
+                                 }}
+                                 messageId={message.id}
+                                 onVote={(optionIndex, messageId) => {
+                                   console.log('Vote received:', optionIndex, messageId);
+                                   // The poll message will handle the update itself
+                                 }}
+                               />
+                             </div>
+                           ) : (
+                             // Regular message
+                             <ChatMessage
+                               message={message.text}
+                               isConsecutive={isConsecutive}
+                               isGroup
+                               messageId={message.id}
+                               reactions={message.reactions || []}
+                               onReact={(emoji) => handleReaction(message.id, emoji)}
+                               currentUsername={username}
+                             />
+                           )}
+                        </div>
                      </div>
                    );
                  })}
@@ -479,6 +541,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                 activeCategory={activeCategory}
                 onCategoryChange={setActiveCategory}
                 onJoinEventChat={onJoinEventChat}
+                onCreatePoll={handleCreatePoll}
               />
             </div>
           </div>
