@@ -32,31 +32,33 @@ export const colorizeHashtags = (text: string): React.ReactNode => {
       );
     }
 
-    // Remove category tags like [SPORT], [AUSGEHEN], [KREATIVITÄT] but keep color coding
-    let displayText = part;
-    let categoryType: 'sport' | 'kreativität' | 'ausgehen' | null = null;
+    // For non-URL parts, colorize hashtags
+    const hashtagParts = part.split(/(#(?:sport|kreativität|ausgehen))/gi);
     
-    // Check for category tags and extract them
-    const categoryTagMatch = part.match(/^\[([A-ZÄÖÜ]+)\]\s*/);
-    if (categoryTagMatch) {
-      const categoryName = categoryTagMatch[1].toLowerCase();
-      displayText = part.replace(/^\[[A-ZÄÖÜ]+\]\s*/, ''); // Remove the tag
+    return hashtagParts.map((hashtagPart, hashtagIndex) => {
+      const lowerPart = hashtagPart.toLowerCase();
       
-      if (categoryName === 'sport') categoryType = 'sport';
-      else if (categoryName === 'kreativität') categoryType = 'kreativität';
-      else if (categoryName === 'ausgehen') categoryType = 'ausgehen';
-    }
-
-    // Apply color styling based on category type
-    if (categoryType) {
-      const colors = getChannelColor(categoryType);
-      return (
-        <span key={`category-${partIndex}`} style={colors.textStyle}>
-          {displayText}
-        </span>
-      );
-    }
-    
-    return displayText;
+      if (lowerPart === '#sport') {
+        return (
+          <span key={`hashtag-${partIndex}-${hashtagIndex}`} style={getChannelColor('sport').textStyle}>
+            {hashtagPart}
+          </span>
+        );
+      } else if (lowerPart === '#kreativität') {
+        return (
+          <span key={`hashtag-${partIndex}-${hashtagIndex}`} style={getChannelColor('kreativität').textStyle}>
+            {hashtagPart}
+          </span>
+        );
+      } else if (lowerPart === '#ausgehen') {
+        return (
+          <span key={`hashtag-${partIndex}-${hashtagIndex}`} style={getChannelColor('ausgehen').textStyle}>
+            {hashtagPart}
+          </span>
+        );
+      }
+      
+      return hashtagPart;
+    });
   });
 };

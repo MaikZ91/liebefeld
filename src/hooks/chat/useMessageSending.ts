@@ -32,14 +32,15 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       
       let messageText = messageToSend;
       
-      // Add category tag to message
-      const categoryTag = `[${selectedCategory.toUpperCase()}]`;
+      // Add category label to the message
+      const categoryLabel = `#${selectedCategory.toLowerCase()}`;
       
       if (eventData) {
         const { title, date, time, location, category } = eventData;
-        messageText = `${categoryTag} 🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${messageToSend}`;
+        messageText = `${categoryLabel} 🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${messageToSend}`;
       } else {
-        messageText = `${categoryTag} ${messageToSend}`;
+        // Add category label to regular messages
+        messageText = `${categoryLabel} ${messageToSend}`;
       }
       
       setNewMessage(''); // Clear message after determining content

@@ -155,7 +155,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   // Dynamisches padding-left basierend auf dem Modus
-  const leftPadding = 'pl-4';
+  const leftPadding = mode === 'community' ? 'pl-[80px]' : 'pl-4';
   
   // Get channel-specific colors for liquid glass effect
   const getInputColors = (type: string) => {
@@ -210,6 +210,62 @@ const MessageInput: React.FC<MessageInputProps> = ({
             WebkitBackdropFilter: 'blur(20px) saturate(180%)'
           }}
         />
+        {/* Buttons auf der linken Seite des Inputs (absolute Positionierung) */}
+        {mode === 'community' && ( // Only show in community mode
+          <div className="flex items-center gap-1 absolute left-1 top-1 z-10">
+            {/* Kategorie-Dropdown (jetzt erster) */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full h-6 px-2 text-[10px] flex items-center gap-1 min-w-[70px] text-white border-0"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    backdropFilter: 'blur(15px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(15px) saturate(180%)'
+                  }}
+                >
+                  {activeCategory}
+                  <ChevronDown className="h-2 w-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="z-[99999] border-0 fixed"
+                style={{
+                  background: 'rgba(0, 0, 0, 0.9)',
+                  backdropFilter: 'blur(20px) saturate(180%)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '12px',
+                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                  position: 'fixed'
+                }}
+                side="top"
+                align="start"
+              >
+                <DropdownMenuItem
+                  onClick={() => handleCategoryClick('Kreativität')}
+                  className="text-white cursor-pointer hover:bg-zinc-800"
+                >
+                  <span style={getChannelColor('kreativität').textStyle}>#kreativität</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleCategoryClick('Ausgehen')}
+                  className="text-white cursor-pointer hover:bg-zinc-800"
+                >
+                  <span style={getChannelColor('ausgehen').textStyle}>#ausgehen</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleCategoryClick('Sport')}
+                  className="text-white cursor-pointer hover:bg-zinc-800"
+                >
+                  <span style={getChannelColor('sport').textStyle}>#sport</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
         {/* Send button on the right */}
         <Button
           onClick={handleSendButtonClick}
