@@ -12,6 +12,7 @@ import MessageContextMenu from './MessageContextMenu';
 import MessageReactions from './MessageReactions';
 import { colorizeHashtags } from '@/utils/hashtagUtils';
 import { getChannelColor } from '@/utils/channelColors';
+import PollMessage from '@/components/poll/PollMessage';
 
 const getGroupColor = (groupType: string) => {
   switch (groupType.toLowerCase()) {
@@ -55,6 +56,9 @@ interface ChatMessageProps {
   currentUsername?: string;
   messageId?: string;
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
+  pollQuestion?: string;
+  pollOptions?: string[];
+  pollVotes?: { [optionIndex: number]: string[] };
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -69,7 +73,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   onReact,
   currentUsername = '',
   messageId,
-  onJoinEventChat
+  onJoinEventChat,
+  pollQuestion,
+  pollOptions,
+  pollVotes
 }) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -159,6 +166,27 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 
   // Format message content - extract event data if present
   const formatContent = () => {
+    // Check if this is a poll message
+    if (pollQuestion && pollOptions && messageId) {
+      const pollData = {
+        question: pollQuestion,
+        options: pollOptions,
+        votes: pollVotes || {}
+      };
+      
+      return (
+        <PollMessage 
+          pollData={pollData} 
+          messageId={messageId}
+          onVote={(optionIndex: number, messageId: string) => {
+            console.log('Poll vote:', { optionIndex, messageId });
+            // Handle poll voting logic here
+            // This will be handled by the parent component
+          }}
+        />
+      );
+    }
+
     if (eventData) {
       return <EventMessageFormatter event={eventData} eventId={eventId} onJoinEventChat={onJoinEventChat} />;
     }

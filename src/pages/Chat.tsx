@@ -270,6 +270,10 @@ const ChatPage = () => {
             hideButtons={true}
             onChatInputPropsChange={setChatInputProps}
             onJoinEventChat={handleJoinEventChat}
+            onCreatePoll={(poll) => {
+              console.log('Poll creation requested:', poll);
+              // The poll creation is handled internally by FullPageChatBot
+            }}
           />
         </div>
         
