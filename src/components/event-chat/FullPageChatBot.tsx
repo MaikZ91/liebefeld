@@ -103,13 +103,21 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   
   // Handle poll creation
   const handleCreatePoll = async (poll: { question: string; options: string[] }) => {
-    if (!username) return;
+    console.log('FullPageChatBot: handleCreatePoll called with:', poll);
+    console.log('FullPageChatBot: username:', username);
+    console.log('FullPageChatBot: communityGroupId:', communityGroupId);
+    
+    if (!username) {
+      console.error('FullPageChatBot: No username available');
+      return;
+    }
 
     try {
       setCommunitySending(true);
       
       // Get user avatar from localStorage
       const avatar = localStorage.getItem(AVATAR_KEY) || null;
+      console.log('FullPageChatBot: avatar:', avatar);
       
       // Create poll message
       const pollMessage = {
@@ -122,7 +130,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
         poll_votes: {} as any
       };
 
-      console.log('Creating poll:', pollMessage);
+      console.log('FullPageChatBot: Creating poll with message:', pollMessage);
 
       // Send to database
       const { data, error } = await supabase
@@ -131,15 +139,15 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
         .select();
 
       if (error) {
-        console.error('Error creating poll:', error);
+        console.error('FullPageChatBot: Error creating poll:', error);
         toast.error('Umfrage konnte nicht erstellt werden');
         return;
       }
 
-      console.log('Poll created successfully:', data);
+      console.log('FullPageChatBot: Poll created successfully:', data);
       toast.success('Umfrage erstellt!');
     } catch (error) {
-      console.error('Error in handleCreatePoll:', error);
+      console.error('FullPageChatBot: Error in handleCreatePoll:', error);
       toast.error('Fehler beim Erstellen der Umfrage');
     } finally {
       setCommunitySending(false);

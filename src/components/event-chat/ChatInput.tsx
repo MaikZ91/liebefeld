@@ -486,9 +486,14 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
         open={isPollCreatorOpen}
         onOpenChange={setIsPollCreatorOpen}
         onCreatePoll={(poll) => {
+          console.log('ChatInput: Poll creation triggered', poll);
           if (onCreatePoll) {
+            console.log('ChatInput: Calling onCreatePoll handler');
             onCreatePoll(poll);
+          } else {
+            console.log('ChatInput: No onCreatePoll handler provided');
           }
+          setIsPollCreatorOpen(false);
         }}
       />
       
