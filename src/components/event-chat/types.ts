@@ -87,6 +87,9 @@ export interface ChatInputProps {
   activeChatModeValue: 'ai' | 'community';
   activeCategory?: string;
   onCategoryChange?: (category: string) => void;
+  placeholder?: string;
+  onJoinEventChat?: (eventId: string, eventTitle: string) => void;
+  onCreatePoll?: (poll: { question: string; options: string[] }) => void;
 }
 
 export interface MessageListProps {
@@ -132,4 +135,5 @@ export interface FullPageChatBotProps {
   setExternalInput?: (value: string) => void;
   onExternalSendHandlerChange?: (handler: ((content?: string | any) => Promise<void>) | null) => void; 
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
+  onCreatePoll?: (poll: { question: string; options: string[] }) => void;
 }
