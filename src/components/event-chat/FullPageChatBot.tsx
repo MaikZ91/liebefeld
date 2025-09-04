@@ -343,6 +343,11 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     }
     
     return communityMessages.filter(message => {
+      // Always show poll messages regardless of category
+      if ((message as any).poll_question) {
+        return true;
+      }
+      
       // Check if message contains any of the selected hashtags
       const messageText = message.text.toLowerCase();
       return messageFilter.some(category => 
