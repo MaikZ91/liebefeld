@@ -49,13 +49,10 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   const [externalSendHandler, setExternalSendHandler] = useState<(() => void) | null>(null);
   
   const { selectedCity } = useEventContext();
-  console.log('EventChatBot: selectedCity from context:', selectedCity);
-  
   const { toast } = useToast();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   
-  const communityGroupId = 'bi_ausgehen'; // Direkt auf die korrekte Gruppe setzen
-  console.log('EventChatBot: using hardcoded communityGroupId:', communityGroupId);
+  const communityGroupId = createCitySpecificGroupId('ausgehen', selectedCity); // Fixed to always use 'ausgehen' channel
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
   const chatLogic = useChatLogic(fullPage, activeChatModeValue);
