@@ -107,6 +107,20 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     console.log('FullPageChatBot: username:', username);
     console.log('FullPageChatBot: communityGroupId:', communityGroupId);
     
+    // Check if the group exists in database
+    const { data: existingGroups } = await supabase
+      .from('chat_groups')
+      .select('id, name')
+      .eq('id', communityGroupId);
+    
+    console.log('FullPageChatBot: existing groups for communityGroupId:', existingGroups);
+    
+    if (!existingGroups || existingGroups.length === 0) {
+      console.error('FullPageChatBot: Group does not exist:', communityGroupId);
+      toast.error(`Gruppe ${communityGroupId} existiert nicht in der Datenbank`);
+      return;
+    }
+    
     if (!username) {
       console.error('FullPageChatBot: No username available');
       return;
