@@ -101,58 +101,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   const [communityInput, setCommunityInput] = useState('');
   const [communitySending, setCommunitySending] = useState(false);
   
-  // Handle poll creation
-  const handleCreatePoll = async (poll: { question: string; options: string[] }) => {
-    console.log('FullPageChatBot: handleCreatePoll called with:', poll);
-    console.log('FullPageChatBot: username:', username);
-    console.log('FullPageChatBot: communityGroupId:', communityGroupId);
-    
-    if (!username) {
-      console.error('FullPageChatBot: No username available');
-      return;
-    }
-
-    try {
-      setCommunitySending(true);
-      
-      // Get user avatar from localStorage
-      const avatar = localStorage.getItem(AVATAR_KEY) || null;
-      console.log('FullPageChatBot: avatar:', avatar);
-      
-      // Create poll message
-      const pollMessage = {
-        group_id: communityGroupId,
-        sender: username,
-        avatar: avatar,
-        text: `📊 ${poll.question}`,
-        poll_question: poll.question,
-        poll_options: poll.options,
-        poll_votes: {} as any
-      };
-
-      console.log('FullPageChatBot: Creating poll with message:', pollMessage);
-
-      // Send to database
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .insert([pollMessage])
-        .select();
-
-      if (error) {
-        console.error('FullPageChatBot: Error creating poll:', error);
-        toast.error('Umfrage konnte nicht erstellt werden');
-        return;
-      }
-
-      console.log('FullPageChatBot: Poll created successfully:', data);
-      toast.success('Umfrage erstellt!');
-    } catch (error) {
-      console.error('FullPageChatBot: Error in handleCreatePoll:', error);
-      toast.error('Fehler beim Erstellen der Umfrage');
-    } finally {
-      setCommunitySending(false);
-    }
-  };
   
   // Create send function directly instead of using external component
   const communitySendMessage = async () => {
@@ -561,7 +509,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                 activeCategory={activeCategory}
                 onCategoryChange={setActiveCategory}
                 onJoinEventChat={onJoinEventChat}
-                onCreatePoll={handleCreatePoll}
+                onCreatePoll={onCreatePoll}
               />
             </div>
           </div>
