@@ -22,6 +22,8 @@ import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { messageService } from '@/services/messageService';
 import { eventChatService } from '@/services/eventChatService';
 import EventChatWindow from '@/components/event-chat/EventChatWindow';
+import { createCitySpecificGroupId } from '@/utils/groupIdUtils';
+import { AVATAR_KEY } from '@/types/chatTypes';
 
 const ChatPage = () => {
   // Get view mode from URL search params or navigation state
@@ -118,6 +120,71 @@ const ChatPage = () => {
   // Function to close event chat window
   const handleCloseEventChat = () => {
     setEventChatWindow(null);
+  };
+
+  // Function to handle poll creation
+  const handleCreatePoll = async (poll: { question: string; options: string[] }) => {
+    const { selectedCity } = useEventContext();
+    const username = localStorage.getItem(USERNAME_KEY);
+    const communityGroupId = createCitySpecificGroupId('ausgehen', selectedCity);
+    
+    console.log('Chat.tsx: handleCreatePoll called with:', poll);
+    console.log('Chat.tsx: username:', username);
+    console.log('Chat.tsx: communityGroupId:', communityGroupId);
+    
+    if (!username) {
+      console.error('Chat.tsx: No username available');
+      return;
+    }
+
+    try {
+      // Get user avatar from localStorage
+      const avatar = localStorage.getItem(AVATAR_KEY) || null;
+      console.log('Chat.tsx: avatar:', avatar);
+      
+      // Create poll message
+      const pollMessage = {
+        group_id: communityGroupId,
+        sender: username,
+        avatar: avatar,
+        text: `📊 ${poll.question}`,
+        poll_question: poll.question,
+        poll_options: poll.options,
+        poll_votes: {} as any
+      };
+
+      console.log('Chat.tsx: Creating poll with message:', pollMessage);
+
+      // Send to database
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .insert([pollMessage])
+        .select();
+
+      if (error) {
+        console.error('Chat.tsx: Error creating poll:', error);
+        toast({
+          title: "Fehler",
+          description: "Umfrage konnte nicht erstellt werden",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      console.log('Chat.tsx: Poll created successfully:', data);
+      toast({
+        title: "Erfolg",
+        description: "Umfrage erstellt!",
+        variant: "default"
+      });
+    } catch (error) {
+      console.error('Chat.tsx: Error in handleCreatePoll:', error);
+      toast({
+        title: "Fehler", 
+        description: "Fehler beim Erstellen der Umfrage",
+        variant: "destructive"
+      });
+    }
   };
 
   // Updated function for profile completion
@@ -270,6 +337,7 @@ const ChatPage = () => {
             hideButtons={true}
             onChatInputPropsChange={setChatInputProps}
             onJoinEventChat={handleJoinEventChat}
+            onCreatePoll={handleCreatePoll}
           />
         </div>
         
