@@ -27,8 +27,20 @@ const PollMessage: React.FC<PollMessageProps> = ({
 }) => {
   console.log('PollMessage: Received pollData:', pollData);
   
-  // Defensive check - ensure options is an array
-  const safeOptions = Array.isArray(pollData.options) ? pollData.options : [];
+  // Parse options if they come as a string
+  let safeOptions = [];
+  try {
+    if (Array.isArray(pollData.options)) {
+      safeOptions = pollData.options;
+    } else if (typeof pollData.options === 'string') {
+      safeOptions = JSON.parse(pollData.options);
+    }
+  } catch (e) {
+    console.error('PollMessage: Error parsing options:', e, pollData.options);
+    safeOptions = [];
+  }
+  
+  console.log('PollMessage: Parsed options:', safeOptions);
   
   if (safeOptions.length === 0) {
     console.error('PollMessage: No valid options found', pollData);
