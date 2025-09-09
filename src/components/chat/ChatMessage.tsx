@@ -18,25 +18,25 @@ const getGroupColor = (groupType: string) => {
     case 'sport': 
       return { 
         bg: 'linear-gradient(135deg, rgba(54, 144, 255, 0.12) 0%, rgba(54, 144, 255, 0.08) 50%, rgba(54, 144, 255, 0.05) 100%)',
-        border: 'rgba(54, 144, 255, 0.25)',
+        border: '#3690FF',
         glow: 'rgba(54, 144, 255, 0.15)'
       };
     case 'ausgehen': 
       return { 
         bg: 'linear-gradient(135deg, rgba(255, 77, 77, 0.12) 0%, rgba(255, 77, 77, 0.08) 50%, rgba(255, 77, 77, 0.05) 100%)',
-        border: 'rgba(255, 77, 77, 0.25)',
+        border: '#FF4D4D',
         glow: 'rgba(255, 77, 77, 0.15)'
       };
     case 'kreativität': 
       return { 
         bg: 'linear-gradient(135deg, rgba(255, 193, 7, 0.12) 0%, rgba(255, 193, 7, 0.08) 50%, rgba(255, 193, 7, 0.05) 100%)',
-        border: 'rgba(255, 193, 7, 0.25)',
+        border: '#FFC107',
         glow: 'rgba(255, 193, 7, 0.15)'
       };
     default: 
       return { 
         bg: 'linear-gradient(135deg, rgba(255, 77, 77, 0.12) 0%, rgba(255, 77, 77, 0.08) 50%, rgba(255, 77, 77, 0.05) 100%)',
-        border: 'rgba(255, 77, 77, 0.25)',
+        border: '#FF4D4D',
         glow: 'rgba(255, 77, 77, 0.15)'
       };
   }
@@ -218,7 +218,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       style={{ 
         background: 'rgba(0, 0, 0, 0.8)',
         border: `1px solid rgba(255, 255, 255, 0.1)`,
-        borderTop: `4px solid ${getGroupColor(groupType).border}`,
+        borderTop: `1px solid ${getGroupColor(groupType).border}`,
         borderRadius: '16px'
       }}
     >
