@@ -5,7 +5,8 @@ import CitySelector from './layouts/CitySelector'; // Import CitySelector
 import ChatInput from './event-chat/ChatInput'; // Import ChatInput
 import { Link } from 'react-router-dom'; // Import Link for THE TRIBE text
 import { Button } from '@/components/ui/button';
-import { Bot, X } from 'lucide-react';
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
+import { X } from 'lucide-react';
 
 interface HeatmapHeaderProps {
   selectedCity?: string;
@@ -32,6 +33,7 @@ interface HeatmapHeaderProps {
 const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld', chatInputProps }) => {
   const { events, isLoading } = useEvents(selectedCity);
   const [showSearchBar, setShowSearchBar] = useState(false);
+  const miaAvatarUrl = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png';
 
   const handleMiaIconClick = () => {
     setShowSearchBar(true);
@@ -70,7 +72,9 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
                 onClick={handleMiaIconClick}
                 className="text-white/80 hover:text-white hover:bg-white/10 rounded-full p-2 flex items-center gap-2"
               >
-                <Bot className="h-5 w-5" />
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={miaAvatarUrl} alt="MIA" />
+                </Avatar>
                 <span className="text-sm font-medium">MIA</span>
               </Button>
             )}
