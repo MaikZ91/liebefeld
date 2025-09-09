@@ -565,12 +565,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
             )}
               {activeChatModeValue === 'community' && (
                 <div className="space-y-2">
-                  {replyTo && (
-                    <div className="px-4">
-                      <ReplyPreview replyTo={replyTo} onCancel={clearReply} />
-                    </div>
-                  )}
-                  
                   <MessageInput
                     username={username}
                     groupId={communityGroupId}
