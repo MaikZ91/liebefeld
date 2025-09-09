@@ -113,7 +113,7 @@ export const Layout: React.FC<LayoutProps> = ({
       {/* NEW: Chat Input directly above BottomNavigation */}
       {/* Conditionally render ChatInput only on /chat or / and when activeView is 'community' */}
       {chatInputProps && (pathname === '/chat' || pathname === '/') && activeView === 'community' && (
-        <div className="fixed bottom-16 left-0 right-0 z-50 px-4 bg-black/95 backdrop-blur-sm">
+        <div className="fixed bottom-16 left-0 right-0 z-50 px-4">
           <div className="bg-black rounded-full border border-gray-700/50 mx-2">
             <ChatInput
               input={chatInputProps.input}
