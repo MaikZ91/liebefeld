@@ -262,8 +262,9 @@ const ChatPage = () => {
 
     try {
       const allMessages = await messageService.fetchMessages(messageService.DEFAULT_GROUP_ID);
+      // Simply count messages from other users (no read tracking)
       const unreadCount = allMessages.filter(msg => 
-        msg.user_name !== currentUser && (!msg.read_by || !msg.read_by.includes(currentUser))
+        msg.user_name !== currentUser
       ).length;
       setUnreadMessageCount(unreadCount);
     } catch (error) {
@@ -272,35 +273,12 @@ const ChatPage = () => {
     }
   };
 
-  // Effect to update unread message count when active view changes - with proper dependencies
-  const hasMarkedAsRead = useRef(false);
-  
+  // Effect to clear unread message count when entering community view
   useEffect(() => {
-    if (activeView === 'community' && !hasMarkedAsRead.current) {
-      hasMarkedAsRead.current = true;
+    if (activeView === 'community') {
       setUnreadMessageCount(0);
-      const markAllAsRead = async () => {
-        if (currentUser && currentUser !== 'Gast') {
-          try {
-            const allMessages = await messageService.fetchMessages(messageService.DEFAULT_GROUP_ID);
-            const unreadMessageIds = allMessages.filter(msg => 
-              msg.user_name !== currentUser && (!msg.read_by || !msg.read_by.includes(currentUser))
-            ).map(msg => msg.id);
-            if (unreadMessageIds.length > 0) {
-              console.log(`Marking ${unreadMessageIds.length} messages as read in Chat.tsx for user: ${currentUser}`);
-              await messageService.markMessagesAsRead(messageService.DEFAULT_GROUP_ID, unreadMessageIds, currentUser);
-            }
-          } catch (error) {
-            console.error('Error marking all messages as read:', error);
-          }
-        }
-      };
-      markAllAsRead();
-    } else if (activeView !== 'community') {
-      // Reset flag when leaving community view
-      hasMarkedAsRead.current = false;
     }
-  }, [activeView, currentUser]);
+  }, [activeView]);
 
   // Check if we're on mobile for responsive design adjustments
   const [isMobile, setIsMobile] = useState(false);

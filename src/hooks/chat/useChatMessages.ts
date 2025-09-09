@@ -50,15 +50,6 @@ export const useChatMessages = (groupId: string, username: string) => {
       
       console.log('Adding new message to state:', newMsg);
       
-      // Mark message as read if from someone else - but only if not already marked
-      if (newMsg.user_name !== username && username) {
-        const isAlreadyRead = newMsg.read_by && newMsg.read_by.includes(username);
-        if (!isAlreadyRead) {
-          console.log(`Marking new message as read for user: ${username}, messageId: ${newMsg.id}`);
-          messageService.markMessagesAsRead(validGroupId, [newMsg.id], username);
-        }
-      }
-      
       // Process and parse event data before adding to messages
       try {
         const processedMsg = {
@@ -224,21 +215,6 @@ export const useChatMessages = (groupId: string, username: string) => {
       
       setMessages(processedMessages);
       setLastSeen(new Date());
-      
-      // Mark messages as read
-      if (fetchedMessages.length > 0 && username) {
-        const unreadMessages = fetchedMessages.filter(
-          msg => msg.user_name !== username
-        );
-        
-        if (unreadMessages.length > 0) {
-          messageService.markMessagesAsRead(
-            validGroupId,
-            unreadMessages.map(msg => msg.id),
-            username
-          );
-        }
-      }
     } catch (err) {
       console.error('Error fetching messages:', err);
     }

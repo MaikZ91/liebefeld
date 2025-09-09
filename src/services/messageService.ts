@@ -71,12 +71,11 @@ export const messageService = {
       const formattedMessages: Message[] = (data || []).map(msg => ({
         id: msg.id,
         created_at: msg.created_at,
-        text: msg.text, // Changed from 'content' to 'text'
+        text: msg.text,
         user_name: msg.sender,
         user_avatar: msg.avatar || '',
         group_id: msg.group_id,
-        reactions: Array.isArray(msg.reactions) ? msg.reactions as { emoji: string; users: string[] }[] : [], // Include reactions in formatted messages
-        // We no longer add event_data directly here
+        reactions: Array.isArray(msg.reactions) ? msg.reactions as { emoji: string; users: string[] }[] : [],
       }));
       
       return formattedMessages;
@@ -86,44 +85,6 @@ export const messageService = {
     }
   },
 
-  /**
-   * Mark messages as read by a specific user
-   */
-  async markMessagesAsRead(groupId: string, messageIds: string[], username: string): Promise<void> {
-    try {
-      // Ensure we have a valid UUID for group_id
-      const validGroupId = groupId === 'general' ? this.DEFAULT_GROUP_ID : groupId;
-      
-      for (const messageId of messageIds) {
-        const { data, error } = await supabase
-          .from('chat_messages')
-          .select('read_by')
-          .eq('id', messageId)
-          .single();
-          
-        if (error) {
-          console.error(`Error fetching read_by for message ${messageId}:`, error);
-          continue;
-        }
-        
-        const readBy = data?.read_by || [];
-        
-        // Only update if the user is not already in the read_by list
-        if (!readBy.includes(username)) {
-          const { error: updateError } = await supabase
-            .from('chat_messages')
-            .update({ read_by: [...readBy, username] })
-            .eq('id', messageId);
-            
-          if (updateError) {
-            console.error(`Error updating read_by for message ${messageId}:`, updateError);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error marking messages as read:', error);
-    }
-  },
 
   /**
    * Send a new message
@@ -141,16 +102,14 @@ export const messageService = {
       
       console.log(`Sending message to group ${validGroupId} from ${username}`);
       
-      // Remove any event_data related fields to avoid schema issues
       const { data, error } = await supabase
         .from('chat_messages')
         .insert([{
           group_id: validGroupId,
           sender: username,
-          text: text, // Changed from 'content' to 'text'
+          text: text,
           avatar: avatar,
-          media_url: mediaUrl,
-          read_by: [username] // The sending person has already read the message
+          media_url: mediaUrl
         }])
         .select('id')
         .single();

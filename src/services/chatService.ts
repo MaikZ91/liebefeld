@@ -72,7 +72,6 @@ export const chatService = {
   // Restore missing methods from other services
   enableRealtime: messageService.enableRealtime,
   fetchMessages: messageService.fetchMessages,
-  markMessagesAsRead: messageService.markMessagesAsRead,
   
   // Subscription operations
   createMessageSubscription: subscriptionService.createMessageSubscription,
