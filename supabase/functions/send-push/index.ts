@@ -75,6 +75,7 @@ Deno.serve(async (req) => {
     const text = typeof payload?.text === 'string' ? payload.text : '';
     const message_id = payload?.message_id ?? null;
     const city = typeof payload?.city === 'string' && payload.city.trim().length > 0 ? payload.city : null;
+    const mention_user = typeof payload?.mention_user === 'string' && payload.mention_user.trim().length > 0 ? payload.mention_user : null;
 
     // Resolve sender/text from DB if missing and message_id is provided
     let finalSender = (sender || 'TRIBE').toString().trim() || 'TRIBE';
@@ -97,12 +98,51 @@ Deno.serve(async (req) => {
       finalText = 'Neue Nachricht';
     }
 
-    // Tokens holen (optional gefiltert nach Stadt)
+    // Tokens holen (optional gefiltert nach Stadt und für @ Erwähnungen)
     let tokensResp;
-    if (city) {
+    
+    if (mention_user) {
+      // Für @ Erwähnungen: Nur den erwähnten Nutzer benachrichtigen
+      tokensResp = await supabase
+        .from('push_tokens')
+        .select('token')
+        .eq('username', mention_user);
+        
+      // Falls kein Token für den spezifischen Nutzer gefunden wurde, versuche es mit Fallback-Tokens der gleichen Stadt
+      const { data: mentionTokens } = tokensResp as { data: Array<{ token: string }> | null, error: any };
+      if (!mentionTokens || mentionTokens.length === 0) {
+        console.log(`No tokens found for mentioned user: ${mention_user}, falling back to city-based tokens`);
+        // Fallback zur städtischen Benachrichtigung
+        if (city) {
+          const lower = city.toString().trim();
+          const variants = new Set<string>([city, lower, lower.toLowerCase(), lower.toUpperCase()]);
+          const norm = lower.toLowerCase();
+          if (norm === 'bi' || norm === 'bielefeld') {
+            variants.add('Bielefeld');
+            variants.add('bielefeld');
+            variants.add('BI');
+            variants.add('bi');
+          }
+          const deAccented = norm.normalize('NFD').replace(/\p{Diacritic}+/gu, '');
+          if (deAccented && deAccented !== norm) {
+            variants.add(deAccented);
+            variants.add(deAccented.charAt(0).toUpperCase() + deAccented.slice(1));
+          }
+          
+          tokensResp = await supabase
+            .from('push_tokens')
+            .select('token')
+            .in('city', Array.from(variants));
+        } else {
+          tokensResp = await supabase
+            .from('push_tokens')
+            .select('token');
+        }
+      }
+    } else if (city) {
+      // Normale städtische Benachrichtigung
       const lower = city.toString().trim();
       const variants = new Set<string>([city, lower, lower.toLowerCase(), lower.toUpperCase()]);
-      // Handle common abbreviations/mappings
       const norm = lower.toLowerCase();
       if (norm === 'bi' || norm === 'bielefeld') {
         variants.add('Bielefeld');
@@ -110,7 +150,6 @@ Deno.serve(async (req) => {
         variants.add('BI');
         variants.add('bi');
       }
-      // Optional: add de-accented variant (e.g., Köln -> Koln)
       const deAccented = norm.normalize('NFD').replace(/\p{Diacritic}+/gu, '');
       if (deAccented && deAccented !== norm) {
         variants.add(deAccented);
@@ -122,6 +161,7 @@ Deno.serve(async (req) => {
         .select('token')
         .in('city', Array.from(variants));
     } else {
+      // Alle Tokens
       tokensResp = await supabase
         .from('push_tokens')
         .select('token');
@@ -225,7 +265,7 @@ Deno.serve(async (req) => {
       failed: failureCount,
       total_tokens: tokens.length,
       error_details: errorDetails.slice(0, 10),
-      meta: { projectId, message_id }
+      meta: { projectId, message_id, mention_user, city }
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

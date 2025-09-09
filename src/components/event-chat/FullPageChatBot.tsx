@@ -23,6 +23,8 @@ import { toast } from 'sonner';
 import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
 import PollMessage from '@/components/poll/PollMessage';
 import { supabase } from '@/integrations/supabase/client';
+import { useReplySystem, ReplyData } from '@/hooks/chat/useReplySystem';
+import MessageInput from '@/components/chat/MessageInput';
 
 interface FullPageChatBotProps {
   chatLogic: any;
@@ -96,7 +98,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     addOptimisticMessage,
     setMessages
   } = useChatMessages(communityGroupId, username);
-
+  
+  // Reply system
+  const { replyTo, startReply, clearReply } = useReplySystem();
+  
   // Community chat state - managed externally via props
   const [communityInput, setCommunityInput] = useState('');
   const [communitySending, setCommunitySending] = useState(false);
@@ -109,7 +114,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     try {
       setCommunitySending(true);
       
-      // Format message with category label
+      // Format message with category label and reply info
       let messageText = communityInput.trim();
       const categoryLabel = `#${activeCategory.toLowerCase()}`;
       messageText = `${categoryLabel} ${messageText}`;
@@ -121,8 +126,43 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
         setExternalInput('');
       }
       
-      // Send directly to database via chatService
-      await chatService.sendMessage(communityGroupId, messageText, username);
+      // Send message with reply data if available
+      if (replyTo) {
+        // Insert message with reply data into database directly
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .insert([{
+            group_id: communityGroupId,
+            sender: username,
+            text: messageText,
+            avatar: localStorage.getItem(AVATAR_KEY),
+            reply_to_message_id: replyTo.messageId,
+            reply_to_sender: replyTo.sender,
+            reply_to_text: replyTo.text.length > 100 ? replyTo.text.substring(0, 100) + '...' : replyTo.text,
+            read_by: [username]
+          }])
+          .select('id')
+          .single();
+          
+        if (error) throw error;
+        
+        // Send notification for reply
+        if (data?.id) {
+          await supabase.functions.invoke('send-push', {
+            body: {
+              sender: username,
+              text: `@${replyTo.sender} ${username} hat auf deine Nachricht geantwortet: "${messageText.length > 50 ? messageText.substring(0, 50) + '...' : messageText}"`,
+              message_id: data.id,
+              mention_user: replyTo.sender
+            }
+          });
+        }
+        
+        clearReply();
+      } else {
+        // Send directly to database via chatService
+        await chatService.sendMessage(communityGroupId, messageText, username);
+      }
       
     } catch (error) {
       console.error('Error sending community message:', error);
@@ -444,16 +484,24 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                                />
                              </div>
                            ) : (
-                             // Regular message
-                             <ChatMessage
-                               message={message.text}
-                               isConsecutive={isConsecutive}
-                               isGroup
-                               messageId={message.id}
-                               reactions={message.reactions || []}
-                               onReact={(emoji) => handleReaction(message.id, emoji)}
-                               currentUsername={username}
-                             />
+                              // Regular message
+                              <ChatMessage
+                                message={message.text}
+                                isConsecutive={isConsecutive}
+                                isGroup
+                                messageId={message.id}
+                                reactions={message.reactions || []}
+                                onReact={(emoji) => handleReaction(message.id, emoji)}
+                                currentUsername={username}
+                                onReply={startReply}
+                                sender={message.user_name}
+                                avatar={message.user_avatar}
+                                replyTo={message.reply_to_message_id ? {
+                                  messageId: message.reply_to_message_id,
+                                  sender: message.reply_to_sender || '',
+                                  text: message.reply_to_text || '',
+                                } : null}
+                              />
                            )}
                         </div>
                      </div>
@@ -490,28 +538,64 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                 handleExamplePromptClick={handleExamplePromptClick}
               />
             )}
-            <div className="flex justify-center">
-              <ChatInput
-                input={currentInput}
-                setInput={currentSetInput}
-                handleSendMessage={currentHandleSendMessage}
-                isTyping={currentIsTyping}
-                onKeyDown={currentHandleKeyPress}
-                onChange={currentHandleInputChange}
-                isHeartActive={isHeartActive}
-                handleHeartClick={handleHeartClick}
-                globalQueries={globalQueries}
-                toggleRecentQueries={toggleRecentQueries}
-                inputRef={inputRef}
-                onAddEvent={onAddEvent}
-                showAnimatedPrompts={showAnimatedPrompts}
-                activeChatModeValue={activeChatModeValue}
-                activeCategory={activeCategory}
-                onCategoryChange={setActiveCategory}
-                onJoinEventChat={onJoinEventChat}
-                onCreatePoll={onCreatePoll}
-              />
-            </div>
+            {activeChatModeValue === 'ai' && (
+              <div className="flex justify-center">
+                <ChatInput
+                  input={currentInput}
+                  setInput={currentSetInput}
+                  handleSendMessage={currentHandleSendMessage}
+                  isTyping={currentIsTyping}
+                  onKeyDown={currentHandleKeyPress}
+                  onChange={currentHandleInputChange}
+                  isHeartActive={isHeartActive}
+                  handleHeartClick={handleHeartClick}
+                  globalQueries={globalQueries}
+                  toggleRecentQueries={toggleRecentQueries}
+                  inputRef={inputRef}
+                  onAddEvent={onAddEvent}
+                  showAnimatedPrompts={showAnimatedPrompts}
+                  activeChatModeValue={activeChatModeValue}
+                  activeCategory={activeCategory}
+                  onCategoryChange={setActiveCategory}
+                  onJoinEventChat={onJoinEventChat}
+                  onCreatePoll={onCreatePoll}
+                />
+              </div>
+            )}
+              {activeChatModeValue === 'community' && (
+                <div className="space-y-2">
+                  {replyTo && (
+                    <div className="px-4">
+                      <div className="bg-white/10 border border-white/20 rounded-lg p-3 mb-2 flex items-start gap-3">
+                        <div className="text-xs text-gray-300 mb-1">
+                          Antwort an {replyTo.sender}
+                        </div>
+                        <div className="text-sm text-gray-400 italic truncate">
+                          {replyTo.text.length > 50 ? replyTo.text.substring(0, 50) + '...' : replyTo.text}
+                        </div>
+                        <button
+                          onClick={clearReply}
+                          className="text-gray-400 hover:text-white"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <MessageInput
+                    username={username}
+                    groupId={communityGroupId}
+                    handleSendMessage={communitySendMessage}
+                    isSending={communitySending}
+                    value={communityInput}
+                    onChange={(e) => setCommunityInput(e.target.value)}
+                    mode="community"
+                    replyTo={replyTo}
+                    onClearReply={clearReply}
+                  />
+                </div>
+              )}
           </div>
         </div>
       )}

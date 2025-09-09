@@ -86,6 +86,9 @@ export type Database = {
           poll_votes: Json | null
           reactions: Json | null
           read_by: string[] | null
+          reply_to_message_id: string | null
+          reply_to_sender: string | null
+          reply_to_text: string | null
           sender: string
           text: string
         }
@@ -106,6 +109,9 @@ export type Database = {
           poll_votes?: Json | null
           reactions?: Json | null
           read_by?: string[] | null
+          reply_to_message_id?: string | null
+          reply_to_sender?: string | null
+          reply_to_text?: string | null
           sender: string
           text: string
         }
@@ -126,6 +132,9 @@ export type Database = {
           poll_votes?: Json | null
           reactions?: Json | null
           read_by?: string[] | null
+          reply_to_message_id?: string | null
+          reply_to_sender?: string | null
+          reply_to_text?: string | null
           sender?: string
           text?: string
         }
@@ -140,6 +149,13 @@ export type Database = {
           {
             foreignKeyName: "chat_messages_parent_id_fkey"
             columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_reply_to_message_id_fkey"
+            columns: ["reply_to_message_id"]
             isOneToOne: false
             referencedRelation: "chat_messages"
             referencedColumns: ["id"]

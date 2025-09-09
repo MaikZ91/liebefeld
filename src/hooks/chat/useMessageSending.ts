@@ -5,8 +5,9 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { realtimeService } from '@/services/realtimeService';
 import { messageService } from '@/services/messageService';
+import { ReplyData } from './useReplySystem';
 
-export const useMessageSending = (groupId: string, username: string, addOptimisticMessage: (message: any) => void, selectedCategory: string = 'Ausgehen') => {
+export const useMessageSending = (groupId: string, username: string, addOptimisticMessage: (message: any) => void, selectedCategory: string = 'Ausgehen', replyTo?: ReplyData | null) => {
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [typing, setTyping] = useState(false);
@@ -130,7 +131,10 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
           event_date: eventData?.date || null,
           event_location: eventData?.location || null,
           event_image_url: null,
-          read_by: [username]
+          read_by: [username],
+          reply_to_message_id: replyTo?.messageId || null,
+          reply_to_sender: replyTo?.sender || null,
+          reply_to_text: replyTo ? (replyTo.text.length > 100 ? replyTo.text.substring(0, 100) + '...' : replyTo.text) : null
         }])
         .select('id')
         .single();
@@ -144,6 +148,11 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       }
       
       console.log('Message sent successfully with ID:', data?.id);
+
+      // Send reply notification if this is a reply
+      if (replyTo && data?.id) {
+        await sendReplyNotification(replyTo, data.id, messageText);
+      }
 
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -159,7 +168,39 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
     } finally {
       setIsSending(false);
     }
-  }, [groupId, username, newMessage, isSending, typing, selectedCategory]);
+  }, [groupId, username, newMessage, isSending, typing, selectedCategory, replyTo]);
+
+  // Add notification sending for replies
+  const sendReplyNotification = useCallback(async (replyData: ReplyData, messageId: string, messageContent: string) => {
+    try {
+      // Send push notification to the original message sender
+      const { error } = await supabase.functions.invoke('send-push', {
+        body: {
+          sender: username,
+          text: `@${replyData.sender} ${username} hat auf deine Nachricht geantwortet: "${messageContent.length > 50 ? messageContent.substring(0, 50) + '...' : messageContent}"`,
+          message_id: messageId,
+          mention_user: replyData.sender
+        }
+      });
+      
+      if (error) {
+        console.error('Failed to send reply notification:', error);
+      }
+    } catch (error) {
+      console.error('Error sending reply notification:', error);
+    }
+  }, [username]);
+
+  // Modified handleSubmit to handle reply notifications
+  useEffect(() => {
+    if (replyTo) {
+      // Add @ mention to the message text
+      const mentionText = `@${replyTo.sender} `;
+      if (!newMessage.startsWith(mentionText)) {
+        setNewMessage(mentionText);
+      }
+    }
+  }, [replyTo, newMessage]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);

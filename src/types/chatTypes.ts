@@ -49,6 +49,10 @@ export interface Message {
   event_title?: string; // Added event_title for display
   read_by?: string[];
   reactions?: { emoji: string; users: string[] }[]; // Added reactions
+  // Reply fields
+  reply_to_message_id?: string;
+  reply_to_sender?: string;
+  reply_to_text?: string;
   // Poll fields - keep as raw database types
   poll_question?: string;
   poll_options?: any; // Can be array or JSON depending on source
