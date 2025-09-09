@@ -94,7 +94,7 @@ const MessageList: React.FC<MessageListProps> = ({
         <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 bg-black min-h-0 pb-20 overflow-x-visible"> {/* Changed overflow-x to visible */}
+      <div className="flex-1 overflow-y-auto p-6 min-h-0 pb-20 overflow-x-visible premium-glass"> {/* Premium background */}
         <div className="flex flex-col space-y-1 w-full max-w-full">
           {messages.length === 0 && !loading && !error && (
             <div className="text-center text-gray-400 py-4">No messages yet. Start the conversation!</div>
@@ -122,13 +122,13 @@ const MessageList: React.FC<MessageListProps> = ({
             return (
               <div key={message.id} className="mb-1 w-full max-w-full overflow-visible">
                 {!isConsecutive && (
-                  <div className="flex items-center -mb-1 relative z-20">
-                    <Avatar className={`h-5 w-5 mr-2 flex-shrink-0 relative z-30 ${isGroup ? 'border-red-500' : ''}`}>
+                  <div className="flex items-center mb-2 relative z-20">
+                    <Avatar className={`h-7 w-7 mr-3 flex-shrink-0 relative z-30 border-2 ${isGroup ? 'border-white/20' : 'border-white/10'}`}>
                       <AvatarImage src={message.user_avatar} alt={message.user_name} />
-                      <AvatarFallback className="bg-red-500 text-white">{getInitials(message.user_name)}</AvatarFallback>
+                      <AvatarFallback className="bg-gradient-to-br from-white/20 to-white/10 text-white font-medium text-sm">{getInitials(message.user_name)}</AvatarFallback>
                     </Avatar>
-                    <div className="text-lg font-medium text-white mr-2">{message.user_name}</div>
-                    <span className="text-sm text-gray-400">{timeAgo}</span>
+                    <div className="text-base font-semibold text-white mr-3">{message.user_name}</div>
+                    <span className="text-xs text-white/60 font-medium">{timeAgo}</span>
                   </div>
                 )}
                 <div className="w-full max-w-full overflow-visible break-words -mt-1 relative z-10">
