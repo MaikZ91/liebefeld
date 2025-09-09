@@ -580,8 +580,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           onKeyDown={handleKeyDownFromMessageInput}
           placeholder="Schreibe eine Nachricht..."
           mode="community"
-          onCategorySelect={setSelectedCategory}
-          activeCategory={selectedCategory}
           groupType={groupType}
         />
       </div>

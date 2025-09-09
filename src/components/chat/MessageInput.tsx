@@ -1,10 +1,7 @@
-// src/components/chat/MessageInput.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Loader2, Send, ChevronDown, Bell } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Loader2, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from "@/integrations/supabase/client";
 import { messageService } from '@/services/messageService';
@@ -12,6 +9,7 @@ import { initializeFCM } from '@/services/firebaseMessaging';
 import { useToast } from '@/hooks/use-toast';
 import { getChannelColor } from '@/utils/channelColors';
 import { useEventContext } from '@/contexts/EventContext';
+import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
 
 interface MessageInputProps {
   username: string;
@@ -22,10 +20,8 @@ interface MessageInputProps {
   onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   placeholder?: string;
-  mode?: 'ai' | 'community'; // Added mode prop
-  onCategorySelect?: (category: string) => void; // Hinzugefügte Prop
-  activeCategory?: string; // Active category prop
-  groupType?: 'ausgehen' | 'sport' | 'kreativität'; // Channel type for colors
+  mode?: 'ai' | 'community';
+  groupType?: 'ausgehen' | 'sport' | 'kreativität';
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({
@@ -37,14 +33,13 @@ const MessageInput: React.FC<MessageInputProps> = ({
   onChange,
   onKeyDown,
   placeholder = "Schreibe eine Nachricht...",
-  mode = 'community', // Default to community mode
-  onCategorySelect, // Hinzugefügte Prop
-  activeCategory = 'Ausgehen', // Default category changed to Ausgehen
-  groupType = 'ausgehen' // Default group type
+  mode = 'community',
+  groupType = 'ausgehen'
 }) => {
   const [newMessage, setNewMessage] = useState("");
   const { toast } = useToast();
   const { selectedCity } = useEventContext();
+  const { activeCategory } = useChatPreferences();
 
   // Sync internal state with external value prop
   useEffect(() => {
@@ -110,24 +105,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
-  const handleCategoryClick = (category: string) => {
-    console.log('MessageInput: changing category to', category);
-    if (onCategorySelect) {
-      onCategorySelect(category);
-    }
-    // Save to localStorage
-    try {
-      import('@/utils/chatPreferences').then(({ saveActiveCategory }) => {
-        saveActiveCategory(category);
-      });
-    } catch (error) {
-      console.error('MessageInput: error saving category preference:', error);
-    }
-    // Synchronisiere den Filter mit der ausgewählten Kategorie beim Senden von Nachrichten
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('categoryChanged', { detail: { category } }));
-    }
-  };
 
   const handleEnablePushNotifications = async () => {
     try {
@@ -154,128 +131,77 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
-  // Dynamisches padding-left basierend auf dem Modus
-  const leftPadding = mode === 'community' ? 'pl-[80px]' : 'pl-4';
-  
+  // Determine current group type based on active category
+  const currentGroupType = activeCategory === 'sport' ? 'sport' : 
+                          activeCategory === 'kreativität' ? 'kreativität' : 
+                          'ausgehen';
+
   // Get channel-specific colors for liquid glass effect
-  const getInputColors = (type: string) => {
-    switch (type) {
-      case 'sport': 
-        return { 
-          bg: 'linear-gradient(135deg, rgba(54, 144, 255, 0.08) 0%, rgba(54, 144, 255, 0.05) 100%)', 
-          border: 'rgba(54, 144, 255, 0.2)',
-          glow: 'rgba(54, 144, 255, 0.1)'
-        };
-      case 'kreativität': 
-        return { 
-          bg: 'linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, rgba(255, 193, 7, 0.05) 100%)', 
-          border: 'rgba(255, 193, 7, 0.2)',
-          glow: 'rgba(255, 193, 7, 0.1)'
-        };
-      case 'ausgehen': 
-        return { 
-          bg: 'linear-gradient(135deg, rgba(255, 77, 77, 0.08) 0%, rgba(255, 77, 77, 0.05) 100%)', 
-          border: 'rgba(255, 77, 77, 0.2)',
-          glow: 'rgba(255, 77, 77, 0.1)'
-        };
-      default: 
-        return { 
-          bg: 'linear-gradient(135deg, rgba(255, 77, 77, 0.08) 0%, rgba(255, 77, 77, 0.05) 100%)', 
-          border: 'rgba(255, 77, 77, 0.2)',
-          glow: 'rgba(255, 77, 77, 0.1)'
-        };
-    }
+  const getInputColors = (type: 'ausgehen' | 'sport' | 'kreativität') => {
+    const colors = getChannelColor(type);
+    return {
+      background: 'rgba(0, 0, 0, 0.95)',
+      border: colors.borderStyle.borderColor,
+      glow: `0 0 20px ${colors.borderStyle.borderColor}40`,
+      focusGlow: `0 0 30px ${colors.borderStyle.borderColor}60`
+    };
   };
   
-  const inputColors = getInputColors(groupType);
+  const inputColors = getInputColors(currentGroupType);
 
   return (
-    <div className="w-full space-y-2">
-      <div className="flex items-center gap-2 relative">
+    <div className="relative flex items-center gap-2">
+      <div className="flex-1">
         <Textarea
-          placeholder={placeholder}
           value={value !== undefined ? value : newMessage}
           onChange={handleTextareaChange}
           onKeyDown={handleKeyDown}
+          placeholder={placeholder}
           className={cn(
-            "min-h-[50px] flex-grow resize-none pr-14 transition-all duration-200 text-white border-0 py-3",
-            leftPadding,
-            "focus:ring-0 focus:outline-none"
+            "min-h-[40px] max-h-[120px] resize-none rounded-full",
+            "border-2 focus:ring-0 focus:ring-offset-0",
+            mode === 'ai' 
+              ? "bg-background border-border text-foreground focus:border-primary" 
+              : "text-white placeholder:text-gray-400 transition-all duration-200"
           )}
-          style={{
-            background: '#1a1a1a',
-            border: '1px solid #333',
-            borderRadius: '20px'
-          }}
+          style={
+            mode === 'community'
+              ? {
+                  backgroundColor: inputColors.background,
+                  borderColor: inputColors.border,
+                  boxShadow: inputColors.glow,
+                }
+              : undefined
+          }
         />
-        {/* Buttons auf der linken Seite des Inputs (absolute Positionierung) */}
-        {mode === 'community' && ( // Only show in community mode
-          <div className="flex items-center gap-1 absolute left-1 top-1 z-10">
-            {/* Kategorie-Dropdown (jetzt erster) */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full h-6 px-2 text-[10px] flex items-center gap-1 min-w-[70px] text-white border-0"
-                  style={{
-                    background: '#2a2a2a',
-                    border: '1px solid #444'
-                  }}
-                >
-                  {activeCategory}
-                  <ChevronDown className="h-2 w-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="z-[99999] border-0 fixed"
-                style={{
-                  background: '#1a1a1a',
-                  border: '1px solid #333',
-                  borderRadius: '12px'
-                }}
-                side="top"
-                align="start"
-              >
-                <DropdownMenuItem
-                  onClick={() => handleCategoryClick('Kreativität')}
-                  className="text-white cursor-pointer hover:bg-zinc-800"
-                >
-                  <span style={getChannelColor('kreativität').textStyle}>#kreativität</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleCategoryClick('Ausgehen')}
-                  className="text-white cursor-pointer hover:bg-zinc-800"
-                >
-                  <span style={getChannelColor('ausgehen').textStyle}>#ausgehen</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleCategoryClick('Sport')}
-                  className="text-white cursor-pointer hover:bg-zinc-800"
-                >
-                  <span style={getChannelColor('sport').textStyle}>#sport</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
-        {/* Send button on the right */}
-        <Button
-          onClick={handleSendButtonClick}
-          disabled={isSending || (!value?.trim() && !newMessage.trim())}
-          className="rounded-full min-w-[32px] h-8 w-8 absolute right-1 top-1 p-0 text-white border-0"
-          style={{
-            background: 'linear-gradient(45deg, #FF8C00, #FF4500)',
-            boxShadow: '0 4px 12px rgba(255, 140, 0, 0.4)'
-          }}
-        >
-          {isSending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
-        </Button>
       </div>
+
+      {/* Send button */}
+      <Button
+        onClick={handleSendButtonClick}
+        disabled={isSending || (value === undefined ? !newMessage.trim() : !value?.trim())}
+        className={cn(
+          "h-10 w-10 rounded-full transition-all duration-200",
+          mode === 'ai' 
+            ? "bg-primary hover:bg-primary/90 text-primary-foreground" 
+            : "text-white border-2 hover:bg-white/10"
+        )}
+        style={
+          mode === 'community'
+            ? {
+                backgroundColor: 'transparent',
+                borderColor: inputColors.border,
+                boxShadow: inputColors.glow,
+              }
+            : undefined
+        }
+      >
+        {isSending ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Send className="h-4 w-4" />
+        )}
+      </Button>
     </div>
   );
 };
