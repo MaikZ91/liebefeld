@@ -216,23 +216,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         "text-white"
       )}
       style={{ 
-        background: getGroupColor(groupType).bg,
+        background: 'rgba(0, 0, 0, 0.8)',
         border: `1px solid rgba(255, 255, 255, 0.1)`,
-        borderLeft: `4px solid ${getGroupColor(groupType).border}`,
-        borderRadius: '16px',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        boxShadow: `0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05), -2px 0 8px ${getGroupColor(groupType).glow}`,
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)'
+        borderTop: `4px solid ${getGroupColor(groupType).border}`,
+        borderRadius: '16px'
       }}
     >
-      {/* Liquid glass shine effect */}
-      <div 
-        className="absolute inset-0 opacity-30 pointer-events-none"
-        style={{
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%)',
-          borderRadius: '16px'
-        }}
-      />
       {/* Outer flex container for text and reactions */}
       <div className="flex flex-col relative z-10">
         <div className="chat-message-bubble w-full">
