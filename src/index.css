@@ -52,6 +52,16 @@
     --kreativität-secondary: 45 93% 48%;
     --ausgehen-primary: 0 84% 60%;
     --ausgehen-secondary: 0 84% 50%;
+    
+    /* Poll design tokens */
+    --poll-gradient-start: 250 100% 70%;
+    --poll-gradient-end: 280 100% 65%;
+    --poll-glass-bg: 0 0% 0% / 0.8;
+    --poll-border: 0 0% 100% / 0.15;
+    --poll-accent: 260 100% 75%;
+    --poll-option-bg: 0 0% 100% / 0.08;
+    --poll-option-hover: 0 0% 100% / 0.12;
+    --poll-shadow: 260 100% 70% / 0.3;
   }
   
   /* Custom placeholder colors for channel inputs */
@@ -111,6 +121,16 @@
     --kreativität-secondary: 45 93% 48%;
     --ausgehen-primary: 0 84% 60%;
     --ausgehen-secondary: 0 84% 50%;
+    
+    /* Poll design tokens */
+    --poll-gradient-start: 250 100% 70%;
+    --poll-gradient-end: 280 100% 65%;
+    --poll-glass-bg: 0 0% 0% / 0.8;
+    --poll-border: 0 0% 100% / 0.15;
+    --poll-accent: 260 100% 75%;
+    --poll-option-bg: 0 0% 100% / 0.08;
+    --poll-option-hover: 0 0% 100% / 0.12;
+    --poll-shadow: 260 100% 70% / 0.3;
   }
 
   /* WICHTIG: Globales Scrolling deaktivieren */
@@ -496,6 +516,53 @@
     100% {
       box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
     }
+  }
+
+  /* Poll animations */
+  @keyframes poll-shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes poll-option-fill {
+    0% {
+      width: 0%;
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes poll-glow {
+    0%, 100% {
+      box-shadow: 0 0 20px hsl(var(--poll-shadow));
+    }
+    50% {
+      box-shadow: 0 0 40px hsl(var(--poll-shadow)), 0 0 60px hsl(var(--poll-shadow));
+    }
+  }
+
+  .animate-poll-shimmer {
+    background: linear-gradient(90deg, 
+      transparent, 
+      hsl(var(--poll-accent) / 0.1), 
+      transparent
+    );
+    background-size: 200% 100%;
+    animation: poll-shimmer 2s infinite;
+  }
+
+  .animate-poll-fill {
+    animation: poll-option-fill 0.8s ease-out forwards;
+  }
+
+  .animate-poll-glow {
+    animation: poll-glow 3s ease-in-out infinite;
   }
 
   /* Mobile safe area insets for transparent navigation bars */
