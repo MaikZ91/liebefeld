@@ -106,7 +106,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                 href={matches[i]}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary hover:opacity-90 underline break-words flex items-center"
+                className="text-primary hover:opacity-90 underline break-all flex items-center"
                 onClick={(e) => {
                   e.stopPropagation();
                 }}
@@ -211,7 +211,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   const messageContent = (
     <div
       className={cn(
-        "group px-4 py-3 rounded-2xl relative w-full max-w-full overflow-hidden transition-all duration-200 break-words",
+        "group px-4 py-3 rounded-2xl relative w-full max-w-full overflow-hidden transition-all duration-200",
         isConsecutive ? 'mt-1' : 'mt-2',
         "text-white"
       )}
@@ -219,9 +219,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         background: 'rgba(0, 0, 0, 0.8)',
         border: `1px solid rgba(255, 255, 255, 0.1)`,
         borderTop: `0.5px solid ${getGroupColor(groupType).border}`,
-        borderRadius: '16px',
-        wordWrap: 'break-word',
-        overflowWrap: 'break-word'
+        borderRadius: '16px'
       }}
     >
       {/* Outer flex container for text and reactions */}

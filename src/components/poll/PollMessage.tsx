@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { CheckCircle2, BarChart3 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
@@ -132,18 +134,8 @@ const PollMessage: React.FC<PollMessageProps> = ({
   const totalVotes = getTotalVotes();
 
   return (
-    <div 
-      className="px-4 py-3 rounded-2xl relative w-full max-w-full overflow-hidden transition-all duration-200 break-words text-white"
-      style={{ 
-        background: 'rgba(0, 0, 0, 0.8)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        borderTop: '0.5px solid #FF4D4D',
-        borderRadius: '16px',
-        wordWrap: 'break-word',
-        overflowWrap: 'break-word'
-      }}
-    >
-      <div className="pb-4">
+    <Card className="w-full max-w-md bg-gradient-to-br from-gray-900/98 to-gray-800/95 backdrop-blur-sm border-gray-700/50 shadow-xl">
+      <CardHeader className="pb-4">
         <div className="flex items-start gap-3">
           <div className="p-2 rounded-full bg-blue-500/20 backdrop-blur-sm">
             <BarChart3 className="h-5 w-5 text-blue-400 flex-shrink-0" />
@@ -154,9 +146,9 @@ const PollMessage: React.FC<PollMessageProps> = ({
             </p>
           </div>
         </div>
-      </div>
+      </CardHeader>
       
-      <div className="space-y-3">
+      <CardContent className="pt-0 space-y-3">
         {safeOptions.map((option, index) => {
           const percentage = getOptionPercentage(index);
           const optionVotes = getOptionVotes(index);
@@ -253,8 +245,8 @@ const PollMessage: React.FC<PollMessageProps> = ({
             </span>
           )}
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
