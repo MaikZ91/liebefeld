@@ -135,13 +135,15 @@ const MessageList: React.FC<MessageListProps> = ({
                       {console.log('MessageList: Rendering poll message', { 
                         question: message.poll_question, 
                         options: message.poll_options, 
+                        options_type: typeof message.poll_options,
+                        options_isArray: Array.isArray(message.poll_options),
                         votes: message.poll_votes,
                         messageId: message.id
                       })}
                       <PollMessage 
                         pollData={{
                           question: message.poll_question,
-                          options: JSON.parse(message.poll_options),
+                          options: Array.isArray(message.poll_options) ? message.poll_options : JSON.parse(message.poll_options),
                           votes: message.poll_votes || {}
                         }}
                         messageId={message.id}

@@ -49,9 +49,9 @@ export interface Message {
   event_title?: string; // Added event_title for display
   read_by?: string[];
   reactions?: { emoji: string; users: string[] }[]; // Added reactions
-  // Poll fields
+  // Poll fields - keep as raw database types
   poll_question?: string;
-  poll_options?: string;
+  poll_options?: any; // Can be array or JSON depending on source
   poll_votes?: { [optionIndex: number]: { username: string; avatar?: string }[] };
 }
 

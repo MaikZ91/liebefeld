@@ -74,6 +74,7 @@ export const messageService = {
           text: msg.text?.substring(0, 50) + '...', 
           poll_question: msg.poll_question,
           poll_options: msg.poll_options,
+          poll_options_type: typeof msg.poll_options,
           poll_votes: msg.poll_votes
         });
         
@@ -85,9 +86,9 @@ export const messageService = {
           user_avatar: msg.avatar || '',
           group_id: msg.group_id,
           reactions: Array.isArray(msg.reactions) ? msg.reactions as { emoji: string; users: string[] }[] : [],
-          // Include poll fields with proper type conversion
+          // Include poll fields - keep them as they are from the database
           poll_question: msg.poll_question || undefined,
-          poll_options: msg.poll_options ? JSON.stringify(msg.poll_options) : undefined,
+          poll_options: msg.poll_options || undefined,
           poll_votes: msg.poll_votes as { [optionIndex: number]: { username: string; avatar?: string }[] } || undefined,
           // Include event fields
           event_id: msg.event_id || undefined,
