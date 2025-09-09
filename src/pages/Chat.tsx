@@ -272,9 +272,12 @@ const ChatPage = () => {
     }
   };
 
-  // Effect to update unread message count when active view changes
+  // Effect to update unread message count when active view changes - with proper dependencies
+  const hasMarkedAsRead = useRef(false);
+  
   useEffect(() => {
-    if (activeView === 'community') {
+    if (activeView === 'community' && !hasMarkedAsRead.current) {
+      hasMarkedAsRead.current = true;
       setUnreadMessageCount(0);
       const markAllAsRead = async () => {
         if (currentUser && currentUser !== 'Gast') {
@@ -284,6 +287,7 @@ const ChatPage = () => {
               msg.user_name !== currentUser && (!msg.read_by || !msg.read_by.includes(currentUser))
             ).map(msg => msg.id);
             if (unreadMessageIds.length > 0) {
+              console.log(`Marking ${unreadMessageIds.length} messages as read in Chat.tsx for user: ${currentUser}`);
               await messageService.markMessagesAsRead(messageService.DEFAULT_GROUP_ID, unreadMessageIds, currentUser);
             }
           } catch (error) {
@@ -292,6 +296,9 @@ const ChatPage = () => {
         }
       };
       markAllAsRead();
+    } else if (activeView !== 'community') {
+      // Reset flag when leaving community view
+      hasMarkedAsRead.current = false;
     }
   }, [activeView, currentUser]);
 
