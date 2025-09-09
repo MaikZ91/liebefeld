@@ -128,17 +128,15 @@ const ChatPage = () => {
 
   // Function to handle poll creation - memoized to prevent re-renders
   const handleCreatePoll = useCallback(async (poll: { question: string; options: string[] }) => {
-    const username = localStorage.getItem(USERNAME_KEY);
+    const storedUsername = localStorage.getItem(USERNAME_KEY);
     const communityGroupId = createCitySpecificGroupId('ausgehen', selectedCity);
+    
+    // Use "Anonymous" as fallback username for non-logged in users
+    const username = storedUsername || 'Anonymous';
     
     console.log('Chat.tsx: handleCreatePoll called with:', poll);
     console.log('Chat.tsx: username:', username);
     console.log('Chat.tsx: communityGroupId:', communityGroupId);
-    
-    if (!username) {
-      console.error('Chat.tsx: No username available');
-      return;
-    }
 
     try {
       // Get user avatar from localStorage
