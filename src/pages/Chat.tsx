@@ -1,5 +1,5 @@
 // src/pages/Chat.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Layout } from '@/components/layouts/Layout';
 import EventChatBot from '@/components/EventChatBot';
@@ -38,8 +38,11 @@ const ChatPage = () => {
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   
-  // Chat bot reference to get input props
+  // Chat bot reference to get input props - memoized to prevent re-renders
   const [chatInputProps, setChatInputProps] = useState<any>(null);
+  
+  // Memoize chatInputProps to prevent unnecessary re-renders
+  const memoizedChatInputProps = useMemo(() => chatInputProps, [chatInputProps]);
   
   const {
     events,
@@ -123,8 +126,8 @@ const ChatPage = () => {
     setEventChatWindow(null);
   };
 
-  // Function to handle poll creation
-  const handleCreatePoll = async (poll: { question: string; options: string[] }) => {
+  // Function to handle poll creation - memoized to prevent re-renders
+  const handleCreatePoll = useCallback(async (poll: { question: string; options: string[] }) => {
     const username = localStorage.getItem(USERNAME_KEY);
     const communityGroupId = createCitySpecificGroupId('ausgehen', selectedCity);
     
@@ -193,7 +196,7 @@ const ChatPage = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [selectedCity]);
 
   // Updated function for profile completion
   const handleProfileUpdate = async () => {
@@ -333,7 +336,7 @@ const ChatPage = () => {
         setIsEventListSheetOpen={setIsEventListSheetOpen}
         newMessagesCount={unreadMessageCount}
         newEventsCount={0}
-        chatInputProps={chatInputProps}
+        chatInputProps={memoizedChatInputProps}
       >
         <div className="flex flex-col h-screen">
           <EventChatBot 

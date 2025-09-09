@@ -238,7 +238,7 @@ export const useChatMessages = (groupId: string, username: string) => {
     } catch (err) {
       console.error('Error fetching messages:', err);
     }
-  }, [validGroupId, username, fetchMessages]);
+  }, [validGroupId, username]);
   
   // Reconnection handling
   const { isReconnecting, handleReconnect } = useReconnection(fetchAndSetMessages);
