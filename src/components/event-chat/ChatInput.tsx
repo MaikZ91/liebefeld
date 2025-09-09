@@ -350,12 +350,9 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
               <DropdownMenuContent 
                 className="z-[99999] border-0 fixed"
                 style={{
-                  background: 'rgba(0, 0, 0, 0.9)',
-                  backdropFilter: 'blur(20px) saturate(180%)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '12px',
-                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                  position: 'fixed'
+                  background: '#1a1a1a',
+                  border: '1px solid #333',
+                  borderRadius: '12px'
                 }}
                 side="top"
                 align="start"
@@ -394,12 +391,9 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
               <DropdownMenuContent 
                 className="z-[99999] border-0 fixed"
                 style={{
-                  background: 'rgba(0, 0, 0, 0.9)',
-                  backdropFilter: 'blur(20px) saturate(180%)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '12px',
-                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                  position: 'fixed'
+                  background: '#1a1a1a',
+                  border: '1px solid #333',
+                  borderRadius: '12px'
                 }}
                 side="top"
                 align="start"
