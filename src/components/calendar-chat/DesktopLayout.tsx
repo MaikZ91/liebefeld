@@ -118,20 +118,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             )}
           </div>
         </div>
-      ) : (
-        <Button 
-          onClick={handleClickChat} 
-          className="fixed right-4 bottom-20 bg-white text-black hover:bg-gray-200 rounded-full shadow-lg relative"
-          size="icon"
-        >
-          <MessageSquare className="h-5 w-5" />
-          {newMessages > 0 && (
-            <Badge className="absolute -top-2 -right-2 bg-red-500 text-white">
-              {newMessages}
-            </Badge>
-          )}
-        </Button>
-      )}
+      ) : null}
     </div>
   );
 };

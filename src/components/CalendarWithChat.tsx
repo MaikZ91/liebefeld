@@ -310,24 +310,11 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
               )}
             </div>
           </div>
-        ) : (
-          <Button 
-            onClick={handleClickChat} 
-            className="fixed right-4 bottom-20 bg-white text-black hover:bg-gray-200 rounded-full shadow-lg relative"
-            size="icon"
-          >
-            <MessageSquare className="h-5 w-5" />
-            {newMessages > 0 && (
-              <Badge className="absolute -top-2 -right-2 bg-red-500 text-white">
-                {newMessages}
-              </Badge>
-            )}
-          </Button>
-        )}
+        ) : null}
       </div>
       
       <div className="md:hidden flex flex-col h-[calc(100vh-200px)] min-h-[500px]">
-        <div className="flex justify-center mb-4">
+      <div className="flex justify-center mb-4">
           <div className="inline-flex rounded-md shadow-sm w-full" role="group">
             <Button
               variant={activeMobileView === 'calendar' ? 'default' : 'outline'} 
