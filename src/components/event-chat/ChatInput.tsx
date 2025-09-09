@@ -55,9 +55,6 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   onJoinEventChat,
   onCreatePoll
 }) => {
-  // Debug log to check if onCreatePoll prop is passed
-  console.log('ChatInput: onCreatePoll prop received:', !!onCreatePoll);
-  
   const miaAvatarUrl = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png'
   const { events, selectedCity } = useEventContext();
   const [isEventSelectOpen, setIsEventSelectOpen] = useState(false);
@@ -365,7 +362,6 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
               >
                 <DropdownMenuItem
                   onClick={() => {
-                    console.log('ChatInput: Opening poll creator dialog');
                     setIsPollCreatorOpen(true);
                   }}
                   className="text-white cursor-pointer hover:bg-zinc-800"

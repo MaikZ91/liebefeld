@@ -34,6 +34,8 @@ interface LayoutProps {
     showAnimatedPrompts: boolean;
     activeCategory?: string;
     onCategoryChange?: (category: string) => void;
+    onJoinEventChat?: (eventId: string, eventTitle: string) => void;
+    onCreatePoll?: (poll: { question: string; options: string[] }) => void;
   };
 }
 
@@ -130,6 +132,8 @@ export const Layout: React.FC<LayoutProps> = ({
               activeCategory={chatInputProps.activeCategory}
               onCategoryChange={chatInputProps.onCategoryChange}
               onChange={chatInputProps.onChange}
+              onJoinEventChat={chatInputProps.onJoinEventChat}
+              onCreatePoll={chatInputProps.onCreatePoll}
               placeholder={activeView === 'community' ? "Chatte in der Community" : "Frage nach Events..."}
             />
           </div>

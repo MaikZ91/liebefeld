@@ -123,7 +123,9 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
         onAddEvent: onAddEvent,
         showAnimatedPrompts: chatLogic.showAnimatedPrompts,
         activeCategory: activeCategory,
-        onCategoryChange: handleCategoryChange
+        onCategoryChange: handleCategoryChange,
+        onJoinEventChat: onJoinEventChat,
+        onCreatePoll: onCreatePoll
       });
     }
   }, [
@@ -135,7 +137,9 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
     activeCategory,
     activeChatModeValue,
     onChatInputPropsChange,
-    externalSendHandler
+    externalSendHandler,
+    onJoinEventChat,
+    onCreatePoll
   ]);
 
   if (!chatLogic.isVisible) return null;
