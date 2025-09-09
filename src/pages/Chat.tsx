@@ -43,7 +43,8 @@ const ChatPage = () => {
   
   const {
     events,
-    refreshEvents
+    refreshEvents,
+    selectedCity
   } = useEventContext();
   const {
     currentUser,
@@ -124,7 +125,6 @@ const ChatPage = () => {
 
   // Function to handle poll creation
   const handleCreatePoll = async (poll: { question: string; options: string[] }) => {
-    const { selectedCity } = useEventContext();
     const username = localStorage.getItem(USERNAME_KEY);
     const communityGroupId = createCitySpecificGroupId('ausgehen', selectedCity);
     
