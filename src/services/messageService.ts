@@ -68,15 +68,32 @@ export const messageService = {
       console.log(`${data?.length || 0} messages received for group ${validGroupId}`);
       
       // Convert messages to expected format
-      const formattedMessages: Message[] = (data || []).map(msg => ({
-        id: msg.id,
-        created_at: msg.created_at,
-        text: msg.text,
-        user_name: msg.sender,
-        user_avatar: msg.avatar || '',
-        group_id: msg.group_id,
-        reactions: Array.isArray(msg.reactions) ? msg.reactions as { emoji: string; users: string[] }[] : [],
-      }));
+      const formattedMessages: Message[] = (data || []).map(msg => {
+        console.log('Processing message:', { 
+          id: msg.id, 
+          text: msg.text?.substring(0, 50) + '...', 
+          poll_question: msg.poll_question,
+          poll_options: msg.poll_options,
+          poll_votes: msg.poll_votes
+        });
+        
+        return {
+          id: msg.id,
+          created_at: msg.created_at,
+          text: msg.text,
+          user_name: msg.sender,
+          user_avatar: msg.avatar || '',
+          group_id: msg.group_id,
+          reactions: Array.isArray(msg.reactions) ? msg.reactions as { emoji: string; users: string[] }[] : [],
+          // Include poll fields with proper type conversion
+          poll_question: msg.poll_question || undefined,
+          poll_options: msg.poll_options ? JSON.stringify(msg.poll_options) : undefined,
+          poll_votes: msg.poll_votes as { [optionIndex: number]: { username: string; avatar?: string }[] } || undefined,
+          // Include event fields
+          event_id: msg.event_id || undefined,
+          event_title: msg.event_title || undefined,
+        };
+      });
       
       return formattedMessages;
     } catch (error) {
