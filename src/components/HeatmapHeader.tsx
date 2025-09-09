@@ -70,12 +70,12 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
                 variant="ghost"
                 size="sm"
                 onClick={handleMiaIconClick}
-                className="text-white/80 hover:text-white hover:bg-white/10 rounded-full p-2 flex items-center gap-2"
+                className="text-white/80 hover:text-white hover:bg-white/10 rounded-full p-1 h-8 flex items-center gap-1.5 shrink-0"
               >
-                <Avatar className="h-6 w-6">
+                <Avatar className="h-5 w-5">
                   <AvatarImage src={miaAvatarUrl} alt="MIA" />
                 </Avatar>
-                <span className="text-sm font-medium">MIA</span>
+                <span className="text-xs font-medium">MIA</span>
               </Button>
             )}
           </div>
