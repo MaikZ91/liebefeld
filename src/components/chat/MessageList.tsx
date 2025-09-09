@@ -132,22 +132,45 @@ const MessageList: React.FC<MessageListProps> = ({
                   {/* Check if this is a poll message */}
                   {message.poll_question && message.poll_options ? (
                     <>
-                      {console.log('MessageList: Rendering poll message', { 
-                        question: message.poll_question, 
-                        options: message.poll_options, 
-                        options_type: typeof message.poll_options,
-                        options_isArray: Array.isArray(message.poll_options),
-                        votes: message.poll_votes,
-                        messageId: message.id
-                      })}
-                      <PollMessage 
-                        pollData={{
-                          question: message.poll_question,
-                          options: Array.isArray(message.poll_options) ? message.poll_options : JSON.parse(message.poll_options),
-                          votes: message.poll_votes || {}
-                        }}
-                        messageId={message.id}
-                      />
+                      {(() => {
+                        console.log('MessageList: Processing poll message', { 
+                          question: message.poll_question, 
+                          options: message.poll_options, 
+                          options_type: typeof message.poll_options,
+                          options_isArray: Array.isArray(message.poll_options),
+                          votes: message.poll_votes,
+                          messageId: message.id
+                        });
+                        
+                        let parsedOptions = [];
+                        
+                        try {
+                          if (Array.isArray(message.poll_options)) {
+                            parsedOptions = message.poll_options;
+                          } else if (typeof message.poll_options === 'string') {
+                            parsedOptions = JSON.parse(message.poll_options);
+                          } else if (message.poll_options && typeof message.poll_options === 'object') {
+                            // If it's already an object, try to convert it
+                            parsedOptions = Object.values(message.poll_options);
+                          }
+                        } catch (e) {
+                          console.error('MessageList: Error parsing poll options:', e, message.poll_options);
+                          parsedOptions = [];
+                        }
+                        
+                        console.log('MessageList: Final parsed options:', parsedOptions);
+                        
+                        return (
+                          <PollMessage 
+                            pollData={{
+                              question: message.poll_question,
+                              options: parsedOptions,
+                              votes: message.poll_votes || {}
+                            }}
+                            messageId={message.id}
+                          />
+                        );
+                      })()}
                     </>
                   ) : (
                     <ChatMessage 

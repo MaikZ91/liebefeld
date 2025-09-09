@@ -25,6 +25,16 @@ const PollMessage: React.FC<PollMessageProps> = ({
   messageId,
   onVote
 }) => {
+  console.log('PollMessage: Received pollData:', pollData);
+  
+  // Defensive check - ensure options is an array
+  const safeOptions = Array.isArray(pollData.options) ? pollData.options : [];
+  
+  if (safeOptions.length === 0) {
+    console.error('PollMessage: No valid options found', pollData);
+    return <div className="text-red-500">Error: Invalid poll data</div>;
+  }
+
   const [votes, setVotes] = useState<{ [optionIndex: number]: { username: string; avatar?: string }[] }>(pollData.votes || {});
   const [userVote, setUserVote] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -125,7 +135,7 @@ const PollMessage: React.FC<PollMessageProps> = ({
       </CardHeader>
       
       <CardContent className="pt-0 space-y-3">
-        {pollData.options.map((option, index) => {
+        {safeOptions.map((option, index) => {
           const percentage = getOptionPercentage(index);
           const optionVotes = getOptionVotes(index);
           const voters = getOptionVoters(index);
