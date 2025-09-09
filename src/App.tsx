@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom"; // Import useNavigate
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom"; // Import useNavigate and useLocation
 import { useEffect, useState } from "react"; // Import useState
 import Index from "./pages/Index";
 import About from "./pages/About";
@@ -22,6 +22,8 @@ import { Layout } from './components/layouts/Layout';
 import UserDirectory from "./components/users/UserDirectory";
 import EventCalendar from "./components/EventCalendar";
 import OnboardingManager from './components/OnboardingManager';
+import { saveLastRoute, getLastRoute } from './utils/lastRouteStorage';
+import { USERNAME_KEY } from './types/chatTypes';
 
 const queryClient = new QueryClient();
 
@@ -46,6 +48,36 @@ function AppInitializer() {
 
   return null;
 }
+
+// Component to track current route and handle initial navigation
+const RouteTracker = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [hasNavigatedToLastRoute, setHasNavigatedToLastRoute] = useState(false);
+
+  // Track current route
+  useEffect(() => {
+    saveLastRoute(location.pathname, location.search);
+  }, [location.pathname, location.search]);
+
+  // Navigate to last route on initial load (only if user has completed onboarding)
+  useEffect(() => {
+    if (!hasNavigatedToLastRoute) {
+      const username = localStorage.getItem(USERNAME_KEY);
+      const hasValidUsername = username && username !== 'Anonymous' && username !== 'User' && username.trim().length > 0;
+      
+      if (hasValidUsername) {
+        const lastRoute = getLastRoute();
+        if (lastRoute && lastRoute !== location.pathname + location.search && location.pathname === '/') {
+          navigate(lastRoute, { replace: true });
+        }
+      }
+      setHasNavigatedToLastRoute(true);
+    }
+  }, [navigate, location, hasNavigatedToLastRoute]);
+
+  return null;
+};
 
 // New component to handle navigation after onboarding, rendered inside BrowserRouter
 const PostOnboardingNavigator = ({ 
@@ -97,6 +129,7 @@ function App() {
             <Sonner position="top-center" />
             <BrowserRouter>
               <AppInitializer />
+              <RouteTracker />
               {/* Render the navigator component inside BrowserRouter */}
               <PostOnboardingNavigator
                 onboardingAction={onboardingRedirectTarget}
