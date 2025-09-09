@@ -114,6 +114,9 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         mediaUrl = URL.createObjectURL(file);
       }
       
+      console.log('Event data to be processed:', eventData);
+      console.log('Event ID before creation:', eventId);
+      
       const { data, error } = await supabase
         .from('chat_messages')
         .insert([{
@@ -131,6 +134,9 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         }])
         .select('id')
         .single();
+        
+      console.log('Message inserted with event_id:', eventId);
+      console.log('Inserted message data:', data);
         
       if (error) {
         console.error('Error sending message:', error);
