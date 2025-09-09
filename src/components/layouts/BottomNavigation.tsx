@@ -105,27 +105,6 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
             <Map className="h-5 w-5" />
           </Button>
 
-          {/* User/Welcome Button */}
-          <Button 
-            variant="ghost"
-            size="icon" 
-            onClick={() => {
-              if (!hasCompletedOnboarding) {
-                setIsOnboardingOpen(true);
-              } else {
-                setIsUserDirectoryOpen(true);
-              }
-            }} 
-            className={cn(
-              "h-12 w-12 rounded-full transition-all duration-300",
-              !hasCompletedOnboarding 
-                ? "text-primary hover:text-primary-foreground hover:bg-primary/20" 
-                : "text-white/60 hover:text-white hover:bg-white/10"
-            )}
-          >
-            <User className="h-5 w-5" />
-          </Button>
-          
           {/* Event Calendar Button */}
           <Button 
             variant="ghost"
@@ -147,6 +126,27 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
                 {newEventsCount}
               </Badge>
             )}
+          </Button>
+
+          {/* User/Welcome Button */}
+          <Button 
+            variant="ghost"
+            size="icon" 
+            onClick={() => {
+              if (!hasCompletedOnboarding) {
+                setIsOnboardingOpen(true);
+              } else {
+                setIsUserDirectoryOpen(true);
+              }
+            }} 
+            className={cn(
+              "h-12 w-12 rounded-full transition-all duration-300",
+              !hasCompletedOnboarding 
+                ? "text-primary hover:text-primary-foreground hover:bg-primary/20" 
+                : "text-white/60 hover:text-white hover:bg-white/10"
+            )}
+          >
+            <User className="h-5 w-5" />
           </Button>
         </div>
       </div>
