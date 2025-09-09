@@ -226,8 +226,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     currentXRef.current = e.touches[0].clientX;
     const deltaX = currentXRef.current - startXRef.current;
     
-    // Only allow swipe to the right (positive deltaX) and limit to 80px
-    const offset = Math.max(0, Math.min(deltaX, 80));
+    // Allow swipe in both directions and limit to 80px
+    const offset = Math.min(Math.abs(deltaX), 80);
     setSwipeOffset(offset);
   };
 
@@ -236,8 +236,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     
     const deltaX = currentXRef.current - startXRef.current;
     
-    // Trigger reply if swiped more than 40px to the right
-    if (deltaX > 40) {
+    // Trigger reply if swiped more than 40px in any direction
+    if (Math.abs(deltaX) > 40) {
       const messageText = typeof message === 'string' ? message : '';
       const replyData = {
         messageId,
@@ -265,8 +265,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     currentXRef.current = e.clientX;
     const deltaX = currentXRef.current - startXRef.current;
     
-    // Only allow swipe to the right (positive deltaX) and limit to 80px
-    const offset = Math.max(0, Math.min(deltaX, 80));
+    // Allow swipe in both directions and limit to 80px
+    const offset = Math.min(Math.abs(deltaX), 80);
     setSwipeOffset(offset);
   };
 
@@ -275,8 +275,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     
     const deltaX = currentXRef.current - startXRef.current;
     
-    // Trigger reply if swiped more than 40px to the right
-    if (deltaX > 40) {
+    // Trigger reply if swiped more than 40px in any direction
+    if (Math.abs(deltaX) > 40) {
       const messageText = typeof message === 'string' ? message : '';
       const replyData = {
         messageId,
