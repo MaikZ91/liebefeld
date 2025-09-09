@@ -136,7 +136,7 @@ const PollMessage: React.FC<PollMessageProps> = ({
 
   return (
     <div className={cn(
-      "group px-4 py-3 rounded-2xl relative w-full max-w-full overflow-hidden transition-all duration-200 text-white",
+      "group pl-2 pr-4 py-3 rounded-2xl relative w-full max-w-full overflow-hidden transition-all duration-200 text-white",
       isConsecutive ? "mt-1" : "mt-2"
     )}
          style={{ 
