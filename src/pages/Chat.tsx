@@ -150,10 +150,12 @@ const ChatPage = () => {
         text: `📊 ${poll.question}`,
         poll_question: poll.question,
         poll_options: JSON.stringify(poll.options), // Convert to JSON string for jsonb column
-        poll_votes: {} // Empty object for initial votes
+        poll_votes: null // Initialize as null for jsonb column
       };
 
       console.log('Chat.tsx: Creating poll with message:', pollMessage);
+      console.log('Chat.tsx: poll_options type:', typeof pollMessage.poll_options);
+      console.log('Chat.tsx: poll_votes value:', pollMessage.poll_votes);
 
       // Send to database
       const { data, error } = await supabase
@@ -162,10 +164,16 @@ const ChatPage = () => {
         .select();
 
       if (error) {
-        console.error('Chat.tsx: Error creating poll:', error);
+        console.error('Chat.tsx: Detailed Supabase error:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+          fullError: error
+        });
         toast({
-          title: "Fehler",
-          description: "Umfrage konnte nicht erstellt werden",
+          title: "Fehler beim Erstellen der Umfrage",
+          description: `${error.message} ${error.code ? `(Code: ${error.code})` : ''}`,
           variant: "destructive"
         });
         return;
