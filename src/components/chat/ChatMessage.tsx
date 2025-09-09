@@ -218,7 +218,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       style={{ 
         background: 'rgba(0, 0, 0, 0.8)',
         border: `1px solid rgba(255, 255, 255, 0.1)`,
-        borderTop: `1px solid ${getGroupColor(groupType).border}`,
+        borderTop: `0.5px solid ${getGroupColor(groupType).border}`,
         borderRadius: '16px'
       }}
     >
