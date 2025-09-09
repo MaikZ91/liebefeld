@@ -137,50 +137,40 @@ const PollMessage: React.FC<PollMessageProps> = ({
   return (
     <div 
       className={cn(
-        "group px-6 py-5 rounded-3xl relative w-full max-w-full overflow-hidden transition-all duration-300 text-white hover:scale-[1.01] transform-gpu",
-        isConsecutive ? "mt-2" : "mt-3"
+        "group px-4 py-3 rounded-2xl relative w-full max-w-full overflow-hidden text-white",
+        isConsecutive ? "mt-1" : "mt-2"
       )}
       style={{ 
         background: 'linear-gradient(135deg, hsl(var(--poll-glass-bg)), hsl(var(--poll-glass-bg) / 0.6))',
         border: '1px solid hsl(var(--poll-border))',
         borderTop: '2px solid hsl(var(--poll-accent))',
-        borderRadius: '24px',
+        borderRadius: '16px',
         backdropFilter: 'blur(20px)',
-        boxShadow: '0 20px 40px -12px hsl(var(--poll-shadow) / 0.4), 0 0 0 1px hsl(var(--poll-border))'
+        boxShadow: '0 8px 16px hsl(var(--poll-shadow) / 0.2)'
       }}
     >
-      {/* Ambient glow effect */}
-      <div 
-        className="absolute inset-0 opacity-30 animate-poll-glow"
-        style={{
-          background: 'radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), hsl(var(--poll-accent) / 0.1), transparent 40%)',
-          borderRadius: '24px'
-        }}
-      />
-      
       <div className="flex flex-col relative z-10">
-        {/* Elegant Poll Header */}
-        <div className="flex items-start gap-4 mb-6">
+        {/* Poll Header */}
+        <div className="flex items-start gap-3 mb-3">
           <div 
-            className="p-3 rounded-2xl relative overflow-hidden animate-poll-glow"
+            className="p-2 rounded-xl flex-shrink-0"
             style={{
               background: 'linear-gradient(135deg, hsl(var(--poll-gradient-start) / 0.2), hsl(var(--poll-gradient-end) / 0.2))',
               backdropFilter: 'blur(10px)',
               border: '1px solid hsl(var(--poll-border))'
             }}
           >
-            <BarChart3 className="h-6 w-6 text-white flex-shrink-0" />
-            <div className="absolute inset-0 animate-poll-shimmer opacity-30"></div>
+            <BarChart3 className="h-4 w-4 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-base font-semibold text-white break-words leading-relaxed tracking-wide">
+            <p className="text-sm font-medium text-white break-words leading-relaxed">
               {pollData.question}
             </p>
           </div>
         </div>
         
-        {/* Elegant Poll Options */}
-        <div className="space-y-4">
+        {/* Poll Options */}
+        <div className="space-y-2">
         {safeOptions.map((option, index) => {
           const percentage = getOptionPercentage(index);
           const optionVotes = getOptionVotes(index);
@@ -189,60 +179,44 @@ const PollMessage: React.FC<PollMessageProps> = ({
           const hasVoted = userVote !== null;
           
           return (
-            <div key={index} className="space-y-3">
-              <div className="relative group">
+            <div key={index} className="space-y-2">
+              <div className="relative">
                 <Button
                   variant="ghost"
-                  className={`w-full justify-start text-left relative overflow-hidden transition-all duration-500 h-14 rounded-2xl ${
-                    hasVoted ? 'cursor-default' : 'cursor-pointer hover:scale-[1.02] hover:shadow-2xl transform-gpu'
+                  className={`w-full justify-start text-left relative overflow-hidden h-10 rounded-xl ${
+                    hasVoted ? 'cursor-default' : 'cursor-pointer hover:scale-[1.01]'
                   }`}
                   style={{
                     background: isSelected 
                       ? `linear-gradient(135deg, hsl(var(--poll-gradient-start) / 0.3), hsl(var(--poll-gradient-end) / 0.3))`
-                      : hasVoted 
-                        ? 'hsl(var(--poll-option-bg))' 
-                        : 'hsl(var(--poll-option-bg))',
+                      : 'hsl(var(--poll-option-bg))',
                     border: isSelected 
-                      ? '2px solid hsl(var(--poll-accent))' 
+                      ? '1px solid hsl(var(--poll-accent))' 
                       : '1px solid hsl(var(--poll-border))',
                     backdropFilter: 'blur(10px)',
                     boxShadow: isSelected 
-                      ? '0 8px 32px hsl(var(--poll-shadow)), 0 0 0 1px hsl(var(--poll-accent) / 0.5)' 
-                      : hasVoted 
-                        ? '0 4px 20px hsl(var(--poll-shadow) / 0.2)' 
-                        : 'none'
+                      ? '0 4px 12px hsl(var(--poll-shadow))' 
+                      : 'none'
                   }}
                   onClick={() => handleVote(index)}
                   disabled={hasVoted || loading}
-                  onMouseEnter={(e) => {
-                    if (!hasVoted) {
-                      e.currentTarget.style.background = 'hsl(var(--poll-option-hover))';
-                      e.currentTarget.style.borderColor = 'hsl(var(--poll-accent) / 0.5)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!hasVoted && !isSelected) {
-                      e.currentTarget.style.background = 'hsl(var(--poll-option-bg))';
-                      e.currentTarget.style.borderColor = 'hsl(var(--poll-border))';
-                    }
-                  }}
                 >
-                  {/* Option letter indicator */}
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-white/80 z-20">
+                  {/* Option letter */}
+                  <div className="absolute left-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-semibold text-white/80 z-20">
                     {String.fromCharCode(65 + index)}
                   </div>
                   
-                  <div className="flex items-center justify-between w-full z-10 relative pl-14 pr-4">
-                    <span className="text-sm font-medium flex-1 mr-3 text-white/95 leading-relaxed">
+                  <div className="flex items-center justify-between w-full z-10 relative pl-10 pr-2">
+                    <span className="text-sm font-medium flex-1 mr-2 text-white/95">
                       {option}
                     </span>
-                    <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       {isSelected && (
-                        <CheckCircle2 className="h-5 w-5 text-white animate-scale-in drop-shadow-lg" />
+                        <CheckCircle2 className="h-4 w-4 text-white" />
                       )}
                       {hasVoted && (
                         <div 
-                          className="text-xs font-bold text-white/95 px-3 py-1.5 rounded-xl backdrop-blur-sm"
+                          className="text-xs font-semibold text-white/95 px-2 py-1 rounded-lg backdrop-blur-sm"
                           style={{
                             background: 'hsl(var(--poll-glass-bg) / 0.6)',
                             border: '1px solid hsl(var(--poll-border))'
@@ -254,40 +228,33 @@ const PollMessage: React.FC<PollMessageProps> = ({
                     </div>
                   </div>
                   
-                  {/* Elegant progress bar */}
+                  {/* Progress bar */}
                   {hasVoted && (
                     <div 
-                      className="absolute inset-0 rounded-2xl opacity-20 animate-poll-fill"
+                      className="absolute inset-0 rounded-xl opacity-20"
                       style={{ 
                         background: `linear-gradient(90deg, hsl(var(--poll-gradient-start) / 0.4) 0%, hsl(var(--poll-gradient-end) / 0.3) 100%)`,
-                        width: `${percentage}%`,
-                        transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)'
+                        width: `${percentage}%`
                       }}
                     />
-                  )}
-                  
-                  {/* Shimmer effect for interactive options */}
-                  {!hasVoted && (
-                    <div className="absolute inset-0 animate-poll-shimmer opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
                   )}
                 </Button>
               </div>
               
-              {/* Elegant voter avatars */}
+              {/* Voter avatars */}
               {voters.length > 0 && (
-                <div className="flex flex-wrap gap-2 ml-16 animate-fade-in">
-                  {voters.slice(0, 6).map((voter, voterIndex) => (
+                <div className="flex flex-wrap gap-1 ml-10">
+                  {voters.slice(0, 4).map((voter, voterIndex) => (
                     <div key={`${voter.username}-${voterIndex}`} className="group/avatar relative">
                       <Avatar 
-                        className="h-8 w-8 border-2 transition-all duration-300 hover:scale-125 transform-gpu cursor-pointer"
+                        className="h-6 w-6 border"
                         style={{
-                          borderColor: 'hsl(var(--poll-accent) / 0.6)',
-                          boxShadow: '0 4px 12px hsl(var(--poll-shadow) / 0.3)'
+                          borderColor: 'hsl(var(--poll-accent) / 0.6)'
                         }}
                       >
                         <AvatarImage src={voter.avatar || undefined} alt={voter.username} />
                         <AvatarFallback 
-                          className="text-white text-xs font-bold"
+                          className="text-white text-xs font-semibold"
                           style={{
                             background: 'linear-gradient(135deg, hsl(var(--poll-gradient-start)), hsl(var(--poll-gradient-end)))'
                           }}
@@ -295,59 +262,17 @@ const PollMessage: React.FC<PollMessageProps> = ({
                           {getInitials(voter.username)}
                         </AvatarFallback>
                       </Avatar>
-                      {/* Elegant tooltip */}
-                      <div 
-                        className="absolute -top-10 left-1/2 transform -translate-x-1/2 px-3 py-1.5 rounded-xl text-xs font-medium text-white opacity-0 group-hover/avatar:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap z-30 shadow-lg"
-                        style={{
-                          background: 'hsl(var(--poll-glass-bg))',
-                          backdropFilter: 'blur(10px)',
-                          border: '1px solid hsl(var(--poll-border))'
-                        }}
-                      >
-                        {voter.username}
-                        <div 
-                          className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 rotate-45"
-                          style={{
-                            background: 'hsl(var(--poll-glass-bg))',
-                            border: '1px solid hsl(var(--poll-border))',
-                            borderTop: 'none',
-                            borderLeft: 'none'
-                          }}
-                        />
-                      </div>
                     </div>
                   ))}
-                  {voters.length > 6 && (
+                  {voters.length > 4 && (
                     <div 
-                      className="h-8 w-8 rounded-full flex items-center justify-center group/more hover:scale-125 transition-all duration-300 cursor-pointer transform-gpu"
+                      className="h-6 w-6 rounded-full flex items-center justify-center text-xs text-white font-semibold"
                       style={{
-                        background: 'linear-gradient(135deg, hsl(var(--poll-option-bg)), hsl(var(--poll-option-hover)))',
-                        border: '2px solid hsl(var(--poll-accent) / 0.6)',
-                        backdropFilter: 'blur(10px)',
-                        boxShadow: '0 4px 12px hsl(var(--poll-shadow) / 0.3)'
+                        background: 'hsl(var(--poll-option-bg))',
+                        border: '1px solid hsl(var(--poll-accent) / 0.6)'
                       }}
                     >
-                      <span className="text-xs text-white font-bold">+{voters.length - 6}</span>
-                      {/* Elegant overflow tooltip */}
-                      <div 
-                        className="absolute -top-10 left-1/2 transform -translate-x-1/2 px-3 py-1.5 rounded-xl text-xs font-medium text-white opacity-0 group-hover/more:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap z-30 shadow-lg"
-                        style={{
-                          background: 'hsl(var(--poll-glass-bg))',
-                          backdropFilter: 'blur(10px)',
-                          border: '1px solid hsl(var(--poll-border))'
-                        }}
-                      >
-                        {voters.length - 6} weitere Stimmen
-                        <div 
-                          className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 rotate-45"
-                          style={{
-                            background: 'hsl(var(--poll-glass-bg))',
-                            border: '1px solid hsl(var(--poll-border))',
-                            borderTop: 'none',
-                            borderLeft: 'none'
-                          }}
-                        />
-                      </div>
+                      +{voters.length - 4}
                     </div>
                   )}
                 </div>
@@ -356,27 +281,21 @@ const PollMessage: React.FC<PollMessageProps> = ({
           );
         })}
         
-        {/* Elegant Vote Count Footer */}
+        {/* Vote Count Footer */}
         <div 
-          className="text-sm text-white/70 text-center mt-6 pt-4 relative"
+          className="text-xs text-white/70 text-center mt-3 pt-2"
           style={{
             borderTop: '1px solid hsl(var(--poll-border))'
           }}
         >
-          <div 
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl backdrop-blur-sm"
-            style={{
-              background: 'hsl(var(--poll-option-bg))',
-              border: '1px solid hsl(var(--poll-border))'
-            }}
-          >
-            <BarChart3 className="h-4 w-4 text-white/80" />
+          <div className="flex items-center justify-center gap-1">
+            <BarChart3 className="h-3 w-3 text-white/60" />
             {totalVotes === 0 ? (
-              <span className="font-medium">Noch keine Stimmen abgegeben</span>
+              <span>Noch keine Stimmen</span>
             ) : totalVotes === 1 ? (
-              <span className="font-medium">1 Person hat abgestimmt</span>
+              <span>1 Stimme</span>
             ) : (
-              <span className="font-medium">{totalVotes} Personen haben abgestimmt</span>
+              <span>{totalVotes} Stimmen</span>
             )}
           </div>
         </div>
