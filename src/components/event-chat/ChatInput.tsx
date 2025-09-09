@@ -289,7 +289,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 
   const getButtonWidth = () => {
     if (activeChatModeValue === 'community') {
-      return 'pl-[90px]';
+      return 'pl-[120px]'; // Erhöht von 90px auf 120px für mehr Abstand zu den Channel-Buttons
     } else {
       const baseButtons = 2;
       const historyButton = globalQueries.length > 0 ? 1 : 0;
