@@ -289,7 +289,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
 
   const getButtonWidth = () => {
     if (activeChatModeValue === 'community') {
-      return 'pl-[120px]'; // Erhöht von 90px auf 120px für mehr Abstand zu den Channel-Buttons
+      return 'pl-[50px]'; // Reduziert für nur Plus-Button
     } else {
       const baseButtons = 2;
       const historyButton = globalQueries.length > 0 ? 1 : 0;
@@ -372,49 +372,6 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
                 >
                   <CalendarPlus className="h-4 w-4 mr-2" />
                   Event erstellen
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full h-6 px-2 text-[10px] flex items-center gap-1 min-w-[70px]"
-                  style={{...colors.borderStyle, ...colors.textStyle}}
-                >
-                  {activeCategory}
-                  <ChevronDown className="h-2 w-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                className="z-[99999] border-0 fixed"
-                style={{
-                  background: '#1a1a1a',
-                  border: '1px solid #333',
-                  borderRadius: '12px'
-                }}
-                side="top"
-                align="start"
-              >
-                <DropdownMenuItem
-                  onClick={() => handleCategoryClick('Kreativität')}
-                  className="text-white cursor-pointer hover:bg-zinc-800"
-                >
-                  <span style={getChannelColor('kreativität').textStyle}>#kreativität</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleCategoryClick('Ausgehen')}
-                  className="text-white cursor-pointer hover:bg-zinc-800"
-                >
-                  <span style={getChannelColor('ausgehen').textStyle}>#ausgehen</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleCategoryClick('Sport')}
-                  className="text-white cursor-pointer hover:bg-zinc-800"
-                >
-                  <span style={getChannelColor('sport').textStyle}>#sport</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
