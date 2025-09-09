@@ -256,7 +256,10 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     </div>
   );
 
-  const { setActiveCategory } = useChatPreferences();
+  const { activeCategory: contextActiveCategory, setActiveCategory } = useChatPreferences();
+  
+  // Use context category, fallback to prop
+  const currentActiveCategory = contextActiveCategory || activeCategory;
   
   const handleCategoryClick = (category: string) => {
     console.log('ChatInput: changing category to:', category);
@@ -284,8 +287,10 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     return 'ausgehen';
   };
   
-  const groupType = getGroupType(activeCategory);
+  const groupType = getGroupType(currentActiveCategory);
   const colors = getChannelColor(groupType);
+  
+  console.log('ChatInput: current category colors', { currentActiveCategory, groupType, colors });
 
   const getButtonWidth = () => {
     if (activeChatModeValue === 'community') {

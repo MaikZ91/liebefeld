@@ -15,6 +15,7 @@ import { eventChatService } from '@/services/eventChatService';
 import { useNavigate } from 'react-router-dom';
 import { chatService } from '@/services/chatService';
 import { getChannelColor } from '@/utils/channelColors';
+import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
 
 interface ChatGroupProps {
   groupId: string;
@@ -54,20 +55,9 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const [username, setUsername] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || 'Gast');
   const [avatar, setAvatar] = useState<string | null>(() => localStorage.getItem(AVATAR_KEY));
-  const [selectedCategory, setSelectedCategory] = useState<string>(() => {
-    // Load from localStorage on component mount
-    try {
-      import('@/utils/chatPreferences').then(({ getActiveCategory }) => {
-        const result = getActiveCategory();
-        console.log('ChatGroup: loading stored category =', result);
-        setSelectedCategory(result);
-      });
-      return 'Ausgehen';
-    } catch (error) {
-      console.error('ChatGroup: error loading category =', error);
-      return 'Ausgehen';
-    }
-  });
+  
+  // Use context for category management
+  const { activeCategory } = useChatPreferences();
   const [messageFilter, setMessageFilter] = useState<string[]>(['alle']); // New filter state
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -78,18 +68,18 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   // Use scroll management hook
   const scrollManagement = useScrollManagement(messages, typingUsers);
 
-  // Detect the group type based on name
-  const isAusgehenGroup = groupName.toLowerCase() === 'ausgehen';
-  const isSportGroup = groupName.toLowerCase() === 'sport';
-  const isKreativitätGroup = groupName.toLowerCase() === 'kreativität';
-
-  const isGroup = isAusgehenGroup || isSportGroup || isKreativitätGroup;
-
-  // Get the group type
-  const groupType = isAusgehenGroup ? 'ausgehen' :
-                   isSportGroup ? 'sport' :
-                   isKreativitätGroup ? 'kreativität' :
-                   'ausgehen';
+  // Get the group type based on activeCategory from context
+  const getGroupTypeFromCategory = (category: string): 'ausgehen' | 'sport' | 'kreativität' => {
+    const lowerCategory = category.toLowerCase();
+    if (lowerCategory === 'sport') return 'sport';
+    if (lowerCategory === 'kreativität') return 'kreativität';
+    return 'ausgehen';
+  };
+  
+  const groupType = getGroupTypeFromCategory(activeCategory);
+  const isGroup = true; // Always treat as group for consistency
+  
+  console.log('ChatGroup: activeCategory from context =', activeCategory, 'groupType =', groupType);
 
   // Update messages ref when messages change
   useEffect(() => {
@@ -332,7 +322,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
 
   // Handle sending messages using chatService instead of direct insert
   const handleSubmit = async () => {
-    console.log('ChatGroup.handleSubmit called', { newMessage, username, groupId, selectedCategory });
+    console.log('ChatGroup.handleSubmit called', { newMessage, username, groupId, activeCategory });
     
     if (!newMessage.trim() || !username || !groupId) {
       console.log('ChatGroup.handleSubmit: early return due to missing data');
@@ -346,7 +336,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       let messageText = newMessage.trim();
 
       // Add category label to the message
-      const categoryLabel = `#${selectedCategory.toLowerCase()}`;
+      const categoryLabel = `#${activeCategory.toLowerCase()}`;
       messageText = `${categoryLabel} ${messageText}`;
 
       console.log('ChatGroup.handleSubmit: sending message via chatService', { messageText, groupId });
