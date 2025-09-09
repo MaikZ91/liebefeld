@@ -107,26 +107,24 @@ const GroupChat: React.FC<GroupChatProps> = ({
         />
       )}
 
-      {/* Remove fixed login status indicator from GroupChat */}
-      {false && (
-        <div className="fixed bottom-20 right-4 bg-black/60 backdrop-blur-xl text-white rounded-2xl px-4 py-2 text-xs flex items-center shadow-2xl border border-white/10 z-50 transition-all duration-300">
-          <UserCircle className="w-3 h-3 mr-2 text-primary" />
-          <span className="text-white/80">{loading ? "Verbinden..." : 
-            currentUser && currentUser !== 'Gast' ? 
-            `${currentUser}` : 
-            "Nicht angemeldet"}</span>
-          {(!currentUser || currentUser === 'Gast') && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="ml-2 text-xs py-1 px-2 h-auto text-primary hover:text-white hover:bg-primary/20 rounded-lg transition-all duration-300" 
-              onClick={() => setIsProfileEditorOpen(true)}
-            >
-              Anmelden
-            </Button>
-          )}
-        </div>
-      )}
+      {/* Login Status */}
+      <div className="fixed bottom-20 right-4 bg-black/60 backdrop-blur-xl text-white rounded-2xl px-4 py-2 text-xs flex items-center shadow-2xl border border-white/10 z-50 transition-all duration-300">
+        <UserCircle className="w-3 h-3 mr-2 text-primary" />
+        <span className="text-white/80">{loading ? "Verbinden..." : 
+          currentUser && currentUser !== 'Gast' ? 
+          `${currentUser}` : 
+          "Nicht angemeldet"}</span>
+        {(!currentUser || currentUser === 'Gast') && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="ml-2 text-xs py-1 px-2 h-auto text-primary hover:text-white hover:bg-primary/20 rounded-lg transition-all duration-300" 
+            onClick={() => setIsProfileEditorOpen(true)}
+          >
+            Anmelden
+          </Button>
+        )}
+      </div>
 
       {/* User directory dialog */}
       <UserDirectory
