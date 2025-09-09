@@ -131,16 +131,14 @@ const MessageList: React.FC<MessageListProps> = ({
                 <div className="w-full max-w-full overflow-visible break-words -mt-1 relative z-10">
                   {/* Check if this is a poll message */}
                   {message.poll_question && message.poll_options ? (
-                    <div className="ml-4">
-                      <PollMessage 
-                        pollData={{
-                          question: message.poll_question,
-                          options: message.poll_options, // Pass as-is, PollMessage will handle parsing
-                          votes: message.poll_votes || {}
-                        }}
-                        messageId={message.id}
-                      />
-                    </div>
+                    <PollMessage 
+                      pollData={{
+                        question: message.poll_question,
+                        options: message.poll_options, // Pass as-is, PollMessage will handle parsing
+                        votes: message.poll_votes || {}
+                      }}
+                      messageId={message.id}
+                    />
                   ) : (
                     <ChatMessage 
                       message={messageContent} 
