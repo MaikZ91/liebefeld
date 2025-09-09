@@ -31,12 +31,57 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       console.log('Sending message to group:', validGroupId);
       
       let messageText = messageToSend;
+      let eventId = null;
+      let eventTitle = null;
       
       // Add category label to the message
       const categoryLabel = `#${selectedCategory.toLowerCase()}`;
       
       if (eventData) {
         const { title, date, time, location, category } = eventData;
+        
+        // First, create or find the event in community_events table
+        const { data: existingEvent, error: findError } = await supabase
+          .from('community_events')
+          .select('id')
+          .eq('title', title)
+          .eq('date', date)
+          .eq('time', time)
+          .eq('location', location || '')
+          .maybeSingle();
+
+        if (findError) {
+          console.error('Error finding event:', findError);
+        }
+
+        if (existingEvent) {
+          // Use existing event
+          eventId = existingEvent.id;
+          eventTitle = title;
+        } else {
+          // Create new event
+          const { data: newEvent, error: createError } = await supabase
+            .from('community_events')
+            .insert([{
+              title,
+              date,
+              time,
+              location: location || '',
+              category: category || 'Sonstiges',
+              description: '',
+              source: 'community'
+            }])
+            .select('id')
+            .single();
+
+          if (createError) {
+            console.error('Error creating event:', createError);
+          } else {
+            eventId = newEvent.id;
+            eventTitle = title;
+          }
+        }
+        
         messageText = `${categoryLabel} 🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${messageToSend}`;
       } else {
         // Add category label to regular messages
@@ -77,6 +122,11 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
           text: messageText,
           avatar: localStorage.getItem(AVATAR_KEY),
           media_url: mediaUrl,
+          event_id: eventId,
+          event_title: eventTitle,
+          event_date: eventData?.date || null,
+          event_location: eventData?.location || null,
+          event_image_url: null,
           read_by: [username]
         }])
         .select('id')
