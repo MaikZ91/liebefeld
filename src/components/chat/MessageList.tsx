@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/chatUIUtils';
 import ChatMessage from './ChatMessage';
 import TypingIndicator from './TypingIndicator';
+import PollMessage from '@/components/poll/PollMessage';
 import { Message, TypingUser, EventShare } from '@/types/chatTypes';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ChatLoadingSkeleton from './ChatLoadingSkeleton';
@@ -128,18 +129,30 @@ const MessageList: React.FC<MessageListProps> = ({
                   </div>
                 )}
                 <div className="w-full max-w-full overflow-visible break-words -mt-1 relative z-10">
-                  <ChatMessage 
-                    message={messageContent} 
-                    isConsecutive={isConsecutive}
-                    isGroup={isGroup}
-                    eventData={eventData}
-                    eventId={message.event_id}
-                    messageId={message.id}
-                    reactions={message.reactions || []} // Pass reactions directly
-                    onReact={handleReaction(message.id)}
-                    currentUsername={username}
-                    onJoinEventChat={onJoinEventChat}
-                  />
+                  {/* Check if this is a poll message */}
+                  {message.poll_question && message.poll_options ? (
+                    <PollMessage 
+                      pollData={{
+                        question: message.poll_question,
+                        options: JSON.parse(message.poll_options),
+                        votes: message.poll_votes || {}
+                      }}
+                      messageId={message.id}
+                    />
+                  ) : (
+                    <ChatMessage 
+                      message={messageContent} 
+                      isConsecutive={isConsecutive}
+                      isGroup={isGroup}
+                      eventData={eventData}
+                      eventId={message.event_id}
+                      messageId={message.id}
+                      reactions={message.reactions || []} // Pass reactions directly
+                      onReact={handleReaction(message.id)}
+                      currentUsername={username}
+                      onJoinEventChat={onJoinEventChat}
+                    />
+                  )}
                 </div>
               </div>
             );

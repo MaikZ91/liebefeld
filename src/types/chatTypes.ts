@@ -36,7 +36,7 @@ export interface ChatQuery {
   created_at?: string;
 }
 
-// Changed: 'content' to 'text' and added 'reactions'
+// Changed: 'content' to 'text' and added 'reactions' and poll fields
 export interface Message {
   id: string;
   created_at: string;
@@ -49,6 +49,10 @@ export interface Message {
   event_title?: string; // Added event_title for display
   read_by?: string[];
   reactions?: { emoji: string; users: string[] }[]; // Added reactions
+  // Poll fields
+  poll_question?: string;
+  poll_options?: string;
+  poll_votes?: { [optionIndex: number]: { username: string; avatar?: string }[] };
 }
 
 export interface ChatGroup {
