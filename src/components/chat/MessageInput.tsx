@@ -10,6 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { getChannelColor } from '@/utils/channelColors';
 import { useEventContext } from '@/contexts/EventContext';
 import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
+import { ReplyData } from '@/hooks/chat/useReplySystem';
+import ReplyPreview from './ReplyPreview';
 
 interface MessageInputProps {
   username: string;
@@ -22,6 +24,8 @@ interface MessageInputProps {
   placeholder?: string;
   mode?: 'ai' | 'community';
   groupType?: 'ausgehen' | 'sport' | 'kreativität';
+  replyTo?: ReplyData | null;
+  onClearReply?: () => void;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({
@@ -34,7 +38,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
   onKeyDown,
   placeholder = "Schreibe eine Nachricht...",
   mode = 'community',
-  groupType = 'ausgehen'
+  groupType = 'ausgehen',
+  replyTo,
+  onClearReply
 }) => {
   const [newMessage, setNewMessage] = useState("");
   const { toast } = useToast();
@@ -150,58 +156,65 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const inputColors = getInputColors(currentGroupType);
 
   return (
-    <div className="relative flex items-center gap-2">
-      <div className="flex-1">
-        <Textarea
-          value={value !== undefined ? value : newMessage}
-          onChange={handleTextareaChange}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
+    <div className="flex flex-col">
+      {/* Reply preview */}
+      {replyTo && onClearReply && (
+        <ReplyPreview replyTo={replyTo} onCancel={onClearReply} />
+      )}
+      
+      <div className="relative flex items-center gap-2">
+        <div className="flex-1">
+          <Textarea
+            value={value !== undefined ? value : newMessage}
+            onChange={handleTextareaChange}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            className={cn(
+              "min-h-[40px] max-h-[120px] resize-none rounded-full",
+              "border-2 focus:ring-0 focus:ring-offset-0",
+              mode === 'ai' 
+                ? "bg-background border-border text-foreground focus:border-primary" 
+                : "text-white placeholder:text-gray-400 transition-all duration-200"
+            )}
+            style={
+              mode === 'community'
+                ? {
+                    backgroundColor: inputColors.background,
+                    borderColor: inputColors.border,
+                    boxShadow: inputColors.glow,
+                  }
+                : undefined
+            }
+          />
+        </div>
+
+        {/* Send button */}
+        <Button
+          onClick={handleSendButtonClick}
+          disabled={isSending || (value === undefined ? !newMessage.trim() : !value?.trim())}
           className={cn(
-            "min-h-[40px] max-h-[120px] resize-none rounded-full",
-            "border-2 focus:ring-0 focus:ring-offset-0",
+            "h-10 w-10 rounded-full transition-all duration-200",
             mode === 'ai' 
-              ? "bg-background border-border text-foreground focus:border-primary" 
-              : "text-white placeholder:text-gray-400 transition-all duration-200"
+              ? "bg-primary hover:bg-primary/90 text-primary-foreground" 
+              : "text-white border-2 hover:bg-white/10"
           )}
           style={
             mode === 'community'
               ? {
-                  backgroundColor: inputColors.background,
+                  backgroundColor: 'transparent',
                   borderColor: inputColors.border,
                   boxShadow: inputColors.glow,
                 }
               : undefined
           }
-        />
+        >
+          {isSending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Send className="h-4 w-4" />
+          )}
+        </Button>
       </div>
-
-      {/* Send button */}
-      <Button
-        onClick={handleSendButtonClick}
-        disabled={isSending || (value === undefined ? !newMessage.trim() : !value?.trim())}
-        className={cn(
-          "h-10 w-10 rounded-full transition-all duration-200",
-          mode === 'ai' 
-            ? "bg-primary hover:bg-primary/90 text-primary-foreground" 
-            : "text-white border-2 hover:bg-white/10"
-        )}
-        style={
-          mode === 'community'
-            ? {
-                backgroundColor: 'transparent',
-                borderColor: inputColors.border,
-                boxShadow: inputColors.glow,
-              }
-            : undefined
-        }
-      >
-        {isSending ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Send className="h-4 w-4" />
-        )}
-      </Button>
     </div>
   );
 };

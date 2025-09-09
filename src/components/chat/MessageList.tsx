@@ -9,6 +9,7 @@ import { Message, TypingUser, EventShare } from '@/types/chatTypes';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ChatLoadingSkeleton from './ChatLoadingSkeleton';
 import { reactionService } from '@/services/reactionService';
+import { ReplyData } from '@/hooks/chat/useReplySystem';
 
 interface MessageListProps {
   messages: Message[];
@@ -21,6 +22,7 @@ interface MessageListProps {
   groupType: 'ausgehen' | 'sport' | 'kreativität';
   chatBottomRef: React.RefObject<HTMLDivElement>;
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
+  onReply?: (replyData: ReplyData) => void;
 }
 
 const MessageList: React.FC<MessageListProps> = ({
@@ -33,7 +35,8 @@ const MessageList: React.FC<MessageListProps> = ({
   isGroup,
   groupType,
   chatBottomRef,
-  onJoinEventChat
+  onJoinEventChat,
+  onReply
 }) => {
   const isMobile = useIsMobile();
 
@@ -155,6 +158,9 @@ const MessageList: React.FC<MessageListProps> = ({
                         onReact={handleReaction(message.id)}
                         currentUsername={username}
                         onJoinEventChat={onJoinEventChat}
+                        onReply={onReply}
+                        sender={message.user_name}
+                        avatar={message.user_avatar}
                       />
                     </div>
                   )}

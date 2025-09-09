@@ -1,17 +1,18 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { EventShare } from '@/types/chatTypes';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { CalendarIcon, Link as LinkIcon } from 'lucide-react';
+import { CalendarIcon, Link as LinkIcon, Reply } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import EventMessageFormatter from './EventMessageFormatter';
 import MessageContextMenu from './MessageContextMenu';
 import MessageReactions from './MessageReactions';
 import { colorizeHashtags } from '@/utils/hashtagUtils';
 import { getChannelColor } from '@/utils/channelColors';
+import { ReplyData } from '@/hooks/chat/useReplySystem';
 
 const getGroupColor = (groupType: string) => {
   switch (groupType.toLowerCase()) {
@@ -58,6 +59,10 @@ interface ChatMessageProps {
   pollQuestion?: string;
   pollOptions?: string[];
   pollVotes?: { [optionIndex: number]: string[] };
+  onReply?: (replyData: ReplyData) => void;
+  sender?: string;
+  avatar?: string;
+  replyTo?: ReplyData | null;
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -72,10 +77,20 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   onReact,
   currentUsername = '',
   messageId,
-  onJoinEventChat
+  onJoinEventChat,
+  onReply,
+  sender,
+  avatar,
+  replyTo
 }) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
+  
+  // Swipe gesture detection
+  const startXRef = useRef<number>(0);
+  const currentXRef = useRef<number>(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [swipeOffset, setSwipeOffset] = useState(0);
 
   // Check if message contains event information
   const containsEventInfo = (text: string): boolean => {
@@ -198,6 +213,83 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     }
   };
 
+  // Swipe gesture handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!onReply || !messageId || !sender) return;
+    startXRef.current = e.touches[0].clientX;
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || !onReply) return;
+    
+    currentXRef.current = e.touches[0].clientX;
+    const deltaX = currentXRef.current - startXRef.current;
+    
+    // Only allow swipe to the right (positive deltaX) and limit to 80px
+    const offset = Math.max(0, Math.min(deltaX, 80));
+    setSwipeOffset(offset);
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging || !onReply || !messageId || !sender) return;
+    
+    const deltaX = currentXRef.current - startXRef.current;
+    
+    // Trigger reply if swiped more than 40px to the right
+    if (deltaX > 40) {
+      const messageText = typeof message === 'string' ? message : '';
+      onReply({
+        messageId,
+        sender,
+        text: messageText,
+        avatar
+      });
+    }
+    
+    // Reset swipe state
+    setIsDragging(false);
+    setSwipeOffset(0);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!onReply || !messageId || !sender) return;
+    startXRef.current = e.clientX;
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !onReply) return;
+    
+    currentXRef.current = e.clientX;
+    const deltaX = currentXRef.current - startXRef.current;
+    
+    // Only allow swipe to the right (positive deltaX) and limit to 80px
+    const offset = Math.max(0, Math.min(deltaX, 80));
+    setSwipeOffset(offset);
+  };
+
+  const handleMouseUp = () => {
+    if (!isDragging || !onReply || !messageId || !sender) return;
+    
+    const deltaX = currentXRef.current - startXRef.current;
+    
+    // Trigger reply if swiped more than 40px to the right
+    if (deltaX > 40) {
+      const messageText = typeof message === 'string' ? message : '';
+      onReply({
+        messageId,
+        sender,
+        text: messageText,
+        avatar
+      });
+    }
+    
+    // Reset swipe state
+    setIsDragging(false);
+    setSwipeOffset(0);
+  };
+
   const detectGroupType = (text: string): 'ausgehen' | 'sport' | 'kreativität' => {
     const t = (text || '').toLowerCase();
     if (t.includes('#sport')) return 'sport';
@@ -209,44 +301,85 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   const colors = getChannelColor(groupType);
 
   const messageContent = (
-    <div
-      className={cn(
-        "group px-4 py-3 rounded-2xl relative w-full max-w-full overflow-hidden transition-all duration-200",
-        isConsecutive ? 'mt-1' : 'mt-2',
-        "text-white"
-      )}
-      style={{ 
-        background: 'rgba(0, 0, 0, 0.8)',
-        border: `1px solid rgba(255, 255, 255, 0.1)`,
-        borderTop: `0.5px solid ${getGroupColor(groupType).border}`,
-        borderRadius: '16px'
-      }}
-    >
-      {/* Outer flex container for text and reactions */}
-      <div className="flex flex-col relative z-10">
-        <div className="chat-message-bubble w-full">
-          {formatContent()}
+    <div className="relative">
+      {/* Reply indicator that shows during swipe */}
+      {swipeOffset > 0 && onReply && (
+        <div 
+          className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 flex items-center gap-2 text-primary"
+          style={{ opacity: Math.min(swipeOffset / 40, 1) }}
+        >
+          <Reply className="h-5 w-5" />
+          <span className="text-sm font-medium">Zitieren</span>
         </div>
-
-        {/* Reactions container, now explicitly below the text content */}
-        {(reactions && reactions.length > 0) || (onReact && messageId && isGroup) ? (
-          <div className="message-reactions-container mt-1">
-            <MessageReactions
-              reactions={reactions}
-              onReact={handleReact}
-              currentUsername={currentUsername}
-              showAddButton={onReact && messageId && isGroup}
-            />
+      )}
+      
+      <div
+        className={cn(
+          "group px-4 py-3 rounded-2xl relative w-full max-w-full overflow-hidden transition-all duration-200 select-none",
+          isConsecutive ? 'mt-1' : 'mt-2',
+          "text-white cursor-pointer"
+        )}
+        style={{ 
+          background: 'rgba(0, 0, 0, 0.8)',
+          border: `1px solid rgba(255, 255, 255, 0.1)`,
+          borderTop: `0.5px solid ${getGroupColor(groupType).border}`,
+          borderRadius: '16px',
+          transform: `translateX(${swipeOffset}px)`,
+          transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp} // Handle mouse leave as mouse up
+      >
+        {/* Reply indicator inside message */}
+        {replyTo && (
+          <div className="mb-2 p-2 bg-white/10 rounded-lg border-l-4 border-primary">
+            <div className="text-xs text-gray-300 mb-1">Antwort an {replyTo.sender}</div>
+            <div className="text-sm text-gray-400 italic">{replyTo.text.length > 50 ? replyTo.text.substring(0, 50) + '...' : replyTo.text}</div>
           </div>
-        ) : null}
+        )}
+        
+        {/* Outer flex container for text and reactions */}
+        <div className="flex flex-col relative z-10">
+          <div className="chat-message-bubble w-full">
+            {formatContent()}
+          </div>
+
+          {/* Reactions container, now explicitly below the text content */}
+          {(reactions && reactions.length > 0) || (onReact && messageId && isGroup) ? (
+            <div className="message-reactions-container mt-1">
+              <MessageReactions
+                reactions={reactions}
+                onReact={handleReact}
+                currentUsername={currentUsername}
+                showAddButton={onReact && messageId && isGroup}
+              />
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );
 
   // Only wrap in context menu if we have reaction capability AND we're in group mode
   if (onReact && messageId && isGroup) {
+    const contextMenuReplyData = onReply && messageId && sender ? {
+      messageId,
+      sender,
+      text: typeof message === 'string' ? message : '',
+      avatar
+    } : undefined;
+    
     return (
-      <MessageContextMenu onReact={handleReact}>
+      <MessageContextMenu 
+        onReact={handleReact}
+        onReply={onReply}
+        replyData={contextMenuReplyData}
+      >
         {messageContent}
       </MessageContextMenu>
     );

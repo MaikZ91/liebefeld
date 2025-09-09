@@ -9,17 +9,23 @@ import {
 } from '@/components/ui/context-menu';
 import EmojiPicker from './EmojiPicker';
 import { Button } from '@/components/ui/button';
+import { Reply } from 'lucide-react';
+import { ReplyData } from '@/hooks/chat/useReplySystem';
 
 interface MessageContextMenuProps {
   children: React.ReactNode;
   onReact: (emoji: string) => void;
+  onReply?: (replyData: ReplyData) => void;
+  replyData?: ReplyData;
 }
 
 const quickReactions = ['👍', '❤️', '😂', '😮', '😢', '😡'];
 
 const MessageContextMenu: React.FC<MessageContextMenuProps> = ({
   children,
-  onReact
+  onReact,
+  onReply,
+  replyData
 }) => {
   return (
     <ContextMenu>
@@ -27,6 +33,20 @@ const MessageContextMenu: React.FC<MessageContextMenuProps> = ({
         {children}
       </ContextMenuTrigger>
       <ContextMenuContent className="w-64 bg-gray-900 border-gray-700 p-2">
+        {/* Reply option */}
+        {onReply && replyData && (
+          <>
+            <ContextMenuItem 
+              className="flex items-center gap-2 px-2 py-2 text-gray-300 hover:bg-gray-800 cursor-pointer"
+              onClick={() => onReply(replyData)}
+            >
+              <Reply className="h-4 w-4" />
+              Zitieren
+            </ContextMenuItem>
+            <ContextMenuSeparator className="bg-gray-700" />
+          </>
+        )}
+        
         <div className="mb-2">
           <div className="text-xs text-gray-400 mb-2 px-2">Schnelle Reaktionen</div>
           <div className="flex gap-1 justify-center">
