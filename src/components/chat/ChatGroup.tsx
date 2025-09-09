@@ -442,14 +442,19 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
 
   return (
     <div className="flex flex-col h-full max-h-full bg-black overflow-y-auto overflow-x-hidden">
-      <div className="py-3 px-4 flex-shrink-0" style={{
-        background: 'rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255, 140, 0, 0.2)'
-      }}>
+      <div 
+        className="py-3 px-4 flex-shrink-0" 
+        style={{
+          background: getChannelColor(groupType).primary,
+          borderBottom: `1px solid ${getChannelColor(groupType).borderStyle.borderColor}`
+        }}
+      >
         <div className="flex items-center justify-between mb-0">
           <div className="flex items-center">
-            <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center mr-3">
+            <div 
+              className="w-10 h-10 rounded-full flex items-center justify-center mr-3"
+              style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
+            >
               <span className="text-white font-bold">{groupName.slice(0, 1).toUpperCase()}</span>
             </div>
             <div>
@@ -463,7 +468,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 rounded-full p-0 px-2 text-red-300 hover:text-red-200 hover:bg-red-900/20"
+                className="h-8 rounded-full p-0 px-2 text-white hover:bg-white/10"
                 onClick={onOpenUserDirectory}
               >
                 <Users className="h-4 w-4 mr-1" />

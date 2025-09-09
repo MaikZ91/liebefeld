@@ -203,11 +203,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
             "focus:ring-0 focus:outline-none"
           )}
           style={{
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
-            backdropFilter: 'blur(20px) saturate(180%)',
-            borderRadius: '20px',
-            WebkitBackdropFilter: 'blur(20px) saturate(180%)'
+            background: '#1a1a1a',
+            border: '1px solid #333',
+            borderRadius: '20px'
           }}
         />
         {/* Buttons auf der linken Seite des Inputs (absolute Positionierung) */}
@@ -221,10 +219,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
                   size="sm"
                   className="rounded-full h-6 px-2 text-[10px] flex items-center gap-1 min-w-[70px] text-white border-0"
                   style={{
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    backdropFilter: 'blur(15px) saturate(180%)',
-                    WebkitBackdropFilter: 'blur(15px) saturate(180%)'
+                    background: '#2a2a2a',
+                    border: '1px solid #444'
                   }}
                 >
                   {activeCategory}
@@ -234,12 +230,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
               <DropdownMenuContent
                 className="z-[99999] border-0 fixed"
                 style={{
-                  background: 'rgba(0, 0, 0, 0.9)',
-                  backdropFilter: 'blur(20px) saturate(180%)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '12px',
-                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                  position: 'fixed'
+                  background: '#1a1a1a',
+                  border: '1px solid #333',
+                  borderRadius: '12px'
                 }}
                 side="top"
                 align="start"

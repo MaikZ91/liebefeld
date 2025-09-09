@@ -40,7 +40,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ value: externalValue, onChange: e
           'inline-flex rounded-full p-0.5',
           variant === 'light'
             ? 'bg-white/80 border border-gray-200'
-            : 'bg-black/60 border border-white/20 backdrop-blur-sm'
+            : 'bg-black border border-white/10'
         )}
       >
         {options.map((opt) => {
@@ -56,13 +56,13 @@ const FilterBar: React.FC<FilterBarProps> = ({ value: externalValue, onChange: e
                 onClick={() => handleChange(opt)}
                 className={cn(
                   chipBase,
-                  isActive
-                    ? variant === 'light'
-                      ? 'bg-gray-900 text-white border border-gray-800'
-                      : 'bg-white/10 text-white border border-white/20'
-                    : variant === 'light'
-                      ? 'text-gray-700 hover:bg-gray-100'
-                      : 'text-white hover:bg-white/10'
+                    isActive
+                      ? variant === 'light'
+                        ? 'bg-gray-900 text-white border border-gray-800'
+                        : 'bg-white/15 text-white border border-white/30'
+                      : variant === 'light'
+                        ? 'text-gray-700 hover:bg-gray-100'
+                        : 'text-white hover:bg-white/5'
                 )}
               >
                 {opt}
