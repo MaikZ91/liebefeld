@@ -27,7 +27,10 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   onJoinEventChat,
   onCreatePoll
 }) => {
-  const [internalActiveChatMode, setInternalActiveChatMode] = useState<'ai' | 'community'>('ai');
+  // Initialize with the provided activeChatMode or default to 'ai'
+  const [internalActiveChatMode, setInternalActiveChatMode] = useState<'ai' | 'community'>(
+    activeChatMode || 'ai'
+  );
   const activeChatModeValue = activeChatMode !== undefined ? activeChatMode : internalActiveChatMode;
   const setActiveChatModeValue = setActiveChatMode || setInternalActiveChatMode;
   
