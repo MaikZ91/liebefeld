@@ -236,8 +236,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     
     const deltaX = currentXRef.current - startXRef.current;
     
-    console.log('Touch end - deltaX:', deltaX, 'threshold: 40px');
-    
     // Trigger reply if swiped more than 40px to the right
     if (deltaX > 40) {
       const messageText = typeof message === 'string' ? message : '';
@@ -247,7 +245,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         text: messageText,
         avatar
       };
-      console.log('Triggering reply with data:', replyData);
       onReply(replyData);
     }
     
@@ -278,8 +275,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     
     const deltaX = currentXRef.current - startXRef.current;
     
-    console.log('Mouse up - deltaX:', deltaX, 'threshold: 40px');
-    
     // Trigger reply if swiped more than 40px to the right
     if (deltaX > 40) {
       const messageText = typeof message === 'string' ? message : '';
@@ -289,7 +284,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         text: messageText,
         avatar
       };
-      console.log('Triggering reply with data:', replyData);
       onReply(replyData);
     }
     

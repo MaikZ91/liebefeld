@@ -12,12 +12,10 @@ export const useReplySystem = () => {
   const [replyTo, setReplyTo] = useState<ReplyData | null>(null);
 
   const startReply = useCallback((messageData: ReplyData) => {
-    console.log('startReply called with:', messageData);
     setReplyTo(messageData);
   }, []);
 
   const clearReply = useCallback(() => {
-    console.log('clearReply called');
     setReplyTo(null);
   }, []);
 

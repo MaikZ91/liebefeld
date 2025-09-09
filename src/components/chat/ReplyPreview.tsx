@@ -10,8 +10,6 @@ interface ReplyPreviewProps {
 }
 
 const ReplyPreview: React.FC<ReplyPreviewProps> = ({ replyTo, onCancel }) => {
-  console.log('ReplyPreview rendered with replyTo:', replyTo);
-  
   const formatText = (text: string) => {
     if (text.length <= 50) return text;
     return text.substring(0, 50) + '...';
