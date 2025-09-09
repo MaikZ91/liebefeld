@@ -113,17 +113,22 @@
     --ausgehen-secondary: 0 84% 50%;
   }
 
-  /* WICHTIG: Globales Scrolling deaktivieren */
+  /* Verbesserte Scrolling-Kontrolle */
   html, body {
     height: 100vh;
-    overflow: hidden;
-    position: fixed;
+    overflow-x: hidden;
+    overflow-y: auto;
     width: 100%;
+    margin: 0;
+    padding: 0;
   }
 
   #root {
     height: 100vh;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    width: 100%;
+    max-width: 100vw;
   }
 
   * {

@@ -212,8 +212,8 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
   }
   
   return (
-    <div className="w-full">
-      <div className="hidden md:flex gap-4 h-[calc(100vh-220px)] min-h-[600px]">
+    <div className="w-full max-w-full overflow-x-hidden">
+      <div className="hidden md:flex gap-4 h-[calc(100vh-220px)] min-h-[600px] overflow-x-hidden">
         <div className={cn(
           "transition-all duration-300 overflow-hidden",
           showChat ? "w-1/3" : "w-full"
@@ -313,7 +313,7 @@ const CalendarWithChat = ({ defaultView = "list" }: CalendarWithChatProps) => {
         ) : null}
       </div>
       
-      <div className="md:hidden flex flex-col h-[calc(100vh-200px)] min-h-[500px]">
+      <div className="md:hidden flex flex-col h-[calc(100vh-200px)] min-h-[500px] overflow-x-hidden max-w-full">
       <div className="flex justify-center mb-4">
           <div className="inline-flex rounded-md shadow-sm w-full" role="group">
             <Button
