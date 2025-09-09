@@ -139,6 +139,7 @@ const MessageList: React.FC<MessageListProps> = ({
                           votes: message.poll_votes || {}
                         }}
                         messageId={message.id}
+                        isConsecutive={isConsecutive}
                       />
                     </div>
                   ) : (

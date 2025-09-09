@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
 import { getInitials } from '@/utils/chatUIUtils';
+import { cn } from '@/lib/utils';
 
 interface PollData {
   question: string;
@@ -16,12 +17,14 @@ interface PollMessageProps {
   pollData: PollData;
   messageId: string;
   onVote?: (optionIndex: number, messageId: string) => void;
+  isConsecutive?: boolean;
 }
 
 const PollMessage: React.FC<PollMessageProps> = ({
   pollData,
   messageId,
-  onVote
+  onVote,
+  isConsecutive = false
 }) => {
   console.log('PollMessage: Received pollData:', pollData);
   
@@ -132,7 +135,10 @@ const PollMessage: React.FC<PollMessageProps> = ({
   const totalVotes = getTotalVotes();
 
   return (
-    <div className="group px-4 py-3 rounded-2xl relative w-full max-w-full overflow-hidden transition-all duration-200 text-white"
+    <div className={cn(
+      "group px-4 py-3 rounded-2xl relative w-full max-w-full overflow-hidden transition-all duration-200 text-white",
+      isConsecutive ? "mt-1" : "mt-2"
+    )}
          style={{ 
            background: 'rgba(0, 0, 0, 0.8)',
            border: `1px solid rgba(255, 255, 255, 0.1)`,
