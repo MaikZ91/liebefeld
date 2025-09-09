@@ -86,12 +86,12 @@ const MessageList: React.FC<MessageListProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-visible">
+    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden">
       {error && (
         <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 bg-black min-h-0 pb-20 overflow-x-visible"> {/* Changed overflow-x to visible */}
+      <div className="flex-1 overflow-y-auto p-4 bg-black min-h-0 pb-20 overflow-x-hidden"> {/* Changed overflow-x to hidden */}
         <div className="flex flex-col space-y-1 w-full max-w-full">
           {messages.length === 0 && !loading && !error && (
             <div className="text-center text-gray-400 py-4">No messages yet. Start the conversation!</div>
@@ -117,7 +117,7 @@ const MessageList: React.FC<MessageListProps> = ({
             }
 
             return (
-              <div key={message.id} className="mb-1 w-full max-w-full overflow-visible">
+              <div key={message.id} className="mb-1 w-full max-w-full overflow-hidden">
                 {!isConsecutive && (
                   <div className="flex items-center -mb-1 relative z-20">
                     <Avatar className={`h-5 w-5 mr-2 flex-shrink-0 relative z-30 ${isGroup ? 'border-red-500' : ''}`}>
@@ -128,7 +128,7 @@ const MessageList: React.FC<MessageListProps> = ({
                     <span className="text-sm text-gray-400">{timeAgo}</span>
                   </div>
                 )}
-                <div className="w-full max-w-full overflow-visible break-words -mt-1 relative z-10">
+                <div className="w-full max-w-full overflow-hidden break-words -mt-1 relative z-10">
                   {/* Check if this is a poll message */}
                   {message.poll_question && message.poll_options ? (
                     <PollMessage 
