@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom"; // Import useNavigate and useLocation
 import { useEffect, useState } from "react"; // Import useState
+import { useStatusBar } from "./hooks/useStatusBar";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
@@ -106,6 +107,9 @@ const PostOnboardingNavigator = ({
 
 
 function App() {
+  // Initialize status bar for mobile app
+  useStatusBar();
+  
   // State to hold the desired redirection target after onboarding
   const [onboardingRedirectTarget, setOnboardingRedirectTarget] = useState<'community_chat' | 'event_heatmap' | null>(null);
 
