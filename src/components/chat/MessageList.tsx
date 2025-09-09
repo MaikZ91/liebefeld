@@ -131,7 +131,7 @@ const MessageList: React.FC<MessageListProps> = ({
                 <div className="w-full max-w-full overflow-visible break-words -mt-1 relative z-10">
                   {/* Check if this is a poll message */}
                   {message.poll_question && message.poll_options ? (
-                    <div className="message-wrapper w-full">
+                    <div className="block w-full box-border m-0 p-0">
                       <PollMessage 
                         pollData={{
                           question: message.poll_question,
@@ -142,7 +142,7 @@ const MessageList: React.FC<MessageListProps> = ({
                       />
                     </div>
                   ) : (
-                    <div className="message-wrapper w-full">
+                    <div className="block w-full box-border m-0 p-0">
                       <ChatMessage 
                         message={messageContent} 
                         isConsecutive={isConsecutive}
