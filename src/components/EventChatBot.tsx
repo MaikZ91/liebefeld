@@ -131,7 +131,6 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
     externalInput,
     chatLogic.isTyping,
     chatLogic.isHeartActive,
-    chatLogic.globalQueries.length,
     chatLogic.showAnimatedPrompts,
     activeCategory,
     activeChatModeValue,
