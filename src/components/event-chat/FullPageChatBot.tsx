@@ -391,7 +391,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               ref={chatContainerRef}
               className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4 bg-black"
             >
-              <div className="space-y-2 py-4 pb-28">
+              <div className="space-y-2 py-4 pb-20">
                 {filteredCommunityMessages.length === 0 && !communityLoading && !communityError && (
                   <div className="text-center text-gray-400 py-4">
                     {messageFilter.includes('alle') 
