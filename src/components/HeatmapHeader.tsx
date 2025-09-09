@@ -5,7 +5,7 @@ import CitySelector from './layouts/CitySelector'; // Import CitySelector
 import ChatInput from './event-chat/ChatInput'; // Import ChatInput
 import { Link } from 'react-router-dom'; // Import Link for THE TRIBE text
 import { Button } from '@/components/ui/button';
-import { MessageSquare, X } from 'lucide-react';
+import { Bot, X } from 'lucide-react';
 
 interface HeatmapHeaderProps {
   selectedCity?: string;
@@ -70,7 +70,7 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
                 onClick={handleMiaIconClick}
                 className="text-white/80 hover:text-white hover:bg-white/10 rounded-full p-2 flex items-center gap-2"
               >
-                <MessageSquare className="h-5 w-5" />
+                <Bot className="h-5 w-5" />
                 <span className="text-sm font-medium">MIA</span>
               </Button>
             )}
