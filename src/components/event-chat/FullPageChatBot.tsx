@@ -25,6 +25,7 @@ import PollMessage from '@/components/poll/PollMessage';
 import { supabase } from '@/integrations/supabase/client';
 import { useReplySystem, ReplyData } from '@/hooks/chat/useReplySystem';
 import MessageInput from '@/components/chat/MessageInput';
+import ReplyPreview from '@/components/chat/ReplyPreview';
 
 interface FullPageChatBotProps {
   chatLogic: any;
@@ -566,20 +567,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                 <div className="space-y-2">
                   {replyTo && (
                     <div className="px-4">
-                      <div className="bg-white/10 border border-white/20 rounded-lg p-3 mb-2 flex items-start gap-3">
-                        <div className="text-xs text-gray-300 mb-1">
-                          Antwort an {replyTo.sender}
-                        </div>
-                        <div className="text-sm text-gray-400 italic truncate">
-                          {replyTo.text.length > 50 ? replyTo.text.substring(0, 50) + '...' : replyTo.text}
-                        </div>
-                        <button
-                          onClick={clearReply}
-                          className="text-gray-400 hover:text-white"
-                        >
-                          ×
-                        </button>
-                      </div>
+                      <ReplyPreview replyTo={replyTo} onCancel={clearReply} />
                     </div>
                   )}
                   
