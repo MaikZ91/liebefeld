@@ -149,8 +149,8 @@ const ChatPage = () => {
         avatar: avatar,
         text: `📊 ${poll.question}`,
         poll_question: poll.question,
-        poll_options: poll.options,
-        poll_votes: {} as any
+        poll_options: JSON.stringify(poll.options), // Convert to JSON string for jsonb column
+        poll_votes: {} // Empty object for initial votes
       };
 
       console.log('Chat.tsx: Creating poll with message:', pollMessage);
