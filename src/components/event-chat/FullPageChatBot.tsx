@@ -429,8 +429,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                            {/* Handle different message types */}
                            {(message as any).poll_question ? (
                              // Poll message
-                             <div className="w-full max-w-sm ml-9">
-                               <PollMessage 
+                              <div className="w-full max-w-sm">
+                                <PollMessage
                                  pollData={{
                                    question: (message as any).poll_question,
                                    options: (message as any).poll_options || [],
