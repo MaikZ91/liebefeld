@@ -134,7 +134,7 @@ const PollMessage: React.FC<PollMessageProps> = ({
   const totalVotes = getTotalVotes();
 
   return (
-    <Card className="w-full max-w-md bg-gradient-to-br from-gray-900/98 to-gray-800/95 backdrop-blur-sm border-gray-700/50 shadow-xl">
+    <Card className="w-full bg-gradient-to-br from-gray-900/98 to-gray-800/95 backdrop-blur-sm border-gray-700/50 shadow-xl">
       <CardHeader className="pb-4">
         <div className="flex items-start gap-3">
           <div className="p-2 rounded-full bg-blue-500/20 backdrop-blur-sm">
