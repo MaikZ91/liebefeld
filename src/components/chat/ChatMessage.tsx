@@ -63,6 +63,7 @@ interface ChatMessageProps {
   sender?: string;
   avatar?: string;
   replyTo?: ReplyData | null;
+  onScrollToMessage?: (messageId: string) => void;
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -81,7 +82,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   onReply,
   sender,
   avatar,
-  replyTo
+  replyTo,
+  onScrollToMessage
 }) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -236,8 +238,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     
     const deltaX = currentXRef.current - startXRef.current;
     
-    // Trigger reply if swiped more than 60px to the right
-    if (deltaX > 60) {
+    // Trigger reply if swiped more than 100px to the right
+    if (deltaX > 100) {
       const messageText = typeof message === 'string' ? message : '';
       const replyData = {
         messageId,
@@ -275,8 +277,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     
     const deltaX = currentXRef.current - startXRef.current;
     
-    // Trigger reply if swiped more than 60px to the right
-    if (deltaX > 60) {
+    // Trigger reply if swiped more than 100px to the right
+    if (deltaX > 100) {
       const messageText = typeof message === 'string' ? message : '';
       const replyData = {
         messageId,
@@ -308,7 +310,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       {swipeOffset > 0 && onReply && (
         <div 
           className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 flex items-center gap-2 text-primary"
-          style={{ opacity: Math.min(swipeOffset / 60, 1) }}
+          style={{ opacity: Math.min(swipeOffset / 100, 1) }}
         >
           <Reply className="h-5 w-5" />
           <span className="text-sm font-medium">Zitieren</span>
@@ -339,7 +341,15 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       >
         {/* Reply indicator inside message - enhanced visibility */}
         {replyTo && (
-          <div className="mb-3 p-3 bg-gradient-to-r from-primary/20 to-primary/10 rounded-lg border-l-4 border-primary backdrop-blur-sm">
+          <div 
+            className="mb-3 p-3 bg-gradient-to-r from-primary/20 to-primary/10 rounded-lg border-l-4 border-primary backdrop-blur-sm cursor-pointer hover:from-primary/25 hover:to-primary/15 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onScrollToMessage && replyTo.messageId) {
+                onScrollToMessage(replyTo.messageId);
+              }
+            }}
+          >
             <div className="flex items-center gap-2 mb-1">
               <Reply className="h-3 w-3 text-primary" />
               <div className="text-xs font-medium text-primary">Antwort an {replyTo.sender}</div>

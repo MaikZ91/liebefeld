@@ -66,7 +66,21 @@ const MessageList: React.FC<MessageListProps> = ({
     }
   };
 
-  // Handle reaction toggle
+  // Handle scrolling to a specific message
+  const scrollToMessage = (messageId: string) => {
+    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (messageElement) {
+      messageElement.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+      // Add a brief highlight effect
+      messageElement.classList.add('bg-primary/20');
+      setTimeout(() => {
+        messageElement.classList.remove('bg-primary/20');
+      }, 2000);
+    }
+  };
   const handleReaction = (messageId: string) => {
     return async (emoji: string) => {
       try {
@@ -120,7 +134,7 @@ const MessageList: React.FC<MessageListProps> = ({
             }
 
             return (
-              <div key={message.id} className="mb-1 w-full max-w-full overflow-visible">
+              <div key={message.id} className="mb-1 w-full max-w-full overflow-visible transition-colors duration-300" data-message-id={message.id}>
                 {!isConsecutive && (
                   <div className="flex items-center -mb-1 relative z-20">
                     <Avatar className={`h-5 w-5 mr-2 flex-shrink-0 relative z-30 ${isGroup ? 'border-red-500' : ''}`}>
@@ -167,6 +181,7 @@ const MessageList: React.FC<MessageListProps> = ({
                           text: message.reply_to_text || '',
                           avatar: undefined
                         } : undefined}
+                        onScrollToMessage={scrollToMessage}
                       />
                     </div>
                   )}
