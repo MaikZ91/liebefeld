@@ -337,11 +337,16 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp} // Handle mouse leave as mouse up
       >
-        {/* Reply indicator inside message */}
+        {/* Reply indicator inside message - enhanced visibility */}
         {replyTo && (
-          <div className="mb-2 p-2 bg-white/10 rounded-lg border-l-4 border-primary">
-            <div className="text-xs text-gray-300 mb-1">Antwort an {replyTo.sender}</div>
-            <div className="text-sm text-gray-400 italic">{replyTo.text.length > 50 ? replyTo.text.substring(0, 50) + '...' : replyTo.text}</div>
+          <div className="mb-3 p-3 bg-gradient-to-r from-primary/20 to-primary/10 rounded-lg border-l-4 border-primary backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-1">
+              <Reply className="h-3 w-3 text-primary" />
+              <div className="text-xs font-medium text-primary">Antwort an {replyTo.sender}</div>
+            </div>
+            <div className="text-sm text-white/80 font-medium leading-relaxed">
+              "{replyTo.text.length > 60 ? replyTo.text.substring(0, 60) + '...' : replyTo.text}"
+            </div>
           </div>
         )}
         

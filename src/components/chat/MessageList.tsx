@@ -161,6 +161,12 @@ const MessageList: React.FC<MessageListProps> = ({
                         onReply={onReply}
                         sender={message.user_name}
                         avatar={message.user_avatar}
+                        replyTo={message.reply_to_message_id ? {
+                          messageId: message.reply_to_message_id,
+                          sender: message.reply_to_sender || 'Unbekannt',
+                          text: message.reply_to_text || '',
+                          avatar: undefined
+                        } : undefined}
                       />
                     </div>
                   )}
