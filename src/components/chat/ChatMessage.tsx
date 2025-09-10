@@ -236,8 +236,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     
     const deltaX = currentXRef.current - startXRef.current;
     
-    // Trigger reply if swiped more than 40px to the right
-    if (deltaX > 40) {
+    // Trigger reply if swiped more than 60px to the right
+    if (deltaX > 60) {
       const messageText = typeof message === 'string' ? message : '';
       const replyData = {
         messageId,
@@ -275,8 +275,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     
     const deltaX = currentXRef.current - startXRef.current;
     
-    // Trigger reply if swiped more than 40px to the right
-    if (deltaX > 40) {
+    // Trigger reply if swiped more than 60px to the right
+    if (deltaX > 60) {
       const messageText = typeof message === 'string' ? message : '';
       const replyData = {
         messageId,
@@ -308,7 +308,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       {swipeOffset > 0 && onReply && (
         <div 
           className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 flex items-center gap-2 text-primary"
-          style={{ opacity: Math.min(swipeOffset / 40, 1) }}
+          style={{ opacity: Math.min(swipeOffset / 60, 1) }}
         >
           <Reply className="h-5 w-5" />
           <span className="text-sm font-medium">Zitieren</span>
