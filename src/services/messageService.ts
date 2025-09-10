@@ -93,6 +93,10 @@ export const messageService = {
           // Include event fields
           event_id: msg.event_id || undefined,
           event_title: msg.event_title || undefined,
+          // Include reply fields
+          reply_to_message_id: msg.reply_to_message_id || undefined,
+          reply_to_sender: msg.reply_to_sender || undefined,
+          reply_to_text: msg.reply_to_text || undefined,
         };
       });
       
