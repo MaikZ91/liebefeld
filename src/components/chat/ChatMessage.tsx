@@ -345,14 +345,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
             className="mb-3 p-3 bg-gradient-to-r from-primary/20 to-primary/10 rounded-lg border-l-4 border-primary backdrop-blur-sm cursor-pointer hover:from-primary/25 hover:to-primary/15 transition-colors"
             onClick={(e) => {
               e.stopPropagation();
-              console.log('Reply clicked, scrolling to:', replyTo.messageId);
               if (onScrollToMessage && replyTo.messageId) {
                 onScrollToMessage(replyTo.messageId);
-              } else {
-                console.warn('onScrollToMessage not available or messageId missing:', {
-                  onScrollToMessage: !!onScrollToMessage,
-                  messageId: replyTo.messageId
-                });
               }
             }}
           >

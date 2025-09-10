@@ -68,21 +68,17 @@ const MessageList: React.FC<MessageListProps> = ({
 
   // Handle scrolling to a specific message
   const scrollToMessage = (messageId: string) => {
-    console.log('Scrolling to message:', messageId);
     const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-    console.log('Found message element:', messageElement);
     if (messageElement) {
       messageElement.scrollIntoView({ 
         behavior: 'smooth', 
         block: 'center' 
       });
       // Add a brief highlight effect
-      messageElement.classList.add('bg-primary/20', 'transition-colors', 'duration-500');
+      messageElement.classList.add('bg-primary/20');
       setTimeout(() => {
         messageElement.classList.remove('bg-primary/20');
       }, 2000);
-    } else {
-      console.warn('Message element not found for ID:', messageId);
     }
   };
   const handleReaction = (messageId: string) => {
