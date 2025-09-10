@@ -322,12 +322,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           "text-white cursor-pointer"
         )}
         style={{ 
-          background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.85) 100%)',
-          border: `1px solid rgba(255, 255, 255, 0.12)`,
-          borderTop: `2px solid ${getGroupColor(groupType).border}20`,
-          borderRadius: '20px',
-          backdropFilter: 'blur(20px)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+          background: 'rgba(0, 0, 0, 0.8)',
+          border: `1px solid rgba(255, 255, 255, 0.1)`,
+          borderTop: `0.5px solid ${getGroupColor(groupType).border}`,
+          borderRadius: '16px',
           transform: `translateX(${swipeOffset}px)`,
           transition: isDragging ? 'none' : 'transform 0.2s ease-out'
         }}

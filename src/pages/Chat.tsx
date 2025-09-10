@@ -321,8 +321,8 @@ const ChatPage = () => {
         newEventsCount={0}
         chatInputProps={memoizedChatInputProps}
       >
-        <div className="flex flex-col h-screen premium-glass">
-          <EventChatBot
+        <div className="flex flex-col h-screen">
+          <EventChatBot 
             fullPage={true} 
             onAddEvent={handleAddEvent} 
             onToggleCommunity={handleToggleCommunity} 

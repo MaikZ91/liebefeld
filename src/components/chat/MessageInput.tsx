@@ -170,16 +170,18 @@ const MessageInput: React.FC<MessageInputProps> = ({
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             className={cn(
-              "min-h-[48px] max-h-[120px] resize-none rounded-2xl premium-input",
-              "border-0 focus:ring-0 focus:ring-offset-0 text-white placeholder:text-white/50",
-              "backdrop-blur-md transition-all duration-300 text-base px-6 py-3"
+              "min-h-[40px] max-h-[120px] resize-none rounded-full",
+              "border-2 focus:ring-0 focus:ring-offset-0",
+              mode === 'ai' 
+                ? "bg-background border-border text-foreground focus:border-primary" 
+                : "text-white placeholder:text-gray-400 transition-all duration-200"
             )}
             style={
               mode === 'community'
                 ? {
-                    background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.8) 100%)',
-                    border: `1px solid ${inputColors.border}40`,
-                    boxShadow: `0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)`,
+                    backgroundColor: inputColors.background,
+                    borderColor: inputColors.border,
+                    boxShadow: inputColors.glow,
                   }
                 : undefined
             }
@@ -191,14 +193,17 @@ const MessageInput: React.FC<MessageInputProps> = ({
           onClick={handleSendButtonClick}
           disabled={isSending || (value === undefined ? !newMessage.trim() : !value?.trim())}
           className={cn(
-            "h-12 w-12 rounded-2xl transition-all duration-300 backdrop-blur-md",
-            "text-white border-0 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+            "h-10 w-10 rounded-full transition-all duration-200",
+            mode === 'ai' 
+              ? "bg-primary hover:bg-primary/90 text-primary-foreground" 
+              : "text-white border-2 hover:bg-white/10"
           )}
           style={
             mode === 'community'
               ? {
-                  background: `linear-gradient(135deg, ${inputColors.border}60, ${inputColors.border}40)`,
-                  boxShadow: `0 4px 20px rgba(0, 0, 0, 0.3), 0 0 20px ${inputColors.border}30`,
+                  backgroundColor: 'transparent',
+                  borderColor: inputColors.border,
+                  boxShadow: inputColors.glow,
                 }
               : undefined
           }
