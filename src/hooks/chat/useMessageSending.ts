@@ -38,6 +38,11 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       // Add category label to the message
       const categoryLabel = `#${selectedCategory.toLowerCase()}`;
       
+      // Variables for RSVP poll (only for events)
+      let pollQuestion = null;
+      let pollOptions = null;
+      let pollVotes = {};
+      
       if (eventData) {
         const { title, date, time, location, category } = eventData;
         
@@ -83,7 +88,12 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
           }
         }
         
-        messageText = `${categoryLabel} 🗓️ **Event: ${title}**\nDatum: ${date} um ${time}\nOrt: ${location || 'k.A.'}\nKategorie: ${category}\n\n${messageToSend}`;
+        // Set up RSVP poll for the event
+        pollQuestion = `${title} am ${date} um ${time} - Wer nimmt teil?`;
+        pollOptions = ["Nehme teil", "Nein", "Vielleicht"];
+        pollVotes = {}; // Empty votes object
+        
+        messageText = `📊 ${pollQuestion}`;
       } else {
         // Add category label to regular messages
         messageText = `${categoryLabel} ${messageToSend}`;
@@ -131,6 +141,9 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
           event_date: eventData?.date || null,
           event_location: eventData?.location || null,
           event_image_url: null,
+          poll_question: pollQuestion,
+          poll_options: pollOptions,
+          poll_votes: pollVotes,
           read_by: [username],
           reply_to_message_id: replyTo?.messageId || null,
           reply_to_sender: replyTo?.sender || null,
