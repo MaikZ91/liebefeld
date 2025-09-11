@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { X, Plus, Sparkles, BarChart3 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -11,6 +12,7 @@ interface PollCreatorProps {
   onCreatePoll: (poll: {
     question: string;
     options: string[];
+    allowMultiple?: boolean;
   }) => void;
 }
 
@@ -21,6 +23,7 @@ const PollCreator: React.FC<PollCreatorProps> = ({
 }) => {
   const [question, setQuestion] = useState('');
   const [options, setOptions] = useState(['', '']);
+  const [allowMultiple, setAllowMultiple] = useState(false);
 
   const handleAddOption = () => {
     if (options.length < 10) {
@@ -45,12 +48,14 @@ const PollCreator: React.FC<PollCreatorProps> = ({
     if (question.trim() && options.filter(opt => opt.trim()).length >= 2) {
       onCreatePoll({
         question: question.trim(),
-        options: options.filter(opt => opt.trim())
+        options: options.filter(opt => opt.trim()),
+        allowMultiple
       });
       
       // Reset form
       setQuestion('');
       setOptions(['', '']);
+      setAllowMultiple(false);
       onOpenChange(false);
     }
   };
@@ -162,6 +167,22 @@ const PollCreator: React.FC<PollCreatorProps> = ({
                 Option hinzufügen
               </Button>
             )}
+          </div>
+
+          {/* Multiple answers option */}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="allowMultiple"
+              checked={allowMultiple}
+              onCheckedChange={(checked) => setAllowMultiple(checked as boolean)}
+              className="data-[state=checked]:bg-white/20 data-[state=checked]:border-white/40 border-white/30"
+            />
+            <Label 
+              htmlFor="allowMultiple" 
+              className="text-sm text-white/80 cursor-pointer"
+            >
+              Mehrere Antworten erlauben
+            </Label>
           </div>
 
           {/* Action buttons */}
