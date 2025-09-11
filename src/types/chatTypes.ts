@@ -57,6 +57,7 @@ export interface Message {
   poll_question?: string;
   poll_options?: any; // Can be array or JSON depending on source
   poll_votes?: { [optionIndex: number]: { username: string; avatar?: string }[] };
+  poll_allow_multiple?: boolean;
 }
 
 export interface ChatGroup {

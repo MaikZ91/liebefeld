@@ -14,7 +14,7 @@ import { createCitySpecificGroupId } from '@/utils/groupIdUtils';
 interface ExtendedEventChatBotProps extends EventChatBotProps {
   onChatInputPropsChange?: (props: any) => void;
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
-  onCreatePoll?: (poll: { question: string; options: string[] }) => void;
+  onCreatePoll?: (poll: { question: string; options: string[]; allowMultiple?: boolean }) => void;
 }
 
 const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({ 

@@ -11,6 +11,7 @@ interface PollData {
   question: string;
   options: string[];
   votes?: { [optionIndex: number]: { username: string; avatar?: string }[] }; // option index -> array of user objects
+  allowMultiple?: boolean;
 }
 
 interface PollMessageProps {
@@ -50,6 +51,7 @@ const PollMessage: React.FC<PollMessageProps> = ({
 
   const [votes, setVotes] = useState<{ [optionIndex: number]: { username: string; avatar?: string }[] }>(pollData.votes || {});
   const [userVote, setUserVote] = useState<number | null>(null);
+  const [userVotes, setUserVotes] = useState<number[]>([]); // For multiple selection
   const [loading, setLoading] = useState(false);
   
   const currentUser = localStorage.getItem(USERNAME_KEY) || 'Anonymous';
@@ -57,59 +59,126 @@ const PollMessage: React.FC<PollMessageProps> = ({
 
   useEffect(() => {
     // Check if current user has already voted
+    const userVotedOptions: number[] = [];
     for (let optionIndex in votes) {
       if (votes[optionIndex].some(vote => vote.username === currentUser)) {
-        setUserVote(parseInt(optionIndex));
-        break;
+        if (pollData.allowMultiple) {
+          userVotedOptions.push(parseInt(optionIndex));
+        } else {
+          setUserVote(parseInt(optionIndex));
+          break;
+        }
       }
     }
-  }, [votes, currentUser]);
+    if (pollData.allowMultiple) {
+      setUserVotes(userVotedOptions);
+    }
+  }, [votes, currentUser, pollData.allowMultiple]);
 
   const handleVote = async (optionIndex: number) => {
-    if (userVote !== null || loading) return; // Already voted or loading
+    if (loading) return;
+
+    // For single selection polls, check if already voted
+    if (!pollData.allowMultiple && userVote !== null) return;
+    
+    // For multiple selection polls, check if clicking an already selected option (to unselect)
+    if (pollData.allowMultiple && userVotes.includes(optionIndex)) {
+      // Unselect this option
+      await toggleVoteOption(optionIndex, false);
+      return;
+    }
     
     setLoading(true);
     
     try {
-      // Update local state optimistically
-      const newVotes = { ...votes };
+      // For single selection, clear previous vote if any
+      if (!pollData.allowMultiple && userVote !== null) {
+        await toggleVoteOption(userVote, false);
+      }
+      
+      // Add new vote
+      await toggleVoteOption(optionIndex, true);
+
+    } catch (error) {
+      console.error('Error voting on poll:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleVoteOption = async (optionIndex: number, isVoting: boolean) => {
+    const newVotes = { ...votes };
+    
+    if (isVoting) {
+      // Add vote
       if (!newVotes[optionIndex]) {
         newVotes[optionIndex] = [];
       }
-      newVotes[optionIndex] = [...newVotes[optionIndex], { 
-        username: currentUser, 
-        avatar: currentUserAvatar 
-      }];
-      
-      setVotes(newVotes);
-      setUserVote(optionIndex);
-
-      // Update in database
-      const { error } = await supabase
-        .from('chat_messages')
-        .update({ 
-          poll_votes: newVotes as any
-        })
-        .eq('id', messageId);
-
-      if (error) {
-        console.error('Error updating poll vote:', error);
-        // Revert optimistic update on error
-        setVotes(pollData.votes || {});
-        setUserVote(null);
+      if (!newVotes[optionIndex].some(vote => vote.username === currentUser)) {
+        newVotes[optionIndex] = [...newVotes[optionIndex], { 
+          username: currentUser, 
+          avatar: currentUserAvatar 
+        }];
       }
-
-      // Call external handler if provided
-      if (onVote) {
-        onVote(optionIndex, messageId);
+    } else {
+      // Remove vote
+      if (newVotes[optionIndex]) {
+        newVotes[optionIndex] = newVotes[optionIndex].filter(vote => vote.username !== currentUser);
+        if (newVotes[optionIndex].length === 0) {
+          delete newVotes[optionIndex];
+        }
       }
-    } catch (error) {
-      console.error('Error voting on poll:', error);
+    }
+    
+    setVotes(newVotes);
+    
+    // Update local state
+    if (pollData.allowMultiple) {
+      if (isVoting) {
+        setUserVotes(prev => [...prev, optionIndex]);
+      } else {
+        setUserVotes(prev => prev.filter(idx => idx !== optionIndex));
+      }
+    } else {
+      setUserVote(isVoting ? optionIndex : null);
+    }
+
+    // Update in database
+    const { error } = await supabase
+      .from('chat_messages')
+      .update({ 
+        poll_votes: newVotes as any
+      })
+      .eq('id', messageId);
+
+    if (error) {
+      console.error('Error updating poll vote:', error);
       // Revert optimistic update on error
       setVotes(pollData.votes || {});
-      setUserVote(null);
-    } finally {
-      setLoading(false);
+      if (pollData.allowMultiple) {
+        // Recalculate user votes from original data
+        const originalUserVotes: number[] = [];
+        for (let optionIndex in pollData.votes || {}) {
+          if ((pollData.votes || {})[optionIndex].some(vote => vote.username === currentUser)) {
+            originalUserVotes.push(parseInt(optionIndex));
+          }
+        }
+        setUserVotes(originalUserVotes);
+      } else {
+        let originalUserVote = null;
+        for (let optionIndex in pollData.votes || {}) {
+          if ((pollData.votes || {})[optionIndex].some(vote => vote.username === currentUser)) {
+            originalUserVote = parseInt(optionIndex);
+            break;
+          }
+        }
+        setUserVote(originalUserVote);
+      }
+    }
+
+    // Call external handler if provided
+    if (onVote) {
+      onVote(optionIndex, messageId);
     }
   };
 
@@ -166,6 +235,11 @@ const PollMessage: React.FC<PollMessageProps> = ({
             <p className="text-sm font-medium text-white break-words leading-relaxed">
               {pollData.question}
             </p>
+            {pollData.allowMultiple && (
+              <p className="text-xs text-white/60 mt-1">
+                Mehrere Antworten möglich
+              </p>
+            )}
           </div>
         </div>
         
@@ -175,8 +249,8 @@ const PollMessage: React.FC<PollMessageProps> = ({
           const percentage = getOptionPercentage(index);
           const optionVotes = getOptionVotes(index);
           const voters = getOptionVoters(index);
-          const isSelected = userVote === index;
-          const hasVoted = userVote !== null;
+          const isSelected = pollData.allowMultiple ? userVotes.includes(index) : userVote === index;
+          const hasVoted = pollData.allowMultiple ? userVotes.length > 0 : userVote !== null;
           
           return (
             <div key={index} className="space-y-2">
@@ -184,7 +258,7 @@ const PollMessage: React.FC<PollMessageProps> = ({
                 <Button
                   variant="ghost"
                   className={`w-full justify-start text-left relative overflow-hidden h-10 rounded-xl ${
-                    hasVoted ? 'cursor-default' : 'cursor-pointer hover:scale-[1.01]'
+                    hasVoted && !pollData.allowMultiple ? 'cursor-default' : 'cursor-pointer hover:scale-[1.01]'
                   }`}
                   style={{
                     background: isSelected 
@@ -199,7 +273,7 @@ const PollMessage: React.FC<PollMessageProps> = ({
                       : 'none'
                   }}
                   onClick={() => handleVote(index)}
-                  disabled={hasVoted || loading}
+                  disabled={(!pollData.allowMultiple && hasVoted) || loading}
                 >
                   {/* Option letter */}
                   <div className="absolute left-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-semibold text-white/80 z-20">

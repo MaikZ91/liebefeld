@@ -153,7 +153,8 @@ const MessageList: React.FC<MessageListProps> = ({
                         pollData={{
                           question: message.poll_question,
                           options: message.poll_options, // Pass as-is, PollMessage will handle parsing
-                          votes: message.poll_votes || {}
+                          votes: message.poll_votes || {},
+                          allowMultiple: message.poll_allow_multiple || false
                         }}
                         messageId={message.id}
                         isConsecutive={isConsecutive}

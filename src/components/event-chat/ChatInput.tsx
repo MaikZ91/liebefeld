@@ -31,7 +31,7 @@ interface ExtendedChatInputProps extends ChatInputProps {
   onCategoryChange?: (category: string) => void;
   placeholder?: string; // Add placeholder prop
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
-  onCreatePoll?: (poll: { question: string; options: string[] }) => void;
+  onCreatePoll?: (poll: { question: string; options: string[]; allowMultiple?: boolean }) => void;
 }
 
 const ChatInput: React.FC<ExtendedChatInputProps> = ({

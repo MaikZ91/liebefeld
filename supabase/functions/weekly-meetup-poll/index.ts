@@ -42,6 +42,7 @@ Deno.serve(async (req) => {
         poll_question: pollQuestion,
         poll_options: pollOptions,
         poll_votes: {},
+        poll_allow_multiple: false, // Single selection for meetup polls
         avatar: '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png',
         created_at: new Date().toISOString()
       })

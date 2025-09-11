@@ -127,7 +127,7 @@ const ChatPage = () => {
   };
 
   // Function to handle poll creation - memoized to prevent re-renders
-  const handleCreatePoll = useCallback(async (poll: { question: string; options: string[] }) => {
+  const handleCreatePoll = useCallback(async (poll: { question: string; options: string[]; allowMultiple?: boolean }) => {
     const storedUsername = localStorage.getItem(USERNAME_KEY);
     const communityGroupId = createCitySpecificGroupId('ausgehen', selectedCity);
     
@@ -151,7 +151,8 @@ const ChatPage = () => {
         text: `📊 ${poll.question}`,
         poll_question: poll.question,
         poll_options: JSON.stringify(poll.options), // Convert to JSON string for jsonb column
-        poll_votes: null // Initialize as null for jsonb column
+        poll_votes: null, // Initialize as null for jsonb column
+        poll_allow_multiple: poll.allowMultiple || false
       };
 
       console.log('Chat.tsx: Creating poll with message:', pollMessage);

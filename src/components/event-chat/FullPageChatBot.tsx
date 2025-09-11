@@ -36,7 +36,7 @@ interface FullPageChatBotProps {
   activeCategory?: string;
   onCategoryChange?: (category: string) => void;
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
-  onCreatePoll?: (poll: { question: string; options: string[] }) => void;
+  onCreatePoll?: (poll: { question: string; options: string[]; allowMultiple?: boolean }) => void;
   hideInput?: boolean;
   externalInput?: string;
   setExternalInput?: (value: string) => void;
