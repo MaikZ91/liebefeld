@@ -346,7 +346,10 @@ const ChatPage = () => {
               </SheetDescription>
             </SheetHeader>
             <div className="mt-4 overflow-y-auto max-h-[80vh]">
-              <EventForm onSuccess={() => setIsAddEventSheetOpen(false)} />
+              <EventForm 
+                onSuccess={() => setIsAddEventSheetOpen(false)} 
+                createRsvpPoll={true}
+              />
             </div>
           </SheetContent>
         </Sheet>

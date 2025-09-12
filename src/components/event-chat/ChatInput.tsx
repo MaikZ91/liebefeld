@@ -472,7 +472,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
                   title: "Event erstellt!",
                   description: "Dein Event wurde erfolgreich erstellt.",
                 });
-              }} 
+              }}
+              createRsvpPoll={true}
             />
           </div>
         </SheetContent>

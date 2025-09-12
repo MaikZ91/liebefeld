@@ -15,21 +15,26 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { USERNAME_KEY, AVATAR_KEY } from "@/types/chatTypes";
+import { createCitySpecificGroupId } from "@/utils/groupIdUtils";
 
 interface EventFormProps {
   onSuccess?: () => void;
   selectedDate?: Date;
   onAddEvent?: (event: any) => Promise<void>;
   onCancel?: () => void;
+  createRsvpPoll?: boolean; // Add this prop to indicate when to create RSVP poll
 }
 
 const EventForm: React.FC<EventFormProps> = ({ 
   onSuccess, 
   selectedDate,
   onAddEvent,
-  onCancel 
+  onCancel,
+  createRsvpPoll = false
 }) => {
-  const { addUserEvent } = useEventContext();
+  const { addUserEvent, selectedCity } = useEventContext();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -73,24 +78,72 @@ const EventForm: React.FC<EventFormProps> = ({
     setIsLoading(true);
 
     try {
+      let createdEvent;
+      
       // If onAddEvent was provided, use it, otherwise use addUserEvent from context
       if (onAddEvent) {
-        await onAddEvent({
+        createdEvent = await onAddEvent({
           ...formData,
           date: formData.date,
           time: formData.time,
         });
       } else {
         // Add event to context (which will save to database)
-        await addUserEvent({
+        createdEvent = await addUserEvent({
           ...formData,
           date: formData.date,
           time: formData.time,
         });
       }
 
+      // Create RSVP poll in community chat if requested
+      if (createRsvpPoll && createdEvent) {
+        try {
+          const storedUsername = localStorage.getItem(USERNAME_KEY) || 'Anonymous';
+          const avatar = localStorage.getItem(AVATAR_KEY) || null;
+          const communityGroupId = createCitySpecificGroupId('ausgehen', selectedCity);
+          
+          // Format the event text
+          const eventText = `🎉 **${formData.title}**\n📅 ${formData.date} um ${formData.time}${formData.location ? `\n📍 ${formData.location}` : ''}${formData.description ? `\n\n${formData.description}` : ''}`;
+          
+          // Create RSVP poll message
+          const pollMessage = {
+            group_id: communityGroupId,
+            sender: storedUsername,
+            avatar: avatar,
+            text: eventText,
+            poll_question: `Wer nimmt teil an "${formData.title}"?`,
+            poll_options: JSON.stringify(['Nehme teil', 'Nein', 'Vielleicht']),
+            poll_votes: null,
+            poll_allow_multiple: false,
+            event_id: createdEvent.id || null,
+            event_title: formData.title,
+            event_date: formData.date,
+            event_location: formData.location || null
+          };
+
+          const { error: pollError } = await supabase
+            .from('chat_messages')
+            .insert([pollMessage]);
+
+          if (pollError) {
+            console.error('Error creating RSVP poll:', pollError);
+            toast.error("Event erstellt, aber RSVP-Umfrage konnte nicht erstellt werden", {
+              description: "Das Event wurde gespeichert, die Umfrage im Chat konnte aber nicht erstellt werden.",
+            });
+          } else {
+            console.log('RSVP poll created successfully');
+          }
+        } catch (pollError) {
+          console.error('Error creating RSVP poll:', pollError);
+          toast.error("Event erstellt, aber RSVP-Umfrage konnte nicht erstellt werden", {
+            description: "Das Event wurde gespeichert, die Umfrage im Chat konnte aber nicht erstellt werden.",
+          });
+        }
+      }
+
       toast.success("Event erfolgreich erstellt!", {
-        description: `${formData.title} wurde zum Kalender hinzugefügt.`,
+        description: `${formData.title} wurde zum Kalender hinzugefügt${createRsvpPoll ? ' und RSVP-Umfrage im Chat erstellt' : ''}.`,
       });
 
       // Reset form
