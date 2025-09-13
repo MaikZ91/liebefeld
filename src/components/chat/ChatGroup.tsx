@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { pushNotificationService } from '@/services/pushNotificationService';
-import { USERNAME_KEY, AVATAR_KEY, TypingUser } from '@/types/chatTypes';
+import { USERNAME_KEY, AVATAR_KEY, TypingUser, Message } from '@/types/chatTypes';
 import { toast } from '@/hooks/use-toast';
 import { getInitials } from '@/utils/chatUIUtils';
 import MessageInput from './MessageInput';
@@ -21,22 +21,6 @@ interface ChatGroupProps {
   groupId: string;
   groupName: string;
   onOpenUserDirectory?: () => void;
-}
-
-interface Message {
-  id: string;
-  created_at: string;
-  text: string; // Changed from 'content' to 'text'
-  user_name: string;
-  user_avatar: string;
-  group_id: string;
-  event_id?: string; // Added event_id for event messages
-  event_title?: string; // Added event_title for event messages
-  read_by?: string[];
-  category?: string; // Added category field for message labeling
-  reply_to_message_id?: string;
-  reply_to_sender?: string;
-  reply_to_text?: string;
 }
 
 const ChatGroup: React.FC<ChatGroupProps> = ({
@@ -65,6 +49,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
 
   // Reply system
   const { replyTo, startReply, clearReply } = useReplySystem();
+  console.log('ChatGroup: reply system initialized', { replyTo, startReply: !!startReply, clearReply: !!clearReply });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);

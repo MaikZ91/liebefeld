@@ -217,6 +217,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 
   // Swipe gesture handlers
   const handleTouchStart = (e: React.TouchEvent) => {
+    console.log('ChatMessage: handleTouchStart called', { onReply: !!onReply, messageId, sender });
     if (!onReply || !messageId || !sender) return;
     startXRef.current = e.touches[0].clientX;
     setIsDragging(true);
@@ -231,15 +232,19 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     // Only allow swipe to the right (positive deltaX) and limit to 80px
     const offset = Math.max(0, Math.min(deltaX, 80));
     setSwipeOffset(offset);
+    console.log('ChatMessage: swipe offset', offset);
   };
 
   const handleTouchEnd = () => {
+    console.log('ChatMessage: handleTouchEnd called', { isDragging, onReply: !!onReply, messageId, sender });
     if (!isDragging || !onReply || !messageId || !sender) return;
     
     const deltaX = currentXRef.current - startXRef.current;
+    console.log('ChatMessage: swipe deltaX', deltaX);
     
     // Trigger reply if swiped more than 100px to the right
     if (deltaX > 100) {
+      console.log('ChatMessage: triggering reply');
       const messageText = typeof message === 'string' ? message : '';
       const replyData = {
         messageId,

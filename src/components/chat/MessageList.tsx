@@ -38,6 +38,7 @@ const MessageList: React.FC<MessageListProps> = ({
   onJoinEventChat,
   onReply
 }) => {
+  console.log('MessageList: onReply prop received', { onReply: !!onReply });
   const isMobile = useIsMobile();
 
   // Parse event data from message text
