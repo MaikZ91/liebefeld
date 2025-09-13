@@ -1,4 +1,3 @@
-// src/components/chat/ChatGroup.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { RefreshCw, Users } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { chatService } from '@/services/chatService';
 import { getChannelColor } from '@/utils/channelColors';
 import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
+import { useReplySystem } from '@/hooks/chat/useReplySystem';
 
 interface ChatGroupProps {
   groupId: string;
@@ -34,6 +34,9 @@ interface Message {
   event_title?: string; // Added event_title for event messages
   read_by?: string[];
   category?: string; // Added category field for message labeling
+  reply_to_message_id?: string;
+  reply_to_sender?: string;
+  reply_to_text?: string;
 }
 
 const ChatGroup: React.FC<ChatGroupProps> = ({
@@ -59,6 +62,9 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   // Use context for category management
   const { activeCategory } = useChatPreferences();
   const [messageFilter, setMessageFilter] = useState<string[]>(['alle']); // New filter state
+
+  // Reply system
+  const { replyTo, startReply, clearReply } = useReplySystem();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -121,7 +127,10 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           group_id: msg.group_id,
           event_id: msg.event_id,
           event_title: msg.event_title,
-          read_by: msg.read_by || []
+          read_by: msg.read_by || [],
+          reply_to_message_id: msg.reply_to_message_id,
+          reply_to_sender: msg.reply_to_sender,
+          reply_to_text: msg.reply_to_text
         }));
 
         setMessages(formattedMessages);
@@ -185,7 +194,10 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
             group_id: msg.group_id,
             event_id: msg.event_id,
             event_title: msg.event_title,
-            read_by: msg.read_by || []
+            read_by: msg.read_by || [],
+            reply_to_message_id: msg.reply_to_message_id,
+            reply_to_sender: msg.reply_to_sender,
+            reply_to_text: msg.reply_to_text
           };
 
           // Add all messages from realtime - no duplicate check needed
@@ -272,7 +284,10 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         group_id: msg.group_id,
         event_id: msg.event_id,
         event_title: msg.event_title,
-        read_by: msg.read_by || []
+        read_by: msg.read_by || [],
+        reply_to_message_id: msg.reply_to_message_id,
+        reply_to_sender: msg.reply_to_sender,
+        reply_to_text: msg.reply_to_text
       }));
 
       setMessages(formattedMessages);
@@ -341,12 +356,31 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
 
       console.log('ChatGroup.handleSubmit: sending message via chatService', { messageText, groupId });
 
-      // Clear input immediately
+      // Clear input and reply immediately
       console.log('ChatGroup: clearing newMessage, was:', newMessage);
       setNewMessage('');
+      clearReply();
 
-      // Use chatService instead of direct insert to avoid duplicates
-      await chatService.sendMessage(groupId, messageText, username, localStorage.getItem(AVATAR_KEY) || undefined);
+      // If replying to a message, include reply information
+      if (replyTo) {
+        // Send reply via supabase directly to include reply fields
+        const { error } = await supabase
+          .from('chat_messages')
+          .insert([{
+            group_id: groupId,
+            sender: username,
+            avatar: localStorage.getItem(AVATAR_KEY) || null,
+            text: messageText,
+            reply_to_message_id: replyTo.messageId,
+            reply_to_sender: replyTo.sender,
+            reply_to_text: replyTo.text.length > 100 ? replyTo.text.substring(0, 100) + '...' : replyTo.text
+          }]);
+
+        if (error) throw error;
+      } else {
+        // Use chatService for regular messages to avoid duplicates
+        await chatService.sendMessage(groupId, messageText, username, localStorage.getItem(AVATAR_KEY) || undefined);
+      }
 
       console.log(`Message sent successfully from ${instanceId.current} (${groupName})`);
     } catch (error) {
@@ -557,6 +591,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         groupType={groupType}
         chatBottomRef={scrollManagement.chatBottomRef}
         onJoinEventChat={handleJoinEventChat}
+        onReply={startReply}
       />
 
       <div className="p-3 bg-black border-t border-gray-800 flex-shrink-0">
@@ -571,6 +606,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           placeholder="Schreibe eine Nachricht..."
           mode="community"
           groupType={groupType}
+          replyTo={replyTo}
+          onClearReply={clearReply}
         />
       </div>
     </div>
