@@ -1,10 +1,11 @@
+// src/components/chat/ChatGroup.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { RefreshCw, Users } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { pushNotificationService } from '@/services/pushNotificationService';
-import { USERNAME_KEY, AVATAR_KEY, TypingUser, Message } from '@/types/chatTypes';
+import { USERNAME_KEY, AVATAR_KEY, TypingUser } from '@/types/chatTypes';
 import { toast } from '@/hooks/use-toast';
 import { getInitials } from '@/utils/chatUIUtils';
 import MessageInput from './MessageInput';
@@ -15,12 +16,24 @@ import { useNavigate } from 'react-router-dom';
 import { chatService } from '@/services/chatService';
 import { getChannelColor } from '@/utils/channelColors';
 import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
-import { useReplySystem } from '@/hooks/chat/useReplySystem';
 
 interface ChatGroupProps {
   groupId: string;
   groupName: string;
   onOpenUserDirectory?: () => void;
+}
+
+interface Message {
+  id: string;
+  created_at: string;
+  text: string; // Changed from 'content' to 'text'
+  user_name: string;
+  user_avatar: string;
+  group_id: string;
+  event_id?: string; // Added event_id for event messages
+  event_title?: string; // Added event_title for event messages
+  read_by?: string[];
+  category?: string; // Added category field for message labeling
 }
 
 const ChatGroup: React.FC<ChatGroupProps> = ({
@@ -46,10 +59,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   // Use context for category management
   const { activeCategory } = useChatPreferences();
   const [messageFilter, setMessageFilter] = useState<string[]>(['alle']); // New filter state
-
-  // Reply system
-  const { replyTo, startReply, clearReply } = useReplySystem();
-  console.log('ChatGroup: reply system initialized', { replyTo, startReply: !!startReply, clearReply: !!clearReply });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -112,10 +121,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           group_id: msg.group_id,
           event_id: msg.event_id,
           event_title: msg.event_title,
-          read_by: msg.read_by || [],
-          reply_to_message_id: msg.reply_to_message_id,
-          reply_to_sender: msg.reply_to_sender,
-          reply_to_text: msg.reply_to_text
+          read_by: msg.read_by || []
         }));
 
         setMessages(formattedMessages);
@@ -179,10 +185,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
             group_id: msg.group_id,
             event_id: msg.event_id,
             event_title: msg.event_title,
-            read_by: msg.read_by || [],
-            reply_to_message_id: msg.reply_to_message_id,
-            reply_to_sender: msg.reply_to_sender,
-            reply_to_text: msg.reply_to_text
+            read_by: msg.read_by || []
           };
 
           // Add all messages from realtime - no duplicate check needed
@@ -269,10 +272,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         group_id: msg.group_id,
         event_id: msg.event_id,
         event_title: msg.event_title,
-        read_by: msg.read_by || [],
-        reply_to_message_id: msg.reply_to_message_id,
-        reply_to_sender: msg.reply_to_sender,
-        reply_to_text: msg.reply_to_text
+        read_by: msg.read_by || []
       }));
 
       setMessages(formattedMessages);
@@ -341,31 +341,12 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
 
       console.log('ChatGroup.handleSubmit: sending message via chatService', { messageText, groupId });
 
-      // Clear input and reply immediately
+      // Clear input immediately
       console.log('ChatGroup: clearing newMessage, was:', newMessage);
       setNewMessage('');
-      clearReply();
 
-      // If replying to a message, include reply information
-      if (replyTo) {
-        // Send reply via supabase directly to include reply fields
-        const { error } = await supabase
-          .from('chat_messages')
-          .insert([{
-            group_id: groupId,
-            sender: username,
-            avatar: localStorage.getItem(AVATAR_KEY) || null,
-            text: messageText,
-            reply_to_message_id: replyTo.messageId,
-            reply_to_sender: replyTo.sender,
-            reply_to_text: replyTo.text.length > 100 ? replyTo.text.substring(0, 100) + '...' : replyTo.text
-          }]);
-
-        if (error) throw error;
-      } else {
-        // Use chatService for regular messages to avoid duplicates
-        await chatService.sendMessage(groupId, messageText, username, localStorage.getItem(AVATAR_KEY) || undefined);
-      }
+      // Use chatService instead of direct insert to avoid duplicates
+      await chatService.sendMessage(groupId, messageText, username, localStorage.getItem(AVATAR_KEY) || undefined);
 
       console.log(`Message sent successfully from ${instanceId.current} (${groupName})`);
     } catch (error) {
@@ -576,7 +557,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         groupType={groupType}
         chatBottomRef={scrollManagement.chatBottomRef}
         onJoinEventChat={handleJoinEventChat}
-        onReply={startReply}
       />
 
       <div className="p-3 bg-black border-t border-gray-800 flex-shrink-0">
@@ -591,8 +571,6 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           placeholder="Schreibe eine Nachricht..."
           mode="community"
           groupType={groupType}
-          replyTo={replyTo}
-          onClearReply={clearReply}
         />
       </div>
     </div>
