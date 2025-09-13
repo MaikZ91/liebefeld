@@ -159,7 +159,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
     <div className="flex flex-col">
       {/* Reply preview */}
       {replyTo && onClearReply && (
-        <ReplyPreview replyTo={replyTo} onCancel={onClearReply} />
+        <ReplyPreview replyTo={replyTo} onCancel={onClearReply} groupType={groupType} />
       )}
       
       <div className="relative flex items-center gap-2">

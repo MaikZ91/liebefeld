@@ -342,7 +342,19 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         {/* Reply indicator inside message - enhanced visibility */}
         {replyTo && (
           <div 
-            className="mb-3 p-3 bg-gradient-to-r from-primary/20 to-primary/10 rounded-lg border-l-4 border-primary backdrop-blur-sm cursor-pointer hover:from-primary/25 hover:to-primary/15 transition-colors"
+            className="mb-3 p-3 rounded-lg border-l-4 backdrop-blur-sm cursor-pointer transition-colors"
+            style={{
+              background: `linear-gradient(to right, ${getChannelColor(detectGroupType(typeof message === 'string' ? message : '')).primary}20, ${getChannelColor(detectGroupType(typeof message === 'string' ? message : '')).primary}10)`,
+              borderLeftColor: getChannelColor(detectGroupType(typeof message === 'string' ? message : '')).primary
+            }}
+            onMouseEnter={(e) => {
+              const groupType = detectGroupType(typeof message === 'string' ? message : '');
+              e.currentTarget.style.background = `linear-gradient(to right, ${getChannelColor(groupType).primary}25, ${getChannelColor(groupType).primary}15)`;
+            }}
+            onMouseLeave={(e) => {
+              const groupType = detectGroupType(typeof message === 'string' ? message : '');
+              e.currentTarget.style.background = `linear-gradient(to right, ${getChannelColor(groupType).primary}20, ${getChannelColor(groupType).primary}10)`;
+            }}
             onClick={(e) => {
               e.stopPropagation();
               if (onScrollToMessage && replyTo.messageId) {
@@ -351,8 +363,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
             }}
           >
             <div className="flex items-center gap-2 mb-1">
-              <Reply className="h-3 w-3 text-primary" />
-              <div className="text-xs font-medium text-primary">Antwort an {replyTo.sender}</div>
+              <Reply className="h-3 w-3" style={{ color: getChannelColor(detectGroupType(typeof message === 'string' ? message : '')).primary }} />
+              <div className="text-xs font-medium" style={{ color: getChannelColor(detectGroupType(typeof message === 'string' ? message : '')).primary }}>Antwort an {replyTo.sender}</div>
             </div>
             <div className="text-sm text-white/80 font-medium leading-relaxed">
               "{replyTo.text.length > 60 ? replyTo.text.substring(0, 60) + '...' : replyTo.text}"

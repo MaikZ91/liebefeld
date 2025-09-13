@@ -3,21 +3,26 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { X, Reply } from 'lucide-react';
 import { ReplyData } from '@/hooks/chat/useReplySystem';
+import { getChannelColor } from '@/utils/channelColors';
+import { getCategoryGroup } from '@/utils/eventCategoryGroups';
 
 interface ReplyPreviewProps {
   replyTo: ReplyData;
   onCancel: () => void;
+  groupType?: 'ausgehen' | 'sport' | 'kreativität';
 }
 
-const ReplyPreview: React.FC<ReplyPreviewProps> = ({ replyTo, onCancel }) => {
+const ReplyPreview: React.FC<ReplyPreviewProps> = ({ replyTo, onCancel, groupType = 'ausgehen' }) => {
   const formatText = (text: string) => {
     if (text.length <= 50) return text;
     return text.substring(0, 50) + '...';
   };
 
+  const colors = getChannelColor(groupType);
+
   return (
     <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-3 mb-2 flex items-start gap-3">
-      <Reply className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
+      <Reply className="h-4 w-4 mt-1 flex-shrink-0" style={colors.textStyle} />
       
       <div className="flex-1 min-w-0">
         <div className="text-xs text-gray-300 mb-1">
