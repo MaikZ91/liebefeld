@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { chatService } from '@/services/chatService';
 import { getChannelColor } from '@/utils/channelColors';
 import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
+import { useReplySystem } from '@/hooks/chat/useReplySystem';
 
 interface ChatGroupProps {
   groupId: string;
@@ -56,9 +57,10 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   const [username, setUsername] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || 'Gast');
   const [avatar, setAvatar] = useState<string | null>(() => localStorage.getItem(AVATAR_KEY));
   
-  // Use context for category management
-  const { activeCategory } = useChatPreferences();
-  const [messageFilter, setMessageFilter] = useState<string[]>(['alle']); // New filter state
+// Use context for category management
+const { replyTo, startReply, clearReply } = useReplySystem();
+const { activeCategory } = useChatPreferences();
+const [messageFilter, setMessageFilter] = useState<string[]>(['alle']); // New filter state
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -348,6 +350,10 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
       // Use chatService instead of direct insert to avoid duplicates
       await chatService.sendMessage(groupId, messageText, username, localStorage.getItem(AVATAR_KEY) || undefined);
 
+      if (replyTo) {
+        clearReply();
+      }
+
       console.log(`Message sent successfully from ${instanceId.current} (${groupName})`);
     } catch (error) {
       console.error('Error sending message:', error);
@@ -557,6 +563,7 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
         groupType={groupType}
         chatBottomRef={scrollManagement.chatBottomRef}
         onJoinEventChat={handleJoinEventChat}
+        onReply={startReply}
       />
 
       <div className="p-3 bg-black border-t border-gray-800 flex-shrink-0">
@@ -571,6 +578,8 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
           placeholder="Schreibe eine Nachricht..."
           mode="community"
           groupType={groupType}
+          replyTo={replyTo}
+          onClearReply={clearReply}
         />
       </div>
     </div>
