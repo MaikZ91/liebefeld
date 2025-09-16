@@ -10,6 +10,7 @@ import { useChatLogic } from './event-chat/useChatLogic';
 import { usePersonalization } from './event-chat/usePersonalization';
 import { EventChatBotProps } from './event-chat/types';
 import { createCitySpecificGroupId } from '@/utils/groupIdUtils';
+import { useReplySystem } from '@/hooks/chat/useReplySystem';
 
 interface ExtendedEventChatBotProps extends EventChatBotProps {
   onChatInputPropsChange?: (props: any) => void;
@@ -51,6 +52,7 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   const { selectedCity } = useEventContext();
   const { toast } = useToast();
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
+  const { replyTo, startReply, clearReply } = useReplySystem();
   
   const communityGroupId = createCitySpecificGroupId('ausgehen', selectedCity); // Fixed to always use 'ausgehen' channel
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
@@ -125,7 +127,9 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
         activeCategory: activeCategory,
         onCategoryChange: handleCategoryChange,
         onJoinEventChat: onJoinEventChat,
-        onCreatePoll: onCreatePoll
+        onCreatePoll: onCreatePoll,
+        replyTo: replyTo,
+        onClearReply: clearReply
       });
     }
   }, [

@@ -90,6 +90,13 @@ export interface ChatInputProps {
   placeholder?: string;
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
   onCreatePoll?: (poll: { question: string; options: string[]; allowMultiple?: boolean }) => void;
+  replyTo?: {
+    messageId: string;
+    sender: string;
+    text: string;
+    avatar?: string;
+  } | null;
+  onClearReply?: () => void;
 }
 
 export interface MessageListProps {

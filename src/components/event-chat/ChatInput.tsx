@@ -12,11 +12,13 @@ import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from "@/integrations/supabase/client";
 import { initializeFCM } from '@/services/firebaseMessaging';
 import { useToast } from '@/hooks/use-toast';
+import EventForm from '@/components/EventForm';
+import PollCreator from '@/components/poll/PollCreator';
 import { getChannelColor } from '@/utils/channelColors';
 import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
-import PollCreator from '@/components/poll/PollCreator';
+import ReplyPreview from '@/components/chat/ReplyPreview';
+import { getCategoryGroup } from '@/utils/eventCategoryGroups';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import EventForm from '@/components/EventForm';
 
 const AnimatedText = ({ text, className = '' }: { text: string; className?: string }) => {
   return (
@@ -32,6 +34,13 @@ interface ExtendedChatInputProps extends ChatInputProps {
   placeholder?: string; // Add placeholder prop
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
   onCreatePoll?: (poll: { question: string; options: string[]; allowMultiple?: boolean }) => void;
+  replyTo?: {
+    messageId: string;
+    sender: string;
+    text: string;
+    avatar?: string;
+  } | null;
+  onClearReply?: () => void;
 }
 
 const ChatInput: React.FC<ExtendedChatInputProps> = ({
@@ -53,7 +62,9 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   onCategoryChange,
   placeholder, // Receive placeholder prop
   onJoinEventChat,
-  onCreatePoll
+  onCreatePoll,
+  replyTo,
+  onClearReply
 }) => {
   const miaAvatarUrl = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png'
   const { events, selectedCity } = useEventContext();
@@ -91,7 +102,6 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   // Reference for the textarea to dynamically adjust height
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-
   useEffect(() => {
     setLocalInput(input);
     // Clear local input when parent input is cleared (after sending)
@@ -100,6 +110,13 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     }
   }, [input]);
 
+  // Focus textarea when a reply starts
+  useEffect(() => {
+    if (replyTo && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [replyTo]);
+
   // Effect to adjust textarea height
   useEffect(() => {
     if (textareaRef.current) {
@@ -107,7 +124,6 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
       textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'; // Set height to scrollHeight
     }
   }, [localInput]); // Re-run when localInput changes
-
 
   const suggestions = [];
 
@@ -304,102 +320,113 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
   };
 
   return (
-    <div className="flex items-center relative w-full max-w-md">
-      <div className="absolute left-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 z-10">
-                {/* MIA Avatar (only shown in AI chat mode) */}
-        {activeChatModeValue === 'ai' && (
-          <Avatar className="h-8 w-8 border-2 border-white/50">
-            <AvatarImage src={miaAvatarUrl} />
-          </Avatar>
-        )}
-        
-        {activeChatModeValue === 'ai' ? (
-          <>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleHeartClick}
-              className={`h-6 w-6 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`}
-              title={isHeartActive ? "Personalisierter Modus aktiv" : "Standard-Modus aktiv"}
-            >
-              <Heart className={`h-3 w-3 ${isHeartActive ? 'fill-red-500' : ''}`} />
-            </Button>
-
-            {globalQueries.length > 0 && (
+    <div className="flex flex-col w-full max-w-md">
+      {/* Reply Preview */}
+      {replyTo && onClearReply && (
+        <div className="mb-2">
+          <ReplyPreview 
+            replyTo={replyTo} 
+            onCancel={onClearReply}
+            groupType={getCategoryGroup(currentActiveCategory || 'Ausgehen').toLowerCase() as 'ausgehen' | 'sport' | 'kreativität'}
+          />
+        </div>
+      )}
+      
+      <div className="flex items-center relative w-full">
+        <div className="absolute left-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 z-10">
+          {/* MIA Avatar (only shown in AI chat mode) */}
+          {activeChatModeValue === 'ai' && (
+            <Avatar className="h-8 w-8 border-2 border-white/50">
+              <AvatarImage src={miaAvatarUrl} />
+            </Avatar>
+          )}
+          
+          {activeChatModeValue === 'ai' ? (
+            <>
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={toggleRecentQueries}
-                className="h-6 w-6 text-red-400"
-                title="Community Anfragen"
+                onClick={handleHeartClick}
+                className={`h-6 w-6 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`}
+                title={isHeartActive ? "Personalisierter Modus aktiv" : "Standard-Modus aktiv"}
               >
-                <History className="h-3 w-3" />
+                <Heart className={`h-3 w-3 ${isHeartActive ? 'fill-red-500' : ''}`} />
               </Button>
-            )}
 
-          </>
-        ) : (
-          <>
-            {/* Community Chat Plus Button */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+              {globalQueries.length > 0 && (
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-primary mr-1"
-                  title="Erstellen"
+                  onClick={toggleRecentQueries}
+                  className="h-6 w-6 text-red-400"
+                  title="Community Anfragen"
                 >
-                  <Plus className="h-3 w-3" />
+                  <History className="h-3 w-3" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                className="z-[99999] border-0 fixed"
-                style={{
-                  background: '#1a1a1a',
-                  border: '1px solid #333',
-                  borderRadius: '12px'
-                }}
-                side="top"
-                align="start"
-              >
-                <DropdownMenuItem
-                  onClick={() => {
-                    setIsPollCreatorOpen(true);
+              )}
+            </>
+          ) : (
+            <>
+              {/* Community Chat Plus Button */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-primary mr-1"
+                    title="Erstellen"
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  className="z-[99999] border-0 fixed"
+                  style={{
+                    background: '#1a1a1a',
+                    border: '1px solid #333',
+                    borderRadius: '12px'
                   }}
-                  className="text-white cursor-pointer hover:bg-zinc-800"
+                  side="top"
+                  align="start"
                 >
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Umfrage erstellen
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setIsEventFormOpen(true)}
-                  className="text-white cursor-pointer hover:bg-zinc-800"
-                >
-                  <CalendarPlus className="h-4 w-4 mr-2" />
-                  Event erstellen
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </>
-        )}
-      </div>
-      
-      <div 
-        className={cn(
-          "absolute inset-0 cursor-text z-5 pointer-events-none",
-          getButtonWidth().replace('pl-', 'left-')
-        )}
-        onClick={handleSuggestionClick}
-        style={{ pointerEvents: localInput.trim() === '' && displayText.trim() !== '' ? 'auto' : 'none' }}
-      />
-      
-      <Textarea
-        ref={textareaRef} // Assign the ref here
-        value={localInput}
-        onChange={handleLocalInputChange}
-        onKeyDown={handleLocalKeyPress}
-        placeholder={placeholderText}
-        rows={1} // Start with 1 row
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setIsPollCreatorOpen(true);
+                    }}
+                    className="text-white cursor-pointer hover:bg-zinc-800"
+                  >
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Umfrage erstellen
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setIsEventFormOpen(true)}
+                    className="text-white cursor-pointer hover:bg-zinc-800"
+                  >
+                    <CalendarPlus className="h-4 w-4 mr-2" />
+                    Event erstellen
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          )}
+        </div>
+        
+        <div 
+          className={cn(
+            "absolute inset-0 cursor-text z-5 pointer-events-none",
+            getButtonWidth().replace('pl-', 'left-')
+          )}
+          onClick={handleSuggestionClick}
+          style={{ pointerEvents: localInput.trim() === '' && displayText.trim() !== '' ? 'auto' : 'none' }}
+        />
+        
+        <Textarea
+          ref={textareaRef} // Assign the ref here
+          value={localInput}
+          onChange={handleLocalInputChange}
+          onKeyDown={handleLocalKeyPress}
+          placeholder={placeholderText}
+          rows={1} // Start with 1 row
           className={cn(
             "w-full bg-background/60 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md border rounded-xl py-2 focus:outline-none text-sm text-foreground placeholder:text-muted-foreground pr-10 transition-all duration-200 text-left min-h-[40px] overflow-hidden flex items-center",
             getButtonWidth()
@@ -412,32 +439,33 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
             borderColor: 'hsl(var(--border))',
             '--placeholder-color': 'hsl(var(--muted-foreground))'
           } as React.CSSProperties & { '--placeholder-color': string }}
-      />
+        />
 
-      <button
-        onClick={() => {
-          console.log('Send button clicked in ChatInput', { activeChatModeValue, localInput });
-          
-          if (activeChatModeValue === 'community') {
-            // For community mode, ONLY update external input - let parent handle sending
-            console.log('Community mode: Send button - updating external input only');
-            setInput(localInput);
-            // Don't clear local input here - let parent handle clearing after successful send
-          } else {
-            // For AI mode, use local send
-            console.log('AI mode: Send button - handling send directly');
-            handleLocalSendMessage();
-          }
-        }}
-        disabled={!localInput.trim() || isTyping}
+        <button
+          onClick={() => {
+            console.log('Send button clicked in ChatInput', { activeChatModeValue, localInput });
+            
+            if (activeChatModeValue === 'community') {
+              // For community mode, ONLY update external input - let parent handle sending
+              console.log('Community mode: Send button - updating external input only');
+              setInput(localInput);
+              // Don't clear local input here - let parent handle clearing after successful send
+            } else {
+              // For AI mode, use local send
+              console.log('AI mode: Send button - handling send directly');
+              handleLocalSendMessage();
+            }
+          }}
+          disabled={!localInput.trim() || isTyping}
           className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-0 flex-shrink-0 h-8 w-8 flex items-center justify-center text-white"
           style={localInput.trim() && !isTyping
             ? (activeChatModeValue === 'community' ? colors.bgStyle : { backgroundColor: 'hsl(var(--primary))' })
             : { backgroundColor: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }
           }
-      >
-        <Send className="h-4 w-4" />
-      </button>
+        >
+          <Send className="h-4 w-4" />
+        </button>
+      </div>
       
       {/* Poll Creator Dialog */}
       <PollCreator

@@ -36,6 +36,13 @@ interface LayoutProps {
     onCategoryChange?: (category: string) => void;
     onJoinEventChat?: (eventId: string, eventTitle: string) => void;
     onCreatePoll?: (poll: { question: string; options: string[]; allowMultiple?: boolean }) => void;
+    replyTo?: {
+      messageId: string;
+      sender: string;
+      text: string;
+      avatar?: string;
+    } | null;
+    onClearReply?: () => void;
   };
 }
 
@@ -134,6 +141,8 @@ export const Layout: React.FC<LayoutProps> = ({
               onChange={chatInputProps.onChange}
               onJoinEventChat={chatInputProps.onJoinEventChat}
               onCreatePoll={chatInputProps.onCreatePoll}
+              replyTo={chatInputProps.replyTo}
+              onClearReply={chatInputProps.onClearReply}
               placeholder={activeView === 'community' ? "Chatte in der Community" : "Frage nach Events..."}
             />
           </div>
