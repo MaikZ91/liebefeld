@@ -238,8 +238,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     
     const deltaX = currentXRef.current - startXRef.current;
     
-    // Trigger reply if swiped more than 100px to the right
-    if (deltaX > 100) {
+    // Trigger reply if swiped more than 60px to the right
+    if (deltaX > 60) {
       const messageText = typeof message === 'string' ? message : '';
       const replyData = {
         messageId,
@@ -277,8 +277,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     
     const deltaX = currentXRef.current - startXRef.current;
     
-    // Trigger reply if swiped more than 100px to the right
-    if (deltaX > 100) {
+    // Trigger reply if swiped more than 60px to the right
+    if (deltaX > 60) {
       const messageText = typeof message === 'string' ? message : '';
       const replyData = {
         messageId,
@@ -309,8 +309,17 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       {/* Reply indicator that shows during swipe */}
       {swipeOffset > 0 && onReply && (
         <div 
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 flex items-center gap-2 text-primary"
+          className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 flex items-center gap-2 text-primary cursor-pointer select-none"
           style={{ opacity: Math.min(swipeOffset / 100, 1) }}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onReply && messageId && sender) {
+              const messageText = typeof message === 'string' ? message : '';
+              onReply({ messageId, sender, text: messageText, avatar });
+              setIsDragging(false);
+              setSwipeOffset(0);
+            }
+          }}
         >
           <Reply className="h-5 w-5" />
           <span className="text-sm font-medium">Zitieren</span>

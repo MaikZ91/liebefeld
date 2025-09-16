@@ -46,7 +46,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const { toast } = useToast();
   const { selectedCity } = useEventContext();
   const { activeCategory } = useChatPreferences();
-
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   // Sync internal state with external value prop
   useEffect(() => {
     if (value !== undefined && value !== newMessage) {
@@ -55,6 +55,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   }, [value]);
 
+  // Focus textarea when a reply starts
+  useEffect(() => {
+    if (replyTo && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [replyTo]);
   // Sicherstellen, dass wir eine gültige UUID für groupId haben
   const validGroupId = groupId === 'general' ? messageService.DEFAULT_GROUP_ID : groupId;
 
@@ -165,6 +171,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
       <div className="relative flex items-center gap-2">
         <div className="flex-1">
           <Textarea
+            ref={textareaRef}
             value={value !== undefined ? value : newMessage}
             onChange={handleTextareaChange}
             onKeyDown={handleKeyDown}
