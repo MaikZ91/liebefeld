@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { chatService } from '@/services/chatService';
 import { USERNAME_KEY } from '@/types/chatTypes';
 import { Badge } from '@/components/ui/badge';
-
+import { supabase } from '@/integrations/supabase/client';
 interface EventChatWindowProps {
   eventId: string;
   eventTitle: string;

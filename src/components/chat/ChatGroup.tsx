@@ -17,6 +17,7 @@ import { chatService } from '@/services/chatService';
 import { getChannelColor } from '@/utils/channelColors';
 import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
 import { useReplySystem } from '@/hooks/chat/useReplySystem';
+import EventChatWindow from '@/components/event-chat/EventChatWindow';
 
 interface ChatGroupProps {
   groupId: string;
@@ -57,10 +58,13 @@ const ChatGroup: React.FC<ChatGroupProps> = ({
   const [username, setUsername] = useState<string>(() => localStorage.getItem(USERNAME_KEY) || 'Gast');
   const [avatar, setAvatar] = useState<string | null>(() => localStorage.getItem(AVATAR_KEY));
   
-// Use context for category management
-const { replyTo, startReply, clearReply } = useReplySystem();
-const { activeCategory } = useChatPreferences();
-const [messageFilter, setMessageFilter] = useState<string[]>(['alle']); // New filter state
+  // Event chat modal state
+  const [eventChatWindow, setEventChatWindow] = useState<{ eventId: string; eventTitle: string; isOpen: boolean } | null>(null);
+
+  // Use context for category management
+  const { replyTo, startReply, clearReply } = useReplySystem();
+  const { activeCategory } = useChatPreferences();
+  const [messageFilter, setMessageFilter] = useState<string[]>(['alle']); // New filter state
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -416,13 +420,11 @@ const [messageFilter, setMessageFilter] = useState<string[]>(['alle']); // New f
     try {
       const groupId = await eventChatService.joinEventChat(eventId, eventTitle);
       if (groupId) {
-        // Navigate to the event chat page or show modal
+        setEventChatWindow({ eventId, eventTitle, isOpen: true });
         toast({
           title: "Event Chat beigetreten",
           description: `Du bist dem Event-Chat für "${eventTitle}" beigetreten.`,
         });
-        // You could implement navigation to a specific event chat route here
-        // For now, we'll just show the success message
       } else {
         throw new Error('Failed to join event chat');
       }
@@ -434,6 +436,11 @@ const [messageFilter, setMessageFilter] = useState<string[]>(['alle']); // New f
         variant: "destructive"
       });
     }
+  };
+
+  // Close event chat modal
+  const handleCloseEventChat = () => {
+    setEventChatWindow(null);
   };
 
   return (
@@ -565,6 +572,15 @@ const [messageFilter, setMessageFilter] = useState<string[]>(['alle']); // New f
         onJoinEventChat={handleJoinEventChat}
         onReply={startReply}
       />
+
+      {eventChatWindow && (
+        <EventChatWindow
+          eventId={eventChatWindow.eventId}
+          eventTitle={eventChatWindow.eventTitle}
+          isOpen={eventChatWindow.isOpen}
+          onClose={handleCloseEventChat}
+        />
+      )}
 
       <div className="p-3 bg-black border-t border-gray-800 flex-shrink-0">
         <MessageInput
