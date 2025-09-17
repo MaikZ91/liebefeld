@@ -49,6 +49,7 @@ interface ChatMessageProps {
   isGroup?: boolean;
   eventData?: EventShare;
   eventId?: string;
+  eventTitle?: string;
   onDateSelect?: (date: string) => void;
   showDateSelector?: boolean;
   reactions?: { emoji: string; users: string[] }[];
@@ -72,6 +73,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   isGroup = false,
   eventData,
   eventId,
+  eventTitle,
   onDateSelect,
   showDateSelector = false,
   reactions = [],
@@ -181,6 +183,38 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   const formatContent = () => {
     if (eventData) {
       return <EventMessageFormatter event={eventData} eventId={eventId} onJoinEventChat={onJoinEventChat} />;
+    }
+
+    // Check if this is a system event join message
+    if (sender === 'System' && eventId && eventTitle && onJoinEventChat && typeof message === 'string') {
+      const isEventJoinMessage = message.includes('ist dem Eventchannel beigetreten') || 
+                                message.includes('joined the event chat') ||
+                                message.includes('Event Chat');
+      
+      if (isEventJoinMessage) {
+        return (
+          <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-primary rounded-full"></div>
+              <span className="text-sm text-primary font-medium">Event Chat</span>
+            </div>
+            <div className="text-sm text-foreground/90">
+              {message}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onJoinEventChat(eventId, eventTitle);
+              }}
+              className="w-full border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50"
+            >
+              In Event Chat wechseln: {eventTitle}
+            </Button>
+          </div>
+        );
+      }
     }
 
     if (typeof message === 'string') {

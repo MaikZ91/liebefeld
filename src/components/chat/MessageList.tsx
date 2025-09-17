@@ -168,6 +168,7 @@ const MessageList: React.FC<MessageListProps> = ({
                         isGroup={isGroup}
                         eventData={eventData}
                         eventId={message.event_id}
+                        eventTitle={message.event_title}
                         messageId={message.id}
                         reactions={message.reactions || []} // Pass reactions directly
                         onReact={handleReaction(message.id)}

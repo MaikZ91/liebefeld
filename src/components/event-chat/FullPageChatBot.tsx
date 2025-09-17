@@ -486,18 +486,21 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                              </div>
                            ) : (
                               // Regular message
-                              <ChatMessage
-                                message={message.text}
-                                isConsecutive={isConsecutive}
-                                isGroup
-                                messageId={message.id}
-                                reactions={message.reactions || []}
-                                onReact={(emoji) => handleReaction(message.id, emoji)}
-                                currentUsername={username}
-                                onReply={startReply}
-                                sender={message.user_name}
-                                avatar={message.user_avatar}
-                                replyTo={message.reply_to_message_id ? {
+                               <ChatMessage
+                                 message={message.text}
+                                 isConsecutive={isConsecutive}
+                                 isGroup
+                                 messageId={message.id}
+                                 eventId={message.event_id}
+                                 eventTitle={message.event_title}
+                                 reactions={message.reactions || []}
+                                 onReact={(emoji) => handleReaction(message.id, emoji)}
+                                 currentUsername={username}
+                                 onJoinEventChat={onJoinEventChat}
+                                 onReply={startReply}
+                                 sender={message.user_name}
+                                 avatar={message.user_avatar}
+                                 replyTo={message.reply_to_message_id ? {
                                   messageId: message.reply_to_message_id,
                                   sender: message.reply_to_sender || '',
                                   text: message.reply_to_text || '',
