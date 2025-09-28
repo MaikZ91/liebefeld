@@ -28,15 +28,15 @@ Deno.serve(async (req) => {
     const formattedDate = `${nextTuesday.getDate()}.${nextTuesday.getMonth() + 1}`
     
     const pollQuestion = `Am Di wieder Laufen. Treffpunkt 19 Uhr Gellershagen Park Teich. Wer ist dabei?`
-    const pollText = `🏃‍♂️ ${pollQuestion}`
+    const pollText = `#sport 🏃‍♂️ ${pollQuestion}`
     
     const pollOptions = ["Bin dabei", "diesmal nicht", "kein Interesse"]
 
-    // Insert the poll message into the sport chat group
+    // Insert the poll message into the ausgehen chat group with #sport tag
     const { data, error } = await supabase
       .from('chat_messages')
       .insert({
-        group_id: 'bi_sport',
+        group_id: 'bi_ausgehen',
         sender: 'MIA',
         text: pollText,
         poll_question: pollQuestion,
