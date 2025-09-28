@@ -17,6 +17,12 @@ verify_jwt = false
 [functions.weekly-mia-message]
 verify_jwt = false
 
+[functions.weekly-meetup-poll]
+verify_jwt = false
+
+[functions.weekly-sport-poll]
+verify_jwt = false
+
 [db]
 port = 54322
 
