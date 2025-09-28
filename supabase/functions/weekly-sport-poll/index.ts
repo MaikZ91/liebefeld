@@ -1,4 +1,4 @@
-// Using direct HTTP calls to avoid runtime dependency issues
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,13 +14,10 @@ Deno.serve(async (req) => {
   try {
     console.log('Starting weekly sport poll function')
     
-    // Use direct HTTP call to Supabase API
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Missing Supabase configuration');
-    }
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
     // Calculate next Tuesday's date for the running event
     const today = new Date()
@@ -35,16 +32,10 @@ Deno.serve(async (req) => {
     
     const pollOptions = ["Bin dabei", "diesmal nicht", "kein Interesse"]
 
-    // Insert the poll message into the sport chat group using direct HTTP call
-    const response = await fetch(`${supabaseUrl}/rest/v1/chat_messages`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${supabaseKey}`,
-        'apikey': supabaseKey,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation'
-      },
-      body: JSON.stringify({
+    // Insert the poll message into the sport chat group
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .insert({
         group_id: 'bi_sport',
         sender: 'MIA',
         text: pollText,
@@ -55,15 +46,11 @@ Deno.serve(async (req) => {
         avatar: '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png',
         created_at: new Date().toISOString()
       })
-    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Error inserting sport poll:', errorText);
-      throw new Error(`API error: ${response.status} - ${errorText}`);
+    if (error) {
+      console.error('Error inserting sport poll:', error)
+      throw error
     }
-
-    const data = await response.json();
 
     console.log('Successfully sent weekly sport poll:', data)
 
