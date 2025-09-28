@@ -23,6 +23,9 @@ verify_jwt = false
 [functions.weekly-sport-poll]
 verify_jwt = false
 
+[functions.monthly-creative-circle]
+verify_jwt = false
+
 [db]
 port = 54322
 
