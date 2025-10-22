@@ -641,22 +641,12 @@ const EventHeatmap: React.FC = () => {
       const initialCenter = getCityCenterCoordinates(selectedCity);
 
       try {
-        // Ensure container is properly attached to DOM
-        if (!mapRef.current || !mapRef.current.parentElement) {
-          console.warn('[EventHeatmap] Map container not properly attached to DOM');
-          return;
-        }
-
         const leafletMap = L.map(mapRef.current, {
           center: [initialCenter.lat, initialCenter.lng],
           zoom: 13,
           attributionControl: false,
           zoomControl: false,
           preferCanvas: false
-        });
-
-        leafletMap.whenReady(() => {
-          console.log('[EventHeatmap] Map is ready');
         });
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -793,22 +783,26 @@ const EventHeatmap: React.FC = () => {
         popupAnchor: [0, -25]
       });
 
-      try {
-        const marker = L.marker([spot.lat, spot.lng], { icon: customIcon });
+      const marker = L.marker([spot.lat, spot.lng], { icon: customIcon });
 
-        marker.on('click', () => {
-          setSelectedTribeSpot(spot);
-          setIsTribeSpotDialogOpen(true);
-        });
+      marker.on('click', () => {
+        setSelectedTribeSpot(spot);
+        setIsTribeSpotDialogOpen(true);
+      });
 
-        // Wait for map to be ready before adding marker
-        if (map && map.getContainer() && map.getContainer().parentNode) {
-          marker.addTo(map);
-          newTribeSpotMarkers.push(marker);
-        }
-      } catch (markerError) {
-        console.warn('[EventHeatmap] Error adding tribe spot marker:', markerError);
-      }
+      const usersAtSpot = allUserProfiles.filter(user => {
+        const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null;
+        if (!hasLiveLocation) return false;
+
+        const distance = Math.sqrt(
+          Math.pow(user.current_live_location_lat! - spot.lat, 2) +
+          Math.pow(user.current_live_location_lng! - spot.lng, 2)
+        );
+        return distance < 0.002;
+      });
+
+      marker.addTo(map);
+      newTribeSpotMarkers.push(marker);
     });
 
     setTribeSpotMarkers(newTribeSpotMarkers);

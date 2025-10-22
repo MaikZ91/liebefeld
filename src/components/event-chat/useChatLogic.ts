@@ -11,8 +11,6 @@ import { useEventNotifications } from '@/hooks/useEventNotifications';
 import { createEventNotificationMessage, getNewEventsFromIds } from '@/utils/eventNotificationUtils';
 import { useEventContext } from '@/contexts/EventContext';
 import { useDailyPerfectDay } from '@/hooks/useDailyPerfectDay';
-import { behaviorTracking } from '@/utils/behaviorTracking';
-import { useLocationAware } from '@/hooks/useLocationAware';
 
 // Define a key for localStorage to track if the app has been launched before
 const APP_LAUNCHED_KEY = 'app_launched_before';
@@ -37,19 +35,13 @@ export const useChatLogic = (
   const [globalQueries, setGlobalQueries] = useState<string[]>([]);
   const [showRecentQueries, setShowRecentQueries] = useState(false);
   const [isHeartActive, setIsHeartActive] = useState(false);
-  const [hasUserSentFirstMessage, setHasUserSentFirstMessage] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState<Array<{ role: string; content: string }>>([]);
-  const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
-  const [isStreamingResponse, setIsStreamingResponse] = useState(false);
+  const [hasUserSentFirstMessage, setHasUserSentFirstMessage] = useState(false); 
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const welcomeMessageShownRef = useRef(false);
   const appLaunchedBeforeRef = useRef(false);
   const isSendingRef = useRef(false);
-  
-  // Location awareness
-  const { location, requestLocation, hasPermission } = useLocationAware();
   // Removed typingTimeoutRef as it's not needed for AI typing simulation during user input
   
 
@@ -485,131 +477,22 @@ export const useChatLogic = (
     setMessages(prev => [...prev, panelMessage]);
     
     try {
-      // Use streaming response
-      setIsStreamingResponse(true);
-      let streamedText = '';
+      const responseHtml = await generateResponse(message, events, isHeartActive);
       
-      const botMessageId = `bot-${Date.now()}`;
-      const botMessage: ChatMessage = {
-        id: botMessageId,
-        isUser: false,
-        text: '',
-        html: '',
-        timestamp: new Date().toISOString()
-      };
-      
-      setMessages(prev => [...prev, botMessage]);
-
-      // Normalize city for the AI function (e.g., "BI" -> "Bielefeld")
-      const storedCityName = localStorage.getItem('selectedCityName');
-      const selectedCityToSend = storedCityName || (selectedCity?.toLowerCase() === 'bi' ? 'Bielefeld' : selectedCity);
-      
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-event-chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-        },
-        body: JSON.stringify({
-          query: message,
-          selectedCity: selectedCityToSend,
-          currentDate: new Date().toISOString().split('T')[0],
-          userInterests: behaviorTracking.getTopCategories(),
-          userLocations: behaviorTracking.getTopLocations(),
-          conversationHistory,
-          userLocation: location
-        })
-      });
-
-      // Check if response is streaming or JSON
-      const contentType = response.headers.get('content-type');
-      const isStream = contentType?.includes('text/event-stream');
-
-      if (isStream) {
-        // Handle streaming response
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
-
-        if (reader) {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
-
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                try {
-                  const jsonStr = line.slice(6);
-                  if (jsonStr === '[DONE]') continue;
-                  
-                  const json = JSON.parse(jsonStr);
-                  const content = json.choices?.[0]?.delta?.content;
-                  
-                  if (content) {
-                    streamedText += content;
-                    setMessages(prev => prev.map(msg => 
-                      msg.id === botMessageId 
-                        ? { ...msg, html: streamedText }
-                        : msg
-                    ));
-                  }
-                } catch (e) {
-                  // Skip invalid JSON
-                }
-              }
-            }
-          }
-        }
-      } else {
-        // Handle regular JSON response
-        const data = await response.json();
-        streamedText = data.response || 'Keine Antwort erhalten.';
-        setMessages(prev => prev.map(msg => 
-          msg.id === botMessageId 
-            ? { ...msg, html: streamedText }
-            : msg
-        ));
-      }
-      
-      // Update conversation history
-      setConversationHistory(prev => [
-        ...prev,
-        { role: 'user', content: message },
-        { role: 'assistant', content: streamedText }
-      ]);
-      
-      // Generate follow-up suggestions based on the conversation
-      const suggestions = generateFollowUpSuggestions(message, streamedText);
-      setFollowUpSuggestions(suggestions);
-      
-      // Extract rich event data from relevant events for export/share
-      setMessages(prev => prev.map(msg => 
-        msg.id === botMessageId 
-          ? { 
-              ...msg, 
-              richEvents: relevantEvents.slice(0, 12).map(e => ({
-                id: e.id,
-                title: e.title,
-                date: e.date,
-                time: e.time,
-                location: e.location || '',
-                category: e.category,
-                link: e.link,
-                image_url: e.image_url,
-                description: e.description,
-                likes: e.likes || 0,
-                city: e.city
-              }))
-            }
-          : msg
-      ));
-      
+      // If callback provided, use it instead of adding to chat
       if (onAiResponseReceived) {
-        onAiResponseReceived(streamedText);
+        onAiResponseReceived(responseHtml);
+      } else {
+        const botMessage: ChatMessage = {
+          id: `bot-${Date.now()}`,
+          isUser: false,
+          text: 'Hier sind weitere Details zu den Events.',
+          html: responseHtml,
+          timestamp: new Date().toISOString()
+        };
+        
+        setMessages(prev => [...prev, botMessage]);
       }
-      
     } catch (error) {
       console.error('[useChatLogic] Error generating response:', error);
       
@@ -624,54 +507,10 @@ export const useChatLogic = (
       
       setMessages(prev => [...prev, errorMessage]);
     } finally {
-      setIsTyping(false);
-      setIsStreamingResponse(false);
-      isSendingRef.current = false;
+      setIsTyping(false); // Stop typing after response
+      isSendingRef.current = false; // Reset flag
     }
   };
-
-  // Generate follow-up suggestions based on the conversation
-  const generateFollowUpSuggestions = (userQuery: string, aiResponse: string): string[] => {
-    const suggestions: string[] = [];
-    const lowerQuery = userQuery.toLowerCase();
-    const lowerResponse = aiResponse.toLowerCase();
-    
-    // Context-aware suggestions
-    if (lowerQuery.includes('heute')) {
-      suggestions.push('Was läuft morgen?', 'Zeig mir Events am Wochenende');
-    } else if (lowerQuery.includes('sport')) {
-      suggestions.push('Zeig mir Kreativ-Events', 'Was läuft heute Abend?');
-    } else if (lowerQuery.includes('musik') || lowerQuery.includes('konzert')) {
-      suggestions.push('Zeig mir Partys', 'Was kostet nichts?');
-    }
-    
-    // Location-based suggestions
-    if (location && hasPermission) {
-      suggestions.push('Events in meiner Nähe');
-    }
-    
-    // Always add personalization option
-    if (!lowerQuery.includes('perfekt')) {
-      suggestions.push('Mein perfekter Tag in Liebefeld');
-    }
-    
-    return suggestions.slice(0, 3);
-  };
-
-  // Track event interactions for recommendations
-  const handleEventLike = useCallback((eventId: string, event: Event) => {
-    behaviorTracking.trackLike(eventId, event.category, event.location);
-    toast.success('Event gespeichert! Wir lernen deine Vorlieben.');
-  }, []);
-
-  const handleEventRSVP = useCallback((eventId: string, event: Event) => {
-    behaviorTracking.trackRSVP(eventId, event.category, event.location);
-    toast.success('Du bist dabei! Event zu deinem Kalender hinzugefügt.');
-  }, []);
-
-  const handleEventView = useCallback((eventId: string, event: Event) => {
-    behaviorTracking.trackView(eventId, event.category, event.location);
-  }, []);
 
   const handleDateSelect = (date: string) => {
     const prompt = `Welche Events gibt es am ${date}?`;

@@ -31,9 +31,7 @@ serve(async (req) => {
       nextWeekEnd, 
       userInterests, 
       userLocations, 
-      selectedCity,
-      conversationHistory = [],
-      userLocation = null
+      selectedCity 
     } = await req.json()
 
     console.log(`[ai-event-chat] START execution for query: "${query}"`);
@@ -64,9 +62,8 @@ serve(async (req) => {
       .limit(500);
 
     // Apply city filter at database level
-    const cityLower = selectedCity?.toLowerCase();
-    if (cityLower === 'bielefeld' || cityLower === 'bi') {
-      console.log(`[ai-event-chat] Applying DB filter for 'Bielefeld' (includes null city, 'bi', and 'bielefeld').`);
+    if (selectedCity && selectedCity.toLowerCase() === 'bielefeld') {
+      console.log(`[ai-event-chat] Applying DB filter for 'Bielefeld' (includes null city and 'bi').`);
       eventsQuery = eventsQuery.or('city.is.null,city.ilike.bielefeld,city.ilike.bi');
     } else if (selectedCity) {
       console.log(`[ai-event-chat] Applying DB filter for city: ${selectedCity}`);
@@ -238,22 +235,20 @@ ${JSON.stringify(filteredEvents.slice(0, 50), null, 2)}`;
 
     console.log('[ai-event-chat] Sending request to Open Router API with Gemini model...');
 
-    // Build conversation messages with history
-    const messages = [
-      { role: "system", content: systemPrompt },
-      ...conversationHistory.map((msg: any) => ({
-        role: msg.role,
-        content: msg.content
-      })),
-      { role: "user", content: query }
-    ];
-
     const payload = {
       model: "google/gemini-2.0-flash-lite-001",
-      messages: messages,
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt
+        },
+        {
+          role: "user", 
+          content: query
+        }
+      ],
       temperature: 0.3,
-      max_tokens: 1024,
-      stream: true
+      max_tokens: 1024
     };
 
     console.log(`[ai-event-chat] Full payload being sent: ${JSON.stringify(payload)}`);
@@ -275,21 +270,15 @@ ${JSON.stringify(filteredEvents.slice(0, 50), null, 2)}`;
       throw new Error(`OpenRouter API error: ${openRouterResponse.status} - ${errorText}`);
     }
 
-    // Stream the response back to the client
-    const stream = openRouterResponse.body;
-    if (!stream) {
-      throw new Error('No response stream available');
-    }
+    const aiResponse = await openRouterResponse.json();
+    console.log('[ai-event-chat] Received response from OpenRouter API');
 
-    console.log('[ai-event-chat] Streaming response back to client');
+    const responseContent = aiResponse.choices?.[0]?.message?.content || 'Entschuldige, ich konnte keine Antwort generieren.';
 
-    return new Response(stream, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
+    return new Response(JSON.stringify({
+      response: responseContent
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
