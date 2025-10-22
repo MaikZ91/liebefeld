@@ -41,6 +41,7 @@ interface FullPageChatBotProps {
   externalInput?: string;
   setExternalInput?: (value: string) => void;
   onExternalSendHandlerChange?: (handler: ((input?: string | any) => Promise<void>) | null) => void; // Updated handler type
+  embedded?: boolean; // when true, fit parent height (used in Heatmap drawer)
 }
 
 const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
@@ -55,7 +56,8 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   hideInput = false,
   externalInput = '',
   setExternalInput,
-  onExternalSendHandlerChange
+  onExternalSendHandlerChange,
+  embedded = false
 }) => {
   // Use global chat preferences context
   const { activeCategory, setActiveCategory } = useChatPreferences();
@@ -360,7 +362,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   }, [chatContainerRef, activeChatModeValue, filteredCommunityMessages.length, typingUsers.length]);
 
   return (
-    <div className="flex flex-col h-screen min-h-0 bg-gradient-to-br from-gray-950 via-black to-gray-900">
+    <div className={embedded ? "flex flex-col h-full min-h-0 bg-gradient-to-br from-gray-950 via-black to-gray-900" : "flex flex-col h-screen min-h-0 bg-gradient-to-br from-gray-950 via-black to-gray-900"}>
       {/* Filter UI für Community Chat - immer sichtbar wenn Community-Modus */}
       {activeChatModeValue === 'community' && (
         <div className="sticky top-0 z-[60] bg-black/40 backdrop-blur-xl border-b border-red-500/20">
