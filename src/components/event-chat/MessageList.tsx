@@ -137,6 +137,22 @@ const MessageList: React.FC<MessageListProps> = ({
                   )}
                 </div>
                 
+                {/* Rich Event Cards - Interactive Event Cards */}
+                {message.richEvents && message.richEvents.length > 0 && onEventLike && onEventRSVP && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {message.richEvents.slice(0, 4).map((event) => (
+                      <RichEventCard
+                        key={event.id}
+                        event={event}
+                        onLike={(eventId) => onEventLike(eventId, event)}
+                        onRSVP={(eventId) => onEventRSVP(eventId, event)}
+                        isLiked={false}
+                        attendeeCount={event.likes || 0}
+                      />
+                    ))}
+                  </div>
+                )}
+                
                 {/* Follow-up Suggestions after last bot message */}
                 {isLastBotMessage && followUpSuggestions.length > 0 && onFollowUpSelect && (
                   <FollowUpSuggestions 

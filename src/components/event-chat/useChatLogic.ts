@@ -584,6 +584,28 @@ export const useChatLogic = (
       const suggestions = generateFollowUpSuggestions(message, streamedText);
       setFollowUpSuggestions(suggestions);
       
+      // Extract rich event data from relevant events for export/share
+      setMessages(prev => prev.map(msg => 
+        msg.id === botMessageId 
+          ? { 
+              ...msg, 
+              richEvents: relevantEvents.slice(0, 12).map(e => ({
+                id: e.id,
+                title: e.title,
+                date: e.date,
+                time: e.time,
+                location: e.location || '',
+                category: e.category,
+                link: e.link,
+                image_url: e.image_url,
+                description: e.description,
+                likes: e.likes || 0,
+                city: e.city
+              }))
+            }
+          : msg
+      ));
+      
       if (onAiResponseReceived) {
         onAiResponseReceived(streamedText);
       }
