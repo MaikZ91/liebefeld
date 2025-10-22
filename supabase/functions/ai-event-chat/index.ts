@@ -31,7 +31,9 @@ serve(async (req) => {
       nextWeekEnd, 
       userInterests, 
       userLocations, 
-      selectedCity 
+      selectedCity,
+      conversationHistory = [],
+      userLocation = null
     } = await req.json()
 
     console.log(`[ai-event-chat] START execution for query: "${query}"`);
@@ -235,20 +237,22 @@ ${JSON.stringify(filteredEvents.slice(0, 50), null, 2)}`;
 
     console.log('[ai-event-chat] Sending request to Open Router API with Gemini model...');
 
+    // Build conversation messages with history
+    const messages = [
+      { role: "system", content: systemPrompt },
+      ...conversationHistory.map((msg: any) => ({
+        role: msg.role,
+        content: msg.content
+      })),
+      { role: "user", content: query }
+    ];
+
     const payload = {
       model: "google/gemini-2.0-flash-lite-001",
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt
-        },
-        {
-          role: "user", 
-          content: query
-        }
-      ],
+      messages: messages,
       temperature: 0.3,
-      max_tokens: 1024
+      max_tokens: 1024,
+      stream: true
     };
 
     console.log(`[ai-event-chat] Full payload being sent: ${JSON.stringify(payload)}`);
@@ -270,15 +274,21 @@ ${JSON.stringify(filteredEvents.slice(0, 50), null, 2)}`;
       throw new Error(`OpenRouter API error: ${openRouterResponse.status} - ${errorText}`);
     }
 
-    const aiResponse = await openRouterResponse.json();
-    console.log('[ai-event-chat] Received response from OpenRouter API');
+    // Stream the response back to the client
+    const stream = openRouterResponse.body;
+    if (!stream) {
+      throw new Error('No response stream available');
+    }
 
-    const responseContent = aiResponse.choices?.[0]?.message?.content || 'Entschuldige, ich konnte keine Antwort generieren.';
+    console.log('[ai-event-chat] Streaming response back to client');
 
-    return new Response(JSON.stringify({
-      response: responseContent
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    return new Response(stream, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
     });
 
   } catch (error) {
