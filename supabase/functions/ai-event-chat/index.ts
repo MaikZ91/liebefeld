@@ -194,8 +194,14 @@ Gruppiere nach Kategorien in GROßBUCHSTABEN:
 **KREATIVITÄT** 🎨
 
 Pro Event:
-• [Uhrzeit] **[Titel]** ${filteredEvents.some(e => (e.likes || 0) > 5) ? '⭐ wenn >5 Likes' : ''}
-  📍 [Location] | ${filteredEvents.some(e => e.link) ? '🔗 [Link falls vorhanden]' : ''}
+• [Uhrzeit] - Wenn Event einen Link hat: <a href="[link]" target="_blank" class="text-red-500 hover:text-red-400">[Titel]</a>, sonst nur: **[Titel]**
+  📍 [Location] ${filteredEvents.some(e => (e.likes || 0) > 5) ? '⭐ wenn >5 Likes' : ''}
+
+LINK-REGEL:
+- Zeige NIEMALS rohe URLs im Text
+- Wenn Event.link vorhanden: Mache den Titel klickbar mit HTML <a> Tag
+- Nutze immer: target="_blank" und class="text-red-500 hover:text-red-400"
+- Wenn kein Link: Zeige Titel nur fett ohne Link
 
 WICHTIG:
 - "Sonstiges" → AUSGEHEN
