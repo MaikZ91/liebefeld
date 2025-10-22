@@ -1331,7 +1331,7 @@ const EventHeatmap: React.FC = () => {
         <div className="p-1 bg-black/15 backdrop-blur-sm rounded-full">
           <div className="flex flex-col items-center gap-1">
             <span className="text-white/60 text-[8px]">{timeRange[0]}h</span>
-            <div className="h-16 w-4">
+            <div className="h-28 w-4">
               <Slider
                 value={timeRange}
                 onValueChange={setTimeRange}
