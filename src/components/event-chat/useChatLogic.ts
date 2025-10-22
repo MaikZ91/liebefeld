@@ -20,7 +20,8 @@ export const useChatLogic = (
   fullPage: boolean = false,
   activeChatModeValue: 'ai' | 'community' = 'ai',
   onDateFilterChange?: (date: Date) => void,
-  onCategoryFilterChange?: (category: string) => void
+  onCategoryFilterChange?: (category: string) => void,
+  onAiResponseReceived?: (response: string) => void
 ) => {
   // Get events and selectedCity from EventContext instead of props
   const { events, selectedCity } = useEventContext();
@@ -478,15 +479,20 @@ export const useChatLogic = (
     try {
       const responseHtml = await generateResponse(message, events, isHeartActive);
       
-      const botMessage: ChatMessage = {
-        id: `bot-${Date.now()}`,
-        isUser: false,
-        text: 'Hier sind weitere Details zu den Events.',
-        html: responseHtml,
-        timestamp: new Date().toISOString()
-      };
-      
-      setMessages(prev => [...prev, botMessage]);
+      // If callback provided, use it instead of adding to chat
+      if (onAiResponseReceived) {
+        onAiResponseReceived(responseHtml);
+      } else {
+        const botMessage: ChatMessage = {
+          id: `bot-${Date.now()}`,
+          isUser: false,
+          text: 'Hier sind weitere Details zu den Events.',
+          html: responseHtml,
+          timestamp: new Date().toISOString()
+        };
+        
+        setMessages(prev => [...prev, botMessage]);
+      }
     } catch (error) {
       console.error('[useChatLogic] Error generating response:', error);
       

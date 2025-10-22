@@ -123,6 +123,9 @@ const EventHeatmap: React.FC = () => {
     isOpen: boolean;
   } | null>(null);
 
+  // AI Response State for Heatmap
+  const [aiResponse, setAiResponse] = useState<string | null>(null);
+  const [showAiResponse, setShowAiResponse] = useState(false);
 
   // Callback to update heatmap date filter from AI chat
   const handleDateFilterFromChat = useCallback((date: Date) => {
@@ -136,7 +139,15 @@ const EventHeatmap: React.FC = () => {
     toast.success(`Kategorie-Filter aktualisiert auf ${category}`);
   }, []);
 
-  const chatLogic = useChatLogic(false, 'ai', handleDateFilterFromChat, handleCategoryFilterFromChat);
+  // Callback to receive AI response directly in heatmap
+  const handleAiResponseReceived = useCallback((response: string) => {
+    setAiResponse(response);
+    setShowAiResponse(true);
+    // Auto-hide after 15 seconds
+    setTimeout(() => setShowAiResponse(false), 15000);
+  }, []);
+
+  const chatLogic = useChatLogic(false, 'ai', handleDateFilterFromChat, handleCategoryFilterFromChat, handleAiResponseReceived);
 
   const mapRef = useRef<HTMLDivElement>(null);
 
@@ -1407,6 +1418,39 @@ const EventHeatmap: React.FC = () => {
           color: white !important;
         }
       `}</style>
+
+      {/* AI Response Card */}
+      {showAiResponse && aiResponse && (
+        <div className="fixed top-20 left-4 right-4 md:left-auto md:right-4 md:w-[500px] z-[1100] animate-fade-in">
+          <Card className="bg-black/90 backdrop-blur-sm border-2 border-red-500/50 shadow-2xl">
+            <div className="p-4">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-red-500" />
+                  </div>
+                  <span className="text-white font-semibold">MIA</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowAiResponse(false)}
+                  className="h-8 w-8 p-0 hover:bg-red-500/20 text-gray-400 hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              {/* Content */}
+              <div 
+                className="text-white text-sm max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-red-500/50 scrollbar-track-transparent pr-2"
+                dangerouslySetInnerHTML={{ __html: aiResponse }}
+              />
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Central Avatar Modal */}
       {showCentralAvatar && (
