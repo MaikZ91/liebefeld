@@ -24,6 +24,7 @@ const EventSwipeMode: React.FC<EventSwipeModeProps> = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState<'left' | 'right' | null>(null);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   const currentEvent = events[currentIndex];
 
@@ -31,6 +32,7 @@ const EventSwipeMode: React.FC<EventSwipeModeProps> = ({
     if (open) {
       setCurrentIndex(0);
       setDirection(null);
+      setIsDescriptionExpanded(false);
     }
   }, [open]);
 
@@ -142,9 +144,30 @@ const EventSwipeMode: React.FC<EventSwipeModeProps> = ({
             <h2 className="text-2xl font-bold text-foreground">{currentEvent.title}</h2>
 
             {currentEvent.description && (
-              <p className="text-muted-foreground text-sm line-clamp-3">
-                {currentEvent.description}
-              </p>
+              <div className="space-y-2">
+                <p className={`text-muted-foreground text-sm ${isDescriptionExpanded ? '' : 'line-clamp-3'}`}>
+                  {currentEvent.description}
+                </p>
+                {currentEvent.description.length > 150 && (
+                  <button
+                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                    className="text-primary text-sm font-medium hover:underline"
+                  >
+                    {isDescriptionExpanded ? 'Weniger anzeigen' : 'Mehr anzeigen'}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {currentEvent.link && (
+              <a
+                href={currentEvent.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary text-sm font-medium hover:underline flex items-center gap-1"
+              >
+                Zum Event →
+              </a>
             )}
 
             <div className="space-y-2 text-sm">
