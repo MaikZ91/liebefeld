@@ -1563,7 +1563,7 @@ const EventHeatmap: React.FC = () => {
           
           {/* Chat Drawer */}
           <div className="fixed bottom-0 left-0 right-0 z-[1200] animate-slide-in-bottom">
-            <div className="bg-gradient-to-t from-black via-gray-950/95 to-gray-900/90 backdrop-blur-2xl rounded-t-3xl shadow-2xl border-t-2 border-red-500/30 max-h-[55vh] flex flex-col">
+            <div className="bg-gradient-to-t from-black via-gray-950/95 to-gray-900/90 backdrop-blur-2xl rounded-t-3xl shadow-2xl border-t-2 border-red-500/30 max-h-[45vh] flex flex-col">
               
               {/* Drag Handle */}
               <div className="flex justify-center py-3 cursor-pointer" onClick={() => setShowAIChat(false)}>
