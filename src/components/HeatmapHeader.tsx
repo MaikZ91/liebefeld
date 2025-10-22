@@ -111,18 +111,10 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
         </div>
       </div>
       
-      {/* Heart button - shown below header when MIA closed */}
+      {/* Buttons below header when MIA closed - Heart button removed */}
       {!showSearchBar && (
         <div className="px-4 pb-2 pt-2 flex gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="bg-black/95 text-white border-gray-700 hover:bg-gray-800"
-            onClick={onOpenSwipeMode}
-            title="Event Swipe Modus"
-          >
-            <Heart className="h-5 w-5" />
-          </Button>
+          {/* Heart button temporarily removed */}
         </div>
       )}
       
@@ -209,17 +201,9 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
             </Popover>
           </div>
           
-          {/* Heart button - shown below chat input when MIA open */}
+          {/* Heart button removed when MIA open */}
           <div className="px-4 pb-4 flex gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="bg-black/95 text-white border-gray-700 hover:bg-gray-800"
-              onClick={onOpenSwipeMode}
-              title="Event Swipe Modus"
-            >
-              <Heart className="h-5 w-5" />
-            </Button>
+            {/* Heart button temporarily removed */}
           </div>
         </>
       )}
