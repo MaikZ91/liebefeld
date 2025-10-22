@@ -18,7 +18,8 @@ const USER_SENT_FIRST_MESSAGE_KEY = 'user_sent_first_message';
 
 export const useChatLogic = (
   fullPage: boolean = false,
-  activeChatModeValue: 'ai' | 'community' = 'ai'
+  activeChatModeValue: 'ai' | 'community' = 'ai',
+  onDateFilterChange?: (date: Date) => void
 ) => {
   // Get events and selectedCity from EventContext instead of props
   const { events, selectedCity } = useEventContext();
@@ -351,10 +352,18 @@ export const useChatLogic = (
 
     if (lowercaseMessage.includes('heute') || lowercaseMessage.includes('today')) {
       relevantEvents = getEventsForDay(events, currentDate);
+      // Update heatmap filter to today
+      if (onDateFilterChange) {
+        onDateFilterChange(currentDate);
+      }
     } else if (lowercaseMessage.includes('morgen') || lowercaseMessage.includes('tomorrow')) {
       const tomorrow = new Date(currentDate);
       tomorrow.setDate(currentDate.getDate() + 1);
       relevantEvents = getEventsForDay(events, tomorrow);
+      // Update heatmap filter to tomorrow
+      if (onDateFilterChange) {
+        onDateFilterChange(tomorrow);
+      }
     }
      else if (lowercaseMessage.includes('wochenende') || lowercaseMessage.includes('weekend')) {
       const [startOfWeek, endOfWeek] = getWeekRange(currentDate);

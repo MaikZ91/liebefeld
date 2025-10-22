@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
@@ -124,7 +124,13 @@ const EventHeatmap: React.FC = () => {
   } | null>(null);
 
 
-  const chatLogic = useChatLogic();
+  // Callback to update heatmap date filter from AI chat
+  const handleDateFilterFromChat = useCallback((date: Date) => {
+    setSelectedDate(date);
+    toast.success(`Karte aktualisiert auf ${format(date, 'dd.MM.yyyy')}`);
+  }, []);
+
+  const chatLogic = useChatLogic(false, 'ai', handleDateFilterFromChat);
 
   const mapRef = useRef<HTMLDivElement>(null);
 
