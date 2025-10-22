@@ -80,13 +80,13 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={handleMiaIconClick}
-                className="relative bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-full px-3 py-2 h-10 flex items-center gap-2 shrink-0 shadow-lg shadow-red-500/40 hover:shadow-red-500/60 transition-all hover:scale-105"
+                className="relative bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-full px-2.5 py-1.5 h-8 flex items-center gap-1.5 shrink-0 shadow-lg shadow-red-500/40 hover:shadow-red-500/60 transition-all hover:scale-105"
               >
                 <div className="absolute inset-0 bg-red-500/20 rounded-full blur-md"></div>
-                <Avatar className="h-6 w-6 relative z-10 ring-2 ring-white/20">
+                <Avatar className="h-5 w-5 relative z-10 ring-2 ring-white/20">
                   <AvatarImage src={miaAvatarUrl} alt="MIA" />
                 </Avatar>
-                <span className="text-sm font-bold relative z-10">MIA</span>
+                <span className="text-xs font-bold relative z-10">MIA</span>
               </Button>
             )}
           </div>
