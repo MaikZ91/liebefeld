@@ -517,40 +517,56 @@ export const useChatLogic = (
         })
       });
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
+      // Check if response is streaming or JSON
+      const contentType = response.headers.get('content-type');
+      const isStream = contentType?.includes('text/event-stream');
 
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+      if (isStream) {
+        // Handle streaming response
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
 
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
+        if (reader) {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const jsonStr = line.slice(6);
-                if (jsonStr === '[DONE]') continue;
-                
-                const json = JSON.parse(jsonStr);
-                const content = json.choices?.[0]?.delta?.content;
-                
-                if (content) {
-                  streamedText += content;
-                  setMessages(prev => prev.map(msg => 
-                    msg.id === botMessageId 
-                      ? { ...msg, html: streamedText }
-                      : msg
-                  ));
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const jsonStr = line.slice(6);
+                  if (jsonStr === '[DONE]') continue;
+                  
+                  const json = JSON.parse(jsonStr);
+                  const content = json.choices?.[0]?.delta?.content;
+                  
+                  if (content) {
+                    streamedText += content;
+                    setMessages(prev => prev.map(msg => 
+                      msg.id === botMessageId 
+                        ? { ...msg, html: streamedText }
+                        : msg
+                    ));
+                  }
+                } catch (e) {
+                  // Skip invalid JSON
                 }
-              } catch (e) {
-                // Skip invalid JSON
               }
             }
           }
         }
+      } else {
+        // Handle regular JSON response
+        const data = await response.json();
+        streamedText = data.response || 'Keine Antwort erhalten.';
+        setMessages(prev => prev.map(msg => 
+          msg.id === botMessageId 
+            ? { ...msg, html: streamedText }
+            : msg
+        ));
       }
       
       // Update conversation history
