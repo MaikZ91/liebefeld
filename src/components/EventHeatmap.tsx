@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, Send, Filter, FilterX, MessageSquare, CalendarIcon } from 'lucide-react';
+import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, Send, Filter, FilterX, MessageSquare, CalendarIcon, Heart } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 
 import { format, parseISO } from 'date-fns';
@@ -45,6 +45,7 @@ import { geocodeLocation, loadCachedCoordinates, geocodeMultipleLocations } from
 import TribeFinder from './TribeFinder';
 import { eventChatService } from '@/services/eventChatService';
 import EventChatWindow from '@/components/event-chat/EventChatWindow';
+import EventSwipeMode from './EventSwipeMode';
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -93,6 +94,7 @@ const EventHeatmap: React.FC = () => {
   const [isTribeFinderOpen, setIsTribeFinderOpen] = useState(false);
   const [selectedTribeSpot, setSelectedTribeSpot] = useState<{name: string, lat: number, lng: number} | null>(null);
   const [isTribeSpotDialogOpen, setIsTribeSpotDialogOpen] = useState(false);
+  const [isSwipeModeOpen, setIsSwipeModeOpen] = useState(false);
 
   // Declare central avatar states at the top level to ensure scope
   const [centralAvatarUsername, setCentralAvatarUsername] = useState('');
@@ -1228,7 +1230,7 @@ const EventHeatmap: React.FC = () => {
 
 
       {/* Button to toggle Filter Panel - moved up */}
-      <div className="fixed top-36 left-4 z-[1001]">
+      <div className="fixed top-36 left-4 z-[1001] flex gap-2">
         <Button
           variant="outline"
           size="icon"
@@ -1237,6 +1239,15 @@ const EventHeatmap: React.FC = () => {
           title={showFilterPanel ? "Filter ausblenden" : "Filter anzeigen"}
         >
           {showFilterPanel ? <FilterX className="h-5 w-5" /> : <Filter className="h-5 w-5" />}
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          className="bg-black/95 text-white border-gray-700 hover:bg-gray-800"
+          onClick={() => setIsSwipeModeOpen(true)}
+          title="Event Swipe Modus"
+        >
+          <Heart className="h-5 w-5" />
         </Button>
       </div>
 
@@ -1663,6 +1674,14 @@ const EventHeatmap: React.FC = () => {
           onClose={() => setEventChatWindow(null)}
         />
       )}
+
+      {/* Event Swipe Mode */}
+      <EventSwipeMode
+        open={isSwipeModeOpen}
+        onOpenChange={setIsSwipeModeOpen}
+        events={filteredEvents}
+        onLikeEvent={handleEventLike}
+      />
     </div>
   );
 };
