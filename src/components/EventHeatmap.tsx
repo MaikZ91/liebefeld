@@ -1211,45 +1211,30 @@ const EventHeatmap: React.FC = () => {
   return (
     <div className="relative w-full h-full overflow-hidden" style={{ height: '100dvh' }}>
       {/* Live Ticker Header */}
-      <HeatmapHeader selectedCity={selectedCity} chatInputProps={{
-        input: aiChatInput,
-        setInput: setAiChatInput,
-        handleSendMessage: handleAIChatSend,
-        isTyping: chatLogic.isTyping,
-        onKeyDown: chatLogic.handleKeyPress,
-        onChange: chatLogic.handleInputChange,
-        isHeartActive: chatLogic.isHeartActive,
-        handleHeartClick: chatLogic.handleHeartClick,
-        globalQueries: chatLogic.globalQueries,
-        toggleRecentQueries: chatLogic.toggleRecentQueries,
-        inputRef: chatLogic.inputRef,
-        onAddEvent: handleOpenEventFormForModal, // Use the no-argument function here
-        showAnimatedPrompts: !aiChatInput.trim(),
-        activeChatModeValue: "ai"
-      }} />
+      <HeatmapHeader 
+        selectedCity={selectedCity} 
+        chatInputProps={{
+          input: aiChatInput,
+          setInput: setAiChatInput,
+          handleSendMessage: handleAIChatSend,
+          isTyping: chatLogic.isTyping,
+          onKeyDown: chatLogic.handleKeyPress,
+          onChange: chatLogic.handleInputChange,
+          isHeartActive: chatLogic.isHeartActive,
+          handleHeartClick: chatLogic.handleHeartClick,
+          globalQueries: chatLogic.globalQueries,
+          toggleRecentQueries: chatLogic.toggleRecentQueries,
+          inputRef: chatLogic.inputRef,
+          onAddEvent: handleOpenEventFormForModal,
+          showAnimatedPrompts: !aiChatInput.trim(),
+          activeChatModeValue: "ai"
+        }}
+        showFilterPanel={showFilterPanel}
+        onToggleFilterPanel={() => setShowFilterPanel(prev => !prev)}
+        onOpenSwipeMode={() => setIsSwipeModeOpen(true)}
+      />
 
 
-      {/* Button to toggle Filter Panel - moved up */}
-      <div className="fixed top-36 left-4 z-[1001] flex gap-2">
-        <Button
-          variant="outline"
-          size="icon"
-          className="bg-black/95 text-white border-gray-700 hover:bg-gray-800"
-          onClick={() => setShowFilterPanel(prev => !prev)}
-          title={showFilterPanel ? "Filter ausblenden" : "Filter anzeigen"}
-        >
-          {showFilterPanel ? <FilterX className="h-5 w-5" /> : <Filter className="h-5 w-5" />}
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="bg-black/95 text-white border-gray-700 hover:bg-gray-800"
-          onClick={() => setIsSwipeModeOpen(true)}
-          title="Event Swipe Modus"
-        >
-          <Heart className="h-5 w-5" />
-        </Button>
-      </div>
 
 
       {/* Filter Panel (Conditional Rendering) */}
