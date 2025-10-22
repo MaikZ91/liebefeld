@@ -1500,27 +1500,35 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* AI Chat Panel */}
+      {/* AI Chat Panel - Modern Glassmorphism Design */}
       {showAIChat && (
-        <div className="absolute bottom-0 left-0 right-0 z-[1000] bg-black/95 backdrop-blur-md h-96">
-          {/* Panel Header */}
-          <div className="flex items-center justify-between p-4 border-b border-black-700">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-white-400" />
-              <span className="text-white font-medium">AI Event Chat</span>
+        <div className="absolute bottom-0 left-0 right-0 z-[1000] bg-gradient-to-t from-black via-gray-950 to-transparent backdrop-blur-2xl h-[500px] shadow-2xl">
+          {/* Panel Header with MIA Branding */}
+          <div className="flex items-center justify-between p-4 border-b border-red-500/30 bg-black/40 backdrop-blur-sm">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="absolute inset-0 bg-red-500/30 rounded-full blur-md animate-pulse"></div>
+                <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-lg shadow-red-500/50">
+                  <MessageSquare className="w-5 h-5 text-white" />
+                </div>
+              </div>
+              <div>
+                <span className="text-white font-bold text-lg tracking-tight">MIA</span>
+                <div className="text-xs text-red-400 font-medium">Event Assistentin</div>
+              </div>
             </div>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setShowAIChat(false)}
-              className="text-white hover:bg-black-700"
+              className="text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all"
             >
               <X className="w-5 h-5" />
             </Button>
           </div>
 
-          {/* AI Chat Content */}
-          <div className="h-full overflow-hidden">
+          {/* AI Chat Content with improved styling */}
+          <div className="h-full overflow-hidden bg-gradient-to-b from-transparent to-black/20">
             <FullPageChatBot
               chatLogic={chatLogic}
               activeChatModeValue="ai"
