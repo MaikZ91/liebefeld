@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X, Heart, ThumbsDown, MapPin, Clock, Calendar, Users } from 'lucide-react';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Event } from '@/types/eventTypes';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -75,7 +76,10 @@ const EventSwipeMode: React.FC<EventSwipeModeProps> = ({
   if (!currentEvent) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md bg-background border-border p-0">
+        <DialogContent className="max-w-md bg-background border-border p-0 z-[9999]">
+          <VisuallyHidden>
+            <DialogTitle>Event Swipe Modus</DialogTitle>
+          </VisuallyHidden>
           <div className="p-8 text-center">
             <p className="text-muted-foreground">Keine weiteren Events verfügbar</p>
             <Button 
@@ -95,7 +99,10 @@ const EventSwipeMode: React.FC<EventSwipeModeProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md bg-background border-border p-0 overflow-hidden">
+      <DialogContent className="max-w-md bg-background border-border p-0 overflow-hidden z-[9999]">
+        <VisuallyHidden>
+          <DialogTitle>Event Swipe Modus - {currentEvent.title}</DialogTitle>
+        </VisuallyHidden>
         <Button
           variant="ghost"
           size="icon"
