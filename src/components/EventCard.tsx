@@ -1,12 +1,13 @@
 import React, { useState, memo } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
-import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign } from 'lucide-react';
+import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign, ThumbsDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useEventContext } from '@/contexts/EventContext';
 import EventLikeButton from "./EventLikeButton";
 import EventLikeAvatars from './event-chat/EventLikeAvatars';
+import { dislikeService } from '@/services/dislikeService';
 
 interface EventCardProps {
   event: Event;
@@ -84,6 +85,18 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     setIsLiking(true);
     await handleLikeEvent(event.id);
     setTimeout(() => setIsLiking(false), 250);
+  };
+
+  const handleDislike = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!event?.id) {
+      console.error("[DISLIKE HANDLER] Kein Event-ID! Kann Dislike nicht ausführen.", event);
+      return;
+    }
+
+    await dislikeService.dislikeEvent(event.id, event.location);
+    window.location.reload();
   };
 
   const handleLinkClick = (e: React.MouseEvent) => {
@@ -189,22 +202,33 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
               {icon}
             </Badge>
 
-            <div className="flex flex-col items-end gap-1">
-              <EventLikeButton
-                likes={currentLikes}
-                isLiking={isLiking}
-                onLike={handleLike}
-                small
-              />
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDislike}
+                className="h-6 w-6 p-0 hover:bg-red-500/20"
+              >
+                <ThumbsDown className="w-3 h-3 text-red-400" />
+              </Button>
               
-              {/* Like Avatars for compact view */}
-              {event.liked_by_users && event.liked_by_users.length > 0 && (
-                <EventLikeAvatars 
-                  likedByUsers={event.liked_by_users} 
-                  maxVisible={2}
-                  size="xs"
+              <div className="flex flex-col items-end gap-1">
+                <EventLikeButton
+                  likes={currentLikes}
+                  isLiking={isLiking}
+                  onLike={handleLike}
+                  small
                 />
-              )}
+                
+                {/* Like Avatars for compact view */}
+                {event.liked_by_users && event.liked_by_users.length > 0 && (
+                  <EventLikeAvatars 
+                    likedByUsers={event.liked_by_users} 
+                    maxVisible={2}
+                    size="xs"
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -288,21 +312,32 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
             {!monochrome && event.category}
           </Badge>
 
-          <div className="flex flex-col items-end gap-2">
-            <EventLikeButton
-              likes={currentLikes}
-              isLiking={isLiking}
-              onLike={handleLike}
-            />
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDislike}
+              className="h-8 w-8 p-0 hover:bg-red-500/20"
+            >
+              <ThumbsDown className="w-4 h-4 text-red-400" />
+            </Button>
             
-            {/* Like Avatars for normal view */}
-            {event.liked_by_users && event.liked_by_users.length > 0 && (
-              <EventLikeAvatars 
-                likedByUsers={event.liked_by_users} 
-                maxVisible={3}
-                size="sm"
+            <div className="flex flex-col items-end gap-2">
+              <EventLikeButton
+                likes={currentLikes}
+                isLiking={isLiking}
+                onLike={handleLike}
               />
-            )}
+              
+              {/* Like Avatars for normal view */}
+              {event.liked_by_users && event.liked_by_users.length > 0 && (
+                <EventLikeAvatars 
+                  likedByUsers={event.liked_by_users} 
+                  maxVisible={3}
+                  size="sm"
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>
