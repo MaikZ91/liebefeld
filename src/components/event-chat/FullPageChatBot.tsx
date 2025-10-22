@@ -360,23 +360,23 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   }, [chatContainerRef, activeChatModeValue, filteredCommunityMessages.length, typingUsers.length]);
 
   return (
-    <div className="flex flex-col h-screen min-h-0">
+    <div className="flex flex-col h-screen min-h-0 bg-gradient-to-br from-gray-950 via-black to-gray-900">
       {/* Filter UI für Community Chat - immer sichtbar wenn Community-Modus */}
       {activeChatModeValue === 'community' && (
-        <div className="sticky top-0 z-[60] bg-background/80 backdrop-blur supports-[backdrop-filter]:backdrop-blur-sm border-b border-border">
-          <div className="px-4 py-2">
+        <div className="sticky top-0 z-[60] bg-black/40 backdrop-blur-xl border-b border-red-500/20">
+          <div className="px-4 py-3">
             <div className="flex gap-2 overflow-x-auto scrollbar-none flex-nowrap">
               {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => {
                 const isActive = messageFilter.includes(category);
                 const isAll = category === 'alle';
-                const chipBase = 'h-7 px-3 text-xs rounded-full transition-colors';
+                const chipBase = 'h-8 px-4 text-xs font-medium rounded-full transition-all duration-200';
                 if (isAll) {
                   return (
                     <Button
                       key={category}
                       variant="ghost"
                       size="sm"
-                      className={`${chipBase} ${isActive ? 'bg-white/10 text-white border border-white/20' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                      className={`${chipBase} ${isActive ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-500/30' : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/10'}`}
                       onClick={() => setActiveCategory('alle')}
                     >
                       #{category}
@@ -390,10 +390,9 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                     key={category}
                     variant="ghost"
                     size="sm"
-                    style={isActive ? { ...colors.bgStyle, ...colors.borderStyle, color: 'hsl(var(--foreground))' } : { ...colors.borderStyle, ...colors.textStyle }}
-                    className={`${chipBase} border ${!isActive ? 'hover:bg-white/5' : ''}`}
+                    style={isActive ? { ...colors.bgStyle, ...colors.borderStyle, color: 'white' } : { ...colors.borderStyle, ...colors.textStyle }}
+                    className={`${chipBase} border shadow-sm ${!isActive ? 'bg-white/5 hover:bg-white/10' : 'shadow-lg'}`}
                     onClick={() => {
-                      // Update category using context
                       setActiveCategory(category);
                     }}
                   >
@@ -407,7 +406,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       )}
 
 
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none bg-black">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none bg-gradient-to-b from-transparent to-black/20">
         {activeChatModeValue === 'ai' ? (
           <div className={hideInput ? "pt-4 px-3" : "pt-32 px-3"}> 
             <MessageList
@@ -417,6 +416,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               messagesEndRef={messagesEndRef}
               examplePrompts={examplePrompts}
               handleExamplePromptClick={handleExamplePromptClick}
+              onJoinEventChat={onJoinEventChat}
             />
             <div ref={messagesEndRef} />
           </div>
@@ -430,15 +430,20 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
             <div
               ref={chatContainerRef}
-              className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4 bg-black"
+              className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4"
             >
-              <div className="space-y-2 py-4 pb-20">
+              <div className="space-y-3 py-4 pb-20">
                 {filteredCommunityMessages.length === 0 && !communityLoading && !communityError && (
-                  <div className="text-center text-gray-400 py-4">
-                    {messageFilter.includes('alle') 
-                      ? 'Noch keine Nachrichten im Community Chat. Starte die Unterhaltung!'
-                      : `Keine Nachrichten in den gewählten Kategorien gefunden.`
-                    }
+                  <div className="text-center py-8">
+                    <div className="inline-flex flex-col items-center gap-2 px-6 py-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl">
+                      <div className="text-white/60 text-sm">
+                        {messageFilter.includes('alle') 
+                          ? 'Noch keine Nachrichten im Community Chat'
+                          : `Keine Nachrichten in den gewählten Kategorien`
+                        }
+                      </div>
+                      <div className="text-white/40 text-xs">Starte die Unterhaltung!</div>
+                    </div>
                   </div>
                 )}
 
@@ -448,7 +453,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                    const timeAgo = formatTime(message.created_at);
 
                    return (
-                       <div key={message.id} className="mb-1 w-full group">
+                       <div key={`${message.id}-${index}`} className="mb-2 w-full group">
                          {!isConsecutive && (
                            <div className="flex items-center mb-1">
                               <Avatar 
