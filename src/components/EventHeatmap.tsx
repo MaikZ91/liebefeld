@@ -1326,52 +1326,80 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* Kategorie Filter Dropdown - Links oben */}
+      {/* Kategorie Filter - Horizontal ausklappbar */}
       <div className="fixed top-24 left-3 z-[1002]">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-black border border-white/10"
-            >
-              {selectedCategory === 'alle' ? '🌟 Alle' : 
-               selectedCategory === 'ausgehen' ? '🎉 Ausgehen' :
-               selectedCategory === 'sport' ? '⚽ Sport' :
-               '🎨 Kreativität'}
-              <ChevronDown className="w-3 h-3 ml-1.5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent 
-            align="start" 
-            className="bg-black border-white/20 text-white min-w-[140px] z-[9999]"
+        <div className="flex items-center gap-2">
+          {/* Aktueller Button */}
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => setShowFilterPanel(!showFilterPanel)}
+            className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-black border border-white/10 transition-all"
           >
-            <DropdownMenuItem 
-              onClick={() => handleCategoryChange('alle')}
-              className="text-sm cursor-pointer hover:bg-white/20 focus:bg-white/20"
-            >
-              🌟 Alle
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => handleCategoryChange('ausgehen')}
-              className="text-sm cursor-pointer hover:bg-white/20 focus:bg-white/20"
-            >
-              🎉 Ausgehen
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => handleCategoryChange('sport')}
-              className="text-sm cursor-pointer hover:bg-white/20 focus:bg-white/20"
-            >
-              ⚽ Sport
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => handleCategoryChange('kreativität')}
-              className="text-sm cursor-pointer hover:bg-white/20 focus:bg-white/20"
-            >
-              🎨 Kreativität
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            {selectedCategory === 'alle' ? '🌟 Alle' : 
+             selectedCategory === 'ausgehen' ? '🎉 Ausgehen' :
+             selectedCategory === 'sport' ? '⚽ Sport' :
+             '🎨 Kreativität'}
+          </Button>
+          
+          {/* Horizontale Kategorie-Optionen */}
+          {showFilterPanel && (
+            <div className="flex gap-2 animate-slide-in-right">
+              {selectedCategory !== 'alle' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    handleCategoryChange('alle');
+                    setShowFilterPanel(false);
+                  }}
+                  className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-white/20 border border-white/10 transition-all"
+                >
+                  🌟 Alle
+                </Button>
+              )}
+              {selectedCategory !== 'ausgehen' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    handleCategoryChange('ausgehen');
+                    setShowFilterPanel(false);
+                  }}
+                  className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-white/20 border border-white/10 transition-all"
+                >
+                  🎉 Ausgehen
+                </Button>
+              )}
+              {selectedCategory !== 'sport' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    handleCategoryChange('sport');
+                    setShowFilterPanel(false);
+                  }}
+                  className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-white/20 border border-white/10 transition-all"
+                >
+                  ⚽ Sport
+                </Button>
+              )}
+              {selectedCategory !== 'kreativität' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    handleCategoryChange('kreativität');
+                    setShowFilterPanel(false);
+                  }}
+                  className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-white/20 border border-white/10 transition-all"
+                >
+                  🎨 Kreativität
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Time Slider - Extrem minimal */}
