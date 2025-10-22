@@ -6,8 +6,13 @@ import ChatInput from './event-chat/ChatInput'; // Import ChatInput
 import { Link } from 'react-router-dom'; // Import Link for THE TRIBE text
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
-import { Filter, FilterX, Heart } from 'lucide-react';
+import { Filter, FilterX, Heart, CalendarIcon } from 'lucide-react';
 import TypewriterPrompts from './TypewriterPrompts';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface HeatmapHeaderProps {
   selectedCity?: string;
@@ -43,6 +48,8 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
 }) => {
   const { events, isLoading } = useEvents(selectedCity);
   const [showSearchBar, setShowSearchBar] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const miaAvatarUrl = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png';
 
   const handleMiaIconClick = () => {
@@ -57,6 +64,17 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
     setShowSearchBar(false);
     // Clear input when closing
     chatInputProps?.setInput('');
+  };
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date && chatInputProps) {
+      setSelectedDate(date);
+      setIsCalendarOpen(false);
+      const formattedDate = format(date, 'dd.MM.yyyy', { locale: de });
+      const prompt = `Zeige mir alle Events vom ${formattedDate}`;
+      chatInputProps.setInput(prompt);
+      chatInputProps.handleSendMessage(prompt);
+    }
   };
 
   return (
@@ -174,6 +192,30 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
             >
               🎨 Kreativität
             </Button>
+            
+            {/* Kalender-Picker Button */}
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-black/80 text-white border-red-500/30 hover:bg-red-500/20 hover:border-red-500/50 rounded-full px-4 py-2 text-xs whitespace-nowrap transition-all"
+                >
+                  <CalendarIcon className="w-3.5 h-3.5 mr-1.5" />
+                  Datum wählen
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 bg-gradient-to-br from-gray-900/95 to-black/95 backdrop-blur-xl border border-red-500/20" align="start">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={handleDateSelect}
+                  initialFocus
+                  locale={de}
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           
           {/* Filter and Heart buttons - shown below chat input when MIA open */}
