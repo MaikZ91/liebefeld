@@ -499,6 +499,10 @@ export const useChatLogic = (
       };
       
       setMessages(prev => [...prev, botMessage]);
+
+      // Normalize city for the AI function (e.g., "BI" -> "Bielefeld")
+      const storedCityName = localStorage.getItem('selectedCityName');
+      const selectedCityToSend = storedCityName || (selectedCity?.toLowerCase() === 'bi' ? 'Bielefeld' : selectedCity);
       
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-event-chat`, {
         method: 'POST',
@@ -508,7 +512,7 @@ export const useChatLogic = (
         },
         body: JSON.stringify({
           query: message,
-          selectedCity,
+          selectedCity: selectedCityToSend,
           currentDate: new Date().toISOString().split('T')[0],
           userInterests: behaviorTracking.getTopCategories(),
           userLocations: behaviorTracking.getTopLocations(),
