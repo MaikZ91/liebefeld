@@ -1303,29 +1303,6 @@ const EventHeatmap: React.FC = () => {
                   className="w-full"
                 />
               </div>
-
-              {/* Time Slider */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-white text-sm">
-                  <Clock className="w-4 h-4 text-red-500" />
-                  <span>Zeit: ab {getTimeFromSlider(timeRange[0])} Uhr</span>
-                </div>
-                <Slider
-                  value={timeRange}
-                  onValueChange={setTimeRange}
-                  max={23}
-                  min={0}
-                  step={1}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-gray-400">
-                  <span>00:00</span>
-                  <span>12:00</span>
-                  <span>23:00</span>
-                </div>
-              </div>
-
-
             </div>
           </Card>
 
@@ -1348,6 +1325,31 @@ const EventHeatmap: React.FC = () => {
           </Card>
         </div>
       )}
+
+      {/* Time Slider - Always visible on map */}
+      <div className="fixed bottom-24 right-4 z-[1002] w-64 animate-fade-in">
+        <Card className="p-3 bg-black/80 backdrop-blur-md border-red-500/20 shadow-lg">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-white text-xs font-medium">
+              <Clock className="w-3.5 h-3.5 text-red-500" />
+              <span>ab {getTimeFromSlider(timeRange[0])} Uhr</span>
+            </div>
+            <Slider
+              value={timeRange}
+              onValueChange={setTimeRange}
+              max={23}
+              min={0}
+              step={1}
+              className="w-full"
+            />
+            <div className="flex justify-between text-[10px] text-gray-400">
+              <span>00:00</span>
+              <span>12:00</span>
+              <span>23:00</span>
+            </div>
+          </div>
+        </Card>
+      </div>
 
       {/* Removed "Find YOUR Tribe" Button (now part of Community Features) */}
       {/* Removed "Ich bin hier" Button (now part of Community Features) */}
