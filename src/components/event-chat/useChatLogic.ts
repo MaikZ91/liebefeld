@@ -384,6 +384,11 @@ export const useChatLogic = (
         (new Date(e.date).toISOString().split('T')[0] === saturday.toISOString().split('T')[0]) ||
         (new Date(e.date).toISOString().split('T')[0] === sunday.toISOString().split('T')[0])
       );
+      
+      // Update heatmap filter to Saturday (weekend start)
+      if (onDateFilterChange) {
+        onDateFilterChange(saturday);
+      }
     }
      else {
       relevantEvents = getFutureEvents(events);
