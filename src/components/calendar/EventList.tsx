@@ -21,15 +21,17 @@ interface EventListProps {
   toggleNewEvents: () => void;
   favoriteCount?: number;
   onShowEventForm?: () => void;
+  onDislike?: (eventId: string) => void;
 }
 
 
-const MemoizedEventCard = memo(({ event, date, onSelectEvent, isTopEvent, isNewEvent }: {
+const MemoizedEventCard = memo(({ event, date, onSelectEvent, isTopEvent, isNewEvent, onDislike }: {
   event: Event;
   date: Date;
   onSelectEvent: (event: Event, date: Date) => void;
   isTopEvent: boolean;
   isNewEvent: boolean;
+  onDislike?: (eventId: string) => void;
 }) => {
   const handleClick = useCallback(() => {
     onSelectEvent(event, date);
@@ -56,6 +58,7 @@ const MemoizedEventCard = memo(({ event, date, onSelectEvent, isTopEvent, isNewE
           onClick={handleClick}
           className={`${isTopEvent ? 'border-l-2 border-white' : isNewEvent ? 'border-l-2 border-gray-400' : ''} relative w-full`}
           monochrome
+          onDislike={onDislike}
         />
       </div>
     </div>
@@ -72,7 +75,8 @@ const EventList: React.FC<EventListProps> = memo(({
   toggleFavorites,
   toggleNewEvents,
   favoriteCount = 0,
-  onShowEventForm
+  onShowEventForm,
+  onDislike
 }) => {
   console.log('📋 [EventList] Rendering with events.length:', events.length, 'showFavorites:', showFavorites);
   
@@ -224,6 +228,7 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
                           onSelectEvent={onSelectEvent}
                           isTopEvent={isTopEvent}
                           isNewEvent={isNewEvent}
+                          onDislike={onDislike}
                         />
                       );
                     })}

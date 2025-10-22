@@ -16,6 +16,17 @@ import FavoritesView from './calendar/FavoritesView';
 import EventForm from './EventForm';
 import { useEventContext, cities } from '@/contexts/EventContext';
 import { toast } from 'sonner';
+import { dislikeService } from '@/services/dislikeService';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from '@/components/ui/alert-dialog';
 
 interface EventCalendarProps {
   defaultView?: "calendar" | "list";
@@ -62,6 +73,14 @@ const EventCalendar = ({ defaultView = "list", onJoinEventChat }: EventCalendarP
   const [view, setView] = useState<"calendar" | "list">(defaultView);
   const [showEventForm, setShowEventForm] = useState(false);
   const [showNewEvents, setShowNewEvents] = useState(false);
+  const [dislikedEventIds, setDislikedEventIds] = useState<string[]>([]);
+  const [isBlockLocationDialogOpen, setIsBlockLocationDialogOpen] = useState(false);
+  const [locationToBlock, setLocationToBlock] = useState<string | null>(null);
+  
+  // Load disliked events on mount
+  useEffect(() => {
+    setDislikedEventIds(dislikeService.getLocalDislikedEvents());
+  }, []);
   
   // Reset component state when mounting to ensure proper display
   useEffect(() => {
@@ -78,8 +97,21 @@ const EventCalendar = ({ defaultView = "list", onJoinEventChat }: EventCalendarP
     const cityName = cityObject ? cityObject.name : selectedCity;
     const targetCityName = cityName.toLowerCase();
 
+    const blockedLocations = dislikeService.getBlockedLocations();
+
     return events.filter(event => {
       const eventCity = event.city ? event.city.toLowerCase() : null;
+
+      // Filter out disliked events
+      const eventId = event.id || `${event.title}-${event.date}-${event.time}`;
+      if (dislikedEventIds.includes(eventId)) {
+        return false;
+      }
+
+      // Filter out blocked locations
+      if (event.location && blockedLocations.includes(event.location)) {
+        return false;
+      }
 
       // When "Bielefeld" is selected, also show events where city is not set.
       if (targetCityName === 'bielefeld') {
@@ -89,7 +121,7 @@ const EventCalendar = ({ defaultView = "list", onJoinEventChat }: EventCalendarP
       // For other cities, require an exact match.
       return eventCity === targetCityName;
     });
-  }, [events, selectedCity]);
+  }, [events, selectedCity, dislikedEventIds]);
   
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
@@ -193,6 +225,54 @@ const EventCalendar = ({ defaultView = "list", onJoinEventChat }: EventCalendarP
     setShowEventForm(prev => !prev);
   };
 
+  const handleEventDislike = async (eventId: string) => {
+    try {
+      // Find the event to get its location
+      const event = eventsFilteredByCity.find(e => {
+        const eId = e.id || `${e.title}-${e.date}-${e.time}`;
+        return eId === eventId;
+      });
+
+      const result = await dislikeService.dislikeEvent(eventId, event?.location);
+      
+      // Update local state immediately
+      setDislikedEventIds(prev => {
+        if (!prev.includes(eventId)) {
+          return [...prev, eventId];
+        }
+        return prev;
+      });
+      
+      // Check if we should ask about blocking the location
+      if (result.shouldAskBlock && result.location) {
+        setLocationToBlock(result.location);
+        setIsBlockLocationDialogOpen(true);
+      }
+      
+      toast.success("Event ausgeblendet", {
+        description: "Das Event wird nicht mehr angezeigt",
+      });
+    } catch (error) {
+      console.error('Error disliking event:', error);
+      toast.error("Fehler", {
+        description: "Ein Fehler ist aufgetreten",
+      });
+    }
+  };
+
+  const handleBlockLocation = () => {
+    if (locationToBlock) {
+      dislikeService.blockLocation(locationToBlock);
+      setIsBlockLocationDialogOpen(false);
+      setLocationToBlock(null);
+      // Trigger re-render by updating dislikedEventIds
+      setDislikedEventIds([...dislikedEventIds]);
+      toast.success("Ort blockiert", {
+        description: `Alle Events von "${locationToBlock}" werden ausgeblendet`,
+      });
+    }
+  };
+
   const triggerChatbotQuery = (query: string) => {
     if (typeof window !== 'undefined' && (window as any).chatbotQuery) {
       (window as any).chatbotQuery(query);
@@ -258,6 +338,7 @@ const EventCalendar = ({ defaultView = "list", onJoinEventChat }: EventCalendarP
                   toggleNewEvents={toggleNewEvents}
                   favoriteCount={favoriteEvents.length}
                   onShowEventForm={toggleEventForm}
+                  onDislike={handleEventDislike}
                 />
               </div>
             </div>
@@ -308,6 +389,24 @@ const EventCalendar = ({ defaultView = "list", onJoinEventChat }: EventCalendarP
           </TabsContent>
         </Tabs>
       </div>
+      
+      <AlertDialog open={isBlockLocationDialogOpen} onOpenChange={setIsBlockLocationDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ort blockieren?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Du hast bereits 2 Events von "{locationToBlock}" ausgeblendet. 
+              Möchtest du alle zukünftigen Events von diesem Ort automatisch ausblenden?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Nein</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBlockLocation}>
+              Ja, Ort blockieren
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

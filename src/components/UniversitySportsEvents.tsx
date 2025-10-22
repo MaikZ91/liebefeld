@@ -8,11 +8,13 @@ import { Button } from '@/components/ui/button';
 interface UniversitySportsEventsProps {
   events: Event[];
   onEventSelect: (event: Event, date: Date) => void;
+  onDislike?: (eventId: string) => void;
 }
 
 const UniversitySportsEvents: React.FC<UniversitySportsEventsProps> = ({
   events,
   onEventSelect,
+  onDislike,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -45,6 +47,7 @@ const UniversitySportsEvents: React.FC<UniversitySportsEventsProps> = ({
               event={event}
               compact={true}
               onClick={() => onEventSelect(event, new Date(event.date))}
+              onDislike={onDislike}
             />
           ))}
         </div>
