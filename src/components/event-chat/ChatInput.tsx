@@ -125,7 +125,24 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     }
   }, [localInput]); // Re-run when localInput changes
 
-  const suggestions = [];
+  const suggestions = activeChatModeValue === 'ai' && showAnimatedPrompts ? [
+    "Frage MIA nach Events...",
+    "Welche Konzerte finden heute statt?",
+    "Was kann ich am Wochenende machen?",
+    "Gibt es Events für Kinder?",
+    "Zeige mir Sportveranstaltungen",
+    "Welche Partys steigen heute Abend?",
+    "Gibt es kreative Workshops?",
+    "Was läuft im Theater?",
+    "Welche Festivals sind geplant?",
+    "Zeige mir kostenlose Events",
+    "Gibt es Kunstausstellungen?",
+    "Welche Comedy-Shows laufen?",
+    "Was kann ich mit Freunden unternehmen?",
+    "Gibt es Outdoor-Events?",
+    "Zeige mir kulinarische Events",
+    "Welche Networking-Events gibt es?",
+  ] : [];
 
   const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
   const [displayText, setDisplayText] = useState('');
