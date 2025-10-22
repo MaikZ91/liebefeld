@@ -85,18 +85,8 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
       {/* Search bar - only show when showSearchBar is true */}
       {chatInputProps && showSearchBar && (
         <div className="px-4 pb-4 pt-2">
-          <div className="bg-black rounded-full mx-2 relative">
-            {/* Close button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleCloseSearchBar}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 text-white/60 hover:text-white hover:bg-white/10 rounded-full p-1"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-            
-            <ChatInput
+        <div className="bg-black rounded-full mx-2 relative">
+          <ChatInput
               input={chatInputProps.input}
               setInput={chatInputProps.setInput}
               handleSendMessage={chatInputProps.handleSendMessage}
