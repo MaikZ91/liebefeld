@@ -19,7 +19,8 @@ const USER_SENT_FIRST_MESSAGE_KEY = 'user_sent_first_message';
 export const useChatLogic = (
   fullPage: boolean = false,
   activeChatModeValue: 'ai' | 'community' = 'ai',
-  onDateFilterChange?: (date: Date) => void
+  onDateFilterChange?: (date: Date) => void,
+  onCategoryFilterChange?: (category: string) => void
 ) => {
   // Get events and selectedCity from EventContext instead of props
   const { events, selectedCity } = useEventContext();
@@ -433,28 +434,35 @@ export const useChatLogic = (
       }
     }
     
-    const categoryMapping = {
-      konzert: "Konzert",
-      party: "Party",
-      ausstellung: "Ausstellung",
-      sport: "Sport",
-      workshop: "Workshop",
-      kultur: "Kultur",
-      film: "Film",
-      theater: "Theater",
-      lesung: "Lesung"
+    const categoryMapping: { [key: string]: { displayName: string, filterGroup: string } } = {
+      konzert: { displayName: "Konzert", filterGroup: "ausgehen" },
+      party: { displayName: "Party", filterGroup: "ausgehen" },
+      ausstellung: { displayName: "Ausstellung", filterGroup: "kreativität" },
+      sport: { displayName: "Sport", filterGroup: "sport" },
+      workshop: { displayName: "Workshop", filterGroup: "kreativität" },
+      kultur: { displayName: "Kultur", filterGroup: "ausgehen" },
+      film: { displayName: "Film", filterGroup: "ausgehen" },
+      theater: { displayName: "Theater", filterGroup: "kreativität" },
+      lesung: { displayName: "Lesung", filterGroup: "kreativität" }
     };
 
     let detectedCategory: string | null = null;
-    for (const [keyword, category] of Object.entries(categoryMapping)) {
+    let detectedFilterGroup: string | null = null;
+    for (const [keyword, categoryData] of Object.entries(categoryMapping)) {
       if (lowercaseMessage.includes(keyword)) {
-        detectedCategory = category;
+        detectedCategory = categoryData.displayName;
+        detectedFilterGroup = categoryData.filterGroup;
         break;
       }
     }
 
     if (detectedCategory) {
       relevantEvents = relevantEvents.filter(event => event.category && event.category.toLowerCase() === detectedCategory.toLowerCase());
+      
+      // Update heatmap category filter
+      if (onCategoryFilterChange && detectedFilterGroup) {
+        onCategoryFilterChange(detectedFilterGroup);
+      }
     }
     
     const panelMessage: ChatMessage = {

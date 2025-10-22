@@ -130,7 +130,13 @@ const EventHeatmap: React.FC = () => {
     toast.success(`Karte aktualisiert auf ${format(date, 'dd.MM.yyyy')}`);
   }, []);
 
-  const chatLogic = useChatLogic(false, 'ai', handleDateFilterFromChat);
+  // Callback to update heatmap category filter from AI chat
+  const handleCategoryFilterFromChat = useCallback((category: string) => {
+    handleCategoryChange(category as FilterGroup);
+    toast.success(`Kategorie-Filter aktualisiert auf ${category}`);
+  }, []);
+
+  const chatLogic = useChatLogic(false, 'ai', handleDateFilterFromChat, handleCategoryFilterFromChat);
 
   const mapRef = useRef<HTMLDivElement>(null);
 
