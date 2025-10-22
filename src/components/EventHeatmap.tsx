@@ -1506,21 +1506,25 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* AI Chat Drawer - Temporarily disabled */}
-      {/* {showAIChat && (
+      {/* AI Chat Drawer - Modern Bottom Sheet Design */}
+      {showAIChat && (
         <>
+          {/* Backdrop */}
           <div 
             className="fixed inset-0 z-[1100] bg-black/60 backdrop-blur-sm animate-fade-in"
             onClick={() => setShowAIChat(false)}
           />
           
+          {/* Chat Drawer */}
           <div className="fixed bottom-0 left-0 right-0 z-[1200] animate-slide-in-bottom">
             <div className="bg-gradient-to-t from-black via-gray-950/95 to-gray-900/90 backdrop-blur-2xl rounded-t-3xl shadow-2xl border-t-2 border-red-500/30 max-h-[85vh] flex flex-col">
               
+              {/* Drag Handle */}
               <div className="flex justify-center py-3 cursor-pointer" onClick={() => setShowAIChat(false)}>
                 <div className="w-12 h-1.5 bg-white/20 rounded-full hover:bg-white/30 transition-colors"></div>
               </div>
               
+              {/* Header */}
               <div className="px-6 pb-4 flex items-center justify-between border-b border-red-500/20">
                 <div className="flex items-center gap-3">
                   <div className="relative">
@@ -1544,6 +1548,7 @@ const EventHeatmap: React.FC = () => {
                 </Button>
               </div>
 
+              {/* Chat Content */}
               <div className="flex-1 overflow-hidden min-h-0">
                 <FullPageChatBot
                   chatLogic={chatLogic}
@@ -1558,7 +1563,7 @@ const EventHeatmap: React.FC = () => {
             </div>
           </div>
         </>
-      )} */}
+      )}
 
 
       {/* Event Form Dialog */}
