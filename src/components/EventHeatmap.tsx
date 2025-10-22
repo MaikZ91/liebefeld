@@ -34,6 +34,7 @@ import { useUserProfile } from '@/hooks/chat/useUserProfile';
 import { getSelectedCategory, saveSelectedCategory } from '@/utils/heatmapPreferences';
 import { messageService } from '@/services/messageService';
 import { Input } from '@/components/ui/input';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { UserProfile } from '@/types/chatTypes';
 import { getInitials } from '@/utils/chatUIUtils';
 import PrivateChat from '@/components/users/PrivateChat';
@@ -1363,9 +1364,9 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* Default Event Display - Show 3 Events directly above navbar */}
-      {!showPerfectDayPanel && !showAIChat && filteredEvents.length > 0 && showEventPanels && (
-        <div className="fixed bottom-16 left-0 right-0 z-[1000]">
+      {/* Default Event Display - Always visible above navbar */}
+      {!showPerfectDayPanel && filteredEvents.length > 0 && showEventPanels && (
+        <div className="fixed bottom-16 left-0 right-0 z-[1300] pointer-events-auto">
           {/* Default Event Panel Display */}
           <div className="px-2 py-4">
             <ThreeEventDisplay
@@ -1575,9 +1576,10 @@ const EventHeatmap: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <div className="absolute inset-0 bg-red-500/30 rounded-full blur-lg animate-pulse"></div>
-                    <div className="relative w-12 h-12 rounded-full bg-gradient-to-br from-red-600 via-red-700 to-red-900 flex items-center justify-center shadow-lg shadow-red-500/50 ring-2 ring-red-400/30">
-                      <MessageSquare className="w-6 h-6 text-white" strokeWidth={2.5} />
-                    </div>
+                    <Avatar className="relative w-12 h-12 ring-2 ring-red-400/30 shadow-lg shadow-red-500/50">
+                      <AvatarImage src="/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png" />
+                      <AvatarFallback className="bg-gradient-to-br from-red-600 to-red-800 text-white font-bold">MIA</AvatarFallback>
+                    </Avatar>
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-white tracking-tight">MIA</h2>
