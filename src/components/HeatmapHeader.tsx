@@ -92,48 +92,74 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
         </div>
       </div>
       
-      {/* Filter and Heart buttons - always shown below header */}
-      <div className="px-4 pb-2 pt-2 flex gap-2">
-        <Button
-          variant="outline"
-          size="icon"
-          className="bg-black/95 text-white border-gray-700 hover:bg-gray-800"
-          onClick={onToggleFilterPanel}
-          title={showFilterPanel ? "Filter ausblenden" : "Filter anzeigen"}
-        >
-          {showFilterPanel ? <FilterX className="h-5 w-5" /> : <Filter className="h-5 w-5" />}
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="bg-black/95 text-white border-gray-700 hover:bg-gray-800"
-          onClick={onOpenSwipeMode}
-          title="Event Swipe Modus"
-        >
-          <Heart className="h-5 w-5" />
-        </Button>
-      </div>
-      
-      {/* Search bar - only show when showSearchBar is true */}
-      {chatInputProps && showSearchBar && (
-        <div className="px-4 pb-4 pt-2">
-          <ChatInput
-            input={chatInputProps.input}
-            setInput={chatInputProps.setInput}
-            handleSendMessage={chatInputProps.handleSendMessage}
-            isTyping={chatInputProps.isTyping}
-            onKeyDown={chatInputProps.onKeyDown}
-            onChange={chatInputProps.onChange}
-            isHeartActive={chatInputProps.isHeartActive}
-            handleHeartClick={chatInputProps.handleHeartClick}
-            globalQueries={chatInputProps.globalQueries}
-            toggleRecentQueries={chatInputProps.toggleRecentQueries}
-            inputRef={chatInputProps.inputRef}
-            onAddEvent={chatInputProps.onAddEvent}
-            showAnimatedPrompts={true}
-            activeChatModeValue="ai"
-          />
+      {/* Filter and Heart buttons - shown below header when MIA closed */}
+      {!showSearchBar && (
+        <div className="px-4 pb-2 pt-2 flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className="bg-black/95 text-white border-gray-700 hover:bg-gray-800"
+            onClick={onToggleFilterPanel}
+            title={showFilterPanel ? "Filter ausblenden" : "Filter anzeigen"}
+          >
+            {showFilterPanel ? <FilterX className="h-5 w-5" /> : <Filter className="h-5 w-5" />}
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="bg-black/95 text-white border-gray-700 hover:bg-gray-800"
+            onClick={onOpenSwipeMode}
+            title="Event Swipe Modus"
+          >
+            <Heart className="h-5 w-5" />
+          </Button>
         </div>
+      )}
+      
+      {/* Search bar and buttons when MIA is open */}
+      {chatInputProps && showSearchBar && (
+        <>
+          <div className="px-4 pb-2 pt-2">
+            <ChatInput
+              input={chatInputProps.input}
+              setInput={chatInputProps.setInput}
+              handleSendMessage={chatInputProps.handleSendMessage}
+              isTyping={chatInputProps.isTyping}
+              onKeyDown={chatInputProps.onKeyDown}
+              onChange={chatInputProps.onChange}
+              isHeartActive={chatInputProps.isHeartActive}
+              handleHeartClick={chatInputProps.handleHeartClick}
+              globalQueries={chatInputProps.globalQueries}
+              toggleRecentQueries={chatInputProps.toggleRecentQueries}
+              inputRef={chatInputProps.inputRef}
+              onAddEvent={chatInputProps.onAddEvent}
+              showAnimatedPrompts={true}
+              activeChatModeValue="ai"
+            />
+          </div>
+          
+          {/* Filter and Heart buttons - shown below chat input when MIA open */}
+          <div className="px-4 pb-4 flex gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="bg-black/95 text-white border-gray-700 hover:bg-gray-800"
+              onClick={onToggleFilterPanel}
+              title={showFilterPanel ? "Filter ausblenden" : "Filter anzeigen"}
+            >
+              {showFilterPanel ? <FilterX className="h-5 w-5" /> : <Filter className="h-5 w-5" />}
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="bg-black/95 text-white border-gray-700 hover:bg-gray-800"
+              onClick={onOpenSwipeMode}
+              title="Event Swipe Modus"
+            >
+              <Heart className="h-5 w-5" />
+            </Button>
+          </div>
+        </>
       )}
     </div>
   );
