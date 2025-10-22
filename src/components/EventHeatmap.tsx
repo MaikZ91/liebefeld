@@ -47,6 +47,7 @@ import TribeFinder from './TribeFinder';
 import { eventChatService } from '@/services/eventChatService';
 import EventChatWindow from '@/components/event-chat/EventChatWindow';
 import EventSwipeMode from './EventSwipeMode';
+import { dislikeService } from '@/services/dislikeService';
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -117,6 +118,10 @@ const EventHeatmap: React.FC = () => {
 
   // NEW STATE FOR PANELS VISIBILITY
   const [showEventPanels, setShowEventPanels] = useState(true);
+  
+  // State for disliked events
+  const [dislikedEventIds, setDislikedEventIds] = useState<string[]>([]);
+
 
   // Event Chat Window State
   const [eventChatWindow, setEventChatWindow] = useState<{
@@ -155,6 +160,22 @@ const EventHeatmap: React.FC = () => {
 
   useEffect(() => {
     loadCachedCoordinates();
+  }, []);
+
+  // Load disliked events on mount
+  useEffect(() => {
+    const loadDislikedEvents = async () => {
+      const username = localStorage.getItem('username');
+      if (username) {
+        try {
+          const dislikedIds = await dislikeService.getDislikedEvents(username);
+          setDislikedEventIds(dislikedIds);
+        } catch (error) {
+          console.error('Error loading disliked events:', error);
+        }
+      }
+    };
+    loadDislikedEvents();
   }, []);
 
   useEffect(() => {
@@ -344,6 +365,12 @@ const EventHeatmap: React.FC = () => {
   const filteredEvents = React.useMemo(() => {
     let filtered = selectedDateFilteredEvents;
 
+    // Filter out disliked events
+    filtered = filtered.filter(event => {
+      const eventId = event.id || `${event.title}-${event.date}-${event.time}`;
+      return !dislikedEventIds.includes(eventId);
+    });
+
     if (selectedCategory !== 'alle') {
       // Special case: "ausgehen" shows all events EXCEPT sport events
       if (selectedCategory === 'ausgehen') {
@@ -381,7 +408,7 @@ const EventHeatmap: React.FC = () => {
     });
 
     return filtered;
-  }, [selectedDateFilteredEvents, selectedCategory, timeRange]);
+  }, [selectedDateFilteredEvents, selectedCategory, timeRange, dislikedEventIds]);
 
   const panelEvents: PanelEvent[] = React.useMemo(() => {
     return filteredEvents.map(event => ({
@@ -1124,6 +1151,28 @@ const EventHeatmap: React.FC = () => {
     }
   };
 
+  const handleEventDislike = async (eventId: string) => {
+    try {
+      const username = localStorage.getItem('username') || 'Anonymous';
+      await dislikeService.dislikeEvent(eventId, username);
+      
+      // Add to local state
+      setDislikedEventIds(prev => [...prev, eventId]);
+      
+      toast({
+        title: "Event ausgeblendet",
+        description: "Das Event wird nicht mehr angezeigt",
+      });
+    } catch (error: any) {
+      console.error('Error disliking event:', error);
+      toast({
+        title: "Fehler",
+        description: "Ein Fehler ist aufgetreten",
+        variant: "destructive"
+      });
+    }
+  };
+
   const togglePanelHeight = () => {
     if (panelHeight === 'collapsed') {
       setPanelHeight('partial');
@@ -1447,6 +1496,7 @@ const EventHeatmap: React.FC = () => {
               panelData={panelData}
               onEventSelect={handleEventSelect}
               onLikeEvent={handleEventLike}
+              onDislikeEvent={handleEventDislike}
               onJoinEventChat={handleJoinEventChat}
               className="w-full"
               onSwipeDownToHide={() => setShowEventPanels(false)} // Pass the prop
