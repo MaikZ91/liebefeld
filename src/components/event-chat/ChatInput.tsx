@@ -329,10 +329,8 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
     if (activeChatModeValue === 'community') {
       return 'pl-[50px]'; // Reduziert für nur Plus-Button
     } else {
-      const baseButtons = 2;
-      const historyButton = globalQueries.length > 0 ? 1 : 0;
-      const totalButtons = baseButtons + historyButton;
-      return 'pl-[110px]';
+      // Nur MIA Avatar, keine anderen Buttons mehr
+      return 'pl-[45px]';
     }
   };
 
@@ -360,27 +358,7 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
           
           {activeChatModeValue === 'ai' ? (
             <>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleHeartClick}
-                className={`h-6 w-6 ${isHeartActive ? 'text-red-500' : 'text-red-400'}`}
-                title={isHeartActive ? "Personalisierter Modus aktiv" : "Standard-Modus aktiv"}
-              >
-                <Heart className={`h-3 w-3 ${isHeartActive ? 'fill-red-500' : ''}`} />
-              </Button>
-
-              {globalQueries.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleRecentQueries}
-                  className="h-6 w-6 text-red-400"
-                  title="Community Anfragen"
-                >
-                  <History className="h-3 w-3" />
-                </Button>
-              )}
+              {/* Keine Buttons mehr - nur MIA Avatar */}
             </>
           ) : (
             <>

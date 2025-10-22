@@ -86,29 +86,22 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
       {/* Search bar - only show when showSearchBar is true */}
       {chatInputProps && showSearchBar && (
         <div className="px-4 pb-4 pt-2">
-          <div className="bg-black rounded-[2rem] mx-2 relative p-4">
-            {/* Beta Label */}
-            <div className="mb-3">
-              <span className="text-[10px] font-semibold bg-primary/20 text-primary px-2 py-1 rounded">BETA</span>
-            </div>
-            
-            <ChatInput
-              input={chatInputProps.input}
-              setInput={chatInputProps.setInput}
-              handleSendMessage={chatInputProps.handleSendMessage}
-              isTyping={chatInputProps.isTyping}
-              onKeyDown={chatInputProps.onKeyDown}
-              onChange={chatInputProps.onChange}
-              isHeartActive={chatInputProps.isHeartActive}
-              handleHeartClick={chatInputProps.handleHeartClick}
-              globalQueries={chatInputProps.globalQueries}
-              toggleRecentQueries={chatInputProps.toggleRecentQueries}
-              inputRef={chatInputProps.inputRef}
-              onAddEvent={chatInputProps.onAddEvent}
-              showAnimatedPrompts={true}
-              activeChatModeValue="ai"
-            />
-          </div>
+          <ChatInput
+            input={chatInputProps.input}
+            setInput={chatInputProps.setInput}
+            handleSendMessage={chatInputProps.handleSendMessage}
+            isTyping={chatInputProps.isTyping}
+            onKeyDown={chatInputProps.onKeyDown}
+            onChange={chatInputProps.onChange}
+            isHeartActive={chatInputProps.isHeartActive}
+            handleHeartClick={chatInputProps.handleHeartClick}
+            globalQueries={chatInputProps.globalQueries}
+            toggleRecentQueries={chatInputProps.toggleRecentQueries}
+            inputRef={chatInputProps.inputRef}
+            onAddEvent={chatInputProps.onAddEvent}
+            showAnimatedPrompts={true}
+            activeChatModeValue="ai"
+          />
         </div>
       )}
     </div>
