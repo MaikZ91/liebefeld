@@ -143,8 +143,6 @@ const EventHeatmap: React.FC = () => {
   const handleAiResponseReceived = useCallback((response: string) => {
     setAiResponse(response);
     setShowAiResponse(true);
-    // Auto-hide after 15 seconds
-    setTimeout(() => setShowAiResponse(false), 15000);
   }, []);
 
   const chatLogic = useChatLogic(false, 'ai', handleDateFilterFromChat, handleCategoryFilterFromChat, handleAiResponseReceived);
