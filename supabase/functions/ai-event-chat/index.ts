@@ -51,13 +51,15 @@ serve(async (req) => {
       console.log('[ai-event-chat] No user locations received');
     }
 
-    // Fetch all events from database
-    console.log('[ai-event-chat] Fetching all events from database...');
+    // Fetch all events from database - only future events to improve performance
+    console.log('[ai-event-chat] Fetching events from database...');
     
     let eventsQuery = supabaseClient
       .from('community_events')
       .select('*')
-      .order('date', { ascending: true });
+      .gte('date', currentDate)
+      .order('date', { ascending: true })
+      .limit(500);
 
     // Apply city filter at database level
     if (selectedCity && selectedCity.toLowerCase() === 'bielefeld') {
@@ -176,13 +178,34 @@ serve(async (req) => {
     const categories = [...new Set(filteredEvents.map(event => event.category).filter(Boolean))];
     console.log(`[ai-event-chat] Categories being sent: ${JSON.stringify(categories)}`);
 
-    // Create system prompt
-    const systemPrompt = `Du bist ein Event-Assistent für ${selectedCity || 'Bielefeld'}. Begrüße den Nutzer freundlich je nach Tageszeit. Liste dann alle Events als chronologische Timeline (geordnet nach Uhrzeit) auf. Gruppiere immer nach den 3 Kategorien: Ausgehen, Sport und Kreativität. Die Kategorie wird in GROßBUCHSTABEN in Rot aufgelistet. WICHTIG: Events mit der category "Sonstiges" werden immer der Kategorie "Ausgehen" zugewiesen! WICHTIG, WICHTIG: Wenn Improtheater im Eventname: wird immer der Kategorie "Kreativität" zugewiesen(ignoriere hier die category: Sport). Beschreibe jedes Event kurz, nimm dafür alle Infos die du hast die du hast für jedes Event. Aktuelles Datum: ${currentDate}.
-Es gibt insgesamt ${allEvents.length} Events in der Datenbank für die ausgewählte Stadt. Ich habe dir die ${filteredEvents.length} relevantesten basierend auf deiner Anfrage ausgewählt.
-Die Anzahl der Likes gibt an, wie beliebt ein Event ist.
-Events mit vielen Likes sind besonders beliebt und bekommen oft den Vorzug bei Empfehlungen. Die Likes-Anzahl findest du bei jedem Event. Berücksichtige die Anzahl der Likes für Empfehlungen und markiere besonders beliebte Events passend.
-Hier die Events:
-${JSON.stringify(filteredEvents, null, 2)}`;
+    // Create system prompt with better formatting instructions
+    const systemPrompt = `Du bist MIA, der Event-Guide für ${selectedCity || 'Bielefeld'}. 
+
+ANTWORT-STIL:
+- Sei enthusiastisch, freundlich und persönlich
+- Nutze Emojis passend zu Events (🎉 🎵 🏃 🎨 usw.)
+- Schreibe kurz und knackig
+- Hebe besonders beliebte Events (viele Likes) hervor mit ⭐
+
+FORMAT:
+Gruppiere nach Kategorien in GROßBUCHSTABEN:
+**AUSGEHEN** 🎉
+**SPORT** 🏃
+**KREATIVITÄT** 🎨
+
+Pro Event:
+• [Uhrzeit] **[Titel]** ${filteredEvents.some(e => (e.likes || 0) > 5) ? '⭐ wenn >5 Likes' : ''}
+  📍 [Location] | ${filteredEvents.some(e => e.link) ? '🔗 [Link falls vorhanden]' : ''}
+
+WICHTIG:
+- "Sonstiges" → AUSGEHEN
+- "Improtheater" → KREATIVITÄT (egal was in category steht)
+- Zeige max. 12 Top-Events (sortiert nach Likes wenn >20 Events)
+- Aktuelles Datum: ${currentDate}
+- ${filteredEvents.length} Events gefunden
+
+Events:
+${JSON.stringify(filteredEvents.slice(0, 50), null, 2)}`;
 
     const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
     if (!openRouterApiKey) {
