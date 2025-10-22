@@ -64,8 +64,9 @@ serve(async (req) => {
       .limit(500);
 
     // Apply city filter at database level
-    if (selectedCity && selectedCity.toLowerCase() === 'bielefeld') {
-      console.log(`[ai-event-chat] Applying DB filter for 'Bielefeld' (includes null city and 'bi').`);
+    const cityLower = selectedCity?.toLowerCase();
+    if (cityLower === 'bielefeld' || cityLower === 'bi') {
+      console.log(`[ai-event-chat] Applying DB filter for 'Bielefeld' (includes null city, 'bi', and 'bielefeld').`);
       eventsQuery = eventsQuery.or('city.is.null,city.ilike.bielefeld,city.ilike.bi');
     } else if (selectedCity) {
       console.log(`[ai-event-chat] Applying DB filter for city: ${selectedCity}`);
