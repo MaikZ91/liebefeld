@@ -110,10 +110,13 @@ serve(async (req) => {
       filteredEvents = allEvents.filter(event => event.date === currentDate);
       console.log(`[ai-event-chat] Nach Filterung für "heute": ${filteredEvents.length} Events übrig`);
     } else if (lowerQuery.includes('morgen') || lowerQuery.includes('tomorrow')) {
-      const tomorrow = new Date(currentDate);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      // Fix: Parse date string explicitly and add 1 day
+      const [year, month, day] = currentDate.split('-').map(Number);
+      const tomorrow = new Date(year, month - 1, day + 1);
       const tomorrowStr = tomorrow.toISOString().split('T')[0];
+      console.log(`[ai-event-chat] Anfrage nach Events für morgen (${tomorrowStr}) erkannt`);
       filteredEvents = allEvents.filter(event => event.date === tomorrowStr);
+      console.log(`[ai-event-chat] Nach Filterung für "morgen": ${filteredEvents.length} Events übrig`);
     } else if (lowerQuery.includes('wochenende') || lowerQuery.includes('weekend')) {
       // Get next weekend dates
       const today = new Date(currentDate);
