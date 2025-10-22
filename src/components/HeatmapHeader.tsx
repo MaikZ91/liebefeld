@@ -76,6 +76,7 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
                   <AvatarImage src={miaAvatarUrl} alt="MIA" />
                 </Avatar>
                 <span className="text-xs font-medium">MIA</span>
+                <span className="text-[10px] font-semibold bg-primary/20 text-primary px-1.5 py-0.5 rounded">BETA</span>
               </Button>
             )}
           </div>
