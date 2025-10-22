@@ -25,6 +25,19 @@ const TypewriterPrompt: React.FC<TypewriterPromptProps> = ({
   const loopTimeout = useRef<NodeJS.Timeout | null>(null);
   const cursorTimeout = useRef<NodeJS.Timeout | null>(null);
 
+  const getNextIndex = (prev: number) => {
+    if (shuffledPrompts.length <= 1) return 0;
+    if (prev === 0) {
+      return 1 + Math.floor(Math.random() * (shuffledPrompts.length - 1));
+    }
+    let next = 1 + Math.floor(Math.random() * (shuffledPrompts.length - 1));
+    if (shuffledPrompts.length > 2) {
+      while (next === prev) {
+        next = 1 + Math.floor(Math.random() * (shuffledPrompts.length - 1));
+      }
+    }
+    return next;
+  };
   // Shuffle prompts on mount
   useEffect(() => {
     const shuffleArray = (array: string[]) => {
@@ -36,7 +49,9 @@ const TypewriterPrompt: React.FC<TypewriterPromptProps> = ({
       return shuffled;
     };
     
-    setShuffledPrompts(shuffleArray(prompts));
+    const first = prompts[0];
+    const rest = prompts.slice(1);
+    setShuffledPrompts(first ? [first, ...shuffleArray(rest)] : shuffleArray(prompts));
   }, [prompts]);
 
   // Start typing effect when prompt changes
@@ -58,7 +73,7 @@ const TypewriterPrompt: React.FC<TypewriterPromptProps> = ({
         // Cursor blinkt weiter nach dem Tippen
         cursorTimeout.current = setTimeout(() => {
           loopTimeout.current = setTimeout(() => {
-            setCurrentPromptIndex((idx) => (idx + 1) % shuffledPrompts.length);
+            setCurrentPromptIndex((prev) => getNextIndex(prev));
           }, loopInterval - 1000);
         }, 1000);
       }
