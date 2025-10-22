@@ -75,41 +75,54 @@ const MessageList: React.FC<MessageListProps> = ({
               </div>
             );
           }
-          // HTML Message
+          // HTML Message (AI Response)
           if (message.html) {
             return (
-              <div key={message.id} className="max-w-[85%] rounded-lg bg-black border border-black">
-                <div dangerouslySetInnerHTML={{ __html: message.html }} className="p-3 event-list-container" />
+              <div key={message.id} className="max-w-[85%] rounded-lg bg-gradient-to-br from-gray-900/95 to-black/95 border border-red-500/30 shadow-lg shadow-red-500/10">
+                <div className="flex items-start gap-2 p-3 border-b border-red-500/20">
+                  <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="text-xs text-red-500 font-bold">MIA</span>
+                  </div>
+                  <div className="text-xs text-red-400 font-medium">Event Assistentin</div>
+                </div>
+                <div dangerouslySetInnerHTML={{ __html: message.html }} className="p-4 event-list-container text-white/90" />
               </div>
             );
           }
-          // Standard
+          // Standard Messages
           return (
             <div
               key={message.id}
               className={cn(
-                "max-w-[85%] rounded-lg",
+                "max-w-[85%] rounded-lg shadow-md",
                 message.isUser
-                  ? "bg-black border border-black ml-auto"
-                  : "bg-black border border-black",
-                message.isEventNotification && "border-red-500/50 bg-red-900/10"
+                  ? "bg-gradient-to-br from-red-600 to-red-700 border border-red-500/50 ml-auto"
+                  : "bg-gradient-to-br from-gray-900/95 to-black/95 border border-red-500/30",
+                message.isEventNotification && "border-red-500/50 bg-red-900/20"
               )}
             >
-              <ChatMessage 
-                message={message.text} 
-                isGroup={false} 
-                onDateSelect={handleDateSelect}
-                showDateSelector={message.isUser && message.text.toLowerCase().includes('event')}
-              />
+              <div className="p-3">
+                <ChatMessage 
+                  message={message.text} 
+                  isGroup={false} 
+                  onDateSelect={handleDateSelect}
+                  showDateSelector={message.isUser && message.text.toLowerCase().includes('event')}
+                />
+              </div>
             </div>
           );
         })}
         {isTyping && (
-          <div className="bg-black max-w-[85%] rounded-lg p-3 border border-black">
-            <div className="flex space-x-2 items-center">
-              <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-              <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-              <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+          <div className="bg-gradient-to-br from-gray-900/95 to-black/95 max-w-[85%] rounded-lg p-4 border border-red-500/30 shadow-lg shadow-red-500/10">
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+                <span className="text-xs text-red-500 font-bold">MIA</span>
+              </div>
+              <div className="flex space-x-2 items-center">
+                <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              </div>
             </div>
           </div>
         )}
