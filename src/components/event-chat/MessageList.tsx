@@ -3,12 +3,13 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import ChatMessage from '@/components/chat/ChatMessage';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { MessageListProps } from './types';
 import SwipeableEventPanel from './SwipeableEventPanel';
 import SwipeableLandingPanel from './SwipeableLandingPanel';
 import TypewriterPrompt from './TypewriterPrompt';
 
-import './MessageList.css'; 
+import './MessageList.css';
 
 const MessageList: React.FC<MessageListProps> = ({
   messages,
@@ -29,7 +30,7 @@ const MessageList: React.FC<MessageListProps> = ({
     .filter(m => !['welcome', 'typewriter-prompt', 'landing-slides'].includes(m.id));
 
   return (
-    <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+    <div className="max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
       <div className="space-y-4 pb-4 px-4">
         {/* Optisch schöne Welcome Nachricht */}
         {welcomeMessage && welcomeMessage.html && (
@@ -82,9 +83,10 @@ const MessageList: React.FC<MessageListProps> = ({
             return (
               <div key={message.id} className="rounded-2xl bg-gradient-to-br from-gray-900/70 to-black/70 backdrop-blur-sm border border-red-500/20 shadow-xl overflow-hidden">
                 <div className="flex items-center gap-3 px-4 py-3 border-b border-red-500/10 bg-black/20">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shrink-0 shadow-lg shadow-red-500/30">
-                    <span className="text-xs text-white font-bold">MIA</span>
-                  </div>
+                  <Avatar className="w-8 h-8 shrink-0 shadow-lg shadow-red-500/30">
+                    <AvatarImage src="/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png" />
+                    <AvatarFallback className="bg-gradient-to-br from-red-600 to-red-800 text-xs text-white font-bold">MIA</AvatarFallback>
+                  </Avatar>
                   <div>
                     <div className="text-sm font-semibold text-red-400">MIA</div>
                     <div className="text-xs text-white/50">Event Assistentin</div>
@@ -120,9 +122,10 @@ const MessageList: React.FC<MessageListProps> = ({
         {isTyping && (
           <div className="rounded-2xl bg-gradient-to-br from-gray-900/70 to-black/70 backdrop-blur-sm border border-red-500/20 shadow-xl overflow-hidden max-w-[85%]">
             <div className="flex items-center gap-3 p-4">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shrink-0 shadow-lg shadow-red-500/30">
-                <span className="text-xs text-white font-bold">MIA</span>
-              </div>
+              <Avatar className="w-8 h-8 shrink-0 shadow-lg shadow-red-500/30">
+                <AvatarImage src="/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png" />
+                <AvatarFallback className="bg-gradient-to-br from-red-600 to-red-800 text-xs text-white font-bold">MIA</AvatarFallback>
+              </Avatar>
               <div className="flex space-x-1.5 items-center">
                 <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                 <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
