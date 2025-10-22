@@ -1126,12 +1126,10 @@ const EventHeatmap: React.FC = () => {
   };
 
   const handleAIChatSend = async (messageContent?: string) => {
-    if ((messageContent && messageContent.trim()) || aiChatInput.trim()) {
-      // Don't open chat dialog, just process the message
-      if (aiChatExternalSendHandler) {
-        // Pass aiChatInput to the handler, which expects a string or any
-        await aiChatExternalSendHandler(aiChatInput);
-      }
+    const message = messageContent || aiChatInput;
+    if (message.trim()) {
+      // Process the message directly via chatLogic
+      await chatLogic.handleSendMessage(message);
       setAiChatInput('');
     }
   };
