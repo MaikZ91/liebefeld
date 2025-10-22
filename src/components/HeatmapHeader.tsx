@@ -76,7 +76,6 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
                   <AvatarImage src={miaAvatarUrl} alt="MIA" />
                 </Avatar>
                 <span className="text-xs font-medium">MIA</span>
-                <span className="text-[10px] font-semibold bg-primary/20 text-primary px-1.5 py-0.5 rounded">BETA</span>
               </Button>
             )}
           </div>
@@ -86,8 +85,13 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
       {/* Search bar - only show when showSearchBar is true */}
       {chatInputProps && showSearchBar && (
         <div className="px-4 pb-4 pt-2">
-        <div className="bg-black rounded-full mx-2 relative">
-          <ChatInput
+          <div className="bg-black rounded-full mx-2 relative">
+            {/* Beta Label */}
+            <div className="absolute -top-6 left-4 flex items-center gap-2">
+              <span className="text-[10px] font-semibold bg-primary/20 text-primary px-2 py-1 rounded">BETA</span>
+            </div>
+            
+            <ChatInput
               input={chatInputProps.input}
               setInput={chatInputProps.setInput}
               handleSendMessage={chatInputProps.handleSendMessage}
