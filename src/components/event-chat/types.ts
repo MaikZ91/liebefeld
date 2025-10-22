@@ -15,6 +15,7 @@ export interface ChatMessage {
   slideData?: LandingSlideData; 
   examplePrompts?: string[]; 
   isEventNotification?: boolean;
+  richEvents?: import('@/types/eventTypes').Event[]; // For ExportShareMenu
 }
 
 export interface PanelEventData {
@@ -102,11 +103,19 @@ export interface ChatInputProps {
 export interface MessageListProps {
   messages: ChatMessage[];
   isTyping: boolean;
+  isStreamingResponse?: boolean;
+  followUpSuggestions?: string[];
+  onFollowUpSelect?: (suggestion: string) => void;
   handleDateSelect?: (date: string) => void;
   messagesEndRef?: React.RefObject<HTMLDivElement>;
   examplePrompts?: string[];
   handleExamplePromptClick?: (prompt: string) => void;
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
+  onEventLike?: (eventId: string, event: any) => void;
+  onEventRSVP?: (eventId: string, event: any) => void;
+  location?: { latitude: number; longitude: number; accuracy: number } | null;
+  hasLocationPermission?: boolean | null;
+  onRequestLocation?: () => void;
 }
 
 export interface RecentQueriesProps {

@@ -65,6 +65,9 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     input: aiInput,
     setInput: setAiInput,
     isTyping: aiTyping,
+    isStreamingResponse,
+    conversationHistory,
+    followUpSuggestions,
     globalQueries,
     showRecentQueries,
     setShowRecentQueries,
@@ -79,7 +82,12 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     handleInputChange: aiInputChange,
     handleHeartClick,
     toggleRecentQueries,
-    showAnimatedPrompts 
+    showAnimatedPrompts,
+    handleEventLike,
+    handleEventRSVP,
+    requestLocation,
+    location,
+    hasPermission: hasLocationPermission
   } = chatLogic;
 
   const { selectedCity } = useEventContext();
@@ -412,11 +420,19 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
             <MessageList
               messages={aiMessages}
               isTyping={aiTyping}
+              isStreamingResponse={isStreamingResponse}
+              followUpSuggestions={followUpSuggestions}
+              onFollowUpSelect={(suggestion) => aiSendMessage(suggestion)}
               handleDateSelect={handleDateSelect}
               messagesEndRef={messagesEndRef}
               examplePrompts={examplePrompts}
               handleExamplePromptClick={handleExamplePromptClick}
               onJoinEventChat={onJoinEventChat}
+              onEventLike={handleEventLike}
+              onEventRSVP={handleEventRSVP}
+              location={location}
+              hasLocationPermission={hasLocationPermission}
+              onRequestLocation={requestLocation}
             />
             <div ref={messagesEndRef} />
           </div>
