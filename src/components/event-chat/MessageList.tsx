@@ -30,7 +30,7 @@ const MessageList: React.FC<MessageListProps> = ({
     .filter(m => !['welcome', 'typewriter-prompt', 'landing-slides'].includes(m.id));
 
   return (
-    <div className="max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+    <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
       <div className="space-y-4 pb-4 px-4">
         {/* Optisch schöne Welcome Nachricht */}
         {welcomeMessage && welcomeMessage.html && (
