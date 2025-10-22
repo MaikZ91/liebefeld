@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Users, Heart, MessageSquare, ChevronDown} from 'lucide-react';
+import { Users, Heart, MessageSquare, ChevronDown, X } from 'lucide-react';
 import { PanelEventData, PanelEvent } from './types';
 import { cn } from '@/lib/utils';
 import EventLikeAvatars from './EventLikeAvatars';
@@ -9,6 +9,7 @@ interface ThreeEventDisplayProps {
   panelData: PanelEventData;
   onEventSelect?: (eventId: string) => void;
   onLikeEvent?: (eventId: string) => void;
+  onDislikeEvent?: (eventId: string) => void;
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
   className?: string;
   onSwipeDownToHide?: () => void; // New prop for swipe down gesture
@@ -19,6 +20,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
   panelData,
   onEventSelect,
   onLikeEvent,
+  onDislikeEvent,
   onJoinEventChat,
   className,
   onSwipeDownToHide, // Destructure new prop
@@ -310,6 +312,24 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
                       </Button>
                     )}
                   </div>
+                  
+                  {/* Dislike Button - Bottom Left */}
+                  {onDislikeEvent && 'id' in event && (
+                    <div className="absolute bottom-2 left-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="bg-black/70 hover:bg-red-600/80 text-white rounded-full p-2"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          await onDislikeEvent(event.id);
+                        }}
+                        title="Event ausblenden"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
                   
                   {/* Event Details mit Like Avatars */}
                   <div className="absolute bottom-0 left-0 right-0 p-3">
