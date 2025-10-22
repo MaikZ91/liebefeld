@@ -16,6 +16,7 @@ const TypewriterPrompt: React.FC<TypewriterPromptProps> = ({
   loopInterval = 2500,
   typingSpeed = 80,
 }) => {
+  const [shuffledPrompts, setShuffledPrompts] = useState<string[]>([]);
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
@@ -24,16 +25,32 @@ const TypewriterPrompt: React.FC<TypewriterPromptProps> = ({
   const loopTimeout = useRef<NodeJS.Timeout | null>(null);
   const cursorTimeout = useRef<NodeJS.Timeout | null>(null);
 
+  // Shuffle prompts on mount
+  useEffect(() => {
+    const shuffleArray = (array: string[]) => {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    };
+    
+    setShuffledPrompts(shuffleArray(prompts));
+  }, [prompts]);
+
   // Start typing effect when prompt changes
   useEffect(() => {
+    if (shuffledPrompts.length === 0) return;
+    
     setDisplayedText('');
     setIsTyping(true);
     setShowCursor(true);
     
     let i = 0;
     const typeChar = () => {
-      if (i < prompts[currentPromptIndex].length) {
-        setDisplayedText(prev => prev + prompts[currentPromptIndex][i]);
+      if (i < shuffledPrompts[currentPromptIndex].length) {
+        setDisplayedText(prev => prev + shuffledPrompts[currentPromptIndex][i]);
         i++;
         typingTimeout.current = setTimeout(typeChar, typingSpeed);
       } else {
@@ -41,7 +58,7 @@ const TypewriterPrompt: React.FC<TypewriterPromptProps> = ({
         // Cursor blinkt weiter nach dem Tippen
         cursorTimeout.current = setTimeout(() => {
           loopTimeout.current = setTimeout(() => {
-            setCurrentPromptIndex((idx) => (idx + 1) % prompts.length);
+            setCurrentPromptIndex((idx) => (idx + 1) % shuffledPrompts.length);
           }, loopInterval - 1000);
         }, 1000);
       }
@@ -54,10 +71,12 @@ const TypewriterPrompt: React.FC<TypewriterPromptProps> = ({
       if (loopTimeout.current) clearTimeout(loopTimeout.current);
       if (cursorTimeout.current) clearTimeout(cursorTimeout.current);
     };
-  }, [currentPromptIndex, prompts, typingSpeed, loopInterval]);
+  }, [currentPromptIndex, shuffledPrompts, typingSpeed, loopInterval]);
 
   const handlePromptClick = () => {
-    onPromptClick(prompts[currentPromptIndex]);
+    if (shuffledPrompts.length > 0) {
+      onPromptClick(shuffledPrompts[currentPromptIndex]);
+    }
   };
 
   return (
