@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom'; // Import Link for THE TRIBE text
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { X } from 'lucide-react';
+import TypewriterPrompts from './TypewriterPrompts';
 
 interface HeatmapHeaderProps {
   selectedCity?: string;
@@ -85,10 +86,13 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
       {/* Search bar - only show when showSearchBar is true */}
       {chatInputProps && showSearchBar && (
         <div className="px-4 pb-4 pt-2">
-          <div className="bg-black rounded-full mx-2 relative">
-            {/* Beta Label */}
-            <div className="absolute -top-6 left-4 flex items-center gap-2">
-              <span className="text-[10px] font-semibold bg-primary/20 text-primary px-2 py-1 rounded">BETA</span>
+          <div className="bg-black rounded-[2rem] mx-2 relative p-4">
+            {/* Beta Label and Typewriter */}
+            <div className="mb-3 flex items-start gap-2">
+              <span className="text-[10px] font-semibold bg-primary/20 text-primary px-2 py-1 rounded shrink-0">BETA</span>
+              <div className="text-white/60 text-sm">
+                <TypewriterPrompts />
+              </div>
             </div>
             
             <ChatInput
