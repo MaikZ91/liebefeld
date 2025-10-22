@@ -139,6 +139,43 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
             />
           </div>
           
+          {/* Kategorie-Prompt-Chips unter der Eingabe */}
+          <div className="px-4 pb-3 pt-1 flex gap-2 overflow-x-auto scrollbar-none">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                chatInputProps.setInput("Zeige mir Events für Ausgehen");
+                chatInputProps.handleSendMessage("Zeige mir Events für Ausgehen");
+              }}
+              className="bg-black/80 text-white border-red-500/30 hover:bg-red-500/20 hover:border-red-500/50 rounded-full px-4 py-2 text-xs whitespace-nowrap transition-all"
+            >
+              🎉 Ausgehen
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                chatInputProps.setInput("Zeige mir Events für Sport");
+                chatInputProps.handleSendMessage("Zeige mir Events für Sport");
+              }}
+              className="bg-black/80 text-white border-red-500/30 hover:bg-red-500/20 hover:border-red-500/50 rounded-full px-4 py-2 text-xs whitespace-nowrap transition-all"
+            >
+              ⚽ Sport
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                chatInputProps.setInput("Zeige mir Events für Kreativität");
+                chatInputProps.handleSendMessage("Zeige mir Events für Kreativität");
+              }}
+              className="bg-black/80 text-white border-red-500/30 hover:bg-red-500/20 hover:border-red-500/50 rounded-full px-4 py-2 text-xs whitespace-nowrap transition-all"
+            >
+              🎨 Kreativität
+            </Button>
+          </div>
+          
           {/* Filter and Heart buttons - shown below chat input when MIA open */}
           <div className="px-4 pb-4 flex gap-2">
             <Button
