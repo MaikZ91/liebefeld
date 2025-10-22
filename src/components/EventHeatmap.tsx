@@ -1328,9 +1328,9 @@ const EventHeatmap: React.FC = () => {
 
       {/* Time Slider - Extrem minimal */}
       <div className="fixed top-36 right-2 z-[1002]">
-        <div className="p-1.5 bg-black/25 backdrop-blur-sm rounded-full">
+        <div className="p-1 bg-black/25 backdrop-blur-sm rounded-full">
           <div className="flex flex-col items-center gap-1.5">
-            <span className="text-white text-[11px] font-bold bg-red-500/30 px-2 py-0.5 rounded-full">{timeRange[0]}h</span>
+            <span className="text-white text-[11px] font-bold">{timeRange[0]}h</span>
             <div className="h-28 w-4">
               <Slider
                 value={timeRange}
