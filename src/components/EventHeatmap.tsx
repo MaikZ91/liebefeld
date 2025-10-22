@@ -1127,7 +1127,7 @@ const EventHeatmap: React.FC = () => {
 
   const handleAIChatSend = async (messageContent?: string) => {
     if ((messageContent && messageContent.trim()) || aiChatInput.trim()) {
-      setShowAIChat(true);
+      // Don't open chat dialog, just process the message
       if (aiChatExternalSendHandler) {
         // Pass aiChatInput to the handler, which expects a string or any
         await aiChatExternalSendHandler(aiChatInput);
