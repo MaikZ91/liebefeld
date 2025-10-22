@@ -37,6 +37,7 @@ interface HeatmapHeaderProps {
   showFilterPanel?: boolean;
   onToggleFilterPanel?: () => void;
   onOpenSwipeMode?: () => void;
+  onMIAOpenChange?: (isOpen: boolean) => void;
 }
 
 const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ 
@@ -44,7 +45,8 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
   chatInputProps, 
   showFilterPanel = false,
   onToggleFilterPanel,
-  onOpenSwipeMode 
+  onOpenSwipeMode,
+  onMIAOpenChange
 }) => {
   const { events, isLoading } = useEvents(selectedCity);
   const [showSearchBar, setShowSearchBar] = useState(false);
@@ -54,6 +56,7 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
 
   const handleMiaIconClick = () => {
     setShowSearchBar(true);
+    onMIAOpenChange?.(true);
     // Focus the input after it appears
     setTimeout(() => {
       chatInputProps?.inputRef?.current?.focus();
@@ -62,6 +65,7 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
 
   const handleCloseSearchBar = () => {
     setShowSearchBar(false);
+    onMIAOpenChange?.(false);
     // Clear input when closing
     chatInputProps?.setInput('');
   };
@@ -140,7 +144,66 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
             />
           </div>
           
-          {/* Kategorie-Prompt-Chips removed when MIA is open */}
+          {/* Kategorie-Prompt-Chips unter der Eingabe */}
+          <div className="px-4 pb-3 pt-1 flex gap-2 overflow-x-auto scrollbar-none">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                chatInputProps.setInput("Zeige mir Events für Ausgehen");
+                chatInputProps.handleSendMessage("Zeige mir Events für Ausgehen");
+              }}
+              className="bg-black/80 text-white border-red-500/30 hover:bg-red-500/20 hover:border-red-500/50 rounded-full px-4 py-2 text-xs whitespace-nowrap transition-all"
+            >
+              🎉 Ausgehen
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                chatInputProps.setInput("Zeige mir Events für Sport");
+                chatInputProps.handleSendMessage("Zeige mir Events für Sport");
+              }}
+              className="bg-black/80 text-white border-red-500/30 hover:bg-red-500/20 hover:border-red-500/50 rounded-full px-4 py-2 text-xs whitespace-nowrap transition-all"
+            >
+              ⚽ Sport
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                chatInputProps.setInput("Zeige mir Events für Kreativität");
+                chatInputProps.handleSendMessage("Zeige mir Events für Kreativität");
+              }}
+              className="bg-black/80 text-white border-red-500/30 hover:bg-red-500/20 hover:border-red-500/50 rounded-full px-4 py-2 text-xs whitespace-nowrap transition-all"
+            >
+              🎨 Kreativität
+            </Button>
+            
+            {/* Kalender-Picker Button */}
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-black/80 text-white border-red-500/30 hover:bg-red-500/20 hover:border-red-500/50 rounded-full px-4 py-2 text-xs whitespace-nowrap transition-all"
+                >
+                  <CalendarIcon className="w-3.5 h-3.5 mr-1.5" />
+                  Datum wählen
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 bg-gradient-to-br from-gray-900/95 to-black/95 backdrop-blur-xl border border-red-500/20" align="start">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={handleDateSelect}
+                  initialFocus
+                  locale={de}
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
           
           {/* Heart button removed when MIA open */}
           <div className="px-4 pb-4 flex gap-2">

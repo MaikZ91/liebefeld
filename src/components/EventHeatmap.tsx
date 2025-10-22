@@ -122,6 +122,9 @@ const EventHeatmap: React.FC = () => {
   // State for disliked events
   const [dislikedEventIds, setDislikedEventIds] = useState<string[]>([]);
 
+  // State for MIA open/close
+  const [isMIAOpen, setIsMIAOpen] = useState(false);
+
 
   // Event Chat Window State
   const [eventChatWindow, setEventChatWindow] = useState<{
@@ -1302,13 +1305,14 @@ const EventHeatmap: React.FC = () => {
         showFilterPanel={showFilterPanel}
         onToggleFilterPanel={() => setShowFilterPanel(prev => !prev)}
         onOpenSwipeMode={() => setIsSwipeModeOpen(true)}
+        onMIAOpenChange={setIsMIAOpen}
       />
 
 
 
 
-      {/* Filter Panel (Conditional Rendering) */}
-      {showFilterPanel && (
+      {/* Filter Panel (Conditional Rendering) - Hide when MIA is open */}
+      {showFilterPanel && !isMIAOpen && (
         <div className="fixed top-60 left-4 z-[1003] space-y-3 max-w-sm animate-fade-in">
           <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
             <h3 className="text-white font-bold mb-4 flex items-center gap-2">
