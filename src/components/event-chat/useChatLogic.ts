@@ -1,5 +1,5 @@
 // src/components/event-chat/useChatLogic.ts
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { ChatMessage, CHAT_HISTORY_KEY, CHAT_QUERIES_KEY, PanelEventData, PanelEvent, AdEvent } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { generateResponse, getWelcomeMessage, createResponseHeader, createLandingSlideData } from '@/utils/chatUtils';
@@ -63,6 +63,18 @@ export const useChatLogic = (
     "Finde ein Afterwork-Event!",
     "Zeig mir Kunst- und Ausstellungs-Highlights."
   ];
+
+  const shuffledExamplePrompts = useMemo(() => {
+    const first = examplePrompts[0];
+    const rest = examplePrompts.slice(1);
+    const arr = [...rest];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return first ? [first, ...arr] : arr;
+  }, []);
+
 
   const adEvents: AdEvent[] = [
     {
@@ -764,7 +776,7 @@ export const useChatLogic = (
     setShowRecentQueries,
     messagesEndRef,
     inputRef,
-    examplePrompts, // <-- wichtig: für MessageList/Prompt-Komponenten immer vorhanden
+    examplePrompts: shuffledExamplePrompts, // randomized but first stays constant
     isHeartActive,
     handleToggleChat,
     handleSendMessage,
