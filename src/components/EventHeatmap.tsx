@@ -16,6 +16,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, Send, Filter, FilterX, MessageSquare, CalendarIcon, Heart } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 
@@ -121,6 +131,10 @@ const EventHeatmap: React.FC = () => {
   
   // State for disliked events
   const [dislikedEventIds, setDislikedEventIds] = useState<string[]>([]);
+  
+  // State for location blocking dialog
+  const [isBlockLocationDialogOpen, setIsBlockLocationDialogOpen] = useState(false);
+  const [locationToBlock, setLocationToBlock] = useState<string | null>(null);
 
   // State for MIA open/close
   const [isMIAOpen, setIsMIAOpen] = useState(false);
@@ -366,6 +380,15 @@ const EventHeatmap: React.FC = () => {
 
   const filteredEvents = React.useMemo(() => {
     let filtered = selectedDateFilteredEvents;
+
+    // Filter out blocked locations
+    const blockedLocations = dislikeService.getBlockedLocations();
+    filtered = filtered.filter(event => {
+      if (event.location && blockedLocations.includes(event.location)) {
+        return false;
+      }
+      return true;
+    });
 
     // Filter out disliked events
     filtered = filtered.filter(event => {
@@ -1148,8 +1171,14 @@ const EventHeatmap: React.FC = () => {
 
   const handleEventDislike = async (eventId: string) => {
     try {
-      console.log('[EventHeatmap] Disliking event:', eventId);
-      await dislikeService.dislikeEvent(eventId);
+      // Find the event to get its location
+      const event = filteredEvents.find(e => {
+        const eId = e.id || `${e.title}-${e.date}-${e.time}`;
+        return eId === eventId;
+      });
+
+      console.log('[EventHeatmap] Disliking event:', eventId, 'location:', event?.location);
+      const result = await dislikeService.dislikeEvent(eventId, event?.location);
       
       // Update local state immediately
       setDislikedEventIds(prev => {
@@ -1158,6 +1187,12 @@ const EventHeatmap: React.FC = () => {
         }
         return prev;
       });
+      
+      // Check if we should ask about blocking the location
+      if (result.shouldAskBlock && result.location) {
+        setLocationToBlock(result.location);
+        setIsBlockLocationDialogOpen(true);
+      }
       
       toast({
         title: "Event ausgeblendet",
@@ -1171,6 +1206,20 @@ const EventHeatmap: React.FC = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const handleBlockLocation = () => {
+    if (locationToBlock) {
+      dislikeService.blockLocation(locationToBlock);
+      toast({
+        title: "Location blockiert",
+        description: `Alle Events von "${locationToBlock}" werden ausgeblendet`,
+      });
+      // Trigger a re-render by updating state
+      setDislikedEventIds(prev => [...prev]);
+    }
+    setIsBlockLocationDialogOpen(false);
+    setLocationToBlock(null);
   };
 
   const togglePanelHeight = () => {
@@ -1866,12 +1915,44 @@ const EventHeatmap: React.FC = () => {
       )}
 
       {/* Event Swipe Mode */}
-      <EventSwipeMode
+      <EventSwipeMode 
         open={isSwipeModeOpen}
         onOpenChange={setIsSwipeModeOpen}
         events={filteredEvents}
         onLikeEvent={handleEventLike}
       />
+
+      {/* Location Blocking Dialog */}
+      <AlertDialog open={isBlockLocationDialogOpen} onOpenChange={setIsBlockLocationDialogOpen}>
+        <AlertDialogContent className="bg-gradient-to-br from-gray-900/95 to-black/95 backdrop-blur-xl border border-red-500/20">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white text-xl">
+              Alle Events von "{locationToBlock}" ausblenden?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-300">
+              Du hast bereits 2 Events von dieser Location ausgeblendet. 
+              Möchtest du alle zukünftigen Events von "{locationToBlock}" automatisch ausblenden?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              onClick={() => {
+                setIsBlockLocationDialogOpen(false);
+                setLocationToBlock(null);
+              }}
+              className="bg-gray-800 hover:bg-gray-700 text-white border-gray-700"
+            >
+              Nein, danke
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleBlockLocation}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Ja, alle ausblenden
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
