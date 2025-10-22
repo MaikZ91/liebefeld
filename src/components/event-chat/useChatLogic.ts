@@ -389,9 +389,48 @@ export const useChatLogic = (
       if (onDateFilterChange) {
         onDateFilterChange(saturday);
       }
-    }
-     else {
-      relevantEvents = getFutureEvents(events);
+    } else {
+      // Check for specific weekdays
+      const weekdayMap: { [key: string]: number } = {
+        'montag': 1, 'mo': 1,
+        'dienstag': 2, 'di': 2,
+        'mittwoch': 3, 'mi': 3,
+        'donnerstag': 4, 'do': 4,
+        'freitag': 5, 'fr': 5,
+        'samstag': 6, 'sa': 6,
+        'sonntag': 0, 'so': 0
+      };
+      
+      let targetWeekday: number | null = null;
+      for (const [keyword, dayNumber] of Object.entries(weekdayMap)) {
+        if (lowercaseMessage.includes(keyword)) {
+          targetWeekday = dayNumber;
+          break;
+        }
+      }
+      
+      if (targetWeekday !== null) {
+        // Calculate next occurrence of this weekday
+        const targetDate = new Date(currentDate);
+        const currentDay = currentDate.getDay();
+        let daysUntilTarget = targetWeekday - currentDay;
+        
+        // If the target day is today or already passed this week, go to next week
+        if (daysUntilTarget <= 0) {
+          daysUntilTarget += 7;
+        }
+        
+        targetDate.setDate(currentDate.getDate() + daysUntilTarget);
+        relevantEvents = getEventsForDay(events, targetDate);
+        
+        // Update heatmap filter to target weekday
+        if (onDateFilterChange) {
+          onDateFilterChange(targetDate);
+        }
+      } else {
+        // Default: show all future events
+        relevantEvents = getFutureEvents(events);
+      }
     }
     
     const categoryMapping = {
