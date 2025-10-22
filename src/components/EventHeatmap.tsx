@@ -91,6 +91,7 @@ const EventHeatmap: React.FC = () => {
   const [isPrivateChatOpen, setIsPrivateChatOpen] = useState(false);
   const [selectedUserForPrivateChat, setSelectedUserForPrivateChat] = useState<UserProfile | null>(null);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [showCategoryOptions, setShowCategoryOptions] = useState(false);
   const [allUserProfiles, setAllUserProfiles] = useState<UserProfile[]>([]);
   const [isTribeFinderOpen, setIsTribeFinderOpen] = useState(false);
   const [selectedTribeSpot, setSelectedTribeSpot] = useState<{name: string, lat: number, lng: number} | null>(null);
@@ -1333,7 +1334,7 @@ const EventHeatmap: React.FC = () => {
           <Button 
             variant="ghost" 
             size="sm"
-            onClick={() => setShowFilterPanel(!showFilterPanel)}
+            onClick={() => setShowCategoryOptions(!showCategoryOptions)}
             className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-black border border-white/10 transition-all"
           >
             {selectedCategory === 'alle' ? '🌟 Alle' : 
@@ -1343,7 +1344,7 @@ const EventHeatmap: React.FC = () => {
           </Button>
           
           {/* Horizontale Kategorie-Optionen */}
-          {showFilterPanel && (
+          {showCategoryOptions && (
             <div className="flex gap-2 animate-slide-in-right">
               {selectedCategory !== 'alle' && (
                 <Button
@@ -1351,7 +1352,7 @@ const EventHeatmap: React.FC = () => {
                   size="sm"
                   onClick={() => {
                     handleCategoryChange('alle');
-                    setShowFilterPanel(false);
+                    setShowCategoryOptions(false);
                   }}
                   className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-white/20 border border-white/10 transition-all"
                 >
@@ -1364,7 +1365,7 @@ const EventHeatmap: React.FC = () => {
                   size="sm"
                   onClick={() => {
                     handleCategoryChange('ausgehen');
-                    setShowFilterPanel(false);
+                    setShowCategoryOptions(false);
                   }}
                   className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-white/20 border border-white/10 transition-all"
                 >
@@ -1377,7 +1378,7 @@ const EventHeatmap: React.FC = () => {
                   size="sm"
                   onClick={() => {
                     handleCategoryChange('sport');
-                    setShowFilterPanel(false);
+                    setShowCategoryOptions(false);
                   }}
                   className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-white/20 border border-white/10 transition-all"
                 >
@@ -1390,7 +1391,7 @@ const EventHeatmap: React.FC = () => {
                   size="sm"
                   onClick={() => {
                     handleCategoryChange('kreativität');
-                    setShowFilterPanel(false);
+                    setShowCategoryOptions(false);
                   }}
                   className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-white/20 border border-white/10 transition-all"
                 >
