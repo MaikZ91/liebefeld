@@ -1326,13 +1326,13 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* Time Slider - Always visible on map */}
-      <div className="fixed bottom-24 right-4 z-[1002] w-64 animate-fade-in">
-        <Card className="p-3 bg-black/80 backdrop-blur-md border-red-500/20 shadow-lg">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-white text-xs font-medium">
-              <Clock className="w-3.5 h-3.5 text-red-500" />
-              <span>ab {getTimeFromSlider(timeRange[0])} Uhr</span>
+      {/* Time Slider - Dezent */}
+      <div className="fixed bottom-24 right-3 z-[1002] w-36">
+        <div className="p-2 bg-black/60 backdrop-blur-sm border border-red-500/10 rounded-lg shadow-sm">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-white/80 text-[10px] font-medium">
+              <Clock className="w-2.5 h-2.5 text-red-400/70" />
+              <span>{getTimeFromSlider(timeRange[0])}</span>
             </div>
             <Slider
               value={timeRange}
@@ -1342,13 +1342,8 @@ const EventHeatmap: React.FC = () => {
               step={1}
               className="w-full"
             />
-            <div className="flex justify-between text-[10px] text-gray-400">
-              <span>00:00</span>
-              <span>12:00</span>
-              <span>23:00</span>
-            </div>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Removed "Find YOUR Tribe" Button (now part of Community Features) */}
