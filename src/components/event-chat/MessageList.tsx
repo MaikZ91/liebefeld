@@ -29,28 +29,30 @@ const MessageList: React.FC<MessageListProps> = ({
     .filter(m => !['welcome', 'typewriter-prompt', 'landing-slides'].includes(m.id));
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="space-y-3 pb-2 px-1">
+    <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+      <div className="space-y-4 pb-4 px-4">
         {/* Optisch schöne Welcome Nachricht */}
         {welcomeMessage && welcomeMessage.html && (
-          <div className="flex justify-center animate-fade-in-fast">
+          <div className="flex justify-center animate-fade-in pt-6">
             <div dangerouslySetInnerHTML={{ __html: welcomeMessage.html }} />
           </div>
         )}
 
         {/* Schreibmaschinen-Prompt - Verwende examplePrompts aus Props */}
         {typewriterPromptMessage && examplePrompts && examplePrompts.length > 0 && (
-          <TypewriterPrompt
-            prompts={examplePrompts}
-            onPromptClick={handleExamplePromptClick}
-            loopInterval={3000}
-            typingSpeed={40}
-          />
+          <div className="py-4">
+            <TypewriterPrompt
+              prompts={examplePrompts}
+              onPromptClick={handleExamplePromptClick}
+              loopInterval={3000}
+              typingSpeed={40}
+            />
+          </div>
         )}
 
         {/* Landing Panel als Slides */}
         {landingSlideMessage && landingSlideMessage.slideData && (
-          <div className="flex justify-center">
+          <div className="flex justify-center py-4">
             <div className="w-full max-w-md mx-auto">
               <SwipeableLandingPanel slideData={landingSlideMessage.slideData} />
             </div>
@@ -62,8 +64,8 @@ const MessageList: React.FC<MessageListProps> = ({
           // Panel
           if (message.panelData) {
             return (
-              <div key={message.id} className={cn("max-w-[85%] rounded-lg bg-black border border-black", message.isEventNotification && "border-red-500/50 bg-red-900/10")}>
-                <div className="p-3">
+              <div key={message.id} className={cn("rounded-xl overflow-hidden bg-gradient-to-br from-gray-900/50 to-black/50 backdrop-blur-sm border border-white/10 shadow-xl", message.isEventNotification && "border-red-500/50")}>
+                <div className="p-4">
                   <SwipeableEventPanel 
                     panelData={message.panelData}
                     onEventSelect={(eventId) => {
@@ -78,14 +80,17 @@ const MessageList: React.FC<MessageListProps> = ({
           // HTML Message (AI Response)
           if (message.html) {
             return (
-              <div key={message.id} className="max-w-[85%] rounded-lg bg-gradient-to-br from-gray-900/95 to-black/95 border border-red-500/30 shadow-lg shadow-red-500/10">
-                <div className="flex items-start gap-2 p-3 border-b border-red-500/20">
-                  <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <span className="text-xs text-red-500 font-bold">MIA</span>
+              <div key={message.id} className="rounded-2xl bg-gradient-to-br from-gray-900/70 to-black/70 backdrop-blur-sm border border-red-500/20 shadow-xl overflow-hidden">
+                <div className="flex items-center gap-3 px-4 py-3 border-b border-red-500/10 bg-black/20">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shrink-0 shadow-lg shadow-red-500/30">
+                    <span className="text-xs text-white font-bold">MIA</span>
                   </div>
-                  <div className="text-xs text-red-400 font-medium">Event Assistentin</div>
+                  <div>
+                    <div className="text-sm font-semibold text-red-400">MIA</div>
+                    <div className="text-xs text-white/50">Event Assistentin</div>
+                  </div>
                 </div>
-                <div dangerouslySetInnerHTML={{ __html: message.html }} className="p-4 event-list-container text-white/90" />
+                <div dangerouslySetInnerHTML={{ __html: message.html }} className="p-5 text-white/90 leading-relaxed event-list-container" />
               </div>
             );
           }
@@ -94,14 +99,14 @@ const MessageList: React.FC<MessageListProps> = ({
             <div
               key={message.id}
               className={cn(
-                "max-w-[85%] rounded-lg shadow-md",
+                "rounded-2xl shadow-lg overflow-hidden max-w-[85%] animate-scale-in",
                 message.isUser
-                  ? "bg-gradient-to-br from-red-600 to-red-700 border border-red-500/50 ml-auto"
-                  : "bg-gradient-to-br from-gray-900/95 to-black/95 border border-red-500/30",
-                message.isEventNotification && "border-red-500/50 bg-red-900/20"
+                  ? "ml-auto bg-gradient-to-br from-red-600 to-red-700 border border-red-500/30"
+                  : "bg-gradient-to-br from-gray-900/70 to-black/70 backdrop-blur-sm border border-white/10",
+                message.isEventNotification && "border-red-500/50"
               )}
             >
-              <div className="p-3">
+              <div className="p-4">
                 <ChatMessage 
                   message={message.text} 
                   isGroup={false} 
@@ -113,12 +118,12 @@ const MessageList: React.FC<MessageListProps> = ({
           );
         })}
         {isTyping && (
-          <div className="bg-gradient-to-br from-gray-900/95 to-black/95 max-w-[85%] rounded-lg p-4 border border-red-500/30 shadow-lg shadow-red-500/10">
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
-                <span className="text-xs text-red-500 font-bold">MIA</span>
+          <div className="rounded-2xl bg-gradient-to-br from-gray-900/70 to-black/70 backdrop-blur-sm border border-red-500/20 shadow-xl overflow-hidden max-w-[85%]">
+            <div className="flex items-center gap-3 p-4">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shrink-0 shadow-lg shadow-red-500/30">
+                <span className="text-xs text-white font-bold">MIA</span>
               </div>
-              <div className="flex space-x-2 items-center">
+              <div className="flex space-x-1.5 items-center">
                 <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                 <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
                 <div className="h-2 w-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>

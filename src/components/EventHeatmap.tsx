@@ -1500,46 +1500,63 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* AI Chat Panel - Modern Glassmorphism Design */}
+      {/* AI Chat Drawer - Modern Bottom Sheet Design */}
       {showAIChat && (
-        <div className="absolute bottom-0 left-0 right-0 z-[1000] bg-gradient-to-t from-black via-gray-950 to-transparent backdrop-blur-2xl h-[500px] shadow-2xl">
-          {/* Panel Header with MIA Branding */}
-          <div className="flex items-center justify-between p-4 border-b border-red-500/30 bg-black/40 backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="absolute inset-0 bg-red-500/30 rounded-full blur-md animate-pulse"></div>
-                <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-lg shadow-red-500/50">
-                  <MessageSquare className="w-5 h-5 text-white" />
-                </div>
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 z-[999] bg-black/60 backdrop-blur-sm animate-fade-in"
+            onClick={() => setShowAIChat(false)}
+          />
+          
+          {/* Chat Drawer */}
+          <div className="fixed bottom-0 left-0 right-0 z-[1000] animate-slide-in-bottom">
+            <div className="bg-gradient-to-t from-black via-gray-950/95 to-gray-900/90 backdrop-blur-2xl rounded-t-3xl shadow-2xl border-t-2 border-red-500/30 max-h-[85vh] flex flex-col">
+              
+              {/* Drag Handle */}
+              <div className="flex justify-center py-3 cursor-pointer" onClick={() => setShowAIChat(false)}>
+                <div className="w-12 h-1.5 bg-white/20 rounded-full hover:bg-white/30 transition-colors"></div>
               </div>
-              <div>
-                <span className="text-white font-bold text-lg tracking-tight">MIA</span>
-                <div className="text-xs text-red-400 font-medium">Event Assistentin</div>
+              
+              {/* Header */}
+              <div className="px-6 pb-4 flex items-center justify-between border-b border-red-500/20">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-red-500/30 rounded-full blur-lg animate-pulse"></div>
+                    <div className="relative w-12 h-12 rounded-full bg-gradient-to-br from-red-600 via-red-700 to-red-900 flex items-center justify-center shadow-lg shadow-red-500/50 ring-2 ring-red-400/30">
+                      <MessageSquare className="w-6 h-6 text-white" strokeWidth={2.5} />
+                    </div>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-white tracking-tight">MIA</h2>
+                    <p className="text-xs text-red-400 font-medium">Deine Event Assistentin</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowAIChat(false)}
+                  className="text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all h-10 w-10"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+
+              {/* Chat Content */}
+              <div className="flex-1 overflow-hidden min-h-0">
+                <FullPageChatBot
+                  chatLogic={chatLogic}
+                  activeChatModeValue="ai"
+                  communityGroupId=""
+                  hideInput={true}
+                  externalInput={aiChatInput}
+                  setExternalInput={setAiChatInput}
+                  onExternalSendHandlerChange={setAiChatExternalSendHandler}
+                />
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowAIChat(false)}
-              className="text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all"
-            >
-              <X className="w-5 h-5" />
-            </Button>
           </div>
-
-          {/* AI Chat Content with improved styling */}
-          <div className="h-full overflow-hidden bg-gradient-to-b from-transparent to-black/20">
-            <FullPageChatBot
-              chatLogic={chatLogic}
-              activeChatModeValue="ai"
-              communityGroupId=""
-              hideInput={true}
-              externalInput={aiChatInput}
-              setExternalInput={setAiChatInput}
-              onExternalSendHandlerChange={setAiChatExternalSendHandler}
-            />
-          </div>
-        </div>
+        </>
       )}
 
 
