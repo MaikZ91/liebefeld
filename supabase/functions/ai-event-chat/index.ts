@@ -196,15 +196,25 @@ Dann gruppiere Events nach Kategorien mit Überschriften:
 **SPORT** 🏃  
 **KREATIVITÄT** 🎨
 
-Pro Kategorie: Schreibe einen zusammenhängenden Fließtext über die Events. Beispiel:
-"Um [Zeit] startet <a href="[link]" target="_blank" class="text-red-500 hover:text-red-400 underline">[Titel]</a> in [Location]. [1-2 Sätze aus description oder eigene kurze Beschreibung basierend auf title/category]. ⭐ [falls >5 Likes]
+Pro Kategorie: Schreibe einen zusammenhängenden Fließtext über die Events.
 
-Direkt danach das nächste Event im gleichen Absatz: Um [Zeit] geht's weiter mit..."
+LINKS - SUPER WICHTIG:
+Für JEDES Event musst du prüfen ob das Feld "link" existiert und nicht null ist:
+- Wenn link vorhanden UND nicht null: Schreibe EXAKT: <a href="KOMPLETTE_URL_HIER" target="_blank" class="text-red-500 hover:text-red-400 underline">EVENT_TITEL</a>
+- Wenn link null oder nicht vorhanden: Schreibe nur: **EVENT_TITEL**
 
-LINK-REGEL:
-- Zeige NIEMALS rohe URLs
-- Wenn event.link vorhanden: <a href="[link]" target="_blank" class="text-red-500 hover:text-red-400 underline">[Titel]</a>
-- Wenn kein Link: Nur **[Titel]** ohne Link
+BEISPIELE:
+Event mit Link (link="https://example.com/party"):
+"Um 20:00 startet <a href="https://example.com/party" target="_blank" class="text-red-500 hover:text-red-400 underline">Summer Beach Party</a> am Obersee."
+
+Event ohne Link (link=null):
+"Um 20:00 startet **Summer Beach Party** am Obersee."
+
+NIEMALS:
+- Rohe URLs im Text zeigen
+- Link-Emoji 🔗 verwenden
+- "(Link)" oder ähnliches schreiben
+- Links vergessen die vorhanden sind
 
 WICHTIG:
 - "Sonstiges" → AUSGEHEN
