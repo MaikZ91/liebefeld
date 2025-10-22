@@ -36,19 +36,7 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
   const [showSearchBar, setShowSearchBar] = useState(false);
   const miaAvatarUrl = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png';
 
-  const handleMiaIconClick = () => {
-    setShowSearchBar(true);
-    // Focus the input after it appears
-    setTimeout(() => {
-      chatInputProps?.inputRef?.current?.focus();
-    }, 100);
-  };
-
-  const handleCloseSearchBar = () => {
-    setShowSearchBar(false);
-    // Clear input when closing
-    chatInputProps?.setInput('');
-  };
+  // Removed - chat input is always visible now
 
   return (
     <div className="fixed top-0 left-0 right-0 z-[1002]">
@@ -64,27 +52,12 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
               </Link>
               <CitySelector />
             </div>
-            
-            {/* MIA Icon - only show if chatInputProps exist and search bar is not shown */}
-            {chatInputProps && !showSearchBar && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleMiaIconClick}
-                className="text-white/80 hover:text-white hover:bg-white/10 rounded-full p-1 h-8 flex items-center gap-1.5 shrink-0"
-              >
-                <Avatar className="h-5 w-5">
-                  <AvatarImage src={miaAvatarUrl} alt="MIA" />
-                </Avatar>
-                <span className="text-xs font-medium">MIA</span>
-              </Button>
-            )}
           </div>
         </div>
       </div>
       
-      {/* Search bar - only show when showSearchBar is true */}
-      {chatInputProps && showSearchBar && (
+      {/* Chat input - always visible */}
+      {chatInputProps && (
         <div className="px-4 pb-4 pt-2">
           <ChatInput
             input={chatInputProps.input}

@@ -451,14 +451,12 @@ const ChatInput: React.FC<ExtendedChatInputProps> = ({
               handleLocalSendMessage();
             }
           }}
-          disabled={!localInput.trim() || isTyping}
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-0 flex-shrink-0 h-8 w-8 flex items-center justify-center text-white"
-          style={localInput.trim() && !isTyping
-            ? (activeChatModeValue === 'community' ? colors.bgStyle : { backgroundColor: 'hsl(var(--primary))' })
-            : { backgroundColor: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }
-          }
+          disabled={true}
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-0 flex-shrink-0 h-8 w-8 flex items-center justify-center text-white relative"
+          style={{ backgroundColor: 'hsl(var(--primary))' }}
         >
           <Send className="h-4 w-4" />
+          <span className="absolute -top-1 -right-1 text-[8px] font-bold bg-primary/20 text-primary px-1 rounded">BETA</span>
         </button>
       </div>
       
