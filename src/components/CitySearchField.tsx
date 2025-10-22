@@ -170,7 +170,7 @@ const CitySearchField: React.FC<CitySearchFieldProps> = ({ onCitySelect, current
   return (
     <div className="relative w-20 md:w-24" ref={dropdownRef}>
       <div className="relative">
-        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 h-3 w-3" />
+        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-white/40 h-3 w-3" />
         <Input
           ref={inputRef}
           type="text"
@@ -181,38 +181,37 @@ const CitySearchField: React.FC<CitySearchFieldProps> = ({ onCitySelect, current
             setIsOpen(true);
           }}
           onFocus={() => setIsOpen(true)}
-          className="pl-7 pr-0 py-1 h-8 text-xs bg-gray-900 border-gray-700 focus:ring-red-500 focus:border-red-500 text-white placeholder:text-white placeholder:font-medium"
+          className="pl-7 pr-0 py-1 h-8 text-xs bg-transparent border-none focus:ring-0 focus:border-none text-white/60 placeholder:text-white/60 placeholder:font-normal hover:text-white/80 transition-colors"
         />
       </div>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-gray-900 border border-gray-700 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto min-w-[200px]">
+        <div className="absolute top-full left-0 mt-2 bg-gradient-to-br from-gray-900/95 to-black/95 backdrop-blur-xl border border-red-500/20 rounded-2xl shadow-2xl shadow-red-500/10 z-[9999] max-h-80 overflow-y-auto min-w-[280px] scrollbar-thin scrollbar-thumb-red-500/20 scrollbar-track-transparent">
           {/* Bestehende Städte */}
           {filteredCities.length > 0 && (
-            <div className="p-2">
-              <div className="text-xs text-gray-400 px-2 py-1 font-medium">Verfügbare Städte</div>
+            <div className="p-3">
+              <div className="text-xs text-red-400 px-2 py-1 font-semibold uppercase tracking-wide">Verfügbare Städte</div>
               {filteredCities.map((city) => (
                 <div
                   key={city.name}
                   onClick={() => handleCitySelect(city.name)}
-                  className="flex items-center justify-between px-3 py-2 hover:bg-gray-800 cursor-pointer rounded-md"
+                  className="flex items-center justify-between px-3 py-2.5 hover:bg-red-500/10 cursor-pointer rounded-lg transition-all group"
                 >
                   <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-gray-400" />
+                    <MapPin className="h-4 w-4 text-red-400 group-hover:text-red-300" />
                     <div className="flex flex-col">
-                      {/* Entfernt 'THE TRIBE.' */}
-                      <span className="text-white font-medium text-xs lowercase">{city.name}</span>
+                      <span className="text-white font-medium text-sm lowercase group-hover:text-red-300 transition-colors">{city.name}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     {city.hasEvents && (
-                      <Badge variant="secondary" className="bg-green-600/20 text-green-400 border-green-600/30">
+                      <Badge variant="secondary" className="bg-red-600/20 text-red-300 border-red-600/30 text-xs">
                         <Calendar className="h-3 w-3 mr-1" />
                         {city.eventCount}
                       </Badge>
                     )}
                     {city.hasCommunity && (
-                      <Badge variant="secondary" className="bg-blue-600/20 text-blue-400 border-blue-600/30">
+                      <Badge variant="secondary" className="bg-red-600/20 text-red-300 border-red-600/30 text-xs">
                         <Users className="h-3 w-3 mr-1" />
                         Community
                       </Badge>
@@ -225,27 +224,26 @@ const CitySearchField: React.FC<CitySearchFieldProps> = ({ onCitySelect, current
 
           {/* Neue Stadt Option */}
           {isNewCity && (
-            <div className="border-t border-gray-700 p-2">
-              <div className="text-xs text-gray-400 px-2 py-1 font-medium">Neue Stadt</div>
-              <div className="px-3 py-2 hover:bg-gray-800 rounded-md">
+            <div className="border-t border-red-500/20 p-3">
+              <div className="text-xs text-red-400 px-2 py-1 font-semibold uppercase tracking-wide">Neue Stadt</div>
+              <div className="px-3 py-2.5 hover:bg-red-500/10 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Plus className="h-4 w-4 text-gray-400" />
+                    <Plus className="h-4 w-4 text-red-400" />
                     <div className="flex flex-col">
-                      {/* Entfernt 'THE TRIBE.' */}
-                      <span className="text-white font-medium text-xs lowercase">{searchTerm}</span>
+                      <span className="text-white font-medium text-sm lowercase">{searchTerm}</span>
                     </div>
                   </div>
                   <Button
                     onClick={() => handleGenerateEvents(searchTerm)}
                     disabled={isGeneratingEvents}
                     size="sm"
-                    className="bg-red-600 hover:bg-red-700 text-white h-7 px-3 text-xs"
+                    className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white h-8 px-3 text-xs shadow-lg shadow-red-500/30"
                   >
                     {isGeneratingEvents ? 'Erstelle...' : 'Community erstellen'}
                   </Button>
                 </div>
-                <div className="text-xs text-gray-400 mt-1 pl-6">
+                <div className="text-xs text-white/50 mt-2 pl-6">
                   Erstelle eine neue Community und generiere Events mit KI
                 </div>
               </div>
@@ -253,14 +251,14 @@ const CitySearchField: React.FC<CitySearchFieldProps> = ({ onCitySelect, current
           )}
 
           {filteredCities.length === 0 && !isNewCity && searchTerm.length > 0 && (
-            <div className="p-4 text-center text-gray-400">
+            <div className="p-4 text-center text-white/50">
               <div className="text-sm">Keine Städte gefunden</div>
               <div className="text-xs mt-1">Gib mindestens 3 Zeichen ein, um eine neue Stadt zu erstellen</div>
             </div>
           )}
 
           {searchTerm.length === 0 && (
-            <div className="p-4 text-center text-gray-400">
+            <div className="p-4 text-center text-white/50">
               <div className="text-sm">Beginne zu tippen, um zu suchen</div>
               <div className="text-xs mt-1">oder wähle eine verfügbare Stadt</div>
             </div>
