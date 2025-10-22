@@ -1326,6 +1326,54 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
+      {/* Kategorie Filter Dropdown - Minimal */}
+      <div className="fixed top-24 right-2 z-[1002]">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="bg-black/25 backdrop-blur-sm text-white text-[10px] px-2 py-1 h-auto rounded-full hover:bg-black/40"
+            >
+              {selectedCategory === 'alle' ? '🌟 Alle' : 
+               selectedCategory === 'ausgehen' ? '🎉 Ausgehen' :
+               selectedCategory === 'sport' ? '⚽ Sport' :
+               '🎨 Kreativität'}
+              <ChevronDown className="w-3 h-3 ml-1" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent 
+            align="end" 
+            className="bg-black/95 backdrop-blur-md border-gray-700 text-white min-w-[120px]"
+          >
+            <DropdownMenuItem 
+              onClick={() => handleCategoryChange('alle')}
+              className="text-xs cursor-pointer hover:bg-white/10"
+            >
+              🌟 Alle
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => handleCategoryChange('ausgehen')}
+              className="text-xs cursor-pointer hover:bg-white/10"
+            >
+              🎉 Ausgehen
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => handleCategoryChange('sport')}
+              className="text-xs cursor-pointer hover:bg-white/10"
+            >
+              ⚽ Sport
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => handleCategoryChange('kreativität')}
+              className="text-xs cursor-pointer hover:bg-white/10"
+            >
+              🎨 Kreativität
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       {/* Time Slider - Extrem minimal */}
       <div className="fixed top-36 right-2 z-[1002]">
         <div className="p-1 bg-black/25 backdrop-blur-sm rounded-full">
