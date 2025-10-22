@@ -1326,12 +1326,15 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* Time Slider - Hochkant, minimal und dezent */}
-      <div className="fixed top-32 right-2 z-[1002]">
-        <div className="p-1 bg-black/20 backdrop-blur-sm border border-white/5 rounded-full">
-          <div className="flex flex-col items-center gap-0.5">
-            <span className="text-white/50 text-[8px] font-medium">{timeRange[0]}h</span>
-            <div className="h-20 w-6 flex items-center justify-center">
+      {/* Time Slider - Minimalistisches Glasmorphismus Design */}
+      <div className="fixed top-32 right-3 z-[1002]">
+        <div className="relative p-2 bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-md border border-white/10 rounded-2xl shadow-lg">
+          <div className="flex flex-col items-center gap-2">
+            <div className="text-white/70 text-[10px] font-bold bg-red-500/20 px-2 py-0.5 rounded-full">
+              {timeRange[0]}:00
+            </div>
+            <div className="h-24 w-5 flex items-center justify-center relative">
+              <div className="absolute inset-0 bg-gradient-to-b from-red-500/10 to-transparent rounded-full" />
               <Slider
                 value={timeRange}
                 onValueChange={setTimeRange}
@@ -1339,10 +1342,13 @@ const EventHeatmap: React.FC = () => {
                 min={0}
                 step={1}
                 orientation="vertical"
-                className="h-full"
+                className="h-full relative z-10"
               />
             </div>
-            <Clock className="w-2 h-2 text-white/30" />
+            <div className="flex flex-col items-center gap-0.5">
+              <Clock className="w-2.5 h-2.5 text-red-400/60" />
+              <span className="text-white/40 text-[7px]">Uhr</span>
+            </div>
           </div>
         </div>
       </div>
