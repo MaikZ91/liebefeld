@@ -691,7 +691,9 @@ const EventHeatmap: React.FC = () => {
 
         // Force map to invalidate size after a short delay
         setTimeout(() => {
-          leafletMap.invalidateSize();
+          if (leafletMap && leafletMap.getContainer()) {
+            leafletMap.invalidateSize();
+          }
         }, 100);
       } catch (error) {
         console.error('[EventHeatmap] Error initializing map:', error);
@@ -706,39 +708,7 @@ const EventHeatmap: React.FC = () => {
     };
   }, [mapRef.current, selectedCity]); // Add selectedCity back to ensure proper reinitialization
 
-  // Separate useEffect for handling city changes with smooth animation
-  useEffect(() => {
-    if (!map || !selectedCity) return;
-
-    console.log('[EventHeatmap] City changed to:', selectedCity);
-    const newCenter = getCityCenterCoordinates(selectedCity);
-
-    // Check if map is still valid before animating
-    try {
-      if (map.getContainer()) {
-        // Deutschland center coordinates for zoom out effect
-        const germanyCenter = { lat: 51.1657, lng: 10.4515 };
-
-        // Step 1: Zoom out to show all of Germany
-        map.setView([germanyCenter.lat, germanyCenter.lng], 6, {
-          animate: true,
-          duration: 0.8
-        });
-
-        // Step 2: After zoom out, zoom into the new city
-        setTimeout(() => {
-          if (map && map.getContainer()) {
-            map.setView([newCenter.lat, newCenter.lng], 13, {
-              animate: true,
-              duration: 1.2
-            });
-          }
-        }, 900); // Wait for zoom out to complete
-      }
-    } catch (error) {
-      console.warn('[EventHeatmap] Error during city change animation:', error);
-    }
-  }, [map]); // Remove selectedCity from deps to prevent conflicts
+  // City changes are handled by map reinitialization in the effect above
 
   // Final cleanup when component unmounts
   useEffect(() => {
@@ -833,8 +803,15 @@ const EventHeatmap: React.FC = () => {
         return distance < 0.002;
       });
 
-      marker.addTo(map);
-      newTribeSpotMarkers.push(marker);
+      // Only add marker if map is valid and has a container
+      try {
+        if (map && map.getContainer()) {
+          marker.addTo(map);
+          newTribeSpotMarkers.push(marker);
+        }
+      } catch (error) {
+        console.warn('[EventHeatmap] Error adding tribe spot marker:', error);
+      }
     });
 
     setTribeSpotMarkers(newTribeSpotMarkers);
@@ -969,8 +946,16 @@ const EventHeatmap: React.FC = () => {
       `;
 
       marker.bindPopup(popupContent);
-      marker.addTo(map);
-      newEventMarkers.push(marker);
+      
+      // Only add marker if map is valid and has a container
+      try {
+        if (map && map.getContainer()) {
+          marker.addTo(map);
+          newEventMarkers.push(marker);
+        }
+      } catch (error) {
+        console.warn('[EventHeatmap] Error adding event marker:', error);
+      }
     });
 
     setEventMarkers(newEventMarkers);
@@ -1105,7 +1090,15 @@ const EventHeatmap: React.FC = () => {
         }
 
         newUserMarkers.push(marker);
-        map.addLayer(marker);
+        
+        // Only add marker if map is valid and has a container
+        try {
+          if (map && map.getContainer()) {
+            map.addLayer(marker);
+          }
+        } catch (error) {
+          console.warn('[EventHeatmap] Error adding user marker:', error);
+        }
       }
     });
     setUserMarkers(newUserMarkers);
