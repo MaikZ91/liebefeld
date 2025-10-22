@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 const prompts = [
+  "Frage MIA nach Events...",
   "Welche Konzerte finden heute statt?",
   "Was kann ich am Wochenende machen?",
   "Gibt es Events für Kinder?",

@@ -87,12 +87,9 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
       {chatInputProps && showSearchBar && (
         <div className="px-4 pb-4 pt-2">
           <div className="bg-black rounded-[2rem] mx-2 relative p-4">
-            {/* Beta Label and Typewriter */}
-            <div className="mb-3 flex items-start gap-2">
-              <span className="text-[10px] font-semibold bg-primary/20 text-primary px-2 py-1 rounded shrink-0">BETA</span>
-              <div className="text-white/60 text-sm">
-                <TypewriterPrompts />
-              </div>
+            {/* Beta Label */}
+            <div className="mb-3">
+              <span className="text-[10px] font-semibold bg-primary/20 text-primary px-2 py-1 rounded">BETA</span>
             </div>
             
             <ChatInput
@@ -108,9 +105,8 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ selectedCity = 'bielefeld
               toggleRecentQueries={chatInputProps.toggleRecentQueries}
               inputRef={chatInputProps.inputRef}
               onAddEvent={chatInputProps.onAddEvent}
-              showAnimatedPrompts={chatInputProps.showAnimatedPrompts}
+              showAnimatedPrompts={true}
               activeChatModeValue="ai"
-              placeholder="Frage MIA nach Events..."
             />
           </div>
         </div>
