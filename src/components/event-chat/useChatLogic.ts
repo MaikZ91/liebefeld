@@ -37,7 +37,8 @@ export const useChatLogic = (
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const welcomeMessageShownRef = useRef(false);
-  const appLaunchedBeforeRef = useRef(false); 
+  const appLaunchedBeforeRef = useRef(false);
+  const isSendingRef = useRef(false);
   // Removed typingTimeoutRef as it's not needed for AI typing simulation during user input
   
 
@@ -256,6 +257,13 @@ export const useChatLogic = (
     const message = customInput || input;
     if (!message.trim()) return;
     
+    // Prevent multiple simultaneous sends
+    if (isSendingRef.current) {
+      console.log('[useChatLogic] Already sending a message, ignoring duplicate call');
+      return;
+    }
+    isSendingRef.current = true;
+    
     if (!hasUserSentFirstMessage) {
       setHasUserSentFirstMessage(true);
       localStorage.setItem(USER_SENT_FIRST_MESSAGE_KEY, 'true');
@@ -333,6 +341,7 @@ export const useChatLogic = (
         setMessages(prev => [...prev, errorMessage]);
       } finally {
         setIsTyping(false); // Stop typing after response
+        isSendingRef.current = false; // Reset flag
       }
       return;
     }
@@ -432,6 +441,7 @@ export const useChatLogic = (
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsTyping(false); // Stop typing after response
+      isSendingRef.current = false; // Reset flag
     }
   };
 
