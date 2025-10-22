@@ -67,9 +67,9 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
         <div className="bg-black mx-4 px-6 py-4 relative rounded-[2rem]">
           {/* Main content */}
           <div className="flex items-center justify-between relative z-10">
-            <div className="flex items-center gap-4">
-              <Link to="/" className="flex items-center">
-                <h1 className="font-sans text-2xl font-bold tracking-tight text-red-500">THE TRIBE</h1>
+            <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
+              <Link to="/" className="flex items-center shrink-0">
+                <h1 className="font-sans text-lg md:text-2xl font-bold tracking-tight text-red-500 whitespace-nowrap">THE TRIBE</h1>
               </Link>
               <CitySelector />
             </div>
