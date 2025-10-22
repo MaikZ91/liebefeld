@@ -1381,7 +1381,7 @@ const EventHeatmap: React.FC = () => {
       )}
 
       {/* Kategorie Filter - Horizontal ausklappbar */}
-      <div className="fixed top-24 left-3 z-[1002]">
+      <div className={cn("fixed top-24 left-3 z-[1002]", isMIAOpen && "hidden")}>
         <div className="flex items-center gap-2">
           {/* Aktueller Button */}
           <Button 
