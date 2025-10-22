@@ -168,11 +168,10 @@ const EventHeatmap: React.FC = () => {
   // Load disliked events on mount and subscribe to changes
   useEffect(() => {
     const username = localStorage.getItem('username');
-    if (!username) return;
 
     const loadDislikedEvents = async () => {
       try {
-        const dislikedIds = await dislikeService.getDislikedEvents(username);
+        const dislikedIds = await dislikeService.getDislikedEvents(username || undefined);
         console.log('[EventHeatmap] Loaded disliked events:', dislikedIds);
         setDislikedEventIds(dislikedIds);
       } catch (error) {
@@ -182,39 +181,41 @@ const EventHeatmap: React.FC = () => {
     
     loadDislikedEvents();
 
-    // Subscribe to realtime changes for this user's dislikes
-    const dislikesSubscription = supabase
-      .channel('disliked_events_changes')
-      .on(
-        'postgres_changes',
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'disliked_events',
-          filter: `username=eq.${username}`
-        },
-        (payload) => {
-          console.log('[EventHeatmap] Dislike change received:', payload);
-          if (payload.eventType === 'INSERT') {
-            setDislikedEventIds(prev => {
-              const newId = (payload.new as any).event_id;
-              if (!prev.includes(newId)) {
-                return [...prev, newId];
-              }
-              return prev;
-            });
-          } else if (payload.eventType === 'DELETE') {
-            setDislikedEventIds(prev => 
-              prev.filter(id => id !== (payload.old as any).event_id)
-            );
+    // Only subscribe to realtime changes if user is logged in
+    if (username) {
+      const dislikesSubscription = supabase
+        .channel('disliked_events_changes')
+        .on(
+          'postgres_changes',
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'disliked_events',
+            filter: `username=eq.${username}`
+          },
+          (payload) => {
+            console.log('[EventHeatmap] Dislike change received:', payload);
+            if (payload.eventType === 'INSERT') {
+              setDislikedEventIds(prev => {
+                const newId = (payload.new as any).event_id;
+                if (!prev.includes(newId)) {
+                  return [...prev, newId];
+                }
+                return prev;
+              });
+            } else if (payload.eventType === 'DELETE') {
+              setDislikedEventIds(prev => 
+                prev.filter(id => id !== (payload.old as any).event_id)
+              );
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
 
-    return () => {
-      dislikesSubscription.unsubscribe();
-    };
+      return () => {
+        dislikesSubscription.unsubscribe();
+      };
+    }
   }, []);
 
   useEffect(() => {
@@ -1185,21 +1186,12 @@ const EventHeatmap: React.FC = () => {
 
   const handleEventDislike = async (eventId: string) => {
     try {
-      const username = localStorage.getItem('username');
-      if (!username) {
-        toast({
-          title: "Fehler",
-          description: "Du musst angemeldet sein, um Events auszublenden.",
-          variant: "destructive"
-        });
-        return;
-      }
+      const username = localStorage.getItem('username') || undefined;
 
       console.log('[EventHeatmap] Disliking event:', eventId);
       await dislikeService.dislikeEvent(eventId, username);
       
-      // Local state update will happen through realtime subscription
-      // But add it immediately for better UX
+      // Update local state immediately for better UX
       setDislikedEventIds(prev => {
         if (!prev.includes(eventId)) {
           return [...prev, eventId];
