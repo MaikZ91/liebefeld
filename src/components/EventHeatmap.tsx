@@ -1326,22 +1326,23 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* Time Slider - Dezent */}
-      <div className="fixed bottom-24 right-3 z-[1002] w-36">
-        <div className="p-2 bg-black/60 backdrop-blur-sm border border-red-500/10 rounded-lg shadow-sm">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-1.5 text-white/80 text-[10px] font-medium">
-              <Clock className="w-2.5 h-2.5 text-red-400/70" />
-              <span>{getTimeFromSlider(timeRange[0])}</span>
+      {/* Time Slider - Hochkant und extrem dezent */}
+      <div className="fixed bottom-32 right-2 z-[1002]">
+        <div className="p-1.5 bg-black/30 backdrop-blur-sm border border-white/5 rounded-full shadow-sm">
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-white/60 text-[9px] font-medium">{getTimeFromSlider(timeRange[0])}</span>
+            <div className="h-32 w-8 flex items-center justify-center">
+              <Slider
+                value={timeRange}
+                onValueChange={setTimeRange}
+                max={23}
+                min={0}
+                step={1}
+                orientation="vertical"
+                className="h-full"
+              />
             </div>
-            <Slider
-              value={timeRange}
-              onValueChange={setTimeRange}
-              max={23}
-              min={0}
-              step={1}
-              className="w-full"
-            />
+            <Clock className="w-2.5 h-2.5 text-white/40" />
           </div>
         </div>
       </div>
