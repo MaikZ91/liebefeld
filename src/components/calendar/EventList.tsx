@@ -194,8 +194,8 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
 
     return (
       <div className="bg-white text-black rounded-3xl border border-gray-200 shadow-xl p-4 overflow-hidden w-full max-w-full -mt-4">
-        <div className="flex items-center justify-between mb-2 gap-2">
-          <FilterBar value={groupFilter} className="flex-shrink-0" variant="light" />
+        <div className="flex items-center mb-2 gap-2 overflow-x-auto">
+          <FilterBar value={groupFilter} className="min-w-max" variant="light" />
         </div>
         
         <div ref={listRef} className="overflow-y-auto max-h-[650px] pr-1 scrollbar-thin w-full mt-2">

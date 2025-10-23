@@ -1395,12 +1395,12 @@ const EventHeatmap: React.FC = () => {
               </div>
 
               {/* Filter Bar */}
-              <div>
+              <div className="w-full overflow-x-auto">
                 <FilterBar 
                   value={selectedCategory}
                   onChange={handleCategoryChange}
                   variant="light"
-                  className="w-full"
+                  className="min-w-max"
                 />
               </div>
             </div>

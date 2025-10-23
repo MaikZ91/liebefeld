@@ -34,10 +34,10 @@ const FilterBar: React.FC<FilterBarProps> = ({ value: externalValue, onChange: e
   };
 
   return (
-    <div className={cn('w-full flex items-center gap-1', className)}>
+    <div className={cn('w-full overflow-x-auto scrollbar-hide', className)}>
       <div
         className={cn(
-          'inline-flex rounded-full p-0.5',
+          'inline-flex rounded-full p-0.5 gap-1',
           variant === 'light'
             ? 'bg-white/80 border border-gray-200'
             : 'bg-black border border-white/10'
