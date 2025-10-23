@@ -491,6 +491,7 @@ export const useChatLogic = (
     
     // Generate contextual follow-up suggestions
     const generateSuggestions = (query: string, hasEvents: boolean): string[] => {
+      console.log('[useChatLogic] Generating suggestions for query:', query, 'hasEvents:', hasEvents);
       const suggestions: string[] = [];
       const lower = query.toLowerCase();
       
@@ -520,7 +521,9 @@ export const useChatLogic = (
         suggestions.push('Mein perfekter Tag');
       }
       
-      return suggestions.slice(0, 4);
+      const result = suggestions.slice(0, 4);
+      console.log('[useChatLogic] Generated suggestions:', result);
+      return result;
     };
 
     try {
@@ -540,6 +543,7 @@ export const useChatLogic = (
           suggestions: suggestions
         };
         
+        console.log('[useChatLogic] Created bot message with suggestions:', botMessage.suggestions);
         setMessages(prev => [...prev, botMessage]);
       }
     } catch (error) {

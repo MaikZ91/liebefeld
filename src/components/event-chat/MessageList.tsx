@@ -82,8 +82,10 @@ const MessageList: React.FC<MessageListProps> = ({
           }
           // HTML Message (AI Response)
           if (message.html) {
+            console.log('[MessageList] Rendering HTML message with suggestions:', message.suggestions);
+            console.log('[MessageList] onSuggestionClick defined:', !!onSuggestionClick);
             return (
-              <div key={message.id}>
+              <div key={message.id} className="space-y-3">
                 <div className="rounded-2xl bg-gradient-to-br from-gray-900/70 to-black/70 backdrop-blur-sm border border-red-500/20 shadow-xl overflow-hidden">
                   <div className="flex items-center gap-3 px-4 py-3 border-b border-red-500/10 bg-black/20">
                     <Avatar className="w-8 h-8 shrink-0 shadow-lg shadow-red-500/30">
@@ -97,11 +99,21 @@ const MessageList: React.FC<MessageListProps> = ({
                   </div>
                   <div dangerouslySetInnerHTML={{ __html: message.html }} className="p-5 text-white/90 leading-relaxed event-list-container" />
                 </div>
-                {message.suggestions && message.suggestions.length > 0 && onSuggestionClick && (
-                  <SuggestionChips 
-                    suggestions={message.suggestions}
-                    onSuggestionClick={onSuggestionClick}
-                  />
+                {message.suggestions && message.suggestions.length > 0 && onSuggestionClick ? (
+                  <div>
+                    <div className="text-xs text-white/40 mb-2 px-4">Du kannst weiterfragen:</div>
+                    <SuggestionChips 
+                      suggestions={message.suggestions}
+                      onSuggestionClick={(suggestion) => {
+                        console.log('[MessageList] Suggestion clicked:', suggestion);
+                        onSuggestionClick(suggestion);
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="text-xs text-red-500 px-4">
+                    Debug: suggestions={JSON.stringify(message.suggestions)}, onClick={!!onSuggestionClick}
+                  </div>
                 )}
               </div>
             );
