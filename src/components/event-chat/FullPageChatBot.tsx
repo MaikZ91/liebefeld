@@ -419,6 +419,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               examplePrompts={examplePrompts}
               handleExamplePromptClick={handleExamplePromptClick}
               onJoinEventChat={onJoinEventChat}
+              onSuggestionClick={aiSendMessage}
             />
             <div ref={messagesEndRef} />
           </div>

@@ -15,6 +15,7 @@ export interface ChatMessage {
   slideData?: LandingSlideData; 
   examplePrompts?: string[]; 
   isEventNotification?: boolean;
+  suggestions?: string[];
 }
 
 export interface PanelEventData {
@@ -107,6 +108,7 @@ export interface MessageListProps {
   examplePrompts?: string[];
   handleExamplePromptClick?: (prompt: string) => void;
   onJoinEventChat?: (eventId: string, eventTitle: string) => void;
+  onSuggestionClick?: (suggestion: string) => void;
 }
 
 export interface RecentQueriesProps {

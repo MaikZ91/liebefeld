@@ -8,6 +8,7 @@ import { MessageListProps } from './types';
 import SwipeableEventPanel from './SwipeableEventPanel';
 import SwipeableLandingPanel from './SwipeableLandingPanel';
 import TypewriterPrompt from './TypewriterPrompt';
+import SuggestionChips from './SuggestionChips';
 
 import './MessageList.css';
 
@@ -18,7 +19,8 @@ const MessageList: React.FC<MessageListProps> = ({
   messagesEndRef,
   examplePrompts,
   handleExamplePromptClick,
-  onJoinEventChat
+  onJoinEventChat,
+  onSuggestionClick
 }) => {
   // Es wird explizit nach dem statischen Willkommensprompt gesucht
   const welcomeMessage = messages.find(m => m.id === 'welcome');
@@ -81,18 +83,26 @@ const MessageList: React.FC<MessageListProps> = ({
           // HTML Message (AI Response)
           if (message.html) {
             return (
-              <div key={message.id} className="rounded-2xl bg-gradient-to-br from-gray-900/70 to-black/70 backdrop-blur-sm border border-red-500/20 shadow-xl overflow-hidden">
-                <div className="flex items-center gap-3 px-4 py-3 border-b border-red-500/10 bg-black/20">
-                  <Avatar className="w-8 h-8 shrink-0 shadow-lg shadow-red-500/30">
-                    <AvatarImage src="/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png" />
-                    <AvatarFallback className="bg-gradient-to-br from-red-600 to-red-800 text-xs text-white font-bold">MIA</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="text-sm font-semibold text-red-400">MIA</div>
-                    <div className="text-xs text-white/50">Event Assistentin</div>
+              <div key={message.id}>
+                <div className="rounded-2xl bg-gradient-to-br from-gray-900/70 to-black/70 backdrop-blur-sm border border-red-500/20 shadow-xl overflow-hidden">
+                  <div className="flex items-center gap-3 px-4 py-3 border-b border-red-500/10 bg-black/20">
+                    <Avatar className="w-8 h-8 shrink-0 shadow-lg shadow-red-500/30">
+                      <AvatarImage src="/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png" />
+                      <AvatarFallback className="bg-gradient-to-br from-red-600 to-red-800 text-xs text-white font-bold">MIA</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="text-sm font-semibold text-red-400">MIA</div>
+                      <div className="text-xs text-white/50">Event Assistentin</div>
+                    </div>
                   </div>
+                  <div dangerouslySetInnerHTML={{ __html: message.html }} className="p-5 text-white/90 leading-relaxed event-list-container" />
                 </div>
-                <div dangerouslySetInnerHTML={{ __html: message.html }} className="p-5 text-white/90 leading-relaxed event-list-container" />
+                {message.suggestions && message.suggestions.length > 0 && onSuggestionClick && (
+                  <SuggestionChips 
+                    suggestions={message.suggestions}
+                    onSuggestionClick={onSuggestionClick}
+                  />
+                )}
               </div>
             );
           }

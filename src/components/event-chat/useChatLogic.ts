@@ -339,7 +339,8 @@ export const useChatLogic = (
           isUser: false,
           text: 'Hier ist dein perfekter Tag in Liebefeld!',
           html: data.response || data.message || "Entschuldige, ich konnte deinen perfekten Tag nicht generieren.",
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          suggestions: ['Weitere Events heute', 'Was läuft am Wochenende?', 'Zeige mir Sport-Events']
         };
         setMessages(prev => [...prev, botMessage]);
 
@@ -488,8 +489,43 @@ export const useChatLogic = (
 
     setMessages(prev => [...prev, panelMessage]);
     
+    // Generate contextual follow-up suggestions
+    const generateSuggestions = (query: string, hasEvents: boolean): string[] => {
+      const suggestions: string[] = [];
+      const lower = query.toLowerCase();
+      
+      if (hasEvents) {
+        // Event-specific suggestions
+        if (lower.includes('heute') || lower.includes('morgen') || lower.includes('wochenende')) {
+          suggestions.push('Weitere Events diese Woche');
+        } else {
+          suggestions.push('Was läuft heute?');
+        }
+        
+        suggestions.push('Zeige mir auf der Karte');
+        
+        if (lower.includes('konzert') || lower.includes('party') || lower.includes('ausgehen')) {
+          suggestions.push('Weitere Ausgeh-Events');
+        } else if (lower.includes('sport') || lower.includes('fitness')) {
+          suggestions.push('Mehr Sport-Events');
+        } else if (lower.includes('kunst') || lower.includes('kultur') || lower.includes('kreativ')) {
+          suggestions.push('Weitere Kreativ-Events');
+        } else {
+          suggestions.push('Kostenlose Events');
+        }
+      } else {
+        // General suggestions when no specific events shown
+        suggestions.push('Was läuft heute?');
+        suggestions.push('Events am Wochenende');
+        suggestions.push('Mein perfekter Tag');
+      }
+      
+      return suggestions.slice(0, 4);
+    };
+
     try {
       const responseHtml = await generateResponse(message, events, isHeartActive);
+      const suggestions = generateSuggestions(message, relevantEvents.length > 0);
       
       // If callback provided, use it instead of adding to chat
       if (onAiResponseReceived) {
@@ -500,7 +536,8 @@ export const useChatLogic = (
           isUser: false,
           text: 'Hier sind weitere Details zu den Events.',
           html: responseHtml,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          suggestions: suggestions
         };
         
         setMessages(prev => [...prev, botMessage]);
