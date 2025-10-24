@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, Send, Filter, FilterX, MessageSquare, CalendarIcon, Heart } from 'lucide-react';
+import SuggestionChips from '@/components/event-chat/SuggestionChips';
 import { useEvents } from '@/hooks/useEvents';
 
 import { format, parseISO } from 'date-fns';
@@ -1662,10 +1663,10 @@ const EventHeatmap: React.FC = () => {
       {/* AI Response Card */}
       {showAiResponse && aiResponse && (
         <div className="fixed top-20 left-4 right-4 md:left-auto md:right-4 md:w-[500px] z-[1100] animate-fade-in">
-          <Card className="bg-black/90 backdrop-blur-sm border-2 border-red-500/50 shadow-2xl">
-            <div className="p-4 space-y-3">
+          <Card className="bg-black/90 backdrop-blur-sm border-2 border-red-500/50 shadow-2xl flex flex-col max-h-[70vh]">
+            <div className="p-4 space-y-3 flex-1 overflow-y-auto">
               {/* Header */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between sticky top-0 bg-black/90 pb-2">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center">
                     <Sparkles className="w-5 h-5 text-red-500" />
@@ -1675,7 +1676,11 @@ const EventHeatmap: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setShowAiResponse(false)}
+                  onClick={() => {
+                    setShowAiResponse(false);
+                    setAiResponse(null);
+                    setAiSuggestions([]);
+                  }}
                   className="h-8 w-8 p-0 hover:bg-red-500/20 text-gray-400 hover:text-white"
                 >
                   <X className="w-4 h-4" />
@@ -1684,7 +1689,7 @@ const EventHeatmap: React.FC = () => {
               
               {/* Content */}
               <div 
-                className="text-white text-sm max-h-[50vh] overflow-y-auto scrollbar-thin scrollbar-thumb-red-500/50 scrollbar-track-transparent pr-2"
+                className="text-white text-sm scrollbar-thin scrollbar-thumb-red-500/50 scrollbar-track-transparent pr-2"
                 dangerouslySetInnerHTML={{ __html: aiResponse }}
               />
               
@@ -1692,25 +1697,51 @@ const EventHeatmap: React.FC = () => {
               {aiSuggestions.length > 0 && (
                 <div className="pt-2 border-t border-red-500/20">
                   <div className="text-xs text-white/50 mb-2">Du kannst weiterfragen:</div>
-                  <div className="flex flex-wrap gap-2">
-                    {aiSuggestions.map((suggestion, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (aiChatExternalSendHandler) {
-                            aiChatExternalSendHandler(suggestion);
-                          }
-                        }}
-                        className="h-8 text-xs font-medium rounded-full bg-white/5 hover:bg-white/10 border-white/20 text-white/80 hover:text-white transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-red-500/20"
-                      >
-                        {suggestion}
-                      </Button>
-                    ))}
-                  </div>
+                  <SuggestionChips 
+                    suggestions={aiSuggestions}
+                    onSuggestionClick={(suggestion) => {
+                      console.log('Suggestion clicked:', suggestion);
+                      if (aiChatExternalSendHandler) {
+                        aiChatExternalSendHandler(suggestion);
+                      }
+                    }}
+                  />
                 </div>
               )}
+            </div>
+            
+            {/* Chat Input */}
+            <div className="border-t border-red-500/20 p-3">
+              <div className="flex gap-2">
+                <Input
+                  value={aiChatInput}
+                  onChange={(e) => setAiChatInput(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      if (aiChatInput.trim() && aiChatExternalSendHandler) {
+                        aiChatExternalSendHandler(aiChatInput);
+                        setAiChatInput('');
+                      }
+                    }
+                  }}
+                  placeholder="Frag MIA nach Events..."
+                  className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                />
+                <Button
+                  size="icon"
+                  onClick={() => {
+                    if (aiChatInput.trim() && aiChatExternalSendHandler) {
+                      aiChatExternalSendHandler(aiChatInput);
+                      setAiChatInput('');
+                    }
+                  }}
+                  disabled={!aiChatInput.trim()}
+                  className="bg-red-500 hover:bg-red-600"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </Card>
         </div>
