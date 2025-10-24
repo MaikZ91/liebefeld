@@ -138,6 +138,10 @@ const EventHeatmap: React.FC = () => {
 
   // State for MIA open/close
   const [isMIAOpen, setIsMIAOpen] = useState(false);
+  
+  // State for daily recommendation
+  const [hasNewDailyRecommendation, setHasNewDailyRecommendation] = useState(false);
+  const [isDailyRecommendationLoading, setIsDailyRecommendationLoading] = useState(false);
 
 
   // Event Chat Window State
@@ -174,6 +178,64 @@ const EventHeatmap: React.FC = () => {
   const chatLogic = useChatLogic(false, 'ai', handleDateFilterFromChat, handleCategoryFilterFromChat, handleAiResponseReceived);
 
   const mapRef = useRef<HTMLDivElement>(null);
+  
+  // Check for daily recommendation on mount
+  useEffect(() => {
+    const checkDailyRecommendation = () => {
+      const today = new Date().toISOString().split('T')[0];
+      const lastShownDate = localStorage.getItem('last_daily_recommendation_date');
+      
+      if (lastShownDate !== today) {
+        setHasNewDailyRecommendation(true);
+      }
+    };
+    
+    checkDailyRecommendation();
+  }, []);
+  
+  // Load daily recommendation when MIA is clicked
+  const handleMIAClick = async () => {
+    if (hasNewDailyRecommendation) {
+      setIsDailyRecommendationLoading(true);
+      
+      try {
+        // Call the perfect day edge function
+        const { data, error } = await supabase.functions.invoke('generate-perfect-day', {
+          body: {
+            username: currentUser || 'Gast',
+            weather: 'partly_cloudy',
+            interests: userProfile?.interests || [],
+            favorite_locations: userProfile?.favorite_locations || []
+          }
+        });
+        
+        if (error) throw error;
+        
+        if (data?.response) {
+          // Show the response in the AI response card
+          const suggestions = [
+            'Weitere Events heute',
+            'Events am Wochenende',
+            'Kreative Events',
+            'Sport Events'
+          ];
+          handleAiResponseReceived(data.response, suggestions);
+          
+          // Mark as shown for today
+          const today = new Date().toISOString().split('T')[0];
+          localStorage.setItem('last_daily_recommendation_date', today);
+          setHasNewDailyRecommendation(false);
+          
+          toast.success('Hier ist deine Tagesempfehlung!');
+        }
+      } catch (error) {
+        console.error('Error loading daily recommendation:', error);
+        toast.error('Konnte Tagesempfehlung nicht laden');
+      } finally {
+        setIsDailyRecommendationLoading(false);
+      }
+    }
+  };
 
   const selectedDateString = format(selectedDate, 'yyyy-MM-dd');
 
@@ -1354,6 +1416,9 @@ const EventHeatmap: React.FC = () => {
         onToggleFilterPanel={() => setShowFilterPanel(prev => !prev)}
         onOpenSwipeMode={() => setIsSwipeModeOpen(true)}
         onMIAOpenChange={setIsMIAOpen}
+        hasNewDailyRecommendation={hasNewDailyRecommendation}
+        onMIAClick={handleMIAClick}
+        isDailyRecommendationLoading={isDailyRecommendationLoading}
       />
 
 

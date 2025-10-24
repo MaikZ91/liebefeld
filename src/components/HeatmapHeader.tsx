@@ -38,6 +38,9 @@ interface HeatmapHeaderProps {
   onToggleFilterPanel?: () => void;
   onOpenSwipeMode?: () => void;
   onMIAOpenChange?: (isOpen: boolean) => void;
+  hasNewDailyRecommendation?: boolean;
+  onMIAClick?: () => void;
+  isDailyRecommendationLoading?: boolean;
 }
 
 const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ 
@@ -46,7 +49,10 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
   showFilterPanel = false,
   onToggleFilterPanel,
   onOpenSwipeMode,
-  onMIAOpenChange
+  onMIAOpenChange,
+  hasNewDailyRecommendation = false,
+  onMIAClick,
+  isDailyRecommendationLoading = false
 }) => {
   const { events, isLoading } = useEvents(selectedCity);
   const [showSearchBar, setShowSearchBar] = useState(false);
@@ -55,12 +61,17 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
   const miaAvatarUrl = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png';
 
   const handleMiaIconClick = () => {
-    setShowSearchBar(true);
-    onMIAOpenChange?.(true);
-    // Focus the input after it appears
-    setTimeout(() => {
-      chatInputProps?.inputRef?.current?.focus();
-    }, 100);
+    // If there's a daily recommendation, trigger the custom handler
+    if (hasNewDailyRecommendation && onMIAClick) {
+      onMIAClick();
+    } else {
+      setShowSearchBar(true);
+      onMIAOpenChange?.(true);
+      // Focus the input after it appears
+      setTimeout(() => {
+        chatInputProps?.inputRef?.current?.focus();
+      }, 100);
+    }
   };
 
   const handleCloseSearchBar = () => {
@@ -102,13 +113,25 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={handleMiaIconClick}
-                className="relative bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-full px-2.5 py-1.5 h-8 flex items-center gap-1.5 shrink-0 shadow-lg shadow-red-500/40 hover:shadow-red-500/60 transition-all hover:scale-105"
+                disabled={isDailyRecommendationLoading}
+                className={cn(
+                  "relative bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-full px-2.5 py-1.5 h-8 flex items-center gap-1.5 shrink-0 shadow-lg shadow-red-500/40 hover:shadow-red-500/60 transition-all hover:scale-105",
+                  hasNewDailyRecommendation && "animate-pulse"
+                )}
               >
+                {hasNewDailyRecommendation && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-ping"></div>
+                )}
+                {hasNewDailyRecommendation && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full"></div>
+                )}
                 <div className="absolute inset-0 bg-red-500/20 rounded-full blur-md"></div>
                 <Avatar className="h-5 w-5 relative z-10 ring-2 ring-white/20">
                   <AvatarImage src={miaAvatarUrl} alt="MIA" />
                 </Avatar>
-                <span className="text-xs font-bold relative z-10">MIA</span>
+                <span className="text-xs font-bold relative z-10">
+                  {isDailyRecommendationLoading ? '...' : 'MIA'}
+                </span>
               </Button>
             )}
           </div>
