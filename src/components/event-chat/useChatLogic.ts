@@ -21,7 +21,7 @@ export const useChatLogic = (
   activeChatModeValue: 'ai' | 'community' = 'ai',
   onDateFilterChange?: (date: Date) => void,
   onCategoryFilterChange?: (category: string) => void,
-  onAiResponseReceived?: (response: string) => void
+  onAiResponseReceived?: (response: string, suggestions?: string[]) => void
 ) => {
   // Get events and selectedCity from EventContext instead of props
   const { events, selectedCity } = useEventContext();
@@ -532,7 +532,7 @@ export const useChatLogic = (
       
       // If callback provided, use it instead of adding to chat
       if (onAiResponseReceived) {
-        onAiResponseReceived(responseHtml);
+        onAiResponseReceived(responseHtml, suggestions);
       } else {
         const botMessage: ChatMessage = {
           id: `bot-${Date.now()}`,

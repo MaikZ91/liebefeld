@@ -150,6 +150,7 @@ const EventHeatmap: React.FC = () => {
   // AI Response State for Heatmap
   const [aiResponse, setAiResponse] = useState<string | null>(null);
   const [showAiResponse, setShowAiResponse] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
 
   // Callback to update heatmap date filter from AI chat
   const handleDateFilterFromChat = useCallback((date: Date) => {
@@ -164,8 +165,9 @@ const EventHeatmap: React.FC = () => {
   }, []);
 
   // Callback to receive AI response directly in heatmap
-  const handleAiResponseReceived = useCallback((response: string) => {
+  const handleAiResponseReceived = useCallback((response: string, suggestions?: string[]) => {
     setAiResponse(response);
+    setAiSuggestions(suggestions || []);
     setShowAiResponse(true);
   }, []);
 
@@ -1596,9 +1598,9 @@ const EventHeatmap: React.FC = () => {
       {showAiResponse && aiResponse && (
         <div className="fixed top-20 left-4 right-4 md:left-auto md:right-4 md:w-[500px] z-[1100] animate-fade-in">
           <Card className="bg-black/90 backdrop-blur-sm border-2 border-red-500/50 shadow-2xl">
-            <div className="p-4">
+            <div className="p-4 space-y-3">
               {/* Header */}
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center">
                     <Sparkles className="w-5 h-5 text-red-500" />
@@ -1617,9 +1619,33 @@ const EventHeatmap: React.FC = () => {
               
               {/* Content */}
               <div 
-                className="text-white text-sm max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-red-500/50 scrollbar-track-transparent pr-2"
+                className="text-white text-sm max-h-[50vh] overflow-y-auto scrollbar-thin scrollbar-thumb-red-500/50 scrollbar-track-transparent pr-2"
                 dangerouslySetInnerHTML={{ __html: aiResponse }}
               />
+              
+              {/* Suggestion Chips */}
+              {aiSuggestions.length > 0 && (
+                <div className="pt-2 border-t border-red-500/20">
+                  <div className="text-xs text-white/50 mb-2">Du kannst weiterfragen:</div>
+                  <div className="flex flex-wrap gap-2">
+                    {aiSuggestions.map((suggestion, index) => (
+                      <Button
+                        key={index}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (aiChatExternalSendHandler) {
+                            aiChatExternalSendHandler(suggestion);
+                          }
+                        }}
+                        className="h-8 text-xs font-medium rounded-full bg-white/5 hover:bg-white/10 border-white/20 text-white/80 hover:text-white transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-red-500/20"
+                      >
+                        {suggestion}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
         </div>
