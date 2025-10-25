@@ -1668,30 +1668,30 @@ const EventHeatmap: React.FC = () => {
       {showAiResponse && (
         <div className="fixed top-20 left-4 right-4 md:left-auto md:right-4 md:w-[500px] z-[1100] animate-fade-in">
           <Card className="bg-black/90 backdrop-blur-sm border-2 border-red-500/50 shadow-2xl flex flex-col max-h-[70vh]">
-            <div className="p-4 space-y-3 flex-1 overflow-y-auto">
-              {/* Header */}
-              <div className="flex items-center justify-between sticky top-0 bg-black/90 pb-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-red-500" />
-                  </div>
-                  <span className="text-white font-semibold">MIA</span>
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 pb-3 border-b border-red-500/20">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-red-500" />
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setShowAiResponse(false);
-                    setAiResponse(null);
-                    setAiSuggestions([]);
-                  }}
-                  className="h-8 w-8 p-0 hover:bg-red-500/20 text-gray-400 hover:text-white"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
+                <span className="text-white font-semibold">MIA</span>
               </div>
-              
-              {/* Content */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShowAiResponse(false);
+                  setAiResponse(null);
+                  setAiSuggestions([]);
+                }}
+                className="h-8 w-8 p-0 hover:bg-red-500/20 text-gray-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-red-500/50 scrollbar-track-transparent">
               {isAiChatLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="flex flex-col items-center gap-3">
@@ -1702,7 +1702,7 @@ const EventHeatmap: React.FC = () => {
               ) : aiResponse ? (
                 <>
                   <div 
-                    className="text-white text-sm scrollbar-thin scrollbar-thumb-red-500/50 scrollbar-track-transparent pr-2"
+                    className="text-white text-sm"
                     dangerouslySetInnerHTML={{ __html: aiResponse }}
                   />
                   
@@ -1732,8 +1732,8 @@ const EventHeatmap: React.FC = () => {
               ) : null}
             </div>
             
-            {/* Chat Input */}
-            <div className="border-t border-red-500/20 p-3">
+            {/* Fixed Chat Input at Bottom */}
+            <div className="border-t border-red-500/20 p-3 bg-black/90">
               <div className="flex gap-2">
                 <Input
                   value={aiChatInput}
