@@ -143,6 +143,9 @@ const EventHeatmap: React.FC = () => {
   // State for daily recommendation
   const [hasNewDailyRecommendation, setHasNewDailyRecommendation] = useState(false);
   const [isDailyRecommendationLoading, setIsDailyRecommendationLoading] = useState(false);
+  
+  // State for AI chat loading
+  const [isAiChatLoading, setIsAiChatLoading] = useState(false);
 
 
   // Event Chat Window State
@@ -174,6 +177,7 @@ const EventHeatmap: React.FC = () => {
     setAiResponse(response);
     setAiSuggestions(suggestions || []);
     setShowAiResponse(true);
+    setIsAiChatLoading(false);
   }, []);
 
   const chatLogic = useChatLogic(false, 'ai', handleDateFilterFromChat, handleCategoryFilterFromChat, handleAiResponseReceived);
@@ -1661,7 +1665,7 @@ const EventHeatmap: React.FC = () => {
       `}</style>
 
       {/* AI Response Card */}
-      {showAiResponse && aiResponse && (
+      {showAiResponse && (
         <div className="fixed top-20 left-4 right-4 md:left-auto md:right-4 md:w-[500px] z-[1100] animate-fade-in">
           <Card className="bg-black/90 backdrop-blur-sm border-2 border-red-500/50 shadow-2xl flex flex-col max-h-[70vh]">
             <div className="p-4 space-y-3 flex-1 overflow-y-auto">
@@ -1688,26 +1692,44 @@ const EventHeatmap: React.FC = () => {
               </div>
               
               {/* Content */}
-              <div 
-                className="text-white text-sm scrollbar-thin scrollbar-thumb-red-500/50 scrollbar-track-transparent pr-2"
-                dangerouslySetInnerHTML={{ __html: aiResponse }}
-              />
-              
-              {/* Suggestion Chips */}
-              {aiSuggestions.length > 0 && (
-                <div className="pt-2 border-t border-red-500/20">
-                  <div className="text-xs text-white/50 mb-2">Du kannst weiterfragen:</div>
-                  <SuggestionChips 
-                    suggestions={aiSuggestions}
-                    onSuggestionClick={(suggestion) => {
-                      console.log('Suggestion clicked:', suggestion);
-                      if (aiChatExternalSendHandler) {
-                        aiChatExternalSendHandler(suggestion);
-                      }
-                    }}
-                  />
+              {isAiChatLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+                    <p className="text-white/70 text-sm">MIA denkt nach...</p>
+                  </div>
                 </div>
-              )}
+              ) : aiResponse ? (
+                <>
+                  <div 
+                    className="text-white text-sm scrollbar-thin scrollbar-thumb-red-500/50 scrollbar-track-transparent pr-2"
+                    dangerouslySetInnerHTML={{ __html: aiResponse }}
+                  />
+                  
+                  {/* Suggestion Chips */}
+                  {aiSuggestions.length > 0 && (
+                    <div className="pt-2 border-t border-red-500/20">
+                      <div className="text-xs text-white/50 mb-2">Du kannst weiterfragen:</div>
+                      <SuggestionChips 
+                        suggestions={aiSuggestions}
+                        onSuggestionClick={async (suggestion) => {
+                          console.log('Suggestion clicked:', suggestion);
+                          if (aiChatExternalSendHandler) {
+                            // Show suggestion in input and clear old response
+                            setAiChatInput(suggestion);
+                            setAiResponse(null);
+                            setAiSuggestions([]);
+                            setIsAiChatLoading(true);
+                            // Send the suggestion
+                            await aiChatExternalSendHandler(suggestion);
+                            setAiChatInput('');
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+                </>
+              ) : null}
             </div>
             
             {/* Chat Input */}
@@ -1716,27 +1738,36 @@ const EventHeatmap: React.FC = () => {
                 <Input
                   value={aiChatInput}
                   onChange={(e) => setAiChatInput(e.target.value)}
-                  onKeyPress={(e) => {
+                  onKeyPress={async (e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
                       if (aiChatInput.trim() && aiChatExternalSendHandler) {
-                        aiChatExternalSendHandler(aiChatInput);
+                        const query = aiChatInput;
                         setAiChatInput('');
+                        setAiResponse(null);
+                        setAiSuggestions([]);
+                        setIsAiChatLoading(true);
+                        await aiChatExternalSendHandler(query);
                       }
                     }
                   }}
                   placeholder="Frag MIA nach Events..."
                   className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                  disabled={isAiChatLoading}
                 />
                 <Button
                   size="icon"
-                  onClick={() => {
+                  onClick={async () => {
                     if (aiChatInput.trim() && aiChatExternalSendHandler) {
-                      aiChatExternalSendHandler(aiChatInput);
+                      const query = aiChatInput;
                       setAiChatInput('');
+                      setAiResponse(null);
+                      setAiSuggestions([]);
+                      setIsAiChatLoading(true);
+                      await aiChatExternalSendHandler(query);
                     }
                   }}
-                  disabled={!aiChatInput.trim()}
+                  disabled={!aiChatInput.trim() || isAiChatLoading}
                   className="bg-red-500 hover:bg-red-600"
                 >
                   <Send className="h-4 w-4" />
