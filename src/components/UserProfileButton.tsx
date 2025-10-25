@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
@@ -12,9 +12,13 @@ import { User, Users, Settings, LogOut } from 'lucide-react';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
 import { getInitials } from '@/utils/chatUIUtils';
 import UserDirectory from './users/UserDirectory';
+import ProfileEditor from './users/ProfileEditor';
+import { useUserProfile } from '@/hooks/chat/useUserProfile';
 
 const UserProfileButton: React.FC = () => {
   const [isDirectoryOpen, setIsDirectoryOpen] = useState(false);
+  const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
+  const { currentUser, userProfile, refetchProfile } = useUserProfile();
   
   const username = typeof window !== 'undefined' 
     ? localStorage.getItem(USERNAME_KEY) || 'User'
@@ -71,7 +75,10 @@ const UserProfileButton: React.FC = () => {
             <Users className="mr-2 h-4 w-4" />
             <span>Community Directory</span>
           </DropdownMenuItem>
-          <DropdownMenuItem className="text-white hover:bg-red-500/20 cursor-pointer">
+          <DropdownMenuItem 
+            className="text-white hover:bg-red-500/20 cursor-pointer"
+            onClick={() => setIsProfileEditorOpen(true)}
+          >
             <User className="mr-2 h-4 w-4" />
             <span>Profil bearbeiten</span>
           </DropdownMenuItem>
@@ -94,6 +101,13 @@ const UserProfileButton: React.FC = () => {
         open={isDirectoryOpen} 
         onOpenChange={setIsDirectoryOpen}
         onSelectUser={() => {}} // Empty function since we don't need user selection in this context
+      />
+
+      <ProfileEditor
+        open={isProfileEditorOpen}
+        onOpenChange={setIsProfileEditorOpen}
+        currentUser={userProfile}
+        onProfileUpdate={refetchProfile}
       />
     </>
   );
