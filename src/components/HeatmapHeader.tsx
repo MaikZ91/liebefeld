@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import UserProfileButton from './UserProfileButton';
 
 interface HeatmapHeaderProps {
   selectedCity?: string;
@@ -107,8 +108,9 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
               <CitySelector />
             </div>
             
-            {/* MIA Icon - only show if chatInputProps exist and search bar is not shown */}
-            {chatInputProps && !showSearchBar && (
+            <div className="flex items-center gap-2">
+              {/* MIA Icon - only show if chatInputProps exist and search bar is not shown */}
+              {chatInputProps && !showSearchBar && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -133,7 +135,11 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
                   {isDailyRecommendationLoading ? '...' : 'MIA'}
                 </span>
               </Button>
-            )}
+              )}
+              
+              {/* User Profile Button */}
+              <UserProfileButton />
+            </div>
           </div>
         </div>
       </div>
