@@ -6,14 +6,13 @@ import ChatInput from './event-chat/ChatInput'; // Import ChatInput
 import { Link } from 'react-router-dom'; // Import Link for THE TRIBE text
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
-import { Filter, FilterX, Heart, CalendarIcon } from 'lucide-react';
+import { Filter, FilterX, Heart, CalendarIcon, Sparkles } from 'lucide-react';
 import TypewriterPrompts from './TypewriterPrompts';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import UserProfileButton from './UserProfileButton';
 
 interface HeatmapHeaderProps {
   selectedCity?: string;
@@ -108,38 +107,20 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
               <CitySelector />
             </div>
             
-            <div className="flex items-center gap-2">
-              {/* MIA Icon - only show if chatInputProps exist and search bar is not shown */}
-              {chatInputProps && !showSearchBar && (
+            {/* MIA Icon - only show if chatInputProps exist and search bar is not shown */}
+            {chatInputProps && !showSearchBar && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleMiaIconClick}
-                disabled={isDailyRecommendationLoading}
-                className={cn(
-                  "relative bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-full px-2.5 py-1.5 h-8 flex items-center gap-1.5 shrink-0 shadow-lg shadow-red-500/40 hover:shadow-red-500/60 transition-all hover:scale-105",
-                  hasNewDailyRecommendation && "animate-pulse"
-                )}
+                className="relative px-3 py-1.5 rounded-full bg-gradient-to-r from-red-500/20 to-pink-500/20 hover:from-red-500/30 hover:to-pink-500/30 border border-red-500/30 hover:border-red-500/50 transition-all shadow-lg shadow-red-500/20"
               >
-                {hasNewDailyRecommendation && (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-ping"></div>
-                )}
-                {hasNewDailyRecommendation && (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full"></div>
-                )}
-                <div className="absolute inset-0 bg-red-500/20 rounded-full blur-md"></div>
-                <Avatar className="h-5 w-5 relative z-10 ring-2 ring-white/20">
-                  <AvatarImage src={miaAvatarUrl} alt="MIA" />
-                </Avatar>
-                <span className="text-xs font-bold relative z-10">
+                <Sparkles className="h-4 w-4 text-red-400 animate-pulse mr-1.5" />
+                <span className="text-sm font-medium bg-gradient-to-r from-red-400 to-pink-400 text-transparent bg-clip-text">
                   {isDailyRecommendationLoading ? '...' : 'MIA'}
                 </span>
               </Button>
-              )}
-              
-              {/* User Profile Button */}
-              <UserProfileButton />
-            </div>
+            )}
           </div>
         </div>
       </div>
