@@ -137,6 +137,7 @@ const UserProfileButton: React.FC<UserProfileButtonProps> = ({
         open={isDirectoryOpen} 
         onOpenChange={setIsDirectoryOpen}
         onSelectUser={() => {}} // Empty function since we don't need user selection in this context
+        currentUsername={username}
       />
 
       <ProfileEditor

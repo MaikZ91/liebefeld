@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { UserProfile } from "@/types/chatTypes";
+import { UserProfile, USERNAME_KEY } from "@/types/chatTypes";
 import UserGallery from './UserGallery';
 import { userService } from '@/services/userService';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
@@ -36,17 +36,19 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
   useEffect(() => {
     if (open) {
       fetchOnlineUsers();
-      if (currentUsername && currentUsername !== 'Gast') {
-        fetchCurrentUserProfile();
-      }
+      fetchCurrentUserProfile();
     }
   }, [open, currentUsername]);
 
   const fetchCurrentUserProfile = async () => {
-    if (!currentUsername || currentUsername === 'Gast') return;
-    
     try {
-      const userProfile = await userService.getUserByUsername(currentUsername);
+      const effectiveUsername = (currentUsername && currentUsername !== 'Gast')
+        ? currentUsername
+        : (typeof window !== 'undefined' ? localStorage.getItem(USERNAME_KEY) || undefined : undefined);
+
+      if (!effectiveUsername || effectiveUsername === 'Gast') return;
+
+      const userProfile = await userService.getUserByUsername(effectiveUsername);
       if (userProfile) {
         setCurrentUserProfile(userProfile);
       }
@@ -115,7 +117,7 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-5xl bg-black text-white border-gray-800 p-0 [&>button]:text-white [&>button]:hover:text-gray-300 z-[9999]">
+        <DialogContent className="sm:max-w-5xl bg-black text-white border-gray-800 p-0 [&>button]:text-white [&>button]:hover:text-gray-300">
           <DialogHeader className="sr-only">
             <DialogTitle>Benutzer Verzeichnis</DialogTitle>
           </DialogHeader>
