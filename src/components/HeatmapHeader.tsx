@@ -115,7 +115,9 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
                 onClick={handleMiaIconClick}
                 className="relative px-3 py-1.5 rounded-full bg-gradient-to-r from-red-500/20 to-pink-500/20 hover:from-red-500/30 hover:to-pink-500/30 border border-red-500/30 hover:border-red-500/50 transition-all shadow-lg shadow-red-500/20"
               >
-                <Sparkles className="h-4 w-4 text-red-400 animate-pulse mr-1.5" />
+                <Avatar className="h-6 w-6 mr-1.5">
+                  <AvatarImage src={miaAvatarUrl} alt="MIA" />
+                </Avatar>
                 <span className="text-sm font-medium bg-gradient-to-r from-red-400 to-pink-400 text-transparent bg-clip-text">
                   {isDailyRecommendationLoading ? '...' : 'MIA'}
                 </span>

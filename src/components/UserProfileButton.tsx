@@ -15,10 +15,28 @@ import UserDirectory from './users/UserDirectory';
 import ProfileEditor from './users/ProfileEditor';
 import { useUserProfile } from '@/hooks/chat/useUserProfile';
 
-const UserProfileButton: React.FC = () => {
+interface UserProfileButtonProps {
+  // Optional props to control ProfileEditor from parent
+  isProfileEditorOpen?: boolean;
+  onProfileEditorOpenChange?: (open: boolean) => void;
+  // Hide dropdown menu and show only avatar
+  avatarOnly?: boolean;
+  onAvatarClick?: () => void;
+}
+
+const UserProfileButton: React.FC<UserProfileButtonProps> = ({
+  isProfileEditorOpen: externalIsProfileEditorOpen,
+  onProfileEditorOpenChange: externalOnProfileEditorOpenChange,
+  avatarOnly = false,
+  onAvatarClick
+}) => {
   const [isDirectoryOpen, setIsDirectoryOpen] = useState(false);
-  const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
+  const [internalIsProfileEditorOpen, setInternalIsProfileEditorOpen] = useState(false);
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
+  
+  // Use external state if provided, otherwise use internal state
+  const isProfileEditorOpen = externalIsProfileEditorOpen ?? internalIsProfileEditorOpen;
+  const setIsProfileEditorOpen = externalOnProfileEditorOpenChange ?? setInternalIsProfileEditorOpen;
   
   const username = typeof window !== 'undefined' 
     ? localStorage.getItem(USERNAME_KEY) || 'User'
@@ -43,6 +61,24 @@ const UserProfileButton: React.FC = () => {
 
   if (!hasCompletedOnboarding) {
     return null; // Don't show button if onboarding not completed
+  }
+
+  // If avatarOnly mode, just render the avatar button
+  if (avatarOnly) {
+    return (
+      <Button 
+        variant="ghost" 
+        className="relative h-8 w-8 rounded-full"
+        onClick={onAvatarClick}
+      >
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={avatarUrl || undefined} alt={username} />
+          <AvatarFallback className="bg-red-500 text-white">
+            {getInitials(username)}
+          </AvatarFallback>
+        </Avatar>
+      </Button>
+    );
   }
 
   return (

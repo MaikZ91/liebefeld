@@ -16,7 +16,10 @@ const DirectoryHeader: React.FC<DirectoryHeaderProps> = ({
     <DialogHeader className="flex flex-row items-center justify-between">
       <DialogTitle className="text-white">Online Benutzer</DialogTitle>
       <div className="flex items-center gap-2">
-        <UserProfileButton />
+        <UserProfileButton 
+          avatarOnly={true}
+          onAvatarClick={onOpenProfileEditor}
+        />
       </div>
     </DialogHeader>
   );
