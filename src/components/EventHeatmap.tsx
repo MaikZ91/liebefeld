@@ -182,6 +182,17 @@ const EventHeatmap: React.FC = () => {
 
   const chatLogic = useChatLogic(false, 'ai', handleDateFilterFromChat, handleCategoryFilterFromChat, handleAiResponseReceived);
 
+  // Fallback: ensure send handler is available immediately
+  useEffect(() => {
+    if (!(aiChatExternalSendHandler)) {
+      try {
+        setAiChatExternalSendHandler(() => (chatLogic as any)?.handleSendMessage);
+      } catch (e) {
+        console.warn('[EventHeatmap] Could not set fallback send handler:', e);
+      }
+    }
+  }, [chatLogic, aiChatExternalSendHandler]);
+
   const mapRef = useRef<HTMLDivElement>(null);
   
   // Check for daily recommendation on mount
@@ -1724,24 +1735,28 @@ const EventHeatmap: React.FC = () => {
                         suggestions={aiSuggestions}
                         onSuggestionClick={async (suggestion) => {
                           console.log('Suggestion clicked:', suggestion);
-                          if (aiChatExternalSendHandler) {
-                            try {
-                              // Show suggestion in input and clear old response
-                              setAiChatInput(suggestion);
-                              setAiResponse(null);
-                              setAiSuggestions([]);
-                              setIsAiChatLoading(true);
-                              // Send the suggestion
+                          try {
+                            // Show suggestion in input and clear old response
+                            setAiChatInput(suggestion);
+                            setAiResponse(null);
+                            setAiSuggestions([]);
+                            setIsAiChatLoading(true);
+                            // Send the suggestion using external handler or fallback
+                            if (aiChatExternalSendHandler) {
                               await aiChatExternalSendHandler(suggestion);
-                              setAiChatInput('');
-                            } catch (error) {
-                              console.error('Error sending suggestion:', error);
-                              toast.error('Konnte Antwort nicht laden');
-                              setAiResponse('<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider konnte ich gerade keine Antwort generieren. Versuche es später erneut.</div>');
-                              setAiSuggestions(['Was läuft heute?', 'Events am Wochenende']);
-                            } finally {
-                              setIsAiChatLoading(false);
+                            } else if ((chatLogic as any)?.handleSendMessage) {
+                              await (chatLogic as any).handleSendMessage(suggestion);
+                            } else {
+                              throw new Error('Kein Send-Handler verfügbar');
                             }
+                            setAiChatInput('');
+                          } catch (error) {
+                            console.error('Error sending suggestion:', error);
+                            toast.error('Konnte Antwort nicht laden');
+                            setAiResponse('<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider konnte ich gerade keine Antwort generieren. Versuche es später erneut.</div>');
+                            setAiSuggestions(['Was läuft heute?', 'Events am Wochenende']);
+                          } finally {
+                            setIsAiChatLoading(false);
                           }
                         }}
                       />
@@ -1760,14 +1775,20 @@ const EventHeatmap: React.FC = () => {
                   onKeyDown={async (e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
-                      if (aiChatInput.trim() && aiChatExternalSendHandler) {
+                      if (aiChatInput.trim()) {
                         const query = aiChatInput;
                         setAiChatInput('');
                         setAiResponse(null);
                         setAiSuggestions([]);
                         try {
                           setIsAiChatLoading(true);
-                          await aiChatExternalSendHandler(query);
+                          if (aiChatExternalSendHandler) {
+                            await aiChatExternalSendHandler(query);
+                          } else if ((chatLogic as any)?.handleSendMessage) {
+                            await (chatLogic as any).handleSendMessage(query);
+                          } else {
+                            throw new Error('Kein Send-Handler verfügbar');
+                          }
                         } catch (error) {
                           console.error('Error sending message:', error);
                           toast.error('Konnte Antwort nicht laden');
@@ -1786,14 +1807,20 @@ const EventHeatmap: React.FC = () => {
                 <Button
                   size="icon"
                   onClick={async () => {
-                    if (aiChatInput.trim() && aiChatExternalSendHandler) {
+                    if (aiChatInput.trim()) {
                       const query = aiChatInput;
                       setAiChatInput('');
                       setAiResponse(null);
                       setAiSuggestions([]);
                       try {
                         setIsAiChatLoading(true);
-                        await aiChatExternalSendHandler(query);
+                        if (aiChatExternalSendHandler) {
+                          await aiChatExternalSendHandler(query);
+                        } else if ((chatLogic as any)?.handleSendMessage) {
+                          await (chatLogic as any).handleSendMessage(query);
+                        } else {
+                          throw new Error('Kein Send-Handler verfügbar');
+                        }
                       } catch (error) {
                         console.error('Error sending message:', error);
                         toast.error('Konnte Antwort nicht laden');
