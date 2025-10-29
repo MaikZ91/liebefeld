@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
@@ -12,31 +12,9 @@ import { User, Users, Settings, LogOut } from 'lucide-react';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
 import { getInitials } from '@/utils/chatUIUtils';
 import UserDirectory from './users/UserDirectory';
-import ProfileEditor from './users/ProfileEditor';
-import { useUserProfile } from '@/hooks/chat/useUserProfile';
 
-interface UserProfileButtonProps {
-  // Optional props to control ProfileEditor from parent
-  isProfileEditorOpen?: boolean;
-  onProfileEditorOpenChange?: (open: boolean) => void;
-  // Hide dropdown menu and show only avatar
-  avatarOnly?: boolean;
-  onAvatarClick?: () => void;
-}
-
-const UserProfileButton: React.FC<UserProfileButtonProps> = ({
-  isProfileEditorOpen: externalIsProfileEditorOpen,
-  onProfileEditorOpenChange: externalOnProfileEditorOpenChange,
-  avatarOnly = false,
-  onAvatarClick
-}) => {
+const UserProfileButton: React.FC = () => {
   const [isDirectoryOpen, setIsDirectoryOpen] = useState(false);
-  const [internalIsProfileEditorOpen, setInternalIsProfileEditorOpen] = useState(false);
-  const { currentUser, userProfile, refetchProfile } = useUserProfile();
-  
-  // Use external state if provided, otherwise use internal state
-  const isProfileEditorOpen = externalIsProfileEditorOpen ?? internalIsProfileEditorOpen;
-  const setIsProfileEditorOpen = externalOnProfileEditorOpenChange ?? setInternalIsProfileEditorOpen;
   
   const username = typeof window !== 'undefined' 
     ? localStorage.getItem(USERNAME_KEY) || 'User'
@@ -61,24 +39,6 @@ const UserProfileButton: React.FC<UserProfileButtonProps> = ({
 
   if (!hasCompletedOnboarding) {
     return null; // Don't show button if onboarding not completed
-  }
-
-  // If avatarOnly mode, just render the avatar button
-  if (avatarOnly) {
-    return (
-      <Button 
-        variant="ghost" 
-        className="relative h-8 w-8 rounded-full"
-        onClick={onAvatarClick}
-      >
-        <Avatar className="h-8 w-8">
-          <AvatarImage src={avatarUrl || undefined} alt={username} />
-          <AvatarFallback className="bg-red-500 text-white">
-            {getInitials(username)}
-          </AvatarFallback>
-        </Avatar>
-      </Button>
-    );
   }
 
   return (
@@ -111,10 +71,7 @@ const UserProfileButton: React.FC<UserProfileButtonProps> = ({
             <Users className="mr-2 h-4 w-4" />
             <span>Community Directory</span>
           </DropdownMenuItem>
-          <DropdownMenuItem 
-            className="text-white hover:bg-red-500/20 cursor-pointer"
-            onClick={() => setIsProfileEditorOpen(true)}
-          >
+          <DropdownMenuItem className="text-white hover:bg-red-500/20 cursor-pointer">
             <User className="mr-2 h-4 w-4" />
             <span>Profil bearbeiten</span>
           </DropdownMenuItem>
@@ -137,14 +94,6 @@ const UserProfileButton: React.FC<UserProfileButtonProps> = ({
         open={isDirectoryOpen} 
         onOpenChange={setIsDirectoryOpen}
         onSelectUser={() => {}} // Empty function since we don't need user selection in this context
-        currentUsername={username}
-      />
-
-      <ProfileEditor
-        open={isProfileEditorOpen}
-        onOpenChange={setIsProfileEditorOpen}
-        currentUser={userProfile}
-        onProfileUpdate={refetchProfile}
       />
     </>
   );
