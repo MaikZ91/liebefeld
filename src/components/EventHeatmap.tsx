@@ -196,6 +196,16 @@ const EventHeatmap: React.FC = () => {
     };
     
     checkDailyRecommendation();
+    
+    // Setup global function for "Personalisiere deine Perfect Day Nachricht" button
+    (window as any).openProfileEditor = () => {
+      setShowAIChat(false);
+      toast.info('Öffne dein Profil unter dem Benutzer-Icon, um deine Interessen anzupassen');
+    };
+    
+    return () => {
+      delete (window as any).openProfileEditor;
+    };
   }, []);
   
   // Load daily recommendation when MIA is clicked
@@ -1715,14 +1725,23 @@ const EventHeatmap: React.FC = () => {
                         onSuggestionClick={async (suggestion) => {
                           console.log('Suggestion clicked:', suggestion);
                           if (aiChatExternalSendHandler) {
-                            // Show suggestion in input and clear old response
-                            setAiChatInput(suggestion);
-                            setAiResponse(null);
-                            setAiSuggestions([]);
-                            setIsAiChatLoading(true);
-                            // Send the suggestion
-                            await aiChatExternalSendHandler(suggestion);
-                            setAiChatInput('');
+                            try {
+                              // Show suggestion in input and clear old response
+                              setAiChatInput(suggestion);
+                              setAiResponse(null);
+                              setAiSuggestions([]);
+                              setIsAiChatLoading(true);
+                              // Send the suggestion
+                              await aiChatExternalSendHandler(suggestion);
+                              setAiChatInput('');
+                            } catch (error) {
+                              console.error('Error sending suggestion:', error);
+                              toast.error('Konnte Antwort nicht laden');
+                              setAiResponse('<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider konnte ich gerade keine Antwort generieren. Versuche es später erneut.</div>');
+                              setAiSuggestions(['Was läuft heute?', 'Events am Wochenende']);
+                            } finally {
+                              setIsAiChatLoading(false);
+                            }
                           }
                         }}
                       />
@@ -1738,7 +1757,7 @@ const EventHeatmap: React.FC = () => {
                 <Input
                   value={aiChatInput}
                   onChange={(e) => setAiChatInput(e.target.value)}
-                  onKeyPress={async (e) => {
+                  onKeyDown={async (e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
                       if (aiChatInput.trim() && aiChatExternalSendHandler) {
@@ -1746,8 +1765,17 @@ const EventHeatmap: React.FC = () => {
                         setAiChatInput('');
                         setAiResponse(null);
                         setAiSuggestions([]);
-                        setIsAiChatLoading(true);
-                        await aiChatExternalSendHandler(query);
+                        try {
+                          setIsAiChatLoading(true);
+                          await aiChatExternalSendHandler(query);
+                        } catch (error) {
+                          console.error('Error sending message:', error);
+                          toast.error('Konnte Antwort nicht laden');
+                          setAiResponse('<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider konnte ich gerade keine Antwort generieren. Versuche es später erneut.</div>');
+                          setAiSuggestions(['Was läuft heute?', 'Events am Wochenende']);
+                        } finally {
+                          setIsAiChatLoading(false);
+                        }
                       }
                     }
                   }}
@@ -1763,8 +1791,17 @@ const EventHeatmap: React.FC = () => {
                       setAiChatInput('');
                       setAiResponse(null);
                       setAiSuggestions([]);
-                      setIsAiChatLoading(true);
-                      await aiChatExternalSendHandler(query);
+                      try {
+                        setIsAiChatLoading(true);
+                        await aiChatExternalSendHandler(query);
+                      } catch (error) {
+                        console.error('Error sending message:', error);
+                        toast.error('Konnte Antwort nicht laden');
+                        setAiResponse('<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider konnte ich gerade keine Antwort generieren. Versuche es später erneut.</div>');
+                        setAiSuggestions(['Was läuft heute?', 'Events am Wochenende']);
+                      } finally {
+                        setIsAiChatLoading(false);
+                      }
                     }
                   }}
                   disabled={!aiChatInput.trim() || isAiChatLoading}
