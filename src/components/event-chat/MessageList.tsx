@@ -22,17 +22,30 @@ const MessageList: React.FC<MessageListProps> = ({
   onJoinEventChat,
   onSuggestionClick
 }) => {
-  // Handler für Event-Links
-  const handleEventLinkClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLElement;
-    if (target.tagName === 'A' && target.getAttribute('href')?.startsWith('event://')) {
-      e.preventDefault();
-      const eventId = target.getAttribute('href')?.replace('event://', '');
-      if (eventId && (window as any).handleEventLinkClick) {
-        (window as any).handleEventLinkClick(eventId);
+  // Globaler Click-Listener für Event-Links
+  React.useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'A') {
+        const href = target.getAttribute('href');
+        if (href?.startsWith('event://')) {
+          e.preventDefault();
+          const eventId = href.replace('event://', '');
+          console.log('[MessageList] Event link clicked, ID:', eventId);
+          if ((window as any).handleEventLinkClick) {
+            (window as any).handleEventLinkClick(eventId);
+          } else {
+            console.error('[MessageList] window.handleEventLinkClick not found!');
+          }
+        }
       }
-    }
-  };
+    };
+
+    document.addEventListener('click', handleGlobalClick);
+    return () => {
+      document.removeEventListener('click', handleGlobalClick);
+    };
+  }, []);
   // Es wird explizit nach dem statischen Willkommensprompt gesucht
   const welcomeMessage = messages.find(m => m.id === 'welcome');
   const typewriterPromptMessage = messages.find(m => m.id === 'typewriter-prompt');
@@ -111,7 +124,6 @@ const MessageList: React.FC<MessageListProps> = ({
                   <div 
                     dangerouslySetInnerHTML={{ __html: message.html }} 
                     className="p-5 text-white/90 leading-relaxed event-list-container"
-                    onClick={handleEventLinkClick}
                   />
                 </div>
                 {message.suggestions && message.suggestions.length > 0 && onSuggestionClick ? (
