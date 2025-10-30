@@ -22,6 +22,17 @@ const MessageList: React.FC<MessageListProps> = ({
   onJoinEventChat,
   onSuggestionClick
 }) => {
+  // Handler für Event-Links
+  const handleEventLinkClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'A' && target.getAttribute('href')?.startsWith('event://')) {
+      e.preventDefault();
+      const eventId = target.getAttribute('href')?.replace('event://', '');
+      if (eventId && (window as any).handleEventLinkClick) {
+        (window as any).handleEventLinkClick(eventId);
+      }
+    }
+  };
   // Es wird explizit nach dem statischen Willkommensprompt gesucht
   const welcomeMessage = messages.find(m => m.id === 'welcome');
   const typewriterPromptMessage = messages.find(m => m.id === 'typewriter-prompt');
@@ -97,7 +108,11 @@ const MessageList: React.FC<MessageListProps> = ({
                       <div className="text-xs text-white/50">Event Assistentin</div>
                     </div>
                   </div>
-                  <div dangerouslySetInnerHTML={{ __html: message.html }} className="p-5 text-white/90 leading-relaxed event-list-container" />
+                  <div 
+                    dangerouslySetInnerHTML={{ __html: message.html }} 
+                    className="p-5 text-white/90 leading-relaxed event-list-container"
+                    onClick={handleEventLinkClick}
+                  />
                 </div>
                 {message.suggestions && message.suggestions.length > 0 && onSuggestionClick ? (
                   <div>

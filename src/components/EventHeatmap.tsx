@@ -182,6 +182,41 @@ const EventHeatmap: React.FC = () => {
 
   const chatLogic = useChatLogic(false, 'ai', handleDateFilterFromChat, handleCategoryFilterFromChat, handleAiResponseReceived);
 
+  // Registriere Event-Link-Handler global
+  useEffect(() => {
+    (window as any).handleEventLinkClick = chatLogic.handleEventLinkClick;
+    
+    // Register additional handlers for event detail buttons
+    (window as any).showEventOnMap = (eventId: string) => {
+      console.log('Show event on map:', eventId);
+      setShowAIChat(false);
+      setShowAiResponse(false);
+      // TODO: Implement map showing logic to highlight event
+      toast.info('Karten-Funktion wird demnächst verfügbar sein');
+    };
+
+    (window as any).showSimilarEvents = (category: string) => {
+      console.log('Show similar events for category:', category);
+      if (aiChatExternalSendHandler) {
+        setShowAiResponse(false);
+        aiChatExternalSendHandler(`Zeige mir ${category} Events`);
+      }
+    };
+
+    (window as any).saveEvent = (eventId: string) => {
+      console.log('Save event:', eventId);
+      toast.success('Event wurde zu deinen Favoriten hinzugefügt! ⭐');
+      // TODO: Implement save to favorites logic
+    };
+
+    return () => {
+      delete (window as any).handleEventLinkClick;
+      delete (window as any).showEventOnMap;
+      delete (window as any).showSimilarEvents;
+      delete (window as any).saveEvent;
+    };
+  }, [chatLogic.handleEventLinkClick, aiChatExternalSendHandler]);
+
   // Fallback: ensure send handler is available immediately
   useEffect(() => {
     if (!(aiChatExternalSendHandler)) {
