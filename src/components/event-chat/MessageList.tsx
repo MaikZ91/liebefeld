@@ -25,9 +25,11 @@ const MessageList: React.FC<MessageListProps> = ({
   // Handler für Event-Links
   const handleEventLinkClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
-    if (target.tagName === 'A' && target.getAttribute('href')?.startsWith('event://')) {
+    const link = target.closest?.('a[href^="event://"]') as HTMLAnchorElement | null;
+
+    if (link) {
       e.preventDefault();
-      const eventId = target.getAttribute('href')?.replace('event://', '');
+      const eventId = link.getAttribute('href')?.replace('event://', '');
       if (eventId && (window as any).handleEventLinkClick) {
         (window as any).handleEventLinkClick(eventId);
       }
