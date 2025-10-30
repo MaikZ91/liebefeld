@@ -35,8 +35,7 @@ export const useChatLogic = (
   const [globalQueries, setGlobalQueries] = useState<string[]>([]);
   const [showRecentQueries, setShowRecentQueries] = useState(false);
   const [isHeartActive, setIsHeartActive] = useState(false);
-  const [hasUserSentFirstMessage, setHasUserSentFirstMessage] = useState(false);
-  const [currentContextEvent, setCurrentContextEvent] = useState<any>(null);
+  const [hasUserSentFirstMessage, setHasUserSentFirstMessage] = useState(false); 
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -279,64 +278,6 @@ export const useChatLogic = (
       return;
     }
     isSendingRef.current = true;
-
-    // Check für Event-Kontext-Fragen
-    const lowerQuery = message.toLowerCase();
-    if (currentContextEvent && (
-      lowerQuery.includes('wann') || 
-      lowerQuery.includes('was kostet') || 
-      lowerQuery.includes('ähnliche') ||
-      lowerQuery.includes('wie komme') ||
-      lowerQuery.includes('wo ist')
-    )) {
-      const event = currentContextEvent;
-      let contextResponse = '';
-
-      if (lowerQuery.includes('wann')) {
-        contextResponse = `Das Event **${event.title}** findet am **${event.date}** um **${event.time} Uhr** statt.`;
-      } else if (lowerQuery.includes('was kostet')) {
-        contextResponse = event.is_paid 
-          ? `Das Event **${event.title}** ist kostenpflichtig. Details zum Preis findest du beim Veranstalter.`
-          : `Das Event **${event.title}** ist kostenlos! 🎉`;
-      } else if (lowerQuery.includes('ähnliche')) {
-        // Trigger search for similar events - reset context and continue with normal flow
-        setCurrentContextEvent(null);
-        isSendingRef.current = false;
-        await handleSendMessage(`Zeige mir ${event.category} Events`);
-        return;
-      } else if (lowerQuery.includes('wie komme') || lowerQuery.includes('wo ist')) {
-        contextResponse = `Das Event findet statt in: **${event.location}**. Du kannst die Location auf der Karte anzeigen lassen.`;
-      }
-
-      if (contextResponse) {
-        const userMessage: ChatMessage = {
-          id: `user-${Date.now()}`,
-          isUser: true,
-          text: message,
-          timestamp: new Date().toISOString()
-        };
-        setMessages(prev => [...prev, userMessage]);
-        
-        const contextMessage: ChatMessage = {
-          id: `ai-context-${Date.now()}`,
-          isUser: false,
-          text: '',
-          html: `<div class="text-white/90">${contextResponse}</div>`,
-          suggestions: ['Zeig mir ähnliche Events', 'Auf Karte zeigen', 'Mehr Details'],
-          timestamp: new Date().toISOString(),
-        };
-        
-        setMessages(prev => [...prev, contextMessage]);
-        
-        if (onAiResponseReceived) {
-          onAiResponseReceived(contextMessage.html!, contextMessage.suggestions);
-        }
-        
-        setInput('');
-        isSendingRef.current = false;
-        return;
-      }
-    }
     
     if (!hasUserSentFirstMessage) {
       setHasUserSentFirstMessage(true);
@@ -405,28 +346,15 @@ export const useChatLogic = (
 
       } catch (error) {
         console.error('[useChatLogic] Error generating perfect day:', error);
-        
-        const fallbackSuggestions = ['Was läuft heute?', 'Events am Wochenende', 'Zeige mir Sport-Events'];
-        const errorHtml = `${createResponseHeader("Fehler")}
-          <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
-            Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. 
-            Bitte versuche es später noch einmal.
-          </div>`;
-        
-        // If callback provided, send error there too
-        if (onAiResponseReceived) {
-          onAiResponseReceived(errorHtml, fallbackSuggestions);
-        } else {
-          const errorMessage: ChatMessage = {
-            id: `error-perfect-day-${Date.now()}`,
-            isUser: false,
-            text: 'Es tut mir leid, ich konnte deinen perfekten Tag nicht generieren.',
-            html: errorHtml,
-            timestamp: new Date().toISOString(),
-            suggestions: fallbackSuggestions
-          };
-          setMessages(prev => [...prev, errorMessage]);
-        }
+        const errorMessage: ChatMessage = {
+          id: `error-perfect-day-${Date.now()}`,
+          isUser: false,
+          text: 'Es tut mir leid, ich konnte deinen perfekten Tag nicht generieren.',
+          html: `${createResponseHeader("Fehler")}
+          <div class=\"bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm\">\n            Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. \n            Bitte versuche es später noch einmal.\n          </div>`,
+          timestamp: new Date().toISOString()
+        };
+        setMessages(prev => [...prev, errorMessage]);
       } finally {
         setIsTyping(false); // Stop typing after response
         isSendingRef.current = false; // Reset flag
@@ -621,30 +549,16 @@ export const useChatLogic = (
     } catch (error) {
       console.error('[useChatLogic] Error generating response:', error);
       
-      // Create fallback suggestions
-      const fallbackSuggestions = ['Was läuft heute?', 'Events am Wochenende', 'Zeige mir Sport-Events'];
+      const errorMessage: ChatMessage = {
+        id: `error-${Date.now()}`,
+        isUser: false,
+        text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
+        html: `${createResponseHeader("Fehler")}
+          <div class=\"bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm\">\n            Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. \n            Bitte versuche es später noch einmal oder formuliere deine Anfrage anders.\n          </div>`,
+        timestamp: new Date().toISOString()
+      };
       
-      const errorHtml = `${createResponseHeader("Fehler")}
-        <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
-          Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. 
-          Bitte versuche es später noch einmal.
-        </div>`;
-      
-      // If callback provided, send error there too
-      if (onAiResponseReceived) {
-        onAiResponseReceived(errorHtml, fallbackSuggestions);
-      } else {
-        const errorMessage: ChatMessage = {
-          id: `error-${Date.now()}`,
-          isUser: false,
-          text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
-          html: errorHtml,
-          timestamp: new Date().toISOString(),
-          suggestions: fallbackSuggestions
-        };
-        
-        setMessages(prev => [...prev, errorMessage]);
-      }
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsTyping(false); // Stop typing after response
       isSendingRef.current = false; // Reset flag
@@ -836,99 +750,6 @@ export const useChatLogic = (
     setShowRecentQueries(!showRecentQueries);
   };
   
-  // Handler für Event-Link-Klicks
-  const handleEventLinkClick = async (eventId: string) => {
-    console.log('[useChatLogic] Event link clicked:', eventId);
-    setIsTyping(true);
-
-    try {
-      // Event aus DB laden
-      const { data: event, error } = await supabase
-        .from('community_events')
-        .select('*')
-        .eq('id', eventId)
-        .maybeSingle();
-
-      if (error || !event) {
-        console.error('[useChatLogic] Error loading event:', error);
-        throw new Error('Event nicht gefunden');
-      }
-
-      console.log('[useChatLogic] Event loaded:', event);
-      setCurrentContextEvent(event);
-
-      // Detailkarte erstellen
-      const detailHtml = `
-        <div class="space-y-4">
-          <div class="flex items-start gap-3">
-            ${event.image_url ? `<img src="${event.image_url}" class="w-20 h-20 rounded-lg object-cover" />` : ''}
-            <div class="flex-1">
-              <h3 class="font-bold text-lg text-red-400">${event.title}</h3>
-              <div class="text-sm text-white/70 space-y-1 mt-2">
-                <div>🕐 ${event.date} um ${event.time} Uhr</div>
-                <div>📍 ${event.location || 'Ort wird noch bekannt gegeben'}</div>
-                ${event.is_paid ? '<div>💶 Kostenpflichtig</div>' : '<div>✅ Kostenlos</div>'}
-              </div>
-            </div>
-          </div>
-          ${event.description ? `<p class="text-sm text-white/80 leading-relaxed">${event.description}</p>` : ''}
-          <div class="flex flex-wrap gap-2 pt-2">
-            <button onclick="window.showEventOnMap && window.showEventOnMap('${event.id}')" class="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 rounded-lg text-sm font-medium transition-colors">
-              🗺️ Auf Karte zeigen
-            </button>
-            <button onclick="window.showSimilarEvents && window.showSimilarEvents('${event.category}')" class="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 rounded-lg text-sm font-medium transition-colors">
-              🔁 Ähnliche Events
-            </button>
-            <button onclick="window.saveEvent && window.saveEvent('${event.id}')" class="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 rounded-lg text-sm font-medium transition-colors">
-              ⭐ Merken
-            </button>
-          </div>
-        </div>
-      `;
-
-      const suggestions = [
-        'Wann fängt das an?',
-        'Zeig mir ähnliche Events',
-        'Was kostet das?',
-        'Wie komme ich dahin?'
-      ];
-
-      const aiMessage: ChatMessage = {
-        id: `ai-event-detail-${Date.now()}`,
-        isUser: false,
-        text: '',
-        html: detailHtml,
-        suggestions,
-        timestamp: new Date().toISOString(),
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
-
-      if (onAiResponseReceived) {
-        onAiResponseReceived(detailHtml, suggestions);
-      }
-    } catch (error) {
-      console.error('[useChatLogic] Error in handleEventLinkClick:', error);
-      const errorHtml = `<div class="text-red-400">Event konnte nicht geladen werden. Bitte versuche es erneut.</div>`;
-      
-      const aiMessage: ChatMessage = {
-        id: `ai-error-${Date.now()}`,
-        isUser: false,
-        text: '',
-        html: errorHtml,
-        timestamp: new Date().toISOString(),
-      };
-      
-      setMessages(prev => [...prev, aiMessage]);
-      
-      if (onAiResponseReceived) {
-        onAiResponseReceived(errorHtml, ['Was läuft heute?', 'Events am Wochenende']);
-      }
-    } finally {
-      setIsTyping(false);
-    }
-  };
-
   const clearChatHistory = () => {
     if (window.confirm("Möchten Sie wirklich den gesamten Chat-Verlauf löschen?")) {
       localStorage.removeItem(CHAT_HISTORY_KEY);
@@ -998,7 +819,6 @@ export const useChatLogic = (
     inputRef,
     examplePrompts: shuffledExamplePrompts, // randomized but first stays constant
     isHeartActive,
-    currentContextEvent,
     handleToggleChat,
     handleSendMessage,
     handleDateSelect,
@@ -1010,7 +830,6 @@ export const useChatLogic = (
     toggleRecentQueries,
     clearChatHistory,
     exportChatHistory,
-    handleEventLinkClick,
     showAnimatedPrompts: false
   };
 };

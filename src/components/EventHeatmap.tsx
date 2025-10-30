@@ -182,52 +182,6 @@ const EventHeatmap: React.FC = () => {
 
   const chatLogic = useChatLogic(false, 'ai', handleDateFilterFromChat, handleCategoryFilterFromChat, handleAiResponseReceived);
 
-  // Registriere Event-Link-Handler global
-  useEffect(() => {
-    (window as any).handleEventLinkClick = chatLogic.handleEventLinkClick;
-    
-    // Register additional handlers for event detail buttons
-    (window as any).showEventOnMap = (eventId: string) => {
-      console.log('Show event on map:', eventId);
-      setShowAIChat(false);
-      setShowAiResponse(false);
-      // TODO: Implement map showing logic to highlight event
-      toast.info('Karten-Funktion wird demnächst verfügbar sein');
-    };
-
-    (window as any).showSimilarEvents = (category: string) => {
-      console.log('Show similar events for category:', category);
-      if (aiChatExternalSendHandler) {
-        setShowAiResponse(false);
-        aiChatExternalSendHandler(`Zeige mir ${category} Events`);
-      }
-    };
-
-    (window as any).saveEvent = (eventId: string) => {
-      console.log('Save event:', eventId);
-      toast.success('Event wurde zu deinen Favoriten hinzugefügt! ⭐');
-      // TODO: Implement save to favorites logic
-    };
-
-    return () => {
-      delete (window as any).handleEventLinkClick;
-      delete (window as any).showEventOnMap;
-      delete (window as any).showSimilarEvents;
-      delete (window as any).saveEvent;
-    };
-  }, [chatLogic.handleEventLinkClick, aiChatExternalSendHandler]);
-
-  // Fallback: ensure send handler is available immediately
-  useEffect(() => {
-    if (!(aiChatExternalSendHandler)) {
-      try {
-        setAiChatExternalSendHandler(() => (chatLogic as any)?.handleSendMessage);
-      } catch (e) {
-        console.warn('[EventHeatmap] Could not set fallback send handler:', e);
-      }
-    }
-  }, [chatLogic, aiChatExternalSendHandler]);
-
   const mapRef = useRef<HTMLDivElement>(null);
   
   // Check for daily recommendation on mount
@@ -242,16 +196,6 @@ const EventHeatmap: React.FC = () => {
     };
     
     checkDailyRecommendation();
-    
-    // Setup global function for "Personalisiere deine Perfect Day Nachricht" button
-    (window as any).openProfileEditor = () => {
-      setShowAIChat(false);
-      toast.info('Öffne dein Profil unter dem Benutzer-Icon, um deine Interessen anzupassen');
-    };
-    
-    return () => {
-      delete (window as any).openProfileEditor;
-    };
   }, []);
   
   // Load daily recommendation when MIA is clicked
@@ -1770,28 +1714,15 @@ const EventHeatmap: React.FC = () => {
                         suggestions={aiSuggestions}
                         onSuggestionClick={async (suggestion) => {
                           console.log('Suggestion clicked:', suggestion);
-                          try {
+                          if (aiChatExternalSendHandler) {
                             // Show suggestion in input and clear old response
                             setAiChatInput(suggestion);
                             setAiResponse(null);
                             setAiSuggestions([]);
                             setIsAiChatLoading(true);
-                            // Send the suggestion using external handler or fallback
-                            if (aiChatExternalSendHandler) {
-                              await aiChatExternalSendHandler(suggestion);
-                            } else if ((chatLogic as any)?.handleSendMessage) {
-                              await (chatLogic as any).handleSendMessage(suggestion);
-                            } else {
-                              throw new Error('Kein Send-Handler verfügbar');
-                            }
+                            // Send the suggestion
+                            await aiChatExternalSendHandler(suggestion);
                             setAiChatInput('');
-                          } catch (error) {
-                            console.error('Error sending suggestion:', error);
-                            toast.error('Konnte Antwort nicht laden');
-                            setAiResponse('<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider konnte ich gerade keine Antwort generieren. Versuche es später erneut.</div>');
-                            setAiSuggestions(['Was läuft heute?', 'Events am Wochenende']);
-                          } finally {
-                            setIsAiChatLoading(false);
                           }
                         }}
                       />
@@ -1807,31 +1738,16 @@ const EventHeatmap: React.FC = () => {
                 <Input
                   value={aiChatInput}
                   onChange={(e) => setAiChatInput(e.target.value)}
-                  onKeyDown={async (e) => {
+                  onKeyPress={async (e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
-                      if (aiChatInput.trim()) {
+                      if (aiChatInput.trim() && aiChatExternalSendHandler) {
                         const query = aiChatInput;
                         setAiChatInput('');
                         setAiResponse(null);
                         setAiSuggestions([]);
-                        try {
-                          setIsAiChatLoading(true);
-                          if (aiChatExternalSendHandler) {
-                            await aiChatExternalSendHandler(query);
-                          } else if ((chatLogic as any)?.handleSendMessage) {
-                            await (chatLogic as any).handleSendMessage(query);
-                          } else {
-                            throw new Error('Kein Send-Handler verfügbar');
-                          }
-                        } catch (error) {
-                          console.error('Error sending message:', error);
-                          toast.error('Konnte Antwort nicht laden');
-                          setAiResponse('<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider konnte ich gerade keine Antwort generieren. Versuche es später erneut.</div>');
-                          setAiSuggestions(['Was läuft heute?', 'Events am Wochenende']);
-                        } finally {
-                          setIsAiChatLoading(false);
-                        }
+                        setIsAiChatLoading(true);
+                        await aiChatExternalSendHandler(query);
                       }
                     }
                   }}
@@ -1842,28 +1758,13 @@ const EventHeatmap: React.FC = () => {
                 <Button
                   size="icon"
                   onClick={async () => {
-                    if (aiChatInput.trim()) {
+                    if (aiChatInput.trim() && aiChatExternalSendHandler) {
                       const query = aiChatInput;
                       setAiChatInput('');
                       setAiResponse(null);
                       setAiSuggestions([]);
-                      try {
-                        setIsAiChatLoading(true);
-                        if (aiChatExternalSendHandler) {
-                          await aiChatExternalSendHandler(query);
-                        } else if ((chatLogic as any)?.handleSendMessage) {
-                          await (chatLogic as any).handleSendMessage(query);
-                        } else {
-                          throw new Error('Kein Send-Handler verfügbar');
-                        }
-                      } catch (error) {
-                        console.error('Error sending message:', error);
-                        toast.error('Konnte Antwort nicht laden');
-                        setAiResponse('<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider konnte ich gerade keine Antwort generieren. Versuche es später erneut.</div>');
-                        setAiSuggestions(['Was läuft heute?', 'Events am Wochenende']);
-                      } finally {
-                        setIsAiChatLoading(false);
-                      }
+                      setIsAiChatLoading(true);
+                      await aiChatExternalSendHandler(query);
                     }
                   }}
                   disabled={!aiChatInput.trim() || isAiChatLoading}

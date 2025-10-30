@@ -199,19 +199,22 @@ Dann gruppiere Events nach Kategorien mit Überschriften:
 Pro Kategorie: Schreibe einen zusammenhängenden Fließtext über die Events.
 
 LINKS - SUPER WICHTIG:
-Für JEDES Event IMMER einen klickbaren Link generieren:
-- Format: <a href="event://{EVENT_ID}" class="text-red-500 hover:text-red-400 underline font-semibold cursor-pointer">EVENT_TITEL</a>
-- Nutze die event.id aus den Event-Daten als EVENT_ID
-- JEDES Event muss klickbar sein, damit Nutzer Details sehen können
+Für JEDES Event musst du prüfen ob das Feld "link" existiert und nicht null ist:
+- Wenn link vorhanden UND nicht null: Schreibe EXAKT: <a href="KOMPLETTE_URL_HIER" target="_blank" class="text-red-500 hover:text-red-400 underline">EVENT_TITEL</a>
+- Wenn link null oder nicht vorhanden: Schreibe nur: **EVENT_TITEL**
 
-BEISPIEL:
-Event mit id="abc-123":
-"Um 20:00 startet <a href="event://abc-123" class="text-red-500 hover:text-red-400 underline font-semibold cursor-pointer">Summer Beach Party</a> am Obersee."
+BEISPIELE:
+Event mit Link (link="https://example.com/party"):
+"Um 20:00 startet <a href="https://example.com/party" target="_blank" class="text-red-500 hover:text-red-400 underline">Summer Beach Party</a> am Obersee."
+
+Event ohne Link (link=null):
+"Um 20:00 startet **Summer Beach Party** am Obersee."
 
 NIEMALS:
-- Event-Namen ohne Link zeigen
-- Externe URLs statt event:// verwenden
-- Event-ID vergessen
+- Rohe URLs im Text zeigen
+- Link-Emoji 🔗 verwenden
+- "(Link)" oder ähnliches schreiben
+- Links vergessen die vorhanden sind
 
 WICHTIG:
 - "Sonstiges" → AUSGEHEN

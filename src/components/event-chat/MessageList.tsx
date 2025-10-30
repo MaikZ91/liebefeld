@@ -22,30 +22,6 @@ const MessageList: React.FC<MessageListProps> = ({
   onJoinEventChat,
   onSuggestionClick
 }) => {
-  // Globaler Click-Listener für Event-Links
-  React.useEffect(() => {
-    const handleGlobalClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'A') {
-        const href = target.getAttribute('href');
-        if (href?.startsWith('event://')) {
-          e.preventDefault();
-          const eventId = href.replace('event://', '');
-          console.log('[MessageList] Event link clicked, ID:', eventId);
-          if ((window as any).handleEventLinkClick) {
-            (window as any).handleEventLinkClick(eventId);
-          } else {
-            console.error('[MessageList] window.handleEventLinkClick not found!');
-          }
-        }
-      }
-    };
-
-    document.addEventListener('click', handleGlobalClick);
-    return () => {
-      document.removeEventListener('click', handleGlobalClick);
-    };
-  }, []);
   // Es wird explizit nach dem statischen Willkommensprompt gesucht
   const welcomeMessage = messages.find(m => m.id === 'welcome');
   const typewriterPromptMessage = messages.find(m => m.id === 'typewriter-prompt');
@@ -121,10 +97,7 @@ const MessageList: React.FC<MessageListProps> = ({
                       <div className="text-xs text-white/50">Event Assistentin</div>
                     </div>
                   </div>
-                  <div 
-                    dangerouslySetInnerHTML={{ __html: message.html }} 
-                    className="p-5 text-white/90 leading-relaxed event-list-container"
-                  />
+                  <div dangerouslySetInnerHTML={{ __html: message.html }} className="p-5 text-white/90 leading-relaxed event-list-container" />
                 </div>
                 {message.suggestions && message.suggestions.length > 0 && onSuggestionClick ? (
                   <div>
