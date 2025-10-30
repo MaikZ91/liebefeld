@@ -346,15 +346,28 @@ export const useChatLogic = (
 
       } catch (error) {
         console.error('[useChatLogic] Error generating perfect day:', error);
-        const errorMessage: ChatMessage = {
-          id: `error-perfect-day-${Date.now()}`,
-          isUser: false,
-          text: 'Es tut mir leid, ich konnte deinen perfekten Tag nicht generieren.',
-          html: `${createResponseHeader("Fehler")}
-          <div class=\"bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm\">\n            Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. \n            Bitte versuche es später noch einmal.\n          </div>`,
-          timestamp: new Date().toISOString()
-        };
-        setMessages(prev => [...prev, errorMessage]);
+        
+        const fallbackSuggestions = ['Was läuft heute?', 'Events am Wochenende', 'Zeige mir Sport-Events'];
+        const errorHtml = `${createResponseHeader("Fehler")}
+          <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
+            Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. 
+            Bitte versuche es später noch einmal.
+          </div>`;
+        
+        // If callback provided, send error there too
+        if (onAiResponseReceived) {
+          onAiResponseReceived(errorHtml, fallbackSuggestions);
+        } else {
+          const errorMessage: ChatMessage = {
+            id: `error-perfect-day-${Date.now()}`,
+            isUser: false,
+            text: 'Es tut mir leid, ich konnte deinen perfekten Tag nicht generieren.',
+            html: errorHtml,
+            timestamp: new Date().toISOString(),
+            suggestions: fallbackSuggestions
+          };
+          setMessages(prev => [...prev, errorMessage]);
+        }
       } finally {
         setIsTyping(false); // Stop typing after response
         isSendingRef.current = false; // Reset flag
@@ -549,16 +562,30 @@ export const useChatLogic = (
     } catch (error) {
       console.error('[useChatLogic] Error generating response:', error);
       
-      const errorMessage: ChatMessage = {
-        id: `error-${Date.now()}`,
-        isUser: false,
-        text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
-        html: `${createResponseHeader("Fehler")}
-          <div class=\"bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm\">\n            Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. \n            Bitte versuche es später noch einmal oder formuliere deine Anfrage anders.\n          </div>`,
-        timestamp: new Date().toISOString()
-      };
+      // Create fallback suggestions
+      const fallbackSuggestions = ['Was läuft heute?', 'Events am Wochenende', 'Zeige mir Sport-Events'];
       
-      setMessages(prev => [...prev, errorMessage]);
+      const errorHtml = `${createResponseHeader("Fehler")}
+        <div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">
+          Es ist ein Fehler aufgetreten: ${error instanceof Error ? error.message : String(error)}. 
+          Bitte versuche es später noch einmal.
+        </div>`;
+      
+      // If callback provided, send error there too
+      if (onAiResponseReceived) {
+        onAiResponseReceived(errorHtml, fallbackSuggestions);
+      } else {
+        const errorMessage: ChatMessage = {
+          id: `error-${Date.now()}`,
+          isUser: false,
+          text: 'Es tut mir leid, ich konnte deine Anfrage nicht verarbeiten.',
+          html: errorHtml,
+          timestamp: new Date().toISOString(),
+          suggestions: fallbackSuggestions
+        };
+        
+        setMessages(prev => [...prev, errorMessage]);
+      }
     } finally {
       setIsTyping(false); // Stop typing after response
       isSendingRef.current = false; // Reset flag
