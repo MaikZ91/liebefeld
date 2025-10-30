@@ -59,6 +59,14 @@ const EventChatBot: React.FC<ExtendedEventChatBotProps> = ({
   
   const chatLogic = useChatLogic(fullPage, activeChatModeValue);
   
+  // Registriere Event-Link-Handler global
+  React.useEffect(() => {
+    (window as any).handleEventLinkClick = chatLogic.handleEventLinkClick;
+    return () => {
+      delete (window as any).handleEventLinkClick;
+    };
+  }, [chatLogic.handleEventLinkClick]);
+  
   const { sendPersonalizedQuery } = usePersonalization(
     chatLogic.handleSendMessage, 
     { userProfile, currentUser, userService }
