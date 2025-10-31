@@ -90,6 +90,11 @@ const MessageList: React.FC<MessageListProps> = ({
                     panelData={message.panelData}
                     onEventSelect={(eventId) => {
                       console.log('Event selected:', eventId);
+                      if ((window as any).handleEventLinkClick) {
+                        (window as any).handleEventLinkClick(eventId);
+                      } else {
+                        console.warn('[MessageList] window.handleEventLinkClick not available');
+                      }
                     }}
                     onJoinEventChat={onJoinEventChat}
                   />
