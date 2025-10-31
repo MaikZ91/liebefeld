@@ -25,11 +25,17 @@ const MessageList: React.FC<MessageListProps> = ({
   // Handler für Event-Links
   const handleEventLinkClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
-    if (target.tagName === 'A' && target.getAttribute('href')?.startsWith('event://')) {
-      e.preventDefault();
-      const eventId = target.getAttribute('href')?.replace('event://', '');
-      if (eventId && (window as any).handleEventLinkClick) {
-        (window as any).handleEventLinkClick(eventId);
+    const anchor = target.closest('a') as HTMLAnchorElement | null;
+    if (anchor) {
+      const href = anchor.getAttribute('href') || '';
+      if (href.startsWith('event://')) {
+        e.preventDefault();
+        const eventId = href.replace('event://', '');
+        if (eventId && (window as any).handleEventLinkClick) {
+          (window as any).handleEventLinkClick(eventId);
+        } else {
+          console.warn('[MessageList] Kein globaler Handler für Event-Links gefunden oder leere ID');
+        }
       }
     }
   };
