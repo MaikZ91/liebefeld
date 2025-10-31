@@ -42,7 +42,7 @@ const MessageList: React.FC<MessageListProps> = ({
 
   // Globaler Fallback-Listener für event:// Links (Capture-Phase)
   React.useEffect(() => {
-    const handleGlobalClick = (e: MouseEvent) => {
+    const handler = (e: Event) => {
       const target = e.target as HTMLElement | null;
       if (!target) return;
       const anchor = target.closest('a') as HTMLAnchorElement | null;
@@ -51,14 +51,22 @@ const MessageList: React.FC<MessageListProps> = ({
       if (!href.startsWith('event://')) return;
       e.preventDefault();
       const eventId = href.slice('event://'.length);
+      console.log('[MessageList] Intercepted event:// click', { href, eventId });
       if (eventId && (window as any).handleEventLinkClick) {
         (window as any).handleEventLinkClick(eventId);
       } else {
         console.warn('[MessageList] Global handler fehlt oder ID leer');
       }
     };
-    document.addEventListener('click', handleGlobalClick, true);
-    return () => document.removeEventListener('click', handleGlobalClick, true);
+    // Capture Phase: stelle sicher, dass wir den Klick bekommen – auch wenn Child-Elemente stoppen
+    document.addEventListener('click', handler, true);
+    document.addEventListener('touchend', handler as EventListener, true);
+    document.addEventListener('pointerup', handler as EventListener, true);
+    return () => {
+      document.removeEventListener('click', handler, true);
+      document.removeEventListener('touchend', handler as EventListener, true);
+      document.removeEventListener('pointerup', handler as EventListener, true);
+    };
   }, []);
   // Es wird explizit nach dem statischen Willkommensprompt gesucht
   const welcomeMessage = messages.find(m => m.id === 'welcome');
