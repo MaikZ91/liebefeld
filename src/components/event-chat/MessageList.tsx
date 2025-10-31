@@ -39,6 +39,27 @@ const MessageList: React.FC<MessageListProps> = ({
       }
     }
   };
+
+  // Globaler Fallback-Listener für event:// Links (Capture-Phase)
+  React.useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      const anchor = target.closest('a') as HTMLAnchorElement | null;
+      if (!anchor) return;
+      const href = anchor.getAttribute('href') || '';
+      if (!href.startsWith('event://')) return;
+      e.preventDefault();
+      const eventId = href.slice('event://'.length);
+      if (eventId && (window as any).handleEventLinkClick) {
+        (window as any).handleEventLinkClick(eventId);
+      } else {
+        console.warn('[MessageList] Global handler fehlt oder ID leer');
+      }
+    };
+    document.addEventListener('click', handleGlobalClick, true);
+    return () => document.removeEventListener('click', handleGlobalClick, true);
+  }, []);
   // Es wird explizit nach dem statischen Willkommensprompt gesucht
   const welcomeMessage = messages.find(m => m.id === 'welcome');
   const typewriterPromptMessage = messages.find(m => m.id === 'typewriter-prompt');
