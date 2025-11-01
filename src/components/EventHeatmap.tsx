@@ -1260,7 +1260,7 @@ const EventHeatmap: React.FC = () => {
     };
   }, [map, allUserProfiles, currentUser, selectedCity]);
 
-  const handleEventSelect = (eventId: string) => {
+  const handleEventSelect = async (eventId: string) => {
     setSelectedEventId(eventId);
 
     const selectedEvent = filteredEvents.find(event =>
@@ -1270,6 +1270,17 @@ const EventHeatmap: React.FC = () => {
     if (selectedEvent && selectedEvent.lat && selectedEvent.lng && map) {
       map.setView([selectedEvent.lat, selectedEvent.lng], 15);
     }
+
+    // MIA öffnen und Event-Details laden
+    setIsMIAOpen(true);
+    setIsAiChatLoading(true);
+    
+    // Event-Details über chatLogic laden
+    if (selectedEvent?.id) {
+      await chatLogic.handleEventLinkClick(selectedEvent.id);
+    }
+    
+    setIsAiChatLoading(false);
   };
 
   const handleEventLike = async (eventId: string) => {
@@ -1691,8 +1702,8 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* Default Event Display - Always visible above navbar */}
-      {!showPerfectDayPanel && filteredEvents.length > 0 && showEventPanels && (
+      {/* Default Event Display - Always visible above navbar (versteckt wenn MIA offen) */}
+      {!showPerfectDayPanel && filteredEvents.length > 0 && showEventPanels && !isMIAOpen && (
         <div className="fixed bottom-16 left-0 right-0 z-[1000] pointer-events-auto">
           {/* Default Event Panel Display */}
           <div className="px-2 py-4">
@@ -1765,6 +1776,7 @@ const EventHeatmap: React.FC = () => {
                   setShowAiResponse(false);
                   setAiResponse(null);
                   setAiSuggestions([]);
+                  setIsMIAOpen(false); // MIA schließen
                 }}
                 className="h-8 w-8 p-0 hover:bg-red-500/20 text-gray-400 hover:text-white"
               >
