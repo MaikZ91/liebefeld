@@ -59,6 +59,7 @@ import TribeFinder from './TribeFinder';
 import { eventChatService } from '@/services/eventChatService';
 import EventChatWindow from '@/components/event-chat/EventChatWindow';
 import EventSwipeMode from './EventSwipeMode';
+import EventDetails from '@/components/EventDetails';
 import { dislikeService } from '@/services/dislikeService';
 
 // Fix Leaflet default icons
@@ -147,6 +148,10 @@ const EventHeatmap: React.FC = () => {
   
   // State for AI chat loading
   const [isAiChatLoading, setIsAiChatLoading] = useState(false);
+  
+  // Detail view state for event details dialog
+  const [showEventDetails, setShowEventDetails] = useState(false);
+  const [selectedEventForDetails, setSelectedEventForDetails] = useState<any>(null);
 
 
   // Event Chat Window State
@@ -185,7 +190,19 @@ const EventHeatmap: React.FC = () => {
 
   // Registriere Event-Link-Handler global
   useEffect(() => {
-    (window as any).handleEventLinkClick = chatLogic.handleEventLinkClick;
+    (window as any).handleEventLinkClick = (eventId: string) => {
+      console.log('[EventHeatmap] handleEventLinkClick -> open details', eventId);
+      setSelectedEventId(eventId);
+      const ev = (events as any)?.find?.((e: any) => (e.id || `${e.title}-${e.date}-${e.time}`) === eventId);
+      if (ev) {
+        setSelectedEventForDetails(ev);
+        setShowEventDetails(true);
+        setIsMIAOpen(true);
+      } else {
+        console.warn('[EventHeatmap] Event not found for id', eventId);
+        toast.error('Event nicht gefunden');
+      }
+    };
     
     // Register additional handlers for event detail buttons
     (window as any).showEventOnMap = (eventId: string) => {
@@ -216,7 +233,7 @@ const EventHeatmap: React.FC = () => {
       delete (window as any).showSimilarEvents;
       delete (window as any).saveEvent;
     };
-  }, [chatLogic.handleEventLinkClick, aiChatExternalSendHandler]);
+  }, [events, aiChatExternalSendHandler]);
 
   // Fallback: ensure send handler is available immediately
   useEffect(() => {
@@ -2193,6 +2210,15 @@ const EventHeatmap: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Event Details Dialog */}
+      {showEventDetails && selectedEventForDetails && (
+        <EventDetails
+          event={selectedEventForDetails}
+          onClose={() => setShowEventDetails(false)}
+          onJoinChat={handleJoinEventChat}
+        />
+      )}
 
       {/* Event Chat Window */}
       {eventChatWindow && (
