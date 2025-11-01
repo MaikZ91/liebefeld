@@ -31,6 +31,7 @@ import SuggestionChips from '@/components/event-chat/SuggestionChips';
 import { useEvents } from '@/hooks/useEvents';
 
 import { format, parseISO } from 'date-fns';
+import { de } from 'date-fns/locale';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import ThreeEventDisplay from '@/components/event-chat/ThreeEventDisplay';
@@ -1630,8 +1631,33 @@ const EventHeatmap: React.FC = () => {
         </div>
       </div>
 
+      {/* Date Picker - Über dem Zeitslider */}
+      <div className={cn("fixed top-32 right-2 z-[1002]", isMIAOpen && "hidden")}>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="bg-black/90 backdrop-blur-md text-white text-[10px] px-2 py-1.5 h-auto rounded-lg hover:bg-black border border-white/10 transition-all flex flex-col items-center gap-0.5 min-w-[3.5rem]"
+            >
+              <span className="font-bold">{format(selectedDate, 'EEE', { locale: de })}</span>
+              <span className="text-[13px] font-bold">{format(selectedDate, 'dd.MM.')}</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 bg-gray-800 border-gray-700 z-[9999]" align="end">
+            <CalendarComponent
+              mode="single"
+              selected={selectedDate}
+              onSelect={(date) => date && setSelectedDate(date)}
+              initialFocus
+              className="pointer-events-auto bg-gray-800 text-white"
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+
       {/* Time Slider - Extrem minimal */}
-      <div className="fixed top-44 right-2 z-[1002]">
+      <div className={cn("fixed top-44 right-2 z-[1002]", isMIAOpen && "hidden")}>
         <div className="p-1 bg-black/25 backdrop-blur-sm rounded-full">
           <div className="flex flex-col items-center gap-1.5">
             <span className="text-white text-[11px] font-bold">{timeRange[0]}h</span>
