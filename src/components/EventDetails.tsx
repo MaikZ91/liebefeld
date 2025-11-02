@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { type Event, RsvpOption, normalizeRsvpCounts } from '../types/eventTypes';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, MapPin, User, Heart, Check, X, HelpCircle, Sparkles, MessageSquare } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Heart, Check, X, HelpCircle, Sparkles, MessageSquare, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { useEventContext } from '@/contexts/EventContext';
+import { supabase } from '@/integrations/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface EventDetailsProps {
   event: Event;
@@ -34,9 +36,74 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onRsvp, onJ
   const [isOpen, setIsOpen] = useState(true);
   const [showSparkle, setShowSparkle] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
+  const [fetchedDescription, setFetchedDescription] = useState<string | null>(null);
+  const [isLoadingDescription, setIsLoadingDescription] = useState(false);
+  const [descriptionSource, setDescriptionSource] = useState<'scraped' | 'generated' | 'original'>('original');
   
   // Get the correct likes count directly from the event
   const displayLikes = event.likes || 0;
+
+  // Fetch description if needed
+  useEffect(() => {
+    const fetchDescription = async () => {
+      // Check if we need to fetch a description
+      if (event.description && event.description.length > 20) {
+        setDescriptionSource('original');
+        return;
+      }
+
+      // Check cache first
+      const cacheKey = `event-description-${event.id}`;
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          const { description, source } = JSON.parse(cached);
+          setFetchedDescription(description);
+          setDescriptionSource(source);
+          return;
+        } catch (e) {
+          // Invalid cache, continue
+        }
+      }
+
+      setIsLoadingDescription(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('fetch-event-description', {
+          body: {
+            eventLink: event.link,
+            eventData: {
+              title: event.title,
+              category: event.category,
+              location: event.location,
+              organizer: event.organizer
+            }
+          }
+        });
+
+        if (error) throw error;
+
+        if (data?.description) {
+          setFetchedDescription(data.description);
+          setDescriptionSource(data.source || 'generated');
+          
+          // Cache the result
+          sessionStorage.setItem(cacheKey, JSON.stringify({
+            description: data.description,
+            source: data.source
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to fetch description:', error);
+        // Use fallback
+        setFetchedDescription(`${event.category}-Event in ${event.location}. Sei dabei!`);
+        setDescriptionSource('generated');
+      } finally {
+        setIsLoadingDescription(false);
+      }
+    };
+
+    fetchDescription();
+  }, [event.id, event.description, event.link, event.title, event.category, event.location, event.organizer]);
   
   const handleClose = () => {
     setIsOpen(false);
@@ -105,7 +172,24 @@ const EventDetails: React.FC<EventDetailsProps> = ({ event, onClose, onRsvp, onJ
             </div>
           </div>
           <DialogDescription className="text-muted-foreground mt-3 text-gray-300 font-light">
-            {event.description}
+            {isLoadingDescription ? (
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full bg-gray-700/50" />
+                <Skeleton className="h-4 w-3/4 bg-gray-700/50" />
+              </div>
+            ) : (
+              <div className="animate-fade-in">
+                {fetchedDescription || event.description || 'Keine Beschreibung verfügbar.'}
+                {descriptionSource !== 'original' && (
+                  <Badge 
+                    variant="outline" 
+                    className="ml-2 text-xs border-gray-600 text-gray-400"
+                  >
+                    {descriptionSource === 'scraped' ? '🌐 Von Webseite' : '✨ AI-generiert'}
+                  </Badge>
+                )}
+              </div>
+            )}
           </DialogDescription>
         </DialogHeader>
         
