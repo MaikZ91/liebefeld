@@ -235,6 +235,32 @@ const EventHeatmap: React.FC = () => {
     };
   }, [events, aiChatExternalSendHandler]);
 
+  // Global capture listener for event:// links (works also in MIA response card)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      const anchor = target.closest('a') as HTMLAnchorElement | null;
+      if (!anchor) return;
+      const href = anchor.getAttribute('href') || '';
+      if (!href.startsWith('event://')) return;
+      e.preventDefault();
+      const eventId = href.slice('event://'.length);
+      console.log('[EventHeatmap] Captured event:// link', { href, eventId });
+      if (eventId && (window as any).handleEventLinkClick) {
+        (window as any).handleEventLinkClick(eventId);
+      } else {
+        console.warn('[EventHeatmap] handleEventLinkClick missing or empty id');
+      }
+    };
+    document.addEventListener('click', handler, true);
+    document.addEventListener('touchend', handler as EventListener, true);
+    return () => {
+      document.removeEventListener('click', handler, true);
+      document.removeEventListener('touchend', handler as EventListener, true);
+    };
+  }, []);
+
   // Fallback: ensure send handler is available immediately
   useEffect(() => {
     if (!(aiChatExternalSendHandler)) {
