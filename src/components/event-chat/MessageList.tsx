@@ -9,6 +9,9 @@ import SwipeableEventPanel from './SwipeableEventPanel';
 import SwipeableLandingPanel from './SwipeableLandingPanel';
 import TypewriterPrompt from './TypewriterPrompt';
 import SuggestionChips from './SuggestionChips';
+import EventDetails from '@/components/EventDetails';
+import { useEventContext } from '@/contexts/EventContext';
+import type { Event } from '@/types/eventTypes';
 
 import './MessageList.css';
 
