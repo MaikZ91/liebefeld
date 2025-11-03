@@ -45,7 +45,7 @@ const MessageList: React.FC<MessageListProps> = ({
 
   // Globaler Fallback-Listener für event:// Links (Capture-Phase)
   React.useEffect(() => {
-    const handler = (e: Event) => {
+    const handler = (e: MouseEvent | TouchEvent | PointerEvent) => {
       const target = e.target as HTMLElement | null;
       if (!target) return;
       const anchor = target.closest('a') as HTMLAnchorElement | null;
@@ -62,11 +62,11 @@ const MessageList: React.FC<MessageListProps> = ({
       }
     };
     // Capture Phase: stelle sicher, dass wir den Klick bekommen – auch wenn Child-Elemente stoppen
-    document.addEventListener('click', handler, true);
+    document.addEventListener('click', handler as EventListener, true);
     document.addEventListener('touchend', handler as EventListener, true);
     document.addEventListener('pointerup', handler as EventListener, true);
     return () => {
-      document.removeEventListener('click', handler, true);
+      document.removeEventListener('click', handler as EventListener, true);
       document.removeEventListener('touchend', handler as EventListener, true);
       document.removeEventListener('pointerup', handler as EventListener, true);
     };
