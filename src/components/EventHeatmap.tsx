@@ -237,9 +237,13 @@ const EventHeatmap: React.FC = () => {
 
   // Global capture listener for event:// links (works also in MIA response card)
   useEffect(() => {
-    const handler = (e: Event) => {
+    const handler = (e: MouseEvent | TouchEvent) => {
       const target = e.target as HTMLElement | null;
       if (!target) return;
+      // If click is inside MIA chat, let the chat handle it (inline rendering)
+      if (target.closest('[data-mia-chat]')) {
+        return;
+      }
       const anchor = target.closest('a') as HTMLAnchorElement | null;
       if (!anchor) return;
       const href = anchor.getAttribute('href') || '';
@@ -253,10 +257,10 @@ const EventHeatmap: React.FC = () => {
         console.warn('[EventHeatmap] handleEventLinkClick missing or empty id');
       }
     };
-    document.addEventListener('click', handler, true);
+    document.addEventListener('click', handler as EventListener, true);
     document.addEventListener('touchend', handler as EventListener, true);
     return () => {
-      document.removeEventListener('click', handler, true);
+      document.removeEventListener('click', handler as EventListener, true);
       document.removeEventListener('touchend', handler as EventListener, true);
     };
   }, []);
