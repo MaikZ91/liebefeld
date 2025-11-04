@@ -2238,14 +2238,20 @@ const EventHeatmap: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Event Details Dialog */}
-      {showEventDetails && selectedEventForDetails && (
-        <EventDetails
-          event={selectedEventForDetails}
-          onClose={() => setShowEventDetails(false)}
-          onJoinChat={handleJoinEventChat}
-        />
-      )}
+      
+          {/* Event Details Dialog */}
+    {showEventDetails && selectedEventForDetails && (
+      <div className="fixed inset-0 z-[1400] flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-[1390]" />
+        <div className="relative z-[1400] w-full max-w-lg mx-auto">
+          <EventDetails
+            event={selectedEventForDetails}
+            onClose={() => setShowEventDetails(false)}
+            onJoinChat={handleJoinEventChat}
+          />
+        </div>
+      </div>
+    )}
 
       {/* Event Chat Window */}
       {eventChatWindow && (
