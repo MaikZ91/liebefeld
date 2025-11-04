@@ -2241,8 +2241,8 @@ const EventHeatmap: React.FC = () => {
       
           {/* Event Details Dialog */}
     {showEventDetails && selectedEventForDetails && (
-      <div className="fixed inset-0 z-[2000] flex items-center justify-center">
-        <div className="relative z-[2000] w-full max-w-lg mx-auto">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+        <div className="relative z-[9999] w-full max-w-lg mx-auto">
           <EventDetails
             event={selectedEventForDetails}
             onClose={() => setShowEventDetails(false)}
