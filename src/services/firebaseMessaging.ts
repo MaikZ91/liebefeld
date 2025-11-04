@@ -19,6 +19,13 @@ export const initializeFCM = async (city?: string, forceRefresh: boolean = false
   try {
     console.log("🚀 Starting FCM initialization...");
     
+    // Skip in preview/no-sw mode to avoid SW-related cache issues
+    const bypassSW = typeof window !== 'undefined' && (window.location.hostname.endsWith('lovableproject.com') || window.location.search.includes('no-sw=1'));
+    if (bypassSW) {
+      console.warn("⏭️ Skipping FCM and SW registration in preview/no-sw mode");
+      return null;
+    }
+    
     // Check if service worker is supported
     if (!('serviceWorker' in navigator)) {
       console.error("❌ Service Worker not supported");
