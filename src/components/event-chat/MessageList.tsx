@@ -71,34 +71,13 @@ const MessageList: React.FC<MessageListProps> = ({
       <div className="space-y-4 pb-4 px-4">
         {/* Event Details Inline Display */}
         {selectedEvent && (
-          <div className="space-y-3">
-            <div className="rounded-2xl bg-gradient-to-br from-gray-900/70 to-black/70 backdrop-blur-sm border border-red-500/20 shadow-xl overflow-hidden">
-              <div className="flex items-center gap-3 px-4 py-3 border-b border-red-500/10 bg-black/20">
-                <Avatar className="w-8 h-8 shrink-0 shadow-lg shadow-red-500/30">
-                  <AvatarImage src="/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png" />
-                  <AvatarFallback className="bg-gradient-to-br from-red-600 to-red-800 text-xs text-white font-bold">MIA</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="text-sm font-semibold text-red-400">MIA</div>
-                  <div className="text-xs text-white/50">Event Details</div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedEventId(null)}
-                  className="text-white/50 hover:text-white h-8 w-8 p-0"
-                >
-                  ✕
-                </Button>
-              </div>
-              <div className="p-4">
-                <EventDetails 
-                  event={selectedEvent}
-                  onClose={() => setSelectedEventId(null)}
-                  inline={true}
-                />
-              </div>
-            </div>
+          <div className="animate-fade-in">
+            <EventDetails 
+              event={selectedEvent}
+              onClose={() => setSelectedEventId(null)}
+              inline={true}
+              onJoinChat={onJoinEventChat}
+            />
           </div>
         )}
 

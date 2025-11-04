@@ -192,24 +192,19 @@ const EventHeatmap: React.FC = () => {
   useEffect(() => {
     (window as any).handleEventLinkClick = (eventId: string) => {
       console.log('[EventHeatmap] handleEventLinkClick -> route to MIA inline details', eventId);
-      setSelectedEventId(eventId);
-      const ev = (events as any)?.find?.((e: any) => (e.id || `${e.title}-${e.date}-${e.time}`) === eventId);
-
-      // Öffne MIA Chat und blende etwaige Dialoge aus
+      
+      // Öffne NUR MIA Chat und blende alle Dialoge aus
       setIsMIAOpen(true);
       setShowAIChat(true);
-      setShowEventDetails(false);
+      setShowEventDetails(false); // Wichtig: Kein separater Dialog
+      setSelectedEventId(null); // Kein separater selectedEventId
 
       // Reiche an MIA weiter (falls bereits gemountet)
       if ((window as any).showEventInMIA) {
+        console.log('[EventHeatmap] Calling showEventInMIA with', eventId);
         (window as any).showEventInMIA(eventId);
       } else {
         console.warn('[EventHeatmap] showEventInMIA not available yet');
-      }
-
-      if (!ev) {
-        console.warn('[EventHeatmap] Event not found for id', eventId);
-        toast.error('Event nicht gefunden');
       }
     };
     
