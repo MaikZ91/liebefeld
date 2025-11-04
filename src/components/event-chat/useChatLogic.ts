@@ -270,8 +270,8 @@ export const useChatLogic = (
   }, [saveGlobalQuery]);
 
   const handleSendMessage = async (customInput?: string) => {
-    const message = customInput || input;
-    if (!message.trim()) return;
+    const message = typeof customInput === 'string' ? customInput : (typeof input === 'string' ? input : '');
+    if (!message || !message.trim()) return;
     
     // Prevent multiple simultaneous sends
     if (isSendingRef.current) {

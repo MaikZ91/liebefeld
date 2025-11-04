@@ -2245,14 +2245,7 @@ const EventHeatmap: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Event Details Dialog */}
-      {showEventDetails && selectedEventForDetails && (
-        <EventDetails
-          event={selectedEventForDetails}
-          onClose={() => setShowEventDetails(false)}
-          onJoinChat={handleJoinEventChat}
-        />
-      )}
+      {/* Event Details Dialog - DEACTIVATED: All details now shown inline in MIA */}
 
       {/* Event Chat Window */}
       {eventChatWindow && (
