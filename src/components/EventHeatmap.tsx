@@ -52,7 +52,7 @@ import { getInitials } from '@/utils/chatUIUtils';
 import PrivateChat from '@/components/users/PrivateChat';
 import HeatmapHeader from './HeatmapHeader';
 import { useEventContext, cities } from '@/contexts/EventContext';
-import FullPageChatBot from '@/components/event-chat/FullPageChatBot';
+import MessageList from '@/components/event-chat/MessageList';
 import { useChatLogic } from '@/components/event-chat/useChatLogic';
 import { geocodeLocation, loadCachedCoordinates, geocodeMultipleLocations } from '@/services/geocodingService';
 import TribeFinder from './TribeFinder';
@@ -2112,17 +2112,59 @@ const EventHeatmap: React.FC = () => {
               </div>
 
               {/* Chat Content */}
-              <div className="flex-1 overflow-hidden min-h-0">
-                <FullPageChatBot
-                  chatLogic={chatLogic}
-                  activeChatModeValue="ai"
-                  communityGroupId=""
-                  hideInput={true}
-                  externalInput={aiChatInput}
-                  setExternalInput={setAiChatInput}
-                  onExternalSendHandlerChange={setAiChatExternalSendHandler}
-                  embedded={true}
-                />
+              <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
+                {/* Message List */}
+                <div className="flex-1 overflow-y-auto px-4 pt-2">
+                  <MessageList
+                    messages={chatLogic.messages}
+                    isTyping={chatLogic.isTyping}
+                    handleDateSelect={() => {}}
+                    messagesEndRef={chatLogic.messagesEndRef}
+                    examplePrompts={[]}
+                    handleExamplePromptClick={() => {}}
+                    onJoinEventChat={handleJoinEventChat}
+                    onSuggestionClick={(suggestion) => {
+                      setAiChatInput(suggestion);
+                      if (aiChatExternalSendHandler) {
+                        aiChatExternalSendHandler(suggestion);
+                      }
+                    }}
+                  />
+                </div>
+                
+                {/* Input Area */}
+                <div className="px-4 pb-4 pt-2 border-t border-red-500/20">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={aiChatInput}
+                      onChange={(e) => setAiChatInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          if (aiChatInput.trim()) {
+                            chatLogic.handleSendMessage(aiChatInput);
+                            setAiChatInput('');
+                          }
+                        }
+                      }}
+                      placeholder="Frage nach Events..."
+                      className="flex-1 bg-white/5 border border-white/10 rounded-full px-4 py-2 text-white placeholder:text-white/40 focus:outline-none focus:border-red-500/50"
+                    />
+                    <Button
+                      onClick={() => {
+                        if (aiChatInput.trim()) {
+                          chatLogic.handleSendMessage(aiChatInput);
+                          setAiChatInput('');
+                        }
+                      }}
+                      disabled={!aiChatInput.trim() || chatLogic.isTyping}
+                      className="bg-red-500 hover:bg-red-600 text-white rounded-full px-6"
+                    >
+                      <Send className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
