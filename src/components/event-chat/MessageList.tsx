@@ -45,6 +45,18 @@ const MessageList: React.FC<MessageListProps> = ({
 
   // Finde das ausgewählte Event
   const selectedEvent = selectedEventId ? events.find(e => e.id === selectedEventId) : null;
+
+  // Externe Steuerung: Erlaube globales Anzeigen eines Events im MIA-Chat
+  React.useEffect(() => {
+    (window as any).showEventInMIA = (eventId: string) => {
+      console.log('[MessageList] showEventInMIA called with', eventId);
+      setSelectedEventId(eventId);
+    };
+    return () => {
+      delete (window as any).showEventInMIA;
+    };
+  }, []);
+
   // Es wird explizit nach dem statischen Willkommensprompt gesucht
   const welcomeMessage = messages.find(m => m.id === 'welcome');
   const typewriterPromptMessage = messages.find(m => m.id === 'typewriter-prompt');
