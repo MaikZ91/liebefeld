@@ -2247,15 +2247,7 @@ const EventHeatmap: React.FC = () => {
 
       {/* Event Details Dialog - DEACTIVATED: All details now shown inline in MIA */}
 
-      {/* Event Chat Window */}
-      {eventChatWindow && (
-        <EventChatWindow
-          eventId={eventChatWindow.eventId}
-          eventTitle={eventChatWindow.eventTitle}
-          isOpen={eventChatWindow.isOpen}
-          onClose={() => setEventChatWindow(null)}
-        />
-      )}
+      {/* Event Chat Window - DEACTIVATED to avoid second dialog; event chat now handled inline in MIA */}
 
       {/* Event Swipe Mode */}
       <EventSwipeMode 

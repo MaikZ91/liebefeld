@@ -104,36 +104,60 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     return eventKeywords.some(keyword => lowerText.includes(keyword));
   };
 
-  // Function to convert URLs to clickable links
+  // Function to convert URLs (http/https) and event:// links to clickable anchors
   const renderMessageWithLinks = (text: string) => {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const linkRegex = /(event:\/\/[^\s]+|https?:\/\/[^\s]+)/g;
 
-    if (!text.match(urlRegex)) {
+    if (!text.match(linkRegex)) {
       return text;
     }
 
-    const parts = text.split(urlRegex);
-    const matches = text.match(urlRegex) || [];
+    const parts = text.split(linkRegex);
+    const matches = text.match(linkRegex) || [];
 
     return (
       <>
         {parts.map((part, i) => (
           <React.Fragment key={i}>
             {part}
-            {matches[i] && (
-              <a
-                href={matches[i]}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:opacity-90 underline break-all flex items-center"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-              >
-                {matches[i]}
-                <LinkIcon className="h-3 w-3 ml-1 inline" />
-              </a>
-            )}
+            {matches[i] && (() => {
+              const href = matches[i]!;
+              const isEvent = href.startsWith('event://');
+              if (isEvent) {
+                const eventId = href.replace('event://', '');
+                return (
+                  <a
+                    href={href}
+                    className="text-primary underline break-all cursor-pointer"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if ((window as any).handleEventLinkClick) {
+                        (window as any).handleEventLinkClick(eventId);
+                      } else if ((window as any).showEventInMIA) {
+                        (window as any).showEventInMIA(eventId);
+                      }
+                    }}
+                  >
+                    {href}
+                  </a>
+                );
+              }
+              return (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:opacity-90 underline break-all flex items-center"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                >
+                  {href}
+                  <LinkIcon className="h-3 w-3 ml-1 inline" />
+                </a>
+              );
+            })()}
           </React.Fragment>
         ))}
       </>

@@ -67,7 +67,7 @@ const MessageList: React.FC<MessageListProps> = ({
     .filter(m => !['welcome', 'typewriter-prompt', 'landing-slides'].includes(m.id));
 
   return (
-    <div data-mia-chat className="max-h-[16vh] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+    <div data-mia-chat className="max-h-[16vh] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent" onClick={handleEventLinkClick}>
       <div className="space-y-4 pb-4 px-4">
         {/* Event Details Inline Display */}
         {selectedEvent && (
