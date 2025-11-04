@@ -197,7 +197,9 @@ const EventHeatmap: React.FC = () => {
       if (ev) {
         setSelectedEventForDetails(ev);
         setShowEventDetails(true);
-        setIsMIAOpen(true);
+        setIsMIAOpen(false);           // 👈 MIA schliessen, damit Details sichtbar sind
+        #setShowAiResponse(false);      // (optional) AI-Card schließen
+        #setIsMIAOpen(true);
       } else {
         console.warn('[EventHeatmap] Event not found for id', eventId);
         toast.error('Event nicht gefunden');
