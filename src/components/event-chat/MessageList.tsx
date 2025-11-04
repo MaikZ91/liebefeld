@@ -12,7 +12,6 @@ import SuggestionChips from './SuggestionChips';
 import EventDetails from '@/components/EventDetails';
 import { useEventContext } from '@/contexts/EventContext';
 import type { Event } from '@/types/eventTypes';
-import { useState } from 'react';
 
 import './MessageList.css';
 
@@ -26,9 +25,7 @@ const MessageList: React.FC<MessageListProps> = ({
   onJoinEventChat,
   onSuggestionClick
 }) => {
-  const { events } = useEventContext();
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  // Handler für Event-Links - Setzt die Event-ID zum Anzeigen der Details
+  // Handler für Event-Links
   const handleEventLinkClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     const anchor = target.closest('a') as HTMLAnchorElement | null;
@@ -37,26 +34,43 @@ const MessageList: React.FC<MessageListProps> = ({
       if (href.startsWith('event://')) {
         e.preventDefault();
         const eventId = href.replace('event://', '');
-        console.log('[MessageList] Event link clicked:', eventId);
-        setSelectedEventId(eventId);
+        if (eventId && (window as any).handleEventLinkClick) {
+          (window as any).handleEventLinkClick(eventId);
+        } else {
+          console.warn('[MessageList] Kein globaler Handler für Event-Links gefunden oder leere ID');
+        }
       }
     }
   };
 
-  // Finde das ausgewählte Event
-  const selectedEvent = selectedEventId ? events.find(e => e.id === selectedEventId) : null;
-
-  // Externe Steuerung: Erlaube globales Anzeigen eines Events im MIA-Chat
+  // Globaler Fallback-Listener für event:// Links (Capture-Phase)
   React.useEffect(() => {
-    (window as any).showEventInMIA = (eventId: string) => {
-      console.log('[MessageList] showEventInMIA called with', eventId);
-      setSelectedEventId(eventId);
+    const handler = (e: MouseEvent | TouchEvent | PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      const anchor = target.closest('a') as HTMLAnchorElement | null;
+      if (!anchor) return;
+      const href = anchor.getAttribute('href') || '';
+      if (!href.startsWith('event://')) return;
+      e.preventDefault();
+      const eventId = href.slice('event://'.length);
+      console.log('[MessageList] Intercepted event:// click', { href, eventId });
+      if (eventId && (window as any).handleEventLinkClick) {
+        (window as any).handleEventLinkClick(eventId);
+      } else {
+        console.warn('[MessageList] Global handler fehlt oder ID leer');
+      }
     };
+    // Capture Phase: stelle sicher, dass wir den Klick bekommen – auch wenn Child-Elemente stoppen
+    document.addEventListener('click', handler as EventListener, true);
+    document.addEventListener('touchend', handler as EventListener, true);
+    document.addEventListener('pointerup', handler as EventListener, true);
     return () => {
-      delete (window as any).showEventInMIA;
+      document.removeEventListener('click', handler as EventListener, true);
+      document.removeEventListener('touchend', handler as EventListener, true);
+      document.removeEventListener('pointerup', handler as EventListener, true);
     };
   }, []);
-
   // Es wird explizit nach dem statischen Willkommensprompt gesucht
   const welcomeMessage = messages.find(m => m.id === 'welcome');
   const typewriterPromptMessage = messages.find(m => m.id === 'typewriter-prompt');
@@ -67,20 +81,8 @@ const MessageList: React.FC<MessageListProps> = ({
     .filter(m => !['welcome', 'typewriter-prompt', 'landing-slides'].includes(m.id));
 
   return (
-    <div data-mia-chat className="max-h-[16vh] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent" onClick={handleEventLinkClick}>
+    <div className="max-h-[16vh] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
       <div className="space-y-4 pb-4 px-4">
-        {/* Event Details Inline Display */}
-        {selectedEvent && (
-          <div className="animate-fade-in">
-            <EventDetails 
-              event={selectedEvent}
-              onClose={() => setSelectedEventId(null)}
-              inline={true}
-              onJoinChat={onJoinEventChat}
-            />
-          </div>
-        )}
-
         {/* Optisch schöne Welcome Nachricht */}
         {welcomeMessage && welcomeMessage.html && (
           <div className="flex justify-center animate-fade-in pt-6">
@@ -119,8 +121,12 @@ const MessageList: React.FC<MessageListProps> = ({
                   <SwipeableEventPanel 
                     panelData={message.panelData}
                     onEventSelect={(eventId) => {
-                      console.log('Event selected from panel:', eventId);
-                      setSelectedEventId(eventId);
+                      console.log('Event selected:', eventId);
+                      if ((window as any).handleEventLinkClick) {
+                        (window as any).handleEventLinkClick(eventId);
+                      } else {
+                        console.warn('[MessageList] window.handleEventLinkClick not available');
+                      }
                     }}
                     onJoinEventChat={onJoinEventChat}
                   />
@@ -162,7 +168,11 @@ const MessageList: React.FC<MessageListProps> = ({
                       }}
                     />
                   </div>
-                ) : null}
+                ) : (
+                  <div className="text-xs text-red-500 px-4">
+                    Debug: suggestions={JSON.stringify(message.suggestions)}, onClick={!!onSuggestionClick}
+                  </div>
+                )}
               </div>
             );
           }
