@@ -945,10 +945,10 @@ const EventHeatmap: React.FC = () => {
         });
 
         // CARTO Dark tiles + orange tint via CSS on tile pane
-        const tiles = L.tileLayer(
-          "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-          { subdomains: "abcd", className: "tribe-tiles" }
-        );
+        const tiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+          subdomains: "abcd",
+          className: "tribe-tiles",
+        });
         tiles.addTo(leafletMap);
         const tilePane = leafletMap.getPane("tilePane");
         if (tilePane) tilePane.classList.add("tribe-orange-tiles");
@@ -1804,11 +1804,18 @@ const EventHeatmap: React.FC = () => {
 
       {/* === Styles (Urban map tint + Chips + Pulse) === */}
       <style>{`
-        /* Orange-Tint für Dark-Tiles */
-        .leaflet-tile-pane.tribe-orange-tiles .leaflet-layer,
-        .leaflet-tile-pane.tribe-orange-tiles .leaflet-tile {
-          filter: sepia(92%) saturate(380%) hue-rotate(340deg) brightness(0.85) contrast(1.25) !important;
-        }
+        /* Orange-Tint für Dark-Tiles – deutlich milder */
+.leaflet-tile-pane.tribe-orange-tiles .leaflet-layer,
+.leaflet-tile-pane.tribe-orange-tiles .leaflet-tile {
+  /* Weniger Sepia + mehr Helligkeit, minimaler Orange-Ton */
+  filter:
+    sepia(12%)
+    saturate(160%)
+    hue-rotate(335deg)
+    brightness(1.10)
+    contrast(1.05) !important;
+  opacity: 0.95; /* ganz leichte Durchsicht für mehr “Leuchten” */
+}
 
         /* Puls für Spots */
         @keyframes tribePulse {
