@@ -1,21 +1,17 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
+// EventHeatmap.tsx
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,61 +21,78 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { MapPin, Calendar, Users, Clock, ChevronDown, ChevronUp, X, Sparkles, Plus, CheckCircle, Send, Filter, FilterX, MessageSquare, CalendarIcon, Heart } from 'lucide-react';
-import SuggestionChips from '@/components/event-chat/SuggestionChips';
-import { useEvents } from '@/hooks/useEvents';
+} from "@/components/ui/alert-dialog";
+import {
+  MapPin,
+  Calendar,
+  Users,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  X,
+  Sparkles,
+  Plus,
+  CheckCircle,
+  Send,
+  Filter,
+  FilterX,
+  MessageSquare,
+  CalendarIcon,
+  Heart,
+} from "lucide-react";
+import SuggestionChips from "@/components/event-chat/SuggestionChips";
+import { useEvents } from "@/hooks/useEvents";
 
-import { format, parseISO } from 'date-fns';
-import { de } from 'date-fns/locale';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import ThreeEventDisplay from '@/components/event-chat/ThreeEventDisplay';
-import { PanelEventData, PanelEvent } from '@/components/event-chat/types';
-import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
-import EventForm from '@/components/EventForm';
-import FilterBar, { FilterGroup } from '@/components/calendar/FilterBar';
-import { getCategoryGroup, CategoryGroup } from '@/utils/eventCategoryGroups';
-import { useUserProfile } from '@/hooks/chat/useUserProfile';
-import { getSelectedCategory, saveSelectedCategory } from '@/utils/heatmapPreferences';
-import { messageService } from '@/services/messageService';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { UserProfile } from '@/types/chatTypes';
-import { getInitials } from '@/utils/chatUIUtils';
-import PrivateChat from '@/components/users/PrivateChat';
-import HeatmapHeader from './HeatmapHeader';
-import { useEventContext, cities } from '@/contexts/EventContext';
-import FullPageChatBot from '@/components/event-chat/FullPageChatBot';
-import { useChatLogic } from '@/components/event-chat/useChatLogic';
-import { geocodeLocation, loadCachedCoordinates, geocodeMultipleLocations } from '@/services/geocodingService';
-import TribeFinder from './TribeFinder';
-import { eventChatService } from '@/services/eventChatService';
-import EventChatWindow from '@/components/event-chat/EventChatWindow';
-import EventSwipeMode from './EventSwipeMode';
-import EventDetails from '@/components/EventDetails';
-import { dislikeService } from '@/services/dislikeService';
+import { format, parseISO } from "date-fns";
+import { de } from "date-fns/locale";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import ThreeEventDisplay from "@/components/event-chat/ThreeEventDisplay";
+import { PanelEventData, PanelEvent } from "@/components/event-chat/types";
+import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import EventForm from "@/components/EventForm";
+import FilterBar, { FilterGroup } from "@/components/calendar/FilterBar";
+import { getCategoryGroup, CategoryGroup } from "@/utils/eventCategoryGroups";
+import { useUserProfile } from "@/hooks/chat/useUserProfile";
+import { getSelectedCategory, saveSelectedCategory } from "@/utils/heatmapPreferences";
+import { messageService } from "@/services/messageService";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { UserProfile } from "@/types/chatTypes";
+import { getInitials } from "@/utils/chatUIUtils";
+import PrivateChat from "@/components/users/PrivateChat";
+import HeatmapHeader from "./HeatmapHeader";
+import { useEventContext, cities } from "@/contexts/EventContext";
+import FullPageChatBot from "@/components/event-chat/FullPageChatBot";
+import { useChatLogic } from "@/components/event-chat/useChatLogic";
+import { geocodeLocation, loadCachedCoordinates, geocodeMultipleLocations } from "@/services/geocodingService";
+import TribeFinder from "./TribeFinder";
+import { eventChatService } from "@/services/eventChatService";
+import EventChatWindow from "@/components/event-chat/EventChatWindow";
+import EventSwipeMode from "./EventSwipeMode";
+import EventDetails from "@/components/EventDetails";
+import { dislikeService } from "@/services/dislikeService";
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
 // Define tribeSpots outside the component to ensure it's a constant and accessible
 const tribeSpots = [
-  { name: 'Sparrenburg', lat: 52.0149, lng: 8.52678 },
-  { name: 'Obersee', lat: 52.056974, lng: 8.563763 },
-  { name: 'Lutterviertel', lat: 52.017241, lng: 8.538027 },
-  { name: 'Gellershagen Park', lat: 52.05, lng: 8.5167 },
-  { name: 'Klosterplatz', lat: 52.0208, lng: 8.5286 },
-  { name: 'Nordpark', lat: 52.0368, lng: 8.5290 },
-  { name: 'Universität Bielefeld', lat: 52.0378, lng: 8.4931 },
-{ name: 'Schwedenschanze', lat: 52.068540, lng: 8.369610 }
+  { name: "Sparrenburg", lat: 52.0149, lng: 8.52678 },
+  { name: "Obersee", lat: 52.056974, lng: 8.563763 },
+  { name: "Lutterviertel", lat: 52.017241, lng: 8.538027 },
+  { name: "Gellershagen Park", lat: 52.05, lng: 8.5167 },
+  { name: "Klosterplatz", lat: 52.0208, lng: 8.5286 },
+  { name: "Nordpark", lat: 52.0368, lng: 8.529 },
+  { name: "Universität Bielefeld", lat: 52.0378, lng: 8.4931 },
+  { name: "Schwedenschanze", lat: 52.06854, lng: 8.36961 },
 ];
 
 const EventHeatmap: React.FC = () => {
@@ -96,25 +109,25 @@ const EventHeatmap: React.FC = () => {
   const [userMarkers, setUserMarkers] = useState<L.Marker[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [panelHeight, setPanelHeight] = useState<'collapsed' | 'partial' | 'full'>('collapsed');
+  const [panelHeight, setPanelHeight] = useState<"collapsed" | "partial" | "full">("collapsed");
   const [perfectDayMessage, setPerfectDayMessage] = useState<string | null>(null);
   const [isPerfectDayLoading, setIsPerfectDayLoading] = useState(false);
   const [showPerfectDayPanel, setShowPerfectDayPanel] = useState(false);
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
-  const [liveStatusMessage, setLiveStatusMessage] = useState('');
+  const [liveStatusMessage, setLiveStatusMessage] = useState("");
   const [isPrivateChatOpen, setIsPrivateChatOpen] = useState(false);
   const [selectedUserForPrivateChat, setSelectedUserForPrivateChat] = useState<UserProfile | null>(null);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [showCategoryOptions, setShowCategoryOptions] = useState(false);
   const [allUserProfiles, setAllUserProfiles] = useState<UserProfile[]>([]);
   const [isTribeFinderOpen, setIsTribeFinderOpen] = useState(false);
-  const [selectedTribeSpot, setSelectedTribeSpot] = useState<{name: string, lat: number, lng: number} | null>(null);
+  const [selectedTribeSpot, setSelectedTribeSpot] = useState<{ name: string; lat: number; lng: number } | null>(null);
   const [isTribeSpotDialogOpen, setIsTribeSpotDialogOpen] = useState(false);
   const [isSwipeModeOpen, setIsSwipeModeOpen] = useState(false);
 
   // Declare central avatar states at the top level to ensure scope
-  const [centralAvatarUsername, setCentralAvatarUsername] = useState('');
-  const [centralAvatarImage, setCentralAvatarImage] = useState('');
+  const [centralAvatarUsername, setCentralAvatarUsername] = useState("");
+  const [centralAvatarImage, setCentralAvatarImage] = useState("");
   const [showCentralAvatar, setShowCentralAvatar] = useState(false);
 
   // Handle category change with persistence
@@ -124,35 +137,36 @@ const EventHeatmap: React.FC = () => {
   };
 
   const [showAIChat, setShowAIChat] = useState(false);
-  const [aiChatInput, setAiChatInput] = useState('');
-  const [aiChatExternalSendHandler, setAiChatExternalSendHandler] = useState<((input?: string | any) => Promise<void>) | null>(null); // Updated type
+  const [aiChatInput, setAiChatInput] = useState("");
+  const [aiChatExternalSendHandler, setAiChatExternalSendHandler] = useState<
+    ((input?: string | any) => Promise<void>) | null
+  >(null); // Updated type
 
   const [eventCoordinates, setEventCoordinates] = useState<Map<string, { lat: number; lng: number }>>(new Map());
 
   // NEW STATE FOR PANELS VISIBILITY
   const [showEventPanels, setShowEventPanels] = useState(true);
-  
+
   // State for disliked events
   const [dislikedEventIds, setDislikedEventIds] = useState<string[]>([]);
-  
+
   // State for location blocking dialog
   const [isBlockLocationDialogOpen, setIsBlockLocationDialogOpen] = useState(false);
   const [locationToBlock, setLocationToBlock] = useState<string | null>(null);
 
   // State for MIA open/close
   const [isMIAOpen, setIsMIAOpen] = useState(false);
-  
+
   // State for daily recommendation
   const [hasNewDailyRecommendation, setHasNewDailyRecommendation] = useState(false);
   const [isDailyRecommendationLoading, setIsDailyRecommendationLoading] = useState(false);
-  
+
   // State for AI chat loading
   const [isAiChatLoading, setIsAiChatLoading] = useState(false);
-  
+
   // Detail view state for event details dialog
   const [showEventDetails, setShowEventDetails] = useState(false);
   const [selectedEventForDetails, setSelectedEventForDetails] = useState<any>(null);
-
 
   // Event Chat Window State
   const [eventChatWindow, setEventChatWindow] = useState<{
@@ -169,7 +183,7 @@ const EventHeatmap: React.FC = () => {
   // Callback to update heatmap date filter from AI chat
   const handleDateFilterFromChat = useCallback((date: Date) => {
     setSelectedDate(date);
-    toast.success(`Karte aktualisiert auf ${format(date, 'dd.MM.yyyy')}`);
+    toast.success(`Karte aktualisiert auf ${format(date, "dd.MM.yyyy")}`);
   }, []);
 
   // Callback to update heatmap category filter from AI chat
@@ -186,38 +200,101 @@ const EventHeatmap: React.FC = () => {
     setIsAiChatLoading(false);
   }, []);
 
-  const chatLogic = useChatLogic(false, 'ai', handleDateFilterFromChat, handleCategoryFilterFromChat, handleAiResponseReceived);
+  const chatLogic = useChatLogic(
+    false,
+    "ai",
+    handleDateFilterFromChat,
+    handleCategoryFilterFromChat,
+    handleAiResponseReceived,
+  );
+
+  // ====== NEW: helper to render + fetch description via Edge Function ======
+  const renderEventHtml = (evt: any, description: string) => {
+    const safeDesc = description || "Keine Beschreibung gefunden.";
+    return `
+      <div class="space-y-3">
+        <div class="flex items-center gap-2">
+          <img src="${evt.image_url || ""}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.12)" onerror="this.style.display='none'"/>
+          <div>
+            <div class="text-white font-semibold">${evt.title}</div>
+            <div class="text-white/60 text-xs">${evt.date} • ${evt.time}${evt.location ? " • " + evt.location : ""}</div>
+          </div>
+        </div>
+        <div class="text-white/90 text-sm leading-5">${safeDesc}</div>
+        <div class="flex gap-2 pt-2">
+          <button class="px-2 py-1 text-xs rounded bg-white/10 hover:bg-white/15" onclick="window.showEventOnMap && window.showEventOnMap('${evt.id}')">Auf Karte zeigen</button>
+          <button class="px-2 py-1 text-xs rounded bg-white/10 hover:bg-white/15" onclick="window.showSimilarEvents && window.showSimilarEvents('${evt.category}')">Ähnliche Events</button>
+          <button class="px-2 py-1 text-xs rounded bg-white/10 hover:bg-white/15" onclick="window.saveEvent && window.saveEvent('${evt.id}')">Speichern ⭐</button>
+        </div>
+      </div>
+    `;
+  };
+
+  const fetchAndShowEventDescription = async (evt: any) => {
+    if (!evt) return;
+    try {
+      setIsMIAOpen(true);
+      setIsAiChatLoading(true);
+      setShowAiResponse(false);
+
+      const { data, error } = await supabase.functions.invoke("fetch-event-description", {
+        body: {
+          eventLink: evt.link ?? null,
+          eventData: {
+            title: evt.title,
+            category: evt.category,
+            location: evt.location,
+            organizer: (evt as any).organizer ?? null,
+            date: evt.date,
+            time: evt.time,
+            city: evt.city ?? selectedCity,
+          },
+        },
+      });
+      if (error) throw error;
+
+      const desc = (data as any)?.description || (data as any)?.response || "";
+      const html = renderEventHtml(evt, desc);
+      handleAiResponseReceived(html, ["Weitere Events heute", "Events am Wochenende"]);
+    } catch (e) {
+      toast.error("Konnte Eventbeschreibung nicht laden");
+      const html = renderEventHtml(evt, "Keine Beschreibung verfügbar. Versuche es später erneut.");
+      handleAiResponseReceived(html, ["Was läuft heute?", "Events am Wochenende"]);
+    } finally {
+      setIsAiChatLoading(false);
+    }
+  };
+  // ====== /NEW helpers ======
 
   // Registriere Event-Link-Handler global
   useEffect(() => {
     (window as any).handleEventLinkClick = async (eventId: string) => {
-      console.log('[EventHeatmap] handleEventLinkClick -> inline in MIA', eventId);
-      // Kein neues Detail-Fenster mehr öffnen – alles im MIA-Dialog rendern
+      console.log("[EventHeatmap] handleEventLinkClick -> inline in MIA", eventId);
+      // Inline in MIA anzeigen
       setShowEventDetails(false);
       setIsMIAOpen(true);
       setShowAiResponse(false);
 
-      try {
-        // Nutze die bestehende Chat-Logik, um die Detail-Antwort als AI-Message einzufügen
-        if ((chatLogic as any)?.handleEventLinkClick) {
-          await (chatLogic as any).handleEventLinkClick(eventId);
-        }
-      } catch (err) {
-        console.warn('[EventHeatmap] handleEventLinkClick inline failed:', err);
+      // Nutze unsere neue Edge-Function
+      const evt = filteredEvents.find((e) => (e.id || `${e.title}-${e.date}-${e.time}`) === eventId);
+      if (!evt) {
+        console.warn("[EventHeatmap] Event not found for id:", eventId);
+        toast.error("Event nicht gefunden");
+        return;
       }
+      await fetchAndShowEventDescription(evt);
     };
-    
+
     // Register additional handlers for event detail buttons
     (window as any).showEventOnMap = (eventId: string) => {
-      console.log('Show event on map:', eventId);
+      console.log("Show event on map:", eventId);
       setShowAIChat(false);
       setShowAiResponse(false);
-      // TODO: Implement map showing logic to highlight event
-      toast.info('Karten-Funktion wird demnächst verfügbar sein');
+      toast.info("Karten-Funktion wird demnächst verfügbar sein");
     };
 
     (window as any).showSimilarEvents = (category: string) => {
-      console.log('Show similar events for category:', category);
+      console.log("Show similar events for category:", category);
       if (aiChatExternalSendHandler) {
         setShowAiResponse(false);
         aiChatExternalSendHandler(`Zeige mir ${category} Events`);
@@ -225,8 +302,8 @@ const EventHeatmap: React.FC = () => {
     };
 
     (window as any).saveEvent = (eventId: string) => {
-      console.log('Save event:', eventId);
-      toast.success('Event wurde zu deinen Favoriten hinzugefügt! ⭐');
+      console.log("Save event:", eventId);
+      toast.success("Event wurde zu deinen Favoriten hinzugefügt! ⭐");
       // TODO: Implement save to favorites logic
     };
 
@@ -236,116 +313,111 @@ const EventHeatmap: React.FC = () => {
       delete (window as any).showSimilarEvents;
       delete (window as any).saveEvent;
     };
-  }, [events, aiChatExternalSendHandler]);
+  }, [events, aiChatExternalSendHandler]); // filteredEvents is derived from state; events dep is OK here
 
   // Global capture listener for event:// links (works also in MIA response card)
   useEffect(() => {
     const handler = (e: Event) => {
       const target = e.target as HTMLElement | null;
       if (!target) return;
-      const anchor = target.closest('a') as HTMLAnchorElement | null;
+      const anchor = target.closest("a") as HTMLAnchorElement | null;
       if (!anchor) return;
-      const href = anchor.getAttribute('href') || '';
-      if (!href.startsWith('event://')) return;
+      const href = anchor.getAttribute("href") || "";
+      if (!href.startsWith("event://")) return;
       e.preventDefault();
-      const eventId = href.slice('event://'.length);
-      console.log('[EventHeatmap] Captured event:// link', { href, eventId });
+      const eventId = href.slice("event://".length);
+      console.log("[EventHeatmap] Captured event:// link", { href, eventId });
       if (eventId && (window as any).handleEventLinkClick) {
         (window as any).handleEventLinkClick(eventId);
       } else {
-        console.warn('[EventHeatmap] handleEventLinkClick missing or empty id');
+        console.warn("[EventHeatmap] handleEventLinkClick missing or empty id");
       }
     };
-    document.addEventListener('click', handler, true);
-    document.addEventListener('touchend', handler as EventListener, true);
+    document.addEventListener("click", handler, true);
+    document.addEventListener("touchend", handler as EventListener, true);
     return () => {
-      document.removeEventListener('click', handler, true);
-      document.removeEventListener('touchend', handler as EventListener, true);
+      document.removeEventListener("click", handler, true);
+      document.removeEventListener("touchend", handler as EventListener, true);
     };
   }, []);
 
   // Fallback: ensure send handler is available immediately
   useEffect(() => {
-    if (!(aiChatExternalSendHandler)) {
+    if (!aiChatExternalSendHandler) {
       try {
         setAiChatExternalSendHandler(() => (chatLogic as any)?.handleSendMessage);
       } catch (e) {
-        console.warn('[EventHeatmap] Could not set fallback send handler:', e);
+        console.warn("[EventHeatmap] Could not set fallback send handler:", e);
       }
     }
   }, [chatLogic, aiChatExternalSendHandler]);
 
   const mapRef = useRef<HTMLDivElement>(null);
-  
+
   // Check for daily recommendation on mount
   useEffect(() => {
     const checkDailyRecommendation = () => {
-      const today = new Date().toISOString().split('T')[0];
-      const lastShownDate = localStorage.getItem('last_daily_recommendation_date');
-      
+      const today = new Date().toISOString().split("T")[0];
+      const lastShownDate = localStorage.getItem("last_daily_recommendation_date");
+
       if (lastShownDate !== today) {
         setHasNewDailyRecommendation(true);
       }
     };
-    
+
     checkDailyRecommendation();
-    
+
     // Setup global function for "Personalisiere deine Perfect Day Nachricht" button
     (window as any).openProfileEditor = () => {
       setShowAIChat(false);
-      toast.info('Öffne dein Profil unter dem Benutzer-Icon, um deine Interessen anzupassen');
+      toast.info("Öffne dein Profil unter dem Benutzer-Icon, um deine Interessen anzupassen");
     };
-    
+
     return () => {
       delete (window as any).openProfileEditor;
     };
   }, []);
-  
+
   // Load daily recommendation when MIA is clicked
   const handleMIAClick = async () => {
     if (hasNewDailyRecommendation) {
       setIsDailyRecommendationLoading(true);
-      
+
       try {
         // Call the perfect day edge function
-        const { data, error } = await supabase.functions.invoke('generate-perfect-day', {
+        const { data, error } = await supabase.functions.invoke("generate-perfect-day", {
           body: {
-            username: currentUser || 'Gast',
-            weather: 'partly_cloudy',
+            username: currentUser || "Gast",
+            weather: "partly_cloudy",
             interests: userProfile?.interests || [],
-            favorite_locations: userProfile?.favorite_locations || []
-          }
+            favorite_locations: userProfile?.favorite_locations || [],
+          },
         });
-        
+
         if (error) throw error;
-        
+
         if (data?.response) {
           // Show the response in the AI response card
-          const suggestions = [
-            'Weitere Events heute',
-            'Events am Wochenende',
-            'Kreative Events',
-            'Sport Events'
-          ];
+          const suggestions = ["Weitere Events heute", "Events am Wochenende", "Kreative Events", "Sport Events"];
           handleAiResponseReceived(data.response, suggestions);
-          
+
           // Mark as shown for today
-          const today = new Date().toISOString().split('T')[0];
-          localStorage.setItem('last_daily_recommendation_date', today);
+          const today = new Date().toISOString().split("T")[0];
+          localStorage.setItem("last_daily_recommendation_date", today);
           setHasNewDailyRecommendation(false);
-          
-          toast.success('Hier ist deine Tagesempfehlung!');
+
+          toast.success("Hier ist deine Tagesempfehlung!");
         }
       } catch (error) {
-        console.error('Error loading daily recommendation:', error);
-        toast.error('Konnte Tagesempfehlung nicht laden');
+        console.error("Error loading daily recommendation:", error);
+        toast.error("Konnte Tagesempfehlung nicht laden");
       } finally {
         setIsDailyRecommendationLoading(false);
       }
     }
   };
 
-  const selectedDateString = format(selectedDate, 'yyyy-MM-dd');
+  const selectedDateString = format(selectedDate, "yyyy-MM-dd");
 
   useEffect(() => {
     loadCachedCoordinates();
@@ -356,24 +428,22 @@ const EventHeatmap: React.FC = () => {
     const loadDislikedEvents = async () => {
       try {
         const dislikedIds = await dislikeService.getDislikedEvents();
-        console.log('[EventHeatmap] Loaded disliked events from localStorage:', dislikedIds);
+        console.log("[EventHeatmap] Loaded disliked events from localStorage:", dislikedIds);
         setDislikedEventIds(dislikedIds);
       } catch (error) {
-        console.error('Error loading disliked events:', error);
+        console.error("Error loading disliked events:", error);
       }
     };
-    
+
     loadDislikedEvents();
   }, []);
 
   useEffect(() => {
     const fetchAllUserProfiles = async () => {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*');
+      const { data, error } = await supabase.from("user_profiles").select("*");
 
       if (error) {
-        console.error('Error fetching all user profiles:', error);
+        console.error("Error fetching all user profiles:", error);
         return;
       }
       setAllUserProfiles(data || []);
@@ -382,26 +452,22 @@ const EventHeatmap: React.FC = () => {
     fetchAllUserProfiles();
 
     const usersSubscription = supabase
-      .channel('user_profiles_changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'user_profiles' },
-        (payload) => {
-          console.log('User profile change received!', payload);
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            setAllUserProfiles(prevProfiles => {
-              const existingIndex = prevProfiles.findIndex(p => p.id === payload.new.id);
-              if (existingIndex > -1) {
-                return prevProfiles.map((p, i) => i === existingIndex ? payload.new as UserProfile : p);
-              } else {
-                return [...prevProfiles, payload.new as UserProfile];
-              }
-            });
-          } else if (payload.eventType === 'DELETE') {
-            setAllUserProfiles(prevProfiles => prevProfiles.filter(p => p.id !== payload.old.id));
-          }
+      .channel("user_profiles_changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "user_profiles" }, (payload) => {
+        console.log("User profile change received!", payload);
+        if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+          setAllUserProfiles((prevProfiles) => {
+            const existingIndex = prevProfiles.findIndex((p) => p.id === payload.new.id);
+            if (existingIndex > -1) {
+              return prevProfiles.map((p, i) => (i === existingIndex ? (payload.new as UserProfile) : p));
+            } else {
+              return [...prevProfiles, payload.new as UserProfile];
+            }
+          });
+        } else if (payload.eventType === "DELETE") {
+          setAllUserProfiles((prevProfiles) => prevProfiles.filter((p) => p.id !== payload.old.id));
         }
-      )
+      })
       .subscribe();
 
     return () => {
@@ -413,27 +479,27 @@ const EventHeatmap: React.FC = () => {
     const geocodeEventLocations = async () => {
       if (!events.length) return;
 
-      console.log('[EventHeatmap] Starting geocoding for events...');
+      console.log("[EventHeatmap] Starting geocoding for events...");
 
       const uniqueLocations = new Set<string>();
       const locationData: Array<{ location: string; city?: string }> = [];
 
       // Filter events by selected city BEFORE sending for geocoding
-      const currentCityEvents = events.filter(event => {
+      const currentCityEvents = events.filter((event) => {
         const eventCityLower = event.city ? event.city.toLowerCase() : null;
         const selectedCityLower = selectedCity.toLowerCase();
-        if (selectedCityLower === 'bi' || selectedCityLower === 'bielefeld') {
-          return !eventCityLower || eventCityLower === 'bielefeld' || eventCityLower === 'bi';
+        if (selectedCityLower === "bi" || selectedCityLower === "bielefeld") {
+          return !eventCityLower || eventCityLower === "bielefeld" || eventCityLower === "bi";
         }
         return eventCityLower === selectedCityLower;
       });
 
-      currentCityEvents.forEach(event => {
+      currentCityEvents.forEach((event) => {
         if (event.location && !uniqueLocations.has(event.location)) {
           uniqueLocations.add(event.location);
           locationData.push({
             location: event.location,
-            city: event.city || selectedCity
+            city: event.city || selectedCity,
           });
         }
       });
@@ -445,14 +511,15 @@ const EventHeatmap: React.FC = () => {
 
         const newEventCoordinates = new Map<string, { lat: number; lng: number }>();
 
-        currentCityEvents.forEach(event => { // Use currentCityEvents here as well
+        currentCityEvents.forEach((event) => {
+          // Use currentCityEvents here as well
           if (event.location) {
             const key = `${event.location}_${event.city || selectedCity}`;
             const coords = coordinates.get(key);
             if (coords) {
               newEventCoordinates.set(event.id, {
                 lat: coords.lat,
-                lng: coords.lng
+                lng: coords.lng,
               });
             }
           }
@@ -461,7 +528,7 @@ const EventHeatmap: React.FC = () => {
         setEventCoordinates(newEventCoordinates);
         console.log(`[EventHeatmap] Geocoded ${newEventCoordinates.size} event locations for selected city.`);
       } catch (error) {
-        console.error('[EventHeatmap] Error during batch geocoding:', error);
+        console.error("[EventHeatmap] Error during batch geocoding:", error);
       }
     };
 
@@ -469,27 +536,25 @@ const EventHeatmap: React.FC = () => {
   }, [events, selectedCity]);
 
   const getTimeFromSlider = (hour: number): string => {
-    return `${hour.toString().padStart(2, '0')}:00`;
+    return `${hour.toString().padStart(2, "0")}:00`;
   };
 
   const getHourFromTime = (timeString: string): number => {
-    const [hour] = timeString.split(':');
+    const [hour] = timeString.split(":");
     return parseInt(hour, 10);
   };
 
   const getCityCenterCoordinates = (cityAbbr: string) => {
-    const cityObject = cities.find(c => c.abbr.toLowerCase() === cityAbbr.toLowerCase());
+    const cityObject = cities.find((c) => c.abbr.toLowerCase() === cityAbbr.toLowerCase());
     if (cityObject) {
       const coords: { [key: string]: { lat: number; lng: number } } = {
-        'bi': { lat: 52.0302, lng: 8.5311 },
-        'bielefeld': { lat: 52.0302, lng: 8.5311 },
-        'berlin': { lat: 52.5200, lng: 13.4050 },
-        'hamburg': { lat: 53.5511, lng: 9.9937 },
-        'kopenhagen': { lat: 55.6833, lng: 12.5833 },
-        'köln': { lat: 50.935173, lng: 6.953101 },
-        'munich': { lat: 48.1351, lng: 11.5820 },
-
-
+        bi: { lat: 52.0302, lng: 8.5311 },
+        bielefeld: { lat: 52.0302, lng: 8.5311 },
+        berlin: { lat: 52.52, lng: 13.405 },
+        hamburg: { lat: 53.5511, lng: 9.9937 },
+        kopenhagen: { lat: 55.6833, lng: 12.5833 },
+        köln: { lat: 50.935173, lng: 6.953101 },
+        munich: { lat: 48.1351, lng: 11.582 },
       };
       return coords[cityObject.abbr.toLowerCase()] || { lat: 52.0302, lng: 8.5311 };
     }
@@ -497,11 +562,12 @@ const EventHeatmap: React.FC = () => {
   };
 
   const selectedDateFilteredEvents = React.useMemo(() => {
-    const cityDisplayName = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity;
+    const cityDisplayName =
+      cities.find((c) => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity;
     console.log(`Filtering events for ${selectedDateString} in ${cityDisplayName}...`);
 
     const filtered = events
-      .filter(event => {
+      .filter((event) => {
         const isSelectedDateEvent = event.date === selectedDateString;
         const hasLocationData = event.location || event.city;
 
@@ -509,18 +575,20 @@ const EventHeatmap: React.FC = () => {
         const selectedCityLower = selectedCity.toLowerCase();
 
         let isRelevantCity = false;
-        if (selectedCityLower === 'bi' || selectedCityLower === 'bielefeld') {
-          isRelevantCity = !eventCityLower || eventCityLower === 'bielefeld' || eventCityLower === 'bi';
+        if (selectedCityLower === "bi" || selectedCityLower === "bielefeld") {
+          isRelevantCity = !eventCityLower || eventCityLower === "bielefeld" || eventCityLower === "bi";
         } else {
           isRelevantCity = eventCityLower === selectedCityLower;
         }
 
-        console.log(`Event: ${event.title}, Date: ${event.date}, Location: ${event.location}, City: ${event.city}, IsSelectedDate: ${isSelectedDateEvent}, HasLocation: ${hasLocationData}, IsRelevantCity: ${isRelevantCity}`);
+        console.log(
+          `Event: ${event.title}, Date: ${event.date}, Location: ${event.location}, City: ${event.city}, IsSelectedDate: ${isSelectedDateEvent}, HasLocation: ${hasLocationData}, IsRelevantCity: ${isRelevantCity}`,
+        );
 
         // Modified to show events even without geocoding working
         return isSelectedDateEvent && isRelevantCity;
       })
-      .map(event => {
+      .map((event) => {
         const coords = eventCoordinates.get(event.id);
         const lat = coords?.lat || getCityCenterCoordinates(selectedCity).lat;
         const lng = coords?.lng || getCityCenterCoordinates(selectedCity).lng;
@@ -530,7 +598,7 @@ const EventHeatmap: React.FC = () => {
           lat,
           lng,
           attendees: (event.rsvp_yes || 0) + (event.rsvp_maybe || 0) + (event.likes || 0),
-          eventHour: getHourFromTime(event.time)
+          eventHour: getHourFromTime(event.time),
         };
       });
 
@@ -540,13 +608,13 @@ const EventHeatmap: React.FC = () => {
 
   const categories = React.useMemo(() => {
     const categoryMap = new Map<string, number>();
-    selectedDateFilteredEvents.forEach(event => {
+    selectedDateFilteredEvents.forEach((event) => {
       categoryMap.set(event.category, (categoryMap.get(event.category) || 0) + 1);
     });
 
     return [
-      { name: 'all', count: selectedDateFilteredEvents.length },
-      ...Array.from(categoryMap.entries()).map(([name, count]) => ({ name, count }))
+      { name: "all", count: selectedDateFilteredEvents.length },
+      ...Array.from(categoryMap.entries()).map(([name, count]) => ({ name, count })),
     ];
   }, [selectedDateFilteredEvents]);
 
@@ -555,7 +623,7 @@ const EventHeatmap: React.FC = () => {
 
     // Filter out blocked locations
     const blockedLocations = dislikeService.getBlockedLocations();
-    filtered = filtered.filter(event => {
+    filtered = filtered.filter((event) => {
       if (event.location && blockedLocations.includes(event.location)) {
         return false;
       }
@@ -563,30 +631,30 @@ const EventHeatmap: React.FC = () => {
     });
 
     // Filter out disliked events
-    filtered = filtered.filter(event => {
+    filtered = filtered.filter((event) => {
       const eventId = event.id || `${event.title}-${event.date}-${event.time}`;
       return !dislikedEventIds.includes(eventId);
     });
 
-    if (selectedCategory !== 'alle') {
+    if (selectedCategory !== "alle") {
       // Special case: "ausgehen" shows all events EXCEPT sport events
-      if (selectedCategory === 'ausgehen') {
-        filtered = filtered.filter(event => {
+      if (selectedCategory === "ausgehen") {
+        filtered = filtered.filter((event) => {
           const eventCategoryGroup = getCategoryGroup(event.category);
-          return eventCategoryGroup !== 'Sport';
+          return eventCategoryGroup !== "Sport";
         });
       } else {
         // For 'sport' and 'kreativität', filter to specific category group
         const categoryGroupMap: Record<FilterGroup, CategoryGroup | null> = {
-          'alle': null,
-          'ausgehen': 'Ausgehen',
-          'sport': 'Sport',
-          'kreativität': 'Kreativität'
+          alle: null,
+          ausgehen: "Ausgehen",
+          sport: "Sport",
+          kreativität: "Kreativität",
         };
-        
+
         const targetCategoryGroup = categoryGroupMap[selectedCategory];
         if (targetCategoryGroup) {
-          filtered = filtered.filter(event => {
+          filtered = filtered.filter((event) => {
             const eventCategoryGroup = getCategoryGroup(event.category);
             return eventCategoryGroup === targetCategoryGroup;
           });
@@ -595,7 +663,7 @@ const EventHeatmap: React.FC = () => {
     }
 
     const selectedHour = timeRange[0];
-    filtered = filtered.filter(event => event.eventHour >= selectedHour);
+    filtered = filtered.filter((event) => event.eventHour >= selectedHour);
 
     // Sort events by likes in descending order
     filtered = filtered.sort((a, b) => {
@@ -608,49 +676,49 @@ const EventHeatmap: React.FC = () => {
   }, [selectedDateFilteredEvents, selectedCategory, timeRange, dislikedEventIds]);
 
   const panelEvents: PanelEvent[] = React.useMemo(() => {
-    return filteredEvents.map(event => ({
+    return filteredEvents.map((event) => ({
       id: event.id || `${event.title}-${event.date}-${event.time}`,
       title: event.title,
       date: event.date,
       time: event.time,
       price: event.is_paid ? "Kostenpflichtig" : "Kostenlos",
-      location: event.location || event.city || 'Unknown Location',
-      image_url: event.image_url || `https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop&q=80&auto=format`,
+      location: event.location || event.city || "Unknown Location",
+      image_url:
+        event.image_url ||
+        `https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop&q=80&auto=format`,
       category: event.category,
       link: event.link,
       likes: event.likes || 0,
       liked_by_users: event.liked_by_users || [],
       rsvp_yes: event.rsvp_yes,
-      rsvp_maybe: event.rsvp_maybe
+      rsvp_maybe: event.rsvp_maybe,
     }));
   }, [filteredEvents]);
 
   const panelData: PanelEventData = React.useMemo(() => {
-    const selectedIndex = selectedEventId
-      ? panelEvents.findIndex(event => event.id === selectedEventId)
-      : 0;
+    const selectedIndex = selectedEventId ? panelEvents.findIndex((event) => event.id === selectedEventId) : 0;
 
     return {
       events: panelEvents,
-      currentIndex: selectedIndex >= 0 ? selectedIndex : 0
+      currentIndex: selectedIndex >= 0 ? selectedIndex : 0,
     };
   }, [panelEvents, selectedEventId]);
 
   const generatePerfectDay = async () => {
     setIsPerfectDayLoading(true);
     try {
-      const username = localStorage.getItem('community_chat_username') || 'Gast';
-      const userInterests = JSON.parse(localStorage.getItem('user_interests') || '[]');
-      const userLocations = JSON.parse(localStorage.getItem('user_locations') || '[]');
-      const weather = sessionStorage.getItem('weather') || 'partly_cloudy';
+      const username = localStorage.getItem("community_chat_username") || "Gast";
+      const userInterests = JSON.parse(localStorage.getItem("user_interests") || "[]");
+      const userLocations = JSON.parse(localStorage.getItem("user_locations") || "[]");
+      const weather = sessionStorage.getItem("weather") || "partly_cloudy";
 
-      const { data, error } = await supabase.functions.invoke('generate-perfect-day', {
+      const { data, error } = await supabase.functions.invoke("generate-perfect-day", {
         body: {
           username,
           weather,
           interests: userInterests,
-          favorite_locations: userLocations
-        }
+          favorite_locations: userLocations,
+        },
       });
 
       if (error) throw error;
@@ -663,11 +731,11 @@ const EventHeatmap: React.FC = () => {
         description: "Deine personalisierte Tagesempfehlung ist bereit.",
       });
     } catch (error: any) {
-      console.error('Error generating Perfect Day:', error);
+      console.error("Error generating Perfect Day:", error);
       toast({
         title: "Fehler",
         description: "Perfect Day konnte nicht generiert werden: " + (error.message || "Unbekannter Fehler."),
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsPerfectDayLoading(false);
@@ -683,7 +751,7 @@ const EventHeatmap: React.FC = () => {
         setEventChatWindow({
           eventId,
           eventTitle,
-          isOpen: true
+          isOpen: true,
         });
 
         toast({
@@ -694,15 +762,15 @@ const EventHeatmap: React.FC = () => {
         toast({
           title: "Fehler",
           description: "Event Chat konnte nicht erstellt werden",
-          variant: "destructive"
+          variant: "destructive",
         });
       }
     } catch (error) {
-      console.error('Error joining event chat:', error);
+      console.error("Error joining event chat:", error);
       toast({
         title: "Fehler",
         description: "Ein Fehler ist aufgetreten",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -710,30 +778,33 @@ const EventHeatmap: React.FC = () => {
   const updateUserPosition = async (username: string, newLat: number, newLng: number) => {
     try {
       const { error } = await supabase
-        .from('user_profiles')
+        .from("user_profiles")
         .update({
           current_live_location_lat: newLat,
           current_live_location_lng: newLng,
-          last_online: new Date().toISOString()
+          last_online: new Date().toISOString(),
         })
-        .eq('username', username);
+        .eq("username", username);
 
       if (error) throw error;
 
       console.log(`Updated position for ${username} to ${newLat}, ${newLng}`);
     } catch (error: any) {
-      console.error('Error updating user position:', error);
+      console.error("Error updating user position:", error);
       toast({
         title: "Fehler",
         description: "Position konnte nicht aktualisiert werden.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
   const handleCheckInWithStatus = async () => {
-    const username = currentUser || localStorage.getItem('community_chat_username') || 'Gast';
-    const avatar = userProfile?.avatar || localStorage.getItem('community_chat_avatar') || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
+    const username = currentUser || localStorage.getItem("community_chat_username") || "Gast";
+    const avatar =
+      userProfile?.avatar ||
+      localStorage.getItem("community_chat_avatar") ||
+      `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
 
     setCentralAvatarUsername(username);
     setCentralAvatarImage(avatar);
@@ -741,7 +812,7 @@ const EventHeatmap: React.FC = () => {
 
     const checkInToast = toast({
       title: "Check-in wird verarbeitet...",
-      duration: Infinity
+      duration: Infinity,
     });
 
     try {
@@ -749,7 +820,7 @@ const EventHeatmap: React.FC = () => {
       const userCurrentLat = userCurrentCityCenter.lat + (Math.random() - 0.5) * 0.005;
       const userCurrentLng = userCurrentCityCenter.lng + (Math.random() - 0.5) * 0.005;
 
-      if (username && username !== 'Gast') {
+      if (username && username !== "Gast") {
         const profileData = {
           username,
           avatar,
@@ -761,20 +832,15 @@ const EventHeatmap: React.FC = () => {
         };
 
         const { data: existingProfile } = await supabase
-          .from('user_profiles')
-          .select('id')
-          .eq('username', username)
+          .from("user_profiles")
+          .select("id")
+          .eq("username", username)
           .maybeSingle();
 
         if (existingProfile) {
-          await supabase
-            .from('user_profiles')
-            .update(profileData)
-            .eq('username', username);
+          await supabase.from("user_profiles").update(profileData).eq("username", username);
         } else {
-          await supabase
-            .from('user_profiles')
-            .insert(profileData);
+          await supabase.from("user_profiles").insert(profileData);
         }
 
         refetchProfile();
@@ -784,29 +850,27 @@ const EventHeatmap: React.FC = () => {
         ? `📍 ${username} ist jetzt hier: "${liveStatusMessage}"`
         : `📍 ${username} ist jetzt in der Nähe!`;
 
-      const cityCommunityGroupId = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.abbr.toLowerCase() + '_ausgehen' || 'bi_ausgehen';
+      const cityCommunityGroupId =
+        cities.find((c) => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.abbr.toLowerCase() + "_ausgehen" ||
+        "bi_ausgehen";
 
-      await messageService.sendMessage(
-        cityCommunityGroupId,
-        username,
-        communityMessage,
-        avatar
-      );
+      await messageService.sendMessage(cityCommunityGroupId, username, communityMessage, avatar);
 
       toast({
         title: "Erfolgreich eingecheckt!",
-        description: liveStatusMessage ? `Dein Status: "${liveStatusMessage}" wurde geteilt.` : "Dein Standort wurde persistent gespeichert.",
+        description: liveStatusMessage
+          ? `Dein Status: "${liveStatusMessage}" wurde geteilt.`
+          : "Dein Standort wurde persistent gespeichert.",
       });
-
     } catch (error: any) {
-      console.error('Check-in failed:', error);
+      console.error("Check-in failed:", error);
       toast({
         title: "Fehler",
         description: error.message || "Es gab ein Problem beim Einchecken.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
-      setLiveStatusMessage('');
+      setLiveStatusMessage("");
       checkInToast.dismiss();
       setShowCentralAvatar(false);
     }
@@ -820,12 +884,12 @@ const EventHeatmap: React.FC = () => {
   // Only one declaration for handleOpenEventForm
   const handleOpenEventForm = async (eventData: any) => {
     try {
-      const cityObject = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase());
+      const cityObject = cities.find((c) => c.abbr.toLowerCase() === selectedCity.toLowerCase());
       const cityName = cityObject ? cityObject.name : selectedCity;
 
       const eventWithCity = { ...eventData, city: cityName };
 
-      console.log('Adding new event to database only:', eventWithCity);
+      console.log("Adding new event to database only:", eventWithCity);
       await addUserEvent(eventWithCity);
       toast({
         title: "Event erfolgreich erstellt!",
@@ -834,11 +898,11 @@ const EventHeatmap: React.FC = () => {
       refreshEvents();
       setIsEventFormOpen(false);
     } catch (error: any) {
-      console.error('Error adding event:', error);
+      console.error("Error adding event:", error);
       toast({
         title: "Fehler",
         description: "Event konnte nicht erstellt werden.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -850,11 +914,11 @@ const EventHeatmap: React.FC = () => {
 
     // Always cleanup any existing map first
     if (map) {
-      console.log('[EventHeatmap] Cleaning up existing map before creating new one');
+      console.log("[EventHeatmap] Cleaning up existing map before creating new one");
       try {
         map.remove();
       } catch (error) {
-        console.warn('[EventHeatmap] Error removing existing map:', error);
+        console.warn("[EventHeatmap] Error removing existing map:", error);
       }
       setMap(null);
     }
@@ -863,7 +927,7 @@ const EventHeatmap: React.FC = () => {
     const initializeMap = () => {
       if (!mapRef.current) return;
 
-      console.log('[EventHeatmap] Initializing map for city:', selectedCity);
+      console.log("[EventHeatmap] Initializing map for city:", selectedCity);
       const initialCenter = getCityCenterCoordinates(selectedCity);
 
       try {
@@ -872,13 +936,13 @@ const EventHeatmap: React.FC = () => {
           zoom: 13,
           attributionControl: false,
           zoomControl: false,
-          preferCanvas: false
+          preferCanvas: false,
         });
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '',
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "",
           maxZoom: 19,
-          className: 'map-tiles'
+          className: "map-tiles",
         }).addTo(leafletMap);
 
         setMap(leafletMap);
@@ -890,7 +954,7 @@ const EventHeatmap: React.FC = () => {
           }
         }, 100);
       } catch (error) {
-        console.error('[EventHeatmap] Error initializing map:', error);
+        console.error("[EventHeatmap] Error initializing map:", error);
       }
     };
 
@@ -908,11 +972,11 @@ const EventHeatmap: React.FC = () => {
   useEffect(() => {
     return () => {
       if (map) {
-        console.log('[EventHeatmap] Final cleanup on unmount');
+        console.log("[EventHeatmap] Final cleanup on unmount");
         try {
           map.remove();
         } catch (error) {
-          console.warn('[EventHeatmap] Error during final cleanup:', error);
+          console.warn("[EventHeatmap] Error during final cleanup:", error);
         }
         setMap(null);
       }
@@ -921,7 +985,7 @@ const EventHeatmap: React.FC = () => {
 
   useEffect(() => {
     if (currentTribeSpotMarkersRef.current) {
-      currentTribeSpotMarkersRef.current.forEach(marker => {
+      currentTribeSpotMarkersRef.current.forEach((marker) => {
         if (map && map.hasLayer(marker)) {
           map.removeLayer(marker);
         }
@@ -929,14 +993,14 @@ const EventHeatmap: React.FC = () => {
     }
     currentTribeSpotMarkersRef.current = [];
 
-    if (!map || (selectedCity.toLowerCase() !== 'bi' && selectedCity.toLowerCase() !== 'bielefeld')) {
+    if (!map || (selectedCity.toLowerCase() !== "bi" && selectedCity.toLowerCase() !== "bielefeld")) {
       setTribeSpotMarkers([]);
       return;
     }
 
     const newTribeSpotMarkers: L.Marker[] = [];
 
-    tribeSpots.forEach(spot => {
+    tribeSpots.forEach((spot) => {
       const iconHtml = `
         <div style="
           background: #000000;
@@ -968,31 +1032,30 @@ const EventHeatmap: React.FC = () => {
             max-width: 40px;
           ">
             ${spot.name}
-
       `;
 
       const customIcon = L.divIcon({
         html: iconHtml,
-        className: 'custom-tribe-spot-marker',
+        className: "custom-tribe-spot-marker",
         iconSize: [50, 50],
         iconAnchor: [25, 25],
-        popupAnchor: [0, -25]
+        popupAnchor: [0, -25],
       });
 
       const marker = L.marker([spot.lat, spot.lng], { icon: customIcon });
 
-      marker.on('click', () => {
+      marker.on("click", () => {
         setSelectedTribeSpot(spot);
         setIsTribeSpotDialogOpen(true);
       });
 
-      const usersAtSpot = allUserProfiles.filter(user => {
+      const usersAtSpot = allUserProfiles.filter((user) => {
         const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null;
         if (!hasLiveLocation) return false;
 
         const distance = Math.sqrt(
           Math.pow(user.current_live_location_lat! - spot.lat, 2) +
-          Math.pow(user.current_live_location_lng! - spot.lng, 2)
+            Math.pow(user.current_live_location_lng! - spot.lng, 2),
         );
         return distance < 0.002;
       });
@@ -1004,7 +1067,7 @@ const EventHeatmap: React.FC = () => {
           newTribeSpotMarkers.push(marker);
         }
       } catch (error) {
-        console.warn('[EventHeatmap] Error adding tribe spot marker:', error);
+        console.warn("[EventHeatmap] Error adding tribe spot marker:", error);
       }
     });
 
@@ -1012,7 +1075,7 @@ const EventHeatmap: React.FC = () => {
     currentTribeSpotMarkersRef.current = newTribeSpotMarkers;
 
     return () => {
-      newTribeSpotMarkers.forEach(marker => {
+      newTribeSpotMarkers.forEach((marker) => {
         if (map && map.hasLayer(marker)) {
           map.removeLayer(marker);
         }
@@ -1022,15 +1085,17 @@ const EventHeatmap: React.FC = () => {
 
   useEffect(() => {
     if (!map) {
-      eventMarkers.forEach(marker => {
-        try { map?.removeLayer(marker); } catch (e) {}
+      eventMarkers.forEach((marker) => {
+        try {
+          map?.removeLayer(marker);
+        } catch (e) {}
       });
       setEventMarkers([]);
       return;
     }
 
     const markersToRemove = [...eventMarkers];
-    markersToRemove.forEach(marker => {
+    markersToRemove.forEach((marker) => {
       if (map.hasLayer(marker)) {
         map.removeLayer(marker);
       }
@@ -1038,12 +1103,12 @@ const EventHeatmap: React.FC = () => {
 
     const newEventMarkers: L.Marker[] = [];
 
-    filteredEvents.forEach(event => {
+    filteredEvents.forEach((event) => {
       const coords = eventCoordinates.get(event.id);
       const lat = coords?.lat || event.lat;
       const lng = coords?.lng || event.lng;
 
-      if (typeof lat !== 'number' || isNaN(lat) || typeof lng !== 'number' || isNaN(lng)) {
+      if (typeof lat !== "number" || isNaN(lat) || typeof lng !== "number" || isNaN(lng)) {
         console.warn(`Invalid coordinates for event ${event.title}: Lat ${lat}, Lng ${lng}. Skipping marker.`);
         return;
       }
@@ -1070,7 +1135,7 @@ const EventHeatmap: React.FC = () => {
           font-family: sans-serif;
           overflow: hidden;
         ">
-          <img src="${event.image_url || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop;'}"
+          <img src="${event.image_url || "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop;"}"
                onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';"
                style="width: ${imageSize}px; height: ${imageSize}px; object-fit: cover; border-radius: 4px; margin-bottom: 4px;"/>
           <div style="
@@ -1093,28 +1158,30 @@ const EventHeatmap: React.FC = () => {
 
       const customIcon = L.divIcon({
         html: iconHtml,
-        className: 'custom-event-marker',
+        className: "custom-event-marker",
         iconSize: [markerSize, markerSize + 20],
-        iconAnchor: [markerSize / 2, markerSize + 20]
+        iconAnchor: [markerSize / 2, markerSize + 20],
       });
 
       const marker = L.marker([lat, lng], { icon: customIcon });
 
-      marker.on('click', () => {
+      marker.on("click", async () => {
         setSelectedEventId(event.id);
         setIsPanelOpen(true);
-        setPanelHeight('partial');
+        setPanelHeight("partial");
         setShowPerfectDayPanel(false);
+        // NEW: show description in MIA via Edge Function
+        await fetchAndShowEventDescription(event);
       });
 
       const popupContent = `
         <div style="min-width: 200px; max-width: 250px; font-family: sans-serif;">
-          ${event.image_url ? `<img src="${event.image_url}" onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;"/>` : ''}
+          ${event.image_url ? `<img src="${event.image_url}" onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;"/>` : ""}
           <h3 style="margin: 0 0 4px 0; font-weight: bold; color: #1f2937; font-size: 16px;">${event.title}</h3>
 
           <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280; font-size: 12px;">
             <span style="margin-right: 5px;">📍</span>
-            <span>${event.location || 'Bielefeld'}</span>
+            <span>${event.location || "Bielefeld"}</span>
           </div>
           <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280; font-size: 12px;">
             <span style="margin-right: 5px;">📅</span>
@@ -1124,7 +1191,7 @@ const EventHeatmap: React.FC = () => {
             <span style="margin-right: 5px;">❤️</span>
             <span>${event.likes || 0} Likes</span>
           </div>
-          ${event.description ? `<p style="margin-bottom: 8px; font-size: 11px; color: #4b5563; max-height: 60px; overflow: hidden;">${event.description}</p>` : ''}
+          ${event.description ? `<p style="margin-bottom: 8px; font-size: 11px; color: #4b5563; max-height: 60px; overflow: hidden;">${event.description}</p>` : ""}
           <div style="
             background: #ef4444;
             color: white;
@@ -1135,12 +1202,12 @@ const EventHeatmap: React.FC = () => {
           ">
             ${event.category}
           </div>
-          ${event.link ? `<div style="margin-top: 8px;"><a href="${event.link}" target="_blank" style="color: #ef4444; text-decoration: underline; font-size: 12px;">Mehr Info</a></div>` : ''}
+          ${event.link ? `<div style="margin-top: 8px;"><a href="${event.link}" target="_blank" style="color: #ef4444; text-decoration: underline; font-size: 12px;">Mehr Info</a></div>` : ""}
         </div>
       `;
 
       marker.bindPopup(popupContent);
-      
+
       // Only add marker if map is valid and has a container
       try {
         if (map && map.getContainer()) {
@@ -1148,14 +1215,14 @@ const EventHeatmap: React.FC = () => {
           newEventMarkers.push(marker);
         }
       } catch (error) {
-        console.warn('[EventHeatmap] Error adding event marker:', error);
+        console.warn("[EventHeatmap] Error adding event marker:", error);
       }
     });
 
     setEventMarkers(newEventMarkers);
 
     return () => {
-      newEventMarkers.forEach(marker => {
+      newEventMarkers.forEach((marker) => {
         if (map && map.hasLayer(marker)) {
           map.removeLayer(marker);
         }
@@ -1165,15 +1232,17 @@ const EventHeatmap: React.FC = () => {
 
   useEffect(() => {
     if (!map) {
-      userMarkers.forEach(marker => {
-        try { map?.removeLayer(marker); } catch (e) {}
+      userMarkers.forEach((marker) => {
+        try {
+          map?.removeLayer(marker);
+        } catch (e) {}
       });
       setUserMarkers([]);
       return;
     }
 
     const markersToRemove = [...userMarkers];
-    markersToRemove.forEach(marker => {
+    markersToRemove.forEach((marker) => {
       if (map.hasLayer(marker)) {
         map.removeLayer(marker);
       }
@@ -1182,23 +1251,30 @@ const EventHeatmap: React.FC = () => {
     const newUserMarkers: L.Marker[] = [];
     const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 
-    allUserProfiles.forEach(user => {
-      const userCity = user.favorite_locations?.[0]?.toLowerCase() || 'bielefeld';
-      const selectedCityName = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name?.toLowerCase() || selectedCity.toLowerCase();
+    allUserProfiles.forEach((user) => {
+      const userCity = user.favorite_locations?.[0]?.toLowerCase() || "bielefeld";
+      const selectedCityName =
+        cities.find((c) => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name?.toLowerCase() ||
+        selectedCity.toLowerCase();
 
       let isUserInCurrentCity = false;
-      if (selectedCityName === 'bielefeld' || selectedCityName === 'bi') {
-        isUserInCurrentCity = !userCity || userCity === 'bielefeld' || userCity === 'bi';
+      if (selectedCityName === "bielefeld" || selectedCityName === "bi") {
+        isUserInCurrentCity = !userCity || userCity === "bielefeld" || userCity === "bi";
       } else {
         isUserInCurrentCity = userCity === selectedCityName;
       }
 
       if (!isUserInCurrentCity) return;
 
-      const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null && user.current_live_location_lat !== undefined && user.current_live_location_lng !== undefined;
-      const hasStatusMessage = user.current_status_message && user.current_status_message.trim() !== '';
-      const isRecentCheckin = user.current_checkin_timestamp &&
-                               (new Date().getTime() - new Date(user.current_checkin_timestamp).getTime() < TWO_HOURS_MS);
+      const hasLiveLocation =
+        user.current_live_location_lat !== null &&
+        user.current_live_location_lng !== null &&
+        user.current_live_location_lat !== undefined &&
+        user.current_live_location_lng !== undefined;
+      const hasStatusMessage = user.current_status_message && user.current_status_message.trim() !== "";
+      const isRecentCheckin =
+        user.current_checkin_timestamp &&
+        new Date().getTime() - new Date(user.current_checkin_timestamp).getTime() < TWO_HOURS_MS;
 
       if (hasLiveLocation && hasStatusMessage) {
         const lat = user.current_live_location_lat as number;
@@ -1233,7 +1309,7 @@ const EventHeatmap: React.FC = () => {
             ">
               ${statusMessage}
             </div>
-            <img src="${user.avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=' + getInitials(user.username)}"
+            <img src="${user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=" + getInitials(user.username)}"
                  alt="${user.username}"
                  style="
                    width: 50px;
@@ -1258,23 +1334,23 @@ const EventHeatmap: React.FC = () => {
 
         const userMarkerIcon = L.divIcon({
           html: userIconHtml,
-          className: 'user-marker',
+          className: "user-marker",
           iconSize: [60, 90],
-          iconAnchor: [30, 90]
+          iconAnchor: [30, 90],
         });
 
         const marker = L.marker([lat, lng], {
           icon: userMarkerIcon,
-          draggable: user.username === currentUser
+          draggable: user.username === currentUser,
         });
 
-        marker.on('click', () => {
+        marker.on("click", () => {
           setSelectedUserForPrivateChat(user);
           setIsPrivateChatOpen(true);
         });
 
         if (user.username === currentUser) {
-          marker.on('dragend', (e) => {
+          marker.on("dragend", (e) => {
             const marker = e.target;
             const position = marker.getLatLng();
             console.log(`User ${user.username} moved to:`, position.lat, position.lng);
@@ -1284,21 +1360,21 @@ const EventHeatmap: React.FC = () => {
         }
 
         newUserMarkers.push(marker);
-        
+
         // Only add marker if map is valid and has a container
         try {
           if (map && map.getContainer()) {
             map.addLayer(marker);
           }
         } catch (error) {
-          console.warn('[EventHeatmap] Error adding user marker:', error);
+          console.warn("[EventHeatmap] Error adding user marker:", error);
         }
       }
     });
     setUserMarkers(newUserMarkers);
 
     return () => {
-      newUserMarkers.forEach(marker => {
+      newUserMarkers.forEach((marker) => {
         if (map && map.hasLayer(marker)) {
           map.removeLayer(marker);
         }
@@ -1309,45 +1385,33 @@ const EventHeatmap: React.FC = () => {
   const handleEventSelect = async (eventId: string) => {
     setSelectedEventId(eventId);
 
-    const selectedEvent = filteredEvents.find(event =>
-      (event.id || `${event.title}-${event.date}-${event.time}`) === eventId
+    const selectedEvent = filteredEvents.find(
+      (event) => (event.id || `${event.title}-${event.date}-${event.time}`) === eventId,
     );
 
     if (selectedEvent && selectedEvent.lat && selectedEvent.lng && map) {
       map.setView([selectedEvent.lat, selectedEvent.lng], 15);
     }
 
-    // MIA öffnen und Event-Details laden
-    setIsMIAOpen(true);
-    setIsAiChatLoading(true);
-    
-    // Event-Details über chatLogic laden
-    if (selectedEvent?.id) {
-      await chatLogic.handleEventLinkClick(selectedEvent.id);
-    }
-    
-    setIsAiChatLoading(false);
+    // NEW: Show description via Edge Function in MIA
+    await fetchAndShowEventDescription(selectedEvent);
   };
 
   const handleEventLike = async (eventId: string) => {
     try {
       // Find the event in the filtered events
-      const event = filteredEvents.find(e =>
-        (e.id || `${e.title}-${e.date}-${e.time}`) === eventId
-      );
+      const event = filteredEvents.find((e) => (e.id || `${e.title}-${e.date}-${e.time}`) === eventId);
 
       if (!event || !event.id) return;
 
       // Use the handleLikeEvent from useEvents hook (extracted above)
       await handleLikeEvent(event.id);
-
-
     } catch (error: any) {
-      console.error('Error liking event:', error);
+      console.error("Error liking event:", error);
       toast({
         title: "Fehler",
         description: "Ein Fehler ist aufgetreten",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -1355,38 +1419,38 @@ const EventHeatmap: React.FC = () => {
   const handleEventDislike = async (eventId: string) => {
     try {
       // Find the event to get its location
-      const event = filteredEvents.find(e => {
+      const event = filteredEvents.find((e) => {
         const eId = e.id || `${e.title}-${e.date}-${e.time}`;
         return eId === eventId;
       });
 
-      console.log('[EventHeatmap] Disliking event:', eventId, 'location:', event?.location);
+      console.log("[EventHeatmap] Disliking event:", eventId, "location:", event?.location);
       const result = await dislikeService.dislikeEvent(eventId, event?.location);
-      
+
       // Update local state immediately
-      setDislikedEventIds(prev => {
+      setDislikedEventIds((prev) => {
         if (!prev.includes(eventId)) {
           return [...prev, eventId];
         }
         return prev;
       });
-      
+
       // Check if we should ask about blocking the location
       if (result.shouldAskBlock && result.location) {
         setLocationToBlock(result.location);
         setIsBlockLocationDialogOpen(true);
       }
-      
+
       toast({
         title: "Event ausgeblendet",
         description: "Das Event wird nicht mehr angezeigt",
       });
     } catch (error: any) {
-      console.error('Error disliking event:', error);
+      console.error("Error disliking event:", error);
       toast({
         title: "Fehler",
         description: "Ein Fehler ist aufgetreten",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -1399,26 +1463,26 @@ const EventHeatmap: React.FC = () => {
         description: `Alle Events von "${locationToBlock}" werden ausgeblendet`,
       });
       // Trigger a re-render by updating state
-      setDislikedEventIds(prev => [...prev]);
+      setDislikedEventIds((prev) => [...prev]);
     }
     setIsBlockLocationDialogOpen(false);
     setLocationToBlock(null);
   };
 
   const togglePanelHeight = () => {
-    if (panelHeight === 'collapsed') {
-      setPanelHeight('partial');
+    if (panelHeight === "collapsed") {
+      setPanelHeight("partial");
       setIsPanelOpen(true);
-    } else if (panelHeight === 'partial') {
-      setPanelHeight('full');
+    } else if (panelHeight === "partial") {
+      setPanelHeight("full");
     } else {
-      setPanelHeight('collapsed');
+      setPanelHeight("collapsed");
       setIsPanelOpen(false);
     }
   };
 
   const closePanelCompletely = () => {
-    setPanelHeight('collapsed');
+    setPanelHeight("collapsed");
     setIsPanelOpen(false);
     setShowPerfectDayPanel(false);
   };
@@ -1428,15 +1492,18 @@ const EventHeatmap: React.FC = () => {
     if (message.trim()) {
       // Process the message directly via chatLogic
       await chatLogic.handleSendMessage(message);
-      setAiChatInput('');
+      setAiChatInput("");
     }
   };
 
   const handleTribeSpotCheckIn = async () => {
     if (!selectedTribeSpot) return;
 
-    const username = currentUser || localStorage.getItem('community_chat_username') || 'Gast';
-    const avatar = userProfile?.avatar || localStorage.getItem('community_chat_avatar') || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
+    const username = currentUser || localStorage.getItem("community_chat_username") || "Gast";
+    const avatar =
+      userProfile?.avatar ||
+      localStorage.getItem("community_chat_avatar") ||
+      `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
 
     try {
       const profileData = {
@@ -1450,28 +1517,25 @@ const EventHeatmap: React.FC = () => {
       };
 
       const { data: existingProfile } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('username', username)
+        .from("user_profiles")
+        .select("id")
+        .eq("username", username)
         .maybeSingle();
 
       if (existingProfile) {
-        await supabase
-          .from('user_profiles')
-          .update(profileData)
-          .eq('username', username);
+        await supabase.from("user_profiles").update(profileData).eq("username", username);
       } else {
-        await supabase
-          .from('user_profiles')
-          .insert(profileData);
+        await supabase.from("user_profiles").insert(profileData);
       }
 
-      const cityCommunityGroupId = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.abbr.toLowerCase() + '_ausgehen' || 'bi_ausgehen';
+      const cityCommunityGroupId =
+        cities.find((c) => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.abbr.toLowerCase() + "_ausgehen" ||
+        "bi_ausgehen";
       await messageService.sendMessage(
         cityCommunityGroupId,
         username,
         `🏛️ ${username} ist jetzt am ${selectedTribeSpot.name}!`,
-        avatar
+        avatar,
       );
 
       toast({
@@ -1482,16 +1546,17 @@ const EventHeatmap: React.FC = () => {
       refetchProfile();
       setIsTribeSpotDialogOpen(false);
     } catch (error: any) {
-      console.error('Tribe spot check-in failed:', error);
+      console.error("Tribe spot check-in failed:", error);
       toast({
         title: "Fehler",
         description: "Check-in am Tribe Spot fehlgeschlagen.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
-  const handleOpenEventFormForModal = () => { // Renamed to clearly differentiate it from handleOpenEventForm
+  const handleOpenEventFormForModal = () => {
+    // Renamed to clearly differentiate it from handleOpenEventForm
     setIsEventFormOpen(true);
   };
 
@@ -1507,14 +1572,14 @@ const EventHeatmap: React.FC = () => {
     );
   }
 
-  const selectedCategoryData = categories.find(cat => cat.name === 'alle');
-  const selectedCategoryDisplay = selectedCategory === 'alle' ? 'Alle' : selectedCategory;
+  const selectedCategoryData = categories.find((cat) => cat.name === "alle");
+  const selectedCategoryDisplay = selectedCategory === "alle" ? "Alle" : selectedCategory;
 
   return (
-    <div className="relative w-full h-full overflow-hidden" style={{ height: '100dvh' }}>
+    <div className="relative w-full h-full overflow-hidden" style={{ height: "100dvh" }}>
       {/* Live Ticker Header */}
-      <HeatmapHeader 
-        selectedCity={selectedCity} 
+      <HeatmapHeader
+        selectedCity={selectedCity}
         chatInputProps={{
           input: aiChatInput,
           setInput: setAiChatInput,
@@ -1529,10 +1594,10 @@ const EventHeatmap: React.FC = () => {
           inputRef: chatLogic.inputRef,
           onAddEvent: handleOpenEventFormForModal,
           showAnimatedPrompts: !aiChatInput.trim(),
-          activeChatModeValue: "ai"
+          activeChatModeValue: "ai",
         }}
         showFilterPanel={showFilterPanel}
-        onToggleFilterPanel={() => setShowFilterPanel(prev => !prev)}
+        onToggleFilterPanel={() => setShowFilterPanel((prev) => !prev)}
         onOpenSwipeMode={() => setIsSwipeModeOpen(true)}
         onMIAOpenChange={setIsMIAOpen}
         hasNewDailyRecommendation={hasNewDailyRecommendation}
@@ -1540,16 +1605,14 @@ const EventHeatmap: React.FC = () => {
         isDailyRecommendationLoading={isDailyRecommendationLoading}
       />
 
-
-
-
       {/* Filter Panel (Conditional Rendering) - Hide when MIA is open */}
       {showFilterPanel && !isMIAOpen && (
         <div className="fixed top-60 left-4 z-[1003] space-y-3 max-w-sm animate-fade-in">
           <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
             <h3 className="text-white font-bold mb-4 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-red-500" />
-              Events für {format(selectedDate, 'dd.MM.yyyy')} in {cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity}
+              Events für {format(selectedDate, "dd.MM.yyyy")} in{" "}
+              {cities.find((c) => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity}
             </h3>
 
             <div className="space-y-4">
@@ -1563,7 +1626,7 @@ const EventHeatmap: React.FC = () => {
                     >
                       <div className="flex items-center gap-2">
                         <CalendarIcon className="h-4 w-4" />
-                        {format(selectedDate, 'dd.MM.yyyy')}
+                        {format(selectedDate, "dd.MM.yyyy")}
                       </div>
                       <ChevronDown className="h-4 w-4" />
                     </Button>
@@ -1582,7 +1645,7 @@ const EventHeatmap: React.FC = () => {
 
               {/* Filter Bar */}
               <div className="w-full overflow-x-auto">
-                <FilterBar 
+                <FilterBar
                   value={selectedCategory}
                   onChange={handleCategoryChange}
                   variant="light"
@@ -1616,27 +1679,30 @@ const EventHeatmap: React.FC = () => {
       <div className={cn("fixed top-24 left-3 z-[1002]", isMIAOpen && "hidden")}>
         <div className="flex items-center gap-2">
           {/* Aktueller Button */}
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
             onClick={() => setShowCategoryOptions(!showCategoryOptions)}
             className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-black border border-white/10 transition-all"
           >
-            {selectedCategory === 'alle' ? '🌟 Alle' : 
-             selectedCategory === 'ausgehen' ? '🎉 Ausgehen' :
-             selectedCategory === 'sport' ? '⚽ Sport' :
-             '🎨 Kreativität'}
+            {selectedCategory === "alle"
+              ? "🌟 Alle"
+              : selectedCategory === "ausgehen"
+                ? "🎉 Ausgehen"
+                : selectedCategory === "sport"
+                  ? "⚽ Sport"
+                  : "🎨 Kreativität"}
           </Button>
-          
+
           {/* Horizontale Kategorie-Optionen */}
           {showCategoryOptions && (
             <div className="flex gap-2 animate-slide-in-right">
-              {selectedCategory !== 'alle' && (
+              {selectedCategory !== "alle" && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    handleCategoryChange('alle');
+                    handleCategoryChange("alle");
                     setShowCategoryOptions(false);
                   }}
                   className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-white/20 border border-white/10 transition-all"
@@ -1644,12 +1710,12 @@ const EventHeatmap: React.FC = () => {
                   🌟 Alle
                 </Button>
               )}
-              {selectedCategory !== 'ausgehen' && (
+              {selectedCategory !== "ausgehen" && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    handleCategoryChange('ausgehen');
+                    handleCategoryChange("ausgehen");
                     setShowCategoryOptions(false);
                   }}
                   className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-white/20 border border-white/10 transition-all"
@@ -1657,12 +1723,12 @@ const EventHeatmap: React.FC = () => {
                   🎉 Ausgehen
                 </Button>
               )}
-              {selectedCategory !== 'sport' && (
+              {selectedCategory !== "sport" && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    handleCategoryChange('sport');
+                    handleCategoryChange("sport");
                     setShowCategoryOptions(false);
                   }}
                   className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-white/20 border border-white/10 transition-all"
@@ -1670,12 +1736,12 @@ const EventHeatmap: React.FC = () => {
                   ⚽ Sport
                 </Button>
               )}
-              {selectedCategory !== 'kreativität' && (
+              {selectedCategory !== "kreativität" && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    handleCategoryChange('kreativität');
+                    handleCategoryChange("kreativität");
                     setShowCategoryOptions(false);
                   }}
                   className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-white/20 border border-white/10 transition-all"
@@ -1697,8 +1763,8 @@ const EventHeatmap: React.FC = () => {
               size="sm"
               className="bg-black/90 backdrop-blur-md text-white text-[10px] px-2 py-1.5 h-auto rounded-lg hover:bg-black border border-white/10 transition-all flex flex-col items-center gap-0.5 min-w-[3.5rem]"
             >
-              <span className="font-bold">{format(selectedDate, 'EEE', { locale: de })}</span>
-              <span className="text-[13px] font-bold">{format(selectedDate, 'dd.MM.')}</span>
+              <span className="font-bold">{format(selectedDate, "EEE", { locale: de })}</span>
+              <span className="text-[13px] font-bold">{format(selectedDate, "dd.MM.")}</span>
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0 bg-gray-800 border-gray-700 z-[9999]" align="end">
@@ -1732,9 +1798,6 @@ const EventHeatmap: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Removed "Find YOUR Tribe" Button (now part of Community Features) */}
-      {/* Removed "Ich bin hier" Button (now part of Community Features) */}
 
       {/* Button to show events panel again if hidden */}
       {!showEventPanels && (
@@ -1771,10 +1834,10 @@ const EventHeatmap: React.FC = () => {
         ref={mapRef}
         className="w-full h-full map-container"
         style={{
-          height: '100vh', // Fill full viewport height
-          minHeight: '100vh',
+          height: "100vh", // Fill full viewport height
+          minHeight: "100vh",
           zIndex: 1,
-          position: 'fixed',
+          position: "fixed",
           top: 0,
           left: 0,
           right: 0,
@@ -1829,7 +1892,7 @@ const EventHeatmap: React.FC = () => {
                 <X className="w-4 h-4" />
               </Button>
             </div>
-            
+
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-red-500/50 scrollbar-track-transparent">
               {isAiChatLoading ? (
@@ -1841,19 +1904,16 @@ const EventHeatmap: React.FC = () => {
                 </div>
               ) : aiResponse ? (
                 <>
-                  <div 
-                    className="text-white text-sm"
-                    dangerouslySetInnerHTML={{ __html: aiResponse }}
-                  />
-                  
+                  <div className="text-white text-sm" dangerouslySetInnerHTML={{ __html: aiResponse }} />
+
                   {/* Suggestion Chips */}
                   {aiSuggestions.length > 0 && (
                     <div className="pt-2 border-t border-red-500/20">
                       <div className="text-xs text-white/50 mb-2">Du kannst weiterfragen:</div>
-                      <SuggestionChips 
+                      <SuggestionChips
                         suggestions={aiSuggestions}
                         onSuggestionClick={async (suggestion) => {
-                          console.log('Suggestion clicked:', suggestion);
+                          console.log("Suggestion clicked:", suggestion);
                           try {
                             // Show suggestion in input and clear old response
                             setAiChatInput(suggestion);
@@ -1866,14 +1926,16 @@ const EventHeatmap: React.FC = () => {
                             } else if ((chatLogic as any)?.handleSendMessage) {
                               await (chatLogic as any).handleSendMessage(suggestion);
                             } else {
-                              throw new Error('Kein Send-Handler verfügbar');
+                              throw new Error("Kein Send-Handler verfügbar");
                             }
-                            setAiChatInput('');
+                            setAiChatInput("");
                           } catch (error) {
-                            console.error('Error sending suggestion:', error);
-                            toast.error('Konnte Antwort nicht laden');
-                            setAiResponse('<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider konnte ich gerade keine Antwort generieren. Versuche es später erneut.</div>');
-                            setAiSuggestions(['Was läuft heute?', 'Events am Wochenende']);
+                            console.error("Error sending suggestion:", error);
+                            toast.error("Konnte Antwort nicht laden");
+                            setAiResponse(
+                              '<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider konnte ich gerade keine Antwort generieren. Versuche es später erneut.</div>',
+                            );
+                            setAiSuggestions(["Was läuft heute?", "Events am Wochenende"]);
                           } finally {
                             setIsAiChatLoading(false);
                           }
@@ -1884,7 +1946,7 @@ const EventHeatmap: React.FC = () => {
                 </>
               ) : null}
             </div>
-            
+
             {/* Fixed Chat Input at Bottom */}
             <div className="border-t border-red-500/20 p-3 bg-black/90">
               <div className="flex gap-2">
@@ -1892,11 +1954,11 @@ const EventHeatmap: React.FC = () => {
                   value={aiChatInput}
                   onChange={(e) => setAiChatInput(e.target.value)}
                   onKeyDown={async (e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
+                    if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
                       if (aiChatInput.trim()) {
                         const query = aiChatInput;
-                        setAiChatInput('');
+                        setAiChatInput("");
                         setAiResponse(null);
                         setAiSuggestions([]);
                         try {
@@ -1906,13 +1968,15 @@ const EventHeatmap: React.FC = () => {
                           } else if ((chatLogic as any)?.handleSendMessage) {
                             await (chatLogic as any).handleSendMessage(query);
                           } else {
-                            throw new Error('Kein Send-Handler verfügbar');
+                            throw new Error("Kein Send-Handler verfügbar");
                           }
                         } catch (error) {
-                          console.error('Error sending message:', error);
-                          toast.error('Konnte Antwort nicht laden');
-                          setAiResponse('<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider konnte ich gerade keine Antwort generieren. Versuche es später erneut.</div>');
-                          setAiSuggestions(['Was läuft heute?', 'Events am Wochenende']);
+                          console.error("Error sending message:", error);
+                          toast.error("Konnte Antwort nicht laden");
+                          setAiResponse(
+                            '<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider konnte ich gerade keine Antwort generieren. Versuche es später erneut.</div>',
+                          );
+                          setAiSuggestions(["Was läuft heute?", "Events am Wochenende"]);
                         } finally {
                           setIsAiChatLoading(false);
                         }
@@ -1928,7 +1992,7 @@ const EventHeatmap: React.FC = () => {
                   onClick={async () => {
                     if (aiChatInput.trim()) {
                       const query = aiChatInput;
-                      setAiChatInput('');
+                      setAiChatInput("");
                       setAiResponse(null);
                       setAiSuggestions([]);
                       try {
@@ -1938,13 +2002,15 @@ const EventHeatmap: React.FC = () => {
                         } else if ((chatLogic as any)?.handleSendMessage) {
                           await (chatLogic as any).handleSendMessage(query);
                         } else {
-                          throw new Error('Kein Send-Handler verfügbar');
+                          throw new Error("Kein Send-Handler verfügbar");
                         }
                       } catch (error) {
-                        console.error('Error sending message:', error);
-                        toast.error('Konnte Antwort nicht laden');
-                        setAiResponse('<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider konnte ich gerade keine Antwort generieren. Versuche es später erneut.</div>');
-                        setAiSuggestions(['Was läuft heute?', 'Events am Wochenende']);
+                        console.error("Error sending message:", error);
+                        toast.error("Konnte Antwort nicht laden");
+                        setAiResponse(
+                          '<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider konnte ich gerade keine Antwort generieren. Versuche es später erneut.</div>',
+                        );
+                        setAiSuggestions(["Was läuft heute?", "Events am Wochenende"]);
                       } finally {
                         setIsAiChatLoading(false);
                       }
@@ -1968,13 +2034,18 @@ const EventHeatmap: React.FC = () => {
             <div className="text-center mb-6">
               <div className="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-red-500 shadow-lg">
                 <img
-                  src={centralAvatarImage || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(centralAvatarUsername)}`}
+                  src={
+                    centralAvatarImage ||
+                    `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(centralAvatarUsername)}`
+                  }
                   alt={centralAvatarUsername}
                   className="w-full h-full object-cover"
                 />
               </div>
               <h2 className="text-2xl font-bold text-gray-800 mb-2">{centralAvatarUsername}</h2>
-              <p className="text-gray-600">Was machst du gerade? Setze deinen Status und verbinde dich mit anderen Tribes!</p>
+              <p className="text-gray-600">
+                Was machst du gerade? Setze deinen Status und verbinde dich mit anderen Tribes!
+              </p>
             </div>
 
             <div className="space-y-4">
@@ -1985,7 +2056,7 @@ const EventHeatmap: React.FC = () => {
                   onChange={(e) => setLiveStatusMessage(e.target.value)}
                   className="w-full bg-gray-50 border-2 border-red-500 rounded-full py-3 px-4 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-gray-800 placeholder-gray-500 pr-12"
                   onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       e.preventDefault();
                       handleCheckInWithStatus();
                     }
@@ -1996,9 +2067,7 @@ const EventHeatmap: React.FC = () => {
                   disabled={!liveStatusMessage.trim()}
                   className={cn(
                     "absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full p-2 flex-shrink-0",
-                    liveStatusMessage.trim()
-                      ? "bg-red-500 hover:bg-red-600 text-white"
-                      : "bg-gray-300 text-gray-500"
+                    liveStatusMessage.trim() ? "bg-red-500 hover:bg-red-600 text-white" : "bg-gray-300 text-gray-500",
                   )}
                 >
                   <Send className="h-4 w-4" />
@@ -2037,10 +2106,7 @@ const EventHeatmap: React.FC = () => {
               <span className="text-white font-medium">Perfect Day</span>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                onClick={goToAIChat}
-                className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1"
-              >
+              <Button onClick={goToAIChat} className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1">
                 Zum Chat
               </Button>
               <Button
@@ -2056,9 +2122,7 @@ const EventHeatmap: React.FC = () => {
 
           {/* Panel Content */}
           <div className="p-4 overflow-y-auto h-full">
-            <div
-              dangerouslySetInnerHTML={{ __html: perfectDayMessage }}
-            />
+            <div dangerouslySetInnerHTML={{ __html: perfectDayMessage }} />
           </div>
         </div>
       )}
@@ -2067,20 +2131,19 @@ const EventHeatmap: React.FC = () => {
       {showAIChat && (
         <>
           {/* Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 z-[900] bg-black/60 backdrop-blur-sm animate-fade-in"
             onClick={() => setShowAIChat(false)}
           />
-          
+
           {/* Chat Drawer */}
           <div className="fixed bottom-16 left-0 right-0 z-[1200] animate-slide-in-bottom">
             <div className="bg-gradient-to-t from-black via-gray-950/95 to-gray-900/90 backdrop-blur-2xl rounded-t-3xl shadow-2xl border-t-2 border-red-500/30 h-[26vh] flex flex-col">
-              
               {/* Drag Handle */}
               <div className="flex justify-center py-3 cursor-pointer" onClick={() => setShowAIChat(false)}>
                 <div className="w-12 h-1.5 bg-white/20 rounded-full hover:bg-white/30 transition-colors"></div>
               </div>
-              
+
               {/* Header */}
               <div className="px-6 pb-4 flex items-center justify-between border-b border-red-500/20">
                 <div className="flex items-center gap-3">
@@ -2088,7 +2151,9 @@ const EventHeatmap: React.FC = () => {
                     <div className="absolute inset-0 bg-red-500/30 rounded-full blur-lg animate-pulse"></div>
                     <Avatar className="relative w-12 h-12 ring-2 ring-red-400/30 shadow-lg shadow-red-500/50">
                       <AvatarImage src="/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png" />
-                      <AvatarFallback className="bg-gradient-to-br from-red-600 to-red-800 text-white font-bold">MIA</AvatarFallback>
+                      <AvatarFallback className="bg-gradient-to-br from-red-600 to-red-800 text-white font-bold">
+                        MIA
+                      </AvatarFallback>
                     </Avatar>
                   </div>
                   <div>
@@ -2124,7 +2189,6 @@ const EventHeatmap: React.FC = () => {
         </>
       )}
 
-
       {/* Event Form Dialog */}
       <Dialog open={isEventFormOpen} onOpenChange={setIsEventFormOpen}>
         <DialogContent className="z-[1100] bg-black/95 backdrop-blur-md border-gray-700 text-white max-w-md">
@@ -2152,10 +2216,7 @@ const EventHeatmap: React.FC = () => {
       />
 
       {/* Tribe Finder Dialog */}
-      <TribeFinder
-        open={isTribeFinderOpen}
-        onOpenChange={setIsTribeFinderOpen}
-      />
+      <TribeFinder open={isTribeFinderOpen} onOpenChange={setIsTribeFinderOpen} />
 
       {/* Tribe Spot Dialog */}
       <Dialog open={isTribeSpotDialogOpen} onOpenChange={setIsTribeSpotDialogOpen}>
@@ -2166,7 +2227,9 @@ const EventHeatmap: React.FC = () => {
               <div className="text-4xl mb-2">🏛️</div>
               <div className="text-xl font-bold">{selectedTribeSpot?.name}</div>
               {/* Corrected Text 1: Changed subtitle for clearer understanding */}
-              <div className="text-sm text-muted-foreground font-normal">Tribe Spot • Treffpunkt für deine Community!</div>
+              <div className="text-sm text-muted-foreground font-normal">
+                Tribe Spot • Treffpunkt für deine Community!
+              </div>
             </DialogTitle>
           </DialogHeader>
 
@@ -2174,7 +2237,8 @@ const EventHeatmap: React.FC = () => {
             <div className="text-center">
               {/* Corrected Text 2: Changed descriptive paragraph for clearer understanding of purpose */}
               <p className="text-sm text-muted-foreground mb-4">
-                Checke dich am {selectedTribeSpot?.name} ein und zeige anderen, dass du hier bist!<br/>
+                Checke dich am {selectedTribeSpot?.name} ein und zeige anderen, dass du hier bist!
+                <br />
                 Dein Check-in wird im Community Chat geteilt, damit du dich mit Gleichgesinnten verbinden kannst.
               </p>
 
@@ -2182,30 +2246,32 @@ const EventHeatmap: React.FC = () => {
               {selectedTribeSpot && (
                 <div className="mb-4">
                   {(() => {
-                    const usersAtSpot = allUserProfiles.filter(user => {
-                      const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null;
+                    const usersAtSpot = allUserProfiles.filter((user) => {
+                      const hasLiveLocation =
+                        user.current_live_location_lat !== null && user.current_live_location_lng !== null;
                       if (!hasLiveLocation) return false;
 
                       const distance = Math.sqrt(
                         Math.pow(user.current_live_location_lat! - selectedTribeSpot.lat, 2) +
-                        Math.pow(user.current_live_location_lng! - selectedTribeSpot.lng, 2)
+                          Math.pow(user.current_live_location_lng! - selectedTribeSpot.lng, 2),
                       );
                       return distance < 0.002;
                     });
 
                     return usersAtSpot.length > 0 ? (
                       <div>
-                        <h4 className="text-sm font-semibold mb-2">
-                          🔥 Wer ist hier? ({usersAtSpot.length})
-                        </h4>
+                        <h4 className="text-sm font-semibold mb-2">🔥 Wer ist hier? ({usersAtSpot.length})</h4>
                         <div className="flex flex-wrap gap-2 justify-center">
-                          {usersAtSpot.map(user => (
+                          {usersAtSpot.map((user) => (
                             <div
                               key={user.id}
                               className="flex items-center gap-2 bg-muted px-2 py-1 rounded-full text-xs"
                             >
                               <img
-                                src={user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(user.username)}`}
+                                src={
+                                  user.avatar ||
+                                  `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(user.username)}`
+                                }
                                 className="w-4 h-4 rounded-full border"
                                 alt={user.username}
                               />
@@ -2221,11 +2287,7 @@ const EventHeatmap: React.FC = () => {
             </div>
 
             <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setIsTribeSpotDialogOpen(false)}
-                className="flex-1"
-              >
+              <Button variant="outline" onClick={() => setIsTribeSpotDialogOpen(false)} className="flex-1">
                 Abbrechen
               </Button>
               <Button
@@ -2240,7 +2302,6 @@ const EventHeatmap: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      
       {/* Event Details Dialog - deaktiviert für MIA Inline-Modus */}
       {false && showEventDetails && selectedEventForDetails && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center">
@@ -2265,7 +2326,7 @@ const EventHeatmap: React.FC = () => {
       )}
 
       {/* Event Swipe Mode */}
-      <EventSwipeMode 
+      <EventSwipeMode
         open={isSwipeModeOpen}
         onOpenChange={setIsSwipeModeOpen}
         events={filteredEvents}
@@ -2280,12 +2341,12 @@ const EventHeatmap: React.FC = () => {
               Alle Events von "{locationToBlock}" ausblenden?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-gray-300">
-              Du hast bereits 2 Events von dieser Location ausgeblendet. 
-              Möchtest du alle zukünftigen Events von "{locationToBlock}" automatisch ausblenden?
+              Du hast bereits 2 Events von dieser Location ausgeblendet. Möchtest du alle zukünftigen Events von "
+              {locationToBlock}" automatisch ausblenden?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel 
+            <AlertDialogCancel
               onClick={() => {
                 setIsBlockLocationDialogOpen(false);
                 setLocationToBlock(null);
@@ -2294,10 +2355,7 @@ const EventHeatmap: React.FC = () => {
             >
               Nein, danke
             </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleBlockLocation}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
+            <AlertDialogAction onClick={handleBlockLocation} className="bg-red-600 hover:bg-red-700 text-white">
               Ja, alle ausblenden
             </AlertDialogAction>
           </AlertDialogFooter>
