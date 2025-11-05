@@ -944,14 +944,21 @@ const EventHeatmap: React.FC = () => {
           preferCanvas: false,
         });
 
-        // CARTO Dark tiles + orange tint via CSS on tile pane
-        const tiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-          subdomains: "abcd",
-          className: "tribe-tiles",
-        });
-        tiles.addTo(leafletMap);
-        const tilePane = leafletMap.getPane("tilePane");
-        if (tilePane) tilePane.classList.add("tribe-orange-tiles");
+        // === Esri Dark Gray Map ===
+        const base = L.tileLayer(
+          "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+          {
+            attribution:
+              "Tiles © Esri — Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community",
+            className: "tribe-tiles",
+          },
+        ).addTo(leafletMap);
+
+        // Labels Overlay für Straßennamen
+        const labels = L.tileLayer(
+          "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
+          { attribution: "Labels © Esri" },
+        ).addTo(leafletMap);
 
         setMap(leafletMap);
 
