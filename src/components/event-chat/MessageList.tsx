@@ -122,17 +122,16 @@ const MessageList: React.FC<MessageListProps> = ({
           // Panel
           if (message.panelData) {
             return (
-              <div key={message.id} className={cn("rounded-xl overflow-hidden bg-gradient-to-br from-gray-900/50 to-black/50 backdrop-blur-sm border border-white/10 shadow-xl", message.isEventNotification && "border-red-500/50")}>
+              <div key={message.id} className={cn("rounded-xl overflow-hidden bg-gradient-to-br from-gray-900/50 to-black/50 backdrop-blur-sm border border-white/10 shadow-xl", message.isEventNotification && "border-red-500/50")}> 
                 <div className="p-4">
                   <SwipeableEventPanel 
                     panelData={message.panelData}
                     onEventSelect={(eventId) => {
                       console.log('Event selected:', eventId);
-                      const event = events.find(ev => ev.id === eventId);
-                      if (event) {
-                        setSelectedEvent(event);
+                      if ((window as any).handleEventLinkClick) {
+                        (window as any).handleEventLinkClick(eventId);
                       } else {
-                        console.warn('[MessageList] Event nicht gefunden:', eventId);
+                        console.warn('[MessageList] window.handleEventLinkClick not available');
                       }
                     }}
                     onJoinEventChat={onJoinEventChat}

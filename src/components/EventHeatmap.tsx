@@ -190,18 +190,20 @@ const EventHeatmap: React.FC = () => {
 
   // Registriere Event-Link-Handler global
   useEffect(() => {
-    (window as any).handleEventLinkClick = (eventId: string) => {
-      console.log('[EventHeatmap] handleEventLinkClick -> open details', eventId);
-      setSelectedEventId(eventId);
-      const ev = (events as any)?.find?.((e: any) => (e.id || `${e.title}-${e.date}-${e.time}`) === eventId);
-      if (ev) {
-        setSelectedEventForDetails(ev);
-        setShowEventDetails(true);
-        setIsMIAOpen(false);
-        setShowAiResponse(false);
-      } else {
-        console.warn('[EventHeatmap] Event not found for id', eventId);
-        toast.error('Event nicht gefunden');
+    (window as any).handleEventLinkClick = async (eventId: string) => {
+      console.log('[EventHeatmap] handleEventLinkClick -> inline in MIA', eventId);
+      // Kein neues Detail-Fenster mehr öffnen – alles im MIA-Dialog rendern
+      setShowEventDetails(false);
+      setIsMIAOpen(true);
+      setShowAiResponse(false);
+
+      try {
+        // Nutze die bestehende Chat-Logik, um die Detail-Antwort als AI-Message einzufügen
+        if ((chatLogic as any)?.handleEventLinkClick) {
+          await (chatLogic as any).handleEventLinkClick(eventId);
+        }
+      } catch (err) {
+        console.warn('[EventHeatmap] handleEventLinkClick inline failed:', err);
       }
     };
     
@@ -2239,18 +2241,18 @@ const EventHeatmap: React.FC = () => {
       </Dialog>
 
       
-          {/* Event Details Dialog */}
-    {showEventDetails && selectedEventForDetails && (
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-        <div className="relative z-[9999] w-full max-w-lg mx-auto">
-          <EventDetails
-            event={selectedEventForDetails}
-            onClose={() => setShowEventDetails(false)}
-            onJoinChat={handleJoinEventChat}
-          />
+      {/* Event Details Dialog - deaktiviert für MIA Inline-Modus */}
+      {false && showEventDetails && selectedEventForDetails && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+          <div className="relative z-[9999] w-full max-w-lg mx-auto">
+            <EventDetails
+              event={selectedEventForDetails}
+              onClose={() => setShowEventDetails(false)}
+              onJoinChat={handleJoinEventChat}
+            />
+          </div>
         </div>
-      </div>
-    )}
+      )}
 
       {/* Event Chat Window */}
       {eventChatWindow && (
