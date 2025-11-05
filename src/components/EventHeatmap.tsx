@@ -180,7 +180,7 @@ const EventHeatmap: React.FC = () => {
   const [showAiResponse, setShowAiResponse] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
 
-  // --- helper: convert links to inline chips (keeps href & handlers) ---
+  // ====== NEW: make anchors render as inline chips in AI HTML ======
   const enhanceLinksToChips = (html: string) => {
     if (!html) return html;
     return html.replace(/<a\s/gi, '<a class="ai-chip" ');
@@ -198,7 +198,7 @@ const EventHeatmap: React.FC = () => {
     toast.success(`Kategorie-Filter aktualisiert auf ${category}`);
   }, []);
 
-  // Callback to receive AI response directly in heatmap
+  // Callback to receive AI response directly in heatmap (with chipified links)
   const handleAiResponseReceived = useCallback((response: string, suggestions?: string[]) => {
     setAiResponse(enhanceLinksToChips(response));
     setAiSuggestions(suggestions || []);
@@ -214,7 +214,7 @@ const EventHeatmap: React.FC = () => {
     handleAiResponseReceived,
   );
 
-  // ====== NEW: helper to render + fetch description via Edge Function ======
+  // ====== helper to render + fetch description via Edge Function ======
   const renderEventHtml = (evt: any, description: string) => {
     const safeDesc = description || "Keine Beschreibung gefunden.";
     const eid = evt.id || `${evt.title}-${evt.date}-${evt.time}`;
@@ -272,7 +272,7 @@ const EventHeatmap: React.FC = () => {
       setIsAiChatLoading(false);
     }
   };
-  // ====== /NEW helpers ======
+  // ====== /helpers ======
 
   // Registriere Event-Link-Handler global
   useEffect(() => {
@@ -293,7 +293,7 @@ const EventHeatmap: React.FC = () => {
       await fetchAndShowEventDescription(evt);
     };
 
-    // Register additional handlers for event detail buttons
+    // Register additional handlers for event detail buttons (legacy)
     (window as any).showEventOnMap = (eventId: string) => {
       console.log("Show event on map:", eventId);
       setShowAIChat(false);
@@ -328,13 +328,13 @@ const EventHeatmap: React.FC = () => {
     const handler = (e: Event) => {
       const target = e.target as HTMLElement | null;
       if (!target) return;
-      const anchor = target.closest("a") as HTMLAnchorElement | null;
+      const anchor = (target.closest && target.closest("a")) as HTMLAnchorElement | null;
       if (!anchor) return;
       const href = anchor.getAttribute("href") || "";
       if (!href.startsWith("event://")) return;
       e.preventDefault();
 
-      // extended routing for chips:
+      // Optional routes for chips:
       if (href.startsWith("event://similar?")) {
         const params = new URLSearchParams(href.split("?")[1] || "");
         const cat = params.get("cat") || "";
@@ -348,12 +348,7 @@ const EventHeatmap: React.FC = () => {
       }
 
       const eventId = href.slice("event://".length);
-      console.log("[EventHeatmap] Captured event:// link", { href, eventId });
-      if (eventId && (window as any).handleEventLinkClick) {
-        (window as any).handleEventLinkClick(eventId);
-      } else {
-        console.warn("[EventHeatmap] handleEventLinkClick missing or empty id");
-      }
+      (window as any).handleEventLinkClick?.(eventId);
     };
     document.addEventListener("click", handler, true);
     document.addEventListener("touchend", handler as EventListener, true);
@@ -361,7 +356,7 @@ const EventHeatmap: React.FC = () => {
       document.removeEventListener("click", handler, true);
       document.removeEventListener("touchend", handler as EventListener, true);
     };
-  }, []);
+  }, [aiChatExternalSendHandler]);
 
   // Fallback: ensure send handler is available immediately
   useEffect(() => {
@@ -501,7 +496,7 @@ const EventHeatmap: React.FC = () => {
     const geocodeEventLocations = async () => {
       if (!events.length) return;
 
-      console.log("[EventHeatmap] Starting geocoding for events...");
+      console.log("[EventHeatmap] Starting geocoding for events...]");
 
       const uniqueLocations = new Set<string>();
       const locationData: Array<{ location: string; city?: string }> = [];
@@ -534,7 +529,6 @@ const EventHeatmap: React.FC = () => {
         const newEventCoordinates = new Map<string, { lat: number; lng: number }>();
 
         currentCityEvents.forEach((event) => {
-          // Use currentCityEvents here as well
           if (event.location) {
             const key = `${event.location}_${event.city || selectedCity}`;
             const coords = coordinates.get(key);
@@ -591,7 +585,6 @@ const EventHeatmap: React.FC = () => {
     const filtered = events
       .filter((event) => {
         const isSelectedDateEvent = event.date === selectedDateString;
-        const hasLocationData = event.location || event.city;
 
         const eventCityLower = event.city ? event.city.toLowerCase() : null;
         const selectedCityLower = selectedCity.toLowerCase();
@@ -603,11 +596,6 @@ const EventHeatmap: React.FC = () => {
           isRelevantCity = eventCityLower === selectedCityLower;
         }
 
-        console.log(
-          `Event: ${event.title}, Date: ${event.date}, Location: ${event.location}, City: ${event.city}, IsSelectedDate: ${isSelectedDateEvent}, HasLocation: ${hasLocationData}, IsRelevantCity: ${isRelevantCity}`,
-        );
-
-        // Modified to show events even without geocoding working
         return isSelectedDateEvent && isRelevantCity;
       })
       .map((event) => {
@@ -659,14 +647,12 @@ const EventHeatmap: React.FC = () => {
     });
 
     if (selectedCategory !== "alle") {
-      // Special case: "ausgehen" shows all events EXCEPT sport events
       if (selectedCategory === "ausgehen") {
         filtered = filtered.filter((event) => {
           const eventCategoryGroup = getCategoryGroup(event.category);
           return eventCategoryGroup !== "Sport";
         });
       } else {
-        // For 'sport' and 'kreativität', filter to specific category group
         const categoryGroupMap: Record<FilterGroup, CategoryGroup | null> = {
           alle: null,
           ausgehen: "Ausgehen",
@@ -687,7 +673,6 @@ const EventHeatmap: React.FC = () => {
     const selectedHour = timeRange[0];
     filtered = filtered.filter((event) => event.eventHour >= selectedHour);
 
-    // Sort events by likes in descending order
     filtered = filtered.sort((a, b) => {
       const likesA = (a.likes || 0) + (a.rsvp_yes || 0) + (a.rsvp_maybe || 0);
       const likesB = (b.likes || 0) + (b.rsvp_yes || 0) + (b.rsvp_maybe || 0);
@@ -769,7 +754,6 @@ const EventHeatmap: React.FC = () => {
       const groupId = await eventChatService.joinEventChat(eventId, eventTitle);
 
       if (groupId) {
-        // Open event chat window
         setEventChatWindow({
           eventId,
           eventTitle,
@@ -903,7 +887,6 @@ const EventHeatmap: React.FC = () => {
     chatLogic.handleExternalQuery("Hallo KI, welche Events gibt es heute?");
   };
 
-  // Only one declaration for handleOpenEventForm
   const handleOpenEventForm = async (eventData: any) => {
     try {
       const cityObject = cities.find((c) => c.abbr.toLowerCase() === selectedCity.toLowerCase());
@@ -945,7 +928,6 @@ const EventHeatmap: React.FC = () => {
       setMap(null);
     }
 
-    // Small delay to ensure cleanup is complete
     const initializeMap = () => {
       if (!mapRef.current) return;
 
@@ -969,7 +951,6 @@ const EventHeatmap: React.FC = () => {
 
         setMap(leafletMap);
 
-        // Force map to invalidate size after a short delay
         setTimeout(() => {
           if (leafletMap && leafletMap.getContainer()) {
             leafletMap.invalidateSize();
@@ -980,15 +961,12 @@ const EventHeatmap: React.FC = () => {
       }
     };
 
-    // Initialize map with a small delay to ensure cleanup is complete
     const timeoutId = setTimeout(initializeMap, 50);
 
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [mapRef.current, selectedCity]); // Add selectedCity back to ensure proper reinitialization
-
-  // City changes are handled by map reinitialization in the effect above
+  }, [mapRef.current, selectedCity]);
 
   // Final cleanup when component unmounts
   useEffect(() => {
@@ -1003,7 +981,7 @@ const EventHeatmap: React.FC = () => {
         setMap(null);
       }
     };
-  }, []); // Empty dependency array for unmount only
+  }, []);
 
   useEffect(() => {
     if (currentTribeSpotMarkersRef.current) {
@@ -1082,7 +1060,6 @@ const EventHeatmap: React.FC = () => {
         return distance < 0.002;
       });
 
-      // Only add marker if map is valid and has a container
       try {
         if (map && map.getContainer()) {
           marker.addTo(map);
@@ -1137,4 +1114,1264 @@ const EventHeatmap: React.FC = () => {
 
       const likes = event.likes || 0;
       let markerSize = 60;
-      const imageSize
+      const imageSize = 40;
+
+      const iconHtml = `
+        <div style="
+          background: rgba(0,0,0,0.8);
+          color: white;
+          border-radius: 8px;
+          width: ${markerSize}px;
+          height: ${markerSize + 20}px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: space-between;
+          padding: 5px;
+          border: 2px solid #ef4444;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+          cursor: pointer;
+          font-family: sans-serif;
+          overflow: hidden;
+        ">
+          <img src="${event.image_url || "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop;"}"
+               onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';"
+               style="width: ${imageSize}px; height: ${imageSize}px; object-fit: cover; border-radius: 4px; margin-bottom: 4px;"/>
+          <div style="
+            font-size: 9px;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+            text-align: center;
+          ">
+            ${event.title}
+          </div>
+          <div style="font-size: 8px; margin-top: 2px; display: flex; align-items: center; justify-content: center; color: #ff9999;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 2px;"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+              ${likes}
+          </div>
+        </div>
+      `;
+
+      const customIcon = L.divIcon({
+        html: iconHtml,
+        className: "custom-event-marker",
+        iconSize: [markerSize, markerSize + 20],
+        iconAnchor: [markerSize / 2, markerSize + 20],
+      });
+
+      const marker = L.marker([lat, lng], { icon: customIcon });
+
+      marker.on("click", async () => {
+        setSelectedEventId(event.id);
+        setIsPanelOpen(true);
+        setPanelHeight("partial");
+        setShowPerfectDayPanel(false);
+        await fetchAndShowEventDescription(event);
+      });
+
+      const popupContent = `
+        <div style="min-width: 200px; max-width: 250px; font-family: sans-serif;">
+          ${event.image_url ? `<img src="${event.image_url}" onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;"/>` : ""}
+          <h3 style="margin: 0 0 4px 0; font-weight: bold; color: #1f2937; font-size: 16px;">${event.title}</h3>
+
+          <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280; font-size: 12px;">
+            <span style="margin-right: 5px;">📍</span>
+            <span>${event.location || "Bielefeld"}</span>
+          </div>
+          <div style="display: flex; align-items: center; margin-bottom: 4px; color: #6b7280; font-size: 12px;">
+            <span style="margin-right: 5px;">📅</span>
+            <span>Heute, ${event.time} Uhr</span>
+          </div>
+          <div style="display: flex; align-items: center; margin-bottom: 8px; color: #6b7280; font-size: 12px;">
+            <span style="margin-right: 5px;">❤️</span>
+            <span>${event.likes || 0} Likes</span>
+          </div>
+          ${event.description ? `<p style="margin-bottom: 8px; font-size: 11px; color: #4b5563; max-height: 60px; overflow: hidden;">${event.description}</p>` : ""}
+          <div style="
+            background: #ef4444;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            display: inline-block;
+          ">
+            ${event.category}
+          </div>
+          ${event.link ? `<div style="margin-top: 8px;"><a href="${event.link}" target="_blank" style="color: #ef4444; text-decoration: underline; font-size: 12px;">Mehr Info</a></div>` : ""}
+        </div>
+      `;
+
+      marker.bindPopup(popupContent);
+
+      try {
+        if (map && map.getContainer()) {
+          marker.addTo(map);
+          newEventMarkers.push(marker);
+        }
+      } catch (error) {
+        console.warn("[EventHeatmap] Error adding event marker:", error);
+      }
+    });
+
+    setEventMarkers(newEventMarkers);
+
+    return () => {
+      newEventMarkers.forEach((marker) => {
+        if (map && map.hasLayer(marker)) {
+          map.removeLayer(marker);
+        }
+      });
+    };
+  }, [map, filteredEvents, selectedCity, eventCoordinates]);
+
+  useEffect(() => {
+    if (!map) {
+      userMarkers.forEach((marker) => {
+        try {
+          map?.removeLayer(marker);
+        } catch (e) {}
+      });
+      setUserMarkers([]);
+      return;
+    }
+
+    const markersToRemove = [...userMarkers];
+    markersToRemove.forEach((marker) => {
+      if (map.hasLayer(marker)) {
+        map.removeLayer(marker);
+      }
+    });
+
+    const newUserMarkers: L.Marker[] = [];
+    const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+
+    allUserProfiles.forEach((user) => {
+      const userCity = user.favorite_locations?.[0]?.toLowerCase() || "bielefeld";
+      const selectedCityName =
+        cities.find((c) => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name?.toLowerCase() ||
+        selectedCity.toLowerCase();
+
+      let isUserInCurrentCity = false;
+      if (selectedCityName === "bielefeld" || selectedCityName === "bi") {
+        isUserInCurrentCity = !userCity || userCity === "bielefeld" || userCity === "bi";
+      } else {
+        isUserInCurrentCity = userCity === selectedCityName;
+      }
+
+      if (!isUserInCurrentCity) return;
+
+      const hasLiveLocation =
+        user.current_live_location_lat !== null &&
+        user.current_live_location_lng !== null &&
+        user.current_live_location_lat !== undefined &&
+        user.current_live_location_lng !== undefined;
+      const hasStatusMessage = user.current_status_message && user.current_status_message.trim() !== "";
+      const isRecentCheckin =
+        user.current_checkin_timestamp &&
+        new Date().getTime() - new Date(user.current_checkin_timestamp).getTime() < TWO_HOURS_MS;
+
+      if (hasLiveLocation && hasStatusMessage) {
+        const lat = user.current_live_location_lat as number;
+        const lng = user.current_live_location_lng as number;
+        const statusMessage = user.current_status_message as string;
+
+        const userIconHtml = `
+          <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: auto;
+            min-width: 80px;
+            max-width: 150px;
+            cursor: move;
+          ">
+            <div style="
+              background: #ef4444;
+              color: white;
+              padding: 4px 8px;
+              border-radius: 15px;
+              font-size: 11px;
+              font-weight: 500;
+              margin-bottom: 5px;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+              position: relative;
+              top: 5px;
+            ">
+              ${statusMessage}
+            </div>
+            <img src="${user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=" + getInitials(user.username)}"
+                 alt="${user.username}"
+                 style="
+                   width: 50px;
+                   height: 50px;
+                   border-radius: 50%;
+                   border: 3px solid white;
+                   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+                   background-color: white;
+                   position: relative;
+                   z-index: 10;
+                 "/>
+            <div style="
+              color: #333;
+              font-size: 10px;
+              font-weight: bold;
+              margin-top: 2px;
+            ">
+              ${user.username}
+            </div>
+          </div>
+        `;
+
+        const userMarkerIcon = L.divIcon({
+          html: userIconHtml,
+          className: "user-marker",
+          iconSize: [60, 90],
+          iconAnchor: [30, 90],
+        });
+
+        const marker = L.marker([lat, lng], {
+          icon: userMarkerIcon,
+          draggable: user.username === currentUser,
+        });
+
+        marker.on("click", () => {
+          setSelectedUserForPrivateChat(user);
+          setIsPrivateChatOpen(true);
+        });
+
+        if (user.username === currentUser) {
+          marker.on("dragend", (e) => {
+            const marker = e.target;
+            const position = marker.getLatLng();
+            console.log(`User ${user.username} moved to:`, position.lat, position.lng);
+
+            updateUserPosition(user.username, position.lat, position.lng);
+          });
+        }
+
+        newUserMarkers.push(marker);
+
+        try {
+          if (map && map.getContainer()) {
+            map.addLayer(marker);
+          }
+        } catch (error) {
+          console.warn("[EventHeatmap] Error adding user marker:", error);
+        }
+      }
+    });
+    setUserMarkers(newUserMarkers);
+
+    return () => {
+      newUserMarkers.forEach((marker) => {
+        if (map && map.hasLayer(marker)) {
+          map.removeLayer(marker);
+        }
+      });
+    };
+  }, [map, allUserProfiles, currentUser, selectedCity]);
+
+  const handleEventSelect = async (eventId: string) => {
+    setSelectedEventId(eventId);
+
+    const selectedEvent = filteredEvents.find(
+      (event) => (event.id || `${event.title}-${event.date}-${event.time}`) === eventId,
+    );
+
+    if (selectedEvent && selectedEvent.lat && selectedEvent.lng && map) {
+      map.setView([selectedEvent.lat, selectedEvent.lng], 15);
+    }
+
+    await fetchAndShowEventDescription(selectedEvent);
+  };
+
+  const handleEventLike = async (eventId: string) => {
+    try {
+      const event = filteredEvents.find((e) => (e.id || `${e.title}-${e.date}-${e.time}`) === eventId);
+      if (!event || !event.id) return;
+      await handleLikeEvent(event.id);
+    } catch (error: any) {
+      console.error("Error liking event:", error);
+      toast({
+        title: "Fehler",
+        description: "Ein Fehler ist aufgetreten",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEventDislike = async (eventId: string) => {
+    try {
+      const event = filteredEvents.find((e) => {
+        const eId = e.id || `${e.title}-${e.date}-${e.time}`;
+        return eId === eventId;
+      });
+
+      console.log("[EventHeatmap] Disliking event:", eventId, "location:", event?.location);
+      const result = await dislikeService.dislikeEvent(eventId, event?.location);
+
+      setDislikedEventIds((prev) => {
+        if (!prev.includes(eventId)) {
+          return [...prev, eventId];
+        }
+        return prev;
+      });
+
+      if (result.shouldAskBlock && result.location) {
+        setLocationToBlock(result.location);
+        setIsBlockLocationDialogOpen(true);
+      }
+
+      toast({
+        title: "Event ausgeblendet",
+        description: "Das Event wird nicht mehr angezeigt",
+      });
+    } catch (error: any) {
+      console.error("Error disliking event:", error);
+      toast({
+        title: "Fehler",
+        description: "Ein Fehler ist aufgetreten",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBlockLocation = () => {
+    if (locationToBlock) {
+      dislikeService.blockLocation(locationToBlock);
+      toast({
+        title: "Location blockiert",
+        description: `Alle Events von "${locationToBlock}" werden ausgeblendet`,
+      });
+      setDislikedEventIds((prev) => [...prev]);
+    }
+    setIsBlockLocationDialogOpen(false);
+    setLocationToBlock(null);
+  };
+
+  const togglePanelHeight = () => {
+    if (panelHeight === "collapsed") {
+      setPanelHeight("partial");
+      setIsPanelOpen(true);
+    } else if (panelHeight === "partial") {
+      setPanelHeight("full");
+    } else {
+      setPanelHeight("collapsed");
+      setIsPanelOpen(false);
+    }
+  };
+
+  const closePanelCompletely = () => {
+    setPanelHeight("collapsed");
+    setIsPanelOpen(false);
+    setShowPerfectDayPanel(false);
+  };
+
+  const handleAIChatSend = async (messageContent?: string) => {
+    const message = messageContent || aiChatInput;
+    if (message.trim()) {
+      await chatLogic.handleSendMessage(message);
+      setAiChatInput("");
+    }
+  };
+
+  const handleTribeSpotCheckIn = async () => {
+    if (!selectedTribeSpot) return;
+
+    const username = currentUser || localStorage.getItem("community_chat_username") || "Gast";
+    const avatar =
+      userProfile?.avatar ||
+      localStorage.getItem("community_chat_avatar") ||
+      `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(username)}`;
+
+    try {
+      const profileData = {
+        username,
+        avatar,
+        last_online: new Date().toISOString(),
+        current_live_location_lat: selectedTribeSpot.lat,
+        current_live_location_lng: selectedTribeSpot.lng,
+        current_status_message: `📍 @ ${selectedTribeSpot.name}`,
+        current_checkin_timestamp: new Date().toISOString(),
+      };
+
+      const { data: existingProfile } = await supabase
+        .from("user_profiles")
+        .select("id")
+        .eq("username", username)
+        .maybeSingle();
+
+      if (existingProfile) {
+        await supabase.from("user_profiles").update(profileData).eq("username", username);
+      } else {
+        await supabase.from("user_profiles").insert(profileData);
+      }
+
+      const cityCommunityGroupId =
+        cities.find((c) => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.abbr.toLowerCase() + "_ausgehen" ||
+        "bi_ausgehen";
+      await messageService.sendMessage(
+        cityCommunityGroupId,
+        username,
+        `🏛️ ${username} ist jetzt am ${selectedTribeSpot.name}!`,
+        avatar,
+      );
+
+      toast({
+        title: `Check-in am ${selectedTribeSpot.name}!`,
+        description: "Du bist jetzt am Tribe Spot eingecheckt.",
+      });
+
+      refetchProfile();
+      setIsTribeSpotDialogOpen(false);
+    } catch (error: any) {
+      console.error("Tribe spot check-in failed:", error);
+      toast({
+        title: "Fehler",
+        description: "Check-in am Tribe Spot fehlgeschlagen.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleOpenEventFormForModal = () => {
+    setIsEventFormOpen(true);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black">
+        <div className="text-center text-white">
+          <MapPin className="w-12 h-12 mx-auto mb-4 animate-bounce text-red-500" />
+          <h2 className="text-xl mb-2">Lade Events...</h2>
+          <p className="text-gray-400">Heutige Events werden geladen...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const selectedCategoryData = categories.find((cat) => cat.name === "alle");
+  const selectedCategoryDisplay = selectedCategory === "alle" ? "Alle" : selectedCategory;
+
+  return (
+    <div className="relative w-full h-full overflow-hidden" style={{ height: "100dvh" }}>
+      {/* Live Ticker Header */}
+      <HeatmapHeader
+        selectedCity={selectedCity}
+        chatInputProps={{
+          input: aiChatInput,
+          setInput: setAiChatInput,
+          handleSendMessage: handleAIChatSend,
+          isTyping: chatLogic.isTyping,
+          onKeyDown: chatLogic.handleKeyPress,
+          onChange: chatLogic.handleInputChange,
+          isHeartActive: chatLogic.isHeartActive,
+          handleHeartClick: chatLogic.handleHeartClick,
+          globalQueries: chatLogic.globalQueries,
+          toggleRecentQueries: chatLogic.toggleRecentQueries,
+          inputRef: chatLogic.inputRef,
+          onAddEvent: handleOpenEventFormForModal,
+          showAnimatedPrompts: !aiChatInput.trim(),
+          activeChatModeValue: "ai",
+        }}
+        showFilterPanel={showFilterPanel}
+        onToggleFilterPanel={() => setShowFilterPanel((prev) => !prev)}
+        onOpenSwipeMode={() => setIsSwipeModeOpen(true)}
+        onMIAOpenChange={setIsMIAOpen}
+        hasNewDailyRecommendation={hasNewDailyRecommendation}
+        onMIAClick={handleMIAClick}
+        isDailyRecommendationLoading={isDailyRecommendationLoading}
+      />
+
+      {/* Filter Panel (Conditional Rendering) - Hide when MIA is open */}
+      {showFilterPanel && !isMIAOpen && (
+        <div className="fixed top-60 left-4 z-[1003] space-y-3 max-w-sm animate-fade-in">
+          <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
+            <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-red-500" />
+              Events für {format(selectedDate, "dd.MM.yyyy")} in{" "}
+              {cities.find((c) => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity}
+            </h3>
+
+            <div className="space-y-4">
+              {/* Date Picker */}
+              <div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                    >
+                      <div className="flex items-center gap-2">
+                        <CalendarIcon className="h-4 w-4" />
+                        {format(selectedDate, "dd.MM.yyyy")}
+                      </div>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-gray-800 border-gray-700 z-[9999]" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => date && setSelectedDate(date)}
+                      initialFocus
+                      className="pointer-events-auto bg-gray-800 text-white"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Filter Bar */}
+              <div className="w-full overflow-x-auto">
+                <FilterBar
+                  value={selectedCategory}
+                  onChange={handleCategoryChange}
+                  variant="light"
+                  className="min-w-max"
+                />
+              </div>
+            </div>
+          </Card>
+
+          {/* Stats */}
+          <Card className="p-3 bg-black/95 backdrop-blur-md border-gray-700 text-white text-sm">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-red-500" />
+                {filteredEvents.length} Events ab {getTimeFromSlider(timeRange[0])} Uhr
+              </div>
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-red-500" />
+                {filteredEvents.reduce((sum, event) => sum + event.attendees, 0)} Interessierte
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-4 text-red-500">❤️</span>
+                {filteredEvents.reduce((sum, event) => sum + (event.likes || 0), 0)} Likes
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Kategorie Filter - Horizontal ausklappbar */}
+      <div className={cn("fixed top-24 left-3 z-[1002]", isMIAOpen && "hidden")}>
+        <div className="flex items-center gap-2">
+          {/* Aktueller Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowCategoryOptions(!showCategoryOptions)}
+            className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-black border border-white/10 transition-all"
+          >
+            {selectedCategory === "alle"
+              ? "🌟 Alle"
+              : selectedCategory === "ausgehen"
+                ? "🎉 Ausgehen"
+                : selectedCategory === "sport"
+                  ? "⚽ Sport"
+                  : "🎨 Kreativität"}
+          </Button>
+
+          {/* Horizontale Kategorie-Optionen */}
+          {showCategoryOptions && (
+            <div className="flex gap-2 animate-slide-in-right">
+              {selectedCategory !== "alle" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    handleCategoryChange("alle");
+                    setShowCategoryOptions(false);
+                  }}
+                  className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-white/20 border border-white/10 transition-all"
+                >
+                  🌟 Alle
+                </Button>
+              )}
+              {selectedCategory !== "ausgehen" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    handleCategoryChange("ausgehen");
+                    setShowCategoryOptions(false);
+                  }}
+                  className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-white/20 border border-white/10 transition-all"
+                >
+                  🎉 Ausgehen
+                </Button>
+              )}
+              {selectedCategory !== "sport" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    handleCategoryChange("sport");
+                    setShowCategoryOptions(false);
+                  }}
+                  className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-white/20 border border-white/10 transition-all"
+                >
+                  ⚽ Sport
+                </Button>
+              )}
+              {selectedCategory !== "kreativität" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    handleCategoryChange("kreativität");
+                    setShowCategoryOptions(false);
+                  }}
+                  className="bg-black/90 backdrop-blur-md text-white text-[11px] px-3 py-1.5 h-auto rounded-lg hover:bg-white/20 border border-white/10 transition-all"
+                >
+                  🎨 Kreativität
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Date Picker - Über dem Zeitslider */}
+      <div className={cn("fixed top-32 right-2 z-[1002]", isMIAOpen && "hidden")}>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="bg-black/90 backdrop-blur-md text-white text-[10px] px-2 py-1.5 h-auto rounded-lg hover:bg-black border border-white/10 transition-all flex flex-col items-center gap-0.5 min-w-[3.5rem]"
+            >
+              <span className="font-bold">{format(selectedDate, "EEE", { locale: de })}</span>
+              <span className="text-[13px] font-bold">{format(selectedDate, "dd.MM.")}</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 bg-gray-800 border-gray-700 z-[9999]" align="end">
+            <CalendarComponent
+              mode="single"
+              selected={selectedDate}
+              onSelect={(date) => date && setSelectedDate(date)}
+              initialFocus
+              className="pointer-events-auto bg-gray-800 text-white"
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      {/* Time Slider - Extrem minimal */}
+      <div className={cn("fixed top-44 right-2 z-[1002]", isMIAOpen && "hidden")}>
+        <div className="p-1 bg-black/25 backdrop-blur-sm rounded-full">
+          <div className="flex flex-col items-center gap-1.5">
+            <span className="text-white text-[11px] font-bold">{timeRange[0]}h</span>
+            <div className="h-28 w-4">
+              <Slider
+                value={timeRange}
+                onValueChange={setTimeRange}
+                max={23}
+                min={0}
+                step={1}
+                orientation="vertical"
+                className="h-full"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Button to show events panel again if hidden */}
+      {!showEventPanels && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[1000]">
+          <Button
+            onClick={() => setShowEventPanels(true)}
+            className="bg-red-500 hover:bg-red-600 text-white rounded-full px-4 py-2 text-sm"
+          >
+            Events anzeigen
+          </Button>
+        </div>
+      )}
+
+      {/* Default Event Display - Always visible above navbar (versteckt wenn MIA offen) */}
+      {!showPerfectDayPanel && filteredEvents.length > 0 && showEventPanels && !isMIAOpen && (
+        <div className="fixed bottom-16 left-0 right-0 z-[1000] pointer-events-auto">
+          <div className="px-2 py-4">
+            <ThreeEventDisplay
+              panelData={panelData}
+              onEventSelect={handleEventSelect}
+              onLikeEvent={handleEventLike}
+              onDislikeEvent={handleEventDislike}
+              onJoinEventChat={handleJoinEventChat}
+              className="w-full"
+              onSwipeDownToHide={() => setShowEventPanels(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Map Container */}
+      <div
+        ref={mapRef}
+        className="w-full h-full map-container"
+        style={{
+          height: "100vh",
+          minHeight: "100vh",
+          zIndex: 1,
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+        }}
+      />
+
+      {/* === Styles (Map tint + Chips + Tight paragraphs) === */}
+      <style>{`
+        .map-container {
+          background-color: #ff3333 !important;
+        }
+        .map-container .leaflet-layer,
+        .map-container .leaflet-tile-pane,
+        .map-container .leaflet-tile {
+          filter: sepia(100%) saturate(400%) hue-rotate(355deg) brightness(0.7) contrast(1.6) !important;
+        }
+        .map-container .leaflet-control-zoom-in,
+        .map-container .leaflet-control-zoom-out {
+          background-color: rgba(0,0,0,0.8) !important;
+          color: #ff3333 !important;
+          border: 1px solid #ff3333 !important;
+        }
+        .map-container .leaflet-control-zoom a:hover {
+          background-color: #ff3333 !important;
+          color: white !important;
+        }
+
+        /* Inline chips for all anchors in AI content */
+        .ai-content a.ai-chip, .ai-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 10px;
+          font-size: 12px;
+          line-height: 1;
+          border-radius: 9999px;
+          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(255,255,255,0.12);
+          color: #fff;
+          text-decoration: none;
+          white-space: nowrap;
+          transition: transform .12s ease, background .12s ease, border-color .12s ease;
+          -webkit-backdrop-filter: blur(6px);
+          backdrop-filter: blur(6px);
+        }
+        .ai-content a.ai-chip:hover, .ai-chip:hover {
+          transform: translateY(-1px);
+          background: rgba(239,68,68,0.18);
+          border-color: rgba(239,68,68,0.35);
+        }
+        .ai-content a.ai-chip:active, .ai-chip:active {
+          transform: translateY(0);
+        }
+        .ai-content p { margin: .4rem 0; }
+      `}</style>
+
+      {/* === AI Response Card (modern) === */}
+      {showAiResponse && (
+        <div className="fixed top-20 right-4 left-4 md:left-auto md:w-[520px] z-[1100] animate-fade-in">
+          <Card className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/70 backdrop-blur-xl shadow-[0_20px_80px_rgba(239,68,68,0.25)]">
+            {/* Gradient ring */}
+            <div
+              className="pointer-events-none absolute inset-0 rounded-3xl"
+              style={{
+                background:
+                  "radial-gradient(120% 60% at 100% 0%, rgba(239,68,68,0.35) 0%, rgba(239,68,68,0.05) 30%, transparent 60%)",
+              }}
+            />
+            {/* Header */}
+            <div className="relative flex items-center justify-between px-4 py-3 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div className="absolute -inset-0.5 rounded-full bg-red-500/30 blur-md" />
+                  <div className="relative w-9 h-9 rounded-full bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center ring-2 ring-white/10">
+                    <Sparkles className="w-5 h-5 text-white" />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-white font-semibold leading-tight">MIA</div>
+                  <div className="text-[11px] text-white/50">Deine Event-Assistentin</div>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setShowAiResponse(false);
+                  setAiResponse(null);
+                  setAiSuggestions([]);
+                  setIsMIAOpen(false);
+                }}
+                className="h-9 w-9 rounded-full text-white/70 hover:text-white hover:bg-white/10"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* Content */}
+            <div className="relative max-h-[66vh] overflow-y-auto px-4 py-3 space-y-3 scrollbar-thin scrollbar-thumb-white/20">
+              {isAiChatLoading ? (
+                <div className="flex items-center justify-center py-10">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-white/20 border-t-white/70" />
+                    <p className="text-white/70 text-sm">MIA denkt nach…</p>
+                  </div>
+                </div>
+              ) : aiResponse ? (
+                <>
+                  <div
+                    className="text-white text-[14px] leading-6 ai-content"
+                    dangerouslySetInnerHTML={{ __html: aiResponse }}
+                  />
+                  {aiSuggestions.length > 0 && (
+                    <div className="pt-2 border-t border-white/10">
+                      <div className="text-[11px] text-white/50 mb-2">Weiter fragen:</div>
+                      <div className="flex flex-wrap gap-2">
+                        {aiSuggestions.map((s, i) => (
+                          <button
+                            key={i}
+                            onClick={async () => {
+                              try {
+                                setAiChatInput(s);
+                                setAiResponse(null);
+                                setAiSuggestions([]);
+                                setIsAiChatLoading(true);
+                                if (aiChatExternalSendHandler) await aiChatExternalSendHandler(s);
+                                else if ((chatLogic as any)?.handleSendMessage)
+                                  await (chatLogic as any).handleSendMessage(s);
+                                setAiChatInput("");
+                              } catch {
+                                toast.error("Konnte Antwort nicht laden");
+                                setAiResponse(
+                                  enhanceLinksToChips(
+                                    '<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider keine Antwort. Bitte erneut versuchen.</div>',
+                                  ),
+                                );
+                                setAiSuggestions(["Was läuft heute?", "Events am Wochenende"]);
+                              } finally {
+                                setIsAiChatLoading(false);
+                              }
+                            }}
+                            className="ai-chip"
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : null}
+            </div>
+
+            {/* Input */}
+            <div className="relative border-t border-white/10 p-3 bg-black/60 backdrop-blur-xl">
+              <div className="flex gap-2">
+                <Input
+                  value={aiChatInput}
+                  onChange={(e) => setAiChatInput(e.target.value)}
+                  onKeyDown={async (e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      if (!aiChatInput.trim()) return;
+                      const q = aiChatInput;
+                      setAiChatInput("");
+                      setAiResponse(null);
+                      setAiSuggestions([]);
+                      try {
+                        setIsAiChatLoading(true);
+                        if (aiChatExternalSendHandler) await aiChatExternalSendHandler(q);
+                        else if ((chatLogic as any)?.handleSendMessage) await (chatLogic as any).handleSendMessage(q);
+                        else throw new Error("Kein Send-Handler verfügbar");
+                      } catch {
+                        toast.error("Konnte Antwort nicht laden");
+                        setAiResponse(
+                          enhanceLinksToChips(
+                            '<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider keine Antwort. Bitte erneut versuchen.</div>',
+                          ),
+                        );
+                        setAiSuggestions(["Was läuft heute?", "Events am Wochenende"]);
+                      } finally {
+                        setIsAiChatLoading(false);
+                      }
+                    }
+                  }}
+                  placeholder="Frag MIA nach Events…"
+                  className="flex-1 bg-white/5 border-white/15 text-white placeholder:text-white/50 rounded-xl"
+                  disabled={isAiChatLoading}
+                />
+                <Button
+                  size="icon"
+                  onClick={async () => {
+                    if (!aiChatInput.trim()) return;
+                    const q = aiChatInput;
+                    setAiChatInput("");
+                    setAiResponse(null);
+                    setAiSuggestions([]);
+                    try {
+                      setIsAiChatLoading(true);
+                      if (aiChatExternalSendHandler) await aiChatExternalSendHandler(q);
+                      else if ((chatLogic as any)?.handleSendMessage) await (chatLogic as any).handleSendMessage(q);
+                      else throw new Error("Kein Send-Handler verfügbar");
+                    } catch {
+                      toast.error("Konnte Antwort nicht laden");
+                      setAiResponse(
+                        enhanceLinksToChips(
+                          '<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider keine Antwort. Bitte erneut versuchen.</div>',
+                        ),
+                      );
+                      setAiSuggestions(["Was läuft heute?", "Events am Wochenende"]);
+                    } finally {
+                      setIsAiChatLoading(false);
+                    }
+                  }}
+                  disabled={isAiChatLoading}
+                  className="rounded-xl bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Central Avatar Modal */}
+      {showCentralAvatar && (
+        <div className="fixed inset-0 z-[1200] bg-black/50 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-red-500 shadow-lg">
+                <img
+                  src={
+                    centralAvatarImage ||
+                    `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(centralAvatarUsername)}`
+                  }
+                  alt={centralAvatarUsername}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">{centralAvatarUsername}</h2>
+              <p className="text-gray-600">
+                Was machst du gerade? Setze deinen Status und verbinde dich mit anderen Tribes!
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center relative w-full">
+                <Input
+                  placeholder="Was machst du gerade? (z.B. Jetzt im Café Barcelona)"
+                  value={liveStatusMessage}
+                  onChange={(e) => setLiveStatusMessage(e.target.value)}
+                  className="w-full bg-gray-50 border-2 border-red-500 rounded-full py-3 px-4 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-gray-800 placeholder-gray-500 pr-12"
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleCheckInWithStatus();
+                    }
+                  }}
+                />
+                <button
+                  onClick={handleCheckInWithStatus}
+                  disabled={!liveStatusMessage.trim()}
+                  className={cn(
+                    "absolute right-2 top-1/2 transform -translate-y-1/2 rounded-full p-2 flex-shrink-0",
+                    liveStatusMessage.trim() ? "bg-red-500 hover:bg-red-600 text-white" : "bg-gray-300 text-gray-500",
+                  )}
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleCheckInWithStatus}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-full py-3"
+                  disabled={!liveStatusMessage.trim()}
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Check-in
+                </Button>
+                <Button
+                  onClick={() => setShowCentralAvatar(false)}
+                  variant="outline"
+                  className="flex-1 border-gray-300 text-gray-700 rounded-full py-3"
+                >
+                  Abbrechen
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Perfect Day Panel */}
+      {showPerfectDayPanel && perfectDayMessage && (
+        <div className="absolute bottom-0 left-0 right-0 z-[1000] bg-black/95 backdrop-blur-md h-96">
+          <div className="flex items-center justify-between p-4 border-b border-gray-700">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-400" />
+              <span className="text-white font-medium">Perfect Day</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button onClick={goToAIChat} className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1">
+                Zum Chat
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowPerfectDayPanel(false)}
+                className="text-white hover:bg-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="p-4 overflow-y-auto h-full">
+            <div dangerouslySetInnerHTML={{ __html: perfectDayMessage }} />
+          </div>
+        </div>
+      )}
+
+      {/* AI Chat Drawer */}
+      {showAIChat && (
+        <>
+          <div
+            className="fixed inset-0 z-[900] bg-black/60 backdrop-blur-sm animate-fade-in"
+            onClick={() => setShowAIChat(false)}
+          />
+          <div className="fixed bottom-16 left-0 right-0 z-[1200] animate-slide-in-bottom">
+            <div className="bg-gradient-to-t from-black via-gray-950/95 to-gray-900/90 backdrop-blur-2xl rounded-t-3xl shadow-2xl border-t-2 border-red-500/30 h-[26vh] flex flex-col">
+              <div className="flex justify-center py-3 cursor-pointer" onClick={() => setShowAIChat(false)}>
+                <div className="w-12 h-1.5 bg-white/20 rounded-full hover:bg-white/30 transition-colors"></div>
+              </div>
+
+              <div className="px-6 pb-4 flex items-center justify-between border-b border-red-500/20">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-red-500/30 rounded-full blur-lg animate-pulse"></div>
+                    <Avatar className="relative w-12 h-12 ring-2 ring-red-400/30 shadow-lg shadow-red-500/50">
+                      <AvatarImage src="/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png" />
+                      <AvatarFallback className="bg-gradient-to-br from-red-600 to-red-800 text-white font-bold">
+                        MIA
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-white tracking-tight">MIA</h2>
+                    <p className="text-xs text-red-400 font-medium">Deine Event Assistentin</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowAIChat(false)}
+                  className="text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all h-10 w-10"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+
+              <div className="flex-1 overflow-hidden min-h-0">
+                <FullPageChatBot
+                  chatLogic={chatLogic}
+                  activeChatModeValue="ai"
+                  communityGroupId=""
+                  hideInput={true}
+                  externalInput={aiChatInput}
+                  setExternalInput={setAiChatInput}
+                  onExternalSendHandlerChange={setAiChatExternalSendHandler}
+                  embedded={true}
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Event Form Dialog */}
+      <Dialog open={isEventFormOpen} onOpenChange={setIsEventFormOpen}>
+        <DialogContent className="z-[1100] bg-black/95 backdrop-blur-md border-gray-700 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Plus className="w-5 h-5 text-red-500" />
+              Community Event hinzufügen
+            </DialogTitle>
+          </DialogHeader>
+          <EventForm
+            onAddEvent={handleOpenEventForm}
+            onSuccess={() => setIsEventFormOpen(false)}
+            onCancel={() => setIsEventFormOpen(false)}
+            selectedDate={new Date()}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Private Chat Dialog */}
+      <PrivateChat
+        open={isPrivateChatOpen}
+        onOpenChange={setIsPrivateChatOpen}
+        currentUser={currentUser}
+        otherUser={selectedUserForPrivateChat}
+      />
+
+      {/* Tribe Finder Dialog */}
+      <TribeFinder open={isTribeFinderOpen} onOpenChange={setIsTribeFinderOpen} />
+
+      {/* Tribe Spot Dialog */}
+      <Dialog open={isTribeSpotDialogOpen} onOpenChange={setIsTribeSpotDialogOpen}>
+        <DialogContent className="sm:max-w-md z-[9999]">
+          <DialogHeader>
+            <DialogTitle className="text-center">
+              <div className="text-4xl mb-2">🏛️</div>
+              <div className="text-xl font-bold">{selectedTribeSpot?.name}</div>
+              <div className="text-sm text-muted-foreground font-normal">
+                Tribe Spot • Treffpunkt für deine Community!
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4 mt-4">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-4">
+                Checke dich am {selectedTribeSpot?.name} ein und zeige anderen, dass du hier bist!
+                <br />
+                Dein Check-in wird im Community Chat geteilt, damit du dich mit Gleichgesinnten verbinden kannst.
+              </p>
+
+              {selectedTribeSpot && (
+                <div className="mb-4">
+                  {(() => {
+                    const usersAtSpot = allUserProfiles.filter((user) => {
+                      const hasLiveLocation =
+                        user.current_live_location_lat !== null && user.current_live_location_lng !== null;
+                      if (!hasLiveLocation) return false;
+
+                      const distance = Math.sqrt(
+                        Math.pow(user.current_live_location_lat! - selectedTribeSpot.lat, 2) +
+                          Math.pow(user.current_live_location_lng! - selectedTribeSpot.lng, 2),
+                      );
+                      return distance < 0.002;
+                    });
+
+                    return usersAtSpot.length > 0 ? (
+                      <div>
+                        <h4 className="text-sm font-semibold mb-2">🔥 Wer ist hier? ({usersAtSpot.length})</h4>
+                        <div className="flex flex-wrap gap-2 justify-center">
+                          {usersAtSpot.map((user) => (
+                            <div
+                              key={user.id}
+                              className="flex items-center gap-2 bg-muted px-2 py-1 rounded-full text-xs"
+                            >
+                              <img
+                                src={
+                                  user.avatar ||
+                                  `https://api.dicebear.com/7.x/initials/svg?seed=${getInitials(user.username)}`
+                                }
+                                className="w-4 h-4 rounded-full border"
+                                alt={user.username}
+                              />
+                              <span className="font-medium">{user.username}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setIsTribeSpotDialogOpen(false)} className="flex-1">
+                Abbrechen
+              </Button>
+              <Button
+                onClick={handleTribeSpotCheckIn}
+                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Check-in!
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Event Details Dialog - disabled for MIA inline mode */}
+      {false && showEventDetails && selectedEventForDetails && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+          <div className="relative z-[9999] w-full max-w-lg mx-auto">
+            <EventDetails
+              event={selectedEventForDetails}
+              onClose={() => setShowEventDetails(false)}
+              onJoinChat={handleJoinEventChat}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Event Chat Window */}
+      {eventChatWindow && (
+        <EventChatWindow
+          eventId={eventChatWindow.eventId}
+          eventTitle={eventChatWindow.eventTitle}
+          isOpen={eventChatWindow.isOpen}
+          onClose={() => setEventChatWindow(null)}
+        />
+      )}
+
+      {/* Event Swipe Mode */}
+      <EventSwipeMode
+        open={isSwipeModeOpen}
+        onOpenChange={setIsSwipeModeOpen}
+        events={filteredEvents}
+        onLikeEvent={handleEventLike}
+      />
+
+      {/* Location Blocking Dialog */}
+      <AlertDialog open={isBlockLocationDialogOpen} onOpenChange={setIsBlockLocationDialogOpen}>
+        <AlertDialogContent className="bg-gradient-to-br from-gray-900/95 to-black/95 backdrop-blur-xl border border-red-500/20">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white text-xl">
+              Alle Events von "{locationToBlock}" ausblenden?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-300">
+              Du hast bereits 2 Events von dieser Location ausgeblendet. Möchtest du alle zukünftigen Events von "
+              {locationToBlock}" automatisch ausblenden?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setIsBlockLocationDialogOpen(false);
+                setLocationToBlock(null);
+              }}
+              className="bg-gray-800 hover:bg-gray-700 text-white border-gray-700"
+            >
+              Nein, danke
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleBlockLocation} className="bg-red-600 hover:bg-red-700 text-white">
+              Ja, alle ausblenden
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};
+
+export default EventHeatmap;
