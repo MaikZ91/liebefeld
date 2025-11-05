@@ -872,7 +872,7 @@ const EventHeatmap: React.FC = () => {
       console.error("Check-in failed:", error);
       toast({
         title: "Fehler",
-        description: error.message || "Es gab ein Problem beim Einchecken.",
+        description: "Es gab ein Problem beim Einchecken.",
         variant: "destructive",
       });
     } finally {
@@ -912,6 +912,7 @@ const EventHeatmap: React.FC = () => {
     }
   };
 
+  // ============== MAP INITIALIZATION (Dark + Orange Streets) ==============
   useEffect(() => {
     if (!mapRef.current) {
       return;
@@ -943,11 +944,14 @@ const EventHeatmap: React.FC = () => {
           preferCanvas: false,
         });
 
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: "",
-          maxZoom: 19,
-          className: "map-tiles",
-        }).addTo(leafletMap);
+        // CARTO Dark tiles + orange tint via CSS on tile pane
+        const tiles = L.tileLayer(
+          "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+          { subdomains: "abcd", className: "tribe-tiles" }
+        );
+        tiles.addTo(leafletMap);
+        const tilePane = leafletMap.getPane("tilePane");
+        if (tilePane) tilePane.classList.add("tribe-orange-tiles");
 
         setMap(leafletMap);
 
@@ -983,6 +987,7 @@ const EventHeatmap: React.FC = () => {
     };
   }, []);
 
+  // ============== TRIBE SPOTS AS GLOWING DOTS ==============
   useEffect(() => {
     if (currentTribeSpotMarkersRef.current) {
       currentTribeSpotMarkersRef.current.forEach((marker) => {
@@ -1001,45 +1006,21 @@ const EventHeatmap: React.FC = () => {
     const newTribeSpotMarkers: L.Marker[] = [];
 
     tribeSpots.forEach((spot) => {
-      const iconHtml = `
+      const dotHtml = `
         <div style="
-          background: #000000;
-          color: white;
-          border-radius: 50%;
-          width: 50px;
-          height: 50px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          border: 3px solid #d4af37;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-          cursor: pointer;
-          font-family: 'Inter', sans-serif;
-          text-align: center;
-          position: relative;
-          transition: all 0.3s ease;
-        "
-        onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 4px 16px rgba(212,175,55,0.4)';"
-        onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.3)';">
-          <div style="
-            font-size: 8px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            line-height: 1.1;
-            word-break: break-word;
-            max-width: 40px;
-          ">
-            ${spot.name}
+          width:10px;height:10px;border-radius:9999px;
+          background: radial-gradient(circle at 50% 50%, rgba(255,160,64,1) 0%, rgba(255,80,0,1) 60%, rgba(255,80,0,0.1) 100%);
+          box-shadow: 0 0 10px rgba(255,120,40,.9), 0 0 24px rgba(255,120,40,.4);
+          animation: tribePulse 1.6s ease-in-out infinite;
+        "></div>
       `;
 
       const customIcon = L.divIcon({
-        html: iconHtml,
-        className: "custom-tribe-spot-marker",
-        iconSize: [50, 50],
-        iconAnchor: [25, 25],
-        popupAnchor: [0, -25],
+        html: dotHtml,
+        className: "tribe-spark",
+        iconSize: [10, 10],
+        iconAnchor: [5, 5],
+        popupAnchor: [0, -10],
       });
 
       const marker = L.marker([spot.lat, spot.lng], { icon: customIcon });
@@ -1047,17 +1028,6 @@ const EventHeatmap: React.FC = () => {
       marker.on("click", () => {
         setSelectedTribeSpot(spot);
         setIsTribeSpotDialogOpen(true);
-      });
-
-      const usersAtSpot = allUserProfiles.filter((user) => {
-        const hasLiveLocation = user.current_live_location_lat !== null && user.current_live_location_lng !== null;
-        if (!hasLiveLocation) return false;
-
-        const distance = Math.sqrt(
-          Math.pow(user.current_live_location_lat! - spot.lat, 2) +
-            Math.pow(user.current_live_location_lng! - spot.lng, 2),
-        );
-        return distance < 0.002;
       });
 
       try {
@@ -1082,6 +1052,7 @@ const EventHeatmap: React.FC = () => {
     };
   }, [map, selectedCity, allUserProfiles, currentUser, userProfile, refetchProfile]);
 
+  // ============== EVENT MARKERS ==============
   useEffect(() => {
     if (!map) {
       eventMarkers.forEach((marker) => {
@@ -1227,6 +1198,7 @@ const EventHeatmap: React.FC = () => {
     };
   }, [map, filteredEvents, selectedCity, eventCoordinates]);
 
+  // ============== USER MARKERS ==============
   useEffect(() => {
     if (!map) {
       userMarkers.forEach((marker) => {
@@ -1826,31 +1798,37 @@ const EventHeatmap: React.FC = () => {
           left: 0,
           right: 0,
           bottom: 0,
+          backgroundColor: "#000000",
         }}
       />
 
-      {/* === Styles (Map tint + Chips + Tight paragraphs) === */}
+      {/* === Styles (Urban map tint + Chips + Pulse) === */}
       <style>{`
-        .map-container {
-          background-color: #ff3333 !important;
+        /* Orange-Tint für Dark-Tiles */
+        .leaflet-tile-pane.tribe-orange-tiles .leaflet-layer,
+        .leaflet-tile-pane.tribe-orange-tiles .leaflet-tile {
+          filter: sepia(92%) saturate(380%) hue-rotate(340deg) brightness(0.85) contrast(1.25) !important;
         }
-        .map-container .leaflet-layer,
-        .map-container .leaflet-tile-pane,
-        .map-container .leaflet-tile {
-          filter: sepia(100%) saturate(400%) hue-rotate(355deg) brightness(0.7) contrast(1.6) !important;
+
+        /* Puls für Spots */
+        @keyframes tribePulse {
+          0%,100% { transform: scale(1); box-shadow: 0 0 10px rgba(255,120,40,.9), 0 0 24px rgba(255,120,40,.4); }
+          50%     { transform: scale(1.25); box-shadow: 0 0 16px rgba(255,160,64,1), 0 0 36px rgba(255,120,40,.6); }
         }
+
+        /* Zoom controls (falls du Leaflet-Controls aktivierst) */
         .map-container .leaflet-control-zoom-in,
         .map-container .leaflet-control-zoom-out {
-          background-color: rgba(0,0,0,0.8) !important;
-          color: #ff3333 !important;
-          border: 1px solid #ff3333 !important;
+          background-color: rgba(0,0,0,0.85) !important;
+          color: #ff6a00 !important;
+          border: 1px solid #ff6a00 !important;
         }
         .map-container .leaflet-control-zoom a:hover {
-          background-color: #ff3333 !important;
+          background-color: #ff6a00 !important;
           color: white !important;
         }
 
-        /* Inline chips for all anchors in AI content */
+        /* Inline chips für AI content */
         .ai-content a.ai-chip, .ai-chip {
           display: inline-flex;
           align-items: center;
