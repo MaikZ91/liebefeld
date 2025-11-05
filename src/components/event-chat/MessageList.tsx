@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import ChatMessage from '@/components/chat/ChatMessage';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,10 @@ const MessageList: React.FC<MessageListProps> = ({
   onJoinEventChat,
   onSuggestionClick
 }) => {
-  // Handler für Event-Links
+  const { events } = useEventContext();
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+
+  // Handler für Event-Links - zeigt Event-Details inline
   const handleEventLinkClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     const anchor = target.closest('a') as HTMLAnchorElement | null;
@@ -34,10 +37,12 @@ const MessageList: React.FC<MessageListProps> = ({
       if (href.startsWith('event://')) {
         e.preventDefault();
         const eventId = href.replace('event://', '');
-        if (eventId && (window as any).handleEventLinkClick) {
-          (window as any).handleEventLinkClick(eventId);
+        console.log('[MessageList] Event-Link geklickt:', eventId);
+        const event = events.find(ev => ev.id === eventId);
+        if (event) {
+          setSelectedEvent(event);
         } else {
-          console.warn('[MessageList] Kein globaler Handler für Event-Links gefunden oder leere ID');
+          console.warn('[MessageList] Event nicht gefunden:', eventId);
         }
       }
     }
@@ -54,14 +59,15 @@ const MessageList: React.FC<MessageListProps> = ({
       if (!href.startsWith('event://')) return;
       e.preventDefault();
       const eventId = href.slice('event://'.length);
-      console.log('[MessageList] Intercepted event:// click', { href, eventId });
-      if (eventId && (window as any).handleEventLinkClick) {
-        (window as any).handleEventLinkClick(eventId);
+      console.log('[MessageList] Global event:// click intercepted', { href, eventId });
+      const event = events.find(ev => ev.id === eventId);
+      if (event) {
+        setSelectedEvent(event);
       } else {
-        console.warn('[MessageList] Global handler fehlt oder ID leer');
+        console.warn('[MessageList] Event nicht gefunden:', eventId);
       }
     };
-    // Capture Phase: stelle sicher, dass wir den Klick bekommen – auch wenn Child-Elemente stoppen
+    // Capture Phase: stelle sicher, dass wir den Klick bekommen
     document.addEventListener('click', handler as EventListener, true);
     document.addEventListener('touchend', handler as EventListener, true);
     document.addEventListener('pointerup', handler as EventListener, true);
@@ -70,7 +76,7 @@ const MessageList: React.FC<MessageListProps> = ({
       document.removeEventListener('touchend', handler as EventListener, true);
       document.removeEventListener('pointerup', handler as EventListener, true);
     };
-  }, []);
+  }, [events]);
   // Es wird explizit nach dem statischen Willkommensprompt gesucht
   const welcomeMessage = messages.find(m => m.id === 'welcome');
   const typewriterPromptMessage = messages.find(m => m.id === 'typewriter-prompt');
@@ -122,10 +128,11 @@ const MessageList: React.FC<MessageListProps> = ({
                     panelData={message.panelData}
                     onEventSelect={(eventId) => {
                       console.log('Event selected:', eventId);
-                      if ((window as any).handleEventLinkClick) {
-                        (window as any).handleEventLinkClick(eventId);
+                      const event = events.find(ev => ev.id === eventId);
+                      if (event) {
+                        setSelectedEvent(event);
                       } else {
-                        console.warn('[MessageList] window.handleEventLinkClick not available');
+                        console.warn('[MessageList] Event nicht gefunden:', eventId);
                       }
                     }}
                     onJoinEventChat={onJoinEventChat}
@@ -199,6 +206,19 @@ const MessageList: React.FC<MessageListProps> = ({
             </div>
           );
         })}
+
+        {/* Event Details Inline - wenn Event ausgewählt wurde */}
+        {selectedEvent && (
+          <div className="animate-scale-in">
+            <EventDetails 
+              event={selectedEvent}
+              onClose={() => setSelectedEvent(null)}
+              onJoinChat={onJoinEventChat}
+              inline={true}
+            />
+          </div>
+        )}
+
         {isTyping && (
           <div className="rounded-2xl bg-gradient-to-br from-gray-900/70 to-black/70 backdrop-blur-sm border border-red-500/20 shadow-xl overflow-hidden max-w-[85%]">
             <div className="flex items-center gap-3 p-4">
