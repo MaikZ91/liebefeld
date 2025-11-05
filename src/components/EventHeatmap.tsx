@@ -945,19 +945,15 @@ const EventHeatmap: React.FC = () => {
         });
 
         // === Esri Dark Gray Map ===
-        const base = L.tileLayer(
-          "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-          {
-            attribution:
-              "Tiles © Esri — Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community",
-            className: "tribe-tiles",
-          },
-        ).addTo(leafletMap);
+        const base = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png", {
+          subdomains: "abcd",
+          className: "tribe-tiles tribe-black",
+        }).addTo(leafletMap);
 
-        // Labels Overlay für Straßennamen
+        // Labels: Referenz-Overlay (hellgrau, gut lesbar)
         const labels = L.tileLayer(
           "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
-          { attribution: "Labels © Esri" },
+          { className: "tribe-tiles tribe-labels" },
         ).addTo(leafletMap);
 
         setMap(leafletMap);
