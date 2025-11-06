@@ -269,6 +269,166 @@ export const useChatLogic = (
     saveGlobalQuery(query);
   }, [saveGlobalQuery]);
 
+  const handleAttendEvent = useCallback(async (eventId: string) => {
+    console.log('[useChatLogic] User attending event:', eventId);
+    const username = localStorage.getItem('community_chat_username') || 'Gast';
+    
+    setIsTyping(true);
+
+    try {
+      // Load event from DB
+      const { data: event, error: eventError } = await supabase
+        .from('community_events')
+        .select('*')
+        .eq('id', eventId)
+        .maybeSingle();
+
+      if (eventError || !event) {
+        console.error('[useChatLogic] Error loading event:', eventError);
+        throw new Error('Event nicht gefunden');
+      }
+
+      // Add user to liked_by_users - ensure we're working with an array
+      const likedByUsers = Array.isArray(event.liked_by_users) 
+        ? event.liked_by_users 
+        : [];
+      
+      const currentUserLike = {
+        username,
+        avatar_url: localStorage.getItem('community_chat_avatar') || null,
+        timestamp: new Date().toISOString()
+      };
+
+      // Check if user already liked
+      const alreadyLiked = likedByUsers.some((like: any) => like.username === username);
+
+      if (!alreadyLiked) {
+        const updatedLikedBy = [...likedByUsers, currentUserLike];
+        
+        // Update event in DB
+        const { error: updateError } = await supabase
+          .from('community_events')
+          .update({
+            likes: (event.likes || 0) + 1,
+            liked_by_users: updatedLikedBy
+          })
+          .eq('id', eventId);
+
+        if (updateError) {
+          console.error('[useChatLogic] Error updating event:', updateError);
+          throw new Error('Fehler beim Speichern');
+        }
+      }
+
+      // Reload event to get updated data
+      const { data: updatedEvent } = await supabase
+        .from('community_events')
+        .select('*')
+        .eq('id', eventId)
+        .single();
+
+      const attendees = Array.isArray(updatedEvent?.liked_by_users) 
+        ? updatedEvent.liked_by_users 
+        : [];
+      const attendeeCount = attendees.length;
+
+      // Generate MIA response
+      const responseHtml = `
+        <div class="space-y-3">
+          <p class="text-white/90 text-base">
+            Schön, dass du dabei bist! 🎉
+          </p>
+          ${attendeeCount > 1 ? `
+            <div class="bg-gradient-to-r from-red-900/30 to-pink-900/30 border border-red-500/20 rounded-lg p-3">
+              <p class="text-white/80 text-sm mb-2">
+                <strong>${attendeeCount} ${attendeeCount === 1 ? 'Person ist' : 'Personen sind'}</strong> auch dabei:
+              </p>
+              <div class="flex flex-wrap gap-1.5">
+                ${attendees.map((a: any) => `
+                  <span class="bg-red-500/20 text-white text-xs px-2 py-1 rounded-full border border-red-500/30">
+                    ${a.username}
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+          ` : `
+            <p class="text-white/70 text-sm">
+              Du bist die erste Person, die sich für dieses Event interessiert! 💫
+            </p>
+          `}
+          <p class="text-white/80 text-sm mt-3">
+            Soll ich ein Treffen in der Community vorschlagen?
+          </p>
+        </div>
+      `;
+
+      const suggestions = ['Treffen vorschlagen', 'Weitere Events anzeigen', 'Event teilen'];
+
+      const aiMessage: ChatMessage = {
+        id: `ai-attend-${Date.now()}`,
+        isUser: false,
+        text: '',
+        html: responseHtml,
+        suggestions,
+        timestamp: new Date().toISOString(),
+        metadata: { eventId, eventTitle: event.title }
+      };
+
+      setMessages(prev => [...prev, aiMessage]);
+
+      if (onAiResponseReceived) {
+        onAiResponseReceived(responseHtml, suggestions);
+      }
+
+      toast.success(`Du bist jetzt bei "${event.title}" dabei!`);
+
+    } catch (error) {
+      console.error('[useChatLogic] Error in handleAttendEvent:', error);
+      toast.error('Fehler beim Beitreten zum Event');
+    } finally {
+      setIsTyping(false);
+    }
+  }, [onAiResponseReceived]);
+
+  const handleProposeMeetup = useCallback(async (eventId: string, eventTitle: string) => {
+    console.log('[useChatLogic] Proposing meetup for event:', eventId);
+    
+    // Ask for meetup details
+    const promptHtml = `
+      <div class="space-y-3">
+        <p class="text-white/90 text-base">
+          Super! Lass uns ein Treffen organisieren. 📅
+        </p>
+        <p class="text-white/80 text-sm">
+          Beantworte bitte folgende Fragen:
+        </p>
+        <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-3 space-y-2 text-sm">
+          <div>1️⃣ Wann sollen wir uns treffen?</div>
+          <div>2️⃣ Wo ist der Treffpunkt?</div>
+          <div>3️⃣ Gibt es weitere Hinweise?</div>
+        </div>
+        <p class="text-white/70 text-xs mt-2">
+          Schreibe mir einfach die Details und ich poste sie im Community-Chat!
+        </p>
+      </div>
+    `;
+
+    const aiMessage: ChatMessage = {
+      id: `ai-meetup-prompt-${Date.now()}`,
+      isUser: false,
+      text: '',
+      html: promptHtml,
+      timestamp: new Date().toISOString(),
+      metadata: { awaitingMeetupDetails: true, eventId, eventTitle }
+    };
+
+    setMessages(prev => [...prev, aiMessage]);
+
+    if (onAiResponseReceived) {
+      onAiResponseReceived(promptHtml, []);
+    }
+  }, [onAiResponseReceived]);
+
   const handleSendMessage = async (customInput?: string) => {
     const message = customInput || input;
     if (!message.trim()) return;
@@ -279,6 +439,78 @@ export const useChatLogic = (
       return;
     }
     isSendingRef.current = true;
+
+    // Check if user clicked "Treffen vorschlagen"
+    if (message === 'Treffen vorschlagen') {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage?.metadata?.eventId) {
+        handleProposeMeetup(lastMessage.metadata.eventId, lastMessage.metadata.eventTitle);
+        setInput('');
+        isSendingRef.current = false;
+        return;
+      }
+    }
+
+    // Check if we're awaiting meetup details
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.metadata?.awaitingMeetupDetails) {
+      const username = localStorage.getItem('community_chat_username') || 'Gast';
+      const eventTitle = lastMessage.metadata.eventTitle;
+      
+      // Send meetup proposal to community chat
+      try {
+        const { error } = await supabase
+          .from('chat_messages')
+          .insert({
+            group_id: 'spot',
+            sender: 'MIA',
+            text: `🎉 Meetup-Vorschlag für "${eventTitle}"!\n\n${username} schlägt vor:\n${message}\n\nWer ist dabei? Antwortet hier im Chat! 💬`,
+            avatar: '/lovable-uploads/c38064ee-a32f-4ecc-b148-f9c53c28d472.png'
+          });
+
+        if (error) {
+          console.error('[useChatLogic] Error posting meetup to community:', error);
+          toast.error('Fehler beim Posten im Community-Chat');
+        } else {
+          toast.success('Meetup-Vorschlag wurde im Community-Chat gepostet!');
+          
+          const confirmHtml = `
+            <div class="space-y-3">
+              <p class="text-white/90 text-base">
+                Perfekt! Dein Meetup-Vorschlag wurde im Community-Chat gepostet! 🎊
+              </p>
+              <div class="bg-gradient-to-r from-green-900/30 to-emerald-900/30 border border-green-500/20 rounded-lg p-3">
+                <p class="text-white/80 text-sm">
+                  Die Community kann jetzt auf deinen Vorschlag antworten. Schau im Chat nach! 💬
+                </p>
+              </div>
+            </div>
+          `;
+
+          const aiMessage: ChatMessage = {
+            id: `ai-meetup-confirm-${Date.now()}`,
+            isUser: false,
+            text: '',
+            html: confirmHtml,
+            suggestions: ['Zum Community-Chat', 'Weitere Events anzeigen'],
+            timestamp: new Date().toISOString(),
+          };
+
+          setMessages(prev => [...prev, aiMessage]);
+
+          if (onAiResponseReceived) {
+            onAiResponseReceived(confirmHtml, aiMessage.suggestions || []);
+          }
+        }
+      } catch (error) {
+        console.error('[useChatLogic] Error posting meetup:', error);
+        toast.error('Fehler beim Posten des Meetup-Vorschlags');
+      }
+      
+      setInput('');
+      isSendingRef.current = false;
+      return;
+    }
 
     // Check für Event-Kontext-Fragen
     const lowerQuery = message.toLowerCase();
@@ -689,15 +921,19 @@ export const useChatLogic = (
   useEffect(() => {
     if (typeof window !== 'undefined') {
       (window as any).chatbotQuery = handleExternalQuery;
-      console.log("[useChatLogic] Registered window.chatbotQuery function");
+      (window as any).handleAttendEvent = handleAttendEvent;
+      (window as any).handleProposeMeetup = handleProposeMeetup;
+      console.log("[useChatLogic] Registered window functions");
     }
     
     return () => {
       if (typeof window !== 'undefined') {
         (window as any).chatbotQuery = undefined;
+        (window as any).handleAttendEvent = undefined;
+        (window as any).handleProposeMeetup = undefined;
       }
     };
-  }, []);
+  }, [handleAttendEvent, handleProposeMeetup]);
 
   useEffect(() => {
     const savedMessages = localStorage.getItem(CHAT_HISTORY_KEY);
@@ -836,7 +1072,167 @@ export const useChatLogic = (
     setShowRecentQueries(!showRecentQueries);
   };
   
-  // Handler für Event-Link-Klicks
+  const handleEventLinkClick = async (eventId: string) => {
+    console.log('[useChatLogic] User attending event:', eventId);
+    const username = localStorage.getItem('community_chat_username') || 'Gast';
+    
+    setIsTyping(true);
+
+    try {
+      // Load event from DB
+      const { data: event, error: eventError } = await supabase
+        .from('community_events')
+        .select('*')
+        .eq('id', eventId)
+        .maybeSingle();
+
+      if (eventError || !event) {
+        console.error('[useChatLogic] Error loading event:', eventError);
+        throw new Error('Event nicht gefunden');
+      }
+
+      // Add user to liked_by_users - ensure we're working with an array
+      const likedByUsers = Array.isArray(event.liked_by_users) 
+        ? event.liked_by_users 
+        : [];
+      
+      const currentUserLike = {
+        username,
+        avatar_url: localStorage.getItem('community_chat_avatar') || null,
+        timestamp: new Date().toISOString()
+      };
+
+      // Check if user already liked
+      const alreadyLiked = likedByUsers.some((like: any) => like.username === username);
+
+      if (!alreadyLiked) {
+        const updatedLikedBy = [...likedByUsers, currentUserLike];
+        
+        // Update event in DB
+        const { error: updateError } = await supabase
+          .from('community_events')
+          .update({
+            likes: (event.likes || 0) + 1,
+            liked_by_users: updatedLikedBy
+          })
+          .eq('id', eventId);
+
+        if (updateError) {
+          console.error('[useChatLogic] Error updating event:', updateError);
+          throw new Error('Fehler beim Speichern');
+        }
+      }
+
+      // Reload event to get updated data
+      const { data: updatedEvent } = await supabase
+        .from('community_events')
+        .select('*')
+        .eq('id', eventId)
+        .single();
+
+      const attendees = Array.isArray(updatedEvent?.liked_by_users) 
+        ? updatedEvent.liked_by_users 
+        : [];
+      const attendeeNames = attendees.map((a: any) => a.username).join(', ');
+      const attendeeCount = attendees.length;
+
+      // Generate MIA response
+      const responseHtml = `
+        <div class="space-y-3">
+          <p class="text-white/90 text-base">
+            Schön, dass du dabei bist! 🎉
+          </p>
+          ${attendeeCount > 1 ? `
+            <div class="bg-gradient-to-r from-red-900/30 to-pink-900/30 border border-red-500/20 rounded-lg p-3">
+              <p class="text-white/80 text-sm mb-2">
+                <strong>${attendeeCount} ${attendeeCount === 1 ? 'Person ist' : 'Personen sind'}</strong> auch dabei:
+              </p>
+              <div class="flex flex-wrap gap-1.5">
+                ${attendees.map((a: any) => `
+                  <span class="bg-red-500/20 text-white text-xs px-2 py-1 rounded-full border border-red-500/30">
+                    ${a.username}
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+          ` : `
+            <p class="text-white/70 text-sm">
+              Du bist die erste Person, die sich für dieses Event interessiert! 💫
+            </p>
+          `}
+          <p class="text-white/80 text-sm mt-3">
+            Soll ich ein Treffen in der Community vorschlagen?
+          </p>
+        </div>
+      `;
+
+      const suggestions = ['Treffen vorschlagen', 'Weitere Events anzeigen', 'Event teilen'];
+
+      const aiMessage: ChatMessage = {
+        id: `ai-attend-${Date.now()}`,
+        isUser: false,
+        text: '',
+        html: responseHtml,
+        suggestions,
+        timestamp: new Date().toISOString(),
+        metadata: { eventId, eventTitle: event.title }
+      };
+
+      setMessages(prev => [...prev, aiMessage]);
+
+      if (onAiResponseReceived) {
+        onAiResponseReceived(responseHtml, suggestions);
+      }
+
+      toast.success(`Du bist jetzt bei "${event.title}" dabei!`);
+
+    } catch (error) {
+      console.error('[useChatLogic] Error in handleAttendEvent:', error);
+      toast.error('Fehler beim Beitreten zum Event');
+    } finally {
+      setIsTyping(false);
+    }
+  }, [onAiResponseReceived]);
+
+  const handleProposeMeetup = useCallback(async (eventId: string, eventTitle: string) => {
+    console.log('[useChatLogic] Proposing meetup for event:', eventId);
+    
+    // Ask for meetup details
+    const promptHtml = `
+      <div class="space-y-3">
+        <p class="text-white/90 text-base">
+          Super! Lass uns ein Treffen organisieren. 📅
+        </p>
+        <p class="text-white/80 text-sm">
+          Beantworte bitte folgende Fragen:
+        </p>
+        <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-3 space-y-2 text-sm">
+          <div>1️⃣ Wann sollen wir uns treffen?</div>
+          <div>2️⃣ Wo ist der Treffpunkt?</div>
+          <div>3️⃣ Gibt es weitere Hinweise?</div>
+        </div>
+        <p class="text-white/70 text-xs mt-2">
+          Schreibe mir einfach die Details und ich poste sie im Community-Chat!
+        </p>
+      </div>
+    `;
+
+    const aiMessage: ChatMessage = {
+      id: `ai-meetup-prompt-${Date.now()}`,
+      isUser: false,
+      text: '',
+      html: promptHtml,
+      timestamp: new Date().toISOString(),
+      metadata: { awaitingMeetupDetails: true, eventId, eventTitle }
+    };
+
+    setMessages(prev => [...prev, aiMessage]);
+
+    if (onAiResponseReceived) {
+      onAiResponseReceived(promptHtml, []);
+    }
+  }, [onAiResponseReceived]);
+
   const handleEventLinkClick = async (eventId: string) => {
     console.log('[useChatLogic] Event link clicked:', eventId);
     setIsTyping(true);
@@ -1011,6 +1407,8 @@ export const useChatLogic = (
     clearChatHistory,
     exportChatHistory,
     handleEventLinkClick,
+    handleAttendEvent,
+    handleProposeMeetup,
     showAnimatedPrompts: false
   };
 };

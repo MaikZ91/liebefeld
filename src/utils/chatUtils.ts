@@ -277,6 +277,7 @@ export const formatEventListItem = (event: any) => {
   const location = cleanTextContent(event.location || 'Ort nicht angegeben');
   const category = cleanTextContent(event.category || 'Sonstiges');
   const date = cleanTextContent(event.date || '');
+  const eventId = event.id || '';
   
   return `
     <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-3 mb-2">
@@ -296,10 +297,16 @@ export const formatEventListItem = (event: any) => {
           </svg>
           <span style="color: white !important;">${location}</span>
         </div>
-        <div class="mt-1">
+        <div class="mt-2 flex items-center justify-between">
           <span class="bg-red-500/70 text-white text-xs px-2 py-0.5 rounded inline-block">
             ${category}
           </span>
+          <button 
+            onclick="window.handleAttendEvent && window.handleAttendEvent('${eventId}')" 
+            class="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white text-xs px-3 py-1.5 rounded-full font-medium transition-all duration-200 hover:scale-105 active:scale-95"
+          >
+            Ich bin dabei 🎉
+          </button>
         </div>
       </div>
     </div>

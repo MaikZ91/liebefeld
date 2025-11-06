@@ -16,6 +16,11 @@ export interface ChatMessage {
   examplePrompts?: string[]; 
   isEventNotification?: boolean;
   suggestions?: string[];
+  metadata?: {
+    eventId?: string;
+    eventTitle?: string;
+    awaitingMeetupDetails?: boolean;
+  };
 }
 
 export interface PanelEventData {
