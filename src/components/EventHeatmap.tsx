@@ -179,6 +179,7 @@ const EventHeatmap: React.FC = () => {
   const [aiResponse, setAiResponse] = useState<string | null>(null);
   const [showAiResponse, setShowAiResponse] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [currentAiEventContext, setCurrentAiEventContext] = useState<{ id: string; title: string } | null>(null);
 
   // ====== NEW: make anchors render as inline chips in AI HTML ======
   const enhanceLinksToChips = (html: string) => {
@@ -230,6 +231,7 @@ const EventHeatmap: React.FC = () => {
         </div>
         <div class="text-white/90 text-sm leading-5">${safeDesc}</div>
         <div class="flex flex-wrap gap-2 pt-2">
+          <a href="event://attend/${eid}" class="ai-chip">🎉 Ich bin dabei</a>
           <a href="event://${eid}" class="ai-chip">Auf Karte zeigen</a>
           <a href="event://similar?cat=${encodeURIComponent(cat)}" class="ai-chip">Ähnliche Events</a>
           <a href="event://save/${eid}" class="ai-chip">Speichern ⭐</a>
@@ -263,7 +265,8 @@ const EventHeatmap: React.FC = () => {
 
       const desc = (data as any)?.description || (data as any)?.response || "";
       const html = renderEventHtml(evt, desc);
-      handleAiResponseReceived(html, ["Weitere Events heute", "Events am Wochenende"]);
+      setCurrentAiEventContext({ id: (evt.id || `${evt.title}-${evt.date}-${evt.time}`), title: evt.title });
+      handleAiResponseReceived(html, ["🎉 Ich bin dabei", "Treffen vorschlagen", "Weitere Events heute", "Events am Wochenende"]);
     } catch (e) {
       toast.error("Konnte Eventbeschreibung nicht laden");
       const html = renderEventHtml(evt, "Keine Beschreibung verfügbar. Versuche es später erneut.");
@@ -344,6 +347,11 @@ const EventHeatmap: React.FC = () => {
       if (href.startsWith("event://save/")) {
         const eventId = href.replace("event://save/", "");
         (window as any).saveEvent?.(eventId);
+        return;
+      }
+      if (href.startsWith("event://attend/")) {
+        const eventId = href.replace("event://attend/", "");
+        (window as any).handleAttendEvent?.(eventId);
         return;
       }
 
@@ -1944,6 +1952,19 @@ const EventHeatmap: React.FC = () => {
                             key={i}
                             onClick={async () => {
                               try {
+                                // Special handling for inline suggestions
+                                if (s === '🎉 Ich bin dabei' || s === 'Ich bin dabei') {
+                                  if (currentAiEventContext?.id) {
+                                    (window as any).handleAttendEvent?.(currentAiEventContext.id);
+                                    return;
+                                  }
+                                }
+                                if (s === 'Treffen vorschlagen') {
+                                  if (currentAiEventContext?.id) {
+                                    (window as any).handleProposeMeetup?.(currentAiEventContext.id, currentAiEventContext.title);
+                                    return;
+                                  }
+                                }
                                 setAiChatInput(s);
                                 setAiResponse(null);
                                 setAiSuggestions([]);
