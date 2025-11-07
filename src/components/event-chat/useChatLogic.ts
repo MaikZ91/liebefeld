@@ -451,6 +451,17 @@ export const useChatLogic = (
       }
     }
 
+    // Check if user clicked "Ich bin dabei"
+    if (message === '🎉 Ich bin dabei' || message === 'Ich bin dabei') {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage?.metadata?.eventId) {
+        handleAttendEvent(lastMessage.metadata.eventId);
+        setInput('');
+        isSendingRef.current = false;
+        return;
+      }
+    }
+
     // Check if we're awaiting meetup details
     const lastMessage = messages[messages.length - 1];
     if (lastMessage?.metadata?.awaitingMeetupDetails) {
@@ -1125,10 +1136,10 @@ export const useChatLogic = (
       `;
 
       const suggestions = [
+        '🎉 Ich bin dabei',
         'Wann fängt das an?',
         'Zeig mir ähnliche Events',
-        'Was kostet das?',
-        'Wie komme ich dahin?'
+        'Was kostet das?'
       ];
 
       const aiMessage: ChatMessage = {
@@ -1138,6 +1149,7 @@ export const useChatLogic = (
         html: detailHtml,
         suggestions,
         timestamp: new Date().toISOString(),
+        metadata: { eventId: event.id, eventTitle: event.title }
       };
 
       setMessages(prev => [...prev, aiMessage]);
