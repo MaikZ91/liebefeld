@@ -1108,6 +1108,9 @@ export const useChatLogic = (
           </div>
           ${event.description ? `<p class="text-sm text-white/80 leading-relaxed">${event.description}</p>` : ''}
           <div class="flex flex-wrap gap-2 pt-2">
+            <button onclick="window.handleAttendEvent && window.handleAttendEvent('${event.id}')" class="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white text-sm font-medium rounded-lg transition-all duration-200 hover:scale-105 active:scale-95">
+              🎉 Ich bin dabei
+            </button>
             <button onclick="window.showEventOnMap && window.showEventOnMap('${event.id}')" class="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 rounded-lg text-sm font-medium transition-colors">
               🗺️ Auf Karte zeigen
             </button>
