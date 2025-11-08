@@ -1,6 +1,6 @@
 import React, { useState, memo } from 'react';
 import { type Event, normalizeRsvpCounts } from '../types/eventTypes';
-import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign, ThumbsDown } from 'lucide-react';
+import { Music, PartyPopper, Image, Dumbbell, Calendar, Clock, MapPin, Users, Landmark, Heart, ExternalLink, BadgePlus, DollarSign, ThumbsDown, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { useEventContext } from '@/contexts/EventContext';
 import EventLikeButton from "./EventLikeButton";
 import EventLikeAvatars from './event-chat/EventLikeAvatars';
 import { dislikeService } from '@/services/dislikeService';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface EventCardProps {
   event: Event;
@@ -63,6 +64,9 @@ const isEventNew = (event: Event): boolean => {
 const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, compact = false, monochrome = false, onDislike }) => {
   const { handleLikeEvent } = useEventContext();
   const [isLiking, setIsLiking] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [description, setDescription] = useState<string>('');
+  const [isLoadingDescription, setIsLoadingDescription] = useState(false);
 
   // Helper um Likes zu zeigen (State bevorzugt, sonst Fallback):
   const currentLikes = event.likes || 0;
@@ -107,18 +111,68 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     }
   };
 
+  const handleCardClick = async (e: React.MouseEvent) => {
+    // Don't expand if clicking on buttons or links
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('a')) {
+      return;
+    }
+
+    if (onClick) {
+      onClick();
+      return;
+    }
+
+    // Toggle expansion
+    const newExpanded = !isExpanded;
+    setIsExpanded(newExpanded);
+
+    // Load description if expanding and not already loaded
+    if (newExpanded && !description && !isLoadingDescription) {
+      setIsLoadingDescription(true);
+      try {
+        const response = await fetch('https://pxbpscfhrvnsawegqvpe.supabase.co/functions/v1/fetch-event-description', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventLink: event.link,
+            eventData: {
+              title: event.title,
+              category: event.category,
+              location: event.location,
+              organizer: event.organizer
+            }
+          })
+        });
+        
+        const data = await response.json();
+        setDescription(data.description || 'Keine Beschreibung verfügbar.');
+      } catch (error) {
+        console.error('Error fetching description:', error);
+        setDescription('Beschreibung konnte nicht geladen werden.');
+      } finally {
+        setIsLoadingDescription(false);
+      }
+    }
+  };
+
   const rsvpCounts = normalizeRsvpCounts(event);
 
   if (compact) {
     return (
-      <div
-        className={cn(
-          "bg-card text-card-foreground border border-border rounded-lg p-1.5 cursor-pointer hover-scale mb-0.5 w-full",
-          isTribe && "border-l-2 border-purple-500 bg-gradient-to-r from-purple-900/20 to-transparent",
-          className
-        )}
-        onClick={onClick}
-      >
+      <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+        <div
+          className={cn(
+            "bg-card text-card-foreground border border-border rounded-lg mb-0.5 w-full transition-all duration-200",
+            isTribe && "border-l-2 border-purple-500 bg-gradient-to-r from-purple-900/20 to-transparent",
+            className
+          )}
+        >
+          <CollapsibleTrigger asChild>
+            <div 
+              className="p-1.5 cursor-pointer hover-scale"
+              onClick={handleCardClick}
+            >
         <div className="flex items-start gap-2">
           {event.image_url && (
             <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden">
@@ -230,23 +284,54 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
                   />
                 )}
               </div>
+
+              {/* Expand/Collapse indicator */}
+              <div className="ml-1">
+                {isExpanded ? (
+                  <ChevronUp className="w-3 h-3 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+            </div>
+      </CollapsibleTrigger>
+
+      <CollapsibleContent className="px-1.5 pb-2 animate-accordion-down">
+        <div className="mt-2 p-3 bg-background/50 backdrop-blur-sm rounded-lg border border-border/50">
+          {isLoadingDescription ? (
+            <div className="flex items-center justify-center py-4">
+              <div className="animate-pulse text-xs text-muted-foreground">Lade Beschreibung...</div>
+            </div>
+          ) : (
+            <p className="text-xs text-foreground/90 leading-relaxed whitespace-pre-wrap">
+              {description || 'Klicke, um die Beschreibung zu laden.'}
+            </p>
+          )}
+        </div>
+      </CollapsibleContent>
+    </div>
+    </Collapsible>
     );
   }
 
   // Non-compact version
   return (
-    <div
-      className={cn(
-        "bg-card text-card-foreground border border-border rounded-xl p-4 cursor-pointer hover-scale w-full",
-        isTribe && "border-l-4 border-purple-500 bg-gradient-to-r from-purple-900/20 to-transparent",
-        className
-      )}
-      onClick={onClick}
-    >
+    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+      <div
+        className={cn(
+          "bg-card text-card-foreground border border-border rounded-xl w-full transition-all duration-200",
+          isTribe && "border-l-4 border-purple-500 bg-gradient-to-r from-purple-900/20 to-transparent",
+          className
+        )}
+      >
+        <CollapsibleTrigger asChild>
+          <div 
+            className="p-4 cursor-pointer hover-scale"
+            onClick={handleCardClick}
+          >
       <div className="flex justify-between items-start mb-2 gap-2">
         <div className="flex flex-col w-4/5">
           <div className="flex flex-wrap gap-1 mb-1">
@@ -313,48 +398,74 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
             {!monochrome && event.category}
           </Badge>
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDislike}
-              className="h-8 w-8 p-0 hover:bg-red-500/20"
-            >
-              <ThumbsDown className="w-4 h-4 text-red-400" />
-            </Button>
-            
-            <div className="flex flex-col items-end gap-2">
-              <EventLikeButton
-                likes={currentLikes}
-                isLiking={isLiking}
-                onLike={handleLike}
-              />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDislike}
+                className="h-8 w-8 p-0 hover:bg-red-500/20"
+              >
+                <ThumbsDown className="w-4 h-4 text-red-400" />
+              </Button>
               
-              {/* Like Avatars for normal view */}
-              {event.liked_by_users && event.liked_by_users.length > 0 && (
-                <EventLikeAvatars 
-                  likedByUsers={event.liked_by_users} 
-                  maxVisible={3}
-                  size="sm"
+              <div className="flex flex-col items-end gap-2">
+                <EventLikeButton
+                  likes={currentLikes}
+                  isLiking={isLiking}
+                  onLike={handleLike}
                 />
-              )}
+                
+                {/* Like Avatars for normal view */}
+                {event.liked_by_users && event.liked_by_users.length > 0 && (
+                  <EventLikeAvatars 
+                    likedByUsers={event.liked_by_users} 
+                    maxVisible={3}
+                    size="sm"
+                  />
+                )}
+              </div>
+
+              {/* Expand/Collapse indicator */}
+              <div className="ml-2">
+                {isExpanded ? (
+                  <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="flex items-center gap-2 text-sm text-white">
-        <div className="flex items-center">
-          <Clock className="w-4 h-4 mr-1 flex-shrink-0" />
-          <span>{event.time} Uhr</span>
+        <div className="flex items-center gap-2 text-sm text-white px-4 pb-4">
+          <div className="flex items-center">
+            <Clock className="w-4 h-4 mr-1 flex-shrink-0" />
+            <span>{event.time} Uhr</span>
+          </div>
+          <span className="mx-1">•</span>
+          <div className="flex items-center overflow-hidden">
+            <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+            <span className="break-words">{event.location}</span>
+          </div>
         </div>
-        <span className="mx-1">•</span>
-        <div className="flex items-center overflow-hidden">
-          <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
-          <span className="break-words">{event.location}</span>
+          </div>
+      </CollapsibleTrigger>
+
+      <CollapsibleContent className="px-4 pb-4 animate-accordion-down">
+        <div className="p-4 bg-background/50 backdrop-blur-sm rounded-lg border border-border/50">
+          {isLoadingDescription ? (
+            <div className="flex items-center justify-center py-6">
+              <div className="animate-pulse text-sm text-muted-foreground">Lade Beschreibung...</div>
+            </div>
+          ) : (
+            <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
+              {description || 'Klicke, um die Beschreibung zu laden.'}
+            </p>
+          )}
         </div>
-      </div>
+      </CollapsibleContent>
     </div>
+    </Collapsible>
   );
 });
 
