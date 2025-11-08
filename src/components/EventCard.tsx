@@ -123,12 +123,17 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
       return;
     }
 
-    // Toggle expansion
-    const newExpanded = !isExpanded;
-    setIsExpanded(newExpanded);
+    // If collapsing, just toggle
+    if (isExpanded) {
+      setIsExpanded(false);
+      return;
+    }
 
-    // Load description if expanding and not already loaded
-    if (newExpanded && !description && !isLoadingDescription) {
+    // Expanding: open immediately and load description
+    setIsExpanded(true);
+
+    // Load description if not already loaded
+    if (!description && !isLoadingDescription) {
       setIsLoadingDescription(true);
       try {
         const response = await fetch('https://pxbpscfhrvnsawegqvpe.supabase.co/functions/v1/fetch-event-description', {
