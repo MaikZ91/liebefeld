@@ -11,6 +11,7 @@ import { useEventNotifications } from '@/hooks/useEventNotifications';
 import { createEventNotificationMessage, getNewEventsFromIds } from '@/utils/eventNotificationUtils';
 import { useEventContext } from '@/contexts/EventContext';
 import { useDailyPerfectDay } from '@/hooks/useDailyPerfectDay';
+import { createCitySpecificGroupId } from '@/utils/groupIdUtils';
 
 // Define a key for localStorage to track if the app has been launched before
 const APP_LAUNCHED_KEY = 'app_launched_before';
@@ -468,12 +469,18 @@ export const useChatLogic = (
       const username = localStorage.getItem('community_chat_username') || 'Gast';
       const eventTitle = lastMessage.metadata.eventTitle;
       
+      // Determine the correct community group ID based on selected city
+      const cityAbbr = selectedCity || 'BI'; // Default to Bielefeld if no city is selected
+      const communityGroupId = createCitySpecificGroupId('Ausgehen', cityAbbr);
+      
+      console.log('[useChatLogic] Posting meetup to group:', communityGroupId);
+      
       // Send meetup proposal to community chat
       try {
         const { error } = await supabase
           .from('chat_messages')
           .insert({
-            group_id: 'spot',
+            group_id: communityGroupId,
             sender: 'MIA',
             text: `🎉 Meetup-Vorschlag für "${eventTitle}"!\n\n${username} schlägt vor:\n${message}\n\nWer ist dabei? Antwortet hier im Chat! 💬`,
             avatar: '/lovable-uploads/c38064ee-a32f-4ecc-b148-f9c53c28d472.png'
