@@ -170,15 +170,16 @@ const MessageInput: React.FC<MessageInputProps> = ({
       
       <div className="relative flex items-center gap-2">
         <div className="flex-1">
-          <Textarea
+<Textarea
             ref={textareaRef}
             value={value !== undefined ? value : newMessage}
             onChange={handleTextareaChange}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
+            rows={1}
             className={cn(
-              "min-h-[36px] max-h-[100px] resize-none rounded-full py-2",
-              "border-2 focus:ring-0 focus:ring-offset-0",
+              "min-h-[32px] max-h-[88px] resize-none rounded-full py-1.5 text-sm leading-5",
+              "border focus:ring-0 focus:ring-offset-0",
               mode === 'ai' 
                 ? "bg-background border-border text-foreground focus:border-primary" 
                 : "text-white placeholder:text-gray-400 transition-all duration-200"
@@ -196,14 +197,14 @@ const MessageInput: React.FC<MessageInputProps> = ({
         </div>
 
         {/* Send button */}
-        <Button
+<Button
           onClick={handleSendButtonClick}
           disabled={isSending || (value === undefined ? !newMessage.trim() : !value?.trim())}
           className={cn(
-            "h-9 w-9 rounded-full transition-all duration-200 shrink-0",
+            "h-8 w-8 rounded-full transition-all duration-200 shrink-0",
             mode === 'ai' 
               ? "bg-primary hover:bg-primary/90 text-primary-foreground" 
-              : "text-white border-2 hover:bg-white/10"
+              : "text-white border hover:bg-white/10"
           )}
           style={
             mode === 'community'
