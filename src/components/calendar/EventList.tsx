@@ -5,12 +5,10 @@ import { Event } from '@/types/eventTypes';
 import EventCard from '@/components/EventCard';
 import { groupEventsByDate } from '@/utils/eventUtils';
 import { Star, Heart, Filter, FilterX, Plus } from 'lucide-react';
-import { useEventContext } from '@/contexts/EventContext';
 import FilterBar, { type FilterGroup } from '@/components/calendar/FilterBar';
 import { isInGroup, CategoryGroup } from '@/utils/eventCategoryGroups';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
-import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
 
 interface EventListProps {
   events: Event[];
@@ -22,6 +20,9 @@ interface EventListProps {
   favoriteCount?: number;
   onShowEventForm?: () => void;
   onDislike?: (eventId: string) => void;
+  filter?: string | null;
+  topEventsPerDay?: Record<string, string>;
+  activeCategory?: string;
 }
 
 
@@ -76,7 +77,10 @@ const EventList: React.FC<EventListProps> = memo(({
   toggleNewEvents,
   favoriteCount = 0,
   onShowEventForm,
-  onDislike
+  onDislike,
+  filter = null,
+  topEventsPerDay = {},
+  activeCategory = 'alle'
 }) => {
   console.log('📋 [EventList] Rendering with events.length:', events.length, 'showFavorites:', showFavorites);
   
@@ -84,10 +88,8 @@ const EventList: React.FC<EventListProps> = memo(({
   const todayRef = useRef<HTMLDivElement>(null);
   
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
-const { filter, setFilter, topEventsPerDay } = useEventContext();
-const { activeCategory } = useChatPreferences();
-const groupFilter = activeCategory as FilterGroup;
-const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).filter(Boolean))) as string[], [events]);
+  const groupFilter = activeCategory as FilterGroup;
+  const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).filter(Boolean))) as string[], [events]);
 
   const filteredEvents = useMemo(() => {
     let base = events;

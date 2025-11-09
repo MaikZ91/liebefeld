@@ -2035,6 +2035,9 @@ const EventHeatmap: React.FC = () => {
                   toggleNewEvents={() => {}}
                   favoriteCount={0}
                   onDislike={handleEventDislike}
+                  filter={null}
+                  topEventsPerDay={{}}
+                  activeCategory="alle"
                 />
               ) : isAiChatLoading ? (
                 <div className="flex items-center justify-center py-10">
