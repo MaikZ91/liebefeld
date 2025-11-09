@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Users, Heart, MessageSquare, ChevronDown, X } from 'lucide-react';
+import { Users, Heart, ChevronDown, X } from 'lucide-react';
 import { PanelEventData, PanelEvent } from './types';
 import { cn } from '@/lib/utils';
 import EventLikeAvatars from './EventLikeAvatars';
@@ -10,7 +10,6 @@ interface ThreeEventDisplayProps {
   onEventSelect?: (eventId: string) => void;
   onLikeEvent?: (eventId: string) => void;
   onDislikeEvent?: (eventId: string) => void;
-  onJoinEventChat?: (eventId: string, eventTitle: string) => void;
   className?: string;
   onSwipeDownToHide?: () => void; // New prop for swipe down gesture
   onSwipeUpToShow?: () => void;   // New prop for swipe up gesture
@@ -21,7 +20,6 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
   onEventSelect,
   onLikeEvent,
   onDislikeEvent,
-  onJoinEventChat,
   className,
   onSwipeDownToHide, // Destructure new prop
   onSwipeUpToShow    // Destructure new prop
@@ -277,22 +275,6 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
                   
                   {/* Action Buttons - stack top-right */}
                   <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-1">
-                    {/* Join Chat Button */}
-                    {onJoinEventChat && 'id' in event && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="bg-red-800/50 hover:bg-red-700/60 text-white text-xs px-2 py-1 h-auto rounded"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          await onJoinEventChat(event.id, event.title);
-                        }}
-                      >
-                        <MessageSquare className="w-3 h-3 mr-1" />
-                        Chat
-                      </Button>
-                    )}
-                    
                     {/* Like Button */}
                     {onLikeEvent && 'id' in event && (
                       <Button

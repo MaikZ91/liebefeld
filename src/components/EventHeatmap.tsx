@@ -1948,7 +1948,6 @@ const EventHeatmap: React.FC = () => {
               onEventSelect={handleEventSelect}
               onLikeEvent={handleEventLike}
               onDislikeEvent={handleEventDislike}
-              onJoinEventChat={handleJoinEventChat}
               className="w-full"
               onSwipeDownToHide={() => setShowEventPanels(false)}
             />
