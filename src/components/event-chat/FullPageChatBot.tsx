@@ -368,10 +368,10 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   }, [chatContainerRef, activeChatModeValue, filteredCommunityMessages.length, typingUsers.length]);
 
   return (
-    <div className={embedded ? "flex flex-col h-full min-h-0 bg-gradient-to-br from-gray-950 via-black to-gray-900" : "flex flex-col h-screen min-h-0 bg-gradient-to-br from-gray-950 via-black to-gray-900"}>
-      {/* Filter UI für Community Chat - matching OnboardingChatbot/CommunityChatSheet style */}
+    <div className={embedded ? "flex flex-col h-full min-h-0 bg-gradient-to-br from-red-950/40 via-black to-gray-900" : "flex flex-col h-screen min-h-0 bg-gradient-to-br from-red-950/40 via-black to-gray-900"}>
+      {/* Filter UI für Community Chat - warmer style like MIA */}
       {activeChatModeValue === 'community' && (
-        <div className="sticky top-0 z-[60] bg-black/30 backdrop-blur-md border-b border-white/5">
+        <div className="sticky top-0 z-[60] bg-gradient-to-r from-red-950/10 to-transparent backdrop-blur-md border-b border-red-500/10">
           <div className="px-4 py-3">
             <div className="flex gap-2 overflow-x-auto scrollbar-none flex-nowrap pb-1">
               {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => {
@@ -414,7 +414,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       )}
 
 
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none bg-gradient-to-b from-transparent to-black/20 px-4 py-4">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none bg-gradient-to-b from-red-950/5 via-transparent to-black/30 px-4 py-4">
         {activeChatModeValue === 'onboarding' ? (
           <div className="px-4 py-4 space-y-4">
             {onboardingLogic.messages.map((msg, index) => (
@@ -729,7 +729,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               </div>
             )}
               {activeChatModeValue === 'community' && (
-                <div className="border-t border-white/5 bg-black/40 backdrop-blur-xl p-4 pb-safe">
+                <div className="border-t border-red-500/10 bg-gradient-to-r from-red-950/20 to-black/40 backdrop-blur-xl p-4 pb-safe">
                   {replyTo && (
                     <div className="mb-3">
                       <ReplyPreview 

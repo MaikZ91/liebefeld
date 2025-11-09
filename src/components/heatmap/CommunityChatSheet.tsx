@@ -214,27 +214,30 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
           side="bottom" 
           className="h-[90vh] p-0 border-0 bg-transparent z-[9999]"
         >
-          <div className="h-full rounded-t-3xl overflow-hidden bg-gradient-to-br from-gray-950 via-black to-gray-900">
-            {/* Gradient overlay matching OnboardingChatbot */}
+          <div className="h-full rounded-t-3xl overflow-hidden bg-gradient-to-br from-red-950/40 via-black to-gray-900">
+            {/* Warmer Gradient-Overlay wie bei MIA */}
             <div
-              className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent to-black/20"
+              className="pointer-events-none absolute inset-0 bg-gradient-to-b from-red-950/20 via-transparent to-black/30"
             />
             
-            {/* Header - matching OnboardingChatbot style */}
-            <div className="relative px-4 py-3 shrink-0 bg-black/40 backdrop-blur-xl border-b border-red-500/20">
+            {/* Header - matching MIA style with warm colors */}
+            <div className="relative px-4 py-4 shrink-0 bg-gradient-to-r from-red-900/30 via-red-950/20 to-transparent backdrop-blur-xl border-b border-red-500/20">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-8 w-8 border border-white/10">
-                    <AvatarImage src="/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png" />
-                    <AvatarFallback className="bg-primary/20 text-white text-xs">
-                      <MessageSquare className="w-4 h-4" />
-                    </AvatarFallback>
-                  </Avatar>
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="absolute -inset-1 bg-red-500/30 rounded-full blur-md" />
+                    <Avatar className="relative h-12 w-12 border-2 border-red-500/30">
+                      <AvatarImage src="/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png" />
+                      <AvatarFallback className="bg-red-600 text-white">
+                        <MessageSquare className="w-5 h-5" />
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
                   <div>
-                    <div className="text-white font-medium text-sm">
+                    <div className="text-white font-semibold text-base leading-tight">
                       {getCommunityDisplayName(activeCategory, selectedCity)}
                     </div>
-                    <div className="text-white/50 text-xs">
+                    <div className="text-red-200/60 text-xs font-medium">
                       Community Chat
                     </div>
                   </div>
@@ -245,25 +248,25 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
                       variant="ghost"
                       size="icon"
                       onClick={onOpenUserDirectory}
-                      className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10 transition-colors rounded-full"
+                      className="h-10 w-10 text-white/60 hover:text-white hover:bg-white/10 transition-colors rounded-full"
                     >
-                      <Users className="h-4 w-4" />
+                      <Users className="h-5 w-5" />
                     </Button>
                   )}
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => onOpenChange(false)}
-                    className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10 transition-colors rounded-full"
+                    className="h-10 w-10 text-white/60 hover:text-white hover:bg-white/10 transition-colors rounded-full"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-5 w-5" />
                   </Button>
                 </div>
               </div>
             </div>
             
-            {/* Category Filter */}
-            <div className="relative px-4 py-3 bg-black/30 backdrop-blur-md border-b border-white/5">
+            {/* Category Filter - warmer style */}
+            <div className="relative px-4 py-3 bg-gradient-to-r from-red-950/10 to-transparent backdrop-blur-md border-b border-red-500/10">
               <div className="flex gap-2 overflow-x-auto scrollbar-none flex-nowrap pb-1">
                 {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => {
                   const isActive = messageFilter.includes(category);
@@ -323,10 +326,10 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
               </div>
             </div>
             
-            {/* Messages - matching OnboardingChatbot style */}
+            {/* Messages - warmer background like MIA */}
             <div 
               ref={chatContainerRef}
-              className="flex-1 overflow-y-auto px-4 py-4 space-y-4 min-h-0 scrollbar-none relative bg-gradient-to-b from-transparent to-black/20"
+              className="flex-1 overflow-y-auto px-4 py-4 space-y-4 min-h-0 scrollbar-none relative bg-gradient-to-b from-red-950/5 via-transparent to-black/30"
               style={{ height: 'calc(100% - 210px)' }}
             >
               {loading && filteredMessages.length === 0 ? (
@@ -451,8 +454,8 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
               <div ref={chatBottomRef} />
             </div>
             
-            {/* Input Area - matching OnboardingChatbot style */}
-            <div className="relative border-t border-white/5 bg-black/40 backdrop-blur-xl">
+            {/* Input Area - warmer style like MIA */}
+            <div className="relative border-t border-red-500/10 bg-gradient-to-r from-red-950/20 to-black/40 backdrop-blur-xl">
               {replyTo && (
                 <div className="px-4 pt-3">
                   <ReplyPreview 
