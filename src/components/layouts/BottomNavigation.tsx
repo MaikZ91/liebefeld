@@ -110,9 +110,19 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
             variant="ghost"
             size="icon" 
             onClick={() => {
-              console.log('🔥 [BottomNav] Event Calendar button clicked, navigating to /events');
-              navigate('/events');
-            }} 
+              console.log('🔥 [BottomNav] Event Calendar button clicked');
+              // Check if we're on the heatmap page
+              if (window.location.pathname === '/heatmap') {
+                // Trigger event list in heatmap
+                window.dispatchEvent(new CustomEvent('toggle-event-list'));
+              } else {
+                // Navigate to heatmap and show event list
+                navigate('/heatmap');
+                setTimeout(() => {
+                  window.dispatchEvent(new CustomEvent('toggle-event-list'));
+                }, 100);
+              }
+            }}
             className={cn(
               "relative h-12 w-12 rounded-full transition-all duration-300",
               isOnEventsPage 

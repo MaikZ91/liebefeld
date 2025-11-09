@@ -193,12 +193,23 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
 
 
     return (
-      <div className="bg-white text-black rounded-3xl border border-gray-200 shadow-xl p-4 overflow-hidden w-full max-w-full -mt-4">
-        <div className="flex items-center mb-2 gap-2 overflow-x-auto">
-          <FilterBar value={groupFilter} className="min-w-max" variant="light" />
+      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/70 backdrop-blur-xl shadow-[0_20px_80px_rgba(239,68,68,0.25)] w-full max-w-full">
+        {/* Gradient ring */}
+        <div
+          className="pointer-events-none absolute inset-0 rounded-3xl"
+          style={{
+            background:
+              "radial-gradient(120% 60% at 100% 0%, rgba(239,68,68,0.35) 0%, rgba(239,68,68,0.05) 30%, transparent 60%)",
+          }}
+        />
+        
+        <div className="relative px-4 pt-4 pb-2">
+          <div className="flex items-center mb-3 gap-2 overflow-x-auto">
+            <FilterBar value={groupFilter} className="min-w-max" variant="dark" />
+          </div>
         </div>
         
-        <div ref={listRef} className="overflow-y-auto max-h-[650px] pr-1 scrollbar-thin w-full mt-2">
+        <div ref={listRef} className="relative overflow-y-auto max-h-[66vh] px-4 pb-4 scrollbar-thin scrollbar-thumb-white/20 w-full">
         {Object.keys(eventsByDate).length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-2 gap-y-1">
             {Object.keys(eventsByDate).sort().map(dateStr => {
@@ -212,7 +223,7 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
                   className={`w-full ${isCurrentDay ? 'scroll-mt-12' : ''}`}
                   id={isCurrentDay ? "today-section" : undefined}
                 >
-                  <h4 className="text-sm font-semibold mb-1 text-gray-900 sticky top-0 bg-white py-1 z-10 flex items-center w-full border-b border-gray-200">
+                  <h4 className="text-sm font-semibold mb-1 text-white sticky top-0 bg-black/70 backdrop-blur-xl py-2 z-10 flex items-center w-full border-b border-white/10">
                     {format(date, 'EEEE, d. MMMM', { locale: de })}
                   </h4>
                   <div className="space-y-0.5 w-full">
@@ -238,7 +249,7 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
             })}
           </div>
         ) : (
-          <div className="flex items-center justify-center h-40 text-gray-500 w-full">
+          <div className="flex items-center justify-center h-40 text-white/70 w-full">
             {showFavorites 
               ? "Du hast noch keine Favoriten" 
               : showNewEvents

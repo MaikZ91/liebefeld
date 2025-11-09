@@ -76,6 +76,7 @@ import EventDetails from "@/components/EventDetails";
 import { dislikeService } from "@/services/dislikeService";
 import OnboardingDialog from "./OnboardingDialog";
 import { useOnboardingLogic } from "@/hooks/chat/useOnboardingLogic";
+import EventList from "@/components/calendar/EventList";
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -168,6 +169,9 @@ const EventHeatmap: React.FC = () => {
 
   // State for AI chat loading
   const [isAiChatLoading, setIsAiChatLoading] = useState(false);
+
+  // State for Event List overlay
+  const [showEventList, setShowEventList] = useState(false);
 
   // Detail view state for event details dialog
   const [showEventDetails, setShowEventDetails] = useState(false);
@@ -396,6 +400,18 @@ const EventHeatmap: React.FC = () => {
       }
     }
   }, [chatLogic, aiChatExternalSendHandler]);
+
+  // Listen for event list toggle from bottom navigation
+  useEffect(() => {
+    const handleToggleEventList = () => {
+      setShowEventList(prev => !prev);
+    };
+
+    window.addEventListener('toggle-event-list', handleToggleEventList);
+    return () => {
+      window.removeEventListener('toggle-event-list', handleToggleEventList);
+    };
+  }, []);
 
   const mapRef = useRef<HTMLDivElement>(null);
 
@@ -1942,6 +1958,41 @@ const EventHeatmap: React.FC = () => {
             });
           }}
         />
+      )}
+
+      {/* === Event List Overlay === */}
+      {showEventList && (
+        <div className="fixed top-20 right-4 left-4 md:left-auto md:w-[520px] z-[1100] animate-fade-in">
+          <div className="relative">
+            {/* Close button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowEventList(false)}
+              className="absolute -top-2 -right-2 z-10 h-9 w-9 rounded-full bg-black/70 backdrop-blur-xl text-white/70 hover:text-white hover:bg-black/90 border border-white/10"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+            
+            <EventList
+              events={filteredEvents}
+              showFavorites={false}
+              showNewEvents={false}
+              onSelectEvent={(event, date) => {
+                setShowEventList(false);
+                handleEventSelect(event.id);
+              }}
+              toggleFavorites={() => {}}
+              toggleNewEvents={() => {}}
+              favoriteCount={0}
+              onShowEventForm={() => {
+                setShowEventList(false);
+                setIsEventFormOpen(true);
+              }}
+              onDislike={handleEventDislike}
+            />
+          </div>
+        </div>
       )}
 
       {/* === AI Response Card (modern) === */}
