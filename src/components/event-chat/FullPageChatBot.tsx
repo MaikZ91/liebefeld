@@ -5,7 +5,7 @@ import ChatInput from './ChatInput';
 import RecentQueries from './RecentQueries';
 import { useChatMessages } from '@/hooks/chat/useChatMessages';
 
-import { AVATAR_KEY, USERNAME_KEY, EventShare } from '@/types/chatTypes'; // Import EventShare
+import { AVATAR_KEY, USERNAME_KEY, EventShare } from '@/types/chatTypes';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/utils/chatUIUtils'; 
 import TypingIndicator from '@/components/chat/TypingIndicator';
@@ -15,6 +15,7 @@ import { chatService } from '@/services/chatService';
 import { useEventContext, cities } from '@/contexts/EventContext';
 import { createGroupDisplayName } from '@/utils/groupIdUtils';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { getChannelColor } from '@/utils/channelColors';
 import UserProfileDialog from '@/components/users/UserProfileDialog';
 import { userService } from '@/services/userService';
@@ -26,10 +27,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useReplySystem, ReplyData } from '@/hooks/chat/useReplySystem';
 import MessageInput from '@/components/chat/MessageInput';
 import ReplyPreview from '@/components/chat/ReplyPreview';
+import { useOnboardingLogic } from '@/hooks/chat/useOnboardingLogic';
+import { Search } from 'lucide-react';
 
 interface FullPageChatBotProps {
   chatLogic: any;
-  activeChatModeValue: 'ai' | 'community';
+  activeChatModeValue: 'ai' | 'community' | 'onboarding';
   communityGroupId: string;
   onAddEvent?: () => void;
   hideButtons?: boolean;
@@ -40,8 +43,9 @@ interface FullPageChatBotProps {
   hideInput?: boolean;
   externalInput?: string;
   setExternalInput?: (value: string) => void;
-  onExternalSendHandlerChange?: (handler: ((input?: string | any) => Promise<void>) | null) => void; // Updated handler type
-  embedded?: boolean; // when true, fit parent height (used in Heatmap drawer)
+  onExternalSendHandlerChange?: (handler: ((input?: string | any) => Promise<void>) | null) => void;
+  embedded?: boolean;
+  onboardingComplete?: () => void;
 }
 
 const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
@@ -57,8 +61,12 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   externalInput = '',
   setExternalInput,
   onExternalSendHandlerChange,
-  embedded = false
+  embedded = false,
+  onboardingComplete
 }) => {
+  // Onboarding logic
+  const { selectedCity, setSelectedCity } = useEventContext();
+  const onboardingLogic = useOnboardingLogic(onboardingComplete, setSelectedCity);
   // Use global chat preferences context
   const { activeCategory, setActiveCategory } = useChatPreferences();
   
@@ -83,8 +91,6 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
     toggleRecentQueries,
     showAnimatedPrompts 
   } = chatLogic;
-
-  const { selectedCity } = useEventContext();
 
   const username =
     typeof window !== 'undefined'
@@ -409,7 +415,79 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
 
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none bg-gradient-to-b from-transparent to-black/20">
-        {activeChatModeValue === 'ai' ? (
+        {activeChatModeValue === 'onboarding' ? (
+          <div className="px-4 py-4 space-y-4">
+            {onboardingLogic.messages.map((msg, index) => (
+              <div key={msg.id} className="animate-fade-in" style={{animationDelay: `${index * 0.1}s`}}>
+                <div className={`flex items-start gap-2 ${msg.isBot ? 'justify-start' : 'justify-end'}`}>
+                  {msg.isBot && (
+                    <div className="relative shrink-0">
+                      <Avatar className="h-8 w-8 border border-white/10">
+                        <AvatarImage src={onboardingLogic.chatbotAvatar} />
+                        <AvatarFallback className="bg-primary/20 text-white text-xs">
+                          MIA
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  )}
+                  
+                  <div className={`flex flex-col gap-2 ${msg.isBot ? '' : 'items-end'}`}>
+                    <div className={`px-4 py-3 rounded-2xl max-w-[80%] ${
+                      msg.isBot 
+                        ? 'bg-white/10 backdrop-blur-sm border border-white/10' 
+                        : 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-500/20'
+                    }`}>
+                      <p className="text-sm text-white whitespace-pre-wrap leading-relaxed">
+                        {msg.message}
+                      </p>
+                    </div>
+                    
+                    {msg.hasButtons && msg.buttons && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {msg.buttons.map((button, btnIndex) => {
+                          const isInterestButton = onboardingLogic.interests.some(i => button.text.includes(i.text));
+                          const isSelected = isInterestButton && onboardingLogic.userData.interests.includes(
+                            onboardingLogic.interests.find(i => button.text.includes(i.text))?.text || ''
+                          );
+                          
+                          return (
+                            <Button
+                              key={btnIndex}
+                              variant={button.variant}
+                              size="sm"
+                              onClick={button.action}
+                              className={`text-xs h-auto py-2 ${
+                                isSelected 
+                                  ? 'bg-gradient-to-r from-red-600 to-red-700 text-white border-transparent' 
+                                  : ''
+                              }`}
+                            >
+                              {button.text}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {onboardingLogic.isTyping && (
+              <div className="flex items-start gap-2">
+                <Avatar className="h-8 w-8 border border-white/10">
+                  <AvatarImage src={onboardingLogic.chatbotAvatar} />
+                  <AvatarFallback className="bg-primary/20 text-white text-xs">MIA</AvatarFallback>
+                </Avatar>
+                <div className="px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
+                  <TypingIndicator typingUsers={[]} />
+                </div>
+              </div>
+            )}
+            
+            <div ref={onboardingLogic.messagesEndRef} />
+          </div>
+        ) : activeChatModeValue === 'ai' ? (
           <div className={hideInput ? "pt-4 px-3" : "pt-32 px-3"}> 
             <MessageList
               messages={aiMessages}
@@ -542,6 +620,73 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       {!hideInput && (
         <div className="sticky bottom-0 z-10 bg-background/80 backdrop-blur supports-[backdrop-filter]:backdrop-blur-sm border-t border-border">
           <div className="px-4 pt-2 pb-3">
+            {activeChatModeValue === 'onboarding' && onboardingLogic.currentStep === 'city' && (
+              <div className="mb-3 space-y-2">
+                {onboardingLogic.filteredCities.length > 0 && onboardingLogic.citySearch && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {onboardingLogic.filteredCities.map((city) => (
+                      <Button
+                        key={city.abbr}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onboardingLogic.selectCity(city.name)}
+                        className="text-xs bg-white/5 hover:bg-white/10 border-white/20"
+                      >
+                        {city.name}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {activeChatModeValue === 'onboarding' && ['name', 'city'].includes(onboardingLogic.currentStep) && (
+              <div className="flex gap-2">
+                {onboardingLogic.currentStep === 'city' ? (
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/40" />
+                    <Input
+                      value={onboardingLogic.citySearch}
+                      onChange={(e) => onboardingLogic.setCitySearch(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          onboardingLogic.handleSendMessage();
+                        }
+                      }}
+                      placeholder="Stadt eingeben..."
+                      className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-white/40"
+                      autoFocus
+                    />
+                  </div>
+                ) : (
+                  <Input
+                    value={onboardingLogic.inputMessage}
+                    onChange={(e) => onboardingLogic.setInputMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        onboardingLogic.handleSendMessage();
+                      }
+                    }}
+                    placeholder="Deine Antwort..."
+                    className="flex-1 bg-white/5 border-white/20 text-white placeholder:text-white/40"
+                    autoFocus
+                  />
+                )}
+                <Button
+                  onClick={onboardingLogic.handleSendMessage}
+                  disabled={onboardingLogic.currentStep === 'name' 
+                    ? !onboardingLogic.inputMessage.trim() 
+                    : !onboardingLogic.citySearch.trim()
+                  }
+                  className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
+                >
+                  →
+                </Button>
+              </div>
+            )}
+            
             {activeChatModeValue === 'ai' && (
               <RecentQueries
                 showRecentQueries={showRecentQueries}
@@ -598,6 +743,15 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
         onOpenChange={setShowUserProfileDialog}
         userProfile={selectedUserProfile}
         loading={loadingUserProfile}
+      />
+      
+      {/* Hidden file input for onboarding avatar upload */}
+      <input
+        ref={onboardingLogic.fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={onboardingLogic.handleImageUpload}
+        className="hidden"
       />
     </div>
   );
