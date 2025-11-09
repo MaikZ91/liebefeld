@@ -220,8 +220,8 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
   
   return (
     <>
-      <div className="fixed top-20 right-4 left-4 md:left-auto md:w-[520px] z-[9999] animate-fade-in">
-        <Card className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/70 backdrop-blur-xl shadow-[0_20px_80px_rgba(239,68,68,0.25)]">
+      <div className="fixed top-20 bottom-16 right-4 left-4 md:left-auto md:w-[520px] z-[9999] animate-fade-in flex flex-col">
+        <Card className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/70 backdrop-blur-xl shadow-[0_20px_80px_rgba(239,68,68,0.25)] flex-1 flex flex-col">
           {/* Gradient ring */}
           <div
             className="pointer-events-none absolute inset-0 rounded-3xl"
@@ -230,6 +230,16 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
                 "radial-gradient(120% 60% at 100% 0%, rgba(239,68,68,0.35) 0%, rgba(239,68,68,0.05) 30%, transparent 60%)",
             }}
           />
+          
+          {/* Close Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onOpenChange(false)}
+            className="absolute top-3 right-3 z-10 h-8 w-8 rounded-full text-white/70 hover:text-white hover:bg-white/10"
+          >
+            <X className="w-4 h-4" />
+          </Button>
           
           {/* Category Filter */}
           <div className="relative px-4 pt-4 pb-2">
@@ -295,8 +305,7 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
           {/* Messages */}
           <div 
             ref={chatContainerRef}
-            className="relative overflow-y-auto px-4 py-3 space-y-3 scrollbar-thin scrollbar-thumb-white/20"
-            style={{ maxHeight: '50vh' }}
+            className="relative flex-1 overflow-y-auto px-4 py-3 space-y-3 scrollbar-thin scrollbar-thumb-white/20"
           >
               {loading && filteredMessages.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
