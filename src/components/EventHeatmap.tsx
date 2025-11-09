@@ -2117,7 +2117,6 @@ const EventHeatmap: React.FC = () => {
               chatInput={aiChatInput}
               onChatInputChange={setAiChatInput}
               onChatSend={handleAIChatSend}
-              hideControls={true}
             />
           </div>
         </div>
