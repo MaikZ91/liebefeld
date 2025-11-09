@@ -74,8 +74,6 @@ import EventChatWindow from "@/components/event-chat/EventChatWindow";
 import EventSwipeMode from "./EventSwipeMode";
 import EventDetails from "@/components/EventDetails";
 import { dislikeService } from "@/services/dislikeService";
-import OnboardingDialog from "./OnboardingDialog";
-import { useOnboardingLogic } from "@/hooks/chat/useOnboardingLogic";
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -159,9 +157,6 @@ const EventHeatmap: React.FC = () => {
   // State for MIA open/close
   const [isMIAOpen, setIsMIAOpen] = useState(false);
 
-  // State for onboarding mode
-  const [isOnboardingActive, setIsOnboardingActive] = useState(false);
-
   // State for daily recommendation
   const [hasNewDailyRecommendation, setHasNewDailyRecommendation] = useState(false);
   const [isDailyRecommendationLoading, setIsDailyRecommendationLoading] = useState(false);
@@ -220,20 +215,6 @@ const EventHeatmap: React.FC = () => {
     handleAiResponseReceived,
   );
 
-  // Onboarding logic
-  const onboardingLogic = useOnboardingLogic(
-    (action) => {
-      // Handle onboarding completion
-      setIsOnboardingActive(false);
-      setIsMIAOpen(false);
-      toast({
-        title: "Onboarding abgeschlossen!",
-        description: "Viel Spaß beim Entdecken von Events!",
-      });
-    },
-    // Pass setSelectedCity from EventContext if available
-    undefined
-  );
 
   // ====== helper to render + fetch description via Edge Function ======
   const renderEventHtml = (evt: any, description: string) => {
@@ -425,17 +406,6 @@ const EventHeatmap: React.FC = () => {
 
   // Load daily recommendation when MIA is clicked
   const handleMIAClick = async () => {
-    // Check if user has completed onboarding
-    const hasCompletedOnboarding = localStorage.getItem(USERNAME_KEY);
-    
-    if (!hasCompletedOnboarding) {
-      // Start onboarding
-      setIsOnboardingActive(true);
-      setIsMIAOpen(true);
-      setShowAiResponse(true);
-      return;
-    }
-    
     if (hasNewDailyRecommendation) {
       setIsDailyRecommendationLoading(true);
 
@@ -1918,20 +1888,6 @@ const EventHeatmap: React.FC = () => {
         .ai-content p { margin: .4rem 0; }
       `}</style>
 
-      {/* Onboarding Dialog */}
-      {isOnboardingActive && (
-        <OnboardingDialog
-          onClose={() => setIsOnboardingActive(false)}
-          onComplete={(action) => {
-            setIsOnboardingActive(false);
-            setIsMIAOpen(false);
-            toast({
-              title: "Onboarding abgeschlossen!",
-              description: "Viel Spaß beim Entdecken von Events!",
-            });
-          }}
-        />
-      )}
 
       {/* === AI Response Card (modern) === */}
       {showAiResponse && (
