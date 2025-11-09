@@ -1690,11 +1690,67 @@ const EventHeatmap: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
-        <div className="text-center text-white">
-          <MapPin className="w-12 h-12 mx-auto mb-4 animate-bounce text-red-500" />
-          <h2 className="text-xl mb-2">Lade Events...</h2>
-          <p className="text-gray-400">Heutige Events werden geladen...</p>
+      <div className="relative flex items-center justify-center min-h-screen bg-gradient-to-br from-black via-gray-900 to-black overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-red-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-primary/5 to-red-500/5 rounded-full blur-3xl animate-[spin_8s_linear_infinite]" />
+        </div>
+
+        {/* Main content */}
+        <div className="relative z-10 flex flex-col items-center space-y-8">
+          {/* Animated pins container */}
+          <div className="relative w-32 h-32">
+            {/* Pulsing background circle */}
+            <div className="absolute inset-0 bg-gradient-to-r from-primary via-red-500 to-primary rounded-full opacity-20 animate-pulse" />
+            <div className="absolute inset-2 bg-gradient-to-r from-primary via-red-500 to-primary rounded-full opacity-30 animate-[pulse_2s_ease-in-out_infinite]" style={{ animationDelay: '0.5s' }} />
+            
+            {/* Rotating pins */}
+            <div className="absolute inset-0 animate-[spin_3s_linear_infinite]">
+              <MapPin className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-8 text-primary drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
+            </div>
+            <div className="absolute inset-0 animate-[spin_3s_linear_infinite]" style={{ animationDelay: '1s' }}>
+              <MapPin className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-6 text-red-400 drop-shadow-[0_0_8px_rgba(239,68,68,0.4)]" />
+            </div>
+            <div className="absolute inset-0 animate-[spin_3s_linear_infinite]" style={{ animationDelay: '2s' }}>
+              <MapPin className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-5 text-red-300 drop-shadow-[0_0_8px_rgba(239,68,68,0.3)]" />
+            </div>
+            
+            {/* Center pin */}
+            <MapPin className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 text-primary animate-bounce drop-shadow-[0_0_12px_rgba(239,68,68,0.8)]" />
+          </div>
+
+          {/* Glassmorphism card */}
+          <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl px-12 py-8 shadow-2xl shadow-primary/20">
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/10 via-transparent to-red-500/10" />
+            
+            <div className="relative text-center space-y-4">
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-white via-red-100 to-white bg-clip-text text-transparent animate-[fade-in_1s_ease-out]">
+                Lade Events...
+              </h2>
+              
+              <div className="flex items-center justify-center gap-2 text-gray-300">
+                <span className="text-sm font-medium">Heutige Events werden geladen</span>
+                <div className="flex gap-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0.2s' }} />
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0.4s' }} />
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              <div className="relative w-64 h-1 bg-white/10 rounded-full overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary via-red-400 to-primary animate-[slide-in-right_1.5s_ease-in-out_infinite] rounded-full shadow-[0_0_12px_rgba(239,68,68,0.6)]" />
+              </div>
+            </div>
+          </div>
+
+          {/* Floating elements */}
+          <div className="absolute top-20 left-20 w-2 h-2 rounded-full bg-red-400/60 animate-[float_3s_ease-in-out_infinite]" />
+          <div className="absolute bottom-20 right-20 w-3 h-3 rounded-full bg-primary/60 animate-[float_4s_ease-in-out_infinite]" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-40 right-32 w-2 h-2 rounded-full bg-red-300/60 animate-[float_3.5s_ease-in-out_infinite]" style={{ animationDelay: '2s' }} />
         </div>
       </div>
     );
