@@ -212,7 +212,7 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent 
           side="bottom" 
-          className="h-[90vh] p-0 border-0 bg-transparent"
+          className="h-[90vh] p-0 border-0 bg-transparent z-[9999]"
         >
           <div className="h-full rounded-t-3xl overflow-hidden bg-gradient-to-br from-gray-950 via-black to-gray-900">
             {/* Gradient overlay matching OnboardingChatbot */}
