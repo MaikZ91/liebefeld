@@ -74,7 +74,14 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
   // Update filter when activeCategory changes
   useEffect(() => {
     setMessageFilter([activeCategory]);
-  }, [activeCategory]);
+    
+    // Scroll to bottom when category changes and messages are loaded
+    if (chatBottomRef.current && messages.length > 0) {
+      setTimeout(() => {
+        chatBottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 200);
+    }
+  }, [activeCategory, messages.length]);
   
   // Filter messages based on selected categories
   const filteredMessages = useMemo(() => {
@@ -263,7 +270,7 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
                         )}
                         onClick={() => {
                           setMessageFilter(['alle']);
-                          onCategoryChange?.('alle');
+                          // Don't change the group category for "alle", just filter locally
                         }}
                       >
                         #{category}

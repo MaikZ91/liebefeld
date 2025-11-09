@@ -186,14 +186,7 @@ export const useChatMessages = (groupId: string, username: string) => {
     };
   }, [validGroupId, username, handleNewMessage, handleMessageUpdate]);
   
-  // Fetch messages when group changes
-  useEffect(() => {
-    if (validGroupId) {
-      console.log(`Group ID changed, fetching messages for: ${validGroupId}`);
-      fetchAndSetMessages();
-    }
-  }, [validGroupId]);
-  
+  // Fetch messages function
   const fetchAndSetMessages = useCallback(async () => {
     if (!validGroupId) return;
     
@@ -218,7 +211,15 @@ export const useChatMessages = (groupId: string, username: string) => {
     } catch (err) {
       console.error('Error fetching messages:', err);
     }
-  }, [validGroupId, username]);
+  }, [validGroupId]);
+  
+  // Fetch messages when group changes
+  useEffect(() => {
+    if (validGroupId) {
+      console.log(`Group ID changed, fetching messages for: ${validGroupId}`);
+      fetchAndSetMessages();
+    }
+  }, [validGroupId, fetchAndSetMessages]);
   
   // Reconnection handling
   const { isReconnecting, handleReconnect } = useReconnection(fetchAndSetMessages);
