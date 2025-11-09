@@ -1754,34 +1754,32 @@ const EventHeatmap: React.FC = () => {
   return (
     <div className="relative w-full h-full overflow-hidden" style={{ height: "100dvh" }}>
       {/* Live Ticker Header */}
-      {!showEventList && (
-        <HeatmapHeader
-          selectedCity={selectedCity}
-          chatInputProps={{
-            input: aiChatInput,
-            setInput: setAiChatInput,
-            handleSendMessage: handleAIChatSend,
-            isTyping: chatLogic.isTyping,
-            onKeyDown: chatLogic.handleKeyPress,
-            onChange: chatLogic.handleInputChange,
-            isHeartActive: chatLogic.isHeartActive,
-            handleHeartClick: chatLogic.handleHeartClick,
-            globalQueries: chatLogic.globalQueries,
-            toggleRecentQueries: chatLogic.toggleRecentQueries,
-            inputRef: chatLogic.inputRef,
-            onAddEvent: handleOpenEventFormForModal,
-            showAnimatedPrompts: !aiChatInput.trim(),
-            activeChatModeValue: "ai",
-          }}
-          showFilterPanel={showFilterPanel}
-          onToggleFilterPanel={() => setShowFilterPanel((prev) => !prev)}
-          onOpenSwipeMode={() => setIsSwipeModeOpen(true)}
-          onMIAOpenChange={setIsMIAOpen}
-          hasNewDailyRecommendation={hasNewDailyRecommendation}
-          onMIAClick={handleMIAClick}
-          isDailyRecommendationLoading={isDailyRecommendationLoading}
-        />
-      )}
+      <HeatmapHeader
+        selectedCity={selectedCity}
+        chatInputProps={{
+          input: aiChatInput,
+          setInput: setAiChatInput,
+          handleSendMessage: handleAIChatSend,
+          isTyping: chatLogic.isTyping,
+          onKeyDown: chatLogic.handleKeyPress,
+          onChange: chatLogic.handleInputChange,
+          isHeartActive: chatLogic.isHeartActive,
+          handleHeartClick: chatLogic.handleHeartClick,
+          globalQueries: chatLogic.globalQueries,
+          toggleRecentQueries: chatLogic.toggleRecentQueries,
+          inputRef: chatLogic.inputRef,
+          onAddEvent: handleOpenEventFormForModal,
+          showAnimatedPrompts: !aiChatInput.trim(),
+          activeChatModeValue: "ai",
+        }}
+        showFilterPanel={showFilterPanel}
+        onToggleFilterPanel={() => setShowFilterPanel((prev) => !prev)}
+        onOpenSwipeMode={() => setIsSwipeModeOpen(true)}
+        onMIAOpenChange={setIsMIAOpen}
+        hasNewDailyRecommendation={hasNewDailyRecommendation}
+        onMIAClick={handleMIAClick}
+        isDailyRecommendationLoading={isDailyRecommendationLoading}
+      />
 
       {/* Filter Panel (Conditional Rendering) - Hide when MIA is open */}
       {showFilterPanel && !isMIAOpen && !showCommunityChat && !showEventList && (
