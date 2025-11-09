@@ -398,6 +398,18 @@ const EventHeatmap: React.FC = () => {
 
   const mapRef = useRef<HTMLDivElement>(null);
 
+  // Auto-start onboarding if user is not logged in
+  useEffect(() => {
+    const hasCompletedOnboarding = localStorage.getItem(USERNAME_KEY);
+    
+    if (!hasCompletedOnboarding) {
+      // Automatically start onboarding for new users
+      setIsOnboardingActive(true);
+      setIsMIAOpen(true);
+      setShowAiResponse(true);
+    }
+  }, []);
+
   // Check for daily recommendation on mount
   useEffect(() => {
     const checkDailyRecommendation = () => {
