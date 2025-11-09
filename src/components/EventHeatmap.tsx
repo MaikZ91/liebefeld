@@ -77,6 +77,8 @@ import { dislikeService } from "@/services/dislikeService";
 import OnboardingDialog from "./OnboardingDialog";
 import { useOnboardingLogic } from "@/hooks/chat/useOnboardingLogic";
 import EventList from "@/components/calendar/EventList";
+import CommunityChatSheet from "@/components/heatmap/CommunityChatSheet";
+import { createCitySpecificGroupId } from "@/utils/groupIdUtils";
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -176,6 +178,10 @@ const EventHeatmap: React.FC = () => {
   // Detail view state for event details dialog
   const [showEventDetails, setShowEventDetails] = useState(false);
   const [selectedEventForDetails, setSelectedEventForDetails] = useState<any>(null);
+  
+  // Community Chat State
+  const [showCommunityChat, setShowCommunityChat] = useState(false);
+  const [communityChatCategory, setCommunityChatCategory] = useState<string>('ausgehen');
 
   // Event Chat Window State
   const [eventChatWindow, setEventChatWindow] = useState<{
@@ -2564,6 +2570,30 @@ const EventHeatmap: React.FC = () => {
         events={filteredEvents}
         onLikeEvent={handleEventLike}
       />
+
+      {/* Community Chat Sheet */}
+      <CommunityChatSheet
+        open={showCommunityChat}
+        onOpenChange={setShowCommunityChat}
+        groupId={createCitySpecificGroupId(communityChatCategory, selectedCity)}
+        selectedCity={selectedCity}
+        activeCategory={communityChatCategory}
+        onCategoryChange={setCommunityChatCategory}
+        onOpenUserDirectory={() => {
+          // Handle user directory if needed
+          console.log('Open user directory');
+        }}
+      />
+      
+      {/* Floating Community Chat Button */}
+      {!showCommunityChat && !isMIAOpen && (
+        <Button
+          onClick={() => setShowCommunityChat(true)}
+          className="fixed bottom-24 right-4 h-14 w-14 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 shadow-[0_8px_30px_rgba(239,68,68,0.4)] hover:shadow-[0_12px_40px_rgba(239,68,68,0.6)] transition-all duration-300 hover:scale-110 z-[1000] border-2 border-white/10"
+        >
+          <MessageSquare className="h-6 w-6 text-white" />
+        </Button>
+      )}
 
       {/* Location Blocking Dialog */}
       <AlertDialog open={isBlockLocationDialogOpen} onOpenChange={setIsBlockLocationDialogOpen}>
