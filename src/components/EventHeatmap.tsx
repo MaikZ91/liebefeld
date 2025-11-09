@@ -2088,37 +2088,35 @@ const EventHeatmap: React.FC = () => {
 
       {/* === Event List Overlay === */}
       {showEventList && (
-        <div className="fixed top-0 bottom-0 left-0 right-0 z-[1100] animate-fade-in bg-black">
-          <div className="relative h-full flex flex-col">
+        <div className="fixed top-20 bottom-0 right-4 left-4 md:left-auto md:w-[520px] z-[1100] animate-fade-in">
+          <div className="relative h-full">
             {/* Close button */}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setShowEventList(false)}
-              className="absolute top-4 right-4 z-10 h-10 w-10 rounded-full bg-red-600/90 backdrop-blur-xl text-white hover:bg-red-700 shadow-lg shadow-red-500/30"
+              className="absolute -top-2 -right-2 z-10 h-10 w-10 rounded-full bg-red-600/90 backdrop-blur-xl text-white hover:bg-red-700 shadow-lg shadow-red-500/30"
             >
               <X className="w-5 h-5" />
             </Button>
             
-            <div className="flex-1 overflow-hidden pt-4 px-4">
-              <EventList
-                events={allFilteredEvents}
-                showFavorites={false}
-                showNewEvents={false}
-                onSelectEvent={(event, date) => {
-                  setShowEventList(false);
-                  handleEventSelect(event.id);
-                }}
-                toggleFavorites={() => {}}
-                toggleNewEvents={() => {}}
-                favoriteCount={0}
-                onShowEventForm={() => {
-                  setShowEventList(false);
-                  setIsEventFormOpen(true);
-                }}
-                onDislike={handleEventDislike}
-              />
-            </div>
+            <EventList
+              events={allFilteredEvents}
+              showFavorites={false}
+              showNewEvents={false}
+              onSelectEvent={(event, date) => {
+                setShowEventList(false);
+                handleEventSelect(event.id);
+              }}
+              toggleFavorites={() => {}}
+              toggleNewEvents={() => {}}
+              favoriteCount={0}
+              onShowEventForm={() => {
+                setShowEventList(false);
+                setIsEventFormOpen(true);
+              }}
+              onDislike={handleEventDislike}
+            />
           </div>
         </div>
       )}

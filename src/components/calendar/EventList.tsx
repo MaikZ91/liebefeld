@@ -260,7 +260,7 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
           </div>
         </div>
         
-        <div ref={listRef} className="relative h-full px-4 pb-4 w-full">
+        <div ref={listRef} className="relative h-[calc(100vh-180px)] px-4 pb-4 w-full">
         {virtualizedItems.length > 0 ? (
           <Virtuoso
             style={{ height: '100%' }}
