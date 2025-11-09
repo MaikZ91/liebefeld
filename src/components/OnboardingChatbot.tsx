@@ -1,10 +1,9 @@
 // src/components/OnboardingChatbot.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, ArrowLeft, Upload, Search } from 'lucide-react';
+import { Send, ArrowLeft, Upload, Search, X } from 'lucide-react';
 import { getInitials } from '@/utils/chatUIUtils';
 import { userService } from '@/services/userService';
 import { cities, useEventContext } from '@/contexts/EventContext';
@@ -455,27 +454,37 @@ Mia 💕`;
     });
   };
 
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
-        className="sm:max-w-lg h-screen max-h-screen flex flex-col p-0 bg-gradient-to-br from-gray-950 via-black to-gray-900 border-0 rounded-none shadow-2xl z-[9999] fixed overflow-hidden"
-        showCloseButton={false}
-      >
+    <div className="fixed inset-0 z-[9999] flex flex-col bg-gradient-to-br from-gray-950 via-black to-gray-900 overflow-hidden">
         {/* Header */}
         <div className="relative px-4 py-3 shrink-0 bg-black/40 backdrop-blur-xl border-b border-red-500/20">
           <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Avatar className="h-8 w-8 border border-white/10">
+                <AvatarImage src={chatbotAvatar} />
+                <AvatarFallback className="bg-primary/20 text-white text-xs">
+                  MIA
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="text-white font-medium text-sm">
+                  MIA
+                </div>
+                <div className="text-white/50 text-xs">
+                  Deine Event-Assistentin
+                </div>
+              </div>
+            </div>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => onOpenChange(false)}
               className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10 transition-colors rounded-full"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <X className="h-4 w-4" />
             </Button>
-            <div className="text-white font-medium text-sm tracking-wide">
-              MIA
-            </div>
-            <div className="w-8 h-8" />
           </div>
         </div>
 
@@ -666,16 +675,15 @@ Mia 💕`;
           </div>
         )}
 
-        {/* Hidden file input for image upload */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          className="hidden"
-        />
-      </DialogContent>
-    </Dialog>
+      {/* Hidden file input for image upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleImageUpload}
+        className="hidden"
+      />
+    </div>
   );
 };
 
