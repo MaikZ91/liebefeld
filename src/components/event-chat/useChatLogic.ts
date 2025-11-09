@@ -463,11 +463,24 @@ export const useChatLogic = (
       }
     }
 
-    // Check if we're awaiting meetup details
-    const lastMessage = messages[messages.length - 1];
-    if (lastMessage?.metadata?.awaitingMeetupDetails) {
+    // Check if we're awaiting meetup details BEFORE adding user message
+    // Find the most recent AI message with awaitingMeetupDetails
+    const awaitingMeetupMessage = [...messages].reverse().find(
+      msg => !msg.isUser && msg.metadata?.awaitingMeetupDetails
+    );
+    
+    if (awaitingMeetupMessage) {
       const username = localStorage.getItem('community_chat_username') || 'Gast';
-      const eventTitle = lastMessage.metadata.eventTitle;
+      const eventTitle = awaitingMeetupMessage.metadata.eventTitle;
+      
+      // Add user message to show in chat
+      const userMessage: ChatMessage = {
+        id: `user-${Date.now()}`,
+        isUser: true,
+        text: message,
+        timestamp: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, userMessage]);
       
       // Determine the correct community group ID based on selected city
       const cityAbbr = selectedCity || 'BI'; // Default to Bielefeld if no city is selected
