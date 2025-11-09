@@ -339,9 +339,6 @@ const EventCalendar = ({ defaultView = "list", onJoinEventChat }: EventCalendarP
                   favoriteCount={favoriteEvents.length}
                   onShowEventForm={toggleEventForm}
                   onDislike={handleEventDislike}
-                  filter={filter}
-                  topEventsPerDay={topEventsPerDay}
-                  activeCategory="alle"
                 />
               </div>
             </div>

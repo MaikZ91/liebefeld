@@ -75,8 +75,6 @@ import EventDetails from "@/components/EventDetails";
 import { dislikeService } from "@/services/dislikeService";
 import OnboardingDialog from "./OnboardingDialog";
 import { useOnboardingLogic } from "@/hooks/chat/useOnboardingLogic";
-import EventList from "./calendar/EventList";
-import { useLocation, useNavigate } from "react-router-dom";
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -102,8 +100,6 @@ const EventHeatmap: React.FC = () => {
   const { selectedCity } = useEventContext();
   const { events, isLoading, refreshEvents, addUserEvent, handleLikeEvent } = useEvents(selectedCity);
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
-  const location = useLocation();
-  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<FilterGroup>(() => getSelectedCategory() as FilterGroup);
   const [timeRange, setTimeRange] = useState([new Date().getHours()]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -188,9 +184,6 @@ const EventHeatmap: React.FC = () => {
   const [showAiResponse, setShowAiResponse] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [currentAiEventContext, setCurrentAiEventContext] = useState<{ id: string; title: string } | null>(null);
-  
-  // Event List mode in AI Response window
-  const [showEventListMode, setShowEventListMode] = useState(false);
 
   // ====== NEW: make anchors render as inline chips in AI HTML ======
   const enhanceLinksToChips = (html: string) => {
@@ -322,17 +315,6 @@ const EventHeatmap: React.FC = () => {
       await fetchAndShowEventDescription(evt);
     };
 
-    // Register handler for opening event list in MIA window
-    (window as any).openEventListInMIA = () => {
-      console.log("[EventHeatmap] Opening event list in MIA window");
-      setIsOnboardingActive(false);
-      setShowEventListMode(true);
-      setShowAiResponse(true);
-      setIsMIAOpen(true);
-      setAiResponse(null);
-      setAiSuggestions([]);
-    };
-
     // Register additional handlers for event detail buttons (legacy)
     (window as any).showEventOnMap = (eventId: string) => {
       console.log("Show event on map:", eventId);
@@ -357,7 +339,6 @@ const EventHeatmap: React.FC = () => {
 
     return () => {
       delete (window as any).handleEventLinkClick;
-      delete (window as any).openEventListInMIA;
       delete (window as any).showEventOnMap;
       delete (window as any).showSimilarEvents;
       delete (window as any).saveEvent;
@@ -428,23 +409,6 @@ const EventHeatmap: React.FC = () => {
       setShowAiResponse(true);
     }
   }, []);
-
-  // Handle query parameter for opening event list in MIA
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.get('openEventList') === '1' && !showEventListMode) {
-      console.log('[EventHeatmap] Opening event list via query param');
-      setIsOnboardingActive(false);
-      setShowEventListMode(true);
-      setShowAiResponse(true);
-      setIsMIAOpen(true);
-      setAiResponse(null);
-      setAiSuggestions([]);
-      
-      // Remove query param to prevent re-triggering
-      navigate('/heatmap', { replace: true });
-    }
-  }, [location.search, showEventListMode, navigate]);
 
   // Check for daily recommendation on mount
   useEffect(() => {
@@ -1998,16 +1962,12 @@ const EventHeatmap: React.FC = () => {
                 <div className="relative">
                   <div className="absolute -inset-0.5 rounded-full bg-red-500/30 blur-md" />
                   <div className="relative w-9 h-9 rounded-full bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center ring-2 ring-white/10">
-                    {showEventListMode ? <CalendarIcon className="w-5 h-5 text-white" /> : <Sparkles className="w-5 h-5 text-white" />}
+                    <Sparkles className="w-5 h-5 text-white" />
                   </div>
                 </div>
                 <div>
-                  <div className="text-white font-semibold leading-tight">
-                    {showEventListMode ? "Event Liste" : "MIA"}
-                  </div>
-                  <div className="text-[11px] text-white/50">
-                    {showEventListMode ? "Alle Events im Überblick" : "Deine Event-Assistentin"}
-                  </div>
+                  <div className="text-white font-semibold leading-tight">MIA</div>
+                  <div className="text-[11px] text-white/50">Deine Event-Assistentin</div>
                 </div>
               </div>
               <Button
@@ -2018,7 +1978,6 @@ const EventHeatmap: React.FC = () => {
                   setAiResponse(null);
                   setAiSuggestions([]);
                   setIsMIAOpen(false);
-                  setShowEventListMode(false);
                 }}
                 className="h-9 w-9 rounded-full text-white/70 hover:text-white hover:bg-white/10"
               >
@@ -2028,26 +1987,7 @@ const EventHeatmap: React.FC = () => {
 
             {/* Content */}
             <div className="relative max-h-[66vh] overflow-y-auto px-4 py-3 space-y-3 scrollbar-thin scrollbar-thumb-white/20">
-              {showEventListMode ? (
-                <EventList
-                  events={events}
-                  showFavorites={false}
-                  showNewEvents={false}
-                  onSelectEvent={(event: any, date: Date) => {
-                    setSelectedEventForDetails(event);
-                    setShowEventDetails(true);
-                    setShowAiResponse(false);
-                    setShowEventListMode(false);
-                  }}
-                  toggleFavorites={() => {}}
-                  toggleNewEvents={() => {}}
-                  favoriteCount={0}
-                  onDislike={handleEventDislike}
-                  filter={null}
-                  topEventsPerDay={{}}
-                  activeCategory="alle"
-                />
-              ) : isAiChatLoading ? (
+              {isAiChatLoading ? (
                 <div className="flex items-center justify-center py-10">
                   <div className="flex flex-col items-center gap-3">
                     <div className="animate-spin rounded-full h-8 w-8 border-2 border-white/20 border-t-white/70" />
@@ -2114,46 +2054,15 @@ const EventHeatmap: React.FC = () => {
               ) : null}
             </div>
 
-            {/* Input - Only show if not in event list mode */}
-            {!showEventListMode && (
-              <div className="relative border-t border-white/10 p-3 bg-black/60 backdrop-blur-xl">
-                <div className="flex gap-2">
-                  <Input
-                    value={aiChatInput}
-                    onChange={(e) => setAiChatInput(e.target.value)}
-                    onKeyDown={async (e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        if (!aiChatInput.trim()) return;
-                        const q = aiChatInput;
-                        setAiChatInput("");
-                        setAiResponse(null);
-                        setAiSuggestions([]);
-                        try {
-                          setIsAiChatLoading(true);
-                          if (aiChatExternalSendHandler) await aiChatExternalSendHandler(q);
-                          else if ((chatLogic as any)?.handleSendMessage) await (chatLogic as any).handleSendMessage(q);
-                          else throw new Error("Kein Send-Handler verfügbar");
-                        } catch {
-                          toast.error("Konnte Antwort nicht laden");
-                          setAiResponse(
-                            enhanceLinksToChips(
-                              '<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider keine Antwort. Bitte erneut versuchen.</div>',
-                            ),
-                          );
-                          setAiSuggestions(["Was läuft heute?", "Events am Wochenende"]);
-                        } finally {
-                          setIsAiChatLoading(false);
-                        }
-                      }
-                    }}
-                    placeholder="Frag MIA nach Events…"
-                    className="flex-1 bg-white/5 border-white/15 text-white placeholder:text-white/50 rounded-xl"
-                    disabled={isAiChatLoading}
-                  />
-                  <Button
-                    size="icon"
-                    onClick={async () => {
+            {/* Input */}
+            <div className="relative border-t border-white/10 p-3 bg-black/60 backdrop-blur-xl">
+              <div className="flex gap-2">
+                <Input
+                  value={aiChatInput}
+                  onChange={(e) => setAiChatInput(e.target.value)}
+                  onKeyDown={async (e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
                       if (!aiChatInput.trim()) return;
                       const q = aiChatInput;
                       setAiChatInput("");
@@ -2175,15 +2084,44 @@ const EventHeatmap: React.FC = () => {
                       } finally {
                         setIsAiChatLoading(false);
                       }
-                    }}
-                    disabled={isAiChatLoading}
-                    className="rounded-xl bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
+                    }
+                  }}
+                  placeholder="Frag MIA nach Events…"
+                  className="flex-1 bg-white/5 border-white/15 text-white placeholder:text-white/50 rounded-xl"
+                  disabled={isAiChatLoading}
+                />
+                <Button
+                  size="icon"
+                  onClick={async () => {
+                    if (!aiChatInput.trim()) return;
+                    const q = aiChatInput;
+                    setAiChatInput("");
+                    setAiResponse(null);
+                    setAiSuggestions([]);
+                    try {
+                      setIsAiChatLoading(true);
+                      if (aiChatExternalSendHandler) await aiChatExternalSendHandler(q);
+                      else if ((chatLogic as any)?.handleSendMessage) await (chatLogic as any).handleSendMessage(q);
+                      else throw new Error("Kein Send-Handler verfügbar");
+                    } catch {
+                      toast.error("Konnte Antwort nicht laden");
+                      setAiResponse(
+                        enhanceLinksToChips(
+                          '<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider keine Antwort. Bitte erneut versuchen.</div>',
+                        ),
+                      );
+                      setAiSuggestions(["Was läuft heute?", "Events am Wochenende"]);
+                    } finally {
+                      setIsAiChatLoading(false);
+                    }
+                  }}
+                  disabled={isAiChatLoading}
+                  className="rounded-xl bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
               </div>
-            )}
+            </div>
           </Card>
         </div>
       )}
