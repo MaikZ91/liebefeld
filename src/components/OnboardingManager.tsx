@@ -1,6 +1,5 @@
 // src/components/OnboardingManager.tsx
-import React, { useState, useEffect } from 'react';
-import OnboardingChatbot from './OnboardingChatbot';
+import React, { useEffect } from 'react';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
 
 interface OnboardingManagerProps {
@@ -10,8 +9,6 @@ interface OnboardingManagerProps {
 }
 
 const OnboardingManager: React.FC<OnboardingManagerProps> = ({ children, onFinalAction }) => {
-  const [showOnboarding, setShowOnboarding] = useState(false);
-
   useEffect(() => {
     // Clean up any conflicting localStorage data from old profile system
     const cleanupOldData = () => {
@@ -30,34 +27,9 @@ const OnboardingManager: React.FC<OnboardingManagerProps> = ({ children, onFinal
     };
 
     cleanupOldData();
-
-    // Check if user has completed onboarding properly
-    const username = localStorage.getItem(USERNAME_KEY);
-    const hasValidUsername = username && username !== 'Anonymous' && username !== 'User' && username.trim().length > 0;
-    
-    if (!hasValidUsername) {
-      setShowOnboarding(true);
-    }
   }, []);
 
-  // Modify handleOnboardingComplete to accept the action from OnboardingChatbot
-  const handleOnboardingComplete = (action: 'community_chat' | 'event_heatmap') => {
-    setShowOnboarding(false);
-    // Call the onFinalAction prop passed from App.tsx with the action
-    onFinalAction(action);
-  };
-
-  return (
-    <>
-      {children}
-      <OnboardingChatbot 
-        open={showOnboarding}
-        onOpenChange={setShowOnboarding}
-        // Pass the modified handleOnboardingComplete to OnboardingChatbot
-        onComplete={handleOnboardingComplete}
-      />
-    </>
-  );
+  return <>{children}</>;
 };
 
 export default OnboardingManager;

@@ -399,7 +399,7 @@ const EventHeatmap: React.FC = () => {
 
   const mapRef = useRef<HTMLDivElement>(null);
 
-  // Check for daily recommendation on mount
+  // Check for daily recommendation on mount and auto-start onboarding
   useEffect(() => {
     const checkDailyRecommendation = () => {
       const today = new Date().toISOString().split("T")[0];
@@ -411,6 +411,17 @@ const EventHeatmap: React.FC = () => {
     };
 
     checkDailyRecommendation();
+
+    // Auto-start onboarding if user hasn't completed it
+    const username = localStorage.getItem(USERNAME_KEY);
+    const hasValidUsername = username && username !== 'Anonymous' && username !== 'User' && username.trim().length > 0;
+    
+    if (!hasValidUsername) {
+      // Start onboarding in MIA dialog
+      setIsOnboardingActive(true);
+      setIsMIAOpen(true);
+      setShowAiResponse(true);
+    }
 
     // Setup global function for "Personalisiere deine Perfect Day Nachricht" button
     (window as any).openProfileEditor = () => {
@@ -2043,15 +2054,46 @@ const EventHeatmap: React.FC = () => {
               ) : null}
             </div>
 
-            {/* Input */}
-            <div className="relative border-t border-white/10 p-3 bg-black/60 backdrop-blur-xl">
-              <div className="flex gap-2">
-                <Input
-                  value={aiChatInput}
-                  onChange={(e) => setAiChatInput(e.target.value)}
-                  onKeyDown={async (e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
+            {/* Input - Hide during onboarding */}
+            {!isOnboardingActive && (
+              <div className="relative border-t border-white/10 p-3 bg-black/60 backdrop-blur-xl">
+                <div className="flex gap-2">
+                  <Input
+                    value={aiChatInput}
+                    onChange={(e) => setAiChatInput(e.target.value)}
+                    onKeyDown={async (e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        if (!aiChatInput.trim()) return;
+                        const q = aiChatInput;
+                        setAiChatInput("");
+                        setAiResponse(null);
+                        setAiSuggestions([]);
+                        try {
+                          setIsAiChatLoading(true);
+                          if (aiChatExternalSendHandler) await aiChatExternalSendHandler(q);
+                          else if ((chatLogic as any)?.handleSendMessage) await (chatLogic as any).handleSendMessage(q);
+                          else throw new Error("Kein Send-Handler verfügbar");
+                        } catch {
+                          toast.error("Konnte Antwort nicht laden");
+                          setAiResponse(
+                            enhanceLinksToChips(
+                              '<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider keine Antwort. Bitte erneut versuchen.</div>',
+                            ),
+                          );
+                          setAiSuggestions(["Was läuft heute?", "Events am Wochenende"]);
+                        } finally {
+                          setIsAiChatLoading(false);
+                        }
+                      }
+                    }}
+                    placeholder="Frag MIA nach Events…"
+                    className="flex-1 bg-white/5 border-white/15 text-white placeholder:text-white/50 rounded-xl"
+                    disabled={isAiChatLoading}
+                  />
+                  <Button
+                    size="icon"
+                    onClick={async () => {
                       if (!aiChatInput.trim()) return;
                       const q = aiChatInput;
                       setAiChatInput("");
@@ -2073,44 +2115,15 @@ const EventHeatmap: React.FC = () => {
                       } finally {
                         setIsAiChatLoading(false);
                       }
-                    }
-                  }}
-                  placeholder="Frag MIA nach Events…"
-                  className="flex-1 bg-white/5 border-white/15 text-white placeholder:text-white/50 rounded-xl"
-                  disabled={isAiChatLoading}
-                />
-                <Button
-                  size="icon"
-                  onClick={async () => {
-                    if (!aiChatInput.trim()) return;
-                    const q = aiChatInput;
-                    setAiChatInput("");
-                    setAiResponse(null);
-                    setAiSuggestions([]);
-                    try {
-                      setIsAiChatLoading(true);
-                      if (aiChatExternalSendHandler) await aiChatExternalSendHandler(q);
-                      else if ((chatLogic as any)?.handleSendMessage) await (chatLogic as any).handleSendMessage(q);
-                      else throw new Error("Kein Send-Handler verfügbar");
-                    } catch {
-                      toast.error("Konnte Antwort nicht laden");
-                      setAiResponse(
-                        enhanceLinksToChips(
-                          '<div class="bg-red-900/20 border border-red-700/30 rounded-lg p-2 text-sm">Leider keine Antwort. Bitte erneut versuchen.</div>',
-                        ),
-                      );
-                      setAiSuggestions(["Was läuft heute?", "Events am Wochenende"]);
-                    } finally {
-                      setIsAiChatLoading(false);
-                    }
-                  }}
-                  disabled={isAiChatLoading}
-                  className="rounded-xl bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
+                    }}
+                    disabled={isAiChatLoading}
+                    className="rounded-xl bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
           </Card>
         </div>
       )}
