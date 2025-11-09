@@ -85,10 +85,18 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
   
   // Filter messages based on selected categories
   const filteredMessages = useMemo(() => {
+    // If we're in a specific category (not "alle"), show all messages from that group
+    // because the groupId is already category-specific (e.g., "bi_sport")
+    if (activeCategory !== 'alle') {
+      return messages;
+    }
+    
+    // If "alle" is selected in the filter chips, show all messages
     if (messageFilter.includes('alle')) {
       return messages;
     }
     
+    // Otherwise, filter by hashtag
     return messages.filter(message => {
       if ((message as any).poll_question) {
         return true;
@@ -99,7 +107,7 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
         messageText.includes(`#${category.toLowerCase()}`)
       );
     });
-  }, [messages, messageFilter]);
+  }, [messages, messageFilter, activeCategory]);
   
   const handleSendMessage = async () => {
     if (!input.trim() || !username) return;
@@ -227,7 +235,7 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
   
   return (
     <>
-      <div className="fixed top-20 bottom-16 right-4 left-4 md:left-auto md:w-[520px] z-[9999] animate-fade-in flex flex-col">
+      <div className="fixed top-20 bottom-0 right-4 left-4 md:left-auto md:w-[520px] z-[9999] animate-fade-in flex flex-col">
         <Card className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/70 backdrop-blur-xl shadow-[0_20px_80px_rgba(239,68,68,0.25)] flex-1 flex flex-col">
           {/* Gradient ring */}
           <div
@@ -243,9 +251,9 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
             variant="ghost"
             size="icon"
             onClick={() => onOpenChange(false)}
-            className="absolute top-3 right-3 z-10 h-8 w-8 rounded-full text-white/70 hover:text-white hover:bg-white/10"
+            className="absolute top-3 right-3 z-10 h-10 w-10 rounded-full bg-red-600/90 hover:bg-red-700 text-white shadow-lg shadow-red-500/30 border border-white/20"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </Button>
           
           {/* Category Filter */}
