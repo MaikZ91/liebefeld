@@ -1775,7 +1775,7 @@ const EventHeatmap: React.FC = () => {
       />
 
       {/* Filter Panel (Conditional Rendering) - Hide when MIA is open */}
-      {showFilterPanel && !isMIAOpen && (
+      {showFilterPanel && !isMIAOpen && !showCommunityChat && (
         <div className="fixed top-60 left-4 z-[1003] space-y-3 max-w-sm animate-fade-in">
           <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
             <h3 className="text-white font-bold mb-4 flex items-center gap-2">
@@ -1924,7 +1924,7 @@ const EventHeatmap: React.FC = () => {
       </div>
 
       {/* Date Picker - Über dem Zeitslider */}
-      <div className={cn("fixed top-32 right-2 z-[1002]", isMIAOpen && "hidden")}>
+      <div className={cn("fixed top-32 right-2 z-[1002]", (isMIAOpen || showCommunityChat) && "hidden")}>
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -1949,7 +1949,7 @@ const EventHeatmap: React.FC = () => {
       </div>
 
       {/* Time Slider - Extrem minimal */}
-      <div className={cn("fixed top-44 right-2 z-[1002]", isMIAOpen && "hidden")}>
+      <div className={cn("fixed top-44 right-2 z-[1002]", (isMIAOpen || showCommunityChat) && "hidden")}>
         <div className="p-1 bg-black/25 backdrop-blur-sm rounded-full">
           <div className="flex flex-col items-center gap-1.5">
             <span className="text-white text-[11px] font-bold">{timeRange[0]}h</span>
@@ -1969,7 +1969,7 @@ const EventHeatmap: React.FC = () => {
       </div>
 
       {/* Button to show events panel again if hidden */}
-      {!showEventPanels && (
+      {!showEventPanels && !showCommunityChat && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[1000]">
           <Button
             onClick={() => setShowEventPanels(true)}
@@ -1981,7 +1981,7 @@ const EventHeatmap: React.FC = () => {
       )}
 
       {/* Default Event Display - Always visible above navbar (versteckt wenn MIA offen oder Event-Liste offen) */}
-      {!showPerfectDayPanel && filteredEvents.length > 0 && showEventPanels && !isMIAOpen && !showEventList && (
+      {!showPerfectDayPanel && filteredEvents.length > 0 && showEventPanels && !isMIAOpen && !showEventList && !showCommunityChat && (
         <div className="fixed bottom-16 left-0 right-0 z-[1000] pointer-events-auto">
           <div className="px-2 py-4">
             <ThreeEventDisplay
