@@ -1692,15 +1692,14 @@ const EventHeatmap: React.FC = () => {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
         <div className="flex flex-col items-center space-y-6">
-          {/* MIA Avatar with glow */}
+          {/* MIA Logo */}
           <div className="relative">
             <div className="absolute inset-0 bg-primary/30 rounded-full blur-2xl animate-pulse" />
-            <Avatar className="relative w-20 h-20 ring-2 ring-primary/50 shadow-lg shadow-primary/50">
-              <AvatarImage src="/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png" />
-              <AvatarFallback className="bg-gradient-to-br from-red-600 to-red-800 text-white font-bold text-2xl">
-                MIA
-              </AvatarFallback>
-            </Avatar>
+            <img 
+              src="/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png" 
+              alt="MIA"
+              className="relative w-20 h-20 object-contain drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]"
+            />
           </div>
 
           {/* Text */}
