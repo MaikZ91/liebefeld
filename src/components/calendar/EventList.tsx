@@ -110,7 +110,16 @@ const EventList: React.FC<EventListProps> = ({
   }, [filteredEvents, showFavorites, topEventsPerDay]);
 
   const eventsByDate = useMemo(() => {
-    const grouped = groupEventsByDate(filteredEvents);
+    // Filter out events without valid date before grouping
+    const validEvents = filteredEvents.filter(event => {
+      if (!event.date) {
+        console.warn('[EventList] Event without date found, skipping:', event.title);
+        return false;
+      }
+      return true;
+    });
+
+    const grouped = groupEventsByDate(validEvents);
     
     Object.keys(grouped).forEach(dateStr => {
       grouped[dateStr].sort((a, b) => {
@@ -134,7 +143,8 @@ const EventList: React.FC<EventListProps> = ({
           return minuteA - minuteB;
         }
         
-        return a.id.localeCompare(b.id);
+        // Safe localeCompare with fallback
+        return (a.id || '').localeCompare(b.id || '');
       });
     });
     
@@ -185,8 +195,16 @@ const EventList: React.FC<EventListProps> = ({
         {Object.keys(eventsByDate).length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-2 gap-y-1">
             {Object.keys(eventsByDate).sort().map(dateStr => {
-              const date = parseISO(dateStr);
-              const isCurrentDay = isToday(date);
+              let date: Date;
+              let isCurrentDay: boolean;
+              
+              try {
+                date = parseISO(dateStr);
+                isCurrentDay = isToday(date);
+              } catch (error) {
+                console.error('[EventList] Invalid date string:', dateStr, error);
+                return null; // Skip invalid date groups
+              }
               
               return (
                 <div 

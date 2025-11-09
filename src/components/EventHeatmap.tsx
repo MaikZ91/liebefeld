@@ -76,7 +76,7 @@ import { dislikeService } from "@/services/dislikeService";
 import OnboardingDialog from "./OnboardingDialog";
 import { useOnboardingLogic } from "@/hooks/chat/useOnboardingLogic";
 import EventList from "./calendar/EventList";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -102,6 +102,8 @@ const EventHeatmap: React.FC = () => {
   const { selectedCity } = useEventContext();
   const { events, isLoading, refreshEvents, addUserEvent, handleLikeEvent } = useEvents(selectedCity);
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<FilterGroup>(() => getSelectedCategory() as FilterGroup);
   const [timeRange, setTimeRange] = useState([new Date().getHours()]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -427,17 +429,23 @@ const EventHeatmap: React.FC = () => {
     }
   }, []);
 
-  // If the URL asks to open the Event List, do it (works after navigation)
-  const location = useLocation();
+  // Handle query parameter for opening event list in MIA
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (params.get('openEventList') === '1') {
+    if (params.get('openEventList') === '1' && !showEventListMode) {
+      console.log('[EventHeatmap] Opening event list via query param');
       setIsOnboardingActive(false);
       setShowEventListMode(true);
       setShowAiResponse(true);
       setIsMIAOpen(true);
+      setAiResponse(null);
+      setAiSuggestions([]);
+      
+      // Remove query param to prevent re-triggering
+      navigate('/heatmap', { replace: true });
     }
-  }, [location.search]);
+  }, [location.search, showEventListMode, navigate]);
+
   // Check for daily recommendation on mount
   useEffect(() => {
     const checkDailyRecommendation = () => {

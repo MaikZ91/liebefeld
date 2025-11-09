@@ -106,24 +106,13 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           </Button>
 
           {/* Event Calendar Button */}
-          
           <Button 
             variant="ghost"
             size="icon" 
             onClick={() => {
               console.log('🔥 [BottomNav] Event Calendar button clicked');
-              // Open within Heatmap MIA window
-              if (location.pathname === '/heatmap' || location.pathname === '/') {
-                if ((window as any).openEventListInMIA) {
-                  (window as any).openEventListInMIA();
-                } else {
-                  // Fallback: force via query param
-                  navigate('/heatmap?openEventList=1');
-                }
-              } else {
-                navigate('/heatmap?openEventList=1');
-              }
-            }} 
+              navigate('/heatmap?openEventList=1');
+            }}
             className={cn(
               "relative h-12 w-12 rounded-full transition-all duration-300",
               isOnEventsPage 
