@@ -748,6 +748,44 @@ const EventHeatmap: React.FC = () => {
     return filtered;
   }, [selectedDateFilteredEvents, selectedCategory, timeRange, dislikedEventIds]);
 
+  // All events for Event List (not filtered by selected date)
+  const allFilteredEvents = React.useMemo(() => {
+    const cityDisplayName =
+      cities.find((c) => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity;
+    
+    let filtered = events.filter((event) => {
+      const eventCityLower = event.city ? event.city.toLowerCase() : null;
+      const selectedCityLower = selectedCity.toLowerCase();
+
+      let isRelevantCity = false;
+      if (selectedCityLower === "bi" || selectedCityLower === "bielefeld") {
+        isRelevantCity = !eventCityLower || eventCityLower === "bielefeld" || eventCityLower === "bi";
+      } else {
+        isRelevantCity = eventCityLower === selectedCityLower;
+      }
+
+      return isRelevantCity;
+    });
+
+    // Filter out blocked locations
+    const blockedLocations = dislikeService.getBlockedLocations();
+    filtered = filtered.filter((event) => {
+      if (event.location && blockedLocations.includes(event.location)) {
+        return false;
+      }
+      return true;
+    });
+
+    // Filter out disliked events
+    filtered = filtered.filter((event) => {
+      const eventId = event.id || `${event.title}-${event.date}-${event.time}`;
+      return !dislikedEventIds.includes(eventId);
+    });
+
+    return filtered;
+  }, [events, selectedCity, dislikedEventIds]);
+
+
   const panelEvents: PanelEvent[] = React.useMemo(() => {
     return filteredEvents.map((event) => ({
       id: event.id || `${event.title}-${event.date}-${event.time}`,
@@ -1862,8 +1900,8 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* Default Event Display - Always visible above navbar (versteckt wenn MIA offen) */}
-      {!showPerfectDayPanel && filteredEvents.length > 0 && showEventPanels && !isMIAOpen && (
+      {/* Default Event Display - Always visible above navbar (versteckt wenn MIA offen oder Event-Liste offen) */}
+      {!showPerfectDayPanel && filteredEvents.length > 0 && showEventPanels && !isMIAOpen && !showEventList && (
         <div className="fixed bottom-16 left-0 right-0 z-[1000] pointer-events-auto">
           <div className="px-2 py-4">
             <ThreeEventDisplay
@@ -1975,7 +2013,7 @@ const EventHeatmap: React.FC = () => {
             </Button>
             
             <EventList
-              events={filteredEvents}
+              events={allFilteredEvents}
               showFavorites={false}
               showNewEvents={false}
               onSelectEvent={(event, date) => {
