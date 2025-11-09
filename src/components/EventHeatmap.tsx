@@ -182,6 +182,13 @@ const EventHeatmap: React.FC = () => {
   // Community Chat State
   const [showCommunityChat, setShowCommunityChat] = useState(false);
   const [communityChatCategory, setCommunityChatCategory] = useState<string>('ausgehen');
+  
+  // Close event panels when community chat opens
+  useEffect(() => {
+    if (showCommunityChat) {
+      setShowEventPanels(false);
+    }
+  }, [showCommunityChat]);
 
   // Event Chat Window State
   const [eventChatWindow, setEventChatWindow] = useState<{

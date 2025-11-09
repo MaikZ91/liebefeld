@@ -329,7 +329,8 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
           {/* Messages */}
           <div 
             ref={chatContainerRef}
-            className="relative max-h-[66vh] overflow-y-auto px-4 py-3 space-y-3 scrollbar-thin scrollbar-thumb-white/20"
+            className="relative overflow-y-auto px-4 py-3 space-y-3 scrollbar-thin scrollbar-thumb-white/20"
+            style={{ maxHeight: '50vh' }}
           >
               {loading && filteredMessages.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
