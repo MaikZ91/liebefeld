@@ -65,6 +65,7 @@ import { getInitials } from "@/utils/chatUIUtils";
 import PrivateChat from "@/components/users/PrivateChat";
 import HeatmapHeader from "./HeatmapHeader";
 import { useEventContext, cities } from "@/contexts/EventContext";
+import FullPageChatBot from "@/components/event-chat/FullPageChatBot";
 import { useChatLogic } from "@/components/event-chat/useChatLogic";
 import { geocodeLocation, loadCachedCoordinates, geocodeMultipleLocations } from "@/services/geocodingService";
 import TribeFinder from "./TribeFinder";
@@ -397,18 +398,6 @@ const EventHeatmap: React.FC = () => {
   }, [chatLogic, aiChatExternalSendHandler]);
 
   const mapRef = useRef<HTMLDivElement>(null);
-
-  // Auto-start onboarding if user is not logged in
-  useEffect(() => {
-    const hasCompletedOnboarding = localStorage.getItem(USERNAME_KEY);
-    
-    if (!hasCompletedOnboarding) {
-      // Automatically start onboarding for new users
-      setIsOnboardingActive(true);
-      setIsMIAOpen(true);
-      setShowAiResponse(true);
-    }
-  }, []);
 
   // Check for daily recommendation on mount
   useEffect(() => {
@@ -1945,7 +1934,7 @@ const EventHeatmap: React.FC = () => {
       )}
 
       {/* === AI Response Card (modern) === */}
-      {showAiResponse && !isOnboardingActive && (
+      {showAiResponse && (
         <div className="fixed top-20 right-4 left-4 md:left-auto md:w-[520px] z-[1100] animate-fade-in">
           <Card className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/70 backdrop-blur-xl shadow-[0_20px_80px_rgba(239,68,68,0.25)]">
             {/* Gradient ring */}
@@ -2224,7 +2213,7 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* AI Chat Drawer - DEPRECATED, using MIA Response Card instead */}
+      {/* AI Chat Drawer */}
       {showAIChat && (
         <>
           <div
@@ -2263,8 +2252,17 @@ const EventHeatmap: React.FC = () => {
                 </Button>
               </div>
 
-              <div className="flex-1 overflow-hidden min-h-0 p-4 text-white/70 text-sm">
-                Dieser Dialog wurde durch das neue MIA Response Card ersetzt.
+              <div className="flex-1 overflow-hidden min-h-0">
+                <FullPageChatBot
+                  chatLogic={chatLogic}
+                  activeChatModeValue="ai"
+                  communityGroupId=""
+                  hideInput={true}
+                  externalInput={aiChatInput}
+                  setExternalInput={setAiChatInput}
+                  onExternalSendHandlerChange={setAiChatExternalSendHandler}
+                  embedded={true}
+                />
               </div>
             </div>
           </div>
