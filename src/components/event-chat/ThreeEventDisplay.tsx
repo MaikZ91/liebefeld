@@ -225,12 +225,12 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
   if (displayEvents.length === 0) return null;
 
   return (
-    <div className={cn("w-full space-y-3", className)}>
+    <div className={cn("w-full space-y-4", className)}>
 
       {/* Three Event Cards with Swipe */}
       <div 
         ref={containerRef}
-        className="overflow-hidden px-2"
+        className="overflow-hidden px-1"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -238,13 +238,15 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
       >
-        {/* Swipe Handle */}
-        <div className="flex flex-col items-center pt-2 pb-3">
-          <div className="w-12 h-1.5 bg-gradient-to-r from-primary/50 via-primary to-primary/50 rounded-full cursor-grab active:cursor-grabbing shadow-lg shadow-primary/20" />
-          <ChevronDown className="h-5 w-5 text-primary/70 mt-1 animate-bounce" />
+<div className="flex justify-center pt-2 pb-1">
+          <div className="w-8 h-1 bg-white-500 rounded-full cursor-grab active:cursor-grabbing opacity-70" />
+        </div>
+        {/* Optional: A subtle down arrow to reinforce the swipe direction */}
+        <div className="flex justify-center -mt-1 pb-2">
+            <ChevronDown className="h-4 w-4 text-white-400 opacity-60" />
         </div>
         <div
-          className="flex gap-2 transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing select-none"
+          className="flex gap-1.5 transition-transform duration-300 ease-out cursor-grab active:cursor-grabbing select-none"
           style={{
             transform: `translateX(${translateX}px)`,
             transition: isDragging ? 'none' : 'transform 0.3s ease-out'
@@ -256,37 +258,37 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
             return (
               <div 
                 key={`${currentIndex}-${index}`}
-                className="flex-shrink-0 w-[32%] bg-card/95 backdrop-blur-sm rounded-3xl overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl hover:shadow-primary/20 border border-border/50"
+                className="flex-shrink-0 w-[32%] bg-black rounded-2xl overflow-hidden cursor-pointer transform transition-transform hover:scale-105"
                 onClick={() => handleEventClick(event as PanelEvent)}
               >
                 {/* Event Image */}
-                <div className="relative h-48 overflow-hidden group">
+                <div className="relative h-48 overflow-hidden">
                   <img
                     src={imageUrl}
                     alt={event.title}
-                    className="w-full h-full object-cover pointer-events-none transition-transform duration-500 group-hover:scale-110"
+                    className="w-full h-full object-cover pointer-events-none"
                     onError={(e) => {
                       e.currentTarget.src = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';
                     }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                   
                   {/* Action Buttons - stack top-right */}
-                  <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-2">
+                  <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-1">
                     {/* Like Button */}
                     {onLikeEvent && 'id' in event && (
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="bg-gradient-to-br from-primary/90 to-primary/70 hover:from-primary hover:to-primary/90 text-primary-foreground rounded-full p-2.5 shadow-lg shadow-primary/30 backdrop-blur-sm border border-primary/20 transition-all duration-300 hover:scale-110"
+                        className="bg-black/50 hover:bg-black/70 text-white rounded-full p-2"
                         onClick={async (e) => {
                           e.stopPropagation();
                           await onLikeEvent(event.id);
                           setRefreshTrigger(prev => prev + 1);
                         }}
                       >
-                        <Heart className="w-4 h-4" fill="currentColor" />
-                        <span className="ml-1.5 text-sm font-semibold">{'likes' in event ? event.likes || 0 : 0}</span>
+                        <Heart className="w-4 h-4" />
+                        <span className="ml-1 text-sm">{'likes' in event ? event.likes || 0 : 0}</span>
                       </Button>
                     )}
 
@@ -295,7 +297,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="bg-destructive/90 hover:bg-destructive text-destructive-foreground rounded-full p-2.5 shadow-lg shadow-destructive/30 backdrop-blur-sm border border-destructive/20 transition-all duration-300 hover:scale-110"
+                        className="bg-black/70 hover:bg-red-600/80 text-white rounded-full p-2"
                         onClick={async (e) => {
                           e.stopPropagation();
                           await onDislikeEvent(event.id);
@@ -307,30 +309,29 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
                     )}
                   </div>
                   
+                  {/* Dislike Button moved under heart in top-right actions */}
+                  
                   {/* Event Details mit Like Avatars */}
-                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/95 via-black/80 to-transparent backdrop-blur-sm">
-                    <h3 className="text-white font-bold text-sm mb-2 line-clamp-3 leading-snug drop-shadow-lg">
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <h3 className="text-white font-bold text-sm mb-1 line-clamp-4 leading-tight">
                       {event.title}
                     </h3>
                     
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-gray-200 text-xs flex-1 line-clamp-1">
-                        {'time' in event && event.time && (
-                          <span className="font-medium">{event.time}</span>
-                        )}
-                        {'location' in event && event.location && (
-                          <span className="text-gray-300"> • {event.location}</span>
-                        )}
+                    <div className="flex items-center justify-between">
+                      <div className="text-gray-300 text-xs">
+                        {'time' in event && event.time && event.time}
+                        {'location' in event && event.location && ` • ${event.location}`}
+                        
                       </div>
                       
                       {/* Like Avatars */}
-                      {'liked_by_users' in event && event.liked_by_users && event.liked_by_users.length > 0 && (
-                        <div className="flex-shrink-0">
+                      {'liked_by_users' in event && event.liked_by_users && (
+                        <div>
                           <EventLikeAvatars 
                             likedByUsers={event.liked_by_users} 
                             maxVisible={3}
                             size="xs"
-                            className="shadow-lg"
+                            className="ml-2"
                           />
                         </div>
                       )}
@@ -345,15 +346,13 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
 
       {/* Swipe Indicators */}
       {totalEvents > 3 && (
-        <div className="flex justify-center gap-2 pb-2">
+        <div className="flex justify-center gap-2">
           {Array.from({ length: totalPages }).map((_, index) => (
             <div
               key={index}
               className={cn(
-                "rounded-full transition-all duration-300",
-                currentPage === index 
-                  ? "w-8 h-2 bg-gradient-to-r from-primary via-primary to-primary shadow-lg shadow-primary/50" 
-                  : "w-2 h-2 bg-muted-foreground/40 hover:bg-muted-foreground/60"
+                "w-2 h-2 rounded-full transition-all",
+                currentPage === index ? "bg-white" : "bg-white/40"
               )}
             />
           ))}
