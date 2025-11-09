@@ -426,6 +426,13 @@ const EventHeatmap: React.FC = () => {
     };
   }, []);
 
+  // Hide global bottom navigation while Event List is open
+  useEffect(() => {
+    if (showEventList) document.body.classList.add('event-list-open');
+    else document.body.classList.remove('event-list-open');
+    return () => document.body.classList.remove('event-list-open');
+  }, [showEventList]);
+
   // Listen for community chat toggle from bottom navigation
   useEffect(() => {
     const handleToggleCommunityChat = () => {
@@ -1747,35 +1754,37 @@ const EventHeatmap: React.FC = () => {
   return (
     <div className="relative w-full h-full overflow-hidden" style={{ height: "100dvh" }}>
       {/* Live Ticker Header */}
-      <HeatmapHeader
-        selectedCity={selectedCity}
-        chatInputProps={{
-          input: aiChatInput,
-          setInput: setAiChatInput,
-          handleSendMessage: handleAIChatSend,
-          isTyping: chatLogic.isTyping,
-          onKeyDown: chatLogic.handleKeyPress,
-          onChange: chatLogic.handleInputChange,
-          isHeartActive: chatLogic.isHeartActive,
-          handleHeartClick: chatLogic.handleHeartClick,
-          globalQueries: chatLogic.globalQueries,
-          toggleRecentQueries: chatLogic.toggleRecentQueries,
-          inputRef: chatLogic.inputRef,
-          onAddEvent: handleOpenEventFormForModal,
-          showAnimatedPrompts: !aiChatInput.trim(),
-          activeChatModeValue: "ai",
-        }}
-        showFilterPanel={showFilterPanel}
-        onToggleFilterPanel={() => setShowFilterPanel((prev) => !prev)}
-        onOpenSwipeMode={() => setIsSwipeModeOpen(true)}
-        onMIAOpenChange={setIsMIAOpen}
-        hasNewDailyRecommendation={hasNewDailyRecommendation}
-        onMIAClick={handleMIAClick}
-        isDailyRecommendationLoading={isDailyRecommendationLoading}
-      />
+      {!showEventList && (
+        <HeatmapHeader
+          selectedCity={selectedCity}
+          chatInputProps={{
+            input: aiChatInput,
+            setInput: setAiChatInput,
+            handleSendMessage: handleAIChatSend,
+            isTyping: chatLogic.isTyping,
+            onKeyDown: chatLogic.handleKeyPress,
+            onChange: chatLogic.handleInputChange,
+            isHeartActive: chatLogic.isHeartActive,
+            handleHeartClick: chatLogic.handleHeartClick,
+            globalQueries: chatLogic.globalQueries,
+            toggleRecentQueries: chatLogic.toggleRecentQueries,
+            inputRef: chatLogic.inputRef,
+            onAddEvent: handleOpenEventFormForModal,
+            showAnimatedPrompts: !aiChatInput.trim(),
+            activeChatModeValue: "ai",
+          }}
+          showFilterPanel={showFilterPanel}
+          onToggleFilterPanel={() => setShowFilterPanel((prev) => !prev)}
+          onOpenSwipeMode={() => setIsSwipeModeOpen(true)}
+          onMIAOpenChange={setIsMIAOpen}
+          hasNewDailyRecommendation={hasNewDailyRecommendation}
+          onMIAClick={handleMIAClick}
+          isDailyRecommendationLoading={isDailyRecommendationLoading}
+        />
+      )}
 
       {/* Filter Panel (Conditional Rendering) - Hide when MIA is open */}
-      {showFilterPanel && !isMIAOpen && !showCommunityChat && (
+      {showFilterPanel && !isMIAOpen && !showCommunityChat && !showEventList && (
         <div className="fixed top-60 left-4 z-[1003] space-y-3 max-w-sm animate-fade-in">
           <Card className="p-4 bg-black/95 backdrop-blur-md border-gray-700 shadow-xl">
             <h3 className="text-white font-bold mb-4 flex items-center gap-2">
@@ -1845,7 +1854,7 @@ const EventHeatmap: React.FC = () => {
       )}
 
       {/* Kategorie Filter - Horizontal ausklappbar */}
-      <div className={cn("fixed top-24 left-3 z-[1002]", (isMIAOpen || showCommunityChat) && "hidden")}>
+      <div className={cn("fixed top-24 left-3 z-[1002]", (isMIAOpen || showCommunityChat || showEventList) && "hidden")}>
         <div className="flex items-center gap-2">
           {/* Aktueller Button */}
           <Button
@@ -2079,35 +2088,37 @@ const EventHeatmap: React.FC = () => {
 
       {/* === Event List Overlay === */}
       {showEventList && (
-        <div className="fixed top-20 right-4 left-4 md:left-auto md:w-[520px] z-[1100] animate-fade-in">
-          <div className="relative">
+        <div className="fixed top-0 bottom-0 left-0 right-0 z-[1100] animate-fade-in bg-black">
+          <div className="relative h-full flex flex-col">
             {/* Close button */}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setShowEventList(false)}
-              className="absolute -top-2 -right-2 z-10 h-9 w-9 rounded-full bg-black/70 backdrop-blur-xl text-white/70 hover:text-white hover:bg-black/90 border border-white/10"
+              className="absolute top-4 right-4 z-10 h-10 w-10 rounded-full bg-red-600/90 backdrop-blur-xl text-white hover:bg-red-700 shadow-lg shadow-red-500/30"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </Button>
             
-            <EventList
-              events={allFilteredEvents}
-              showFavorites={false}
-              showNewEvents={false}
-              onSelectEvent={(event, date) => {
-                setShowEventList(false);
-                handleEventSelect(event.id);
-              }}
-              toggleFavorites={() => {}}
-              toggleNewEvents={() => {}}
-              favoriteCount={0}
-              onShowEventForm={() => {
-                setShowEventList(false);
-                setIsEventFormOpen(true);
-              }}
-              onDislike={handleEventDislike}
-            />
+            <div className="flex-1 overflow-hidden pt-4 px-4">
+              <EventList
+                events={allFilteredEvents}
+                showFavorites={false}
+                showNewEvents={false}
+                onSelectEvent={(event, date) => {
+                  setShowEventList(false);
+                  handleEventSelect(event.id);
+                }}
+                toggleFavorites={() => {}}
+                toggleNewEvents={() => {}}
+                favoriteCount={0}
+                onShowEventForm={() => {
+                  setShowEventList(false);
+                  setIsEventFormOpen(true);
+                }}
+                onDislike={handleEventDislike}
+              />
+            </div>
           </div>
         </div>
       )}

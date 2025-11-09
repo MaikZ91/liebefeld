@@ -601,4 +601,9 @@
   body.community-chat-open .lov-bottom-nav {
     display: none !important;
   }
+
+  /* Hide bottom navigation when event list is open */
+  body.event-list-open .lov-bottom-nav {
+    display: none !important;
+  }
 }
