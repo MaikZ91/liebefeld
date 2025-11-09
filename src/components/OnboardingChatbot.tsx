@@ -458,77 +458,92 @@ Mia 💕`;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="sm:max-w-lg h-[80vh] max-h-[700px] flex flex-col p-0 bg-black/95 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl z-[9999] fixed overflow-hidden"
+        className="sm:max-w-lg h-screen max-h-screen flex flex-col p-0 bg-gradient-to-br from-gray-950 via-black to-gray-900 border-0 rounded-none shadow-2xl z-[9999] fixed overflow-hidden"
         showCloseButton={false}
       >
-        {/* Gradient Background Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-kreativität-primary/10 pointer-events-none" />
-        
         {/* Header */}
-        <DialogHeader className="relative px-6 py-4 shrink-0 border-b border-white/10">
+        <div className="relative px-4 py-3 shrink-0 bg-black/40 backdrop-blur-xl border-b border-red-500/20">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => onOpenChange(false)}
-              className="h-10 w-10 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10 transition-colors rounded-full"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className="h-4 w-4" />
             </Button>
-            <DialogTitle className="text-white font-serif text-xl tracking-wide bg-gradient-to-r from-white to-white/80 bg-clip-text">
-              THE TRIBE
-            </DialogTitle>
-            <div className="w-10 h-10" />
+            <div className="text-white font-medium text-sm tracking-wide">
+              MIA
+            </div>
+            <div className="w-8 h-8" />
           </div>
-        </DialogHeader>
+        </div>
 
         {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 min-h-0 scrollbar-thin relative">
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 min-h-0 scrollbar-none relative bg-gradient-to-b from-transparent to-black/20">
           {messages.map((msg, index) => (
-            <div key={msg.id} className="space-y-3 animate-fade-in" style={{animationDelay: `${index * 0.1}s`}}>
-              <div className={`flex ${msg.isBot ? 'justify-start' : 'justify-end'}`}>
+            <div key={msg.id} className="animate-fade-in" style={{animationDelay: `${index * 0.1}s`}}>
+              <div className={`flex items-start gap-2 ${msg.isBot ? 'justify-start' : 'justify-end'}`}>
                 {msg.isBot && (
-                  <div className="relative mr-3 mt-1 shrink-0">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 p-0.5">
-                      <img 
-                        src={chatbotAvatar} 
-                        alt="Event Guide" 
-                        className="w-full h-full rounded-full object-cover"
-                      />
-                    </div>
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-black/90" />
+                  <div className="relative shrink-0">
+                    <Avatar className="h-8 w-8 border border-white/10">
+                      <AvatarImage src={chatbotAvatar} />
+                      <AvatarFallback className="bg-primary/20 text-white text-xs">
+                        MIA
+                      </AvatarFallback>
+                    </Avatar>
                   </div>
                 )}
-                <div className="max-w-[85%]">
-                  <div
-                    className={`rounded-3xl px-6 py-4 backdrop-blur-md transition-all duration-300 hover-scale ${
-                      msg.isBot
-                        ? 'bg-white/95 text-gray-800 shadow-lg border border-white/20'
-                        : 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg'
-                    }`}
-                  >
-                    <p className="text-sm leading-relaxed font-medium">{msg.message}</p>
+                
+                <div className={`flex flex-col gap-1 max-w-[75%] ${!msg.isBot ? 'items-end' : ''}`}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-white/50">{msg.sender}</span>
+                    <span className="text-xs text-white/30">{formatTime(msg.timestamp)}</span>
                   </div>
-                  <p className="text-xs text-white/50 mt-2 px-2 font-mono">
-                    {formatTime(msg.timestamp)}
-                  </p>
+                  
+                  <div
+                    className={`
+                      px-4 py-2.5 rounded-2xl backdrop-blur-sm transition-all
+                      ${msg.isBot 
+                        ? 'bg-white/10 border border-white/10 rounded-tl-sm' 
+                        : 'bg-gradient-to-r from-red-600 to-red-700 rounded-tr-sm text-white shadow-lg shadow-red-500/20'
+                      }
+                    `}
+                  >
+                    <p className={`text-sm leading-relaxed ${msg.isBot ? 'text-white/90' : 'text-white'}`}>
+                      {msg.message}
+                    </p>
+                  </div>
                 </div>
+                
+                {!msg.isBot && (
+                  <div className="relative shrink-0">
+                    <Avatar className="h-8 w-8 border border-white/10">
+                      <AvatarImage src={userData.avatar} />
+                      <AvatarFallback className="bg-primary/20 text-white text-xs">
+                        {getInitials(msg.sender)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                )}
               </div>
               
               {/* Interest buttons with special handling */}
               {currentStep === 'interests' && msg.message.includes('Was interessiert dich besonders?') ? (
-                <div className="flex flex-wrap gap-3 ml-13 animate-fade-in" style={{animationDelay: `${(index + 1) * 0.1}s`}}>
+                <div className="flex flex-wrap gap-2 mt-2">
                   {interests.map((interest, buttonIndex) => (
                     <Button
                       key={buttonIndex}
                       onClick={() => toggleInterest(interest.text)}
                       variant="outline"
                       size="sm"
-                      className={`text-sm transition-all duration-300 hover-scale backdrop-blur-md border-2 font-medium ${
-                        userData.interests.includes(interest.text)
-                          ? 'bg-gradient-to-r from-primary to-primary/90 text-white border-primary shadow-lg shadow-primary/20'
-                          : 'bg-white/10 border-white/30 text-white hover:bg-white/20'
-                      }`}
+                      className={`
+                        h-8 rounded-full px-3 text-xs font-medium transition-all duration-200
+                        ${userData.interests.includes(interest.text)
+                          ? 'bg-gradient-to-r from-red-600 to-red-700 text-white border-0 shadow-lg shadow-red-500/30'
+                          : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:text-white'
+                        }
+                      `}
                     >
                       {`${interest.emoji} ${interest.text}`}
                     </Button>
@@ -537,24 +552,26 @@ Mia 💕`;
                     onClick={proceedToAvatar}
                     variant="default"
                     size="sm"
-                    className="text-sm transition-all duration-300 hover-scale backdrop-blur-md border-2 font-medium bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-white border-primary shadow-lg shadow-primary/20"
+                    className="h-8 rounded-full px-3 text-xs font-medium bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-lg shadow-red-500/30"
                   >
                     Weiter →
                   </Button>
                 </div>
               ) : msg.hasButtons && msg.buttons && (
-                <div className="flex flex-wrap gap-3 ml-13 animate-fade-in" style={{animationDelay: `${(index + 1) * 0.1}s`}}>
+                <div className="flex flex-wrap gap-2 mt-2">
                   {msg.buttons.map((button, buttonIndex) => (
                     <Button
                       key={buttonIndex}
                       onClick={button.action}
                       variant={button.variant}
                       size="sm"
-                      className={`text-sm transition-all duration-300 hover-scale backdrop-blur-md border-2 font-medium ${
-                        button.variant === 'default'
-                          ? 'bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-white border-primary shadow-lg shadow-primary/20'
-                          : 'bg-white/10 border-white/30 text-white hover:bg-white/20'
-                      }`}
+                      className={`
+                        h-8 rounded-full px-3 text-xs font-medium transition-all duration-200
+                        ${button.variant === 'default'
+                          ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 shadow-lg shadow-red-500/30'
+                          : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:text-white'
+                        }
+                      `}
                     >
                       {button.text}
                     </Button>
@@ -566,23 +583,23 @@ Mia 💕`;
           
           {/* Typing Indicator */}
           {isTyping && (
-            <div className="flex justify-start animate-fade-in">
-              <div className="relative mr-3 mt-1 shrink-0">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 p-0.5">
-                  <img 
-                    src={chatbotAvatar} 
-                    alt="Event Guide" 
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full border-2 border-black/90 animate-pulse" />
+            <div className="flex items-start gap-2 animate-fade-in">
+              <div className="relative shrink-0">
+                <Avatar className="h-8 w-8 border border-white/10">
+                  <AvatarImage src={chatbotAvatar} />
+                  <AvatarFallback className="bg-primary/20 text-white text-xs">
+                    MIA
+                  </AvatarFallback>
+                </Avatar>
               </div>
-              <div className="bg-white/95 backdrop-blur-md rounded-3xl px-6 py-4 max-w-[85%] shadow-lg border border-white/20">
-                <div className="flex space-x-2 items-center">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                  <span className="text-gray-500 text-xs ml-2">Mia tippt...</span>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-white/50">Event-Guide</span>
+                <div className="px-4 py-2.5 rounded-2xl rounded-tl-sm bg-white/10 border border-white/10 backdrop-blur-sm">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
                 </div>
               </div>
             </div>
@@ -591,52 +608,61 @@ Mia 💕`;
           <div ref={messagesEndRef} />
         </div>
 
+        {/* City suggestions dropdown */}
+        {currentStep === 'city' && citySearch.length > 0 && filteredCities.length > 0 && (
+          <div className="absolute bottom-full left-0 right-0 mb-2 bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden animate-fade-in mx-4">
+            <div className="max-h-48 overflow-y-auto scrollbar-none">
+              {filteredCities.map((city) => (
+                <button
+                  key={city.abbr}
+                  onClick={() => selectCity(city.name)}
+                  className="w-full px-4 py-2.5 text-left text-sm text-white/80 hover:bg-white/10 hover:text-white transition-colors border-b border-white/5 last:border-b-0 flex items-center gap-2"
+                >
+                  <Search className="h-3.5 w-3.5 text-white/40" />
+                  <span>{city.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Input Area */}
         {(currentStep === 'name' || currentStep === 'city') && (
-          <div className="p-6 shrink-0 border-t border-white/10 backdrop-blur-md relative">
-            <div className="flex items-center space-x-3">
-              {currentStep === 'city' && <Search className="h-5 w-5 text-white/60 absolute left-9 z-10" />}
-              <Input
-                placeholder={currentStep === 'city' ? "In welcher Stadt bist du?" : "Wie heißt du?"}
-                value={currentStep === 'city' ? citySearch : inputMessage}
-                onChange={(e) => {
-                  if (currentStep === 'city') {
-                    setCitySearch(e.target.value);
-                  } else {
-                    setInputMessage(e.target.value);
+          <div className="relative px-4 py-3 shrink-0 border-t border-white/10 bg-black/40 backdrop-blur-xl">
+            <div className="flex items-end gap-2">
+              <div className="flex-1 relative">
+                <Input
+                  value={currentStep === 'city' ? citySearch : inputMessage}
+                  onChange={(e) => {
+                    if (currentStep === 'city') {
+                      setCitySearch(e.target.value);
+                    } else {
+                      setInputMessage(e.target.value);
+                    }
+                  }}
+                  onKeyPress={handleKeyPress}
+                  placeholder={
+                    currentStep === 'name' 
+                      ? "Dein Name..." 
+                      : currentStep === 'city'
+                      ? "Stadt eingeben..."
+                      : "Nachricht schreiben..."
                   }
-                }}
-                onKeyPress={handleKeyPress}
-                className={`flex-1 bg-white/10 backdrop-blur-md border-2 border-white/20 rounded-2xl py-4 text-white placeholder:text-white/60 focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 font-medium ${
-                  currentStep === 'city' ? 'pl-12 pr-5' : 'px-5'
-                }`}
-              />
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-red-500/50 rounded-xl h-10 transition-all"
+                />
+              </div>
               <Button
                 onClick={handleSendMessage}
-                disabled={currentStep === 'name' ? !inputMessage.trim() : !citySearch.trim()}
+                disabled={
+                  (currentStep === 'name' && !inputMessage.trim()) || 
+                  (currentStep === 'city' && !citySearch.trim())
+                }
                 size="icon"
-                className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-white rounded-2xl h-12 w-12 shadow-lg shadow-primary/30 transition-all duration-300 disabled:opacity-50 disabled:shadow-none hover-scale border-2 border-primary"
+                className="h-10 w-10 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-white/5 disabled:to-white/5 disabled:text-white/30 shadow-lg shadow-red-500/20 transition-all"
               >
-                <Send className="h-5 w-5" />
+                <Send className="h-4 w-4" />
               </Button>
             </div>
-            
-            {/* City suggestions */}
-            {currentStep === 'city' && citySearch.length > 0 && filteredCities.length > 0 && (
-              <div className="mt-4 space-y-2 max-h-40 overflow-y-auto scrollbar-thin">
-                {filteredCities.map((city, index) => (
-                  <button
-                    key={city.name}
-                    onClick={() => selectCity(city.name)}
-                    className="w-full text-left px-4 py-3 hover:bg-white/10 rounded-2xl text-sm flex items-center text-white/80 hover:text-white transition-all duration-300 backdrop-blur-md border border-white/10 hover:border-white/20 animate-fade-in"
-                    style={{animationDelay: `${index * 0.05}s`}}
-                  >
-                    <Search className="h-4 w-4 mr-3 text-primary" />
-                    <span className="font-medium">{city.name}</span>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         )}
 
