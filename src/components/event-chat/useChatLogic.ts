@@ -484,9 +484,12 @@ export const useChatLogic = (
       
       // Determine the correct community group ID based on selected city
       const cityAbbr = selectedCity || 'BI'; // Default to Bielefeld if no city is selected
-      const communityGroupId = createCitySpecificGroupId('Ausgehen', cityAbbr);
+      const communityGroupId = createCitySpecificGroupId('ausgehen', cityAbbr);
       
       console.log('[useChatLogic] Posting meetup to group:', communityGroupId);
+      
+      // Prepare meetup text with category hashtag for visibility
+      const meetupText = `#ausgehen 🎉 Meetup-Vorschlag für "${eventTitle}"!\n\n${username} schlägt vor:\n${message}\n\nWer ist dabei? Antwortet hier im Chat! 💬`;
       
       // Send meetup proposal to community chat
       try {
@@ -495,8 +498,10 @@ export const useChatLogic = (
           .insert({
             group_id: communityGroupId,
             sender: 'MIA',
-            text: `🎉 Meetup-Vorschlag für "${eventTitle}"!\n\n${username} schlägt vor:\n${message}\n\nWer ist dabei? Antwortet hier im Chat! 💬`,
-            avatar: '/lovable-uploads/c38064ee-a32f-4ecc-b148-f9c53c28d472.png'
+            text: meetupText,
+            avatar: '/lovable-uploads/c38064ee-a32f-4ecc-b148-f9c53c28d472.png',
+            event_id: awaitingMeetupMessage.metadata.eventId,
+            event_title: eventTitle
           });
 
         if (error) {
