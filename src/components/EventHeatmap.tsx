@@ -419,6 +419,18 @@ const EventHeatmap: React.FC = () => {
     };
   }, []);
 
+  // Listen for community chat toggle from bottom navigation
+  useEffect(() => {
+    const handleToggleCommunityChat = () => {
+      setShowCommunityChat(prev => !prev);
+    };
+
+    window.addEventListener('toggle-community-chat', handleToggleCommunityChat);
+    return () => {
+      window.removeEventListener('toggle-community-chat', handleToggleCommunityChat);
+    };
+  }, []);
+
   const mapRef = useRef<HTMLDivElement>(null);
 
   // Check for daily recommendation on mount and auto-start onboarding
@@ -2585,16 +2597,6 @@ const EventHeatmap: React.FC = () => {
         }}
       />
       
-      {/* Floating Community Chat Button */}
-      {!showCommunityChat && !isMIAOpen && (
-        <Button
-          onClick={() => setShowCommunityChat(true)}
-          className="fixed bottom-24 right-4 h-14 w-14 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 shadow-[0_8px_30px_rgba(239,68,68,0.4)] hover:shadow-[0_12px_40px_rgba(239,68,68,0.6)] transition-all duration-300 hover:scale-110 z-[1000] border-2 border-white/10"
-        >
-          <MessageSquare className="h-6 w-6 text-white" />
-        </Button>
-      )}
-
       {/* Location Blocking Dialog */}
       <AlertDialog open={isBlockLocationDialogOpen} onOpenChange={setIsBlockLocationDialogOpen}>
         <AlertDialogContent className="bg-gradient-to-br from-gray-900/95 to-black/95 backdrop-blur-xl border border-red-500/20">

@@ -63,8 +63,16 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
             variant="ghost"
             size="icon" 
             onClick={() => {
-              setActiveView?.('community');
-              navigate('/chat?view=community');
+              console.log('🔥 [BottomNav] Community Chat button clicked');
+              // Check if we're on the heatmap page
+              if (window.location.pathname === '/heatmap') {
+                // Trigger community chat in heatmap
+                window.dispatchEvent(new CustomEvent('toggle-community-chat'));
+              } else {
+                // Navigate to chat page
+                setActiveView?.('community');
+                navigate('/chat?view=community');
+              }
             }} 
             className={cn(
               "relative h-12 w-12 rounded-full transition-all duration-300",
