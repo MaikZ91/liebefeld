@@ -53,6 +53,15 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
     setMessages
   } = useChatMessages(groupId, username);
   
+  // Auto-scroll to bottom when opening the chat
+  useEffect(() => {
+    if (open && chatBottomRef.current) {
+      setTimeout(() => {
+        chatBottomRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
+      }, 150);
+    }
+  }, [open]);
+  
   const { replyTo, startReply, clearReply } = useReplySystem();
   
   const [input, setInput] = useState('');
@@ -222,49 +231,6 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
             }}
           />
           
-          {/* Header */}
-          <div className="relative flex items-center justify-between px-4 py-3 border-b border-white/10">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="absolute -inset-0.5 rounded-full bg-red-500/30 blur-md" />
-                <div className="relative w-9 h-9 rounded-full bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center ring-2 ring-white/10">
-                  <Avatar className="w-9 h-9">
-                    <AvatarImage src="/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png" />
-                    <AvatarFallback className="bg-transparent">
-                      <MessageSquare className="w-5 h-5 text-white" />
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-              </div>
-              <div>
-                <div className="text-white font-semibold leading-tight">
-                  {getCommunityDisplayName(activeCategory, selectedCity)}
-                </div>
-                <div className="text-[11px] text-white/50">Community Chat</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {onOpenUserDirectory && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onOpenUserDirectory}
-                  className="h-9 w-9 rounded-full text-white/70 hover:text-white hover:bg-white/10"
-                >
-                  <Users className="w-4 h-4" />
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onOpenChange(false)}
-                className="h-9 w-9 rounded-full text-white/70 hover:text-white hover:bg-white/10"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-            
           {/* Category Filter */}
           <div className="relative px-4 pt-4 pb-2">
             <div className="flex gap-2 overflow-x-auto scrollbar-none flex-nowrap">
