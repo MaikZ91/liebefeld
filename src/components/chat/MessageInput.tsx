@@ -177,7 +177,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             className={cn(
-              "min-h-[40px] max-h-[120px] resize-none rounded-full",
+              "min-h-[36px] max-h-[100px] resize-none rounded-full py-2",
               "border-2 focus:ring-0 focus:ring-offset-0",
               mode === 'ai' 
                 ? "bg-background border-border text-foreground focus:border-primary" 
@@ -200,7 +200,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
           onClick={handleSendButtonClick}
           disabled={isSending || (value === undefined ? !newMessage.trim() : !value?.trim())}
           className={cn(
-            "h-10 w-10 rounded-full transition-all duration-200",
+            "h-9 w-9 rounded-full transition-all duration-200 shrink-0",
             mode === 'ai' 
               ? "bg-primary hover:bg-primary/90 text-primary-foreground" 
               : "text-white border-2 hover:bg-white/10"

@@ -455,7 +455,7 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
             </div>
             
           {/* Input */}
-          <div className="relative border-t border-white/10 p-3 bg-black/60 backdrop-blur-xl">
+          <div className="relative border-t border-white/10 px-3 py-2 bg-black/60 backdrop-blur-xl">
             {replyTo && (
               <div className="mb-2">
                 <ReplyPreview 
