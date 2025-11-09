@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { X, Send, Users, MessageSquare, Reply } from 'lucide-react';
@@ -207,67 +207,67 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
     return `vor ${Math.floor(diff / 1440)}d`;
   };
   
+  if (!open) return null;
+  
   return (
     <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent 
-          side="bottom" 
-          className="h-[90vh] p-0 border-0 bg-transparent z-[9999]"
-        >
-          <div className="h-full rounded-t-3xl overflow-hidden bg-gradient-to-br from-red-950/40 via-black to-gray-900">
-            {/* Warmer Gradient-Overlay wie bei MIA */}
-            <div
-              className="pointer-events-none absolute inset-0 bg-gradient-to-b from-red-950/20 via-transparent to-black/30"
-            />
-            
-            {/* Header - matching MIA style with warm colors */}
-            <div className="relative px-4 py-4 shrink-0 bg-gradient-to-r from-red-900/30 via-red-950/20 to-transparent backdrop-blur-xl border-b border-red-500/20">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <div className="absolute -inset-1 bg-red-500/30 rounded-full blur-md" />
-                    <Avatar className="relative h-12 w-12 border-2 border-red-500/30">
-                      <AvatarImage src="/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png" />
-                      <AvatarFallback className="bg-red-600 text-white">
-                        <MessageSquare className="w-5 h-5" />
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-                  <div>
-                    <div className="text-white font-semibold text-base leading-tight">
-                      {getCommunityDisplayName(activeCategory, selectedCity)}
-                    </div>
-                    <div className="text-red-200/60 text-xs font-medium">
-                      Community Chat
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {onOpenUserDirectory && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={onOpenUserDirectory}
-                      className="h-10 w-10 text-white/60 hover:text-white hover:bg-white/10 transition-colors rounded-full"
-                    >
-                      <Users className="h-5 w-5" />
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onOpenChange(false)}
-                    className="h-10 w-10 text-white/60 hover:text-white hover:bg-white/10 transition-colors rounded-full"
-                  >
-                    <X className="h-5 w-5" />
-                  </Button>
+      <div className="fixed top-20 right-4 left-4 md:left-auto md:w-[520px] z-[9999] animate-fade-in">
+        <Card className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/70 backdrop-blur-xl shadow-[0_20px_80px_rgba(239,68,68,0.25)]">
+          {/* Gradient ring */}
+          <div
+            className="pointer-events-none absolute inset-0 rounded-3xl"
+            style={{
+              background:
+                "radial-gradient(120% 60% at 100% 0%, rgba(239,68,68,0.35) 0%, rgba(239,68,68,0.05) 30%, transparent 60%)",
+            }}
+          />
+          
+          {/* Header */}
+          <div className="relative flex items-center justify-between px-4 py-3 border-b border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="absolute -inset-0.5 rounded-full bg-red-500/30 blur-md" />
+                <div className="relative w-9 h-9 rounded-full bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center ring-2 ring-white/10">
+                  <Avatar className="w-9 h-9">
+                    <AvatarImage src="/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png" />
+                    <AvatarFallback className="bg-transparent">
+                      <MessageSquare className="w-5 h-5 text-white" />
+                    </AvatarFallback>
+                  </Avatar>
                 </div>
               </div>
+              <div>
+                <div className="text-white font-semibold leading-tight">
+                  {getCommunityDisplayName(activeCategory, selectedCity)}
+                </div>
+                <div className="text-[11px] text-white/50">Community Chat</div>
+              </div>
             </div>
+            <div className="flex items-center gap-2">
+              {onOpenUserDirectory && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onOpenUserDirectory}
+                  className="h-9 w-9 rounded-full text-white/70 hover:text-white hover:bg-white/10"
+                >
+                  <Users className="w-4 h-4" />
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onOpenChange(false)}
+                className="h-9 w-9 rounded-full text-white/70 hover:text-white hover:bg-white/10"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
             
-            {/* Category Filter - warmer style */}
-            <div className="relative px-4 py-3 bg-gradient-to-r from-red-950/10 to-transparent backdrop-blur-md border-b border-red-500/10">
-              <div className="flex gap-2 overflow-x-auto scrollbar-none flex-nowrap pb-1">
+          {/* Category Filter */}
+          <div className="relative px-4 pt-4 pb-2">
+            <div className="flex gap-2 overflow-x-auto scrollbar-none flex-nowrap">
                 {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => {
                   const isActive = messageFilter.includes(category);
                   const isAll = category === 'alle';
@@ -324,14 +324,13 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
                   );
                 })}
               </div>
-            </div>
-            
-            {/* Messages - warmer background like MIA */}
-            <div 
-              ref={chatContainerRef}
-              className="flex-1 overflow-y-auto px-4 py-4 space-y-4 min-h-0 scrollbar-none relative bg-gradient-to-b from-red-950/5 via-transparent to-black/30"
-              style={{ height: 'calc(100% - 210px)' }}
-            >
+          </div>
+          
+          {/* Messages */}
+          <div 
+            ref={chatContainerRef}
+            className="relative max-h-[66vh] overflow-y-auto px-4 py-3 space-y-3 scrollbar-thin scrollbar-thumb-white/20"
+          >
               {loading && filteredMessages.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-white/50 text-sm">Lade Nachrichten...</div>
@@ -454,43 +453,39 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
               <div ref={chatBottomRef} />
             </div>
             
-            {/* Input Area - warmer style like MIA */}
-            <div className="relative border-t border-red-500/10 bg-gradient-to-r from-red-950/20 to-black/40 backdrop-blur-xl">
-              {replyTo && (
-                <div className="px-4 pt-3">
-                  <ReplyPreview 
-                    replyTo={replyTo} 
-                    onCancel={clearReply}
-                    groupType={activeCategory as 'ausgehen' | 'sport' | 'kreativität'}
-                  />
-                </div>
-              )}
-              
-              <div className="p-4 pb-safe">
-                <MessageInput
-                  username={username}
-                  groupId={groupId}
-                  handleSendMessage={handleSendMessage}
-                  isSending={sending}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
-                  placeholder="Nachricht schreiben..."
-                  mode="community"
+          {/* Input */}
+          <div className="relative border-t border-white/10 p-3 bg-black/60 backdrop-blur-xl">
+            {replyTo && (
+              <div className="mb-2">
+                <ReplyPreview 
+                  replyTo={replyTo} 
+                  onCancel={clearReply}
                   groupType={activeCategory as 'ausgehen' | 'sport' | 'kreativität'}
-                  replyTo={replyTo}
-                  onClearReply={clearReply}
                 />
               </div>
-            </div>
+            )}
+            <MessageInput
+              username={username}
+              groupId={groupId}
+              handleSendMessage={handleSendMessage}
+              isSending={sending}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              placeholder="Nachricht schreiben..."
+              mode="community"
+              groupType={activeCategory as 'ausgehen' | 'sport' | 'kreativität'}
+              replyTo={replyTo}
+              onClearReply={clearReply}
+            />
           </div>
-        </SheetContent>
-      </Sheet>
+        </Card>
+      </div>
       
       <UserProfileDialog
         userProfile={selectedUserProfile}
