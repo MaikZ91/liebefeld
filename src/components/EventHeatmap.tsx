@@ -748,7 +748,7 @@ const EventHeatmap: React.FC = () => {
     return filtered;
   }, [selectedDateFilteredEvents, selectedCategory, timeRange, dislikedEventIds]);
 
-  // All events for Event List (not filtered by selected date)
+  // All events for Event List (not filtered by selected date, but with category and time filters)
   const allFilteredEvents = React.useMemo(() => {
     const cityDisplayName =
       cities.find((c) => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity;
@@ -782,8 +782,27 @@ const EventHeatmap: React.FC = () => {
       return !dislikedEventIds.includes(eventId);
     });
 
+    // Apply category filter
+    if (selectedCategory) {
+      filtered = filtered.filter((event) => event.category === selectedCategory);
+    }
+
+    // Apply time range filter
+    if (timeRange[0] > 0 || timeRange[1] < 24) {
+      const [minHour, maxHour] = timeRange;
+      filtered = filtered.filter((event) => {
+        if (!event.time) return true;
+        const [hourStr] = event.time.split(":");
+        const hour = parseInt(hourStr, 10);
+        return hour >= minHour && hour < maxHour;
+      });
+    }
+
+    // Sort by likes (descending)
+    filtered.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+
     return filtered;
-  }, [events, selectedCity, dislikedEventIds]);
+  }, [events, selectedCity, dislikedEventIds, selectedCategory, timeRange]);
 
 
   const panelEvents: PanelEvent[] = React.useMemo(() => {
