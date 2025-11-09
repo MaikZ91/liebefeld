@@ -38,6 +38,10 @@ export const useChatLogic = (
   const [isHeartActive, setIsHeartActive] = useState(false);
   const [hasUserSentFirstMessage, setHasUserSentFirstMessage] = useState(false);
   const [currentContextEvent, setCurrentContextEvent] = useState<any>(null);
+  const [pendingMeetup, setPendingMeetup] = useState<{
+    eventId: string;
+    eventTitle: string;
+  } | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -394,6 +398,9 @@ export const useChatLogic = (
   const handleProposeMeetup = useCallback(async (eventId: string, eventTitle: string) => {
     console.log('[useChatLogic] Proposing meetup for event:', eventId);
     
+    // Set state to track pending meetup
+    setPendingMeetup({ eventId, eventTitle });
+    
     // Ask for meetup details
     const promptHtml = `
       <div class="space-y-3">
@@ -463,15 +470,10 @@ export const useChatLogic = (
       }
     }
 
-    // Check if we're awaiting meetup details BEFORE adding user message
-    // Find the most recent AI message with awaitingMeetupDetails
-    const awaitingMeetupMessage = [...messages].reverse().find(
-      msg => !msg.isUser && msg.metadata?.awaitingMeetupDetails
-    );
-    
-    if (awaitingMeetupMessage) {
+    // Check if we have a pending meetup (state-based, no marker search needed)
+    if (pendingMeetup) {
       const username = localStorage.getItem('community_chat_username') || 'Gast';
-      const eventTitle = awaitingMeetupMessage.metadata.eventTitle;
+      const { eventId, eventTitle } = pendingMeetup;
       
       // Add user message to show in chat
       const userMessage: ChatMessage = {
@@ -483,7 +485,7 @@ export const useChatLogic = (
       setMessages(prev => [...prev, userMessage]);
       
       // Determine the correct community group ID based on selected city
-      const cityAbbr = selectedCity || 'BI'; // Default to Bielefeld if no city is selected
+      const cityAbbr = selectedCity || 'BI';
       const communityGroupId = createCitySpecificGroupId('ausgehen', cityAbbr);
       
       console.log('[useChatLogic] Posting meetup to group:', communityGroupId);
@@ -500,7 +502,7 @@ export const useChatLogic = (
             sender: 'MIA',
             text: meetupText,
             avatar: '/lovable-uploads/c38064ee-a32f-4ecc-b148-f9c53c28d472.png',
-            event_id: awaitingMeetupMessage.metadata.eventId,
+            event_id: eventId,
             event_title: eventTitle
           });
 
@@ -543,6 +545,8 @@ export const useChatLogic = (
         toast.error('Fehler beim Posten des Meetup-Vorschlags');
       }
       
+      // Reset pending meetup state
+      setPendingMeetup(null);
       setInput('');
       isSendingRef.current = false;
       return;
