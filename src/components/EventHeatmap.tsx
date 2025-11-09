@@ -65,7 +65,6 @@ import { getInitials } from "@/utils/chatUIUtils";
 import PrivateChat from "@/components/users/PrivateChat";
 import HeatmapHeader from "./HeatmapHeader";
 import { useEventContext, cities } from "@/contexts/EventContext";
-import FullPageChatBot from "@/components/event-chat/FullPageChatBot";
 import { useChatLogic } from "@/components/event-chat/useChatLogic";
 import { geocodeLocation, loadCachedCoordinates, geocodeMultipleLocations } from "@/services/geocodingService";
 import TribeFinder from "./TribeFinder";
@@ -2213,7 +2212,7 @@ const EventHeatmap: React.FC = () => {
         </div>
       )}
 
-      {/* AI Chat Drawer */}
+      {/* AI Chat Drawer - DEPRECATED, using MIA Response Card instead */}
       {showAIChat && (
         <>
           <div
@@ -2252,17 +2251,8 @@ const EventHeatmap: React.FC = () => {
                 </Button>
               </div>
 
-              <div className="flex-1 overflow-hidden min-h-0">
-                <FullPageChatBot
-                  chatLogic={chatLogic}
-                  activeChatModeValue="ai"
-                  communityGroupId=""
-                  hideInput={true}
-                  externalInput={aiChatInput}
-                  setExternalInput={setAiChatInput}
-                  onExternalSendHandlerChange={setAiChatExternalSendHandler}
-                  embedded={true}
-                />
+              <div className="flex-1 overflow-hidden min-h-0 p-4 text-white/70 text-sm">
+                Dieser Dialog wurde durch das neue MIA Response Card ersetzt.
               </div>
             </div>
           </div>

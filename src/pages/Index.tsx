@@ -5,7 +5,6 @@ import LiveTicker from '@/components/LiveTicker';
 import InstagramFeed from '@/components/InstagramFeed';
 import CommunityTest from '@/components/CommunityTest';
 import ImageCarousel from '@/components/ImageCarousel';
-import { CalendarWithChat } from '@/components/calendar-chat';
 import BetaTesterBanner from '@/components/BetaTesterBanner';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';

@@ -13,7 +13,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar, MessageSquare, Map, User, Settings, LogOut, UserIcon, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate, useLocation } from 'react-router-dom';
-import OnboardingChatbot from '@/components/OnboardingChatbot';
 import UserDirectory from '@/components/users/UserDirectory';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
 import { getInitials } from '@/utils/chatUIUtils';
@@ -23,20 +22,21 @@ interface BottomNavigationProps {
   setActiveView?: (view: 'ai' | 'community') => void;
   newMessagesCount: number;
   newEventsCount: number;
+  onOpenOnboarding?: () => void;
 }
 
 export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   activeView,
   setActiveView,
   newMessagesCount,
-  newEventsCount
+  newEventsCount,
+  onOpenOnboarding
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const isOnHeatmap = location.pathname === '/heatmap';
   const isOnEventsPage = location.pathname === '/events';
   const isOnChallengePage = location.pathname === '/challenge';
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isUserDirectoryOpen, setIsUserDirectoryOpen] = useState(false);
 
   // Check if user has completed onboarding
@@ -134,7 +134,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
             size="icon" 
             onClick={() => {
               if (!hasCompletedOnboarding) {
-                setIsOnboardingOpen(true);
+                onOpenOnboarding?.();
               } else {
                 setIsUserDirectoryOpen(true);
               }
@@ -150,16 +150,6 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           </Button>
         </div>
       </div>
-      
-      {/* Onboarding Chatbot */}
-      <OnboardingChatbot 
-        open={isOnboardingOpen}
-        onOpenChange={setIsOnboardingOpen}
-        onComplete={() => {
-          // Refresh page or trigger profile reload
-          window.location.reload();
-        }}
-      />
 
       {/* User Directory */}
       <UserDirectory 
