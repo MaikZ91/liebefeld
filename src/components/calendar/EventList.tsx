@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
-import SuggestionChips from '@/components/event-chat/SuggestionChips';
 
 interface EventListProps {
   events: Event[];
@@ -291,15 +290,24 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
 
       {/* MIA Chat Input Footer */}
       {onChatSend && onChatInputChange && (
-        <div className="relative px-4 pb-4 pt-2 flex-shrink-0 border-t border-white/10">
-          <SuggestionChips
-            suggestions={['Highlights der Woche', 'Wochenzusammenfassung', 'Was geht am Wochenende']}
-            onSuggestionClick={async (suggestion) => {
-              onChatInputChange(suggestion);
-              await onChatSend(suggestion);
-            }}
-          />
-          <div className="flex gap-2 mt-3">
+        <div className="relative px-4 pb-3 pt-2 flex-shrink-0 border-t border-white/10">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+            {['Highlights der Woche', 'Wochenzusammenfassung', 'Was geht am Wochenende'].map((suggestion, index) => (
+              <Button
+                key={index}
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  onChatInputChange(suggestion);
+                  await onChatSend(suggestion);
+                }}
+                className="h-8 text-xs font-medium rounded-full bg-white/5 hover:bg-white/10 border-white/20 text-white/80 hover:text-white transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-red-500/20 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0"
+              >
+                <span>{suggestion}</span>
+              </Button>
+            ))}
+          </div>
+          <div className="flex gap-2 mt-2">
             <Input
               value={chatInput}
               onChange={(e) => onChatInputChange(e.target.value)}
