@@ -1,5 +1,4 @@
 // supabase/functions/ai-geocode-location/index.ts
-// Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const corsHeaders = {
@@ -7,11 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Laden Sie Ihren OpenRouter API Key aus den Umgebungsvariablen von Supabase Secrets.
-// Dies ist KRITISCH für die Sicherheit. Setzen Sie dies NICHT direkt im Code!
-const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -26,56 +23,51 @@ serve(async (req) => {
       );
     }
 
-    if (!OPENROUTER_API_KEY) {
-      // Geben Sie einen 500er-Fehler zurück, wenn der API-Schlüssel fehlt
+    if (!LOVABLE_API_KEY) {
       return new Response(
-        JSON.stringify({ error: 'OpenRouter API key is not configured in Supabase Secrets.' }),
+        JSON.stringify({ error: 'Lovable API key is not configured in Supabase Secrets.' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
 
-    const prompt = `Konvertiere den folgenden Standort in Längen- und Breitengrade. Gib die Antwort ausschließlich als JSON-Objekt mit den Feldern "lat" (Breitengrad, float) und "lng" (Längengrad, float) zurück. Wenn du den Standort nicht eindeutig identifizieren kannst, gib "lat": null und "lng": null zurück. Beachte, dass es sich um einen Standort in der Stadt "${cityContext || 'Bielefeld'}" handelt, falls dieser Kontext hilft.
+    const prompt = `Konvertiere den folgenden Standort in Längen- und Breitengrade. Gib die Antwort ausschließlich als JSON-Objekt mit den Feldern "lat" (Breitengrad, float) und "lng" (Längengrad, float) zurück. Wenn du den Standort nicht eindeutig identifizieren kannst, gib "lat": null und "lng": null zurück. 
 
-Beispiel 1:
-Input: "Forum Bielefeld"
+WICHTIG: Beachte den Stadt-Kontext: "${cityContext}". Suche den Standort in dieser spezifischen Stadt.
+
+Beispiel 1 (Bielefeld):
+Input: "Forum Bielefeld", Stadt: "Bielefeld"
 Output: {"lat": 52.0163, "lng": 8.5298}
 
-Beispiel 2:
-Input: "SAMS"
-Output: {"lat": 52.0205, "lng": 8.5342}
+Beispiel 2 (Hamburg):
+Input: "Reeperbahn", Stadt: "Hamburg"
+Output: {"lat": 53.5496, "lng": 9.9595}
 
-Beispiel 3:
-Input: "Bunker Ulmenwall"
-Output: {"lat": 52.0211, "lng": 8.5318}
-
-Beispiel 4:
-Input: "hochschulsport_bielefeld"
-Output: {"lat": 52.0357, "lng": 8.5042}
+Beispiel 3 (Berlin):
+Input: "Brandenburger Tor", Stadt: "Berlin"
+Output: {"lat": 52.5163, "lng": 13.3777}
 
 Input: "${locationString}"
+Stadt: "${cityContext}"
 Output: `;
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
-        // Fügen Sie bei Bedarf Referer und X-Title hinzu, wenn Ihr OpenRouter-Konto dies erfordert
-        // 'HTTP-Referer': 'https://your-domain.com', 
-        // 'X-Title': 'Your App Name'
       },
       body: JSON.stringify({
-        model: "google/gemini-2.0-flash-latest", // Wählen Sie ein passendes Modell
+        model: "google/gemini-2.0-flash-exp",
         messages: [{ role: "user", content: prompt }],
-        temperature: 0.1, // Niedrige Temperatur für faktenbasierte Antworten
-        max_tokens: 100 // Geringe Token-Anzahl, da die Ausgabe kurz sein sollte
+        temperature: 0.1,
+        max_tokens: 150
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenRouter API error:', response.status, errorText);
-      throw new Error(`OpenRouter API returned status ${response.status}: ${errorText}`);
+      console.error('Lovable AI Gateway error:', response.status, errorText);
+      throw new Error(`Lovable AI Gateway returned status ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
