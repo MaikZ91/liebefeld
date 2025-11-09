@@ -606,4 +606,9 @@
   body.event-list-open .lov-bottom-nav {
     display: none !important;
   }
+
+  /* Ensure Radix popovers (e.g., Calendar selector) are hidden while Event List is open */
+  body.event-list-open [data-radix-popper-content-wrapper] {
+    display: none !important;
+  }
 }

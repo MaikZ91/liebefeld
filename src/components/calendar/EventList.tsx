@@ -27,6 +27,7 @@ interface EventListProps {
   chatInput?: string;
   onChatInputChange?: (value: string) => void;
   onChatSend?: (message?: string) => Promise<void>;
+  hideControls?: boolean;
 }
 
 
@@ -72,7 +73,7 @@ const MemoizedEventCard = memo(({ event, date, onSelectEvent, isTopEvent, isNewE
 
 MemoizedEventCard.displayName = 'MemoizedEventCard';
 
-const EventList: React.FC<EventListProps> = memo(({
+const EventList: React.FC<EventListProps> = memo(({ 
   events,
   showFavorites,
   showNewEvents = false,
@@ -84,7 +85,8 @@ const EventList: React.FC<EventListProps> = memo(({
   onDislike,
   chatInput = '',
   onChatInputChange,
-  onChatSend
+  onChatSend,
+  hideControls = false
 }) => {
   console.log('📋 [EventList] Rendering with events.length:', events.length, 'showFavorites:', showFavorites);
   
@@ -261,11 +263,13 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
           }}
         />
         
-        <div className="relative px-4 pt-4 pb-2 flex-shrink-0">
-          <div className="flex items-center mb-3 gap-2 overflow-x-auto">
-            <FilterBar value={groupFilter} className="min-w-max" variant="dark" />
+        {!hideControls && (
+          <div className="relative px-4 pt-4 pb-2 flex-shrink-0">
+            <div className="flex items-center mb-3 gap-2 overflow-x-auto">
+              <FilterBar value={groupFilter} className="min-w-max" variant="dark" />
+            </div>
           </div>
-        </div>
+        )}
         
         <div ref={listRef} className="relative flex-1 px-4 pb-2 w-full overflow-hidden">
         {virtualizedItems.length > 0 ? (
