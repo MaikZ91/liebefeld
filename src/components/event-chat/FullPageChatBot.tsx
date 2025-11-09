@@ -369,11 +369,11 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   return (
     <div className={embedded ? "flex flex-col h-full min-h-0 bg-gradient-to-br from-gray-950 via-black to-gray-900" : "flex flex-col h-screen min-h-0 bg-gradient-to-br from-gray-950 via-black to-gray-900"}>
-      {/* Filter UI für Community Chat - immer sichtbar wenn Community-Modus */}
+      {/* Filter UI für Community Chat - matching OnboardingChatbot/CommunityChatSheet style */}
       {activeChatModeValue === 'community' && (
-        <div className="sticky top-0 z-[60] bg-black/40 backdrop-blur-xl border-b border-red-500/20">
+        <div className="sticky top-0 z-[60] bg-black/30 backdrop-blur-md border-b border-white/5">
           <div className="px-4 py-3">
-            <div className="flex gap-2 overflow-x-auto scrollbar-none flex-nowrap">
+            <div className="flex gap-2 overflow-x-auto scrollbar-none flex-nowrap pb-1">
               {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => {
                 const isActive = messageFilter.includes(category);
                 const isAll = category === 'alle';
@@ -414,7 +414,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       )}
 
 
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none bg-gradient-to-b from-transparent to-black/20">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none bg-gradient-to-b from-transparent to-black/20 px-4 py-4">
         {activeChatModeValue === 'onboarding' ? (
           <div className="px-4 py-4 space-y-4">
             {onboardingLogic.messages.map((msg, index) => (
@@ -511,89 +511,98 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
             <div
               ref={chatContainerRef}
-              className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4"
+              className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4 py-4"
             >
-              <div className="space-y-3 py-4 pb-20">
+              <div className="space-y-4 pb-20">
                 {filteredCommunityMessages.length === 0 && !communityLoading && !communityError && (
-                  <div className="text-center py-8">
-                    <div className="inline-flex flex-col items-center gap-2 px-6 py-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl">
-                      <div className="text-white/60 text-sm">
-                        {messageFilter.includes('alle') 
-                          ? 'Noch keine Nachrichten im Community Chat'
-                          : `Keine Nachrichten in den gewählten Kategorien`
-                        }
-                      </div>
-                      <div className="text-white/40 text-xs">Starte die Unterhaltung!</div>
+                  <div className="flex flex-col items-center justify-center h-full space-y-3">
+                    <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center">
+                      <Search className="w-6 h-6 text-white/30" />
+                    </div>
+                    <div className="text-white/50 text-sm text-center">
+                      {messageFilter.includes('alle') 
+                        ? 'Noch keine Nachrichten im Community Chat'
+                        : `Keine Nachrichten in den gewählten Kategorien`
+                      }<br/>
+                      <span className="text-white/40 text-xs">Starte die Unterhaltung!</span>
                     </div>
                   </div>
                 )}
 
                 {filteredCommunityMessages.map((message, index) => {
-                   const isConsecutive =
-                     index > 0 && filteredCommunityMessages[index - 1].user_name === message.user_name;
-                   const timeAgo = formatTime(message.created_at);
-
+                   const msgWithPoll = message as any;
+                   
+                   // Poll message
+                   if (msgWithPoll.poll_question) {
+                     return (
+                       <PollMessage
+                         key={message.id}
+                         pollData={{
+                           question: msgWithPoll.poll_question,
+                           options: msgWithPoll.poll_options,
+                           votes: msgWithPoll.poll_votes || {},
+                           allowMultiple: msgWithPoll.poll_allow_multiple
+                         }}
+                         messageId={message.id}
+                       />
+                     );
+                   }
+                   
+                   // Regular message - matching CommunityChatSheet style
+                   const isOwnMessage = message.user_name === username;
+                   
                    return (
-                       <div key={`${message.id}-${index}`} className="mb-2 w-full group">
-                         {!isConsecutive && (
-                           <div className="flex items-center mb-1">
-                              <Avatar 
-                                className="h-7 w-7 mr-2 flex-shrink-0 ring-1 ring-border cursor-pointer hover:opacity-80 transition-opacity"
-                                onClick={() => handleAvatarClick(message.user_name)}
-                              >
-                               <AvatarImage src={message.user_avatar} alt={message.user_name} />
-                               <AvatarFallback className="bg-muted text-foreground">
-                                 {getInitials(message.user_name)}
-                               </AvatarFallback>
-                             </Avatar>
-                             <div className="text-base font-medium text-white mr-2">
-                               {message.user_name}
-                             </div>
-                             <span className="text-sm text-muted-foreground">{timeAgo}</span>
-                          </div>
+                     <div
+                       key={message.id}
+                       className="flex gap-3 animate-fade-in"
+                     >
+                       {!isOwnMessage && (
+                         <Avatar 
+                           className="w-8 h-8 shrink-0 border border-white/10 cursor-pointer"
+                           onClick={() => handleAvatarClick(message.user_name)}
+                         >
+                           <AvatarImage src={message.user_avatar || undefined} />
+                           <AvatarFallback className="bg-primary/20 text-white text-xs">
+                             {getInitials(message.user_name)}
+                           </AvatarFallback>
+                         </Avatar>
+                       )}
+                       
+                       <div className="flex flex-col gap-1 max-w-[75%]">
+                         {!isOwnMessage && (
+                           <span className="text-xs text-white/60 px-1">{message.user_name}</span>
                          )}
-                         <div className="break-words">
-                           {/* Handle different message types */}
-                           {(message as any).poll_question ? (
-                             // Poll message
-                              <div className="w-full max-w-sm">
-                                <PollMessage
-                                 pollData={{
-                                   question: (message as any).poll_question,
-                                   options: (message as any).poll_options || [],
-                                   votes: (message as any).poll_votes || {}
-                                 }}
-                                 messageId={message.id}
-                                 onVote={(optionIndex, messageId) => {
-                                   console.log('Vote received:', optionIndex, messageId);
-                                   // The poll message will handle the update itself
-                                 }}
-                               />
+                         
+                         <div
+                           className={`rounded-2xl px-4 py-2.5 relative group ${
+                             isOwnMessage
+                               ? "bg-gradient-to-r from-red-600 to-red-700 text-white"
+                               : "bg-white/10 text-white border border-white/10"
+                           }`}
+                         >
+                           {message.reply_to_sender && (
+                             <div className="text-xs opacity-70 mb-1 pb-1 border-b border-white/20">
+                               Antwort an {message.reply_to_sender}
                              </div>
-                           ) : (
-                              // Regular message
-                               <ChatMessage
-                                 message={message.text}
-                                 isConsecutive={isConsecutive}
-                                 isGroup
-                                 messageId={message.id}
-                                 eventId={message.event_id}
-                                 eventTitle={message.event_title}
-                                 reactions={message.reactions || []}
-                                 onReact={(emoji) => handleReaction(message.id, emoji)}
-                                 currentUsername={username}
-                                 onJoinEventChat={onJoinEventChat}
-                                 onReply={startReply}
-                                 sender={message.user_name}
-                                 avatar={message.user_avatar}
-                                 replyTo={message.reply_to_message_id ? {
-                                  messageId: message.reply_to_message_id,
-                                  sender: message.reply_to_sender || '',
-                                  text: message.reply_to_text || '',
-                                } : null}
-                              />
                            )}
-                        </div>
+                           
+                           <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                             {message.text}
+                           </p>
+                           
+                           <span className="text-[10px] opacity-60 mt-1 block">
+                             {formatTime(message.created_at)}
+                           </span>
+                         </div>
+                         
+                         {message.reactions && message.reactions.length > 0 && (
+                           <MessageReactions
+                             reactions={message.reactions}
+                             onReact={(emoji) => handleReaction(message.id, emoji)}
+                             currentUsername={username}
+                           />
+                         )}
+                       </div>
                      </div>
                    );
                  })}
@@ -610,7 +619,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       {activeChatModeValue === 'community' && showScrollToBottom && (
         <button
           onClick={() => chatBottomRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })}
-          className="fixed right-4 bottom-28 z-20 rounded-full bg-background/80 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md border border-border shadow-md px-3 py-2 text-xs text-foreground hover:bg-muted transition"
+          className="fixed right-4 bottom-28 z-20 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 shadow-lg px-4 py-2 text-xs text-white hover:bg-black/80 transition-all duration-300"
           aria-label="Nach unten scrollen"
         >
           Zum Ende
@@ -720,7 +729,16 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
               </div>
             )}
               {activeChatModeValue === 'community' && (
-                <div className="space-y-2">
+                <div className="border-t border-white/5 bg-black/40 backdrop-blur-xl p-4 pb-safe">
+                  {replyTo && (
+                    <div className="mb-3">
+                      <ReplyPreview 
+                        replyTo={replyTo} 
+                        onCancel={clearReply}
+                        groupType={activeCategory as 'ausgehen' | 'sport' | 'kreativität'}
+                      />
+                    </div>
+                  )}
                   <MessageInput
                     username={username}
                     groupId={communityGroupId}
