@@ -106,37 +106,22 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           </Button>
 
           {/* Event Calendar Button */}
+          
           <Button 
             variant="ghost"
             size="icon" 
             onClick={() => {
               console.log('🔥 [BottomNav] Event Calendar button clicked');
-              // Check if we're on the heatmap page
+              // Open within Heatmap MIA window
               if (location.pathname === '/heatmap' || location.pathname === '/') {
-                console.log('🔥 [BottomNav] On heatmap page, opening event list');
                 if ((window as any).openEventListInMIA) {
                   (window as any).openEventListInMIA();
                 } else {
-                  console.warn('🔥 [BottomNav] openEventListInMIA not available yet');
-                  // Try again after a short delay
-                  setTimeout(() => {
-                    if ((window as any).openEventListInMIA) {
-                      (window as any).openEventListInMIA();
-                    } else {
-                      console.error('🔥 [BottomNav] openEventListInMIA still not available');
-                    }
-                  }, 100);
+                  // Fallback: force via query param
+                  navigate('/heatmap?openEventList=1');
                 }
               } else {
-                // Navigate to heatmap first, then open list
-                console.log('🔥 [BottomNav] Not on heatmap, navigating there first');
-                navigate('/heatmap');
-                // Open list after navigation
-                setTimeout(() => {
-                  if ((window as any).openEventListInMIA) {
-                    (window as any).openEventListInMIA();
-                  }
-                }, 500);
+                navigate('/heatmap?openEventList=1');
               }
             }} 
             className={cn(

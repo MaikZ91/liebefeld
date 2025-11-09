@@ -76,6 +76,7 @@ import { dislikeService } from "@/services/dislikeService";
 import OnboardingDialog from "./OnboardingDialog";
 import { useOnboardingLogic } from "@/hooks/chat/useOnboardingLogic";
 import EventList from "./calendar/EventList";
+import { useLocation } from "react-router-dom";
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -322,6 +323,7 @@ const EventHeatmap: React.FC = () => {
     // Register handler for opening event list in MIA window
     (window as any).openEventListInMIA = () => {
       console.log("[EventHeatmap] Opening event list in MIA window");
+      setIsOnboardingActive(false);
       setShowEventListMode(true);
       setShowAiResponse(true);
       setIsMIAOpen(true);
@@ -425,6 +427,17 @@ const EventHeatmap: React.FC = () => {
     }
   }, []);
 
+  // If the URL asks to open the Event List, do it (works after navigation)
+  const location = useLocation();
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('openEventList') === '1') {
+      setIsOnboardingActive(false);
+      setShowEventListMode(true);
+      setShowAiResponse(true);
+      setIsMIAOpen(true);
+    }
+  }, [location.search]);
   // Check for daily recommendation on mount
   useEffect(() => {
     const checkDailyRecommendation = () => {
