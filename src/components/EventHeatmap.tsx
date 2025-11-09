@@ -1945,7 +1945,7 @@ const EventHeatmap: React.FC = () => {
       )}
 
       {/* === AI Response Card (modern) === */}
-      {showAiResponse && (
+      {showAiResponse && !isOnboardingActive && (
         <div className="fixed top-20 right-4 left-4 md:left-auto md:w-[520px] z-[1100] animate-fade-in">
           <Card className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/70 backdrop-blur-xl shadow-[0_20px_80px_rgba(239,68,68,0.25)]">
             {/* Gradient ring */}
