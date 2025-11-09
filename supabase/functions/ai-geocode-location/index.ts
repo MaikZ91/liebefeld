@@ -74,7 +74,11 @@ Output: `;
     const aiContent = data.choices?.[0]?.message?.content;
 
     if (!aiContent) {
-      throw new Error('AI did not return content in expected format.');
+      console.error('AI did not return content in expected format. Full data:', data);
+      return new Response(
+        JSON.stringify({ lat: null, lng: null, error: 'AI did not return content' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     try {
@@ -85,19 +89,45 @@ Output: `;
       } else if (cleanContent.startsWith('```')) {
         cleanContent = cleanContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
       }
-      
-      // Parse the cleaned JSON
-      const parsedCoordinates = JSON.parse(cleanContent.trim());
 
-      // Validate that we have valid lat and lng
-      if (typeof parsedCoordinates.lat === 'number' && typeof parsedCoordinates.lng === 'number') {
-        console.log('Successfully geocoded:', locationString, '->', parsedCoordinates);
+      // If wrapped text contains JSON after labels like "Output:", extract the first {...}
+      if (!cleanContent.trim().startsWith('{')) {
+        const start = cleanContent.indexOf('{');
+        const end = cleanContent.lastIndexOf('}');
+        if (start !== -1 && end > start) {
+          cleanContent = cleanContent.slice(start, end + 1);
+        }
+      }
+      
+      let parsedCoordinates: any;
+      try {
+        parsedCoordinates = JSON.parse(cleanContent.trim());
+      } catch {
+        // Fallback: extract lat/lng via regex
+        const match = cleanContent.match(/"lat"\s*:\s*(-?\d+(?:\.\d+)?|null)[\s\S]*?"lng"\s*:\s*(-?\d+(?:\.\d+)?|null)/i);
+        if (match) {
+          const latVal = match[1] === 'null' ? null : parseFloat(match[1]);
+          const lngVal = match[2] === 'null' ? null : parseFloat(match[2]);
+          parsedCoordinates = { lat: latVal, lng: lngVal };
+        } else {
+          throw new Error('Could not extract lat/lng from AI response');
+        }
+      }
+
+      // Normalize potential string numbers
+      const lat = typeof parsedCoordinates.lat === 'string' ? parseFloat(parsedCoordinates.lat) : parsedCoordinates.lat;
+      const lng = typeof parsedCoordinates.lng === 'string' ? parseFloat(parsedCoordinates.lng) : parsedCoordinates.lng;
+
+      const inRange = (v: number | null, min: number, max: number) => typeof v === 'number' && isFinite(v) && v >= min && v <= max;
+
+      if (inRange(lat, -90, 90) && inRange(lng, -180, 180)) {
+        const result = { lat, lng };
+        console.log('Successfully geocoded:', locationString, '->', result);
         return new Response(
-          JSON.stringify(parsedCoordinates),
+          JSON.stringify(result),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       } else {
-        // Invalid coordinates returned
         console.warn('AI returned invalid coordinates:', parsedCoordinates);
         return new Response(
           JSON.stringify({ lat: null, lng: null, error: 'AI returned invalid coordinates' }),
@@ -106,16 +136,19 @@ Output: `;
       }
     } catch (parseError) {
       console.error('Failed to parse AI response as JSON:', aiContent, parseError);
-      throw new Error('AI response was not valid JSON or unexpected format.');
+      // Return a graceful 200 with nulls to avoid hard failures on client
+      return new Response(
+        JSON.stringify({ lat: null, lng: null, error: 'AI response was not valid JSON or unexpected format.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
   } catch (error: any) {
     console.error('Error in AI geocode function:', error);
-    // Rückgabe von null-Koordinaten bei Fehlern, damit die Anwendung nicht abstürzt
+    // Return null coordinates with 200 to keep client resilient
     return new Response(
       JSON.stringify({ lat: null, lng: null, error: error.message || 'Unknown AI geocoding error' }),
       {
-        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
