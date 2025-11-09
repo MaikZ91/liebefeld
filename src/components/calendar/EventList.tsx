@@ -5,13 +5,15 @@ import { Virtuoso } from 'react-virtuoso';
 import { Event } from '@/types/eventTypes';
 import EventCard from '@/components/EventCard';
 import { groupEventsByDate } from '@/utils/eventUtils';
-import { Star, Heart, Filter, FilterX, Plus } from 'lucide-react';
+import { Star, Heart, Filter, FilterX, Plus, Send } from 'lucide-react';
 import { useEventContext } from '@/contexts/EventContext';
 import FilterBar, { type FilterGroup } from '@/components/calendar/FilterBar';
 import { isInGroup, CategoryGroup } from '@/utils/eventCategoryGroups';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { useChatPreferences } from '@/contexts/ChatPreferencesContext';
+import SuggestionChips from '@/components/event-chat/SuggestionChips';
 
 interface EventListProps {
   events: Event[];
@@ -23,6 +25,9 @@ interface EventListProps {
   favoriteCount?: number;
   onShowEventForm?: () => void;
   onDislike?: (eventId: string) => void;
+  chatInput?: string;
+  onChatInputChange?: (value: string) => void;
+  onChatSend?: (message?: string) => Promise<void>;
 }
 
 
@@ -77,7 +82,10 @@ const EventList: React.FC<EventListProps> = memo(({
   toggleNewEvents,
   favoriteCount = 0,
   onShowEventForm,
-  onDislike
+  onDislike,
+  chatInput = '',
+  onChatInputChange,
+  onChatSend
 }) => {
   console.log('📋 [EventList] Rendering with events.length:', events.length, 'showFavorites:', showFavorites);
   
@@ -244,7 +252,7 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
   }, [virtualizedItems, topTodayEvent, onSelectEvent, onDislike]);
 
     return (
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/70 backdrop-blur-xl shadow-[0_20px_80px_rgba(239,68,68,0.25)] w-full max-w-full">
+      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/70 backdrop-blur-xl shadow-[0_20px_80px_rgba(239,68,68,0.25)] w-full max-w-full flex flex-col" style={{ height: 'calc(100vh - 96px)' }}>
         {/* Gradient ring */}
         <div
           className="pointer-events-none absolute inset-0 rounded-3xl"
@@ -254,13 +262,13 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
           }}
         />
         
-        <div className="relative px-4 pt-4 pb-2">
+        <div className="relative px-4 pt-4 pb-2 flex-shrink-0">
           <div className="flex items-center mb-3 gap-2 overflow-x-auto">
             <FilterBar value={groupFilter} className="min-w-max" variant="dark" />
           </div>
         </div>
         
-        <div ref={listRef} className="relative h-[calc(100vh-180px)] px-4 pb-4 w-full">
+        <div ref={listRef} className="relative flex-1 px-4 pb-2 w-full overflow-hidden">
         {virtualizedItems.length > 0 ? (
           <Virtuoso
             style={{ height: '100%' }}
@@ -280,6 +288,42 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
           </div>
         )}
       </div>
+
+      {/* MIA Chat Input Footer */}
+      {onChatSend && onChatInputChange && (
+        <div className="relative px-4 pb-4 pt-2 flex-shrink-0 border-t border-white/10">
+          <SuggestionChips
+            suggestions={['Highlights der Woche', 'Wochenzusammenfassung', 'Was geht am Wochenende']}
+            onSuggestionClick={async (suggestion) => {
+              onChatInputChange(suggestion);
+              await onChatSend(suggestion);
+            }}
+          />
+          <div className="flex gap-2 mt-3">
+            <Input
+              value={chatInput}
+              onChange={(e) => onChatInputChange(e.target.value)}
+              onKeyDown={async (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  if (!chatInput.trim()) return;
+                  await onChatSend();
+                }
+              }}
+              placeholder="Frag MIA nach Events..."
+              className="flex-1 bg-black/40 border-white/20 text-white placeholder:text-white/40 focus:border-primary"
+            />
+            <Button
+              size="icon"
+              onClick={() => chatInput.trim() && onChatSend()}
+              disabled={!chatInput.trim()}
+              className="bg-primary hover:bg-primary/90 text-white"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

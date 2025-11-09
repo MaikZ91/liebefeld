@@ -1956,7 +1956,7 @@ const EventHeatmap: React.FC = () => {
       </div>
 
       {/* Time Slider - Extrem minimal */}
-      <div className={cn("fixed top-44 right-2 z-[1002]", (isMIAOpen || showCommunityChat) && "hidden")}>
+      <div className={cn("fixed top-44 right-2 z-[1002]", (isMIAOpen || showCommunityChat || showEventList) && "hidden")}>
         <div className="p-1 bg-black/25 backdrop-blur-sm rounded-full">
           <div className="flex flex-col items-center gap-1.5">
             <span className="text-white text-[11px] font-bold">{timeRange[0]}h</span>
@@ -1976,7 +1976,7 @@ const EventHeatmap: React.FC = () => {
       </div>
 
       {/* Button to show events panel again if hidden */}
-      {!showEventPanels && !showCommunityChat && (
+      {!showEventPanels && !showCommunityChat && !showEventList && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[1000]">
           <Button
             onClick={() => setShowEventPanels(true)}
@@ -2114,6 +2114,9 @@ const EventHeatmap: React.FC = () => {
                 setIsEventFormOpen(true);
               }}
               onDislike={handleEventDislike}
+              chatInput={aiChatInput}
+              onChatInputChange={setAiChatInput}
+              onChatSend={handleAIChatSend}
             />
           </div>
         </div>
