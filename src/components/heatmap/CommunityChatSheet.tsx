@@ -85,29 +85,43 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
   
   // Filter messages based on selected categories
   const filteredMessages = useMemo(() => {
-    // If we're in a specific category (not "alle"), show all messages from that group
-    // because the groupId is already category-specific (e.g., "bi_sport")
-    if (activeCategory !== 'alle') {
-      return messages;
-    }
-    
-    // If "alle" is selected in the filter chips, show all messages
+    // Single group: always filter by selected category chips
     if (messageFilter.includes('alle')) {
       return messages;
     }
-    
-    // Otherwise, filter by hashtag
-    return messages.filter(message => {
-      if ((message as any).poll_question) {
-        return true;
-      }
-      
-      const messageText = message.text.toLowerCase();
-      return messageFilter.some(category => 
-        messageText.includes(`#${category.toLowerCase()}`)
-      );
+
+    const stripDiacritics = (s: string) =>
+      s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    const umlautToAe = (s: string) =>
+      s.replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+
+    const categorySynonyms: Record<string, string[]> = {
+      'ausgehen': ['ausgehen', 'party', 'konzert', 'festival', 'club', 'nightlife', 'bar'],
+      'kreativität': ['kreativität', 'kreativitaet', 'kreativ', 'kultur', 'workshop', 'ausstellung', 'theater', 'lesung'],
+      'sport': ['sport', 'fitness', 'yoga', 'run', 'lauf'],
+    };
+
+    return messages.filter((message) => {
+      const msgLower = (message.text || '').toLowerCase();
+      const msgAscii = stripDiacritics(msgLower);
+      const msgUmlaut = umlautToAe(msgLower);
+
+      if ((message as any).poll_question) return true;
+
+      return messageFilter.some((category) => {
+        const syns = categorySynonyms[category] || [category];
+        return syns.some((syn) => {
+          const tag = `#${syn.toLowerCase()}`;
+          return (
+            msgLower.includes(tag) ||
+            msgAscii.includes(stripDiacritics(tag)) ||
+            msgUmlaut.includes(umlautToAe(tag))
+          );
+        });
+      });
     });
-  }, [messages, messageFilter, activeCategory]);
+  }, [messages, messageFilter]);
   
   const handleSendMessage = async () => {
     if (!input.trim() || !username) return;
@@ -230,6 +244,13 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
     if (diff < 24 * 60) return `vor ${Math.floor(diff / 60)}h`;
     return `vor ${Math.floor(diff / 1440)}d`;
   };
+  
+  // Hide global bottom navigation while Community Chat is open
+  useEffect(() => {
+    if (open) document.body.classList.add('community-chat-open');
+    else document.body.classList.remove('community-chat-open');
+    return () => document.body.classList.remove('community-chat-open');
+  }, [open]);
   
   if (!open) return null;
   

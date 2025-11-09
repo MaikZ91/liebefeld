@@ -596,4 +596,9 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Hide bottom navigation when community chat is open */
+  body.community-chat-open .lov-bottom-nav {
+    display: none !important;
+  }
 }
