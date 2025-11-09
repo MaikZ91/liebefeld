@@ -78,17 +78,26 @@ Output: `;
     }
 
     try {
-      // Versuchen, die Antwort als JSON zu parsen
-      const parsedCoordinates = JSON.parse(aiContent);
+      // Remove markdown code fencing if present (```json ... ```)
+      let cleanContent = aiContent.trim();
+      if (cleanContent.startsWith('```json')) {
+        cleanContent = cleanContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleanContent.startsWith('```')) {
+        cleanContent = cleanContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      
+      // Parse the cleaned JSON
+      const parsedCoordinates = JSON.parse(cleanContent.trim());
 
-      // Stellen Sie sicher, dass die geparsten Daten lat und lng enthalten
+      // Validate that we have valid lat and lng
       if (typeof parsedCoordinates.lat === 'number' && typeof parsedCoordinates.lng === 'number') {
+        console.log('Successfully geocoded:', locationString, '->', parsedCoordinates);
         return new Response(
           JSON.stringify(parsedCoordinates),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       } else {
-        // Wenn lat oder lng nicht korrekt sind, behandeln als nicht gefunden
+        // Invalid coordinates returned
         console.warn('AI returned invalid coordinates:', parsedCoordinates);
         return new Response(
           JSON.stringify({ lat: null, lng: null, error: 'AI returned invalid coordinates' }),
