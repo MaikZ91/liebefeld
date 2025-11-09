@@ -748,7 +748,7 @@ const EventHeatmap: React.FC = () => {
     return filtered;
   }, [selectedDateFilteredEvents, selectedCategory, timeRange, dislikedEventIds]);
 
-  // All events for Event List (not filtered by selected date, but with category and time filters)
+  // All events for Event List (not filtered by selected date, mirror same filters as filteredEvents)
   const allFilteredEvents = React.useMemo(() => {
     const cityDisplayName =
       cities.find((c) => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity;
@@ -782,24 +782,44 @@ const EventHeatmap: React.FC = () => {
       return !dislikedEventIds.includes(eventId);
     });
 
-    // Apply category filter
-    if (selectedCategory) {
-      filtered = filtered.filter((event) => event.category === selectedCategory);
+    // Apply category filter (same semantics as filteredEvents)
+    if (selectedCategory !== "alle") {
+      if (selectedCategory === "ausgehen") {
+        filtered = filtered.filter((event) => {
+          const eventCategoryGroup = getCategoryGroup(event.category);
+          return eventCategoryGroup !== "Sport";
+        });
+      } else {
+        const categoryGroupMap: Record<FilterGroup, CategoryGroup | null> = {
+          alle: null,
+          ausgehen: "Ausgehen",
+          sport: "Sport",
+          kreativität: "Kreativität",
+        };
+
+        const targetCategoryGroup = categoryGroupMap[selectedCategory];
+        if (targetCategoryGroup) {
+          filtered = filtered.filter((event) => {
+            const eventCategoryGroup = getCategoryGroup(event.category);
+            return eventCategoryGroup === targetCategoryGroup;
+          });
+        }
+      }
     }
 
-    // Apply time range filter
-    if (timeRange[0] > 0 || timeRange[1] < 24) {
-      const [minHour, maxHour] = timeRange;
-      filtered = filtered.filter((event) => {
-        if (!event.time) return true;
-        const [hourStr] = event.time.split(":");
-        const hour = parseInt(hourStr, 10);
-        return hour >= minHour && hour < maxHour;
-      });
-    }
+    // Apply time range lower bound (same as filteredEvents)
+    const selectedHour = timeRange[0];
+    filtered = filtered.filter((event) => {
+      const hour = event.time ? getHourFromTime(event.time) : 0;
+      return hour >= selectedHour;
+    });
 
-    // Sort by likes (descending)
-    filtered.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+    // Sort by popularity (likes + RSVPs) descending
+    filtered = filtered.sort((a, b) => {
+      const likesA = (a.likes || 0) + (a.rsvp_yes || 0) + (a.rsvp_maybe || 0);
+      const likesB = (b.likes || 0) + (b.rsvp_yes || 0) + (b.rsvp_maybe || 0);
+      return likesB - likesA;
+    });
 
     return filtered;
   }, [events, selectedCity, dislikedEventIds, selectedCategory, timeRange]);
