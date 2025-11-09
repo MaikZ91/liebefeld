@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, memo, useMemo, useCallback } from 'react';
 import { format, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { Virtuoso } from 'react-virtuoso';
 import { Event } from '@/types/eventTypes';
 import EventCard from '@/components/EventCard';
 import { groupEventsByDate } from '@/utils/eventUtils';
@@ -126,7 +127,8 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
     });
   }, [filteredEvents, showFavorites, topEventsPerDay]);
 
-  const eventsByDate = useMemo(() => {
+  // Flatten events by date for virtuoso
+  const virtualizedItems = useMemo(() => {
     const grouped = groupEventsByDate(filteredEvents);
     
     Object.keys(grouped).forEach(dateStr => {
@@ -155,7 +157,16 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
       });
     });
     
-    return grouped;
+    // Convert to flat array with headers
+    const items: Array<{ type: 'header'; dateStr: string } | { type: 'event'; event: Event; dateStr: string }> = [];
+    Object.keys(grouped).sort().forEach(dateStr => {
+      items.push({ type: 'header', dateStr });
+      grouped[dateStr].forEach(event => {
+        items.push({ type: 'event', event, dateStr });
+      });
+    });
+    
+    return items;
   }, [filteredEvents]);
   
   useEffect(() => {
@@ -192,6 +203,46 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
 
 
 
+  const renderItem = useCallback((index: number) => {
+    const item = virtualizedItems[index];
+    
+    if (item.type === 'header') {
+      const date = parseISO(item.dateStr);
+      const isCurrentDay = isToday(date);
+      
+      return (
+        <div 
+          key={`header-${item.dateStr}`}
+          className={`w-full ${isCurrentDay ? 'scroll-mt-12' : ''}`}
+          id={isCurrentDay ? "today-section" : undefined}
+        >
+          <h4 className="text-sm font-semibold mb-1 text-white sticky top-0 bg-black/70 backdrop-blur-xl py-2 z-10 flex items-center w-full border-b border-white/10">
+            {format(date, 'EEEE, d. MMMM', { locale: de })}
+          </h4>
+        </div>
+      );
+    }
+    
+    // item.type === 'event'
+    const date = parseISO(item.dateStr);
+    const isCurrentDay = isToday(date);
+    const isTopEvent = isCurrentDay && topTodayEvent && item.event.id === topTodayEvent.id;
+    const isNewEvent = false;
+    
+    return (
+      <div key={`event-${item.event.id}`} className="w-full">
+        <MemoizedEventCard
+          event={item.event}
+          date={date}
+          onSelectEvent={onSelectEvent}
+          isTopEvent={isTopEvent}
+          isNewEvent={isNewEvent}
+          onDislike={onDislike}
+        />
+      </div>
+    );
+  }, [virtualizedItems, topTodayEvent, onSelectEvent, onDislike]);
+
     return (
       <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/70 backdrop-blur-xl shadow-[0_20px_80px_rgba(239,68,68,0.25)] w-full max-w-full">
         {/* Gradient ring */}
@@ -209,45 +260,14 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
           </div>
         </div>
         
-        <div ref={listRef} className="relative overflow-y-auto max-h-[66vh] px-4 pb-4 scrollbar-thin scrollbar-thumb-white/20 w-full">
-        {Object.keys(eventsByDate).length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-2 gap-y-1">
-            {Object.keys(eventsByDate).sort().map(dateStr => {
-              const date = parseISO(dateStr);
-              const isCurrentDay = isToday(date);
-              
-              return (
-                <div 
-                  key={dateStr} 
-                  ref={isCurrentDay ? todayRef : null}
-                  className={`w-full ${isCurrentDay ? 'scroll-mt-12' : ''}`}
-                  id={isCurrentDay ? "today-section" : undefined}
-                >
-                  <h4 className="text-sm font-semibold mb-1 text-white sticky top-0 bg-black/70 backdrop-blur-xl py-2 z-10 flex items-center w-full border-b border-white/10">
-                    {format(date, 'EEEE, d. MMMM', { locale: de })}
-                  </h4>
-                  <div className="space-y-0.5 w-full">
-                    {eventsByDate[dateStr].map((event) => {
-                      const isTopEvent = isCurrentDay && topTodayEvent && event.id === topTodayEvent.id;
-                      const isNewEvent = false; // No new events tracking for now
-                      
-                      return (
-                        <MemoizedEventCard
-                          key={event.id}
-                          event={event}
-                          date={date}
-                          onSelectEvent={onSelectEvent}
-                          isTopEvent={isTopEvent}
-                          isNewEvent={isNewEvent}
-                          onDislike={onDislike}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        <div ref={listRef} className="relative h-[66vh] px-4 pb-4 w-full">
+        {virtualizedItems.length > 0 ? (
+          <Virtuoso
+            style={{ height: '100%' }}
+            totalCount={virtualizedItems.length}
+            itemContent={renderItem}
+            className="scrollbar-thin scrollbar-thumb-white/20"
+          />
         ) : (
           <div className="flex items-center justify-center h-40 text-white/70 w-full">
             {showFavorites 
