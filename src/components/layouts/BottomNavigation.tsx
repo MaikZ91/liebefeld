@@ -110,8 +110,10 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
             variant="ghost"
             size="icon" 
             onClick={() => {
-              console.log('🔥 [BottomNav] Event Calendar button clicked, navigating to /events');
-              navigate('/events');
+              console.log('🔥 [BottomNav] Event Calendar button clicked, opening event list in MIA window');
+              if ((window as any).openEventListInMIA) {
+                (window as any).openEventListInMIA();
+              }
             }} 
             className={cn(
               "relative h-12 w-12 rounded-full transition-all duration-300",
