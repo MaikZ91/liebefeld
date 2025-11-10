@@ -2195,10 +2195,15 @@ const EventHeatmap: React.FC = () => {
                                   }
                                 }
                                 if (s === 'Treffen vorschlagen') {
-                                  if (currentAiEventContext?.id && chatLogic.handleProposeMeetup) {
-                                    await chatLogic.handleProposeMeetup(currentAiEventContext.id, currentAiEventContext.title);
+                                  const eventId = currentAiEventContext?.id || selectedEventForDetails?.id;
+                                  const eventTitle = currentAiEventContext?.title || selectedEventForDetails?.title;
+                                  
+                                  if (eventId && eventTitle && chatLogic.handleProposeMeetup) {
+                                    console.log('[DEBUG] Calling handleProposeMeetup with:', eventId, eventTitle);
+                                    await chatLogic.handleProposeMeetup(eventId, eventTitle);
                                     return;
                                   }
+                                  console.error('[DEBUG] Missing event context for meetup proposal');
                                 }
                                 setAiChatInput(s);
                                 setAiResponse(null);
@@ -2249,9 +2254,7 @@ const EventHeatmap: React.FC = () => {
                         setAiSuggestions([]);
                         try {
                           setIsAiChatLoading(true);
-                          if (aiChatExternalSendHandler) await aiChatExternalSendHandler(q);
-                          else if ((chatLogic as any)?.handleSendMessage) await (chatLogic as any).handleSendMessage(q);
-                          else throw new Error("Kein Send-Handler verfügbar");
+                          await chatLogic.handleSendMessage(q);
                         } catch {
                           toast.error("Konnte Antwort nicht laden");
                           setAiResponse(
@@ -2279,9 +2282,7 @@ const EventHeatmap: React.FC = () => {
                       setAiSuggestions([]);
                       try {
                         setIsAiChatLoading(true);
-                        if (aiChatExternalSendHandler) await aiChatExternalSendHandler(q);
-                        else if ((chatLogic as any)?.handleSendMessage) await (chatLogic as any).handleSendMessage(q);
-                        else throw new Error("Kein Send-Handler verfügbar");
+                        await chatLogic.handleSendMessage(q);
                       } catch {
                         toast.error("Konnte Antwort nicht laden");
                         setAiResponse(

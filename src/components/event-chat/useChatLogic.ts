@@ -396,10 +396,11 @@ export const useChatLogic = (
   }, [onAiResponseReceived]);
 
   const handleProposeMeetup = useCallback(async (eventId: string, eventTitle: string) => {
-    console.log('[useChatLogic] Proposing meetup for event:', eventId);
+    console.log('[DEBUG] handleProposeMeetup called with:', eventId, eventTitle);
     
     // Set state to track pending meetup
     setPendingMeetup({ eventId, eventTitle });
+    console.log('[DEBUG] pendingMeetup state set');
     
     // Ask for meetup details
     const promptHtml = `
@@ -471,7 +472,9 @@ export const useChatLogic = (
     }
 
     // Check if we have a pending meetup (state-based, no marker search needed)
+    console.log('[DEBUG] handleSendMessage - pendingMeetup:', pendingMeetup);
     if (pendingMeetup) {
+      console.log('[DEBUG] Processing meetup with:', pendingMeetup);
       const username = localStorage.getItem('community_chat_username') || 'Gast';
       const { eventId, eventTitle } = pendingMeetup;
       
