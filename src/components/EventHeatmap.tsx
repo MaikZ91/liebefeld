@@ -2189,14 +2189,14 @@ const EventHeatmap: React.FC = () => {
                               try {
                                 // Special handling for inline suggestions
                                 if (s === '🎉 Ich bin dabei' || s === 'Ich bin dabei') {
-                                  if (currentAiEventContext?.id) {
-                                    (window as any).handleAttendEvent?.(currentAiEventContext.id);
+                                  if (currentAiEventContext?.id && chatLogic.handleAttendEvent) {
+                                    await chatLogic.handleAttendEvent(currentAiEventContext.id);
                                     return;
                                   }
                                 }
                                 if (s === 'Treffen vorschlagen') {
-                                  if (currentAiEventContext?.id) {
-                                    (window as any).handleProposeMeetup?.(currentAiEventContext.id, currentAiEventContext.title);
+                                  if (currentAiEventContext?.id && chatLogic.handleProposeMeetup) {
+                                    await chatLogic.handleProposeMeetup(currentAiEventContext.id, currentAiEventContext.title);
                                     return;
                                   }
                                 }
