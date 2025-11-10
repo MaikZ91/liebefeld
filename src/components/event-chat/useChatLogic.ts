@@ -32,25 +32,44 @@ export const useChatLogic = (
     const normalizedInput = inputCity.toLowerCase();
     const cityEntryByAbbr = cities.find(c => c.abbr.toLowerCase() === normalizedInput);
     const cityEntryByName = cities.find(c => c.name.toLowerCase() === normalizedInput);
-    const canonicalCityId = (cityEntryByAbbr?.abbr || cityEntryByName?.abbr || inputCity).toLowerCase();
+
     const normalizedCategory = category.toLowerCase();
-    const fallbackCanonicalId = createCitySpecificGroupId(normalizedCategory, canonicalCityId);
+
+    const normalizedCityName = (cityEntryByAbbr?.name || cityEntryByName?.name || inputCity)
+      .toLowerCase();
+    const sanitizedCityName = normalizedCityName
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .replace(/[^a-z0-9 ]/g, ' ')
+      .trim();
+
+    const cityNameVariants = [
+      sanitizedCityName,
+      sanitizedCityName.replace(/\s+/g, ''),
+      sanitizedCityName.replace(/\s+/g, '-'),
+      sanitizedCityName.replace(/\s+/g, '_'),
+    ];
+
+    const cityAbbrVariants = [
+      cityEntryByAbbr?.abbr?.toLowerCase(),
+      cityEntryByName?.abbr?.toLowerCase(),
+      normalizedInput,
+      normalizedInput.replace(/[^a-z0-9]/g, ''),
+    ];
 
     const cityVariants = Array.from(new Set([
-      canonicalCityId,
-      normalizedInput.replace(/[^a-z0-9äöüß]/g, ''),
-      normalizedInput
+      ...cityNameVariants,
+      ...cityAbbrVariants,
     ].filter(Boolean)));
 
     const possibleIds = new Set<string>();
     for (const cityVariant of cityVariants) {
       possibleIds.add(createCitySpecificGroupId(normalizedCategory, cityVariant));
+      possibleIds.add(`${cityVariant}_${normalizedCategory}`);
       possibleIds.add(`${cityVariant}-${normalizedCategory}`);
-      possibleIds.add(`${normalizedCategory}-${cityVariant}`);
       possibleIds.add(`${normalizedCategory}_${cityVariant}`);
+      possibleIds.add(`${normalizedCategory}-${cityVariant}`);
     }
-
-    possibleIds.add(fallbackCanonicalId);
 
     for (const groupId of possibleIds) {
       const { data, error } = await supabase
@@ -69,27 +88,13 @@ export const useChatLogic = (
       }
     }
 
-    const resolvedCityName = cityEntryByAbbr?.name
-      || cityEntryByName?.name
-      || normalizedInput.charAt(0).toUpperCase() + normalizedInput.slice(1);
-    const displayCategory = normalizedCategory.charAt(0).toUpperCase() + normalizedCategory.slice(1);
+    console.error('[useChatLogic] No matching chat group found for', {
+      category: normalizedCategory,
+      inputCity,
+      variants: Array.from(possibleIds),
+    });
 
-    const groupName = `${displayCategory} • ${resolvedCityName}`;
-    const groupDescription = `Community-Chat für ${displayCategory} in ${resolvedCityName}`;
-
-    const { error: insertError } = await supabase
-      .from('chat_groups')
-      .insert({
-        id: fallbackCanonicalId,
-        name: groupName,
-        description: groupDescription
-      });
-
-    if (insertError && insertError.code !== '23505') {
-      console.error('[useChatLogic] Failed to create fallback chat group:', insertError);
-      throw insertError;
-    }
-    return fallbackCanonicalId;
+    throw new Error('chat-group-not-found');
   }, [selectedCity]);
   
   const [isVisible, setIsVisible] = useState(false);
