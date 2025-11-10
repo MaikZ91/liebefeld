@@ -9,7 +9,7 @@ import { getFutureEvents, getEventsForDay, getWeekRange } from '@/utils/eventUti
 import { fetchWeather } from '@/utils/weatherUtils';
 import { useEventNotifications } from '@/hooks/useEventNotifications';
 import { createEventNotificationMessage, getNewEventsFromIds } from '@/utils/eventNotificationUtils';
-import { useEventContext } from '@/contexts/EventContext';
+import { useEventContext, cities } from '@/contexts/EventContext';
 import { useDailyPerfectDay } from '@/hooks/useDailyPerfectDay';
 import { createCitySpecificGroupId } from '@/utils/groupIdUtils';
 
@@ -26,6 +26,71 @@ export const useChatLogic = (
 ) => {
   // Get events and selectedCity from EventContext instead of props
   const { events, selectedCity } = useEventContext();
+
+  const resolveCommunityGroupId = useCallback(async (category: string, cityInput?: string) => {
+    const inputCity = cityInput || selectedCity || 'bi';
+    const normalizedInput = inputCity.toLowerCase();
+    const cityEntryByAbbr = cities.find(c => c.abbr.toLowerCase() === normalizedInput);
+    const cityEntryByName = cities.find(c => c.name.toLowerCase() === normalizedInput);
+    const canonicalCityId = (cityEntryByAbbr?.abbr || cityEntryByName?.abbr || inputCity).toLowerCase();
+    const normalizedCategory = category.toLowerCase();
+    const fallbackCanonicalId = createCitySpecificGroupId(normalizedCategory, canonicalCityId);
+
+    const cityVariants = Array.from(new Set([
+      canonicalCityId,
+      normalizedInput.replace(/[^a-z0-9äöüß]/g, ''),
+      normalizedInput
+    ].filter(Boolean)));
+
+    const possibleIds = new Set<string>();
+    for (const cityVariant of cityVariants) {
+      possibleIds.add(createCitySpecificGroupId(normalizedCategory, cityVariant));
+      possibleIds.add(`${cityVariant}-${normalizedCategory}`);
+      possibleIds.add(`${normalizedCategory}-${cityVariant}`);
+      possibleIds.add(`${normalizedCategory}_${cityVariant}`);
+    }
+
+    possibleIds.add(fallbackCanonicalId);
+
+    for (const groupId of possibleIds) {
+      const { data, error } = await supabase
+        .from('chat_groups')
+        .select('id')
+        .eq('id', groupId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('[useChatLogic] Error checking chat group existence:', groupId, error);
+        continue;
+      }
+
+      if (data?.id) {
+        return data.id;
+      }
+    }
+
+    const resolvedCityName = cityEntryByAbbr?.name
+      || cityEntryByName?.name
+      || normalizedInput.charAt(0).toUpperCase() + normalizedInput.slice(1);
+    const displayCategory = normalizedCategory.charAt(0).toUpperCase() + normalizedCategory.slice(1);
+
+    const groupName = `${displayCategory} • ${resolvedCityName}`;
+    const groupDescription = `Community-Chat für ${displayCategory} in ${resolvedCityName}`;
+
+    const { error: insertError } = await supabase
+      .from('chat_groups')
+      .insert({
+        id: fallbackCanonicalId,
+        name: groupName,
+        description: groupDescription
+      });
+
+    if (insertError && insertError.code !== '23505') {
+      console.error('[useChatLogic] Failed to create fallback chat group:', insertError);
+      throw insertError;
+    }
+    return fallbackCanonicalId;
+  }, [selectedCity]);
   
   const [isVisible, setIsVisible] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(fullPage);
@@ -489,8 +554,17 @@ export const useChatLogic = (
       
       // Determine the correct community group ID based on selected city
       const cityAbbr = selectedCity || 'BI';
-      const communityGroupId = createCitySpecificGroupId('ausgehen', cityAbbr);
-      
+      let communityGroupId: string;
+
+      try {
+        communityGroupId = await resolveCommunityGroupId('ausgehen', cityAbbr);
+      } catch (groupError) {
+        console.error('[useChatLogic] Unable to resolve community group:', groupError);
+        toast.error('Community-Chat konnte nicht gefunden werden. Bitte versuche es später erneut.');
+        isSendingRef.current = false;
+        return;
+      }
+
       console.log('[useChatLogic] Posting meetup to group:', communityGroupId);
       
       // Prepare meetup text with category hashtag for visibility
