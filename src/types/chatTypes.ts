@@ -47,6 +47,12 @@ export interface Message {
   event_data?: EventShare;
   event_id?: string; // Added event_id for joining event chats
   event_title?: string; // Added event_title for display
+  event_date?: string; // Added for meetup proposals
+  event_location?: string; // Added for meetup proposals
+  meetup_responses?: { // Added for meetup proposals
+    'bin dabei'?: Array<{ username: string; avatar?: string }>;
+    'diesmal nicht'?: Array<{ username: string; avatar?: string }>;
+  };
   read_by?: string[];
   reactions?: { emoji: string; users: string[] }[]; // Added reactions
   // Reply fields

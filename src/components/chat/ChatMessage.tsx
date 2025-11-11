@@ -13,6 +13,7 @@ import MessageReactions from './MessageReactions';
 import { colorizeHashtags } from '@/utils/hashtagUtils';
 import { getChannelColor } from '@/utils/channelColors';
 import { ReplyData } from '@/hooks/chat/useReplySystem';
+import MeetupProposal from './MeetupProposal';
 
 const getGroupColor = (groupType: string) => {
   switch (groupType.toLowerCase()) {
@@ -50,6 +51,9 @@ interface ChatMessageProps {
   eventData?: EventShare;
   eventId?: string;
   eventTitle?: string;
+  eventDate?: string;
+  eventLocation?: string;
+  meetupResponses?: any;
   onDateSelect?: (date: string) => void;
   showDateSelector?: boolean;
   reactions?: { emoji: string; users: string[] }[];
@@ -65,6 +69,7 @@ interface ChatMessageProps {
   avatar?: string;
   replyTo?: ReplyData | null;
   onScrollToMessage?: (messageId: string) => void;
+  onShowEvent?: (eventId: string) => void;
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -74,6 +79,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   eventData,
   eventId,
   eventTitle,
+  eventDate,
+  eventLocation,
+  meetupResponses,
   onDateSelect,
   showDateSelector = false,
   reactions = [],
@@ -85,7 +93,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   sender,
   avatar,
   replyTo,
-  onScrollToMessage
+  onScrollToMessage,
+  onShowEvent
 }) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -181,6 +190,22 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 
   // Format message content - extract event data if present
   const formatContent = () => {
+    // Priority 0: Render meetup proposal if event_id is present and message contains meetup text
+    if (eventId && eventTitle && typeof message === 'string' && message.includes('Meetup-Vorschlag')) {
+      return (
+        <MeetupProposal
+          messageId={messageId || ''}
+          eventId={eventId}
+          eventTitle={eventTitle}
+          eventDate={eventDate}
+          eventLocation={eventLocation}
+          messageText={message}
+          meetupResponses={meetupResponses}
+          onShowEvent={onShowEvent}
+        />
+      );
+    }
+
     if (eventData) {
       return <EventMessageFormatter event={eventData} eventId={eventId} onJoinEventChat={onJoinEventChat} />;
     }

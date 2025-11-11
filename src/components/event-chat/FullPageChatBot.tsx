@@ -548,6 +548,34 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
                      );
                    }
                    
+                   // Check if message is meetup proposal
+                   const isMeetupProposal = msgWithPoll.event_id && msgWithPoll.event_title && message.text.includes('Meetup-Vorschlag');
+                   
+                    if (isMeetupProposal) {
+                      return (
+                        <ChatMessage
+                          key={message.id}
+                          message={message.text}
+                          eventId={msgWithPoll.event_id}
+                          eventTitle={msgWithPoll.event_title}
+                          eventDate={msgWithPoll.event_date}
+                          eventLocation={msgWithPoll.event_location}
+                          meetupResponses={msgWithPoll.meetup_responses}
+                          messageId={message.id}
+                          sender={message.user_name}
+                          avatar={message.user_avatar}
+                          onShowEvent={(eventId) => {
+                            // Use chatLogic's handleEventLinkClick to show event in AI dialog
+                            if (chatLogic && chatLogic.handleEventLinkClick) {
+                              chatLogic.handleEventLinkClick(eventId);
+                            } else {
+                              toast.error('AI Chat nicht verfügbar');
+                            }
+                          }}
+                        />
+                      );
+                    }
+                   
                    // Regular message - matching CommunityChatSheet style
                    const isOwnMessage = message.user_name === username;
                    

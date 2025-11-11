@@ -80,6 +80,7 @@ export type Database = {
           group_id: string
           id: string
           media_url: string | null
+          meetup_responses: Json | null
           parent_id: string | null
           poll_allow_multiple: boolean | null
           poll_options: Json | null
@@ -104,6 +105,7 @@ export type Database = {
           group_id: string
           id?: string
           media_url?: string | null
+          meetup_responses?: Json | null
           parent_id?: string | null
           poll_allow_multiple?: boolean | null
           poll_options?: Json | null
@@ -128,6 +130,7 @@ export type Database = {
           group_id?: string
           id?: string
           media_url?: string | null
+          meetup_responses?: Json | null
           parent_id?: string | null
           poll_allow_multiple?: boolean | null
           poll_options?: Json | null
