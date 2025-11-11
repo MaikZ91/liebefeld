@@ -143,13 +143,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "chat_messages_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "chat_groups"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "chat_messages_parent_id_fkey"
             columns: ["parent_id"]
             isOneToOne: false
@@ -252,6 +245,27 @@ export type Database = {
           source?: string | null
           time?: string
           title?: string
+        }
+        Relationships: []
+      }
+      disliked_events: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          username?: string
         }
         Relationships: []
       }
@@ -513,18 +527,9 @@ export type Database = {
         Args: { p_username: string }
         Returns: boolean
       }
-      generate_daily_perfect_day_messages: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      get_event_like_count: {
-        Args: { event_uuid: string }
-        Returns: number
-      }
-      get_thread_count: {
-        Args: { message_id: string }
-        Returns: number
-      }
+      generate_daily_perfect_day_messages: { Args: never; Returns: undefined }
+      get_event_like_count: { Args: { event_uuid: string }; Returns: number }
+      get_thread_count: { Args: { message_id: string }; Returns: number }
       has_user_liked_event: {
         Args: { event_uuid: string; user_uuid: string }
         Returns: boolean
