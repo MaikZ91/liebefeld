@@ -21,6 +21,7 @@ import UserProfileDialog from '@/components/users/UserProfileDialog';
 import { userService } from '@/services/userService';
 import { createGroupDisplayName } from '@/utils/groupIdUtils';
 import { cities } from '@/contexts/EventContext';
+import MeetupProposal from '@/components/chat/MeetupProposal';
 
 interface CommunityChatSheetProps {
   open: boolean;
@@ -30,6 +31,7 @@ interface CommunityChatSheetProps {
   activeCategory?: string;
   onCategoryChange?: (category: string) => void;
   onOpenUserDirectory?: () => void;
+  onShowEvent?: (eventId: string) => void;
 }
 
 const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
@@ -39,7 +41,8 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
   selectedCity,
   activeCategory = 'ausgehen',
   onCategoryChange,
-  onOpenUserDirectory
+  onOpenUserDirectory,
+  onShowEvent
 }) => {
   const username = typeof window !== 'undefined' ? localStorage.getItem(USERNAME_KEY) || 'Anonymous' : 'Anonymous';
   
@@ -360,6 +363,29 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
               ) : (
                 filteredMessages.map((message) => {
                   const msgWithPoll = message as any;
+                  
+                  // Check if this is a meetup proposal
+                  const isMeetupProposal = 
+                    message.text?.includes('🎉 Meetup-Vorschlag für') &&
+                    msgWithPoll.event_id &&
+                    msgWithPoll.event_title;
+                  
+                  if (isMeetupProposal) {
+                    return (
+                      <MeetupProposal
+                        key={message.id}
+                        messageId={message.id}
+                        eventId={msgWithPoll.event_id}
+                        eventTitle={msgWithPoll.event_title}
+                        eventDate={msgWithPoll.event_date}
+                        eventLocation={msgWithPoll.event_location}
+                        messageText={message.text}
+                        meetupResponses={msgWithPoll.meetup_responses || { 'bin dabei': [], 'diesmal nicht': [] }}
+                        onShowEvent={onShowEvent}
+                      />
+                    );
+                  }
+                  
                   if (msgWithPoll.poll_question) {
                     return (
                       <PollMessage

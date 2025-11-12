@@ -2613,6 +2613,12 @@ const EventHeatmap: React.FC = () => {
           // Handle user directory if needed
           console.log('Open user directory');
         }}
+        onShowEvent={async (eventId) => {
+          const event = filteredEvents.find((e) => e.id === eventId);
+          if (event) {
+            await fetchAndShowEventDescription(event);
+          }
+        }}
       />
       
       {/* Location Blocking Dialog */}
