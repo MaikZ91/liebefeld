@@ -19,6 +19,8 @@ interface MeetupProposalProps {
     'diesmal nicht'?: Array<{ username: string; avatar?: string }>;
   };
   onShowEvent?: (eventId: string) => void;
+  sender?: string;
+  senderAvatar?: string;
 }
 
 const MeetupProposal: React.FC<MeetupProposalProps> = ({
@@ -29,7 +31,9 @@ const MeetupProposal: React.FC<MeetupProposalProps> = ({
   eventLocation,
   messageText,
   meetupResponses = {},
-  onShowEvent
+  onShowEvent,
+  sender,
+  senderAvatar
 }) => {
   const [responses, setResponses] = useState(meetupResponses);
   const [userResponse, setUserResponse] = useState<'bin dabei' | 'diesmal nicht' | null>(null);
@@ -98,110 +102,125 @@ const MeetupProposal: React.FC<MeetupProposalProps> = ({
   const diesmalNichtCount = responses['diesmal nicht']?.length || 0;
 
   return (
-    <div className="my-3 rounded-xl overflow-hidden border border-red-500/30 bg-gradient-to-br from-red-950/40 via-black/50 to-gray-900/50 backdrop-blur-sm shadow-lg shadow-red-500/20">
-      {/* Header */}
-      <div className="px-4 py-3 bg-gradient-to-r from-red-600/20 to-red-700/20 border-b border-red-500/20">
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="w-4 h-4 text-red-400" />
-          <span className="text-sm font-semibold text-red-300">Meetup-Vorschlag</span>
+    <div className="my-4 rounded-2xl overflow-hidden border border-primary/20 bg-gradient-to-br from-background via-background/95 to-muted/50 backdrop-blur-sm shadow-2xl shadow-primary/10">
+      {/* Header with Avatar */}
+      <div className="px-5 py-4 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b border-border/50">
+        <div className="flex items-center gap-3 mb-3">
+          {sender && (
+            <Avatar className="w-8 h-8 ring-2 ring-primary/30 shadow-lg">
+              <AvatarImage src={senderAvatar || undefined} />
+              <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
+                {getInitials(sender)}
+              </AvatarFallback>
+            </Avatar>
+          )}
+          <div className="flex items-center gap-2 flex-1">
+            <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+            <span className="text-sm font-semibold text-primary">Meetup-Vorschlag</span>
+            {sender && <span className="text-xs text-muted-foreground">von {sender}</span>}
+          </div>
         </div>
-        <h3 className="text-base font-bold text-white">{eventTitle}</h3>
+        <h3 className="text-lg font-bold text-foreground leading-tight">{eventTitle}</h3>
       </div>
 
       {/* Event Details */}
       {(eventDate || eventLocation) && (
-        <div className="px-4 py-3 space-y-2 border-b border-white/5">
+        <div className="px-5 py-4 space-y-3 border-b border-border/30 bg-muted/30">
           {eventDate && (
-            <div className="flex items-center gap-2 text-sm text-white/80">
-              <Calendar className="w-4 h-4 text-red-400" />
-              <span>{new Date(eventDate).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+            <div className="flex items-center gap-3 text-sm text-foreground/80">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Calendar className="w-4 h-4 text-primary" />
+              </div>
+              <span className="font-medium">{new Date(eventDate).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
             </div>
           )}
           {eventLocation && (
-            <div className="flex items-center gap-2 text-sm text-white/80">
-              <MapPin className="w-4 h-4 text-red-400" />
-              <span>{eventLocation}</span>
+            <div className="flex items-center gap-3 text-sm text-foreground/80">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                <MapPin className="w-4 h-4 text-primary" />
+              </div>
+              <span className="font-medium">{eventLocation}</span>
             </div>
           )}
         </div>
       )}
 
       {/* Message Text */}
-      <div className="px-4 py-3 text-sm text-white/90 whitespace-pre-wrap border-b border-white/5">
+      <div className="px-5 py-4 text-sm text-foreground/90 whitespace-pre-wrap border-b border-border/30 leading-relaxed bg-background/50">
         {messageText.replace(/^#\w+\s+🎉\s+Meetup-Vorschlag für ".*"!\n\n/, '').replace(/\n\nWer ist dabei\? Antwortet hier im Chat! 💬$/, '')}
       </div>
 
       {/* Action Buttons */}
-      <div className="px-4 py-3 space-y-3">
+      <div className="px-5 py-4 space-y-3 bg-background/30">
         {/* Show Event Button */}
         <Button
           onClick={handleShowEvent}
           variant="outline"
           size="sm"
-          className="w-full h-9 bg-white/5 hover:bg-white/10 border-white/20 text-white hover:text-white transition-all duration-200"
+          className="w-full h-10 bg-primary/5 hover:bg-primary/10 border-primary/20 text-foreground hover:text-foreground transition-all duration-300 font-medium shadow-sm hover:shadow-md"
         >
-          <Sparkles className="w-4 h-4 mr-2" />
+          <Sparkles className="w-4 h-4 mr-2 text-primary" />
           Event mit MIA anzeigen
         </Button>
 
         {/* Response Chips */}
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <Button
             onClick={() => handleResponse('bin dabei')}
             variant="outline"
             size="sm"
-            className={`flex-1 h-10 transition-all duration-200 ${
+            className={`flex-1 h-11 transition-all duration-300 font-medium shadow-sm ${
               userResponse === 'bin dabei'
-                ? 'bg-green-600 hover:bg-green-700 border-green-500 text-white shadow-lg shadow-green-500/30'
-                : 'bg-white/5 hover:bg-white/10 border-white/20 text-white/80 hover:text-white'
+                ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 border-green-500/50 text-white shadow-lg shadow-green-500/30 scale-105'
+                : 'bg-background hover:bg-muted border-border text-foreground/80 hover:text-foreground hover:border-primary/30'
             }`}
           >
             <Users className="w-4 h-4 mr-2" />
             Bin dabei
-            {binDabeiCount > 0 && <span className="ml-2 font-bold">({binDabeiCount})</span>}
+            {binDabeiCount > 0 && <span className="ml-2 px-1.5 py-0.5 bg-white/20 rounded-full text-xs font-bold">({binDabeiCount})</span>}
           </Button>
           
           <Button
             onClick={() => handleResponse('diesmal nicht')}
             variant="outline"
             size="sm"
-            className={`flex-1 h-10 transition-all duration-200 ${
+            className={`flex-1 h-11 transition-all duration-300 font-medium shadow-sm ${
               userResponse === 'diesmal nicht'
-                ? 'bg-gray-600 hover:bg-gray-700 border-gray-500 text-white shadow-lg shadow-gray-500/30'
-                : 'bg-white/5 hover:bg-white/10 border-white/20 text-white/80 hover:text-white'
+                ? 'bg-gradient-to-r from-muted to-muted-foreground/20 hover:from-muted hover:to-muted-foreground/30 border-muted-foreground/30 text-foreground shadow-lg shadow-muted/30 scale-105'
+                : 'bg-background hover:bg-muted border-border text-foreground/80 hover:text-foreground hover:border-primary/30'
             }`}
           >
             Diesmal nicht
-            {diesmalNichtCount > 0 && <span className="ml-2 font-bold">({diesmalNichtCount})</span>}
+            {diesmalNichtCount > 0 && <span className="ml-2 px-1.5 py-0.5 bg-black/10 rounded-full text-xs font-bold">({diesmalNichtCount})</span>}
           </Button>
         </div>
 
         {/* Avatar Display for "bin dabei" */}
         {binDabeiCount > 0 && (
-          <div className="flex items-center gap-2 pt-2 border-t border-white/5">
-            <div className="flex items-center -space-x-2">
+          <div className="flex items-center gap-3 pt-3 border-t border-border/30">
+            <div className="flex items-center -space-x-3">
               {responses['bin dabei']?.slice(0, 5).map((user, index) => (
                 <Avatar 
                   key={`${user.username}-${index}`}
-                  className="w-6 h-6 border-2 border-black"
+                  className="w-8 h-8 border-2 border-background ring-2 ring-green-500/30 shadow-md"
                   style={{ zIndex: 5 - index }}
                 >
                   <AvatarImage src={user.avatar || undefined} />
-                  <AvatarFallback className="bg-green-600 text-white text-[10px]">
+                  <AvatarFallback className="bg-gradient-to-br from-green-600 to-green-700 text-white text-xs font-semibold">
                     {getInitials(user.username)}
                   </AvatarFallback>
                 </Avatar>
               ))}
               {binDabeiCount > 5 && (
                 <div 
-                  className="w-6 h-6 rounded-full bg-green-700 border-2 border-black flex items-center justify-center text-white text-[10px] font-medium"
+                  className="w-8 h-8 rounded-full bg-gradient-to-br from-green-700 to-green-800 border-2 border-background ring-2 ring-green-500/30 flex items-center justify-center text-white text-xs font-bold shadow-md"
                   style={{ zIndex: 0 }}
                 >
                   +{binDabeiCount - 5}
                 </div>
               )}
             </div>
-            <span className="text-xs text-white/60">
+            <span className="text-sm text-muted-foreground font-medium">
               {binDabeiCount === 1 ? '1 Person' : `${binDabeiCount} Personen`} dabei
             </span>
           </div>

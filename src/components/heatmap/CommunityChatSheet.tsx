@@ -382,6 +382,8 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
                         messageText={message.text}
                         meetupResponses={msgWithPoll.meetup_responses || { 'bin dabei': [], 'diesmal nicht': [] }}
                         onShowEvent={onShowEvent}
+                        sender={message.sender || message.user_name}
+                        senderAvatar={message.avatar || message.user_avatar}
                       />
                     );
                   }

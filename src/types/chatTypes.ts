@@ -41,8 +41,10 @@ export interface Message {
   id: string;
   created_at: string;
   text: string; // Changed from 'content' to 'text'
-  user_name: string;
-  user_avatar: string;
+  user_name: string; // Keeping for backward compatibility
+  user_avatar: string; // Keeping for backward compatibility
+  sender?: string; // Updated to match database field (optional for backward compatibility)
+  avatar?: string; // Updated to match database field (optional for backward compatibility)
   group_id: string;
   event_data?: EventShare;
   event_id?: string; // Added event_id for joining event chats
