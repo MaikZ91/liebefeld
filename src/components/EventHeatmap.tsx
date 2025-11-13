@@ -472,8 +472,8 @@ const EventHeatmap: React.FC = () => {
     if (!hasValidUsername) {
       // Start onboarding in MIA dialog
       setIsOnboardingActive(false);
-      setIsMIAOpen(true);
-      setShowAiResponse(true);
+      setIsMIAOpen(false);
+      setShowAiResponse(false);
     }
 
     // Setup global function for "Personalisiere deine Perfect Day Nachricht" button
