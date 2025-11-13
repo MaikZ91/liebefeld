@@ -104,7 +104,9 @@ const EventHeatmap: React.FC = () => {
   const { selectedCity } = useEventContext();
   const { events, isLoading, refreshEvents, addUserEvent, handleLikeEvent } = useEvents(selectedCity);
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
-  const [selectedCategory, setSelectedCategory] = useState<FilterGroup>(() => getSelectedCategory() as FilterGroup);
+  const [selectedCategory, setSelectedCategory] = useState<FilterGroup>(() => {
+    return (getSelectedCategory() as FilterGroup) || "ausgehen";
+  });
   const [timeRange, setTimeRange] = useState([new Date().getHours()]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [map, setMap] = useState<L.Map | null>(null);
