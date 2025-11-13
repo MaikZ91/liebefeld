@@ -502,9 +502,9 @@ export const useChatLogic = (
           .from('chat_messages')
           .insert({
             group_id: communityGroupId,
-            sender: 'MIA',
+            sender: username,
             text: meetupText,
-            avatar: '/lovable-uploads/c38064ee-a32f-4ecc-b148-f9c53c28d472.png',
+            avatar: (localStorage.getItem('community_chat_avatar') || ''),
             event_id: eventId,
             event_title: eventTitle
           });

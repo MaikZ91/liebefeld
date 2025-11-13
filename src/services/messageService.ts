@@ -84,15 +84,21 @@ export const messageService = {
           text: msg.text,
           user_name: msg.sender,
           user_avatar: msg.avatar || '',
+          sender: msg.sender || undefined,
+          avatar: msg.avatar || undefined,
           group_id: msg.group_id,
           reactions: Array.isArray(msg.reactions) ? msg.reactions as { emoji: string; users: string[] }[] : [],
           // Include poll fields - keep them as they are from the database
           poll_question: msg.poll_question || undefined,
           poll_options: msg.poll_options || undefined,
           poll_votes: msg.poll_votes as { [optionIndex: number]: { username: string; avatar?: string }[] } || undefined,
+          poll_allow_multiple: msg.poll_allow_multiple || undefined,
           // Include event fields
           event_id: msg.event_id || undefined,
           event_title: msg.event_title || undefined,
+          event_date: msg.event_date || undefined,
+          event_location: msg.event_location || undefined,
+          meetup_responses: (msg.meetup_responses as unknown) as { 'bin dabei'?: { username: string; avatar?: string }[]; 'diesmal nicht'?: { username: string; avatar?: string }[] } | undefined,
           // Include reply fields
           reply_to_message_id: msg.reply_to_message_id || undefined,
           reply_to_sender: msg.reply_to_sender || undefined,
