@@ -1288,44 +1288,153 @@ const EventHeatmap: React.FC = () => {
       }
 
       const likes = event.likes || 0;
+      const likedByUsers = Array.isArray(event.liked_by_users) ? event.liked_by_users : [];
+      const activityCount = likedByUsers.length;
       let markerSize = 60;
       const imageSize = 40;
 
-      const iconHtml = `
-        <div style="
-          background: rgba(0,0,0,0.8);
-          color: white;
-          border-radius: 8px;
-          width: ${markerSize}px;
-          height: ${markerSize + 20}px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: space-between;
-          padding: 5px;
-          border: 2px solid #ef4444;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-          cursor: pointer;
-          font-family: sans-serif;
-          overflow: hidden;
-        ">
-          <img src="${event.image_url || "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop;"}"
-               onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';"
-               style="width: ${imageSize}px; height: ${imageSize}px; object-fit: cover; border-radius: 4px; margin-bottom: 4px;"/>
+      // Create avatar circles around the event marker
+      const avatarRadius = 50; // Distance from center
+      const avatarSize = 24;
+      const maxVisibleAvatars = 8;
+      const visibleAvatars = likedByUsers.slice(0, maxVisibleAvatars);
+      
+      const avatarHtml = visibleAvatars.map((user, index) => {
+        const angle = (index / Math.max(visibleAvatars.length, 3)) * 2 * Math.PI;
+        const x = Math.cos(angle) * avatarRadius;
+        const y = Math.sin(angle) * avatarRadius;
+        
+        const getInitials = (username: string) => {
+          return username.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+        };
+        
+        return `
           <div style="
+            position: absolute;
+            width: ${avatarSize}px;
+            height: ${avatarSize}px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: 2px solid rgba(16, 185, 129, 0.3);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.6), 0 2px 8px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 9px;
             font-weight: bold;
-            white-space: nowrap;
+            color: white;
+            transform: translate(${x}px, ${y - 40}px);
+            animation: pulse-glow 2s ease-in-out infinite;
+            animation-delay: ${index * 0.2}s;
+            z-index: 10;
             overflow: hidden;
-            text-overflow: ellipsis;
-            width: 100%;
-            text-align: center;
           ">
-            ${event.title}
+            ${user.avatar_url ? 
+              `<img src="${user.avatar_url}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />` :
+              `<span>${getInitials(user.username)}</span>`
+            }
           </div>
-          <div style="font-size: 8px; margin-top: 2px; display: flex; align-items: center; justify-content: center; color: #ff9999;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 2px;"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-              ${likes}
+        `;
+      }).join('');
+      
+      // Add counter for remaining users
+      const remainingCount = activityCount - maxVisibleAvatars;
+      const counterHtml = remainingCount > 0 ? `
+        <div style="
+          position: absolute;
+          width: ${avatarSize}px;
+          height: ${avatarSize}px;
+          border-radius: 50%;
+          background: rgba(0, 0, 0, 0.85);
+          border: 2px solid rgba(16, 185, 129, 0.5);
+          box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 9px;
+          font-weight: bold;
+          color: #10b981;
+          transform: translate(0px, ${-avatarRadius - 40}px);
+          z-index: 11;
+        ">
+          +${remainingCount}
+        </div>
+      ` : '';
+
+      const iconHtml = `
+        <style>
+          @keyframes pulse-glow {
+            0%, 100% { 
+              box-shadow: 0 0 12px rgba(16, 185, 129, 0.6), 0 2px 8px rgba(0,0,0,0.4);
+              transform: scale(1);
+            }
+            50% { 
+              box-shadow: 0 0 20px rgba(16, 185, 129, 0.9), 0 2px 12px rgba(0,0,0,0.6);
+              transform: scale(1.1);
+            }
+          }
+          @keyframes activity-ring {
+            0% { 
+              box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            50% { 
+              box-shadow: 0 0 0 ${avatarRadius + 20}px rgba(16, 185, 129, 0);
+            }
+            100% { 
+              box-shadow: 0 0 0 ${avatarRadius + 20}px rgba(16, 185, 129, 0);
+            }
+          }
+        </style>
+        <div style="position: relative; width: ${markerSize}px; height: ${markerSize + 20}px;">
+          ${activityCount > 0 ? `
+            <div style="
+              position: absolute;
+              width: ${markerSize}px;
+              height: ${markerSize}px;
+              border-radius: 50%;
+              top: 0;
+              left: 0;
+              animation: activity-ring 2s ease-out infinite;
+            "></div>
+          ` : ''}
+          ${avatarHtml}
+          ${counterHtml}
+          <div style="
+            background: rgba(0,0,0,0.8);
+            color: white;
+            border-radius: 8px;
+            width: ${markerSize}px;
+            height: ${markerSize + 20}px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px;
+            border: 2px solid ${activityCount > 0 ? '#10b981' : '#ef4444'};
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            cursor: pointer;
+            font-family: sans-serif;
+            overflow: hidden;
+            position: relative;
+          ">
+            <img src="${event.image_url || "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop;"}"
+                 onerror="this.src='https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop';"
+                 style="width: ${imageSize}px; height: ${imageSize}px; object-fit: cover; border-radius: 4px; margin-bottom: 4px;"/>
+            <div style="
+              font-size: 9px;
+              font-weight: bold;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              width: 100%;
+              text-align: center;
+            ">
+              ${event.title}
+            </div>
+            <div style="font-size: 8px; margin-top: 2px; display: flex; align-items: center; justify-content: center; color: ${activityCount > 0 ? '#10b981' : '#ff9999'};">
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 2px;"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                ${likes}
+            </div>
           </div>
         </div>
       `;
@@ -1333,8 +1442,8 @@ const EventHeatmap: React.FC = () => {
       const customIcon = L.divIcon({
         html: iconHtml,
         className: "custom-event-marker",
-        iconSize: [markerSize, markerSize + 20],
-        iconAnchor: [markerSize / 2, markerSize + 20],
+        iconSize: [markerSize + (avatarRadius * 2), markerSize + 20 + (avatarRadius * 2)],
+        iconAnchor: [(markerSize + (avatarRadius * 2)) / 2, markerSize + 20 + avatarRadius],
       });
 
       const marker = L.marker([lat, lng], { icon: customIcon });
