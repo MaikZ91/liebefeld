@@ -252,6 +252,37 @@ const MeetupProposal: React.FC<MeetupProposalProps> = ({
             </span>
           </div>
         )}
+
+        {/* Avatar Display for "diesmal nicht" */}
+        {diesmalNichtCount > 0 && (
+          <div className="flex items-center gap-3 pt-3 border-t border-border/30">
+            <div className="flex items-center -space-x-3">
+              {responses['diesmal nicht']?.slice(0, 5).map((user, index) => (
+                <Avatar 
+                  key={`${user.username}-${index}`}
+                  className="w-8 h-8 border-2 border-background ring-2 ring-muted-foreground/20 shadow-md"
+                  style={{ zIndex: 5 - index }}
+                >
+                  <AvatarImage src={user.avatar || undefined} />
+                  <AvatarFallback className="bg-gradient-to-br from-muted to-muted-foreground/40 text-foreground text-xs font-semibold">
+                    {getInitials(user.username)}
+                  </AvatarFallback>
+                </Avatar>
+              ))}
+              {diesmalNichtCount > 5 && (
+                <div 
+                  className="w-8 h-8 rounded-full bg-gradient-to-br from-muted to-muted-foreground/50 border-2 border-background ring-2 ring-muted-foreground/20 flex items-center justify-center text-foreground text-xs font-bold shadow-md"
+                  style={{ zIndex: 0 }}
+                >
+                  +{diesmalNichtCount - 5}
+                </div>
+              )}
+            </div>
+            <span className="text-sm text-muted-foreground font-medium">
+              {diesmalNichtCount === 1 ? '1 Person' : `${diesmalNichtCount} Personen`} kann leider nicht
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
