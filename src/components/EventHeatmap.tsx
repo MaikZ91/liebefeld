@@ -178,11 +178,11 @@ const EventHeatmap: React.FC = () => {
   // Detail view state for event details dialog
   const [showEventDetails, setShowEventDetails] = useState(false);
   const [selectedEventForDetails, setSelectedEventForDetails] = useState<any>(null);
-  
+
   // Community Chat State
   const [showCommunityChat, setShowCommunityChat] = useState(false);
-  const [communityChatCategory, setCommunityChatCategory] = useState<string>('ausgehen');
-  
+  const [communityChatCategory, setCommunityChatCategory] = useState<string>("ausgehen");
+
   // Close event panels when community chat opens
   useEffect(() => {
     if (showCommunityChat) {
@@ -249,7 +249,7 @@ const EventHeatmap: React.FC = () => {
       });
     },
     // Pass setSelectedCity from EventContext if available
-    undefined
+    undefined,
   );
 
   // ====== helper to render + fetch description via Edge Function ======
@@ -302,8 +302,13 @@ const EventHeatmap: React.FC = () => {
 
       const desc = (data as any)?.description || (data as any)?.response || "";
       const html = renderEventHtml(evt, desc);
-      setCurrentAiEventContext({ id: (evt.id || `${evt.title}-${evt.date}-${evt.time}`), title: evt.title });
-      handleAiResponseReceived(html, ["🎉 Ich bin dabei", "Treffen vorschlagen", "Weitere Events heute", "Events am Wochenende"]);
+      setCurrentAiEventContext({ id: evt.id || `${evt.title}-${evt.date}-${evt.time}`, title: evt.title });
+      handleAiResponseReceived(html, [
+        "🎉 Ich bin dabei",
+        "Treffen vorschlagen",
+        "Weitere Events heute",
+        "Events am Wochenende",
+      ]);
     } catch (e) {
       toast.error("Konnte Eventbeschreibung nicht laden");
       const html = renderEventHtml(evt, "Keine Beschreibung verfügbar. Versuche es später erneut.");
@@ -417,31 +422,31 @@ const EventHeatmap: React.FC = () => {
   // Listen for event list toggle from bottom navigation
   useEffect(() => {
     const handleToggleEventList = () => {
-      setShowEventList(prev => !prev);
+      setShowEventList((prev) => !prev);
     };
 
-    window.addEventListener('toggle-event-list', handleToggleEventList);
+    window.addEventListener("toggle-event-list", handleToggleEventList);
     return () => {
-      window.removeEventListener('toggle-event-list', handleToggleEventList);
+      window.removeEventListener("toggle-event-list", handleToggleEventList);
     };
   }, []);
 
   // Hide global bottom navigation while Event List is open
   useEffect(() => {
-    if (showEventList) document.body.classList.add('event-list-open');
-    else document.body.classList.remove('event-list-open');
-    return () => document.body.classList.remove('event-list-open');
+    if (showEventList) document.body.classList.add("event-list-open");
+    else document.body.classList.remove("event-list-open");
+    return () => document.body.classList.remove("event-list-open");
   }, [showEventList]);
 
   // Listen for community chat toggle from bottom navigation
   useEffect(() => {
     const handleToggleCommunityChat = () => {
-      setShowCommunityChat(prev => !prev);
+      setShowCommunityChat((prev) => !prev);
     };
 
-    window.addEventListener('toggle-community-chat', handleToggleCommunityChat);
+    window.addEventListener("toggle-community-chat", handleToggleCommunityChat);
     return () => {
-      window.removeEventListener('toggle-community-chat', handleToggleCommunityChat);
+      window.removeEventListener("toggle-community-chat", handleToggleCommunityChat);
     };
   }, []);
 
@@ -462,11 +467,11 @@ const EventHeatmap: React.FC = () => {
 
     // Auto-start onboarding if user hasn't completed it
     const username = localStorage.getItem(USERNAME_KEY);
-    const hasValidUsername = username && username !== 'Anonymous' && username !== 'User' && username.trim().length > 0;
-    
+    const hasValidUsername = username && username !== "Anonymous" && username !== "User" && username.trim().length > 0;
+
     if (!hasValidUsername) {
       // Start onboarding in MIA dialog
-      setIsOnboardingActive(true);
+      setIsOnboardingActive(false);
       setIsMIAOpen(true);
       setShowAiResponse(true);
     }
@@ -486,7 +491,7 @@ const EventHeatmap: React.FC = () => {
   const handleMIAClick = async () => {
     // Check if user has completed onboarding
     const hasCompletedOnboarding = localStorage.getItem(USERNAME_KEY);
-    
+
     if (!hasCompletedOnboarding) {
       // Start onboarding
       setIsOnboardingActive(true);
@@ -494,7 +499,7 @@ const EventHeatmap: React.FC = () => {
       setShowAiResponse(true);
       return;
     }
-    
+
     if (hasNewDailyRecommendation) {
       setIsDailyRecommendationLoading(true);
 
@@ -784,7 +789,7 @@ const EventHeatmap: React.FC = () => {
   const allFilteredEvents = React.useMemo(() => {
     const cityDisplayName =
       cities.find((c) => c.abbr.toLowerCase() === selectedCity.toLowerCase())?.name || selectedCity;
-    
+
     let filtered = events.filter((event) => {
       const eventCityLower = event.city ? event.city.toLowerCase() : null;
       const selectedCityLower = selectedCity.toLowerCase();
@@ -855,7 +860,6 @@ const EventHeatmap: React.FC = () => {
 
     return filtered;
   }, [events, selectedCity, dislikedEventIds, selectedCategory, timeRange]);
-
 
   const panelEvents: PanelEvent[] = React.useMemo(() => {
     return filteredEvents.map((event) => ({
@@ -1298,17 +1302,23 @@ const EventHeatmap: React.FC = () => {
       const avatarSize = 24;
       const maxVisibleAvatars = 8;
       const visibleAvatars = likedByUsers.slice(0, maxVisibleAvatars);
-      
-      const avatarHtml = visibleAvatars.map((user, index) => {
-        const angle = (index / Math.max(visibleAvatars.length, 3)) * 2 * Math.PI;
-        const x = Math.cos(angle) * avatarRadius;
-        const y = Math.sin(angle) * avatarRadius;
-        
-        const getInitials = (username: string) => {
-          return username.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-        };
-        
-        return `
+
+      const avatarHtml = visibleAvatars
+        .map((user, index) => {
+          const angle = (index / Math.max(visibleAvatars.length, 3)) * 2 * Math.PI;
+          const x = Math.cos(angle) * avatarRadius;
+          const y = Math.sin(angle) * avatarRadius;
+
+          const getInitials = (username: string) => {
+            return username
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .toUpperCase()
+              .slice(0, 2);
+          };
+
+          return `
           <div style="
             position: absolute;
             width: ${avatarSize}px;
@@ -1329,17 +1339,21 @@ const EventHeatmap: React.FC = () => {
             z-index: 10;
             overflow: hidden;
           ">
-            ${user.avatar_url ? 
-              `<img src="${user.avatar_url}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />` :
-              `<span>${getInitials(user.username)}</span>`
+            ${
+              user.avatar_url
+                ? `<img src="${user.avatar_url}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />`
+                : `<span>${getInitials(user.username)}</span>`
             }
           </div>
         `;
-      }).join('');
-      
+        })
+        .join("");
+
       // Add counter for remaining users
       const remainingCount = activityCount - maxVisibleAvatars;
-      const counterHtml = remainingCount > 0 ? `
+      const counterHtml =
+        remainingCount > 0
+          ? `
         <div style="
           position: absolute;
           width: ${avatarSize}px;
@@ -1359,7 +1373,8 @@ const EventHeatmap: React.FC = () => {
         ">
           +${remainingCount}
         </div>
-      ` : '';
+      `
+          : "";
 
       const iconHtml = `
         <style>
@@ -1386,7 +1401,9 @@ const EventHeatmap: React.FC = () => {
           }
         </style>
         <div style="position: relative; width: ${markerSize}px; height: ${markerSize + 20}px;">
-          ${activityCount > 0 ? `
+          ${
+            activityCount > 0
+              ? `
             <div style="
               position: absolute;
               width: ${markerSize}px;
@@ -1396,7 +1413,9 @@ const EventHeatmap: React.FC = () => {
               left: 0;
               animation: activity-ring 2s ease-out infinite;
             "></div>
-          ` : ''}
+          `
+              : ""
+          }
           ${avatarHtml}
           ${counterHtml}
           <div style="
@@ -1410,7 +1429,7 @@ const EventHeatmap: React.FC = () => {
             align-items: center;
             justify-content: space-between;
             padding: 5px;
-            border: 2px solid ${activityCount > 0 ? '#10b981' : '#ef4444'};
+            border: 2px solid ${activityCount > 0 ? "#10b981" : "#ef4444"};
             box-shadow: 0 2px 8px rgba(0,0,0,0.4);
             cursor: pointer;
             font-family: sans-serif;
@@ -1431,7 +1450,7 @@ const EventHeatmap: React.FC = () => {
             ">
               ${event.title}
             </div>
-            <div style="font-size: 8px; margin-top: 2px; display: flex; align-items: center; justify-content: center; color: ${activityCount > 0 ? '#10b981' : '#ff9999'};">
+            <div style="font-size: 8px; margin-top: 2px; display: flex; align-items: center; justify-content: center; color: ${activityCount > 0 ? "#10b981" : "#ff9999"};">
                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 2px;"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
                 ${likes}
             </div>
@@ -1442,8 +1461,8 @@ const EventHeatmap: React.FC = () => {
       const customIcon = L.divIcon({
         html: iconHtml,
         className: "custom-event-marker",
-        iconSize: [markerSize + (avatarRadius * 2), markerSize + 20 + (avatarRadius * 2)],
-        iconAnchor: [(markerSize + (avatarRadius * 2)) / 2, markerSize + 20 + avatarRadius],
+        iconSize: [markerSize + avatarRadius * 2, markerSize + 20 + avatarRadius * 2],
+        iconAnchor: [(markerSize + avatarRadius * 2) / 2, markerSize + 20 + avatarRadius],
       });
 
       const marker = L.marker([lat, lng], { icon: customIcon });
@@ -1836,8 +1855,8 @@ const EventHeatmap: React.FC = () => {
           {/* MIA Logo */}
           <div className="relative">
             <div className="absolute inset-0 bg-primary/30 rounded-full blur-2xl animate-pulse" />
-            <img 
-              src="/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png" 
+            <img
+              src="/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png"
               alt="MIA"
               className="relative w-20 h-20 object-contain drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]"
             />
@@ -1848,8 +1867,8 @@ const EventHeatmap: React.FC = () => {
             <p className="text-white/90 font-medium">MIA lädt Events</p>
             <div className="flex items-center justify-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" />
-              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0.15s' }} />
-              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0.3s' }} />
+              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0.15s" }} />
+              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0.3s" }} />
             </div>
           </div>
         </div>
@@ -1961,7 +1980,9 @@ const EventHeatmap: React.FC = () => {
       )}
 
       {/* Kategorie Filter - Horizontal ausklappbar */}
-      <div className={cn("fixed top-24 left-3 z-[1002]", (isMIAOpen || showCommunityChat || showEventList) && "hidden")}>
+      <div
+        className={cn("fixed top-24 left-3 z-[1002]", (isMIAOpen || showCommunityChat || showEventList) && "hidden")}
+      >
         <div className="flex items-center gap-2">
           {/* Aktueller Button */}
           <Button
@@ -2065,7 +2086,9 @@ const EventHeatmap: React.FC = () => {
       </div>
 
       {/* Time Slider - Extrem minimal */}
-      <div className={cn("fixed top-44 right-2 z-[1002]", (isMIAOpen || showCommunityChat || showEventList) && "hidden")}>
+      <div
+        className={cn("fixed top-44 right-2 z-[1002]", (isMIAOpen || showCommunityChat || showEventList) && "hidden")}
+      >
         <div className="p-1 bg-black/25 backdrop-blur-sm rounded-full">
           <div className="flex flex-col items-center gap-1.5">
             <span className="text-white text-[11px] font-bold">{timeRange[0]}h</span>
@@ -2097,20 +2120,25 @@ const EventHeatmap: React.FC = () => {
       )}
 
       {/* Default Event Display - Always visible above navbar (versteckt wenn MIA offen oder Event-Liste offen) */}
-      {!showPerfectDayPanel && filteredEvents.length > 0 && showEventPanels && !isMIAOpen && !showEventList && !showCommunityChat && (
-        <div className="fixed bottom-16 left-0 right-0 z-[1000] pointer-events-auto">
-          <div className="px-2 py-4">
-            <ThreeEventDisplay
-              panelData={panelData}
-              onEventSelect={handleEventSelect}
-              onLikeEvent={handleEventLike}
-              onDislikeEvent={handleEventDislike}
-              className="w-full"
-              onSwipeDownToHide={() => setShowEventPanels(false)}
-            />
+      {!showPerfectDayPanel &&
+        filteredEvents.length > 0 &&
+        showEventPanels &&
+        !isMIAOpen &&
+        !showEventList &&
+        !showCommunityChat && (
+          <div className="fixed bottom-16 left-0 right-0 z-[1000] pointer-events-auto">
+            <div className="px-2 py-4">
+              <ThreeEventDisplay
+                panelData={panelData}
+                onEventSelect={handleEventSelect}
+                onLikeEvent={handleEventLike}
+                onDislikeEvent={handleEventDislike}
+                className="w-full"
+                onSwipeDownToHide={() => setShowEventPanels(false)}
+              />
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Map Container */}
       <div
@@ -2206,7 +2234,7 @@ const EventHeatmap: React.FC = () => {
             >
               <X className="w-5 h-5" />
             </Button>
-            
+
             <EventList
               events={allFilteredEvents}
               showFavorites={false}
@@ -2297,22 +2325,22 @@ const EventHeatmap: React.FC = () => {
                             onClick={async () => {
                               try {
                                 // Special handling for inline suggestions
-                                if (s === '🎉 Ich bin dabei' || s === 'Ich bin dabei') {
+                                if (s === "🎉 Ich bin dabei" || s === "Ich bin dabei") {
                                   if (currentAiEventContext?.id && chatLogic.handleAttendEvent) {
                                     await chatLogic.handleAttendEvent(currentAiEventContext.id);
                                     return;
                                   }
                                 }
-                                if (s === 'Treffen vorschlagen') {
+                                if (s === "Treffen vorschlagen") {
                                   const eventId = currentAiEventContext?.id || selectedEventForDetails?.id;
                                   const eventTitle = currentAiEventContext?.title || selectedEventForDetails?.title;
-                                  
+
                                   if (eventId && eventTitle && chatLogic.handleProposeMeetup) {
-                                    console.log('[DEBUG] Calling handleProposeMeetup with:', eventId, eventTitle);
+                                    console.log("[DEBUG] Calling handleProposeMeetup with:", eventId, eventTitle);
                                     await chatLogic.handleProposeMeetup(eventId, eventTitle);
                                     return;
                                   }
-                                  console.error('[DEBUG] Missing event context for meetup proposal');
+                                  console.error("[DEBUG] Missing event context for meetup proposal");
                                 }
                                 setAiChatInput(s);
                                 setAiResponse(null);
@@ -2720,7 +2748,7 @@ const EventHeatmap: React.FC = () => {
         onCategoryChange={setCommunityChatCategory}
         onOpenUserDirectory={() => {
           // Handle user directory if needed
-          console.log('Open user directory');
+          console.log("Open user directory");
         }}
         onShowEvent={async (eventId) => {
           const event = filteredEvents.find((e) => e.id === eventId);
@@ -2729,7 +2757,7 @@ const EventHeatmap: React.FC = () => {
           }
         }}
       />
-      
+
       {/* Location Blocking Dialog */}
       <AlertDialog open={isBlockLocationDialogOpen} onOpenChange={setIsBlockLocationDialogOpen}>
         <AlertDialogContent className="bg-gradient-to-br from-gray-900/95 to-black/95 backdrop-blur-xl border border-red-500/20">
