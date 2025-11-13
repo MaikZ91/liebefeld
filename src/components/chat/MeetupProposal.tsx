@@ -6,6 +6,7 @@ import { getInitials } from '@/utils/chatUIUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { AVATAR_KEY, USERNAME_KEY } from '@/types/chatTypes';
 import { toast } from 'sonner';
+import { updateEventLikes } from '@/services/eventService';
 
 interface MeetupProposalProps {
   messageId: string;
@@ -67,12 +68,38 @@ const MeetupProposal: React.FC<MeetupProposalProps> = ({
         newResponses['diesmal nicht'] = newResponses['diesmal nicht'].filter(r => r.username !== username);
       }
 
+      // Determine if we're adding or removing the response
+      const isAddingResponse = userResponse !== response;
+      const isClickingBinDabei = response === 'bin dabei';
+      
       // Add to selected response if not clicking same button
-      if (userResponse !== response) {
+      if (isAddingResponse) {
         if (!newResponses[response]) {
           newResponses[response] = [];
         }
         newResponses[response].push({ username, avatar });
+      }
+
+      // Sync with event likes for "bin dabei"
+      if (isClickingBinDabei) {
+        try {
+          if (isAddingResponse) {
+            // Like the event when clicking "bin dabei"
+            await updateEventLikes(eventId, 'like', { 
+              username: username, 
+              avatar_url: avatar 
+            });
+          } else {
+            // Unlike the event when removing "bin dabei"
+            await updateEventLikes(eventId, 'unlike', { 
+              username: username, 
+              avatar_url: avatar 
+            });
+          }
+        } catch (likeError) {
+          console.error('Error syncing event likes:', likeError);
+          // Don't fail the entire operation if like sync fails
+        }
       }
 
       // Update database
