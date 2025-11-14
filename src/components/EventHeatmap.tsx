@@ -1937,6 +1937,8 @@ const EventHeatmap: React.FC = () => {
       {/* Live Ticker Header */}
       <HeatmapHeader
         selectedCity={selectedCity}
+        selectedDate={selectedDate}
+        timeRange={timeRange}
         chatInputProps={{
           input: aiChatInput,
           setInput: setAiChatInput,
