@@ -883,14 +883,53 @@ const EventHeatmap: React.FC = () => {
     }));
   }, [filteredEvents]);
 
+  const sortedPanelEvents: PanelEvent[] = React.useMemo(() => {
+    const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop&q=80&auto=format";
+    const AUSGEHEN_CATEGORIES = new Set(['Party', 'Konzert', 'Festival', 'Club', 'Nightlife', 'Bar']);
+    
+    const isPlaceholderImage = (imageUrl: string) => imageUrl === PLACEHOLDER_IMAGE;
+    const isAusgehenCategory = (category?: string) => category ? AUSGEHEN_CATEGORIES.has(category) : false;
+    const isLikedByCurrentUser = (event: PanelEvent) => {
+      if (!currentUser) return false;
+      return event.liked_by_users?.some(user => user.username === currentUser) || false;
+    };
+
+    return [...panelEvents].sort((a, b) => {
+      // Priority 1: Liked events always come first
+      const aLiked = isLikedByCurrentUser(a);
+      const bLiked = isLikedByCurrentUser(b);
+      if (aLiked && !bLiked) return -1;
+      if (!aLiked && bLiked) return 1;
+
+      // For non-liked events, sort by category and image
+      const aIsPlaceholder = isPlaceholderImage(a.image_url);
+      const bIsPlaceholder = isPlaceholderImage(b.image_url);
+      const aIsAusgehen = isAusgehenCategory(a.category);
+      const bIsAusgehen = isAusgehenCategory(b.category);
+
+      // Priority 2: Events with placeholder images go last
+      if (aIsPlaceholder && !bIsPlaceholder) return 1;
+      if (!aIsPlaceholder && bIsPlaceholder) return -1;
+
+      // Priority 3: Among non-placeholder events, "Ausgehen" comes first
+      if (!aIsPlaceholder && !bIsPlaceholder) {
+        if (aIsAusgehen && !bIsAusgehen) return -1;
+        if (!aIsAusgehen && bIsAusgehen) return 1;
+      }
+
+      // Keep original order if all factors are equal
+      return 0;
+    });
+  }, [panelEvents, currentUser]);
+
   const panelData: PanelEventData = React.useMemo(() => {
-    const selectedIndex = selectedEventId ? panelEvents.findIndex((event) => event.id === selectedEventId) : 0;
+    const selectedIndex = selectedEventId ? sortedPanelEvents.findIndex((event) => event.id === selectedEventId) : 0;
 
     return {
-      events: panelEvents,
+      events: sortedPanelEvents,
       currentIndex: selectedIndex >= 0 ? selectedIndex : 0,
     };
-  }, [panelEvents, selectedEventId]);
+  }, [sortedPanelEvents, selectedEventId]);
 
   const generatePerfectDay = async () => {
     setIsPerfectDayLoading(true);
