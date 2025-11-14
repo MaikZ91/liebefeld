@@ -3,28 +3,30 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom"; // Import useNavigate and useLocation
-import { useEffect, useState } from "react"; // Import useState
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useStatusBar } from "./hooks/useStatusBar";
-import Index from "./pages/Index";
-import About from "./pages/About";
-import NotFound from "./pages/NotFound";
-import Impressum from "./pages/Impressum";
-import Privacy from "./pages/Privacy";
-import CSAEPolicies from "./pages/CSAEPolicies";
-import Chat from "./pages/Chat";
-import Challenge from "./pages/Challenge";
 import { EventProvider } from "./contexts/EventContext";
 import { initializeSupabase } from "./utils/initSupabase";
 import { initializeFCM } from "./services/firebaseMessaging";
 import { useEventContext } from "./contexts/EventContext";
-import Heatmap from '@/pages/Heatmap';
 import { Layout } from './components/layouts/Layout';
-import UserDirectory from "./components/users/UserDirectory";
-import EventCalendar from "./components/EventCalendar";
 import OnboardingManager from './components/OnboardingManager';
 import { saveLastRoute, getLastRoute } from './utils/lastRouteStorage';
 import { USERNAME_KEY } from './types/chatTypes';
+
+// Lazy load route components for code splitting and performance optimization
+const Index = lazy(() => import("./pages/Index"));
+const About = lazy(() => import("./pages/About"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Impressum = lazy(() => import("./pages/Impressum"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const CSAEPolicies = lazy(() => import("./pages/CSAEPolicies"));
+const Chat = lazy(() => import("./pages/Chat"));
+const Challenge = lazy(() => import("./pages/Challenge"));
+const Heatmap = lazy(() => import('@/pages/Heatmap'));
+const UserDirectory = lazy(() => import("./components/users/UserDirectory"));
+const EventCalendar = lazy(() => import("./components/EventCalendar"));
 
 const queryClient = new QueryClient();
 
@@ -139,26 +141,32 @@ function App() {
                 onboardingAction={onboardingRedirectTarget}
                 onNavigated={resetOnboardingRedirect}
               />
-              <Routes>
-                {/* Heatmap as main page, now wrapped by Layout */}
-                <Route path="/" element={<Layout><Heatmap /></Layout>} />
-                <Route path="/heatmap" element={<Layout><Heatmap /></Layout>} />
-                
-                {/* Other pages */}
-                <Route path="/index" element={<Index />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/chat" element={<Chat />} />
-                <Route path="/challenge" element={<Challenge />} />
-                <Route path="/impressum" element={<Impressum />} />
-                <Route path="/privacy" element={<Privacy />} />
-                <Route path="/policies" element={<CSAEPolicies />} />
-                
-                {/* Layout-wrapped pages */}
-                <Route path="/users" element={<Layout><UserDirectory open={true} onOpenChange={() => {}} onSelectUser={() => {}} /></Layout>} />
-                <Route path="/events" element={<Layout><EventCalendar /></Layout>} />
-                
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <Suspense fallback={
+                <div className="flex items-center justify-center min-h-screen">
+                  <div className="animate-pulse text-muted-foreground">Lädt...</div>
+                </div>
+              }>
+                <Routes>
+                  {/* Heatmap as main page, now wrapped by Layout */}
+                  <Route path="/" element={<Layout><Heatmap /></Layout>} />
+                  <Route path="/heatmap" element={<Layout><Heatmap /></Layout>} />
+                  
+                  {/* Other pages */}
+                  <Route path="/index" element={<Index />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/chat" element={<Chat />} />
+                  <Route path="/challenge" element={<Challenge />} />
+                  <Route path="/impressum" element={<Impressum />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/policies" element={<CSAEPolicies />} />
+                  
+                  {/* Layout-wrapped pages */}
+                  <Route path="/users" element={<Layout><UserDirectory open={true} onOpenChange={() => {}} onSelectUser={() => {}} /></Layout>} />
+                  <Route path="/events" element={<Layout><EventCalendar /></Layout>} />
+                  
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
             </BrowserRouter>
           </OnboardingManager>
         </EventProvider>
