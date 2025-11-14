@@ -107,7 +107,7 @@ const EventHeatmap: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<FilterGroup>(() => {
     return (getSelectedCategory() as FilterGroup) || "ausgehen";
   });
-  const [timeRange, setTimeRange] = useState([new Date().getHours()]);
+  const [timeRange, setTimeRange] = useState([0]); // Start at midnight to show all events
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [map, setMap] = useState<L.Map | null>(null);
   const [eventMarkers, setEventMarkers] = useState<L.Marker[]>([]);
