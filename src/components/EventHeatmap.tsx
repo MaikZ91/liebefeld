@@ -886,9 +886,11 @@ const EventHeatmap: React.FC = () => {
   const sortedPanelEvents: PanelEvent[] = React.useMemo(() => {
     const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop&q=80&auto=format";
     const AUSGEHEN_CATEGORIES = new Set(['Party', 'Konzert', 'Festival', 'Club', 'Nightlife', 'Bar']);
+    const SPORT_CATEGORIES = new Set(['Sport', 'Fitness', 'Yoga', 'Run', 'Lauf']);
     
     const isPlaceholderImage = (imageUrl: string) => imageUrl === PLACEHOLDER_IMAGE;
     const isAusgehenCategory = (category?: string) => category ? AUSGEHEN_CATEGORIES.has(category) : false;
+    const isSportCategory = (category?: string) => category ? SPORT_CATEGORIES.has(category) : false;
     const isLikedByCurrentUser = (event: PanelEvent) => {
       if (!currentUser) return false;
       return event.liked_by_users?.some(user => user.username === currentUser) || false;
@@ -901,21 +903,25 @@ const EventHeatmap: React.FC = () => {
       if (aLiked && !bLiked) return -1;
       if (!aLiked && bLiked) return 1;
 
-      // For non-liked events, sort by category and image
+      // For non-liked events, sort by placeholder, then category
       const aIsPlaceholder = isPlaceholderImage(a.image_url);
       const bIsPlaceholder = isPlaceholderImage(b.image_url);
-      const aIsAusgehen = isAusgehenCategory(a.category);
-      const bIsAusgehen = isAusgehenCategory(b.category);
-
+      
       // Priority 2: Events with placeholder images go last
       if (aIsPlaceholder && !bIsPlaceholder) return 1;
       if (!aIsPlaceholder && bIsPlaceholder) return -1;
 
-      // Priority 3: Among non-placeholder events, "Ausgehen" comes first
-      if (!aIsPlaceholder && !bIsPlaceholder) {
-        if (aIsAusgehen && !bIsAusgehen) return -1;
-        if (!aIsAusgehen && bIsAusgehen) return 1;
-      }
+      // Priority 3: Among events with same image status, order by category
+      const aIsAusgehen = isAusgehenCategory(a.category);
+      const bIsAusgehen = isAusgehenCategory(b.category);
+      const aIsSport = isSportCategory(a.category);
+      const bIsSport = isSportCategory(b.category);
+
+      // Ausgehen comes first, Sport comes last
+      if (aIsAusgehen && !bIsAusgehen) return -1;
+      if (!aIsAusgehen && bIsAusgehen) return 1;
+      if (!aIsSport && bIsSport) return -1;
+      if (aIsSport && !bIsSport) return 1;
 
       // Keep original order if all factors are equal
       return 0;
