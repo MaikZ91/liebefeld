@@ -107,7 +107,7 @@ const EventHeatmap: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<FilterGroup>(() => {
     return (getSelectedCategory() as FilterGroup) || "ausgehen";
   });
-  const [timeRange, setTimeRange] = useState([0]); // Start at midnight to show all events
+  const [timeRange, setTimeRange] = useState<number[] | null>(null); // null = show all events initially
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [map, setMap] = useState<L.Map | null>(null);
   const [eventMarkers, setEventMarkers] = useState<L.Marker[]>([]);
@@ -775,8 +775,11 @@ const EventHeatmap: React.FC = () => {
       }
     }
 
-    const selectedHour = timeRange[0];
-    filtered = filtered.filter((event) => event.eventHour >= selectedHour);
+    // Only filter by time if timeRange is set
+    if (timeRange !== null) {
+      const selectedHour = timeRange[0];
+      filtered = filtered.filter((event) => event.eventHour >= selectedHour);
+    }
 
     filtered = filtered.sort((a, b) => {
       const likesA = (a.likes || 0) + (a.rsvp_yes || 0) + (a.rsvp_maybe || 0);
@@ -847,11 +850,13 @@ const EventHeatmap: React.FC = () => {
     }
 
     // Apply time range lower bound (same as filteredEvents)
-    const selectedHour = timeRange[0];
-    filtered = filtered.filter((event) => {
-      const hour = event.time ? getHourFromTime(event.time) : 0;
-      return hour >= selectedHour;
-    });
+    if (timeRange !== null) {
+      const selectedHour = timeRange[0];
+      filtered = filtered.filter((event) => {
+        const hour = event.time ? getHourFromTime(event.time) : 0;
+        return hour >= selectedHour;
+      });
+    }
 
     // Sort by popularity (likes + RSVPs) descending
     filtered = filtered.sort((a, b) => {
@@ -2011,7 +2016,7 @@ const EventHeatmap: React.FC = () => {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-red-500" />
-                {filteredEvents.length} Events ab {getTimeFromSlider(timeRange[0])} Uhr
+                {filteredEvents.length} Events {timeRange === null ? "heute" : `ab ${getTimeFromSlider(timeRange[0])} Uhr`}
               </div>
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-red-500" />
@@ -2107,7 +2112,7 @@ const EventHeatmap: React.FC = () => {
         </div>
       </div>
 
-      {/* Date Picker - Über dem Zeitslider */}
+      {/* Date & Time Picker */}
       <div className={cn("fixed top-32 right-2 z-[1002]", (isMIAOpen || showCommunityChat) && "hidden")}>
         <Popover>
           <PopoverTrigger asChild>
@@ -2118,41 +2123,64 @@ const EventHeatmap: React.FC = () => {
             >
               <span className="font-bold">{format(selectedDate, "EEE", { locale: de })}</span>
               <span className="text-[13px] font-bold">{format(selectedDate, "dd.MM.")}</span>
+              <span className="text-[9px] text-white/60 mt-0.5">
+                {timeRange === null ? "Alle" : `ab ${timeRange[0]}h`}
+              </span>
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 bg-gray-800 border-gray-700 z-[9999]" align="end">
-            <CalendarComponent
-              mode="single"
-              selected={selectedDate}
-              onSelect={(date) => date && setSelectedDate(date)}
-              initialFocus
-              className="pointer-events-auto bg-gray-800 text-white"
-            />
+          <PopoverContent className="w-auto bg-gray-800 border-gray-700 z-[9999]" align="end">
+            <div className="space-y-4 p-4">
+              {/* Calendar */}
+              <div>
+                <CalendarComponent
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  initialFocus
+                  className="pointer-events-auto bg-gray-800 text-white"
+                />
+              </div>
+              
+              {/* Time Slider Section */}
+              <div className="border-t border-gray-700 pt-4">
+                <div className="text-white text-sm font-semibold mb-3 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-red-500" />
+                  Uhrzeit filtern
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <Slider
+                      value={timeRange || [0]}
+                      onValueChange={(value) => setTimeRange(value)}
+                      max={23}
+                      min={0}
+                      step={1}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="text-white font-bold min-w-[3rem] text-center">
+                    {timeRange === null ? "Alle" : `${timeRange[0]}h`}
+                  </div>
+                </div>
+                <div className="text-white/60 text-xs mt-2">
+                  Zeigt Events ab der gewählten Uhrzeit
+                </div>
+                {timeRange !== null && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setTimeRange(null)}
+                    className="mt-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                  >
+                    Filter zurücksetzen
+                  </Button>
+                )}
+              </div>
+            </div>
           </PopoverContent>
         </Popover>
       </div>
 
-      {/* Time Slider - Extrem minimal */}
-      <div
-        className={cn("fixed top-44 right-2 z-[1002]", (isMIAOpen || showCommunityChat || showEventList) && "hidden")}
-      >
-        <div className="p-1 bg-black/25 backdrop-blur-sm rounded-full">
-          <div className="flex flex-col items-center gap-1.5">
-            <span className="text-white text-[11px] font-bold">{timeRange[0]}h</span>
-            <div className="h-28 w-4">
-              <Slider
-                value={timeRange}
-                onValueChange={setTimeRange}
-                max={23}
-                min={0}
-                step={1}
-                orientation="vertical"
-                className="h-full"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Button to show events panel again if hidden */}
       {!showEventPanels && !showCommunityChat && !showEventList && (
