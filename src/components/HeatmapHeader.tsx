@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import ChatInput from './event-chat/ChatInput';
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { X } from 'lucide-react';
@@ -62,29 +61,49 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
     chatInputProps?.setInput('');
   };
 
+  const categories = ['Art', 'Comedy', 'Jazz', 'Meetups'];
+
+  const handleCategoryClick = (category: string) => {
+    if (chatInputProps) {
+      const prompt = `Zeige mir Events für ${category}`;
+      chatInputProps.setInput(prompt);
+      chatInputProps.handleSendMessage(prompt);
+    }
+  };
+
   return (
     <div className="fixed top-0 left-0 right-0 z-[1002]">
       {/* Slim urban header bar */}
       <div className="bg-black/90 backdrop-blur-sm border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
-            {/* Left: Logo */}
-            <Link to="/" className="flex items-center">
-              <span className="text-white text-lg font-medium tracking-tight">
-                THE TRIBE
+            {/* Left: Tonight in Berlin + Categories */}
+            <div className="flex items-center gap-6 overflow-x-auto scrollbar-none">
+              <span className="text-white/60 text-sm font-light whitespace-nowrap">
+                Tonight in Berlin
               </span>
-            </Link>
+              
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => handleCategoryClick(category)}
+                  className="text-white/80 hover:text-white text-sm font-light whitespace-nowrap transition-colors"
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
 
             {/* Right: MIA KI */}
             <button
               onClick={handleMiaIconClick}
               disabled={isDailyRecommendationLoading}
-              className="relative flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/10 disabled:opacity-50"
+              className="relative flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/10 disabled:opacity-50 ml-4 shrink-0"
             >
-              <Avatar className="h-6 w-6">
+              <Avatar className="h-5 w-5">
                 <AvatarImage src={miaAvatarUrl} alt="MIA" />
               </Avatar>
-              <span className="text-white text-sm font-medium">
+              <span className="text-white text-xs font-medium">
                 {isDailyRecommendationLoading ? '...' : 'MIA'}
               </span>
               
