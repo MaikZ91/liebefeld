@@ -61,7 +61,7 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
     chatInputProps?.setInput('');
   };
 
-  const categories = ['Party','Art', 'Comedy', 'Concerts','Sport' 'Meetups'];
+  const categories = ['Party','Art', 'Comedy', 'Concerts','Sport','Meetups'];
 
   const handleCategoryClick = (category: string) => {
     if (chatInputProps) {
