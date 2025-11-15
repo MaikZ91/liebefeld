@@ -61,7 +61,7 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
     chatInputProps?.setInput('');
   };
 
-  const categories = ['Art', 'Comedy', 'Jazz', 'Meetups'];
+  const categories = ['Party','Art', 'Comedy', 'Concerts','Sport' 'Meetups'];
 
   const handleCategoryClick = (category: string) => {
     if (chatInputProps) {
@@ -80,7 +80,7 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
             {/* Left: Tonight in Berlin + Categories */}
             <div className="flex items-center gap-6 overflow-x-auto scrollbar-none">
               <span className="text-white/60 text-sm font-light whitespace-nowrap">
-                Tonight in Berlin
+                Tonight in Bielefeld
               </span>
               
               {categories.map((category) => (
