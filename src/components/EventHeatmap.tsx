@@ -2234,12 +2234,12 @@ const EventHeatmap: React.FC = () => {
       {/* === Styles (Map tint + Chips + Tight paragraphs) === */}
       <style>{`
         .map-container {
-          background-color: #ff3333 !important;
+          background: linear-gradient(135deg, #3d1a1a 0%, #2b1111 50%, #1a0a0a 100%) !important;
         }
         .map-container .leaflet-layer,
         .map-container .leaflet-tile-pane,
         .map-container .leaflet-tile {
-          filter: sepia(100%) saturate(400%) hue-rotate(355deg) brightness(0.7) contrast(1.6) !important;
+          filter: sepia(80%) saturate(200%) hue-rotate(340deg) brightness(0.4) contrast(1.8) !important;
         }
         .map-container .leaflet-control-zoom-in,
         .map-container .leaflet-control-zoom-out {
