@@ -8,6 +8,10 @@
   :root {
     --background: 0 0% 0%;
     --foreground: 0 0% 100%;
+    
+    /* Urban dark red map theme */
+    --map-urban-red: 15 45% 25%;
+    --map-overlay-red: 15 65% 15%;
 
     --card: 0 0% 0%;
     --card-foreground: 0 0% 100%;
@@ -605,5 +609,35 @@
   /* Hide bottom navigation when event list is open */
   body.event-list-open .lov-bottom-nav {
     display: none !important;
+  }
+
+  /* Urban dark red map styling */
+  .map-tiles {
+    filter: brightness(0.6) contrast(1.3) saturate(0.7) hue-rotate(-15deg) sepia(0.4);
+  }
+
+  .map-container {
+    background: linear-gradient(135deg, hsl(15, 45%, 18%) 0%, hsl(15, 35%, 12%) 50%, hsl(10, 40%, 10%) 100%);
+  }
+
+  .map-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, 
+      hsla(15, 50%, 20%, 0.4) 0%, 
+      hsla(10, 45%, 15%, 0.3) 50%, 
+      hsla(5, 40%, 10%, 0.5) 100%
+    );
+    pointer-events: none;
+    z-index: 2;
+    mix-blend-mode: multiply;
+  }
+
+  .leaflet-tile-pane {
+    filter: brightness(0.5) contrast(1.4) saturate(0.6) hue-rotate(-20deg) sepia(0.5);
   }
 }
