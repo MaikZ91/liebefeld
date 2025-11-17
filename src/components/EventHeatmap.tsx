@@ -220,7 +220,6 @@ const EventHeatmap: React.FC = () => {
   // Callback to update heatmap category filter from AI chat
   const handleCategoryFilterFromChat = useCallback((category: string) => {
     handleCategoryChange(category as FilterGroup);
-    toast.success(`Kategorie-Filter aktualisiert auf ${category}`);
   }, []);
 
   // Callback to receive AI response directly in heatmap (with chipified links)
