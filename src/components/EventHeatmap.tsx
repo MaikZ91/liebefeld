@@ -214,7 +214,6 @@ const EventHeatmap: React.FC = () => {
   // Callback to update heatmap date filter from AI chat
   const handleDateFilterFromChat = useCallback((date: Date) => {
     setSelectedDate(date);
-    toast.success(`Karte aktualisiert auf ${format(date, "dd.MM.yyyy")}`);
   }, []);
 
   // Callback to update heatmap category filter from AI chat
