@@ -73,49 +73,48 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
 
   return (
     <div className="fixed top-0 left-0 right-0 z-[1002]">
-      {/* Slim urban header bar */}
-      <div className="bg-black/95 backdrop-blur-sm border-b border-white/5">
-        <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-12">
-            {/* Left: Tonight in Berlin + Categories */}
-            <div className="flex items-center gap-6 overflow-x-auto scrollbar-none">
-              <span className="text-white/60 text-sm font-light whitespace-nowrap">
-                Tonight in Bielefeld
-              </span>
-              
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => handleCategoryClick(category)}
-                  className="text-white/80 hover:text-white text-sm font-light whitespace-nowrap transition-colors"
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-
-            {/* Right: MIA KI */}
-            <button
-              onClick={handleMiaIconClick}
-              disabled={isDailyRecommendationLoading}
-              className="relative flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/10 disabled:opacity-50 ml-4 shrink-0"
-            >
-              <Avatar className="h-5 w-5">
-                <AvatarImage src={miaAvatarUrl} alt="MIA" />
-              </Avatar>
-              <span className="text-white text-xs font-medium">
-                {isDailyRecommendationLoading ? '...' : 'MIA'}
-              </span>
-              
-              {/* Notification badge */}
-              {hasNewDailyRecommendation && (
-                <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+      {/* Floating slim header like in the screenshot */}
+      <div className="pointer-events-none" style={{ marginTop: 'calc(env(safe-area-inset-top, 0px) + 6px)' }}>
+        <div className="relative">
+          {/* Centered category pill */}
+          <div className="flex justify-center">
+            <div className="pointer-events-auto max-w-[92%] overflow-x-auto scrollbar-none rounded-full bg-black/80 backdrop-blur-md border border-white/10 shadow-lg px-3 py-2">
+              <div className="flex items-center gap-4">
+                <span className="text-white/70 text-sm font-light whitespace-nowrap">
+                  Tonight in Bielefeld
                 </span>
-              )}
-            </button>
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => handleCategoryClick(category)}
+                    className="text-white/80 hover:text-white text-sm font-light whitespace-nowrap transition-colors px-1"
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
+
+          {/* MIA pill on the right */}
+          <button
+            onClick={handleMiaIconClick}
+            disabled={isDailyRecommendationLoading}
+            className="pointer-events-auto absolute right-4 -top-1.5 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/80 hover:bg-white/10 transition-colors border border-white/10 disabled:opacity-50 shadow-lg"
+          >
+            <Avatar className="h-5 w-5">
+              <AvatarImage src={miaAvatarUrl} alt="MIA" />
+            </Avatar>
+            <span className="text-white text-xs font-medium">
+              {isDailyRecommendationLoading ? '...' : 'MIA'}
+            </span>
+            {hasNewDailyRecommendation && (
+              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+              </span>
+            )}
+          </button>
         </div>
       </div>
       
