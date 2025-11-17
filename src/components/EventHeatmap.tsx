@@ -2238,7 +2238,6 @@ const EventHeatmap: React.FC = () => {
   .map-container .leaflet-tile {
     filter: brightness(0.58) sepia(0.70) saturate(1.35) hue-rotate(5deg) contrast(1.22) !important;
   }
-`}</style>
         .map-container .leaflet-control-zoom-in,
         .map-container .leaflet-control-zoom-out {
           background-color: rgba(0,0,0,0.8) !important;
