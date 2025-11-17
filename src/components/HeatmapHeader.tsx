@@ -65,7 +65,7 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
 
   const handleCategoryClick = (category: string) => {
     if (chatInputProps) {
-      const prompt = `Zeige mir Events für ${category}`;
+      const prompt = `Zeige mir Events für ${category} heute`;
       chatInputProps.setInput(prompt);
       chatInputProps.handleSendMessage(prompt);
     }
