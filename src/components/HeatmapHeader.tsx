@@ -74,9 +74,9 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
   return (
     <div className="fixed top-0 left-0 right-0 z-[1002]">
       {/* Slim urban header bar */}
-      <div className="bg-black/90 backdrop-blur-sm border-b border-white/10">
+      <div className="bg-black/95 backdrop-blur-sm border-b border-white/5">
         <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14">
+          <div className="flex items-center justify-between h-12">
             {/* Left: Tonight in Berlin + Categories */}
             <div className="flex items-center gap-6 overflow-x-auto scrollbar-none">
               <span className="text-white/60 text-sm font-light whitespace-nowrap">
