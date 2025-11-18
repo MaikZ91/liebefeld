@@ -887,17 +887,16 @@ const EventHeatmap: React.FC = () => {
   }, [filteredEvents]);
 
   const sortedPanelEvents: PanelEvent[] = React.useMemo(() => {
-    const PLACEHOLDER_IMAGE =
-      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop&q=80&auto=format";
-    const AUSGEHEN_CATEGORIES = new Set(["Party", "Konzert", "Festival", "Club", "Nightlife", "Bar"]);
-    const SPORT_CATEGORIES = new Set(["Sport", "Fitness", "Yoga", "Run", "Lauf"]);
-
+    const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=300&fit=crop&q=80&auto=format";
+    const AUSGEHEN_CATEGORIES = new Set(['Party', 'Konzert', 'Festival', 'Club', 'Nightlife', 'Bar']);
+    const SPORT_CATEGORIES = new Set(['Sport', 'Fitness', 'Yoga', 'Run', 'Lauf']);
+    
     const isPlaceholderImage = (imageUrl: string) => imageUrl === PLACEHOLDER_IMAGE;
-    const isAusgehenCategory = (category?: string) => (category ? AUSGEHEN_CATEGORIES.has(category) : false);
-    const isSportCategory = (category?: string) => (category ? SPORT_CATEGORIES.has(category) : false);
+    const isAusgehenCategory = (category?: string) => category ? AUSGEHEN_CATEGORIES.has(category) : false;
+    const isSportCategory = (category?: string) => category ? SPORT_CATEGORIES.has(category) : false;
     const isLikedByCurrentUser = (event: PanelEvent) => {
       if (!currentUser) return false;
-      return event.liked_by_users?.some((user) => user.username === currentUser) || false;
+      return event.liked_by_users?.some(user => user.username === currentUser) || false;
     };
 
     return [...panelEvents].sort((a, b) => {
@@ -910,7 +909,7 @@ const EventHeatmap: React.FC = () => {
       // For non-liked events, sort by placeholder, then category
       const aIsPlaceholder = isPlaceholderImage(a.image_url);
       const bIsPlaceholder = isPlaceholderImage(b.image_url);
-
+      
       // Priority 2: Events with placeholder images go last
       if (aIsPlaceholder && !bIsPlaceholder) return 1;
       if (!aIsPlaceholder && bIsPlaceholder) return -1;
@@ -2015,8 +2014,7 @@ const EventHeatmap: React.FC = () => {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-red-500" />
-                {filteredEvents.length} Events{" "}
-                {timeRange === null ? "heute" : `ab ${getTimeFromSlider(timeRange[0])} Uhr`}
+                {filteredEvents.length} Events {timeRange === null ? "heute" : `ab ${getTimeFromSlider(timeRange[0])} Uhr`}
               </div>
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-red-500" />
@@ -2140,7 +2138,7 @@ const EventHeatmap: React.FC = () => {
                   className="pointer-events-auto bg-gray-800 text-white"
                 />
               </div>
-
+              
               {/* Time Slider Section */}
               <div className="border-t border-gray-700 pt-4">
                 <div className="text-white text-sm font-semibold mb-3 flex items-center gap-2">
@@ -2162,7 +2160,9 @@ const EventHeatmap: React.FC = () => {
                     {timeRange === null ? "Alle" : `${timeRange[0]}h`}
                   </div>
                 </div>
-                <div className="text-white/60 text-xs mt-2">Zeigt Events ab der gewählten Uhrzeit</div>
+                <div className="text-white/60 text-xs mt-2">
+                  Zeigt Events ab der gewählten Uhrzeit
+                </div>
                 {timeRange !== null && (
                   <Button
                     variant="ghost"
@@ -2178,6 +2178,7 @@ const EventHeatmap: React.FC = () => {
           </PopoverContent>
         </Popover>
       </div>
+
 
       {/* Button to show events panel again if hidden */}
       {!showEventPanels && !showCommunityChat && !showEventList && (
@@ -2230,20 +2231,14 @@ const EventHeatmap: React.FC = () => {
 
       {/* === Styles (Map tint + Chips + Tight paragraphs) === */}
       <style>{`
-  .map-container {
-    background: #221310 !important; /* dunkles warmes Braun */
-  }
-  .map-container .leaflet-layer,
-  .map-container .leaflet-tile-pane,
-  .map-container .leaflet-tile {
-    filter:
-      brightness(0.57)
-      sepia(0.80)
-      saturate(1.25)
-      hue-rotate(343deg)
-      contrast(1.22)
-      !important;
-  }
+        .map-container {
+          background: #1a0a0a !important;
+        }
+        .map-container .leaflet-layer,
+        .map-container .leaflet-tile-pane,
+        .map-container .leaflet-tile {
+          filter: brightness(0.55) sepia(0.75) saturate(1.2) hue-rotate(340deg) contrast(1.2) !important;
+        }
         .map-container .leaflet-control-zoom-in,
         .map-container .leaflet-control-zoom-out {
           background-color: rgba(0,0,0,0.8) !important;
