@@ -260,81 +260,42 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
   return (
     <>
       <div className="fixed top-20 bottom-0 right-4 left-4 md:left-auto md:w-[520px] z-[9999] animate-fade-in flex flex-col">
-        <Card className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/70 backdrop-blur-xl shadow-[0_20px_80px_rgba(239,68,68,0.25)] flex-1 flex flex-col">
-          {/* Gradient ring */}
-          <div
-            className="pointer-events-none absolute inset-0 rounded-3xl"
-            style={{
-              background:
-                "radial-gradient(120% 60% at 100% 0%, rgba(239,68,68,0.35) 0%, rgba(239,68,68,0.05) 30%, transparent 60%)",
-            }}
-          />
-          
+        <Card className="relative overflow-hidden rounded-3xl border border-white/5 bg-black flex-1 flex flex-col">
           {/* Close Button */}
           <Button
             variant="ghost"
             size="icon"
             onClick={() => onOpenChange(false)}
-            className="absolute top-3 right-3 z-10 h-10 w-10 rounded-full bg-red-600/90 hover:bg-red-700 text-white shadow-lg shadow-red-500/30 border border-white/20"
+            className="absolute top-3 right-3 z-10 h-10 w-10 rounded-full bg-red-600/90 hover:bg-red-700 text-white shadow-lg border border-white/20"
           >
             <X className="w-5 h-5" />
           </Button>
           
-          {/* Category Filter */}
-          <div className="relative px-4 pt-4 pb-2">
+          {/* Category Filter - Urban Dark Style */}
+          <div className="relative px-4 pt-4 pb-2 border-b border-white/5">
             <div className="flex gap-2 overflow-x-auto scrollbar-none flex-nowrap">
-                {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => {
-                  const isActive = messageFilter.includes(category);
-                  const isAll = category === 'alle';
-                  const chipBase = 'h-8 px-4 text-xs font-medium rounded-full transition-all duration-200 shrink-0';
-                  
-                  if (isAll) {
-                    return (
-                      <Button
-                        key={category}
-                        variant="ghost"
-                        size="sm"
-                        className={cn(
-                          chipBase,
-                          isActive 
-                            ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-500/30' 
-                            : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/10'
-                        )}
-                        onClick={() => {
-                          setMessageFilter(['alle']);
-                          // Don't change the group category for "alle", just filter locally
-                        }}
-                      >
-                        #{category}
-                      </Button>
-                    );
-                  }
-                  
-                  const type = category as 'ausgehen' | 'kreativität' | 'sport';
-                  const colors = getChannelColor(type);
+                {['#ausgehen', '#kreativität', '#sport'].map((category) => {
+                  const catKey = category.replace('#', '');
+                  const isActive = messageFilter.includes(catKey);
+                  const chipBase = 'h-9 px-5 text-sm font-medium rounded-full transition-all duration-200 shrink-0 border';
                   
                   return (
                     <Button
                       key={category}
                       variant="ghost"
                       size="sm"
-                      style={
-                        isActive 
-                          ? { ...colors.bgStyle, ...colors.borderStyle, color: 'white' } 
-                          : { ...colors.borderStyle, ...colors.textStyle }
-                      }
                       className={cn(
                         chipBase,
-                        'border shadow-sm',
-                        !isActive && 'bg-white/5 hover:bg-white/10',
-                        isActive && 'shadow-lg'
+                        isActive 
+                          ? 'bg-white/10 text-white border-white/20'
+                          : 'bg-transparent text-white/60 hover:text-white hover:bg-white/5 border-white/10'
                       )}
                       onClick={() => {
-                        setMessageFilter([category]);
-                        onCategoryChange?.(category);
+                        setMessageFilter([catKey]);
+                        onCategoryChange?.(catKey);
                       }}
                     >
-                      #{category}
+                      {category}
                     </Button>
                   );
                 })}
@@ -344,7 +305,11 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
           {/* Messages */}
           <div 
             ref={chatContainerRef}
-            className="relative flex-1 overflow-y-auto px-4 py-3 space-y-3 scrollbar-thin scrollbar-thumb-white/20"
+            className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-black"
+            style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'rgba(255, 255, 255, 0.2) transparent'
+            }}
           >
               {loading && filteredMessages.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
@@ -493,8 +458,8 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
               <div ref={chatBottomRef} />
             </div>
             
-          {/* Input */}
-          <div className="relative border-t border-white/10 px-3 py-2 bg-black/60 backdrop-blur-xl">
+          {/* Input - Urban Dark Style */}
+          <div className="relative px-4 pb-4 pt-2 bg-black border-t border-white/5">
             {replyTo && (
               <div className="mb-2">
                 <ReplyPreview 
@@ -504,25 +469,31 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
                 />
               </div>
             )}
-            <MessageInput
-              username={username}
-              groupId={groupId}
-              handleSendMessage={handleSendMessage}
-              isSending={sending}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendMessage();
-                }
-              }}
-              placeholder="Nachricht schreiben..."
-              mode="community"
-              groupType={activeCategory as 'ausgehen' | 'sport' | 'kreativität'}
-              replyTo={replyTo}
-              onClearReply={clearReply}
-            />
+            <div className="flex items-center gap-2 bg-white/5 rounded-full px-4 py-2.5 border border-white/10">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                placeholder="Nachricht schreiben..."
+                className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/40 text-sm"
+                disabled={sending}
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={handleSendMessage}
+                disabled={sending || !input.trim()}
+                className="h-8 w-8 rounded-full hover:bg-white/10 text-white/60 hover:text-white"
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </Card>
       </div>
