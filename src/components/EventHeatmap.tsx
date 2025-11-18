@@ -1996,16 +1996,6 @@ const EventHeatmap: React.FC = () => {
                   </PopoverContent>
                 </Popover>
               </div>
-
-              {/* Filter Bar */}
-              <div className="w-full overflow-x-auto">
-                <FilterBar
-                  value={selectedCategory}
-                  onChange={handleCategoryChange}
-                  variant="light"
-                  className="min-w-max"
-                />
-              </div>
             </div>
           </Card>
 
