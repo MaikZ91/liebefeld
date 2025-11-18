@@ -368,43 +368,28 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
   }, [chatContainerRef, activeChatModeValue, filteredCommunityMessages.length, typingUsers.length]);
 
   return (
-    <div className={embedded ? "flex flex-col h-full min-h-0 bg-gradient-to-br from-red-950/40 via-black to-gray-900" : "flex flex-col h-screen min-h-0 bg-gradient-to-br from-red-950/40 via-black to-gray-900"}>
-      {/* Filter UI für Community Chat - warmer style like MIA */}
+    <div className={embedded ? "flex flex-col h-full min-h-0 bg-black" : "flex flex-col h-screen min-h-0 bg-black"}>
+      {/* Filter UI für Community Chat - Urban Dark Style */}
       {activeChatModeValue === 'community' && (
-        <div className="sticky top-0 z-[60] bg-gradient-to-r from-red-950/10 to-transparent backdrop-blur-md border-b border-red-500/10">
+        <div className="sticky top-0 z-[60] bg-black border-b border-white/5">
           <div className="px-4 py-3">
             <div className="flex gap-2 overflow-x-auto scrollbar-none flex-nowrap pb-1">
-              {['alle', 'ausgehen', 'kreativität', 'sport'].map((category) => {
-                const isActive = messageFilter.includes(category);
-                const isAll = category === 'alle';
-                const chipBase = 'h-8 px-4 text-xs font-medium rounded-full transition-all duration-200';
-                if (isAll) {
-                  return (
-                    <Button
-                      key={category}
-                      variant="ghost"
-                      size="sm"
-                      className={`${chipBase} ${isActive ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-500/30' : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/10'}`}
-                      onClick={() => setActiveCategory('alle')}
-                    >
-                      #{category}
-                    </Button>
-                  );
-                }
-                const type = (category as 'ausgehen' | 'kreativität' | 'sport');
-                const colors = getChannelColor(type);
+              {['#ausgehen', '#kreativität', '#sport'].map((category) => {
+                const catKey = category.replace('#', '');
+                const isActive = messageFilter.includes(catKey);
+                const chipBase = 'h-9 px-5 text-sm font-medium rounded-full transition-all duration-200 border';
+                
                 return (
                   <Button
                     key={category}
                     variant="ghost"
                     size="sm"
-                    style={isActive ? { ...colors.bgStyle, ...colors.borderStyle, color: 'white' } : { ...colors.borderStyle, ...colors.textStyle }}
-                    className={`${chipBase} border shadow-sm ${!isActive ? 'bg-white/5 hover:bg-white/10' : 'shadow-lg'}`}
+                    className={`${chipBase} ${isActive ? 'bg-white/10 text-white border-white/20' : 'bg-transparent text-white/60 hover:text-white hover:bg-white/5 border-white/10'}`}
                     onClick={() => {
-                      setActiveCategory(category);
+                      setActiveCategory(catKey);
                     }}
                   >
-                    #{category}
+                    {category}
                   </Button>
                 );
               })}
@@ -414,7 +399,7 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
       )}
 
 
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none bg-gradient-to-b from-red-950/5 via-transparent to-black/30 px-4 py-4">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none bg-black px-4 py-4">
         {activeChatModeValue === 'onboarding' ? (
           <div className="px-4 py-4 space-y-4">
             {onboardingLogic.messages.map((msg, index) => (
