@@ -253,24 +253,17 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
     return (
       <div className="relative overflow-hidden rounded-3xl border border-white/5 bg-black w-full max-w-full flex flex-col" style={{ height: 'calc(100vh - 96px)' }}>
         <div className="relative px-4 pt-4 pb-2 flex-shrink-0 border-b border-white/5">
-          <div className="flex gap-2 overflow-x-auto scrollbar-none flex-nowrap">
-            {['#ausgehen', '#kreativität', '#sport'].map((category) => {
-              const catKey = category.replace('#', '');
-              const isActive = groupFilter === catKey;
-              const chipBase = 'h-9 px-5 text-sm font-medium rounded-full transition-all duration-200 border';
+          <div className="flex gap-2 flex-nowrap">
+            {['ausgehen', 'kreativität', 'sport'].map((category) => {
+              const isActive = groupFilter === category;
               
               return (
-                <Button
+                <div
                   key={category}
-                  variant="ghost"
-                  size="sm"
-                  className={`${chipBase} ${isActive ? 'bg-white/10 text-white border-white/20' : 'bg-transparent text-white/60 hover:text-white hover:bg-white/5 border-white/10'}`}
-                  onClick={() => {
-                    // This would need a handler passed from parent
-                  }}
+                  className={`h-7 px-3 text-xs font-medium rounded-full transition-all duration-200 border flex-1 flex items-center justify-center ${isActive ? 'bg-white/10 text-white border-white/20' : 'bg-transparent text-white/60 border-white/10'}`}
                 >
-                  {category}
-                </Button>
+                  #{category}
+                </div>
               );
             })}
           </div>
@@ -297,26 +290,24 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
         )}
       </div>
 
-      {/* MIA Chat Input Footer - Urban Dark Style */}
+      {/* Premium Urban MIA Chat Input Footer */}
       {onChatSend && onChatInputChange && (
-        <div className="relative px-4 pb-3 pt-2 flex-shrink-0 border-t border-white/5 bg-black">
+        <div className="p-3 flex-shrink-0 bg-black">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
             {['Highlights der Woche', 'Wochenzusammenfassung', 'Was geht am Wochenende'].map((suggestion, index) => (
-              <Button
+              <button
                 key={index}
-                variant="outline"
-                size="sm"
                 onClick={async () => {
                   onChatInputChange(suggestion);
                   await onChatSend(suggestion);
                 }}
-                className="h-8 text-xs font-medium rounded-full bg-white/5 hover:bg-white/10 border-white/10 text-white/60 hover:text-white transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0"
+                className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-xs rounded-full border border-white/10 transition-all whitespace-nowrap"
               >
-                <span>{suggestion}</span>
-              </Button>
+                {suggestion}
+              </button>
             ))}
           </div>
-          <div className="flex items-center gap-2 bg-white/5 rounded-full px-4 py-2.5 border border-white/10 mt-2">
+          <div className="flex items-center gap-2 bg-white/5 rounded-full px-5 py-3 border border-white/10 backdrop-blur-sm">
             <input
               type="text"
               value={chatInput}
@@ -329,17 +320,15 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
                 }
               }}
               placeholder="Frag MIA nach Events..."
-              className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/40 text-sm"
+              className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/50 text-sm"
             />
-            <Button
-              size="icon"
-              variant="ghost"
+            <button
               onClick={() => chatInput.trim() && onChatSend()}
               disabled={!chatInput.trim()}
-              className="h-8 w-8 rounded-full hover:bg-white/10 text-white/60 hover:text-white"
+              className="text-white/50 hover:text-white disabled:opacity-20 transition-all"
             >
-              <Send className="w-4 h-4" />
-            </Button>
+              <Send className="h-4 w-4" />
+            </button>
           </div>
         </div>
       )}
