@@ -260,7 +260,7 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
   return (
     <>
       <div className="fixed top-20 bottom-0 right-4 left-4 md:left-auto md:w-[520px] z-[9999] animate-fade-in flex flex-col">
-        <Card className="relative overflow-hidden rounded-3xl border border-white/5 bg-black flex-1 flex flex-col">
+        <Card className="relative overflow-hidden rounded-3xl border border-white/5 bg-black flex-1 flex flex-col pb-0">
           {/* Close Button */}
           <Button
             variant="ghost"
@@ -298,10 +298,10 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
               </div>
           </div>
           
-          {/* Messages */}
+          {/* Messages with padding for floating input */}
           <div 
             ref={chatContainerRef}
-            className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-black"
+            className="flex-1 overflow-y-auto px-4 py-4 pb-24 space-y-4 bg-black"
             style={{
               scrollbarWidth: 'thin',
               scrollbarColor: 'rgba(255, 255, 255, 0.2) transparent'
@@ -454,10 +454,10 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
               <div ref={chatBottomRef} />
             </div>
             
-          {/* Premium Urban Chat Input */}
-          <div className="p-3 bg-black">
+          {/* Premium Urban Chat Input - Floating separated */}
+          <div className="absolute bottom-3 left-3 right-3">
             {replyTo && (
-              <div className="mb-2">
+              <div className="mb-2 mx-1">
                 <ReplyPreview 
                   replyTo={replyTo} 
                   onCancel={clearReply}
@@ -465,7 +465,7 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
                 />
               </div>
             )}
-            <div className="flex items-center gap-2 bg-white/5 rounded-full px-5 py-3 border border-white/10 backdrop-blur-sm">
+            <div className="flex items-center gap-2 bg-black/90 backdrop-blur-xl rounded-full px-5 py-3 border border-white/10 shadow-2xl">
               <input
                 type="text"
                 value={input}
