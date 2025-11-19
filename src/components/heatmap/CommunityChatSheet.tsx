@@ -271,32 +271,28 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
             <X className="w-5 h-5" />
           </Button>
           
-          {/* Category Filter - Urban Dark Style */}
+          {/* Category Filter - Compact Urban Style */}
           <div className="relative px-4 pt-4 pb-2 border-b border-white/5">
-            <div className="flex gap-2 overflow-x-auto scrollbar-none flex-nowrap">
-                {['#ausgehen', '#kreativität', '#sport'].map((category) => {
-                  const catKey = category.replace('#', '');
-                  const isActive = messageFilter.includes(catKey);
-                  const chipBase = 'h-9 px-5 text-sm font-medium rounded-full transition-all duration-200 shrink-0 border';
+            <div className="flex gap-2 flex-nowrap">
+                {['ausgehen', 'kreativität', 'sport'].map((category) => {
+                  const isActive = messageFilter.includes(category);
                   
                   return (
-                    <Button
+                    <button
                       key={category}
-                      variant="ghost"
-                      size="sm"
                       className={cn(
-                        chipBase,
+                        'h-7 px-3 text-xs font-medium rounded-full transition-all duration-200 border flex-1',
                         isActive 
                           ? 'bg-white/10 text-white border-white/20'
                           : 'bg-transparent text-white/60 hover:text-white hover:bg-white/5 border-white/10'
                       )}
                       onClick={() => {
-                        setMessageFilter([catKey]);
-                        onCategoryChange?.(catKey);
+                        setMessageFilter([category]);
+                        onCategoryChange?.(category);
                       }}
                     >
-                      {category}
-                    </Button>
+                      #{category}
+                    </button>
                   );
                 })}
               </div>
@@ -380,11 +376,11 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
                     >
                       {!isOwnMessage && (
                         <Avatar 
-                          className="w-8 h-8 shrink-0 border border-white/10 cursor-pointer"
+                          className="h-10 w-10 flex-shrink-0 ring-1 ring-white/10 cursor-pointer"
                           onClick={() => handleAvatarClick(message.user_name)}
                         >
                           <AvatarImage src={message.user_avatar || undefined} />
-                          <AvatarFallback className="bg-primary/20 text-white text-xs">
+                          <AvatarFallback className="bg-primary/30 text-white text-sm font-medium">
                             {getInitials(message.user_name)}
                           </AvatarFallback>
                         </Avatar>
@@ -395,15 +391,15 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
                         isOwnMessage && "items-end"
                       )}>
                         {!isOwnMessage && (
-                          <span className="text-xs text-white/60 px-1">{message.user_name}</span>
+                          <span className="text-xs text-white/50 font-medium px-1">{message.user_name}</span>
                         )}
                         
                         <div
                           className={cn(
-                            "rounded-2xl px-4 py-2.5 relative group",
+                            "rounded-2xl px-4 py-3 relative group",
                             isOwnMessage
-                              ? "bg-gradient-to-r from-red-600 to-red-700 text-white"
-                              : "bg-white/10 text-white border border-white/10"
+                              ? "bg-white/5 text-white border border-white/10"
+                              : "bg-white/10 text-white border border-white/5"
                           )}
                         >
                           {message.reply_to_sender && (
@@ -417,7 +413,7 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
                             {message.text}
                           </p>
                           
-                          <span className="text-[10px] opacity-60 mt-1 block">
+                          <span className="text-[10px] text-white/40 mt-1.5 block">
                             {formatTime(message.created_at)}
                           </span>
                           
@@ -458,8 +454,8 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
               <div ref={chatBottomRef} />
             </div>
             
-          {/* Input - Urban Dark Style */}
-          <div className="relative px-4 pb-4 pt-2 bg-black border-t border-white/5">
+          {/* Premium Urban Chat Input */}
+          <div className="p-3 bg-black">
             {replyTo && (
               <div className="mb-2">
                 <ReplyPreview 
@@ -469,7 +465,7 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
                 />
               </div>
             )}
-            <div className="flex items-center gap-2 bg-white/5 rounded-full px-4 py-2.5 border border-white/10">
+            <div className="flex items-center gap-2 bg-white/5 rounded-full px-5 py-3 border border-white/10 backdrop-blur-sm">
               <input
                 type="text"
                 value={input}
@@ -481,18 +477,16 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
                   }
                 }}
                 placeholder="Nachricht schreiben..."
-                className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/40 text-sm"
+                className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/50 text-sm"
                 disabled={sending}
               />
-              <Button
-                size="icon"
-                variant="ghost"
+              <button
                 onClick={handleSendMessage}
                 disabled={sending || !input.trim()}
-                className="h-8 w-8 rounded-full hover:bg-white/10 text-white/60 hover:text-white"
+                className="text-white/50 hover:text-white disabled:opacity-20 transition-all"
               >
-                <Send className="w-4 h-4" />
-              </Button>
+                <Send className="h-4 w-4" />
+              </button>
             </div>
           </div>
         </Card>

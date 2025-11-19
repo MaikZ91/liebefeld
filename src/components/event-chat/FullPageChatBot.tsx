@@ -369,28 +369,24 @@ const FullPageChatBot: React.FC<FullPageChatBotProps> = ({
 
   return (
     <div className={embedded ? "flex flex-col h-full min-h-0 bg-black" : "flex flex-col h-screen min-h-0 bg-black"}>
-      {/* Filter UI für Community Chat - Urban Dark Style */}
+      {/* Compact Urban Category Filter für Community Chat */}
       {activeChatModeValue === 'community' && (
         <div className="sticky top-0 z-[60] bg-black border-b border-white/5">
           <div className="px-4 py-3">
-            <div className="flex gap-2 overflow-x-auto scrollbar-none flex-nowrap pb-1">
-              {['#ausgehen', '#kreativität', '#sport'].map((category) => {
-                const catKey = category.replace('#', '');
-                const isActive = messageFilter.includes(catKey);
-                const chipBase = 'h-9 px-5 text-sm font-medium rounded-full transition-all duration-200 border';
+            <div className="flex gap-2 flex-nowrap">
+              {['ausgehen', 'kreativität', 'sport'].map((category) => {
+                const isActive = messageFilter.includes(category);
                 
                 return (
-                  <Button
+                  <button
                     key={category}
-                    variant="ghost"
-                    size="sm"
-                    className={`${chipBase} ${isActive ? 'bg-white/10 text-white border-white/20' : 'bg-transparent text-white/60 hover:text-white hover:bg-white/5 border-white/10'}`}
+                    className={`h-7 px-3 text-xs font-medium rounded-full transition-all duration-200 border flex-1 ${isActive ? 'bg-white/10 text-white border-white/20' : 'bg-transparent text-white/60 hover:text-white hover:bg-white/5 border-white/10'}`}
                     onClick={() => {
-                      setActiveCategory(catKey);
+                      setActiveCategory(category);
                     }}
                   >
-                    {category}
-                  </Button>
+                    #{category}
+                  </button>
                 );
               })}
             </div>
