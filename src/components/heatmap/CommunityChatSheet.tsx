@@ -266,9 +266,9 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
             variant="ghost"
             size="icon"
             onClick={() => onOpenChange(false)}
-            className="absolute top-3 right-3 z-10 h-10 w-10 rounded-full bg-red-600/90 hover:bg-red-700 text-white shadow-lg border border-white/20"
+            className="absolute top-3 right-3 z-10 h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-all border border-white/10"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </Button>
           
           {/* Category Filter - Premium Urban Chips */}
@@ -281,7 +281,7 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
                     <button
                       key={category}
                       className={cn(
-                        'h-9 px-5 text-sm font-medium rounded-full transition-all duration-200 border',
+                        'h-7 px-3 text-xs font-medium rounded-full transition-all duration-200 border',
                         isActive 
                           ? 'bg-white/10 text-white border-white/20'
                           : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border-white/10'
