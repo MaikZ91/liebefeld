@@ -465,7 +465,7 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
                 />
               </div>
             )}
-            <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm rounded-full px-4 py-2.5 border border-white/10">
+            <div className="flex items-center gap-3 bg-black rounded-full px-5 py-3.5 border border-white/20">
               <input
                 type="text"
                 value={input}
@@ -477,13 +477,13 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
                   }
                 }}
                 placeholder="Nachricht schreiben..."
-                className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/40 text-sm"
+                className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/50 text-base"
                 disabled={sending}
               />
               <button
                 onClick={handleSendMessage}
                 disabled={sending || !input.trim()}
-                className="text-white/60 hover:text-white disabled:opacity-20 transition-all flex-shrink-0"
+                className="text-white/70 hover:text-white disabled:opacity-30 transition-all flex-shrink-0"
               >
                 <Send className="h-5 w-5" />
               </button>
