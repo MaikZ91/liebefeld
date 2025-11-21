@@ -55,9 +55,8 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-t border-white/10 lov-bottom-nav">
-      <div className="flex items-center justify-center px-4 py-1.5">
-        <div className="flex items-center gap-1.5 bg-black/80 backdrop-blur-sm rounded-lg px-2 py-1 border border-white/10">
+    <div className="fixed bottom-4 left-4 right-4 z-50 flex justify-center lov-bottom-nav">
+      <div className="flex items-center gap-2 bg-black/70 backdrop-blur-xl rounded-2xl px-4 py-2 border border-white/20 shadow-2xl shadow-black/50">
           {/* Community Chat Button */}
           <Button 
             variant="ghost"
@@ -75,10 +74,10 @@ onClick={() => {
               }
             }}
             className={cn(
-              "relative h-10 w-10 rounded-lg transition-all duration-300",
+              "relative h-11 w-11 rounded-xl transition-all duration-300",
               activeView === 'community' 
-                ? 'bg-primary text-white shadow-lg shadow-primary/25' 
-                : 'text-white/60 hover:text-white hover:bg-white/10'
+                ? 'bg-primary text-white shadow-lg shadow-primary/30' 
+                : 'text-white/70 hover:text-white hover:bg-white/10'
             )}
           >
             {hasCompletedOnboarding ? (
@@ -92,7 +91,7 @@ onClick={() => {
               <MessageSquare className="h-5 w-5" />
             )}
             {newMessagesCount > 0 && (
-              <Badge className="absolute -top-1 -right-1 bg-green-500 text-white h-5 w-5 flex items-center justify-center rounded-full text-[10px] p-0">
+              <Badge className="absolute -top-1 -right-1 bg-gradient-to-br from-green-400 to-emerald-500 text-white h-5 w-5 flex items-center justify-center rounded-full text-[10px] p-0 border border-white/20 shadow-lg animate-pulse">
                 {newMessagesCount}
               </Badge>
             )}
@@ -104,10 +103,10 @@ onClick={() => {
             size="icon" 
             onClick={() => navigate('/heatmap')} 
             className={cn(
-              "h-10 w-10 rounded-lg transition-all duration-300",
+              "h-11 w-11 rounded-xl transition-all duration-300",
               isOnHeatmap 
-                ? 'bg-primary text-white shadow-lg shadow-primary/25' 
-                : 'text-white/60 hover:text-white hover:bg-white/10'
+                ? 'bg-primary text-white shadow-lg shadow-primary/30' 
+                : 'text-white/70 hover:text-white hover:bg-white/10'
             )}
           >
             <Map className="h-5 w-5" />
@@ -132,15 +131,15 @@ onClick={() => {
               }
             }}
             className={cn(
-              "relative h-10 w-10 rounded-lg transition-all duration-300",
+              "relative h-11 w-11 rounded-xl transition-all duration-300",
               isOnEventsPage 
-                ? 'bg-primary text-white shadow-lg shadow-primary/25' 
-                : 'text-white/60 hover:text-white hover:bg-white/10'
+                ? 'bg-primary text-white shadow-lg shadow-primary/30' 
+                : 'text-white/70 hover:text-white hover:bg-white/10'
             )}
           >
             <Calendar className="h-5 w-5" />
             {newEventsCount > 0 && (
-              <Badge className="absolute -top-1 -right-1 bg-green-500 text-white h-5 w-5 flex items-center justify-center rounded-full text-[10px] p-0">
+              <Badge className="absolute -top-1 -right-1 bg-gradient-to-br from-green-400 to-emerald-500 text-white h-5 w-5 flex items-center justify-center rounded-full text-[10px] p-0 border border-white/20 shadow-lg animate-pulse">
                 {newEventsCount}
               </Badge>
             )}
@@ -158,16 +157,15 @@ onClick={() => {
               }
             }} 
             className={cn(
-              "h-10 w-10 rounded-lg transition-all duration-300",
+              "h-11 w-11 rounded-xl transition-all duration-300",
               !hasCompletedOnboarding 
                 ? "text-primary hover:text-primary-foreground hover:bg-primary/20" 
-                : "text-white/60 hover:text-white hover:bg-white/10"
+                : "text-white/70 hover:text-white hover:bg-white/10"
             )}
           >
             <User className="h-5 w-5" />
           </Button>
         </div>
-      </div>
       
       {/* Onboarding Chatbot */}
       <OnboardingChatbot 
