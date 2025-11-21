@@ -56,7 +56,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 flex justify-center lov-bottom-nav">
-      <div className="flex items-center gap-2 bg-black/70 backdrop-blur-xl rounded-2xl px-4 py-2 border border-white/20 shadow-2xl shadow-black/50">
+      <div className="flex items-center gap-2 bg-black/70 backdrop-blur-xl rounded-2xl px-3 py-1.5 border border-white/20 shadow-2xl shadow-black/50">
           {/* Community Chat Button */}
           <Button 
             variant="ghost"
@@ -74,7 +74,7 @@ onClick={() => {
               }
             }}
             className={cn(
-              "relative h-11 w-11 rounded-xl transition-all duration-300",
+              "relative h-9 w-9 rounded-xl transition-all duration-300",
               activeView === 'community' 
                 ? 'bg-primary text-white shadow-lg shadow-primary/30' 
                 : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -88,7 +88,7 @@ onClick={() => {
                 </AvatarFallback>
               </Avatar>
             ) : (
-              <MessageSquare className="h-5 w-5" />
+              <MessageSquare className="h-4 w-4" />
             )}
             {newMessagesCount > 0 && (
               <Badge className="absolute -top-1 -right-1 bg-gradient-to-br from-green-400 to-emerald-500 text-white h-5 w-5 flex items-center justify-center rounded-full text-[10px] p-0 border border-white/20 shadow-lg animate-pulse">
@@ -103,13 +103,13 @@ onClick={() => {
             size="icon" 
             onClick={() => navigate('/heatmap')} 
             className={cn(
-              "h-11 w-11 rounded-xl transition-all duration-300",
+              "h-9 w-9 rounded-xl transition-all duration-300",
               isOnHeatmap 
                 ? 'bg-primary text-white shadow-lg shadow-primary/30' 
                 : 'text-white/70 hover:text-white hover:bg-white/10'
             )}
           >
-            <Map className="h-5 w-5" />
+            <Map className="h-4 w-4" />
           </Button>
 
           {/* Event Calendar Button */}
@@ -131,13 +131,13 @@ onClick={() => {
               }
             }}
             className={cn(
-              "relative h-11 w-11 rounded-xl transition-all duration-300",
+              "relative h-9 w-9 rounded-xl transition-all duration-300",
               isOnEventsPage 
                 ? 'bg-primary text-white shadow-lg shadow-primary/30' 
                 : 'text-white/70 hover:text-white hover:bg-white/10'
             )}
           >
-            <Calendar className="h-5 w-5" />
+            <Calendar className="h-4 w-4" />
             {newEventsCount > 0 && (
               <Badge className="absolute -top-1 -right-1 bg-gradient-to-br from-green-400 to-emerald-500 text-white h-5 w-5 flex items-center justify-center rounded-full text-[10px] p-0 border border-white/20 shadow-lg animate-pulse">
                 {newEventsCount}
@@ -157,13 +157,13 @@ onClick={() => {
               }
             }} 
             className={cn(
-              "h-11 w-11 rounded-xl transition-all duration-300",
+              "h-9 w-9 rounded-xl transition-all duration-300",
               !hasCompletedOnboarding 
                 ? "text-primary hover:text-primary-foreground hover:bg-primary/20" 
                 : "text-white/70 hover:text-white hover:bg-white/10"
             )}
           >
-            <User className="h-5 w-5" />
+            <User className="h-4 w-4" />
           </Button>
         </div>
       
