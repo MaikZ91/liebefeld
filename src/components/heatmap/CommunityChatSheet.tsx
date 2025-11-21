@@ -272,7 +272,7 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
           </Button>
           
           {/* Category Filter - Premium Urban Chips */}
-          <div className="px-3 pt-3 pb-2">
+          <div className="px-3 pt-3 pb-2 pr-12">
             <div className="flex gap-2 justify-center">
                 {['ausgehen', 'kreativität', 'sport'].map((category) => {
                   const isActive = messageFilter.includes(category);
