@@ -55,9 +55,9 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/1 bg-transparent border-t border-white/5 lov-bottom-nav">
-      <div className="flex items-center justify-center px-6 py-2">
-        <div className="flex items-center gap-1 bg-black/100 backdrop-blur-md rounded-full px-2 py-1 border border-white/5">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-t border-white/10 lov-bottom-nav">
+      <div className="flex items-center justify-center px-4 py-1.5">
+        <div className="flex items-center gap-1.5 bg-black/80 backdrop-blur-sm rounded-lg px-2 py-1 border border-white/10">
           {/* Community Chat Button */}
           <Button 
             variant="ghost"
@@ -75,7 +75,7 @@ onClick={() => {
               }
             }}
             className={cn(
-              "relative h-12 w-12 rounded-full transition-all duration-300",
+              "relative h-10 w-10 rounded-lg transition-all duration-300",
               activeView === 'community' 
                 ? 'bg-primary text-white shadow-lg shadow-primary/25' 
                 : 'text-white/60 hover:text-white hover:bg-white/10'
@@ -104,7 +104,7 @@ onClick={() => {
             size="icon" 
             onClick={() => navigate('/heatmap')} 
             className={cn(
-              "h-12 w-12 rounded-full transition-all duration-300",
+              "h-10 w-10 rounded-lg transition-all duration-300",
               isOnHeatmap 
                 ? 'bg-primary text-white shadow-lg shadow-primary/25' 
                 : 'text-white/60 hover:text-white hover:bg-white/10'
@@ -132,7 +132,7 @@ onClick={() => {
               }
             }}
             className={cn(
-              "relative h-12 w-12 rounded-full transition-all duration-300",
+              "relative h-10 w-10 rounded-lg transition-all duration-300",
               isOnEventsPage 
                 ? 'bg-primary text-white shadow-lg shadow-primary/25' 
                 : 'text-white/60 hover:text-white hover:bg-white/10'
@@ -158,7 +158,7 @@ onClick={() => {
               }
             }} 
             className={cn(
-              "h-12 w-12 rounded-full transition-all duration-300",
+              "h-10 w-10 rounded-lg transition-all duration-300",
               !hasCompletedOnboarding 
                 ? "text-primary hover:text-primary-foreground hover:bg-primary/20" 
                 : "text-white/60 hover:text-white hover:bg-white/10"
