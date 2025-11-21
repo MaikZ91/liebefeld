@@ -2109,7 +2109,7 @@ const EventHeatmap: React.FC = () => {
         !isMIAOpen &&
         !showEventList &&
         !showCommunityChat && (
-          <div className="fixed bottom-12 left-0 right-0 z-[1000] pointer-events-auto">
+          <div className="fixed bottom-20 left-0 right-0 z-[1000] pointer-events-auto">
             <div className="px-2 py-4">
               <ThreeEventDisplay
                 panelData={panelData}
