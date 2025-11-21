@@ -225,7 +225,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
   if (displayEvents.length === 0) return null;
 
   return (
-    <div className={cn("w-full space-y-4", className)}>
+    <div className={cn("w-full space-y-2", className)}>
 
       {/* Three Event Cards with Swipe */}
       <div 
@@ -238,11 +238,11 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
       >
-<div className="flex justify-center pt-2 pb-1">
+        <div className="flex justify-center pt-1 pb-0.5">
           <div className="w-8 h-1 bg-white-500 rounded-full cursor-grab active:cursor-grabbing opacity-70" />
         </div>
         {/* Optional: A subtle down arrow to reinforce the swipe direction */}
-        <div className="flex justify-center -mt-1 pb-2">
+        <div className="flex justify-center -mt-0.5 pb-1">
             <ChevronDown className="h-4 w-4 text-white-400 opacity-60" />
         </div>
         <div
@@ -346,7 +346,7 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
 
       {/* Swipe Indicators */}
       {totalEvents > 3 && (
-        <div className="flex justify-center gap-2">
+        <div className="flex justify-center gap-2 pt-1">
           {Array.from({ length: totalPages }).map((_, index) => (
             <div
               key={index}
