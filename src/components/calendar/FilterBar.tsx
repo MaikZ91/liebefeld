@@ -11,7 +11,6 @@ interface FilterBarProps {
   onChange?: (value: FilterGroup) => void;
   className?: string;
   variant?: "dark" | "light";
-  unreadByCategory?: Record<string, boolean>;
 }
 
 const options: FilterGroup[] = ["alle", "ausgehen", "kreativität", "sport"];
@@ -21,7 +20,6 @@ const FilterBar: React.FC<FilterBarProps> = ({
   onChange: externalOnChange,
   className,
   variant = "dark",
-  unreadByCategory = {},
 }) => {
   // Use context for persistence, with optional external control
   const { activeCategory, setActiveCategory } = useChatPreferences();
@@ -78,8 +76,6 @@ const FilterBar: React.FC<FilterBarProps> = ({
             | "kreativität"
             | "sport";
           const colors = getChannelColor(type);
-          const hasUnread = unreadByCategory[opt] || false;
-          
           return (
             <Button
               key={opt}
@@ -91,12 +87,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                   ? { ...colors.bgStyle, ...colors.borderStyle, color: "hsl(var(--foreground))" }
                   : { ...colors.borderStyle, ...colors.textStyle }
               }
-              className={cn(
-                chipBase, 
-                "border relative", 
-                !isActive && "hover:bg-white/5",
-                hasUnread && !isActive && "before:absolute before:inset-0 before:rounded-full before:p-[2px] before:animate-border-spin before:-z-10"
-              )}
+              className={cn(chipBase, "border", !isActive && "hover:bg-white/5")}
             >
               {opt}
             </Button>
