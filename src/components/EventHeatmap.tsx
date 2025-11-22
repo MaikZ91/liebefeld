@@ -1234,14 +1234,14 @@ const EventHeatmap: React.FC = () => {
         <div style="
           background: #000000;
           color: white;
-          border-radius: 50%;
-          width: 50px;
-          height: 50px;
+          clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+          width: 40px;
+          height: 40px;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          border: 3px solid #d4af37;
+          padding-top: 8px;
           box-shadow: 0 2px 8px rgba(0,0,0,0.3);
           cursor: pointer;
           font-family: 'Inter', sans-serif;
@@ -1249,16 +1249,16 @@ const EventHeatmap: React.FC = () => {
           position: relative;
           transition: all 0.3s ease;
         "
-        onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 4px 16px rgba(212,175,55,0.4)';"
+        onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 4px 16px rgba(0,0,0,0.5)';"
         onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.3)';">
           <div style="
-            font-size: 8px;
+            font-size: 7px;
             font-weight: 600;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
             text-transform: uppercase;
-            line-height: 1.1;
+            line-height: 1;
             word-break: break-word;
-            max-width: 40px;
+            max-width: 32px;
           ">
             ${spot.name}
       `;
@@ -1266,9 +1266,9 @@ const EventHeatmap: React.FC = () => {
       const customIcon = L.divIcon({
         html: iconHtml,
         className: "custom-tribe-spot-marker",
-        iconSize: [50, 50],
-        iconAnchor: [25, 25],
-        popupAnchor: [0, -25],
+        iconSize: [40, 40],
+        iconAnchor: [20, 35],
+        popupAnchor: [0, -35],
       });
 
       const marker = L.marker([spot.lat, spot.lng], { icon: customIcon });
