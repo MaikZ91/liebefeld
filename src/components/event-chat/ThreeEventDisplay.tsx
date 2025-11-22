@@ -346,13 +346,16 @@ const ThreeEventDisplay: React.FC<ThreeEventDisplayProps> = ({
 
       {/* Swipe Indicators */}
       {totalEvents > 3 && (
-        <div className="flex justify-center gap-2 pt-1">
+        <div className="flex justify-center gap-1.5 pt-1">
           {Array.from({ length: totalPages }).map((_, index) => (
             <div
               key={index}
               className={cn(
-                "w-2 h-2 rounded-full transition-all",
-                currentPage === index ? "bg-white" : "bg-white/40"
+                "w-0 h-0 transition-all",
+                "border-l-[3px] border-l-transparent border-r-[3px] border-r-transparent",
+                currentPage === index 
+                  ? "border-t-[5px] border-t-white" 
+                  : "border-t-[5px] border-t-white/40"
               )}
             />
           ))}
