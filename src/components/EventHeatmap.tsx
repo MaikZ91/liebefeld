@@ -1375,7 +1375,6 @@ const EventHeatmap: React.FC = () => {
             height: ${avatarSize}px;
             border-radius: 50%;
             background: linear-gradient(135deg, #10b981, #059669);
-            border: 2px solid rgba(16, 185, 129, 0.3);
             box-shadow: 0 0 12px rgba(16, 185, 129, 0.6), 0 2px 8px rgba(0,0,0,0.4);
             display: flex;
             align-items: center;
@@ -1410,7 +1409,6 @@ const EventHeatmap: React.FC = () => {
           height: ${avatarSize}px;
           border-radius: 50%;
           background: rgba(0, 0, 0, 0.85);
-          border: 2px solid rgba(16, 185, 129, 0.5);
           box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
           display: flex;
           align-items: center;
@@ -1479,7 +1477,6 @@ const EventHeatmap: React.FC = () => {
             align-items: center;
             justify-content: space-between;
             padding: 5px;
-            border: 2px solid ${activityCount > 0 ? "#10b981" : "#ef4444"};
             box-shadow: 0 2px 8px rgba(0,0,0,0.4);
             cursor: pointer;
             font-family: sans-serif;
