@@ -24,9 +24,7 @@ const MessageReactions: React.FC<MessageReactionsProps> = ({
   }
 
   return (
-    // Add flex-wrap and items-center to ensure reactions wrap correctly
-    // and are vertically aligned within the container.
-    <div className="flex flex-wrap items-center gap-1">
+    <div className="flex justify-between items-center gap-2">
       {hasReactions && (
         <ReactionBar
           reactions={reactions}
@@ -41,7 +39,7 @@ const MessageReactions: React.FC<MessageReactionsProps> = ({
             <Button
               variant="ghost"
               size="icon"
-              className="h-5 w-5 p-0 text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 transition-all duration-200"
+              className="h-5 w-5 p-0 text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 transition-all duration-200 ml-auto"
             >
               <Plus className="h-3 w-3" />
             </Button>

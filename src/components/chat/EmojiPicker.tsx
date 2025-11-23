@@ -41,7 +41,7 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ onEmojiSelect, trigger }) => 
         )}
       </PopoverTrigger>
       <PopoverContent
-        className="w-80 p-3 bg-popover border-border"
+        className="w-80 p-3 bg-popover border-border z-[99999]"
         side="top"
         align="start"
       >
