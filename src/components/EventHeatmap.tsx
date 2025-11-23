@@ -1932,6 +1932,8 @@ const EventHeatmap: React.FC = () => {
       <HeatmapHeader
         selectedCity={selectedCity}
         onCityChange={setSelectedCity}
+        events={events}
+        selectedDate={selectedDate}
         chatInputProps={{
           input: aiChatInput,
           setInput: setAiChatInput,
