@@ -101,7 +101,7 @@ const tribeSpots = [
 ];
 
 const EventHeatmap: React.FC = () => {
-  const { selectedCity } = useEventContext();
+  const { selectedCity, setSelectedCity } = useEventContext();
   const { events, isLoading, refreshEvents, addUserEvent, handleLikeEvent } = useEvents(selectedCity);
   const { currentUser, userProfile, refetchProfile } = useUserProfile();
   const [selectedCategory, setSelectedCategory] = useState<FilterGroup>(() => {
@@ -1931,6 +1931,7 @@ const EventHeatmap: React.FC = () => {
       {/* Live Ticker Header */}
       <HeatmapHeader
         selectedCity={selectedCity}
+        onCityChange={setSelectedCity}
         chatInputProps={{
           input: aiChatInput,
           setInput: setAiChatInput,

@@ -2,10 +2,14 @@ import React, { useState } from 'react';
 import ChatInput from './event-chat/ChatInput';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
-import { X } from 'lucide-react';
+import { X, ChevronDown } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cities } from '@/contexts/EventContext';
+import { cn } from '@/lib/utils';
 
 interface HeatmapHeaderProps {
   selectedCity?: string;
+  onCityChange?: (cityAbbr: string) => void;
   chatInputProps?: {
     input: string;
     setInput: (value: string) => void;
@@ -34,6 +38,8 @@ interface HeatmapHeaderProps {
 }
 
 const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ 
+  selectedCity = 'bi',
+  onCityChange,
   chatInputProps, 
   onMIAOpenChange,
   hasNewDailyRecommendation = false,
@@ -41,7 +47,17 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
   isDailyRecommendationLoading = false
 }) => {
   const [showSearchBar, setShowSearchBar] = useState(false);
+  const [cityPopoverOpen, setCityPopoverOpen] = useState(false);
   const miaAvatarUrl = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png';
+
+  // Get the full city name from abbreviation
+  const currentCityObject = cities.find(c => c.abbr.toLowerCase() === selectedCity.toLowerCase());
+  const displayCityName = currentCityObject?.name || 'Bielefeld';
+
+  const handleCitySelect = (cityAbbr: string) => {
+    onCityChange?.(cityAbbr);
+    setCityPopoverOpen(false);
+  };
 
   const handleMiaIconClick = () => {
     if (hasNewDailyRecommendation && onMIAClick) {
@@ -77,11 +93,41 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
       <div className="px-3" style={{ marginTop: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}>
         <div className="bg-black/85 backdrop-blur-md border border-white/10 shadow-lg rounded-lg overflow-hidden">
           <div className="flex items-center justify-between h-11 px-3">
-            {/* Left: Categories */}
+            {/* Left: City Selector + Categories */}
             <div className="flex items-center gap-4 overflow-x-auto scrollbar-none flex-1">
-              <span className="text-white/70 text-sm font-light whitespace-nowrap">
-                Tonight in Bielefeld
-              </span>
+              {/* City Selector */}
+              <Popover open={cityPopoverOpen} onOpenChange={setCityPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <button className="flex items-center gap-1.5 text-white/70 hover:text-white text-sm font-light whitespace-nowrap transition-colors">
+                    <span>Tonight in {displayCityName}</span>
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent 
+                  className="w-56 p-2 bg-black/95 border-white/20 z-[99999]" 
+                  align="start"
+                  side="bottom"
+                >
+                  <div className="space-y-1">
+                    {cities.map((city) => (
+                      <button
+                        key={city.abbr}
+                        onClick={() => handleCitySelect(city.abbr.toLowerCase())}
+                        className={cn(
+                          "w-full text-left px-3 py-2 text-sm rounded-md transition-colors",
+                          selectedCity.toLowerCase() === city.abbr.toLowerCase()
+                            ? "bg-white/10 text-white"
+                            : "text-white/70 hover:bg-white/5 hover:text-white"
+                        )}
+                      >
+                        {city.name}
+                      </button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              {/* Category buttons */}
               {categories.map((category) => (
                 <button
                   key={category}
