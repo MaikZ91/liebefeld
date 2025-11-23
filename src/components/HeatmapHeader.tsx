@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import ChatInput from './event-chat/ChatInput';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
@@ -6,10 +6,15 @@ import { X, ChevronDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cities } from '@/contexts/EventContext';
 import { cn } from '@/lib/utils';
+import { Event } from '@/types/eventTypes';
+import { isInGroup } from '@/utils/eventCategoryGroups';
+import { isSameDay } from 'date-fns';
 
 interface HeatmapHeaderProps {
   selectedCity?: string;
   onCityChange?: (cityAbbr: string) => void;
+  events?: Event[];
+  selectedDate?: Date;
   chatInputProps?: {
     input: string;
     setInput: (value: string) => void;
@@ -40,6 +45,8 @@ interface HeatmapHeaderProps {
 const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({ 
   selectedCity = 'bi',
   onCityChange,
+  events = [],
+  selectedDate,
   chatInputProps, 
   onMIAOpenChange,
   hasNewDailyRecommendation = false,
@@ -58,6 +65,23 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
     onCityChange?.(cityAbbr);
     setCityPopoverOpen(false);
   };
+
+  // Calculate event counts per category for the selected date
+  const categoryCounts = useMemo(() => {
+    const dateToFilter = selectedDate || new Date();
+    const eventsOnDate = events.filter(event => 
+      isSameDay(new Date(event.date), dateToFilter)
+    );
+
+    return {
+      Party: eventsOnDate.filter(e => isInGroup(e.category, 'Ausgehen')).length,
+      Art: eventsOnDate.filter(e => isInGroup(e.category, 'Kreativität')).length,
+      Comedy: eventsOnDate.filter(e => ['Comedy', 'Kabarett', 'Stand-up'].includes(e.category)).length,
+      Concerts: eventsOnDate.filter(e => ['Konzert', 'Musik', 'Live Music'].includes(e.category)).length,
+      Sport: eventsOnDate.filter(e => isInGroup(e.category, 'Sport')).length,
+      Meetups: eventsOnDate.filter(e => ['Meetup', 'Treffen', 'Community'].includes(e.category)).length,
+    };
+  }, [events, selectedDate]);
 
   const handleMiaIconClick = () => {
     if (hasNewDailyRecommendation && onMIAClick) {
@@ -79,9 +103,21 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
 
   const categories = ['Party','Art', 'Comedy', 'Concerts','Sport','Meetups'];
 
+  const getCategoryPrompt = (category: string): string => {
+    const prompts: Record<string, string> = {
+      'Party': 'Zeige mir nur Party-Events und Club-Events heute',
+      'Art': 'Zeige mir nur Kunst-Events, Ausstellungen und Galerien heute',
+      'Comedy': 'Zeige mir nur Comedy-Events, Kabarett und Stand-up heute',
+      'Concerts': 'Zeige mir nur Konzerte und Live-Musik-Events heute',
+      'Sport': 'Zeige mir nur Sport-Events und Fitness-Aktivitäten heute',
+      'Meetups': 'Zeige mir nur Meetups, Treffen und Community-Events heute',
+    };
+    return prompts[category] || `Zeige mir ${category} Events heute`;
+  };
+
   const handleCategoryClick = (category: string) => {
     if (chatInputProps) {
-      const prompt = `Zeige mir Events für ${category} heute`;
+      const prompt = getCategoryPrompt(category);
       chatInputProps.setInput(prompt);
       chatInputProps.handleSendMessage(prompt);
     }
@@ -128,15 +164,21 @@ const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
               </Popover>
 
               {/* Category buttons */}
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => handleCategoryClick(category)}
-                  className="text-white/80 hover:text-white text-sm font-light whitespace-nowrap transition-colors"
-                >
-                  {category}
-                </button>
-              ))}
+              {categories.map((category) => {
+                const count = categoryCounts[category as keyof typeof categoryCounts] || 0;
+                return (
+                  <button
+                    key={category}
+                    onClick={() => handleCategoryClick(category)}
+                    className="text-white/80 hover:text-white text-sm font-light whitespace-nowrap transition-colors flex items-center gap-1"
+                  >
+                    <span>{category}</span>
+                    {count > 0 && (
+                      <span className="text-[10px] text-white/50">({count})</span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Right: MIA integrated */}
