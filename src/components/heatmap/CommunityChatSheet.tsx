@@ -88,45 +88,27 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
     }
   }, [activeCategory, messages.length]);
   
-  // Filter messages based on selected categories
+  // Filter messages based on selected categories using group_id
   const filteredMessages = useMemo(() => {
     // Single group: always filter by selected category chips
     if (messageFilter.includes('alle')) {
       return messages;
     }
 
-    const stripDiacritics = (s: string) =>
-      s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-    const umlautToAe = (s: string) =>
-      s.replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
-
-    const categorySynonyms: Record<string, string[]> = {
-      'ausgehen': ['ausgehen', 'party', 'konzert', 'festival', 'club', 'nightlife', 'bar'],
-      'kreativität': ['kreativität', 'kreativitaet', 'kreativ', 'kultur', 'workshop', 'ausstellung', 'theater', 'lesung'],
-      'sport': ['sport', 'fitness', 'yoga', 'run', 'lauf'],
-    };
+    // Get city abbreviation from the current groupId (e.g., "bi_ausgehen" -> "bi")
+    const cityAbbr = groupId.split('_')[0];
 
     return messages.filter((message) => {
-      const msgLower = (message.text || '').toLowerCase();
-      const msgAscii = stripDiacritics(msgLower);
-      const msgUmlaut = umlautToAe(msgLower);
-
+      // Always show poll messages
       if ((message as any).poll_question) return true;
 
+      // Check if message's group_id matches any of the selected categories
       return messageFilter.some((category) => {
-        const syns = categorySynonyms[category] || [category];
-        return syns.some((syn) => {
-          const tag = `#${syn.toLowerCase()}`;
-          return (
-            msgLower.includes(tag) ||
-            msgAscii.includes(stripDiacritics(tag)) ||
-            msgUmlaut.includes(umlautToAe(tag))
-          );
-        });
+        const expectedGroupId = `${cityAbbr}_${category}`;
+        return message.group_id === expectedGroupId;
       });
     });
-  }, [messages, messageFilter]);
+  }, [messages, messageFilter, groupId]);
   
   const handleSendMessage = async () => {
     if (!input.trim() || !username) return;
