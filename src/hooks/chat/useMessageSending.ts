@@ -35,9 +35,6 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
       let eventId = null;
       let eventTitle = null;
       
-      // Add category label to the message
-      const categoryLabel = `#${selectedCategory.toLowerCase()}`;
-      
       // Variables for RSVP poll (only for events)
       let pollQuestion = null;
       let pollOptions = null;
@@ -94,9 +91,6 @@ export const useMessageSending = (groupId: string, username: string, addOptimist
         pollVotes = {}; // Empty votes object
         
         messageText = `📊 ${pollQuestion}`;
-      } else {
-        // Add category label to regular messages
-        messageText = `${categoryLabel} ${messageToSend}`;
       }
       
       setNewMessage(''); // Clear message after determining content

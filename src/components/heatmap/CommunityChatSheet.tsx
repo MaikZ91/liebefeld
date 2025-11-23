@@ -22,6 +22,7 @@ import { userService } from '@/services/userService';
 import { createGroupDisplayName } from '@/utils/groupIdUtils';
 import { cities } from '@/contexts/EventContext';
 import MeetupProposal from '@/components/chat/MeetupProposal';
+import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 
 interface CommunityChatSheetProps {
   open: boolean;
@@ -66,6 +67,7 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
   }, [open]);
   
   const { replyTo, startReply, clearReply } = useReplySystem();
+  const { unreadByCategory, markCategoryAsRead } = useUnreadMessages(groupId, username);
   
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -133,8 +135,6 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
       setSending(true);
       
       let messageText = input.trim();
-      const categoryLabel = `#${activeCategory.toLowerCase()}`;
-      messageText = `${categoryLabel} ${messageText}`;
       
       setInput('');
       
@@ -274,21 +274,24 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
           {/* Category Filter - Premium Urban Chips */}
           <div className="px-3 pt-3 pb-2 pr-12">
             <div className="flex gap-2 justify-center">
-                {['ausgehen', 'kreativität', 'sport'].map((category) => {
+                  {['ausgehen', 'kreativität', 'sport'].map((category) => {
                   const isActive = messageFilter.includes(category);
+                  const hasUnread = unreadByCategory[category] || false;
                   
                   return (
                     <button
                       key={category}
                       className={cn(
-                        'h-7 px-3 text-xs font-medium rounded-full transition-all duration-200 border',
+                        'h-7 px-3 text-xs font-medium rounded-full transition-all duration-200 border relative',
                         isActive 
                           ? 'bg-white/10 text-white border-white/20'
-                          : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border-white/10'
+                          : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border-white/10',
+                        hasUnread && !isActive && 'before:absolute before:inset-0 before:rounded-full before:p-[2px] before:animate-border-spin before:-z-10'
                       )}
                       onClick={() => {
                         setMessageFilter([category]);
                         onCategoryChange?.(category);
+                        markCategoryAsRead(category);
                       }}
                     >
                       #{category}
@@ -434,13 +437,12 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
                           </div>
                         </div>
                         
-                        {message.reactions && message.reactions.length > 0 && (
-                          <MessageReactions
-                            reactions={message.reactions}
-                            onReact={(emoji) => handleReaction(message.id, emoji)}
-                            currentUsername={username}
-                          />
-                        )}
+                        <MessageReactions
+                          reactions={message.reactions || []}
+                          onReact={(emoji) => handleReaction(message.id, emoji)}
+                          currentUsername={username}
+                          showAddButton={true}
+                        />
                       </div>
                     </div>
                   );
