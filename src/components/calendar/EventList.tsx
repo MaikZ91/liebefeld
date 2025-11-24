@@ -93,7 +93,7 @@ const EventList: React.FC<EventListProps> = memo(({
   
   const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
 const { filter, setFilter, topEventsPerDay } = useEventContext();
-const { activeCategory } = useChatPreferences();
+const { activeCategory, setActiveCategory } = useChatPreferences();
 const groupFilter = activeCategory as FilterGroup;
 const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).filter(Boolean))) as string[], [events]);
 
@@ -258,12 +258,13 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
               const isActive = groupFilter === category;
               
               return (
-                <div
+                <button
                   key={category}
-                  className={`h-7 px-3 text-xs font-medium rounded-full transition-all duration-200 border flex-1 flex items-center justify-center ${isActive ? 'bg-white/10 text-white border-white/20' : 'bg-transparent text-white/60 border-white/10'}`}
+                  onClick={() => setActiveCategory(category as FilterGroup)}
+                  className={`h-7 px-3 text-xs font-medium rounded-full transition-all duration-200 border flex-1 flex items-center justify-center cursor-pointer hover:bg-white/5 ${isActive ? 'bg-white/10 text-white border-white/20' : 'bg-transparent text-white/60 border-white/10'}`}
                 >
                   #{category}
-                </div>
+                </button>
               );
             })}
           </div>
