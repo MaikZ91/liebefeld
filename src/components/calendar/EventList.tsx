@@ -91,11 +91,10 @@ const EventList: React.FC<EventListProps> = memo(({
   const listRef = useRef<HTMLDivElement>(null);
   const todayRef = useRef<HTMLDivElement>(null);
   
-  const [topTodayEvent, setTopTodayEvent] = useState<Event | null>(null);
-const { filter, setFilter, topEventsPerDay } = useEventContext();
-const { activeCategory, setActiveCategory } = useChatPreferences();
-const groupFilter = activeCategory as FilterGroup;
-const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).filter(Boolean))) as string[], [events]);
+  const { filter, setFilter, topEventsPerDay } = useEventContext();
+  const { activeCategory, setActiveCategory } = useChatPreferences();
+  const groupFilter = activeCategory as FilterGroup;
+  const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).filter(Boolean))) as string[], [events]);
 
   const filteredEvents = useMemo(() => {
     let base = events;
@@ -123,6 +122,35 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
 
     return base;
   }, [events, filter, groupFilter]);
+
+  // Calculate top today event based on current filtered events
+  const topTodayEvent = useMemo(() => {
+    const todayEvents = filteredEvents.filter(event => {
+      if (!event.date) return false;
+      try {
+        const eventDate = parseISO(event.date);
+        return isToday(eventDate);
+      } catch (error) {
+        console.error(`Error checking if event is today:`, error);
+        return false;
+      }
+    });
+    
+    if (todayEvents.length === 0) return null;
+    
+    const popular = [...todayEvents].sort((a, b) => {
+      const likesA = a.likes || 0;
+      const likesB = b.likes || 0;
+      
+      if (likesB !== likesA) {
+        return likesB - likesA;
+      }
+      
+      return a.id.localeCompare(b.id);
+    })[0];
+    
+    return popular;
+  }, [filteredEvents]);
 
   const displayEvents = useMemo(() => {
     if (!showFavorites) return filteredEvents;
@@ -175,38 +203,6 @@ const categories = useMemo(() => Array.from(new Set(events.map(e => e.category).
     
     return items;
   }, [filteredEvents]);
-  
-  useEffect(() => {
-    if (displayEvents.length > 0) {
-      const todayEvents = displayEvents.filter(event => {
-        if (!event.date) return false;
-        try {
-          const eventDate = parseISO(event.date);
-          return isToday(eventDate);
-        } catch (error) {
-          console.error(`Error checking if event is today:`, error);
-          return false;
-        }
-      });
-      
-      if (todayEvents.length > 0) {
-        const popular = [...todayEvents].sort((a, b) => {
-          const likesA = a.likes || 0;
-          const likesB = b.likes || 0;
-          
-          if (likesB !== likesA) {
-            return likesB - likesA;
-          }
-          
-          return a.id.localeCompare(b.id);
-        })[0];
-        
-        setTopTodayEvent(popular);
-      } else {
-        setTopTodayEvent(null);
-      }
-    }
-  }, [displayEvents]);
 
 
 
