@@ -164,43 +164,43 @@ const EventList: React.FC<EventListProps> = memo(({
 
   // Flatten events by date for virtuoso
   const virtualizedItems = useMemo(() => {
-    const grouped = groupEventsByDate(filteredEvents);
-    
-    Object.keys(grouped).forEach(dateStr => {
-      grouped[dateStr].sort((a, b) => {
-        const likesA = a.likes || 0;
-        const likesB = b.likes || 0;
-        
-        if (likesB !== likesA) {
-          return likesB - likesA;
-        }
-        
-        const timeA = a.time || '00:00';
-        const timeB = b.time || '00:00';
-        
-        const [hourA, minuteA] = timeA.split(':').map(Number);
-        const [hourB, minuteB] = timeB.split(':').map(Number);
-        
-        if (hourA !== hourB) {
-          return hourA - hourB;
-        }
-        if (minuteA !== minuteB) {
-          return minuteA - minuteB;
-        }
-        
-        return a.id.localeCompare(b.id);
-      });
+    // Sort all events globally by likes (desc), then date, then time
+    const sortedEvents = [...filteredEvents].sort((a, b) => {
+      const likesA = a.likes || 0;
+      const likesB = b.likes || 0;
+
+      if (likesB !== likesA) {
+        return likesB - likesA;
+      }
+
+      // Fallback: earlier date first
+      const dateA = a.date || '';
+      const dateB = b.date || '';
+      if (dateA !== dateB) {
+        return dateA.localeCompare(dateB);
+      }
+
+      // Fallback: earlier time first
+      const timeA = a.time || '00:00';
+      const timeB = b.time || '00:00';
+      return timeA.localeCompare(timeB);
     });
-    
-    // Convert to flat array with headers
+
     const items: Array<{ type: 'header'; dateStr: string } | { type: 'event'; event: Event; dateStr: string }> = [];
-    Object.keys(grouped).sort().forEach(dateStr => {
-      items.push({ type: 'header', dateStr });
-      grouped[dateStr].forEach(event => {
-        items.push({ type: 'event', event, dateStr });
-      });
+    let lastDateStr: string | null = null;
+
+    sortedEvents.forEach(event => {
+      if (!event.date) return;
+      const dateStr = event.date;
+
+      if (dateStr !== lastDateStr) {
+        items.push({ type: 'header', dateStr });
+        lastDateStr = dateStr;
+      }
+
+      items.push({ type: 'event', event, dateStr });
     });
-    
+
     return items;
   }, [filteredEvents]);
 
