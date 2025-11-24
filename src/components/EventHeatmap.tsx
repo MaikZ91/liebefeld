@@ -2213,9 +2213,9 @@ const EventHeatmap: React.FC = () => {
               variant="ghost"
               size="icon"
               onClick={() => setShowEventList(false)}
-              className="absolute -top-2 -right-2 z-10 h-10 w-10 rounded-full bg-red-600/90 backdrop-blur-xl text-white hover:bg-red-700 shadow-lg shadow-red-500/30"
+              className="absolute top-3 right-3 z-10 h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-all border border-white/10"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </Button>
 
             <EventList
