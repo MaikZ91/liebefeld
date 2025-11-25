@@ -164,10 +164,13 @@ const EventList: React.FC<EventListProps> = memo(({
 
   // Flatten events by date for virtuoso
   const virtualizedItems = useMemo(() => {
+    // Create a likes map to ensure we're using the latest values
+    const likesMap = new Map(filteredEvents.map(e => [e.id, e.likes || 0]));
+    
     // Sort all events globally by likes (desc), then date, then time
     const sortedEvents = [...filteredEvents].sort((a, b) => {
-      const likesA = a.likes || 0;
-      const likesB = b.likes || 0;
+      const likesA = likesMap.get(a.id) || 0;
+      const likesB = likesMap.get(b.id) || 0;
 
       if (likesB !== likesA) {
         return likesB - likesA;
@@ -202,7 +205,7 @@ const EventList: React.FC<EventListProps> = memo(({
     });
 
     return items;
-  }, [filteredEvents]);
+  }, [filteredEvents, filteredEvents.map(e => e.likes).join(',')]);
 
 
 
