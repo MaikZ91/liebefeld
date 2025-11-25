@@ -1895,33 +1895,7 @@ const EventHeatmap: React.FC = () => {
     setIsEventFormOpen(true);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
-        <div className="flex flex-col items-center space-y-6">
-          {/* MIA Logo */}
-          <div className="relative">
-            <div className="absolute inset-0 bg-primary/30 rounded-full blur-2xl animate-pulse" />
-            <img
-              src="/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png"
-              alt="MIA"
-              className="relative w-20 h-20 object-contain drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]"
-            />
-          </div>
-
-          {/* Text */}
-          <div className="text-center space-y-2">
-            <p className="text-white/90 font-medium">MIA lädt Events</p>
-            <div className="flex items-center justify-center gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" />
-              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0.15s" }} />
-              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0.3s" }} />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // No loading screen - render map immediately
 
   const selectedCategoryData = categories.find((cat) => cat.name === "alle");
   const selectedCategoryDisplay = selectedCategory === "alle" ? "Alle" : selectedCategory;
