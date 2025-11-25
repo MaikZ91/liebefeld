@@ -72,10 +72,7 @@ const GroupChat: React.FC<GroupChatProps> = ({
     return () => clearTimeout(timer);
   }, []);
   
-  // Show loading skeleton during initialization
-  if (isInitializing && loading) {
-    return <ChatLoadingSkeleton />;
-  }
+  // No loading skeleton - show content immediately
 
   return (
     <div className="flex flex-col h-full">

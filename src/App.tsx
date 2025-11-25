@@ -141,11 +141,7 @@ function App() {
                 onboardingAction={onboardingRedirectTarget}
                 onNavigated={resetOnboardingRedirect}
               />
-              <Suspense fallback={
-                <div className="flex items-center justify-center min-h-screen">
-                  <div className="animate-pulse text-muted-foreground">Lädt...</div>
-                </div>
-              }>
+              <Suspense fallback={null}>
                 <Routes>
                   {/* Heatmap as main page, now wrapped by Layout */}
                   <Route path="/" element={<Layout><Heatmap /></Layout>} />
