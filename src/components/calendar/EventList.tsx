@@ -24,19 +24,21 @@ interface EventListProps {
   favoriteCount?: number;
   onShowEventForm?: () => void;
   onDislike?: (eventId: string) => void;
+  onLike?: (eventId: string) => void;
   chatInput?: string;
   onChatInputChange?: (value: string) => void;
   onChatSend?: (message?: string) => Promise<void>;
 }
 
 
-const MemoizedEventCard = memo(({ event, date, onSelectEvent, isTopEvent, isNewEvent, onDislike }: {
+const MemoizedEventCard = memo(({ event, date, onSelectEvent, isTopEvent, isNewEvent, onDislike, onLike }: {
   event: Event;
   date: Date;
   onSelectEvent: (event: Event, date: Date) => void;
   isTopEvent: boolean;
   isNewEvent: boolean;
   onDislike?: (eventId: string) => void;
+  onLike?: (eventId: string) => void;
 }) => {
   const handleClick = useCallback(() => {
     onSelectEvent(event, date);
@@ -64,6 +66,7 @@ const MemoizedEventCard = memo(({ event, date, onSelectEvent, isTopEvent, isNewE
           className={`${isTopEvent ? 'border-l-2 border-white' : isNewEvent ? 'border-l-2 border-gray-400' : ''} relative w-full`}
           monochrome
           onDislike={onDislike}
+          onLike={onLike}
         />
       </div>
     </div>
@@ -82,6 +85,7 @@ const EventList: React.FC<EventListProps> = memo(({
   favoriteCount = 0,
   onShowEventForm,
   onDislike,
+  onLike,
   chatInput = '',
   onChatInputChange,
   onChatSend
@@ -244,10 +248,11 @@ const EventList: React.FC<EventListProps> = memo(({
           isTopEvent={isTopEvent}
           isNewEvent={isNewEvent}
           onDislike={onDislike}
+          onLike={onLike}
         />
       </div>
     );
-  }, [virtualizedItems, topTodayEvent, onSelectEvent, onDislike]);
+  }, [virtualizedItems, topTodayEvent, onSelectEvent, onDislike, onLike]);
 
     return (
       <div className="relative overflow-hidden rounded-3xl border border-white/5 bg-black w-full max-w-full flex flex-col" style={{ height: 'calc(100vh - 96px)' }}>
