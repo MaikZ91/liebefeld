@@ -17,6 +17,7 @@ interface EventCardProps {
   compact?: boolean;
   monochrome?: boolean;
   onDislike?: (eventId: string) => void;
+  onLike?: (eventId: string) => void;
 }
 
 // Category icon mappings
@@ -61,7 +62,7 @@ const isEventNew = (event: Event): boolean => {
   return new Date(event.created_at) > twentyFourHoursAgo;
 };
 
-const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, compact = false, monochrome = false, onDislike }) => {
+const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, compact = false, monochrome = false, onDislike, onLike }) => {
   const { handleLikeEvent } = useEventContext();
   const [isLiking, setIsLiking] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -88,7 +89,14 @@ const EventCard: React.FC<EventCardProps> = memo(({ event, onClick, className, c
     }
 
     setIsLiking(true);
-    await handleLikeEvent(event.id);
+    
+    // Use onLike prop if provided, otherwise fall back to context
+    if (onLike) {
+      await onLike(event.id);
+    } else {
+      await handleLikeEvent(event.id);
+    }
+    
     setTimeout(() => setIsLiking(false), 250);
   };
 

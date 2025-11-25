@@ -2208,6 +2208,7 @@ const EventHeatmap: React.FC = () => {
                 setIsEventFormOpen(true);
               }}
               onDislike={handleEventDislike}
+              onLike={handleEventLike}
               chatInput={aiChatInput}
               onChatInputChange={setAiChatInput}
               onChatSend={handleAIChatSend}
