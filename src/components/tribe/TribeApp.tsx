@@ -209,15 +209,48 @@ export const TribeApp: React.FC = () => {
       }
     }
     
-    // Sort: Liked events first, then by date
+    // Sort: Custom priority order
     result.sort((a, b) => {
       const isLikedA = likedEventIds.has(a.id);
       const isLikedB = likedEventIds.has(b.id);
       
+      // Liked events always come first
       if (isLikedA && !isLikedB) return -1;
       if (!isLikedA && isLikedB) return 1;
       
-      return new Date(a.date).getTime() - new Date(b.date).getTime();
+      // Check if events have images
+      const hasImageA = !!a.image_url;
+      const hasImageB = !!b.image_url;
+      
+      // Events without images go to the end
+      if (hasImageA && !hasImageB) return -1;
+      if (!hasImageA && hasImageB) return 1;
+      
+      // Category priority: Ausgehen > Kreativität > Sport
+      const categoryOrder: Record<string, number> = {
+        'ausgehen': 1,
+        'party': 1,
+        'konzert': 1,
+        'kreativität': 2,
+        'art': 2,
+        'sport': 3,
+      };
+      
+      const categoryA = categoryOrder[a.category?.toLowerCase() || ''] || 999;
+      const categoryB = categoryOrder[b.category?.toLowerCase() || ''] || 999;
+      
+      if (categoryA !== categoryB) {
+        return categoryA - categoryB;
+      }
+      
+      // Within same category, sort by date and time
+      const dateCompare = new Date(a.date).getTime() - new Date(b.date).getTime();
+      if (dateCompare !== 0) return dateCompare;
+      
+      // If same date, sort by time
+      const timeA = a.time || '00:00';
+      const timeB = b.time || '00:00';
+      return timeA.localeCompare(timeB);
     });
     
     return result;
