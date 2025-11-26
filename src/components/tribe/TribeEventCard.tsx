@@ -170,8 +170,14 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
         {/* AI Summary */}
         {summary && (
           <div className="px-2 pb-2 animate-fadeIn">
-            <div className="bg-zinc-900/50 border-l-2 border-gold px-2 py-1.5">
-              <p className="text-[10px] text-zinc-300 leading-relaxed">"{summary}"</p>
+            <div className="bg-zinc-900/50 border-l-2 border-gold px-2 py-1.5 relative">
+              <button
+                onClick={(e) => { e.stopPropagation(); setSummary(null); }}
+                className="absolute top-1 right-1 text-zinc-600 hover:text-white transition-colors"
+              >
+                <X size={10} />
+              </button>
+              <p className="text-[10px] text-zinc-300 leading-relaxed pr-4">"{summary}"</p>
             </div>
           </div>
         )}
@@ -283,8 +289,14 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
         {/* Action Bar */}
         <div className="mt-4 flex gap-2 pl-24">
             {summary ? (
-                 <div className="bg-zinc-900/50 p-3 border-l border-gold animate-fadeIn w-full">
-                     <p className="text-sm text-zinc-300 font-light leading-relaxed">"{summary}"</p>
+                 <div className="bg-zinc-900/50 p-3 border-l border-gold animate-fadeIn w-full relative">
+                     <button
+                       onClick={(e) => { e.stopPropagation(); setSummary(null); }}
+                       className="absolute top-2 right-2 text-zinc-600 hover:text-white transition-colors"
+                     >
+                       <X size={14} />
+                     </button>
+                     <p className="text-sm text-zinc-300 font-light leading-relaxed pr-8">"{summary}"</p>
                  </div>
             ) : (
                 <>
