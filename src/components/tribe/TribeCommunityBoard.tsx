@@ -9,7 +9,7 @@ interface Props {
   userProfile: UserProfile;
 }
 
-type Tab = 'ALL' | 'CREW' | 'TIPS';
+type Tab = 'ALL' | 'TRIBE' | 'TIPS';
 
 const TRIBE_BOARD_GROUP_ID = 'tribe_community_board';
 
@@ -155,7 +155,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
 
   const filteredPosts = posts.filter(p => {
       if (selectedCity !== 'All' && p.city !== selectedCity) return false;
-      if (activeTab === 'CREW') return p.tags.includes('CrewCall') || p.tags.includes('Connect');
+      if (activeTab === 'TRIBE') return p.tags.includes('TribeCall') || p.tags.includes('Connect');
       if (activeTab === 'TIPS') return p.tags.includes('Question') || p.tags.includes('Tip');
       return true;
   });
@@ -172,10 +172,10 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
   const handlePost = async () => {
     if (!newPost.trim()) return;
     
-    // Auto-tag 'CrewCall' if text implies it (simple check for demo)
+    // Auto-tag 'TribeCall' if text implies it (simple check for demo)
     const tags = [...generatedTags];
-    if (newPost.toLowerCase().includes('suche') || newPost.toLowerCase().includes('crew') || newPost.toLowerCase().includes('wer')) {
-        if (!tags.includes('CrewCall')) tags.push('CrewCall');
+    if (newPost.toLowerCase().includes('suche') || newPost.toLowerCase().includes('tribe') || newPost.toLowerCase().includes('wer')) {
+        if (!tags.includes('TribeCall')) tags.push('TribeCall');
     }
 
     // Add hashtags to text
@@ -311,7 +311,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
         <div className="px-6 py-4 flex gap-4 overflow-x-auto no-scrollbar border-b border-white/5">
             {[
                 { id: 'ALL', label: 'All Posts' },
-                { id: 'CREW', label: 'Crew Search' },
+                { id: 'TRIBE', label: 'Tribe Search' },
                 { id: 'TIPS', label: 'Insider Tips' }
             ].map(tab => (
                 <button
@@ -348,8 +348,8 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                                     <span className="block text-[10px] text-zinc-600">{post.city} • {post.time}</span>
                                 </div>
                             </div>
-                            {post.tags.includes('CrewCall') && (
-                                <span className="bg-gold/10 text-gold border border-gold/20 text-[9px] font-bold px-2 py-0.5 uppercase tracking-widest rounded-sm">Crew Call</span>
+                            {post.tags.includes('TribeCall') && (
+                                <span className="bg-gold/10 text-gold border border-gold/20 text-[9px] font-bold px-2 py-0.5 uppercase tracking-widest rounded-sm">Tribe Call</span>
                             )}
                         </div>
 

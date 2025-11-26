@@ -6,7 +6,7 @@ import { Sparkles, Users, Share2, X, Heart, Check } from 'lucide-react';
 interface EventCardProps {
   event: TribeEvent;
   variant?: 'hero' | 'standard' | 'compact';
-  onJoinCrew?: (eventName: string) => void;
+  onJoinTribe?: (eventName: string) => void;
   onInteraction?: (eventId: string, type: 'like' | 'dislike') => void;
   isLiked?: boolean;
   isAttending?: boolean;
@@ -33,7 +33,7 @@ const formatTime = (timeStr?: string | null) => {
 export const TribeEventCard: React.FC<EventCardProps> = ({ 
   event, 
   variant = 'standard', 
-  onJoinCrew,
+  onJoinTribe,
   onInteraction,
   isLiked = false,
   isAttending = false,
@@ -264,10 +264,10 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                 </button>
 
                 <button 
-                    onClick={() => onJoinCrew && onJoinCrew(event.title)}
-                    className="h-9 flex-1 flex items-center justify-center gap-2 bg-white hover:bg-zinc-200 text-black text-xs font-bold tracking-wide transition-colors"
+                    onClick={() => onJoinTribe && onJoinTribe(event.title)}
+                    className="h-9 flex-1 flex items-center justify-center gap-2 bg-white hover:bg-zinc-200 text-black text-[11px] font-bold tracking-wide transition-colors whitespace-nowrap"
                 >
-                    Join Crew
+                    Join Tribe
                 </button>
                 </>
             )}

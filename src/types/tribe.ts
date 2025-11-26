@@ -60,7 +60,7 @@ export interface Post {
   tags: string[];
   userAvatar?: string;
   comments?: Comment[];
-  isCrewCall?: boolean;
+  isTribeCall?: boolean;
 }
 
 export enum ViewState {

@@ -237,16 +237,16 @@ export const TribeApp: React.FC = () => {
     }, 1000);
   };
 
-  const handleJoinCrew = (eventName: string) => {
+  const handleJoinTribe = (eventName: string) => {
     if (!userProfile) return;
     const newPost: Post = {
         id: Date.now().toString(),
         user: userProfile.username,
-        text: `Who is going to "${eventName}"? Looking for a crew!`,
+        text: `Who is going to "${eventName}"? Looking for tribe members!`,
         city: selectedCity,
         likes: 0,
         time: 'Just now',
-        tags: ['CrewCall'],
+        tags: ['TribeCall'],
         userAvatar: userProfile.avatarUrl
     };
     setPosts([newPost, ...posts]);
@@ -432,7 +432,7 @@ export const TribeApp: React.FC = () => {
                               <TribeEventCard 
                                 event={event} 
                                 variant={isCompactMode ? 'compact' : 'standard'}
-                                onJoinCrew={handleJoinCrew}
+                                onJoinTribe={handleJoinTribe}
                                 onInteraction={handleInteraction}
                                 isLiked={likedEventIds.has(event.id)}
                                 isAttending={attendingEventIds.has(event.id)}
