@@ -326,7 +326,7 @@ export const TribeApp: React.FC = () => {
         {view === ViewState.FEED && (
           <div className="animate-fadeIn pb-20">
             {/* Nexus Section */}
-            <div className="px-6 pt-8 pb-6 bg-gradient-to-b from-black via-black to-transparent">
+            <div className="px-6 pt-4 pb-6 bg-gradient-to-b from-black via-black to-transparent border border-white/5 rounded-xl mx-4 mt-4">
               {/* Nexus Search Bar */}
               <div className="relative group mb-3">
                 <input 
