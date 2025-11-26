@@ -200,13 +200,83 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-90"></div>
                 
+                {/* TINDER ACTIONS OVERLAY */}
+                <div className="absolute right-3 top-3 flex flex-col gap-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); onInteraction?.(event.id, 'dislike'); }}
+                    className="w-9 h-9 rounded-full bg-black/80 border border-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white backdrop-blur-sm"
+                  >
+                    <X size={16} />
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); onInteraction?.(event.id, 'like'); }}
+                    className={`w-9 h-9 rounded-full bg-black/80 border flex items-center justify-center transition-colors backdrop-blur-sm ${isLiked ? 'border-gold text-gold' : 'border-zinc-700 text-zinc-400 hover:border-gold hover:text-gold'}`}
+                  >
+                    <Heart size={16} fill={isLiked ? "currentColor" : "none"} />
+                  </button>
+                </div>
+                
                 <div className="absolute bottom-5 left-5 right-5">
                     <div className="flex items-center gap-3 mb-2">
                          <span className="bg-black text-gold px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest">{formatEventDate(event.date, true)}</span>
                          {event.category && <span className="text-zinc-300 text-[10px] uppercase tracking-widest">{event.category}</span>}
                     </div>
                     <h2 className="text-2xl font-light text-white leading-none mb-2">{event.title}</h2>
-                    <p className="text-zinc-400 text-xs font-light">{event.city}</p>
+                    <p className="text-zinc-400 text-xs font-light mb-3">{event.city}</p>
+                    
+                    {/* Community Section */}
+                    <div className="flex items-center gap-3 mb-3">
+                        <div className="flex -space-x-3">
+                            {isAttending && (
+                              <div className="w-7 h-7 rounded-full border-2 border-gold bg-black flex items-center justify-center relative z-10">
+                                <Check size={14} className="text-gold" />
+                              </div>
+                            )}
+                            {mockAvatars.slice(0, 3).map((url, i) => (
+                                <img key={i} src={url} className="w-7 h-7 rounded-full border-2 border-black object-cover grayscale" />
+                            ))}
+                        </div>
+                        <span className={`text-xs font-light ${isAttending ? "text-gold" : "text-zinc-400"}`}>
+                            +{currentAttendees} going
+                        </span>
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    {summary ? (
+                      <div className="bg-zinc-900/80 p-3 border-l border-gold animate-fadeIn backdrop-blur-sm relative">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setSummary(null); }}
+                          className="absolute top-2 right-2 text-zinc-600 hover:text-white transition-colors"
+                        >
+                          <X size={12} />
+                        </button>
+                        <p className="text-xs text-zinc-300 font-light leading-relaxed pr-6">"{summary}"</p>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); handleGetSummary(e); }}
+                            disabled={loadingSummary}
+                            className="h-9 px-3 flex items-center justify-center gap-1.5 bg-zinc-900/80 hover:bg-zinc-800/80 text-zinc-300 text-[10px] font-medium tracking-wide transition-colors border border-white/5 backdrop-blur-sm"
+                        >
+                            {loadingSummary ? <span className="animate-pulse">Checking...</span> : <><Sparkles size={12} className="text-gold" /> Vibe</>}
+                        </button>
+                        
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); onToggleAttendance?.(event.id); }}
+                            className={`h-9 px-3 flex items-center justify-center gap-1.5 text-[10px] font-bold tracking-wide transition-colors border backdrop-blur-sm ${isAttending ? 'bg-gold text-black border-gold' : 'bg-transparent text-gold border-gold/30 hover:bg-gold/10'}`}
+                        >
+                            {isAttending ? <><Check size={12} /> GOING</> : 'RSVP'}
+                        </button>
+
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); onJoinTribe?.(event.title); }}
+                            className="h-9 flex-1 flex items-center justify-center gap-1.5 bg-white/90 hover:bg-white text-black text-[10px] font-bold tracking-wide transition-colors backdrop-blur-sm"
+                        >
+                            Join Tribe
+                        </button>
+                      </div>
+                    )}
                 </div>
             </div>
         </div>
