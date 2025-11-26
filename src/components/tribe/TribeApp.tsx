@@ -209,10 +209,34 @@ export const TribeApp: React.FC = () => {
       }
     }
     
+    // Helper function to detect "Ausgehen" events by keywords
+    const isAusgehenEvent = (event: TribeEvent): boolean => {
+      const category = (event.category || '').toLowerCase();
+      const title = (event.title || '').toLowerCase();
+      const location = (event.location || '').toLowerCase();
+      
+      // Check category first
+      if (['ausgehen', 'party', 'konzert', 'concert'].includes(category)) {
+        return true;
+      }
+      
+      // Check for ausgehen keywords in title or location
+      const ausgehenKeywords = [
+        'party', 'club', 'konzert', 'concert', 'bar', 'kneipe', 'disco',
+        'festival', 'live', 'dj', 'techno', 'house', 'punk', 'rock',
+        'jazz', 'blues', 'open air', 'club', 'tanzveranstaltung', 'tanzen',
+        'kulturzentrum', 'forum', 'ringlokschuppen', 'bunker', 'nachtleben'
+      ];
+      
+      return ausgehenKeywords.some(keyword => 
+        title.includes(keyword) || location.includes(keyword)
+      );
+    };
+    
     // Sort with priority:
     // 1. Liked events first
     // 2. All events WITH images (any category) before events without images
-    // 3. Within events with images: Ausgehen > Kreativität > Sport > Others by time
+    // 3. Within events with images: Ausgehen (including keyword-detected) > Kreativität > Sport > Others by time
     // 4. Events without images last
     result.sort((a, b) => {
       const isLikedA = likedEventIds.has(a.id);
@@ -227,15 +251,19 @@ export const TribeApp: React.FC = () => {
       const hasImageB = !!b.image_url;
       
       // Priority 2: ALL events with images come before events without images
-      // This means even "other" categories with images come before categorized events without images
       if (hasImageA && !hasImageB) return -1;
       if (!hasImageA && hasImageB) return 1;
       
       // Priority 3: Among events with images, sort by category priority
+      const isAusgehenA = isAusgehenEvent(a);
+      const isAusgehenB = isAusgehenEvent(b);
+      
+      // Ausgehen events (by category or keywords) come first
+      if (isAusgehenA && !isAusgehenB) return -1;
+      if (!isAusgehenA && isAusgehenB) return 1;
+      
+      // Then normal category priority
       const categoryOrder: Record<string, number> = {
-        'ausgehen': 1,
-        'party': 1,
-        'konzert': 1,
         'kreativität': 2,
         'art': 2,
         'sport': 3,
