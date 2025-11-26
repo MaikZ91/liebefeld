@@ -312,21 +312,21 @@ export const TribeApp: React.FC = () => {
             {/* Nexus Section */}
             <div className="px-6 pt-6 pb-4 bg-gradient-to-b from-black via-black to-transparent">
               {/* Nexus Search Bar */}
-              <div className="relative group mb-4">
+              <div className="relative group mb-3">
                 <input 
                   type="text"
                   value={nexusInput}
                   onChange={(e) => setNexusInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleNexusAsk(nexusInput)}
                   placeholder="Ask Nexus..."
-                  className="w-full bg-surface/90 backdrop-blur-md border border-white/10 focus:border-gold/50 text-white text-base placeholder-zinc-500 rounded-full py-4 px-6 outline-none transition-all shadow-2xl"
+                  className="w-full bg-black border border-white/20 focus:border-white/40 text-white text-sm placeholder-zinc-600 rounded-full py-3 px-5 outline-none transition-all"
                 />
                 {nexusInput.trim() && (
                   <button 
                     onClick={() => handleNexusAsk(nexusInput)}
-                    className="absolute inset-y-0 right-4 flex items-center text-gold hover:text-gold/80 transition-all"
+                    className="absolute inset-y-0 right-3 flex items-center text-zinc-500 hover:text-gold transition-all"
                   >
-                    <Send size={20} />
+                    <Send size={16} />
                   </button>
                 )}
               </div>
@@ -335,13 +335,13 @@ export const TribeApp: React.FC = () => {
               <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
                 <button 
                   onClick={() => { setNexusInput('Vibe Check: *TRIBE BOULDERN?'); handleNexusAsk('Vibe Check: *TRIBE BOULDERN?'); }}
-                  className="px-4 py-2 bg-surface border border-white/10 text-zinc-300 text-sm whitespace-nowrap rounded-full hover:border-gold/50 hover:text-white transition-all"
+                  className="px-3 py-1.5 bg-black border border-white/20 text-zinc-400 text-xs whitespace-nowrap rounded-full hover:border-white/40 hover:text-white transition-all"
                 >
                   Vibe Check: *TRIBE BOULDERN?
                 </button>
                 <button 
                   onClick={() => { setNexusInput(`Was geht heute in ${selectedCity}?`); handleNexusAsk(`Was geht heute in ${selectedCity}?`); }}
-                  className="px-4 py-2 bg-surface border border-white/10 text-zinc-300 text-sm whitespace-nowrap rounded-full hover:border-gold/50 hover:text-white transition-all"
+                  className="px-3 py-1.5 bg-black border border-white/20 text-zinc-400 text-xs whitespace-nowrap rounded-full hover:border-white/40 hover:text-white transition-all"
                 >
                   Was geht heute in {selectedCity}?
                 </button>
