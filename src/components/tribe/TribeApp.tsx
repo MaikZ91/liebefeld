@@ -265,98 +265,122 @@ export const TribeApp: React.FC = () => {
     <div className="min-h-screen bg-black text-white pb-24 overflow-x-hidden relative font-sans selection:bg-gold selection:text-black">
       
       {/* --- HEADER --- */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/5 px-6 py-4 flex justify-between items-center max-w-2xl mx-auto">
-        {/* THE TRIBE LOGO */}
-        <div className="flex items-center gap-3">
-             <div className="relative w-6 h-6">
-                <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L2 22H22L12 2Z" className="fill-white"/>
-                    <circle cx="12" cy="14" r="3" className="fill-black"/>
-                </svg>
-             </div>
-             <span className="text-sm font-extrabold tracking-[0.25em] text-white">THE TRIBE</span>
+      <header className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/5 max-w-2xl mx-auto">
+        <div className="px-6 py-4 flex justify-between items-center">
+          {/* THE TRIBE LOGO */}
+          <div className="flex items-center gap-3">
+               <div className="relative w-6 h-6">
+                  <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2L2 22H22L12 2Z" className="fill-white"/>
+                      <circle cx="12" cy="14" r="3" className="fill-black"/>
+                  </svg>
+               </div>
+               <span className="text-sm font-extrabold tracking-[0.25em] text-white">THE TRIBE</span>
+          </div>
+
+          {/* CITY SELECTOR */}
+          <div className="relative">
+              <button 
+                  onClick={() => setIsCityMenuOpen(!isCityMenuOpen)} 
+                  className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-white hover:text-gold transition-colors px-3 py-1.5"
+              >
+                  {selectedCity}
+                  <ChevronDown size={14} className={`transition-transform duration-300 ${isCityMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {isCityMenuOpen && (
+                  <div className="absolute top-full right-0 mt-2 bg-zinc-900 border border-white/10 min-w-[160px] z-50 shadow-2xl animate-fadeIn">
+                      {CITIES.map(city => (
+                          <button 
+                              key={city} 
+                              onClick={() => { setSelectedCity(city); setIsCityMenuOpen(false); }} 
+                              className="block w-full text-right px-4 py-3 text-[10px] font-bold uppercase text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
+                          >
+                              {city}
+                          </button>
+                      ))}
+                  </div>
+              )}
+          </div>
         </div>
 
-        {/* CITY SELECTOR */}
-        <div className="relative">
-            <button 
-                onClick={() => setIsCityMenuOpen(!isCityMenuOpen)} 
-                className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-white hover:text-gold transition-colors px-3 py-1.5"
-            >
-                {selectedCity}
-                <ChevronDown size={14} className={`transition-transform duration-300 ${isCityMenuOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {isCityMenuOpen && (
-                <div className="absolute top-full right-0 mt-2 bg-zinc-900 border border-white/10 min-w-[160px] z-50 shadow-2xl animate-fadeIn">
-                    {CITIES.map(city => (
-                        <button 
-                            key={city} 
-                            onClick={() => { setSelectedCity(city); setIsCityMenuOpen(false); }} 
-                            className="block w-full text-right px-4 py-3 text-[10px] font-bold uppercase text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
-                        >
-                            {city}
-                        </button>
-                    ))}
+        {/* Nexus Omnibox - integrated in header */}
+        {view === ViewState.FEED && (
+          <div className="px-6 pb-4">
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                <Sparkles size={16} className={`text-gold transition-opacity duration-500 ${isNexusThinking ? 'animate-pulse' : 'opacity-80'}`} />
+              </div>
+              <input 
+                type="text"
+                value={nexusInput}
+                onChange={(e) => setNexusInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleNexusAsk(nexusInput)}
+                placeholder="Ask Nexus..."
+                className="w-full bg-surface/80 backdrop-blur-md border border-white/10 focus:border-gold/50 text-white text-sm placeholder-zinc-500 rounded-full py-3 pl-12 pr-12 outline-none transition-all shadow-lg"
+              />
+              <button 
+                onClick={() => handleNexusAsk(nexusInput)}
+                disabled={!nexusInput.trim()}
+                className="absolute inset-y-0 right-3 flex items-center text-zinc-500 hover:text-gold disabled:opacity-0 transition-all"
+              >
+                <Send size={16} />
+              </button>
+            </div>
+
+            {/* Inline Nexus Insight */}
+            {nexusInsight && (
+              <div className="mt-3 bg-surface border-l-2 border-gold p-4 relative animate-fadeIn shadow-2xl">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={12} className="text-gold" />
+                    <span className="text-[10px] font-bold text-gold uppercase tracking-widest">Nexus Insight</span>
+                  </div>
+                  <button onClick={() => setNexusInsight(null)} className="text-zinc-600 hover:text-white">
+                    <X size={14} />
+                  </button>
                 </div>
+                <p className="text-sm text-zinc-300 font-light leading-relaxed">{nexusInsight}</p>
+              </div>
             )}
-        </div>
+
+            {/* Active Filter Indicator */}
+            {nexusFilter && (
+              <div className="mt-2 flex justify-between items-center bg-gold/10 border border-gold/30 px-3 py-2 rounded-sm animate-fadeIn">
+                <div className="flex items-center gap-2">
+                  <Filter size={12} className="text-gold" />
+                  <span className="text-[10px] text-gold font-bold uppercase tracking-widest">Nexus Filter Active</span>
+                </div>
+                <button onClick={() => setNexusFilter(null)} className="text-[9px] text-zinc-400 hover:text-white underline">RESET</button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Category Tabs */}
+        {view === ViewState.FEED && (
+          <div className="flex gap-2 px-6 pb-3 overflow-x-auto no-scrollbar">
+            {CATEGORIES.map(cat => (
+              <button 
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap transition-colors ${
+                  selectedCategory === cat 
+                    ? 'bg-gold text-black' 
+                    : 'bg-surface border border-white/10 text-zinc-400 hover:text-white'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
       </header>
 
       {/* --- MAIN CONTENT --- */}
-      <main className="pt-20 px-0 max-w-2xl mx-auto h-screen overflow-y-auto">
+      <main className="pt-[180px] px-0 max-w-2xl mx-auto h-screen overflow-y-auto">
 
         {view === ViewState.FEED && (
           <div className="animate-fadeIn pb-20">
-            {/* Nexus Omnibox */}
-            <div className="sticky top-[72px] z-40 bg-gradient-to-b from-black via-black/95 to-transparent pt-4 pb-6 px-6">
-                <div className="relative group">
-                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                        <Sparkles size={16} className={`text-gold transition-opacity duration-500 ${isNexusThinking ? 'animate-pulse' : 'opacity-80'}`} />
-                    </div>
-                    <input 
-                        type="text"
-                        value={nexusInput}
-                        onChange={(e) => setNexusInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleNexusAsk(nexusInput)}
-                        placeholder="Ask Nexus..."
-                        className="w-full bg-surface/80 backdrop-blur-md border border-white/10 focus:border-gold/50 text-white text-sm placeholder-zinc-500 rounded-full py-3 pl-12 pr-12 outline-none transition-all shadow-lg"
-                    />
-                    <button 
-                        onClick={() => handleNexusAsk(nexusInput)}
-                        disabled={!nexusInput.trim()}
-                        className="absolute inset-y-0 right-3 flex items-center text-zinc-500 hover:text-gold disabled:opacity-0 transition-all"
-                    >
-                        <Send size={16} />
-                    </button>
-                </div>
-
-                {/* Inline Nexus Insight */}
-                {nexusInsight && (
-                    <div className="mt-3 bg-surface border-l-2 border-gold p-4 relative animate-fadeIn shadow-2xl">
-                        <div className="flex justify-between items-start mb-2">
-                              <div className="flex items-center gap-2">
-                                <Sparkles size={12} className="text-gold" />
-                                <span className="text-[10px] font-bold text-gold uppercase tracking-widest">Nexus Insight</span>
-                              </div>
-                              <button onClick={() => setNexusInsight(null)} className="text-zinc-600 hover:text-white">
-                                <X size={14} />
-                              </button>
-                        </div>
-                        <p className="text-sm text-zinc-300 font-light leading-relaxed">{nexusInsight}</p>
-                    </div>
-                )}
-
-                {/* Active Filter Indicator */}
-                {nexusFilter && (
-                    <div className="mt-2 flex justify-between items-center bg-gold/10 border border-gold/30 px-3 py-2 rounded-sm animate-fadeIn">
-                        <div className="flex items-center gap-2">
-                            <Filter size={12} className="text-gold" />
-                            <span className="text-[10px] text-gold font-bold uppercase tracking-widest">Nexus Filter Active</span>
-                        </div>
-                        <button onClick={() => setNexusFilter(null)} className="text-[9px] text-zinc-400 hover:text-white underline">RESET</button>
-                    </div>
-                )}
-            </div>
 
             {/* Spotlight */}
             {spotlightEvents.length > 0 && (
