@@ -2,7 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { getTribeResponse } from '@/services/tribe/aiHelpers';
 import { ChatMessage, TribeEvent } from '@/types/tribe';
 import { TribeEventCard } from './TribeEventCard';
-import { ArrowUp, X, Sparkles } from 'lucide-react';
+import { ArrowUp, X } from 'lucide-react';
+
+const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150";
 
 interface TribeAIChatProps {
   onClose: () => void;
@@ -42,11 +44,11 @@ export const TribeAIChat: React.FC<TribeAIChatProps> = ({ onClose, events, onQue
       {/* Header */}
       <div className="flex justify-between items-center p-6 border-b border-white/10">
          <div className="flex items-center gap-3">
-             <div className="w-8 h-8 bg-white text-black rounded-sm flex items-center justify-center">
-                 <Sparkles size={16} fill="black" />
+             <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20">
+                 <img src={MIA_AVATAR} className="w-full h-full object-cover" alt="MIA" />
              </div>
              <div>
-                 <h2 className="font-bold text-sm uppercase tracking-widest">Concierge</h2>
+                 <h2 className="font-bold text-sm uppercase tracking-widest">MIA</h2>
                  <p className="text-[10px] text-zinc-500 uppercase">Always Active</p>
              </div>
          </div>
@@ -56,18 +58,32 @@ export const TribeAIChat: React.FC<TribeAIChatProps> = ({ onClose, events, onQue
       {/* Chat */}
       <div className="flex-1 overflow-y-auto p-6 space-y-8">
         {messages.map((msg, idx) => (
-          <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-            <div className={`max-w-[85%] text-sm md:text-base leading-relaxed ${msg.role === 'user' ? 'text-white font-medium text-right' : 'text-zinc-400 text-left'}`}>
-                {msg.text}
-            </div>
-            {msg.relatedEvents && (
-              <div className="mt-6 w-full md:w-[80%] space-y-4">
-                {msg.relatedEvents.map((evt, eIdx) => <TribeEventCard key={eIdx} event={evt} variant="standard" />)}
+          <div key={idx} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+            {msg.role === 'model' && (
+              <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 border border-white/20 mt-1">
+                <img src={MIA_AVATAR} className="w-full h-full object-cover" alt="MIA" />
               </div>
             )}
+            <div className={`flex-1 flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+              <div className={`max-w-[85%] text-sm md:text-base leading-relaxed ${msg.role === 'user' ? 'text-white font-medium text-right' : 'text-zinc-400 text-left'}`}>
+                  {msg.text}
+              </div>
+              {msg.relatedEvents && (
+                <div className="mt-6 w-full md:w-[80%] space-y-4">
+                  {msg.relatedEvents.map((evt, eIdx) => <TribeEventCard key={eIdx} event={evt} variant="standard" />)}
+                </div>
+              )}
+            </div>
           </div>
         ))}
-        {isTyping && <div className="text-xs text-zinc-600 uppercase tracking-widest pl-0 animate-pulse">Thinking...</div>}
+        {isTyping && (
+          <div className="flex gap-3">
+            <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 border border-white/20">
+              <img src={MIA_AVATAR} className="w-full h-full object-cover" alt="MIA" />
+            </div>
+            <div className="text-xs text-zinc-600 uppercase tracking-widest animate-pulse">Thinking...</div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 

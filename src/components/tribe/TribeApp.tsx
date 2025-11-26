@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 
 const CITIES = ['Bielefeld', 'Berlin', 'Hamburg', 'Köln', 'München'];
+const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150";
+
 const CATEGORIES = ['ALL', 'PARTY', 'ART', 'CONCERT', 'SPORT'];
 
 export const TribeApp: React.FC = () => {
@@ -221,7 +223,7 @@ export const TribeApp: React.FC = () => {
     
     // Simulate AI response (replace with actual Lovable AI call)
     setTimeout(() => {
-      setNexusInsight(`Found ${filteredEvents.length} events matching "${query}"`);
+      setNexusInsight(`MIA found ${filteredEvents.length} events matching "${query}"`);
       
       // Simple keyword-based filter
       const lowerQuery = query.toLowerCase();
@@ -325,17 +327,20 @@ export const TribeApp: React.FC = () => {
 
         {view === ViewState.FEED && (
           <div className="animate-fadeIn pb-20">
-            {/* Nexus Section */}
+            {/* MIA Section */}
             <div className="px-6 pt-2 pb-6 bg-gradient-to-b from-black via-black to-transparent">
-              {/* Nexus Search Bar */}
-              <div className="relative group mb-3">
+              {/* MIA Search Bar */}
+              <div className="relative group mb-3 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-white/20">
+                  <img src={MIA_AVATAR} className="w-full h-full object-cover" alt="MIA" />
+                </div>
                 <input 
                   type="text"
                   value={nexusInput}
                   onChange={(e) => setNexusInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleNexusAsk(nexusInput)}
-                  placeholder="Ask Nexus..."
-                  className="w-full bg-black border border-white/[0.08] focus:border-white/20 text-white text-sm placeholder-zinc-700 rounded-full py-2.5 px-4 outline-none transition-all"
+                  placeholder="Ask MIA..."
+                  className="flex-1 bg-black border border-white/[0.08] focus:border-white/20 text-white text-sm placeholder-zinc-700 rounded-full py-2.5 px-4 outline-none transition-all"
                 />
                 {nexusInput.trim() && (
                   <button 
@@ -380,13 +385,15 @@ export const TribeApp: React.FC = () => {
                 ))}
               </div>
 
-              {/* Inline Nexus Insight */}
+              {/* Inline MIA Insight */}
               {nexusInsight && (
                 <div className="mt-4 bg-surface border-l-2 border-gold p-4 relative animate-fadeIn shadow-2xl rounded-sm">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
-                      <Sparkles size={14} className="text-gold" />
-                      <span className="text-[10px] font-bold text-gold uppercase tracking-widest">Nexus Insight</span>
+                      <div className="w-4 h-4 rounded-full overflow-hidden">
+                        <img src={MIA_AVATAR} className="w-full h-full object-cover" alt="MIA" />
+                      </div>
+                      <span className="text-[10px] font-bold text-gold uppercase tracking-widest">MIA Insight</span>
                     </div>
                     <button onClick={() => setNexusInsight(null)} className="text-zinc-600 hover:text-white">
                       <X size={14} />
@@ -401,18 +408,23 @@ export const TribeApp: React.FC = () => {
                 <div className="mt-3 flex justify-between items-center bg-gold/10 border border-gold/30 px-3 py-2 rounded-sm animate-fadeIn">
                   <div className="flex items-center gap-2">
                     <Filter size={12} className="text-gold" />
-                    <span className="text-[10px] text-gold font-bold uppercase tracking-widest">Nexus Filter Active</span>
+                    <span className="text-[10px] text-gold font-bold uppercase tracking-widest">MIA Filter Active</span>
                   </div>
                   <button onClick={() => setNexusFilter(null)} className="text-[9px] text-zinc-400 hover:text-white underline">RESET</button>
                 </div>
               )}
             </div>
 
-            {/* Nexus Recommendations */}
+            {/* MIA Recommendations */}
             {spotlightEvents.length > 0 && (
               <div className="mb-12">
                   <div className="px-6 mb-5">
-                      <h2 className="text-xs font-bold text-white uppercase tracking-[0.2em]">Nexus Recommendations</h2>
+                      <h2 className="text-xs font-bold text-white uppercase tracking-[0.2em] flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-full overflow-hidden">
+                          <img src={MIA_AVATAR} className="w-full h-full object-cover" alt="MIA" />
+                        </div>
+                        MIA Recommendations
+                      </h2>
                   </div>
                   <div className="flex gap-4 overflow-x-auto no-scrollbar snap-x px-6 pb-4">
                       {spotlightEvents.map((event, i) => (
