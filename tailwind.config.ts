@@ -94,7 +94,8 @@ export default {
 				DEFAULT: '#d4b483',
 				light: '#e5d4b4',
 				dark: '#b39667'
-			}
+			},
+			surface: 'hsl(var(--surface))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

@@ -37,6 +37,9 @@
     --gold: 45 100% 51%;
     --gold-light: 45 100% 60%;
     
+    /* Surface color for Tribe cards */
+    --surface: 0 0% 10%;
+    
     /* Urban dark red map theme */
     --map-urban-red: 15 45% 25%;
     --map-overlay-red: 15 65% 15%;
@@ -667,5 +670,47 @@
 
 .leaflet-tile-pane {
   filter: none !important;
+}
+
+/* Tribe Map Markers */
+.marker-pin-image {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #d4b483;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(212, 180, 131, 0.4);
+}
+
+.marker-pin-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.marker-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #d4b483;
+  color: #000;
+  font-size: 9px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.marker-pin-social {
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
 }
 }
