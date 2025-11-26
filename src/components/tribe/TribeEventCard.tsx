@@ -90,75 +90,98 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
     const vibeColor = event.vibe ? getVibeBadgeColor(event.vibe).split(' ')[0] : '';
     
     return (
-      <div className={`flex items-center gap-2.5 bg-black border-b border-white/5 py-2 transition-all duration-500 ${animationClass}`}>
-        {/* Thumbnail - Smaller */}
-        <div className="w-12 h-14 bg-zinc-900 flex-shrink-0 relative overflow-hidden rounded">
-          {displayImage ? (
-            <img src={displayImage} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-zinc-800">
-              <span className="text-[7px] text-zinc-700">?</span>
-            </div>
-          )}
-          {isLiked && (
-            <div className="absolute top-0 left-0 right-0 bg-gold/90 text-black text-[6px] font-bold px-1 py-0.5 text-center">
-              ★
-            </div>
-          )}
-          {event.vibe && (
-            <div className={`absolute bottom-0 left-0 right-0 ${vibeColor} backdrop-blur-sm text-[6px] font-bold px-1 py-0.5 text-center uppercase`}>
-              {event.vibe}
-            </div>
-          )}
-        </div>
-
-        {/* Info - Tighter */}
-        <div className="flex-1 min-w-0">
-          <h3 className={`text-xs font-medium truncate leading-tight ${isLiked ? 'text-gold' : 'text-white'}`}>
-            {event.title}
-          </h3>
-          <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 mt-0.5">
-            <span className="font-mono">{formatTime(event.time)}</span>
-            {event.location && (
-              <>
-                <span className="text-zinc-700">•</span>
-                <span className="truncate text-zinc-400">{event.location}</span>
-              </>
+      <div className={`bg-black border-b border-white/5 transition-all duration-500 ${animationClass}`}>
+        <div className="flex items-center gap-2.5 py-2">
+          {/* Thumbnail - Smaller */}
+          <div className="w-12 h-14 bg-zinc-900 flex-shrink-0 relative overflow-hidden rounded">
+            {displayImage ? (
+              <img src={displayImage} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-zinc-800">
+                <span className="text-[7px] text-zinc-700">?</span>
+              </div>
+            )}
+            {isLiked && (
+              <div className="absolute top-0 left-0 right-0 bg-gold/90 text-black text-[6px] font-bold px-1 py-0.5 text-center">
+                ★
+              </div>
+            )}
+            {event.vibe && (
+              <div className={`absolute bottom-0 left-0 right-0 ${vibeColor} backdrop-blur-sm text-[6px] font-bold px-1 py-0.5 text-center uppercase`}>
+                {event.vibe}
+              </div>
             )}
           </div>
-          {/* Attendees under location */}
-          <div className="flex items-center gap-1 mt-1">
-            <div className="flex -space-x-1.5">
-              {isAttending && (
-                <div className="w-4 h-4 rounded-full border border-black bg-gold flex items-center justify-center">
-                  <Check size={8} className="text-black" />
-                </div>
+
+          {/* Info - Tighter */}
+          <div className="flex-1 min-w-0">
+            <h3 className={`text-xs font-medium truncate leading-tight ${isLiked ? 'text-gold' : 'text-white'}`}>
+              {event.title}
+            </h3>
+            <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 mt-0.5">
+              <span className="font-mono">{formatTime(event.time)}</span>
+              {event.location && (
+                <>
+                  <span className="text-zinc-700">•</span>
+                  <span className="truncate text-zinc-400">{event.location}</span>
+                </>
               )}
-              {mockAvatars.slice(0, 2).map((url, i) => (
-                <img key={i} src={url} className="w-4 h-4 rounded-full border border-black object-cover" />
-              ))}
             </div>
-            <span className={`text-[9px] ${isAttending ? "text-gold font-bold" : "text-zinc-500"}`}>
-              +{currentAttendees}
-            </span>
+            {/* Attendees under location */}
+            <div className="flex items-center gap-1 mt-1">
+              <div className="flex -space-x-1.5">
+                {isAttending && (
+                  <div className="w-4 h-4 rounded-full border border-black bg-gold flex items-center justify-center">
+                    <Check size={8} className="text-black" />
+                  </div>
+                )}
+                {mockAvatars.slice(0, 2).map((url, i) => (
+                  <img key={i} src={url} className="w-4 h-4 rounded-full border border-black object-cover" />
+                ))}
+              </div>
+              <span className={`text-[9px] ${isAttending ? "text-gold font-bold" : "text-zinc-500"}`}>
+                +{currentAttendees}
+              </span>
+            </div>
+          </div>
+
+          {/* Quick Actions - Minimal */}
+          <div className="flex gap-1.5 flex-shrink-0">
+            <button 
+              onClick={handleGetSummary}
+              disabled={loadingSummary}
+              className={`p-1 transition-colors ${summary ? 'text-gold' : 'text-zinc-600 hover:text-gold'}`}
+              title="Get Vibe"
+            >
+              {loadingSummary ? (
+                <div className="w-3 h-3 border border-zinc-600 border-t-gold rounded-full animate-spin" />
+              ) : (
+                <Sparkles size={12} fill={summary ? "currentColor" : "none"} />
+              )}
+            </button>
+            <button 
+              onClick={(e) => handleInteractionClick('dislike', e)}
+              className="p-1 text-zinc-600 hover:text-red-500 transition-colors"
+            >
+              <X size={12} />
+            </button>
+            <button 
+              onClick={(e) => handleInteractionClick('like', e)}
+              className={`p-1 transition-colors ${isLiked ? 'text-gold' : 'text-zinc-600 hover:text-gold'}`}
+            >
+              <Heart size={12} fill={isLiked ? "currentColor" : "none"} />
+            </button>
           </div>
         </div>
 
-        {/* Quick Actions - Minimal */}
-        <div className="flex gap-1.5 flex-shrink-0">
-          <button 
-            onClick={(e) => handleInteractionClick('dislike', e)}
-            className="p-1 text-zinc-600 hover:text-red-500 transition-colors"
-          >
-            <X size={12} />
-          </button>
-          <button 
-            onClick={(e) => handleInteractionClick('like', e)}
-            className={`p-1 transition-colors ${isLiked ? 'text-gold' : 'text-zinc-600 hover:text-gold'}`}
-          >
-            <Heart size={12} fill={isLiked ? "currentColor" : "none"} />
-          </button>
-        </div>
+        {/* AI Summary */}
+        {summary && (
+          <div className="px-2 pb-2 animate-fadeIn">
+            <div className="bg-zinc-900/50 border-l-2 border-gold px-2 py-1.5">
+              <p className="text-[10px] text-zinc-300 leading-relaxed">"{summary}"</p>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
