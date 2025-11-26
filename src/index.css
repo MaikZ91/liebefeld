@@ -33,6 +33,10 @@
     --background: 0 0% 0%;
     --foreground: 0 0% 100%;
     
+    /* THE TRIBE gold theme */
+    --gold: 45 100% 51%;
+    --gold-light: 45 100% 60%;
+    
     /* Urban dark red map theme */
     --map-urban-red: 15 45% 25%;
     --map-overlay-red: 15 65% 15%;
