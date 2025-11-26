@@ -197,7 +197,7 @@ export const TribeApp: React.FC = () => {
         )}
 
         {view === ViewState.TRIBE_AI && <TribeAIChat onClose={() => setView(ViewState.FEED)} events={filteredEvents} />}
-        {view === ViewState.COMMUNITY && <TribeCommunityBoard selectedCity={selectedCity} userProfile={userProfile} posts={posts} onPostsChange={setPosts} />}
+        {view === ViewState.COMMUNITY && <TribeCommunityBoard selectedCity={selectedCity} userProfile={userProfile} />}
         {view === ViewState.MAP && (
             <div className="absolute inset-0 pt-16 h-[calc(100vh-80px)]">
                  <TribeMapView events={filteredEvents} posts={posts} selectedCity={selectedCity} />
