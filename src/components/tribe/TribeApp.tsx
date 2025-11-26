@@ -21,7 +21,7 @@ const CITIES = ['Bielefeld', 'Berlin', 'Hamburg', 'Köln', 'München'];
 const CATEGORIES = ['ALL', 'PARTY', 'ART', 'CONCERT', 'SPORT'];
 
 export const TribeApp: React.FC = () => {
-  const [view, setView] = useState<ViewState>(ViewState.AUTH);
+  const [view, setView] = useState<ViewState>(ViewState.FEED);
   const [selectedCity, setSelectedCity] = useState<string>('Bielefeld');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [isCityMenuOpen, setIsCityMenuOpen] = useState(false);
@@ -45,9 +45,6 @@ export const TribeApp: React.FC = () => {
       const parsedProfile = JSON.parse(savedProfile);
       setUserProfile(parsedProfile);
       if (parsedProfile.homebase) setSelectedCity(parsedProfile.homebase);
-      setView(ViewState.FEED);
-    } else {
-      setView(ViewState.AUTH);
     }
 
     const savedLikes = localStorage.getItem('tribe_liked_events');
@@ -130,7 +127,7 @@ export const TribeApp: React.FC = () => {
     setUserProfile(profile);
     if (profile.homebase) setSelectedCity(profile.homebase);
     localStorage.setItem('tribe_user_profile', JSON.stringify(profile));
-    setView(ViewState.FEED);
+    setView(ViewState.PROFILE);
   };
 
   const handleToggleLike = (eventId: string) => {
@@ -180,8 +177,8 @@ export const TribeApp: React.FC = () => {
   const attendingEvents = allEvents.filter(e => attendingEventIds.has(e.id));
   const likedEvents = allEvents.filter(e => likedEventIds.has(e.id));
 
-  // Render Auth Screen
-  if (view === ViewState.AUTH || !userProfile) {
+  // Render Auth Screen only when explicitly in AUTH view
+  if (view === ViewState.AUTH) {
     return <AuthScreen onLogin={handleLogin} />;
   }
 
@@ -329,7 +326,10 @@ export const TribeApp: React.FC = () => {
               <span className="text-[9px] font-medium uppercase tracking-wider">Nexus</span>
           </button>
 
-          <button onClick={() => setView(ViewState.PROFILE)} className={`flex flex-col items-center gap-1 p-2 ${view === ViewState.PROFILE ? 'text-white' : 'text-zinc-600'}`}>
+          <button
+            onClick={() => setView(userProfile ? ViewState.PROFILE : ViewState.AUTH)}
+            className={`flex flex-col items-center gap-1 p-2 ${view === ViewState.PROFILE ? 'text-white' : 'text-zinc-600'}`}
+          >
               <User size={20} strokeWidth={1.5} />
               <span className="text-[9px] font-medium uppercase tracking-wider">Profile</span>
           </button>
