@@ -328,21 +328,21 @@ export const TribeApp: React.FC = () => {
             {/* Nexus Section */}
             <div className="px-6 pt-8 pb-6 bg-gradient-to-b from-black via-black to-transparent">
               {/* Nexus Search Bar */}
-              <div className="relative group mb-4">
+              <div className="relative group mb-3">
                 <input 
                   type="text"
                   value={nexusInput}
                   onChange={(e) => setNexusInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleNexusAsk(nexusInput)}
                   placeholder="Ask Nexus..."
-                  className="w-full bg-black border border-white/10 focus:border-white/20 text-white text-base placeholder-zinc-600 rounded-full py-4 px-6 outline-none transition-all"
+                  className="w-full bg-black border border-white/5 focus:border-white/10 text-white text-sm placeholder-zinc-700 rounded-full py-2.5 px-4 outline-none transition-all"
                 />
                 {nexusInput.trim() && (
                   <button 
                     onClick={() => handleNexusAsk(nexusInput)}
-                    className="absolute inset-y-0 right-4 flex items-center text-zinc-500 hover:text-gold transition-all"
+                    className="absolute inset-y-0 right-3 flex items-center text-zinc-600 hover:text-gold transition-all"
                   >
-                    <Send size={18} />
+                    <Send size={14} />
                   </button>
                 )}
               </div>
