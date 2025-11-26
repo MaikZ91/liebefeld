@@ -337,18 +337,18 @@ export const TribeApp: React.FC = () => {
               <div className="relative">
                   <button 
                       onClick={() => setIsCityMenuOpen(!isCityMenuOpen)} 
-                      className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-gold hover:text-white transition-colors px-3 py-1.5 border border-white/20 bg-black/50"
+                      className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 text-white hover:text-gold transition-colors px-2 py-1 border border-white/10 bg-black/30"
                   >
                       {selectedCity}
-                      <ChevronDown size={14} className={`transition-transform duration-300 ${isCityMenuOpen ? 'rotate-180' : ''}`} />
+                      <ChevronDown size={12} className={`transition-transform duration-300 ${isCityMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
                   {isCityMenuOpen && (
-                      <div className="absolute top-full right-0 mt-2 bg-zinc-900 border border-white/10 min-w-[160px] z-50 shadow-2xl animate-fadeIn">
+                      <div className="absolute top-full right-0 mt-2 bg-black border border-white/10 min-w-[140px] z-50 shadow-2xl animate-fadeIn">
                           {CITIES.map(city => (
                               <button 
                                   key={city} 
                                   onClick={() => { setSelectedCity(city); setIsCityMenuOpen(false); }} 
-                                  className="block w-full text-right px-4 py-3 text-[10px] font-bold uppercase text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
+                                  className="block w-full text-right px-3 py-2 text-[10px] font-bold uppercase text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
                               >
                                   {city}
                               </button>
