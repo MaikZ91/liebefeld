@@ -80,7 +80,7 @@ export const TribeAIChat: React.FC<TribeAIChatProps> = ({ onClose, events }) => 
                 {msg.relatedEvents && msg.relatedEvents.length > 0 && (
                   <div className="mt-4 space-y-3">
                     {msg.relatedEvents.map((event, i) => (
-                      <TribeEventCard key={i} event={event} variant="compact" />
+                      <TribeEventCard key={i} event={event} variant="standard" />
                     ))}
                   </div>
                 )}
@@ -103,24 +103,26 @@ export const TribeAIChat: React.FC<TribeAIChatProps> = ({ onClose, events }) => 
       </ScrollArea>
 
       {/* Input */}
-      <div className="p-4 border-t border-white/10">
-        <div className="max-w-3xl mx-auto bg-zinc-900/50 backdrop-blur-md rounded-2xl border border-white/10 px-4 py-3 flex items-center gap-3">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="flex-1 bg-transparent text-white placeholder-zinc-600 outline-none text-sm"
-            placeholder="Ask for recommendations..."
-            disabled={isLoading}
-          />
-          <button 
-            onClick={handleSend} 
-            disabled={!input.trim() || isLoading}
-            className="text-gold disabled:text-zinc-700 hover:opacity-80 transition-opacity"
-          >
-            <ArrowUp size={20} />
-          </button>
+      <div className="p-6 border-t border-white/10">
+        <div className="max-w-3xl mx-auto">
+          <div className="flex items-center gap-4 border-b border-white/20 pb-2 focus-within:border-white transition-colors">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="flex-1 bg-transparent text-white placeholder-zinc-600 outline-none text-lg font-light"
+              placeholder="Ask for a recommendation..."
+              disabled={isLoading}
+            />
+            <button 
+              onClick={handleSend} 
+              disabled={!input.trim() || isLoading}
+              className="text-white disabled:text-zinc-700 hover:opacity-80 transition-opacity"
+            >
+              <ArrowUp size={24} />
+            </button>
+          </div>
         </div>
       </div>
     </div>
