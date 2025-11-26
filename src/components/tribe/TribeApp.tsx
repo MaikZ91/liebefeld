@@ -6,6 +6,7 @@ import { TribeEventCard } from './TribeEventCard';
 import { TribeAIChat } from './TribeAIChat';
 import { TribeCommunityBoard } from './TribeCommunityBoard';
 import { TribeMapView } from './TribeMapView';
+import { TribeBottomNav } from './TribeBottomNav';
 import { AuthScreen } from './AuthScreen';
 import { ProfileView } from './ProfileView';
 import { 
@@ -50,6 +51,9 @@ export const TribeApp: React.FC = () => {
   
   const [allEvents, setAllEvents] = useState<TribeEvent[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
+  
+  // New message notification state
+  const [hasNewCommunityMessages, setHasNewCommunityMessages] = useState(false);
 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
@@ -90,12 +94,60 @@ export const TribeApp: React.FC = () => {
     localStorage.setItem('tribe_query_history', JSON.stringify(queryHistory));
   }, [queryHistory]);
 
+  // Check for new community messages on app start
+  useEffect(() => {
+    checkForNewMessages();
+  }, []);
+
   useEffect(() => {
     fetchEvents();
     if (userProfile) {
       loadPosts();
     }
   }, [selectedCity, userProfile]);
+
+  const checkForNewMessages = async () => {
+    try {
+      const lastSeenTimestamp = localStorage.getItem('tribe_last_seen_community');
+      
+      // Fetch latest community message
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('created_at')
+        .eq('group_id', 'tribe_community_board')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error || !data) return;
+
+      if (!lastSeenTimestamp) {
+        // New user - show notification
+        setHasNewCommunityMessages(true);
+      } else {
+        // Check if there are newer messages
+        const lastSeen = new Date(lastSeenTimestamp);
+        const latestMessage = new Date(data.created_at);
+        if (latestMessage > lastSeen) {
+          setHasNewCommunityMessages(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking for new messages:', error);
+    }
+  };
+
+  const markCommunityAsSeen = () => {
+    localStorage.setItem('tribe_last_seen_community', new Date().toISOString());
+    setHasNewCommunityMessages(false);
+  };
+
+  const handleViewChange = (newView: ViewState) => {
+    setView(newView);
+    if (newView === ViewState.COMMUNITY) {
+      markCommunityAsSeen();
+    }
+  };
 
   const fetchEvents = async () => {
     try {
@@ -504,27 +556,11 @@ export const TribeApp: React.FC = () => {
       </main>
 
       {/* --- BOTTOM NAVIGATION --- */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 border-t border-white/10 px-6 py-2 flex justify-around items-center max-w-2xl mx-auto w-full backdrop-blur-lg">
-          <button onClick={() => setView(ViewState.FEED)} className={`flex flex-col items-center gap-1 p-2 ${view === ViewState.FEED ? 'text-white' : 'text-zinc-600'}`}>
-              <Home size={22} strokeWidth={1.5} />
-              <span className="text-[10px] font-medium uppercase tracking-wider">Feed</span>
-          </button>
-
-          <button onClick={() => setView(ViewState.MAP)} className={`flex flex-col items-center gap-1 p-2 ${view === ViewState.MAP ? 'text-white' : 'text-zinc-600'}`}>
-              <MapIcon size={22} strokeWidth={1.5} />
-              <span className="text-[10px] font-medium uppercase tracking-wider">Map</span>
-          </button>
-
-          <button onClick={() => setView(ViewState.COMMUNITY)} className={`flex flex-col items-center gap-1 p-2 ${view === ViewState.COMMUNITY ? 'text-white' : 'text-zinc-600'}`}>
-              <Users size={22} strokeWidth={1.5} />
-              <span className="text-[10px] font-medium uppercase tracking-wider">Tribe</span>
-          </button>
-
-          <button onClick={() => setView(ViewState.TRIBE_AI)} className={`flex flex-col items-center gap-1 p-2 ${view === ViewState.TRIBE_AI ? 'text-gold' : 'text-zinc-600'}`}>
-              <Sparkles size={22} strokeWidth={1.5} />
-              <span className="text-[10px] font-medium uppercase tracking-wider">Concierge</span>
-          </button>
-      </nav>
+      <TribeBottomNav 
+        currentView={view} 
+        onViewChange={handleViewChange}
+        hasNewCommunityMessages={hasNewCommunityMessages}
+      />
 
     </div>
   );
