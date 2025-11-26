@@ -23,10 +23,11 @@ export default {
 			}
 		},
 		extend: {
-			fontFamily: {
-				sans: ['Roboto', 'sans-serif'],
-				serif: ['Playfair Display', 'serif'],
-			},
+		fontFamily: {
+			sans: ['Outfit', 'Roboto', 'sans-serif'],
+			outfit: ['Outfit', 'sans-serif'],
+			serif: ['Playfair Display', 'serif'],
+		},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -85,10 +86,15 @@ export default {
 					primary: 'hsl(var(--kreativität-primary))',
 					secondary: 'hsl(var(--kreativität-secondary))'
 				},
-				ausgehen: {
-					primary: 'hsl(var(--ausgehen-primary))',
-					secondary: 'hsl(var(--ausgehen-secondary))'
-				}
+			ausgehen: {
+				primary: 'hsl(var(--ausgehen-primary))',
+				secondary: 'hsl(var(--ausgehen-secondary))'
+			},
+			gold: {
+				DEFAULT: '#d4b483',
+				light: '#e5d4b4',
+				dark: '#b39667'
+			}
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
