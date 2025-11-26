@@ -7,9 +7,10 @@ import { ArrowUp, X, Sparkles } from 'lucide-react';
 interface TribeAIChatProps {
   onClose: () => void;
   events: TribeEvent[];
+  onQuery?: (query: string) => void;
 }
 
-export const TribeAIChat: React.FC<TribeAIChatProps> = ({ onClose, events }) => {
+export const TribeAIChat: React.FC<TribeAIChatProps> = ({ onClose, events, onQuery }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: 'model', text: "Ready to curate your evening. What are you looking for?" }
   ]);
@@ -27,6 +28,10 @@ export const TribeAIChat: React.FC<TribeAIChatProps> = ({ onClose, events }) => 
     setInput('');
     setMessages(prev => [...prev, { role: 'user', text: userText }]);
     setIsTyping(true);
+    
+    // Track query
+    if (onQuery) onQuery(userText);
+    
     const response = await getTribeResponse(userText, events);
     setIsTyping(false);
     setMessages(prev => [...prev, { role: 'model', text: response.text, relatedEvents: response.relatedEvents }]);
