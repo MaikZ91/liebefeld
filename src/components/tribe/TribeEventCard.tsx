@@ -9,6 +9,23 @@ interface EventCardProps {
   onJoinCrew?: (eventName: string) => void;
 }
 
+// Helper functions for date/time formatting
+const formatEventDate = (dateStr: string, includeYear = false) => {
+  const date = new Date(dateStr);
+  const weekday = date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  if (includeYear) {
+    return `${weekday.slice(0,2)}, ${day}.${month}.${date.getFullYear()}`;
+  }
+  return `${weekday}, ${day}.${month}`;
+};
+
+const formatTime = (timeStr?: string | null) => {
+  if (!timeStr) return '23:00';
+  return timeStr;
+};
+
 export const TribeEventCard: React.FC<EventCardProps> = ({ event, variant = 'standard', onJoinCrew }) => {
   const [summary, setSummary] = useState<string | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
@@ -49,7 +66,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({ event, variant = 'sta
                 
                 <div className="absolute bottom-5 left-5 right-5">
                     <div className="flex items-center gap-3 mb-2">
-                         <span className="text-black bg-gold px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest">{event.date}</span>
+                         <span className="bg-black text-gold px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest">{formatEventDate(event.date, true)}</span>
                          {event.category && <span className="text-zinc-300 text-[10px] uppercase tracking-widest">{event.category}</span>}
                     </div>
                     <h2 className="text-2xl font-light text-white leading-none mb-2">{event.title}</h2>
@@ -79,7 +96,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({ event, variant = 'sta
             {/* Info */}
             <div className="flex-1 min-w-0 pt-1">
                 <div className="flex justify-between items-start mb-2">
-                    <span className="text-[11px] text-gold font-medium uppercase tracking-widest">{event.date} • {event.time || '23:00'}</span>
+                    <span className="text-[11px] text-gold font-medium uppercase tracking-widest">{formatEventDate(event.date)} • {formatTime(event.time)}</span>
                     <button className="text-zinc-500 hover:text-white transition-colors"><Share2 size={16} strokeWidth={1.5} /></button>
                 </div>
                 <h3 className="text-xl text-white font-normal leading-tight mb-1 truncate">
