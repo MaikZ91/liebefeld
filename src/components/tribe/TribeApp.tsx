@@ -31,9 +31,15 @@ const CATEGORIES = ['ALL', 'PARTY', 'ART', 'CONCERT', 'SPORT'];
 export const TribeApp: React.FC = () => {
   const [view, setView] = useState<ViewState>(ViewState.FEED);
   const [selectedCity, setSelectedCity] = useState<string>('Bielefeld');
-  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [selectedCategory, setSelectedCategory] = useState<string>(() => {
+    const saved = localStorage.getItem('tribe_selected_category');
+    return saved || 'ALL';
+  });
   const [isCityMenuOpen, setIsCityMenuOpen] = useState(false);
-  const [isCompactMode, setIsCompactMode] = useState(false);
+  const [isCompactMode, setIsCompactMode] = useState(() => {
+    const saved = localStorage.getItem('tribe_view_mode');
+    return saved === 'compact';
+  });
   
   // Event tracking state
   const [hiddenEventIds, setHiddenEventIds] = useState<Set<string>>(new Set());
@@ -93,6 +99,14 @@ export const TribeApp: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('tribe_query_history', JSON.stringify(queryHistory));
   }, [queryHistory]);
+
+  useEffect(() => {
+    localStorage.setItem('tribe_selected_category', selectedCategory);
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    localStorage.setItem('tribe_view_mode', isCompactMode ? 'compact' : 'normal');
+  }, [isCompactMode]);
 
   // Check for new community messages on app start
   useEffect(() => {
