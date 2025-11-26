@@ -348,15 +348,15 @@ export const TribeApp: React.FC = () => {
               </div>
 
               {/* Category Tabs */}
-              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+              <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-2">
                 {CATEGORIES.map(cat => (
                   <button 
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
-                    className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap transition-colors ${
+                    className={`px-3 py-1 text-[9px] font-bold uppercase tracking-wider whitespace-nowrap transition-colors rounded-sm ${
                       selectedCategory === cat 
                         ? 'bg-gold text-black' 
-                        : 'bg-surface border border-white/10 text-zinc-400 hover:text-white'
+                        : 'bg-surface/50 border border-white/10 text-zinc-500 hover:text-zinc-300'
                     }`}
                   >
                     {cat}
