@@ -10,7 +10,7 @@ interface TribeBottomNavProps {
 export const TribeBottomNav: React.FC<TribeBottomNavProps> = ({ currentView, onViewChange }) => {
   const navItems = [
     { view: ViewState.FEED, icon: Home, label: 'Home' },
-    { view: ViewState.TRIBE_AI, icon: Sparkles, label: 'Tribe AI' },
+    { view: ViewState.TRIBE_AI, icon: Sparkles, label: 'MIA' },
     { view: ViewState.COMMUNITY, icon: Users, label: 'Community' },
     { view: ViewState.MAP, icon: Map, label: 'Map' },
   ];
