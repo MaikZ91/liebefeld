@@ -332,7 +332,7 @@ export const TribeApp: React.FC = () => {
               </div>
 
               {/* Suggestion Chips */}
-              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-3">
                 <button 
                   onClick={() => { setNexusInput('Vibe Check: *TRIBE BOULDERN?'); handleNexusAsk('Vibe Check: *TRIBE BOULDERN?'); }}
                   className="px-3 py-1.5 bg-black border border-white/20 text-zinc-400 text-xs whitespace-nowrap rounded-full hover:border-white/40 hover:text-white transition-all"
@@ -345,6 +345,23 @@ export const TribeApp: React.FC = () => {
                 >
                   Was geht heute in {selectedCity}?
                 </button>
+              </div>
+
+              {/* Category Tabs */}
+              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+                {CATEGORIES.map(cat => (
+                  <button 
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap transition-colors ${
+                      selectedCategory === cat 
+                        ? 'bg-gold text-black' 
+                        : 'bg-surface border border-white/10 text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
               </div>
 
               {/* Inline Nexus Insight */}
@@ -379,7 +396,7 @@ export const TribeApp: React.FC = () => {
             {spotlightEvents.length > 0 && (
               <div className="mb-12">
                   <div className="px-6 mb-4">
-                      <h2 className="text-base font-bold text-white uppercase tracking-widest">Nexus Recommendations</h2>
+                      <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Nexus Recommendations</h2>
                   </div>
                   <div className="flex gap-4 overflow-x-auto no-scrollbar snap-x px-6 pb-4">
                       {spotlightEvents.map((event, i) => (
@@ -401,7 +418,7 @@ export const TribeApp: React.FC = () => {
             {/* Feed List */}
             <div className="px-6 space-y-2 pb-12">
                 <div className="flex justify-between items-center border-b border-white/5 pb-4 mb-4">
-                    <h2 className="text-base font-bold text-white uppercase tracking-widest">Your Feed</h2>
+                    <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Your Feed</h2>
                     <button 
                       onClick={() => setIsCompactMode(!isCompactMode)}
                       className="text-zinc-500 hover:text-white transition-colors"
