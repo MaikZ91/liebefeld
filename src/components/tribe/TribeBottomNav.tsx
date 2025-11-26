@@ -9,39 +9,29 @@ interface TribeBottomNavProps {
 
 export const TribeBottomNav: React.FC<TribeBottomNavProps> = ({ currentView, onViewChange }) => {
   const navItems = [
-    { view: ViewState.FEED, icon: Home, label: 'Feed' },
-    { view: ViewState.TRIBE_AI, icon: Sparkles, label: 'AI' },
+    { view: ViewState.FEED, icon: Home, label: 'Home' },
+    { view: ViewState.TRIBE_AI, icon: Sparkles, label: 'Tribe AI' },
     { view: ViewState.COMMUNITY, icon: Users, label: 'Community' },
     { view: ViewState.MAP, icon: Map, label: 'Map' },
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40">
-      <div className="max-w-md mx-auto px-4 pb-4">
-        <div className="bg-black/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl">
-          <div className="flex items-center justify-around px-2 py-3">
-            {navItems.map(({ view, icon: Icon, label }) => {
-              const isActive = currentView === view;
-              return (
-                <button
-                  key={view}
-                  onClick={() => onViewChange(view)}
-                  className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${
-                    isActive 
-                      ? 'bg-gold/20 text-gold' 
-                      : 'text-zinc-500 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                  <span className={`text-[10px] font-medium ${isActive ? 'font-bold' : ''}`}>
-                    {label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </div>
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 border-t border-white/10 px-6 py-2 flex justify-between items-center max-w-2xl mx-auto w-full backdrop-blur-lg">
+      {navItems.map(({ view, icon: Icon, label }) => {
+        const isActive = currentView === view;
+        return (
+          <button
+            key={view}
+            onClick={() => onViewChange(view)}
+            className={`flex flex-col items-center gap-1 p-2 ${
+              isActive ? 'text-white' : 'text-zinc-600'
+            }`}
+          >
+            <Icon size={20} strokeWidth={1.5} />
+            <span className="text-[9px] font-medium uppercase tracking-wider">{label}</span>
+          </button>
+        );
+      })}
+    </nav>
   );
 };

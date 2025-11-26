@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
 import { TribeEvent } from '@/types/tribe';
 import { generateEventSummary } from '@/services/tribe/aiHelpers';
-import { getVibeBadgeColor, getCategoryDisplayName } from '@/utils/tribe/eventHelpers';
-import { Sparkles, Users, ExternalLink, Heart } from 'lucide-react';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { Sparkles, Users, UserPlus } from 'lucide-react';
 
 interface TribeEventCardProps {
   event: TribeEvent;
-  variant?: 'standard' | 'compact' | 'spotlight';
-  onJoinCrew?: (eventId: string) => void;
-  onLike?: (eventId: string) => void;
+  variant?: 'hero' | 'standard';
+  onJoinCrew?: (eventName: string) => void;
   onClick?: () => void;
 }
 
@@ -17,231 +14,136 @@ export const TribeEventCard: React.FC<TribeEventCardProps> = ({
   event, 
   variant = 'standard',
   onJoinCrew,
-  onLike,
   onClick 
 }) => {
   const [summary, setSummary] = useState<string | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
   
-  const displayImage = event.image_url || '/placeholder.svg';
+  const displayImage = event.image_url;
   const attendeeCount = event.attendees || Math.floor(Math.random() * 80) + 12;
-  const matchScore = event.matchScore || 0;
+  const mockAvatars = [
+    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=64&h=64&fit=crop",
+    "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=64&h=64&fit=crop",
+    "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=64&h=64&fit=crop"
+  ];
 
-  const handleGenerateSummary = async () => {
-    if (summary || loadingSummary) return;
+  const handleGetSummary = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (summary) return;
     setLoadingSummary(true);
-    const generated = await generateEventSummary(event);
-    setSummary(generated);
+    const aiSummary = await generateEventSummary(event);
+    setSummary(aiSummary);
     setLoadingSummary(false);
   };
 
-  const handleLikeClick = () => {
-    setIsLiked(!isLiked);
-    onLike?.(event.id);
-  };
-
-  if (variant === 'compact') {
+  // --- HERO VARIANT (Spotlight) ---
+  if (variant === 'hero') {
     return (
-      <div 
-        className="bg-black/60 backdrop-blur-md border border-white/10 p-3 hover:border-gold/50 transition-all cursor-pointer group"
-        onClick={onClick}
-      >
-        <div className="flex gap-3">
-          <AspectRatio ratio={1} className="w-16 h-16 flex-shrink-0">
-            <img 
-              src={displayImage} 
-              alt={event.title}
-              className="w-full h-full object-cover rounded"
-            />
-          </AspectRatio>
-          
-          <div className="flex-1 min-w-0">
-            <h3 className="text-white text-xs font-semibold line-clamp-1 group-hover:text-gold transition-colors">
-              {event.title}
-            </h3>
-            <p className="text-zinc-500 text-[10px] mt-0.5">
-              {new Date(event.date).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: 'short' })} {event.time}
-            </p>
-            
-            <div className="flex items-center gap-2 mt-1">
-              {event.vibe && (
-                <span className={`text-[8px] px-1.5 py-0.5 rounded border font-medium ${getVibeBadgeColor(event.vibe)}`}>
-                  {event.vibe}
-                </span>
-              )}
-              <span className="text-zinc-600 text-[10px] flex items-center gap-1">
-                <Users size={10} /> {attendeeCount}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (variant === 'spotlight') {
-    return (
-      <div 
-        className="bg-gradient-to-br from-black via-zinc-900 to-black border border-gold/30 overflow-hidden group hover:border-gold transition-all cursor-pointer"
-        onClick={onClick}
-      >
-        <AspectRatio ratio={16/9}>
-          <img 
-            src={displayImage} 
-            alt={event.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-          
-          {/* Match Score Badge */}
-          {matchScore > 0 && (
-            <div className="absolute top-4 right-4 bg-gold text-black text-[10px] font-bold px-3 py-1.5 flex items-center gap-1.5 shadow-xl">
-              <Sparkles size={12} />
-              {matchScore}% MATCH
+      <div className="w-full cursor-pointer relative group overflow-hidden bg-black" onClick={onClick}>
+        <div className="aspect-[16/9] w-full relative">
+          {displayImage ? (
+            <img src={displayImage} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt={event.title} />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-zinc-900 relative">
+              <span className="text-gold text-[10px] uppercase tracking-widest relative z-10 border border-gold/30 px-3 py-1">Tap to Load Visual</span>
             </div>
           )}
           
-          {/* Attendees */}
-          <div className="absolute bottom-4 left-4 flex items-center gap-2">
-            <div className="flex -space-x-2">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="w-7 h-7 rounded-full bg-zinc-700 border-2 border-black" />
-              ))}
-            </div>
-            <span className="text-white text-xs font-medium">+{attendeeCount - 3} going</span>
-          </div>
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-90"></div>
           
-          {/* Content */}
-          <div className="absolute bottom-0 left-0 right-0 p-6">
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex-1">
-                {event.category && (
-                  <span className="text-gold text-[10px] font-bold uppercase tracking-widest mb-1 block">
-                    {getCategoryDisplayName(event.category)}
-                  </span>
-                )}
-                <h2 className="text-white text-2xl font-bold mb-1">{event.title}</h2>
-                <p className="text-zinc-400 text-sm">
-                  {new Date(event.date).toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long' })}
-                </p>
+          <div className="absolute bottom-5 left-5 right-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="flex -space-x-1.5">
+                {mockAvatars.map((avatar, i) => (
+                  <img key={i} src={avatar} alt="" className="w-7 h-7 rounded-full border border-black" />
+                ))}
               </div>
+              <span className="text-white text-xs font-light">
+                +{attendeeCount - 3} going
+              </span>
             </div>
             
-            {event.vibe && (
-              <span className={`inline-block text-xs px-3 py-1 rounded border font-medium mt-2 ${getVibeBadgeColor(event.vibe)}`}>
-                {event.vibe}
-              </span>
+            <h3 className="text-white text-xl font-light tracking-tight mb-1">{event.title}</h3>
+            <p className="text-zinc-400 text-sm font-light">{event.date} · {event.time || 'TBA'}</p>
+            
+            {event.matchScore && event.matchScore > 70 && (
+              <div className="mt-3 inline-flex items-center gap-1.5 bg-gold/20 text-gold px-2 py-1 text-[10px] font-bold uppercase tracking-widest border border-gold/30">
+                <Sparkles size={12} />
+                {event.matchScore}% Match
+              </div>
             )}
           </div>
-        </AspectRatio>
+        </div>
       </div>
     );
   }
 
-  // Standard variant
+  // --- STANDARD VARIANT ---
   return (
-    <div 
-      className="bg-black/80 backdrop-blur-md border border-white/10 overflow-hidden hover:border-gold/50 transition-all group cursor-pointer"
-      onClick={onClick}
-    >
-      <AspectRatio ratio={16/9}>
-        <img 
-          src={displayImage} 
-          alt={event.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-        
-        {/* Match Score */}
-        {matchScore > 70 && (
-          <div className="absolute top-3 right-3 bg-gold text-black text-[9px] font-bold px-2 py-1 flex items-center gap-1">
-            <Sparkles size={10} />
-            {matchScore}%
-          </div>
-        )}
-        
-        {/* Vibe Badge */}
-        {event.vibe && (
-          <div className={`absolute top-3 left-3 text-[9px] px-2 py-1 rounded border font-medium ${getVibeBadgeColor(event.vibe)}`}>
-            {event.vibe}
-          </div>
-        )}
-      </AspectRatio>
-
-      <div className="p-4">
-        {/* Category */}
-        {event.category && (
-          <span className="text-gold text-[9px] font-bold uppercase tracking-widest">
-            {getCategoryDisplayName(event.category)}
-          </span>
-        )}
-        
-        {/* Title */}
-        <h3 className="text-white text-base font-bold mt-1 mb-2 line-clamp-2">
-          {event.title}
-        </h3>
-
-        {/* Date & Time */}
-        <div className="text-zinc-500 text-xs mb-3">
-          {new Date(event.date).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: 'short' })} • {event.time}
-        </div>
-
-        {/* Description or Summary */}
-        {summary ? (
-          <p className="text-zinc-400 text-xs leading-relaxed mb-3">{summary}</p>
-        ) : event.description ? (
-          <p className="text-zinc-400 text-xs leading-relaxed mb-3 line-clamp-2">{event.description}</p>
-        ) : null}
-
-        {/* Actions */}
-        <div className="flex items-center gap-2 pt-3 border-t border-white/5">
-          <button
-            onClick={handleLikeClick}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition-colors ${
-              isLiked ? 'text-red-400' : 'text-zinc-500 hover:text-white'
-            }`}
-          >
-            <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} />
-            <span>{(event.likes || 0) + (isLiked ? 1 : 0)}</span>
-          </button>
-
-          <button
-            onClick={handleGenerateSummary}
-            disabled={loadingSummary || !!summary}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-zinc-500 hover:text-gold transition-colors disabled:opacity-50"
-          >
-            <Sparkles size={14} />
-            {loadingSummary ? 'Generating...' : summary ? 'Summary' : 'AI Summary'}
-          </button>
-
-          <div className="flex-1" />
-
-          <div className="flex items-center gap-1 text-zinc-500 text-xs">
-            <Users size={12} />
-            <span>{attendeeCount}</span>
-          </div>
-
-          {event.link && (
-            <a 
-              href={event.link} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-zinc-500 hover:text-white transition-colors"
-            >
-              <ExternalLink size={14} />
-            </a>
+    <div className="cursor-pointer relative group bg-black" onClick={onClick}>
+      <div className="flex gap-4">
+        {/* Image */}
+        <div className="w-28 h-28 flex-shrink-0 relative overflow-hidden">
+          {displayImage ? (
+            <img src={displayImage} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt={event.title} />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+              <span className="text-gold text-[9px] uppercase tracking-widest">No Image</span>
+            </div>
           )}
         </div>
-
-        {/* Join Crew Button */}
-        {onJoinCrew && (
-          <button
-            onClick={() => onJoinCrew(event.id)}
-            className="w-full mt-3 bg-white hover:bg-gold text-black text-xs font-bold tracking-wide py-2 transition-colors"
-          >
-            Join Crew
-          </button>
+        
+        {/* Content */}
+        <div className="flex-1 min-w-0 py-1">
+          <div className="mb-1">
+            <h4 className="text-white text-base font-light tracking-tight line-clamp-2 group-hover:text-gold transition-colors">{event.title}</h4>
+          </div>
+          
+          <p className="text-zinc-500 text-xs font-light mb-2">{event.date} · {event.time || 'TBA'}</p>
+          
+          <div className="flex items-center gap-2 text-zinc-600 text-xs">
+            <div className="flex items-center gap-1">
+              <Users size={12} />
+              <span>{attendeeCount}</span>
+            </div>
+            {event.matchScore && event.matchScore > 60 && (
+              <div className="flex items-center gap-1 text-gold">
+                <Sparkles size={12} />
+                <span>{event.matchScore}%</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {/* Action Bar */}
+      <div className="mt-4 flex gap-3 pl-[7.25rem]">
+        {summary ? (
+          <div className="bg-zinc-900/50 p-3 border-l border-gold animate-fadeIn w-full">
+            <p className="text-sm text-zinc-300 font-light leading-relaxed">"{summary}"</p>
+          </div>
+        ) : (
+          <>
+            <button 
+              onClick={handleGetSummary}
+              disabled={loadingSummary}
+              className="h-9 px-4 flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-medium tracking-wide transition-colors border border-white/5"
+            >
+              {loadingSummary ? <span className="animate-pulse">Checking...</span> : <><Sparkles size={14} className="text-gold" /> Vibe Check</>}
+            </button>
+            
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                onJoinCrew && onJoinCrew(event.title);
+              }}
+              className="h-9 flex-1 flex items-center justify-center gap-2 bg-white hover:bg-zinc-200 text-black text-xs font-bold tracking-wide transition-colors"
+            >
+              <UserPlus size={14} />
+              Join Crew
+            </button>
+          </>
         )}
       </div>
     </div>

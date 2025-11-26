@@ -8,7 +8,7 @@ import { TribeCommunityBoard } from './TribeCommunityBoard';
 import { TribeMapView } from './TribeMapView';
 import { TribeBottomNav } from './TribeBottomNav';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sparkles, MapPin } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 export const TribeApp: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>(ViewState.FEED);
@@ -48,7 +48,6 @@ export const TribeApp: React.FC = () => {
   };
 
   const loadPosts = () => {
-    // Mock posts for now
     const mockPosts: Post[] = [
       {
         id: '1',
@@ -67,7 +66,10 @@ export const TribeApp: React.FC = () => {
 
   const handleEventClick = (event: TribeEvent) => {
     console.log('Event clicked:', event);
-    // Could open detail dialog here
+  };
+
+  const handleJoinCrew = (eventName: string) => {
+    console.log('Joining crew for:', eventName);
   };
 
   const renderView = () => {
@@ -75,49 +77,47 @@ export const TribeApp: React.FC = () => {
       case ViewState.FEED:
         return (
           <ScrollArea className="h-full">
-            <div className="p-4 pb-24 space-y-6">
+            <div className="pb-20">
               {/* Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h1 className="text-white text-2xl font-bold">THE TRIBE</h1>
-                  <p className="text-zinc-500 text-sm">Tonight in {selectedCity}</p>
+              <header className="bg-black/95 backdrop-blur-lg border-b border-white/10 sticky top-0 z-30 px-5 py-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h1 className="text-white text-xl font-light tracking-tight">THE TRIBE</h1>
+                    <p className="text-zinc-600 text-xs font-light uppercase tracking-widest">Tonight in {selectedCity}</p>
+                  </div>
+                  <button
+                    onClick={() => setShowAI(true)}
+                    className="bg-gold hover:bg-gold/80 text-black rounded-full p-2.5 transition-colors"
+                  >
+                    <Sparkles size={18} />
+                  </button>
                 </div>
-                <button
-                  onClick={() => setShowAI(true)}
-                  className="bg-gold hover:bg-gold-light text-black rounded-full p-3 transition-colors"
-                >
-                  <Sparkles size={20} />
-                </button>
-              </div>
+              </header>
 
-              {/* Spotlight Events */}
-              <div>
-                <h2 className="text-white text-lg font-bold mb-3">Tonight's Highlights</h2>
-                <div className="space-y-3">
-                  {events.slice(0, 3).map((event) => (
-                    <TribeEventCard 
-                      key={event.id} 
-                      event={event} 
-                      variant="spotlight"
-                      onClick={() => handleEventClick(event)}
-                    />
-                  ))}
+              {/* Hero Event */}
+              {events.length > 0 && (
+                <div className="mb-6">
+                  <TribeEventCard 
+                    event={events[0]} 
+                    variant="hero"
+                    onClick={() => handleEventClick(events[0])}
+                    onJoinCrew={handleJoinCrew}
+                  />
                 </div>
-              </div>
+              )}
 
-              {/* All Events Grid */}
-              <div>
-                <h2 className="text-white text-lg font-bold mb-3">All Events</h2>
-                <div className="grid grid-cols-2 gap-3">
-                  {events.slice(3).map((event) => (
-                    <TribeEventCard 
-                      key={event.id} 
-                      event={event} 
-                      variant="compact"
-                      onClick={() => handleEventClick(event)}
-                    />
-                  ))}
-                </div>
+              {/* More Events */}
+              <div className="px-5 space-y-6">
+                <h2 className="text-white text-sm font-light uppercase tracking-widest">More Events</h2>
+                {events.slice(1).map((event) => (
+                  <TribeEventCard 
+                    key={event.id} 
+                    event={event} 
+                    variant="standard"
+                    onClick={() => handleEventClick(event)}
+                    onJoinCrew={handleJoinCrew}
+                  />
+                ))}
               </div>
             </div>
           </ScrollArea>
