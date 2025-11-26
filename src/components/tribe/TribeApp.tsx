@@ -22,6 +22,8 @@ export const TribeApp: React.FC = () => {
     avatarUrl: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png',
   });
 
+  const cityOptions = ['Bielefeld', 'Berlin', 'Hamburg', 'München', 'Köln'];
+
   useEffect(() => {
     fetchEvents();
     loadPosts();
@@ -74,27 +76,53 @@ export const TribeApp: React.FC = () => {
   const filteredEvents = allEvents.filter(e => e.date.startsWith(targetDate));
 
   return (
-    <div className="flex flex-col h-screen bg-black font-['Outfit',sans-serif] text-white overflow-hidden">
+    <div className="min-h-screen bg-black text-white pb-24 overflow-x-hidden relative font-sans selection:bg-gold selection:text-black">
+      
       {/* --- HEADER --- */}
-      <header className="bg-black/95 backdrop-blur-lg border-b border-white/10 px-5 py-4 sticky top-0 z-30">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-white text-xl font-light tracking-tight">THE TRIBE</h1>
-            <p className="text-zinc-600 text-xs font-light uppercase tracking-widest">
-              Tonight in {selectedCity}
-            </p>
-          </div>
-          <button
-            onClick={() => setShowAI(true)}
-            className="bg-gold hover:bg-gold/80 text-black rounded-full p-2.5 transition-colors"
-          >
-            <Sparkles size={18} />
-          </button>
+      <header className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/5 px-6 py-4 flex justify-between items-center max-w-2xl mx-auto">
+        {/* THE TRIBE LOGO */}
+        <div className="flex items-center gap-3">
+             <div className="relative w-6 h-6">
+                <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 22H22L12 2Z" className="fill-white"/>
+                    <circle cx="12" cy="14" r="3" className="fill-black"/>
+                </svg>
+             </div>
+            <div>
+                <h1 className="text-white text-base font-light tracking-tight uppercase">THE TRIBE</h1>
+                <p className="text-[10px] text-zinc-600 uppercase tracking-widest">Tonight in {selectedCity}</p>
+            </div>
         </div>
+
+        {/* City Selector */}
+        <div className="relative">
+          <select
+            value={selectedCity}
+            onChange={(e) => setSelectedCity(e.target.value)}
+            className="bg-zinc-900 border border-white/10 text-white text-xs px-3 py-1.5 rounded appearance-none cursor-pointer hover:bg-zinc-800 transition-colors pr-8"
+          >
+            {cityOptions.map(city => (
+              <option key={city} value={city}>{city}</option>
+            ))}
+          </select>
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+            <svg className="w-3 h-3 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+
+        {/* AI Button */}
+        <button
+          onClick={() => setShowAI(true)}
+          className="bg-gold hover:bg-gold/80 text-black rounded-full p-2 transition-colors"
+        >
+          <Sparkles size={16} />
+        </button>
       </header>
 
       {/* --- MAIN CONTENT --- */}
-      <main className="flex-1 overflow-hidden relative">
+      <main className="pt-20 flex-1 overflow-hidden relative">
         {view === ViewState.FEED && (
           <div className="h-full overflow-y-auto pb-20">
             {/* Hero Event */}
@@ -172,6 +200,7 @@ export const TribeApp: React.FC = () => {
             <TribeMapView 
               events={filteredEvents}
               posts={posts}
+              selectedCity={selectedCity}
               onEventClick={(e) => console.log('Event clicked:', e)}
             />
           </div>

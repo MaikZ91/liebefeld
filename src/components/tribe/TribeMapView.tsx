@@ -1,202 +1,203 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { TribeEvent, Post } from '@/types/tribe';
 
 interface TribeMapViewProps {
   events: TribeEvent[];
-  posts?: Post[];
-  onEventClick: (event: TribeEvent) => void;
+  posts: Post[];
+  selectedCity: string;
+  onEventClick?: (event: TribeEvent) => void;
 }
 
 const CITY_COORDS: Record<string, [number, number]> = {
   'Bielefeld': [52.0302, 8.5325],
-  'Berlin': [52.5200, 13.4050],
+  'Berlin': [52.52, 13.405],
   'Hamburg': [53.5511, 9.9937],
-  'Cologne': [50.9375, 6.9603],
-  'Munich': [48.1351, 11.5820],
+  'München': [48.1351, 11.582],
+  'Köln': [50.9375, 6.9603],
 };
 
-const getCategoryImage = (category?: string) => {
-  const cat = category?.toUpperCase() || '';
-  if (cat.includes('PARTY') || cat.includes('TECHNO') || cat.includes('RAVE')) 
-    return 'https://images.unsplash.com/photo-1574391884720-385075a8529e?w=100&h=100&fit=crop';
-  if (cat.includes('ART') || cat.includes('CULTURE')) 
-    return 'https://images.unsplash.com/photo-1547891654-e66ed7ebb968?w=100&h=100&fit=crop';
-  if (cat.includes('SPORT') || cat.includes('RUN')) 
-    return 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=100&h=100&fit=crop';
-  return 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=100&h=100&fit=crop';
-};
-
-const getJitteredCoords = (city: string): [number, number] => {
-  const base = CITY_COORDS[city] || CITY_COORDS['Bielefeld'];
-  return [
-    base[0] + (Math.random() - 0.5) * 0.02,
-    base[1] + (Math.random() - 0.5) * 0.02
-  ];
-};
-
-export const TribeMapView: React.FC<TribeMapViewProps> = ({ events, posts = [], onEventClick }) => {
-  const mapRef = useRef<L.Map | null>(null);
+export const TribeMapView: React.FC<TribeMapViewProps> = ({ events, posts, selectedCity, onEventClick }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.Marker[]>([]);
+  const [filterMode, setFilterMode] = useState<'TODAY' | 'TOMORROW'>('TODAY');
 
+  // Initialize map
   useEffect(() => {
-    if (!mapContainerRef.current || mapRef.current) return;
+    if (!mapContainerRef.current || mapInstanceRef.current) return;
 
-    // Initialize map
+    const cityCoords = CITY_COORDS[selectedCity] || CITY_COORDS['Bielefeld'];
+
     const map = L.map(mapContainerRef.current, {
+      center: cityCoords,
+      zoom: 13,
       zoomControl: false,
-    }).setView([52.0302, 8.5325], 13);
+    });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap',
+      attribution: '&copy; OpenStreetMap contributors',
     }).addTo(map);
 
-    // Add zoom control to bottom right
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    mapRef.current = map;
-
-    // Add custom CSS for markers
+    // Custom CSS for dark urban aesthetic
     const style = document.createElement('style');
     style.textContent = `
-      .marker-pin-image {
-        width: 48px;
-        height: 48px;
-        position: relative;
-        cursor: pointer;
+      .leaflet-tile-container {
+        filter: grayscale(100%) brightness(0.4) sepia(100%) hue-rotate(330deg) saturate(150%);
       }
-      .marker-pin-image img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        border-radius: 4px;
-        border: 2px solid #000;
-      }
-      .marker-badge {
-        position: absolute;
-        top: -6px;
-        right: -6px;
-        background: #d4b483;
-        color: #000;
-        font-size: 9px;
-        font-weight: 700;
-        padding: 2px 4px;
-        border-radius: 3px;
-        display: flex;
-        align-items: center;
-        gap: 2px;
-        z-index: 10;
-        border: 1px solid #000;
-      }
-      .marker-badge svg {
-        width: 8px;
-        height: 8px;
-      }
-      .marker-pin-social {
-        width: 24px;
-        height: 24px;
-        background: white;
-        border: 2px solid #000;
-        border-radius: 50%;
-        cursor: pointer;
-      }
-      .custom-div-icon {
-        background: transparent !important;
-        border: none !important;
+      .leaflet-control-attribution {
+        display: none !important;
       }
     `;
     document.head.appendChild(style);
 
+    mapInstanceRef.current = map;
+
     return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
+      map.remove();
+      mapInstanceRef.current = null;
       document.head.removeChild(style);
     };
-  }, []);
+  }, [selectedCity]);
 
+  // Update city center
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (mapInstanceRef.current) {
+      const cityCoords = CITY_COORDS[selectedCity] || CITY_COORDS['Bielefeld'];
+      mapInstanceRef.current.setView(cityCoords, 13);
+    }
+  }, [selectedCity]);
 
-    const map = mapRef.current;
+  // Render markers
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
 
-    // Clear existing markers
-    map.eachLayer((layer) => {
-      if (layer instanceof L.Marker) {
-        map.removeLayer(layer);
-      }
-    });
+    // Clear old markers
+    markersRef.current.forEach(m => m.remove());
+    markersRef.current = [];
 
-    // Add event markers
-    events.forEach((event) => {
-      const coords = getJitteredCoords(event.city || 'Bielefeld');
-      const imgUrl = event.image_url || getCategoryImage(event.category);
-      const attendees = event.attendees || Math.floor(Math.random() * 50) + 10;
-      
-      const eventIcon = L.divIcon({
-        className: 'custom-div-icon',
-        html: `
-          <div class="marker-pin-image">
-            <div class="marker-badge">
-              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-              ${attendees}
-            </div>
-            <img src="${imgUrl}" alt="${event.title}" />
+    const map = mapInstanceRef.current;
+    const cityCoords = CITY_COORDS[selectedCity] || CITY_COORDS['Bielefeld'];
+
+    const getJitteredCoords = (baseCoords: [number, number], index: number): [number, number] => {
+      const offset = 0.01;
+      const angle = (index * 2 * Math.PI) / Math.max(events.length, 8);
+      return [
+        baseCoords[0] + offset * Math.cos(angle) + (Math.random() - 0.5) * 0.005,
+        baseCoords[1] + offset * Math.sin(angle) + (Math.random() - 0.5) * 0.005,
+      ];
+    };
+
+    // Render event markers
+    events.forEach((evt, idx) => {
+      const coords = getJitteredCoords(cityCoords, idx);
+      const attendees = evt.attendees || Math.floor(Math.random() * 50) + 10;
+
+      const iconHtml = `
+        <div class="relative group cursor-pointer">
+          <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-gold shadow-lg hover:scale-110 transition-transform">
+            ${evt.image_url 
+              ? `<img src="${evt.image_url}" class="w-full h-full object-cover" alt="${evt.title}"/>`
+              : `<div class="w-full h-full bg-zinc-800 flex items-center justify-center text-xs text-gold">?</div>`
+            }
           </div>
-        `,
-        iconSize: [48, 48],
-        iconAnchor: [24, 54]
-      });
+          <div class="absolute -top-1 -right-1 bg-gold text-black text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow">
+            ${attendees}
+          </div>
+        </div>
+      `;
 
-      const marker = L.marker(coords, { icon: eventIcon, zIndexOffset: 100 }).addTo(map);
-      
+      const marker = L.marker(coords, {
+        icon: L.divIcon({
+          html: iconHtml,
+          className: '',
+          iconSize: [48, 48],
+          iconAnchor: [24, 24],
+        }),
+      }).addTo(map);
+
       marker.bindPopup(`
-        <div style="min-width: 180px; font-family: 'Outfit', sans-serif;">
-          <div style="height: 80px; width: 100%; overflow: hidden; margin-bottom: 8px;">
-            <img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover;" />
-          </div>
-          <div style="padding: 0 4px 4px 4px;">
-            <div style="font-size: 10px; color: #d4b483; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">${event.category || 'Event'}</div>
-            <div style="font-size: 14px; font-weight: 600; color: #fff; margin-top: 2px; line-height: 1.2;">${event.title}</div>
-            <div style="font-size: 11px; color: #a1a1aa; margin-top: 4px;">${event.date} • +${attendees} going</div>
-          </div>
+        <div class="text-sm">
+          <strong class="text-black">${evt.title}</strong><br/>
+          <span class="text-xs text-gray-600">${evt.date} • ${evt.time || 'TBA'}</span><br/>
+          <span class="text-xs text-gray-700">${attendees} going</span>
         </div>
       `);
 
-      marker.on('click', () => onEventClick(event));
-    });
-
-    // Add post markers (white dots)
-    posts.forEach((post) => {
-      const coords = getJitteredCoords(post.city || 'Bielefeld');
-      
-      const socialIcon = L.divIcon({
-        className: 'custom-div-icon',
-        html: `<div class="marker-pin-social"></div>`,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12]
+      marker.on('click', () => {
+        onEventClick && onEventClick(evt);
       });
 
-      const marker = L.marker(coords, { icon: socialIcon, zIndexOffset: 50 }).addTo(map);
-      
+      markersRef.current.push(marker);
+    });
+
+    // Render post markers (simple white dots)
+    posts.forEach((post, idx) => {
+      const coords = getJitteredCoords(cityCoords, idx + events.length);
+
+      const iconHtml = `
+        <div class="w-3 h-3 bg-white rounded-full shadow-md hover:scale-125 transition-transform cursor-pointer"></div>
+      `;
+
+      const marker = L.marker(coords, {
+        icon: L.divIcon({
+          html: iconHtml,
+          className: '',
+          iconSize: [12, 12],
+          iconAnchor: [6, 6],
+        }),
+      }).addTo(map);
+
       marker.bindPopup(`
-        <div style="min-width: 140px; font-family: 'Outfit', sans-serif;">
-          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-            <div style="width: 16px; height: 16px; background: #fff; border-radius: 50%;"></div>
-            <div style="font-size: 12px; font-weight: 600; color: #fff;">${post.user}</div>
-          </div>
-          <div style="font-size: 11px; color: #d4d4d8; line-height: 1.4; margin-bottom: 4px;">${post.text.substring(0, 100)}${post.text.length > 100 ? '...' : ''}</div>
-          <div style="font-size: 10px; color: #71717a;">${post.time}</div>
+        <div class="text-xs">
+          <strong class="text-black">${post.user}</strong><br/>
+          <span class="text-gray-700">${post.text}</span>
         </div>
       `);
+
+      markersRef.current.push(marker);
     });
-  }, [events, posts, onEventClick]);
+  }, [events, posts, selectedCity, onEventClick]);
+
+  const handleSetToday = () => setFilterMode('TODAY');
+  const handleSetTomorrow = () => setFilterMode('TOMORROW');
 
   return (
-    <div className="relative h-full w-full">
-      <div ref={mapContainerRef} className="h-full w-full" />
+    <div className="relative w-full h-full">
+      <div ref={mapContainerRef} className="w-full h-full" />
+
+      {/* Floating controls */}
+      <div className="absolute top-4 left-4 right-4 z-[1000] flex flex-col gap-3 pointer-events-none">
+         <div className="flex gap-2 pointer-events-auto">
+             <button 
+                onClick={handleSetToday}
+                className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider flex-1 transition-colors ${filterMode === 'TODAY' ? 'bg-white text-black' : 'bg-white/10 text-zinc-400 hover:bg-white/20 backdrop-blur-md'}`}
+             >
+                Today
+             </button>
+             <button 
+                onClick={handleSetTomorrow}
+                className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider flex-1 transition-colors ${filterMode === 'TOMORROW' ? 'bg-white text-black' : 'bg-white/10 text-zinc-400 hover:bg-white/20 backdrop-blur-md'}`}
+             >
+                Tmrw
+             </button>
+         </div>
+
+         {/* Legend */}
+         <div className="bg-black/90 backdrop-blur-md px-3 py-2 border border-white/10 flex gap-4 shadow-xl pointer-events-auto">
+             <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-sm bg-gold"></div>
+                <span className="text-[9px] text-zinc-300 uppercase tracking-wide">Events</span>
+             </div>
+             <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-white"></div>
+                <span className="text-[9px] text-zinc-300 uppercase tracking-wide">Posts</span>
+             </div>
+         </div>
+      </div>
     </div>
   );
 };
