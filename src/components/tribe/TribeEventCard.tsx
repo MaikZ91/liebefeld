@@ -241,7 +241,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
         </div>
 
         {/* Action Bar */}
-        <div className="mt-4 flex gap-3 pl-[7.25rem]">
+        <div className="mt-4 flex gap-2 pl-24">
             {summary ? (
                  <div className="bg-zinc-900/50 p-3 border-l border-gold animate-fadeIn w-full">
                      <p className="text-sm text-zinc-300 font-light leading-relaxed">"{summary}"</p>
@@ -251,21 +251,21 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                 <button 
                     onClick={handleGetSummary}
                     disabled={loadingSummary}
-                    className="h-9 px-4 flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-medium tracking-wide transition-colors border border-white/5"
+                    className="h-9 px-3 flex items-center justify-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-[10px] font-medium tracking-wide transition-colors border border-white/5 whitespace-nowrap"
                 >
-                    {loadingSummary ? <span className="animate-pulse">Checking...</span> : <><Sparkles size={14} className="text-gold" /> Vibe Check</>}
+                    {loadingSummary ? <span className="animate-pulse">Checking...</span> : <><Sparkles size={12} className="text-gold" /> Vibe</>}
                 </button>
                 
                 <button 
                     onClick={handleToggleGoingClick}
-                    className={`h-9 px-4 flex items-center justify-center gap-2 text-xs font-bold tracking-wide transition-colors border ${isAttending ? 'bg-gold text-black border-gold' : 'bg-transparent text-gold border-gold/30 hover:bg-gold/10'}`}
+                    className={`h-9 px-3 flex items-center justify-center gap-1.5 text-[10px] font-bold tracking-wide transition-colors border whitespace-nowrap ${isAttending ? 'bg-gold text-black border-gold' : 'bg-transparent text-gold border-gold/30 hover:bg-gold/10'}`}
                 >
-                    {isAttending ? <><Check size={14} /> GOING</> : 'RSVP'}
+                    {isAttending ? <><Check size={12} /> GOING</> : 'RSVP'}
                 </button>
 
                 <button 
                     onClick={() => onJoinTribe && onJoinTribe(event.title)}
-                    className="h-9 flex-1 flex items-center justify-center gap-2 bg-white hover:bg-zinc-200 text-black text-[11px] font-bold tracking-wide transition-colors whitespace-nowrap"
+                    className="h-9 flex-1 flex items-center justify-center gap-1.5 bg-white hover:bg-zinc-200 text-black text-[10px] font-bold tracking-wide transition-colors whitespace-nowrap min-w-0"
                 >
                     Join Tribe
                 </button>
