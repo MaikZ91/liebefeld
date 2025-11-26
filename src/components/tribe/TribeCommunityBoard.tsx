@@ -266,9 +266,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
     <div className="h-full flex flex-col bg-black animate-fadeIn">
         
         {/* --- INPUT AREA --- */}
-        <div className="p-6 border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur-xl z-20">
-            <h2 className="font-serif text-2xl text-gold mb-4 italic">The Tribe Board</h2>
-            
+        <div className="p-6 pb-4 border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur-xl z-20">
             <div className="bg-surface border border-white/10 rounded-xl p-3 shadow-lg">
                 <textarea 
                     value={newPost}
