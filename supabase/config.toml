@@ -32,6 +32,12 @@ verify_jwt = false
 [functions.ai-batch-geocode]
 verify_jwt = false
 
+[functions.ensure_avatar_policies]
+verify_jwt = false
+
+[functions.analyze-activity-proposal]
+verify_jwt = false
+
 [db]
 port = 54322
 
