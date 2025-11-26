@@ -499,27 +499,84 @@ export const TribeApp: React.FC = () => {
             <div className="px-6 space-y-2 pb-12">
                 <div className="flex justify-between items-center border-b border-white/5 pb-4 mb-6">
                     <h2 className="text-xs font-bold text-white uppercase tracking-[0.2em]">Your Feed</h2>
-                    <button 
-                      onClick={() => setIsCompactMode(!isCompactMode)}
-                      className="text-zinc-500 hover:text-white transition-colors"
-                    >
-                      {isCompactMode ? <LayoutTemplate size={16} /> : <LayoutList size={16} />}
-                    </button>
+                    <div className="flex items-center gap-3">
+                      {/* Vibe Filter */}
+                      <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="bg-black text-zinc-400 text-[10px] uppercase tracking-wider border border-white/10 px-2 py-1 rounded-sm focus:border-gold focus:text-gold outline-none"
+                      >
+                        <option value="ALL">All Vibes</option>
+                        <option value="PARTY">Party</option>
+                        <option value="ART">Art</option>
+                        <option value="CONCERT">Concert</option>
+                        <option value="SPORT">Sport</option>
+                      </select>
+                      <button 
+                        onClick={() => setIsCompactMode(!isCompactMode)}
+                        className="text-zinc-500 hover:text-white transition-colors"
+                      >
+                        {isCompactMode ? <LayoutTemplate size={16} /> : <LayoutList size={16} />}
+                      </button>
+                    </div>
                 </div>
                 {feedEvents.length > 0 ? (
-                    feedEvents.map((event, i) => (
+                    (() => {
+                      // Group events by date in compact mode
+                      if (isCompactMode) {
+                        const grouped: Record<string, TribeEvent[]> = {};
+                        feedEvents.forEach(event => {
+                          if (!grouped[event.date]) grouped[event.date] = [];
+                          grouped[event.date].push(event);
+                        });
+                        
+                        const sortedDates = Object.keys(grouped).sort();
+                        
+                        return sortedDates.map(date => {
+                          const dateObj = new Date(date);
+                          const weekday = dateObj.toLocaleDateString('de-DE', { weekday: 'long' });
+                          const day = dateObj.getDate();
+                          const month = dateObj.toLocaleDateString('de-DE', { month: 'long' });
+                          
+                          return (
+                            <div key={date} className="mb-6">
+                              <h3 className="text-sm font-serif text-white/90 mb-2 capitalize">
+                                {weekday}, {day}. {month}
+                              </h3>
+                              <div className="space-y-0">
+                                {grouped[date].map((event, i) => (
+                                  <TribeEventCard 
+                                    key={i}
+                                    event={event} 
+                                    variant="compact"
+                                    onJoinTribe={handleJoinTribe}
+                                    onInteraction={handleInteraction}
+                                    isLiked={likedEventIds.has(event.id)}
+                                    isAttending={attendingEventIds.has(event.id)}
+                                    onToggleAttendance={handleToggleAttendance}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        });
+                      }
+                      
+                      // Standard mode - no grouping
+                      return feedEvents.map((event, i) => (
                         <div key={i}>
-                              <TribeEventCard 
-                                event={event} 
-                                variant={isCompactMode ? 'compact' : 'standard'}
-                                onJoinTribe={handleJoinTribe}
-                                onInteraction={handleInteraction}
-                                isLiked={likedEventIds.has(event.id)}
-                                isAttending={attendingEventIds.has(event.id)}
-                                onToggleAttendance={handleToggleAttendance}
-                              />
+                          <TribeEventCard 
+                            event={event} 
+                            variant="standard"
+                            onJoinTribe={handleJoinTribe}
+                            onInteraction={handleInteraction}
+                            isLiked={likedEventIds.has(event.id)}
+                            isAttending={attendingEventIds.has(event.id)}
+                            onToggleAttendance={handleToggleAttendance}
+                          />
                         </div>
-                    ))
+                      ));
+                    })()
                 ) : (
                     <div className="py-10 text-center text-zinc-600 font-light text-sm">
                         No events in this sector.
