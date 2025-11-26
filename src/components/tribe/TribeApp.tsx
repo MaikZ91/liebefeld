@@ -6,37 +6,78 @@ import { TribeEventCard } from './TribeEventCard';
 import { TribeAIChat } from './TribeAIChat';
 import { TribeCommunityBoard } from './TribeCommunityBoard';
 import { TribeMapView } from './TribeMapView';
+import { AuthScreen } from './AuthScreen';
+import { ProfileView } from './ProfileView';
 import { 
   Map as MapIcon,
   Home,
   Users,
   Sparkles,
-  ChevronDown
+  ChevronDown,
+  User
 } from 'lucide-react';
 
 const CITIES = ['Bielefeld', 'Berlin', 'Hamburg', 'Köln', 'München'];
 const CATEGORIES = ['ALL', 'PARTY', 'ART', 'CONCERT', 'SPORT'];
 
 export const TribeApp: React.FC = () => {
-  const [view, setView] = useState<ViewState>(ViewState.FEED);
+  const [view, setView] = useState<ViewState>(ViewState.AUTH);
   const [selectedCity, setSelectedCity] = useState<string>('Bielefeld');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [isCityMenuOpen, setIsCityMenuOpen] = useState(false);
   
+  // Event tracking state
+  const [likedEventIds, setLikedEventIds] = useState<Set<string>>(new Set());
+  const [attendingEventIds, setAttendingEventIds] = useState<Set<string>>(new Set());
+  
+  // Query history
+  const [queryHistory, setQueryHistory] = useState<string[]>([]);
+  
   const [allEvents, setAllEvents] = useState<TribeEvent[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
 
-  const [userProfile] = useState<UserProfile>({
-    username: localStorage.getItem('username') || 'Mia',
-    bio: 'Observer',
-    avatarUrl: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png',
-    avatar: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png'
-  });
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  // Initialize auth and preferences
+  useEffect(() => {
+    const savedProfile = localStorage.getItem('tribe_user_profile');
+    if (savedProfile) {
+      const parsedProfile = JSON.parse(savedProfile);
+      setUserProfile(parsedProfile);
+      if (parsedProfile.homebase) setSelectedCity(parsedProfile.homebase);
+      setView(ViewState.FEED);
+    } else {
+      setView(ViewState.AUTH);
+    }
+
+    const savedLikes = localStorage.getItem('tribe_liked_events');
+    const savedAttending = localStorage.getItem('tribe_attending_events');
+    const savedHistory = localStorage.getItem('tribe_query_history');
+    
+    if (savedLikes) setLikedEventIds(new Set(JSON.parse(savedLikes)));
+    if (savedAttending) setAttendingEventIds(new Set(JSON.parse(savedAttending)));
+    if (savedHistory) setQueryHistory(JSON.parse(savedHistory));
+  }, []);
+
+  // Save preferences
+  useEffect(() => {
+    localStorage.setItem('tribe_liked_events', JSON.stringify(Array.from(likedEventIds)));
+  }, [likedEventIds]);
 
   useEffect(() => {
-    fetchEvents();
-    loadPosts();
-  }, [selectedCity]);
+    localStorage.setItem('tribe_attending_events', JSON.stringify(Array.from(attendingEventIds)));
+  }, [attendingEventIds]);
+
+  useEffect(() => {
+    localStorage.setItem('tribe_query_history', JSON.stringify(queryHistory));
+  }, [queryHistory]);
+
+  useEffect(() => {
+    if (userProfile) {
+      fetchEvents();
+      loadPosts();
+    }
+  }, [selectedCity, userProfile]);
 
   const fetchEvents = async () => {
     try {
@@ -85,20 +126,63 @@ export const TribeApp: React.FC = () => {
   const spotlightEvents = filteredEvents.slice(0, 5);
   const feedEvents = filteredEvents.slice(5);
 
-  const handleJoinCrew = (eventName: string) => {
-      const newPost: Post = {
-          id: Date.now().toString(),
-          user: userProfile.username,
-          text: `Who is going to "${eventName}"? Looking for a crew!`,
-          city: selectedCity,
-          likes: 0,
-          time: 'Just now',
-          tags: ['CrewCall'],
-          userAvatar: userProfile.avatarUrl
-      };
-      setPosts([newPost, ...posts]);
-      setView(ViewState.COMMUNITY);
+  const handleLogin = (profile: UserProfile) => {
+    setUserProfile(profile);
+    if (profile.homebase) setSelectedCity(profile.homebase);
+    localStorage.setItem('tribe_user_profile', JSON.stringify(profile));
+    setView(ViewState.FEED);
   };
+
+  const handleToggleLike = (eventId: string) => {
+    setLikedEventIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(eventId)) {
+        newSet.delete(eventId);
+      } else {
+        newSet.add(eventId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleToggleAttendance = (eventId: string) => {
+    setAttendingEventIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(eventId)) {
+        newSet.delete(eventId);
+      } else {
+        newSet.add(eventId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleQuery = (query: string) => {
+    setQueryHistory(prev => [query, ...prev.filter(q => q !== query)].slice(0, 20));
+  };
+
+  const handleJoinCrew = (eventName: string) => {
+    if (!userProfile) return;
+    const newPost: Post = {
+        id: Date.now().toString(),
+        user: userProfile.username,
+        text: `Who is going to "${eventName}"? Looking for a crew!`,
+        city: selectedCity,
+        likes: 0,
+        time: 'Just now',
+        tags: ['CrewCall'],
+        userAvatar: userProfile.avatarUrl
+    };
+    setPosts([newPost, ...posts]);
+    setView(ViewState.COMMUNITY);
+  };
+
+  const attendingEvents = allEvents.filter(e => attendingEventIds.has(e.id));
+  const likedEvents = allEvents.filter(e => likedEventIds.has(e.id));
+
+  if (!userProfile) {
+    return <AuthScreen onLogin={handleLogin} />;
+  }
 
   return (
     <div className="min-h-screen bg-black text-white pb-24 overflow-x-hidden relative font-sans selection:bg-gold selection:text-black">
@@ -196,12 +280,28 @@ export const TribeApp: React.FC = () => {
           </div>
         )}
 
-        {view === ViewState.TRIBE_AI && <TribeAIChat onClose={() => setView(ViewState.FEED)} events={filteredEvents} />}
+        {view === ViewState.TRIBE_AI && (
+          <TribeAIChat 
+            onClose={() => setView(ViewState.FEED)} 
+            events={filteredEvents}
+            onQuery={handleQuery}
+          />
+        )}
         {view === ViewState.COMMUNITY && <TribeCommunityBoard selectedCity={selectedCity} userProfile={userProfile} />}
         {view === ViewState.MAP && (
             <div className="absolute inset-0 pt-16 h-[calc(100vh-80px)]">
                  <TribeMapView events={filteredEvents} posts={posts} selectedCity={selectedCity} />
             </div>
+        )}
+        {view === ViewState.PROFILE && (
+          <ProfileView 
+            userProfile={userProfile}
+            attendingEvents={attendingEvents}
+            likedEvents={likedEvents}
+            onToggleAttendance={(event) => handleToggleAttendance(event.id)}
+            attendingEventIds={attendingEventIds}
+            likedEventIds={likedEventIds}
+          />
         )}
 
       </main>
@@ -226,6 +326,11 @@ export const TribeApp: React.FC = () => {
           <button onClick={() => setView(ViewState.TRIBE_AI)} className={`flex flex-col items-center gap-1 p-2 ${view === ViewState.TRIBE_AI ? 'text-gold' : 'text-zinc-600'}`}>
               <Sparkles size={20} strokeWidth={1.5} />
               <span className="text-[9px] font-medium uppercase tracking-wider">Nexus</span>
+          </button>
+
+          <button onClick={() => setView(ViewState.PROFILE)} className={`flex flex-col items-center gap-1 p-2 ${view === ViewState.PROFILE ? 'text-white' : 'text-zinc-600'}`}>
+              <User size={20} strokeWidth={1.5} />
+              <span className="text-[9px] font-medium uppercase tracking-wider">Profile</span>
           </button>
       </nav>
 

@@ -33,6 +33,13 @@ export interface UserProfile {
   bio: string;
   avatarUrl: string;
   avatar?: string;
+  homebase?: string;
+}
+
+export interface NexusFilter {
+  category?: string;
+  vibe?: 'RAGE' | 'CHILL' | 'ARTSY' | 'FLIRTY';
+  date?: string;
 }
 
 export interface Comment {
@@ -57,10 +64,12 @@ export interface Post {
 }
 
 export enum ViewState {
+  AUTH = 'AUTH',
   FEED = 'FEED',
   TRIBE_AI = 'TRIBE_AI',
   COMMUNITY = 'COMMUNITY',
-  MAP = 'MAP'
+  MAP = 'MAP',
+  PROFILE = 'PROFILE'
 }
 
 export interface ConnectionSuggestion {
