@@ -3,6 +3,8 @@ import { UserProfile, Post, Comment } from '@/types/tribe';
 import { enhancePostContent } from '@/services/tribe/aiHelpers';
 import { ArrowRight, Sparkles, Heart, MessageCircle, Share2, Hash, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import MeetupProposal from '@/components/chat/MeetupProposal';
+import { v4 as uuidv4 } from 'uuid';
 
 interface Props {
   selectedCity: string;
@@ -104,7 +106,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
     }
   };
 
-  const convertMessageToPost = (msg: any): Post => {
+  const convertMessageToPost = (msg: any): Post & { event_id?: string; event_title?: string; event_date?: string; event_location?: string; meetup_responses?: any } => {
     const reactions = msg.reactions as { emoji: string; users: string[] }[] || [];
     const likes = reactions.reduce((sum, r) => sum + (r.users?.length || 0), 0);
     
@@ -125,7 +127,12 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
       time: formatTime(msg.created_at),
       tags,
       userAvatar: msg.avatar,
-      comments: []
+      comments: [],
+      event_id: msg.event_id,
+      event_title: msg.event_title,
+      event_date: msg.event_date,
+      event_location: msg.event_location,
+      meetup_responses: msg.meetup_responses
     };
   };
 
@@ -185,14 +192,38 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
     }
 
     try {
+      // Analyze if this is an activity proposal
+      const { data: analysisData, error: analysisError } = await supabase.functions.invoke(
+        'analyze-activity-proposal',
+        { body: { text: newPost } }
+      );
+
+      let messageData: any = {
+        group_id: TRIBE_BOARD_GROUP_ID,
+        sender: userProfile.username,
+        text: postText,
+        avatar: userProfile.avatarUrl || userProfile.avatar || null
+      };
+
+      // If it's an activity proposal, add event fields
+      if (analysisData?.isActivityProposal && !analysisError) {
+        const eventId = uuidv4();
+        messageData.event_id = eventId;
+        messageData.event_title = analysisData.suggestedTitle || newPost.substring(0, 50);
+        messageData.event_date = analysisData.date || new Date().toISOString().split('T')[0];
+        messageData.event_location = analysisData.location || null;
+        messageData.meetup_responses = {};
+        
+        // Add category tag if detected
+        if (analysisData.category) {
+          postText += ` #${analysisData.category}`;
+          messageData.text = postText;
+        }
+      }
+
       await supabase
         .from('chat_messages')
-        .insert({
-          group_id: TRIBE_BOARD_GROUP_ID,
-          sender: userProfile.username,
-          text: postText,
-          avatar: userProfile.avatarUrl || userProfile.avatar || null
-        });
+        .insert(messageData);
 
       setNewPost('');
       setGeneratedTags([]);
@@ -333,91 +364,115 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                     Quiet night in {selectedCity}... be the first to post.
                 </div>
             ) : (
-                filteredPosts.map(post => (
-                    <div key={post.id} className="group border-b border-white/5 pb-4 last:border-0">
-                        {/* Header */}
-                        <div className="flex justify-between items-start mb-2">
-                            <div className="flex items-center gap-2">
-                                <div className="w-7 h-7 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center overflow-hidden">
-                                    {post.userAvatar ? <img src={post.userAvatar} className="w-full h-full object-cover"/> : <span className="text-[10px] text-zinc-500">{post.user[0]}</span>}
+                filteredPosts.map(post => {
+                    // Check if this is an activity proposal (has event_id)
+                    const postData = posts.find(p => p.id === post.id);
+                    const isActivityProposal = !!(postData as any)?.event_id;
+
+                    if (isActivityProposal) {
+                        const rawPost = posts.find(p => p.id === post.id) as any;
+                        return (
+                            <MeetupProposal
+                                key={post.id}
+                                messageId={post.id}
+                                eventId={rawPost.event_id}
+                                eventTitle={rawPost.event_title || post.text.substring(0, 50)}
+                                eventDate={rawPost.event_date}
+                                eventLocation={rawPost.event_location}
+                                messageText={post.text}
+                                meetupResponses={rawPost.meetup_responses || {}}
+                                sender={post.user}
+                                senderAvatar={post.userAvatar}
+                            />
+                        );
+                    }
+
+                    return (
+                        <div key={post.id} className="group border-b border-white/5 pb-4 last:border-0">
+                            {/* Header */}
+                            <div className="flex justify-between items-start mb-2">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-7 h-7 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center overflow-hidden">
+                                        {post.userAvatar ? <img src={post.userAvatar} className="w-full h-full object-cover"/> : <span className="text-[10px] text-zinc-500">{post.user[0]}</span>}
+                                    </div>
+                                    <div>
+                                        <span className="block font-bold text-white text-[10px] uppercase tracking-wide">{post.user}</span>
+                                        <span className="block text-[9px] text-zinc-600">{post.city} • {post.time}</span>
+                                    </div>
                                 </div>
-                                <div>
-                                    <span className="block font-bold text-white text-[10px] uppercase tracking-wide">{post.user}</span>
-                                    <span className="block text-[9px] text-zinc-600">{post.city} • {post.time}</span>
-                                </div>
+                                {post.tags.includes('TribeCall') && (
+                                    <span className="bg-gold/10 text-gold border border-gold/20 text-[8px] font-bold px-1.5 py-0.5 uppercase tracking-widest rounded-sm">Tribe Call</span>
+                                )}
                             </div>
-                            {post.tags.includes('TribeCall') && (
-                                <span className="bg-gold/10 text-gold border border-gold/20 text-[8px] font-bold px-1.5 py-0.5 uppercase tracking-widest rounded-sm">Tribe Call</span>
+
+                            {/* Content */}
+                            <p className="text-zinc-200 text-xs font-light leading-relaxed mb-2 pl-9">
+                                {post.text}
+                            </p>
+
+                            {/* Tags */}
+                            {post.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 mb-2 pl-9">
+                                    {post.tags.map(tag => (
+                                        <span key={tag} className="text-[9px] text-zinc-500 hover:text-white transition-colors cursor-pointer">#{tag}</span>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Actions */}
+                            <div className="flex items-center gap-4 pl-9">
+                                <button onClick={() => handleLike(post.id)} className="flex items-center gap-1.5 text-zinc-500 hover:text-red-500 transition-colors group/like">
+                                    <Heart size={14} className={post.likes > 0 ? "fill-red-500 text-red-500" : "group-hover/like:text-red-500"} />
+                                    <span className="text-[9px] font-medium">{post.likes || 0}</span>
+                                </button>
+                                
+                                <button onClick={() => setExpandedPostId(expandedPostId === post.id ? null : post.id)} className="flex items-center gap-1.5 text-zinc-500 hover:text-white transition-colors">
+                                    <MessageCircle size={14} />
+                                    <span className="text-[9px] font-medium">{post.comments?.length || 0}</span>
+                                </button>
+                                
+                                <button className="text-zinc-500 hover:text-gold transition-colors ml-auto">
+                                    <Share2 size={14} />
+                                </button>
+                            </div>
+
+                            {/* Thread / Comments */}
+                            {expandedPostId === post.id && (
+                                <div className="mt-3 pl-9 animate-fadeIn">
+                                    {/* Comment List */}
+                                    {post.comments && post.comments.length > 0 && (
+                                        <div className="space-y-2 mb-3 border-l border-white/10 pl-3">
+                                            {post.comments.map(comment => (
+                                                <div key={comment.id}>
+                                                    <div className="flex items-center gap-1.5 mb-0.5">
+                                                        <span className="text-[9px] font-bold text-white">{comment.user}</span>
+                                                        <span className="text-[8px] text-zinc-600">{comment.time}</span>
+                                                    </div>
+                                                    <p className="text-[10px] text-zinc-400">{comment.text}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    
+                                    {/* Reply Input */}
+                                    <div className="flex gap-2">
+                                        <input 
+                                            type="text" 
+                                            value={replyText}
+                                            onChange={(e) => setReplyText(e.target.value)}
+                                            placeholder="Add a reply..."
+                                            className="flex-1 bg-zinc-900 border border-white/5 px-2.5 py-1.5 text-[10px] text-white outline-none focus:border-white/20"
+                                            onKeyDown={(e) => e.key === 'Enter' && handleReply(post.id)}
+                                        />
+                                        <button onClick={() => handleReply(post.id)} className="bg-white/10 text-white p-1.5 hover:bg-white/20 transition-colors">
+                                            <Send size={12} />
+                                        </button>
+                                    </div>
+                                </div>
                             )}
                         </div>
-
-                        {/* Content */}
-                        <p className="text-zinc-200 text-xs font-light leading-relaxed mb-2 pl-9">
-                            {post.text}
-                        </p>
-
-                        {/* Tags */}
-                        {post.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 mb-2 pl-9">
-                                {post.tags.map(tag => (
-                                    <span key={tag} className="text-[9px] text-zinc-500 hover:text-white transition-colors cursor-pointer">#{tag}</span>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-4 pl-9">
-                            <button onClick={() => handleLike(post.id)} className="flex items-center gap-1.5 text-zinc-500 hover:text-red-500 transition-colors group/like">
-                                <Heart size={14} className={post.likes > 0 ? "fill-red-500 text-red-500" : "group-hover/like:text-red-500"} />
-                                <span className="text-[9px] font-medium">{post.likes || 0}</span>
-                            </button>
-                            
-                            <button onClick={() => setExpandedPostId(expandedPostId === post.id ? null : post.id)} className="flex items-center gap-1.5 text-zinc-500 hover:text-white transition-colors">
-                                <MessageCircle size={14} />
-                                <span className="text-[9px] font-medium">{post.comments?.length || 0}</span>
-                            </button>
-                            
-                            <button className="text-zinc-500 hover:text-gold transition-colors ml-auto">
-                                <Share2 size={14} />
-                            </button>
-                        </div>
-
-                        {/* Thread / Comments */}
-                        {expandedPostId === post.id && (
-                            <div className="mt-3 pl-9 animate-fadeIn">
-                                {/* Comment List */}
-                                {post.comments && post.comments.length > 0 && (
-                                    <div className="space-y-2 mb-3 border-l border-white/10 pl-3">
-                                        {post.comments.map(comment => (
-                                            <div key={comment.id}>
-                                                <div className="flex items-center gap-1.5 mb-0.5">
-                                                    <span className="text-[9px] font-bold text-white">{comment.user}</span>
-                                                    <span className="text-[8px] text-zinc-600">{comment.time}</span>
-                                                </div>
-                                                <p className="text-[10px] text-zinc-400">{comment.text}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                                
-                                {/* Reply Input */}
-                                <div className="flex gap-2">
-                                    <input 
-                                        type="text" 
-                                        value={replyText}
-                                        onChange={(e) => setReplyText(e.target.value)}
-                                        placeholder="Add a reply..."
-                                        className="flex-1 bg-zinc-900 border border-white/5 px-2.5 py-1.5 text-[10px] text-white outline-none focus:border-white/20"
-                                        onKeyDown={(e) => e.key === 'Enter' && handleReply(post.id)}
-                                    />
-                                    <button onClick={() => handleReply(post.id)} className="bg-white/10 text-white p-1.5 hover:bg-white/20 transition-colors">
-                                        <Send size={12} />
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                ))
+                    );
+                })
             )}
         </div>
     </div>
