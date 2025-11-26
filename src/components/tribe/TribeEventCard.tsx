@@ -87,8 +87,6 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
 
   // --- COMPACT VARIANT (List Compact) ---
   if (variant === 'compact') {
-    const vibeColor = event.vibe ? getVibeBadgeColor(event.vibe).split(' ')[0] : '';
-    
     return (
       <div className={`bg-black border-b border-white/5 transition-all duration-500 ${animationClass}`}>
         <div className="flex items-center gap-2.5 py-2">
@@ -104,11 +102,6 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
             {isLiked && (
               <div className="absolute top-0 left-0 right-0 bg-gold/90 text-black text-[6px] font-bold px-1 py-0.5 text-center">
                 ★
-              </div>
-            )}
-            {event.vibe && (
-              <div className={`absolute bottom-0 left-0 right-0 ${vibeColor} backdrop-blur-sm text-[6px] font-bold px-1 py-0.5 text-center uppercase`}>
-                {event.vibe}
               </div>
             )}
           </div>
