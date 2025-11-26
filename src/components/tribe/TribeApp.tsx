@@ -9,6 +9,7 @@ import { TribeMapView } from './TribeMapView';
 import { TribeBottomNav } from './TribeBottomNav';
 import { AuthScreen } from './AuthScreen';
 import { ProfileView } from './ProfileView';
+import { TribeLiveTicker } from '@/components/TribeLiveTicker';
 import { 
   Map as MapIcon,
   Home,
@@ -454,8 +455,22 @@ export const TribeApp: React.FC = () => {
         </div>
       </header>
 
+      {/* --- LIVE TICKER --- */}
+      <div className="fixed top-[73px] left-0 right-0 z-40 max-w-2xl mx-auto">
+        <TribeLiveTicker 
+          events={allEvents.map(e => ({
+            id: e.id,
+            date: e.date,
+            title: e.title,
+            location: e.location,
+            likes: likedEventIds.has(e.id) ? (e.likes || 0) + 1 : e.likes || 0,
+          }))}
+          selectedCity={selectedCity}
+        />
+      </div>
+
       {/* --- MAIN CONTENT --- */}
-      <main className="pt-20 px-0 max-w-2xl mx-auto h-screen overflow-y-auto">
+      <main className="pt-[110px] px-0 max-w-2xl mx-auto h-screen overflow-y-auto">
 
         {view === ViewState.FEED && (
           <div className="animate-fadeIn pb-20">
