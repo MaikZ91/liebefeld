@@ -142,10 +142,10 @@ export const TribeApp: React.FC = () => {
       </header>
 
       {/* --- MAIN CONTENT --- */}
-      <main className="pt-20 px-0 max-w-2xl mx-auto min-h-screen">
+      <main className="pt-20 px-0 max-w-2xl mx-auto h-screen overflow-y-auto">
 
         {view === ViewState.FEED && (
-          <div className="animate-fadeIn">
+          <div className="animate-fadeIn pb-20">
             {/* Categories */}
             <div className="px-6 mb-8 flex gap-8 overflow-x-auto no-scrollbar border-b border-white/5 pb-4">
                 {CATEGORIES.map(cat => (
