@@ -120,10 +120,10 @@ export const TribeApp: React.FC = () => {
         <div className="relative">
             <button 
                 onClick={() => setIsCityMenuOpen(!isCityMenuOpen)} 
-                className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 text-zinc-400 hover:text-white transition-colors border border-white/10 px-3 py-1.5"
+                className="text-xs font-bold uppercase tracking-widest flex items-center gap-2 text-white hover:text-gold transition-colors px-3 py-1.5"
             >
                 {selectedCity}
-                <ChevronDown size={12} className={`transition-transform duration-300 ${isCityMenuOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown size={14} className={`transition-transform duration-300 ${isCityMenuOpen ? 'rotate-180' : ''}`} />
             </button>
             {isCityMenuOpen && (
                 <div className="absolute top-full right-0 mt-2 bg-zinc-900 border border-white/10 min-w-[160px] z-50 shadow-2xl animate-fadeIn">
@@ -147,7 +147,7 @@ export const TribeApp: React.FC = () => {
         {view === ViewState.FEED && (
           <div className="animate-fadeIn pb-20">
             {/* Categories */}
-            <div className="px-6 mb-8 flex gap-8 overflow-x-auto no-scrollbar border-b border-white/5 pb-4">
+            <div className="px-6 mb-4 flex gap-8 overflow-x-auto no-scrollbar border-b border-white/5 pb-4">
                 {CATEGORIES.map(cat => (
                     <button 
                         key={cat} 
