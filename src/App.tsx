@@ -25,6 +25,7 @@ const CSAEPolicies = lazy(() => import("./pages/CSAEPolicies"));
 const Chat = lazy(() => import("./pages/Chat"));
 const Challenge = lazy(() => import("./pages/Challenge"));
 const Heatmap = lazy(() => import('@/pages/Heatmap'));
+const Tribe = lazy(() => import("./pages/Tribe"));
 const UserDirectory = lazy(() => import("./components/users/UserDirectory"));
 const EventCalendar = lazy(() => import("./components/EventCalendar"));
 
@@ -143,8 +144,11 @@ function App() {
               />
               <Suspense fallback={null}>
                 <Routes>
-                  {/* Heatmap as main page, now wrapped by Layout */}
-                  <Route path="/" element={<Layout><Heatmap /></Layout>} />
+                  {/* Tribe as main page */}
+                  <Route path="/" element={<Tribe />} />
+                  
+                  {/* Old heatmap page */}
+                  <Route path="/old" element={<Layout><Heatmap /></Layout>} />
                   <Route path="/heatmap" element={<Layout><Heatmap /></Layout>} />
                   
                   {/* Other pages */}

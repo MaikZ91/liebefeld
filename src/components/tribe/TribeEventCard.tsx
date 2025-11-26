@@ -10,13 +10,15 @@ interface TribeEventCardProps {
   variant?: 'standard' | 'compact' | 'spotlight';
   onJoinCrew?: (eventId: string) => void;
   onLike?: (eventId: string) => void;
+  onClick?: () => void;
 }
 
 export const TribeEventCard: React.FC<TribeEventCardProps> = ({ 
   event, 
   variant = 'standard',
   onJoinCrew,
-  onLike 
+  onLike,
+  onClick 
 }) => {
   const [summary, setSummary] = useState<string | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
@@ -41,7 +43,10 @@ export const TribeEventCard: React.FC<TribeEventCardProps> = ({
 
   if (variant === 'compact') {
     return (
-      <div className="bg-black/60 backdrop-blur-md border border-white/10 p-3 hover:border-gold/50 transition-all cursor-pointer group">
+      <div 
+        className="bg-black/60 backdrop-blur-md border border-white/10 p-3 hover:border-gold/50 transition-all cursor-pointer group"
+        onClick={onClick}
+      >
         <div className="flex gap-3">
           <AspectRatio ratio={1} className="w-16 h-16 flex-shrink-0">
             <img 
@@ -77,7 +82,10 @@ export const TribeEventCard: React.FC<TribeEventCardProps> = ({
 
   if (variant === 'spotlight') {
     return (
-      <div className="bg-gradient-to-br from-black via-zinc-900 to-black border border-gold/30 overflow-hidden group hover:border-gold transition-all">
+      <div 
+        className="bg-gradient-to-br from-black via-zinc-900 to-black border border-gold/30 overflow-hidden group hover:border-gold transition-all cursor-pointer"
+        onClick={onClick}
+      >
         <AspectRatio ratio={16/9}>
           <img 
             src={displayImage} 
@@ -133,7 +141,10 @@ export const TribeEventCard: React.FC<TribeEventCardProps> = ({
 
   // Standard variant
   return (
-    <div className="bg-black/80 backdrop-blur-md border border-white/10 overflow-hidden hover:border-gold/50 transition-all group">
+    <div 
+      className="bg-black/80 backdrop-blur-md border border-white/10 overflow-hidden hover:border-gold/50 transition-all group cursor-pointer"
+      onClick={onClick}
+    >
       <AspectRatio ratio={16/9}>
         <img 
           src={displayImage} 
