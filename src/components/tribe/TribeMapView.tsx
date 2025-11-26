@@ -1,7 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { TribeEvent, Post } from '@/types/tribe';
+import { Calendar, Filter, Users } from 'lucide-react';
 
 interface TribeMapViewProps {
   events: TribeEvent[];
@@ -12,189 +11,218 @@ interface TribeMapViewProps {
 
 const CITY_COORDS: Record<string, [number, number]> = {
   'Bielefeld': [52.0302, 8.5325],
-  'Berlin': [52.52, 13.405],
+  'Dortmund': [51.5136, 7.4653],
+  'Berlin': [52.5200, 13.4050],
   'Hamburg': [53.5511, 9.9937],
-  'München': [48.1351, 11.582],
-  'Köln': [50.9375, 6.9603],
+  'Cologne': [50.9375, 6.9603],
+  'Munich': [48.1351, 11.5820],
+  'Stuttgart': [48.7758, 9.1829],
+  'Global': [51.1657, 10.4515], 
+};
+
+// Helper to provide nice visuals if no image exists
+const getCategoryImage = (category?: string) => {
+  const cat = category?.toUpperCase() || '';
+  if (cat.includes('PARTY') || cat.includes('TECHNO') || cat.includes('RAVE') || cat.includes('AUSGEHEN')) 
+    return 'https://images.unsplash.com/photo-1574391884720-385075a8529e?w=100&h=100&fit=crop';
+  if (cat.includes('ART') || cat.includes('CULTURE') || cat.includes('KREATIVITÄT')) 
+    return 'https://images.unsplash.com/photo-1547891654-e66ed7ebb968?w=100&h=100&fit=crop';
+  if (cat.includes('SPORT') || cat.includes('RUN')) 
+    return 'https://images.unsplash.com/photo-1552674605-469455cad900?w=100&h=100&fit=crop';
+  if (cat.includes('CONCERT') || cat.includes('LIVE')) 
+    return 'https://images.unsplash.com/photo-1459749411177-287ce38e315f?w=100&h=100&fit=crop';
+  
+  // Default Nightlife
+  return 'https://images.unsplash.com/photo-1514525253440-b393452e8d26?w=100&h=100&fit=crop';
+};
+
+const getJitteredCoords = (city: string): [number, number] => {
+  const base = CITY_COORDS[city] || CITY_COORDS['Bielefeld'];
+  const latJitter = (Math.random() - 0.5) * 0.03;
+  const lngJitter = (Math.random() - 0.5) * 0.03;
+  return [base[0] + latJitter, base[1] + lngJitter];
+};
+
+const parseDateString = (dateStr: string): Date | null => {
+  try {
+    const parts = dateStr.includes(',') ? dateStr.split(', ')[1] : dateStr;
+    const [day, month, year] = parts.split('.');
+    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  } catch (e) {
+    return null;
+  }
 };
 
 export const TribeMapView: React.FC<TribeMapViewProps> = ({ events, posts, selectedCity, onEventClick }) => {
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
-  const markersRef = useRef<L.Marker[]>([]);
-  const [filterMode, setFilterMode] = useState<'TODAY' | 'TOMORROW'>('TODAY');
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
+  
+  const [currentDate, setCurrentDate] = useState<Date>(new Date()); 
+  const [filterMode, setFilterMode] = useState<'TODAY' | 'TOMORROW' | 'CUSTOM'>('TODAY');
 
-  // Initialize map
-  useEffect(() => {
-    if (!mapContainerRef.current || mapInstanceRef.current) return;
-
-    const cityCoords = CITY_COORDS[selectedCity] || CITY_COORDS['Bielefeld'];
-
-    const map = L.map(mapContainerRef.current, {
-      center: cityCoords,
-      zoom: 13,
-      zoomControl: false,
+  const filteredEvents = useMemo(() => {
+    return events.filter(event => {
+      const eventDate = parseDateString(event.date);
+      if (!eventDate) return false;
+      return eventDate.toDateString() === currentDate.toDateString();
     });
+  }, [events, currentDate]);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-    }).addTo(map);
+  const handleSetToday = () => {
+      setCurrentDate(new Date());
+      setFilterMode('TODAY');
+  }
 
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
+  const handleSetTomorrow = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    setCurrentDate(tomorrow);
+    setFilterMode('TOMORROW');
+  }
 
-    // Custom CSS for dark urban aesthetic
-    const style = document.createElement('style');
-    style.textContent = `
-      .leaflet-tile-container {
-        filter: grayscale(100%) brightness(0.4) sepia(100%) hue-rotate(330deg) saturate(150%);
-      }
-      .leaflet-control-attribution {
-        display: none !important;
-      }
-    `;
-    document.head.appendChild(style);
-
-    mapInstanceRef.current = map;
-
-    return () => {
-      map.remove();
-      mapInstanceRef.current = null;
-      document.head.removeChild(style);
-    };
-  }, [selectedCity]);
-
-  // Update city center
   useEffect(() => {
-    if (mapInstanceRef.current) {
-      const cityCoords = CITY_COORDS[selectedCity] || CITY_COORDS['Bielefeld'];
-      mapInstanceRef.current.setView(cityCoords, 13);
+    if (!mapRef.current || typeof (window as any).L === 'undefined') return;
+
+    if (!mapInstanceRef.current) {
+      const L = (window as any).L;
+      const initialCoords = selectedCity !== 'All' && CITY_COORDS[selectedCity] 
+        ? CITY_COORDS[selectedCity] 
+        : CITY_COORDS['Bielefeld'];
+
+      const map = L.map(mapRef.current, {
+        zoomControl: false,
+        attributionControl: false
+      }).setView(initialCoords, selectedCity === 'All' ? 7 : 13);
+
+      // CartoDB Dark Matter
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        subdomains: 'abcd',
+      }).addTo(map);
+
+      mapInstanceRef.current = map;
     }
-  }, [selectedCity]);
-
-  // Render markers
-  useEffect(() => {
-    if (!mapInstanceRef.current) return;
-
-    // Clear old markers
-    markersRef.current.forEach(m => m.remove());
-    markersRef.current = [];
 
     const map = mapInstanceRef.current;
-    const cityCoords = CITY_COORDS[selectedCity] || CITY_COORDS['Bielefeld'];
+    const L = (window as any).L;
 
-    const getJitteredCoords = (baseCoords: [number, number], index: number): [number, number] => {
-      const offset = 0.01;
-      const angle = (index * 2 * Math.PI) / Math.max(events.length, 8);
-      return [
-        baseCoords[0] + offset * Math.cos(angle) + (Math.random() - 0.5) * 0.005,
-        baseCoords[1] + offset * Math.sin(angle) + (Math.random() - 0.5) * 0.005,
-      ];
-    };
+    map.eachLayer((layer: any) => {
+      if (layer instanceof L.Marker) {
+        map.removeLayer(layer);
+      }
+    });
 
-    // Render event markers
-    events.forEach((evt, idx) => {
-      const coords = getJitteredCoords(cityCoords, idx);
-      const attendees = evt.attendees || Math.floor(Math.random() * 50) + 10;
-
-      const iconHtml = `
-        <div class="relative group cursor-pointer">
-          <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-gold shadow-lg hover:scale-110 transition-transform">
-            ${evt.image_url 
-              ? `<img src="${evt.image_url}" class="w-full h-full object-cover" alt="${evt.title}"/>`
-              : `<div class="w-full h-full bg-zinc-800 flex items-center justify-center text-xs text-gold">?</div>`
-            }
+    // --- ADD EVENTS (IMAGES + ATTENDEE BADGE) ---
+    filteredEvents.forEach(event => {
+      const coords = getJitteredCoords(event.city || 'Bielefeld');
+      const imgUrl = event.image_url || getCategoryImage(event.category);
+      const attendees = event.attendees || Math.floor(Math.random() * 50) + 10;
+      
+      const eventIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: `
+          <div class="marker-pin-image">
+            <div class="marker-badge">
+                 <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                 ${attendees}
+            </div>
+            <img src="${imgUrl}" alt="${event.title}" />
           </div>
-          <div class="absolute -top-1 -right-1 bg-gold text-black text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow">
-            ${attendees}
-          </div>
-        </div>
-      `;
-
-      const marker = L.marker(coords, {
-        icon: L.divIcon({
-          html: iconHtml,
-          className: '',
-          iconSize: [48, 48],
-          iconAnchor: [24, 24],
-        }),
-      }).addTo(map);
-
-      marker.bindPopup(`
-        <div class="text-sm">
-          <strong class="text-black">${evt.title}</strong><br/>
-          <span class="text-xs text-gray-600">${evt.date} • ${evt.time || 'TBA'}</span><br/>
-          <span class="text-xs text-gray-700">${attendees} going</span>
-        </div>
-      `);
-
-      marker.on('click', () => {
-        onEventClick && onEventClick(evt);
+        `,
+        iconSize: [48, 48],
+        iconAnchor: [24, 54]
       });
 
-      markersRef.current.push(marker);
-    });
-
-    // Render post markers (simple white dots)
-    posts.forEach((post, idx) => {
-      const coords = getJitteredCoords(cityCoords, idx + events.length);
-
-      const iconHtml = `
-        <div class="w-3 h-3 bg-white rounded-full shadow-md hover:scale-125 transition-transform cursor-pointer"></div>
-      `;
-
-      const marker = L.marker(coords, {
-        icon: L.divIcon({
-          html: iconHtml,
-          className: '',
-          iconSize: [12, 12],
-          iconAnchor: [6, 6],
-        }),
-      }).addTo(map);
-
+      const marker = L.marker(coords, { icon: eventIcon, zIndexOffset: 100 }).addTo(map);
       marker.bindPopup(`
-        <div class="text-xs">
-          <strong class="text-black">${post.user}</strong><br/>
-          <span class="text-gray-700">${post.text}</span>
+        <div style="min-width: 180px; font-family: 'Outfit', sans-serif;">
+          <div style="height: 80px; width: 100%; overflow: hidden; margin-bottom: 8px;">
+            <img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover;" />
+          </div>
+          <div style="padding: 0 4px 4px 4px;">
+            <div style="font-size: 10px; color: #d4b483; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">${event.category || 'Event'}</div>
+            <div style="font-size: 14px; font-weight: 600; color: #fff; margin-top: 2px; line-height: 1.2;">${event.title}</div>
+            <div style="font-size: 11px; color: #a1a1aa; margin-top: 4px;">${event.date} • +${attendees} going</div>
+          </div>
         </div>
       `);
-
-      markersRef.current.push(marker);
+      
+      if (onEventClick) {
+        marker.on('click', () => onEventClick(event));
+      }
     });
-  }, [events, posts, selectedCity, onEventClick]);
 
-  const handleSetToday = () => setFilterMode('TODAY');
-  const handleSetTomorrow = () => setFilterMode('TOMORROW');
+    // --- ADD POSTS (WHITE DOTS) ---
+    posts.forEach(post => {
+      const coords = getJitteredCoords(post.city || 'Bielefeld');
+      
+      const socialIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: `<div class="marker-pin-social"></div>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+      });
+
+      const marker = L.marker(coords, { icon: socialIcon, zIndexOffset: 50 }).addTo(map);
+      marker.bindPopup(`
+        <div style="min-width: 140px; font-family: 'Outfit', sans-serif;">
+           <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+              <div style="width: 16px; height: 16px; background: #fff; border-radius: 50%;"></div>
+              <div style="font-size: 11px; color: #ffffff; font-weight: 600;">${post.user}</div>
+           </div>
+          <div style="font-size: 12px; font-weight: 400; color: #e4e4e7; line-height: 1.3;">"${post.text}"</div>
+          <div style="font-size: 9px; color: #71717a; margin-top: 6px;">${post.time}</div>
+        </div>
+      `);
+    });
+
+    if (selectedCity !== 'All' && CITY_COORDS[selectedCity]) {
+      map.flyTo(CITY_COORDS[selectedCity], 13, { duration: 1.5 });
+    }
+
+  }, [filteredEvents, posts, selectedCity, onEventClick]);
+
+  const dateDisplay = currentDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
 
   return (
-    <div className="relative w-full h-full">
-      <div ref={mapContainerRef} className="w-full h-full" />
-
-      {/* Floating controls */}
-      <div className="absolute top-4 left-4 right-4 z-[1000] flex flex-col gap-3 pointer-events-none">
-         <div className="flex gap-2 pointer-events-auto">
-             <button 
-                onClick={handleSetToday}
-                className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider flex-1 transition-colors ${filterMode === 'TODAY' ? 'bg-white text-black' : 'bg-white/10 text-zinc-400 hover:bg-white/20 backdrop-blur-md'}`}
-             >
-                Today
-             </button>
-             <button 
-                onClick={handleSetTomorrow}
-                className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider flex-1 transition-colors ${filterMode === 'TOMORROW' ? 'bg-white text-black' : 'bg-white/10 text-zinc-400 hover:bg-white/20 backdrop-blur-md'}`}
-             >
-                Tmrw
-             </button>
+    <div className="h-full w-full relative bg-surface">
+      <div id="map" ref={mapRef} className="h-full w-full grayscale-[0.2]"></div>
+      
+      {/* HUD CONTROLS */}
+      <div className="absolute top-4 left-4 z-[400] flex flex-col gap-2 pointer-events-none">
+         
+         {/* Title Card */}
+         <div className="bg-black/90 backdrop-blur-md px-4 py-3 border border-white/10 flex flex-col gap-1 shadow-xl pointer-events-auto min-w-[140px]">
+             <span className="text-[9px] font-bold uppercase text-zinc-400 tracking-widest border-b border-white/10 pb-1 mb-1">Live Map</span>
+             <div className="flex items-center justify-between">
+                <span className="text-xl font-light text-white">{dateDisplay}</span>
+                <Calendar size={14} className="text-gold"/>
+             </div>
+             <div className="flex gap-1 mt-2">
+                 <button 
+                    onClick={handleSetToday}
+                    className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider flex-1 transition-colors ${filterMode === 'TODAY' ? 'bg-gold text-black' : 'bg-white/10 text-zinc-400 hover:bg-white/20'}`}
+                 >
+                    Today
+                 </button>
+                 <button 
+                    onClick={handleSetTomorrow}
+                    className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider flex-1 transition-colors ${filterMode === 'TOMORROW' ? 'bg-white text-black' : 'bg-white/10 text-zinc-400 hover:bg-white/20'}`}
+                 >
+                    Tmrw
+                 </button>
+             </div>
          </div>
 
          {/* Legend */}
          <div className="bg-black/90 backdrop-blur-md px-3 py-2 border border-white/10 flex gap-4 shadow-xl pointer-events-auto">
              <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-sm bg-gold"></div>
-                <span className="text-[9px] text-zinc-300 uppercase tracking-wide">Events</span>
+                <span className="text-[9px] text-white uppercase tracking-wider">{filteredEvents.length} Events</span>
              </div>
              <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-white"></div>
-                <span className="text-[9px] text-zinc-300 uppercase tracking-wide">Posts</span>
+                <span className="text-[9px] text-white uppercase tracking-wider">Community</span>
              </div>
          </div>
       </div>
