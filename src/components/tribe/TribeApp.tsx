@@ -42,6 +42,8 @@ export const TribeApp: React.FC = () => {
     return saved === 'compact';
   });
   
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  
   // Event tracking state
   const [hiddenEventIds, setHiddenEventIds] = useState<Set<string>>(new Set());
   const [likedEventIds, setLikedEventIds] = useState<Set<string>>(new Set());
@@ -342,6 +344,10 @@ export const TribeApp: React.FC = () => {
     });
   };
 
+  const handleTickerEventClick = (eventId: string) => {
+    setSelectedEventId(eventId);
+  };
+
   const handleQuery = (query: string) => {
     setQueryHistory(prev => [query, ...prev.filter(q => q !== query)].slice(0, 20));
   };
@@ -466,6 +472,7 @@ export const TribeApp: React.FC = () => {
             likes: likedEventIds.has(e.id) ? (e.likes || 0) + 1 : e.likes || 0,
           }))}
           selectedCity={selectedCity}
+          onEventClick={handleTickerEventClick}
         />
       </div>
 
@@ -713,6 +720,39 @@ export const TribeApp: React.FC = () => {
         onViewChange={handleViewChange}
         hasNewCommunityMessages={hasNewCommunityMessages}
       />
+
+      {/* --- EVENT DETAIL DIALOG --- */}
+      {selectedEventId && (() => {
+        const selectedEvent = allEvents.find(e => e.id === selectedEventId);
+        if (!selectedEvent) return null;
+        
+        return (
+          <div 
+            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setSelectedEventId(null)}
+          >
+            <div 
+              className="bg-zinc-900 border border-white/10 max-w-lg w-full max-h-[80vh] overflow-y-auto animate-scale-in"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <TribeEventCard
+                event={selectedEvent}
+                variant="standard"
+                isLiked={likedEventIds.has(selectedEvent.id)}
+                isAttending={attendingEventIds.has(selectedEvent.id)}
+                onInteraction={(eventId, type) => handleInteraction(eventId, type)}
+                onToggleAttendance={handleToggleAttendance}
+              />
+              <button
+                onClick={() => setSelectedEventId(null)}
+                className="w-full py-3 text-center text-zinc-500 hover:text-white transition-colors border-t border-white/10 text-sm"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );

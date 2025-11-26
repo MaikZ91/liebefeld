@@ -14,9 +14,10 @@ interface TickerEvent {
 interface TribeLiveTickerProps {
   events: TickerEvent[];
   selectedCity?: string;
+  onEventClick?: (eventId: string) => void;
 }
 
-export const TribeLiveTicker: React.FC<TribeLiveTickerProps> = ({ events, selectedCity }) => {
+export const TribeLiveTicker: React.FC<TribeLiveTickerProps> = ({ events, selectedCity, onEventClick }) => {
   const [isPaused, setIsPaused] = useState(false);
   const innerTickerRef = useRef<HTMLDivElement>(null);
 
@@ -73,9 +74,13 @@ export const TribeLiveTicker: React.FC<TribeLiveTickerProps> = ({ events, select
             {tickerEvents.length > 0 ? (
               <>
                 {[...tickerEvents, ...tickerEvents].map((event, index) => (
-                  <div 
+                  <button
                     key={`${event.id}-${index}`} 
-                    className="inline-block mx-4"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEventClick?.(event.id);
+                    }}
+                    className="inline-block mx-4 cursor-pointer hover:opacity-80 transition-opacity"
                   >
                     <span className="inline-flex items-center gap-2">
                       <span className="text-gold font-bold text-[11px] tracking-wide">
@@ -96,7 +101,7 @@ export const TribeLiveTicker: React.FC<TribeLiveTickerProps> = ({ events, select
                       </span>
                     </span>
                     <span className="mx-3 text-gold/30">•</span>
-                  </div>
+                  </button>
                 ))}
               </>
             ) : (
