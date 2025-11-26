@@ -353,7 +353,7 @@ export const TribeApp: React.FC = () => {
                   <button 
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
-                    className={`text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
+                    className={`text-xs font-medium uppercase tracking-wider whitespace-nowrap transition-colors ${
                       selectedCategory === cat 
                         ? 'text-gold' 
                         : 'text-zinc-600 hover:text-zinc-400'
