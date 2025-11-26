@@ -363,6 +363,23 @@ export const TribeApp: React.FC = () => {
                 </button>
               </div>
 
+              {/* Category Tabs */}
+              <div className="flex gap-6 overflow-x-auto no-scrollbar pb-3">
+                {CATEGORIES.map(cat => (
+                  <button 
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`text-xs font-medium uppercase tracking-wider whitespace-nowrap transition-colors ${
+                      selectedCategory === cat 
+                        ? 'text-gold' 
+                        : 'text-zinc-600 hover:text-zinc-400'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
               {/* Inline Nexus Insight */}
               {nexusInsight && (
                 <div className="mt-4 bg-surface border-l-2 border-gold p-4 relative animate-fadeIn shadow-2xl rounded-sm">
