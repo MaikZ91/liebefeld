@@ -215,8 +215,8 @@ export const TribeApp: React.FC = () => {
       const title = (event.title || '').toLowerCase();
       const location = (event.location || '').toLowerCase();
       
-      // Check category first
-      if (['ausgehen', 'party', 'konzert', 'concert'].includes(category)) {
+      // Check category first - including "Sonstiges"
+      if (['ausgehen', 'party', 'konzert', 'concert', 'sonstiges', 'other'].includes(category)) {
         return true;
       }
       
