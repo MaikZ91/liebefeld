@@ -52,7 +52,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({ event, variant = 'sta
   // --- HERO VARIANT (Spotlight) ---
   if (variant === 'hero') {
     return (
-        <div className="w-full cursor-pointer relative group overflow-hidden bg-surface">
+        <div className="w-full cursor-pointer relative group overflow-hidden bg-black">
             <div className="aspect-[16/9] w-full relative">
                 {displayImage ? (
                     <img src={displayImage} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
@@ -79,7 +79,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({ event, variant = 'sta
 
   // --- STANDARD VARIANT (List) ---
   return (
-    <div className="bg-surface border-b border-white/5 pb-6 mb-2">
+    <div className="bg-black border-b border-white/5 pb-6 mb-2">
         {/* Main Card Content */}
         <div className="flex gap-5 items-start cursor-pointer group">
             {/* Thumbnail */}
