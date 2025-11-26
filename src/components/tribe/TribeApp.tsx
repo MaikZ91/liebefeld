@@ -89,8 +89,8 @@ export const TribeApp: React.FC = () => {
   }, [queryHistory]);
 
   useEffect(() => {
+    fetchEvents();
     if (userProfile) {
-      fetchEvents();
       loadPosts();
     }
   }, [selectedCity, userProfile]);
