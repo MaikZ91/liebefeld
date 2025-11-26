@@ -29,6 +29,9 @@ verify_jwt = false
 [functions.fetch-event-description]
 verify_jwt = false
 
+[functions.ai-batch-geocode]
+verify_jwt = false
+
 [db]
 port = 54322
 

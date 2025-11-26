@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { TribeEvent, Post } from '@/types/tribe';
 import { Calendar, Filter, Users } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TribeMapViewProps {
   events: TribeEvent[];
@@ -64,6 +65,7 @@ export const TribeMapView: React.FC<TribeMapViewProps> = ({ events, posts, selec
   
   const [currentDate, setCurrentDate] = useState<Date>(new Date()); 
   const [filterMode, setFilterMode] = useState<'TODAY' | 'TOMORROW' | 'CUSTOM'>('TODAY');
+  const [eventCoordinates, setEventCoordinates] = useState<Map<string, {lat: number, lng: number}>>(new Map());
 
   const filteredEvents = useMemo(() => {
     return events.filter(event => {
@@ -84,6 +86,44 @@ export const TribeMapView: React.FC<TribeMapViewProps> = ({ events, posts, selec
     setCurrentDate(tomorrow);
     setFilterMode('TOMORROW');
   }
+
+  // Batch-Geocoding beim Mount
+  useEffect(() => {
+    const loadAllCoordinates = async () => {
+      const uniqueLocations = [...new Set(
+        events.filter(e => e.location).map(e => e.location)
+      )];
+      
+      if (uniqueLocations.length === 0) return;
+      
+      console.log(`Batch geocoding ${uniqueLocations.length} locations for ${selectedCity}`);
+      
+      try {
+        const { data, error } = await supabase.functions.invoke('ai-batch-geocode', {
+          body: { locations: uniqueLocations, cityContext: selectedCity }
+        });
+        
+        if (error) {
+          console.error('Batch geocoding error:', error);
+          return;
+        }
+        
+        const coordsMap = new Map<string, {lat: number, lng: number}>();
+        data?.coordinates?.forEach((c: any) => {
+          if (c.lat && c.lng && c.location) {
+            coordsMap.set(c.location.toLowerCase(), { lat: c.lat, lng: c.lng });
+          }
+        });
+        
+        console.log(`Loaded ${coordsMap.size} coordinates from batch geocoding`);
+        setEventCoordinates(coordsMap);
+      } catch (err) {
+        console.error('Failed to batch geocode:', err);
+      }
+    };
+    
+    loadAllCoordinates();
+  }, [events, selectedCity]);
 
   useEffect(() => {
     if (!mapRef.current || typeof (window as any).L === 'undefined') return;
@@ -119,7 +159,15 @@ export const TribeMapView: React.FC<TribeMapViewProps> = ({ events, posts, selec
 
     // --- ADD EVENTS (IMAGES + ATTENDEE BADGE) ---
     filteredEvents.forEach(event => {
-      const coords = getJitteredCoords(event.city || 'Bielefeld');
+      // Use real coordinates from batch geocoding if available
+      const realCoords = event.location 
+        ? eventCoordinates.get(event.location.toLowerCase())
+        : undefined;
+      
+      const coords: [number, number] = realCoords 
+        ? [realCoords.lat, realCoords.lng]
+        : getJitteredCoords(event.city || 'Bielefeld');
+      
       const imgUrl = event.image_url || getCategoryImage(event.category);
       const attendees = event.attendees || Math.floor(Math.random() * 50) + 10;
       
@@ -185,7 +233,7 @@ export const TribeMapView: React.FC<TribeMapViewProps> = ({ events, posts, selec
       map.flyTo(CITY_COORDS[selectedCity], 13, { duration: 1.5 });
     }
 
-  }, [filteredEvents, posts, selectedCity, onEventClick]);
+  }, [filteredEvents, posts, selectedCity, onEventClick, eventCoordinates]);
 
   const dateDisplay = currentDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
 
