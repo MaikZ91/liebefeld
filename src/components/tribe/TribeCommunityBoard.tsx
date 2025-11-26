@@ -1,24 +1,157 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserProfile, Post, Comment } from '@/types/tribe';
 import { enhancePostContent } from '@/services/tribe/aiHelpers';
 import { ArrowRight, Sparkles, Heart, MessageCircle, Share2, Hash, Send } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Props {
   selectedCity: string;
   userProfile: UserProfile;
-  posts: Post[];
-  onPostsChange: (posts: Post[]) => void;
 }
 
 type Tab = 'ALL' | 'CREW' | 'TIPS';
 
-export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile, posts, onPostsChange }) => {
+const TRIBE_BOARD_GROUP_ID = 'tribe_community_board';
+
+export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile }) => {
+  const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [generatedTags, setGeneratedTags] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>('ALL');
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  // Load posts from database
+  useEffect(() => {
+    loadPosts();
+    
+    // Setup realtime subscription
+    const channel = supabase
+      .channel('tribe_board_posts')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `group_id=eq.${TRIBE_BOARD_GROUP_ID}`
+      }, (payload) => {
+        const newMessage = payload.new;
+        if (newMessage.parent_id) {
+          // It's a comment, refresh posts to update comments
+          loadPosts();
+        } else {
+          // It's a new post
+          const post = convertMessageToPost(newMessage);
+          setPosts(prev => [post, ...prev]);
+        }
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `group_id=eq.${TRIBE_BOARD_GROUP_ID}`
+      }, () => {
+        // Refresh on updates (likes, etc.)
+        loadPosts();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const loadPosts = async () => {
+    try {
+      // Fetch all posts (parent messages)
+      const { data: postsData, error: postsError } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('group_id', TRIBE_BOARD_GROUP_ID)
+        .is('parent_id', null)
+        .order('created_at', { ascending: false });
+
+      if (postsError) throw postsError;
+
+      // Fetch all comments
+      const { data: commentsData, error: commentsError } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('group_id', TRIBE_BOARD_GROUP_ID)
+        .not('parent_id', 'is', null)
+        .order('created_at', { ascending: true });
+
+      if (commentsError) throw commentsError;
+
+      // Convert to Post objects
+      const convertedPosts = (postsData || []).map(msg => {
+        const postComments = (commentsData || [])
+          .filter(c => c.parent_id === msg.id)
+          .map(c => convertMessageToComment(c));
+        
+        return {
+          ...convertMessageToPost(msg),
+          comments: postComments
+        };
+      });
+
+      setPosts(convertedPosts);
+    } catch (error) {
+      console.error('Error loading posts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const convertMessageToPost = (msg: any): Post => {
+    const reactions = msg.reactions as { emoji: string; users: string[] }[] || [];
+    const likes = reactions.reduce((sum, r) => sum + (r.users?.length || 0), 0);
+    
+    // Extract tags from text (hashtags)
+    const tags: string[] = [];
+    const hashtagRegex = /#(\w+)/g;
+    let match;
+    while ((match = hashtagRegex.exec(msg.text)) !== null) {
+      tags.push(match[1]);
+    }
+
+    return {
+      id: msg.id,
+      user: msg.sender,
+      text: msg.text,
+      city: selectedCity,
+      likes,
+      time: formatTime(msg.created_at),
+      tags,
+      userAvatar: msg.avatar,
+      comments: []
+    };
+  };
+
+  const convertMessageToComment = (msg: any): Comment => {
+    return {
+      id: msg.id,
+      user: msg.sender,
+      text: msg.text,
+      time: formatTime(msg.created_at),
+      userAvatar: msg.avatar
+    };
+  };
+
+  const formatTime = (timestamp: string): string => {
+    const now = new Date();
+    const messageTime = new Date(timestamp);
+    const diffMs = now.getTime() - messageTime.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays}d ago`;
+  };
 
   const filteredPosts = posts.filter(p => {
       if (selectedCity !== 'All' && p.city !== selectedCity) return false;
@@ -36,7 +169,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
       setIsOptimizing(false);
   };
 
-  const handlePost = () => {
+  const handlePost = async () => {
     if (!newPost.trim()) return;
     
     // Auto-tag 'CrewCall' if text implies it (simple check for demo)
@@ -45,50 +178,89 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
         if (!tags.includes('CrewCall')) tags.push('CrewCall');
     }
 
-    const post: Post = {
-      id: Date.now().toString(),
-      user: userProfile.username,
-      text: newPost,
-      city: selectedCity,
-      likes: 0,
-      time: 'Just now',
-      tags: tags,
-      userAvatar: userProfile.avatarUrl || userProfile.avatar,
-      comments: []
-    };
-    onPostsChange([post, ...posts]);
-    setNewPost('');
-    setGeneratedTags([]);
+    // Add hashtags to text
+    let postText = newPost;
+    if (tags.length > 0) {
+      postText += '\n\n' + tags.map(t => `#${t}`).join(' ');
+    }
+
+    try {
+      await supabase
+        .from('chat_messages')
+        .insert({
+          group_id: TRIBE_BOARD_GROUP_ID,
+          sender: userProfile.username,
+          text: postText,
+          avatar: userProfile.avatarUrl || userProfile.avatar || null
+        });
+
+      setNewPost('');
+      setGeneratedTags([]);
+    } catch (error) {
+      console.error('Error posting:', error);
+    }
   };
 
-  const handleReply = (postId: string) => {
-      if (!replyText.trim()) return;
-      const updatedPosts = posts.map(p => {
-          if (p.id === postId) {
-              return {
-                  ...p,
-                  comments: [
-                      ...(p.comments || []),
-                      {
-                          id: Date.now().toString(),
-                          user: userProfile.username,
-                          text: replyText,
-                          time: 'Just now',
-                          userAvatar: userProfile.avatarUrl || userProfile.avatar
-                      }
-                  ]
-              };
-          }
-          return p;
-      });
-      onPostsChange(updatedPosts);
+  const handleReply = async (postId: string) => {
+    if (!replyText.trim()) return;
+
+    try {
+      await supabase
+        .from('chat_messages')
+        .insert({
+          group_id: TRIBE_BOARD_GROUP_ID,
+          sender: userProfile.username,
+          text: replyText,
+          avatar: userProfile.avatarUrl || userProfile.avatar || null,
+          parent_id: postId
+        });
+
       setReplyText('');
+    } catch (error) {
+      console.error('Error replying:', error);
+    }
   };
 
-  const handleLike = (postId: string) => {
-    const updatedPosts = posts.map(p => p.id === postId ? { ...p, likes: p.likes + 1 } : p);
-    onPostsChange(updatedPosts);
-  }
+  const handleLike = async (postId: string) => {
+    try {
+      // Get current message
+      const { data: msg, error: fetchError } = await supabase
+        .from('chat_messages')
+        .select('reactions')
+        .eq('id', postId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const reactions = (msg.reactions as { emoji: string; users: string[] }[] || []);
+      const heartReaction = reactions.find(r => r.emoji === '❤️');
+      
+      let newReactions;
+      if (heartReaction) {
+        // Check if user already liked
+        if (heartReaction.users.includes(userProfile.username)) {
+          // Unlike
+          heartReaction.users = heartReaction.users.filter(u => u !== userProfile.username);
+        } else {
+          // Like
+          heartReaction.users.push(userProfile.username);
+        }
+        newReactions = reactions;
+      } else {
+        // Add new heart reaction
+        newReactions = [...reactions, { emoji: '❤️', users: [userProfile.username] }];
+      }
+
+      // Update in database
+      await supabase
+        .from('chat_messages')
+        .update({ reactions: newReactions })
+        .eq('id', postId);
+
+    } catch (error) {
+      console.error('Error liking post:', error);
+    }
+  };
 
   return (
     <div className="h-full flex flex-col bg-black animate-fadeIn">
@@ -154,7 +326,11 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
 
         {/* --- FEED --- */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6 pb-32">
-            {filteredPosts.length === 0 ? (
+            {loading ? (
+                <div className="text-center py-10 text-zinc-600 font-light italic">
+                    Loading posts...
+                </div>
+            ) : filteredPosts.length === 0 ? (
                 <div className="text-center py-10 text-zinc-600 font-light italic">
                     Quiet night in {selectedCity}... be the first to post.
                 </div>
