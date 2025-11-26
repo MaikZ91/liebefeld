@@ -45,6 +45,11 @@ const getJitteredCoords = (city: string): [number, number] => {
 
 const parseDateString = (dateStr: string): Date | null => {
   try {
+    // Support ISO format "YYYY-MM-DD" from database
+    if (dateStr.includes('-') && dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return new Date(dateStr);
+    }
+    // Support German format "DD.MM.YYYY" or "WE, DD.MM.YYYY"
     const parts = dateStr.includes(',') ? dateStr.split(', ')[1] : dateStr;
     const [day, month, year] = parts.split('.');
     return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
