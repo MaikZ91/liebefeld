@@ -180,7 +180,8 @@ export const TribeApp: React.FC = () => {
   const attendingEvents = allEvents.filter(e => attendingEventIds.has(e.id));
   const likedEvents = allEvents.filter(e => likedEventIds.has(e.id));
 
-  if (!userProfile) {
+  // Render Auth Screen
+  if (view === ViewState.AUTH || !userProfile) {
     return <AuthScreen onLogin={handleLogin} />;
   }
 
