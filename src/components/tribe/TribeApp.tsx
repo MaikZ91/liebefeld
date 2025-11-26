@@ -326,7 +326,7 @@ export const TribeApp: React.FC = () => {
         {view === ViewState.FEED && (
           <div className="animate-fadeIn pb-20">
             {/* Nexus Section */}
-            <div className="px-6 pt-4 pb-6 bg-gradient-to-b from-black via-black to-transparent border border-white/5 rounded-xl mx-4 mt-4">
+            <div className="px-6 pt-2 pb-6 bg-gradient-to-b from-black via-black to-transparent">
               {/* Nexus Search Bar */}
               <div className="relative group mb-3">
                 <input 
@@ -335,7 +335,7 @@ export const TribeApp: React.FC = () => {
                   onChange={(e) => setNexusInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleNexusAsk(nexusInput)}
                   placeholder="Ask Nexus..."
-                  className="w-full bg-black border border-white/5 focus:border-white/10 text-white text-sm placeholder-zinc-700 rounded-full py-2.5 px-4 outline-none transition-all"
+                  className="w-full bg-black border border-white/[0.08] focus:border-white/20 text-white text-sm placeholder-zinc-700 rounded-full py-2.5 px-4 outline-none transition-all"
                 />
                 {nexusInput.trim() && (
                   <button 
