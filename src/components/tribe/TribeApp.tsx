@@ -462,19 +462,21 @@ export const TribeApp: React.FC = () => {
       </header>
 
       {/* --- LIVE TICKER --- */}
-      <div className="fixed top-[73px] left-0 right-0 z-40 max-w-2xl mx-auto">
-        <TribeLiveTicker 
-          events={allEvents.map(e => ({
-            id: e.id,
-            date: e.date,
-            title: e.title,
-            location: e.location,
-            likes: likedEventIds.has(e.id) ? (e.likes || 0) + 1 : e.likes || 0,
-          }))}
-          selectedCity={selectedCity}
-          onEventClick={handleTickerEventClick}
-        />
-      </div>
+      {view === ViewState.FEED && (
+        <div className="fixed top-[73px] left-0 right-0 z-40 max-w-2xl mx-auto">
+          <TribeLiveTicker
+            events={allEvents.map(e => ({
+              id: e.id,
+              date: e.date,
+              title: e.title,
+              location: e.location,
+              likes: likedEventIds.has(e.id) ? (e.likes || 0) + 1 : e.likes || 0,
+            }))}
+            selectedCity={selectedCity}
+            onEventClick={handleTickerEventClick}
+          />
+        </div>
+      )}
 
       {/* --- MAIN CONTENT --- */}
       <main className="pt-[110px] px-0 max-w-2xl mx-auto h-screen overflow-y-auto">
