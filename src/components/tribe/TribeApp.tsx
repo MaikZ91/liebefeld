@@ -416,7 +416,7 @@ export const TribeApp: React.FC = () => {
                       <circle cx="12" cy="14" r="3" className="fill-black"/>
                   </svg>
                </div>
-               <span className="text-sm font-serif font-extrabold tracking-[0.25em] text-white">THE TRIBE</span>
+               <span className="text-sm font-extrabold tracking-[0.25em] text-white">THE TRIBE</span>
           </div>
 
           {/* CITY SELECTOR & USER AVATAR */}
@@ -424,7 +424,7 @@ export const TribeApp: React.FC = () => {
               <div className="relative">
                   <button 
                       onClick={() => setIsCityMenuOpen(!isCityMenuOpen)} 
-                      className="text-[10px] font-serif font-bold uppercase tracking-wider flex items-center gap-1.5 text-white hover:text-gold transition-colors px-2 py-1 border border-white/10 bg-black/30"
+                      className="text-[10px] font-extrabold uppercase tracking-[0.25em] flex items-center gap-1.5 text-white hover:text-gold transition-colors px-2 py-1 border border-white/10 bg-black/30"
                   >
                       {selectedCity}
                       <ChevronDown size={12} className={`transition-transform duration-300 ${isCityMenuOpen ? 'rotate-180' : ''}`} />
@@ -435,7 +435,7 @@ export const TribeApp: React.FC = () => {
                               <button 
                                   key={city} 
                                   onClick={() => { setSelectedCity(city); setIsCityMenuOpen(false); }} 
-                                  className="block w-full text-right px-3 py-2 text-[10px] font-serif font-bold uppercase text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
+                                  className="block w-full text-right px-3 py-2 text-[10px] font-extrabold uppercase tracking-[0.25em] text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
                               >
                                   {city}
                               </button>
@@ -575,7 +575,7 @@ export const TribeApp: React.FC = () => {
             {spotlightEvents.length > 0 && (
               <div className="mb-12">
                   <div className="px-6 mb-5">
-                      <h2 className="text-xs font-serif font-bold text-white uppercase tracking-[0.2em] flex items-center gap-2">
+                      <h2 className="text-xs font-extrabold text-white uppercase tracking-[0.25em] flex items-center gap-2">
                         <div className="w-4 h-4 rounded-full overflow-hidden">
                           <img src={MIA_AVATAR} className="w-full h-full object-cover" alt="MIA" />
                         </div>
@@ -602,7 +602,7 @@ export const TribeApp: React.FC = () => {
             {/* Feed List */}
             <div className="px-6 space-y-2 pb-12">
                 <div className="flex justify-between items-center border-b border-white/5 pb-4 mb-6">
-                    <h2 className="text-xs font-serif font-bold text-white uppercase tracking-[0.2em]">Your Feed</h2>
+                    <h2 className="text-xs font-extrabold text-white uppercase tracking-[0.25em]">Your Feed</h2>
                     <div className="flex items-center gap-3">
                       {/* Vibe Filter */}
                       <select
