@@ -307,7 +307,7 @@ export const TribeApp: React.FC = () => {
   }, [allEvents, selectedCity, selectedCategory, hiddenEventIds, likedEventIds, nexusFilter]);
 
   const spotlightEvents = filteredEvents.slice(0, 5);
-  const feedEvents = filteredEvents.slice(5);
+  const feedEvents = filteredEvents; // Show all events in feed, including spotlight events
 
   const handleLogin = (profile: UserProfile) => {
     setUserProfile(profile);
