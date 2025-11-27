@@ -648,17 +648,21 @@ export const TribeApp: React.FC = () => {
                                 {weekday}, {day}. {month}
                               </h3>
                               <div className="space-y-0">
-                                {grouped[date].map((event, i) => (
-                                  <TribeEventCard 
-                                    key={i}
-                                    event={event} 
-                                    variant="compact"
-                                    onJoinTribe={handleJoinTribe}
-                                    onInteraction={handleInteraction}
-                                    isLiked={likedEventIds.has(event.id)}
-                                    isAttending={attendingEventIds.has(event.id)}
-                                    onToggleAttendance={handleToggleAttendance}
-                                  />
+                                {grouped[date].map((event) => (
+                                  <div 
+                                    key={event.id}
+                                    className="animate-fade-in transition-all duration-300 ease-out"
+                                  >
+                                    <TribeEventCard 
+                                      event={event} 
+                                      variant="compact"
+                                      onJoinTribe={handleJoinTribe}
+                                      onInteraction={handleInteraction}
+                                      isLiked={likedEventIds.has(event.id)}
+                                      isAttending={attendingEventIds.has(event.id)}
+                                      onToggleAttendance={handleToggleAttendance}
+                                    />
+                                  </div>
                                 ))}
                               </div>
                             </div>
@@ -667,8 +671,11 @@ export const TribeApp: React.FC = () => {
                       }
                       
                       // Standard mode - no grouping
-                      return feedEvents.map((event, i) => (
-                        <div key={i}>
+                      return feedEvents.map((event) => (
+                        <div 
+                          key={event.id}
+                          className="animate-fade-in transition-all duration-300 ease-out"
+                        >
                           <TribeEventCard 
                             event={event} 
                             variant="standard"
