@@ -1,0 +1,216 @@
+import { TribeEvent } from '@/types/tribe';
+
+const LIKES_KEY = 'mia_liked_events';
+const DISLIKES_KEY = 'mia_disliked_events';
+const PREFERENCES_KEY = 'mia_user_preferences';
+
+interface EventInteraction {
+  eventId: string;
+  category?: string;
+  location?: string;
+  title: string;
+  timestamp: string;
+}
+
+interface UserPreferences {
+  likedCategories: Record<string, number>; // category -> count
+  dislikedCategories: Record<string, number>;
+  likedLocations: Record<string, number>; // location -> count
+  dislikedLocations: Record<string, number>;
+  likedKeywords: Record<string, number>; // keywords from titles
+  dislikedKeywords: Record<string, number>;
+}
+
+export const personalizationService = {
+  // Track a like interaction
+  trackLike(event: TribeEvent): void {
+    const likes = this.getLikes();
+    const interaction: EventInteraction = {
+      eventId: event.id,
+      category: event.category,
+      location: event.location || undefined,
+      title: event.title,
+      timestamp: new Date().toISOString(),
+    };
+    
+    likes.push(interaction);
+    localStorage.setItem(LIKES_KEY, JSON.stringify(likes));
+    this.updatePreferences();
+  },
+
+  // Track a dislike interaction
+  trackDislike(event: TribeEvent): void {
+    const dislikes = this.getDislikes();
+    const interaction: EventInteraction = {
+      eventId: event.id,
+      category: event.category,
+      location: event.location || undefined,
+      title: event.title,
+      timestamp: new Date().toISOString(),
+    };
+    
+    dislikes.push(interaction);
+    localStorage.setItem(DISLIKES_KEY, JSON.stringify(dislikes));
+    this.updatePreferences();
+  },
+
+  // Get all likes
+  getLikes(): EventInteraction[] {
+    try {
+      const stored = localStorage.getItem(LIKES_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  // Get all dislikes
+  getDislikes(): EventInteraction[] {
+    try {
+      const stored = localStorage.getItem(DISLIKES_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  // Update aggregated preferences
+  updatePreferences(): void {
+    const likes = this.getLikes();
+    const dislikes = this.getDislikes();
+
+    const preferences: UserPreferences = {
+      likedCategories: {},
+      dislikedCategories: {},
+      likedLocations: {},
+      dislikedLocations: {},
+      likedKeywords: {},
+      dislikedKeywords: {},
+    };
+
+    // Aggregate likes
+    likes.forEach(interaction => {
+      if (interaction.category) {
+        preferences.likedCategories[interaction.category] = 
+          (preferences.likedCategories[interaction.category] || 0) + 1;
+      }
+      if (interaction.location) {
+        preferences.likedLocations[interaction.location] = 
+          (preferences.likedLocations[interaction.location] || 0) + 1;
+      }
+      // Extract keywords from title
+      const keywords = this.extractKeywords(interaction.title);
+      keywords.forEach(keyword => {
+        preferences.likedKeywords[keyword] = 
+          (preferences.likedKeywords[keyword] || 0) + 1;
+      });
+    });
+
+    // Aggregate dislikes
+    dislikes.forEach(interaction => {
+      if (interaction.category) {
+        preferences.dislikedCategories[interaction.category] = 
+          (preferences.dislikedCategories[interaction.category] || 0) + 1;
+      }
+      if (interaction.location) {
+        preferences.dislikedLocations[interaction.location] = 
+          (preferences.dislikedLocations[interaction.location] || 0) + 1;
+      }
+      const keywords = this.extractKeywords(interaction.title);
+      keywords.forEach(keyword => {
+        preferences.dislikedKeywords[keyword] = 
+          (preferences.dislikedKeywords[keyword] || 0) + 1;
+      });
+    });
+
+    localStorage.setItem(PREFERENCES_KEY, JSON.stringify(preferences));
+  },
+
+  // Get aggregated preferences
+  getPreferences(): UserPreferences {
+    try {
+      const stored = localStorage.getItem(PREFERENCES_KEY);
+      return stored ? JSON.parse(stored) : {
+        likedCategories: {},
+        dislikedCategories: {},
+        likedLocations: {},
+        dislikedLocations: {},
+        likedKeywords: {},
+        dislikedKeywords: {},
+      };
+    } catch {
+      return {
+        likedCategories: {},
+        dislikedCategories: {},
+        likedLocations: {},
+        dislikedLocations: {},
+        likedKeywords: {},
+        dislikedKeywords: {},
+      };
+    }
+  },
+
+  // Calculate matching score for an event (0-100%)
+  calculateMatchScore(event: TribeEvent): number {
+    const preferences = this.getPreferences();
+    let score = 50; // Start at neutral
+
+    // Category scoring (±20 points)
+    if (event.category) {
+      const likeCount = preferences.likedCategories[event.category] || 0;
+      const dislikeCount = preferences.dislikedCategories[event.category] || 0;
+      score += Math.min(likeCount * 5, 20);
+      score -= Math.min(dislikeCount * 5, 20);
+    }
+
+    // Location scoring (±15 points)
+    if (event.location) {
+      const likeCount = preferences.likedLocations[event.location] || 0;
+      const dislikeCount = preferences.dislikedLocations[event.location] || 0;
+      score += Math.min(likeCount * 4, 15);
+      score -= Math.min(dislikeCount * 4, 15);
+    }
+
+    // Keyword scoring (±15 points)
+    const keywords = this.extractKeywords(event.title);
+    let keywordBonus = 0;
+    let keywordPenalty = 0;
+    keywords.forEach(keyword => {
+      const likeCount = preferences.likedKeywords[keyword] || 0;
+      const dislikeCount = preferences.dislikedKeywords[keyword] || 0;
+      keywordBonus += Math.min(Number(likeCount), 3) * 2;
+      keywordPenalty += Math.min(Number(dislikeCount), 3) * 2;
+    });
+    score += Math.min(keywordBonus, 15);
+    score -= Math.min(keywordPenalty, 15);
+
+    // Clamp to 0-100
+    return Math.max(0, Math.min(100, Math.round(score)));
+  },
+
+  // Extract keywords from title (simple word splitting)
+  extractKeywords(title: string): string[] {
+    const stopWords = ['der', 'die', 'das', 'ein', 'eine', 'und', 'oder', 'in', 'am', 'im', 'von', 'für', 'mit', 'zum', 'zur'];
+    return title
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(word => word.length > 3 && !stopWords.includes(word));
+  },
+
+  // Get favorite locations (locations with most likes)
+  getFavoriteLocations(): string[] {
+    const preferences = this.getPreferences();
+    const locations = Object.entries(preferences.likedLocations)
+      .sort(([, a], [, b]) => (b as number) - (a as number))
+      .slice(0, 5)
+      .map(([location]) => location);
+    return locations;
+  },
+
+  // Clear all personalization data
+  clearAll(): void {
+    localStorage.removeItem(LIKES_KEY);
+    localStorage.removeItem(DISLIKES_KEY);
+    localStorage.removeItem(PREFERENCES_KEY);
+  },
+};
