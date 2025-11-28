@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserProfile, TribeEvent } from '@/types/tribe';
 import { TribeEventCard } from './TribeEventCard';
-import { Shield, Sparkles } from 'lucide-react';
+import { Shield, Sparkles, MapPin } from 'lucide-react';
+import { personalizationService } from '@/services/personalizationService';
 
 interface ProfileViewProps {
   userProfile: UserProfile;
@@ -21,6 +22,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   likedEventIds
 }) => {
   const [activeTab, setActiveTab] = useState<'GOING' | 'LIKED'>('GOING');
+  const [favoriteLocations, setFavoriteLocations] = useState<string[]>([]);
+  
+  useEffect(() => {
+    const locations = personalizationService.getFavoriteLocations();
+    setFavoriteLocations(locations);
+  }, [likedEvents]);
 
   return (
     <div className="min-h-screen bg-black text-white pb-24 animate-fadeIn">
@@ -40,18 +47,38 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               </div>
               <p className="text-zinc-500 text-xs font-light uppercase tracking-widest mb-6">{userProfile.bio}</p>
               
-              <div className="flex gap-12 border-t border-white/5 pt-6 w-full justify-center">
-                  <div className="text-center">
-                      <span className="block text-xl font-bold text-gold">{attendingEvents.length}</span>
-                      <span className="text-[9px] text-zinc-500 uppercase tracking-widest">Going</span>
-                  </div>
-                  <div className="text-center">
-                      <span className="block text-xl font-bold text-gold">{likedEvents.length}</span>
-                      <span className="text-[9px] text-zinc-500 uppercase tracking-widest">Liked</span>
-                  </div>
-              </div>
-          </div>
-       </div>
+               <div className="flex gap-12 border-t border-white/5 pt-6 w-full justify-center">
+                   <div className="text-center">
+                       <span className="block text-xl font-bold text-gold">{attendingEvents.length}</span>
+                       <span className="text-[9px] text-zinc-500 uppercase tracking-widest">Going</span>
+                   </div>
+                   <div className="text-center">
+                       <span className="block text-xl font-bold text-gold">{likedEvents.length}</span>
+                       <span className="text-[9px] text-zinc-500 uppercase tracking-widest">Liked</span>
+                   </div>
+               </div>
+               
+               {/* Favorite Locations */}
+               {favoriteLocations.length > 0 && (
+                 <div className="border-t border-white/5 pt-6 mt-6 w-full">
+                   <div className="flex items-center gap-2 mb-3">
+                     <MapPin size={14} className="text-gold" />
+                     <span className="text-[9px] text-zinc-500 uppercase tracking-widest">Favorit Lokalitäten</span>
+                   </div>
+                   <div className="flex flex-wrap gap-2">
+                     {favoriteLocations.map((location, idx) => (
+                       <div 
+                         key={idx}
+                         className="px-3 py-1 bg-zinc-900 border border-gold/20 text-gold text-[10px] font-medium"
+                       >
+                         {location}
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+               )}
+           </div>
+        </div>
 
        {/* Tabs */}
        <div className="flex border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur z-20">

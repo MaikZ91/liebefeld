@@ -12,6 +12,7 @@ interface EventCardProps {
   isLiked?: boolean;
   isAttending?: boolean;
   onToggleAttendance?: (eventId: string) => void;
+  matchScore?: number; // MIA matching score 0-100%
 }
 
 // Helper functions for date/time formatting
@@ -38,7 +39,8 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
   onInteraction,
   isLiked = false,
   isAttending = false,
-  onToggleAttendance
+  onToggleAttendance,
+  matchScore
 }) => {
   const [summary, setSummary] = useState<string | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
@@ -97,6 +99,11 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-zinc-800">
                 <span className="text-[7px] text-zinc-700">?</span>
+              </div>
+            )}
+            {matchScore !== undefined && (
+              <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-gold text-[7px] font-bold px-1 py-0.5 text-center">
+                {matchScore}%
               </div>
             )}
             {isLiked && (
@@ -313,6 +320,11 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                     <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-800">
                          <span className="text-[9px] text-zinc-600 uppercase">No Img</span>
                     </div>
+                )}
+                {matchScore !== undefined && (
+                  <div className="absolute bottom-1 right-1 bg-black/80 text-gold text-[9px] font-bold px-1.5 py-1 border border-gold/30">
+                    {matchScore}%
+                  </div>
                 )}
                 {isLiked && (
                   <div className="absolute top-1 left-1 bg-gold text-black text-[8px] font-bold px-1.5 py-0.5 uppercase tracking-wide">

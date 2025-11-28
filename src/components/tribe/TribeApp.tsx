@@ -10,6 +10,10 @@ import { TribeBottomNav } from './TribeBottomNav';
 import { AuthScreen } from './AuthScreen';
 import { ProfileView } from './ProfileView';
 import { TribeLiveTicker } from '@/components/TribeLiveTicker';
+import { LocationBlockDialog } from './LocationBlockDialog';
+import { dislikeService } from '@/services/dislikeService';
+import { personalizationService } from '@/services/personalizationService';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Map as MapIcon,
   Home,
@@ -48,6 +52,12 @@ export const TribeApp: React.FC = () => {
   const [hiddenEventIds, setHiddenEventIds] = useState<Set<string>>(new Set());
   const [likedEventIds, setLikedEventIds] = useState<Set<string>>(new Set());
   const [attendingEventIds, setAttendingEventIds] = useState<Set<string>>(new Set());
+  const [eventMatchScores, setEventMatchScores] = useState<Map<string, number>>(new Map());
+  const { toast } = useToast();
+  const [locationBlockDialog, setLocationBlockDialog] = useState<{ open: boolean; location: string | null }>({ 
+    open: false, 
+    location: null 
+  });
   
   // Nexus state
   const [nexusInput, setNexusInput] = useState('');
@@ -122,6 +132,11 @@ export const TribeApp: React.FC = () => {
       loadPosts();
     }
   }, [selectedCity, userProfile]);
+  
+  // Calculate match scores when events load
+  useEffect(() => {
+    recalculateMatchScores();
+  }, [allEvents]);
 
   const checkForNewMessages = async () => {
     try {
@@ -208,6 +223,9 @@ export const TribeApp: React.FC = () => {
     // Remove hidden events
     result = result.filter(e => !hiddenEventIds.has(e.id));
     
+    // Remove blocked locations
+    result = result.filter(e => !e.location || !dislikeService.isLocationBlocked(e.location));
+    
     // Filter by category
     if (selectedCategory !== 'ALL') {
         result = result.filter(e => e.category?.toUpperCase() === selectedCategory);
@@ -250,16 +268,19 @@ export const TribeApp: React.FC = () => {
       );
     };
     
-    // Sort with priority:
-    // 1. Liked events first
-    // 2. All events WITH images (any category) before events without images
-    // 3. Within events with images: Ausgehen (including keyword-detected) > Kreativität > Sport > Others by time
-    // 4. Events without images last
+    // Sort with priority based on match scores
     result.sort((a, b) => {
+      // Priority 0: Match score first (higher score = better match)
+      const scoreA = eventMatchScores.get(a.id) || 50;
+      const scoreB = eventMatchScores.get(b.id) || 50;
+      if (scoreB !== scoreA) {
+        return scoreB - scoreA;
+      }
+      
       const isLikedA = likedEventIds.has(a.id);
       const isLikedB = likedEventIds.has(b.id);
       
-      // Priority 1: Liked events always come first
+      // Priority 1: Liked events come next
       if (isLikedA && !isLikedB) return -1;
       if (!isLikedA && isLikedB) return 1;
       
@@ -307,7 +328,7 @@ export const TribeApp: React.FC = () => {
   }, [allEvents, selectedCity, selectedCategory, hiddenEventIds, likedEventIds, nexusFilter]);
 
   const spotlightEvents = filteredEvents.slice(0, 5);
-  const feedEvents = filteredEvents; // Show all events in feed, including spotlight events
+  const feedEvents = filteredEvents; // Show all events in feed, including spotlight events (sorted by match score)
 
   const handleLogin = (profile: UserProfile) => {
     setUserProfile(profile);
@@ -316,8 +337,38 @@ export const TribeApp: React.FC = () => {
     setView(ViewState.PROFILE);
   };
 
-  const handleInteraction = (eventId: string, type: 'like' | 'dislike') => {
-    if (type === 'like') {
+  const recalculateMatchScores = () => {
+    const scores = new Map<string, number>();
+    allEvents.forEach(event => {
+      const score = personalizationService.calculateMatchScore(event);
+      scores.set(event.id, score);
+    });
+    setEventMatchScores(scores);
+  };
+
+  const handleInteraction = async (eventId: string, type: 'like' | 'dislike') => {
+    const event = allEvents.find(e => e.id === eventId);
+    
+    if (type === 'dislike') {
+      setHiddenEventIds(prev => new Set([...prev, eventId]));
+      
+      // Track dislike for personalization
+      if (event) {
+        personalizationService.trackDislike(event);
+      }
+      
+      const { shouldAskBlock, location } = await dislikeService.dislikeEvent(
+        eventId,
+        event?.location || undefined
+      );
+      
+      if (shouldAskBlock && location) {
+        setLocationBlockDialog({ open: true, location });
+      }
+      
+      // Recalculate match scores after dislike
+      recalculateMatchScores();
+    } else if (type === 'like') {
       setLikedEventIds(prev => {
         const newSet = new Set(prev);
         if (newSet.has(eventId)) {
@@ -327,9 +378,30 @@ export const TribeApp: React.FC = () => {
         }
         return newSet;
       });
-    } else if (type === 'dislike') {
-      setHiddenEventIds(prev => new Set([...prev, eventId]));
+      
+      // Track like for personalization
+      if (event) {
+        personalizationService.trackLike(event);
+      }
+      
+      // Recalculate match scores after like
+      recalculateMatchScores();
     }
+  };
+  
+  const handleBlockLocation = () => {
+    if (locationBlockDialog.location) {
+      dislikeService.blockLocation(locationBlockDialog.location);
+      toast({
+        title: "Location blockiert",
+        description: `Events von "${locationBlockDialog.location}" werden nicht mehr angezeigt.`
+      });
+      setLocationBlockDialog({ open: false, location: null });
+    }
+  };
+  
+  const handleCancelBlock = () => {
+    setLocationBlockDialog({ open: false, location: null });
   };
 
   const handleToggleAttendance = (eventId: string) => {
@@ -588,11 +660,12 @@ export const TribeApp: React.FC = () => {
                               <TribeEventCard 
                                 event={event} 
                                 variant="hero"
-                                onInteraction={handleInteraction}
-                                isLiked={likedEventIds.has(event.id)}
-                                isAttending={attendingEventIds.has(event.id)}
-                                onToggleAttendance={handleToggleAttendance}
-                              />
+                          onInteraction={handleInteraction}
+                          isLiked={likedEventIds.has(event.id)}
+                          isAttending={attendingEventIds.has(event.id)}
+                          onToggleAttendance={handleToggleAttendance}
+                          matchScore={eventMatchScores.get(event.id)}
+                        />
                           </div>
                       ))}
                   </div>
@@ -661,6 +734,7 @@ export const TribeApp: React.FC = () => {
                                       isLiked={likedEventIds.has(event.id)}
                                       isAttending={attendingEventIds.has(event.id)}
                                       onToggleAttendance={handleToggleAttendance}
+                                      matchScore={eventMatchScores.get(event.id)}
                                     />
                                   </div>
                                 ))}
@@ -684,6 +758,7 @@ export const TribeApp: React.FC = () => {
                             isLiked={likedEventIds.has(event.id)}
                             isAttending={attendingEventIds.has(event.id)}
                             onToggleAttendance={handleToggleAttendance}
+                            matchScore={eventMatchScores.get(event.id)}
                           />
                         </div>
                       ));
@@ -762,6 +837,14 @@ export const TribeApp: React.FC = () => {
           </div>
         );
       })()}
+
+      {/* --- LOCATION BLOCK DIALOG --- */}
+      <LocationBlockDialog 
+        open={locationBlockDialog.open}
+        location={locationBlockDialog.location || ''}
+        onBlock={handleBlockLocation}
+        onCancel={handleCancelBlock}
+      />
 
     </div>
   );

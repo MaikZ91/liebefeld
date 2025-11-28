@@ -87,7 +87,7 @@ export const dislikeService = {
     // Track location if provided
     if (location) {
       const count = this.incrementLocationDislike(location);
-      if (count === 2 && !this.isLocationBlocked(location)) {
+      if (count === 3 && !this.isLocationBlocked(location)) {
         return { shouldAskBlock: true, location };
       }
     }
