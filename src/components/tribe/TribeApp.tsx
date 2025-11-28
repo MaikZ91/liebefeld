@@ -11,6 +11,7 @@ import { AuthScreen } from './AuthScreen';
 import { ProfileView } from './ProfileView';
 import { TribeLiveTicker } from '@/components/TribeLiveTicker';
 import { LocationBlockDialog } from './LocationBlockDialog';
+import { AppDownloadPrompt } from './AppDownloadPrompt';
 import { dislikeService } from '@/services/dislikeService';
 import { personalizationService } from '@/services/personalizationService';
 import { useToast } from '@/hooks/use-toast';
@@ -845,6 +846,9 @@ export const TribeApp: React.FC = () => {
         onBlock={handleBlockLocation}
         onCancel={handleCancelBlock}
       />
+
+      {/* --- APP DOWNLOAD PROMPT --- */}
+      <AppDownloadPrompt />
 
     </div>
   );
