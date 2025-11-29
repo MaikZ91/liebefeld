@@ -3,6 +3,7 @@ import { getTribeResponse } from '@/services/tribe/aiHelpers';
 import { ChatMessage, TribeEvent } from '@/types/tribe';
 import { TribeEventCard } from './TribeEventCard';
 import { ArrowUp, X } from 'lucide-react';
+import { personalizationService } from '@/services/personalizationService';
 
 const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150";
 
@@ -70,7 +71,16 @@ export const TribeAIChat: React.FC<TribeAIChatProps> = ({ onClose, events, onQue
               </div>
               {msg.relatedEvents && (
                 <div className="mt-6 w-full md:w-[80%] space-y-4">
-                  {msg.relatedEvents.map((evt, eIdx) => <TribeEventCard key={eIdx} event={evt} variant="standard" />)}
+                  <div className="flex items-center gap-2 mb-3 px-1">
+                    <div className="w-1 h-1 rounded-full bg-gold animate-pulse" />
+                    <span className="text-[10px] text-zinc-500 uppercase tracking-widest">
+                      MIA Match Score zeigt, wie gut Events zu deinen Vorlieben passen
+                    </span>
+                  </div>
+                  {msg.relatedEvents.map((evt, eIdx) => {
+                    const matchScore = personalizationService.calculateMatchScore(evt);
+                    return <TribeEventCard key={eIdx} event={evt} variant="standard" matchScore={matchScore} />;
+                  })}
                 </div>
               )}
             </div>
