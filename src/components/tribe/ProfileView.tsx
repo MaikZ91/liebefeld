@@ -11,6 +11,7 @@ interface ProfileViewProps {
   onToggleAttendance?: (event: TribeEvent) => void;
   attendingEventIds?: Set<string>;
   likedEventIds?: Set<string>;
+  onOpenMatcher?: () => void;
 }
 
 export const ProfileView: React.FC<ProfileViewProps> = ({ 
@@ -19,7 +20,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   likedEvents,
   onToggleAttendance,
   attendingEventIds,
-  likedEventIds
+  likedEventIds,
+  onOpenMatcher
 }) => {
   const [activeTab, setActiveTab] = useState<'GOING' | 'LIKED'>('GOING');
   const [favoriteLocations, setFavoriteLocations] = useState<string[]>([]);
@@ -93,6 +95,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               className={`flex-1 py-4 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'LIKED' ? 'text-gold border-b-2 border-gold' : 'text-zinc-600 hover:text-white'}`}
            >
               Favorites
+           </button>
+           <button 
+              onClick={onOpenMatcher}
+              className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-gold hover:bg-gold/10 transition-colors border-l border-white/10"
+           >
+              Find People
            </button>
        </div>
 

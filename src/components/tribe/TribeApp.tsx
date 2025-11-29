@@ -12,6 +12,7 @@ import { ProfileView } from './ProfileView';
 import { TribeLiveTicker } from '@/components/TribeLiveTicker';
 import { LocationBlockDialog } from './LocationBlockDialog';
 import { AppDownloadPrompt } from './AppDownloadPrompt';
+import { TribeUserMatcher } from './TribeUserMatcher';
 import { dislikeService } from '@/services/dislikeService';
 import { personalizationService } from '@/services/personalizationService';
 import { useToast } from '@/hooks/use-toast';
@@ -535,6 +536,16 @@ export const TribeApp: React.FC = () => {
     return <AuthScreen onLogin={handleLogin} />;
   }
 
+  // Render User Matcher
+  if (view === ViewState.MATCHER) {
+    return (
+      <TribeUserMatcher 
+        currentUserProfile={userProfile}
+        onBack={() => setView(ViewState.PROFILE)}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black text-white pb-24 overflow-x-hidden relative font-sans selection:bg-gold selection:text-black">
       
@@ -854,6 +865,7 @@ export const TribeApp: React.FC = () => {
             onToggleAttendance={(event) => handleToggleAttendance(event.id)}
             attendingEventIds={attendingEventIds}
             likedEventIds={likedEventIds}
+            onOpenMatcher={() => setView(ViewState.MATCHER)}
           />
         )}
 
