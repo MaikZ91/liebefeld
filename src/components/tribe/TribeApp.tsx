@@ -200,8 +200,11 @@ export const TribeApp: React.FC = () => {
 
   const fetchEvents = async (append = false) => {
     try {
+      console.log('🔄 [TribeApp fetchEvents] Starting fetch, append:', append, 'currentPage:', currentPage);
       const pageSize = 50;
       const offset = append ? currentPage * pageSize : 0;
+      
+      console.log('🔄 [TribeApp fetchEvents] Fetching with offset:', offset, 'pageSize:', pageSize);
       
       const { data, error, count } = await supabase
         .from('community_events')
@@ -213,17 +216,25 @@ export const TribeApp: React.FC = () => {
 
       if (error) throw error;
       
+      console.log('🔄 [TribeApp fetchEvents] Received:', data?.length, 'events, total count:', count);
+      
       const tribeEvents = (data || []).map(convertToTribeEvent);
       
       if (append) {
-        setAllEvents(prev => [...prev, ...tribeEvents]);
+        setAllEvents(prev => {
+          console.log('🔄 [TribeApp fetchEvents] Appending events, prev count:', prev.length);
+          return [...prev, ...tribeEvents];
+        });
         setCurrentPage(prev => prev + 1);
       } else {
+        console.log('🔄 [TribeApp fetchEvents] Setting initial events');
         setAllEvents(tribeEvents);
         setCurrentPage(1);
       }
       
-      setHasMoreEvents(tribeEvents.length === pageSize && (count || 0) > offset + pageSize);
+      const hasMore = tribeEvents.length === pageSize && (count || 0) > offset + pageSize;
+      console.log('🔄 [TribeApp fetchEvents] hasMoreEvents:', hasMore);
+      setHasMoreEvents(hasMore);
     } catch (error) {
       console.error('Error loading events:', error);
     }
@@ -266,7 +277,16 @@ export const TribeApp: React.FC = () => {
     // Filter by selected date from calendar picker
     if (selectedDate) {
       const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
-      result = result.filter(e => e.date === selectedDateStr);
+      console.log('🔄 [TribeApp filteredEvents] Filtering by date:', selectedDateStr);
+      console.log('🔄 [TribeApp filteredEvents] Before date filter:', result.length);
+      result = result.filter(e => {
+        const matches = e.date === selectedDateStr;
+        if (!matches) {
+          console.log('🔄 Date mismatch:', e.date, 'vs', selectedDateStr, 'for event:', e.title);
+        }
+        return matches;
+      });
+      console.log('🔄 [TribeApp filteredEvents] After date filter:', result.length);
     }
     
     // Filter by category
@@ -909,7 +929,10 @@ export const TribeApp: React.FC = () => {
                 {hasMoreEvents && !selectedDate && feedEvents.length > 0 && (
                   <div className="flex justify-center pt-8">
                     <button
-                      onClick={loadMoreEvents}
+                      onClick={() => {
+                        console.log('🔄 [TribeApp] Load More clicked, hasMoreEvents:', hasMoreEvents, 'isLoadingMore:', isLoadingMore);
+                        loadMoreEvents();
+                      }}
                       disabled={isLoadingMore}
                       className="px-6 py-2 bg-zinc-800 text-zinc-400 text-xs uppercase tracking-wider border border-white/10 hover:border-gold hover:text-gold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -917,6 +940,11 @@ export const TribeApp: React.FC = () => {
                     </button>
                   </div>
                 )}
+                
+                {/* Debug Info */}
+                <div className="text-[10px] text-zinc-600 text-center pt-4">
+                  Zeige {feedEvents.length} Events | hasMore: {hasMoreEvents ? 'ja' : 'nein'} | selectedDate: {selectedDate ? format(selectedDate, 'dd.MM.yyyy') : 'keine'}
+                </div>
             </div>
           </div>
         )}
