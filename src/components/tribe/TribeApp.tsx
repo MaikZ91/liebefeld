@@ -27,8 +27,12 @@ import {
   X,
   Filter,
   LayoutList,
-  LayoutTemplate
+  LayoutTemplate,
+  Calendar as CalendarIcon
 } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
 
 const CITIES = ['Bielefeld', 'Berlin', 'Hamburg', 'Köln', 'München'];
 const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150";
@@ -49,6 +53,10 @@ export const TribeApp: React.FC = () => {
   });
   
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMoreEvents, setHasMoreEvents] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
   
   // Event tracking state
   const [hiddenEventIds, setHiddenEventIds] = useState<Set<string>>(new Set());
@@ -134,7 +142,9 @@ export const TribeApp: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchEvents();
+    setCurrentPage(0);
+    setHasMoreEvents(true);
+    fetchEvents(false);
     if (userProfile) {
       loadPosts();
     }
@@ -188,23 +198,43 @@ export const TribeApp: React.FC = () => {
     }
   };
 
-  const fetchEvents = async () => {
+  const fetchEvents = async (append = false) => {
     try {
-      const { data, error } = await supabase
+      const pageSize = 50;
+      const offset = append ? currentPage * pageSize : 0;
+      
+      const { data, error, count } = await supabase
         .from('community_events')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('city', selectedCity)
         .gte('date', new Date().toISOString().split('T')[0])
         .order('date', { ascending: true })
-        .limit(100);
+        .range(offset, offset + pageSize - 1);
 
       if (error) throw error;
       
       const tribeEvents = (data || []).map(convertToTribeEvent);
-      setAllEvents(tribeEvents);
+      
+      if (append) {
+        setAllEvents(prev => [...prev, ...tribeEvents]);
+        setCurrentPage(prev => prev + 1);
+      } else {
+        setAllEvents(tribeEvents);
+        setCurrentPage(1);
+      }
+      
+      setHasMoreEvents(tribeEvents.length === pageSize && (count || 0) > offset + pageSize);
     } catch (error) {
       console.error('Error loading events:', error);
     }
+  };
+
+  const loadMoreEvents = async () => {
+    if (isLoadingMore || !hasMoreEvents) return;
+    
+    setIsLoadingMore(true);
+    await fetchEvents(true);
+    setIsLoadingMore(false);
   };
 
   const loadPosts = () => {
@@ -232,6 +262,12 @@ export const TribeApp: React.FC = () => {
     
     // Remove blocked locations
     result = result.filter(e => !e.location || !dislikeService.isLocationBlocked(e.location));
+    
+    // Filter by selected date from calendar picker
+    if (selectedDate) {
+      const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
+      result = result.filter(e => e.date === selectedDateStr);
+    }
     
     // Filter by category
     if (selectedCategory !== 'ALL') {
@@ -332,7 +368,7 @@ export const TribeApp: React.FC = () => {
     });
     
     return result;
-  }, [allEvents, selectedCity, selectedCategory, hiddenEventIds, likedEventIds, nexusFilter]);
+  }, [allEvents, selectedCity, selectedCategory, hiddenEventIds, likedEventIds, nexusFilter, selectedDate]);
 
   const spotlightEvents = filteredEvents.slice(0, 5);
   const feedEvents = filteredEvents; // Show all events in feed, including spotlight events (sorted by match score)
@@ -761,6 +797,34 @@ export const TribeApp: React.FC = () => {
                         <option value="CONCERT">Concert</option>
                         <option value="SPORT">Sport</option>
                       </select>
+                      
+                      {/* Calendar Picker */}
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button className="text-zinc-500 hover:text-white transition-colors">
+                            <CalendarIcon size={16} />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 bg-zinc-900 border-white/10" align="end">
+                          <Calendar
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={setSelectedDate}
+                            className="pointer-events-auto"
+                          />
+                          {selectedDate && (
+                            <div className="p-3 border-t border-white/10">
+                              <button
+                                onClick={() => setSelectedDate(undefined)}
+                                className="w-full text-xs text-zinc-400 hover:text-white transition-colors"
+                              >
+                                Filter zurücksetzen
+                              </button>
+                            </div>
+                          )}
+                        </PopoverContent>
+                      </Popover>
+                      
                       <button 
                         onClick={() => setIsCompactMode(!isCompactMode)}
                         className="text-zinc-500 hover:text-white transition-colors"
@@ -839,6 +903,19 @@ export const TribeApp: React.FC = () => {
                     <div className="py-10 text-center text-zinc-600 font-light text-sm">
                         No events in this sector.
                     </div>
+                )}
+                
+                {/* Load More Button */}
+                {hasMoreEvents && !selectedDate && feedEvents.length > 0 && (
+                  <div className="flex justify-center pt-8">
+                    <button
+                      onClick={loadMoreEvents}
+                      disabled={isLoadingMore}
+                      className="px-6 py-2 bg-zinc-800 text-zinc-400 text-xs uppercase tracking-wider border border-white/10 hover:border-gold hover:text-gold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoadingMore ? 'Lädt...' : 'Mehr Events laden'}
+                    </button>
+                  </div>
                 )}
             </div>
           </div>
