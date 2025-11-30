@@ -54,9 +54,6 @@ export const TribeApp: React.FC = () => {
   
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMoreEvents, setHasMoreEvents] = useState(true);
-  const [currentPage, setCurrentPage] = useState(0);
   
   // Event tracking state
   const [hiddenEventIds, setHiddenEventIds] = useState<Set<string>>(new Set());
@@ -142,9 +139,7 @@ export const TribeApp: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    setCurrentPage(0);
-    setHasMoreEvents(true);
-    fetchEvents(false);
+    fetchEvents();
     if (userProfile) {
       loadPosts();
     }
@@ -198,54 +193,25 @@ export const TribeApp: React.FC = () => {
     }
   };
 
-  const fetchEvents = async (append = false) => {
+  const fetchEvents = async () => {
     try {
-      console.log('🔄 [TribeApp fetchEvents] Starting fetch, append:', append, 'currentPage:', currentPage);
-      const pageSize = 50;
-      const offset = append ? currentPage * pageSize : 0;
-      
-      console.log('🔄 [TribeApp fetchEvents] Fetching with offset:', offset, 'pageSize:', pageSize);
-      
-      const { data, error, count } = await supabase
+      console.log('🔄 [TribeApp fetchEvents] Loading all upcoming events for city:', selectedCity);
+      const { data, error } = await supabase
         .from('community_events')
-        .select('*', { count: 'exact' })
+        .select('*')
         .eq('city', selectedCity)
         .gte('date', new Date().toISOString().split('T')[0])
         .order('date', { ascending: true })
-        .range(offset, offset + pageSize - 1);
+        .limit(1000);
 
       if (error) throw error;
       
-      console.log('🔄 [TribeApp fetchEvents] Received:', data?.length, 'events, total count:', count);
-      
+      console.log('🔄 [TribeApp fetchEvents] Received events:', data?.length);
       const tribeEvents = (data || []).map(convertToTribeEvent);
-      
-      if (append) {
-        setAllEvents(prev => {
-          console.log('🔄 [TribeApp fetchEvents] Appending events, prev count:', prev.length);
-          return [...prev, ...tribeEvents];
-        });
-        setCurrentPage(prev => prev + 1);
-      } else {
-        console.log('🔄 [TribeApp fetchEvents] Setting initial events');
-        setAllEvents(tribeEvents);
-        setCurrentPage(1);
-      }
-      
-      const hasMore = tribeEvents.length === pageSize && (count || 0) > offset + pageSize;
-      console.log('🔄 [TribeApp fetchEvents] hasMoreEvents:', hasMore);
-      setHasMoreEvents(hasMore);
+      setAllEvents(tribeEvents);
     } catch (error) {
       console.error('Error loading events:', error);
     }
-  };
-
-  const loadMoreEvents = async () => {
-    if (isLoadingMore || !hasMoreEvents) return;
-    
-    setIsLoadingMore(true);
-    await fetchEvents(true);
-    setIsLoadingMore(false);
   };
 
   const loadPosts = () => {
@@ -925,26 +891,6 @@ export const TribeApp: React.FC = () => {
                     </div>
                 )}
                 
-                {/* Load More Button */}
-                {hasMoreEvents && !selectedDate && feedEvents.length > 0 && (
-                  <div className="flex justify-center pt-8">
-                    <button
-                      onClick={() => {
-                        console.log('🔄 [TribeApp] Load More clicked, hasMoreEvents:', hasMoreEvents, 'isLoadingMore:', isLoadingMore);
-                        loadMoreEvents();
-                      }}
-                      disabled={isLoadingMore}
-                      className="px-6 py-2 bg-zinc-800 text-zinc-400 text-xs uppercase tracking-wider border border-white/10 hover:border-gold hover:text-gold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isLoadingMore ? 'Lädt...' : 'Mehr Events laden'}
-                    </button>
-                  </div>
-                )}
-                
-                {/* Debug Info */}
-                <div className="text-[10px] text-zinc-600 text-center pt-4">
-                  Zeige {feedEvents.length} Events | hasMore: {hasMoreEvents ? 'ja' : 'nein'} | selectedDate: {selectedDate ? format(selectedDate, 'dd.MM.yyyy') : 'keine'}
-                </div>
             </div>
           </div>
         )}
