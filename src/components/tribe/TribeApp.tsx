@@ -7,7 +7,7 @@ import { TribeAIChat } from './TribeAIChat';
 import { TribeCommunityBoard } from './TribeCommunityBoard';
 import { TribeMapView } from './TribeMapView';
 import { TribeBottomNav } from './TribeBottomNav';
-import { AuthScreen } from './AuthScreen';
+import { AccessGate } from './AccessGate';
 import { ProfileView } from './ProfileView';
 import { TribeLiveTicker } from '@/components/TribeLiveTicker';
 import { LocationBlockDialog } from './LocationBlockDialog';
@@ -629,9 +629,9 @@ export const TribeApp: React.FC = () => {
   const attendingEvents = allEvents.filter(e => attendingEventIds.has(e.id));
   const likedEvents = allEvents.filter(e => likedEventIds.has(e.id));
 
-  // Render Auth Screen when explicitly in AUTH view OR for first time users
+  // Render Access Gate for first time users
   if (view === ViewState.AUTH || requiresAuth) {
-    return <AuthScreen onLogin={handleLogin} />;
+    return <AccessGate onAccessGranted={handleLogin} />;
   }
 
   // Render User Matcher
