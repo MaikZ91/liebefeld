@@ -54,6 +54,9 @@ export const TribeApp: React.FC = () => {
   
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMoreEvents, setHasMoreEvents] = useState(true);
+  const [loadedDateRange, setLoadedDateRange] = useState<{ start: string; end: string } | null>(null);
   
   // Event tracking state
   const [hiddenEventIds, setHiddenEventIds] = useState<Set<string>>(new Set());
@@ -139,7 +142,11 @@ export const TribeApp: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchEvents();
+    // Initial load: first 50 events
+    setAllEvents([]);
+    setLoadedDateRange(null);
+    setHasMoreEvents(true);
+    fetchEvents(true);
     if (userProfile) {
       loadPosts();
     }
@@ -193,24 +200,93 @@ export const TribeApp: React.FC = () => {
     }
   };
 
-  const fetchEvents = async () => {
+  const fetchEvents = async (isInitial = false, specificDate?: Date) => {
     try {
-      console.log('🔄 [TribeApp fetchEvents] Loading all upcoming events for city:', selectedCity);
+      if (isLoadingMore && !isInitial) return;
+      setIsLoadingMore(true);
+
+      const pageSize = 50;
+      let startDate: string;
+      let endDate: string;
+
+      if (specificDate) {
+        // Load events for the selected month
+        const monthStart = new Date(specificDate.getFullYear(), specificDate.getMonth(), 1);
+        const monthEnd = new Date(specificDate.getFullYear(), specificDate.getMonth() + 1, 0);
+        startDate = monthStart.toISOString().split('T')[0];
+        endDate = monthEnd.toISOString().split('T')[0];
+        
+        console.log('🔄 [TribeApp fetchEvents] Loading events for month:', startDate, 'to', endDate);
+      } else if (isInitial) {
+        // Initial load: today + 50 events
+        startDate = new Date().toISOString().split('T')[0];
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + 365);
+        endDate = futureDate.toISOString().split('T')[0];
+        
+        console.log('🔄 [TribeApp fetchEvents] Initial load from:', startDate);
+      } else {
+        // Load more: continue from last loaded date
+        if (!loadedDateRange) {
+          setIsLoadingMore(false);
+          return;
+        }
+        startDate = loadedDateRange.end;
+        const futureDate = new Date(startDate);
+        futureDate.setDate(futureDate.getDate() + 365);
+        endDate = futureDate.toISOString().split('T')[0];
+        
+        console.log('🔄 [TribeApp fetchEvents] Loading more from:', startDate);
+      }
+
       const { data, error } = await supabase
         .from('community_events')
         .select('*')
         .eq('city', selectedCity)
-        .gte('date', new Date().toISOString().split('T')[0])
+        .gte('date', startDate)
+        .lte('date', endDate)
         .order('date', { ascending: true })
-        .limit(1000);
+        .limit(pageSize);
 
       if (error) throw error;
       
-      console.log('🔄 [TribeApp fetchEvents] Received events:', data?.length);
+      console.log('🔄 [TribeApp fetchEvents] Received:', data?.length, 'events');
+      
       const tribeEvents = (data || []).map(convertToTribeEvent);
-      setAllEvents(tribeEvents);
+      
+      if (specificDate) {
+        // Merge with existing events
+        setAllEvents(prev => {
+          const merged = [...prev, ...tribeEvents];
+          const unique = Array.from(new Map(merged.map(e => [e.id, e])).values());
+          return unique.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        });
+      } else if (isInitial) {
+        setAllEvents(tribeEvents);
+        if (tribeEvents.length > 0) {
+          const lastDate = tribeEvents[tribeEvents.length - 1].date;
+          setLoadedDateRange({ start: startDate, end: lastDate });
+        }
+      } else {
+        // Append for infinite scroll
+        setAllEvents(prev => [...prev, ...tribeEvents]);
+        if (tribeEvents.length > 0) {
+          const lastDate = tribeEvents[tribeEvents.length - 1].date;
+          setLoadedDateRange(prev => prev ? { ...prev, end: lastDate } : { start: startDate, end: lastDate });
+        }
+      }
+      
+      setHasMoreEvents(tribeEvents.length === pageSize);
     } catch (error) {
       console.error('Error loading events:', error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  const loadMoreEvents = () => {
+    if (!isLoadingMore && hasMoreEvents) {
+      fetchEvents(false);
     }
   };
 
@@ -795,7 +871,22 @@ export const TribeApp: React.FC = () => {
                           <Calendar
                             mode="single"
                             selected={selectedDate}
-                            onSelect={setSelectedDate}
+                            onSelect={(date) => {
+                              setSelectedDate(date);
+                              if (date) {
+                                // Check if we need to load events for this month
+                                const monthStart = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+                                const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+                                
+                                // Check if we have events for this date range
+                                const hasEventsInRange = allEvents.some(e => e.date >= monthStart && e.date <= monthEnd);
+                                
+                                if (!hasEventsInRange) {
+                                  console.log('🔄 [TribeApp] Loading events for selected month');
+                                  fetchEvents(false, date);
+                                }
+                              }
+                            }}
                             className="pointer-events-auto"
                           />
                           {selectedDate && (
@@ -889,6 +980,31 @@ export const TribeApp: React.FC = () => {
                     <div className="py-10 text-center text-zinc-600 font-light text-sm">
                         No events in this sector.
                     </div>
+                )}
+                
+                {/* Infinite Scroll Trigger */}
+                {!selectedDate && hasMoreEvents && feedEvents.length > 0 && (
+                  <div 
+                    ref={(el) => {
+                      if (!el) return;
+                      const observer = new IntersectionObserver(
+                        (entries) => {
+                          if (entries[0].isIntersecting && !isLoadingMore) {
+                            console.log('🔄 [TribeApp] Infinite scroll triggered');
+                            loadMoreEvents();
+                          }
+                        },
+                        { threshold: 0.1 }
+                      );
+                      observer.observe(el);
+                      return () => observer.disconnect();
+                    }}
+                    className="h-20 flex items-center justify-center"
+                  >
+                    {isLoadingMore && (
+                      <div className="text-zinc-600 text-xs">Lädt weitere Events...</div>
+                    )}
+                  </div>
                 )}
                 
             </div>
