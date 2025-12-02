@@ -268,8 +268,12 @@ export const TribeApp: React.FC = () => {
           setLoadedDateRange({ start: startDate, end: lastDate });
         }
       } else {
-        // Append for infinite scroll
-        setAllEvents(prev => [...prev, ...tribeEvents]);
+        // Append for infinite scroll - deduplicate by ID
+        setAllEvents(prev => {
+          const merged = [...prev, ...tribeEvents];
+          const unique = Array.from(new Map(merged.map(e => [e.id, e])).values());
+          return unique.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        });
         if (tribeEvents.length > 0) {
           const lastDate = tribeEvents[tribeEvents.length - 1].date;
           setLoadedDateRange(prev => prev ? { ...prev, end: lastDate } : { start: startDate, end: lastDate });
