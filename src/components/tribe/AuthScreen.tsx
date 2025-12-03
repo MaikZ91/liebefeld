@@ -1,7 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { UserProfile, TribeEvent } from '@/types/tribe';
+import { UserProfile } from '@/types/tribe';
 import { ArrowRight, UserX, Sparkles, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+
+// Import reel images
+import reel1 from '@/assets/tribe/reel-1.jpg';
+import reel2 from '@/assets/tribe/reel-2.jpg';
+import reel3 from '@/assets/tribe/reel-3.jpg';
+import reel4 from '@/assets/tribe/reel-4.jpg';
+import reel5 from '@/assets/tribe/reel-5.jpg';
+import reel6 from '@/assets/tribe/reel-6.jpg';
+import reel7 from '@/assets/tribe/reel-7.jpg';
+import reel8 from '@/assets/tribe/reel-8.jpg';
+import reel9 from '@/assets/tribe/reel-9.jpg';
+
+const REEL_IMAGES = [reel1, reel2, reel3, reel4, reel5, reel6, reel7, reel8, reel9];
 
 interface AuthScreenProps {
   onLogin: (profile: UserProfile) => void;
@@ -18,78 +31,26 @@ const AVATAR_OPTIONS = [
 
 const CITIES = ['Bielefeld', 'Berlin', 'Hamburg', 'Köln', 'München'];
 
-// Floating event card for background
-const FloatingEventCard: React.FC<{ event: TribeEvent; index: number }> = ({ event, index }) => {
-  const positions = [
-    { left: '5%', delay: '0s' },
-    { left: '25%', delay: '3s' },
-    { left: '45%', delay: '1s' },
-    { left: '65%', delay: '4s' },
-    { left: '85%', delay: '2s' },
-    { left: '15%', delay: '5s' },
-  ];
-  
-  const pos = positions[index % positions.length];
-  
-  return (
-    <div 
-      className="absolute w-32 animate-float-up"
-      style={{ 
-        left: pos.left,
-        animationDelay: pos.delay,
-        bottom: '-150px'
-      }}
-    >
-      <div className="bg-zinc-900/80 border border-white/10 rounded-lg overflow-hidden backdrop-blur-sm">
-        {event.image_url && (
-          <img 
-            src={event.image_url} 
-            alt={event.title}
-            className="w-full h-16 object-cover"
-          />
-        )}
-        <div className="p-2">
-          <p className="text-[9px] text-white font-medium truncate">{event.title}</p>
-          <p className="text-[8px] text-zinc-500">{event.date}</p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [selectedCity, setSelectedCity] = useState('Bielefeld');
   const [isGuestLoading, setIsGuestLoading] = useState(false);
-  const [previewEvents, setPreviewEvents] = useState<TribeEvent[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [eventCount, setEventCount] = useState(0);
 
-  // Load preview events for background animation
+  // Reel-style image slideshow
   useEffect(() => {
-    const loadPreviewEvents = async () => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex(prev => (prev + 1) % REEL_IMAGES.length);
+    }, 3000); // Change image every 3 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  // Load event count for social proof
+  useEffect(() => {
+    const loadEventCount = async () => {
       try {
         const today = new Date().toISOString().split('T')[0];
-        const { data, error } = await supabase
-          .from('community_events')
-          .select('id, title, date, image_url, category')
-          .gte('date', today)
-          .not('image_url', 'is', null)
-          .order('date', { ascending: true })
-          .limit(6);
-        
-        if (!error && data) {
-          setPreviewEvents(data.map(e => ({
-            id: e.id,
-            title: e.title,
-            date: e.date,
-            event: e.title,
-            link: '',
-            image_url: e.image_url,
-            category: e.category
-          })));
-        }
-
-        // Get total event count for this week
         const weekLater = new Date();
         weekLater.setDate(weekLater.getDate() + 7);
         const { count } = await supabase
@@ -97,14 +58,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
           .select('*', { count: 'exact', head: true })
           .gte('date', today)
           .lte('date', weekLater.toISOString().split('T')[0]);
-        
         setEventCount(count || 0);
       } catch (err) {
-        console.error('Failed to load preview events:', err);
+        console.error('Failed to load event count:', err);
       }
     };
-
-    loadPreviewEvents();
+    loadEventCount();
   }, []);
 
   const handleEnter = () => {
@@ -168,18 +127,33 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* Animated Event Background */}
-      <div className="absolute inset-0 overflow-hidden opacity-25 pointer-events-none">
-        {previewEvents.map((event, i) => (
-          <FloatingEventCard key={event.id} event={event} index={i} />
+      {/* Reel-style Image Slideshow Background */}
+      <div className="absolute inset-0 overflow-hidden">
+        {REEL_IMAGES.map((img, i) => (
+          <div
+            key={i}
+            className="absolute inset-0 transition-opacity duration-1000"
+            style={{ 
+              opacity: currentImageIndex === i ? 0.35 : 0,
+              zIndex: currentImageIndex === i ? 1 : 0
+            }}
+          >
+            <img 
+              src={img} 
+              alt=""
+              className="w-full h-full object-cover scale-110"
+            />
+          </div>
         ))}
+        {/* Dark gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/50 z-10" />
       </div>
 
       {/* Background Ambience */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-gold/10 blur-[100px] rounded-full pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-zinc-800/20 blur-[100px] rounded-full pointer-events-none"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-gold/10 blur-[100px] rounded-full pointer-events-none z-20"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-zinc-800/20 blur-[100px] rounded-full pointer-events-none z-20"></div>
 
-      <div className="w-full max-w-sm z-10">
+      <div className="w-full max-w-sm z-30">
         
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
@@ -265,27 +239,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         </div>
       </div>
 
-      {/* CSS for floating animation */}
+      {/* CSS for animations */}
       <style>{`
-        @keyframes float-up {
-          0% {
-            transform: translateY(0) rotate(0deg);
-            opacity: 0;
-          }
-          10% {
-            opacity: 1;
-          }
-          90% {
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(-120vh) rotate(5deg);
-            opacity: 0;
-          }
-        }
-        .animate-float-up {
-          animation: float-up 20s linear infinite;
-        }
         .animate-fadeIn {
           animation: fadeIn 0.5s ease-out;
         }
