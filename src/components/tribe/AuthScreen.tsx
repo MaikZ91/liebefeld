@@ -42,7 +42,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex(prev => (prev + 1) % REEL_IMAGES.length);
-    }, 3000); // Change image every 3 seconds
+    }, 1500); // Change image every 1.5 seconds
     return () => clearInterval(interval);
   }, []);
 
