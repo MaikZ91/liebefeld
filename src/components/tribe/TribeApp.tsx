@@ -13,7 +13,6 @@ import { TribeLiveTicker } from '@/components/TribeLiveTicker';
 import { LocationBlockDialog } from './LocationBlockDialog';
 import { AppDownloadPrompt } from './AppDownloadPrompt';
 import { TribeUserMatcher } from './TribeUserMatcher';
-import { NewMembersWidget } from './NewMembersWidget';
 import { dislikeService } from '@/services/dislikeService';
 import { personalizationService } from '@/services/personalizationService';
 import { useToast } from '@/hooks/use-toast';
@@ -760,24 +759,21 @@ export const TribeApp: React.FC = () => {
                 </button>
               </div>
 
-              {/* Category Tabs with New Members Widget */}
-              <div className="flex items-center justify-between pb-3">
-                <div className="flex gap-6 overflow-x-auto no-scrollbar">
-                  {CATEGORIES.map(cat => (
-                    <button 
-                      key={cat}
-                      onClick={() => setSelectedCategory(cat)}
-                      className={`text-xs font-medium uppercase tracking-wider whitespace-nowrap transition-colors ${
-                        selectedCategory === cat 
-                          ? 'text-gold' 
-                          : 'text-zinc-600 hover:text-zinc-400'
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-                <NewMembersWidget />
+              {/* Category Tabs */}
+              <div className="flex gap-6 overflow-x-auto no-scrollbar pb-3">
+                {CATEGORIES.map(cat => (
+                  <button 
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`text-xs font-medium uppercase tracking-wider whitespace-nowrap transition-colors ${
+                      selectedCategory === cat 
+                        ? 'text-gold' 
+                        : 'text-zinc-600 hover:text-zinc-400'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
               </div>
 
               {/* Inline MIA Insight */}
@@ -1015,7 +1011,16 @@ export const TribeApp: React.FC = () => {
             onQuery={handleQuery}
           />
         )}
-        {view === ViewState.COMMUNITY && <TribeCommunityBoard selectedCity={selectedCity} userProfile={userProfile} />}
+        {view === ViewState.COMMUNITY && (
+          <TribeCommunityBoard 
+            selectedCity={selectedCity} 
+            userProfile={userProfile}
+            onProfileClick={(username) => {
+              // TODO: Open profile dialog for the clicked user
+              console.log('Profile clicked:', username);
+            }}
+          />
+        )}
         {view === ViewState.MAP && (
             <div className="absolute inset-0 pt-16 h-[calc(100vh-80px)]">
                  <TribeMapView events={filteredEvents} posts={posts} selectedCity={selectedCity} />
