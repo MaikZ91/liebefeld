@@ -13,6 +13,7 @@ import { TribeLiveTicker } from '@/components/TribeLiveTicker';
 import { LocationBlockDialog } from './LocationBlockDialog';
 import { AppDownloadPrompt } from './AppDownloadPrompt';
 import { TribeUserMatcher } from './TribeUserMatcher';
+import { NewMembersWidget } from './NewMembersWidget';
 import { dislikeService } from '@/services/dislikeService';
 import { personalizationService } from '@/services/personalizationService';
 import { useToast } from '@/hooks/use-toast';
@@ -467,19 +468,8 @@ export const TribeApp: React.FC = () => {
 
       console.log('User profile created:', data);
 
-      // Post welcome message to tribe_community_board
-      const { error: messageError } = await supabase
-        .from('chat_messages')
-        .insert({
-          group_id: 'tribe_community_board',
-          sender: 'MIA',
-          text: `🎉 Willkommen in THE TRIBE, ${profile.username}! Entdecke deine Stadt auf eine ganz neue Art. Wir freuen uns, dass du dabei bist!`,
-          avatar: MIA_AVATAR
-        });
-
-      if (messageError) {
-        console.error('Error posting welcome message:', messageError);
-      }
+      // Welcome message removed from chat - shown in NewMembersWidget instead
+      // Firebase push notification still sent via trigger on user_profiles insert
 
       // Save profile locally and update state
       setUserProfile(profile);
@@ -770,21 +760,24 @@ export const TribeApp: React.FC = () => {
                 </button>
               </div>
 
-              {/* Category Tabs */}
-              <div className="flex gap-6 overflow-x-auto no-scrollbar pb-3">
-                {CATEGORIES.map(cat => (
-                  <button 
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`text-xs font-medium uppercase tracking-wider whitespace-nowrap transition-colors ${
-                      selectedCategory === cat 
-                        ? 'text-gold' 
-                        : 'text-zinc-600 hover:text-zinc-400'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
+              {/* Category Tabs with New Members Widget */}
+              <div className="flex items-center justify-between pb-3">
+                <div className="flex gap-6 overflow-x-auto no-scrollbar">
+                  {CATEGORIES.map(cat => (
+                    <button 
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`text-xs font-medium uppercase tracking-wider whitespace-nowrap transition-colors ${
+                        selectedCategory === cat 
+                          ? 'text-gold' 
+                          : 'text-zinc-600 hover:text-zinc-400'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+                <NewMembersWidget />
               </div>
 
               {/* Inline MIA Insight */}
