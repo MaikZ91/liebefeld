@@ -60,41 +60,33 @@ export const NewMembersWidget: React.FC<NewMembersWidgetProps> = ({ onProfileCli
   if (recentMembers.length === 0) return null;
 
   return (
-    <div className="bg-zinc-900/60 border border-white/5 rounded-lg p-4 mb-4">
-      <div className="flex items-center gap-2 mb-3">
-        <Sparkles size={14} className="text-gold" />
-        <span className="text-xs font-medium text-gold uppercase tracking-wider">Willkommen in der Community!</span>
-      </div>
-      
-      <p className="text-[11px] text-zinc-400 mb-3">
-        Neue Mitglieder sind da – stellt euch gerne vor! 👋
-      </p>
-      
-      <div className="flex flex-wrap gap-2">
-        {recentMembers.map((member) => (
-          <button
-            key={member.id}
-            onClick={() => onProfileClick?.(member.username)}
-            className="flex items-center gap-2 bg-black/40 hover:bg-black/60 border border-white/10 hover:border-gold/30 rounded-full px-3 py-1.5 transition-all group"
-          >
-            <div className="w-5 h-5 rounded-full overflow-hidden bg-zinc-800 flex-shrink-0">
-              {member.avatar ? (
-                <img 
-                  src={member.avatar} 
-                  alt={member.username}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-[8px] text-zinc-500">
-                  {member.username.charAt(0).toUpperCase()}
-                </div>
-              )}
-            </div>
-            <span className="text-[11px] text-zinc-300 group-hover:text-white transition-colors">
-              {member.username}
-            </span>
-          </button>
-        ))}
+    <div className="bg-zinc-900/40 border border-white/5 rounded-lg px-3 py-2 mb-3">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <Sparkles size={10} className="text-gold" />
+          <span className="text-[9px] text-zinc-400">Neu dabei:</span>
+        </div>
+        
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          {recentMembers.map((member) => (
+            <button
+              key={member.id}
+              onClick={() => onProfileClick?.(member.username)}
+              className="flex items-center gap-1.5 bg-black/30 hover:bg-black/50 border border-white/5 hover:border-gold/20 rounded-full px-2 py-1 transition-all group flex-shrink-0"
+            >
+              <div className="w-4 h-4 rounded-full overflow-hidden bg-zinc-800">
+                {member.avatar ? (
+                  <img src={member.avatar} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-[7px] text-zinc-500">
+                    {member.username.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <span className="text-[9px] text-zinc-400 group-hover:text-white">{member.username}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
