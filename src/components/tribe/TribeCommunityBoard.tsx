@@ -3,19 +3,17 @@ import { UserProfile, Post, Comment } from '@/types/tribe';
 import { enhancePostContent } from '@/services/tribe/aiHelpers';
 import { ArrowRight, Sparkles, Heart, MessageCircle, Share2, Hash, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { NewMembersWidget } from './NewMembersWidget';
 
 interface Props {
   selectedCity: string;
   userProfile: UserProfile;
-  onProfileClick?: (username: string) => void;
 }
 
 type Tab = 'ALL' | 'TRIBE' | 'TIPS';
 
 const TRIBE_BOARD_GROUP_ID = 'tribe_community_board';
 
-export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile, onProfileClick }) => {
+export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile }) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -368,8 +366,6 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
 
         {/* --- FEED --- */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-32">
-            {/* Welcome Widget for new members */}
-            <NewMembersWidget onProfileClick={onProfileClick} />
             {loading ? (
                 <div className="text-center py-10 text-zinc-600 font-light italic">
                     Loading posts...

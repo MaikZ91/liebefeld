@@ -467,8 +467,19 @@ export const TribeApp: React.FC = () => {
 
       console.log('User profile created:', data);
 
-      // Welcome message removed from chat - shown in NewMembersWidget instead
-      // Firebase push notification still sent via trigger on user_profiles insert
+      // Post welcome message to tribe_community_board
+      const { error: messageError } = await supabase
+        .from('chat_messages')
+        .insert({
+          group_id: 'tribe_community_board',
+          sender: 'MIA',
+          text: `🎉 Willkommen in THE TRIBE, ${profile.username}! Entdecke deine Stadt auf eine ganz neue Art. Wir freuen uns, dass du dabei bist!`,
+          avatar: MIA_AVATAR
+        });
+
+      if (messageError) {
+        console.error('Error posting welcome message:', messageError);
+      }
 
       // Save profile locally and update state
       setUserProfile(profile);
@@ -1011,16 +1022,7 @@ export const TribeApp: React.FC = () => {
             onQuery={handleQuery}
           />
         )}
-        {view === ViewState.COMMUNITY && (
-          <TribeCommunityBoard 
-            selectedCity={selectedCity} 
-            userProfile={userProfile}
-            onProfileClick={(username) => {
-              // TODO: Open profile dialog for the clicked user
-              console.log('Profile clicked:', username);
-            }}
-          />
-        )}
+        {view === ViewState.COMMUNITY && <TribeCommunityBoard selectedCity={selectedCity} userProfile={userProfile} />}
         {view === ViewState.MAP && (
             <div className="absolute inset-0 pt-16 h-[calc(100vh-80px)]">
                  <TribeMapView events={filteredEvents} posts={posts} selectedCity={selectedCity} />
