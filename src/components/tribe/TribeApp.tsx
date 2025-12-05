@@ -11,8 +11,6 @@ import { AuthScreen } from './AuthScreen';
 import { ProfileView } from './ProfileView';
 import { TribeLiveTicker } from '@/components/TribeLiveTicker';
 import { LocationBlockDialog } from './LocationBlockDialog';
-import { AppDownloadPrompt } from './AppDownloadPrompt';
-import { TribeUserMatcher } from './TribeUserMatcher';
 import { dislikeService } from '@/services/dislikeService';
 import { personalizationService } from '@/services/personalizationService';
 import { useToast } from '@/hooks/use-toast';
@@ -27,12 +25,8 @@ import {
   X,
   Filter,
   LayoutList,
-  LayoutTemplate,
-  Calendar as CalendarIcon
+  LayoutTemplate
 } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { format } from 'date-fns';
 
 const CITIES = ['Bielefeld', 'Berlin', 'Hamburg', 'Köln', 'München'];
 const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150";
@@ -53,10 +47,6 @@ export const TribeApp: React.FC = () => {
   });
   
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMoreEvents, setHasMoreEvents] = useState(true);
-  const [loadedDateRange, setLoadedDateRange] = useState<{ start: string; end: string } | null>(null);
   
   // Event tracking state
   const [hiddenEventIds, setHiddenEventIds] = useState<Set<string>>(new Set());
@@ -85,7 +75,6 @@ export const TribeApp: React.FC = () => {
   const [hasNewCommunityMessages, setHasNewCommunityMessages] = useState(false);
 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [requiresAuth, setRequiresAuth] = useState<boolean>(false);
 
   // Initialize auth and preferences
   useEffect(() => {
@@ -94,10 +83,6 @@ export const TribeApp: React.FC = () => {
       const parsedProfile = JSON.parse(savedProfile);
       setUserProfile(parsedProfile);
       if (parsedProfile.homebase) setSelectedCity(parsedProfile.homebase);
-      setRequiresAuth(false);
-    } else {
-      // First time user - require authentication
-      setRequiresAuth(true);
     }
 
     const savedLikes = localStorage.getItem('tribe_liked_events');
@@ -142,11 +127,7 @@ export const TribeApp: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Initial load: first 50 events
-    setAllEvents([]);
-    setLoadedDateRange(null);
-    setHasMoreEvents(true);
-    fetchEvents(true);
+    fetchEvents();
     if (userProfile) {
       loadPosts();
     }
@@ -200,97 +181,22 @@ export const TribeApp: React.FC = () => {
     }
   };
 
-  const fetchEvents = async (isInitial = false, specificDate?: Date) => {
+  const fetchEvents = async () => {
     try {
-      if (isLoadingMore && !isInitial) return;
-      setIsLoadingMore(true);
-
-      const pageSize = 50;
-      let startDate: string;
-      let endDate: string;
-
-      if (specificDate) {
-        // Load events for the selected month
-        const monthStart = new Date(specificDate.getFullYear(), specificDate.getMonth(), 1);
-        const monthEnd = new Date(specificDate.getFullYear(), specificDate.getMonth() + 1, 0);
-        startDate = monthStart.toISOString().split('T')[0];
-        endDate = monthEnd.toISOString().split('T')[0];
-        
-        console.log('🔄 [TribeApp fetchEvents] Loading events for month:', startDate, 'to', endDate);
-      } else if (isInitial) {
-        // Initial load: today + 50 events
-        startDate = new Date().toISOString().split('T')[0];
-        const futureDate = new Date();
-        futureDate.setDate(futureDate.getDate() + 365);
-        endDate = futureDate.toISOString().split('T')[0];
-        
-        console.log('🔄 [TribeApp fetchEvents] Initial load from:', startDate);
-      } else {
-        // Load more: continue from last loaded date
-        if (!loadedDateRange) {
-          setIsLoadingMore(false);
-          return;
-        }
-        startDate = loadedDateRange.end;
-        const futureDate = new Date(startDate);
-        futureDate.setDate(futureDate.getDate() + 365);
-        endDate = futureDate.toISOString().split('T')[0];
-        
-        console.log('🔄 [TribeApp fetchEvents] Loading more from:', startDate);
-      }
-
       const { data, error } = await supabase
         .from('community_events')
         .select('*')
         .eq('city', selectedCity)
-        .gte('date', startDate)
-        .lte('date', endDate)
+        .gte('date', new Date().toISOString().split('T')[0])
         .order('date', { ascending: true })
-        .limit(pageSize);
+        .limit(100);
 
       if (error) throw error;
       
-      console.log('🔄 [TribeApp fetchEvents] Received:', data?.length, 'events');
-      
       const tribeEvents = (data || []).map(convertToTribeEvent);
-      
-      if (specificDate) {
-        // Merge with existing events
-        setAllEvents(prev => {
-          const merged = [...prev, ...tribeEvents];
-          const unique = Array.from(new Map(merged.map(e => [e.id, e])).values());
-          return unique.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        });
-      } else if (isInitial) {
-        setAllEvents(tribeEvents);
-        if (tribeEvents.length > 0) {
-          const lastDate = tribeEvents[tribeEvents.length - 1].date;
-          setLoadedDateRange({ start: startDate, end: lastDate });
-        }
-      } else {
-        // Append for infinite scroll - deduplicate by ID
-        setAllEvents(prev => {
-          const merged = [...prev, ...tribeEvents];
-          const unique = Array.from(new Map(merged.map(e => [e.id, e])).values());
-          return unique.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        });
-        if (tribeEvents.length > 0) {
-          const lastDate = tribeEvents[tribeEvents.length - 1].date;
-          setLoadedDateRange(prev => prev ? { ...prev, end: lastDate } : { start: startDate, end: lastDate });
-        }
-      }
-      
-      setHasMoreEvents(tribeEvents.length === pageSize);
+      setAllEvents(tribeEvents);
     } catch (error) {
       console.error('Error loading events:', error);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
-
-  const loadMoreEvents = () => {
-    if (!isLoadingMore && hasMoreEvents) {
-      fetchEvents(false);
     }
   };
 
@@ -319,21 +225,6 @@ export const TribeApp: React.FC = () => {
     
     // Remove blocked locations
     result = result.filter(e => !e.location || !dislikeService.isLocationBlocked(e.location));
-    
-    // Filter by selected date from calendar picker
-    if (selectedDate) {
-      const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
-      console.log('🔄 [TribeApp filteredEvents] Filtering by date:', selectedDateStr);
-      console.log('🔄 [TribeApp filteredEvents] Before date filter:', result.length);
-      result = result.filter(e => {
-        const matches = e.date === selectedDateStr;
-        if (!matches) {
-          console.log('🔄 Date mismatch:', e.date, 'vs', selectedDateStr, 'for event:', e.title);
-        }
-        return matches;
-      });
-      console.log('🔄 [TribeApp filteredEvents] After date filter:', result.length);
-    }
     
     // Filter by category
     if (selectedCategory !== 'ALL') {
@@ -434,71 +325,16 @@ export const TribeApp: React.FC = () => {
     });
     
     return result;
-  }, [allEvents, selectedCity, selectedCategory, hiddenEventIds, likedEventIds, nexusFilter, selectedDate]);
+  }, [allEvents, selectedCity, selectedCategory, hiddenEventIds, likedEventIds, nexusFilter]);
 
   const spotlightEvents = filteredEvents.slice(0, 5);
   const feedEvents = filteredEvents; // Show all events in feed, including spotlight events (sorted by match score)
 
-  const handleLogin = async (profile: UserProfile) => {
-    try {
-      // Call Edge Function to create user profile in DB
-      const { data, error } = await supabase.functions.invoke('manage_user_profile', {
-        body: {
-          action: 'createOrUpdateProfile',
-          profile: {
-            username: profile.username,
-            avatar: profile.avatarUrl,
-            interests: [],
-            favorite_locations: profile.homebase ? [profile.homebase] : [],
-            hobbies: []
-          }
-        }
-      });
-
-      if (error) {
-        console.error('Error creating user profile:', error);
-        toast({
-          title: "Fehler",
-          description: "Profil konnte nicht erstellt werden",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      console.log('User profile created:', data);
-
-      // Post welcome message to tribe_community_board
-      const { error: messageError } = await supabase
-        .from('chat_messages')
-        .insert({
-          group_id: 'tribe_community_board',
-          sender: 'MIA',
-          text: `🎉 Willkommen in THE TRIBE, ${profile.username}! Entdecke deine Stadt auf eine ganz neue Art. Wir freuen uns, dass du dabei bist!`,
-          avatar: MIA_AVATAR
-        });
-
-      if (messageError) {
-        console.error('Error posting welcome message:', messageError);
-      }
-
-      // Save profile locally and update state
-      setUserProfile(profile);
-      if (profile.homebase) setSelectedCity(profile.homebase);
-      localStorage.setItem('tribe_user_profile', JSON.stringify(profile));
-      setRequiresAuth(false);
-
-      toast({
-        title: "Willkommen!",
-        description: "Dein Profil wurde erfolgreich erstellt"
-      });
-    } catch (error) {
-      console.error('Unexpected error during login:', error);
-      toast({
-        title: "Fehler",
-        description: "Ein unerwarteter Fehler ist aufgetreten",
-        variant: "destructive"
-      });
-    }
+  const handleLogin = (profile: UserProfile) => {
+    setUserProfile(profile);
+    if (profile.homebase) setSelectedCity(profile.homebase);
+    localStorage.setItem('tribe_user_profile', JSON.stringify(profile));
+    setView(ViewState.PROFILE);
   };
 
   const recalculateMatchScores = () => {
@@ -633,19 +469,9 @@ export const TribeApp: React.FC = () => {
   const attendingEvents = allEvents.filter(e => attendingEventIds.has(e.id));
   const likedEvents = allEvents.filter(e => likedEventIds.has(e.id));
 
-  // Render Auth Screen when explicitly in AUTH view OR for first time users
-  if (view === ViewState.AUTH || requiresAuth) {
+  // Render Auth Screen only when explicitly in AUTH view
+  if (view === ViewState.AUTH) {
     return <AuthScreen onLogin={handleLogin} />;
-  }
-
-  // Render User Matcher
-  if (view === ViewState.MATCHER) {
-    return (
-      <TribeUserMatcher 
-        currentUserProfile={userProfile}
-        onBack={() => setView(ViewState.PROFILE)}
-      />
-    );
   }
 
   return (
@@ -725,7 +551,7 @@ export const TribeApp: React.FC = () => {
       )}
 
       {/* --- MAIN CONTENT --- */}
-      <main className={`${view === ViewState.COMMUNITY ? 'pt-16' : 'pt-[110px]'} px-0 max-w-2xl mx-auto h-screen overflow-y-auto`}>
+      <main className="pt-[110px] px-0 max-w-2xl mx-auto h-screen overflow-y-auto">
 
         {view === ViewState.FEED && (
           <div className="animate-fadeIn pb-20">
@@ -863,49 +689,6 @@ export const TribeApp: React.FC = () => {
                         <option value="CONCERT">Concert</option>
                         <option value="SPORT">Sport</option>
                       </select>
-                      
-                      {/* Calendar Picker */}
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <button className="text-zinc-500 hover:text-white transition-colors">
-                            <CalendarIcon size={16} />
-                          </button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0 bg-zinc-900 border-white/10" align="end">
-                          <Calendar
-                            mode="single"
-                            selected={selectedDate}
-                            onSelect={(date) => {
-                              setSelectedDate(date);
-                              if (date) {
-                                // Check if we need to load events for this month
-                                const monthStart = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
-                                const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
-                                
-                                // Check if we have events for this date range
-                                const hasEventsInRange = allEvents.some(e => e.date >= monthStart && e.date <= monthEnd);
-                                
-                                if (!hasEventsInRange) {
-                                  console.log('🔄 [TribeApp] Loading events for selected month');
-                                  fetchEvents(false, date);
-                                }
-                              }
-                            }}
-                            className="pointer-events-auto"
-                          />
-                          {selectedDate && (
-                            <div className="p-3 border-t border-white/10">
-                              <button
-                                onClick={() => setSelectedDate(undefined)}
-                                className="w-full text-xs text-zinc-400 hover:text-white transition-colors"
-                              >
-                                Filter zurücksetzen
-                              </button>
-                            </div>
-                          )}
-                        </PopoverContent>
-                      </Popover>
-                      
                       <button 
                         onClick={() => setIsCompactMode(!isCompactMode)}
                         className="text-zinc-500 hover:text-white transition-colors"
@@ -985,32 +768,6 @@ export const TribeApp: React.FC = () => {
                         No events in this sector.
                     </div>
                 )}
-                
-                {/* Infinite Scroll Trigger */}
-                {!selectedDate && hasMoreEvents && feedEvents.length > 0 && (
-                  <div 
-                    ref={(el) => {
-                      if (!el) return;
-                      const observer = new IntersectionObserver(
-                        (entries) => {
-                          if (entries[0].isIntersecting && !isLoadingMore) {
-                            console.log('🔄 [TribeApp] Infinite scroll triggered');
-                            loadMoreEvents();
-                          }
-                        },
-                        { threshold: 0.1 }
-                      );
-                      observer.observe(el);
-                      return () => observer.disconnect();
-                    }}
-                    className="h-20 flex items-center justify-center"
-                  >
-                    {isLoadingMore && (
-                      <div className="text-zinc-600 text-xs">Lädt weitere Events...</div>
-                    )}
-                  </div>
-                )}
-                
             </div>
           </div>
         )}
@@ -1036,7 +793,6 @@ export const TribeApp: React.FC = () => {
             onToggleAttendance={(event) => handleToggleAttendance(event.id)}
             attendingEventIds={attendingEventIds}
             likedEventIds={likedEventIds}
-            onOpenMatcher={() => setView(ViewState.MATCHER)}
           />
         )}
 
@@ -1089,9 +845,6 @@ export const TribeApp: React.FC = () => {
         onBlock={handleBlockLocation}
         onCancel={handleCancelBlock}
       />
-
-      {/* --- APP DOWNLOAD PROMPT --- */}
-      <AppDownloadPrompt />
 
     </div>
   );

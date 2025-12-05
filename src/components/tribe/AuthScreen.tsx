@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { UserProfile } from '@/types/tribe';
-import { ArrowRight, UserX } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { Sparkles, ArrowRight } from 'lucide-react';
 
 interface AuthScreenProps {
   onLogin: (profile: UserProfile) => void;
@@ -23,7 +22,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_OPTIONS[0]);
   const [selectedCity, setSelectedCity] = useState('Bielefeld');
-  const [isGuestLoading, setIsGuestLoading] = useState(false);
 
   const handleEnter = () => {
     if (!username.trim()) return;
@@ -38,51 +36,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     onLogin(profile);
   };
 
-  const handleGuestLogin = async () => {
-    setIsGuestLoading(true);
-    try {
-      // Get next guest number from database
-      const { data: existingGuests, error } = await supabase
-        .from('user_profiles')
-        .select('username')
-        .like('username', 'Guest_%')
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      let guestNumber = 1;
-      if (!error && existingGuests && existingGuests.length > 0) {
-        const lastGuest = existingGuests[0].username;
-        const match = lastGuest.match(/Guest_(\d+)/);
-        if (match) {
-          guestNumber = parseInt(match[1]) + 1;
-        }
-      }
-
-      const guestUsername = `Guest_${guestNumber}`;
-      const randomAvatar = AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)];
-      
-      const profile: UserProfile = {
-        username: guestUsername,
-        avatarUrl: randomAvatar,
-        bio: 'Guest',
-        homebase: selectedCity
-      };
-      
-      onLogin(profile);
-    } catch (err) {
-      // Fallback to timestamp-based guest name
-      const profile: UserProfile = {
-        username: `Guest_${Date.now().toString().slice(-4)}`,
-        avatarUrl: AVATAR_OPTIONS[0],
-        bio: 'Guest',
-        homebase: selectedCity
-      };
-      onLogin(profile);
-    } finally {
-      setIsGuestLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 relative overflow-hidden animate-fadeIn">
       {/* Background Ambience */}
@@ -92,7 +45,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       <div className="w-full max-w-sm z-10">
         
         {/* Logo */}
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center mb-12">
             <div className="relative w-12 h-12 mb-4">
                 <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 2L2 22H22L12 2Z" className="fill-white"/>
@@ -100,33 +53,31 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                 </svg>
             </div>
             <h1 className="text-2xl font-serif font-bold tracking-[0.2em] text-white">THE TRIBE</h1>
-            <p className="text-[10px] text-gold uppercase tracking-widest mt-2">Dein Netzwerk in Bielefeld</p>
+            <p className="text-[10px] text-gold uppercase tracking-widest mt-2">Access Gate</p>
         </div>
 
         {/* Step 1: Identity */}
         {step === 1 && (
-          <div className="space-y-6 animate-fadeIn">
+          <div className="space-y-8 animate-fadeIn">
             <div className="text-center space-y-2">
-                <h2 className="text-xl font-light">Willkommen in Bielefeld!</h2>
-                <p className="text-xs text-zinc-400 leading-relaxed px-4">
-                  Neu in der Stadt? Finde Events, lerne Leute kennen und entdecke deine neue Heimat.
-                </p>
+                <h2 className="text-xl font-light">Identify Yourself</h2>
+                <p className="text-xs text-zinc-500">Choose a codename for the network.</p>
             </div>
 
-            <div className="space-y-5">
+            <div className="space-y-6">
                 <div className="relative">
                     <input 
                         type="text" 
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
-                        placeholder="Dein Name oder Spitzname"
-                        className="w-full bg-transparent border-b border-white/20 py-3 text-center text-xl font-serif text-white placeholder-zinc-600 outline-none focus:border-gold transition-colors"
+                        placeholder="CODENAME"
+                        className="w-full bg-transparent border-b border-white/20 py-3 text-center text-xl font-serif text-white placeholder-zinc-700 outline-none focus:border-gold transition-colors"
                         autoFocus
                     />
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-xs text-zinc-500 uppercase tracking-wider">Deine Stadt</label>
+                    <label className="text-xs text-zinc-500 uppercase tracking-wider">Homebase</label>
                     <select 
                         value={selectedCity}
                         onChange={(e) => setSelectedCity(e.target.value)}
@@ -142,32 +93,17 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                 disabled={!username.trim()}
                 className="w-full bg-white text-black py-4 font-bold uppercase tracking-widest text-xs hover:bg-gold transition-colors disabled:opacity-50 disabled:hover:bg-white"
             >
-                Weiter
+                Next Step
             </button>
-
-            {/* Guest Login Option */}
-            <div className="pt-4 border-t border-white/10">
-              <button 
-                onClick={handleGuestLogin}
-                disabled={isGuestLoading}
-                className="w-full flex items-center justify-center gap-2 text-zinc-500 text-xs uppercase tracking-wider hover:text-white transition-colors py-2"
-              >
-                <UserX size={14} />
-                {isGuestLoading ? 'Wird geladen...' : 'Als Gast weitermachen'}
-              </button>
-              <p className="text-[10px] text-zinc-600 text-center mt-2">
-                Schnell reinschauen ohne Anmeldung
-              </p>
-            </div>
           </div>
         )}
 
         {/* Step 2: Persona */}
         {step === 2 && (
-           <div className="space-y-6 animate-fadeIn">
+           <div className="space-y-8 animate-fadeIn">
              <div className="text-center space-y-2">
-                <h2 className="text-xl font-light">Wähle dein Profilbild</h2>
-                <p className="text-xs text-zinc-400">So sehen dich andere in der Community</p>
+                <h2 className="text-xl font-light">Select Persona</h2>
+                <p className="text-xs text-zinc-500">How will you be seen?</p>
             </div>
 
             <div className="grid grid-cols-3 gap-4 justify-items-center">
@@ -186,10 +122,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                 onClick={handleEnter}
                 className="w-full bg-gold text-black py-4 font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 hover:bg-white transition-colors shadow-[0_0_20px_rgba(212,180,131,0.2)]"
             >
-                Los geht's <ArrowRight size={14} />
+                Enter The Tribe <ArrowRight size={14} />
             </button>
             
-            <button onClick={() => setStep(1)} className="w-full text-zinc-600 text-[10px] uppercase tracking-widest hover:text-white">Zurück</button>
+            <button onClick={() => setStep(1)} className="w-full text-zinc-600 text-[10px] uppercase tracking-widest hover:text-white">Back</button>
            </div>
         )}
       </div>

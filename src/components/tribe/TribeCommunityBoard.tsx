@@ -104,59 +104,17 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
     }
   };
 
-  // Auto-detect topic from post text
-  const detectTopics = (text: string): string[] => {
-    const detected: string[] = [];
-    const lowerText = text.toLowerCase();
-    
-    // Topic patterns
-    const topicPatterns: { keywords: string[]; tag: string }[] = [
-      { keywords: ['sport', 'fitness', 'laufen', 'joggen', 'gym', 'training', 'fußball', 'basketball'], tag: 'Sport' },
-      { keywords: ['party', 'feiern', 'club', 'tanzen', 'disko', 'disco'], tag: 'Party' },
-      { keywords: ['kunst', 'ausstellung', 'galerie', 'museum', 'kreativ'], tag: 'Kunst' },
-      { keywords: ['musik', 'konzert', 'live', 'band', 'gig'], tag: 'Musik' },
-      { keywords: ['essen', 'restaurant', 'food', 'café', 'brunch', 'dinner'], tag: 'Food' },
-      { keywords: ['weihnacht', 'advent', 'glühwein'], tag: 'Weihnachten' },
-      { keywords: ['tipp', 'empfehl', 'insider', 'geheimtipp'], tag: 'InsiderTipp' },
-      { keywords: ['kino', 'film', 'movie'], tag: 'Kino' },
-      { keywords: ['wandern', 'natur', 'park', 'spazier'], tag: 'Outdoor' },
-      { keywords: ['networking', 'business', 'startup', 'gründer'], tag: 'Business' },
-    ];
-    
-    // Check for TribeCall patterns (people looking for others)
-    if (lowerText.includes('wer hat lust') || lowerText.includes('suche') || 
-        lowerText.includes('jemand dabei') || lowerText.includes('wer kommt') ||
-        lowerText.includes('tribecall') || lowerText.includes('tribe call')) {
-      detected.push('TribeCall');
-    }
-    
-    // Check other topics
-    for (const pattern of topicPatterns) {
-      if (pattern.keywords.some(kw => lowerText.includes(kw))) {
-        detected.push(pattern.tag);
-      }
-    }
-    
-    return detected;
-  };
-
   const convertMessageToPost = (msg: any): Post => {
     const reactions = msg.reactions as { emoji: string; users: string[] }[] || [];
     const likes = reactions.reduce((sum, r) => sum + (r.users?.length || 0), 0);
     
-    // Extract explicit hashtags from text
-    const explicitTags: string[] = [];
+    // Extract tags from text (hashtags)
+    const tags: string[] = [];
     const hashtagRegex = /#(\w+)/g;
     let match;
     while ((match = hashtagRegex.exec(msg.text)) !== null) {
-      explicitTags.push(match[1]);
+      tags.push(match[1]);
     }
-    
-    // Auto-detect topics
-    const detectedTags = detectTopics(msg.text);
-    
-    // Combine and deduplicate
-    const allTags = [...new Set([...detectedTags, ...explicitTags])];
 
     return {
       id: msg.id,
@@ -165,7 +123,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
       city: selectedCity,
       likes,
       time: formatTime(msg.created_at),
-      tags: allTags,
+      tags,
       userAvatar: msg.avatar,
       comments: []
     };
@@ -308,7 +266,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
     <div className="h-full flex flex-col bg-black animate-fadeIn">
         
         {/* --- INPUT AREA --- */}
-        <div className="px-4 pt-2 pb-2 border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur-xl z-20">
+        <div className="p-4 pb-3 border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur-xl z-20">
             <div className="bg-surface border border-white/10 rounded-xl p-2 shadow-lg">
                 <textarea 
                     value={newPost}
@@ -388,14 +346,9 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                                     <span className="block text-[9px] text-zinc-600">{post.city} • {post.time}</span>
                                 </div>
                             </div>
-                            <div className="flex flex-wrap gap-1">
-                              {post.tags.includes('TribeCall') && (
+                            {post.tags.includes('TribeCall') && (
                                 <span className="bg-gold/10 text-gold border border-gold/20 text-[8px] font-bold px-1.5 py-0.5 uppercase tracking-widest rounded-sm">Tribe Call</span>
-                              )}
-                              {post.tags.filter(t => t !== 'TribeCall' && !t.startsWith('Tribe')).slice(0, 2).map(tag => (
-                                <span key={tag} className="bg-white/5 text-zinc-400 border border-white/10 text-[8px] font-medium px-1.5 py-0.5 uppercase tracking-wider rounded-sm">#{tag}</span>
-                              ))}
-                            </div>
+                            )}
                         </div>
 
                         {/* Content */}
