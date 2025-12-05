@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, TribeEvent } from '@/types/tribe';
 import { TribeEventCard } from './TribeEventCard';
-import { Shield, Sparkles, MapPin } from 'lucide-react';
+import { Shield, Sparkles, MapPin, Edit3 } from 'lucide-react';
 import { personalizationService } from '@/services/personalizationService';
 
 interface ProfileViewProps {
@@ -12,6 +12,7 @@ interface ProfileViewProps {
   attendingEventIds?: Set<string>;
   likedEventIds?: Set<string>;
   onOpenMatcher?: () => void;
+  onEditProfile?: () => void;
 }
 
 export const ProfileView: React.FC<ProfileViewProps> = ({ 
@@ -21,7 +22,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   onToggleAttendance,
   attendingEventIds,
   likedEventIds,
-  onOpenMatcher
+  onOpenMatcher,
+  onEditProfile
 }) => {
   const [activeTab, setActiveTab] = useState<'GOING' | 'LIKED'>('GOING');
   const [favoriteLocations, setFavoriteLocations] = useState<string[]>([]);
@@ -38,6 +40,17 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           <div className="absolute top-0 right-0 p-4 opacity-5">
               <Shield size={120} />
           </div>
+          
+          {/* Edit Profile Button */}
+          {onEditProfile && (
+            <button
+              onClick={onEditProfile}
+              className="absolute top-4 right-4 z-10 flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-white/10 text-zinc-400 hover:text-gold hover:border-gold/30 transition-all text-xs uppercase tracking-widest"
+            >
+              <Edit3 size={14} />
+              Bearbeiten
+            </button>
+          )}
           
           <div className="relative z-10 flex flex-col items-center text-center mt-4">
               <div className="w-24 h-24 rounded-full border-2 border-gold p-1 mb-4">
@@ -60,14 +73,34 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                    </div>
                </div>
                
+               {/* Interests */}
+               {userProfile.interests && userProfile.interests.length > 0 && (
+                 <div className="border-t border-white/5 pt-6 mt-6 w-full">
+                   <div className="flex items-center gap-2 mb-3 justify-center">
+                     <Sparkles size={14} className="text-gold" />
+                     <span className="text-[9px] text-zinc-500 uppercase tracking-widest">Interessen</span>
+                   </div>
+                   <div className="flex flex-wrap gap-2 justify-center">
+                     {userProfile.interests.map((interest, idx) => (
+                       <div 
+                         key={idx}
+                         className="px-3 py-1 bg-zinc-900 border border-gold/20 text-gold text-[10px] font-medium"
+                       >
+                         {interest}
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+               )}
+               
                {/* Favorite Locations */}
                {favoriteLocations.length > 0 && (
                  <div className="border-t border-white/5 pt-6 mt-6 w-full">
-                   <div className="flex items-center gap-2 mb-3">
+                   <div className="flex items-center gap-2 mb-3 justify-center">
                      <MapPin size={14} className="text-gold" />
                      <span className="text-[9px] text-zinc-500 uppercase tracking-widest">Favorit Lokalitäten</span>
                    </div>
-                   <div className="flex flex-wrap gap-2">
+                   <div className="flex flex-wrap gap-2 justify-center">
                      {favoriteLocations.map((location, idx) => (
                        <div 
                          key={idx}
