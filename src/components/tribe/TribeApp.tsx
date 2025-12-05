@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ViewState, TribeEvent, Post, UserProfile, NexusFilter } from '@/types/tribe';
-import { UserProfile as ChatUserProfile } from '@/types/chatTypes';
 import { convertToTribeEvent } from '@/utils/tribe/eventHelpers';
 import { TribeEventCard } from './TribeEventCard';
 import { TribeAIChat } from './TribeAIChat';
@@ -14,8 +13,6 @@ import { TribeLiveTicker } from '@/components/TribeLiveTicker';
 import { LocationBlockDialog } from './LocationBlockDialog';
 import { AppDownloadPrompt } from './AppDownloadPrompt';
 import { TribeUserMatcher } from './TribeUserMatcher';
-import UserProfileDialog from '@/components/users/UserProfileDialog';
-import ProfileEditor from '@/components/users/ProfileEditor';
 import { dislikeService } from '@/services/dislikeService';
 import { personalizationService } from '@/services/personalizationService';
 import { useToast } from '@/hooks/use-toast';
@@ -71,12 +68,6 @@ export const TribeApp: React.FC = () => {
     open: false, 
     location: null 
   });
-  const [profileDialog, setProfileDialog] = useState<{ open: boolean; profile: ChatUserProfile | null; loading: boolean }>({
-    open: false,
-    profile: null,
-    loading: false
-  });
-  const [profileEditorOpen, setProfileEditorOpen] = useState(false);
   
   // Nexus state
   const [nexusInput, setNexusInput] = useState('');
@@ -476,8 +467,19 @@ export const TribeApp: React.FC = () => {
 
       console.log('User profile created:', data);
 
-      // Welcome message removed from chat - shown in NewMembersWidget instead
-      // Firebase push notification still sent via trigger on user_profiles insert
+      // Post welcome message to tribe_community_board
+      const { error: messageError } = await supabase
+        .from('chat_messages')
+        .insert({
+          group_id: 'tribe_community_board',
+          sender: 'MIA',
+          text: `🎉 Willkommen in THE TRIBE, ${profile.username}! Entdecke deine Stadt auf eine ganz neue Art. Wir freuen uns, dass du dabei bist!`,
+          avatar: MIA_AVATAR
+        });
+
+      if (messageError) {
+        console.error('Error posting welcome message:', messageError);
+      }
 
       // Save profile locally and update state
       setUserProfile(profile);
@@ -1020,35 +1022,7 @@ export const TribeApp: React.FC = () => {
             onQuery={handleQuery}
           />
         )}
-        {view === ViewState.COMMUNITY && (
-          <TribeCommunityBoard 
-            selectedCity={selectedCity} 
-            userProfile={userProfile}
-            onProfileClick={async (username) => {
-              setProfileDialog({ open: true, profile: null, loading: true });
-              try {
-                const { data, error } = await supabase
-                  .from('user_profiles')
-                  .select('*')
-                  .eq('username', username)
-                  .maybeSingle();
-                if (error) throw error;
-                setProfileDialog({ open: true, profile: data, loading: false });
-              } catch (err) {
-                console.error('Error fetching profile:', err);
-                setProfileDialog({ open: false, profile: null, loading: false });
-              }
-            }}
-          />
-        )}
-        
-        {/* User Profile Dialog */}
-        <UserProfileDialog
-          open={profileDialog.open}
-          onOpenChange={(open) => setProfileDialog(prev => ({ ...prev, open }))}
-          userProfile={profileDialog.profile}
-          loading={profileDialog.loading}
-        />
+        {view === ViewState.COMMUNITY && <TribeCommunityBoard selectedCity={selectedCity} userProfile={userProfile} />}
         {view === ViewState.MAP && (
             <div className="absolute inset-0 pt-16 h-[calc(100vh-80px)]">
                  <TribeMapView events={filteredEvents} posts={posts} selectedCity={selectedCity} />
@@ -1063,43 +1037,8 @@ export const TribeApp: React.FC = () => {
             attendingEventIds={attendingEventIds}
             likedEventIds={likedEventIds}
             onOpenMatcher={() => setView(ViewState.MATCHER)}
-            onEditProfile={() => setProfileEditorOpen(true)}
           />
         )}
-
-        {/* Profile Editor Dialog */}
-        <ProfileEditor
-          open={profileEditorOpen}
-          onOpenChange={setProfileEditorOpen}
-          currentUser={userProfile ? {
-            id: 'temp-profile-id',
-            username: userProfile.username,
-            avatar: userProfile.avatarUrl || null,
-            interests: userProfile.interests || [],
-            favorite_locations: userProfile.favorite_locations || [],
-            hobbies: userProfile.hobbies || [],
-            last_online: new Date().toISOString(),
-            created_at: new Date().toISOString()
-          } : null}
-          onProfileUpdate={() => {
-            // Reload profile from localStorage
-            const savedProfile = localStorage.getItem('tribe_user_profile');
-            const username = localStorage.getItem('lovable_username');
-            const avatar = localStorage.getItem('lovable_avatar');
-            const interests = localStorage.getItem('user_interests');
-            const favoriteLocations = localStorage.getItem('favorite_locations');
-            
-            if (savedProfile) {
-              const parsed = JSON.parse(savedProfile);
-              if (username) parsed.username = username;
-              if (avatar) parsed.avatarUrl = avatar;
-              if (interests) parsed.interests = JSON.parse(interests);
-              if (favoriteLocations) parsed.favorite_locations = JSON.parse(favoriteLocations);
-              localStorage.setItem('tribe_user_profile', JSON.stringify(parsed));
-              setUserProfile(parsed);
-            }
-          }}
-        />
 
       </main>
 
