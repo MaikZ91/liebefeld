@@ -11,6 +11,8 @@ import { AuthScreen } from './AuthScreen';
 import { ProfileView } from './ProfileView';
 import { TribeLiveTicker } from '@/components/TribeLiveTicker';
 import { LocationBlockDialog } from './LocationBlockDialog';
+import { AppDownloadPrompt } from './AppDownloadPrompt';
+import { TribeUserMatcher } from './TribeUserMatcher';
 import { dislikeService } from '@/services/dislikeService';
 import { personalizationService } from '@/services/personalizationService';
 import { useToast } from '@/hooks/use-toast';
@@ -75,6 +77,7 @@ export const TribeApp: React.FC = () => {
   const [hasNewCommunityMessages, setHasNewCommunityMessages] = useState(false);
 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [requiresAuth, setRequiresAuth] = useState<boolean>(false);
 
   // Initialize auth and preferences
   useEffect(() => {
@@ -83,6 +86,10 @@ export const TribeApp: React.FC = () => {
       const parsedProfile = JSON.parse(savedProfile);
       setUserProfile(parsedProfile);
       if (parsedProfile.homebase) setSelectedCity(parsedProfile.homebase);
+      setRequiresAuth(false);
+    } else {
+      // First time user - require authentication
+      setRequiresAuth(true);
     }
 
     const savedLikes = localStorage.getItem('tribe_liked_events');
@@ -330,11 +337,66 @@ export const TribeApp: React.FC = () => {
   const spotlightEvents = filteredEvents.slice(0, 5);
   const feedEvents = filteredEvents; // Show all events in feed, including spotlight events (sorted by match score)
 
-  const handleLogin = (profile: UserProfile) => {
-    setUserProfile(profile);
-    if (profile.homebase) setSelectedCity(profile.homebase);
-    localStorage.setItem('tribe_user_profile', JSON.stringify(profile));
-    setView(ViewState.PROFILE);
+  const handleLogin = async (profile: UserProfile) => {
+    try {
+      // Call Edge Function to create user profile in DB
+      const { data, error } = await supabase.functions.invoke('manage_user_profile', {
+        body: {
+          action: 'createOrUpdateProfile',
+          profile: {
+            username: profile.username,
+            avatar: profile.avatarUrl,
+            interests: [],
+            favorite_locations: profile.homebase ? [profile.homebase] : [],
+            hobbies: []
+          }
+        }
+      });
+
+      if (error) {
+        console.error('Error creating user profile:', error);
+        toast({
+          title: "Fehler",
+          description: "Profil konnte nicht erstellt werden",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      console.log('User profile created:', data);
+
+      // Post welcome message to tribe_community_board
+      const { error: messageError } = await supabase
+        .from('chat_messages')
+        .insert({
+          group_id: 'tribe_community_board',
+          sender: 'MIA',
+          text: `🎉 Willkommen in THE TRIBE, ${profile.username}! Entdecke deine Stadt auf eine ganz neue Art. Wir freuen uns, dass du dabei bist!`,
+          avatar: MIA_AVATAR
+        });
+
+      if (messageError) {
+        console.error('Error posting welcome message:', messageError);
+      }
+
+      // Save profile locally and update state
+      setUserProfile(profile);
+      if (profile.homebase) setSelectedCity(profile.homebase);
+      localStorage.setItem('tribe_user_profile', JSON.stringify(profile));
+      setRequiresAuth(false);
+
+      toast({
+        title: "Willkommen!",
+        description: "Dein Profil wurde erfolgreich erstellt"
+      });
+    } catch (error) {
+      console.error('Unexpected error during login:', error);
+      toast({
+        title: "Fehler",
+        description: "Ein unerwarteter Fehler ist aufgetreten",
+        variant: "destructive"
+      });
+    }
   };
 
   const recalculateMatchScores = () => {
@@ -469,9 +531,19 @@ export const TribeApp: React.FC = () => {
   const attendingEvents = allEvents.filter(e => attendingEventIds.has(e.id));
   const likedEvents = allEvents.filter(e => likedEventIds.has(e.id));
 
-  // Render Auth Screen only when explicitly in AUTH view
-  if (view === ViewState.AUTH) {
+  // Render Auth Screen when explicitly in AUTH view OR for first time users
+  if (view === ViewState.AUTH || requiresAuth) {
     return <AuthScreen onLogin={handleLogin} />;
+  }
+
+  // Render User Matcher
+  if (view === ViewState.MATCHER) {
+    return (
+      <TribeUserMatcher 
+        currentUserProfile={userProfile}
+        onBack={() => setView(ViewState.PROFILE)}
+      />
+    );
   }
 
   return (
@@ -793,6 +865,7 @@ export const TribeApp: React.FC = () => {
             onToggleAttendance={(event) => handleToggleAttendance(event.id)}
             attendingEventIds={attendingEventIds}
             likedEventIds={likedEventIds}
+            onOpenMatcher={() => setView(ViewState.MATCHER)}
           />
         )}
 
@@ -845,6 +918,9 @@ export const TribeApp: React.FC = () => {
         onBlock={handleBlockLocation}
         onCancel={handleCancelBlock}
       />
+
+      {/* --- APP DOWNLOAD PROMPT --- */}
+      <AppDownloadPrompt />
 
     </div>
   );
