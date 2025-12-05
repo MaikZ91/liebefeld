@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ViewState, TribeEvent, Post, UserProfile, NexusFilter } from '@/types/tribe';
+import { UserProfile as ChatUserProfile } from '@/types/chatTypes';
 import { convertToTribeEvent } from '@/utils/tribe/eventHelpers';
 import { TribeEventCard } from './TribeEventCard';
 import { TribeAIChat } from './TribeAIChat';
@@ -13,6 +14,7 @@ import { TribeLiveTicker } from '@/components/TribeLiveTicker';
 import { LocationBlockDialog } from './LocationBlockDialog';
 import { AppDownloadPrompt } from './AppDownloadPrompt';
 import { TribeUserMatcher } from './TribeUserMatcher';
+import UserProfileDialog from '@/components/users/UserProfileDialog';
 import { dislikeService } from '@/services/dislikeService';
 import { personalizationService } from '@/services/personalizationService';
 import { useToast } from '@/hooks/use-toast';
@@ -67,6 +69,11 @@ export const TribeApp: React.FC = () => {
   const [locationBlockDialog, setLocationBlockDialog] = useState<{ open: boolean; location: string | null }>({ 
     open: false, 
     location: null 
+  });
+  const [profileDialog, setProfileDialog] = useState<{ open: boolean; profile: ChatUserProfile | null; loading: boolean }>({
+    open: false,
+    profile: null,
+    loading: false
   });
   
   // Nexus state
@@ -1015,12 +1022,31 @@ export const TribeApp: React.FC = () => {
           <TribeCommunityBoard 
             selectedCity={selectedCity} 
             userProfile={userProfile}
-            onProfileClick={(username) => {
-              // TODO: Open profile dialog for the clicked user
-              console.log('Profile clicked:', username);
+            onProfileClick={async (username) => {
+              setProfileDialog({ open: true, profile: null, loading: true });
+              try {
+                const { data, error } = await supabase
+                  .from('user_profiles')
+                  .select('*')
+                  .eq('username', username)
+                  .maybeSingle();
+                if (error) throw error;
+                setProfileDialog({ open: true, profile: data, loading: false });
+              } catch (err) {
+                console.error('Error fetching profile:', err);
+                setProfileDialog({ open: false, profile: null, loading: false });
+              }
             }}
           />
         )}
+        
+        {/* User Profile Dialog */}
+        <UserProfileDialog
+          open={profileDialog.open}
+          onOpenChange={(open) => setProfileDialog(prev => ({ ...prev, open }))}
+          userProfile={profileDialog.profile}
+          loading={profileDialog.loading}
+        />
         {view === ViewState.MAP && (
             <div className="absolute inset-0 pt-16 h-[calc(100vh-80px)]">
                  <TribeMapView events={filteredEvents} posts={posts} selectedCity={selectedCity} />
