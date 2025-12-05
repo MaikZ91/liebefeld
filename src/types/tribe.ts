@@ -34,10 +34,6 @@ export interface UserProfile {
   avatarUrl: string;
   avatar?: string;
   homebase?: string;
-  interests?: string[];
-  hobbies?: string[];
-  favorite_locations?: string[];
-  matchScore?: number;
 }
 
 export interface NexusFilter {
@@ -73,8 +69,7 @@ export enum ViewState {
   TRIBE_AI = 'TRIBE_AI',
   COMMUNITY = 'COMMUNITY',
   MAP = 'MAP',
-  PROFILE = 'PROFILE',
-  MATCHER = 'MATCHER'
+  PROFILE = 'PROFILE'
 }
 
 export interface ConnectionSuggestion {
