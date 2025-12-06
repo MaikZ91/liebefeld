@@ -15,7 +15,7 @@ import { LocationBlockDialog } from './LocationBlockDialog';
 import { AppDownloadPrompt } from './AppDownloadPrompt';
 import { TribeUserMatcher } from './TribeUserMatcher';
 import UserProfileDialog from '@/components/users/UserProfileDialog';
-import ProfileEditor from '@/components/users/ProfileEditor';
+
 import { dislikeService } from '@/services/dislikeService';
 import { personalizationService } from '@/services/personalizationService';
 import { useToast } from '@/hooks/use-toast';
@@ -76,7 +76,7 @@ export const TribeApp: React.FC = () => {
     profile: null,
     loading: false
   });
-  const [profileEditorOpen, setProfileEditorOpen] = useState(false);
+  
   
   // Nexus state
   const [nexusInput, setNexusInput] = useState('');
@@ -1063,43 +1063,12 @@ export const TribeApp: React.FC = () => {
             attendingEventIds={attendingEventIds}
             likedEventIds={likedEventIds}
             onOpenMatcher={() => setView(ViewState.MATCHER)}
-            onEditProfile={() => setProfileEditorOpen(true)}
+            onProfileUpdate={(updatedProfile) => {
+              setUserProfile(updatedProfile);
+            }}
           />
         )}
 
-        {/* Profile Editor Dialog */}
-        <ProfileEditor
-          open={profileEditorOpen}
-          onOpenChange={setProfileEditorOpen}
-          currentUser={userProfile ? {
-            id: 'temp-profile-id',
-            username: userProfile.username,
-            avatar: userProfile.avatarUrl || null,
-            interests: userProfile.interests || [],
-            favorite_locations: userProfile.favorite_locations || [],
-            hobbies: userProfile.hobbies || [],
-            last_online: new Date().toISOString(),
-            created_at: new Date().toISOString()
-          } : null}
-          onProfileUpdate={() => {
-            // Reload profile from localStorage
-            const savedProfile = localStorage.getItem('tribe_user_profile');
-            const username = localStorage.getItem('lovable_username');
-            const avatar = localStorage.getItem('lovable_avatar');
-            const interests = localStorage.getItem('user_interests');
-            const favoriteLocations = localStorage.getItem('favorite_locations');
-            
-            if (savedProfile) {
-              const parsed = JSON.parse(savedProfile);
-              if (username) parsed.username = username;
-              if (avatar) parsed.avatarUrl = avatar;
-              if (interests) parsed.interests = JSON.parse(interests);
-              if (favoriteLocations) parsed.favorite_locations = JSON.parse(favoriteLocations);
-              localStorage.setItem('tribe_user_profile', JSON.stringify(parsed));
-              setUserProfile(parsed);
-            }
-          }}
-        />
 
       </main>
 
