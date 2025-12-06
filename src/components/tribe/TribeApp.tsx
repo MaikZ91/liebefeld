@@ -43,9 +43,8 @@ const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb
 const CATEGORIES = ['ALL', 'PARTY', 'ART', 'CONCERT', 'SPORT'];
 
 export const TribeApp: React.FC = () => {
-  const [view, setView] = useState<ViewState>(ViewState.COMMUNITY);
+  const [view, setView] = useState<ViewState>(ViewState.FEED);
   const [selectedCity, setSelectedCity] = useState<string>('Bielefeld');
-  const [showProfileHint, setShowProfileHint] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>(() => {
     const saved = localStorage.getItem('tribe_selected_category');
     return saved || 'ALL';
@@ -97,61 +96,28 @@ export const TribeApp: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [requiresAuth, setRequiresAuth] = useState<boolean>(false);
 
-  // Initialize auth and preferences - auto-create guest if no profile exists
+  // Initialize auth and preferences
   useEffect(() => {
-    const initializeProfile = async () => {
-      const savedProfile = localStorage.getItem('tribe_user_profile');
-      if (savedProfile) {
-        const parsedProfile = JSON.parse(savedProfile);
-        setUserProfile(parsedProfile);
-        if (parsedProfile.homebase) setSelectedCity(parsedProfile.homebase);
-        setRequiresAuth(false);
-      } else {
-        // Auto-create guest account
-        const guestNumber = Math.floor(Math.random() * 10000);
-        const AVATAR_OPTIONS = [
-          "/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png",
-          "/lovable-uploads/764c9b33-5d7d-4134-b503-c77e23c469f9.png",
-          "/lovable-uploads/c38064ee-a32f-4ecc-b148-f9c53c28d472.png",
-          "/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png",
-        ];
-        const randomAvatar = AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)];
-        
-        const guestProfile: UserProfile = {
-          username: `Guest_${guestNumber}`,
-          bio: '',
-          avatarUrl: randomAvatar,
-          homebase: 'Bielefeld',
-          interests: [],
-          hobbies: [],
-          favorite_locations: []
-        };
-        
-        localStorage.setItem('tribe_user_profile', JSON.stringify(guestProfile));
-        localStorage.setItem('chat_username', guestProfile.username);
-        localStorage.setItem('chat_avatar', guestProfile.avatarUrl);
-        
-        setUserProfile(guestProfile);
-        setRequiresAuth(false);
-        
-        // Show profile hint for new guests
-        setShowProfileHint(true);
-        // Auto-hide hint after 10 seconds
-        setTimeout(() => setShowProfileHint(false), 10000);
-      }
+    const savedProfile = localStorage.getItem('tribe_user_profile');
+    if (savedProfile) {
+      const parsedProfile = JSON.parse(savedProfile);
+      setUserProfile(parsedProfile);
+      if (parsedProfile.homebase) setSelectedCity(parsedProfile.homebase);
+      setRequiresAuth(false);
+    } else {
+      // First time user - require authentication
+      setRequiresAuth(true);
+    }
 
-      const savedLikes = localStorage.getItem('tribe_liked_events');
-      const savedHidden = localStorage.getItem('tribe_hidden_events');
-      const savedAttending = localStorage.getItem('tribe_attending_events');
-      const savedHistory = localStorage.getItem('tribe_query_history');
-      
-      if (savedLikes) setLikedEventIds(new Set(JSON.parse(savedLikes)));
-      if (savedHidden) setHiddenEventIds(new Set(JSON.parse(savedHidden)));
-      if (savedAttending) setAttendingEventIds(new Set(JSON.parse(savedAttending)));
-      if (savedHistory) setQueryHistory(JSON.parse(savedHistory));
-    };
+    const savedLikes = localStorage.getItem('tribe_liked_events');
+    const savedHidden = localStorage.getItem('tribe_hidden_events');
+    const savedAttending = localStorage.getItem('tribe_attending_events');
+    const savedHistory = localStorage.getItem('tribe_query_history');
     
-    initializeProfile();
+    if (savedLikes) setLikedEventIds(new Set(JSON.parse(savedLikes)));
+    if (savedHidden) setHiddenEventIds(new Set(JSON.parse(savedHidden)));
+    if (savedAttending) setAttendingEventIds(new Set(JSON.parse(savedAttending)));
+    if (savedHistory) setQueryHistory(JSON.parse(savedHistory));
   }, []);
 
   // Save preferences
@@ -665,8 +631,8 @@ export const TribeApp: React.FC = () => {
   const attendingEvents = allEvents.filter(e => attendingEventIds.has(e.id));
   const likedEvents = allEvents.filter(e => likedEventIds.has(e.id));
 
-  // Render Auth Screen only when explicitly requested
-  if (view === ViewState.AUTH) {
+  // Render Auth Screen when explicitly in AUTH view OR for first time users
+  if (view === ViewState.AUTH || requiresAuth) {
     return <AuthScreen onLogin={handleLogin} />;
   }
 
@@ -722,36 +688,19 @@ export const TribeApp: React.FC = () => {
                   )}
               </div>
 
-              {/* USER AVATAR with profile hint */}
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    setShowProfileHint(false);
-                    setView(userProfile ? ViewState.PROFILE : ViewState.AUTH);
-                  }}
-                  className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-all ${
-                    showProfileHint 
-                      ? 'border-gold animate-pulse shadow-[0_0_12px_rgba(196,164,106,0.5)]' 
-                      : 'border-white/20 hover:border-gold'
-                  }`}
-                >
-                  {userProfile?.avatarUrl ? (
-                    <img src={userProfile.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                      <User size={20} className="text-zinc-600" />
-                    </div>
-                  )}
-                </button>
-                
-                {/* Profile hint tooltip */}
-                {showProfileHint && (
-                  <div className="absolute top-full right-0 mt-2 bg-zinc-900 border border-gold/30 px-3 py-2 rounded-lg shadow-lg animate-fade-in whitespace-nowrap">
-                    <p className="text-xs text-zinc-300">Hier Profil erstellen</p>
-                    <div className="absolute -top-1 right-4 w-2 h-2 bg-zinc-900 border-l border-t border-gold/30 rotate-45"></div>
+              {/* USER AVATAR */}
+              <button
+                onClick={() => setView(userProfile ? ViewState.PROFILE : ViewState.AUTH)}
+                className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20 hover:border-gold transition-colors"
+              >
+                {userProfile?.avatarUrl ? (
+                  <img src={userProfile.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+                    <User size={20} className="text-zinc-600" />
                   </div>
                 )}
-              </div>
+              </button>
           </div>
         </div>
       </header>
