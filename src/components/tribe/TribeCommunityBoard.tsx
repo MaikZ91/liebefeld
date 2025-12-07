@@ -167,6 +167,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
       city: selectedCity,
       likes,
       time: formatTime(msg.created_at),
+      timestamp: msg.created_at, // Store raw timestamp for sorting
       tags: allTags,
       userAvatar: msg.avatar,
       comments: []
@@ -179,6 +180,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
       user: msg.sender,
       text: msg.text,
       time: formatTime(msg.created_at),
+      timestamp: msg.created_at, // Store raw timestamp for sorting
       userAvatar: msg.avatar
     };
   };
@@ -197,12 +199,39 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
     return `${diffDays}d ago`;
   };
 
-  const filteredPosts = posts.filter(p => {
+  // Helper to get last activity timestamp for a post
+  const getLastActivityTime = (post: Post): number => {
+    const postTime = new Date(post.timestamp).getTime();
+    if (post.comments && post.comments.length > 0) {
+      // Find newest comment timestamp
+      const newestCommentTime = Math.max(
+        ...post.comments.map(c => new Date(c.timestamp).getTime())
+      );
+      return Math.max(postTime, newestCommentTime);
+    }
+    return postTime;
+  };
+
+  // Check if user is involved in a post (authored or commented)
+  const isOwnPost = (post: Post): boolean => post.user === userProfile.username;
+  const isInvolvedInPost = (post: Post): boolean => {
+    if (isOwnPost(post)) return false; // Own posts handled separately
+    return post.comments?.some(c => c.user === userProfile.username) || false;
+  };
+
+  const filteredPosts = posts
+    .filter(p => {
       if (selectedCity !== 'All' && p.city !== selectedCity) return false;
       if (activeTab === 'TRIBE') return p.tags.includes('TribeCall') || p.tags.includes('Connect');
       if (activeTab === 'TIPS') return p.tags.includes('Question') || p.tags.includes('Tip');
       return true;
-  });
+    })
+    .sort((a, b) => {
+      // Sort by last activity (post creation or newest comment)
+      const aTime = getLastActivityTime(a);
+      const bTime = getLastActivityTime(b);
+      return bTime - aTime;
+    });
 
   const handleOptimize = async () => {
       if (!newPost.trim()) return;
@@ -379,10 +408,24 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                     Quiet night in {selectedCity}... be the first to post.
                 </div>
             ) : (
-                filteredPosts.map(post => (
-                    <div key={post.id} className="group border-b border-white/5 pb-4 last:border-0">
+                filteredPosts.map(post => {
+                    const ownPost = isOwnPost(post);
+                    const involved = isInvolvedInPost(post);
+                    
+                    return (
+                    <div key={post.id} className="group border-b border-white/5 pb-4 last:border-0 relative">
+                        {/* Involvement indicator */}
+                        {(ownPost || involved) && (
+                          <div className="absolute left-0 top-2">
+                            <div 
+                              className={`w-1.5 h-1.5 rounded-full ${ownPost ? 'bg-gold shadow-[0_0_6px_hsl(var(--gold))]' : 'bg-white/70'}`}
+                              title={ownPost ? 'Dein Post' : 'Du hast kommentiert'}
+                            />
+                          </div>
+                        )}
+                        
                         {/* Header */}
-                        <div className="flex justify-between items-start mb-2">
+                        <div className="flex justify-between items-start mb-2 pl-4">
                             <div className="flex items-center gap-2">
                                 <div className="w-7 h-7 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center overflow-hidden">
                                     {post.userAvatar ? <img src={post.userAvatar} className="w-full h-full object-cover"/> : <span className="text-[10px] text-zinc-500">{post.user[0]}</span>}
@@ -403,13 +446,13 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                         </div>
 
                         {/* Content */}
-                        <p className="text-zinc-200 text-xs font-light leading-relaxed mb-2 pl-9">
+                        <p className="text-zinc-200 text-xs font-light leading-relaxed mb-2 pl-[52px]">
                             {post.text}
                         </p>
 
                         {/* Tags */}
                         {post.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 mb-2 pl-9">
+                            <div className="flex flex-wrap gap-1.5 mb-2 pl-[52px]">
                                 {post.tags.map(tag => (
                                     <span key={tag} className="text-[9px] text-zinc-500 hover:text-white transition-colors cursor-pointer">#{tag}</span>
                                 ))}
@@ -417,7 +460,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                         )}
 
                         {/* Actions */}
-                        <div className="flex items-center gap-4 pl-9">
+                        <div className="flex items-center gap-4 pl-[52px]">
                             <button onClick={() => handleLike(post.id)} className="flex items-center gap-1.5 text-zinc-500 hover:text-red-500 transition-colors group/like">
                                 <Heart size={14} className={post.likes > 0 ? "fill-red-500 text-red-500" : "group-hover/like:text-red-500"} />
                                 <span className="text-[9px] font-medium">{post.likes || 0}</span>
@@ -435,7 +478,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
 
                         {/* Thread / Comments */}
                         {expandedPostId === post.id && (
-                            <div className="mt-3 pl-9 animate-fadeIn">
+                            <div className="mt-3 pl-[52px] animate-fadeIn">
                                 {/* Comment List */}
                                 {post.comments && post.comments.length > 0 && (
                                     <div className="space-y-2 mb-3 border-l border-white/10 pl-3">
@@ -468,7 +511,8 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                             </div>
                         )}
                     </div>
-                ))
+                    );
+                })
             )}
         </div>
     </div>

@@ -312,6 +312,7 @@ export const TribeApp: React.FC = () => {
         city: selectedCity,
         likes: 12,
         time: '2h ago',
+        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
         tags: ['jazz', 'ausgehen'],
         userAvatar: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png',
         comments: [],
@@ -621,6 +622,7 @@ export const TribeApp: React.FC = () => {
         city: selectedCity,
         likes: 0,
         time: 'Just now',
+        timestamp: new Date().toISOString(),
         tags: ['TribeCall'],
         userAvatar: userProfile.avatarUrl
     };
