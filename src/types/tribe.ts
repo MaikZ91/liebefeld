@@ -51,6 +51,7 @@ export interface Comment {
   user: string;
   text: string;
   time: string;
+  timestamp: string; // ISO date for sorting
   userAvatar?: string;
 }
 
@@ -61,6 +62,7 @@ export interface Post {
   city: string;
   likes: number;
   time: string;
+  timestamp: string; // ISO date for sorting
   tags: string[];
   userAvatar?: string;
   comments?: Comment[];
