@@ -43,7 +43,7 @@ const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb
 const CATEGORIES = ['ALL', 'PARTY', 'ART', 'CONCERT', 'SPORT'];
 
 export const TribeApp: React.FC = () => {
-  const [view, setView] = useState<ViewState>(ViewState.FEED);
+  const [view, setView] = useState<ViewState>(ViewState.COMMUNITY);
   const [selectedCity, setSelectedCity] = useState<string>('Bielefeld');
   const [selectedCategory, setSelectedCategory] = useState<string>(() => {
     const saved = localStorage.getItem('tribe_selected_category');
@@ -95,18 +95,51 @@ export const TribeApp: React.FC = () => {
 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [requiresAuth, setRequiresAuth] = useState<boolean>(false);
+  const [showProfileHint, setShowProfileHint] = useState<boolean>(false);
 
   // Initialize auth and preferences
   useEffect(() => {
     const savedProfile = localStorage.getItem('tribe_user_profile');
+    const hasSeenProfileHint = localStorage.getItem('tribe_seen_profile_hint');
+    
     if (savedProfile) {
       const parsedProfile = JSON.parse(savedProfile);
       setUserProfile(parsedProfile);
       if (parsedProfile.homebase) setSelectedCity(parsedProfile.homebase);
       setRequiresAuth(false);
+      
+      // Show profile hint for guest users who haven't dismissed it yet
+      if (parsedProfile.username?.startsWith('Guest_') && !hasSeenProfileHint) {
+        setShowProfileHint(true);
+        // Auto-dismiss after 10 seconds
+        setTimeout(() => {
+          setShowProfileHint(false);
+          localStorage.setItem('tribe_seen_profile_hint', 'true');
+        }, 10000);
+      }
     } else {
-      // First time user - require authentication
-      setRequiresAuth(true);
+      // First time user - create a guest profile automatically
+      const guestNum = Math.floor(Math.random() * 9999);
+      const guestProfile: UserProfile = {
+        username: `Guest_${guestNum}`,
+        bio: '',
+        avatarUrl: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png',
+        homebase: 'Bielefeld',
+        interests: [],
+        favorite_locations: []
+      };
+      localStorage.setItem('tribe_user_profile', JSON.stringify(guestProfile));
+      localStorage.setItem('chat_username', guestProfile.username);
+      localStorage.setItem('chat_avatar', guestProfile.avatarUrl);
+      setUserProfile(guestProfile);
+      setRequiresAuth(false);
+      
+      // Show profile hint for first-time users
+      setShowProfileHint(true);
+      setTimeout(() => {
+        setShowProfileHint(false);
+        localStorage.setItem('tribe_seen_profile_hint', 'true');
+      }, 10000);
     }
 
     const savedLikes = localStorage.getItem('tribe_liked_events');
@@ -690,19 +723,40 @@ export const TribeApp: React.FC = () => {
                   )}
               </div>
 
-              {/* USER AVATAR */}
-              <button
-                onClick={() => setView(userProfile ? ViewState.PROFILE : ViewState.AUTH)}
-                className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20 hover:border-gold transition-colors"
-              >
-                {userProfile?.avatarUrl ? (
-                  <img src={userProfile.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                    <User size={20} className="text-zinc-600" />
+              {/* USER AVATAR with Profile Hint */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setShowProfileHint(false);
+                    localStorage.setItem('tribe_seen_profile_hint', 'true');
+                    setView(userProfile ? ViewState.PROFILE : ViewState.AUTH);
+                  }}
+                  className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-colors ${
+                    showProfileHint 
+                      ? 'border-gold animate-pulse' 
+                      : 'border-white/20 hover:border-gold'
+                  }`}
+                >
+                  {userProfile?.avatarUrl ? (
+                    <img src={userProfile.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+                      <User size={20} className="text-zinc-600" />
+                    </div>
+                  )}
+                </button>
+                
+                {/* Profile creation hint tooltip */}
+                {showProfileHint && (
+                  <div className="absolute top-full right-0 mt-2 whitespace-nowrap animate-fadeIn">
+                    <div className="bg-zinc-900 border border-gold/30 px-3 py-1.5 rounded shadow-lg">
+                      <span className="text-[10px] text-gold font-medium">Profil erstellen</span>
+                    </div>
+                    {/* Arrow pointing up */}
+                    <div className="absolute -top-1 right-4 w-2 h-2 bg-zinc-900 border-l border-t border-gold/30 transform rotate-45" />
                   </div>
                 )}
-              </button>
+              </div>
           </div>
         </div>
       </header>
