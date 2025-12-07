@@ -66,6 +66,15 @@ export const TribeApp: React.FC = () => {
   const [likedEventIds, setLikedEventIds] = useState<Set<string>>(new Set());
   const [attendingEventIds, setAttendingEventIds] = useState<Set<string>>(new Set());
   const [eventMatchScores, setEventMatchScores] = useState<Map<string, number>>(new Map());
+  
+  // Collapsed day sections state (for compact mode after first like)
+  const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
+  const [hasLikedFirstEvent, setHasLikedFirstEvent] = useState<boolean>(() => {
+    return localStorage.getItem('tribe_has_first_like') === 'true';
+  });
+  const [showLikeTutorial, setShowLikeTutorial] = useState<boolean>(() => {
+    return localStorage.getItem('tribe_seen_like_tutorial') !== 'true';
+  });
   const { toast } = useToast();
   const [locationBlockDialog, setLocationBlockDialog] = useState<{ open: boolean; location: string | null }>({ 
     open: false, 
@@ -565,12 +574,24 @@ export const TribeApp: React.FC = () => {
       // Recalculate match scores after dislike
       recalculateMatchScores();
     } else if (type === 'like') {
+      const isFirstLike = !hasLikedFirstEvent && likedEventIds.size === 0;
+      
       setLikedEventIds(prev => {
         const newSet = new Set(prev);
         if (newSet.has(eventId)) {
           newSet.delete(eventId);
         } else {
           newSet.add(eventId);
+          
+          // First like ever - collapse the feed and notify user
+          if (isFirstLike) {
+            setHasLikedFirstEvent(true);
+            localStorage.setItem('tribe_has_first_like', 'true');
+            toast({
+              title: "Feed optimiert! ✨",
+              description: "Deine Favoriten stehen jetzt oben. Tippe 'Mehr anzeigen' um alle Events zu sehen."
+            });
+          }
         }
         return newSet;
       });
@@ -968,6 +989,28 @@ export const TribeApp: React.FC = () => {
                       </button>
                     </div>
                 </div>
+                {/* Like Tutorial for first-time Feed visitors */}
+                {showLikeTutorial && view === ViewState.FEED && (
+                  <div className="mb-6 bg-zinc-900/80 border border-gold/30 rounded-lg p-4 animate-fadeIn">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-[10px] font-bold text-gold uppercase tracking-widest">💡 Tipp</span>
+                      <button 
+                        onClick={() => {
+                          setShowLikeTutorial(false);
+                          localStorage.setItem('tribe_seen_like_tutorial', 'true');
+                        }}
+                        className="text-zinc-500 hover:text-white"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                    <p className="text-xs text-zinc-300 leading-relaxed">
+                      <strong className="text-white">Like Events</strong> die dich interessieren! Je mehr du likest, desto besser lernt MIA deinen Geschmack kennen und zeigt dir passende Events zuerst. 
+                      Nach deinem ersten Like wird der Feed automatisch auf deine Top-Picks reduziert.
+                    </p>
+                  </div>
+                )}
+                
                 {feedEvents.length > 0 ? (
                     (() => {
                       // Group events by date in compact mode
@@ -979,6 +1022,7 @@ export const TribeApp: React.FC = () => {
                         });
                         
                         const sortedDates = Object.keys(grouped).sort();
+                        const MAX_COLLAPSED_EVENTS = 5;
                         
                         return sortedDates.map(date => {
                           const dateObj = new Date(date);
@@ -986,13 +1030,21 @@ export const TribeApp: React.FC = () => {
                           const day = dateObj.getDate();
                           const month = dateObj.toLocaleDateString('de-DE', { month: 'long' });
                           
+                          const allEventsForDate = grouped[date];
+                          const isExpanded = expandedDates.has(date);
+                          const shouldCollapse = hasLikedFirstEvent && allEventsForDate.length > MAX_COLLAPSED_EVENTS;
+                          const displayedEvents = shouldCollapse && !isExpanded 
+                            ? allEventsForDate.slice(0, MAX_COLLAPSED_EVENTS) 
+                            : allEventsForDate;
+                          const hiddenCount = allEventsForDate.length - MAX_COLLAPSED_EVENTS;
+                          
                           return (
                             <div key={date} className="mb-6">
                               <h3 className="text-sm font-serif text-white/90 mb-2 capitalize">
                                 {weekday}, {day}. {month}
                               </h3>
                               <div className="space-y-0">
-                                {grouped[date].map((event) => (
+                                {displayedEvents.map((event) => (
                                   <div 
                                     key={event.id}
                                     className="animate-fade-in transition-all duration-300 ease-out"
@@ -1010,6 +1062,32 @@ export const TribeApp: React.FC = () => {
                                   </div>
                                 ))}
                               </div>
+                              
+                              {/* Expand button for collapsed dates */}
+                              {shouldCollapse && !isExpanded && hiddenCount > 0 && (
+                                <button
+                                  onClick={() => setExpandedDates(prev => new Set([...prev, date]))}
+                                  className="w-full mt-2 py-2 text-[10px] text-zinc-500 hover:text-gold uppercase tracking-widest border border-dashed border-white/10 hover:border-gold/30 transition-colors flex items-center justify-center gap-2"
+                                >
+                                  <ChevronDown size={12} />
+                                  +{hiddenCount} weitere Events anzeigen
+                                </button>
+                              )}
+                              
+                              {/* Collapse button when expanded */}
+                              {shouldCollapse && isExpanded && (
+                                <button
+                                  onClick={() => setExpandedDates(prev => {
+                                    const newSet = new Set(prev);
+                                    newSet.delete(date);
+                                    return newSet;
+                                  })}
+                                  className="w-full mt-2 py-2 text-[10px] text-zinc-500 hover:text-gold uppercase tracking-widest border border-dashed border-white/10 hover:border-gold/30 transition-colors flex items-center justify-center gap-2"
+                                >
+                                  <ChevronDown size={12} className="rotate-180" />
+                                  Weniger anzeigen
+                                </button>
+                              )}
                             </div>
                           );
                         });
