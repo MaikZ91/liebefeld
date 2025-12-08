@@ -67,6 +67,8 @@ export interface Post {
   userAvatar?: string;
   comments?: Comment[];
   isTribeCall?: boolean;
+  meetup_responses?: Record<string, Array<{username: string; avatar?: string}>>;
+  relevanceScore?: number;
 }
 
 export enum ViewState {

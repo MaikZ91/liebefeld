@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { UserProfile, Post, Comment } from '@/types/tribe';
 import { enhancePostContent } from '@/services/tribe/aiHelpers';
-import { ArrowRight, Sparkles, Heart, MessageCircle, Share2, Hash, Send } from 'lucide-react';
+import { ArrowRight, Sparkles, Heart, MessageCircle, Share2, Hash, Send, X, Check, HelpCircle, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { NewMembersWidget } from './NewMembersWidget';
+import { Badge } from '@/components/ui/badge';
 
 interface Props {
   selectedCity: string;
@@ -15,6 +16,10 @@ type Tab = 'ALL' | 'TRIBE' | 'TIPS';
 
 const TRIBE_BOARD_GROUP_ID = 'tribe_community_board';
 
+// LocalStorage keys for dismissed posts and topic preferences
+const DISMISSED_POSTS_KEY = 'tribe_dismissed_posts';
+const TOPIC_DISLIKES_KEY = 'tribe_topic_dislikes';
+
 export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile, onProfileClick }) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
@@ -24,6 +29,14 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
   const [loading, setLoading] = useState(true);
+  const [dismissedPosts, setDismissedPosts] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem(DISMISSED_POSTS_KEY);
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+  const [topicDislikes, setTopicDislikes] = useState<Record<string, number>>(() => {
+    const saved = localStorage.getItem(TOPIC_DISLIKES_KEY);
+    return saved ? JSON.parse(saved) : {};
+  });
 
   // Load posts from database
   useEffect(() => {
@@ -170,7 +183,8 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
       timestamp: msg.created_at, // Store raw timestamp for sorting
       tags: allTags,
       userAvatar: msg.avatar,
-      comments: []
+      comments: [],
+      meetup_responses: msg.meetup_responses || {}
     };
   };
 
@@ -219,19 +233,132 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
     return post.comments?.some(c => c.user === userProfile.username) || false;
   };
 
-  const filteredPosts = posts
-    .filter(p => {
-      if (selectedCity !== 'All' && p.city !== selectedCity) return false;
-      if (activeTab === 'TRIBE') return p.tags.includes('TribeCall') || p.tags.includes('Connect');
-      if (activeTab === 'TIPS') return p.tags.includes('Question') || p.tags.includes('Tip');
-      return true;
-    })
-    .sort((a, b) => {
-      // Sort by last activity (post creation or newest comment)
-      const aTime = getLastActivityTime(a);
-      const bTime = getLastActivityTime(b);
-      return bTime - aTime;
+  // Calculate relevance score based on user interests and topic preferences
+  const calculateRelevanceScore = (post: Post): number => {
+    let score = 50; // Base score
+    
+    const userInterests = userProfile.interests || [];
+    const userLocations = userProfile.favorite_locations || [];
+    
+    // Boost for matching interests
+    post.tags.forEach(tag => {
+      const tagLower = tag.toLowerCase();
+      if (userInterests.some(i => i.toLowerCase().includes(tagLower) || tagLower.includes(i.toLowerCase()))) {
+        score += 15;
+      }
     });
+    
+    // Boost for matching locations in text
+    userLocations.forEach(loc => {
+      if (post.text.toLowerCase().includes(loc.toLowerCase())) {
+        score += 10;
+      }
+    });
+    
+    // Penalize for dismissed topic patterns
+    post.tags.forEach(tag => {
+      const dislikeCount = topicDislikes[tag.toLowerCase()] || 0;
+      score -= dislikeCount * 5;
+    });
+    
+    // Boost for TribeCalls (community engagement)
+    if (post.tags.includes('TribeCall')) score += 10;
+    
+    // Boost for popular posts
+    if (post.likes > 5) score += 5;
+    if (post.comments && post.comments.length > 3) score += 5;
+    
+    return Math.max(0, Math.min(100, Math.round(score)));
+  };
+
+  // Handle dismissing a post
+  const handleDismissPost = (postId: string, postTags: string[]) => {
+    // Update dismissed posts
+    const newDismissed = new Set(dismissedPosts);
+    newDismissed.add(postId);
+    setDismissedPosts(newDismissed);
+    localStorage.setItem(DISMISSED_POSTS_KEY, JSON.stringify([...newDismissed]));
+    
+    // Track topic dislikes
+    const newTopicDislikes = { ...topicDislikes };
+    postTags.forEach(tag => {
+      const key = tag.toLowerCase();
+      newTopicDislikes[key] = (newTopicDislikes[key] || 0) + 1;
+    });
+    setTopicDislikes(newTopicDislikes);
+    localStorage.setItem(TOPIC_DISLIKES_KEY, JSON.stringify(newTopicDislikes));
+  };
+
+  // Handle RSVP for TribeCalls
+  const handleRSVP = async (postId: string, response: 'yes' | 'no' | 'maybe') => {
+    try {
+      const { data: msg, error: fetchError } = await supabase
+        .from('chat_messages')
+        .select('meetup_responses')
+        .eq('id', postId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const responses = (msg.meetup_responses as Record<string, Array<{username: string; avatar?: string}>>) || {};
+      const responseKey = response === 'yes' ? 'bin dabei' : response === 'no' ? 'diesmal nicht' : 'vielleicht';
+      
+      // Remove user from all response arrays first
+      ['bin dabei', 'diesmal nicht', 'vielleicht'].forEach(key => {
+        if (responses[key]) {
+          responses[key] = responses[key].filter(u => u.username !== userProfile.username);
+        }
+      });
+      
+      // Add to selected response
+      if (!responses[responseKey]) responses[responseKey] = [];
+      responses[responseKey].push({ 
+        username: userProfile.username, 
+        avatar: userProfile.avatarUrl || userProfile.avatar 
+      });
+
+      await supabase
+        .from('chat_messages')
+        .update({ meetup_responses: responses })
+        .eq('id', postId);
+
+      loadPosts(); // Refresh to show updated responses
+    } catch (error) {
+      console.error('Error updating RSVP:', error);
+    }
+  };
+
+  // Get user's current RSVP status for a post
+  const getUserRSVP = (post: Post): string | null => {
+    const responses = post.meetup_responses;
+    if (!responses) return null;
+    
+    for (const [key, users] of Object.entries(responses)) {
+      if (users?.some(u => u.username === userProfile.username)) {
+        return key;
+      }
+    }
+    return null;
+  };
+
+  const filteredPosts = useMemo(() => {
+    return posts
+      .filter(p => {
+        // Filter out dismissed posts
+        if (dismissedPosts.has(p.id)) return false;
+        if (selectedCity !== 'All' && p.city !== selectedCity) return false;
+        if (activeTab === 'TRIBE') return p.tags.includes('TribeCall') || p.tags.includes('Connect');
+        if (activeTab === 'TIPS') return p.tags.includes('Question') || p.tags.includes('Tip');
+        return true;
+      })
+      .map(p => ({ ...p, relevanceScore: calculateRelevanceScore(p) }))
+      .sort((a, b) => {
+        // Sort by last activity (post creation or newest comment)
+        const aTime = getLastActivityTime(a);
+        const bTime = getLastActivityTime(b);
+        return bTime - aTime;
+      });
+  }, [posts, dismissedPosts, activeTab, selectedCity, topicDislikes, userProfile]);
 
   const handleOptimize = async () => {
       if (!newPost.trim()) return;
@@ -408,12 +535,49 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                     Quiet night in {selectedCity}... be the first to post.
                 </div>
             ) : (
-                filteredPosts.map(post => {
+                filteredPosts.map((post, index) => {
                     const ownPost = isOwnPost(post);
                     const involved = isInvolvedInPost(post);
+                    const isNewest = index === 0;
+                    const isTribeCall = post.tags.includes('TribeCall');
+                    const userRSVP = getUserRSVP(post);
+                    const relevanceScore = post.relevanceScore || 50;
+                    const meetupResponses = post.meetup_responses;
                     
                     return (
-                    <div key={post.id} className="group border-b border-white/5 pb-4 last:border-0 relative">
+                    <div 
+                      key={post.id} 
+                      className={`group border-b border-white/5 pb-4 last:border-0 relative transition-all duration-300 ${
+                        isNewest ? 'bg-white/[0.02] -mx-4 px-4 py-3 border border-gold/10 rounded-lg' : ''
+                      }`}
+                    >
+                        {/* Dismiss button */}
+                        {!ownPost && (
+                          <button
+                            onClick={() => handleDismissPost(post.id, post.tags)}
+                            className="absolute right-0 top-0 p-1.5 text-zinc-700 hover:text-zinc-400 opacity-0 group-hover:opacity-100 transition-all"
+                            title="Nicht interessant"
+                          >
+                            <X size={12} />
+                          </button>
+                        )}
+                        
+                        {/* Newest badge & Relevance score */}
+                        <div className="absolute right-0 top-0 flex items-center gap-2 pr-6">
+                          {isNewest && (
+                            <Badge variant="outline" className="text-[7px] bg-gold/10 text-gold border-gold/30 px-1.5 py-0 animate-pulse">
+                              NEU
+                            </Badge>
+                          )}
+                          <span className={`text-[8px] font-medium ${
+                            relevanceScore >= 70 ? 'text-green-500' : 
+                            relevanceScore >= 50 ? 'text-zinc-500' : 
+                            'text-zinc-700'
+                          }`}>
+                            {relevanceScore}%
+                          </span>
+                        </div>
+                        
                         {/* Involvement indicator */}
                         {(ownPost || involved) && (
                           <div className="absolute left-0 top-2">
@@ -425,7 +589,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                         )}
                         
                         {/* Header */}
-                        <div className="flex justify-between items-start mb-2 pl-4">
+                        <div className="flex justify-between items-start mb-2 pl-4 pr-16">
                             <div className="flex items-center gap-2">
                                 <div className="w-7 h-7 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center overflow-hidden">
                                     {post.userAvatar ? <img src={post.userAvatar} className="w-full h-full object-cover"/> : <span className="text-[10px] text-zinc-500">{post.user[0]}</span>}
@@ -436,8 +600,8 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                                 </div>
                             </div>
                             <div className="flex flex-wrap gap-1">
-                              {post.tags.includes('TribeCall') && (
-                                <span className="bg-gold/10 text-gold border border-gold/20 text-[8px] font-bold px-1.5 py-0.5 uppercase tracking-widest rounded-sm">Tribe Call</span>
+                              {isTribeCall && (
+                                <span className="bg-gold/10 text-gold border border-gold/20 text-[8px] font-bold px-1.5 py-0.5 uppercase tracking-widest rounded-sm animate-pulse">Tribe Call</span>
                               )}
                               {post.tags.filter(t => t !== 'TribeCall' && !t.startsWith('Tribe')).slice(0, 2).map(tag => (
                                 <span key={tag} className="bg-white/5 text-zinc-400 border border-white/10 text-[8px] font-medium px-1.5 py-0.5 uppercase tracking-wider rounded-sm">#{tag}</span>
@@ -459,14 +623,92 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                             </div>
                         )}
 
+                        {/* RSVP Buttons for TribeCalls */}
+                        {isTribeCall && (
+                          <div className="flex items-center gap-2 mb-3 pl-[52px]">
+                            <button
+                              onClick={() => handleRSVP(post.id, 'yes')}
+                              className={`flex items-center gap-1 text-[9px] px-2 py-1 rounded transition-all ${
+                                userRSVP === 'bin dabei' 
+                                  ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                                  : 'bg-white/5 text-zinc-400 border border-white/10 hover:border-green-500/30 hover:text-green-400'
+                              }`}
+                            >
+                              <Check size={10} />
+                              Dabei
+                              {meetupResponses?.['bin dabei']?.length ? (
+                                <span className="ml-1 text-[8px] opacity-70">({meetupResponses['bin dabei'].length})</span>
+                              ) : null}
+                            </button>
+                            <button
+                              onClick={() => handleRSVP(post.id, 'maybe')}
+                              className={`flex items-center gap-1 text-[9px] px-2 py-1 rounded transition-all ${
+                                userRSVP === 'vielleicht' 
+                                  ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' 
+                                  : 'bg-white/5 text-zinc-400 border border-white/10 hover:border-yellow-500/30 hover:text-yellow-400'
+                              }`}
+                            >
+                              <HelpCircle size={10} />
+                              Vielleicht
+                            </button>
+                            <button
+                              onClick={() => handleRSVP(post.id, 'no')}
+                              className={`flex items-center gap-1 text-[9px] px-2 py-1 rounded transition-all ${
+                                userRSVP === 'diesmal nicht' 
+                                  ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
+                                  : 'bg-white/5 text-zinc-400 border border-white/10 hover:border-red-500/30 hover:text-red-400'
+                              }`}
+                            >
+                              <X size={10} />
+                              Nein
+                            </button>
+                          </div>
+                        )}
+                        
+                        {/* RSVP Avatars */}
+                        {isTribeCall && meetupResponses?.['bin dabei']?.length > 0 && (
+                          <div className="flex items-center gap-1.5 mb-2 pl-[52px]">
+                            <Users size={10} className="text-green-500" />
+                            <div className="flex -space-x-1.5">
+                              {meetupResponses['bin dabei'].slice(0, 5).map((u, i) => (
+                                <div 
+                                  key={i} 
+                                  className="w-5 h-5 rounded-full border border-black bg-zinc-800 overflow-hidden"
+                                  title={u.username}
+                                >
+                                  {u.avatar ? (
+                                    <img src={u.avatar} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <span className="text-[8px] text-zinc-500 flex items-center justify-center h-full">{u.username[0]}</span>
+                                  )}
+                                </div>
+                              ))}
+                              {meetupResponses['bin dabei'].length > 5 && (
+                                <span className="text-[8px] text-zinc-500 ml-1">+{meetupResponses['bin dabei'].length - 5}</span>
+                              )}
+                            </div>
+                            <span className="text-[8px] text-green-500/70">sind dabei</span>
+                          </div>
+                        )}
+
                         {/* Actions */}
                         <div className="flex items-center gap-4 pl-[52px]">
-                            <button onClick={() => handleLike(post.id)} className="flex items-center gap-1.5 text-zinc-500 hover:text-red-500 transition-colors group/like">
+                            <button 
+                              onClick={() => handleLike(post.id)} 
+                              className={`flex items-center gap-1.5 transition-colors group/like ${
+                                isNewest ? 'text-red-400 animate-pulse' : 'text-zinc-500 hover:text-red-500'
+                              }`}
+                            >
                                 <Heart size={14} className={post.likes > 0 ? "fill-red-500 text-red-500" : "group-hover/like:text-red-500"} />
                                 <span className="text-[9px] font-medium">{post.likes || 0}</span>
                             </button>
                             
-                            <button onClick={() => setExpandedPostId(expandedPostId === post.id ? null : post.id)} className="flex items-center gap-1.5 text-zinc-500 hover:text-white transition-colors">
+                            <button 
+                              onClick={() => setExpandedPostId(expandedPostId === post.id ? null : post.id)} 
+                              className={`flex items-center gap-1.5 transition-colors ${
+                                isNewest ? 'text-gold animate-pulse' : 'text-zinc-500 hover:text-white'
+                              }`}
+                            >
                                 <MessageCircle size={14} />
                                 <span className="text-[9px] font-medium">{post.comments?.length || 0}</span>
                             </button>
