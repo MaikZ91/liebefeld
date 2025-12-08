@@ -127,28 +127,8 @@ export const TribeApp: React.FC = () => {
         }, 10000);
       }
     } else {
-      // First time user - create a guest profile automatically
-      const guestNum = Math.floor(Math.random() * 9999);
-      const guestProfile: UserProfile = {
-        username: `Guest_${guestNum}`,
-        bio: '',
-        avatarUrl: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png',
-        homebase: 'Bielefeld',
-        interests: [],
-        favorite_locations: []
-      };
-      localStorage.setItem('tribe_user_profile', JSON.stringify(guestProfile));
-      localStorage.setItem('chat_username', guestProfile.username);
-      localStorage.setItem('chat_avatar', guestProfile.avatarUrl);
-      setUserProfile(guestProfile);
-      setRequiresAuth(false);
-      
-      // Show profile hint for first-time users
-      setShowProfileHint(true);
-      setTimeout(() => {
-        setShowProfileHint(false);
-        localStorage.setItem('tribe_seen_profile_hint', 'true');
-      }, 10000);
+      // First time user - show AuthScreen
+      setRequiresAuth(true);
     }
 
     const savedLikes = localStorage.getItem('tribe_liked_events');
