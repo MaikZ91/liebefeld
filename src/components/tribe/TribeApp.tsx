@@ -1152,6 +1152,13 @@ export const TribeApp: React.FC = () => {
             onClose={() => setView(ViewState.FEED)} 
             events={filteredEvents}
             onQuery={handleQuery}
+            userProfile={userProfile ? {
+              username: userProfile.username,
+              interests: userProfile.interests,
+              favorite_locations: userProfile.favorite_locations,
+              hobbies: userProfile.hobbies
+            } : undefined}
+            city={selectedCity}
           />
         )}
         {view === ViewState.COMMUNITY && (

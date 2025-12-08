@@ -1,18 +1,41 @@
 import { supabase } from '@/integrations/supabase/client';
 import { TribeEvent } from '@/types/tribe';
 
+interface UserProfileContext {
+  username?: string;
+  interests?: string[];
+  favorite_locations?: string[];
+  hobbies?: string[];
+}
+
 /**
  * Get AI chat response using Lovable AI Gateway via edge function
+ * Now includes community chat context and user profile for personalization
  */
 export const getTribeResponse = async (
   userMessage: string,
-  availableEvents: TribeEvent[]
+  availableEvents: TribeEvent[],
+  userProfile?: UserProfileContext,
+  city?: string
 ): Promise<{ text: string; relatedEvents: TribeEvent[] }> => {
   try {
+    // Enrich events with match scores and likes for ranking context
+    const enrichedEvents = availableEvents.map(event => ({
+      ...event,
+      matchScore: event.matchScore || 0,
+      likes: event.likes || 0
+    })).sort((a, b) => {
+      // Sort by match score first, then by likes
+      if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
+      return (b.likes || 0) - (a.likes || 0);
+    });
+
     const { data, error } = await supabase.functions.invoke('tribe-ai-chat', {
       body: {
         message: userMessage,
-        events: availableEvents,
+        events: enrichedEvents.slice(0, 30), // Send top 30 ranked events
+        userProfile,
+        city
       },
     });
 
