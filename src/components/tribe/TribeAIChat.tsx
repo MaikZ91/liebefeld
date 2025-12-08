@@ -7,15 +7,39 @@ import { personalizationService } from '@/services/personalizationService';
 
 const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150";
 
+interface UserProfileContext {
+  username?: string;
+  interests?: string[];
+  favorite_locations?: string[];
+  hobbies?: string[];
+}
+
 interface TribeAIChatProps {
   onClose: () => void;
   events: TribeEvent[];
   onQuery?: (query: string) => void;
+  userProfile?: UserProfileContext;
+  city?: string;
 }
 
-export const TribeAIChat: React.FC<TribeAIChatProps> = ({ onClose, events, onQuery }) => {
+export const TribeAIChat: React.FC<TribeAIChatProps> = ({ onClose, events, onQuery, userProfile, city }) => {
+  // Personalized greeting based on user profile
+  const getGreeting = () => {
+    if (userProfile?.username && !userProfile.username.startsWith('Guest_')) {
+      const interest = userProfile.interests?.[0];
+      const location = userProfile.favorite_locations?.[0];
+      if (interest && location) {
+        return `Hey ${userProfile.username}! Ich kenne deine Vorlieben für ${interest} und ${location}. Was suchst du heute?`;
+      } else if (interest) {
+        return `Hey ${userProfile.username}! Du stehst auf ${interest} - soll ich dir passende Events zeigen?`;
+      }
+      return `Hey ${userProfile.username}! Was kann ich heute für dich finden?`;
+    }
+    return "Hey! Ich bin MIA, deine Event-Concierge. Was suchst du heute?";
+  };
+
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'model', text: "Ready to curate your evening. What are you looking for?" }
+    { role: 'model', text: getGreeting() }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -35,7 +59,7 @@ export const TribeAIChat: React.FC<TribeAIChatProps> = ({ onClose, events, onQue
     // Track query
     if (onQuery) onQuery(userText);
     
-    const response = await getTribeResponse(userText, events);
+    const response = await getTribeResponse(userText, events, userProfile, city);
     setIsTyping(false);
     setMessages(prev => [...prev, { role: 'model', text: response.text, relatedEvents: response.relatedEvents }]);
   };
