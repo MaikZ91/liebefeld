@@ -48,6 +48,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [eventCount, setEventCount] = useState(0);
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [videoEnded, setVideoEnded] = useState(false);
+  const [videoProgress, setVideoProgress] = useState(0);
   const [showNameInput, setShowNameInput] = useState(false);
   const [typewriterIndex, setTypewriterIndex] = useState(0);
   
@@ -268,6 +269,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             muted
             playsInline
             onEnded={() => setVideoEnded(true)}
+            onTimeUpdate={(e) => {
+              const video = e.currentTarget;
+              if (video.duration) {
+                setVideoProgress((video.currentTime / video.duration) * 100);
+              }
+            }}
             className="absolute inset-0 w-full h-full object-contain bg-black"
           >
             <source src="/videos/intro.mp4" type="video/mp4" />
@@ -299,12 +306,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       >
         {/* Top Section - Progress Bar + Logo + Tagline */}
         <div className="pt-3 px-4">
-          {/* Progress Bar - continuous like video */}
+          {/* Progress Bar - shows video progress first, then slideshow */}
           <div className="w-full h-0.5 rounded-full bg-white/20 overflow-hidden mb-4">
             <div 
               className="h-full bg-white transition-none"
               style={{ 
-                width: `${((currentImageIndex + imageProgress / 100) / REEL_IMAGES.length) * 100}%`
+                width: videoEnded 
+                  ? `${((currentImageIndex + imageProgress / 100) / REEL_IMAGES.length) * 100}%`
+                  : `${videoProgress}%`
               }}
             />
           </div>
