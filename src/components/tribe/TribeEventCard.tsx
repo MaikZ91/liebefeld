@@ -201,9 +201,12 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
 
   // --- HERO VARIANT (Spotlight) ---
   if (variant === 'hero') {
+    // Generate stable score for this event
+    const displayScore = matchScore !== undefined ? matchScore : (70 + (event.id.charCodeAt(0) % 25));
+    
     return (
-        <div className="w-full cursor-pointer relative group overflow-hidden bg-black">
-            <div className="aspect-[16/9] w-full relative">
+        <div className="w-full cursor-pointer relative group overflow-hidden bg-black rounded-lg">
+            <div className="aspect-[4/5] w-full relative">
                 {displayImage ? (
                     <img src={displayImage} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
                 ) : (
@@ -212,87 +215,88 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                     </div>
                 )}
                 {/* Gradient Overlay - stronger for text readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/20"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
                 
-                {/* TINDER ACTIONS OVERLAY */}
-                <div className="absolute right-3 top-3 flex flex-col gap-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                {/* Match Score Badge - TOP LEFT - always visible */}
+                <div className="absolute top-3 left-3 z-20">
+                  <span className="bg-gold text-black px-2.5 py-1 text-xs font-bold uppercase tracking-wide shadow-lg">
+                    {displayScore}% Match
+                  </span>
+                </div>
+                
+                {/* Like/Dislike Actions - TOP RIGHT - always visible */}
+                <div className="absolute right-3 top-3 flex gap-2 z-20">
                   <button 
                     onClick={(e) => { e.stopPropagation(); onInteraction?.(event.id, 'dislike'); }}
-                    className="w-9 h-9 rounded-full bg-black/80 border border-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white backdrop-blur-sm"
+                    className="w-9 h-9 rounded-full bg-black/70 border border-zinc-600 flex items-center justify-center text-zinc-300 hover:text-white hover:bg-black/90 backdrop-blur-sm"
                   >
                     <X size={16} />
                   </button>
                   <button 
                     onClick={(e) => { e.stopPropagation(); onInteraction?.(event.id, 'like'); }}
-                    className={`w-9 h-9 rounded-full bg-black/80 border flex items-center justify-center transition-colors backdrop-blur-sm ${isLiked ? 'border-gold text-gold' : 'border-zinc-700 text-zinc-400 hover:border-gold hover:text-gold'}`}
+                    className={`w-9 h-9 rounded-full bg-black/70 border flex items-center justify-center transition-colors backdrop-blur-sm ${isLiked ? 'border-gold text-gold bg-gold/20' : 'border-zinc-600 text-zinc-300 hover:border-gold hover:text-gold'}`}
                   >
                     <Heart size={16} fill={isLiked ? "currentColor" : "none"} />
                   </button>
                 </div>
                 
-                <div className="absolute bottom-4 left-4 right-4 z-10">
-                    {/* Match Score Badge - top left */}
-                    <div className="absolute -top-12 left-0">
-                      <span className="bg-gold text-black px-2 py-1 text-xs font-bold uppercase tracking-wide shadow-lg">
-                        {matchScore !== undefined ? matchScore : Math.floor(Math.random() * 30) + 70}% Match
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 mb-1">
+                {/* Content - Bottom */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
+                    <div className="flex items-center gap-2 mb-2">
                          <span className="bg-black/80 text-gold px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest">{formatEventDate(event.date, true)}</span>
                          {event.category && <span className="text-white/80 text-[9px] uppercase tracking-widest">{event.category}</span>}
                     </div>
-                    <h2 className="text-lg font-bold text-white leading-tight mb-1 line-clamp-2">{event.title}</h2>
-                    <p className="text-white/90 text-xs font-medium mb-2">{event.location || event.city}</p>
+                    <h2 className="text-base font-bold text-white leading-snug mb-1">{event.title}</h2>
+                    <p className="text-white/80 text-xs font-medium mb-3">{event.location || event.city}</p>
                     
                     {/* Community Section */}
                     <div className="flex items-center gap-3 mb-3">
-                        <div className="flex -space-x-3">
+                        <div className="flex -space-x-2">
                             {isAttending && (
-                              <div className="w-7 h-7 rounded-full border-2 border-gold bg-black flex items-center justify-center relative z-10">
-                                <Check size={14} className="text-gold" />
+                              <div className="w-6 h-6 rounded-full border-2 border-gold bg-black flex items-center justify-center relative z-10">
+                                <Check size={12} className="text-gold" />
                               </div>
                             )}
                             {mockAvatars.slice(0, 3).map((url, i) => (
-                                <img key={i} src={url} className="w-7 h-7 rounded-full border-2 border-black object-cover grayscale" />
+                                <img key={i} src={url} className="w-6 h-6 rounded-full border-2 border-black object-cover grayscale" />
                             ))}
                         </div>
-                        <span className={`text-xs font-light ${isAttending ? "text-gold" : "text-zinc-400"}`}>
+                        <span className={`text-[10px] font-light ${isAttending ? "text-gold" : "text-zinc-400"}`}>
                             +{currentAttendees} going
                         </span>
                     </div>
                     
                     {/* Action Buttons */}
                     {summary ? (
-                      <div className="bg-zinc-900/80 p-3 border-l border-gold animate-fadeIn backdrop-blur-sm relative">
+                      <div className="bg-zinc-900/80 p-2 border-l border-gold animate-fadeIn backdrop-blur-sm relative">
                         <button
                           onClick={(e) => { e.stopPropagation(); setSummary(null); }}
-                          className="absolute top-2 right-2 text-zinc-600 hover:text-white transition-colors"
+                          className="absolute top-1 right-1 text-zinc-600 hover:text-white transition-colors"
                         >
-                          <X size={12} />
+                          <X size={10} />
                         </button>
-                        <p className="text-xs text-zinc-300 font-light leading-relaxed pr-6">"{summary}"</p>
+                        <p className="text-[10px] text-zinc-300 font-light leading-relaxed pr-4">"{summary}"</p>
                       </div>
                     ) : (
                       <div className="flex gap-2">
                         <button 
                             onClick={(e) => { e.stopPropagation(); handleGetSummary(e); }}
                             disabled={loadingSummary}
-                            className="h-9 px-3 flex items-center justify-center gap-1.5 bg-zinc-900/80 hover:bg-zinc-800/80 text-zinc-300 text-[10px] font-medium tracking-wide transition-colors border border-white/5 backdrop-blur-sm"
+                            className="h-8 px-3 flex items-center justify-center gap-1.5 bg-zinc-900/80 hover:bg-zinc-800/80 text-zinc-300 text-[9px] font-medium tracking-wide transition-colors border border-white/10 backdrop-blur-sm rounded"
                         >
-                            {loadingSummary ? <span className="animate-pulse">Checking...</span> : <><Sparkles size={12} className="text-gold" /> Vibe</>}
+                            {loadingSummary ? <span className="animate-pulse">...</span> : <><Sparkles size={10} className="text-gold" /> Vibe</>}
                         </button>
                         
                         <button 
                             onClick={(e) => { e.stopPropagation(); onToggleAttendance?.(event.id); }}
-                            className={`h-9 px-3 flex items-center justify-center gap-1.5 text-[10px] font-bold tracking-wide transition-colors border backdrop-blur-sm ${isAttending ? 'bg-gold text-black border-gold' : 'bg-transparent text-gold border-gold/30 hover:bg-gold/10'}`}
+                            className={`h-8 px-3 flex items-center justify-center gap-1 text-[9px] font-bold tracking-wide transition-colors border backdrop-blur-sm rounded ${isAttending ? 'bg-gold text-black border-gold' : 'bg-transparent text-gold border-gold/50 hover:bg-gold/10'}`}
                         >
-                            {isAttending ? <><Check size={12} /> GOING</> : 'RSVP'}
+                            {isAttending ? <><Check size={10} /> GOING</> : 'RSVP'}
                         </button>
 
                         <button 
                             onClick={(e) => { e.stopPropagation(); onJoinTribe?.(event.title); }}
-                            className="h-9 flex-1 flex items-center justify-center gap-1.5 bg-white/90 hover:bg-white text-black text-[10px] font-bold tracking-wide transition-colors backdrop-blur-sm"
+                            className="h-8 flex-1 flex items-center justify-center gap-1 bg-white/90 hover:bg-white text-black text-[9px] font-bold tracking-wide transition-colors backdrop-blur-sm rounded"
                         >
                             Join Tribe
                         </button>
