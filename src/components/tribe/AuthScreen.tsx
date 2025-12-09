@@ -13,8 +13,14 @@ import reel6 from '@/assets/tribe/reel-6.jpg';
 import reel7 from '@/assets/tribe/reel-7.jpg';
 import reel8 from '@/assets/tribe/reel-8.jpg';
 import reel9 from '@/assets/tribe/reel-9.jpg';
+import reel10 from '@/assets/tribe/reel-10.jpg';
+import reel11 from '@/assets/tribe/reel-11.jpg';
+import reel12 from '@/assets/tribe/reel-12.jpg';
+import reel13 from '@/assets/tribe/reel-13.jpg';
+import reel14 from '@/assets/tribe/reel-14.jpg';
+import reel15 from '@/assets/tribe/reel-15.jpg';
 
-const REEL_IMAGES = [reel1, reel2, reel3, reel4, reel5, reel6, reel7, reel8, reel9];
+const REEL_IMAGES = [reel1, reel2, reel3, reel4, reel5, reel6, reel7, reel8, reel9, reel10, reel11, reel12, reel13, reel14, reel15];
 
 interface AuthScreenProps {
   onLogin: (profile: UserProfile) => void;
