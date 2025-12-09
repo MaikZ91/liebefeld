@@ -71,7 +71,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   useEffect(() => {
     if (!videoEnded) return;
     
-    const IMAGE_DURATION = 3000;
+    const IMAGE_DURATION = 1500;
     const PROGRESS_INTERVAL = 30;
     
     // Reset progress when image changes
@@ -259,7 +259,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             muted
             playsInline
             onEnded={() => setVideoEnded(true)}
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-contain bg-black"
           >
             <source src="/videos/intro.mp4" type="video/mp4" />
           </video>
@@ -317,14 +317,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
           </button>
         </div>
 
-        {/* Middle Section - Main Visual + Name Input */}
+        {/* Middle Section - Name Input */}
         <div className="flex-1 flex flex-col items-center justify-center px-6">
-          <p className="text-5xl font-bold text-white text-center leading-tight drop-shadow-2xl">
-            Neu in<br/>Bielefeld?
-          </p>
-          
           {/* Name Input - always visible */}
-          <div className="mt-8 w-full max-w-xs">
+          <div className="w-full max-w-xs">
             <input 
               type="text" 
               value={username}
