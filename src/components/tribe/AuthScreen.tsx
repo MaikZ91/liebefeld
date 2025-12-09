@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { UserProfile } from '@/types/tribe';
-import { ChevronUp, Play, Sparkles } from 'lucide-react';
+import { ChevronUp, Lock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 // Import reel images
@@ -55,7 +55,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [translateY, setTranslateY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
   
   // Typewriter state
   const [typewriterIndex, setTypewriterIndex] = useState(0);
@@ -189,7 +189,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     }
   };
 
-  // Touch handlers for swipe-up
+  // Touch handlers for swipe-up on bottom section only
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!canSwipe) return;
     setIsDragging(true);
@@ -201,7 +201,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     const currentY = e.touches[0].clientY;
     const diff = startY - currentY;
     if (diff > 0) {
-      setTranslateY(Math.min(diff, 300));
+      setTranslateY(Math.min(diff, 400));
     }
   };
 
@@ -228,7 +228,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       if (!isDragging || !canSwipe) return;
       const diff = startY - e.clientY;
       if (diff > 0) {
-        setTranslateY(Math.min(diff, 300));
+        setTranslateY(Math.min(diff, 400));
       }
     };
 
@@ -255,31 +255,32 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   }, [isDragging, startY, translateY, canSwipe]);
 
   const swipeProgress = Math.min(translateY / 150, 1);
+  const progressStep = canSwipe ? 2 : (username.trim() ? 1 : 0);
 
   return (
     <div className="h-screen bg-black text-white flex flex-col relative overflow-hidden select-none">
       {/* Progress Bar at Top */}
       <div className="absolute top-0 left-0 right-0 z-50 flex gap-1 px-4 pt-3">
         <div className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
-          <div className="h-full bg-white w-1/2" />
+          <div className="h-full bg-white" style={{ width: progressStep >= 1 ? '100%' : '50%' }} />
         </div>
         <div className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-white transition-all duration-300" 
-            style={{ width: `${canSwipe ? 100 : 0}%` }}
-          />
+          <div className="h-full bg-gold transition-all duration-300" style={{ width: progressStep >= 2 ? '100%' : '0%' }} />
+        </div>
+        <div className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
+          <div className="h-full bg-gold transition-all duration-300" style={{ width: swipeProgress * 100 + '%' }} />
         </div>
       </div>
 
-      {/* Header Section - Logo + Typewriter */}
-      <div className="relative z-40 pt-10 px-6 pb-4 bg-gradient-to-b from-black via-black/95 to-transparent">
+      {/* Header Section - Logo + Typewriter (Fixed) */}
+      <div className="relative z-40 pt-10 px-6 pb-4 bg-black">
         {/* THE TRIBE Logo */}
-        <h1 className="text-center text-2xl font-serif tracking-[0.3em] text-white mb-3">
+        <h1 className="text-center text-2xl font-serif tracking-[0.3em] text-white mb-2">
           T H E &nbsp; T R I B E
         </h1>
         
         {/* Typewriter Text */}
-        <p className="text-center text-white/90 text-sm min-h-[40px]">
+        <p className="text-center text-white/90 text-sm min-h-[20px]">
           {displayText}
           <span className="animate-pulse">|</span>
         </p>
@@ -290,10 +291,60 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         </p>
       </div>
 
-      {/* Main Content - Swipeable Area */}
+      {/* Image Section (Fixed - doesn't move) */}
+      <div className="relative flex-1 overflow-hidden">
+        {/* Background Image Slideshow */}
+        {REEL_IMAGES.map((img, i) => (
+          <img 
+            key={i}
+            src={img} 
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
+            style={{ opacity: currentImageIndex === i ? 1 : 0 }}
+            draggable={false}
+          />
+        ))}
+        
+        {/* "Neu in Bielefeld?" Text Overlay - Fixed on image */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <p className="text-4xl font-bold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] mb-4">
+            Neu in Bielefeld?
+          </p>
+          
+          {/* Swipe Up Button */}
+          <div 
+            className={`w-16 h-16 rounded-full flex items-center justify-center shadow-xl transition-all duration-300 ${
+              canSwipe 
+                ? 'bg-red-600 cursor-pointer animate-bounce-slow' 
+                : 'bg-zinc-700 cursor-not-allowed'
+            }`}
+            style={{
+              transform: `scale(${1 + swipeProgress * 0.2})`,
+            }}
+          >
+            {canSwipe ? (
+              <ChevronUp className="w-8 h-8 text-white" />
+            ) : (
+              <Lock className="w-6 h-6 text-white/60" />
+            )}
+          </div>
+          
+          {/* Hint below button */}
+          {!canSwipe && (
+            <p className="text-white/60 text-xs mt-3 bg-black/50 px-3 py-1 rounded-full">
+              Gib deinen Namen ein zum Freischalten
+            </p>
+          )}
+        </div>
+
+        {/* Bottom gradient for transition to form */}
+        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black to-transparent" />
+      </div>
+
+      {/* Bottom Section - Form & CTA (Swipeable) */}
       <div 
-        ref={containerRef}
-        className="flex-1 relative"
+        ref={bottomRef}
+        className="relative z-30 bg-black px-6 pb-6 pt-4"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -303,85 +354,37 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
           transition: isDragging ? 'none' : 'transform 0.3s ease-out'
         }}
       >
-        {/* Background Image Slideshow */}
-        <div className="absolute inset-0">
-          {REEL_IMAGES.map((img, i) => (
-            <img 
-              key={i}
-              src={img} 
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
-              style={{ opacity: currentImageIndex === i ? 1 : 0 }}
-              draggable={false}
-            />
-          ))}
-          {/* Gradient Overlays */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90" />
-        </div>
-
-        {/* Play Button Center */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-16 h-16 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/20">
-            <Play className="w-8 h-8 text-white ml-1" fill="white" />
-          </div>
-        </div>
-
-        {/* "Neu in Bielefeld?" Banner */}
-        <div className="absolute bottom-32 left-0 right-0 pointer-events-none">
-          <div className="bg-gradient-to-r from-transparent via-black/60 to-transparent py-2">
-            <p className="text-center text-3xl font-bold text-white drop-shadow-lg">
-              Neu in Bielefeld?
-            </p>
-          </div>
-        </div>
-
-        {/* Swipe Up Indicator */}
-        <div 
-          className={`absolute bottom-16 left-1/2 -translate-x-1/2 transition-all duration-300 ${
-            canSwipe ? 'opacity-100' : 'opacity-40'
-          }`}
-        >
-          <div 
-            className="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center shadow-lg cursor-pointer animate-bounce"
-            style={{
-              transform: `scale(${1 + swipeProgress * 0.3})`,
-              backgroundColor: `hsl(0, ${70 + swipeProgress * 30}%, ${45 + swipeProgress * 15}%)`
-            }}
-          >
-            <ChevronUp className="w-8 h-8 text-white" />
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Section - Form & CTA */}
-      <div 
-        className="relative z-30 bg-black px-6 pb-6 pt-4"
-        style={{
-          transform: `translateY(-${translateY * 0.5}px)`,
-          opacity: 1 - swipeProgress * 0.5,
-          transition: isDragging ? 'none' : 'all 0.3s ease-out'
-        }}
-      >
         {/* JETZT ENTDECKEN */}
         <h2 className="text-center text-2xl font-bold tracking-widest mb-1">
           JETZT ENTDECKEN
         </h2>
-        <p className="text-center text-white/60 text-sm mb-2">
+        <p className="text-center text-white/60 text-sm mb-1">
           Kostenlos starten
         </p>
         <p className="text-center text-white/40 text-xs mb-4">
           {eventCount > 0 ? `${eventCount}+ aktive Mitglieder` : '200+ aktive Mitglieder'}
         </p>
 
-        {/* Name Input */}
-        <input 
-          type="text" 
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="Dein Name"
-          className="w-full bg-transparent border border-white/30 rounded-full py-3 px-5 text-center text-white placeholder-white/40 outline-none focus:border-red-500 transition-colors mb-3"
-          onKeyDown={(e) => e.key === 'Enter' && canSwipe && handleEnter()}
-        />
+        {/* Name Input with required indicator */}
+        <div className="relative mb-3">
+          <input 
+            type="text" 
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Dein Name *"
+            className={`w-full bg-transparent border-2 rounded-full py-3 px-5 text-center text-white placeholder-white/40 outline-none transition-colors ${
+              username.trim() 
+                ? 'border-red-500' 
+                : 'border-white/30 focus:border-red-500'
+            }`}
+            onKeyDown={(e) => e.key === 'Enter' && canSwipe && handleEnter()}
+          />
+          {!username.trim() && (
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500 text-xs">
+              Pflicht
+            </span>
+          )}
+        </div>
 
         {/* Category Chips */}
         <div className="flex flex-wrap gap-2 justify-center mb-4">
@@ -411,7 +414,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
         {/* Swipe Hint or Guest Login */}
         {canSwipe ? (
-          <p className="text-center text-white/40 text-xs animate-pulse">
+          <p className="text-center text-green-400 text-xs animate-pulse">
             ↑ Nach oben wischen zum Starten
           </p>
         ) : (
@@ -426,12 +429,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       </div>
 
       <style>{`
-        @keyframes bounce {
+        @keyframes bounce-slow {
           0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
+          50% { transform: translateY(-6px); }
         }
-        .animate-bounce {
-          animation: bounce 1.5s ease-in-out infinite;
+        .animate-bounce-slow {
+          animation: bounce-slow 2s ease-in-out infinite;
         }
       `}</style>
     </div>
