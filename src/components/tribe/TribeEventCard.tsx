@@ -206,7 +206,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
     
     return (
         <div className="w-full cursor-pointer relative group overflow-hidden bg-black rounded-lg">
-            <div className="aspect-[3/4] w-full relative">
+            <div className="aspect-[16/9] w-full relative">
                 {displayImage ? (
                     <img src={displayImage} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
                 ) : (
@@ -214,95 +214,84 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                         <span className="text-gold text-[10px] uppercase tracking-widest relative z-10 border border-gold/30 px-3 py-1">No Image</span>
                     </div>
                 )}
-                {/* Gradient Overlay - stronger for text readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
                 
-                {/* Match Score Badge - TOP LEFT - always visible */}
-                <div className="absolute top-3 left-3 z-20">
-                  <span className="bg-gold text-black px-2.5 py-1 text-xs font-bold uppercase tracking-wide shadow-lg">
-                    {displayScore}% Match
+                {/* Match Score Badge - TOP LEFT */}
+                <div className="absolute top-2 left-2 z-20">
+                  <span className="bg-gold text-black px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                    {displayScore}%
                   </span>
                 </div>
                 
-                {/* Like/Dislike Actions - TOP RIGHT - always visible */}
-                <div className="absolute right-3 top-3 flex gap-2 z-20">
+                {/* Like/Dislike - TOP RIGHT */}
+                <div className="absolute right-2 top-2 flex gap-1.5 z-20">
                   <button 
                     onClick={(e) => { e.stopPropagation(); onInteraction?.(event.id, 'dislike'); }}
-                    className="w-9 h-9 rounded-full bg-black/70 border border-zinc-600 flex items-center justify-center text-zinc-300 hover:text-white hover:bg-black/90 backdrop-blur-sm"
+                    className="w-7 h-7 rounded-full bg-black/60 border border-zinc-600 flex items-center justify-center text-zinc-300 hover:text-white backdrop-blur-sm"
                   >
-                    <X size={16} />
+                    <X size={14} />
                   </button>
                   <button 
                     onClick={(e) => { e.stopPropagation(); onInteraction?.(event.id, 'like'); }}
-                    className={`w-9 h-9 rounded-full bg-black/70 border flex items-center justify-center transition-colors backdrop-blur-sm ${isLiked ? 'border-gold text-gold bg-gold/20' : 'border-zinc-600 text-zinc-300 hover:border-gold hover:text-gold'}`}
+                    className={`w-7 h-7 rounded-full bg-black/60 border flex items-center justify-center transition-colors backdrop-blur-sm ${isLiked ? 'border-gold text-gold bg-gold/20' : 'border-zinc-600 text-zinc-300 hover:border-gold hover:text-gold'}`}
                   >
-                    <Heart size={16} fill={isLiked ? "currentColor" : "none"} />
+                    <Heart size={14} fill={isLiked ? "currentColor" : "none"} />
                   </button>
                 </div>
                 
-                {/* Content - Bottom */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
-                    <div className="flex items-center gap-2 mb-2">
-                         <span className="bg-black/80 text-gold px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest">{formatEventDate(event.date, true)}</span>
-                         {event.category && <span className="text-white/80 text-[9px] uppercase tracking-widest">{event.category}</span>}
-                    </div>
-                    <h2 className="text-base font-bold text-white leading-snug mb-1">{event.title}</h2>
-                    <p className="text-white/80 text-xs font-medium mb-3">{event.location || event.city}</p>
+                {/* Content - Bottom compact */}
+                <div className="absolute bottom-0 left-0 right-0 p-3 z-10">
+                    <h2 className="text-sm font-bold text-white leading-tight mb-0.5 line-clamp-1">{event.title}</h2>
+                    <p className="text-white/70 text-[10px] mb-2">{event.location || event.city}</p>
                     
-                    {/* Community Section */}
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="flex -space-x-2">
-                            {isAttending && (
-                              <div className="w-6 h-6 rounded-full border-2 border-gold bg-black flex items-center justify-center relative z-10">
-                                <Check size={12} className="text-gold" />
-                              </div>
-                            )}
-                            {mockAvatars.slice(0, 3).map((url, i) => (
-                                <img key={i} src={url} className="w-6 h-6 rounded-full border-2 border-black object-cover grayscale" />
-                            ))}
+                    {/* Bottom row: avatars + buttons */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                            <div className="flex -space-x-1.5">
+                                {mockAvatars.slice(0, 2).map((url, i) => (
+                                    <img key={i} src={url} className="w-5 h-5 rounded-full border border-black object-cover" />
+                                ))}
+                            </div>
+                            <span className="text-[9px] text-zinc-400">+{currentAttendees}</span>
                         </div>
-                        <span className={`text-[10px] font-light ${isAttending ? "text-gold" : "text-zinc-400"}`}>
-                            +{currentAttendees} going
-                        </span>
-                    </div>
-                    
-                    {/* Action Buttons */}
-                    {summary ? (
-                      <div className="bg-zinc-900/80 p-2 border-l border-gold animate-fadeIn backdrop-blur-sm relative">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setSummary(null); }}
-                          className="absolute top-1 right-1 text-zinc-600 hover:text-white transition-colors"
-                        >
-                          <X size={10} />
-                        </button>
-                        <p className="text-[10px] text-zinc-300 font-light leading-relaxed pr-4">"{summary}"</p>
-                      </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); handleGetSummary(e); }}
-                            disabled={loadingSummary}
-                            className="h-8 px-3 flex items-center justify-center gap-1.5 bg-zinc-900/80 hover:bg-zinc-800/80 text-zinc-300 text-[9px] font-medium tracking-wide transition-colors border border-white/10 backdrop-blur-sm rounded"
-                        >
-                            {loadingSummary ? <span className="animate-pulse">...</span> : <><Sparkles size={10} className="text-gold" /> Vibe</>}
-                        </button>
                         
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); onToggleAttendance?.(event.id); }}
-                            className={`h-8 px-3 flex items-center justify-center gap-1 text-[9px] font-bold tracking-wide transition-colors border backdrop-blur-sm rounded ${isAttending ? 'bg-gold text-black border-gold' : 'bg-transparent text-gold border-gold/50 hover:bg-gold/10'}`}
-                        >
-                            {isAttending ? <><Check size={10} /> GOING</> : 'RSVP'}
-                        </button>
-
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); onJoinTribe?.(event.title); }}
-                            className="h-8 flex-1 flex items-center justify-center gap-1 bg-white/90 hover:bg-white text-black text-[9px] font-bold tracking-wide transition-colors backdrop-blur-sm rounded"
-                        >
-                            Join Tribe
-                        </button>
-                      </div>
-                    )}
+                        <div className="flex gap-1.5">
+                          <button 
+                              onClick={(e) => { e.stopPropagation(); handleGetSummary(e); }}
+                              disabled={loadingSummary}
+                              className="h-6 px-2 flex items-center gap-1 bg-zinc-900/80 text-zinc-300 text-[8px] font-medium border border-white/10 rounded backdrop-blur-sm"
+                          >
+                              <Sparkles size={9} className="text-gold" /> Vibe
+                          </button>
+                          <button 
+                              onClick={(e) => { e.stopPropagation(); onToggleAttendance?.(event.id); }}
+                              className={`h-6 px-2 text-[8px] font-bold border rounded backdrop-blur-sm ${isAttending ? 'bg-gold text-black border-gold' : 'text-gold border-gold/50'}`}
+                          >
+                              {isAttending ? '✓' : 'RSVP'}
+                          </button>
+                          <button 
+                              onClick={(e) => { e.stopPropagation(); onJoinTribe?.(event.title); }}
+                              className="h-6 px-2 bg-white/90 text-black text-[8px] font-bold rounded"
+                          >
+                              Join
+                          </button>
+                        </div>
+                    </div>
                 </div>
+                
+                {/* AI Summary overlay if active */}
+                {summary && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/90 p-3 z-20 backdrop-blur-sm">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setSummary(null); }}
+                      className="absolute top-1 right-1 text-zinc-500 hover:text-white"
+                    >
+                      <X size={12} />
+                    </button>
+                    <p className="text-[10px] text-zinc-300 leading-relaxed pr-4">"{summary}"</p>
+                  </div>
+                )}
             </div>
         </div>
     );
