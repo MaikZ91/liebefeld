@@ -61,12 +61,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const canSwipe = username.trim().length > 0;
   
   // Delay showing name input
+  // Show name input when video ends (slideshow starts)
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (videoEnded) {
       setShowNameInput(true);
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
+    }
+  }, [videoEnded]);
   
   // Typewriter effect
   useEffect(() => {
