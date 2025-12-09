@@ -168,7 +168,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             <img 
               src={img} 
               alt=""
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           </div>
         ))}
