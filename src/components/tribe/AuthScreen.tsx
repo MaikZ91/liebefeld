@@ -283,74 +283,43 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
           </p>
         </div>
 
-        {/* Bottom Section - Form + Swipe CTA */}
-        <div className="px-6 pb-8">
-          {/* Name Input */}
-          <input 
-            type="text" 
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Wie heißt du?"
-            className="w-full bg-black/50 backdrop-blur-sm border-2 border-white/20 rounded-full py-4 px-6 text-center text-lg text-white placeholder-white/40 outline-none focus:border-red-500 transition-all mb-4"
-            onKeyDown={(e) => e.key === 'Enter' && canSwipe && handleEnter()}
-          />
-
-          {/* Category Chips - Compact */}
-          <div className="flex flex-wrap gap-2 justify-center mb-6">
-            {CATEGORIES.map(cat => (
-              <button
-                key={cat.id}
-                onClick={(e) => { e.stopPropagation(); toggleCategory(cat.id); }}
-                className={`px-3 py-1.5 rounded-full text-xs transition-all ${
-                  selectedCategories.has(cat.id)
-                    ? 'bg-red-600 text-white'
-                    : 'bg-black/40 backdrop-blur-sm text-white/70 border border-white/20'
-                }`}
-              >
-                {cat.icon} {cat.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Swipe Up CTA */}
+        {/* Bottom Section - Swipe CTA (like screenshot) */}
+        <div className="px-6 pb-6">
+          {/* Swipe Up Button */}
           <div className="flex flex-col items-center">
-            {/* Animated Swipe Button */}
             <div 
-              className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 ${
-                canSwipe 
-                  ? 'bg-red-600 shadow-[0_0_30px_rgba(220,38,38,0.5)]' 
-                  : 'bg-zinc-800/80 backdrop-blur-sm'
-              }`}
+              className="relative w-16 h-16 rounded-full bg-zinc-900/90 backdrop-blur-sm flex items-center justify-center"
               style={{
-                transform: `scale(${1 + swipeProgress * 0.3}) translateY(${-swipeProgress * 20}px)`,
+                transform: `scale(${1 + swipeProgress * 0.2}) translateY(${-swipeProgress * 15}px)`,
               }}
             >
-              <ChevronUp 
-                className={`w-10 h-10 transition-all ${canSwipe ? 'text-white' : 'text-white/40'}`}
-                style={{
-                  transform: `translateY(${Math.sin(Date.now() / 300) * (canSwipe ? 4 : 0)}px)`
-                }}
-              />
-              
-              {/* Pulse rings when ready */}
-              {canSwipe && (
-                <>
-                  <div className="absolute inset-0 rounded-full border-2 border-red-500 animate-ping opacity-30" />
-                  <div className="absolute inset-[-8px] rounded-full border border-red-500/30 animate-pulse" />
-                </>
-              )}
+              <ChevronUp className="w-8 h-8 text-red-500" />
             </div>
 
-            {/* CTA Text */}
-            <p className={`mt-4 text-sm font-medium tracking-wide transition-all ${
-              canSwipe ? 'text-white' : 'text-white/40'
-            }`}>
-              {canSwipe ? 'NACH OBEN WISCHEN' : 'GIB DEINEN NAMEN EIN'}
+            {/* JETZT ENTDECKEN */}
+            <h2 className="mt-4 text-2xl font-bold text-white tracking-wide">
+              JETZT ENTDECKEN
+            </h2>
+            
+            {/* Kostenlos starten */}
+            <p className="mt-1 text-white/80 text-base">
+              Kostenlos starten
             </p>
+            
+            {/* 200+ aktive Mitglieder */}
+            <p className="mt-1 text-white/50 text-sm">
+              200+ aktive Mitglieder
+            </p>
+            
+            {/* Events in deiner Nähe pill */}
+            <div className="mt-4 flex items-center gap-2 border border-red-500/50 rounded-full px-4 py-2">
+              <div className="w-2 h-2 bg-red-500 rounded-full" />
+              <span className="text-white/80 text-sm">Events in deiner Nähe</span>
+            </div>
             
             {/* Progress indicator */}
             {translateY > 10 && (
-              <div className="mt-2 w-32 h-1 bg-white/20 rounded-full overflow-hidden">
+              <div className="mt-3 w-32 h-1 bg-white/20 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-red-500 transition-all"
                   style={{ width: `${swipeProgress * 100}%` }}
@@ -359,13 +328,28 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             )}
           </div>
 
+          {/* Hidden Name Input - shown on click */}
+          {!canSwipe && (
+            <div className="mt-6">
+              <input 
+                type="text" 
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Dein Name zum Starten"
+                className="w-full bg-black/50 backdrop-blur-sm border border-white/20 rounded-full py-3 px-5 text-center text-sm text-white placeholder-white/40 outline-none focus:border-red-500 transition-all"
+                onKeyDown={(e) => e.key === 'Enter' && canSwipe && handleEnter()}
+                autoFocus
+              />
+            </div>
+          )}
+
           {/* Guest Login */}
           <button 
             onClick={(e) => { e.stopPropagation(); handleGuestLogin(); }}
             disabled={isGuestLoading}
-            className="mt-6 text-white/30 text-xs hover:text-white/50 transition-colors mx-auto block"
+            className="mt-4 text-white/30 text-[10px] hover:text-white/50 transition-colors mx-auto block"
           >
-            {isGuestLoading ? '...' : 'Erstmal nur schauen'}
+            {isGuestLoading ? '...' : 'erstmal nur schauen'}
           </button>
         </div>
       </div>
