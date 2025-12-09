@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { TribeEvent } from '@/types/tribe';
 import { generateEventSummary } from '@/services/tribe/aiHelpers';
 import { getVibeBadgeColor } from '@/utils/tribe/eventHelpers';
-import { Sparkles, Users, Share2, X, Heart, Check } from 'lucide-react';
+import { Sparkles, Users, Share2, X, Heart, Check, ExternalLink } from 'lucide-react';
 
 interface EventCardProps {
   event: TribeEvent;
@@ -206,9 +206,21 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                   <span className="text-[10px] text-zinc-500">Loading Vibe...</span>
                 </div>
               ) : summary ? (
-                <>
-                  <p className="text-[10px] text-zinc-300 leading-relaxed pr-4">"{summary}"</p>
-                </>
+                <div>
+                  <p className="text-[10px] text-zinc-300 leading-relaxed pr-4 mb-1.5">"{summary}"</p>
+                  {event.link && (
+                    <a 
+                      href={event.link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1 text-[9px] text-zinc-500 hover:text-gold transition-colors"
+                    >
+                      <ExternalLink size={8} />
+                      Mehr erfahren
+                    </a>
+                  )}
+                </div>
               ) : null}
             </div>
             {/* Actions row when expanded */}
