@@ -341,8 +341,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
           )}
         </div>
 
-        {/* Bottom Section - Swipe CTA - kompakt */}
-        <div className="px-6 pb-4" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 16px), 16px)' }}>
+        {/* Bottom Section - Swipe CTA */}
+        <div className="px-6 mb-20">
           {/* Swipe Up Button */}
           <div className="flex flex-col items-center">
             <div 
