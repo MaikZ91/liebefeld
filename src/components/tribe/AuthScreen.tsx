@@ -336,7 +336,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         </div>
 
         {/* Middle Section - Name Input */}
-        <div className="flex-1 flex flex-col items-center justify-center px-6">
+        <div className="flex-1 flex flex-col items-center justify-end pb-8 px-6">
           {/* Name Input - appears after delay */}
           {showNameInput && (
             <div className="w-full max-w-xs animate-fade-in">
@@ -375,7 +375,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         </div>
 
         {/* Bottom Section - Swipe CTA */}
-        <div className="px-6 pb-12">
+        <div className="px-6 pb-6">
           {/* Swipe Up Button */}
           <div className="flex flex-col items-center">
             <div 
