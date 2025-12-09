@@ -254,26 +254,26 @@ export const TribeApp: React.FC = () => {
       if (isLoadingMore && !isInitial) return;
       setIsLoadingMore(true);
 
-      const pageSize = 50;
+      const pageSize = 100; // Increased for better coverage
       let startDate: string;
       let endDate: string;
 
       if (specificDate) {
-        // Load events for the selected month
+        // Load events for the selected month + buffer
         const monthStart = new Date(specificDate.getFullYear(), specificDate.getMonth(), 1);
-        const monthEnd = new Date(specificDate.getFullYear(), specificDate.getMonth() + 1, 0);
+        const monthEnd = new Date(specificDate.getFullYear(), specificDate.getMonth() + 2, 0); // +2 months buffer
         startDate = monthStart.toISOString().split("T")[0];
         endDate = monthEnd.toISOString().split("T")[0];
 
-        console.log("🔄 [TribeApp fetchEvents] Loading events for month:", startDate, "to", endDate);
+        console.log("🔄 [TribeApp fetchEvents] Loading events for extended range:", startDate, "to", endDate);
       } else if (isInitial) {
-        // Initial load: today + 50 events
+        // Initial load: today + 60 days (increased from 50 events limit)
         startDate = new Date().toISOString().split("T")[0];
         const futureDate = new Date();
-        futureDate.setDate(futureDate.getDate() + 365);
+        futureDate.setDate(futureDate.getDate() + 60);
         endDate = futureDate.toISOString().split("T")[0];
 
-        console.log("🔄 [TribeApp fetchEvents] Initial load from:", startDate);
+        console.log("🔄 [TribeApp fetchEvents] Initial load from:", startDate, "to", endDate);
       } else {
         // Load more: continue from last loaded date
         if (!loadedDateRange) {
@@ -282,10 +282,10 @@ export const TribeApp: React.FC = () => {
         }
         startDate = loadedDateRange.end;
         const futureDate = new Date(startDate);
-        futureDate.setDate(futureDate.getDate() + 365);
+        futureDate.setDate(futureDate.getDate() + 60);
         endDate = futureDate.toISOString().split("T")[0];
 
-        console.log("🔄 [TribeApp fetchEvents] Loading more from:", startDate);
+        console.log("🔄 [TribeApp fetchEvents] Loading more from:", startDate, "to", endDate);
       }
 
       const { data, error } = await supabase
@@ -299,22 +299,29 @@ export const TribeApp: React.FC = () => {
 
       if (error) throw error;
 
-      console.log("🔄 [TribeApp fetchEvents] Received:", data?.length, "events");
+      console.log("🔄 [TribeApp fetchEvents] Received:", data?.length, "events for range", startDate, "-", endDate);
 
       const tribeEvents = (data || []).map(convertToTribeEvent);
 
       if (specificDate) {
-        // Merge with existing events
+        // Merge with existing events - smart deduplication
         setAllEvents((prev) => {
           const merged = [...prev, ...tribeEvents];
           const unique = Array.from(new Map(merged.map((e) => [e.id, e])).values());
           return unique.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         });
+        // Update loaded date range to include this new range
+        setLoadedDateRange((prev) => {
+          if (!prev) return { start: startDate, end: endDate };
+          return {
+            start: startDate < prev.start ? startDate : prev.start,
+            end: endDate > prev.end ? endDate : prev.end,
+          };
+        });
       } else if (isInitial) {
         setAllEvents(tribeEvents);
         if (tribeEvents.length > 0) {
-          const lastDate = tribeEvents[tribeEvents.length - 1].date;
-          setLoadedDateRange({ start: startDate, end: lastDate });
+          setLoadedDateRange({ start: startDate, end: endDate });
         }
       } else {
         // Append for infinite scroll - deduplicate by ID
@@ -324,8 +331,7 @@ export const TribeApp: React.FC = () => {
           return unique.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         });
         if (tribeEvents.length > 0) {
-          const lastDate = tribeEvents[tribeEvents.length - 1].date;
-          setLoadedDateRange((prev) => (prev ? { ...prev, end: lastDate } : { start: startDate, end: lastDate }));
+          setLoadedDateRange((prev) => (prev ? { start: prev.start, end: endDate } : { start: startDate, end: endDate }));
         }
       }
 
