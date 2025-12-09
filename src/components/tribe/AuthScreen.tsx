@@ -152,34 +152,83 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     }
   };
 
+  // Get two images for split screen
+  const topImageIndex = currentImageIndex;
+  const bottomImageIndex = (currentImageIndex + 4) % REEL_IMAGES.length;
+
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-end pb-8 p-6 relative overflow-hidden">
-      {/* Reel-style Image Slideshow Background - More Visible */}
-      <div className="absolute inset-0 overflow-hidden">
-        {REEL_IMAGES.map((img, i) => (
-          <div
-            key={i}
-            className="absolute inset-0 transition-opacity duration-1000"
-            style={{ 
-              opacity: currentImageIndex === i ? 1 : 0,
-              zIndex: currentImageIndex === i ? 1 : 0
-            }}
-          >
+    <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden">
+      {/* Split Screen Background - Two Full Images Stacked */}
+      <div className="absolute inset-0 flex flex-col">
+        {/* Top Image */}
+        <div className="relative h-1/2 overflow-hidden">
+          {REEL_IMAGES.map((img, i) => (
             <img 
+              key={`top-${i}`}
               src={img} 
               alt=""
-              className="w-full h-full object-contain"
+              className="absolute inset-0 w-full h-full object-cover transition-all duration-1000"
+              style={{ 
+                opacity: topImageIndex === i ? 1 : 0,
+                transform: topImageIndex === i ? 'scale(1.05)' : 'scale(1.1)',
+              }}
             />
+          ))}
+          {/* Live Activity Badge - Top Right */}
+          <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            <span className="text-[10px] text-white font-medium">LIVE</span>
           </div>
-        ))}
-        {/* Gradient overlay - only at bottom for form readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent z-10" />
+          {/* Floating User Avatars - Social Proof */}
+          <div className="absolute bottom-4 left-4 z-20 flex -space-x-2">
+            {AVATAR_OPTIONS.slice(0, 4).map((avatar, i) => (
+              <img 
+                key={i}
+                src={avatar}
+                alt=""
+                className="w-8 h-8 rounded-full border-2 border-black object-cover"
+                style={{ animationDelay: `${i * 0.1}s` }}
+              />
+            ))}
+            <div className="w-8 h-8 rounded-full bg-gold/90 border-2 border-black flex items-center justify-center text-[10px] text-black font-bold">
+              +47
+            </div>
+          </div>
+          {/* Subtle gradient at bottom of top image */}
+          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/50 to-transparent z-10" />
+        </div>
+
+        {/* Bottom Image */}
+        <div className="relative h-1/2 overflow-hidden">
+          {REEL_IMAGES.map((img, i) => (
+            <img 
+              key={`bottom-${i}`}
+              src={img} 
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover transition-all duration-1000"
+              style={{ 
+                opacity: bottomImageIndex === i ? 1 : 0,
+                transform: bottomImageIndex === i ? 'scale(1.05)' : 'scale(1.1)',
+              }}
+            />
+          ))}
+          {/* Event Counter Badge */}
+          {eventCount > 0 && (
+            <div className="absolute top-4 left-4 z-20 bg-gold text-black px-3 py-1.5 rounded-full">
+              <span className="text-[11px] font-bold">{eventCount} Events diese Woche</span>
+            </div>
+          )}
+          {/* Trending Tag */}
+          <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-red-500/90 px-2.5 py-1 rounded-full">
+            <Sparkles size={10} className="text-white" />
+            <span className="text-[10px] text-white font-medium">TRENDING</span>
+          </div>
+          {/* Heavy gradient overlay for form readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/90 to-black/30 z-10" />
+        </div>
       </div>
 
-      {/* Subtle vignette effect */}
-      <div className="absolute inset-0 shadow-[inset_0_0_100px_rgba(0,0,0,0.5)] z-20 pointer-events-none" />
-
-      <div className="w-full max-w-sm z-30">
+      <div className="relative z-30 w-full max-w-sm mx-auto px-6 pb-8">
         
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
@@ -268,21 +317,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             {isGuestLoading ? '...' : 'erstmal nur schauen'}
           </button>
 
-          {/* Social Proof Ticker */}
-          {eventCount > 0 && (
-            <div className="pt-4 border-t border-white/5">
-              <div className="flex items-center justify-center gap-4 text-[10px] text-zinc-500">
-                <span className="flex items-center gap-1">
-                  <Sparkles size={10} className="text-gold" />
-                  {eventCount} Events diese Woche
-                </span>
-                <span className="flex items-center gap-1">
-                  <Users size={10} className="text-gold" />
-                  Live Community
-                </span>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
