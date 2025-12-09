@@ -341,21 +341,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
           )}
         </div>
 
-        {/* Bottom Section - Swipe CTA */}
-        <div className="px-6 pb-safe" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 16px)' }}>
-          {/* Guest Login - moved up, always visible */}
-          <button 
-            onClick={(e) => { e.stopPropagation(); handleGuestLogin(); }}
-            disabled={isGuestLoading}
-            className="mb-4 text-white/50 text-sm hover:text-white/70 transition-colors block mx-auto"
-          >
-            {isGuestLoading ? '...' : 'erstmal nur schauen'}
-          </button>
-          
+        {/* Bottom Section - Swipe CTA - kompakt */}
+        <div className="px-6 pb-4" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 16px), 16px)' }}>
           {/* Swipe Up Button */}
           <div className="flex flex-col items-center">
             <div 
-              className="relative w-14 h-14 rounded-full bg-zinc-900/90 backdrop-blur-sm flex items-center justify-center animate-bounce"
+              className="relative w-12 h-12 rounded-full bg-zinc-900/90 backdrop-blur-sm flex items-center justify-center animate-bounce"
               style={{
                 transform: `scale(${1 + swipeProgress * 0.2}) translateY(${-swipeProgress * 15}px)`,
                 animationDuration: '2s',
@@ -364,28 +355,32 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
               {/* Pulsing rings */}
               <div className="absolute inset-0 rounded-full border border-red-500/30 animate-ping" style={{ animationDuration: '2s' }} />
               <div className="absolute inset-[-4px] rounded-full border border-red-500/20 animate-pulse" />
-              <ChevronUp className="w-7 h-7 text-red-500 relative z-10" />
+              <ChevronUp className="w-6 h-6 text-red-500 relative z-10" />
             </div>
 
             {/* JETZT ENTDECKEN */}
-            <h2 className="mt-3 text-xl font-bold text-white tracking-wide">
+            <h2 className="mt-2 text-lg font-bold text-white tracking-wide">
               JETZT ENTDECKEN
             </h2>
             
-            {/* Kostenlos starten */}
-            <p className="mt-1 text-white/70 text-sm">
-              Kostenlos starten
-            </p>
-            
             {/* Progress indicator */}
             {translateY > 10 && (
-              <div className="mt-2 w-32 h-1 bg-white/20 rounded-full overflow-hidden">
+              <div className="mt-1 w-32 h-1 bg-white/20 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-red-500 transition-all"
                   style={{ width: `${swipeProgress * 100}%` }}
                 />
               </div>
             )}
+            
+            {/* Guest Login */}
+            <button 
+              onClick={(e) => { e.stopPropagation(); handleGuestLogin(); }}
+              disabled={isGuestLoading}
+              className="mt-2 text-white/50 text-xs hover:text-white/70 transition-colors"
+            >
+              {isGuestLoading ? '...' : 'erstmal nur schauen'}
+            </button>
           </div>
         </div>
       </div>
