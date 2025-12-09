@@ -67,7 +67,7 @@ export const TribeApp: React.FC = () => {
   const [isCityMenuOpen, setIsCityMenuOpen] = useState(false);
   const [isCompactMode, setIsCompactMode] = useState(() => {
     const saved = localStorage.getItem("tribe_view_mode");
-    return saved === "compact";
+    return saved !== "normal"; // Default to compact (true) unless explicitly set to "normal"
   });
 
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
