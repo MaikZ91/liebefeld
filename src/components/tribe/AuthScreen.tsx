@@ -72,12 +72,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     }
   }, [typewriterIndex]);
 
-  // Dynamic collage slideshow - each tile changes independently
+  // Calm collage slideshow - slower, staggered changes
   useEffect(() => {
     const timers: NodeJS.Timeout[] = [];
     
-    // Each tile has its own random-ish interval
-    const intervals = [1100, 1400, 900, 1600, 1200, 1500, 1000, 1300];
+    // Slower intervals for calmer feel
+    const intervals = [4000, 5000, 4500, 5500, 4200, 5200, 4800, 5800];
     
     imageIndices.forEach((_, slotIndex) => {
       const updateSlot = () => {
@@ -89,7 +89,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         timers[slotIndex] = setTimeout(updateSlot, intervals[slotIndex]);
       };
       
-      timers[slotIndex] = setTimeout(updateSlot, intervals[slotIndex] + slotIndex * 200);
+      // Stagger initial starts more
+      timers[slotIndex] = setTimeout(updateSlot, intervals[slotIndex] + slotIndex * 600);
     });
     
     return () => timers.forEach(t => clearTimeout(t));
