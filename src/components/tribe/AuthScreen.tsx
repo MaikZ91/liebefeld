@@ -273,18 +273,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       >
         {/* Top Section - Progress Bar + Logo + Tagline */}
         <div className="pt-3 px-4">
-          {/* Progress Bar - synced with images */}
-          <div className="flex gap-1 mb-4">
-            {REEL_IMAGES.map((_, i) => (
-              <div key={i} className="flex-1 h-0.5 rounded-full bg-white/20 overflow-hidden">
-                <div 
-                  className="h-full bg-white transition-none"
-                  style={{ 
-                    width: i < currentImageIndex ? '100%' : i === currentImageIndex ? `${imageProgress}%` : '0%'
-                  }}
-                />
-              </div>
-            ))}
+          {/* Progress Bar - continuous like video */}
+          <div className="w-full h-0.5 rounded-full bg-white/20 overflow-hidden mb-4">
+            <div 
+              className="h-full bg-white transition-none"
+              style={{ 
+                width: `${((currentImageIndex + imageProgress / 100) / REEL_IMAGES.length) * 100}%`
+              }}
+            />
           </div>
           
           <h1 className="text-center text-lg font-serif tracking-[0.3em] text-white">
