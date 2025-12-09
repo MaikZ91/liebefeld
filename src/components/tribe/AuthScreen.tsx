@@ -238,14 +238,28 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
           transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
-        {/* Top Section - Logo */}
-        <div className="pt-12 px-6">
-          <h1 className="text-center text-3xl font-serif tracking-[0.4em] text-white">
+        {/* Top Section - Progress Bar + Logo + Tagline */}
+        <div className="pt-4 px-6">
+          {/* Progress Bar */}
+          <div className="flex gap-2 mb-6">
+            <div className={`flex-1 h-1 rounded-full ${canSwipe ? 'bg-white' : 'bg-white/40'}`} />
+            <div className={`flex-1 h-1 rounded-full ${selectedCategories.size > 0 ? 'bg-white' : 'bg-white/40'}`} />
+          </div>
+          
+          <h1 className="text-center text-2xl font-serif tracking-[0.4em] text-white">
             THE TRIBE
           </h1>
-          <p className="text-center text-white/60 text-xs mt-2 tracking-wider">
-            DEIN NETZWERK IN DEINER STADT
+          
+          <p className="text-center text-white/60 text-sm mt-4 leading-relaxed">
+            Bielefeld ist nur eine Stadt bis du deine Leute findest.
           </p>
+          
+          <button 
+            onClick={(e) => { e.stopPropagation(); if (canSwipe) handleEnter(); }}
+            className="block mx-auto mt-2 text-red-500 text-sm font-medium hover:text-red-400 transition-colors"
+          >
+            Finde sie jetzt →
+          </button>
         </div>
 
         {/* Middle Section - Spacer + Main Visual */}
