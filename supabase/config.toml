@@ -1,4 +1,3 @@
-
 project_id = "ykleosfvtqcmqxqihnod"
 
 [api]
@@ -30,6 +29,9 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.ai-batch-geocode]
+verify_jwt = false
+
+[functions.youtube-search]
 verify_jwt = false
 
 [db]
