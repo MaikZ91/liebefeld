@@ -62,14 +62,15 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   
   // Start video on mount
   useEffect(() => {
-    if (videoRef.current && !videoEnded) {
-      videoRef.current.play().catch(err => {
+    const video = videoRef.current;
+    if (video) {
+      video.play().catch(err => {
         console.log('Video autoplay failed:', err);
         // If autoplay fails, skip to slideshow
         setVideoEnded(true);
       });
     }
-  }, [videoEnded]);
+  }, []);
 
   const canSwipe = username.trim().length > 0;
   
