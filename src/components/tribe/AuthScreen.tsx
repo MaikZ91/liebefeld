@@ -342,7 +342,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         </div>
 
         {/* Bottom Section - Swipe CTA */}
-        <div className="px-6 pb-2">
+        <div className="px-6 pb-safe" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 16px)' }}>
+          {/* Guest Login - moved up, always visible */}
+          <button 
+            onClick={(e) => { e.stopPropagation(); handleGuestLogin(); }}
+            disabled={isGuestLoading}
+            className="mb-4 text-white/50 text-sm hover:text-white/70 transition-colors block mx-auto"
+          >
+            {isGuestLoading ? '...' : 'erstmal nur schauen'}
+          </button>
+          
           {/* Swipe Up Button */}
           <div className="flex flex-col items-center">
             <div 
@@ -377,15 +386,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                 />
               </div>
             )}
-            
-            {/* Guest Login - always visible */}
-            <button 
-              onClick={(e) => { e.stopPropagation(); handleGuestLogin(); }}
-              disabled={isGuestLoading}
-              className="mt-6 text-white/50 text-sm hover:text-white/70 transition-colors"
-            >
-              {isGuestLoading ? '...' : 'erstmal nur schauen'}
-            </button>
           </div>
         </div>
       </div>
