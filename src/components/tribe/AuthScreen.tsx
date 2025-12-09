@@ -240,13 +240,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
               </div>
             </div>
 
-            <select 
-              value={selectedCity}
-              onChange={(e) => setSelectedCity(e.target.value)}
-              className="w-full bg-zinc-900 border border-white/20 text-white text-sm p-2.5 outline-none focus:border-gold transition-colors rounded-lg"
-            >
-              {CITIES.map(city => <option key={city} value={city}>{city}</option>)}
-            </select>
           </div>
 
           {/* Main CTA */}
