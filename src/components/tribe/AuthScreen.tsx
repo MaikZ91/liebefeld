@@ -247,20 +247,37 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       onTouchEnd={handleTouchEnd}
       onMouseDown={handleMouseDown}
     >
-      {/* Full Screen Background */}
+      {/* Full Screen Background - seamless top and bottom */}
       <div className="absolute inset-0 bg-black">
-        {REEL_IMAGES.map((img, i) => (
-          <img 
-            key={i}
-            src={img} 
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-1000"
-            style={{ opacity: currentImageIndex === i ? 1 : 0 }}
-            draggable={false}
-          />
-        ))}
-        {/* Dark overlay - lighter in middle to show more image */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/70" />
+        {/* Top portion of image */}
+        <div className="absolute top-0 left-0 right-0 h-[40%] overflow-hidden">
+          {REEL_IMAGES.map((img, i) => (
+            <img 
+              key={`top-${i}`}
+              src={img} 
+              alt=""
+              className="absolute w-full h-[250%] object-cover object-top transition-opacity duration-1000"
+              style={{ opacity: currentImageIndex === i ? 1 : 0, top: 0 }}
+              draggable={false}
+            />
+          ))}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black" />
+        </div>
+        
+        {/* Bottom portion of image */}
+        <div className="absolute bottom-0 left-0 right-0 h-[40%] overflow-hidden">
+          {REEL_IMAGES.map((img, i) => (
+            <img 
+              key={`bottom-${i}`}
+              src={img} 
+              alt=""
+              className="absolute w-full h-[250%] object-cover object-bottom transition-opacity duration-1000"
+              style={{ opacity: currentImageIndex === i ? 1 : 0, bottom: 0 }}
+              draggable={false}
+            />
+          ))}
+          <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-black" />
+        </div>
       </div>
 
       {/* Content Container - moves up on swipe */}
