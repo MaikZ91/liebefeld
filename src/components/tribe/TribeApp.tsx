@@ -508,56 +508,51 @@ export const TribeApp: React.FC = () => {
     return result;
   }, [allEvents, selectedCity, selectedCategory, hiddenEventIds, likedEventIds, nexusFilter, selectedDate]);
 
-  // Get top event per day for next 7 days (highest match score per day)
-  const spotlightEvents = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const topEventsPerDay: TribeEvent[] = [];
-    
-    for (let i = 0; i < 7; i++) {
-      const targetDate = new Date(today);
-      targetDate.setDate(today.getDate() + i);
-      const dateStr = targetDate.toISOString().split('T')[0];
-      
-      // Find events for this day
-      const dayEvents = filteredEvents.filter(e => e.date === dateStr);
-      
-      if (dayEvents.length > 0) {
-        // Sort by match score (highest first)
-        const sorted = [...dayEvents].sort((a, b) => {
-          const scoreA = eventMatchScores.get(a.id) || 50;
-          const scoreB = eventMatchScores.get(b.id) || 50;
-          return scoreB - scoreA;
-        });
-        
-        // Take the top event for this day
-        topEventsPerDay.push(sorted[0]);
-      }
-    }
-    
-    return topEventsPerDay;
-  }, [filteredEvents, eventMatchScores]);
+  // State for infinite scroll in hero section
+  const [heroLoadedCount, setHeroLoadedCount] = useState(10);
 
-  // Get top events for live ticker (next 7 days, sorted by score)
-  const tickerTopEvents = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const sevenDaysLater = new Date(today);
-    sevenDaysLater.setDate(today.getDate() + 7);
-    
-    // Filter events within next 7 days
-    const next7DaysEvents = allEvents.filter(e => {
-      const eventDate = new Date(e.date);
-      return eventDate >= today && eventDate < sevenDaysLater;
-    });
-    
-    // Sort by match score
-    return [...next7DaysEvents].sort((a, b) => {
+  // Get top events sorted by match score for hero section (infinite scroll)
+  const spotlightEvents = useMemo(() => {
+    // Sort all filtered events by match score
+    const sorted = [...filteredEvents].sort((a, b) => {
       const scoreA = eventMatchScores.get(a.id) || 50;
       const scoreB = eventMatchScores.get(b.id) || 50;
       return scoreB - scoreA;
-    }).slice(0, 20); // Top 20 for ticker
+    });
+    
+    return sorted.slice(0, heroLoadedCount);
+  }, [filteredEvents, eventMatchScores, heroLoadedCount]);
+
+  // Load more hero events when scrolling
+  const handleHeroScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const scrollEnd = target.scrollWidth - target.scrollLeft - target.clientWidth;
+    
+    // Load more when near the end
+    if (scrollEnd < 200 && heroLoadedCount < filteredEvents.length) {
+      setHeroLoadedCount(prev => Math.min(prev + 10, filteredEvents.length));
+    }
+  };
+
+  // Get top events for live ticker (highest score)
+  const tickerTopEvents = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const thirtyDaysLater = new Date(today);
+    thirtyDaysLater.setDate(today.getDate() + 30);
+    
+    // Filter events within next 30 days
+    const next30DaysEvents = allEvents.filter(e => {
+      const eventDate = new Date(e.date);
+      return eventDate >= today && eventDate < thirtyDaysLater;
+    });
+    
+    // Sort by match score
+    return [...next30DaysEvents].sort((a, b) => {
+      const scoreA = eventMatchScores.get(a.id) || 50;
+      const scoreB = eventMatchScores.get(b.id) || 50;
+      return scoreB - scoreA;
+    });
   }, [allEvents, eventMatchScores]);
 
   const feedEvents = filteredEvents; // Show all events in feed, including spotlight events (sorted by match score)
@@ -846,7 +841,7 @@ export const TribeApp: React.FC = () => {
               date: e.date,
               title: e.title,
               location: e.location,
-              likes: eventMatchScores.get(e.id) || 50, // Show score instead of likes
+              likes: e.likes || 0,
             }))}
             selectedCity={selectedCity}
             onEventClick={handleTickerEventClick}
@@ -968,7 +963,10 @@ export const TribeApp: React.FC = () => {
                     MIA Recommendations
                   </h2>
                 </div>
-                <div className="flex gap-4 overflow-x-auto no-scrollbar snap-x px-6 pb-4">
+                <div 
+                  className="flex gap-4 overflow-x-auto no-scrollbar snap-x px-6 pb-4"
+                  onScroll={handleHeroScroll}
+                >
                   {spotlightEvents.map((event, i) => (
                     <div key={`spot-${i}`} className="min-w-[75vw] md:min-w-[340px] snap-center">
                       <TribeEventCard
@@ -982,6 +980,12 @@ export const TribeApp: React.FC = () => {
                       />
                     </div>
                   ))}
+                  {/* Loading indicator when more available */}
+                  {heroLoadedCount < filteredEvents.length && (
+                    <div className="min-w-[60px] flex items-center justify-center">
+                      <div className="w-6 h-6 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
