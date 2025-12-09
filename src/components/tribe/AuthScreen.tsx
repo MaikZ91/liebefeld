@@ -355,13 +355,13 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
           />
         </div>
         
-        {/* Gradient overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70" />
+        {/* Gradient overlay for text readability - stronger at bottom */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/60 to-black/90" />
       </div>
 
       {/* Content Container - moves up on swipe */}
       <div 
-        className="relative h-full flex flex-col"
+        className="relative z-10 h-full flex flex-col"
         style={{
           transform: `translateY(-${translateY}px)`,
           transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
