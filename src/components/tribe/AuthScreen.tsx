@@ -156,18 +156,17 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const bottomImageIndex = (currentImageIndex + 4) % REEL_IMAGES.length;
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden">
-      {/* Top Image Strip - 35% height */}
-      <div className="relative h-[35%] overflow-hidden">
+    <div className="h-screen bg-black text-white flex flex-col relative overflow-hidden">
+      {/* Top Image Strip */}
+      <div className="relative h-[35vh] min-h-[200px] overflow-hidden flex-shrink-0">
         {REEL_IMAGES.map((img, i) => (
           <img 
             key={`top-${i}`}
             src={img} 
             alt=""
-            className="absolute inset-0 w-full h-full object-cover object-center transition-all duration-1000"
+            className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-1000"
             style={{ 
               opacity: currentImageIndex === i ? 1 : 0,
-              transform: currentImageIndex === i ? 'scale(1)' : 'scale(1.05)',
             }}
           />
         ))}
@@ -189,7 +188,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       </div>
 
       {/* Middle Section - Form on black */}
-      <div className="relative z-20 flex-1 flex flex-col justify-center bg-black px-6 -mt-8">
+      <div className="relative z-20 flex-1 flex flex-col justify-center bg-black px-6">
         {/* Logo */}
         <div className="flex flex-col items-center mb-4">
           <div className="relative w-10 h-10 mb-2">
@@ -264,17 +263,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         </div>
       </div>
 
-      {/* Bottom Image Strip - 25% height */}
-      <div className="relative h-[25%] overflow-hidden">
+      {/* Bottom Image Strip */}
+      <div className="relative h-[25vh] min-h-[150px] overflow-hidden flex-shrink-0">
         {REEL_IMAGES.map((img, i) => (
           <img 
             key={`bottom-${i}`}
             src={img} 
             alt=""
-            className="absolute inset-0 w-full h-full object-cover object-center transition-all duration-1000"
+            className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-1000"
             style={{ 
               opacity: bottomImageIndex === i ? 1 : 0,
-              transform: bottomImageIndex === i ? 'scale(1)' : 'scale(1.05)',
             }}
           />
         ))}
