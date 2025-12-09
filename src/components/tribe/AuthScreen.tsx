@@ -48,6 +48,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [eventCount, setEventCount] = useState(0);
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [videoEnded, setVideoEnded] = useState(false);
+  const [showNameInput, setShowNameInput] = useState(false);
   const [typewriterIndex, setTypewriterIndex] = useState(0);
   
   // Swipe state
@@ -56,6 +57,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [startY, setStartY] = useState(0);
 
   const canSwipe = username.trim().length > 0;
+  
+  // Delay showing name input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowNameInput(true);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
   
   // Typewriter effect
   useEffect(() => {
@@ -319,17 +328,19 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
         {/* Middle Section - Name Input */}
         <div className="flex-1 flex flex-col items-center justify-center px-6">
-          {/* Name Input - always visible */}
-          <div className="w-full max-w-xs">
-            <input 
-              type="text" 
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Dein Name zum Starten"
-              className="w-full bg-black/50 backdrop-blur-sm border border-white/20 rounded-full py-3 px-5 text-center text-sm text-white placeholder-white/40 outline-none focus:border-red-500 transition-all"
-              onKeyDown={(e) => e.key === 'Enter' && canSwipe && handleEnter()}
-            />
-          </div>
+          {/* Name Input - appears after delay */}
+          {showNameInput && (
+            <div className="w-full max-w-xs animate-fade-in">
+              <input 
+                type="text" 
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Dein Name zum Starten"
+                className="w-full bg-black/50 backdrop-blur-sm border border-white/20 rounded-full py-3 px-5 text-center text-sm text-white placeholder-white/40 outline-none focus:border-red-500 transition-all"
+                onKeyDown={(e) => e.key === 'Enter' && canSwipe && handleEnter()}
+              />
+            </div>
+          )}
           
           {/* Interests - appear when name has at least 1 character */}
           {username.length > 0 && (
