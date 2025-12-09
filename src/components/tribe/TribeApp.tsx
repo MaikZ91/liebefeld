@@ -1048,7 +1048,7 @@ export const TribeApp: React.FC = () => {
                 (() => {
                   // Group events by date in compact mode
                   if (isCompactMode) {
-                    const grouped: Record<string, TribeEvent[]> = {};
+                  const grouped: Record<string, TribeEvent[]> = {};
                     feedEvents.forEach((event) => {
                       if (!grouped[event.date]) grouped[event.date] = [];
                       grouped[event.date].push(event);
@@ -1056,21 +1056,63 @@ export const TribeApp: React.FC = () => {
 
                     const sortedDates = Object.keys(grouped).sort();
                     const MAX_COLLAPSED_EVENTS = 5;
+                    const now = new Date();
+                    const currentHour = now.getHours();
+                    const todayStr = now.toISOString().split("T")[0];
 
                     return sortedDates.map((date) => {
                       const dateObj = new Date(date);
                       const weekday = dateObj.toLocaleDateString("de-DE", { weekday: "long" });
                       const day = dateObj.getDate();
                       const month = dateObj.toLocaleDateString("de-DE", { month: "long" });
+                      const isToday = date === todayStr;
 
-                      const allEventsForDate = grouped[date];
+                      // Sort events: active events first, past events last (only for today)
+                      const allEventsForDate = [...grouped[date]].sort((a, b) => {
+                        if (!isToday) return 0;
+                        
+                        const getEventHour = (timeStr?: string | null) => {
+                          if (!timeStr) return 23;
+                          const match = timeStr.match(/^(\d{1,2})/);
+                          return match ? parseInt(match[1], 10) : 23;
+                        };
+                        
+                        const aHour = getEventHour(a.time);
+                        const bHour = getEventHour(b.time);
+                        const aIsPast = aHour < currentHour;
+                        const bIsPast = bHour < currentHour;
+                        
+                        // Past events go to the end
+                        if (aIsPast && !bIsPast) return 1;
+                        if (!aIsPast && bIsPast) return -1;
+                        return 0;
+                      });
+                      
+                      // Separate active and past events for today
+                      const activeEvents = isToday 
+                        ? allEventsForDate.filter(e => {
+                            const match = e.time?.match(/^(\d{1,2})/);
+                            const hour = match ? parseInt(match[1], 10) : 23;
+                            return hour >= currentHour;
+                          })
+                        : allEventsForDate;
+                      
+                      const pastEvents = isToday 
+                        ? allEventsForDate.filter(e => {
+                            const match = e.time?.match(/^(\d{1,2})/);
+                            const hour = match ? parseInt(match[1], 10) : 23;
+                            return hour < currentHour;
+                          })
+                        : [];
+
                       const isExpanded = expandedDates.has(date);
-                      const shouldCollapse = hasLikedFirstEvent && allEventsForDate.length > MAX_COLLAPSED_EVENTS;
+                      const shouldCollapse = (hasLikedFirstEvent && activeEvents.length > MAX_COLLAPSED_EVENTS) || pastEvents.length > 0;
                       const displayedEvents =
                         shouldCollapse && !isExpanded
-                          ? allEventsForDate.slice(0, MAX_COLLAPSED_EVENTS)
-                          : allEventsForDate;
-                      const hiddenCount = allEventsForDate.length - MAX_COLLAPSED_EVENTS;
+                          ? activeEvents.slice(0, MAX_COLLAPSED_EVENTS)
+                          : [...activeEvents, ...pastEvents];
+                      const hiddenActiveCount = Math.max(0, activeEvents.length - MAX_COLLAPSED_EVENTS);
+                      const hiddenCount = (hasLikedFirstEvent ? hiddenActiveCount : 0) + pastEvents.length;
 
                       return (
                         <div key={date} className="mb-6">
@@ -1078,20 +1120,33 @@ export const TribeApp: React.FC = () => {
                             {weekday}, {day}. {month}
                           </h3>
                           <div className="space-y-0">
-                            {displayedEvents.map((event) => (
-                              <div key={event.id} className="animate-fade-in transition-all duration-300 ease-out">
-                                <TribeEventCard
-                                  event={event}
-                                  variant="compact"
-                                  onJoinTribe={handleJoinTribe}
-                                  onInteraction={handleInteraction}
-                                  isLiked={likedEventIds.has(event.id)}
-                                  isAttending={attendingEventIds.has(event.id)}
-                                  onToggleAttendance={handleToggleAttendance}
-                                  matchScore={eventMatchScores.get(event.id)}
-                                />
-                              </div>
-                            ))}
+                            {displayedEvents.map((event) => {
+                              // Check if this event is past (today only)
+                              const isPastEvent = isToday && (() => {
+                                const match = event.time?.match(/^(\d{1,2})/);
+                                const hour = match ? parseInt(match[1], 10) : 23;
+                                return hour < currentHour;
+                              })();
+                              
+                              return (
+                                <div 
+                                  key={event.id} 
+                                  className={`animate-fade-in transition-all duration-300 ease-out ${isPastEvent ? 'opacity-40' : ''}`}
+                                >
+                                  <TribeEventCard
+                                    event={event}
+                                    variant="compact"
+                                    onJoinTribe={handleJoinTribe}
+                                    onInteraction={handleInteraction}
+                                    isLiked={likedEventIds.has(event.id)}
+                                    isAttending={attendingEventIds.has(event.id)}
+                                    onToggleAttendance={handleToggleAttendance}
+                                    matchScore={eventMatchScores.get(event.id)}
+                                    isPast={isPastEvent}
+                                  />
+                                </div>
+                              );
+                            })}
                           </div>
 
                           {/* Expand button for collapsed dates */}
@@ -1100,7 +1155,9 @@ export const TribeApp: React.FC = () => {
                               onClick={() => setExpandedDates((prev) => new Set([...prev, date]))}
                               className="w-full mt-2 py-2 text-[10px] text-zinc-500 hover:text-gold uppercase tracking-widest border border-dashed border-white/10 hover:border-gold/30 transition-colors flex items-center justify-center gap-2"
                             >
-                              <ChevronDown size={12} />+{hiddenCount} weitere Events anzeigen
+                              <ChevronDown size={12} />
+                              +{hiddenCount} weitere Events 
+                              {pastEvents.length > 0 && isToday && ` (${pastEvents.length} bereits vorbei)`}
                             </button>
                           )}
 
