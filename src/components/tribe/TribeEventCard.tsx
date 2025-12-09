@@ -108,7 +108,12 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                 {matchScore}%
               </div>
             )}
-            {isLiked && (
+            {isPast && (
+              <div className="absolute top-0 left-0 right-0 bg-zinc-700/90 text-zinc-300 text-[6px] font-bold px-1 py-0.5 text-center uppercase tracking-wider">
+                Vorbei
+              </div>
+            )}
+            {isLiked && !isPast && (
               <div className="absolute top-0 left-0 right-0 bg-gold/90 text-black text-[6px] font-bold px-1 py-0.5 text-center">
                 ★
               </div>
