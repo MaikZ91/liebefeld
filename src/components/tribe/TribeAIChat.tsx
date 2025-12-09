@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { getTribeResponse } from '@/services/tribe/aiHelpers';
 import { ChatMessage, TribeEvent } from '@/types/tribe';
 import { TribeEventCard } from './TribeEventCard';
-import { ArrowUp, X, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { ArrowUp, X, Sparkles } from 'lucide-react';
 import { personalizationService } from '@/services/personalizationService';
 
 const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150";
@@ -22,23 +22,82 @@ interface TribeAIChatProps {
   city?: string;
 }
 
+// Event Chip Component - clickable inline event reference
+const EventChip: React.FC<{ 
+  event: TribeEvent; 
+  onEventClick: (event: TribeEvent) => void;
+}> = ({ event, onEventClick }) => {
+  return (
+    <button
+      onClick={() => onEventClick(event)}
+      className="inline-flex items-center gap-1 px-2 py-0.5 bg-gold/20 hover:bg-gold/30 border border-gold/30 rounded-full text-gold text-xs font-medium transition-all mx-0.5 align-baseline"
+    >
+      <span className="truncate max-w-[120px]">{event.title}</span>
+      <span className="text-[10px] opacity-70">→</span>
+    </button>
+  );
+};
+
+// Parse message text and replace event references with chips
+const MessageWithEventChips: React.FC<{
+  text: string;
+  events: TribeEvent[];
+  onEventClick: (event: TribeEvent) => void;
+}> = ({ text, events, onEventClick }) => {
+  // Clean markdown formatting (remove ** and other markdown)
+  const cleanText = text
+    .replace(/\*\*/g, '')  // Remove bold markers
+    .replace(/\*/g, '')    // Remove italic markers
+    .replace(/__/g, '')    // Remove underline markers
+    .replace(/~~~/g, '')   // Remove strikethrough
+    .replace(/`/g, '');    // Remove code markers
+  
+  // Try to find event titles in the text and replace them with chips
+  let segments: (string | React.ReactNode)[] = [cleanText];
+  
+  events.forEach((event, idx) => {
+    const newSegments: (string | React.ReactNode)[] = [];
+    
+    segments.forEach((segment) => {
+      if (typeof segment !== 'string') {
+        newSegments.push(segment);
+        return;
+      }
+      
+      // Look for event title in text (case-insensitive)
+      const lowerSegment = segment.toLowerCase();
+      const lowerTitle = event.title.toLowerCase();
+      const index = lowerSegment.indexOf(lowerTitle);
+      
+      if (index !== -1) {
+        // Split and insert chip
+        if (index > 0) {
+          newSegments.push(segment.substring(0, index));
+        }
+        newSegments.push(
+          <EventChip key={`${event.id}-${idx}`} event={event} onEventClick={onEventClick} />
+        );
+        if (index + event.title.length < segment.length) {
+          newSegments.push(segment.substring(index + event.title.length));
+        }
+      } else {
+        newSegments.push(segment);
+      }
+    });
+    
+    segments = newSegments;
+  });
+  
+  return <>{segments}</>;
+};
+
 // Smart Event Carousel Component
-const EventCarousel: React.FC<{ events: TribeEvent[] }> = ({ events }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+const EventCarousel: React.FC<{ events: TribeEvent[]; onEventClick?: (event: TribeEvent) => void }> = ({ events, onEventClick }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const topEvent = events[0];
   const otherEvents = events.slice(1);
   const topMatchScore = topEvent ? personalizationService.calculateMatchScore(topEvent) : 0;
-
-  const scrollToIndex = (index: number) => {
-    if (containerRef.current) {
-      const scrollAmount = index * (containerRef.current.offsetWidth * 0.85 + 12);
-      containerRef.current.scrollTo({ left: scrollAmount, behavior: 'smooth' });
-    }
-    setCurrentIndex(index);
-  };
 
   if (events.length === 0) return null;
 
@@ -71,11 +130,11 @@ const EventCarousel: React.FC<{ events: TribeEvent[] }> = ({ events }) => {
             {otherEvents.length} weitere Vorschläge
           </span>
           
-          {/* Show max 3 other events stacked */}
+          {/* Show max 2 other events stacked */}
           <div className="space-y-2">
             {otherEvents.slice(0, isExpanded ? otherEvents.length : 2).map((evt, idx) => {
               const matchScore = personalizationService.calculateMatchScore(evt);
-              return <CompactEventCard key={idx} event={evt} matchScore={matchScore} />;
+              return <CompactEventCard key={idx} event={evt} matchScore={matchScore} onEventClick={onEventClick} />;
             })}
           </div>
 
@@ -95,9 +154,12 @@ const EventCarousel: React.FC<{ events: TribeEvent[] }> = ({ events }) => {
 };
 
 // Compact Event Card for carousel
-const CompactEventCard: React.FC<{ event: TribeEvent; matchScore: number }> = ({ event, matchScore }) => {
+const CompactEventCard: React.FC<{ event: TribeEvent; matchScore: number; onEventClick?: (event: TribeEvent) => void }> = ({ event, matchScore, onEventClick }) => {
   return (
-    <div className="bg-zinc-900/80 border border-white/10 rounded-lg overflow-hidden hover:border-gold/30 transition-all">
+    <div 
+      className="bg-zinc-900/80 border border-white/10 rounded-lg overflow-hidden hover:border-gold/30 transition-all cursor-pointer"
+      onClick={() => onEventClick?.(event)}
+    >
       <div className="flex gap-3 p-3">
         {/* Image */}
         {event.image_url && (
@@ -131,14 +193,9 @@ const CompactEventCard: React.FC<{ event: TribeEvent; matchScore: number }> = ({
         <div className="flex items-center gap-2">
           <span className="text-[9px] text-zinc-600 uppercase tracking-wider">{event.category}</span>
         </div>
-        <a 
-          href={event.link} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="text-[10px] text-gold hover:text-white transition-colors uppercase tracking-wider font-medium"
-        >
+        <span className="text-[10px] text-gold uppercase tracking-wider font-medium">
           Details →
-        </a>
+        </span>
       </div>
     </div>
   );
@@ -171,19 +228,26 @@ export const TribeAIChat: React.FC<TribeAIChatProps> = ({ onClose, events, onQue
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
-    const userText = input;
-    setInput('');
-    setMessages(prev => [...prev, { role: 'user', text: userText }]);
+  const handleSend = async (customInput?: string) => {
+    const textToSend = customInput || input;
+    if (!textToSend.trim()) return;
+    
+    if (!customInput) setInput('');
+    setMessages(prev => [...prev, { role: 'user', text: textToSend }]);
     setIsTyping(true);
     
     // Track query
-    if (onQuery) onQuery(userText);
+    if (onQuery) onQuery(textToSend);
     
-    const response = await getTribeResponse(userText, events, userProfile, city);
+    const response = await getTribeResponse(textToSend, events, userProfile, city);
     setIsTyping(false);
     setMessages(prev => [...prev, { role: 'model', text: response.text, relatedEvents: response.relatedEvents }]);
+  };
+
+  // Handle event chip click - ask MIA about specific event
+  const handleEventClick = (event: TribeEvent) => {
+    const query = `Erzähl mir mehr über "${event.title}"`;
+    handleSend(query);
   };
 
   return (
@@ -213,11 +277,20 @@ export const TribeAIChat: React.FC<TribeAIChatProps> = ({ onClose, events, onQue
             )}
             <div className={`flex-1 flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
               <div className={`max-w-[85%] text-sm md:text-base leading-relaxed ${msg.role === 'user' ? 'text-white font-medium text-right bg-zinc-800/50 rounded-2xl rounded-tr-sm px-4 py-2' : 'text-zinc-300 text-left'}`}>
-                  {msg.text}
+                {msg.role === 'model' && msg.relatedEvents && msg.relatedEvents.length > 0 ? (
+                  <MessageWithEventChips 
+                    text={msg.text} 
+                    events={msg.relatedEvents} 
+                    onEventClick={handleEventClick}
+                  />
+                ) : (
+                  // Clean markdown for messages without events too
+                  msg.text.replace(/\*\*/g, '').replace(/\*/g, '')
+                )}
               </div>
               {msg.relatedEvents && msg.relatedEvents.length > 0 && (
                 <div className="w-full max-w-full overflow-hidden">
-                  <EventCarousel events={msg.relatedEvents} />
+                  <EventCarousel events={msg.relatedEvents} onEventClick={handleEventClick} />
                 </div>
               )}
             </div>
@@ -246,10 +319,7 @@ export const TribeAIChat: React.FC<TribeAIChatProps> = ({ onClose, events, onQue
         {["Was geht heute?", "Beste Parties", "Kulturelle Events"].map((suggestion) => (
           <button
             key={suggestion}
-            onClick={() => {
-              setInput(suggestion);
-              setTimeout(() => handleSend(), 100);
-            }}
+            onClick={() => handleSend(suggestion)}
             className="px-3 py-1.5 bg-zinc-900 border border-white/10 rounded-full text-xs text-zinc-400 hover:text-white hover:border-gold/30 transition-all whitespace-nowrap"
           >
             {suggestion}
@@ -268,7 +338,7 @@ export const TribeAIChat: React.FC<TribeAIChatProps> = ({ onClose, events, onQue
               className="flex-1 bg-transparent text-white placeholder-zinc-600 outline-none text-lg font-light"
               placeholder="Frag MIA..."
             />
-            <button onClick={handleSend} disabled={!input.trim()} className="text-gold disabled:text-zinc-700 hover:opacity-80 transition-opacity">
+            <button onClick={() => handleSend()} disabled={!input.trim()} className="text-gold disabled:text-zinc-700 hover:opacity-80 transition-opacity">
                 <ArrowUp size={24} />
             </button>
         </div>
