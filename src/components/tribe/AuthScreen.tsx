@@ -346,12 +346,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
           {/* Swipe Up Button */}
           <div className="flex flex-col items-center">
             <div 
-              className="relative w-14 h-14 rounded-full bg-zinc-900/90 backdrop-blur-sm flex items-center justify-center"
+              className="relative w-14 h-14 rounded-full bg-zinc-900/90 backdrop-blur-sm flex items-center justify-center animate-bounce"
               style={{
                 transform: `scale(${1 + swipeProgress * 0.2}) translateY(${-swipeProgress * 15}px)`,
+                animationDuration: '2s',
               }}
             >
-              <ChevronUp className="w-7 h-7 text-red-500" />
+              {/* Pulsing rings */}
+              <div className="absolute inset-0 rounded-full border border-red-500/30 animate-ping" style={{ animationDuration: '2s' }} />
+              <div className="absolute inset-[-4px] rounded-full border border-red-500/20 animate-pulse" />
+              <ChevronUp className="w-7 h-7 text-red-500 relative z-10" />
             </div>
 
             {/* JETZT ENTDECKEN */}
