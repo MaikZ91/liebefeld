@@ -13,6 +13,7 @@ interface EventCardProps {
   isAttending?: boolean;
   onToggleAttendance?: (eventId: string) => void;
   matchScore?: number; // MIA matching score 0-100%
+  isPast?: boolean; // Event has already passed (time-based)
 }
 
 // Helper functions for date/time formatting
@@ -40,7 +41,8 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
   isLiked = false,
   isAttending = false,
   onToggleAttendance,
-  matchScore
+  matchScore,
+  isPast = false
 }) => {
   const [summary, setSummary] = useState<string | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
