@@ -38,6 +38,9 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
     const saved = localStorage.getItem(TOPIC_DISLIKES_KEY);
     return saved ? JSON.parse(saved) : {};
   });
+  const [profileBannerDismissed, setProfileBannerDismissed] = useState(() => 
+    localStorage.getItem('tribe_profile_banner_dismissed') === 'true'
+  );
 
   // Load posts from database
   useEffect(() => {
@@ -531,46 +534,40 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
 
         {/* --- FEED --- */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-32">
-            {/* Profile Creation Banner - compact, closable */}
-            {userProfile && (() => {
+            {/* Profile Creation Banner - simple, closable */}
+            {userProfile && !profileBannerDismissed && (() => {
               const hasAvatar = !!userProfile.avatarUrl || !!userProfile.avatar;
               const hasInterests = (userProfile.interests?.length || 0) > 0;
               const hasLocations = (userProfile.favorite_locations?.length || 0) > 0;
               const isNotGuest = !userProfile.username?.startsWith("Guest_");
               const isProfileComplete = hasAvatar && hasInterests && hasLocations && isNotGuest;
-              const bannerDismissed = localStorage.getItem('tribe_profile_banner_dismissed') === 'true';
               
-              if (isProfileComplete || bannerDismissed) return null;
-              
-              const completedCount = [isNotGuest, hasAvatar, hasInterests, hasLocations].filter(Boolean).length;
+              if (isProfileComplete) return null;
               
               return (
                 <div className="bg-zinc-900/80 border border-gold/20 rounded-lg p-3 mb-3 relative">
                   <button 
                     onClick={() => {
                       localStorage.setItem('tribe_profile_banner_dismissed', 'true');
-                      window.dispatchEvent(new Event('storage'));
+                      setProfileBannerDismissed(true);
                     }}
-                    className="absolute top-2 right-2 text-zinc-500 hover:text-white transition-colors"
+                    className="absolute top-2 right-2 text-zinc-500 hover:text-white transition-colors p-1"
                   >
-                    <X size={14} />
+                    <X size={16} />
                   </button>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 pr-6">
                     <div className="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0">
                       <Star size={14} className="text-gold" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-xs font-bold text-white">Profil vervollständigen</h3>
-                        <span className="text-[10px] text-gold">{completedCount}/4</span>
-                      </div>
-                      <p className="text-[10px] text-zinc-500 mt-0.5">Für bessere Empfehlungen</p>
+                      <h3 className="text-xs font-bold text-white">Vervollständige dein Profil</h3>
+                      <p className="text-[10px] text-zinc-500">Für bessere Empfehlungen</p>
                     </div>
                     <button 
                       onClick={onEditProfile}
-                      className="bg-gold hover:bg-white text-black text-[9px] font-bold uppercase tracking-wider px-3 py-1.5 rounded transition-colors"
+                      className="bg-gold hover:bg-white text-black text-[9px] font-bold uppercase tracking-wider px-3 py-1.5 rounded transition-colors flex-shrink-0"
                     >
-                      Bearbeiten
+                      Los
                     </button>
                   </div>
                 </div>
