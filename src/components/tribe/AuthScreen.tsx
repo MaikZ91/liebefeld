@@ -254,13 +254,13 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             key={i}
             src={img} 
             alt=""
-            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
+            className="absolute inset-0 w-full h-full object-contain transition-opacity duration-1000"
             style={{ opacity: currentImageIndex === i ? 1 : 0 }}
             draggable={false}
           />
         ))}
         {/* Dark overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-black" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
       </div>
 
       {/* Content Container - moves up on swipe */}
