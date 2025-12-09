@@ -335,7 +335,11 @@ export const TribeApp: React.FC = () => {
         }
       }
 
-      setHasMoreEvents(tribeEvents.length === pageSize);
+      // Only set hasMoreEvents to false if we got less than pageSize AND the end date is far in the future
+      const endDateObj = new Date(endDate);
+      const sixMonthsFromNow = new Date();
+      sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
+      setHasMoreEvents(tribeEvents.length === pageSize || endDateObj < sixMonthsFromNow);
     } catch (error) {
       console.error("Error loading events:", error);
     } finally {
@@ -344,6 +348,7 @@ export const TribeApp: React.FC = () => {
   };
 
   const loadMoreEvents = () => {
+    console.log("🔄 [TribeApp loadMoreEvents] Called, isLoadingMore:", isLoadingMore, "hasMoreEvents:", hasMoreEvents, "loadedDateRange:", loadedDateRange);
     if (!isLoadingMore && hasMoreEvents) {
       fetchEvents(false);
     }
@@ -1203,25 +1208,28 @@ export const TribeApp: React.FC = () => {
               )}
 
               {/* Infinite Scroll Trigger */}
-              {!selectedDate && hasMoreEvents && feedEvents.length > 0 && (
+              {!selectedDate && feedEvents.length > 0 && (
                 <div
                   ref={(el) => {
                     if (!el) return;
                     const observer = new IntersectionObserver(
                       (entries) => {
-                        if (entries[0].isIntersecting && !isLoadingMore) {
-                          console.log("🔄 [TribeApp] Infinite scroll triggered");
+                        if (entries[0].isIntersecting && !isLoadingMore && hasMoreEvents) {
+                          console.log("🔄 [TribeApp] Infinite scroll triggered, loadedDateRange:", loadedDateRange);
                           loadMoreEvents();
                         }
                       },
                       { threshold: 0.1 },
                     );
                     observer.observe(el);
-                    return () => observer.disconnect();
                   }}
                   className="h-20 flex items-center justify-center"
                 >
-                  {isLoadingMore && <div className="text-zinc-600 text-xs">Lädt weitere Events...</div>}
+                  {isLoadingMore ? (
+                    <div className="text-zinc-600 text-xs">Lädt weitere Events...</div>
+                  ) : hasMoreEvents ? (
+                    <div className="text-zinc-700 text-[10px]">Scroll für mehr Events</div>
+                  ) : null}
                 </div>
               )}
             </div>
