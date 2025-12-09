@@ -247,35 +247,38 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       onTouchEnd={handleTouchEnd}
       onMouseDown={handleMouseDown}
     >
-      {/* Full Screen Background - top and bottom without transition */}
-      <div className="absolute inset-0 bg-black">
-        {/* Top portion of image */}
-        <div className="absolute top-0 left-0 right-0 h-[35%] overflow-hidden">
+      {/* Full Screen Background - different images top and bottom, no gap */}
+      <div className="absolute inset-0">
+        {/* Top half - current image */}
+        <div className="absolute top-0 left-0 right-0 h-1/2 overflow-hidden">
           {REEL_IMAGES.map((img, i) => (
             <img 
               key={`top-${i}`}
               src={img} 
               alt=""
-              className="absolute w-full h-auto object-cover object-top transition-opacity duration-1000"
+              className="absolute inset-0 w-full h-full object-cover object-bottom transition-opacity duration-1000"
               style={{ opacity: currentImageIndex === i ? 1 : 0 }}
               draggable={false}
             />
           ))}
         </div>
         
-        {/* Bottom portion of image */}
-        <div className="absolute bottom-0 left-0 right-0 h-[35%] overflow-hidden">
+        {/* Bottom half - next image */}
+        <div className="absolute bottom-0 left-0 right-0 h-1/2 overflow-hidden">
           {REEL_IMAGES.map((img, i) => (
             <img 
               key={`bottom-${i}`}
               src={img} 
               alt=""
-              className="absolute w-full h-auto object-cover object-bottom transition-opacity duration-1000 bottom-0"
-              style={{ opacity: currentImageIndex === i ? 1 : 0, position: 'absolute', bottom: 0 }}
+              className="absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-1000"
+              style={{ opacity: (currentImageIndex + 1) % REEL_IMAGES.length === i ? 1 : 0 }}
               draggable={false}
             />
           ))}
         </div>
+        
+        {/* Subtle overlay for text readability */}
+        <div className="absolute inset-0 bg-black/30" />
       </div>
 
       {/* Content Container - moves up on swipe */}
