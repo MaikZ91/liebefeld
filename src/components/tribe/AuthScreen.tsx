@@ -44,6 +44,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [selectedCity] = useState('Bielefeld');
   const [isGuestLoading, setIsGuestLoading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageProgress, setImageProgress] = useState(0);
   const [eventCount, setEventCount] = useState(0);
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [typewriterIndex, setTypewriterIndex] = useState(0);
@@ -65,13 +66,32 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     }
   }, [typewriterIndex]);
 
-  // Reel-style image slideshow
+  // Reel-style image slideshow with progress
   useEffect(() => {
-    const interval = setInterval(() => {
+    const IMAGE_DURATION = 3000;
+    const PROGRESS_INTERVAL = 30;
+    
+    // Reset progress when image changes
+    setImageProgress(0);
+    
+    // Progress animation
+    const progressTimer = setInterval(() => {
+      setImageProgress(prev => {
+        const next = prev + (PROGRESS_INTERVAL / IMAGE_DURATION) * 100;
+        return next >= 100 ? 100 : next;
+      });
+    }, PROGRESS_INTERVAL);
+    
+    // Image change
+    const imageTimer = setTimeout(() => {
       setCurrentImageIndex(prev => (prev + 1) % REEL_IMAGES.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+    }, IMAGE_DURATION);
+    
+    return () => {
+      clearInterval(progressTimer);
+      clearTimeout(imageTimer);
+    };
+  }, [currentImageIndex]);
 
   // Load event count
   useEffect(() => {
@@ -253,10 +273,18 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       >
         {/* Top Section - Progress Bar + Logo + Tagline */}
         <div className="pt-3 px-4">
-          {/* Progress Bar */}
+          {/* Progress Bar - synced with images */}
           <div className="flex gap-1 mb-4">
-            <div className={`flex-1 h-0.5 rounded-full ${canSwipe ? 'bg-white' : 'bg-white/30'}`} />
-            <div className={`flex-1 h-0.5 rounded-full ${selectedCategories.size > 0 ? 'bg-white' : 'bg-white/30'}`} />
+            {REEL_IMAGES.map((_, i) => (
+              <div key={i} className="flex-1 h-0.5 rounded-full bg-white/20 overflow-hidden">
+                <div 
+                  className="h-full bg-white transition-none"
+                  style={{ 
+                    width: i < currentImageIndex ? '100%' : i === currentImageIndex ? `${imageProgress}%` : '0%'
+                  }}
+                />
+              </div>
+            ))}
           </div>
           
           <h1 className="text-center text-lg font-serif tracking-[0.3em] text-white">
