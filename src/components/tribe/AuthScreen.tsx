@@ -281,13 +281,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
           <p className="text-5xl font-bold text-white text-center leading-tight drop-shadow-2xl">
             Neu in<br/>Bielefeld?
           </p>
-          
-          {eventCount > 0 && (
-            <div className="mt-6 flex items-center gap-2 bg-black/40 backdrop-blur-sm rounded-full px-4 py-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-white/80 text-sm">{eventCount} Events diese Woche</span>
-            </div>
-          )}
         </div>
 
         {/* Bottom Section - Form + Swipe CTA */}
