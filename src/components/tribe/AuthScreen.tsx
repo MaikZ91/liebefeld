@@ -13,6 +13,7 @@ import reel6 from '@/assets/tribe/reel-6.jpg';
 import reel7 from '@/assets/tribe/reel-7.jpg';
 import reel8 from '@/assets/tribe/reel-8.jpg';
 import reel9 from '@/assets/tribe/reel-9.jpg';
+import videoPoster from '@/assets/tribe/video-poster.jpg';
 
 const REEL_IMAGES = [reel1, reel2, reel3, reel4, reel5, reel6, reel7, reel8, reel9];
 
@@ -81,8 +82,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   useEffect(() => {
     if (!videoEnded) return;
     
-    const IMAGE_DURATION = 1500;
-    const PROGRESS_INTERVAL = 30;
+    const IMAGE_DURATION = 1000;
+    const PROGRESS_INTERVAL = 20;
     
     // Reset progress when image changes
     setImageProgress(0);
@@ -262,12 +263,22 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     >
       {/* Full Screen Background */}
       <div className="absolute inset-0">
-        {/* Video - plays first */}
+        {/* Poster image - shows immediately while video loads */}
+        {!videoEnded && (
+          <img 
+            src={videoPoster} 
+            alt="" 
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        )}
+        
+        {/* Video - plays on top of poster */}
         {!videoEnded && (
           <video
             autoPlay
             muted
             playsInline
+            preload="auto"
             onEnded={() => setVideoEnded(true)}
             onTimeUpdate={(e) => {
               const video = e.currentTarget;
@@ -275,7 +286,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                 setVideoProgress((video.currentTime / video.duration) * 100);
               }
             }}
-            className="absolute inset-0 w-full h-full object-contain bg-black"
+            className="absolute inset-0 w-full h-full object-contain bg-transparent"
           >
             <source src="/videos/intro.mp4" type="video/mp4" />
           </video>
