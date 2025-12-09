@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { TribeEvent } from '@/types/tribe';
 import { generateEventSummary } from '@/services/tribe/aiHelpers';
 import { getVibeBadgeColor } from '@/utils/tribe/eventHelpers';
-import { Sparkles, Users, Share2, X, Heart, Check, ExternalLink } from 'lucide-react';
+import { Sparkles, Users, Share2, X, Heart, Check, ExternalLink, Play } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EventCardProps {
   event: TribeEvent;
@@ -14,6 +15,13 @@ interface EventCardProps {
   onToggleAttendance?: (eventId: string) => void;
   matchScore?: number; // MIA matching score 0-100%
   isPast?: boolean; // Event has already passed (time-based)
+}
+
+interface YouTubeVideo {
+  videoId: string;
+  title: string;
+  thumbnail: string;
+  channelTitle: string;
 }
 
 // Helper functions for date/time formatting
@@ -48,6 +56,9 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [youtubeVideo, setYoutubeVideo] = useState<YouTubeVideo | null>(null);
+  const [loadingVideo, setLoadingVideo] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
   
   const displayImage = event.image_url;
 
@@ -60,6 +71,59 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
       "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=64&h=64&fit=crop"
   ];
 
+  // Build YouTube search query from event info
+  const buildYouTubeQuery = () => {
+    const parts: string[] = [];
+    // Extract artist/band name from title (often before "-" or ":" or at start)
+    const title = event.title || '';
+    const cleanTitle = title.replace(/[–—]/g, '-');
+    
+    // Try to extract artist name
+    if (cleanTitle.includes(':')) {
+      parts.push(cleanTitle.split(':')[1]?.trim() || cleanTitle);
+    } else if (cleanTitle.includes('-')) {
+      parts.push(cleanTitle.split('-')[0]?.trim() || cleanTitle);
+    } else {
+      parts.push(cleanTitle);
+    }
+    
+    // Add category hint for better results
+    const category = event.category?.toLowerCase() || '';
+    if (category.includes('party') || category.includes('ausgehen')) {
+      parts.push('live set DJ');
+    } else if (category.includes('konzert') || category.includes('concert')) {
+      parts.push('live performance');
+    } else if (category.includes('sport')) {
+      parts.push('highlights');
+    }
+    
+    return parts.join(' ').slice(0, 80); // YouTube query limit
+  };
+
+  const fetchYouTubeVideo = async () => {
+    if (youtubeVideo || loadingVideo) return;
+    
+    setLoadingVideo(true);
+    try {
+      const query = buildYouTubeQuery();
+      console.log('[TribeEventCard] YouTube search:', query);
+      
+      const { data, error } = await supabase.functions.invoke('youtube-search', {
+        body: { query, maxResults: 1 }
+      });
+      
+      if (error) {
+        console.error('[TribeEventCard] YouTube search error:', error);
+      } else if (data?.videos?.length > 0) {
+        setYoutubeVideo(data.videos[0]);
+      }
+    } catch (err) {
+      console.error('[TribeEventCard] YouTube fetch error:', err);
+    } finally {
+      setLoadingVideo(false);
+    }
+  };
+
   const handleGetSummary = async (e: React.MouseEvent) => {
       e.stopPropagation();
       if (summary) {
@@ -69,7 +133,13 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
       }
       setLoadingSummary(true);
       setIsExpanded(true); // Expand image when loading
-      const aiSummary = await generateEventSummary(event);
+      
+      // Fetch both summary and YouTube video in parallel
+      const [aiSummary] = await Promise.all([
+        generateEventSummary(event),
+        fetchYouTubeVideo()
+      ]);
+      
       setSummary(aiSummary);
       setLoadingSummary(false);
   };
@@ -199,6 +269,46 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
         {/* AI Summary - Shown when expanded */}
         {isExpanded && (
           <div className="px-1 pb-2 animate-fadeIn">
+            {/* YouTube Video Preview */}
+            {(loadingVideo || youtubeVideo) && (
+              <div className="mb-2">
+                {loadingVideo ? (
+                  <div className="aspect-video bg-zinc-900 rounded flex items-center justify-center">
+                    <div className="w-4 h-4 border-2 border-zinc-600 border-t-gold rounded-full animate-spin" />
+                  </div>
+                ) : youtubeVideo && !showVideo ? (
+                  <div 
+                    className="relative aspect-video bg-zinc-900 rounded overflow-hidden cursor-pointer group"
+                    onClick={(e) => { e.stopPropagation(); setShowVideo(true); }}
+                  >
+                    <img 
+                      src={youtubeVideo.thumbnail} 
+                      alt={youtubeVideo.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/20 transition-colors">
+                      <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center shadow-lg">
+                        <Play size={18} className="text-white ml-0.5" fill="white" />
+                      </div>
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-1.5">
+                      <p className="text-[8px] text-white/80 truncate">{youtubeVideo.channelTitle}</p>
+                    </div>
+                  </div>
+                ) : youtubeVideo && showVideo ? (
+                  <div className="aspect-video rounded overflow-hidden">
+                    <iframe
+                      src={`https://www.youtube.com/embed/${youtubeVideo.videoId}?autoplay=1`}
+                      title={youtubeVideo.title}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                ) : null}
+              </div>
+            )}
+            
             <div className="bg-zinc-900/50 border-l-2 border-gold px-2 py-1.5 relative mb-2">
               {loadingSummary ? (
                 <div className="flex items-center gap-2">
