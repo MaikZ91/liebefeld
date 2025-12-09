@@ -415,16 +415,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
           {/* Interests - appear when name has at least 1 character */}
           {username.length > 0 && (
             <div className="mt-4 w-full max-w-xs animate-fade-in">
-              <p className="text-white/50 text-xs text-center mb-2">Wähle Interessen aus</p>
+              <p className="text-white text-xs text-center mb-2 font-medium">Wähle Interessen aus</p>
               <div className="flex flex-wrap justify-center gap-2">
                 {CATEGORIES.map(cat => (
                   <button
                     key={cat.id}
                     onClick={(e) => { e.stopPropagation(); toggleCategory(cat.id); }}
-                    className={`px-3 py-1.5 rounded-full text-xs transition-all ${
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
                       selectedCategories.has(cat.id)
-                        ? 'bg-red-500 text-white'
-                        : 'bg-white/10 text-white/70 hover:bg-white/20'
+                        ? 'bg-red-500 text-white border-red-500'
+                        : 'bg-black/70 text-white border-white/30 hover:bg-black/90 hover:border-white/50'
                     }`}
                   >
                     {cat.icon} {cat.label}
