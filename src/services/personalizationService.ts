@@ -3,6 +3,16 @@ import { TribeEvent } from '@/types/tribe';
 const LIKES_KEY = 'mia_liked_events';
 const DISLIKES_KEY = 'mia_disliked_events';
 const PREFERENCES_KEY = 'mia_user_preferences';
+const PREFERRED_CATEGORIES_KEY = 'tribe_preferred_categories';
+
+// Map auth screen categories to event categories
+const CATEGORY_MAPPING: Record<string, string[]> = {
+  'ausgehen': ['Ausgehen', 'Bar', 'Club', 'Nightlife', 'Sonstiges'],
+  'party': ['Party', 'Club', 'Nightlife', 'Ausgehen'],
+  'konzerte': ['Konzert', 'Konzerte', 'Music', 'Musik', 'Live'],
+  'sport': ['Sport', 'Hochschulsport', 'Fitness', 'Outdoor'],
+  'kreativitaet': ['Kreativität', 'Kunst', 'Art', 'Workshop', 'Kultur'],
+};
 
 interface EventInteraction {
   eventId: string;
@@ -150,10 +160,41 @@ export const personalizationService = {
     }
   },
 
+  // Get preferred categories from onboarding
+  getPreferredCategories(): string[] {
+    try {
+      const stored = localStorage.getItem(PREFERRED_CATEGORIES_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  // Check if event matches preferred categories
+  matchesPreferredCategory(event: TribeEvent): boolean {
+    const preferredCategories = this.getPreferredCategories();
+    if (preferredCategories.length === 0) return false;
+    
+    const eventCategory = event.category?.toLowerCase() || '';
+    
+    for (const prefCat of preferredCategories) {
+      const mappedCategories = CATEGORY_MAPPING[prefCat] || [];
+      if (mappedCategories.some(c => eventCategory.includes(c.toLowerCase()))) {
+        return true;
+      }
+    }
+    return false;
+  },
+
   // Calculate matching score for an event (0-100%)
   calculateMatchScore(event: TribeEvent): number {
     const preferences = this.getPreferences();
     let score = 50; // Start at neutral
+
+    // BOOST from preferred categories (onboarding selection) - +15 points
+    if (this.matchesPreferredCategory(event)) {
+      score += 15;
+    }
 
     // Category scoring (±20 points)
     if (event.category) {
