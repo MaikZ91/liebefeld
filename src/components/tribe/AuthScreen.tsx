@@ -329,7 +329,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             />
           </div>
           
-          <h1 className="text-center text-lg font-serif tracking-[0.3em] text-white">
+          <h1 className="text-center text-2xl font-light tracking-[0.5em] text-white uppercase">
             THE TRIBE
           </h1>
           
