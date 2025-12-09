@@ -300,50 +300,73 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
           </button>
         </div>
 
-        {/* Middle Section - Spacer + Main Visual */}
+        {/* Middle Section - Main Visual + Name Input */}
         <div className="flex-1 flex flex-col items-center justify-center px-6">
           <p className="text-5xl font-bold text-white text-center leading-tight drop-shadow-2xl">
             Neu in<br/>Bielefeld?
           </p>
+          
+          {/* Name Input - always visible */}
+          <div className="mt-8 w-full max-w-xs">
+            <input 
+              type="text" 
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Dein Name zum Starten"
+              className="w-full bg-black/50 backdrop-blur-sm border border-white/20 rounded-full py-3 px-5 text-center text-sm text-white placeholder-white/40 outline-none focus:border-red-500 transition-all"
+              onKeyDown={(e) => e.key === 'Enter' && canSwipe && handleEnter()}
+            />
+          </div>
+          
+          {/* Interests - appear when name has at least 1 character */}
+          {username.length > 0 && (
+            <div className="mt-4 w-full max-w-xs animate-fade-in">
+              <p className="text-white/50 text-xs text-center mb-2">Wähle Interessen aus</p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {CATEGORIES.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={(e) => { e.stopPropagation(); toggleCategory(cat.id); }}
+                    className={`px-3 py-1.5 rounded-full text-xs transition-all ${
+                      selectedCategories.has(cat.id)
+                        ? 'bg-red-500 text-white'
+                        : 'bg-white/10 text-white/70 hover:bg-white/20'
+                    }`}
+                  >
+                    {cat.icon} {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Bottom Section - Swipe CTA (like screenshot) */}
-        <div className="px-6 pb-6">
+        {/* Bottom Section - Swipe CTA */}
+        <div className="px-6 pb-8">
           {/* Swipe Up Button */}
           <div className="flex flex-col items-center">
             <div 
-              className="relative w-16 h-16 rounded-full bg-zinc-900/90 backdrop-blur-sm flex items-center justify-center"
+              className="relative w-14 h-14 rounded-full bg-zinc-900/90 backdrop-blur-sm flex items-center justify-center"
               style={{
                 transform: `scale(${1 + swipeProgress * 0.2}) translateY(${-swipeProgress * 15}px)`,
               }}
             >
-              <ChevronUp className="w-8 h-8 text-red-500" />
+              <ChevronUp className="w-7 h-7 text-red-500" />
             </div>
 
             {/* JETZT ENTDECKEN */}
-            <h2 className="mt-4 text-2xl font-bold text-white tracking-wide">
+            <h2 className="mt-3 text-xl font-bold text-white tracking-wide">
               JETZT ENTDECKEN
             </h2>
             
             {/* Kostenlos starten */}
-            <p className="mt-1 text-white/80 text-base">
+            <p className="mt-1 text-white/70 text-sm">
               Kostenlos starten
             </p>
             
-            {/* 200+ aktive Mitglieder */}
-            <p className="mt-1 text-white/50 text-sm">
-              200+ aktive Mitglieder
-            </p>
-            
-            {/* Events in deiner Nähe pill */}
-            <div className="mt-4 flex items-center gap-2 border border-red-500/50 rounded-full px-4 py-2">
-              <div className="w-2 h-2 bg-red-500 rounded-full" />
-              <span className="text-white/80 text-sm">Events in deiner Nähe</span>
-            </div>
-            
             {/* Progress indicator */}
             {translateY > 10 && (
-              <div className="mt-3 w-32 h-1 bg-white/20 rounded-full overflow-hidden">
+              <div className="mt-2 w-32 h-1 bg-white/20 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-red-500 transition-all"
                   style={{ width: `${swipeProgress * 100}%` }}
@@ -352,26 +375,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             )}
           </div>
 
-          {/* Hidden Name Input - shown on click */}
-          {!canSwipe && (
-            <div className="mt-6">
-              <input 
-                type="text" 
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Dein Name zum Starten"
-                className="w-full bg-black/50 backdrop-blur-sm border border-white/20 rounded-full py-3 px-5 text-center text-sm text-white placeholder-white/40 outline-none focus:border-red-500 transition-all"
-                onKeyDown={(e) => e.key === 'Enter' && canSwipe && handleEnter()}
-                autoFocus
-              />
-            </div>
-          )}
-
-          {/* Guest Login */}
+          {/* Guest Login - always visible */}
           <button 
             onClick={(e) => { e.stopPropagation(); handleGuestLogin(); }}
             disabled={isGuestLoading}
-            className="mt-4 text-white/30 text-[10px] hover:text-white/50 transition-colors mx-auto block"
+            className="mt-4 text-white/40 text-xs hover:text-white/60 transition-colors mx-auto block"
           >
             {isGuestLoading ? '...' : 'erstmal nur schauen'}
           </button>
