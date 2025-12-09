@@ -74,7 +74,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
   // Reel-style image slideshow with progress
   useEffect(() => {
-    const IMAGE_DURATION = 3000;
+    const IMAGE_DURATION = 1200;
     const PROGRESS_INTERVAL = 30;
     
     // Reset progress when image changes
@@ -253,31 +253,45 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       onTouchEnd={handleTouchEnd}
       onMouseDown={handleMouseDown}
     >
-      {/* Full Screen Background - different images top and bottom, no gap */}
+      {/* Full Screen Background - 3 different images, no gap */}
       <div className="absolute inset-0">
-        {/* Top half - current image */}
-        <div className="absolute top-0 left-0 right-0 h-1/2 overflow-hidden">
+        {/* Top third */}
+        <div className="absolute top-0 left-0 right-0 h-1/3 overflow-hidden">
           {REEL_IMAGES.map((img, i) => (
             <img 
               key={`top-${i}`}
               src={img} 
               alt=""
-              className="absolute inset-0 w-full h-full object-cover object-bottom transition-opacity duration-1000"
+              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
               style={{ opacity: currentImageIndex === i ? 1 : 0 }}
               draggable={false}
             />
           ))}
         </div>
         
-        {/* Bottom half - next image */}
-        <div className="absolute bottom-0 left-0 right-0 h-1/2 overflow-hidden">
+        {/* Middle third */}
+        <div className="absolute top-1/3 left-0 right-0 h-1/3 overflow-hidden">
+          {REEL_IMAGES.map((img, i) => (
+            <img 
+              key={`mid-${i}`}
+              src={img} 
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+              style={{ opacity: (currentImageIndex + 5) % REEL_IMAGES.length === i ? 1 : 0 }}
+              draggable={false}
+            />
+          ))}
+        </div>
+        
+        {/* Bottom third */}
+        <div className="absolute top-2/3 left-0 right-0 h-1/3 overflow-hidden">
           {REEL_IMAGES.map((img, i) => (
             <img 
               key={`bottom-${i}`}
               src={img} 
               alt=""
-              className="absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-1000"
-              style={{ opacity: (currentImageIndex + 1) % REEL_IMAGES.length === i ? 1 : 0 }}
+              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+              style={{ opacity: (currentImageIndex + 10) % REEL_IMAGES.length === i ? 1 : 0 }}
               draggable={false}
             />
           ))}
