@@ -532,7 +532,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
         {/* --- FEED --- */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-32">
             {/* Profile Creation Banner - show when profile is incomplete */}
-            {(() => {
+            {userProfile && (() => {
               const hasAvatar = !!userProfile.avatarUrl || !!userProfile.avatar;
               const hasInterests = (userProfile.interests?.length || 0) > 0;
               const hasLocations = (userProfile.favorite_locations?.length || 0) > 0;
