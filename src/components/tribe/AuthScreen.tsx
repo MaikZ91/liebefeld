@@ -301,7 +301,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         </div>
 
         {/* Middle Section - Name Input */}
-        <div className="flex-1 flex flex-col items-center justify-center px-6">
+        <div className="flex-1 flex flex-col items-center justify-end pb-32 px-6">
           
           {/* Name Input - always visible */}
           <div className="mt-8 w-full max-w-xs">
