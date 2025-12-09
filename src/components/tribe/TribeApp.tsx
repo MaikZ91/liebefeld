@@ -29,8 +29,6 @@ import {
   Send,
   X,
   Filter,
-  LayoutList,
-  LayoutTemplate,
   Calendar as CalendarIcon,
 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
@@ -65,10 +63,6 @@ export const TribeApp: React.FC = () => {
     return saved || "ALL";
   });
   const [isCityMenuOpen, setIsCityMenuOpen] = useState(false);
-  const [isCompactMode, setIsCompactMode] = useState(() => {
-    const saved = localStorage.getItem("tribe_view_mode");
-    return saved !== "normal"; // Default to compact (true) unless explicitly set to "normal"
-  });
 
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -192,9 +186,6 @@ export const TribeApp: React.FC = () => {
     localStorage.setItem("tribe_selected_category", selectedCategory);
   }, [selectedCategory]);
 
-  useEffect(() => {
-    localStorage.setItem("tribe_view_mode", isCompactMode ? "compact" : "normal");
-  }, [isCompactMode]);
 
   // Check for new community messages on app start
   useEffect(() => {
@@ -954,7 +945,7 @@ export const TribeApp: React.FC = () => {
 
             {/* MIA Recommendations */}
             {spotlightEvents.length > 0 && (
-              <div className="mb-12">
+              <div className="mb-4">
                 <div className="px-6 mb-5">
                   <h2 className="text-xs font-extrabold text-white uppercase tracking-[0.25em] flex items-center gap-2">
                     <div className="w-4 h-4 rounded-full overflow-hidden">
@@ -992,7 +983,7 @@ export const TribeApp: React.FC = () => {
 
             {/* Feed List */}
             <div className="px-6 space-y-2 pb-12">
-              <div className="flex justify-between items-center border-b border-white/5 pb-4 mb-6">
+              <div className="flex justify-between items-center border-b border-white/5 pb-3 mb-4">
                 <h2 className="text-xs font-extrabold text-white uppercase tracking-[0.25em]">Your Feed</h2>
                 <div className="flex items-center gap-3">
                   {/* Vibe Filter */}
@@ -1053,18 +1044,11 @@ export const TribeApp: React.FC = () => {
                       )}
                     </PopoverContent>
                   </Popover>
-
-                  <button
-                    onClick={() => setIsCompactMode(!isCompactMode)}
-                    className="text-zinc-500 hover:text-white transition-colors"
-                  >
-                    {isCompactMode ? <LayoutTemplate size={16} /> : <LayoutList size={16} />}
-                  </button>
                 </div>
               </div>
               {/* Like Tutorial for first-time Feed visitors */}
               {showLikeTutorial && view === ViewState.FEED && (
-                <div className="mb-6 bg-zinc-900/80 border border-gold/30 rounded-lg p-4 animate-fadeIn">
+                <div className="mb-4 bg-zinc-900/80 border border-gold/30 rounded-lg p-3 animate-fadeIn">
                   <div className="flex justify-between items-start mb-2">
                     <span className="text-[10px] font-bold text-gold uppercase tracking-widest">💡 Tipp</span>
                     <button
@@ -1077,18 +1061,20 @@ export const TribeApp: React.FC = () => {
                       <X size={14} />
                     </button>
                   </div>
-                  <p className="text-xs text-zinc-300 leading-relaxed">
+                  <p className="text-xs text-zinc-300 leading-relaxed mb-2">
                     <strong className="text-white">Like Events</strong> die dich interessieren! Je mehr du likest, desto
-                    besser lernt MIA deinen Geschmack kennen und zeigt dir passende Events zuerst. Nach deinem ersten
-                    Like wird der Feed automatisch auf deine Top-Picks reduziert.
+                    besser lernt MIA deinen Geschmack kennen und zeigt dir passende Events zuerst.
+                  </p>
+                  <p className="text-xs text-zinc-300 leading-relaxed">
+                    <strong className="text-gold">✨ Vibe</strong> – Tippe auf das Sparkles-Icon um eine KI-Zusammenfassung
+                    des Events zu erhalten. Das Bild wird dabei vergrößert angezeigt.
                   </p>
                 </div>
               )}
 
               {feedEvents.length > 0 ? (
                 (() => {
-                  // Group events by date in compact mode
-                  if (isCompactMode) {
+                  // Always compact mode - group events by date
                   const grouped: Record<string, TribeEvent[]> = {};
                     feedEvents.forEach((event) => {
                       if (!grouped[event.date]) grouped[event.date] = [];
@@ -1221,23 +1207,6 @@ export const TribeApp: React.FC = () => {
                         </div>
                       );
                     });
-                  }
-
-                  // Standard mode - no grouping
-                  return feedEvents.map((event) => (
-                    <div key={event.id} className="animate-fade-in transition-all duration-300 ease-out">
-                      <TribeEventCard
-                        event={event}
-                        variant="standard"
-                        onJoinTribe={handleJoinTribe}
-                        onInteraction={handleInteraction}
-                        isLiked={likedEventIds.has(event.id)}
-                        isAttending={attendingEventIds.has(event.id)}
-                        onToggleAttendance={handleToggleAttendance}
-                        matchScore={eventMatchScores.get(event.id)}
-                      />
-                    </div>
-                  ));
                 })()
               ) : (
                 <div className="py-10 text-center text-zinc-600 font-light text-sm">No events in this sector.</div>

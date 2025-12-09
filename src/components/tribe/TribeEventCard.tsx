@@ -47,6 +47,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
   const [summary, setSummary] = useState<string | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
   
   const displayImage = event.image_url;
 
@@ -61,8 +62,13 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
 
   const handleGetSummary = async (e: React.MouseEvent) => {
       e.stopPropagation();
-      if (summary) return;
+      if (summary) {
+        // Toggle expanded view when clicking on already loaded summary
+        setIsExpanded(!isExpanded);
+        return;
+      }
       setLoadingSummary(true);
+      setIsExpanded(true); // Expand image when loading
       const aiSummary = await generateEventSummary(event);
       setSummary(aiSummary);
       setLoadingSummary(false);
@@ -93,9 +99,11 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
   if (variant === 'compact') {
     return (
       <div className={`bg-black border-b border-white/5 transition-all duration-500 ${animationClass} ${isPast ? 'opacity-40 grayscale' : ''}`}>
-        <div className="flex items-center gap-2.5 py-2">
-          {/* Thumbnail - Smaller */}
-          <div className="w-12 h-14 bg-zinc-900 flex-shrink-0 relative overflow-hidden rounded">
+        <div className={`flex items-start gap-2.5 py-2 transition-all duration-300 ${isExpanded ? 'flex-col' : ''}`}>
+          {/* Thumbnail - Expands when Vibe is clicked */}
+          <div className={`bg-zinc-900 flex-shrink-0 relative overflow-hidden rounded transition-all duration-300 ${
+            isExpanded ? 'w-full aspect-video' : 'w-12 h-14'
+          }`}>
             {displayImage ? (
               <img src={displayImage} className="w-full h-full object-cover" />
             ) : (
@@ -103,26 +111,31 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                 <span className="text-[7px] text-zinc-700">?</span>
               </div>
             )}
-            {matchScore !== undefined && (
+            {matchScore !== undefined && !isExpanded && (
               <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-gold text-[7px] font-bold px-1 py-0.5 text-center">
                 {matchScore}%
               </div>
             )}
-            {isPast && (
+            {isExpanded && matchScore !== undefined && (
+              <div className="absolute top-2 left-2 bg-gold text-black text-[9px] font-bold px-2 py-0.5">
+                {matchScore}%
+              </div>
+            )}
+            {isPast && !isExpanded && (
               <div className="absolute top-0 left-0 right-0 bg-zinc-700/90 text-zinc-300 text-[6px] font-bold px-1 py-0.5 text-center uppercase tracking-wider">
                 Vorbei
               </div>
             )}
-            {isLiked && !isPast && (
+            {isLiked && !isPast && !isExpanded && (
               <div className="absolute top-0 left-0 right-0 bg-gold/90 text-black text-[6px] font-bold px-1 py-0.5 text-center">
                 ★
               </div>
             )}
           </div>
 
-          {/* Info - Tighter */}
-          <div className="flex-1 min-w-0">
-            <h3 className={`text-xs font-medium truncate leading-tight ${isLiked ? 'text-gold' : 'text-white'}`}>
+          {/* Info - Full width when expanded */}
+          <div className={`min-w-0 ${isExpanded ? 'w-full px-1' : 'flex-1'}`}>
+            <h3 className={`font-medium leading-tight ${isLiked ? 'text-gold' : 'text-white'} ${isExpanded ? 'text-sm mb-1' : 'text-xs truncate'}`}>
               {event.title}
             </h3>
             <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 mt-0.5">
@@ -130,7 +143,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
               {event.location && (
                 <>
                   <span className="text-zinc-700">•</span>
-                  <span className="truncate text-zinc-400">{event.location}</span>
+                  <span className={`text-zinc-400 ${isExpanded ? '' : 'truncate'}`}>{event.location}</span>
                 </>
               )}
             </div>
@@ -153,45 +166,73 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
           </div>
 
           {/* Quick Actions - Minimal */}
-          <div className="flex gap-1.5 flex-shrink-0">
-            <button 
-              onClick={handleGetSummary}
-              disabled={loadingSummary}
-              className={`p-1 transition-colors ${summary ? 'text-gold' : 'text-zinc-600 hover:text-gold'}`}
-              title="Get Vibe"
-            >
-              {loadingSummary ? (
-                <div className="w-3 h-3 border border-zinc-600 border-t-gold rounded-full animate-spin" />
-              ) : (
-                <Sparkles size={12} fill={summary ? "currentColor" : "none"} />
-              )}
-            </button>
-            <button 
-              onClick={(e) => handleInteractionClick('dislike', e)}
-              className="p-1 text-zinc-600 hover:text-red-500 transition-colors"
-            >
-              <X size={12} />
-            </button>
-            <button 
-              onClick={(e) => handleInteractionClick('like', e)}
-              className={`p-1 transition-colors ${isLiked ? 'text-gold' : 'text-zinc-600 hover:text-gold'}`}
-            >
-              <Heart size={12} fill={isLiked ? "currentColor" : "none"} />
-            </button>
-          </div>
+          {!isExpanded && (
+            <div className="flex gap-1.5 flex-shrink-0">
+              <button 
+                onClick={handleGetSummary}
+                disabled={loadingSummary}
+                className={`p-1 transition-colors ${summary ? 'text-gold' : 'text-zinc-600 hover:text-gold'}`}
+                title="Get Vibe"
+              >
+                {loadingSummary ? (
+                  <div className="w-3 h-3 border border-zinc-600 border-t-gold rounded-full animate-spin" />
+                ) : (
+                  <Sparkles size={12} fill={summary ? "currentColor" : "none"} />
+                )}
+              </button>
+              <button 
+                onClick={(e) => handleInteractionClick('dislike', e)}
+                className="p-1 text-zinc-600 hover:text-red-500 transition-colors"
+              >
+                <X size={12} />
+              </button>
+              <button 
+                onClick={(e) => handleInteractionClick('like', e)}
+                className={`p-1 transition-colors ${isLiked ? 'text-gold' : 'text-zinc-600 hover:text-gold'}`}
+              >
+                <Heart size={12} fill={isLiked ? "currentColor" : "none"} />
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* AI Summary */}
-        {summary && (
-          <div className="px-2 pb-2 animate-fadeIn">
-            <div className="bg-zinc-900/50 border-l-2 border-gold px-2 py-1.5 relative">
+        {/* AI Summary - Shown when expanded */}
+        {isExpanded && (
+          <div className="px-1 pb-2 animate-fadeIn">
+            <div className="bg-zinc-900/50 border-l-2 border-gold px-2 py-1.5 relative mb-2">
+              {loadingSummary ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 border border-zinc-600 border-t-gold rounded-full animate-spin" />
+                  <span className="text-[10px] text-zinc-500">Loading Vibe...</span>
+                </div>
+              ) : summary ? (
+                <>
+                  <p className="text-[10px] text-zinc-300 leading-relaxed pr-4">"{summary}"</p>
+                </>
+              ) : null}
+            </div>
+            {/* Actions row when expanded */}
+            <div className="flex justify-between items-center">
+              <div className="flex gap-2">
+                <button 
+                  onClick={(e) => handleInteractionClick('dislike', e)}
+                  className="px-2 py-1 text-zinc-600 hover:text-red-500 transition-colors text-[9px] border border-zinc-800 rounded"
+                >
+                  <X size={10} className="inline mr-1" /> Skip
+                </button>
+                <button 
+                  onClick={(e) => handleInteractionClick('like', e)}
+                  className={`px-2 py-1 transition-colors text-[9px] border rounded ${isLiked ? 'text-gold border-gold' : 'text-zinc-600 border-zinc-800 hover:text-gold hover:border-gold'}`}
+                >
+                  <Heart size={10} fill={isLiked ? "currentColor" : "none"} className="inline mr-1" /> Like
+                </button>
+              </div>
               <button
-                onClick={(e) => { e.stopPropagation(); setSummary(null); }}
-                className="absolute top-1 right-1 text-zinc-600 hover:text-white transition-colors"
+                onClick={(e) => { e.stopPropagation(); setIsExpanded(false); setSummary(null); }}
+                className="text-[9px] text-zinc-500 hover:text-white px-2 py-1"
               >
-                <X size={10} />
+                Schließen
               </button>
-              <p className="text-[10px] text-zinc-300 leading-relaxed pr-4">"{summary}"</p>
             </div>
           </div>
         )}
