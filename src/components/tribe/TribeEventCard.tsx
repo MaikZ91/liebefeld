@@ -217,9 +217,12 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
                 
-                {/* Match Score Badge - TOP LEFT */}
-                <div className="absolute top-2 left-2 z-20">
-                  <span className="bg-gold text-black px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                {/* Date + Score Badge - TOP LEFT */}
+                <div className="absolute top-2 left-2 z-20 flex gap-1.5">
+                  <span className="bg-black/80 text-gold px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide">
+                    {formatEventDate(event.date)}
+                  </span>
+                  <span className="bg-gold text-black px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide">
                     {displayScore}%
                   </span>
                 </div>
