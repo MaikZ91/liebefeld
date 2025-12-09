@@ -47,6 +47,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [imageProgress, setImageProgress] = useState(0);
   const [eventCount, setEventCount] = useState(0);
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+  const [videoEnded, setVideoEnded] = useState(false);
   const [typewriterIndex, setTypewriterIndex] = useState(0);
   
   // Swipe state
@@ -66,8 +67,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     }
   }, [typewriterIndex]);
 
-  // Reel-style image slideshow with progress
+  // Reel-style image slideshow with progress - only starts after video ends
   useEffect(() => {
+    if (!videoEnded) return;
+    
     const IMAGE_DURATION = 3000;
     const PROGRESS_INTERVAL = 30;
     
@@ -91,7 +94,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       clearInterval(progressTimer);
       clearTimeout(imageTimer);
     };
-  }, [currentImageIndex]);
+  }, [currentImageIndex, videoEnded]);
 
   // Load event count
   useEffect(() => {
@@ -249,7 +252,21 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     >
       {/* Full Screen Background */}
       <div className="absolute inset-0">
-        {REEL_IMAGES.map((img, i) => (
+        {/* Video - plays first */}
+        {!videoEnded && (
+          <video
+            autoPlay
+            muted
+            playsInline
+            onEnded={() => setVideoEnded(true)}
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src="/videos/intro.mp4" type="video/mp4" />
+          </video>
+        )}
+        
+        {/* Slideshow - starts after video ends */}
+        {videoEnded && REEL_IMAGES.map((img, i) => (
           <img 
             key={i}
             src={img} 
