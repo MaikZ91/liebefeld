@@ -31,18 +31,28 @@ const AVATAR_OPTIONS = [
 
 const CITIES = ['Bielefeld', 'Berlin', 'Hamburg', 'Köln', 'München'];
 
+const CATEGORIES = [
+  { id: 'ausgehen', label: 'Ausgehen', icon: '🍸' },
+  { id: 'party', label: 'Party', icon: '🎉' },
+  { id: 'konzerte', label: 'Konzerte', icon: '🎵' },
+  { id: 'sport', label: 'Sport', icon: '⚽' },
+  { id: 'kreativitaet', label: 'Kreativität', icon: '🎨' },
+];
+
 export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [selectedCity, setSelectedCity] = useState('Bielefeld');
   const [isGuestLoading, setIsGuestLoading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [eventCount, setEventCount] = useState(0);
+  const [showCategories, setShowCategories] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
 
   // Reel-style image slideshow
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex(prev => (prev + 1) % REEL_IMAGES.length);
-    }, 1500); // Change image every 1.5 seconds
+    }, 1500);
     return () => clearInterval(interval);
   }, []);
 
@@ -66,17 +76,34 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     loadEventCount();
   }, []);
 
+  const toggleCategory = (categoryId: string) => {
+    setSelectedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) {
+        next.delete(categoryId);
+      } else {
+        next.add(categoryId);
+      }
+      return next;
+    });
+  };
+
   const handleEnter = () => {
     if (!username.trim()) return;
     
-    // Auto-assign random avatar (can be changed later in profile)
     const randomAvatar = AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)];
+    
+    // Save preferred categories to localStorage for MIA pre-configuration
+    if (selectedCategories.size > 0) {
+      localStorage.setItem('tribe_preferred_categories', JSON.stringify(Array.from(selectedCategories)));
+    }
     
     const profile: UserProfile = {
       username: username,
       avatarUrl: randomAvatar,
       bio: 'New Member',
-      homebase: selectedCity
+      homebase: selectedCity,
+      interests: Array.from(selectedCategories)
     };
     
     onLogin(profile);
@@ -182,11 +209,33 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                 type="text" 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                onFocus={() => setShowCategories(true)}
                 placeholder="Wie heißt du?"
                 className="w-full bg-transparent border-b border-white/20 py-3 text-center text-xl font-serif text-white placeholder-zinc-600 outline-none focus:border-gold transition-colors"
                 autoFocus
                 onKeyDown={(e) => e.key === 'Enter' && username.trim() && handleEnter()}
               />
+            </div>
+
+            {/* Category Filters - appear on name focus */}
+            <div className={`overflow-hidden transition-all duration-300 ${showCategories ? 'max-h-32 opacity-100' : 'max-h-0 opacity-0'}`}>
+              <p className="text-[10px] text-zinc-500 text-center mb-2">Was interessiert dich?</p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {CATEGORIES.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => toggleCategory(cat.id)}
+                    className={`px-3 py-1.5 rounded-full text-xs transition-all ${
+                      selectedCategories.has(cat.id)
+                        ? 'bg-gold text-black'
+                        : 'bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700/50'
+                    }`}
+                  >
+                    <span className="mr-1">{cat.icon}</span>
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-1">
@@ -211,14 +260,13 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             <ArrowRight size={14} />
           </button>
 
-          {/* Guest Login - More Prominent */}
+          {/* Guest Login - Very Small */}
           <button 
             onClick={handleGuestLogin}
             disabled={isGuestLoading}
-            className="w-full border border-white/20 text-white py-3 text-xs uppercase tracking-wider hover:bg-white/5 transition-colors flex items-center justify-center gap-2"
+            className="text-zinc-600 text-[9px] hover:text-zinc-400 transition-colors mx-auto block mt-2"
           >
-            <UserX size={14} />
-            {isGuestLoading ? 'Wird geladen...' : 'Erstmal nur schauen'}
+            {isGuestLoading ? '...' : 'erstmal nur schauen'}
           </button>
 
           {/* Social Proof Ticker */}
