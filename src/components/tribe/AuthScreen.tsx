@@ -37,6 +37,8 @@ const CATEGORIES = [
   { id: 'kreativitaet', label: 'Kreativität', icon: '🎨' },
 ];
 
+const TYPEWRITER_TEXT = "Bielefeld ist nur eine Stadt bis du deine Leute findest.";
+
 export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [selectedCity] = useState('Bielefeld');
@@ -44,6 +46,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [eventCount, setEventCount] = useState(0);
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+  const [typewriterIndex, setTypewriterIndex] = useState(0);
   
   // Swipe state
   const [translateY, setTranslateY] = useState(0);
@@ -51,6 +54,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [startY, setStartY] = useState(0);
 
   const canSwipe = username.trim().length > 0;
+  
+  // Typewriter effect
+  useEffect(() => {
+    if (typewriterIndex < TYPEWRITER_TEXT.length) {
+      const timeout = setTimeout(() => {
+        setTypewriterIndex(prev => prev + 1);
+      }, 50);
+      return () => clearTimeout(timeout);
+    }
+  }, [typewriterIndex]);
 
   // Reel-style image slideshow
   useEffect(() => {
@@ -239,24 +252,25 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         }}
       >
         {/* Top Section - Progress Bar + Logo + Tagline */}
-        <div className="pt-4 px-6">
+        <div className="pt-3 px-4">
           {/* Progress Bar */}
-          <div className="flex gap-2 mb-6">
-            <div className={`flex-1 h-1 rounded-full ${canSwipe ? 'bg-white' : 'bg-white/40'}`} />
-            <div className={`flex-1 h-1 rounded-full ${selectedCategories.size > 0 ? 'bg-white' : 'bg-white/40'}`} />
+          <div className="flex gap-1 mb-4">
+            <div className={`flex-1 h-0.5 rounded-full ${canSwipe ? 'bg-white' : 'bg-white/30'}`} />
+            <div className={`flex-1 h-0.5 rounded-full ${selectedCategories.size > 0 ? 'bg-white' : 'bg-white/30'}`} />
           </div>
           
-          <h1 className="text-center text-2xl font-serif tracking-[0.4em] text-white">
+          <h1 className="text-center text-lg font-serif tracking-[0.3em] text-white">
             THE TRIBE
           </h1>
           
-          <p className="text-center text-white/60 text-sm mt-4 leading-relaxed">
-            Bielefeld ist nur eine Stadt bis du deine Leute findest.
+          <p className="text-center text-white/70 text-xs mt-3 min-h-[2em]">
+            {TYPEWRITER_TEXT.slice(0, typewriterIndex)}
+            {typewriterIndex < TYPEWRITER_TEXT.length && <span className="animate-pulse">|</span>}
           </p>
           
           <button 
             onClick={(e) => { e.stopPropagation(); if (canSwipe) handleEnter(); }}
-            className="block mx-auto mt-2 text-red-500 text-sm font-medium hover:text-red-400 transition-colors"
+            className="block mx-auto mt-1 text-red-500 text-xs font-medium hover:text-red-400 transition-colors"
           >
             Finde sie jetzt →
           </button>
