@@ -153,32 +153,31 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* Reel-style Image Slideshow Background */}
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-end pb-8 p-6 relative overflow-hidden">
+      {/* Reel-style Image Slideshow Background - More Visible */}
       <div className="absolute inset-0 overflow-hidden">
         {REEL_IMAGES.map((img, i) => (
           <div
             key={i}
             className="absolute inset-0 transition-opacity duration-1000"
             style={{ 
-              opacity: currentImageIndex === i ? 0.35 : 0,
+              opacity: currentImageIndex === i ? 1 : 0,
               zIndex: currentImageIndex === i ? 1 : 0
             }}
           >
             <img 
               src={img} 
               alt=""
-              className="w-full h-full object-cover scale-110"
+              className="w-full h-full object-cover"
             />
           </div>
         ))}
-        {/* Dark gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/50 z-10" />
+        {/* Gradient overlay - only at bottom for form readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent z-10" />
       </div>
 
-      {/* Background Ambience */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-gold/10 blur-[100px] rounded-full pointer-events-none z-20"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-zinc-800/20 blur-[100px] rounded-full pointer-events-none z-20"></div>
+      {/* Subtle vignette effect */}
+      <div className="absolute inset-0 shadow-[inset_0_0_100px_rgba(0,0,0,0.5)] z-20 pointer-events-none" />
 
       <div className="w-full max-w-sm z-30">
         
