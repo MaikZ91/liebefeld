@@ -230,19 +230,20 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                   </button>
                 </div>
                 
-                <div className="absolute bottom-5 left-5 right-5 z-10">
-                    {/* Match Score - always show */}
-                    <div className="mb-3">
-                      <span className="bg-gold text-black px-3 py-1 text-sm font-bold uppercase tracking-wide shadow-lg">
+                <div className="absolute bottom-4 left-4 right-4 z-10">
+                    {/* Match Score Badge - top left */}
+                    <div className="absolute -top-12 left-0">
+                      <span className="bg-gold text-black px-2 py-1 text-xs font-bold uppercase tracking-wide shadow-lg">
                         {matchScore !== undefined ? matchScore : Math.floor(Math.random() * 30) + 70}% Match
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 mb-2">
-                         <span className="bg-black text-gold px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest">{formatEventDate(event.date, true)}</span>
-                         {event.category && <span className="text-white text-[10px] uppercase tracking-widest font-medium">{event.category}</span>}
+                    
+                    <div className="flex items-center gap-2 mb-1">
+                         <span className="bg-black/80 text-gold px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest">{formatEventDate(event.date, true)}</span>
+                         {event.category && <span className="text-white/80 text-[9px] uppercase tracking-widest">{event.category}</span>}
                     </div>
-                    <h2 className="text-2xl font-bold text-white leading-tight mb-2">{event.title}</h2>
-                    <p className="text-white text-sm font-medium mb-3">{event.city}</p>
+                    <h2 className="text-lg font-bold text-white leading-tight mb-1 line-clamp-2">{event.title}</h2>
+                    <p className="text-white/90 text-xs font-medium mb-2">{event.location || event.city}</p>
                     
                     {/* Community Section */}
                     <div className="flex items-center gap-3 mb-3">
