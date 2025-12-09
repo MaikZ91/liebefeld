@@ -511,55 +511,34 @@ export const TribeApp: React.FC = () => {
   const spotlightEvents = filteredEvents.slice(0, 5);
   const feedEvents = filteredEvents; // Show all events in feed, including spotlight events (sorted by match score)
 
-  const handleLogin = async (profile: UserProfile) => {
-    try {
-      // Call Edge Function to create user profile in DB
-      const { data, error } = await supabase.functions.invoke("manage_user_profile", {
-        body: {
-          action: "createOrUpdateProfile",
-          profile: {
-            username: profile.username,
-            avatar: profile.avatarUrl,
-            interests: [],
-            favorite_locations: profile.homebase ? [profile.homebase] : [],
-            hobbies: [],
-          },
-        },
-      });
+  const handleLogin = (profile: UserProfile) => {
+    // Save profile locally and update state immediately (no waiting)
+    setUserProfile(profile);
+    if (profile.homebase) setSelectedCity(profile.homebase);
+    localStorage.setItem("tribe_user_profile", JSON.stringify(profile));
+    setRequiresAuth(false);
 
+    // Fire-and-forget: Create profile in DB in background
+    supabase.functions.invoke("manage_user_profile", {
+      body: {
+        action: "createOrUpdateProfile",
+        profile: {
+          username: profile.username,
+          avatar: profile.avatarUrl,
+          interests: [],
+          favorite_locations: profile.homebase ? [profile.homebase] : [],
+          hobbies: [],
+        },
+      },
+    }).then(({ error }) => {
       if (error) {
         console.error("Error creating user profile:", error);
-        toast({
-          title: "Fehler",
-          description: "Profil konnte nicht erstellt werden",
-          variant: "destructive",
-        });
-        return;
+      } else {
+        console.log("User profile created in background");
       }
-
-      console.log("User profile created:", data);
-
-      // Welcome message removed from chat - shown in NewMembersWidget instead
-      // Firebase push notification still sent via trigger on user_profiles insert
-
-      // Save profile locally and update state
-      setUserProfile(profile);
-      if (profile.homebase) setSelectedCity(profile.homebase);
-      localStorage.setItem("tribe_user_profile", JSON.stringify(profile));
-      setRequiresAuth(false);
-
-      toast({
-        title: "Willkommen!",
-        description: "Dein Profil wurde erfolgreich erstellt",
-      });
-    } catch (error) {
-      console.error("Unexpected error during login:", error);
-      toast({
-        title: "Fehler",
-        description: "Ein unerwarteter Fehler ist aufgetreten",
-        variant: "destructive",
-      });
-    }
+    }).catch((error) => {
+      console.error("Unexpected error during profile creation:", error);
+    });
   };
 
   const recalculateMatchScores = () => {
