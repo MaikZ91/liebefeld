@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { UserProfile } from '@/types/tribe';
-import { ArrowRight, UserX, Sparkles, Users } from 'lucide-react';
+import { ChevronUp, Play, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 // Import reel images
@@ -29,8 +29,6 @@ const AVATAR_OPTIONS = [
   "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=150&h=150"
 ];
 
-const CITIES = ['Bielefeld', 'Berlin', 'Hamburg', 'Köln', 'München'];
-
 const CATEGORIES = [
   { id: 'ausgehen', label: 'Ausgehen', icon: '🍸' },
   { id: 'party', label: 'Party', icon: '🎉' },
@@ -39,22 +37,62 @@ const CATEGORIES = [
   { id: 'kreativitaet', label: 'Kreativität', icon: '🎨' },
 ];
 
+const TYPEWRITER_TEXTS = [
+  "Bielefeld ist nur eine Stadt bis du deine Leute findest.",
+  "Entdecke Events, die zu dir passen.",
+  "Finde deine Community in der Stadt."
+];
+
 export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
-  const [selectedCity, setSelectedCity] = useState('Bielefeld');
+  const [selectedCity] = useState('Bielefeld');
   const [isGuestLoading, setIsGuestLoading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [eventCount, setEventCount] = useState(0);
-  const [showCategories, setShowCategories] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+  
+  // Swipe state
+  const [translateY, setTranslateY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Typewriter state
+  const [typewriterIndex, setTypewriterIndex] = useState(0);
+  const [displayText, setDisplayText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const canSwipe = username.trim().length > 0;
 
   // Reel-style image slideshow
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex(prev => (prev + 1) % REEL_IMAGES.length);
-    }, 1500);
+    }, 2500);
     return () => clearInterval(interval);
   }, []);
+
+  // Typewriter effect
+  useEffect(() => {
+    const currentText = TYPEWRITER_TEXTS[typewriterIndex];
+    const timeout = setTimeout(() => {
+      if (!isDeleting) {
+        if (displayText.length < currentText.length) {
+          setDisplayText(currentText.slice(0, displayText.length + 1));
+        } else {
+          setTimeout(() => setIsDeleting(true), 2000);
+        }
+      } else {
+        if (displayText.length > 0) {
+          setDisplayText(displayText.slice(0, -1));
+        } else {
+          setIsDeleting(false);
+          setTypewriterIndex((prev) => (prev + 1) % TYPEWRITER_TEXTS.length);
+        }
+      }
+    }, isDeleting ? 30 : 50);
+    return () => clearTimeout(timeout);
+  }, [displayText, isDeleting, typewriterIndex]);
 
   // Load event count for social proof
   useEffect(() => {
@@ -93,7 +131,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     
     const randomAvatar = AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)];
     
-    // Save preferred categories to localStorage for MIA pre-configuration
     if (selectedCategories.size > 0) {
       localStorage.setItem('tribe_preferred_categories', JSON.stringify(Array.from(selectedCategories)));
     }
@@ -152,148 +189,249 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     }
   };
 
-  // Image indices for top and bottom strips
-  const bottomImageIndex = (currentImageIndex + 4) % REEL_IMAGES.length;
+  // Touch handlers for swipe-up
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!canSwipe) return;
+    setIsDragging(true);
+    setStartY(e.touches[0].clientY);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || !canSwipe) return;
+    const currentY = e.touches[0].clientY;
+    const diff = startY - currentY;
+    if (diff > 0) {
+      setTranslateY(Math.min(diff, 300));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging || !canSwipe) return;
+    setIsDragging(false);
+    
+    if (translateY > 150) {
+      handleEnter();
+    } else {
+      setTranslateY(0);
+    }
+  };
+
+  // Mouse handlers for desktop
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!canSwipe) return;
+    setIsDragging(true);
+    setStartY(e.clientY);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !canSwipe) return;
+      const diff = startY - e.clientY;
+      if (diff > 0) {
+        setTranslateY(Math.min(diff, 300));
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (!isDragging || !canSwipe) return;
+      setIsDragging(false);
+      
+      if (translateY > 150) {
+        handleEnter();
+      } else {
+        setTranslateY(0);
+      }
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, startY, translateY, canSwipe]);
+
+  const swipeProgress = Math.min(translateY / 150, 1);
 
   return (
-    <div className="h-screen bg-black text-white flex flex-col relative overflow-hidden">
-      {/* Top Image Strip */}
-      <div className="relative h-[35vh] min-h-[200px] overflow-hidden flex-shrink-0">
-        {REEL_IMAGES.map((img, i) => (
-          <img 
-            key={`top-${i}`}
-            src={img} 
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-1000"
-            style={{ 
-              opacity: currentImageIndex === i ? 1 : 0,
-            }}
+    <div className="h-screen bg-black text-white flex flex-col relative overflow-hidden select-none">
+      {/* Progress Bar at Top */}
+      <div className="absolute top-0 left-0 right-0 z-50 flex gap-1 px-4 pt-3">
+        <div className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
+          <div className="h-full bg-white w-1/2" />
+        </div>
+        <div className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-white transition-all duration-300" 
+            style={{ width: `${canSwipe ? 100 : 0}%` }}
           />
-        ))}
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black z-10" />
-        
-        {/* Logo - centered on top image */}
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center">
-          <div className="relative w-12 h-12 mb-2">
-            <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L2 22H22L12 2Z" className="fill-white"/>
-              <circle cx="12" cy="14" r="3" className="fill-black"/>
-            </svg>
-          </div>
-          <h1 className="text-2xl font-serif font-bold tracking-[0.2em] text-white drop-shadow-lg">THE TRIBE</h1>
-          <p className="text-[10px] text-gold uppercase tracking-widest mt-1 drop-shadow-lg">Dein Netzwerk in deiner Stadt</p>
         </div>
-        
-        {/* Live Badge */}
-        <div className="absolute top-4 right-4 z-30 flex items-center gap-2 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-          <span className="text-[10px] text-white font-medium">LIVE</span>
-        </div>
-        
-        {/* Event Counter */}
-        {eventCount > 0 && (
-          <div className="absolute top-4 left-4 z-30 bg-gold text-black px-3 py-1.5 rounded-full">
-            <span className="text-[11px] font-bold">{eventCount} Events diese Woche</span>
-          </div>
-        )}
       </div>
 
-      {/* Middle Section - Form on black */}
-      <div className="relative z-20 flex-1 flex flex-col justify-center bg-black px-6">
+      {/* Header Section - Logo + Typewriter */}
+      <div className="relative z-40 pt-10 px-6 pb-4 bg-gradient-to-b from-black via-black/95 to-transparent">
+        {/* THE TRIBE Logo */}
+        <h1 className="text-center text-2xl font-serif tracking-[0.3em] text-white mb-3">
+          T H E &nbsp; T R I B E
+        </h1>
+        
+        {/* Typewriter Text */}
+        <p className="text-center text-white/90 text-sm min-h-[40px]">
+          {displayText}
+          <span className="animate-pulse">|</span>
+        </p>
+        
+        {/* "Finde sie jetzt" Link */}
+        <p className="text-center text-red-500 text-sm mt-2 cursor-pointer hover:text-red-400 transition-colors">
+          Finde sie jetzt →
+        </p>
+      </div>
 
-        {/* Compact Form */}
-        <div className="space-y-3 animate-fadeIn max-w-sm mx-auto w-full">
-          <div className="text-center">
-            <h2 className="text-lg font-light">Entdecke was läuft</h2>
-          </div>
-
-          <div className="space-y-2">
-            <input 
-              type="text" 
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              onFocus={() => setShowCategories(true)}
-              placeholder="Wie heißt du?"
-              className="w-full bg-zinc-900 border border-white/20 rounded-lg py-3 text-center text-lg font-serif text-white placeholder-zinc-500 outline-none focus:border-gold transition-colors"
-              autoFocus
-              onKeyDown={(e) => e.key === 'Enter' && username.trim() && handleEnter()}
+      {/* Main Content - Swipeable Area */}
+      <div 
+        ref={containerRef}
+        className="flex-1 relative"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        style={{
+          transform: `translateY(-${translateY}px)`,
+          transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+        }}
+      >
+        {/* Background Image Slideshow */}
+        <div className="absolute inset-0">
+          {REEL_IMAGES.map((img, i) => (
+            <img 
+              key={i}
+              src={img} 
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
+              style={{ opacity: currentImageIndex === i ? 1 : 0 }}
+              draggable={false}
             />
+          ))}
+          {/* Gradient Overlays */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90" />
+        </div>
 
-            {/* Category Filters */}
-            <div className={`overflow-hidden transition-all duration-300 ${showCategories ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="flex flex-wrap gap-1.5 justify-center py-1">
-                {CATEGORIES.map(cat => (
-                  <button
-                    key={cat.id}
-                    onClick={() => toggleCategory(cat.id)}
-                    className={`px-2.5 py-1 rounded-full text-[10px] transition-all ${
-                      selectedCategories.has(cat.id)
-                        ? 'bg-gold text-black'
-                        : 'bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-700'
-                    }`}
-                  >
-                    <span className="mr-1">{cat.icon}</span>
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
+        {/* Play Button Center */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-16 h-16 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/20">
+            <Play className="w-8 h-8 text-white ml-1" fill="white" />
           </div>
+        </div>
 
-          {/* Main CTA */}
-          <button 
-            onClick={handleEnter}
-            disabled={!username.trim()}
-            className="w-full bg-gold text-black py-3 font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 hover:bg-white transition-colors disabled:opacity-40 rounded-lg shadow-[0_0_30px_rgba(212,180,131,0.4)]"
+        {/* "Neu in Bielefeld?" Banner */}
+        <div className="absolute bottom-32 left-0 right-0 pointer-events-none">
+          <div className="bg-gradient-to-r from-transparent via-black/60 to-transparent py-2">
+            <p className="text-center text-3xl font-bold text-white drop-shadow-lg">
+              Neu in Bielefeld?
+            </p>
+          </div>
+        </div>
+
+        {/* Swipe Up Indicator */}
+        <div 
+          className={`absolute bottom-16 left-1/2 -translate-x-1/2 transition-all duration-300 ${
+            canSwipe ? 'opacity-100' : 'opacity-40'
+          }`}
+        >
+          <div 
+            className="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center shadow-lg cursor-pointer animate-bounce"
+            style={{
+              transform: `scale(${1 + swipeProgress * 0.3})`,
+              backgroundColor: `hsl(0, ${70 + swipeProgress * 30}%, ${45 + swipeProgress * 15}%)`
+            }}
           >
-            <Sparkles size={14} />
-            Los geht's
-            <ArrowRight size={14} />
-          </button>
+            <ChevronUp className="w-8 h-8 text-white" />
+          </div>
+        </div>
+      </div>
 
-          {/* Guest Login */}
+      {/* Bottom Section - Form & CTA */}
+      <div 
+        className="relative z-30 bg-black px-6 pb-6 pt-4"
+        style={{
+          transform: `translateY(-${translateY * 0.5}px)`,
+          opacity: 1 - swipeProgress * 0.5,
+          transition: isDragging ? 'none' : 'all 0.3s ease-out'
+        }}
+      >
+        {/* JETZT ENTDECKEN */}
+        <h2 className="text-center text-2xl font-bold tracking-widest mb-1">
+          JETZT ENTDECKEN
+        </h2>
+        <p className="text-center text-white/60 text-sm mb-2">
+          Kostenlos starten
+        </p>
+        <p className="text-center text-white/40 text-xs mb-4">
+          {eventCount > 0 ? `${eventCount}+ aktive Mitglieder` : '200+ aktive Mitglieder'}
+        </p>
+
+        {/* Name Input */}
+        <input 
+          type="text" 
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Dein Name"
+          className="w-full bg-transparent border border-white/30 rounded-full py-3 px-5 text-center text-white placeholder-white/40 outline-none focus:border-red-500 transition-colors mb-3"
+          onKeyDown={(e) => e.key === 'Enter' && canSwipe && handleEnter()}
+        />
+
+        {/* Category Chips */}
+        <div className="flex flex-wrap gap-2 justify-center mb-4">
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat.id}
+              onClick={() => toggleCategory(cat.id)}
+              className={`px-3 py-1.5 rounded-full text-xs transition-all ${
+                selectedCategories.has(cat.id)
+                  ? 'bg-red-600 text-white'
+                  : 'bg-white/10 text-white/70 border border-white/20 hover:bg-white/20'
+              }`}
+            >
+              <span className="mr-1">{cat.icon}</span>
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Events Badge */}
+        <div className="flex justify-center mb-3">
+          <div className="flex items-center gap-2 border border-red-600/50 rounded-full px-4 py-2">
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+            <span className="text-white/80 text-xs">Events in deiner Nähe</span>
+          </div>
+        </div>
+
+        {/* Swipe Hint or Guest Login */}
+        {canSwipe ? (
+          <p className="text-center text-white/40 text-xs animate-pulse">
+            ↑ Nach oben wischen zum Starten
+          </p>
+        ) : (
           <button 
             onClick={handleGuestLogin}
             disabled={isGuestLoading}
-            className="text-zinc-500 text-[9px] hover:text-white transition-colors mx-auto block"
+            className="text-white/40 text-xs hover:text-white/60 transition-colors mx-auto block"
           >
-            {isGuestLoading ? '...' : 'erstmal nur schauen'}
+            {isGuestLoading ? '...' : 'Erstmal nur schauen →'}
           </button>
-        </div>
-      </div>
-
-      {/* Bottom Image Strip */}
-      <div className="relative h-[25vh] min-h-[150px] overflow-hidden flex-shrink-0">
-        {REEL_IMAGES.map((img, i) => (
-          <img 
-            key={`bottom-${i}`}
-            src={img} 
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-1000"
-            style={{ 
-              opacity: bottomImageIndex === i ? 1 : 0,
-            }}
-          />
-        ))}
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black z-10" />
-        
-        {/* Trending Badge */}
-        <div className="absolute bottom-4 right-4 z-20 flex items-center gap-1.5 bg-red-500/90 px-2.5 py-1 rounded-full">
-          <Sparkles size={10} className="text-white" />
-          <span className="text-[10px] text-white font-medium">TRENDING</span>
-        </div>
+        )}
       </div>
 
       <style>{`
-        .animate-fadeIn {
-          animation: fadeIn 0.5s ease-out;
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-8px); }
         }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
+        .animate-bounce {
+          animation: bounce 1.5s ease-in-out infinite;
         }
       `}</style>
     </div>
