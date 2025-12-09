@@ -231,17 +231,20 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                 </div>
                 
                 <div className="absolute bottom-5 left-5 right-5">
+                    {/* Match Score - Top prominent */}
+                    {matchScore !== undefined && (
+                      <div className="mb-3">
+                        <span className="bg-gold text-black px-3 py-1 text-sm font-bold uppercase tracking-wide shadow-lg">
+                          {matchScore}% Match
+                        </span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-3 mb-2">
-                         <span className="bg-black text-gold px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest">{formatEventDate(event.date, true)}</span>
-                         {event.category && <span className="text-zinc-300 text-[10px] uppercase tracking-widest">{event.category}</span>}
-                         {matchScore !== undefined && (
-                           <span className="bg-gold/90 text-black px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
-                             {matchScore}% Match
-                           </span>
-                         )}
+                         <span className="bg-black/90 text-gold px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest">{formatEventDate(event.date, true)}</span>
+                         {event.category && <span className="text-zinc-300 text-[10px] uppercase tracking-widest drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">{event.category}</span>}
                     </div>
-                    <h2 className="text-2xl font-light text-white leading-none mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">{event.title}</h2>
-                    <p className="text-zinc-300 text-xs font-light mb-3 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{event.city}</p>
+                    <h2 className="text-2xl font-semibold text-white leading-tight mb-2" style={{ textShadow: '0 2px 8px rgba(0,0,0,1), 0 0 20px rgba(0,0,0,0.8)' }}>{event.title}</h2>
+                    <p className="text-zinc-200 text-xs font-medium mb-3" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>{event.city}</p>
                     
                     {/* Community Section */}
                     <div className="flex items-center gap-3 mb-3">
