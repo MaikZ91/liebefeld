@@ -121,13 +121,8 @@ export const TribeApp: React.FC = () => {
   // New message notification state
   const [hasNewCommunityMessages, setHasNewCommunityMessages] = useState(false);
 
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
-    const saved = localStorage.getItem("tribe_user_profile");
-    return saved ? JSON.parse(saved) : null;
-  });
-  const [requiresAuth, setRequiresAuth] = useState<boolean>(() => {
-    return !localStorage.getItem("tribe_user_profile");
-  });
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [requiresAuth, setRequiresAuth] = useState<boolean>(false);
   const [showProfileHint, setShowProfileHint] = useState<boolean>(false);
 
   // Check if user profile is complete (has avatar, interests, and locations)

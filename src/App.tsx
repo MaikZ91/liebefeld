@@ -25,7 +25,7 @@ const CSAEPolicies = lazy(() => import("./pages/CSAEPolicies"));
 const Chat = lazy(() => import("./pages/Chat"));
 const Challenge = lazy(() => import("./pages/Challenge"));
 const Heatmap = lazy(() => import('@/pages/Heatmap'));
-import { TribeApp } from "./components/tribe/TribeApp";
+const Tribe = lazy(() => import("./pages/Tribe"));
 const UserDirectory = lazy(() => import("./components/users/UserDirectory"));
 const EventCalendar = lazy(() => import("./components/EventCalendar"));
 
@@ -145,7 +145,7 @@ function App() {
               <Suspense fallback={null}>
                 <Routes>
                   {/* Tribe as main page */}
-                  <Route path="/" element={<TribeApp />} />
+                  <Route path="/" element={<Tribe />} />
                   
                   {/* Old heatmap page */}
                   <Route path="/old" element={<Layout><Heatmap /></Layout>} />

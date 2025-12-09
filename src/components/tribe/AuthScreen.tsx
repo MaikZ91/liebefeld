@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserProfile } from '@/types/tribe';
 import { ChevronUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,7 +13,6 @@ import reel6 from '@/assets/tribe/reel-6.jpg';
 import reel7 from '@/assets/tribe/reel-7.jpg';
 import reel8 from '@/assets/tribe/reel-8.jpg';
 import reel9 from '@/assets/tribe/reel-9.jpg';
-import videoPoster from '@/assets/tribe/video-poster.jpg';
 
 const REEL_IMAGES = [reel1, reel2, reel3, reel4, reel5, reel6, reel7, reel8, reel9];
 
@@ -48,39 +47,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [imageProgress, setImageProgress] = useState(0);
   const [eventCount, setEventCount] = useState(0);
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
-  const [videoEnded, setVideoEnded] = useState(false);
-  const [videoProgress, setVideoProgress] = useState(0);
-  const [showNameInput, setShowNameInput] = useState(false);
   const [typewriterIndex, setTypewriterIndex] = useState(0);
   
   // Swipe state
   const [translateY, setTranslateY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
-  
-  const videoRef = useRef<HTMLVideoElement>(null);
-  
-  // Start video on mount
-  useEffect(() => {
-    const video = videoRef.current;
-    if (video) {
-      video.play().catch(err => {
-        console.log('Video autoplay failed:', err);
-        // If autoplay fails, skip to slideshow
-        setVideoEnded(true);
-      });
-    }
-  }, []);
 
   const canSwipe = username.trim().length > 0;
-  
-  // Delay showing name input
-  // Show name input when video ends (slideshow starts)
-  useEffect(() => {
-    if (videoEnded) {
-      setShowNameInput(true);
-    }
-  }, [videoEnded]);
   
   // Typewriter effect
   useEffect(() => {
@@ -92,12 +66,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     }
   }, [typewriterIndex]);
 
-  // Reel-style image slideshow with progress - only starts after video ends
+  // Reel-style image slideshow with progress
   useEffect(() => {
-    if (!videoEnded) return;
-    
-    const IMAGE_DURATION = 1000;
-    const PROGRESS_INTERVAL = 20;
+    const IMAGE_DURATION = 3000;
+    const PROGRESS_INTERVAL = 30;
     
     // Reset progress when image changes
     setImageProgress(0);
@@ -119,7 +91,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       clearInterval(progressTimer);
       clearTimeout(imageTimer);
     };
-  }, [currentImageIndex, videoEnded]);
+  }, [currentImageIndex]);
 
   // Load event count
   useEffect(() => {
@@ -277,38 +249,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     >
       {/* Full Screen Background */}
       <div className="absolute inset-0">
-        {/* Poster image - shows immediately while video loads */}
-        {!videoEnded && (
-          <img 
-            src={videoPoster} 
-            alt="" 
-            className="absolute inset-0 w-full h-full object-contain bg-black"
-          />
-        )}
-        
-        {/* Video - plays on top of poster */}
-        {!videoEnded && (
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            playsInline
-            preload="auto"
-            onEnded={() => setVideoEnded(true)}
-            onTimeUpdate={(e) => {
-              const video = e.currentTarget;
-              if (video.duration) {
-                setVideoProgress((video.currentTime / video.duration) * 100);
-              }
-            }}
-            className="absolute inset-0 w-full h-full object-contain bg-transparent"
-          >
-            <source src="/videos/intro.mp4" type="video/mp4" />
-          </video>
-        )}
-        
-        {/* Slideshow - starts after video ends */}
-        {videoEnded && REEL_IMAGES.map((img, i) => (
+        {REEL_IMAGES.map((img, i) => (
           <img 
             key={i}
             src={img} 
@@ -332,19 +273,17 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       >
         {/* Top Section - Progress Bar + Logo + Tagline */}
         <div className="pt-3 px-4">
-          {/* Progress Bar - shows video progress first, then slideshow */}
+          {/* Progress Bar - continuous like video */}
           <div className="w-full h-0.5 rounded-full bg-white/20 overflow-hidden mb-4">
             <div 
               className="h-full bg-white transition-none"
               style={{ 
-                width: videoEnded 
-                  ? `${((currentImageIndex + imageProgress / 100) / REEL_IMAGES.length) * 100}%`
-                  : `${videoProgress}%`
+                width: `${((currentImageIndex + imageProgress / 100) / REEL_IMAGES.length) * 100}%`
               }}
             />
           </div>
           
-          <h1 className="text-center text-sm font-light tracking-[0.5em] text-white uppercase">
+          <h1 className="text-center text-lg font-serif tracking-[0.3em] text-white">
             THE TRIBE
           </h1>
           
@@ -361,21 +300,23 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
           </button>
         </div>
 
-        {/* Middle Section - Name Input */}
-        <div className="flex-1 flex flex-col items-center justify-end pb-8 px-6">
-          {/* Name Input - appears after delay */}
-          {showNameInput && (
-            <div className="w-full max-w-xs animate-fade-in">
-              <input 
-                type="text" 
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Dein Name zum Starten"
-                className="w-full bg-black/50 backdrop-blur-sm border border-white/20 rounded-full py-3 px-5 text-center text-sm text-white placeholder-white/40 outline-none focus:border-red-500 transition-all"
-                onKeyDown={(e) => e.key === 'Enter' && canSwipe && handleEnter()}
-              />
-            </div>
-          )}
+        {/* Middle Section - Main Visual + Name Input */}
+        <div className="flex-1 flex flex-col items-center justify-center px-6">
+          <p className="text-5xl font-bold text-white text-center leading-tight drop-shadow-2xl">
+            Neu in<br/>Bielefeld?
+          </p>
+          
+          {/* Name Input - always visible */}
+          <div className="mt-8 w-full max-w-xs">
+            <input 
+              type="text" 
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Dein Name zum Starten"
+              className="w-full bg-black/50 backdrop-blur-sm border border-white/20 rounded-full py-3 px-5 text-center text-sm text-white placeholder-white/40 outline-none focus:border-red-500 transition-all"
+              onKeyDown={(e) => e.key === 'Enter' && canSwipe && handleEnter()}
+            />
+          </div>
           
           {/* Interests - appear when name has at least 1 character */}
           {username.length > 0 && (
@@ -401,7 +342,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         </div>
 
         {/* Bottom Section - Swipe CTA */}
-        <div className="px-6 pb-6">
+        <div className="px-6 pb-12">
           {/* Swipe Up Button */}
           <div className="flex flex-col items-center">
             <div 
