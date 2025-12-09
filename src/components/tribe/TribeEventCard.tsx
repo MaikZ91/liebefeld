@@ -348,14 +348,21 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
             {/* Info */}
             <div className="flex-1 min-w-0 pt-1">
                 <div className="flex justify-between items-start mb-2">
-                    <span className="text-[11px] text-gold font-medium uppercase tracking-widest">{formatEventDate(event.date)} • {formatTime(event.time)}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-gold font-medium uppercase tracking-widest">{formatEventDate(event.date)} • {formatTime(event.time)}</span>
+                      {matchScore !== undefined && (
+                        <span className="bg-gold text-black text-[10px] font-bold px-1.5 py-0.5 uppercase">
+                          {matchScore}%
+                        </span>
+                      )}
+                    </div>
                     <button onClick={(e) => { e.stopPropagation(); }} className="text-zinc-500 hover:text-white transition-colors"><Share2 size={16} strokeWidth={1.5} /></button>
                 </div>
-                <h3 className={`text-xl font-normal leading-tight mb-1 truncate ${isLiked ? 'text-gold' : 'text-white'}`}>
+                <h3 className={`text-lg font-medium leading-tight mb-1 ${isLiked ? 'text-gold' : 'text-white'}`} style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
                     {event.title}
                 </h3>
-                <p className="text-sm text-zinc-500 font-light mb-4 truncate">
-                  {event.location ? <span className="text-white font-medium">{event.location}, </span> : ''}
+                <p className="text-sm text-zinc-400 font-light mb-4 truncate">
+                  {event.location ? <span className="text-zinc-200 font-medium">{event.location}, </span> : ''}
                   {event.city}
                 </p>
                 
