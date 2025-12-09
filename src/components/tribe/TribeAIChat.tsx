@@ -52,7 +52,7 @@ const EventCarousel: React.FC<{ events: TribeEvent[] }> = ({ events }) => {
   }
 
   return (
-    <div className="mt-4 w-full space-y-3">
+    <div className="mt-4 space-y-3 max-w-full">
       {/* Top Pick - Featured Event */}
       <div className="relative">
         <div className="absolute -left-1 top-3 z-10">
@@ -64,71 +64,29 @@ const EventCarousel: React.FC<{ events: TribeEvent[] }> = ({ events }) => {
         <TribeEventCard event={topEvent} variant="standard" matchScore={topMatchScore} />
       </div>
 
-      {/* Other Events - Compact Horizontal Scroll */}
+      {/* Other Events - Stacked vertically */}
       {otherEvents.length > 0 && (
         <div className="space-y-2">
-          <div className="flex items-center justify-between px-1">
-            <span className="text-[10px] text-zinc-500 uppercase tracking-widest">
-              {otherEvents.length} weitere Vorschläge
-            </span>
-            {otherEvents.length > 2 && (
-              <div className="flex items-center gap-1">
-                <button 
-                  onClick={() => scrollToIndex(Math.max(0, currentIndex - 1))}
-                  className="p-1 text-zinc-600 hover:text-white transition-colors"
-                  disabled={currentIndex === 0}
-                >
-                  <ChevronLeft size={14} />
-                </button>
-                <span className="text-[10px] text-zinc-600">{currentIndex + 1}/{otherEvents.length}</span>
-                <button 
-                  onClick={() => scrollToIndex(Math.min(otherEvents.length - 1, currentIndex + 1))}
-                  className="p-1 text-zinc-600 hover:text-white transition-colors"
-                  disabled={currentIndex === otherEvents.length - 1}
-                >
-                  <ChevronRight size={14} />
-                </button>
-              </div>
-            )}
-          </div>
+          <span className="text-[10px] text-zinc-500 uppercase tracking-widest px-1">
+            {otherEvents.length} weitere Vorschläge
+          </span>
           
-          {/* Horizontal scroll container */}
-          <div 
-            ref={containerRef}
-            className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-2"
-            onScroll={(e) => {
-              const container = e.currentTarget;
-              const cardWidth = container.offsetWidth * 0.85 + 12;
-              const newIndex = Math.round(container.scrollLeft / cardWidth);
-              if (newIndex !== currentIndex) setCurrentIndex(newIndex);
-            }}
-          >
-            {otherEvents.map((evt, idx) => {
+          {/* Show max 3 other events stacked */}
+          <div className="space-y-2">
+            {otherEvents.slice(0, isExpanded ? otherEvents.length : 2).map((evt, idx) => {
               const matchScore = personalizationService.calculateMatchScore(evt);
-              return (
-                <div 
-                  key={idx} 
-                  className="flex-shrink-0 w-[85%] snap-start"
-                >
-                  <CompactEventCard event={evt} matchScore={matchScore} />
-                </div>
-              );
+              return <CompactEventCard key={idx} event={evt} matchScore={matchScore} />;
             })}
           </div>
 
-          {/* Dots indicator */}
-          {otherEvents.length > 1 && otherEvents.length <= 5 && (
-            <div className="flex justify-center gap-1.5">
-              {otherEvents.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => scrollToIndex(idx)}
-                  className={`w-1.5 h-1.5 rounded-full transition-all ${
-                    idx === currentIndex ? 'bg-gold w-4' : 'bg-zinc-700 hover:bg-zinc-500'
-                  }`}
-                />
-              ))}
-            </div>
+          {/* Show more button */}
+          {otherEvents.length > 2 && (
+            <button 
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="w-full py-2 text-[10px] text-zinc-500 hover:text-gold uppercase tracking-widest transition-colors"
+            >
+              {isExpanded ? 'Weniger anzeigen' : `+${otherEvents.length - 2} weitere anzeigen`}
+            </button>
           )}
         </div>
       )}
@@ -258,7 +216,7 @@ export const TribeAIChat: React.FC<TribeAIChatProps> = ({ onClose, events, onQue
                   {msg.text}
               </div>
               {msg.relatedEvents && msg.relatedEvents.length > 0 && (
-                <div className="w-full md:w-[90%]">
+                <div className="w-full max-w-full overflow-hidden">
                   <EventCarousel events={msg.relatedEvents} />
                 </div>
               )}
