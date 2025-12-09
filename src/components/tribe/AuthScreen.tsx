@@ -247,20 +247,34 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       onTouchEnd={handleTouchEnd}
       onMouseDown={handleMouseDown}
     >
-      {/* Full Screen Background */}
-      <div className="absolute inset-0">
+      {/* Top Image */}
+      <div className="absolute top-0 left-0 right-0 h-1/3">
         {REEL_IMAGES.map((img, i) => (
           <img 
-            key={i}
+            key={`top-${i}`}
             src={img} 
             alt=""
-            className="absolute inset-0 w-full h-full object-contain transition-opacity duration-1000"
+            className="absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-1000"
             style={{ opacity: currentImageIndex === i ? 1 : 0 }}
             draggable={false}
           />
         ))}
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black" />
+      </div>
+      
+      {/* Bottom Image */}
+      <div className="absolute bottom-0 left-0 right-0 h-1/3">
+        {REEL_IMAGES.map((img, i) => (
+          <img 
+            key={`bottom-${i}`}
+            src={img} 
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover object-bottom transition-opacity duration-1000"
+            style={{ opacity: (currentImageIndex + 1) % REEL_IMAGES.length === i ? 1 : 0 }}
+            draggable={false}
+          />
+        ))}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-black" />
       </div>
 
       {/* Content Container - moves up on swipe */}
