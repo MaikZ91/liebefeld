@@ -49,7 +49,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [selectedCity] = useState('Bielefeld');
   const [isGuestLoading, setIsGuestLoading] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageIndices, setImageIndices] = useState([0, 3, 6, 9, 12, 1, 4, 7]);
   const [imageProgress, setImageProgress] = useState(0);
   const [eventCount, setEventCount] = useState(0);
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
@@ -72,32 +72,28 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     }
   }, [typewriterIndex]);
 
-  // Reel-style image slideshow with progress
+  // Dynamic collage slideshow - each tile changes independently
   useEffect(() => {
-    const IMAGE_DURATION = 1200;
-    const PROGRESS_INTERVAL = 30;
+    const timers: NodeJS.Timeout[] = [];
     
-    // Reset progress when image changes
-    setImageProgress(0);
+    // Each tile has its own random-ish interval
+    const intervals = [1100, 1400, 900, 1600, 1200, 1500, 1000, 1300];
     
-    // Progress animation
-    const progressTimer = setInterval(() => {
-      setImageProgress(prev => {
-        const next = prev + (PROGRESS_INTERVAL / IMAGE_DURATION) * 100;
-        return next >= 100 ? 100 : next;
-      });
-    }, PROGRESS_INTERVAL);
+    imageIndices.forEach((_, slotIndex) => {
+      const updateSlot = () => {
+        setImageIndices(prev => {
+          const newIndices = [...prev];
+          newIndices[slotIndex] = (prev[slotIndex] + 1) % REEL_IMAGES.length;
+          return newIndices;
+        });
+        timers[slotIndex] = setTimeout(updateSlot, intervals[slotIndex]);
+      };
+      
+      timers[slotIndex] = setTimeout(updateSlot, intervals[slotIndex] + slotIndex * 200);
+    });
     
-    // Image change
-    const imageTimer = setTimeout(() => {
-      setCurrentImageIndex(prev => (prev + 1) % REEL_IMAGES.length);
-    }, IMAGE_DURATION);
-    
-    return () => {
-      clearInterval(progressTimer);
-      clearTimeout(imageTimer);
-    };
-  }, [currentImageIndex]);
+    return () => timers.forEach(t => clearTimeout(t));
+  }, []);
 
   // Load event count
   useEffect(() => {
@@ -253,52 +249,114 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       onTouchEnd={handleTouchEnd}
       onMouseDown={handleMouseDown}
     >
-      {/* Full Screen Background - 3 different images, no gap */}
-      <div className="absolute inset-0">
-        {/* Top third */}
-        <div className="absolute top-0 left-0 right-0 h-1/3 overflow-hidden">
-          {REEL_IMAGES.map((img, i) => (
-            <img 
-              key={`top-${i}`}
-              src={img} 
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
-              style={{ opacity: currentImageIndex === i ? 1 : 0 }}
-              draggable={false}
-            />
-          ))}
+      {/* Dynamic Collage Background */}
+      <div className="absolute inset-0 bg-black overflow-hidden">
+        {/* Tile 1 - Large top left, tilted */}
+        <div 
+          className="absolute -left-4 -top-4 w-[55%] h-[38%] overflow-hidden rounded-lg shadow-2xl"
+          style={{ transform: 'rotate(-3deg)' }}
+        >
+          <img 
+            src={REEL_IMAGES[imageIndices[0]]} 
+            alt=""
+            className="w-full h-full object-cover transition-all duration-700 scale-110"
+            draggable={false}
+          />
         </div>
         
-        {/* Middle third */}
-        <div className="absolute top-1/3 left-0 right-0 h-1/3 overflow-hidden">
-          {REEL_IMAGES.map((img, i) => (
-            <img 
-              key={`mid-${i}`}
-              src={img} 
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
-              style={{ opacity: (currentImageIndex + 5) % REEL_IMAGES.length === i ? 1 : 0 }}
-              draggable={false}
-            />
-          ))}
+        {/* Tile 2 - Medium top right */}
+        <div 
+          className="absolute -right-2 top-[5%] w-[50%] h-[30%] overflow-hidden rounded-lg shadow-2xl"
+          style={{ transform: 'rotate(4deg)' }}
+        >
+          <img 
+            src={REEL_IMAGES[imageIndices[1]]} 
+            alt=""
+            className="w-full h-full object-cover transition-all duration-700 scale-110"
+            draggable={false}
+          />
         </div>
         
-        {/* Bottom third */}
-        <div className="absolute top-2/3 left-0 right-0 h-1/3 overflow-hidden">
-          {REEL_IMAGES.map((img, i) => (
-            <img 
-              key={`bottom-${i}`}
-              src={img} 
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
-              style={{ opacity: (currentImageIndex + 10) % REEL_IMAGES.length === i ? 1 : 0 }}
-              draggable={false}
-            />
-          ))}
+        {/* Tile 3 - Small middle left */}
+        <div 
+          className="absolute left-[5%] top-[32%] w-[40%] h-[25%] overflow-hidden rounded-lg shadow-2xl z-10"
+          style={{ transform: 'rotate(2deg)' }}
+        >
+          <img 
+            src={REEL_IMAGES[imageIndices[2]]} 
+            alt=""
+            className="w-full h-full object-cover transition-all duration-700 scale-110"
+            draggable={false}
+          />
         </div>
         
-        {/* Subtle overlay for text readability */}
-        <div className="absolute inset-0 bg-black/30" />
+        {/* Tile 4 - Medium middle right */}
+        <div 
+          className="absolute right-[2%] top-[28%] w-[45%] h-[28%] overflow-hidden rounded-lg shadow-2xl"
+          style={{ transform: 'rotate(-5deg)' }}
+        >
+          <img 
+            src={REEL_IMAGES[imageIndices[3]]} 
+            alt=""
+            className="w-full h-full object-cover transition-all duration-700 scale-110"
+            draggable={false}
+          />
+        </div>
+        
+        {/* Tile 5 - Large bottom left */}
+        <div 
+          className="absolute -left-6 top-[52%] w-[52%] h-[32%] overflow-hidden rounded-lg shadow-2xl"
+          style={{ transform: 'rotate(3deg)' }}
+        >
+          <img 
+            src={REEL_IMAGES[imageIndices[4]]} 
+            alt=""
+            className="w-full h-full object-cover transition-all duration-700 scale-110"
+            draggable={false}
+          />
+        </div>
+        
+        {/* Tile 6 - Medium bottom right */}
+        <div 
+          className="absolute right-[-5%] top-[50%] w-[48%] h-[30%] overflow-hidden rounded-lg shadow-2xl z-10"
+          style={{ transform: 'rotate(-4deg)' }}
+        >
+          <img 
+            src={REEL_IMAGES[imageIndices[5]]} 
+            alt=""
+            className="w-full h-full object-cover transition-all duration-700 scale-110"
+            draggable={false}
+          />
+        </div>
+        
+        {/* Tile 7 - Bottom strip left */}
+        <div 
+          className="absolute left-[10%] -bottom-2 w-[42%] h-[22%] overflow-hidden rounded-lg shadow-2xl"
+          style={{ transform: 'rotate(-2deg)' }}
+        >
+          <img 
+            src={REEL_IMAGES[imageIndices[6]]} 
+            alt=""
+            className="w-full h-full object-cover transition-all duration-700 scale-110"
+            draggable={false}
+          />
+        </div>
+        
+        {/* Tile 8 - Bottom strip right */}
+        <div 
+          className="absolute -right-4 -bottom-4 w-[50%] h-[25%] overflow-hidden rounded-lg shadow-2xl"
+          style={{ transform: 'rotate(5deg)' }}
+        >
+          <img 
+            src={REEL_IMAGES[imageIndices[7]]} 
+            alt=""
+            className="w-full h-full object-cover transition-all duration-700 scale-110"
+            draggable={false}
+          />
+        </div>
+        
+        {/* Gradient overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70" />
       </div>
 
       {/* Content Container - moves up on swipe */}
@@ -311,14 +369,15 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       >
         {/* Top Section - Progress Bar + Logo + Tagline */}
         <div className="pt-3 px-4">
-          {/* Progress Bar - continuous like video */}
-          <div className="w-full h-0.5 rounded-full bg-white/20 overflow-hidden mb-4">
-            <div 
-              className="h-full bg-white transition-none"
-              style={{ 
-                width: `${((currentImageIndex + imageProgress / 100) / REEL_IMAGES.length) * 100}%`
-              }}
-            />
+          {/* Progress dots - one per visible tile */}
+          <div className="flex justify-center gap-1 mb-4">
+            {imageIndices.slice(0, 5).map((idx, i) => (
+              <div 
+                key={i}
+                className="w-1.5 h-1.5 rounded-full bg-white/60 animate-pulse"
+                style={{ animationDelay: `${i * 0.2}s` }}
+              />
+            ))}
           </div>
           
           <h1 className="text-center text-lg font-serif tracking-[0.3em] text-white">
