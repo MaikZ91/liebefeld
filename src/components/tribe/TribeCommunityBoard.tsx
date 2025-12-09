@@ -651,7 +651,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                             </div>
                             <div className="flex flex-wrap gap-1">
                               {isTribeCall && (
-                                <span className="bg-gold/10 text-gold border border-gold/20 text-[8px] font-bold px-1.5 py-0.5 uppercase tracking-widest rounded-sm animate-pulse">Tribe Call</span>
+                                <span className="bg-gold/10 text-gold border border-gold/20 text-[8px] font-bold px-1.5 py-0.5 uppercase tracking-widest rounded-sm">Tribe Call</span>
                               )}
                               {post.tags.filter(t => t !== 'TribeCall' && !t.startsWith('Tribe')).slice(0, 2).map(tag => (
                                 <span key={tag} className="bg-white/5 text-zinc-400 border border-white/10 text-[8px] font-medium px-1.5 py-0.5 uppercase tracking-wider rounded-sm">#{tag}</span>
