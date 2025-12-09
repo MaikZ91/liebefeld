@@ -189,20 +189,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         </div>
       )}
 
-      {/* Floating User Avatars - Left Side */}
-      <div className="absolute left-4 top-1/3 z-30 flex flex-col -space-y-1">
-        {AVATAR_OPTIONS.slice(0, 4).map((avatar, i) => (
-          <img 
-            key={i}
-            src={avatar}
-            alt=""
-            className="w-10 h-10 rounded-full border-2 border-black object-cover"
-          />
-        ))}
-        <div className="w-10 h-10 rounded-full bg-gold/90 border-2 border-black flex items-center justify-center text-[10px] text-black font-bold">
-          +47
-        </div>
-      </div>
 
       {/* Form Content - positioned at bottom, minimal */}
       <div className="absolute inset-x-0 bottom-0 z-30 w-full max-w-sm mx-auto px-6 pb-6">
