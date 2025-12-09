@@ -171,17 +171,29 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
           />
         ))}
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black z-10" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black z-10" />
+        
+        {/* Logo - centered on top image */}
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center">
+          <div className="relative w-12 h-12 mb-2">
+            <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L2 22H22L12 2Z" className="fill-white"/>
+              <circle cx="12" cy="14" r="3" className="fill-black"/>
+            </svg>
+          </div>
+          <h1 className="text-2xl font-serif font-bold tracking-[0.2em] text-white drop-shadow-lg">THE TRIBE</h1>
+          <p className="text-[10px] text-gold uppercase tracking-widest mt-1 drop-shadow-lg">Dein Netzwerk in deiner Stadt</p>
+        </div>
         
         {/* Live Badge */}
-        <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
+        <div className="absolute top-4 right-4 z-30 flex items-center gap-2 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
           <span className="text-[10px] text-white font-medium">LIVE</span>
         </div>
         
         {/* Event Counter */}
         {eventCount > 0 && (
-          <div className="absolute top-4 left-4 z-20 bg-gold text-black px-3 py-1.5 rounded-full">
+          <div className="absolute top-4 left-4 z-30 bg-gold text-black px-3 py-1.5 rounded-full">
             <span className="text-[11px] font-bold">{eventCount} Events diese Woche</span>
           </div>
         )}
@@ -189,17 +201,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
       {/* Middle Section - Form on black */}
       <div className="relative z-20 flex-1 flex flex-col justify-center bg-black px-6">
-        {/* Logo */}
-        <div className="flex flex-col items-center mb-4">
-          <div className="relative w-10 h-10 mb-2">
-            <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L2 22H22L12 2Z" className="fill-white"/>
-              <circle cx="12" cy="14" r="3" className="fill-black"/>
-            </svg>
-          </div>
-          <h1 className="text-xl font-serif font-bold tracking-[0.2em] text-white">THE TRIBE</h1>
-          <p className="text-[9px] text-gold uppercase tracking-widest mt-1">Dein Netzwerk in deiner Stadt</p>
-        </div>
 
         {/* Compact Form */}
         <div className="space-y-3 animate-fadeIn max-w-sm mx-auto w-full">
