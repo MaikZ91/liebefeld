@@ -466,43 +466,49 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
     <div className="h-full flex flex-col bg-black animate-fadeIn">
         
         {/* --- INPUT AREA --- */}
-        <div className="px-4 pt-2 pb-2 border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur-xl z-20">
-            <div className="bg-surface border border-white/10 rounded-xl p-2 shadow-lg">
+        <div className="px-4 py-1.5 border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur-xl z-20">
+            <div className="bg-surface border border-white/10 rounded-lg p-1.5 shadow-lg flex items-end gap-2">
                 <textarea 
                     value={newPost}
-                    onChange={(e) => setNewPost(e.target.value)}
+                    onChange={(e) => {
+                        setNewPost(e.target.value);
+                        // Auto-resize textarea
+                        e.target.style.height = 'auto';
+                        e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                    }}
                     placeholder={`What's happening in ${selectedCity}?`}
-                    className="w-full bg-transparent text-white text-sm placeholder-zinc-600 outline-none resize-none h-12"
+                    className="flex-1 bg-transparent text-white text-sm placeholder-zinc-600 outline-none resize-none min-h-[28px] max-h-[120px] py-1"
+                    rows={1}
                 />
                 
-                {/* Tags Preview */}
-                {generatedTags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                        {generatedTags.map(tag => (
-                            <span key={tag} className="text-[9px] text-gold bg-gold/10 px-1.5 py-0.5 rounded-sm uppercase tracking-wider">#{tag}</span>
-                        ))}
-                    </div>
-                )}
-
-                <div className="flex justify-between items-center mt-1.5 pt-1.5 border-t border-white/5">
+                <div className="flex items-center gap-1.5 flex-shrink-0">
                     <button 
                         onClick={handleOptimize} 
                         disabled={isOptimizing || !newPost}
-                        className="flex items-center gap-1.5 text-[10px] text-zinc-400 hover:text-gold transition-colors disabled:opacity-50"
+                        className="text-zinc-500 hover:text-gold transition-colors disabled:opacity-50 p-1"
+                        title="AI Enhance"
                     >
-                        <Sparkles size={12} className={isOptimizing ? "animate-spin" : ""} />
-                        {isOptimizing ? 'Optimizing...' : 'AI Enhance'}
+                        <Sparkles size={14} className={isOptimizing ? "animate-spin" : ""} />
                     </button>
 
                     <button 
                         onClick={handlePost} 
                         disabled={!newPost} 
-                        className="bg-gold hover:bg-white text-black text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 transition-colors disabled:opacity-50"
+                        className="bg-gold hover:bg-white text-black text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded transition-colors disabled:opacity-50"
                     >
                         Post
                     </button>
                 </div>
             </div>
+            
+            {/* Tags Preview - only show when tags exist */}
+            {generatedTags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                    {generatedTags.map(tag => (
+                        <span key={tag} className="text-[8px] text-gold bg-gold/10 px-1 py-0.5 rounded-sm uppercase tracking-wider">#{tag}</span>
+                    ))}
+                </div>
+            )}
         </div>
 
         {/* --- CHANNELS / TABS --- */}
