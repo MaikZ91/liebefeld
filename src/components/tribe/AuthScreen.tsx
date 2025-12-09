@@ -152,44 +152,148 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     }
   };
 
-  // Get two images for split screen
-  const topImageIndex = currentImageIndex;
+  // Image indices for top and bottom strips
   const bottomImageIndex = (currentImageIndex + 4) % REEL_IMAGES.length;
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden">
-      {/* Full Screen Background - Single Image */}
-      <div className="absolute inset-0">
+      {/* Top Image Strip - 35% height */}
+      <div className="relative h-[35%] overflow-hidden">
         {REEL_IMAGES.map((img, i) => (
           <img 
-            key={i}
+            key={`top-${i}`}
             src={img} 
             alt=""
-            className="absolute inset-0 w-full h-full object-cover transition-all duration-1000"
+            className="absolute inset-0 w-full h-full object-cover object-center transition-all duration-1000"
             style={{ 
               opacity: currentImageIndex === i ? 1 : 0,
-              transform: currentImageIndex === i ? 'scale(1.02)' : 'scale(1.05)',
+              transform: currentImageIndex === i ? 'scale(1)' : 'scale(1.05)',
             }}
           />
         ))}
-        {/* Subtle gradient only at bottom for form readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent z-10" />
-      </div>
-
-      {/* Live Activity Badge - Top Right */}
-      <div className="absolute top-4 right-4 z-30 flex items-center gap-2 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
-        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-        <span className="text-[10px] text-white font-medium">LIVE</span>
-      </div>
-
-      {/* Event Counter Badge - Top Left */}
-      {eventCount > 0 && (
-        <div className="absolute top-4 left-4 z-30 bg-gold text-black px-3 py-1.5 rounded-full">
-          <span className="text-[11px] font-bold">{eventCount} Events diese Woche</span>
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black z-10" />
+        
+        {/* Live Badge */}
+        <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+          <span className="text-[10px] text-white font-medium">LIVE</span>
         </div>
-      )}
+        
+        {/* Event Counter */}
+        {eventCount > 0 && (
+          <div className="absolute top-4 left-4 z-20 bg-gold text-black px-3 py-1.5 rounded-full">
+            <span className="text-[11px] font-bold">{eventCount} Events diese Woche</span>
+          </div>
+        )}
+      </div>
 
+      {/* Middle Section - Form on black */}
+      <div className="relative z-20 flex-1 flex flex-col justify-center bg-black px-6 -mt-8">
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-4">
+          <div className="relative w-10 h-10 mb-2">
+            <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L2 22H22L12 2Z" className="fill-white"/>
+              <circle cx="12" cy="14" r="3" className="fill-black"/>
+            </svg>
+          </div>
+          <h1 className="text-xl font-serif font-bold tracking-[0.2em] text-white">THE TRIBE</h1>
+          <p className="text-[9px] text-gold uppercase tracking-widest mt-1">Dein Netzwerk in deiner Stadt</p>
+        </div>
 
+        {/* Compact Form */}
+        <div className="space-y-3 animate-fadeIn max-w-sm mx-auto w-full">
+          <div className="text-center">
+            <h2 className="text-lg font-light">Entdecke was läuft</h2>
+          </div>
+
+          <div className="space-y-2">
+            <input 
+              type="text" 
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              onFocus={() => setShowCategories(true)}
+              placeholder="Wie heißt du?"
+              className="w-full bg-zinc-900 border border-white/20 rounded-lg py-3 text-center text-lg font-serif text-white placeholder-zinc-500 outline-none focus:border-gold transition-colors"
+              autoFocus
+              onKeyDown={(e) => e.key === 'Enter' && username.trim() && handleEnter()}
+            />
+
+            {/* Category Filters */}
+            <div className={`overflow-hidden transition-all duration-300 ${showCategories ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="flex flex-wrap gap-1.5 justify-center py-1">
+                {CATEGORIES.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => toggleCategory(cat.id)}
+                    className={`px-2.5 py-1 rounded-full text-[10px] transition-all ${
+                      selectedCategories.has(cat.id)
+                        ? 'bg-gold text-black'
+                        : 'bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-700'
+                    }`}
+                  >
+                    <span className="mr-1">{cat.icon}</span>
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <select 
+              value={selectedCity}
+              onChange={(e) => setSelectedCity(e.target.value)}
+              className="w-full bg-zinc-900 border border-white/20 text-white text-sm p-2.5 outline-none focus:border-gold transition-colors rounded-lg"
+            >
+              {CITIES.map(city => <option key={city} value={city}>{city}</option>)}
+            </select>
+          </div>
+
+          {/* Main CTA */}
+          <button 
+            onClick={handleEnter}
+            disabled={!username.trim()}
+            className="w-full bg-gold text-black py-3 font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 hover:bg-white transition-colors disabled:opacity-40 rounded-lg shadow-[0_0_30px_rgba(212,180,131,0.4)]"
+          >
+            <Sparkles size={14} />
+            Los geht's
+            <ArrowRight size={14} />
+          </button>
+
+          {/* Guest Login */}
+          <button 
+            onClick={handleGuestLogin}
+            disabled={isGuestLoading}
+            className="text-zinc-500 text-[9px] hover:text-white transition-colors mx-auto block"
+          >
+            {isGuestLoading ? '...' : 'erstmal nur schauen'}
+          </button>
+        </div>
+      </div>
+
+      {/* Bottom Image Strip - 25% height */}
+      <div className="relative h-[25%] overflow-hidden">
+        {REEL_IMAGES.map((img, i) => (
+          <img 
+            key={`bottom-${i}`}
+            src={img} 
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover object-center transition-all duration-1000"
+            style={{ 
+              opacity: bottomImageIndex === i ? 1 : 0,
+              transform: bottomImageIndex === i ? 'scale(1)' : 'scale(1.05)',
+            }}
+          />
+        ))}
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black z-10" />
+        
+        {/* Trending Badge */}
+        <div className="absolute bottom-4 right-4 z-20 flex items-center gap-1.5 bg-red-500/90 px-2.5 py-1 rounded-full">
+          <Sparkles size={10} className="text-white" />
+          <span className="text-[10px] text-white font-medium">TRENDING</span>
+        </div>
+      </div>
       {/* Form Content - positioned at bottom, minimal */}
       <div className="absolute inset-x-0 bottom-0 z-30 w-full max-w-sm mx-auto px-6 pb-6">
         
