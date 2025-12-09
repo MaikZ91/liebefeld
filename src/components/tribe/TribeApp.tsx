@@ -125,6 +125,16 @@ export const TribeApp: React.FC = () => {
   const [requiresAuth, setRequiresAuth] = useState<boolean>(false);
   const [showProfileHint, setShowProfileHint] = useState<boolean>(false);
 
+  // Check if user profile is complete (has avatar, interests, and locations)
+  const isProfileComplete = (profile: UserProfile | null): boolean => {
+    if (!profile) return false;
+    const hasAvatar = !!profile.avatarUrl || !!profile.avatar;
+    const hasInterests = (profile.interests?.length || 0) > 0;
+    const hasLocations = (profile.favorite_locations?.length || 0) > 0;
+    const isNotGuest = !profile.username?.startsWith("Guest_");
+    return hasAvatar && hasInterests && hasLocations && isNotGuest;
+  };
+
   // Initialize auth and preferences
   useEffect(() => {
     const savedProfile = localStorage.getItem("tribe_user_profile");
@@ -136,8 +146,8 @@ export const TribeApp: React.FC = () => {
       if (parsedProfile.homebase) setSelectedCity(parsedProfile.homebase);
       setRequiresAuth(false);
 
-      // Show profile hint for guest users who haven't dismissed it yet
-      if (parsedProfile.username?.startsWith("Guest_") && !hasSeenProfileHint) {
+      // Show profile hint if profile is incomplete and hint not dismissed
+      if (!isProfileComplete(parsedProfile) && !hasSeenProfileHint) {
         setShowProfileHint(true);
         // Auto-dismiss after 10 seconds
         setTimeout(() => {
@@ -759,22 +769,32 @@ export const TribeApp: React.FC = () => {
                   localStorage.setItem("tribe_seen_profile_hint", "true");
                   setView(userProfile ? ViewState.PROFILE : ViewState.AUTH);
                 }}
-                className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-colors ${
-                  showProfileHint ? "border-gold animate-pulse" : "border-white/20 hover:border-gold"
+                className={`flex items-center gap-2 ${
+                  !isProfileComplete(userProfile) ? "animate-pulse" : ""
                 }`}
               >
-                {userProfile?.avatarUrl ? (
-                  <img src={userProfile.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                    <User size={20} className="text-zinc-600" />
-                  </div>
+                <div className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-colors ${
+                  !isProfileComplete(userProfile) ? "border-gold" : "border-white/20 hover:border-gold"
+                }`}>
+                  {userProfile?.avatarUrl ? (
+                    <img src={userProfile.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+                      <User size={20} className="text-zinc-600" />
+                    </div>
+                  )}
+                </div>
+                {/* Show "Profil erstellen" text when profile is incomplete */}
+                {!isProfileComplete(userProfile) && (
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-gold hidden sm:block">
+                    Profil erstellen
+                  </span>
                 )}
               </button>
 
-              {/* Profile creation hint tooltip */}
-              {showProfileHint && (
-                <div className="absolute top-full right-0 mt-2 whitespace-nowrap animate-fadeIn">
+              {/* Profile creation hint tooltip (mobile) */}
+              {showProfileHint && !isProfileComplete(userProfile) && (
+                <div className="absolute top-full right-0 mt-2 whitespace-nowrap animate-fadeIn sm:hidden">
                   <div className="bg-zinc-900 border border-gold/30 px-3 py-1.5 rounded shadow-lg">
                     <span className="text-[10px] text-gold font-medium">Profil erstellen</span>
                   </div>
@@ -1240,6 +1260,7 @@ export const TribeApp: React.FC = () => {
           <TribeCommunityBoard
             selectedCity={selectedCity}
             userProfile={userProfile}
+            onEditProfile={() => setView(ViewState.PROFILE)}
             onProfileClick={async (username) => {
               setProfileDialog({ open: true, profile: null, loading: true });
               try {

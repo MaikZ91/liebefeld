@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { UserProfile, Post, Comment } from '@/types/tribe';
 import { enhancePostContent } from '@/services/tribe/aiHelpers';
-import { ArrowRight, Sparkles, Heart, MessageCircle, Share2, Hash, Send, X, Check, HelpCircle, Users } from 'lucide-react';
+import { ArrowRight, Sparkles, Heart, MessageCircle, Share2, Hash, Send, X, Check, HelpCircle, Users, Camera, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { NewMembersWidget } from './NewMembersWidget';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,7 @@ interface Props {
   selectedCity: string;
   userProfile: UserProfile;
   onProfileClick?: (username: string) => void;
+  onEditProfile?: () => void;
 }
 
 type Tab = 'ALL' | 'TRIBE' | 'TIPS';
@@ -20,7 +21,7 @@ const TRIBE_BOARD_GROUP_ID = 'tribe_community_board';
 const DISMISSED_POSTS_KEY = 'tribe_dismissed_posts';
 const TOPIC_DISLIKES_KEY = 'tribe_topic_dislikes';
 
-export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile, onProfileClick }) => {
+export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile, onProfileClick, onEditProfile }) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -530,6 +531,69 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
 
         {/* --- FEED --- */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-32">
+            {/* Profile Creation Banner - show when profile is incomplete */}
+            {(() => {
+              const hasAvatar = !!userProfile.avatarUrl || !!userProfile.avatar;
+              const hasInterests = (userProfile.interests?.length || 0) > 0;
+              const hasLocations = (userProfile.favorite_locations?.length || 0) > 0;
+              const isNotGuest = !userProfile.username?.startsWith("Guest_");
+              const isProfileComplete = hasAvatar && hasInterests && hasLocations && isNotGuest;
+              
+              if (isProfileComplete) return null;
+              
+              return (
+                <div className="bg-gradient-to-r from-gold/10 via-gold/5 to-transparent border border-gold/20 rounded-lg p-4 mb-4 animate-fadeIn">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0">
+                      <Star size={20} className="text-gold" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-bold text-white mb-1">Personalisiere deine Experience</h3>
+                      <p className="text-xs text-zinc-400 mb-3 leading-relaxed">
+                        Vervollständige dein Profil für authentischere Verbindungen und personalisierte Event-Empfehlungen.
+                      </p>
+                      
+                      {/* Checklist */}
+                      <div className="space-y-1.5 mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-4 h-4 rounded-full flex items-center justify-center ${isNotGuest ? 'bg-green-500/20' : 'bg-zinc-800'}`}>
+                            {isNotGuest ? <Check size={10} className="text-green-400" /> : <span className="w-1.5 h-1.5 bg-zinc-600 rounded-full" />}
+                          </div>
+                          <span className={`text-[11px] ${isNotGuest ? 'text-zinc-400 line-through' : 'text-white'}`}>Wähle einen Namen</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-4 h-4 rounded-full flex items-center justify-center ${hasAvatar ? 'bg-green-500/20' : 'bg-zinc-800'}`}>
+                            {hasAvatar ? <Check size={10} className="text-green-400" /> : <Camera size={10} className="text-zinc-500" />}
+                          </div>
+                          <span className={`text-[11px] ${hasAvatar ? 'text-zinc-400 line-through' : 'text-white'}`}>Lade ein Profilbild hoch</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-4 h-4 rounded-full flex items-center justify-center ${hasInterests ? 'bg-green-500/20' : 'bg-zinc-800'}`}>
+                            {hasInterests ? <Check size={10} className="text-green-400" /> : <Heart size={10} className="text-zinc-500" />}
+                          </div>
+                          <span className={`text-[11px] ${hasInterests ? 'text-zinc-400 line-through' : 'text-white'}`}>Füge deine Interessen hinzu</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-4 h-4 rounded-full flex items-center justify-center ${hasLocations ? 'bg-green-500/20' : 'bg-zinc-800'}`}>
+                            {hasLocations ? <Check size={10} className="text-green-400" /> : <span className="w-1.5 h-1.5 bg-zinc-600 rounded-full" />}
+                          </div>
+                          <span className={`text-[11px] ${hasLocations ? 'text-zinc-400 line-through' : 'text-white'}`}>Wähle Lieblingsorte</span>
+                        </div>
+                      </div>
+                      
+                      <button 
+                        onClick={onEditProfile}
+                        className="bg-gold hover:bg-white text-black text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded transition-colors flex items-center gap-2"
+                      >
+                        Profil vervollständigen
+                        <ArrowRight size={12} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+            
             {/* Welcome Widget for new members */}
             <NewMembersWidget onProfileClick={onProfileClick} />
             {loading ? (
