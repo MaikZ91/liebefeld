@@ -508,7 +508,58 @@ export const TribeApp: React.FC = () => {
     return result;
   }, [allEvents, selectedCity, selectedCategory, hiddenEventIds, likedEventIds, nexusFilter, selectedDate]);
 
-  const spotlightEvents = filteredEvents.slice(0, 5);
+  // Get top event per day for next 7 days (highest match score per day)
+  const spotlightEvents = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const topEventsPerDay: TribeEvent[] = [];
+    
+    for (let i = 0; i < 7; i++) {
+      const targetDate = new Date(today);
+      targetDate.setDate(today.getDate() + i);
+      const dateStr = targetDate.toISOString().split('T')[0];
+      
+      // Find events for this day
+      const dayEvents = filteredEvents.filter(e => e.date === dateStr);
+      
+      if (dayEvents.length > 0) {
+        // Sort by match score (highest first)
+        const sorted = [...dayEvents].sort((a, b) => {
+          const scoreA = eventMatchScores.get(a.id) || 50;
+          const scoreB = eventMatchScores.get(b.id) || 50;
+          return scoreB - scoreA;
+        });
+        
+        // Take the top event for this day
+        topEventsPerDay.push(sorted[0]);
+      }
+    }
+    
+    return topEventsPerDay;
+  }, [filteredEvents, eventMatchScores]);
+
+  // Get top events for live ticker (next 7 days, sorted by score)
+  const tickerTopEvents = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sevenDaysLater = new Date(today);
+    sevenDaysLater.setDate(today.getDate() + 7);
+    
+    // Filter events within next 7 days
+    const next7DaysEvents = allEvents.filter(e => {
+      const eventDate = new Date(e.date);
+      return eventDate >= today && eventDate < sevenDaysLater;
+    });
+    
+    // Sort by match score
+    return [...next7DaysEvents].sort((a, b) => {
+      const scoreA = eventMatchScores.get(a.id) || 50;
+      const scoreB = eventMatchScores.get(b.id) || 50;
+      return scoreB - scoreA;
+    }).slice(0, 20); // Top 20 for ticker
+  }, [allEvents, eventMatchScores]);
+
   const feedEvents = filteredEvents; // Show all events in feed, including spotlight events (sorted by match score)
 
   const handleLogin = (profile: UserProfile) => {
@@ -790,12 +841,12 @@ export const TribeApp: React.FC = () => {
       {view === ViewState.FEED && (
         <div className="fixed top-[73px] left-0 right-0 z-40 max-w-2xl mx-auto">
           <TribeLiveTicker
-            events={allEvents.map((e) => ({
+            events={tickerTopEvents.map((e) => ({
               id: e.id,
               date: e.date,
               title: e.title,
               location: e.location,
-              likes: likedEventIds.has(e.id) ? (e.likes || 0) + 1 : e.likes || 0,
+              likes: eventMatchScores.get(e.id) || 50, // Show score instead of likes
             }))}
             selectedCity={selectedCity}
             onEventClick={handleTickerEventClick}

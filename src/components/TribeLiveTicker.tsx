@@ -96,8 +96,7 @@ export const TribeLiveTicker: React.FC<TribeLiveTickerProps> = ({ events, select
                       <span className="text-white text-[11px] font-medium">{event.title}</span>
                       <span className="text-zinc-500 text-[10px]">({event.location || 'TBA'})</span>
                       <span className="text-gold/70 text-[10px] flex items-center gap-0.5">
-                        <ThumbsUp className="w-2.5 h-2.5" /> 
-                        {event.likes || 0}
+                        {event.likes || 0}%
                       </span>
                     </span>
                     <span className="mx-3 text-gold/30">•</span>
