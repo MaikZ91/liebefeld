@@ -92,7 +92,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
   // --- COMPACT VARIANT (List Compact) ---
   if (variant === 'compact') {
     return (
-      <div className={`bg-black border-b border-white/5 transition-all duration-500 ${animationClass}`}>
+      <div className={`bg-black border-b border-white/5 transition-all duration-500 ${animationClass} ${isPast ? 'opacity-40 grayscale' : ''}`}>
         <div className="flex items-center gap-2.5 py-2">
           {/* Thumbnail - Smaller */}
           <div className="w-12 h-14 bg-zinc-900 flex-shrink-0 relative overflow-hidden rounded">
