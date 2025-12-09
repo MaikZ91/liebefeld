@@ -206,7 +206,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
     
     return (
         <div className="w-full cursor-pointer relative group overflow-hidden bg-black rounded-lg">
-            <div className="aspect-[4/5] w-full relative">
+            <div className="aspect-[3/4] w-full relative">
                 {displayImage ? (
                     <img src={displayImage} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
                 ) : (
