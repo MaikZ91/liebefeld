@@ -4,7 +4,6 @@ import { generateEventSummary } from '@/services/tribe/aiHelpers';
 import { getVibeBadgeColor } from '@/utils/tribe/eventHelpers';
 import { Sparkles, Users, Share2, X, Heart, Check, ExternalLink, Play } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { MiaWhisper } from './MiaWhisper';
 
 interface EventCardProps {
   event: TribeEvent;
@@ -218,10 +217,6 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                 </>
               )}
             </div>
-            {/* MIA Whisper - dezenter, personalisierter Hint */}
-            {!isExpanded && (
-              <MiaWhisper event={event} isLiked={isLiked} matchScore={matchScore} />
-            )}
             {/* Attendees under location */}
             <div className="flex items-center gap-1 mt-1">
               <div className="flex -space-x-1.5">
