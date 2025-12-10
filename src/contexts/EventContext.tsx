@@ -6,6 +6,7 @@ import { useEvents } from '../hooks/useEvents';
 import { useTopEvents } from '../hooks/useTopEvents';
 
 export const cities = [
+  { name: "Deutschland", abbr: "DE" },
   { name: "Bielefeld", abbr: "BI" },
   { name: "Berlin", abbr: "berlin" },
   { name: "Bremen", abbr: "bremen" },
@@ -24,7 +25,6 @@ export const cities = [
   { name: "Münster", abbr: "münster" },
   { name: "Nürnberg", abbr: "nürnberg" },
   { name: "Stuttgart", abbr: "stuttgart" },
-  
 ];
 
 interface EventContextProps {

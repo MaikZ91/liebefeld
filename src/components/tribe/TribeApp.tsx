@@ -36,6 +36,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 
 const CITIES = [
+  "Deutschland",
   "Bielefeld",
   "Berlin",
   "Hamburg",
@@ -259,6 +260,7 @@ export const TribeApp: React.FC = () => {
       const today = new Date().toISOString().split("T")[0];
       const cityLower = selectedCity.toLowerCase();
       const cityAbbr = cityLower.substring(0, 2);
+      const isGermanyWide = selectedCity === "Deutschland";
 
       if (specificDate) {
         // Calendar picker: load all events for that specific month
@@ -269,13 +271,19 @@ export const TribeApp: React.FC = () => {
         
         console.log("🔄 [fetchEvents] Calendar load for month:", startDate, "to", endDate);
         
-        const { data, error } = await supabase
+        let query = supabase
           .from("community_events")
           .select("*")
-          .or(`city.is.null,city.ilike.${selectedCity},city.ilike.${cityAbbr}`)
           .gte("date", startDate)
           .lte("date", endDate)
           .order("date", { ascending: true });
+
+        // Only filter by city if not "Deutschland"
+        if (!isGermanyWide) {
+          query = query.or(`city.is.null,city.ilike.${selectedCity},city.ilike.${cityAbbr}`);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
         
@@ -293,13 +301,19 @@ export const TribeApp: React.FC = () => {
         
         console.log("🔄 [fetchEvents] Pagination load, offset:", offset, "limit:", PAGE_SIZE);
         
-        const { data, error } = await supabase
+        let query = supabase
           .from("community_events")
           .select("*")
-          .or(`city.is.null,city.ilike.${selectedCity},city.ilike.${cityAbbr}`)
           .gte("date", today)
           .order("date", { ascending: true })
           .range(offset, offset + PAGE_SIZE - 1);
+
+        // Only filter by city if not "Deutschland"
+        if (!isGermanyWide) {
+          query = query.or(`city.is.null,city.ilike.${selectedCity},city.ilike.${cityAbbr}`);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
         
@@ -356,7 +370,16 @@ export const TribeApp: React.FC = () => {
   };
 
   const filteredEvents = useMemo(() => {
-    let result = allEvents.filter((e) => e.city === selectedCity);
+    const isGermanyWide = selectedCity === "Deutschland";
+    // For Deutschland, show all events; otherwise filter by city
+    let result = isGermanyWide 
+      ? [...allEvents] 
+      : allEvents.filter((e) => {
+          const eventCity = (e.city || "").toLowerCase();
+          const cityLower = selectedCity.toLowerCase();
+          const cityAbbr = cityLower.substring(0, 2);
+          return eventCity === cityLower || eventCity === cityAbbr || !e.city;
+        });
 
     // Remove hidden events
     result = result.filter((e) => !hiddenEventIds.has(e.id));
