@@ -57,8 +57,59 @@ const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb
 const CATEGORIES = ["ALL", "PARTY", "ART", "CONCERT", "SPORT"];
 
 export const TribeApp: React.FC = () => {
+  // AUTH CHECK FIRST - before any other state or effects
+  const [authChecked, setAuthChecked] = useState(false);
+  const [requiresAuth, setRequiresAuth] = useState<boolean>(true);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  // Check auth synchronously from localStorage on first render
+  useEffect(() => {
+    const savedProfile = localStorage.getItem("tribe_user_profile");
+    if (savedProfile) {
+      try {
+        const parsedProfile = JSON.parse(savedProfile);
+        setUserProfile(parsedProfile);
+        setRequiresAuth(false);
+      } catch {
+        setRequiresAuth(true);
+      }
+    } else {
+      setRequiresAuth(true);
+    }
+    setAuthChecked(true);
+  }, []);
+
+  // EARLY RETURN: Show AuthScreen immediately if not authenticated
+  // This prevents ANY main app initialization
+  if (!authChecked) {
+    return <div className="min-h-screen bg-black" />;
+  }
+
+  if (requiresAuth) {
+    return (
+      <AuthScreen
+        onLogin={(profile: UserProfile) => {
+          localStorage.setItem("tribe_user_profile", JSON.stringify(profile));
+          setUserProfile(profile);
+          setRequiresAuth(false);
+        }}
+      />
+    );
+  }
+
+  // User is authenticated - render the main app
+  return <TribeAppMain userProfile={userProfile} setUserProfile={setUserProfile} />;
+};
+
+// Main app component - only loaded after authentication
+const TribeAppMain: React.FC<{
+  userProfile: UserProfile | null;
+  setUserProfile: React.Dispatch<React.SetStateAction<UserProfile | null>>;
+}> = ({ userProfile, setUserProfile }) => {
   const [view, setView] = useState<ViewState>(ViewState.COMMUNITY);
-  const [selectedCity, setSelectedCity] = useState<string>("Bielefeld");
+  const [selectedCity, setSelectedCity] = useState<string>(() => {
+    return userProfile?.homebase || "Bielefeld";
+  });
   const [selectedCategory, setSelectedCategory] = useState<string>(() => {
     const saved = localStorage.getItem("tribe_selected_category");
     return saved || "ALL";
@@ -116,8 +167,6 @@ export const TribeApp: React.FC = () => {
   // New message notification state
   const [hasNewCommunityMessages, setHasNewCommunityMessages] = useState(false);
 
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [requiresAuth, setRequiresAuth] = useState<boolean>(false);
   const [showProfileHint, setShowProfileHint] = useState<boolean>(false);
 
   // Check if user profile is complete (has avatar, interests, and locations)
@@ -130,29 +179,18 @@ export const TribeApp: React.FC = () => {
     return hasAvatar && hasInterests && hasLocations && isNotGuest;
   };
 
-  // Initialize auth and preferences
+  // Initialize preferences (auth already handled in parent)
   useEffect(() => {
-    const savedProfile = localStorage.getItem("tribe_user_profile");
     const hasSeenProfileHint = localStorage.getItem("tribe_seen_profile_hint");
 
-    if (savedProfile) {
-      const parsedProfile = JSON.parse(savedProfile);
-      setUserProfile(parsedProfile);
-      if (parsedProfile.homebase) setSelectedCity(parsedProfile.homebase);
-      setRequiresAuth(false);
-
-      // Show profile hint if profile is incomplete and hint not dismissed
-      if (!isProfileComplete(parsedProfile) && !hasSeenProfileHint) {
-        setShowProfileHint(true);
-        // Auto-dismiss after 10 seconds
-        setTimeout(() => {
-          setShowProfileHint(false);
-          localStorage.setItem("tribe_seen_profile_hint", "true");
-        }, 10000);
-      }
-    } else {
-      // First time user - show AuthScreen
-      setRequiresAuth(true);
+    // Show profile hint if profile is incomplete and hint not dismissed
+    if (!isProfileComplete(userProfile) && !hasSeenProfileHint) {
+      setShowProfileHint(true);
+      // Auto-dismiss after 10 seconds
+      setTimeout(() => {
+        setShowProfileHint(false);
+        localStorage.setItem("tribe_seen_profile_hint", "true");
+      }, 10000);
     }
 
     const savedLikes = localStorage.getItem("tribe_liked_events");
@@ -576,7 +614,6 @@ export const TribeApp: React.FC = () => {
     setUserProfile(profile);
     if (profile.homebase) setSelectedCity(profile.homebase);
     localStorage.setItem("tribe_user_profile", JSON.stringify(profile));
-    setRequiresAuth(false);
 
     // Fire-and-forget: Create profile in DB in background
     supabase.functions.invoke("manage_user_profile", {
@@ -743,8 +780,8 @@ export const TribeApp: React.FC = () => {
   const attendingEvents = allEvents.filter((e) => attendingEventIds.has(e.id));
   const likedEvents = allEvents.filter((e) => likedEventIds.has(e.id));
 
-  // Render Auth Screen when explicitly in AUTH view OR for first time users
-  if (view === ViewState.AUTH || requiresAuth) {
+  // Render Auth Screen when explicitly in AUTH view
+  if (view === ViewState.AUTH) {
     return <AuthScreen onLogin={handleLogin} />;
   }
 
