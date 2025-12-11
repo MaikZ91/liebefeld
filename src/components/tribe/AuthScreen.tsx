@@ -381,11 +381,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             ))}
           </div>
           
-          <h1 className="text-center text-lg font-serif tracking-[0.3em] text-white">
+          <h1 className="text-center text-xl font-serif tracking-[0.3em] text-white drop-shadow-lg">
             THE TRIBE
           </h1>
           
-          <p className="text-center text-white/70 text-xs mt-3 min-h-[2em]">
+          <p className="text-center text-white text-sm mt-3 min-h-[2em] drop-shadow-md">
             {TYPEWRITER_TEXT.slice(0, typewriterIndex)}
             {typewriterIndex < TYPEWRITER_TEXT.length && <span className="animate-pulse">|</span>}
           </p>
