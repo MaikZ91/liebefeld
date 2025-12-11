@@ -437,30 +437,44 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         </div>
 
         {/* Bottom Section - Swipe CTA */}
-        <div className="px-6 mb-20">
+        <div className="px-6 mb-16">
           {/* Swipe Up Button */}
           <div className="flex flex-col items-center">
             <div 
-              className="relative w-12 h-12 rounded-full bg-zinc-900/90 backdrop-blur-sm flex items-center justify-center animate-bounce"
+              className="relative w-14 h-14 rounded-full bg-zinc-900/90 border-2 border-red-500 backdrop-blur-sm flex items-center justify-center"
               style={{
                 transform: `scale(${1 + swipeProgress * 0.2}) translateY(${-swipeProgress * 15}px)`,
-                animationDuration: '2s',
               }}
             >
-              {/* Pulsing rings */}
-              <div className="absolute inset-0 rounded-full border border-red-500/30 animate-ping" style={{ animationDuration: '2s' }} />
-              <div className="absolute inset-[-4px] rounded-full border border-red-500/20 animate-pulse" />
-              <ChevronUp className="w-6 h-6 text-red-500 relative z-10" />
+              {/* Pulsing ring */}
+              <div className="absolute inset-[-3px] rounded-full border border-red-500/40 animate-ping" style={{ animationDuration: '2s' }} />
+              <ChevronUp className="w-7 h-7 text-red-500 relative z-10" />
             </div>
 
             {/* JETZT ENTDECKEN */}
-            <h2 className="mt-2 text-lg font-bold text-white tracking-wide">
+            <h2 className="mt-4 text-2xl font-bold text-white tracking-wider">
               JETZT ENTDECKEN
             </h2>
             
+            {/* Kostenlos starten */}
+            <p className="mt-1 text-white/80 text-sm">
+              Kostenlos starten
+            </p>
+            
+            {/* Aktive Mitglieder */}
+            <p className="mt-1 text-white/50 text-xs">
+              200+ aktive Mitglieder
+            </p>
+            
+            {/* Events Badge */}
+            <div className="mt-3 flex items-center gap-2 px-4 py-2 rounded-full border border-red-500/50 bg-black/50">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-white/80 text-sm">Events in deiner Nähe</span>
+            </div>
+            
             {/* Progress indicator */}
             {translateY > 10 && (
-              <div className="mt-1 w-32 h-1 bg-white/20 rounded-full overflow-hidden">
+              <div className="mt-3 w-32 h-1 bg-white/20 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-red-500 transition-all"
                   style={{ width: `${swipeProgress * 100}%` }}
@@ -472,7 +486,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             <button 
               onClick={(e) => { e.stopPropagation(); handleGuestLogin(); }}
               disabled={isGuestLoading}
-              className="mt-2 text-white/50 text-xs hover:text-white/70 transition-colors"
+              className="mt-4 text-white/60 text-sm hover:text-white/80 transition-colors"
             >
               {isGuestLoading ? '...' : 'erstmal nur schauen'}
             </button>
