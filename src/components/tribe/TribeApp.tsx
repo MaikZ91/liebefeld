@@ -8,7 +8,7 @@ import { TribeAIChat } from "./TribeAIChat";
 import { TribeCommunityBoard } from "./TribeCommunityBoard";
 import { TribeMapView } from "./TribeMapView";
 import { TribeBottomNav } from "./TribeBottomNav";
-import { AuthScreen } from "./AuthScreen";
+import { WelcomeOverlay } from "./WelcomeOverlay";
 import { ProfileView } from "./ProfileView";
 import { TribeLiveTicker } from "@/components/TribeLiveTicker";
 import { LocationBlockDialog } from "./LocationBlockDialog";
@@ -57,48 +57,36 @@ const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb
 const CATEGORIES = ["ALL", "PARTY", "ART", "CONCERT", "SPORT"];
 
 export const TribeApp: React.FC = () => {
-  // AUTH CHECK FIRST - before any other state or effects
-  const [authChecked, setAuthChecked] = useState(false);
-  const [requiresAuth, setRequiresAuth] = useState<boolean>(true);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-
-  // Check auth synchronously from localStorage on first render
-  useEffect(() => {
+  // AUTH CHECK - show app immediately, overlay WelcomeOverlay if not authenticated
+  const [showWelcome, setShowWelcome] = useState<boolean>(() => {
+    const savedProfile = localStorage.getItem("tribe_user_profile");
+    return !savedProfile;
+  });
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
     const savedProfile = localStorage.getItem("tribe_user_profile");
     if (savedProfile) {
       try {
-        const parsedProfile = JSON.parse(savedProfile);
-        setUserProfile(parsedProfile);
-        setRequiresAuth(false);
+        return JSON.parse(savedProfile);
       } catch {
-        setRequiresAuth(true);
+        return null;
       }
-    } else {
-      setRequiresAuth(true);
     }
-    setAuthChecked(true);
-  }, []);
+    return null;
+  });
 
-  // EARLY RETURN: Show AuthScreen immediately if not authenticated
-  // This prevents ANY main app initialization
-  if (!authChecked) {
-    return <div className="min-h-screen bg-black" />;
-  }
+  const handleLogin = (profile: UserProfile) => {
+    localStorage.setItem("tribe_user_profile", JSON.stringify(profile));
+    setUserProfile(profile);
+    setShowWelcome(false);
+  };
 
-  if (requiresAuth) {
-    return (
-      <AuthScreen
-        onLogin={(profile: UserProfile) => {
-          localStorage.setItem("tribe_user_profile", JSON.stringify(profile));
-          setUserProfile(profile);
-          setRequiresAuth(false);
-        }}
-      />
-    );
-  }
-
-  // User is authenticated - render the main app
-  return <TribeAppMain userProfile={userProfile} setUserProfile={setUserProfile} />;
+  // Always render the main app, with WelcomeOverlay on top if needed
+  return (
+    <>
+      <TribeAppMain userProfile={userProfile} setUserProfile={setUserProfile} />
+      {showWelcome && <WelcomeOverlay onLogin={handleLogin} />}
+    </>
+  );
 };
 
 // Main app component - only loaded after authentication
@@ -780,10 +768,7 @@ const TribeAppMain: React.FC<{
   const attendingEvents = allEvents.filter((e) => attendingEventIds.has(e.id));
   const likedEvents = allEvents.filter((e) => likedEventIds.has(e.id));
 
-  // Render Auth Screen when explicitly in AUTH view
-  if (view === ViewState.AUTH) {
-    return <AuthScreen onLogin={handleLogin} />;
-  }
+  // No longer need AUTH view - WelcomeOverlay is shown as overlay in parent
 
   // Render User Matcher
   if (view === ViewState.MATCHER) {
