@@ -231,8 +231,9 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
   };
 
   // Check if user is involved in a post (authored or commented)
-  const isOwnPost = (post: Post): boolean => post.user === userProfile.username;
+  const isOwnPost = (post: Post): boolean => userProfile?.username ? post.user === userProfile.username : false;
   const isInvolvedInPost = (post: Post): boolean => {
+    if (!userProfile?.username) return false;
     if (isOwnPost(post)) return false; // Own posts handled separately
     return post.comments?.some(c => c.user === userProfile.username) || false;
   };
@@ -241,8 +242,8 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
   const calculateRelevanceScore = (post: Post): number => {
     let score = 50; // Base score
     
-    const userInterests = userProfile.interests || [];
-    const userLocations = userProfile.favorite_locations || [];
+    const userInterests = userProfile?.interests || [];
+    const userLocations = userProfile?.favorite_locations || [];
     
     // Boost for matching interests
     post.tags.forEach(tag => {
@@ -310,15 +311,15 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
       // Remove user from all response arrays first
       ['bin dabei', 'diesmal nicht', 'vielleicht'].forEach(key => {
         if (responses[key]) {
-          responses[key] = responses[key].filter(u => u.username !== userProfile.username);
+          responses[key] = responses[key].filter(u => u.username !== userProfile?.username);
         }
       });
       
       // Add to selected response
       if (!responses[responseKey]) responses[responseKey] = [];
       responses[responseKey].push({ 
-        username: userProfile.username, 
-        avatar: userProfile.avatarUrl || userProfile.avatar 
+        username: userProfile?.username || 'Guest', 
+        avatar: userProfile?.avatarUrl || userProfile?.avatar 
       });
 
       await supabase
@@ -338,7 +339,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
     if (!responses) return null;
     
     for (const [key, users] of Object.entries(responses)) {
-      if (users?.some(u => u.username === userProfile.username)) {
+      if (users?.some(u => u.username === userProfile?.username)) {
         return key;
       }
     }
@@ -393,9 +394,9 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
         .from('chat_messages')
         .insert({
           group_id: TRIBE_BOARD_GROUP_ID,
-          sender: userProfile.username,
+          sender: userProfile?.username || 'Guest',
           text: postText,
-          avatar: userProfile.avatarUrl || userProfile.avatar || null
+          avatar: userProfile?.avatarUrl || userProfile?.avatar || null
         });
 
       setNewPost('');
