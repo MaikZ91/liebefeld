@@ -137,75 +137,41 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 text-white overflow-hidden">
-      {/* Dynamic Collage Background */}
-      <div className="absolute inset-0 bg-black overflow-hidden">
-        {/* Tile 1 - Large top left */}
-        <div 
-          className="absolute -left-4 -top-4 w-[55%] h-[38%] overflow-hidden rounded-lg shadow-2xl"
-          style={{ transform: 'rotate(-3deg)' }}
-        >
+    <div className="fixed inset-0 z-50 text-white overflow-hidden bg-black/80 backdrop-blur-md">
+      {/* Semi-transparent collage overlay */}
+      <div className="absolute inset-0 overflow-hidden opacity-40">
+        {/* Tile 1 */}
+        <div className="absolute -left-4 -top-4 w-[55%] h-[38%] overflow-hidden rounded-lg" style={{ transform: 'rotate(-3deg)' }}>
           <img src={REEL_IMAGES[imageIndices[0]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
         </div>
-        
-        {/* Tile 2 - Medium top right */}
-        <div 
-          className="absolute -right-2 top-[5%] w-[50%] h-[30%] overflow-hidden rounded-lg shadow-2xl"
-          style={{ transform: 'rotate(4deg)' }}
-        >
+        {/* Tile 2 */}
+        <div className="absolute -right-2 top-[5%] w-[50%] h-[30%] overflow-hidden rounded-lg" style={{ transform: 'rotate(4deg)' }}>
           <img src={REEL_IMAGES[imageIndices[1]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
         </div>
-        
-        {/* Tile 3 - Small middle left */}
-        <div 
-          className="absolute left-[5%] top-[32%] w-[40%] h-[25%] overflow-hidden rounded-lg shadow-2xl z-10"
-          style={{ transform: 'rotate(2deg)' }}
-        >
+        {/* Tile 3 */}
+        <div className="absolute left-[5%] top-[32%] w-[40%] h-[25%] overflow-hidden rounded-lg z-10" style={{ transform: 'rotate(2deg)' }}>
           <img src={REEL_IMAGES[imageIndices[2]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
         </div>
-        
-        {/* Tile 4 - Medium middle right */}
-        <div 
-          className="absolute right-[2%] top-[28%] w-[45%] h-[28%] overflow-hidden rounded-lg shadow-2xl"
-          style={{ transform: 'rotate(-5deg)' }}
-        >
+        {/* Tile 4 */}
+        <div className="absolute right-[2%] top-[28%] w-[45%] h-[28%] overflow-hidden rounded-lg" style={{ transform: 'rotate(-5deg)' }}>
           <img src={REEL_IMAGES[imageIndices[3]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
         </div>
-        
-        {/* Tile 5 - Large bottom left */}
-        <div 
-          className="absolute -left-6 top-[52%] w-[52%] h-[32%] overflow-hidden rounded-lg shadow-2xl"
-          style={{ transform: 'rotate(3deg)' }}
-        >
+        {/* Tile 5 */}
+        <div className="absolute -left-6 top-[52%] w-[52%] h-[32%] overflow-hidden rounded-lg" style={{ transform: 'rotate(3deg)' }}>
           <img src={REEL_IMAGES[imageIndices[4]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
         </div>
-        
-        {/* Tile 6 - Medium bottom right */}
-        <div 
-          className="absolute right-[-5%] top-[50%] w-[48%] h-[30%] overflow-hidden rounded-lg shadow-2xl z-10"
-          style={{ transform: 'rotate(-4deg)' }}
-        >
+        {/* Tile 6 */}
+        <div className="absolute right-[-5%] top-[50%] w-[48%] h-[30%] overflow-hidden rounded-lg z-10" style={{ transform: 'rotate(-4deg)' }}>
           <img src={REEL_IMAGES[imageIndices[5]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
         </div>
-        
-        {/* Tile 7 - Bottom strip left */}
-        <div 
-          className="absolute left-[10%] -bottom-2 w-[42%] h-[22%] overflow-hidden rounded-lg shadow-2xl"
-          style={{ transform: 'rotate(-2deg)' }}
-        >
+        {/* Tile 7 */}
+        <div className="absolute left-[10%] -bottom-2 w-[42%] h-[22%] overflow-hidden rounded-lg" style={{ transform: 'rotate(-2deg)' }}>
           <img src={REEL_IMAGES[imageIndices[6]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
         </div>
-        
-        {/* Tile 8 - Bottom strip right */}
-        <div 
-          className="absolute -right-4 -bottom-4 w-[50%] h-[25%] overflow-hidden rounded-lg shadow-2xl"
-          style={{ transform: 'rotate(5deg)' }}
-        >
+        {/* Tile 8 */}
+        <div className="absolute -right-4 -bottom-4 w-[50%] h-[25%] overflow-hidden rounded-lg" style={{ transform: 'rotate(5deg)' }}>
           <img src={REEL_IMAGES[imageIndices[7]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
         </div>
-        
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/70 to-black/90" />
       </div>
 
       {/* Content */}
