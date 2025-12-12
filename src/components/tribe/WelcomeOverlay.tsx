@@ -2,6 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile } from '@/types/tribe';
 import { supabase } from '@/integrations/supabase/client';
 
+// Import reel images
+import reel1 from '@/assets/tribe/reel-1.jpg';
+import reel2 from '@/assets/tribe/reel-2.jpg';
+import reel3 from '@/assets/tribe/reel-3.jpg';
+import reel4 from '@/assets/tribe/reel-4.jpg';
+import reel5 from '@/assets/tribe/reel-5.jpg';
+import reel6 from '@/assets/tribe/reel-6.jpg';
+import reel7 from '@/assets/tribe/reel-7.jpg';
+import reel8 from '@/assets/tribe/reel-8.jpg';
+import reel9 from '@/assets/tribe/reel-9.jpg';
+import reel10 from '@/assets/tribe/reel-10.jpg';
+import reel11 from '@/assets/tribe/reel-11.jpg';
+import reel12 from '@/assets/tribe/reel-12.jpg';
+import reel13 from '@/assets/tribe/reel-13.jpg';
+import reel14 from '@/assets/tribe/reel-14.jpg';
+import reel15 from '@/assets/tribe/reel-15.jpg';
+
+const REEL_IMAGES = [reel1, reel2, reel3, reel4, reel5, reel6, reel7, reel8, reel9, reel10, reel11, reel12, reel13, reel14, reel15];
+
 interface WelcomeOverlayProps {
   onLogin: (profile: UserProfile) => void;
 }
@@ -28,6 +47,27 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
   const [selectedCity] = useState('Bielefeld');
   const [isGuestLoading, setIsGuestLoading] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+  const [imageIndices, setImageIndices] = useState([0, 3, 6, 9, 12, 1, 4, 7]);
+
+  // Calm collage slideshow - slower, staggered changes
+  useEffect(() => {
+    const timers: NodeJS.Timeout[] = [];
+    const intervals = [4000, 5000, 4500, 5500, 4200, 5200, 4800, 5800];
+    
+    imageIndices.forEach((_, slotIndex) => {
+      const updateSlot = () => {
+        setImageIndices(prev => {
+          const newIndices = [...prev];
+          newIndices[slotIndex] = (prev[slotIndex] + 1) % REEL_IMAGES.length;
+          return newIndices;
+        });
+        timers[slotIndex] = setTimeout(updateSlot, intervals[slotIndex]);
+      };
+      timers[slotIndex] = setTimeout(updateSlot, intervals[slotIndex] + slotIndex * 600);
+    });
+    
+    return () => timers.forEach(t => clearTimeout(t));
+  }, []);
 
   const toggleCategory = (categoryId: string) => {
     setSelectedCategories(prev => {
@@ -97,30 +137,98 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-sm bg-zinc-900/95 border border-zinc-700 rounded-2xl p-6 shadow-2xl">
-        {/* Welcome Header */}
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-white mb-1">Willkommen</h1>
-          <p className="text-zinc-400 text-sm">Tritt der Community bei</p>
+    <div className="fixed inset-0 z-50 text-white overflow-hidden">
+      {/* Dynamic Collage Background */}
+      <div className="absolute inset-0 bg-black overflow-hidden">
+        {/* Tile 1 - Large top left */}
+        <div 
+          className="absolute -left-4 -top-4 w-[55%] h-[38%] overflow-hidden rounded-lg shadow-2xl"
+          style={{ transform: 'rotate(-3deg)' }}
+        >
+          <img src={REEL_IMAGES[imageIndices[0]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
         </div>
+        
+        {/* Tile 2 - Medium top right */}
+        <div 
+          className="absolute -right-2 top-[5%] w-[50%] h-[30%] overflow-hidden rounded-lg shadow-2xl"
+          style={{ transform: 'rotate(4deg)' }}
+        >
+          <img src={REEL_IMAGES[imageIndices[1]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
+        </div>
+        
+        {/* Tile 3 - Small middle left */}
+        <div 
+          className="absolute left-[5%] top-[32%] w-[40%] h-[25%] overflow-hidden rounded-lg shadow-2xl z-10"
+          style={{ transform: 'rotate(2deg)' }}
+        >
+          <img src={REEL_IMAGES[imageIndices[2]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
+        </div>
+        
+        {/* Tile 4 - Medium middle right */}
+        <div 
+          className="absolute right-[2%] top-[28%] w-[45%] h-[28%] overflow-hidden rounded-lg shadow-2xl"
+          style={{ transform: 'rotate(-5deg)' }}
+        >
+          <img src={REEL_IMAGES[imageIndices[3]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
+        </div>
+        
+        {/* Tile 5 - Large bottom left */}
+        <div 
+          className="absolute -left-6 top-[52%] w-[52%] h-[32%] overflow-hidden rounded-lg shadow-2xl"
+          style={{ transform: 'rotate(3deg)' }}
+        >
+          <img src={REEL_IMAGES[imageIndices[4]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
+        </div>
+        
+        {/* Tile 6 - Medium bottom right */}
+        <div 
+          className="absolute right-[-5%] top-[50%] w-[48%] h-[30%] overflow-hidden rounded-lg shadow-2xl z-10"
+          style={{ transform: 'rotate(-4deg)' }}
+        >
+          <img src={REEL_IMAGES[imageIndices[5]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
+        </div>
+        
+        {/* Tile 7 - Bottom strip left */}
+        <div 
+          className="absolute left-[10%] -bottom-2 w-[42%] h-[22%] overflow-hidden rounded-lg shadow-2xl"
+          style={{ transform: 'rotate(-2deg)' }}
+        >
+          <img src={REEL_IMAGES[imageIndices[6]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
+        </div>
+        
+        {/* Tile 8 - Bottom strip right */}
+        <div 
+          className="absolute -right-4 -bottom-4 w-[50%] h-[25%] overflow-hidden rounded-lg shadow-2xl"
+          style={{ transform: 'rotate(5deg)' }}
+        >
+          <img src={REEL_IMAGES[imageIndices[7]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
+        </div>
+        
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/70 to-black/90" />
+      </div>
 
+      {/* Content */}
+      <div className="relative z-10 h-full flex flex-col items-center justify-center px-6">
+        {/* Welcome Header */}
+        <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">Willkommen</h1>
+        
         {/* Name Input */}
-        <div className="mb-4">
+        <div className="w-full max-w-xs mt-6">
           <input 
             type="text" 
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Dein Name"
-            className="w-full bg-zinc-800/80 border border-zinc-600 rounded-xl py-3 px-4 text-white placeholder-zinc-500 outline-none focus:border-red-500 transition-all text-center"
+            className="w-full bg-black/50 backdrop-blur-sm border border-white/20 rounded-full py-3 px-5 text-center text-white placeholder-white/40 outline-none focus:border-red-500 transition-all"
             onKeyDown={(e) => e.key === 'Enter' && username.trim() && handleEnter()}
           />
         </div>
         
         {/* Interests - appear when name has at least 1 character */}
         {username.length > 0 && (
-          <div className="mb-6 animate-fade-in">
-            <p className="text-zinc-400 text-xs text-center mb-3">Wähle deine Interessen</p>
+          <div className="mt-4 w-full max-w-xs animate-fade-in">
+            <p className="text-white/70 text-xs text-center mb-2">Wähle deine Interessen</p>
             <div className="flex flex-wrap justify-center gap-2">
               {CATEGORIES.map(cat => (
                 <button
@@ -129,7 +237,7 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
                   className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
                     selectedCategories.has(cat.id)
                       ? 'bg-red-500 text-white border-red-500'
-                      : 'bg-zinc-800 text-zinc-300 border-zinc-600 hover:border-zinc-500'
+                      : 'bg-black/70 text-white border-white/30 hover:bg-black/90 hover:border-white/50'
                   }`}
                 >
                   {cat.icon} {cat.label}
@@ -143,32 +251,23 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
         <button
           onClick={handleEnter}
           disabled={!username.trim()}
-          className={`w-full py-3 rounded-xl font-semibold transition-all ${
+          className={`mt-6 w-full max-w-xs py-3 rounded-full font-semibold transition-all ${
             username.trim()
               ? 'bg-red-500 text-white hover:bg-red-600'
-              : 'bg-zinc-700 text-zinc-500 cursor-not-allowed'
+              : 'bg-zinc-700/50 text-zinc-500 cursor-not-allowed'
           }`}
         >
           Los geht's
         </button>
 
-        {/* Divider */}
-        <div className="flex items-center gap-3 my-5">
-          <div className="flex-1 h-px bg-zinc-700" />
-          <span className="text-zinc-500 text-xs">oder</span>
-          <div className="flex-1 h-px bg-zinc-700" />
-        </div>
-
         {/* Connect with Community */}
-        <div className="text-center mb-4">
-          <p className="text-zinc-300 text-sm font-medium">Verbinde dich mit der Community</p>
-        </div>
+        <p className="mt-8 text-white/60 text-sm">Verbinde dich mit der Community</p>
 
         {/* Guest Login */}
         <button
           onClick={handleGuestLogin}
           disabled={isGuestLoading}
-          className="w-full py-2.5 rounded-xl border border-zinc-600 text-zinc-400 hover:text-white hover:border-zinc-500 transition-all text-sm"
+          className="mt-3 text-white/50 hover:text-white/80 transition-colors text-sm underline underline-offset-2"
         >
           {isGuestLoading ? 'Wird geladen...' : 'erstmal nur schauen'}
         </button>
