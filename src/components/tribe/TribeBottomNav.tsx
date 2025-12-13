@@ -1,6 +1,6 @@
 import React from 'react';
 import { ViewState } from '@/types/tribe';
-import { Home, Sparkles, Users, Map } from 'lucide-react';
+import { Home, Users, Map } from 'lucide-react';
 
 interface TribeBottomNavProps {
   currentView: ViewState;
@@ -9,15 +9,15 @@ interface TribeBottomNavProps {
 }
 
 export const TribeBottomNav: React.FC<TribeBottomNavProps> = ({ currentView, onViewChange, hasNewCommunityMessages }) => {
+  // MIA removed from bottom nav - now integrated into Explore page
   const navItems = [
     { view: ViewState.FEED, icon: Home, label: 'Explore' },
     { view: ViewState.MAP, icon: Map, label: 'Social Map' },
     { view: ViewState.COMMUNITY, icon: Users, label: 'Community', hasNotification: hasNewCommunityMessages, isCenterButton: true },
-    { view: ViewState.TRIBE_AI, icon: Sparkles, label: 'MIA' },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 border-t border-white/10 px-4 py-2 flex justify-around items-end max-w-2xl mx-auto w-full backdrop-blur-lg">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 border-t border-white/10 px-8 py-2 flex justify-around items-end max-w-2xl mx-auto w-full backdrop-blur-lg">
       {navItems.map(({ view, icon: Icon, label, hasNotification, isCenterButton }) => {
         
         const isActive = currentView === view;
