@@ -4,7 +4,6 @@ import { ViewState, TribeEvent, Post, UserProfile, NexusFilter } from "@/types/t
 import { UserProfile as ChatUserProfile } from "@/types/chatTypes";
 import { convertToTribeEvent } from "@/utils/tribe/eventHelpers";
 import { TribeEventCard } from "./TribeEventCard";
-import { TribeAIChat } from "./TribeAIChat";
 import { TribeCommunityBoard } from "./TribeCommunityBoard";
 import { TribeMapView } from "./TribeMapView";
 import { TribeBottomNav } from "./TribeBottomNav";
@@ -14,19 +13,15 @@ import { TribeLiveTicker } from "@/components/TribeLiveTicker";
 import { LocationBlockDialog } from "./LocationBlockDialog";
 import { AppDownloadPrompt } from "./AppDownloadPrompt";
 import { TribeUserMatcher } from "./TribeUserMatcher";
+import { MiaInlineChat } from "./MiaInlineChat";
 import UserProfileDialog from "@/components/users/UserProfileDialog";
 
 import { dislikeService } from "@/services/dislikeService";
 import { personalizationService } from "@/services/personalizationService";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Map as MapIcon,
-  Home,
-  Users,
-  Sparkles,
   ChevronDown,
   User,
-  Send,
   X,
   Filter,
   Calendar as CalendarIcon,
@@ -140,11 +135,8 @@ const TribeAppMain: React.FC<{
     loading: false,
   });
 
-  // Nexus state
-  const [nexusInput, setNexusInput] = useState("");
-  const [nexusInsight, setNexusInsight] = useState<string | null>(null);
-  const [isNexusThinking, setIsNexusThinking] = useState(false);
-  const [nexusFilter, setNexusFilter] = useState<NexusFilter | null>(null);
+  // MIA inline state - replaces old Nexus state
+  const [miaFilteredEventIds, setMiaFilteredEventIds] = useState<string[] | null>(null);
 
   // Query history
   const [queryHistory, setQueryHistory] = useState<string[]>([]);
@@ -433,17 +425,9 @@ const TribeAppMain: React.FC<{
       result = result.filter((e) => e.category?.toUpperCase() === selectedCategory);
     }
 
-    // Apply Nexus filter if active
-    if (nexusFilter) {
-      if (nexusFilter.category) {
-        result = result.filter((e) => e.category?.toLowerCase().includes(nexusFilter.category!.toLowerCase()));
-      }
-      if (nexusFilter.vibe) {
-        result = result.filter((e) => e.vibe === nexusFilter.vibe);
-      }
-      if (nexusFilter.date) {
-        result = result.filter((e) => e.date === nexusFilter.date);
-      }
+    // Apply MIA filter if active (replaces old nexusFilter)
+    if (miaFilteredEventIds) {
+      result = result.filter((e) => miaFilteredEventIds.includes(e.id));
     }
 
     // Helper function to detect "Ausgehen" events by keywords
@@ -546,7 +530,7 @@ const TribeAppMain: React.FC<{
     });
 
     return result;
-  }, [allEvents, selectedCity, selectedCategory, hiddenEventIds, likedEventIds, nexusFilter, selectedDate]);
+  }, [allEvents, selectedCity, selectedCategory, hiddenEventIds, likedEventIds, miaFilteredEventIds, selectedDate]);
 
   // State for infinite scroll in hero section
   const [heroLoadedCount, setHeroLoadedCount] = useState(10);
@@ -722,30 +706,14 @@ const TribeAppMain: React.FC<{
     setQueryHistory((prev) => [query, ...prev.filter((q) => q !== query)].slice(0, 20));
   };
 
-  const handleNexusAsk = async (query: string) => {
-    if (!query.trim()) return;
-    setIsNexusThinking(true);
-    setNexusInput("");
+  // handleNexusAsk removed - MIA is now handled by MiaInlineChat component
 
-    // Track query
-    handleQuery(query);
+  const handleMiaEventsFiltered = (eventIds: string[]) => {
+    setMiaFilteredEventIds(eventIds);
+  };
 
-    // Simulate AI response (replace with actual Lovable AI call)
-    setTimeout(() => {
-      setNexusInsight(`MIA found ${filteredEvents.length} events matching "${query}"`);
-
-      // Simple keyword-based filter
-      const lowerQuery = query.toLowerCase();
-      if (lowerQuery.includes("party") || lowerQuery.includes("techno")) {
-        setNexusFilter({ category: "PARTY" });
-      } else if (lowerQuery.includes("art") || lowerQuery.includes("culture")) {
-        setNexusFilter({ category: "ART" });
-      } else if (lowerQuery.includes("sport")) {
-        setNexusFilter({ category: "SPORT" });
-      }
-
-      setIsNexusThinking(false);
-    }, 1000);
+  const handleMiaClearFilter = () => {
+    setMiaFilteredEventIds(null);
   };
 
   const handleJoinTribe = (eventName: string) => {
@@ -891,55 +859,24 @@ const TribeAppMain: React.FC<{
       >
         {view === ViewState.FEED && (
           <div className="animate-fadeIn pb-20">
-            {/* MIA Section */}
-            <div className="px-6 pt-2 pb-6 bg-gradient-to-b from-black via-black to-transparent">
-              {/* MIA Search Bar */}
-              <div className="relative group mb-3 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-white/20">
-                  <img src={MIA_AVATAR} className="w-full h-full object-cover" alt="MIA" />
-                </div>
-                <input
-                  type="text"
-                  value={nexusInput}
-                  onChange={(e) => setNexusInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleNexusAsk(nexusInput)}
-                  placeholder="Ask MIA..."
-                  className="flex-1 bg-black border border-white/[0.08] focus:border-white/20 text-white text-sm placeholder-zinc-700 rounded-full py-2.5 px-4 outline-none transition-all"
-                />
-                {nexusInput.trim() && (
-                  <button
-                    onClick={() => handleNexusAsk(nexusInput)}
-                    className="absolute inset-y-0 right-3 flex items-center text-zinc-600 hover:text-gold transition-all"
-                  >
-                    <Send size={14} />
-                  </button>
-                )}
-              </div>
-
-              {/* Suggestion Chips */}
-              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-6">
-                <button
-                  onClick={() => {
-                    setNexusInput("Vibe Check: *TRIBE BOULDERN?");
-                    handleNexusAsk("Vibe Check: *TRIBE BOULDERN?");
-                  }}
-                  className="px-4 py-2 bg-zinc-900/50 border border-white/10 text-zinc-400 text-xs whitespace-nowrap rounded-full hover:border-white/30 hover:text-white transition-all"
-                >
-                  Vibe Check: *TRIBE BOULDERN?
-                </button>
-                <button
-                  onClick={() => {
-                    setNexusInput(`Was geht heute in ${selectedCity}?`);
-                    handleNexusAsk(`Was geht heute in ${selectedCity}?`);
-                  }}
-                  className="px-4 py-2 bg-zinc-900/50 border border-white/10 text-zinc-400 text-xs whitespace-nowrap rounded-full hover:border-white/30 hover:text-white transition-all"
-                >
-                  Was geht heute in {selectedCity}?
-                </button>
-              </div>
+            {/* MIA Inline Chat - Full AI Integration */}
+            <div className="px-6 pt-2 pb-4 bg-gradient-to-b from-black via-black to-transparent">
+              <MiaInlineChat
+                events={allEvents}
+                userProfile={userProfile ? {
+                  username: userProfile.username,
+                  interests: userProfile.interests,
+                  favorite_locations: userProfile.favorite_locations,
+                  hobbies: userProfile.hobbies,
+                } : undefined}
+                city={selectedCity}
+                onQuery={handleQuery}
+                onEventsFiltered={handleMiaEventsFiltered}
+                onClearFilter={handleMiaClearFilter}
+              />
 
               {/* Category Tabs */}
-              <div className="flex gap-6 overflow-x-auto no-scrollbar pb-3">
+              <div className="flex gap-6 overflow-x-auto no-scrollbar pb-3 mt-4">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat}
@@ -953,36 +890,20 @@ const TribeAppMain: React.FC<{
                 ))}
               </div>
 
-              {/* Inline MIA Insight */}
-              {nexusInsight && (
-                <div className="mt-4 bg-surface border-l-2 border-gold p-4 relative animate-fadeIn shadow-2xl rounded-sm">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 rounded-full overflow-hidden">
-                        <img src={MIA_AVATAR} className="w-full h-full object-cover" alt="MIA" />
-                      </div>
-                      <span className="text-[10px] font-bold text-gold uppercase tracking-widest">MIA Insight</span>
-                    </div>
-                    <button onClick={() => setNexusInsight(null)} className="text-zinc-600 hover:text-white">
-                      <X size={14} />
-                    </button>
-                  </div>
-                  <p className="text-sm text-zinc-300 font-light leading-relaxed">{nexusInsight}</p>
-                </div>
-              )}
-
-              {/* Active Filter Indicator */}
-              {nexusFilter && (
+              {/* Active MIA Filter Indicator */}
+              {miaFilteredEventIds && (
                 <div className="mt-3 flex justify-between items-center bg-gold/10 border border-gold/30 px-3 py-2 rounded-sm animate-fadeIn">
                   <div className="flex items-center gap-2">
                     <Filter size={12} className="text-gold" />
-                    <span className="text-[10px] text-gold font-bold uppercase tracking-widest">MIA Filter Active</span>
+                    <span className="text-[10px] text-gold font-bold uppercase tracking-widest">
+                      MIA zeigt {miaFilteredEventIds.length} Events
+                    </span>
                   </div>
                   <button
-                    onClick={() => setNexusFilter(null)}
+                    onClick={handleMiaClearFilter}
                     className="text-[9px] text-zinc-400 hover:text-white underline"
                   >
-                    RESET
+                    ALLE ANZEIGEN
                   </button>
                 </div>
               )}
@@ -1286,24 +1207,7 @@ const TribeAppMain: React.FC<{
           </div>
         )}
 
-        {view === ViewState.TRIBE_AI && (
-          <TribeAIChat
-            onClose={() => setView(ViewState.FEED)}
-            events={filteredEvents}
-            onQuery={handleQuery}
-            userProfile={
-              userProfile
-                ? {
-                    username: userProfile.username,
-                    interests: userProfile.interests,
-                    favorite_locations: userProfile.favorite_locations,
-                    hobbies: userProfile.hobbies,
-                  }
-                : undefined
-            }
-            city={selectedCity}
-          />
-        )}
+        {/* MIA is now integrated directly into the Explore page - no separate view needed */}
         {view === ViewState.COMMUNITY && (
           <TribeCommunityBoard
             selectedCity={selectedCity}
