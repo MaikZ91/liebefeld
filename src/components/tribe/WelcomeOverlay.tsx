@@ -137,106 +137,102 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 text-white overflow-hidden bg-black/80 backdrop-blur-md">
-      {/* Semi-transparent collage overlay */}
-      <div className="absolute inset-0 overflow-hidden opacity-40">
-        {/* Tile 1 */}
-        <div className="absolute -left-4 -top-4 w-[55%] h-[38%] overflow-hidden rounded-lg" style={{ transform: 'rotate(-3deg)' }}>
-          <img src={REEL_IMAGES[imageIndices[0]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
-        </div>
-        {/* Tile 2 */}
-        <div className="absolute -right-2 top-[5%] w-[50%] h-[30%] overflow-hidden rounded-lg" style={{ transform: 'rotate(4deg)' }}>
-          <img src={REEL_IMAGES[imageIndices[1]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
-        </div>
-        {/* Tile 3 */}
-        <div className="absolute left-[5%] top-[32%] w-[40%] h-[25%] overflow-hidden rounded-lg z-10" style={{ transform: 'rotate(2deg)' }}>
-          <img src={REEL_IMAGES[imageIndices[2]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
-        </div>
-        {/* Tile 4 */}
-        <div className="absolute right-[2%] top-[28%] w-[45%] h-[28%] overflow-hidden rounded-lg" style={{ transform: 'rotate(-5deg)' }}>
-          <img src={REEL_IMAGES[imageIndices[3]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
-        </div>
-        {/* Tile 5 */}
-        <div className="absolute -left-6 top-[52%] w-[52%] h-[32%] overflow-hidden rounded-lg" style={{ transform: 'rotate(3deg)' }}>
-          <img src={REEL_IMAGES[imageIndices[4]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
-        </div>
-        {/* Tile 6 */}
-        <div className="absolute right-[-5%] top-[50%] w-[48%] h-[30%] overflow-hidden rounded-lg z-10" style={{ transform: 'rotate(-4deg)' }}>
-          <img src={REEL_IMAGES[imageIndices[5]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
-        </div>
-        {/* Tile 7 */}
-        <div className="absolute left-[10%] -bottom-2 w-[42%] h-[22%] overflow-hidden rounded-lg" style={{ transform: 'rotate(-2deg)' }}>
-          <img src={REEL_IMAGES[imageIndices[6]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
-        </div>
-        {/* Tile 8 */}
-        <div className="absolute -right-4 -bottom-4 w-[50%] h-[25%] overflow-hidden rounded-lg" style={{ transform: 'rotate(5deg)' }}>
-          <img src={REEL_IMAGES[imageIndices[7]]} alt="" className="w-full h-full object-cover transition-all duration-700 scale-110" draggable={false} />
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 h-full flex flex-col items-center justify-center px-6">
-        {/* Welcome Header */}
-        <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">Willkommen</h1>
-        
-        {/* Name Input */}
-        <div className="w-full max-w-xs mt-6">
-          <input 
-            type="text" 
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Dein Name"
-            className="w-full bg-black/50 backdrop-blur-sm border border-white/20 rounded-full py-3 px-5 text-center text-white placeholder-white/40 outline-none focus:border-red-500 transition-all"
-            onKeyDown={(e) => e.key === 'Enter' && username.trim() && handleEnter()}
-          />
-        </div>
-        
-        {/* Interests - appear when name has at least 1 character */}
-        {username.length > 0 && (
-          <div className="mt-4 w-full max-w-xs animate-fade-in">
-            <p className="text-white/70 text-xs text-center mb-2">Wähle deine Interessen</p>
-            <div className="flex flex-wrap justify-center gap-2">
-              {CATEGORIES.map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => toggleCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
-                    selectedCategories.has(cat.id)
-                      ? 'bg-red-500 text-white border-red-500'
-                      : 'bg-black/70 text-white border-white/30 hover:bg-black/90 hover:border-white/50'
-                  }`}
-                >
-                  {cat.icon} {cat.label}
-                </button>
-              ))}
-            </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/50 backdrop-blur-sm">
+      {/* Card Container */}
+      <div className="relative w-full max-w-sm bg-zinc-900/95 rounded-2xl overflow-hidden shadow-2xl border border-zinc-700/50">
+        {/* Collage Background inside card */}
+        <div className="absolute inset-0 overflow-hidden opacity-30">
+          {/* Tile 1 */}
+          <div className="absolute -left-2 -top-2 w-[55%] h-[40%] overflow-hidden" style={{ transform: 'rotate(-3deg)' }}>
+            <img src={REEL_IMAGES[imageIndices[0]]} alt="" className="w-full h-full object-cover transition-all duration-700" draggable={false} />
           </div>
-        )}
+          {/* Tile 2 */}
+          <div className="absolute -right-2 top-[10%] w-[50%] h-[35%] overflow-hidden" style={{ transform: 'rotate(4deg)' }}>
+            <img src={REEL_IMAGES[imageIndices[1]]} alt="" className="w-full h-full object-cover transition-all duration-700" draggable={false} />
+          </div>
+          {/* Tile 3 */}
+          <div className="absolute left-[5%] top-[40%] w-[45%] h-[30%] overflow-hidden" style={{ transform: 'rotate(2deg)' }}>
+            <img src={REEL_IMAGES[imageIndices[2]]} alt="" className="w-full h-full object-cover transition-all duration-700" draggable={false} />
+          </div>
+          {/* Tile 4 */}
+          <div className="absolute right-[0%] top-[45%] w-[50%] h-[35%] overflow-hidden" style={{ transform: 'rotate(-4deg)' }}>
+            <img src={REEL_IMAGES[imageIndices[3]]} alt="" className="w-full h-full object-cover transition-all duration-700" draggable={false} />
+          </div>
+          {/* Tile 5 */}
+          <div className="absolute -left-4 -bottom-4 w-[55%] h-[35%] overflow-hidden" style={{ transform: 'rotate(3deg)' }}>
+            <img src={REEL_IMAGES[imageIndices[4]]} alt="" className="w-full h-full object-cover transition-all duration-700" draggable={false} />
+          </div>
+          {/* Tile 6 */}
+          <div className="absolute -right-4 -bottom-4 w-[50%] h-[30%] overflow-hidden" style={{ transform: 'rotate(-5deg)' }}>
+            <img src={REEL_IMAGES[imageIndices[5]]} alt="" className="w-full h-full object-cover transition-all duration-700" draggable={false} />
+          </div>
+        </div>
 
-        {/* Enter Button */}
-        <button
-          onClick={handleEnter}
-          disabled={!username.trim()}
-          className={`mt-6 w-full max-w-xs py-3 rounded-full font-semibold transition-all ${
-            username.trim()
-              ? 'bg-red-500 text-white hover:bg-red-600'
-              : 'bg-zinc-700/50 text-zinc-500 cursor-not-allowed'
-          }`}
-        >
-          Los geht's
-        </button>
+        {/* Gradient Overlay inside card */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/70 to-black/90" />
 
-        {/* Connect with Community */}
-        <p className="mt-8 text-white/60 text-sm">Verbinde dich mit der Community</p>
+        {/* Content */}
+        <div className="relative z-10 px-6 py-10 flex flex-col items-center text-white">
+          {/* Welcome Header */}
+          <h1 className="text-2xl font-bold mb-1">Willkommen</h1>
+          <p className="text-white/50 text-sm mb-6">Verbinde dich mit der Community</p>
+          
+          {/* Name Input */}
+          <div className="w-full">
+            <input 
+              type="text" 
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Dein Name"
+              className="w-full bg-black/50 border border-white/20 rounded-full py-3 px-5 text-center text-white placeholder-white/40 outline-none focus:border-red-500 transition-all"
+              onKeyDown={(e) => e.key === 'Enter' && username.trim() && handleEnter()}
+            />
+          </div>
+          
+          {/* Interests - appear when name has at least 1 character */}
+          {username.length > 0 && (
+            <div className="mt-4 w-full animate-fade-in">
+              <p className="text-white/60 text-xs text-center mb-2">Wähle deine Interessen</p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {CATEGORIES.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => toggleCategory(cat.id)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                      selectedCategories.has(cat.id)
+                        ? 'bg-red-500 text-white border-red-500'
+                        : 'bg-black/50 text-white border-white/30 hover:border-white/50'
+                    }`}
+                  >
+                    {cat.icon} {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-        {/* Guest Login */}
-        <button
-          onClick={handleGuestLogin}
-          disabled={isGuestLoading}
-          className="mt-3 text-white/50 hover:text-white/80 transition-colors text-sm underline underline-offset-2"
-        >
-          {isGuestLoading ? 'Wird geladen...' : 'erstmal nur schauen'}
-        </button>
+          {/* Enter Button */}
+          <button
+            onClick={handleEnter}
+            disabled={!username.trim()}
+            className={`mt-6 w-full py-3 rounded-full font-semibold transition-all ${
+              username.trim()
+                ? 'bg-red-500 text-white hover:bg-red-600'
+                : 'bg-zinc-700/50 text-zinc-500 cursor-not-allowed'
+            }`}
+          >
+            Los geht's
+          </button>
+
+          {/* Guest Login */}
+          <button
+            onClick={handleGuestLogin}
+            disabled={isGuestLoading}
+            className="mt-4 text-white/50 hover:text-white/70 transition-colors text-sm"
+          >
+            {isGuestLoading ? 'Wird geladen...' : 'erstmal nur schauen →'}
+          </button>
+        </div>
       </div>
     </div>
   );
