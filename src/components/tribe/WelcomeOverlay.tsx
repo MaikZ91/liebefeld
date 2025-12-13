@@ -78,7 +78,7 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
     });
   };
 
-  const handleEnter = () => {
+  const handleEnter = async () => {
     if (!username.trim()) return;
     
     const randomAvatar = AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)];
@@ -94,6 +94,17 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
       homebase: selectedCity,
       interests: Array.from(selectedCategories)
     };
+    
+    // Save to database for NewMembersWidget (fire-and-forget)
+    supabase
+      .from('user_profiles')
+      .insert({
+        username: profile.username,
+        avatar: profile.avatarUrl,
+        interests: profile.interests,
+        favorite_locations: [selectedCity]
+      })
+      .then(() => console.log('Profile saved to database'));
     
     onLogin(profile);
   };
@@ -118,19 +129,42 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
       const guestUsername = `Guest_${guestNumber}`;
       const randomAvatar = AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)];
       
-      onLogin({
+      const guestProfile = {
         username: guestUsername,
         avatarUrl: randomAvatar,
         bio: 'Guest',
         homebase: selectedCity
-      });
+      };
+      
+      // Save guest to database for NewMembersWidget
+      await supabase
+        .from('user_profiles')
+        .insert({
+          username: guestProfile.username,
+          avatar: guestProfile.avatarUrl,
+          favorite_locations: [selectedCity]
+        });
+      
+      onLogin(guestProfile);
     } catch (err) {
-      onLogin({
+      const fallbackProfile = {
         username: `Guest_${Date.now().toString().slice(-4)}`,
         avatarUrl: AVATAR_OPTIONS[0],
         bio: 'Guest',
         homebase: selectedCity
-      });
+      };
+      
+      // Try to save fallback guest too
+      supabase
+        .from('user_profiles')
+        .insert({
+          username: fallbackProfile.username,
+          avatar: fallbackProfile.avatarUrl,
+          favorite_locations: [selectedCity]
+        })
+        .then(() => {});
+      
+      onLogin(fallbackProfile);
     } finally {
       setIsGuestLoading(false);
     }
