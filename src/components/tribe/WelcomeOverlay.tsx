@@ -171,11 +171,11 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/30 backdrop-blur-[2px]">
       {/* Card Container */}
-      <div className="relative w-full max-w-sm bg-zinc-900/95 rounded-2xl overflow-hidden shadow-2xl border border-zinc-700/50">
-        {/* Collage Background inside card */}
-        <div className="absolute inset-0 overflow-hidden opacity-30">
+      <div className="relative w-full max-w-sm bg-black/70 backdrop-blur-md rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+        {/* Collage Background inside card - full visibility */}
+        <div className="absolute inset-0 overflow-hidden">
           {/* Tile 1 */}
           <div className="absolute -left-2 -top-2 w-[55%] h-[40%] overflow-hidden" style={{ transform: 'rotate(-3deg)' }}>
             <img src={REEL_IMAGES[imageIndices[0]]} alt="" className="w-full h-full object-cover transition-all duration-700" draggable={false} />
@@ -202,8 +202,8 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
           </div>
         </div>
 
-        {/* Gradient Overlay inside card */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/70 to-black/90" />
+        {/* Gradient Overlay inside card - lighter for better image visibility */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/80" />
 
         {/* Content */}
         <div className="relative z-10 px-6 py-10 flex flex-col items-center text-white">
