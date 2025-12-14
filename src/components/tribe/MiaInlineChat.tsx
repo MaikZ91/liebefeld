@@ -1,8 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { getTribeResponse } from '@/services/tribe/aiHelpers';
 import { TribeEvent, ChatMessage } from '@/types/tribe';
-import { ArrowUp, X, Sparkles, ChevronUp, ChevronDown } from 'lucide-react';
-import { personalizationService } from '@/services/personalizationService';
+import { ArrowUp, X, Sparkles } from 'lucide-react';
 
 const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150";
 
@@ -20,6 +19,7 @@ interface MiaInlineChatProps {
   onQuery?: (query: string) => void;
   onEventsFiltered?: (filteredEventIds: string[]) => void;
   onClearFilter?: () => void;
+  onEventClick?: (event: TribeEvent) => void;
 }
 
 export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
@@ -29,6 +29,7 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
   onQuery,
   onEventsFiltered,
   onClearFilter,
+  onEventClick,
 }) => {
   const [input, setInput] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
@@ -37,6 +38,49 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
   const [relatedEvents, setRelatedEvents] = useState<TribeEvent[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const responseRef = useRef<HTMLDivElement>(null);
+
+  // Generate personalized suggestions based on user profile and upcoming events
+  const suggestions = useMemo(() => {
+    const baseSuggestions: string[] = [];
+    
+    // Standard suggestions
+    baseSuggestions.push("Was geht am Wochenende?");
+    baseSuggestions.push("Mein perfekter Tag");
+    baseSuggestions.push("Plane meinen Tag");
+    
+    // Interest-based suggestions
+    if (userProfile?.interests?.length) {
+      const interest = userProfile.interests[0];
+      if (interest.toLowerCase().includes('party') || interest.toLowerCase().includes('ausgehen')) {
+        baseSuggestions.push("Beste Parties heute");
+      }
+      if (interest.toLowerCase().includes('sport')) {
+        baseSuggestions.push("Sport Events diese Woche");
+      }
+      if (interest.toLowerCase().includes('kunst') || interest.toLowerCase().includes('kultur')) {
+        baseSuggestions.push("Kulturelle Highlights");
+      }
+      if (interest.toLowerCase().includes('musik') || interest.toLowerCase().includes('konzert')) {
+        baseSuggestions.push("Live Musik heute");
+      }
+    }
+    
+    // Location-based suggestions
+    if (userProfile?.favorite_locations?.length) {
+      const location = userProfile.favorite_locations[0];
+      baseSuggestions.push(`Events in ${location}`);
+    }
+    
+    // Event category suggestions based on what's available
+    const categories = new Set(events.map(e => e.category?.toLowerCase()).filter(Boolean));
+    if (categories.has('comedy')) baseSuggestions.push("Comedy Shows");
+    if (categories.has('konzert') || categories.has('concert')) baseSuggestions.push("Konzerte diese Woche");
+    if (categories.has('theater')) baseSuggestions.push("Theater Vorstellungen");
+    if (categories.has('food') || categories.has('kulinarik')) baseSuggestions.push("Food Events");
+    
+    // Return unique suggestions, max 6
+    return [...new Set(baseSuggestions)].slice(0, 6);
+  }, [userProfile, events]);
 
   // Personalized greeting
   const getGreeting = () => {
@@ -91,13 +135,14 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
     if (onClearFilter) onClearFilter();
   };
 
-  // Quick suggestions
-  const suggestions = [
-    "Was geht heute?",
-    "Beste Parties",
-    "Kultur Events",
-    "Sport heute",
-  ];
+  const handleEventChipClick = (event: TribeEvent) => {
+    if (onEventClick) {
+      onEventClick(event);
+    } else {
+      // Default: Ask MIA for more details about this event
+      handleSend(`Erzähl mir mehr über "${event.title}"`);
+    }
+  };
 
   return (
     <div className="relative">
@@ -116,7 +161,7 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
               <span className="text-[10px] font-bold text-gold uppercase tracking-widest">MIA</span>
               {relatedEvents.length > 0 && (
                 <span className="text-[9px] text-zinc-500 uppercase tracking-wider ml-2">
-                  {relatedEvents.length} Events gefiltert
+                  {relatedEvents.length} Events gefunden
                 </span>
               )}
             </div>
@@ -146,12 +191,12 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
             )}
           </div>
 
-          {/* Related Events Preview (if any) */}
+          {/* Related Events as Inline Chips */}
           {relatedEvents.length > 0 && !isTyping && (
             <div className="px-4 pb-4 pt-2 border-t border-white/5">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] text-zinc-500 uppercase tracking-wider">
-                  MIA Empfehlungen
+                  Klick für Details
                 </span>
                 <button 
                   onClick={handleClear}
@@ -160,22 +205,22 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
                   Filter zurücksetzen
                 </button>
               </div>
-              <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                {relatedEvents.slice(0, 5).map((event, idx) => (
-                  <div 
+              <div className="flex flex-wrap gap-2">
+                {relatedEvents.map((event) => (
+                  <button
                     key={event.id}
-                    className="flex-shrink-0 px-3 py-1.5 bg-gold/10 border border-gold/20 rounded-full"
+                    onClick={() => handleEventChipClick(event)}
+                    className="group flex items-center gap-1.5 px-3 py-1.5 bg-gold/10 border border-gold/20 rounded-full hover:bg-gold/20 hover:border-gold/40 transition-all"
                   >
-                    <span className="text-xs text-gold truncate max-w-[150px] block">
+                    <Sparkles size={10} className="text-gold" />
+                    <span className="text-xs text-gold truncate max-w-[150px]">
                       {event.title}
                     </span>
-                  </div>
+                    {event.matchScore && (
+                      <span className="text-[9px] text-gold/60 font-bold">{event.matchScore}%</span>
+                    )}
+                  </button>
                 ))}
-                {relatedEvents.length > 5 && (
-                  <div className="flex-shrink-0 px-3 py-1.5 bg-zinc-800 rounded-full">
-                    <span className="text-xs text-zinc-400">+{relatedEvents.length - 5}</span>
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -211,7 +256,7 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
           </div>
         </div>
 
-        {/* Suggestion Chips */}
+        {/* Personalized Suggestion Chips */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
           {suggestions.map((suggestion) => (
             <button
