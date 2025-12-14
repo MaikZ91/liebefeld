@@ -716,15 +716,15 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                           </div>
                         )}
                         
-                        {/* RSVP Avatars - Show for all response types */}
+                        {/* RSVP Avatars - Show for all response types in one line */}
                         {isTribeCall && (meetupResponses?.['bin dabei']?.length > 0 || meetupResponses?.['vielleicht']?.length > 0 || meetupResponses?.['diesmal nicht']?.length > 0) && (
-                          <div className="space-y-1.5 mb-2 pl-[52px]">
+                          <div className="flex items-center gap-4 mb-2 pl-[52px] flex-wrap">
                             {/* Dabei Avatars */}
                             {meetupResponses?.['bin dabei']?.length > 0 && (
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1">
                                 <Check size={10} className="text-green-500" />
                                 <div className="flex -space-x-1.5">
-                                  {meetupResponses['bin dabei'].slice(0, 5).map((u, i) => (
+                                  {meetupResponses['bin dabei'].slice(0, 4).map((u, i) => (
                                     <div 
                                       key={i} 
                                       className="w-5 h-5 rounded-full border border-black bg-zinc-800 overflow-hidden"
@@ -737,19 +737,18 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                                       )}
                                     </div>
                                   ))}
-                                  {meetupResponses['bin dabei'].length > 5 && (
-                                    <span className="text-[8px] text-zinc-500 ml-1">+{meetupResponses['bin dabei'].length - 5}</span>
+                                  {meetupResponses['bin dabei'].length > 4 && (
+                                    <span className="text-[8px] text-zinc-500 ml-1">+{meetupResponses['bin dabei'].length - 4}</span>
                                   )}
                                 </div>
-                                <span className="text-[8px] text-green-500/70">dabei</span>
                               </div>
                             )}
                             {/* Vielleicht Avatars */}
                             {meetupResponses?.['vielleicht']?.length > 0 && (
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1">
                                 <HelpCircle size={10} className="text-yellow-500" />
                                 <div className="flex -space-x-1.5">
-                                  {meetupResponses['vielleicht'].slice(0, 5).map((u, i) => (
+                                  {meetupResponses['vielleicht'].slice(0, 4).map((u, i) => (
                                     <div 
                                       key={i} 
                                       className="w-5 h-5 rounded-full border border-black bg-zinc-800 overflow-hidden"
@@ -762,19 +761,18 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                                       )}
                                     </div>
                                   ))}
-                                  {meetupResponses['vielleicht'].length > 5 && (
-                                    <span className="text-[8px] text-zinc-500 ml-1">+{meetupResponses['vielleicht'].length - 5}</span>
+                                  {meetupResponses['vielleicht'].length > 4 && (
+                                    <span className="text-[8px] text-zinc-500 ml-1">+{meetupResponses['vielleicht'].length - 4}</span>
                                   )}
                                 </div>
-                                <span className="text-[8px] text-yellow-500/70">vielleicht</span>
                               </div>
                             )}
                             {/* Nein Avatars */}
                             {meetupResponses?.['diesmal nicht']?.length > 0 && (
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1">
                                 <X size={10} className="text-red-500" />
                                 <div className="flex -space-x-1.5">
-                                  {meetupResponses['diesmal nicht'].slice(0, 5).map((u, i) => (
+                                  {meetupResponses['diesmal nicht'].slice(0, 4).map((u, i) => (
                                     <div 
                                       key={i} 
                                       className="w-5 h-5 rounded-full border border-black bg-zinc-800 overflow-hidden"
@@ -787,11 +785,10 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                                       )}
                                     </div>
                                   ))}
-                                  {meetupResponses['diesmal nicht'].length > 5 && (
-                                    <span className="text-[8px] text-zinc-500 ml-1">+{meetupResponses['diesmal nicht'].length - 5}</span>
+                                  {meetupResponses['diesmal nicht'].length > 4 && (
+                                    <span className="text-[8px] text-zinc-500 ml-1">+{meetupResponses['diesmal nicht'].length - 4}</span>
                                   )}
                                 </div>
-                                <span className="text-[8px] text-red-500/70">nicht dabei</span>
                               </div>
                             )}
                           </div>
