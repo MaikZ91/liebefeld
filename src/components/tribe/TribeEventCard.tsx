@@ -217,22 +217,35 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                 </>
               )}
             </div>
-            {/* Attendees under location */}
-            <div className="flex items-center gap-1 mt-1">
-              <div className="flex -space-x-1.5">
-                {isAttending && (
-                  <div className="w-4 h-4 rounded-full border border-black bg-gold flex items-center justify-center">
-                    <Check size={8} className="text-black" />
-                  </div>
-                )}
-                {mockAvatars.slice(0, 2).map((url, i) => (
-                  <img key={i} src={url} className="w-4 h-4 rounded-full border border-black object-cover" />
-                ))}
-              </div>
-              <span className={`text-[9px] ${isAttending ? "text-gold font-bold" : "text-zinc-500"}`}>
-                +{currentAttendees}
-              </span>
-            </div>
+                            {/* Attendees/Likes avatars under location */}
+                            <div className="flex items-center gap-1 mt-1">
+                              <div className="flex -space-x-1.5">
+                                {isAttending && (
+                                  <div className="w-4 h-4 rounded-full border border-black bg-gold flex items-center justify-center">
+                                    <Check size={8} className="text-black" />
+                                  </div>
+                                )}
+                                {/* Show liked_by_users avatars if available */}
+                                {event.liked_by_users && Array.isArray(event.liked_by_users) && event.liked_by_users.slice(0, 3).map((u: any, i: number) => (
+                                  <div key={i} className="w-4 h-4 rounded-full border border-black bg-zinc-800 overflow-hidden" title={u.username || 'User'}>
+                                    {u.avatar ? (
+                                      <img src={u.avatar} className="w-full h-full object-cover" />
+                                    ) : (
+                                      <span className="text-[6px] text-zinc-500 flex items-center justify-center h-full">{(u.username || '?')[0]}</span>
+                                    )}
+                                  </div>
+                                ))}
+                                {/* Fallback to mock avatars if no liked_by_users */}
+                                {(!event.liked_by_users || !Array.isArray(event.liked_by_users) || event.liked_by_users.length === 0) && 
+                                  mockAvatars.slice(0, 2).map((url, i) => (
+                                    <img key={i} src={url} className="w-4 h-4 rounded-full border border-black object-cover" />
+                                  ))
+                                }
+                              </div>
+                              <span className={`text-[9px] ${isAttending ? "text-gold font-bold" : "text-zinc-500"}`}>
+                                {event.likes && event.likes > 0 ? `+${event.likes}` : `+${currentAttendees}`}
+                              </span>
+                            </div>
           </div>
 
           {/* Quick Actions - Minimal */}

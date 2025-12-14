@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { UserProfile, Post, Comment } from '@/types/tribe';
 import { enhancePostContent } from '@/services/tribe/aiHelpers';
-import { ArrowRight, Sparkles, Heart, MessageCircle, Share2, Hash, Send, X, Check, HelpCircle, Users, Camera, Star } from 'lucide-react';
+import { ArrowRight, Sparkles, Heart, MessageCircle, Hash, Send, X, Check, HelpCircle, Users, Camera, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { NewMembersWidget } from './NewMembersWidget';
 import { Badge } from '@/components/ui/badge';
@@ -716,29 +716,97 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                           </div>
                         )}
                         
-                        {/* RSVP Avatars */}
-                        {isTribeCall && meetupResponses?.['bin dabei']?.length > 0 && (
-                          <div className="flex items-center gap-1.5 mb-2 pl-[52px]">
-                            <Users size={10} className="text-green-500" />
-                            <div className="flex -space-x-1.5">
-                              {meetupResponses['bin dabei'].slice(0, 5).map((u, i) => (
-                                <div 
-                                  key={i} 
-                                  className="w-5 h-5 rounded-full border border-black bg-zinc-800 overflow-hidden"
-                                  title={u.username}
-                                >
-                                  {u.avatar ? (
-                                    <img src={u.avatar} className="w-full h-full object-cover" />
-                                  ) : (
-                                    <span className="text-[8px] text-zinc-500 flex items-center justify-center h-full">{u.username[0]}</span>
+                        {/* RSVP Avatars - Show for all response types */}
+                        {isTribeCall && (meetupResponses?.['bin dabei']?.length > 0 || meetupResponses?.['vielleicht']?.length > 0 || meetupResponses?.['diesmal nicht']?.length > 0) && (
+                          <div className="space-y-1.5 mb-2 pl-[52px]">
+                            {/* Dabei Avatars */}
+                            {meetupResponses?.['bin dabei']?.length > 0 && (
+                              <div className="flex items-center gap-1.5">
+                                <Check size={10} className="text-green-500" />
+                                <div className="flex -space-x-1.5">
+                                  {meetupResponses['bin dabei'].slice(0, 5).map((u, i) => (
+                                    <div 
+                                      key={i} 
+                                      className="w-5 h-5 rounded-full border border-black bg-zinc-800 overflow-hidden"
+                                      title={u.username}
+                                    >
+                                      {u.avatar ? (
+                                        <img src={u.avatar} className="w-full h-full object-cover" />
+                                      ) : (
+                                        <span className="text-[8px] text-zinc-500 flex items-center justify-center h-full">{u.username[0]}</span>
+                                      )}
+                                    </div>
+                                  ))}
+                                  {meetupResponses['bin dabei'].length > 5 && (
+                                    <span className="text-[8px] text-zinc-500 ml-1">+{meetupResponses['bin dabei'].length - 5}</span>
                                   )}
                                 </div>
-                              ))}
-                              {meetupResponses['bin dabei'].length > 5 && (
-                                <span className="text-[8px] text-zinc-500 ml-1">+{meetupResponses['bin dabei'].length - 5}</span>
-                              )}
+                                <span className="text-[8px] text-green-500/70">dabei</span>
+                              </div>
+                            )}
+                            {/* Vielleicht Avatars */}
+                            {meetupResponses?.['vielleicht']?.length > 0 && (
+                              <div className="flex items-center gap-1.5">
+                                <HelpCircle size={10} className="text-yellow-500" />
+                                <div className="flex -space-x-1.5">
+                                  {meetupResponses['vielleicht'].slice(0, 5).map((u, i) => (
+                                    <div 
+                                      key={i} 
+                                      className="w-5 h-5 rounded-full border border-black bg-zinc-800 overflow-hidden"
+                                      title={u.username}
+                                    >
+                                      {u.avatar ? (
+                                        <img src={u.avatar} className="w-full h-full object-cover" />
+                                      ) : (
+                                        <span className="text-[8px] text-zinc-500 flex items-center justify-center h-full">{u.username[0]}</span>
+                                      )}
+                                    </div>
+                                  ))}
+                                  {meetupResponses['vielleicht'].length > 5 && (
+                                    <span className="text-[8px] text-zinc-500 ml-1">+{meetupResponses['vielleicht'].length - 5}</span>
+                                  )}
+                                </div>
+                                <span className="text-[8px] text-yellow-500/70">vielleicht</span>
+                              </div>
+                            )}
+                            {/* Nein Avatars */}
+                            {meetupResponses?.['diesmal nicht']?.length > 0 && (
+                              <div className="flex items-center gap-1.5">
+                                <X size={10} className="text-red-500" />
+                                <div className="flex -space-x-1.5">
+                                  {meetupResponses['diesmal nicht'].slice(0, 5).map((u, i) => (
+                                    <div 
+                                      key={i} 
+                                      className="w-5 h-5 rounded-full border border-black bg-zinc-800 overflow-hidden"
+                                      title={u.username}
+                                    >
+                                      {u.avatar ? (
+                                        <img src={u.avatar} className="w-full h-full object-cover" />
+                                      ) : (
+                                        <span className="text-[8px] text-zinc-500 flex items-center justify-center h-full">{u.username[0]}</span>
+                                      )}
+                                    </div>
+                                  ))}
+                                  {meetupResponses['diesmal nicht'].length > 5 && (
+                                    <span className="text-[8px] text-zinc-500 ml-1">+{meetupResponses['diesmal nicht'].length - 5}</span>
+                                  )}
+                                </div>
+                                <span className="text-[8px] text-red-500/70">nicht dabei</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Latest comment preview for newest post */}
+                        {isNewest && post.comments && post.comments.length > 0 && expandedPostId !== post.id && (
+                          <div className="mb-2 pl-[52px] border-l-2 border-gold/30 ml-[52px]">
+                            <div className="pl-2 py-1">
+                              <div className="flex items-center gap-1.5 mb-0.5">
+                                <span className="text-[9px] font-bold text-gold">{post.comments[post.comments.length - 1].user}</span>
+                                <span className="text-[8px] text-zinc-600">{post.comments[post.comments.length - 1].time}</span>
+                              </div>
+                              <p className="text-[10px] text-zinc-400 line-clamp-2">{post.comments[post.comments.length - 1].text}</p>
                             </div>
-                            <span className="text-[8px] text-green-500/70">sind dabei</span>
                           </div>
                         )}
 
@@ -762,10 +830,6 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                             >
                                 <MessageCircle size={14} />
                                 <span className="text-[9px] font-medium">{post.comments?.length || 0}</span>
-                            </button>
-                            
-                            <button className="text-zinc-500 hover:text-gold transition-colors ml-auto">
-                                <Share2 size={14} />
                             </button>
                         </div>
 
