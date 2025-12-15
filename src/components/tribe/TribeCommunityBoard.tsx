@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { UserProfile, Post, Comment } from '@/types/tribe';
-import { enhancePostContent } from '@/services/tribe/aiHelpers';
-import { ArrowRight, Sparkles, Heart, MessageCircle, Hash, Send, X, Check, HelpCircle, Users, Camera, Star } from 'lucide-react';
+import { ArrowRight, Heart, MessageCircle, Hash, Send, X, Check, HelpCircle, Users, Camera, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { NewMembersWidget } from './NewMembersWidget';
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +23,7 @@ const TOPIC_DISLIKES_KEY = 'tribe_topic_dislikes';
 export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile, onProfileClick, onEditProfile }) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
-  const [isOptimizing, setIsOptimizing] = useState(false);
+  
   const [generatedTags, setGeneratedTags] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>('ALL');
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
@@ -365,14 +364,6 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
       });
   }, [posts, dismissedPosts, activeTab, selectedCity, topicDislikes, userProfile]);
 
-  const handleOptimize = async () => {
-      if (!newPost.trim()) return;
-      setIsOptimizing(true);
-      const result = await enhancePostContent(newPost);
-      setNewPost(result.optimizedText);
-      setGeneratedTags(result.hashtags);
-      setIsOptimizing(false);
-  };
 
   const handlePost = async () => {
     if (!newPost.trim()) return;
@@ -487,15 +478,6 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                 />
                 
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <button 
-                        onClick={handleOptimize} 
-                        disabled={isOptimizing || !newPost}
-                        className="text-zinc-500 hover:text-gold transition-colors disabled:opacity-50 p-1"
-                        title="AI Enhance"
-                    >
-                        <Sparkles size={14} className={isOptimizing ? "animate-spin" : ""} />
-                    </button>
-
                     <button 
                         onClick={handlePost} 
                         disabled={!newPost} 
@@ -642,9 +624,12 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                         {/* Header */}
                         <div className="flex justify-between items-start mb-2 pl-4 pr-16">
                             <div className="flex items-center gap-2">
-                                <div className="w-7 h-7 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center overflow-hidden">
+                                <button 
+                                  onClick={() => onProfileClick?.(post.user)}
+                                  className="w-7 h-7 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center overflow-hidden hover:border-gold/50 transition-colors cursor-pointer"
+                                >
                                     {post.userAvatar ? <img src={post.userAvatar} className="w-full h-full object-cover"/> : <span className="text-[10px] text-zinc-500">{post.user[0]}</span>}
-                                </div>
+                                </button>
                                 <div>
                                     <span className="block font-bold text-white text-[10px] uppercase tracking-wide">{post.user}</span>
                                     <span className="block text-[9px] text-zinc-600">{post.city} • {post.time}</span>
