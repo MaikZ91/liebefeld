@@ -193,7 +193,7 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
       />
       
       {/* Card Container - larger */}
-      <div className="relative w-full max-w-md bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/20">
+      <div className="relative w-full max-w-md bg-black/60 backdrop-blur-md rounded-2xl overflow-hidden shadow-2xl border border-white/10">
         {/* Collage Background inside card - full visibility */}
         <div className="absolute inset-0 overflow-hidden">
           {/* Tile 1 */}
@@ -222,14 +222,14 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
           </div>
         </div>
 
-        {/* Gradient Overlay inside card - solid for full opacity */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/85 to-black/95" />
+        {/* Gradient Overlay inside card - lighter for better image visibility */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/50 to-black/70" />
 
         {/* Content */}
         <div className="relative z-10 px-8 py-12 flex flex-col items-center text-white">
           {/* Welcome Header */}
-          <h1 className="text-3xl font-bold mb-3">Willkommen</h1>
-          <p className="text-white text-base font-medium mb-8">Verbinde dich mit der Community</p>
+          <h1 className="text-3xl font-bold mb-2">Willkommen</h1>
+          <p className="text-white/50 text-sm mb-8">Verbinde dich mit der Community</p>
           
           {/* Name Input */}
           <div className="w-full">
