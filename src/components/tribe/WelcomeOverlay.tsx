@@ -106,6 +106,10 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
       })
       .then(() => console.log('Profile saved to database'));
     
+    // Mark welcome as completed and dispatch event for AppDownloadPrompt
+    localStorage.setItem('tribe_welcome_completed', 'true');
+    window.dispatchEvent(new CustomEvent('tribe_welcome_completed'));
+    
     onLogin(profile);
   };
 
@@ -145,6 +149,10 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
           favorite_locations: [selectedCity]
         });
       
+      // Mark welcome as completed and dispatch event for AppDownloadPrompt
+      localStorage.setItem('tribe_welcome_completed', 'true');
+      window.dispatchEvent(new CustomEvent('tribe_welcome_completed'));
+      
       onLogin(guestProfile);
     } catch (err) {
       const fallbackProfile = {
@@ -163,6 +171,10 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
           favorite_locations: [selectedCity]
         })
         .then(() => {});
+      
+      // Mark welcome as completed and dispatch event for AppDownloadPrompt
+      localStorage.setItem('tribe_welcome_completed', 'true');
+      window.dispatchEvent(new CustomEvent('tribe_welcome_completed'));
       
       onLogin(fallbackProfile);
     } finally {

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, ExternalLink, Smartphone } from 'lucide-react';
+import { X, Smartphone } from 'lucide-react';
 
 const DISMISSED_KEY = 'tribe_app_download_dismissed';
-const SHOW_DELAY_MS = 10000; // 10 seconds
+const WELCOME_COMPLETED_KEY = 'tribe_welcome_completed';
+const SHOW_DELAY_AFTER_WELCOME_MS = 3000; // 3 seconds after welcome screen
 
 export const AppDownloadPrompt: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -26,12 +27,25 @@ export const AppDownloadPrompt: React.FC = () => {
       return;
     }
 
-    // Show after delay
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, SHOW_DELAY_MS);
+    // Check if welcome screen was already completed
+    const welcomeCompleted = localStorage.getItem(WELCOME_COMPLETED_KEY);
+    if (welcomeCompleted) {
+      // Welcome already completed, show after short delay
+      const timer = setTimeout(() => {
+        setIsVisible(true);
+      }, SHOW_DELAY_AFTER_WELCOME_MS);
+      return () => clearTimeout(timer);
+    }
 
-    return () => clearTimeout(timer);
+    // Listen for welcome completion event
+    const handleWelcomeComplete = () => {
+      setTimeout(() => {
+        setIsVisible(true);
+      }, SHOW_DELAY_AFTER_WELCOME_MS);
+    };
+
+    window.addEventListener('tribe_welcome_completed', handleWelcomeComplete);
+    return () => window.removeEventListener('tribe_welcome_completed', handleWelcomeComplete);
   }, []);
 
   const handleDismiss = () => {
