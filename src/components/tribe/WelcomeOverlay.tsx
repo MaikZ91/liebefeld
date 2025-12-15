@@ -183,9 +183,17 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/30 backdrop-blur-[2px]">
-      {/* Card Container */}
-      <div className="relative w-full max-w-sm bg-black/70 backdrop-blur-md rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Gradient overlay - transparent at top/bottom, solid in middle */}
+      <div 
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.7) 20%, rgba(0,0,0,0.85) 50%, rgba(0,0,0,0.7) 80%, transparent 100%)'
+        }}
+      />
+      
+      {/* Card Container - larger */}
+      <div className="relative w-full max-w-md bg-black/60 backdrop-blur-md rounded-2xl overflow-hidden shadow-2xl border border-white/10">
         {/* Collage Background inside card - full visibility */}
         <div className="absolute inset-0 overflow-hidden">
           {/* Tile 1 */}
@@ -215,13 +223,13 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
         </div>
 
         {/* Gradient Overlay inside card - lighter for better image visibility */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/50 to-black/70" />
 
         {/* Content */}
-        <div className="relative z-10 px-6 py-10 flex flex-col items-center text-white">
+        <div className="relative z-10 px-8 py-12 flex flex-col items-center text-white">
           {/* Welcome Header */}
-          <h1 className="text-2xl font-bold mb-1">Willkommen</h1>
-          <p className="text-white/50 text-sm mb-6">Verbinde dich mit der Community</p>
+          <h1 className="text-3xl font-bold mb-2">Willkommen</h1>
+          <p className="text-white/50 text-sm mb-8">Verbinde dich mit der Community</p>
           
           {/* Name Input */}
           <div className="w-full">
@@ -230,21 +238,21 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Dein Name"
-              className="w-full bg-black/50 border border-white/20 rounded-full py-3 px-5 text-center text-white placeholder-white/40 outline-none focus:border-red-500 transition-all"
+              className="w-full bg-black/50 border border-white/20 rounded-full py-4 px-6 text-center text-lg text-white placeholder-white/40 outline-none focus:border-red-500 transition-all"
               onKeyDown={(e) => e.key === 'Enter' && username.trim() && handleEnter()}
             />
           </div>
           
           {/* Interests - appear when name has at least 1 character */}
           {username.length > 0 && (
-            <div className="mt-4 w-full animate-fade-in">
-              <p className="text-white/60 text-xs text-center mb-2">Wähle deine Interessen</p>
+            <div className="mt-5 w-full animate-fade-in">
+              <p className="text-white/60 text-xs text-center mb-3">Wähle deine Interessen</p>
               <div className="flex flex-wrap justify-center gap-2">
                 {CATEGORIES.map(cat => (
                   <button
                     key={cat.id}
                     onClick={() => toggleCategory(cat.id)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${
                       selectedCategories.has(cat.id)
                         ? 'bg-red-500 text-white border-red-500'
                         : 'bg-black/50 text-white border-white/30 hover:border-white/50'
@@ -261,7 +269,7 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
           <button
             onClick={handleEnter}
             disabled={!username.trim()}
-            className={`mt-6 w-full py-3 rounded-full font-semibold transition-all ${
+            className={`mt-8 w-full py-4 rounded-full font-semibold text-lg transition-all ${
               username.trim()
                 ? 'bg-red-500 text-white hover:bg-red-600'
                 : 'bg-zinc-700/50 text-zinc-500 cursor-not-allowed'
@@ -274,7 +282,7 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
           <button
             onClick={handleGuestLogin}
             disabled={isGuestLoading}
-            className="mt-4 text-white/50 hover:text-white/70 transition-colors text-sm"
+            className="mt-5 text-white/50 hover:text-white/70 transition-colors text-sm"
           >
             {isGuestLoading ? 'Wird geladen...' : 'erstmal nur schauen →'}
           </button>
