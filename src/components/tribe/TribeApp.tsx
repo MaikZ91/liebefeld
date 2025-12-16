@@ -137,13 +137,13 @@ export const TribeApp: React.FC = () => {
         localStorage.setItem("tribe_user_profile", JSON.stringify(guestProfile));
         setUserProfile(guestProfile);
         
-        // Show welcome screen after short delay
+        // Show welcome screen after delay (doubled)
         if (!hasCompletedWelcome) {
-          setTimeout(() => setShowWelcome(true), 800);
+          setTimeout(() => setShowWelcome(true), 1600);
         }
       } else if (!hasCompletedWelcome) {
         // User has profile but hasn't completed welcome
-        setTimeout(() => setShowWelcome(true), 800);
+        setTimeout(() => setShowWelcome(true), 1600);
       }
     };
     

@@ -41,6 +41,15 @@ const formatTime = (timeStr?: string | null) => {
   return timeStr;
 };
 
+// Check if event is "new" (created within last 7 days)
+const isNewEvent = (createdAt?: string): boolean => {
+  if (!createdAt) return false;
+  const created = new Date(createdAt);
+  const now = new Date();
+  const diffDays = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
+  return diffDays <= 7;
+};
+
 export const TribeEventCard: React.FC<EventCardProps> = ({ 
   event, 
   variant = 'standard', 
@@ -61,6 +70,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
   const [showVideo, setShowVideo] = useState(false);
   
   const displayImage = event.image_url;
+  const isNew = isNewEvent(event.created_at);
 
   // Mock Attendees Data
   const baseCount = event.attendees || Math.floor(Math.random() * 80) + 12;
@@ -199,6 +209,11 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
             {isLiked && !isPast && !isExpanded && (
               <div className="absolute top-0 left-0 right-0 bg-gold/90 text-black text-[6px] font-bold px-1 py-0.5 text-center">
                 ★
+              </div>
+            )}
+            {isNew && !isPast && !isLiked && !isExpanded && (
+              <div className="absolute top-0 left-0 right-0 bg-emerald-500/90 text-white text-[6px] font-bold px-1 py-0.5 text-center uppercase tracking-wider">
+                New
               </div>
             )}
           </div>
@@ -393,7 +408,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
                 
-                {/* Date + Score Badge - TOP LEFT */}
+                {/* Date + Score + New Badge - TOP LEFT */}
                 <div className="absolute top-2 left-2 z-20 flex gap-1.5">
                   <span className="bg-black/80 text-gold px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide">
                     {formatEventDate(event.date)}
@@ -401,6 +416,11 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                   <span className="bg-gold text-black px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide">
                     {displayScore}%
                   </span>
+                  {isNew && (
+                    <span className="bg-emerald-500 text-white px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide">
+                      New
+                    </span>
+                  )}
                 </div>
                 
                 {/* Like/Dislike - TOP RIGHT */}
@@ -515,6 +535,11 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                 {isLiked && (
                   <div className="absolute top-1 left-1 bg-gold text-black text-[8px] font-bold px-1.5 py-0.5 uppercase tracking-wide">
                     Liked
+                  </div>
+                )}
+                {isNew && !isLiked && (
+                  <div className="absolute top-1 left-1 bg-emerald-500 text-white text-[8px] font-bold px-1.5 py-0.5 uppercase tracking-wide">
+                    New
                   </div>
                 )}
             </div>
