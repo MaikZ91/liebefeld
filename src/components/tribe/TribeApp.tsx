@@ -51,12 +51,69 @@ const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb
 
 const CATEGORIES = ["ALL", "PARTY", "ART", "CONCERT", "SPORT"];
 
+const AVATAR_OPTIONS = [
+  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150",
+  "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150&h=150",
+  "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&q=80&w=150&h=150",
+  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150",
+  "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=150&h=150",
+  "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=150&h=150"
+];
+
+// Auto-create guest profile for new users
+const createGuestProfile = async (): Promise<UserProfile> => {
+  try {
+    const { data: existingGuests } = await supabase
+      .from('user_profiles')
+      .select('username')
+      .like('username', 'Guest_%')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    let guestNumber = 1;
+    if (existingGuests && existingGuests.length > 0) {
+      const lastGuest = existingGuests[0].username;
+      const match = lastGuest.match(/Guest_(\d+)/);
+      if (match) guestNumber = parseInt(match[1]) + 1;
+    }
+
+    const guestUsername = `Guest_${guestNumber}`;
+    const randomAvatar = AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)];
+    
+    const guestProfile: UserProfile = {
+      username: guestUsername,
+      avatarUrl: randomAvatar,
+      bio: 'Guest',
+      homebase: 'Bielefeld'
+    };
+    
+    // Save to database (fire-and-forget)
+    supabase
+      .from('user_profiles')
+      .insert({
+        username: guestProfile.username,
+        avatar: guestProfile.avatarUrl,
+        favorite_locations: ['Bielefeld']
+      })
+      .then(() => console.log('Guest profile saved to database'));
+    
+    return guestProfile;
+  } catch {
+    // Fallback guest profile
+    return {
+      username: `Guest_${Date.now().toString().slice(-4)}`,
+      avatarUrl: AVATAR_OPTIONS[0],
+      bio: 'Guest',
+      homebase: 'Bielefeld'
+    };
+  }
+};
+
 export const TribeApp: React.FC = () => {
-  // AUTH CHECK - show app immediately, overlay WelcomeOverlay if not authenticated
-  const [showWelcome, setShowWelcome] = useState<boolean>(() => {
-    const savedProfile = localStorage.getItem("tribe_user_profile");
-    return !savedProfile;
-  });
+  // Check if user has completed welcome before
+  const hasCompletedWelcome = localStorage.getItem("tribe_welcome_completed") === "true";
+  
+  // Initialize profile from storage or create guest immediately
   const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
     const savedProfile = localStorage.getItem("tribe_user_profile");
     if (savedProfile) {
@@ -68,18 +125,44 @@ export const TribeApp: React.FC = () => {
     }
     return null;
   });
+  
+  // Show welcome screen with delay for new users
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  // Auto-create guest profile on first visit
+  useEffect(() => {
+    const initGuestProfile = async () => {
+      if (!userProfile) {
+        const guestProfile = await createGuestProfile();
+        localStorage.setItem("tribe_user_profile", JSON.stringify(guestProfile));
+        setUserProfile(guestProfile);
+        
+        // Show welcome screen after short delay
+        if (!hasCompletedWelcome) {
+          setTimeout(() => setShowWelcome(true), 800);
+        }
+      } else if (!hasCompletedWelcome) {
+        // User has profile but hasn't completed welcome
+        setTimeout(() => setShowWelcome(true), 800);
+      }
+    };
+    
+    initGuestProfile();
+  }, []);
 
   const handleLogin = (profile: UserProfile) => {
     localStorage.setItem("tribe_user_profile", JSON.stringify(profile));
+    localStorage.setItem("tribe_welcome_completed", "true");
+    window.dispatchEvent(new CustomEvent('tribe_welcome_completed'));
     setUserProfile(profile);
     setShowWelcome(false);
   };
 
-  // Always render the main app, with WelcomeOverlay on top if needed
+  // Always render the main app immediately, with WelcomeOverlay on top if needed
   return (
     <>
       <TribeAppMain userProfile={userProfile} setUserProfile={setUserProfile} />
-      {showWelcome && <WelcomeOverlay onLogin={handleLogin} />}
+      {showWelcome && <WelcomeOverlay onLogin={handleLogin} initialUsername={userProfile?.username} />}
     </>
   );
 };

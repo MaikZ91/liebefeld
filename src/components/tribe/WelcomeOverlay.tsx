@@ -23,6 +23,7 @@ const REEL_IMAGES = [reel1, reel2, reel3, reel4, reel5, reel6, reel7, reel8, ree
 
 interface WelcomeOverlayProps {
   onLogin: (profile: UserProfile) => void;
+  initialUsername?: string;
 }
 
 const AVATAR_OPTIONS = [
@@ -42,10 +43,10 @@ const CATEGORIES = [
   { id: 'kreativitaet', label: 'Kreativität', icon: '🎨' },
 ];
 
-export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
+export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin, initialUsername }) => {
+  // Don't pre-fill guest username - let user enter their own name
   const [username, setUsername] = useState('');
   const [selectedCity] = useState('Bielefeld');
-  const [isGuestLoading, setIsGuestLoading] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [imageIndices, setImageIndices] = useState([0, 3, 6, 9, 12, 1, 4, 7]);
 
@@ -113,72 +114,27 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
     onLogin(profile);
   };
 
-  const handleGuestLogin = async () => {
-    setIsGuestLoading(true);
-    try {
-      const { data: existingGuests, error } = await supabase
-        .from('user_profiles')
-        .select('username')
-        .like('username', 'Guest_%')
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      let guestNumber = 1;
-      if (!error && existingGuests && existingGuests.length > 0) {
-        const lastGuest = existingGuests[0].username;
-        const match = lastGuest.match(/Guest_(\d+)/);
-        if (match) guestNumber = parseInt(match[1]) + 1;
-      }
-
-      const guestUsername = `Guest_${guestNumber}`;
-      const randomAvatar = AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)];
-      
-      const guestProfile = {
-        username: guestUsername,
-        avatarUrl: randomAvatar,
-        bio: 'Guest',
-        homebase: selectedCity
-      };
-      
-      // Save guest to database for NewMembersWidget
-      await supabase
-        .from('user_profiles')
-        .insert({
-          username: guestProfile.username,
-          avatar: guestProfile.avatarUrl,
-          favorite_locations: [selectedCity]
+  // Just close overlay and keep existing guest profile
+  const handleSkip = () => {
+    // Mark welcome as completed
+    localStorage.setItem('tribe_welcome_completed', 'true');
+    window.dispatchEvent(new CustomEvent('tribe_welcome_completed'));
+    
+    // Get existing guest profile from localStorage
+    const savedProfile = localStorage.getItem('tribe_user_profile');
+    if (savedProfile) {
+      try {
+        const existingProfile = JSON.parse(savedProfile);
+        onLogin(existingProfile);
+      } catch {
+        // Fallback - shouldn't happen
+        onLogin({
+          username: `Guest_${Date.now().toString().slice(-4)}`,
+          avatarUrl: AVATAR_OPTIONS[0],
+          bio: 'Guest',
+          homebase: 'Bielefeld'
         });
-      
-      // Mark welcome as completed and dispatch event for AppDownloadPrompt
-      localStorage.setItem('tribe_welcome_completed', 'true');
-      window.dispatchEvent(new CustomEvent('tribe_welcome_completed'));
-      
-      onLogin(guestProfile);
-    } catch (err) {
-      const fallbackProfile = {
-        username: `Guest_${Date.now().toString().slice(-4)}`,
-        avatarUrl: AVATAR_OPTIONS[0],
-        bio: 'Guest',
-        homebase: selectedCity
-      };
-      
-      // Try to save fallback guest too
-      supabase
-        .from('user_profiles')
-        .insert({
-          username: fallbackProfile.username,
-          avatar: fallbackProfile.avatarUrl,
-          favorite_locations: [selectedCity]
-        })
-        .then(() => {});
-      
-      // Mark welcome as completed and dispatch event for AppDownloadPrompt
-      localStorage.setItem('tribe_welcome_completed', 'true');
-      window.dispatchEvent(new CustomEvent('tribe_welcome_completed'));
-      
-      onLogin(fallbackProfile);
-    } finally {
-      setIsGuestLoading(false);
+      }
     }
   };
 
@@ -278,13 +234,12 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
             Los geht's
           </button>
 
-          {/* Guest Login */}
+          {/* Skip - keep guest profile */}
           <button
-            onClick={handleGuestLogin}
-            disabled={isGuestLoading}
+            onClick={handleSkip}
             className="mt-5 text-white/50 hover:text-white/70 transition-colors text-sm"
           >
-            {isGuestLoading ? 'Wird geladen...' : 'erstmal nur schauen →'}
+            erstmal nur schauen →
           </button>
         </div>
       </div>
