@@ -562,6 +562,23 @@ export const TribeCommunityBoard: React.FC<Props> = ({
         
         {/* --- INPUT AREA --- */}
         <div className="px-4 py-1.5 border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur-xl z-20">
+            {/* MIA greeting message above input during greeting_ready/waiting_for_post */}
+            {(onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post') && (
+              <div className="flex items-start gap-2 mb-2 p-2 bg-zinc-900/50 border border-gold/20 rounded-lg">
+                <img 
+                  src={MIA_AVATAR} 
+                  className="w-8 h-8 rounded-full ring-2 ring-gold/50 object-cover flex-shrink-0" 
+                  alt="MIA" 
+                />
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-bold text-gold">MIA</span>
+                  <p className="text-xs text-white/90 leading-relaxed mt-0.5">
+                    Perfekt! 🙌 Jetzt lass dich der Community vorstellen. Ergänze gerne noch einen Fun Fact über dich!
+                  </p>
+                </div>
+              </div>
+            )}
+            
             <div className={`bg-surface border rounded-lg p-1.5 shadow-lg flex items-end gap-2 ${
               (onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post') 
                 ? 'border-gold/50 ring-2 ring-gold/20' 
@@ -629,8 +646,8 @@ export const TribeCommunityBoard: React.FC<Props> = ({
 
         {/* --- FEED --- */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-32">
-            {/* MIA Onboarding Message - shown as chat message in feed */}
-            {onboardingMiaMessage && (
+            {/* MIA Onboarding Message - shown as chat message in feed (except greeting_ready/waiting_for_post which shows above input) */}
+            {onboardingMiaMessage && onboardingStep !== 'greeting_ready' && onboardingStep !== 'waiting_for_post' && (
               <div className="bg-zinc-900/50 border border-gold/20 rounded-lg p-3 animate-fadeIn">
                 <div className="flex gap-3">
                   <div className="relative flex-shrink-0">
@@ -655,14 +672,6 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                       <div className="mt-3 flex items-center gap-2 text-gold animate-pulse">
                         <span className="text-xl">👆</span>
                         <span className="text-xs font-medium">Klick auf deinen Avatar oben rechts!</span>
-                      </div>
-                    )}
-                    
-                    {/* Show hint for greeting during greeting_ready */}
-                    {(onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post') && (
-                      <div className="mt-3 flex items-center gap-2 text-gold animate-pulse">
-                        <span className="text-xl">👆</span>
-                        <span className="text-xs font-medium">Deine Begrüßung ist oben im Eingabefeld - klick auf Post!</span>
                       </div>
                     )}
                   </div>
