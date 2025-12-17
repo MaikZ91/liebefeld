@@ -5,7 +5,7 @@ import { getVibeBadgeColor } from '@/utils/tribe/eventHelpers';
 import { Sparkles, Users, Share2, X, Heart, Check, ExternalLink, Play, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatTimeOption } from '@/utils/tribe/eventGrouping';
-
+import { getEventDisplayImage } from '@/utils/tribe/sportImages';
 interface TimeSlot {
   time: string;
   eventId: string;
@@ -95,7 +95,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
   const hasMultipleTimes = allTimes && allTimes.length > 1;
   const currentTime = hasMultipleTimes ? allTimes[selectedTimeIndex] : null;
   
-  const displayImage = event.image_url;
+  const displayImage = getEventDisplayImage(event.image_url, event.title, event.location);
   const isNew = isNewEvent(event.created_at);
   const isTribe = isTribeEvent(event);
 
