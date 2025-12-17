@@ -702,6 +702,7 @@ const TribeAppMain: React.FC<{
       recalculateMatchScores();
     } else if (type === "like") {
       const isFirstLike = !hasLikedFirstEvent && likedEventIds.size === 0;
+      const isOnboardingWaitingForLike = isOnboarding && currentStep === 'waiting_for_like';
 
       setLikedEventIds((prev) => {
         const newSet = new Set(prev);
@@ -710,27 +711,23 @@ const TribeAppMain: React.FC<{
         } else {
           newSet.add(eventId);
 
-          // First like ever - collapse the feed and notify user
-            if (isFirstLike) {
-              setHasLikedFirstEvent(true);
-              localStorage.setItem("tribe_has_first_like", "true");
-              
-              // During onboarding, switch to Community view with community onboarding
-              if (isOnboarding) {
-                setStep('community_intro');
-                toast({
-                  title: "Super! 🎉",
-                  description: "Jetzt zeig ich dir die Community. Hier triffst du Leute mit ähnlichem Geschmack!",
-                });
-                // Switch to Community view after a short delay
-                setTimeout(() => setView(ViewState.COMMUNITY), 1000);
-              } else {
-                toast({
-                  title: "Feed optimiert! ✨",
-                  description: "Deine Favoriten stehen jetzt oben. Tippe 'Mehr anzeigen' um alle Events zu sehen.",
-                });
-              }
-            }
+          // During onboarding waiting_for_like step - switch to community
+          if (isOnboardingWaitingForLike) {
+            setStep('community_intro');
+            toast({
+              title: "Super! 🎉",
+              description: "Jetzt zeig ich dir die Community. Hier triffst du Leute mit ähnlichem Geschmack!",
+            });
+            setTimeout(() => setView(ViewState.COMMUNITY), 1000);
+          } else if (isFirstLike) {
+            // First like ever (non-onboarding) - collapse the feed
+            setHasLikedFirstEvent(true);
+            localStorage.setItem("tribe_has_first_like", "true");
+            toast({
+              title: "Feed optimiert! ✨",
+              description: "Deine Favoriten stehen jetzt oben. Tippe 'Mehr anzeigen' um alle Events zu sehen.",
+            });
+          }
         }
         return newSet;
       });
