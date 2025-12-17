@@ -7,7 +7,6 @@ import { TribeEventCard } from "./TribeEventCard";
 import { TribeCommunityBoard } from "./TribeCommunityBoard";
 import { TribeMapView } from "./TribeMapView";
 import { TribeBottomNav } from "./TribeBottomNav";
-import { WelcomeOverlay } from "./WelcomeOverlay";
 import { ProfileView } from "./ProfileView";
 import { TribeLiveTicker } from "@/components/TribeLiveTicker";
 import { LocationBlockDialog } from "./LocationBlockDialog";
@@ -15,6 +14,7 @@ import { AppDownloadPrompt } from "./AppDownloadPrompt";
 import { TribeUserMatcher } from "./TribeUserMatcher";
 import { MiaInlineChat } from "./MiaInlineChat";
 import UserProfileDialog from "@/components/users/UserProfileDialog";
+import { useOnboardingFlow } from "@/hooks/useOnboardingFlow";
 
 import { dislikeService } from "@/services/dislikeService";
 import { personalizationService } from "@/services/personalizationService";
@@ -110,9 +110,6 @@ const createGuestProfile = async (): Promise<UserProfile> => {
 };
 
 export const TribeApp: React.FC = () => {
-  // Check if user has completed welcome before
-  const hasCompletedWelcome = localStorage.getItem("tribe_welcome_completed") === "true";
-  
   // Initialize profile from storage or create guest immediately
   const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
     const savedProfile = localStorage.getItem("tribe_user_profile");
@@ -125,9 +122,6 @@ export const TribeApp: React.FC = () => {
     }
     return null;
   });
-  
-  // Show welcome screen with delay for new users
-  const [showWelcome, setShowWelcome] = useState(false);
 
   // Auto-create guest profile on first visit
   useEffect(() => {
@@ -136,35 +130,13 @@ export const TribeApp: React.FC = () => {
         const guestProfile = await createGuestProfile();
         localStorage.setItem("tribe_user_profile", JSON.stringify(guestProfile));
         setUserProfile(guestProfile);
-        
-        // Show welcome screen after delay (doubled)
-        if (!hasCompletedWelcome) {
-          setTimeout(() => setShowWelcome(true), 1600);
-        }
-      } else if (!hasCompletedWelcome) {
-        // User has profile but hasn't completed welcome
-        setTimeout(() => setShowWelcome(true), 1600);
       }
     };
     
     initGuestProfile();
   }, []);
 
-  const handleLogin = (profile: UserProfile) => {
-    localStorage.setItem("tribe_user_profile", JSON.stringify(profile));
-    localStorage.setItem("tribe_welcome_completed", "true");
-    window.dispatchEvent(new CustomEvent('tribe_welcome_completed'));
-    setUserProfile(profile);
-    setShowWelcome(false);
-  };
-
-  // Always render the main app immediately, with WelcomeOverlay on top if needed
-  return (
-    <>
-      <TribeAppMain userProfile={userProfile} setUserProfile={setUserProfile} />
-      {showWelcome && <WelcomeOverlay onLogin={handleLogin} initialUsername={userProfile?.username} />}
-    </>
-  );
+  return <TribeAppMain userProfile={userProfile} setUserProfile={setUserProfile} />;
 };
 
 // Main app component - only loaded after authentication
@@ -172,7 +144,14 @@ const TribeAppMain: React.FC<{
   userProfile: UserProfile | null;
   setUserProfile: React.Dispatch<React.SetStateAction<UserProfile | null>>;
 }> = ({ userProfile, setUserProfile }) => {
-  const [view, setView] = useState<ViewState>(ViewState.COMMUNITY);
+  // Onboarding flow
+  const { currentStep, isOnboarding, advanceStep, completeOnboarding } = useOnboardingFlow();
+  
+  // Start in FEED view for onboarding, COMMUNITY otherwise
+  const [view, setView] = useState<ViewState>(() => {
+    const onboardingCompleted = localStorage.getItem('tribe_onboarding_completed') === 'true';
+    return onboardingCompleted ? ViewState.COMMUNITY : ViewState.FEED;
+  });
   const [selectedCity, setSelectedCity] = useState<string>(() => {
     return userProfile?.homebase || "Bielefeld";
   });
@@ -735,10 +714,22 @@ const TribeAppMain: React.FC<{
           if (isFirstLike) {
             setHasLikedFirstEvent(true);
             localStorage.setItem("tribe_has_first_like", "true");
-            toast({
-              title: "Feed optimiert! ✨",
-              description: "Deine Favoriten stehen jetzt oben. Tippe 'Mehr anzeigen' um alle Events zu sehen.",
-            });
+            
+            // During onboarding, switch to Community view
+            if (isOnboarding) {
+              completeOnboarding();
+              toast({
+                title: "Super! 🎉",
+                description: "Jetzt zeig ich dir die Community. Hier triffst du Leute mit ähnlichem Geschmack!",
+              });
+              // Switch to Community view after a short delay
+              setTimeout(() => setView(ViewState.COMMUNITY), 1000);
+            } else {
+              toast({
+                title: "Feed optimiert! ✨",
+                description: "Deine Favoriten stehen jetzt oben. Tippe 'Mehr anzeigen' um alle Events zu sehen.",
+              });
+            }
           }
         }
         return newSet;
@@ -942,7 +933,7 @@ const TribeAppMain: React.FC<{
       >
         {view === ViewState.FEED && (
           <div className="animate-fadeIn pb-20">
-            {/* MIA Inline Chat - Full AI Integration */}
+            {/* MIA Inline Chat - Full AI Integration with Onboarding */}
             <div className="px-6 pt-2 pb-4 bg-gradient-to-b from-black via-black to-transparent">
               <MiaInlineChat
                 events={allEvents}
@@ -956,6 +947,8 @@ const TribeAppMain: React.FC<{
                 onQuery={handleQuery}
                 onEventsFiltered={handleMiaEventsFiltered}
                 onClearFilter={handleMiaClearFilter}
+                onboardingStep={isOnboarding ? currentStep : undefined}
+                onAdvanceOnboarding={advanceStep}
               />
 
               {/* Category Tabs */}
@@ -1095,8 +1088,8 @@ const TribeAppMain: React.FC<{
                   </Popover>
                 </div>
               </div>
-              {/* Like Tutorial for first-time Feed visitors */}
-              {showLikeTutorial && view === ViewState.FEED && (
+              {/* Like Tutorial for first-time Feed visitors - hide during onboarding */}
+              {showLikeTutorial && view === ViewState.FEED && !isOnboarding && (
                 <div className="mb-4 bg-zinc-900/80 border border-gold/30 rounded-lg p-3 animate-fadeIn">
                   <div className="flex justify-between items-start mb-2">
                     <span className="text-[10px] font-bold text-gold uppercase tracking-widest">💡 Tipp</span>
