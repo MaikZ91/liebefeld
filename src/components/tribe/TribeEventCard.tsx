@@ -2,8 +2,15 @@ import React, { useState } from 'react';
 import { TribeEvent } from '@/types/tribe';
 import { generateEventSummary } from '@/services/tribe/aiHelpers';
 import { getVibeBadgeColor } from '@/utils/tribe/eventHelpers';
-import { Sparkles, Users, Share2, X, Heart, Check, ExternalLink, Play } from 'lucide-react';
+import { Sparkles, Users, Share2, X, Heart, Check, ExternalLink, Play, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { formatTimeOption } from '@/utils/tribe/eventGrouping';
+
+interface TimeSlot {
+  time: string;
+  eventId: string;
+  is3D?: boolean;
+}
 
 interface EventCardProps {
   event: TribeEvent;
@@ -15,6 +22,9 @@ interface EventCardProps {
   onToggleAttendance?: (eventId: string) => void;
   matchScore?: number; // MIA matching score 0-100%
   isPast?: boolean; // Event has already passed (time-based)
+  // Grouped events props
+  allTimes?: TimeSlot[];
+  onTimeSelect?: (eventId: string) => void;
 }
 
 interface YouTubeVideo {
@@ -66,7 +76,9 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
   isAttending = false,
   onToggleAttendance,
   matchScore,
-  isPast = false
+  isPast = false,
+  allTimes,
+  onTimeSelect
 }) => {
   const [summary, setSummary] = useState<string | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
@@ -75,6 +87,12 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
   const [youtubeVideo, setYoutubeVideo] = useState<YouTubeVideo | null>(null);
   const [loadingVideo, setLoadingVideo] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
+  const [isTimeDropdownOpen, setIsTimeDropdownOpen] = useState(false);
+  const [selectedTimeIndex, setSelectedTimeIndex] = useState(0);
+  
+  // Check if this is a grouped event with multiple times
+  const hasMultipleTimes = allTimes && allTimes.length > 1;
+  const currentTime = hasMultipleTimes ? allTimes[selectedTimeIndex] : null;
   
   const displayImage = event.image_url;
   const isNew = isNewEvent(event.created_at);
@@ -244,7 +262,44 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
               )}
             </div>
             <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 mt-0.5">
-              <span className="font-mono">{formatTime(event.time)}</span>
+              {/* Time display - dropdown if multiple times */}
+              {hasMultipleTimes ? (
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsTimeDropdownOpen(!isTimeDropdownOpen);
+                    }}
+                    className="font-mono flex items-center gap-0.5 text-gold hover:text-gold/80 transition-colors"
+                  >
+                    {formatTimeOption(currentTime?.time || event.time || '23:00', currentTime?.is3D)}
+                    <ChevronDown size={10} className={`transition-transform ${isTimeDropdownOpen ? 'rotate-180' : ''}`} />
+                    <span className="text-[8px] text-zinc-600 ml-0.5">+{allTimes.length - 1}</span>
+                  </button>
+                  {isTimeDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-1 bg-zinc-900 border border-zinc-700 rounded shadow-xl z-50 min-w-[100px]">
+                      {allTimes.map((slot, idx) => (
+                        <button
+                          key={slot.eventId}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTimeIndex(idx);
+                            setIsTimeDropdownOpen(false);
+                            if (onTimeSelect) onTimeSelect(slot.eventId);
+                          }}
+                          className={`block w-full text-left px-2 py-1.5 text-[10px] font-mono hover:bg-zinc-800 transition-colors ${
+                            idx === selectedTimeIndex ? 'text-gold bg-zinc-800' : 'text-zinc-300'
+                          }`}
+                        >
+                          {formatTimeOption(slot.time, slot.is3D)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <span className="font-mono">{formatTime(event.time)}</span>
+              )}
               {event.location && (
                 <>
                   <span className="text-zinc-700">•</span>
