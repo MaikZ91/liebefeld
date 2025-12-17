@@ -1,0 +1,49 @@
+# THE TRIBE Bielefeld - robots.txt
+# https://the-tribe.bi
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://the-tribe.bi/sitemap.xml
+
+# AI Crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# Standard crawlers
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+# Crawl-delay for politeness
+Crawl-delay: 1
+
+# Host
+Host: https://the-tribe.bi

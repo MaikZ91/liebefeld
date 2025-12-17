@@ -1,14 +1,23 @@
 {
-  "name": "THE TRIBE",
-  "short_name": "Tribe",
-  "start_url": "/",
+  "name": "THE TRIBE Bielefeld - Events & Community",
+  "short_name": "THE TRIBE",
+  "start_url": "/tribe",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#000000",
   "theme_color": "#000000",
   "orientation": "portrait",
-  "description": "Community-App für real-life Begegnungen – Events, Verbindungen und gemeinsame Interessen.",
+  "description": "Die #1 Event-App für Bielefeld. Entdecke Partys, Konzerte, Sport & Kultur. Verbinde dich mit der Community. Personalisierte Empfehlungen durch KI-Assistentin MIA.",
   "id": "/",
+  "lang": "de-DE",
+  "dir": "ltr",
+  "categories": ["entertainment", "social", "lifestyle"],
   "icons": [
+    {
+      "src": "/icon-192.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
     {
       "src": "/icon-512.png",
       "type": "image/png",
@@ -28,7 +37,46 @@
       "purpose": "monochrome"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "label": "THE TRIBE Bielefeld Event Übersicht"
+    }
+  ],
   "launch_handler": {
     "client_mode": "auto"
-  }
+  },
+  "shortcuts": [
+    {
+      "name": "Events heute",
+      "short_name": "Heute",
+      "description": "Alle Events für heute in Bielefeld",
+      "url": "/tribe?filter=today",
+      "icons": [{"src": "/icon-192.svg", "sizes": "192x192"}]
+    },
+    {
+      "name": "Party & Ausgehen",
+      "short_name": "Party",
+      "description": "Partys und Clubs in Bielefeld",
+      "url": "/tribe?category=party",
+      "icons": [{"src": "/icon-192.svg", "sizes": "192x192"}]
+    },
+    {
+      "name": "Community",
+      "short_name": "Community",
+      "description": "Bielefelder Community Chat",
+      "url": "/tribe?view=community",
+      "icons": [{"src": "/icon-192.svg", "sizes": "192x192"}]
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://drive.google.com/uc?export=download&id=1Fn3mG9AT4dEPKR37nfVt6IdyIbukeWJr",
+      "id": "bi.tribe.app"
+    }
+  ],
+  "prefer_related_applications": false
 }
