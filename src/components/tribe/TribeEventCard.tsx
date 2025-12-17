@@ -9,6 +9,7 @@ import { formatTimeOption } from '@/utils/tribe/eventGrouping';
 interface TimeSlot {
   time: string;
   eventId: string;
+  location?: string;
   is3D?: boolean;
 }
 
@@ -262,22 +263,24 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
               )}
             </div>
             <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 mt-0.5">
-              {/* Time display - dropdown if multiple times */}
+              {/* Time display - dropdown if multiple times/locations */}
               {hasMultipleTimes ? (
-                <div className="relative">
+                <div className="relative flex-1 min-w-0">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setIsTimeDropdownOpen(!isTimeDropdownOpen);
                     }}
-                    className="font-mono flex items-center gap-0.5 text-gold hover:text-gold/80 transition-colors"
+                    className="font-mono flex items-center gap-0.5 text-gold hover:text-gold/80 transition-colors max-w-full"
                   >
-                    {formatTimeOption(currentTime?.time || event.time || '23:00', currentTime?.is3D)}
-                    <ChevronDown size={10} className={`transition-transform ${isTimeDropdownOpen ? 'rotate-180' : ''}`} />
-                    <span className="text-[8px] text-zinc-600 ml-0.5">+{allTimes.length - 1}</span>
+                    <span className="truncate">
+                      {formatTimeOption(currentTime?.time || event.time || '23:00', currentTime?.is3D, currentTime?.location)}
+                    </span>
+                    <ChevronDown size={10} className={`flex-shrink-0 transition-transform ${isTimeDropdownOpen ? 'rotate-180' : ''}`} />
+                    <span className="text-[8px] text-zinc-600 ml-0.5 flex-shrink-0">+{allTimes.length - 1}</span>
                   </button>
                   {isTimeDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-1 bg-zinc-900 border border-zinc-700 rounded shadow-xl z-50 min-w-[100px]">
+                    <div className="absolute top-full left-0 mt-1 bg-zinc-900 border border-zinc-700 rounded shadow-xl z-50 min-w-[180px] max-w-[280px]">
                       {allTimes.map((slot, idx) => (
                         <button
                           key={slot.eventId}
@@ -287,23 +290,27 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                             setIsTimeDropdownOpen(false);
                             if (onTimeSelect) onTimeSelect(slot.eventId);
                           }}
-                          className={`block w-full text-left px-2 py-1.5 text-[10px] font-mono hover:bg-zinc-800 transition-colors ${
+                          className={`block w-full text-left px-2 py-1.5 text-[10px] hover:bg-zinc-800 transition-colors ${
                             idx === selectedTimeIndex ? 'text-gold bg-zinc-800' : 'text-zinc-300'
                           }`}
                         >
-                          {formatTimeOption(slot.time, slot.is3D)}
+                          <span className="font-mono">{slot.time?.match(/^(\d{1,2}:\d{2})/)?.[1] || slot.time}</span>
+                          {slot.is3D && <span className="text-zinc-500 ml-1">(3D)</span>}
+                          {slot.location && <span className="text-zinc-500 ml-1">• {slot.location}</span>}
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
               ) : (
-                <span className="font-mono">{formatTime(event.time)}</span>
-              )}
-              {event.location && (
                 <>
-                  <span className="text-zinc-700">•</span>
-                  <span className={`text-zinc-400 ${isExpanded ? '' : 'truncate'}`}>{event.location}</span>
+                  <span className="font-mono">{formatTime(event.time)}</span>
+                  {event.location && (
+                    <>
+                      <span className="text-zinc-700">•</span>
+                      <span className={`text-zinc-400 ${isExpanded ? '' : 'truncate'}`}>{event.location}</span>
+                    </>
+                  )}
                 </>
               )}
             </div>

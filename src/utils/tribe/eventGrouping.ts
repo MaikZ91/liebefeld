@@ -16,26 +16,32 @@ export const normalizeEventTitle = (title: string): string => {
 
 /**
  * Create a grouping key for an event
- * Groups by normalized title + location + date
+ * Groups by normalized title + date ONLY (not location - same event at different locations should group)
  */
 export const createEventGroupKey = (event: TribeEvent): string => {
   const normalizedTitle = normalizeEventTitle(event.title || '');
-  const location = (event.location || '').toLowerCase().trim();
   const date = event.date || '';
-  return `${normalizedTitle}|${location}|${date}`;
+  return `${normalizedTitle}|${date}`;
 };
 
 /**
- * Grouped event with multiple times
+ * Grouped event with multiple times/locations
  */
+export interface TimeSlot {
+  time: string;
+  eventId: string;
+  location?: string;
+  is3D?: boolean;
+}
+
 export interface GroupedEvent extends TribeEvent {
-  allTimes: { time: string; eventId: string; is3D?: boolean }[];
+  allTimes: TimeSlot[];
   selectedTimeIndex: number;
 }
 
 /**
- * Group similar events by title/location/date
- * Returns grouped events with all available times
+ * Group similar events by title/date (ignoring location)
+ * Returns grouped events with all available times and locations
  */
 export const groupSimilarEvents = (events: TribeEvent[]): GroupedEvent[] => {
   const groups = new Map<string, TribeEvent[]>();
@@ -60,30 +66,34 @@ export const groupSimilarEvents = (events: TribeEvent[]): GroupedEvent[] => {
         allTimes: [{ 
           time: eventGroup[0].time || '23:00', 
           eventId: eventGroup[0].id,
+          location: eventGroup[0].location,
           is3D: /3D/i.test(eventGroup[0].title || '')
         }],
         selectedTimeIndex: 0
       });
     } else {
-      // Multiple events - group times
-      // Sort by time
+      // Multiple events - group times/locations
+      // Sort by time first, then location
       eventGroup.sort((a, b) => {
         const timeA = a.time || '23:59';
         const timeB = b.time || '23:59';
-        return timeA.localeCompare(timeB);
+        const timeCompare = timeA.localeCompare(timeB);
+        if (timeCompare !== 0) return timeCompare;
+        return (a.location || '').localeCompare(b.location || '');
       });
       
-      // Use first event as base, collect all times
+      // Use first event as base, collect all times/locations
       const baseEvent = eventGroup[0];
-      const allTimes = eventGroup.map(e => ({
+      const allTimes: TimeSlot[] = eventGroup.map(e => ({
         time: e.time || '23:00',
         eventId: e.id,
+        location: e.location,
         is3D: /3D/i.test(e.title || '')
       }));
       
-      // Remove duplicates by time
+      // Remove exact duplicates (same time + location + 3D status)
       const uniqueTimes = allTimes.filter((t, idx, arr) => 
-        arr.findIndex(x => x.time === t.time && x.is3D === t.is3D) === idx
+        arr.findIndex(x => x.time === t.time && x.location === t.location && x.is3D === t.is3D) === idx
       );
       
       result.push({
@@ -100,11 +110,16 @@ export const groupSimilarEvents = (events: TribeEvent[]): GroupedEvent[] => {
 };
 
 /**
- * Format time display for dropdown
+ * Format time option display for dropdown - includes location if present
  */
-export const formatTimeOption = (time: string, is3D?: boolean): string => {
+export const formatTimeOption = (time: string, is3D?: boolean, location?: string): string => {
   // Extract just HH:MM
   const match = time.match(/^(\d{1,2}:\d{2})/);
   const shortTime = match ? match[1] : time;
-  return is3D ? `${shortTime} (3D)` : shortTime;
+  
+  let label = shortTime;
+  if (is3D) label += ' (3D)';
+  if (location) label += ` • ${location}`;
+  
+  return label;
 };
