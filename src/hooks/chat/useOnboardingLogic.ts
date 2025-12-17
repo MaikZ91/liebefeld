@@ -299,8 +299,23 @@ export const useOnboardingLogic = (
         ]
       );
     } else {
-      // Desktop - skip app download step
-      completeOnboarding(finalAction);
+      // Desktop - show PWA installation info
+      addBotMessage(
+        '📱 Tipp: Du kannst THE TRIBE auch als App installieren!\n\nKlicke im Browser-Menü auf "Installieren" oder "Zum Startbildschirm hinzufügen" für die volle Experience mit Push-Benachrichtigungen.',
+        true,
+        [
+          {
+            text: 'Cool, danke! 👍',
+            action: () => completeOnboarding(finalAction),
+            variant: 'default'
+          },
+          {
+            text: 'Später',
+            action: () => completeOnboarding(finalAction),
+            variant: 'outline'
+          }
+        ]
+      );
     }
   };
 
