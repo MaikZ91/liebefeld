@@ -46,7 +46,8 @@ const ONBOARDING_MESSAGES: Record<OnboardingStep, { text: string; showNext?: boo
   // Community onboarding steps - handled in TribeCommunityBoard
   community_intro: { text: '' },
   explain_profile: { text: '' },
-  waiting_for_profile: { text: '' },
+  waiting_for_avatar_click: { text: '' },
+  editing_profile: { text: '' },
   greeting_ready: { text: '' },
   waiting_for_post: { text: '' },
   completed: {
