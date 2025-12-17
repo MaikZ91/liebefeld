@@ -12,6 +12,7 @@ export type OnboardingStep =
   | 'editing_profile'           // User is editing profile
   | 'greeting_ready'
   | 'waiting_for_post'
+  | 'offer_guidance'            // Offer guided tour or explore alone
   | 'completed';
 
 interface OnboardingState {
@@ -59,6 +60,7 @@ export const useOnboardingFlow = () => {
         'editing_profile',
         'greeting_ready',
         'waiting_for_post',
+        'offer_guidance',
         'completed'
       ];
       const currentIndex = steps.indexOf(prev.currentStep);
@@ -99,12 +101,10 @@ export const useOnboardingFlow = () => {
 
   const markGreetingPosted = useCallback(() => {
     localStorage.setItem('tribe_greeting_posted', 'true');
-    localStorage.setItem('tribe_onboarding_completed', 'true');
     setState(prev => ({
       ...prev,
       hasPostedGreeting: true,
-      currentStep: 'completed',
-      hasCompletedOnboarding: true,
+      currentStep: 'offer_guidance',
     }));
   }, []);
 
@@ -174,6 +174,7 @@ export const useOnboardingFlow = () => {
                            state.currentStep === 'waiting_for_avatar_click' ||
                            state.currentStep === 'editing_profile' ||
                            state.currentStep === 'greeting_ready' ||
-                           state.currentStep === 'waiting_for_post',
+                           state.currentStep === 'waiting_for_post' ||
+                           state.currentStep === 'offer_guidance',
   };
 };

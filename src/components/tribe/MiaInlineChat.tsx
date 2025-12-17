@@ -63,6 +63,7 @@ const ONBOARDING_MESSAGES: Record<OnboardingStep, { text: string; showNext?: boo
   editing_profile: { text: '' },
   greeting_ready: { text: '' },
   waiting_for_post: { text: '' },
+  offer_guidance: { text: '' },
   completed: {
     text: '',
   },
