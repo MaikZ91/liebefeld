@@ -136,23 +136,21 @@ export const useOnboardingFlow = () => {
     const interests = profile.interests || [];
     const locations = profile.favorite_locations || [];
     
-    let greeting = `Hey, ich bin ${name}! 👋`;
+    let greeting = `Hey Leute! 👋 Ich bin ${name}`;
     
     if (interests.length > 0) {
       const interestText = interests.slice(0, 3).join(', ');
-      greeting += ` Ich steh auf ${interestText}`;
+      greeting += ` und ich liebe ${interestText}! 🔥`;
+    } else {
+      greeting += '!';
     }
     
     if (locations.length > 0) {
       const locationText = locations[0];
-      greeting += interests.length > 0 
-        ? ` und hänge gerne in ${locationText} rum.` 
-        : ` Findet mich oft in ${locationText}.`;
-    } else if (interests.length > 0) {
-      greeting += '.';
+      greeting += ` Ihr findet mich oft in ${locationText}.`;
     }
     
-    greeting += '\n\n'; // Leave space for fun fact
+    greeting += '\n\nFreue mich mega, Teil der Community zu sein! Wer hat Bock, was zusammen zu unternehmen? 🙌';
     
     return greeting;
   }, []);
