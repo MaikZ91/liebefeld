@@ -60,89 +60,55 @@ const AVATAR_OPTIONS = [
   "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=150&h=150"
 ];
 
-// Auto-create guest profile for new users
-const createGuestProfile = async (): Promise<UserProfile> => {
-  try {
-    const { data: existingGuests } = await supabase
-      .from('user_profiles')
-      .select('username')
-      .like('username', 'Guest_%')
-      .order('created_at', { ascending: false })
-      .limit(1);
-
-    let guestNumber = 1;
-    if (existingGuests && existingGuests.length > 0) {
-      const lastGuest = existingGuests[0].username;
-      const match = lastGuest.match(/Guest_(\d+)/);
-      if (match) guestNumber = parseInt(match[1]) + 1;
-    }
-
-    const guestUsername = `Guest_${guestNumber}`;
-    const randomAvatar = AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)];
-    
-    const guestProfile: UserProfile = {
-      username: guestUsername,
-      avatarUrl: randomAvatar,
-      bio: 'Guest',
-      homebase: 'Bielefeld'
-    };
-    
-    // Save to database (fire-and-forget)
-    supabase
-      .from('user_profiles')
-      .insert({
-        username: guestProfile.username,
-        avatar: guestProfile.avatarUrl,
-        favorite_locations: ['Bielefeld']
-      })
-      .then(() => console.log('Guest profile saved to database'));
-    
-    return guestProfile;
-  } catch {
-    // Fallback guest profile
-    return {
-      username: `Guest_${Date.now().toString().slice(-4)}`,
-      avatarUrl: AVATAR_OPTIONS[0],
-      bio: 'Guest',
-      homebase: 'Bielefeld'
-    };
-  }
+// Create guest profile instantly (no database query for speed)
+const createGuestProfileSync = (): UserProfile => {
+  const guestNumber = Date.now().toString().slice(-6);
+  const randomAvatar = AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)];
+  
+  const guestProfile: UserProfile = {
+    username: `Guest_${guestNumber}`,
+    avatarUrl: randomAvatar,
+    bio: 'Guest',
+    homebase: 'Bielefeld'
+  };
+  
+  // Save to database in background (fire-and-forget)
+  supabase
+    .from('user_profiles')
+    .insert({
+      username: guestProfile.username,
+      avatar: guestProfile.avatarUrl,
+      favorite_locations: ['Bielefeld']
+    })
+    .then(() => console.log('Guest profile saved to database'));
+  
+  return guestProfile;
 };
 
 export const TribeApp: React.FC = () => {
-  // Initialize profile from storage or create guest immediately
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
+  // Initialize profile from storage or create guest immediately (synchronous!)
+  const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     const savedProfile = localStorage.getItem("tribe_user_profile");
     if (savedProfile) {
       try {
         return JSON.parse(savedProfile);
       } catch {
-        return null;
+        // Invalid JSON - create new guest
       }
     }
-    return null;
+    // No saved profile - create guest instantly
+    const guestProfile = createGuestProfileSync();
+    localStorage.setItem("tribe_user_profile", JSON.stringify(guestProfile));
+    return guestProfile;
   });
-
-  // Auto-create guest profile on first visit
-  useEffect(() => {
-    const initGuestProfile = async () => {
-      if (!userProfile) {
-        const guestProfile = await createGuestProfile();
-        localStorage.setItem("tribe_user_profile", JSON.stringify(guestProfile));
-        setUserProfile(guestProfile);
-      }
-    };
-    
-    initGuestProfile();
-  }, []);
 
   return <TribeAppMain userProfile={userProfile} setUserProfile={setUserProfile} />;
 };
 
-// Main app component - only loaded after authentication
+// Main app component - always has userProfile (never null)
 const TribeAppMain: React.FC<{
-  userProfile: UserProfile | null;
-  setUserProfile: React.Dispatch<React.SetStateAction<UserProfile | null>>;
+  userProfile: UserProfile;
+  setUserProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
 }> = ({ userProfile, setUserProfile }) => {
   // Onboarding flow
   const { currentStep, isOnboarding, advanceStep, setStep, completeOnboarding, markProfileComplete, markGreetingPosted, generateGreeting, isCommunityOnboarding, shouldAvatarBlink } = useOnboardingFlow();
