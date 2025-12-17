@@ -566,8 +566,11 @@ const TribeAppMain: React.FC<{
 
   // Get top events sorted by match score for hero section (infinite scroll)
   const spotlightEvents = useMemo(() => {
-    // Sort all filtered events by match score
-    const sorted = [...filteredEvents].sort((a, b) => {
+    // First group similar events to avoid duplicates
+    const grouped = groupSimilarEvents(filteredEvents);
+    
+    // Sort by match score
+    const sorted = [...grouped].sort((a, b) => {
       const scoreA = eventMatchScores.get(a.id) || 50;
       const scoreB = eventMatchScores.get(b.id) || 50;
       return scoreB - scoreA;
