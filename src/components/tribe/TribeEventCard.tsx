@@ -51,8 +51,10 @@ const isNewEvent = (createdAt?: string): boolean => {
 };
 
 // Check if event is a Tribe/Community event
-const isTribeEvent = (source?: string): boolean => {
-  return source === 'community';
+const isTribeEvent = (event: TribeEvent): boolean => {
+  // Check if source is 'community' OR if title contains 'TRIBE' (case-insensitive)
+  const titleContainsTribe = event.title?.toUpperCase().includes('TRIBE') || false;
+  return event.source === 'community' || titleContainsTribe;
 };
 
 export const TribeEventCard: React.FC<EventCardProps> = ({ 
@@ -76,7 +78,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
   
   const displayImage = event.image_url;
   const isNew = isNewEvent(event.created_at);
-  const isTribe = isTribeEvent(event.source);
+  const isTribe = isTribeEvent(event);
 
   // Mock Attendees Data
   const baseCount = event.attendees || Math.floor(Math.random() * 80) + 12;
