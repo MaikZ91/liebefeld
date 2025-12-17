@@ -341,7 +341,7 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
                           </div>
                         ))}
                       </div>
-                      <span className="text-[11px] text-zinc-400 ml-2">+842 in der Community</span>
+                      <span className="text-[11px] text-zinc-400 ml-2">+200 in der Community</span>
                     </div>
                   </div>
                 )}
