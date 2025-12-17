@@ -30,12 +30,14 @@ const DISMISSED_POSTS_KEY = 'tribe_dismissed_posts';
 const TOPIC_DISLIKES_KEY = 'tribe_topic_dislikes';
 
 // Community onboarding messages
-const COMMUNITY_ONBOARDING_MESSAGES: Record<string, { text: string; showAction?: 'avatar' | 'post' }> = {
+const COMMUNITY_ONBOARDING_MESSAGES: Record<string, { text: string; showNext?: boolean; showAction?: 'avatar' | 'post' }> = {
   community_intro: {
     text: 'Willkommen in der Community! 🎉 Hier triffst du Leute, die deine Interessen teilen.',
+    showNext: true,
   },
   explain_profile: {
     text: 'Für authentische Verbindungen brauchen wir ein bisschen mehr über dich. Mit einem vollständigen Profil können andere sehen, wer du bist und was dich interessiert. Das macht es viel einfacher, echte Connections zu finden! ✨',
+    showNext: true,
   },
   waiting_for_avatar_click: {
     text: 'Klicke oben rechts auf deinen Avatar 👆 um dein Profil zu bearbeiten!',
@@ -100,21 +102,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
         setOnboardingMiaMessage(message.text);
       }
       
-      // Auto-advance from community_intro to explain_profile after delay
-      // Longer delay so users have time to read the welcome message
-      if (onboardingStep === 'community_intro' && onAdvanceOnboarding) {
-        setTimeout(() => {
-          onAdvanceOnboarding();
-        }, 5000); // 5 seconds to read welcome message
-      }
-      
-      // Auto-advance from explain_profile to waiting_for_avatar_click after delay
-      // Longer delay for the explanation about profiles
-      if (onboardingStep === 'explain_profile' && onAdvanceOnboarding) {
-        setTimeout(() => {
-          onAdvanceOnboarding();
-        }, 6000); // 6 seconds to read profile explanation
-      }
+      // No auto-advance - user clicks "Weiter" button instead
       
       // Generate greeting when reaching greeting_ready step
       if (onboardingStep === 'greeting_ready' && generateGreeting && !greetingGenerated) {
@@ -575,6 +563,17 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                   <p className="text-xs text-white/90 leading-relaxed mt-0.5">
                     {onboardingMiaMessage}
                   </p>
+                  
+                  {/* Show "Weiter" button for steps that need manual advancement */}
+                  {onboardingStep && COMMUNITY_ONBOARDING_MESSAGES[onboardingStep]?.showNext && onAdvanceOnboarding && (
+                    <button
+                      onClick={onAdvanceOnboarding}
+                      className="mt-2 px-3 py-1.5 bg-gold text-black text-xs font-semibold rounded-full hover:bg-gold/90 transition-all"
+                    >
+                      Weiter →
+                    </button>
+                  )}
+                  
                   {/* Show hint to click avatar during waiting_for_avatar_click */}
                   {onboardingStep === 'waiting_for_avatar_click' && (
                     <div className="mt-2 flex items-center gap-2 text-gold animate-pulse">
