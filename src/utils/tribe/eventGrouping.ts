@@ -3,13 +3,17 @@ import { TribeEvent } from '@/types/tribe';
 /**
  * Normalize event title for grouping
  * - Remove "3D" suffix
+ * - Remove "The " prefix (case-insensitive)
+ * - Remove "& More" / "&More" suffix (case-insensitive)
  * - Normalize whitespace
  * - Lowercase for comparison
  */
 export const normalizeEventTitle = (title: string): string => {
   return title
-    .replace(/\s*3D\s*/gi, ' ')  // Remove "3D"
-    .replace(/\s+/g, ' ')         // Normalize whitespace
+    .replace(/^the\s+/gi, '')        // Remove "The " prefix
+    .replace(/\s*&\s*more$/gi, '')   // Remove "& More" suffix
+    .replace(/\s*3D\s*/gi, ' ')      // Remove "3D"
+    .replace(/\s+/g, ' ')            // Normalize whitespace
     .trim()
     .toLowerCase();
 };
