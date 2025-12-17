@@ -20,7 +20,7 @@ interface ChatMessage {
   }>;
 }
 
-type OnboardingStep = 'start' | 'name' | 'city' | 'interests' | 'avatar' | 'notifications' | 'complete';
+type OnboardingStep = 'start' | 'name' | 'city' | 'interests' | 'avatar' | 'notifications' | 'app_download' | 'complete';
 
 const chatbotAvatar = '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png';
 
@@ -218,8 +218,6 @@ export const useOnboardingLogic = (
   };
 
   const finishOnboarding = async (finalAction: 'community_chat' | 'event_heatmap') => {
-    setCurrentStep('complete');
-
     try {
       // Save user profile
       localStorage.setItem(USERNAME_KEY, userData.username);
@@ -237,28 +235,15 @@ export const useOnboardingLogic = (
 
       await sendWelcomeMessageToChat();
 
-      // Trigger App Download prompt after profile creation
       localStorage.setItem('tribe_welcome_completed', 'true');
-      window.dispatchEvent(new Event('tribe_welcome_completed'));
-
-      const successMessage = finalAction === 'community_chat'
-        ? `Super! Du bist bereit, dich mit anderen Tribes zu verbinden. Wir sehen uns im Community-Chat! 🎉`
-        : `Du bist bereit! 🎉 Ich finde jetzt passende Events und Leute für dich in ${userData.city}.`;
-
-      addBotMessage(successMessage, true, [
-        {
-          text: 'Los geht\'s!',
-          action: () => {
-            onComplete?.(finalAction);
-          },
-          variant: 'default'
-        }
-      ]);
 
       toast({
         title: `Willkommen ${userData.username}!`,
         description: 'Dein Profil wurde erfolgreich erstellt.',
       });
+
+      // Show app download step
+      showAppDownloadStep(finalAction);
     } catch (error) {
       toast({
         title: 'Fehler',
@@ -266,6 +251,75 @@ export const useOnboardingLogic = (
         variant: 'destructive'
       });
     }
+  };
+
+  const showAppDownloadStep = (finalAction: 'community_chat' | 'event_heatmap') => {
+    // Detect device type
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isAndroid = /android/.test(userAgent);
+    const isIOS = /iphone|ipad|ipod/.test(userAgent);
+
+    setCurrentStep('app_download');
+
+    if (isAndroid) {
+      addBotMessage(
+        '📱 Hol dir die volle Experience!\n\nMit der THE TRIBE App bekommst du Push-Benachrichtigungen für neue Events und die beste Performance.',
+        true,
+        [
+          {
+            text: '📲 Im Play Store öffnen',
+            action: () => {
+              window.open('https://play.google.com/store/apps/details?id=co.median.android.yadezx', '_blank');
+              completeOnboarding(finalAction);
+            },
+            variant: 'default'
+          },
+          {
+            text: 'Später',
+            action: () => completeOnboarding(finalAction),
+            variant: 'outline'
+          }
+        ]
+      );
+    } else if (isIOS) {
+      addBotMessage(
+        '📱 Installiere THE TRIBE als App!\n\nSo geht\'s:\n1️⃣ Tippe unten auf das Teilen-Symbol\n2️⃣ Wähle "Zum Home-Bildschirm"\n3️⃣ Fertig! THE TRIBE erscheint als App-Icon',
+        true,
+        [
+          {
+            text: 'Verstanden! 👍',
+            action: () => completeOnboarding(finalAction),
+            variant: 'default'
+          },
+          {
+            text: 'Später',
+            action: () => completeOnboarding(finalAction),
+            variant: 'outline'
+          }
+        ]
+      );
+    } else {
+      // Desktop - skip app download step
+      completeOnboarding(finalAction);
+    }
+  };
+
+  const completeOnboarding = (finalAction: 'community_chat' | 'event_heatmap') => {
+    setCurrentStep('complete');
+    
+    const successMessage = finalAction === 'community_chat'
+      ? `Super! Du bist bereit, dich mit anderen Tribes zu verbinden. Wir sehen uns im Community-Chat! 🎉`
+      : `Du bist bereit! 🎉 Ich finde jetzt passende Events und Leute für dich in ${userData.city}.`;
+
+    addBotMessage(successMessage, true, [
+      {
+        text: 'Los geht\'s!',
+        action: () => {
+          onComplete?.(finalAction);
+        },
+        variant: 'default'
+      }
+    ]);
   };
 
   const sendWelcomeMessageToChat = async () => {
