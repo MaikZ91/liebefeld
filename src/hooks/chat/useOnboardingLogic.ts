@@ -57,7 +57,7 @@ export const useOnboardingLogic = (
   useEffect(() => {
     if (messages.length === 0) {
       addBotMessage(
-        'Hey du! Willkommen bei THE TRIBE. Ich bin Mia, deine persönliche Event-Assistentin. Ich helfe dir, coole Leute und Veranstaltungen in deiner Stadt zu finden. Du liebst reale Verbindungen? Dann mach dich bereit!',
+        'Hey du! Willkommen bei THE TRIBE 🎉 Ich bin MIA – deine persönliche Event-Assistentin. Ich finde für dich personalisierte Events und helfe dir, Gleichgesinnte zu connecten. Bereit für echte Begegnungen?',
         true,
         [{
           text: 'Los geht\'s! 🚀',
