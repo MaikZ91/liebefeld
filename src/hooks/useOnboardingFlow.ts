@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 export type OnboardingStep = 
   | 'welcome' 
   | 'explain_app' 
+  | 'select_interests'          // User selects interests
   | 'explain_likes' 
   | 'waiting_for_like' 
   | 'community_intro'
@@ -49,6 +50,7 @@ export const useOnboardingFlow = () => {
       const steps: OnboardingStep[] = [
         'welcome', 
         'explain_app', 
+        'select_interests',
         'explain_likes', 
         'waiting_for_like',
         'community_intro',

@@ -784,6 +784,29 @@ const TribeAppMain: React.FC<{
     setMiaFilteredEventIds(null);
   };
 
+  // Handle interests selected during onboarding
+  const handleInterestsSelected = (interests: string[]) => {
+    // Save interests to profile
+    if (userProfile) {
+      const updatedProfile = {
+        ...userProfile,
+        interests: interests,
+      };
+      setUserProfile(updatedProfile);
+      localStorage.setItem("tribe_user_profile", JSON.stringify(updatedProfile));
+      
+      // Also save to localStorage for personalization
+      localStorage.setItem("tribe_user_interests", JSON.stringify(interests));
+      
+      // Fire-and-forget update to database
+      supabase
+        .from('user_profiles')
+        .update({ interests: interests })
+        .eq('username', userProfile.username)
+        .then(() => console.log('Interests saved to database'));
+    }
+  };
+
   const handleJoinTribe = (eventName: string) => {
     if (!userProfile) return;
     const newPost: Post = {
@@ -953,6 +976,7 @@ const TribeAppMain: React.FC<{
                 onClearFilter={handleMiaClearFilter}
                 onboardingStep={isOnboarding ? currentStep : undefined}
                 onAdvanceOnboarding={advanceStep}
+                onInterestsSelected={handleInterestsSelected}
               />
 
               {/* Category Tabs */}
