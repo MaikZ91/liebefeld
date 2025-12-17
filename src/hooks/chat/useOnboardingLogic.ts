@@ -237,6 +237,10 @@ export const useOnboardingLogic = (
 
       await sendWelcomeMessageToChat();
 
+      // Trigger App Download prompt after profile creation
+      localStorage.setItem('tribe_welcome_completed', 'true');
+      window.dispatchEvent(new Event('tribe_welcome_completed'));
+
       const successMessage = finalAction === 'community_chat'
         ? `Super! Du bist bereit, dich mit anderen Tribes zu verbinden. Wir sehen uns im Community-Chat! 🎉`
         : `Du bist bereit! 🎉 Ich finde jetzt passende Events und Leute für dich in ${userData.city}.`;
