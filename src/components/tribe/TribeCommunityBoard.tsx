@@ -558,35 +558,6 @@ export const TribeCommunityBoard: React.FC<Props> = ({
     return (
     <div className="h-full flex flex-col bg-black animate-fadeIn">
         
-        {/* --- MIA ONBOARDING MESSAGE --- */}
-        {onboardingMiaMessage && (
-          <div className="px-4 py-3 bg-gradient-to-r from-gold/10 via-gold/5 to-transparent border-b border-gold/20">
-            <div className="flex gap-3">
-              <div className="relative flex-shrink-0">
-                <img 
-                  src={MIA_AVATAR} 
-                  className="w-10 h-10 rounded-full ring-2 ring-gold/50 object-cover" 
-                  alt="MIA" 
-                />
-                <div className="absolute -bottom-1 -right-1 bg-gold text-black text-[6px] font-bold px-1 py-0.5 rounded">
-                  MIA
-                </div>
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-white/90 leading-relaxed">{onboardingMiaMessage}</p>
-                
-                {/* Show hint to click avatar during waiting_for_avatar_click */}
-                {onboardingStep === 'waiting_for_avatar_click' && (
-                  <div className="mt-3 flex items-center gap-2 text-gold animate-pulse">
-                    <span className="text-xl">👆</span>
-                    <span className="text-xs font-medium">Klick auf deinen Avatar oben rechts!</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-        
         {/* --- INPUT AREA --- */}
         <div className="px-4 py-1.5 border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur-xl z-20">
             <div className={`bg-surface border rounded-lg p-1.5 shadow-lg flex items-end gap-2 ${
@@ -656,6 +627,46 @@ export const TribeCommunityBoard: React.FC<Props> = ({
 
         {/* --- FEED --- */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-32">
+            {/* MIA Onboarding Message - shown as chat message in feed */}
+            {onboardingMiaMessage && (
+              <div className="bg-zinc-900/50 border border-gold/20 rounded-lg p-3 animate-fadeIn">
+                <div className="flex gap-3">
+                  <div className="relative flex-shrink-0">
+                    <img 
+                      src={MIA_AVATAR} 
+                      className="w-10 h-10 rounded-full ring-2 ring-gold/50 object-cover" 
+                      alt="MIA" 
+                    />
+                    <div className="absolute -bottom-1 -right-1 bg-gold text-black text-[6px] font-bold px-1 py-0.5 rounded">
+                      MIA
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-bold text-gold">MIA</span>
+                      <span className="text-[9px] text-zinc-500">Just now</span>
+                    </div>
+                    <p className="text-sm text-white/90 leading-relaxed">{onboardingMiaMessage}</p>
+                    
+                    {/* Show hint to click avatar during waiting_for_avatar_click */}
+                    {onboardingStep === 'waiting_for_avatar_click' && (
+                      <div className="mt-3 flex items-center gap-2 text-gold animate-pulse">
+                        <span className="text-xl">👆</span>
+                        <span className="text-xs font-medium">Klick auf deinen Avatar oben rechts!</span>
+                      </div>
+                    )}
+                    
+                    {/* Show hint for greeting during greeting_ready */}
+                    {(onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post') && (
+                      <div className="mt-3 flex items-center gap-2 text-gold animate-pulse">
+                        <span className="text-xl">👆</span>
+                        <span className="text-xs font-medium">Deine Begrüßung ist oben im Eingabefeld - klick auf Post!</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
             {/* Profile Creation Banner - simple, closable */}
             {userProfile && !profileBannerDismissed && (() => {
               const hasAvatar = !!userProfile.avatarUrl || !!userProfile.avatar;
