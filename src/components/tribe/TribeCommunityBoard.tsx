@@ -101,17 +101,19 @@ export const TribeCommunityBoard: React.FC<Props> = ({
       }
       
       // Auto-advance from community_intro to explain_profile after delay
+      // Longer delay so users have time to read the welcome message
       if (onboardingStep === 'community_intro' && onAdvanceOnboarding) {
         setTimeout(() => {
           onAdvanceOnboarding();
-        }, 2500);
+        }, 5000); // 5 seconds to read welcome message
       }
       
       // Auto-advance from explain_profile to waiting_for_avatar_click after delay
+      // Longer delay for the explanation about profiles
       if (onboardingStep === 'explain_profile' && onAdvanceOnboarding) {
         setTimeout(() => {
           onAdvanceOnboarding();
-        }, 3500);
+        }, 6000); // 6 seconds to read profile explanation
       }
       
       // Generate greeting when reaching greeting_ready step
