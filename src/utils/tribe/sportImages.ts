@@ -73,6 +73,10 @@ const EVENT_IMAGES: Record<string, string> = {
   kabarett: 'https://images.unsplash.com/photo-1527224538127-2104bb71c51b?w=400&h=300&fit=crop',
   karaoke: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&h=300&fit=crop',
   
+  // Pub / Quiz
+  'pub quiz': 'https://images.unsplash.com/photo-1574096079513-d8259312b785?w=400&h=300&fit=crop',
+  quiz: 'https://images.unsplash.com/photo-1574096079513-d8259312b785?w=400&h=300&fit=crop',
+  'irish pub': 'https://images.unsplash.com/photo-1574096079513-d8259312b785?w=400&h=300&fit=crop',
   // Cinema
   cinemaxx: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&h=300&fit=crop',
   kino: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&h=300&fit=crop',
