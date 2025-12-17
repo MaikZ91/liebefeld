@@ -17,6 +17,11 @@ const KREATIVITAET = new Set([
   'Lesung',
   'Kultur',
   'Kreativ',
+  'Improtheater',
+  'Impro',
+  'Improvisation',
+  'Comedy',
+  'Kabarett',
 ]);
 
 const SPORT = new Set([
