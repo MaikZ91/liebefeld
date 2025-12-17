@@ -213,12 +213,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
         onProfileUpdate(updatedProfile);
       }
 
-      toast({
-        title: "Erfolg",
-        description: "Profil erfolgreich aktualisiert!",
-        variant: "success"
-      });
-
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating profile:', error);
