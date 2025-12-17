@@ -1,5 +1,3 @@
-import { initializeApp } from "firebase/app";
-import { getMessaging, getToken, deleteToken } from "firebase/messaging";
 import { supabase } from "@/integrations/supabase/client";
 
 const firebaseConfig = {
@@ -12,8 +10,20 @@ const firebaseConfig = {
   measurementId: "G-J4DS43HNBF"
 };
 
-const app = initializeApp(firebaseConfig);
-const messaging = getMessaging(app);
+// Lazy-loaded Firebase instances
+let firebaseApp: any = null;
+let messaging: any = null;
+
+// Lazy initialize Firebase only when needed
+const getFirebaseMessaging = async () => {
+  if (!messaging) {
+    const { initializeApp } = await import("firebase/app");
+    const { getMessaging } = await import("firebase/messaging");
+    firebaseApp = initializeApp(firebaseConfig);
+    messaging = getMessaging(firebaseApp);
+  }
+  return messaging;
+};
 
 export const initializeFCM = async (city?: string, forceRefresh: boolean = false) => {
   try {
@@ -35,18 +45,22 @@ export const initializeFCM = async (city?: string, forceRefresh: boolean = false
     const registration = await navigator.serviceWorker.register("/sw.js");
     console.log("✅ Service worker registered:", registration);
     
+    // Lazy load Firebase
+    const firebaseMessaging = await getFirebaseMessaging();
+    const { getToken, deleteToken } = await import("firebase/messaging");
+    
     console.log("🔑 Getting FCM token...");
     // Optionally refresh token
     if (forceRefresh) {
       try {
-        await deleteToken(messaging);
+        await deleteToken(firebaseMessaging);
         console.log("🗑️ Deleted old token (forceRefresh=true)");
       } catch (deleteError) {
         console.log("ℹ️ No old token to delete:", deleteError);
       }
     }
     
-    const token = await getToken(messaging, {
+    const token = await getToken(firebaseMessaging, {
       vapidKey: "BAa8eG9roLbc_UZg9P7qRDSWEbEwG4H79z1La5Q1-PiTdLUcpJwTIhHbL49oL3zteBHYAtwWufuGsyhqPpd1Xi0",
       serviceWorkerRegistration: registration
     });
