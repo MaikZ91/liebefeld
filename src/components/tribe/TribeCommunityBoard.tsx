@@ -669,8 +669,8 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                 </div>
               </div>
             )}
-            {/* Profile Creation Banner - simple, closable */}
-            {userProfile && !profileBannerDismissed && (() => {
+            {/* Profile Creation Banner - simple, closable - HIDE during onboarding */}
+            {userProfile && !profileBannerDismissed && !onboardingStep && (() => {
               const hasAvatar = !!userProfile.avatarUrl || !!userProfile.avatar;
               const hasInterests = (userProfile.interests?.length || 0) > 0;
               const hasLocations = (userProfile.favorite_locations?.length || 0) > 0;

@@ -714,10 +714,7 @@ const TribeAppMain: React.FC<{
           // During onboarding waiting_for_like step - switch to community
           if (isOnboardingWaitingForLike) {
             setStep('community_intro');
-            toast({
-              title: "Super! 🎉",
-              description: "Jetzt zeig ich dir die Community. Hier triffst du Leute mit ähnlichem Geschmack!",
-            });
+            // Toast removed - MIA greets in community view instead
             setTimeout(() => setView(ViewState.COMMUNITY), 1000);
           } else if (isFirstLike) {
             // First like ever (non-onboarding) - collapse the feed
