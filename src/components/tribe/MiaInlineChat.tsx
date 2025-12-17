@@ -198,8 +198,10 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
   };
 
   const handleTypewriterClick = () => {
-    // Just focus input, don't auto-trigger
-    inputRef.current?.focus();
+    // Auto-send the current typewriter prompt
+    if (currentFullPrompt) {
+      handleSend(currentFullPrompt);
+    }
   };
 
   const handleClear = () => {
