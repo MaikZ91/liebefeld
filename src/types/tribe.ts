@@ -11,6 +11,7 @@ export interface TribeEvent {
   city?: string;
   location?: string | null;
   created_at?: string; // ISO date for "New" badge detection
+  source?: string; // 'community' for Tribe events
   // THE TRIBE Expert Features
   matchScore?: number; // 0-100
   attendees?: number; // Count of people going
