@@ -29,6 +29,14 @@ const Tribe = lazy(() => import("./pages/Tribe"));
 const UserDirectory = lazy(() => import("./components/users/UserDirectory"));
 const EventCalendar = lazy(() => import("./components/EventCalendar"));
 
+// SEO Landing Pages
+const PartyBielefeld = lazy(() => import("./pages/seo/PartyBielefeld"));
+const KonzerteBielefeld = lazy(() => import("./pages/seo/KonzerteBielefeld"));
+const SportBielefeld = lazy(() => import("./pages/seo/SportBielefeld"));
+const KunstBielefeld = lazy(() => import("./pages/seo/KunstBielefeld"));
+const EventsHeute = lazy(() => import("./pages/seo/EventsHeute"));
+const EventsWochenende = lazy(() => import("./pages/seo/EventsWochenende"));
+
 const queryClient = new QueryClient();
 
 // Separate component for initialization that runs inside Router context
@@ -163,6 +171,14 @@ function App() {
                   <Route path="/impressum" element={<Impressum />} />
                   <Route path="/privacy" element={<Privacy />} />
                   <Route path="/policies" element={<CSAEPolicies />} />
+                  
+                  {/* SEO Landing Pages */}
+                  <Route path="/party-bielefeld" element={<PartyBielefeld />} />
+                  <Route path="/konzerte-bielefeld" element={<KonzerteBielefeld />} />
+                  <Route path="/sport-bielefeld" element={<SportBielefeld />} />
+                  <Route path="/kunst-bielefeld" element={<KunstBielefeld />} />
+                  <Route path="/events-heute" element={<EventsHeute />} />
+                  <Route path="/events-wochenende" element={<EventsWochenende />} />
                   
                   {/* Layout-wrapped pages */}
                   <Route path="/users" element={<Layout><UserDirectory open={true} onOpenChange={() => {}} onSelectUser={() => {}} /></Layout>} />
