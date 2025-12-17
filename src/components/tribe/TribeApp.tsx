@@ -145,7 +145,7 @@ const TribeAppMain: React.FC<{
   setUserProfile: React.Dispatch<React.SetStateAction<UserProfile | null>>;
 }> = ({ userProfile, setUserProfile }) => {
   // Onboarding flow
-  const { currentStep, isOnboarding, advanceStep, setStep, completeOnboarding, markProfileComplete, markGreetingPosted, generateGreeting, isCommunityOnboarding } = useOnboardingFlow();
+  const { currentStep, isOnboarding, advanceStep, setStep, completeOnboarding, markProfileComplete, markGreetingPosted, generateGreeting, isCommunityOnboarding, shouldAvatarBlink } = useOnboardingFlow();
   
   // Start in FEED view for onboarding, COMMUNITY otherwise
   const [view, setView] = useState<ViewState>(() => {
@@ -864,20 +864,28 @@ const TribeAppMain: React.FC<{
               )}
             </div>
 
-            {/* USER AVATAR with Profile Hint */}
+            {/* USER AVATAR with Profile Hint and Onboarding Blink */}
             <div className="relative">
               <button
                 onClick={() => {
                   setShowProfileHint(false);
                   localStorage.setItem("tribe_seen_profile_hint", "true");
+                  
+                  // During onboarding waiting_for_avatar_click step, set to editing_profile and go to PROFILE
+                  if (shouldAvatarBlink && currentStep === 'waiting_for_avatar_click') {
+                    setStep('editing_profile');
+                  }
+                  
                   setView(userProfile ? ViewState.PROFILE : ViewState.AUTH);
                 }}
                 className={`flex items-center gap-2 ${
-                  !isProfileComplete(userProfile) ? "animate-pulse" : ""
+                  shouldAvatarBlink ? "" : (!isProfileComplete(userProfile) ? "animate-pulse" : "")
                 }`}
               >
                 <div className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-colors ${
-                  !isProfileComplete(userProfile) ? "border-gold" : "border-white/20 hover:border-gold"
+                  shouldAvatarBlink 
+                    ? "border-gold animate-[pulse_1s_ease-in-out_infinite] shadow-[0_0_15px_rgba(212,175,55,0.7)]" 
+                    : (!isProfileComplete(userProfile) ? "border-gold" : "border-white/20 hover:border-gold")
                 }`}>
                   {userProfile?.avatarUrl ? (
                     <img src={userProfile.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
@@ -887,9 +895,11 @@ const TribeAppMain: React.FC<{
                     </div>
                   )}
                 </div>
-                {/* Show "Profil erstellen" text when profile is incomplete */}
-                {!isProfileComplete(userProfile) && (
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-gold hidden sm:block">
+                {/* Show "Profil erstellen" text when avatar should blink OR profile is incomplete */}
+                {(shouldAvatarBlink || !isProfileComplete(userProfile)) && (
+                  <span className={`text-[9px] font-bold uppercase tracking-wider hidden sm:block ${
+                    shouldAvatarBlink ? "text-gold animate-pulse" : "text-gold"
+                  }`}>
                     Profil erstellen
                   </span>
                 )}
@@ -1333,10 +1343,11 @@ const TribeAppMain: React.FC<{
             attendingEventIds={attendingEventIds}
             likedEventIds={likedEventIds}
             onOpenMatcher={() => setView(ViewState.MATCHER)}
+            onboardingStep={currentStep}
             onProfileUpdate={(updatedProfile) => {
               setUserProfile(updatedProfile);
               // During community onboarding, mark profile complete and go back to community
-              if (isCommunityOnboarding && (currentStep === 'explain_profile' || currentStep === 'waiting_for_profile')) {
+              if (isCommunityOnboarding && currentStep === 'editing_profile') {
                 markProfileComplete();
                 setView(ViewState.COMMUNITY);
               }

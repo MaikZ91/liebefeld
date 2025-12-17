@@ -7,7 +7,8 @@ export type OnboardingStep =
   | 'waiting_for_like' 
   | 'community_intro'
   | 'explain_profile' 
-  | 'waiting_for_profile' 
+  | 'waiting_for_avatar_click'  // User needs to click avatar
+  | 'editing_profile'           // User is editing profile
   | 'greeting_ready'
   | 'waiting_for_post'
   | 'completed';
@@ -52,7 +53,8 @@ export const useOnboardingFlow = () => {
         'waiting_for_like',
         'community_intro',
         'explain_profile',
-        'waiting_for_profile',
+        'waiting_for_avatar_click',
+        'editing_profile',
         'greeting_ready',
         'waiting_for_post',
         'completed'
@@ -153,6 +155,9 @@ export const useOnboardingFlow = () => {
     return greeting;
   }, []);
 
+  // Check if we're in a step where avatar should blink
+  const shouldAvatarBlink = state.currentStep === 'waiting_for_avatar_click';
+
   return {
     ...state,
     advanceStep,
@@ -162,10 +167,12 @@ export const useOnboardingFlow = () => {
     markProfileComplete,
     markGreetingPosted,
     generateGreeting,
+    shouldAvatarBlink,
     isOnboarding: !state.hasCompletedOnboarding,
     isCommunityOnboarding: state.currentStep === 'community_intro' || 
                            state.currentStep === 'explain_profile' || 
-                           state.currentStep === 'waiting_for_profile' ||
+                           state.currentStep === 'waiting_for_avatar_click' ||
+                           state.currentStep === 'editing_profile' ||
                            state.currentStep === 'greeting_ready' ||
                            state.currentStep === 'waiting_for_post',
   };

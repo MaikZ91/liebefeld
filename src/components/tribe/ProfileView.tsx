@@ -12,6 +12,9 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
 import { getInitials } from '@/utils/chatUIUtils';
+import { OnboardingStep } from '@/hooks/useOnboardingFlow';
+
+const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150";
 
 interface ProfileViewProps {
   userProfile: UserProfile;
@@ -22,6 +25,7 @@ interface ProfileViewProps {
   likedEventIds?: Set<string>;
   onOpenMatcher?: () => void;
   onProfileUpdate?: (updatedProfile: UserProfile) => void;
+  onboardingStep?: OnboardingStep;
 }
 
 export const ProfileView: React.FC<ProfileViewProps> = ({ 
@@ -32,13 +36,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   attendingEventIds,
   likedEventIds,
   onOpenMatcher,
-  onProfileUpdate
+  onProfileUpdate,
+  onboardingStep
 }) => {
   const [activeTab, setActiveTab] = useState<'GOING' | 'LIKED'>('GOING');
   const [favoriteLocations, setFavoriteLocations] = useState<string[]>([]);
   
-  // Edit mode state
-  const [isEditing, setIsEditing] = useState(false);
+  // Edit mode state - auto-start editing if in onboarding editing_profile step
+  const [isEditing, setIsEditing] = useState(onboardingStep === 'editing_profile');
   const [editUsername, setEditUsername] = useState(userProfile.username);
   const [editAvatar, setEditAvatar] = useState(userProfile.avatarUrl);
   const [editInterests, setEditInterests] = useState<string[]>(userProfile.interests || []);
@@ -56,6 +61,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     const locations = personalizationService.getFavoriteLocations();
     setFavoriteLocations(locations);
   }, [likedEvents]);
+
+  // Auto-start editing when onboarding step is editing_profile
+  useEffect(() => {
+    if (onboardingStep === 'editing_profile') {
+      setIsEditing(true);
+    }
+  }, [onboardingStep]);
 
   // Reset edit state when userProfile changes
   useEffect(() => {
@@ -236,6 +248,29 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
   return (
     <div className="min-h-screen bg-black text-white pb-24 animate-fadeIn">
+       {/* MIA Guidance during onboarding */}
+       {onboardingStep === 'editing_profile' && (
+         <div className="bg-gold/10 border-b border-gold/20 p-4">
+           <div className="flex items-start gap-3 max-w-lg mx-auto">
+             <div className="relative flex-shrink-0">
+               <img 
+                 src={MIA_AVATAR} 
+                 alt="MIA" 
+                 className="w-10 h-10 rounded-full object-cover border border-gold/50"
+               />
+               <div className="absolute -bottom-1 -right-1 bg-gold text-black text-[6px] font-bold px-1 py-0.5 rounded">
+                 MIA
+               </div>
+             </div>
+             <div className="flex-1">
+               <p className="text-sm text-white/90 leading-relaxed">
+                 Super! Füge jetzt ein Bild hinzu, erzähl uns von deinen Interessen und wähle deine Lieblingsorte. Wenn du fertig bist, klick auf <span className="text-gold font-bold">Speichern</span>! 💫
+               </p>
+             </div>
+           </div>
+         </div>
+       )}
+
        {/* Identity Card */}
        <div className="p-6 bg-surface border-b border-white/5 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-5">

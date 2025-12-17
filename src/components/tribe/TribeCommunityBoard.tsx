@@ -30,17 +30,19 @@ const DISMISSED_POSTS_KEY = 'tribe_dismissed_posts';
 const TOPIC_DISLIKES_KEY = 'tribe_topic_dislikes';
 
 // Community onboarding messages
-const COMMUNITY_ONBOARDING_MESSAGES: Record<string, { text: string; showAction?: 'profile' | 'post' }> = {
+const COMMUNITY_ONBOARDING_MESSAGES: Record<string, { text: string; showAction?: 'avatar' | 'post' }> = {
   community_intro: {
     text: 'Willkommen in der Community! 🎉 Hier triffst du Leute, die deine Interessen teilen.',
   },
   explain_profile: {
     text: 'Für authentische Verbindungen brauchen wir ein bisschen mehr über dich. Mit einem vollständigen Profil können andere sehen, wer du bist und was dich interessiert. Das macht es viel einfacher, echte Connections zu finden! ✨',
-    showAction: 'profile',
   },
-  waiting_for_profile: {
-    text: 'Super, erstelle jetzt dein Profil! 👆',
-    showAction: 'profile',
+  waiting_for_avatar_click: {
+    text: 'Klicke oben rechts auf deinen Avatar 👆 um dein Profil zu bearbeiten!',
+    showAction: 'avatar',
+  },
+  editing_profile: {
+    text: 'Super! Füge jetzt ein Bild hinzu, erzähl uns von deinen Interessen und wähle deine Lieblingsorte. Wenn du fertig bist, klick auf Speichern! 💫',
   },
   greeting_ready: {
     text: 'Perfekt! 🙌 Jetzt lass dich der Community vorstellen. Ich hab schon mal eine Nachricht für dich vorbereitet. Ergänze gerne noch einen Fun Fact über dich und klick dann auf Post!',
@@ -90,7 +92,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
   useEffect(() => {
     if (!onboardingStep) return;
     
-    const isCommunityStep = ['community_intro', 'explain_profile', 'waiting_for_profile', 'greeting_ready', 'waiting_for_post'].includes(onboardingStep);
+    const isCommunityStep = ['community_intro', 'explain_profile', 'waiting_for_avatar_click', 'editing_profile', 'greeting_ready', 'waiting_for_post'].includes(onboardingStep);
     
     if (isCommunityStep) {
       const message = COMMUNITY_ONBOARDING_MESSAGES[onboardingStep];
@@ -103,6 +105,13 @@ export const TribeCommunityBoard: React.FC<Props> = ({
         setTimeout(() => {
           onAdvanceOnboarding();
         }, 2500);
+      }
+      
+      // Auto-advance from explain_profile to waiting_for_avatar_click after delay
+      if (onboardingStep === 'explain_profile' && onAdvanceOnboarding) {
+        setTimeout(() => {
+          onAdvanceOnboarding();
+        }, 3500);
       }
       
       // Generate greeting when reaching greeting_ready step
@@ -566,18 +575,12 @@ export const TribeCommunityBoard: React.FC<Props> = ({
               <div className="flex-1">
                 <p className="text-sm text-white/90 leading-relaxed">{onboardingMiaMessage}</p>
                 
-                {/* Profile Edit Button during onboarding */}
-                {(onboardingStep === 'explain_profile' || onboardingStep === 'waiting_for_profile') && (
-                  <button
-                    onClick={() => {
-                      onEditProfile?.();
-                      // Will mark profile complete when user saves profile
-                    }}
-                    className="mt-3 flex items-center gap-2 px-4 py-2 bg-gold text-black text-xs font-bold uppercase tracking-widest rounded hover:bg-gold/90 transition-colors"
-                  >
-                    <Edit3 size={14} />
-                    Profil erstellen
-                  </button>
+                {/* Show hint to click avatar during waiting_for_avatar_click */}
+                {onboardingStep === 'waiting_for_avatar_click' && (
+                  <div className="mt-3 flex items-center gap-2 text-gold animate-pulse">
+                    <span className="text-xl">👆</span>
+                    <span className="text-xs font-medium">Klick auf deinen Avatar oben rechts!</span>
+                  </div>
                 )}
               </div>
             </div>
