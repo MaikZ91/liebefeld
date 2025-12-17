@@ -1,15 +1,24 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { UserProfile, Post, Comment } from '@/types/tribe';
-import { ArrowRight, Heart, MessageCircle, Hash, Send, X, Check, HelpCircle, Users, Camera, Star } from 'lucide-react';
+import { ArrowRight, Heart, MessageCircle, Hash, Send, X, Check, HelpCircle, Users, Camera, Star, Sparkles, Edit3 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { NewMembersWidget } from './NewMembersWidget';
 import { Badge } from '@/components/ui/badge';
+import { OnboardingStep } from '@/hooks/useOnboardingFlow';
+
+const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150";
 
 interface Props {
   selectedCity: string;
   userProfile: UserProfile;
   onProfileClick?: (username: string) => void;
   onEditProfile?: () => void;
+  // Onboarding props
+  onboardingStep?: OnboardingStep;
+  onAdvanceOnboarding?: () => void;
+  onMarkProfileComplete?: () => void;
+  onMarkGreetingPosted?: () => void;
+  generateGreeting?: (profile: { username?: string; interests?: string[]; favorite_locations?: string[] }) => string;
 }
 
 type Tab = 'ALL' | 'TRIBE' | 'TIPS';
@@ -20,7 +29,40 @@ const TRIBE_BOARD_GROUP_ID = 'tribe_community_board';
 const DISMISSED_POSTS_KEY = 'tribe_dismissed_posts';
 const TOPIC_DISLIKES_KEY = 'tribe_topic_dislikes';
 
-export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile, onProfileClick, onEditProfile }) => {
+// Community onboarding messages
+const COMMUNITY_ONBOARDING_MESSAGES: Record<string, { text: string; showAction?: 'profile' | 'post' }> = {
+  community_intro: {
+    text: 'Willkommen in der Community! 🎉 Hier triffst du Leute, die deine Interessen teilen.',
+  },
+  explain_profile: {
+    text: 'Für authentische Verbindungen brauchen wir ein bisschen mehr über dich. Mit einem vollständigen Profil können andere sehen, wer du bist und was dich interessiert. Das macht es viel einfacher, echte Connections zu finden! ✨',
+    showAction: 'profile',
+  },
+  waiting_for_profile: {
+    text: 'Super, erstelle jetzt dein Profil! 👆',
+    showAction: 'profile',
+  },
+  greeting_ready: {
+    text: 'Perfekt! 🙌 Jetzt lass dich der Community vorstellen. Ich hab schon mal eine Nachricht für dich vorbereitet. Ergänze gerne noch einen Fun Fact über dich und klick dann auf Post!',
+    showAction: 'post',
+  },
+  waiting_for_post: {
+    text: 'Klick auf "Post" um dich vorzustellen! 👇',
+    showAction: 'post',
+  },
+};
+
+export const TribeCommunityBoard: React.FC<Props> = ({ 
+  selectedCity, 
+  userProfile, 
+  onProfileClick, 
+  onEditProfile,
+  onboardingStep,
+  onAdvanceOnboarding,
+  onMarkProfileComplete,
+  onMarkGreetingPosted,
+  generateGreeting,
+}) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
   
@@ -40,6 +82,47 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
   const [profileBannerDismissed, setProfileBannerDismissed] = useState(() => 
     localStorage.getItem('tribe_profile_banner_dismissed') === 'true'
   );
+  const [onboardingMiaMessage, setOnboardingMiaMessage] = useState<string | null>(null);
+  const [greetingGenerated, setGreetingGenerated] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Handle community onboarding
+  useEffect(() => {
+    if (!onboardingStep) return;
+    
+    const isCommunityStep = ['community_intro', 'explain_profile', 'waiting_for_profile', 'greeting_ready', 'waiting_for_post'].includes(onboardingStep);
+    
+    if (isCommunityStep) {
+      const message = COMMUNITY_ONBOARDING_MESSAGES[onboardingStep];
+      if (message?.text) {
+        setOnboardingMiaMessage(message.text);
+      }
+      
+      // Auto-advance from community_intro to explain_profile after delay
+      if (onboardingStep === 'community_intro' && onAdvanceOnboarding) {
+        setTimeout(() => {
+          onAdvanceOnboarding();
+        }, 2500);
+      }
+      
+      // Generate greeting when reaching greeting_ready step
+      if (onboardingStep === 'greeting_ready' && generateGreeting && !greetingGenerated) {
+        const greeting = generateGreeting({
+          username: userProfile.username,
+          interests: userProfile.interests,
+          favorite_locations: userProfile.favorite_locations,
+        });
+        setNewPost(greeting);
+        setGreetingGenerated(true);
+        // Focus the textarea
+        setTimeout(() => {
+          textareaRef.current?.focus();
+        }, 500);
+      }
+    } else {
+      setOnboardingMiaMessage(null);
+    }
+  }, [onboardingStep, generateGreeting, greetingGenerated, userProfile, onAdvanceOnboarding]);
 
   // Load posts from database
   useEffect(() => {
@@ -392,6 +475,11 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
 
       setNewPost('');
       setGeneratedTags([]);
+      
+      // If during onboarding greeting step, mark it complete
+      if (onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post') {
+        onMarkGreetingPosted?.();
+      }
     } catch (error) {
       console.error('Error posting:', error);
     }
@@ -458,13 +546,53 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
     }
   };
 
-  return (
+    return (
     <div className="h-full flex flex-col bg-black animate-fadeIn">
+        
+        {/* --- MIA ONBOARDING MESSAGE --- */}
+        {onboardingMiaMessage && (
+          <div className="px-4 py-3 bg-gradient-to-r from-gold/10 via-gold/5 to-transparent border-b border-gold/20">
+            <div className="flex gap-3">
+              <div className="relative flex-shrink-0">
+                <img 
+                  src={MIA_AVATAR} 
+                  className="w-10 h-10 rounded-full ring-2 ring-gold/50 object-cover" 
+                  alt="MIA" 
+                />
+                <div className="absolute -bottom-1 -right-1 bg-gold text-black text-[6px] font-bold px-1 py-0.5 rounded">
+                  MIA
+                </div>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-white/90 leading-relaxed">{onboardingMiaMessage}</p>
+                
+                {/* Profile Edit Button during onboarding */}
+                {(onboardingStep === 'explain_profile' || onboardingStep === 'waiting_for_profile') && (
+                  <button
+                    onClick={() => {
+                      onEditProfile?.();
+                      // Will mark profile complete when user saves profile
+                    }}
+                    className="mt-3 flex items-center gap-2 px-4 py-2 bg-gold text-black text-xs font-bold uppercase tracking-widest rounded hover:bg-gold/90 transition-colors"
+                  >
+                    <Edit3 size={14} />
+                    Profil erstellen
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* --- INPUT AREA --- */}
         <div className="px-4 py-1.5 border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur-xl z-20">
-            <div className="bg-surface border border-white/10 rounded-lg p-1.5 shadow-lg flex items-end gap-2">
+            <div className={`bg-surface border rounded-lg p-1.5 shadow-lg flex items-end gap-2 ${
+              (onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post') 
+                ? 'border-gold/50 ring-2 ring-gold/20' 
+                : 'border-white/10'
+            }`}>
                 <textarea 
+                    ref={textareaRef}
                     value={newPost}
                     onChange={(e) => {
                         setNewPost(e.target.value);
@@ -472,7 +600,11 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                         e.target.style.height = 'auto';
                         e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
                     }}
-                    placeholder={`What's happening in ${selectedCity}?`}
+                    placeholder={
+                      (onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post')
+                        ? 'Ergänze gerne noch einen Fun Fact über dich...'
+                        : `What's happening in ${selectedCity}?`
+                    }
                     className="flex-1 bg-transparent text-white text-sm placeholder-zinc-600 outline-none resize-none min-h-[28px] max-h-[120px] py-1"
                     rows={1}
                 />
@@ -481,7 +613,11 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                     <button 
                         onClick={handlePost} 
                         disabled={!newPost} 
-                        className="bg-gold hover:bg-white text-black text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded transition-colors disabled:opacity-50"
+                        className={`text-black text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded transition-colors disabled:opacity-50 ${
+                          (onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post')
+                            ? 'bg-gold hover:bg-gold/90 animate-pulse'
+                            : 'bg-gold hover:bg-white'
+                        }`}
                     >
                         Post
                     </button>
