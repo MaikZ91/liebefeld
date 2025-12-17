@@ -36,8 +36,57 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
   const [isTyping, setIsTyping] = useState(false);
   const [currentResponse, setCurrentResponse] = useState<ChatMessage | null>(null);
   const [relatedEvents, setRelatedEvents] = useState<TribeEvent[]>([]);
+  const [hasShownNewEventsGreeting, setHasShownNewEventsGreeting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const responseRef = useRef<HTMLDivElement>(null);
+
+  // Check for new events (created within last 7 days)
+  const newEvents = useMemo(() => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    return events.filter(event => {
+      if (!event.created_at) return false;
+      const createdAt = new Date(event.created_at);
+      return createdAt >= sevenDaysAgo;
+    });
+  }, [events]);
+
+  // Auto-show MIA greeting with new events
+  useEffect(() => {
+    if (hasShownNewEventsGreeting || newEvents.length === 0) return;
+    
+    // Check if we've already shown this greeting today
+    const lastGreetingDate = localStorage.getItem('mia_new_events_greeting_date');
+    const today = new Date().toDateString();
+    
+    if (lastGreetingDate === today) return;
+    
+    // Show greeting after a short delay
+    const timer = setTimeout(() => {
+      const userName = userProfile?.username && !userProfile.username.startsWith('Guest_') 
+        ? userProfile.username 
+        : '';
+      
+      const greeting = userName 
+        ? `Hey ${userName}! 👋` 
+        : 'Hey! 👋';
+      
+      const cityName = city || 'deiner Stadt';
+      const message = `${greeting} Es gibt ${newEvents.length} neue Events in ${cityName}. Vielleicht ist ja was für dich dabei, um dich zu connecten! Schau mal:`;
+      
+      setCurrentResponse({
+        role: 'model',
+        text: message,
+      });
+      setRelatedEvents(newEvents.slice(0, 5)); // Show max 5 new events
+      setIsExpanded(true);
+      setHasShownNewEventsGreeting(true);
+      localStorage.setItem('mia_new_events_greeting_date', today);
+    }, 1500);
+    
+    return () => clearTimeout(timer);
+  }, [newEvents, userProfile, city, hasShownNewEventsGreeting]);
 
   // Generate personalized suggestions based on user profile and upcoming events
   const suggestions = useMemo(() => {
