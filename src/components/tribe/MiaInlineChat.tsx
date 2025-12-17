@@ -213,10 +213,8 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
   };
 
   const handleTypewriterClick = () => {
-    // Auto-send the current typewriter prompt
-    if (currentFullPrompt) {
-      handleSend(currentFullPrompt);
-    }
+    // Just focus the input - let user type their own question
+    inputRef.current?.focus();
   };
 
   const handleClear = () => {
@@ -472,9 +470,9 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
             </div>
           </div>
 
-          {/* Quick Suggestion Chips - show when focused */}
-          {isInputFocused && !isExploreOnboarding && (
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 animate-fadeIn">
+          {/* Quick Suggestion Chips - always visible, click to trigger */}
+          {!isExploreOnboarding && (
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
               {personalizedSuggestions.map((suggestion) => (
                 <button
                   key={suggestion}
