@@ -68,6 +68,19 @@ const EVENT_IMAGES: Record<string, string> = {
   comedy: 'https://images.unsplash.com/photo-1527224538127-2104bb71c51b?w=400&h=300&fit=crop',
   standup: 'https://images.unsplash.com/photo-1527224538127-2104bb71c51b?w=400&h=300&fit=crop',
   kabarett: 'https://images.unsplash.com/photo-1527224538127-2104bb71c51b?w=400&h=300&fit=crop',
+  
+  // Cinema
+  cinemaxx: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&h=300&fit=crop',
+  kino: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&h=300&fit=crop',
+  cinema: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&h=300&fit=crop',
+  film: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&h=300&fit=crop',
+  
+  // VHS / Education
+  vhs: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400&h=300&fit=crop',
+  volkshochschule: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400&h=300&fit=crop',
+  kurs: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400&h=300&fit=crop',
+  workshop: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=300&fit=crop',
+  seminar: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400&h=300&fit=crop',
 };
 
 // Default image for unknown events
