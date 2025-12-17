@@ -145,7 +145,7 @@ const TribeAppMain: React.FC<{
   setUserProfile: React.Dispatch<React.SetStateAction<UserProfile | null>>;
 }> = ({ userProfile, setUserProfile }) => {
   // Onboarding flow
-  const { currentStep, isOnboarding, advanceStep, completeOnboarding } = useOnboardingFlow();
+  const { currentStep, isOnboarding, advanceStep, setStep, completeOnboarding, markProfileComplete, markGreetingPosted, generateGreeting, isCommunityOnboarding } = useOnboardingFlow();
   
   // Start in FEED view for onboarding, COMMUNITY otherwise
   const [view, setView] = useState<ViewState>(() => {
@@ -711,26 +711,26 @@ const TribeAppMain: React.FC<{
           newSet.add(eventId);
 
           // First like ever - collapse the feed and notify user
-          if (isFirstLike) {
-            setHasLikedFirstEvent(true);
-            localStorage.setItem("tribe_has_first_like", "true");
-            
-            // During onboarding, switch to Community view
-            if (isOnboarding) {
-              completeOnboarding();
-              toast({
-                title: "Super! 🎉",
-                description: "Jetzt zeig ich dir die Community. Hier triffst du Leute mit ähnlichem Geschmack!",
-              });
-              // Switch to Community view after a short delay
-              setTimeout(() => setView(ViewState.COMMUNITY), 1000);
-            } else {
-              toast({
-                title: "Feed optimiert! ✨",
-                description: "Deine Favoriten stehen jetzt oben. Tippe 'Mehr anzeigen' um alle Events zu sehen.",
-              });
+            if (isFirstLike) {
+              setHasLikedFirstEvent(true);
+              localStorage.setItem("tribe_has_first_like", "true");
+              
+              // During onboarding, switch to Community view with community onboarding
+              if (isOnboarding) {
+                setStep('community_intro');
+                toast({
+                  title: "Super! 🎉",
+                  description: "Jetzt zeig ich dir die Community. Hier triffst du Leute mit ähnlichem Geschmack!",
+                });
+                // Switch to Community view after a short delay
+                setTimeout(() => setView(ViewState.COMMUNITY), 1000);
+              } else {
+                toast({
+                  title: "Feed optimiert! ✨",
+                  description: "Deine Favoriten stehen jetzt oben. Tippe 'Mehr anzeigen' um alle Events zu sehen.",
+                });
+              }
             }
-          }
         }
         return newSet;
       });
@@ -1289,6 +1289,11 @@ const TribeAppMain: React.FC<{
             selectedCity={selectedCity}
             userProfile={userProfile}
             onEditProfile={() => setView(ViewState.PROFILE)}
+            onboardingStep={isCommunityOnboarding ? currentStep : undefined}
+            onAdvanceOnboarding={advanceStep}
+            onMarkProfileComplete={markProfileComplete}
+            onMarkGreetingPosted={markGreetingPosted}
+            generateGreeting={generateGreeting}
             onProfileClick={async (username) => {
               setProfileDialog({ open: true, profile: null, loading: true });
               try {
@@ -1330,6 +1335,11 @@ const TribeAppMain: React.FC<{
             onOpenMatcher={() => setView(ViewState.MATCHER)}
             onProfileUpdate={(updatedProfile) => {
               setUserProfile(updatedProfile);
+              // During community onboarding, mark profile complete and go back to community
+              if (isCommunityOnboarding && (currentStep === 'explain_profile' || currentStep === 'waiting_for_profile')) {
+                markProfileComplete();
+                setView(ViewState.COMMUNITY);
+              }
             }}
           />
         )}

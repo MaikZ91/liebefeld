@@ -43,6 +43,12 @@ const ONBOARDING_MESSAGES: Record<OnboardingStep, { text: string; showNext?: boo
   waiting_for_like: {
     text: 'Scroll durch die Events und like das erste, das dich anspricht! 👇',
   },
+  // Community onboarding steps - handled in TribeCommunityBoard
+  community_intro: { text: '' },
+  explain_profile: { text: '' },
+  waiting_for_profile: { text: '' },
+  greeting_ready: { text: '' },
+  waiting_for_post: { text: '' },
   completed: {
     text: '',
   },
