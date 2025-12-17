@@ -184,8 +184,8 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
   // --- COMPACT VARIANT (List Compact) ---
   if (variant === 'compact') {
     return (
-      <div className={`bg-black border-b border-white/5 transition-all duration-500 ${animationClass} ${isPast ? 'opacity-40 grayscale' : ''} ${isTribe ? 'border-l-2 border-l-gold/50' : ''}`}>
-        <div className={`flex items-start gap-2.5 py-2 transition-all duration-300 ${isExpanded ? 'flex-col' : ''}`}>
+      <div className={`transition-all duration-500 ${animationClass} ${isPast ? 'opacity-40 grayscale' : ''} ${isTribe ? 'bg-gradient-to-r from-gold/10 via-gold/5 to-transparent border border-gold/30 rounded-lg shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-black border-b border-white/5'}`}>
+        <div className={`flex items-start gap-2.5 py-2 transition-all duration-300 ${isExpanded ? 'flex-col' : ''} ${isTribe ? 'px-2' : ''}`}>
           {/* Thumbnail - Expands when Vibe is clicked */}
           <div className={`bg-zinc-900 flex-shrink-0 relative overflow-hidden rounded transition-all duration-300 ${
             isExpanded ? 'w-full aspect-video' : 'w-12 h-14'
@@ -232,7 +232,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
           {/* Info - Full width when expanded */}
           <div className={`min-w-0 ${isExpanded ? 'w-full px-1' : 'flex-1'}`}>
             <div className="flex items-center gap-1.5">
-              <h3 className={`font-medium leading-tight ${isLiked ? 'text-gold' : isTribe ? 'text-gold' : 'text-white'} ${isExpanded ? 'text-sm mb-1' : 'text-xs truncate'}`}>
+              <h3 className={`font-medium leading-tight ${isLiked ? 'text-gold' : isTribe ? 'text-gold font-semibold' : 'text-white'} ${isExpanded ? 'text-sm mb-1' : 'text-xs truncate'}`}>
                 {event.title}
               </h3>
               {isTribe && isExpanded && (
@@ -414,7 +414,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
     const displayScore = matchScore !== undefined ? matchScore : (70 + (event.id.charCodeAt(0) % 25));
     
     return (
-        <div className="w-full cursor-pointer relative group overflow-hidden bg-black rounded-lg">
+        <div className={`w-full cursor-pointer relative group overflow-hidden rounded-lg ${isTribe ? 'ring-2 ring-gold/50 shadow-[0_0_20px_rgba(212,175,55,0.2)]' : 'bg-black'}`}>
             <div className="aspect-[16/9] w-full relative">
                 {displayImage ? (
                     <img src={displayImage} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
@@ -464,7 +464,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                 
                 {/* Content - Bottom compact */}
                 <div className="absolute bottom-0 left-0 right-0 p-3 z-10">
-                    <h2 className="text-sm font-bold text-white leading-tight mb-0.5 line-clamp-1">{event.title}</h2>
+                    <h2 className={`text-sm font-bold leading-tight mb-0.5 line-clamp-1 ${isTribe ? 'text-gold' : 'text-white'}`}>{event.title}</h2>
                     <p className="text-white/70 text-[10px] mb-2">{event.location || event.city}</p>
                     
                     {/* Bottom row: avatars + buttons */}
@@ -521,7 +521,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
 
   // --- STANDARD VARIANT (List) ---
   return (
-    <div className={`bg-black border-b border-white/5 pb-6 mb-2 transition-all duration-500 ${animationClass}`}>
+    <div className={`pb-6 mb-2 transition-all duration-500 ${animationClass} ${isTribe ? 'bg-gradient-to-r from-gold/10 via-gold/5 to-transparent border border-gold/30 rounded-lg p-3 shadow-[0_0_20px_rgba(212,175,55,0.15)]' : 'bg-black border-b border-white/5'}`}>
         {/* Main Card Content */}
         <div className="flex gap-5 items-start cursor-pointer group relative">
             
@@ -585,7 +585,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                     </div>
                     <button onClick={(e) => { e.stopPropagation(); }} className="text-zinc-500 hover:text-white transition-colors"><Share2 size={16} strokeWidth={1.5} /></button>
                 </div>
-                <h3 className={`text-lg font-medium leading-tight mb-1 ${isLiked ? 'text-gold' : 'text-white'}`} style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
+                <h3 className={`text-lg font-medium leading-tight mb-1 ${isLiked ? 'text-gold' : isTribe ? 'text-gold font-semibold' : 'text-white'}`} style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
                     {event.title}
                 </h3>
                 <p className="text-sm text-zinc-400 font-light mb-4 truncate">
