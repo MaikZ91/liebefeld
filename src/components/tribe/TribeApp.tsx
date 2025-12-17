@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ViewState, TribeEvent, Post, UserProfile, NexusFilter } from "@/types/tribe";
 import { UserProfile as ChatUserProfile } from "@/types/chatTypes";
 import { convertToTribeEvent } from "@/utils/tribe/eventHelpers";
+import { groupSimilarEvents, GroupedEvent } from "@/utils/tribe/eventGrouping";
 import { TribeEventCard } from "./TribeEventCard";
 import { TribeCommunityBoard } from "./TribeCommunityBoard";
 import { TribeMapView } from "./TribeMapView";
@@ -1113,9 +1114,12 @@ const TribeAppMain: React.FC<{
 
               {feedEvents.length > 0 ? (
                 (() => {
+                  // Group similar events (same title+location) with multiple times
+                  const groupedEvents = groupSimilarEvents(feedEvents);
+                  
                   // Always compact mode - group events by date
-                  const grouped: Record<string, TribeEvent[]> = {};
-                    feedEvents.forEach((event) => {
+                  const grouped: Record<string, GroupedEvent[]> = {};
+                    groupedEvents.forEach((event) => {
                       if (!grouped[event.date]) grouped[event.date] = [];
                       grouped[event.date].push(event);
                     });
@@ -1204,11 +1208,12 @@ const TribeAppMain: React.FC<{
                                     variant="compact"
                                     onJoinTribe={handleJoinTribe}
                                     onInteraction={handleInteraction}
-                                    isLiked={likedEventIds.has(event.id)}
-                                    isAttending={attendingEventIds.has(event.id)}
+                                    isLiked={likedEventIds.has(event.id) || event.allTimes?.some(t => likedEventIds.has(t.eventId))}
+                                    isAttending={attendingEventIds.has(event.id) || event.allTimes?.some(t => attendingEventIds.has(t.eventId))}
                                     onToggleAttendance={handleToggleAttendance}
                                     matchScore={eventMatchScores.get(event.id)}
                                     isPast={isPastEvent}
+                                    allTimes={event.allTimes}
                                   />
                                 </div>
                               );
