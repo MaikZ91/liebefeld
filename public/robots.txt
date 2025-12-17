@@ -1,11 +1,11 @@
 # THE TRIBE Bielefeld - robots.txt
-# https://the-tribe.bi
+# https://liebefeld.lovable.app
 
 User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://the-tribe.bi/sitemap.xml
+Sitemap: https://liebefeld.lovable.app/sitemap.xml
 
 # AI Crawlers
 User-agent: GPTBot
@@ -46,4 +46,4 @@ Allow: /
 Crawl-delay: 1
 
 # Host
-Host: https://the-tribe.bi
+Host: https://liebefeld.lovable.app

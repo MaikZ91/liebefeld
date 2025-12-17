@@ -6,85 +6,93 @@
   
   <!-- Homepage - Events Bielefeld -->
   <url>
-    <loc>https://the-tribe.bi/</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://liebefeld.lovable.app/</loc>
+    <lastmod>2025-12-17</lastmod>
     <changefreq>hourly</changefreq>
     <priority>1.0</priority>
   </url>
   
   <!-- Event Categories -->
   <url>
-    <loc>https://the-tribe.bi/?category=party</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://liebefeld.lovable.app/?category=party</loc>
+    <lastmod>2025-12-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
-    <loc>https://the-tribe.bi/?category=concert</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://liebefeld.lovable.app/?category=concert</loc>
+    <lastmod>2025-12-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
-    <loc>https://the-tribe.bi/?category=sport</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://liebefeld.lovable.app/?category=sport</loc>
+    <lastmod>2025-12-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
-    <loc>https://the-tribe.bi/?category=art</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://liebefeld.lovable.app/?category=art</loc>
+    <lastmod>2025-12-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   
   <!-- Tribe App -->
   <url>
-    <loc>https://the-tribe.bi/tribe</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://liebefeld.lovable.app/tribe</loc>
+    <lastmod>2025-12-17</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.95</priority>
   </url>
   
   <!-- Heatmap / Social Map -->
   <url>
-    <loc>https://the-tribe.bi/heatmap</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://liebefeld.lovable.app/heatmap</loc>
+    <lastmod>2025-12-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   
   <!-- Community Chat -->
   <url>
-    <loc>https://the-tribe.bi/chat</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://liebefeld.lovable.app/chat</loc>
+    <lastmod>2025-12-17</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.85</priority>
   </url>
   
   <!-- About -->
   <url>
-    <loc>https://the-tribe.bi/about</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://liebefeld.lovable.app/about</loc>
+    <lastmod>2025-12-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   
   <!-- Privacy -->
   <url>
-    <loc>https://the-tribe.bi/privacy</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://liebefeld.lovable.app/privacy</loc>
+    <lastmod>2025-12-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
   
   <!-- Impressum -->
   <url>
-    <loc>https://the-tribe.bi/impressum</loc>
-    <lastmod>2025-01-01</lastmod>
+    <loc>https://liebefeld.lovable.app/impressum</loc>
+    <lastmod>2025-12-17</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+  <!-- CSAE Policies -->
+  <url>
+    <loc>https://liebefeld.lovable.app/csae-policies</loc>
+    <lastmod>2025-12-17</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
