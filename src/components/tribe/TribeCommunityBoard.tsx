@@ -30,7 +30,7 @@ const DISMISSED_POSTS_KEY = 'tribe_dismissed_posts';
 const TOPIC_DISLIKES_KEY = 'tribe_topic_dislikes';
 
 // Community onboarding messages
-const COMMUNITY_ONBOARDING_MESSAGES: Record<string, { text: string; showNext?: boolean; showAction?: 'avatar' | 'post' }> = {
+const COMMUNITY_ONBOARDING_MESSAGES: Record<string, { text: string; showNext?: boolean; showAction?: 'avatar' | 'post'; showGuidanceChoice?: boolean }> = {
   community_intro: {
     text: 'Willkommen in der Community! 🎉 Hier triffst du Leute, die deine Interessen teilen.',
     showNext: true,
@@ -53,6 +53,10 @@ const COMMUNITY_ONBOARDING_MESSAGES: Record<string, { text: string; showNext?: b
   waiting_for_post: {
     text: 'Klick auf "Post" um dich vorzustellen! 👇',
     showAction: 'post',
+  },
+  offer_guidance: {
+    text: 'Glückwunsch, du bist jetzt Teil der Community! 🎊\n\nMöchtest du, dass ich dir noch weitere Features zeige, oder willst du die App auf eigene Faust erkunden?',
+    showGuidanceChoice: true,
   },
 };
 
@@ -94,7 +98,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
   useEffect(() => {
     if (!onboardingStep) return;
     
-    const isCommunityStep = ['community_intro', 'explain_profile', 'waiting_for_avatar_click', 'editing_profile', 'greeting_ready', 'waiting_for_post'].includes(onboardingStep);
+    const isCommunityStep = ['community_intro', 'explain_profile', 'waiting_for_avatar_click', 'editing_profile', 'greeting_ready', 'waiting_for_post', 'offer_guidance'].includes(onboardingStep);
     
     if (isCommunityStep) {
       const message = COMMUNITY_ONBOARDING_MESSAGES[onboardingStep];
@@ -577,6 +581,32 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                     >
                       Weiter →
                     </button>
+                  )}
+                  
+                  {/* Show guidance choice buttons */}
+                  {onboardingStep === 'offer_guidance' && (
+                    <div className="mt-3 flex flex-col gap-2">
+                      <button
+                        onClick={() => {
+                          // For now, just complete onboarding - future: guided tour
+                          onAdvanceOnboarding?.();
+                        }}
+                        className="w-full px-3 py-2 bg-gold text-black text-xs font-semibold rounded-lg hover:bg-gold/90 transition-all flex items-center justify-center gap-2"
+                      >
+                        <Sparkles size={14} />
+                        Zeig mir mehr Features
+                      </button>
+                      <button
+                        onClick={() => {
+                          // Complete onboarding
+                          onAdvanceOnboarding?.();
+                        }}
+                        className="w-full px-3 py-2 bg-white/10 text-white text-xs font-semibold rounded-lg hover:bg-white/20 transition-all flex items-center justify-center gap-2"
+                      >
+                        <Users size={14} />
+                        Alleine erkunden
+                      </button>
+                    </div>
                   )}
                   
                   {/* Show hint to click avatar during waiting_for_avatar_click */}
