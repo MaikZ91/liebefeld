@@ -22,6 +22,14 @@ const KREATIVITAET = new Set([
   'Improvisation',
   'Comedy',
   'Kabarett',
+  'VHS',
+  'Volkshochschule',
+  'Creative',
+  'Kunst',
+  'Art',
+  'Krakeln',
+  'Malen',
+  'Zeichnen',
 ]);
 
 const SPORT = new Set([

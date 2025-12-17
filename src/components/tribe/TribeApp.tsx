@@ -4,6 +4,7 @@ import { ViewState, TribeEvent, Post, UserProfile, NexusFilter } from "@/types/t
 import { UserProfile as ChatUserProfile } from "@/types/chatTypes";
 import { convertToTribeEvent } from "@/utils/tribe/eventHelpers";
 import { groupSimilarEvents, GroupedEvent } from "@/utils/tribe/eventGrouping";
+import { getCategoryGroup } from "@/utils/eventCategoryGroups";
 import { TribeEventCard } from "./TribeEventCard";
 import { TribeCommunityBoard } from "./TribeCommunityBoard";
 import { TribeMapView } from "./TribeMapView";
@@ -451,7 +452,47 @@ const TribeAppMain: React.FC<{
 
     // Filter by category
     if (selectedCategory !== "ALL") {
-      result = result.filter((e) => e.category?.toUpperCase() === selectedCategory);
+      result = result.filter((e) => {
+        const category = e.category || "";
+        const title = (e.title || "").toLowerCase();
+        const location = (e.location || "").toLowerCase();
+        
+        // Direct category match
+        if (category.toUpperCase() === selectedCategory) return true;
+        
+        // Map category groups
+        const categoryGroup = getCategoryGroup(category);
+        
+        // ART filter - match Kreativität group and keywords
+        if (selectedCategory === "ART") {
+          if (categoryGroup === "Kreativität") return true;
+          // Check for art/kreativ keywords in title/location
+          const artKeywords = ['kreativ', 'kunst', 'art', 'theater', 'impro', 'workshop', 'vhs', 'volkshochschule', 'ausstellung', 'lesung', 'comedy', 'kabarett', 'krakeln', 'malen', 'zeichnen', 'creative'];
+          return artKeywords.some(kw => title.includes(kw) || location.includes(kw));
+        }
+        
+        // PARTY filter
+        if (selectedCategory === "PARTY") {
+          if (categoryGroup === "Ausgehen") return true;
+          const partyKeywords = ['party', 'club', 'disco', 'dj', 'techno', 'house'];
+          return partyKeywords.some(kw => title.includes(kw) || location.includes(kw));
+        }
+        
+        // CONCERT filter
+        if (selectedCategory === "CONCERT") {
+          const concertKeywords = ['konzert', 'concert', 'live', 'band', 'musik'];
+          return concertKeywords.some(kw => title.includes(kw) || location.includes(kw));
+        }
+        
+        // SPORT filter
+        if (selectedCategory === "SPORT") {
+          if (categoryGroup === "Sport") return true;
+          const sportKeywords = ['sport', 'fitness', 'yoga', 'lauf', 'run', 'training', 'hochschulsport'];
+          return sportKeywords.some(kw => title.includes(kw) || location.includes(kw));
+        }
+        
+        return false;
+      });
     }
 
     // Apply MIA filter if active (replaces old nexusFilter)
