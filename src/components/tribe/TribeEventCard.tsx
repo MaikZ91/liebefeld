@@ -274,7 +274,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                     className="font-mono flex items-center gap-0.5 text-gold hover:text-gold/80 transition-colors max-w-full"
                   >
                     <span className="truncate">
-                      {formatTimeOption(currentTime?.time || event.time || '23:00', currentTime?.is3D, currentTime?.location)}
+                      {formatTimeOption(currentTime || { time: event.time || '23:00', eventId: event.id })}
                     </span>
                     <ChevronDown size={10} className={`flex-shrink-0 transition-transform ${isTimeDropdownOpen ? 'rotate-180' : ''}`} />
                     <span className="text-[8px] text-zinc-600 ml-0.5 flex-shrink-0">+{allTimes.length - 1}</span>
@@ -294,9 +294,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                             idx === selectedTimeIndex ? 'text-gold bg-zinc-800' : 'text-zinc-300'
                           }`}
                         >
-                          <span className="font-mono">{slot.time?.match(/^(\d{1,2}:\d{2})/)?.[1] || slot.time}</span>
-                          {slot.is3D && <span className="text-zinc-500 ml-1">(3D)</span>}
-                          {slot.location && <span className="text-zinc-500 ml-1">• {slot.location}</span>}
+                          {formatTimeOption(slot)}
                         </button>
                       ))}
                     </div>

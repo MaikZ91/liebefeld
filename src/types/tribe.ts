@@ -10,6 +10,7 @@ export interface TribeEvent {
   image_url?: string | null;
   city?: string;
   location?: string | null;
+  organizer?: string | null;
   created_at?: string; // ISO date for "New" badge detection
   source?: string; // 'community' for Tribe events
   // THE TRIBE Expert Features

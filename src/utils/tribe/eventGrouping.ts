@@ -1,6 +1,47 @@
 import { TribeEvent } from '@/types/tribe';
 
 /**
+ * Activity keywords that should be grouped together
+ */
+const ACTIVITY_KEYWORDS: Record<string, string> = {
+  // Running variants
+  'laufen': 'laufen',
+  'lauftreff': 'laufen',
+  'läufer': 'laufen',
+  'running': 'laufen',
+  'joggen': 'laufen',
+  'jogging': 'laufen',
+  // Volleyball
+  'volleyball': 'volleyball',
+  'beachvolleyball': 'volleyball',
+  // Badminton
+  'badminton': 'badminton',
+  // Basketball
+  'basketball': 'basketball',
+  // Yoga
+  'yoga': 'yoga',
+  // Fitness
+  'fitness': 'fitness',
+  'krafttraining': 'fitness',
+  // Swimming
+  'schwimmen': 'schwimmen',
+  'swimming': 'schwimmen',
+};
+
+/**
+ * Extract the primary activity keyword from a title
+ */
+const extractActivityKeyword = (title: string): string | null => {
+  const lower = title.toLowerCase();
+  for (const [keyword, activity] of Object.entries(ACTIVITY_KEYWORDS)) {
+    if (lower.includes(keyword)) {
+      return activity;
+    }
+  }
+  return null;
+};
+
+/**
  * Normalize event title for grouping
  * - Remove "3D" suffix
  * - Remove "The " prefix (case-insensitive)
@@ -20,11 +61,20 @@ export const normalizeEventTitle = (title: string): string => {
 
 /**
  * Create a grouping key for an event
- * Groups by normalized title + date ONLY (not location - same event at different locations should group)
+ * Groups by activity keyword (if found) OR normalized title + date
  */
 export const createEventGroupKey = (event: TribeEvent): string => {
-  const normalizedTitle = normalizeEventTitle(event.title || '');
+  const title = event.title || '';
   const date = event.date || '';
+  
+  // Check if this is an activity that should be grouped
+  const activity = extractActivityKeyword(title);
+  if (activity) {
+    return `activity:${activity}|${date}`;
+  }
+  
+  // Fall back to normalized title
+  const normalizedTitle = normalizeEventTitle(title);
   return `${normalizedTitle}|${date}`;
 };
 
@@ -35,6 +85,8 @@ export interface TimeSlot {
   time: string;
   eventId: string;
   location?: string;
+  organizer?: string;
+  title?: string;
   is3D?: boolean;
 }
 
@@ -62,7 +114,9 @@ export const groupSimilarEvents = (events: TribeEvent[]): GroupedEvent[] => {
   // Convert groups to GroupedEvent array
   const result: GroupedEvent[] = [];
   
-  groups.forEach((eventGroup) => {
+  groups.forEach((eventGroup, key) => {
+    const isActivityGroup = key.startsWith('activity:');
+    
     if (eventGroup.length === 1) {
       // Single event - no grouping needed
       result.push({
@@ -71,6 +125,8 @@ export const groupSimilarEvents = (events: TribeEvent[]): GroupedEvent[] => {
           time: eventGroup[0].time || '23:00', 
           eventId: eventGroup[0].id,
           location: eventGroup[0].location,
+          organizer: eventGroup[0].organizer,
+          title: eventGroup[0].title,
           is3D: /3D/i.test(eventGroup[0].title || '')
         }],
         selectedTimeIndex: 0
@@ -92,6 +148,8 @@ export const groupSimilarEvents = (events: TribeEvent[]): GroupedEvent[] => {
         time: e.time || '23:00',
         eventId: e.id,
         location: e.location,
+        organizer: e.organizer,
+        title: e.title,
         is3D: /3D/i.test(e.title || '')
       }));
       
@@ -100,10 +158,19 @@ export const groupSimilarEvents = (events: TribeEvent[]): GroupedEvent[] => {
         arr.findIndex(x => x.time === t.time && x.location === t.location && x.is3D === t.is3D) === idx
       );
       
+      // For activity groups, use the activity name as title
+      let displayTitle = baseEvent.title;
+      if (isActivityGroup) {
+        const activity = key.split(':')[1].split('|')[0];
+        // Capitalize first letter
+        displayTitle = activity.charAt(0).toUpperCase() + activity.slice(1);
+      } else {
+        displayTitle = baseEvent.title?.replace(/\s*3D\s*/gi, ' ').trim() || baseEvent.title;
+      }
+      
       result.push({
         ...baseEvent,
-        // Clean up title (remove 3D if present)
-        title: baseEvent.title?.replace(/\s*3D\s*/gi, ' ').trim() || baseEvent.title,
+        title: displayTitle,
         allTimes: uniqueTimes,
         selectedTimeIndex: 0
       });
@@ -114,16 +181,27 @@ export const groupSimilarEvents = (events: TribeEvent[]): GroupedEvent[] => {
 };
 
 /**
- * Format time option display for dropdown - includes location if present
+ * Format time option display for dropdown - includes organizer/title for activity groups
  */
-export const formatTimeOption = (time: string, is3D?: boolean, location?: string): string => {
+export const formatTimeOption = (slot: TimeSlot): string => {
+  const { time, is3D, location, organizer, title } = slot;
+  
   // Extract just HH:MM
   const match = time.match(/^(\d{1,2}:\d{2})/);
   const shortTime = match ? match[1] : time;
   
   let label = shortTime;
   if (is3D) label += ' (3D)';
-  if (location) label += ` • ${location}`;
+  
+  // Show organizer or title to distinguish between grouped events
+  if (organizer) {
+    label += ` • ${organizer}`;
+  } else if (title && location) {
+    // Show short title if different variants
+    label += ` • ${title}`;
+  } else if (location) {
+    label += ` • ${location}`;
+  }
   
   return label;
 };
