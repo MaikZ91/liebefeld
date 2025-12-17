@@ -25,9 +25,18 @@ interface MiaInlineChatProps {
   // Onboarding props
   onboardingStep?: OnboardingStep;
   onAdvanceOnboarding?: () => void;
+  onInterestsSelected?: (interests: string[]) => void;
 }
 
-const ONBOARDING_MESSAGES: Record<OnboardingStep, { text: string; showNext?: boolean; showHeart?: boolean }> = {
+const INTEREST_OPTIONS = [
+  { id: 'ausgehen', label: 'Ausgehen', emoji: '🍻' },
+  { id: 'party', label: 'Party', emoji: '🎉' },
+  { id: 'konzerte', label: 'Konzerte', emoji: '🎵' },
+  { id: 'kreativität', label: 'Kreativität', emoji: '🎨' },
+  { id: 'sport', label: 'Sport', emoji: '⚽' },
+];
+
+const ONBOARDING_MESSAGES: Record<OnboardingStep, { text: string; showNext?: boolean; showHeart?: boolean; showInterests?: boolean }> = {
   welcome: {
     text: 'Hey! 👋 Willkommen bei THE TRIBE! Ich bin MIA, deine persönliche Event-Assistentin.',
     showNext: true,
@@ -35,6 +44,10 @@ const ONBOARDING_MESSAGES: Record<OnboardingStep, { text: string; showNext?: boo
   explain_app: {
     text: 'THE TRIBE verbindet dich mit echten Menschen in deiner Stadt. Hier findest du Events und eine Community, die deine Interessen teilt. Mein Job? Dir zu helfen, die perfekten Events zu finden und dich mit anderen zu connecten! 🎉',
     showNext: true,
+  },
+  select_interests: {
+    text: 'Was interessiert dich? Wähl aus, was dir gefällt - so kann ich dir direkt passende Events zeigen! 🎯',
+    showInterests: true,
   },
   explain_likes: {
     text: 'Jetzt zeig ich dir, wie ich dich besser kennenlerne: Wenn dir ein Event gefällt, klick einfach auf das Herz ❤️ Je mehr du likest, desto besser kann ich dir passende Events vorschlagen!',
@@ -65,6 +78,7 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
   onEventClick,
   onboardingStep,
   onAdvanceOnboarding,
+  onInterestsSelected,
 }) => {
   const [input, setInput] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
@@ -73,6 +87,7 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
   const [relatedEvents, setRelatedEvents] = useState<TribeEvent[]>([]);
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [onboardingMessageIndex, setOnboardingMessageIndex] = useState(0);
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const responseRef = useRef<HTMLDivElement>(null);
 
@@ -235,6 +250,23 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
     }
   };
 
+  const handleInterestToggle = (interestId: string) => {
+    setSelectedInterests(prev => 
+      prev.includes(interestId) 
+        ? prev.filter(i => i !== interestId)
+        : [...prev, interestId]
+    );
+  };
+
+  const handleInterestsContinue = () => {
+    if (selectedInterests.length > 0 && onInterestsSelected) {
+      onInterestsSelected(selectedInterests);
+    }
+    if (onAdvanceOnboarding) {
+      onAdvanceOnboarding();
+    }
+  };
+
   const isOnboarding = onboardingStep && onboardingStep !== 'completed';
   const currentOnboardingMessage = onboardingStep ? ONBOARDING_MESSAGES[onboardingStep] : null;
 
@@ -297,6 +329,41 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
                   >
                     Weiter →
                   </button>
+                )}
+
+                {/* Interest selection during onboarding */}
+                {isOnboarding && currentOnboardingMessage?.showInterests && (
+                  <div className="mt-4 space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      {INTEREST_OPTIONS.map((interest) => (
+                        <button
+                          key={interest.id}
+                          onClick={() => handleInterestToggle(interest.id)}
+                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                            selectedInterests.includes(interest.id)
+                              ? 'bg-gold text-black'
+                              : 'bg-zinc-800 text-zinc-300 border border-zinc-700 hover:border-gold/50'
+                          }`}
+                        >
+                          {interest.emoji} {interest.label}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={handleInterestsContinue}
+                      disabled={selectedInterests.length === 0}
+                      className={`px-4 py-2 text-sm font-semibold rounded-full transition-all ${
+                        selectedInterests.length > 0
+                          ? 'bg-gold text-black hover:bg-gold/90'
+                          : 'bg-zinc-700 text-zinc-500 cursor-not-allowed'
+                      }`}
+                    >
+                      {selectedInterests.length > 0 
+                        ? `Weiter mit ${selectedInterests.length} Interesse${selectedInterests.length > 1 ? 'n' : ''} →`
+                        : 'Wähl mindestens eins aus'
+                      }
+                    </button>
+                  </div>
                 )}
                 
                 {isOnboarding && currentOnboardingMessage?.showHeart && (
