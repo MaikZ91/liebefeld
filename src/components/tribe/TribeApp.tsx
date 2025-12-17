@@ -726,6 +726,9 @@ const TribeAppMain: React.FC<{
           // During onboarding waiting_for_like step - switch to community
           if (isOnboardingWaitingForLike) {
             setStep('community_intro');
+            // Also mark first like so feed collapses
+            setHasLikedFirstEvent(true);
+            localStorage.setItem("tribe_has_first_like", "true");
             // Toast removed - MIA greets in community view instead
             setTimeout(() => setView(ViewState.COMMUNITY), 1000);
           } else if (isFirstLike) {
