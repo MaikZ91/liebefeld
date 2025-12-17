@@ -21,8 +21,8 @@ export const SEO = ({
   title = 'THE TRIBE Bielefeld | Events, Veranstaltungen & Community',
   description = 'Entdecke alle Events und Veranstaltungen in Bielefeld. Party, Konzerte, Sport, Kultur & mehr. Die #1 Community-App für Bielefeld.',
   keywords = 'Bielefeld Events, Veranstaltungen Bielefeld, Party Bielefeld, Konzerte Bielefeld, THE TRIBE',
-  image = 'https://the-tribe.bi/og-image.png',
-  url = 'https://the-tribe.bi/',
+  image = 'https://liebefeld.lovable.app/og-image.png',
+  url = 'https://liebefeld.lovable.app/',
   type = 'website',
   event,
 }: SEOProps) => {
@@ -73,7 +73,7 @@ export const SEO = ({
             "organizer": {
               "@type": "Organization",
               "name": "THE TRIBE Bielefeld",
-              "url": "https://the-tribe.bi"
+              "url": "https://liebefeld.lovable.app"
             },
             "eventStatus": "https://schema.org/EventScheduled",
             "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode"
