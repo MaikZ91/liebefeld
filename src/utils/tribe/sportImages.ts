@@ -1,5 +1,6 @@
-// Sport-specific placeholder images for Hochschulsport events
-const SPORT_IMAGES: Record<string, string> = {
+// Event-specific placeholder images based on keywords
+const EVENT_IMAGES: Record<string, string> = {
+  // Sports
   volleyball: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=400&h=300&fit=crop',
   badminton: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=400&h=300&fit=crop',
   basketball: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=400&h=300&fit=crop',
@@ -15,8 +16,6 @@ const SPORT_IMAGES: Record<string, string> = {
   laufen: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=300&fit=crop',
   running: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=300&fit=crop',
   joggen: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=300&fit=crop',
-  tanzen: 'https://images.unsplash.com/photo-1508700929628-666bc8bd84ea?w=400&h=300&fit=crop',
-  dance: 'https://images.unsplash.com/photo-1508700929628-666bc8bd84ea?w=400&h=300&fit=crop',
   hockey: 'https://images.unsplash.com/photo-1580748142189-df2dbda8fcd3?w=400&h=300&fit=crop',
   handball: 'https://images.unsplash.com/photo-1611251135345-18c56206b863?w=400&h=300&fit=crop',
   tischtennis: 'https://images.unsplash.com/photo-1534158914592-062992fbe900?w=400&h=300&fit=crop',
@@ -48,10 +47,31 @@ const SPORT_IMAGES: Record<string, string> = {
   gymnastics: 'https://images.unsplash.com/photo-1566241440091-ec10de8db2e1?w=400&h=300&fit=crop',
   leichtathletik: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=300&fit=crop',
   athletics: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=300&fit=crop',
+  
+  // Dance styles
+  tango: 'https://images.unsplash.com/photo-1545959570-a94084071b5d?w=400&h=300&fit=crop',
+  argentina: 'https://images.unsplash.com/photo-1545959570-a94084071b5d?w=400&h=300&fit=crop',
+  salsa: 'https://images.unsplash.com/photo-1547153760-18fc86324498?w=400&h=300&fit=crop',
+  bachata: 'https://images.unsplash.com/photo-1547153760-18fc86324498?w=400&h=300&fit=crop',
+  tanzen: 'https://images.unsplash.com/photo-1508700929628-666bc8bd84ea?w=400&h=300&fit=crop',
+  dance: 'https://images.unsplash.com/photo-1508700929628-666bc8bd84ea?w=400&h=300&fit=crop',
+  ballett: 'https://images.unsplash.com/photo-1518834107812-67b0b7c58434?w=400&h=300&fit=crop',
+  ballet: 'https://images.unsplash.com/photo-1518834107812-67b0b7c58434?w=400&h=300&fit=crop',
+  hiphop: 'https://images.unsplash.com/photo-1547153760-18fc86324498?w=400&h=300&fit=crop',
+  
+  // Theater & Culture
+  improtheater: 'https://images.unsplash.com/photo-1503095396549-807759245b35?w=400&h=300&fit=crop',
+  impro: 'https://images.unsplash.com/photo-1503095396549-807759245b35?w=400&h=300&fit=crop',
+  improvisation: 'https://images.unsplash.com/photo-1503095396549-807759245b35?w=400&h=300&fit=crop',
+  theater: 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=400&h=300&fit=crop',
+  theatre: 'https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?w=400&h=300&fit=crop',
+  comedy: 'https://images.unsplash.com/photo-1527224538127-2104bb71c51b?w=400&h=300&fit=crop',
+  standup: 'https://images.unsplash.com/photo-1527224538127-2104bb71c51b?w=400&h=300&fit=crop',
+  kabarett: 'https://images.unsplash.com/photo-1527224538127-2104bb71c51b?w=400&h=300&fit=crop',
 };
 
-// Default sport image for unknown sports
-const DEFAULT_SPORT_IMAGE = 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&h=300&fit=crop';
+// Default image for unknown events
+const DEFAULT_EVENT_IMAGE = 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&h=300&fit=crop';
 
 /**
  * Check if an event is a Hochschulsport event
@@ -66,25 +86,25 @@ export const isHochschulsportEvent = (title?: string, organizer?: string): boole
 };
 
 /**
- * Get an appropriate image for a sport event based on keywords in the title
+ * Get an appropriate image for an event based on keywords in the title
  */
-export const getSportImage = (title?: string): string => {
-  if (!title) return DEFAULT_SPORT_IMAGE;
+export const getKeywordImage = (title?: string): string | null => {
+  if (!title) return null;
   
   const lowerTitle = title.toLowerCase();
   
-  // Check each sport keyword
-  for (const [sport, imageUrl] of Object.entries(SPORT_IMAGES)) {
-    if (lowerTitle.includes(sport)) {
+  // Check each keyword
+  for (const [keyword, imageUrl] of Object.entries(EVENT_IMAGES)) {
+    if (lowerTitle.includes(keyword)) {
       return imageUrl;
     }
   }
   
-  return DEFAULT_SPORT_IMAGE;
+  return null;
 };
 
 /**
- * Get display image for an event - returns sport-specific image for Hochschulsport events
+ * Get display image for an event - returns keyword-specific image when no image exists
  */
 export const getEventDisplayImage = (
   imageUrl?: string | null,
@@ -93,16 +113,22 @@ export const getEventDisplayImage = (
 ): string | undefined => {
   // If event has a real image that's not a placeholder, use it
   if (imageUrl && !imageUrl.includes('placeholder') && !imageUrl.includes('default')) {
-    // For Hochschulsport events, always use sport-specific images
+    // For Hochschulsport events, always use keyword-specific images (they often have generic logos)
     if (isHochschulsportEvent(title, organizer)) {
-      return getSportImage(title);
+      return getKeywordImage(title) || DEFAULT_EVENT_IMAGE;
     }
     return imageUrl;
   }
   
-  // For Hochschulsport events without images, get sport-specific image
+  // No image - try to find a keyword match
+  const keywordImage = getKeywordImage(title);
+  if (keywordImage) {
+    return keywordImage;
+  }
+  
+  // For Hochschulsport events without keyword match, use default sport image
   if (isHochschulsportEvent(title, organizer)) {
-    return getSportImage(title);
+    return DEFAULT_EVENT_IMAGE;
   }
   
   return imageUrl || undefined;
