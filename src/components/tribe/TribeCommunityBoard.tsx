@@ -113,10 +113,15 @@ export const TribeCommunityBoard: React.FC<Props> = ({
         });
         setNewPost(greeting);
         setGreetingGenerated(true);
-        // Focus the textarea
+        // Focus and expand the textarea
         setTimeout(() => {
-          textareaRef.current?.focus();
-        }, 500);
+          if (textareaRef.current) {
+            textareaRef.current.focus();
+            // Auto-resize to fit content
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px';
+          }
+        }, 100);
       }
     } else {
       setOnboardingMiaMessage(null);
