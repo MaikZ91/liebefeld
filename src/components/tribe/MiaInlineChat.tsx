@@ -50,7 +50,7 @@ const ONBOARDING_MESSAGES: Record<OnboardingStep, { text: string; showNext?: boo
     showInterests: true,
   },
   explain_likes: {
-    text: 'Wenn dir ein Event gefällt, like es mit dem Herz ❤️ So sehe ich, was dich interessiert – und kann dir Events zeigen, bei denen du Menschen mit ähnlichem Geschmack triffst!',
+    text: 'Perfekt! Ich zeige dir jetzt schon Events, die zu deinen Interessen passen – mit Match-Score! ❤️ Like Events, die dich ansprechen – so lerne ich dich noch besser kennen und finde Menschen für dich, die ähnlich ticken.',
     showHeart: true,
   },
   waiting_for_like: {

@@ -795,8 +795,11 @@ const TribeAppMain: React.FC<{
       setUserProfile(updatedProfile);
       localStorage.setItem("tribe_user_profile", JSON.stringify(updatedProfile));
       
-      // Also save to localStorage for personalization
+      // Save to localStorage for personalization
       localStorage.setItem("tribe_user_interests", JSON.stringify(interests));
+      
+      // CRITICAL: Save to preferred categories key for score calculation
+      localStorage.setItem("tribe_preferred_categories", JSON.stringify(interests));
       
       // Fire-and-forget update to database
       supabase
