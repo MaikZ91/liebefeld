@@ -32,11 +32,11 @@ const TOPIC_DISLIKES_KEY = 'tribe_topic_dislikes';
 // Community onboarding messages
 const COMMUNITY_ONBOARDING_MESSAGES: Record<string, { text: string; showNext?: boolean; showAction?: 'avatar' | 'post'; showGuidanceChoice?: boolean }> = {
   community_intro: {
-    text: 'Willkommen in der Community! 🎉 Hier triffst du Leute, die deine Interessen teilen.',
+    text: 'Willkommen in der Community! 🎉 Hier treffen sich Menschen, die wie du rausgehen und echte Connections knüpfen wollen – bei Events, Aktivitäten und spontanen Treffen.',
     showNext: true,
   },
   explain_profile: {
-    text: 'Für authentische Verbindungen brauchen wir ein bisschen mehr über dich. Mit einem vollständigen Profil können andere sehen, wer du bist und was dich interessiert. Das macht es viel einfacher, echte Connections zu finden! ✨',
+    text: 'Damit andere dich finden können, brauchen wir ein bisschen mehr über dich. Dein Profil zeigt, wer du bist und was dich begeistert – so finden dich Menschen mit ähnlichen Interessen für gemeinsame Erlebnisse! ✨',
     showNext: true,
   },
   waiting_for_avatar_click: {
@@ -44,18 +44,18 @@ const COMMUNITY_ONBOARDING_MESSAGES: Record<string, { text: string; showNext?: b
     showAction: 'avatar',
   },
   editing_profile: {
-    text: 'Super! Füge jetzt ein Bild hinzu, erzähl uns von deinen Interessen und wähle deine Lieblingsorte. Wenn du fertig bist, klick auf Speichern! 💫',
+    text: 'Super! Füge ein Bild hinzu und erzähl uns von deinen Interessen – das macht es anderen leichter, dich anzusprechen und gemeinsame Aktivitäten zu planen! 💫',
   },
   greeting_ready: {
-    text: 'Perfekt! 🙌 Jetzt lass dich der Community vorstellen. Ich hab schon mal eine Nachricht für dich vorbereitet. Ergänze gerne noch einen Fun Fact über dich und klick dann auf Post!',
+    text: 'Perfekt! 🙌 Jetzt stell dich der Community vor. Ich hab schon eine Nachricht für dich vorbereitet – ergänze gerne noch einen Fun Fact und klick auf Post! So finden dich Gleichgesinnte.',
     showAction: 'post',
   },
   waiting_for_post: {
-    text: 'Klick auf "Post" um dich vorzustellen! 👇',
+    text: 'Klick auf "Post" um dich vorzustellen! Deine erste Chance, neue Leute kennenzulernen 👇',
     showAction: 'post',
   },
   offer_guidance: {
-    text: 'Glückwunsch, du bist jetzt Teil der Community! 🎊\n\nMöchtest du, dass ich dir noch weitere Features zeige, oder willst du die App auf eigene Faust erkunden?',
+    text: 'Herzlichen Glückwunsch – du bist jetzt Teil der Tribe! 🎊\n\nAb jetzt kannst du Events entdecken, Leute treffen und echte Verbindungen aufbauen. Soll ich dir noch mehr zeigen?',
     showGuidanceChoice: true,
   },
 };
@@ -594,7 +594,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                         className="w-full px-3 py-2 bg-gold text-black text-xs font-semibold rounded-lg hover:bg-gold/90 transition-all flex items-center justify-center gap-2"
                       >
                         <Sparkles size={14} />
-                        Zeig mir mehr Features
+                        Zeig mir, wie ich Leute treffe
                       </button>
                       <button
                         onClick={() => {
@@ -604,7 +604,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                         className="w-full px-3 py-2 bg-white/10 text-white text-xs font-semibold rounded-lg hover:bg-white/20 transition-all flex items-center justify-center gap-2"
                       >
                         <Users size={14} />
-                        Alleine erkunden
+                        Direkt loslegen & entdecken
                       </button>
                     </div>
                   )}

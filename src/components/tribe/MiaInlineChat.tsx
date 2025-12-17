@@ -38,23 +38,23 @@ const INTEREST_OPTIONS = [
 
 const ONBOARDING_MESSAGES: Record<OnboardingStep, { text: string; showNext?: boolean; showHeart?: boolean; showInterests?: boolean }> = {
   welcome: {
-    text: 'Hey! 👋 Willkommen bei THE TRIBE! Ich bin MIA, deine persönliche Event-Assistentin.',
+    text: 'Hey! 👋 Willkommen bei THE TRIBE – der App, die dich mit echten Menschen verbindet, nicht nur online, sondern im echten Leben!',
     showNext: true,
   },
   explain_app: {
-    text: 'THE TRIBE verbindet dich mit echten Menschen in deiner Stadt. Hier findest du Events und eine Community, die deine Interessen teilt. Mein Job? Dir zu helfen, die perfekten Events zu finden und dich mit anderen zu connecten! 🎉',
+    text: 'Hier findest du Events und Menschen, die deine Leidenschaften teilen. Ob Sport, Party oder Kunst – THE TRIBE bringt euch zusammen. Keine oberflächlichen Likes, sondern echte Begegnungen! 🤝',
     showNext: true,
   },
   select_interests: {
-    text: 'Was interessiert dich? Wähl aus, was dir gefällt - so kann ich dir direkt passende Events zeigen! 🎯',
+    text: 'Was begeistert dich? Wähl deine Interessen – so finde ich Events, bei denen du Gleichgesinnte triffst! 🎯',
     showInterests: true,
   },
   explain_likes: {
-    text: 'Jetzt zeig ich dir, wie ich dich besser kennenlerne: Wenn dir ein Event gefällt, klick einfach auf das Herz ❤️ Je mehr du likest, desto besser kann ich dir passende Events vorschlagen!',
+    text: 'Wenn dir ein Event gefällt, like es mit dem Herz ❤️ So sehe ich, was dich interessiert – und kann dir Events zeigen, bei denen du Menschen mit ähnlichem Geschmack triffst!',
     showHeart: true,
   },
   waiting_for_like: {
-    text: 'Scroll durch die Events und like das erste, das dich anspricht! 👇',
+    text: 'Scroll durch die Events und like das erste, das dich anspricht! Vielleicht trifft sich dort schon deine neue Crew? 👇',
   },
   // Community onboarding steps - handled in TribeCommunityBoard
   community_intro: { text: '' },
