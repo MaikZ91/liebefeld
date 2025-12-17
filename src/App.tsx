@@ -46,8 +46,12 @@ function AppInitializer() {
         }
       });
 
-    // Initialize or update Firebase Cloud Messaging token with city preference
-    initializeFCM(selectedCity);
+    // Delay Firebase initialization by 3 seconds - app is already visible by then
+    const fcmTimer = setTimeout(() => {
+      initializeFCM(selectedCity);
+    }, 3000);
+
+    return () => clearTimeout(fcmTimer);
   }, [selectedCity]);
 
   return null;
