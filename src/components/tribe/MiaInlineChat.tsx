@@ -93,11 +93,16 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const responseRef = useRef<HTMLDivElement>(null);
 
-  // Show onboarding messages automatically
+  // Show onboarding messages automatically - only for explore steps with text
   useEffect(() => {
     if (onboardingStep && onboardingStep !== 'completed') {
       const message = ONBOARDING_MESSAGES[onboardingStep];
-      if (message.text) {
+      // Only show for explore onboarding steps that have text
+      const communitySteps = ['community_intro', 'explain_profile', 'waiting_for_avatar_click', 
+        'editing_profile', 'greeting_ready', 'waiting_for_post', 'offer_guidance'];
+      const isCommunity = communitySteps.includes(onboardingStep);
+      
+      if (message.text && !isCommunity) {
         setIsExpanded(true);
         // Typewriter effect for onboarding
         setIsTyping(true);
@@ -110,7 +115,17 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
           });
           setIsTyping(false);
         }, 800);
+      } else {
+        // Clear state when not in explore onboarding - show normal typewriter input
+        setIsExpanded(false);
+        setCurrentResponse(null);
+        setIsTyping(false);
       }
+    } else if (!onboardingStep || onboardingStep === 'completed') {
+      // Onboarding completed or not active - clear state
+      setIsExpanded(false);
+      setCurrentResponse(null);
+      setIsTyping(false);
     }
   }, [onboardingStep]);
 
