@@ -242,7 +242,13 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
     }
   };
 
-  const isOnboarding = onboardingStep && onboardingStep !== 'completed';
+  // Community onboarding steps are handled in TribeCommunityBoard, not here
+  const communityOnboardingSteps: OnboardingStep[] = [
+    'community_intro', 'explain_profile', 'waiting_for_avatar_click', 
+    'editing_profile', 'greeting_ready', 'waiting_for_post', 'offer_guidance'
+  ];
+  const isCommunityStep = onboardingStep && communityOnboardingSteps.includes(onboardingStep);
+  const isExploreOnboarding = onboardingStep && onboardingStep !== 'completed' && !isCommunityStep;
   const currentOnboardingMessage = onboardingStep ? ONBOARDING_MESSAGES[onboardingStep] : null;
 
   return (
@@ -263,13 +269,13 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
                 <span className="text-[10px] font-bold text-gold uppercase tracking-widest">MIA</span>
                 <span className="text-[8px] bg-gradient-to-r from-gold to-amber-500 text-black px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">TRIBE AI</span>
               </div>
-              {!isOnboarding && relatedEvents.length > 0 && (
+              {!isExploreOnboarding && relatedEvents.length > 0 && (
                 <span className="text-[9px] text-zinc-500 uppercase tracking-wider ml-2">
                   {relatedEvents.length} Events
                 </span>
               )}
             </div>
-            {!isOnboarding && (
+            {!isExploreOnboarding && (
               <button 
                 onClick={handleClear}
                 className="text-zinc-500 hover:text-white transition-colors"
@@ -297,7 +303,7 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
                 </p>
                 
                 {/* Onboarding action buttons */}
-                {isOnboarding && currentOnboardingMessage?.showNext && (
+                {isExploreOnboarding && currentOnboardingMessage?.showNext && (
                   <button
                     onClick={handleOnboardingNext}
                     className="mt-4 px-4 py-2 bg-gold text-black text-sm font-semibold rounded-full hover:bg-gold/90 transition-all"
@@ -307,7 +313,7 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
                 )}
 
                 {/* Interest selection during onboarding */}
-                {isOnboarding && currentOnboardingMessage?.showInterests && (
+                {isExploreOnboarding && currentOnboardingMessage?.showInterests && (
                   <div className="mt-4 space-y-4">
                     <div className="flex flex-wrap gap-2">
                       {INTEREST_OPTIONS.map((interest) => (
@@ -341,7 +347,7 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
                   </div>
                 )}
                 
-                {isOnboarding && currentOnboardingMessage?.showHeart && (
+                {isExploreOnboarding && currentOnboardingMessage?.showHeart && (
                   <div className="mt-4 flex items-center gap-3">
                     <div className="flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-full">
                       <Heart className="w-5 h-5 text-red-500 fill-red-500" />
@@ -360,7 +366,7 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
           </div>
 
           {/* Related Events as Inline Chips - hide during onboarding */}
-          {!isOnboarding && relatedEvents.length > 0 && !isTyping && (
+          {!isExploreOnboarding && relatedEvents.length > 0 && !isTyping && (
             <div className="px-4 pb-4 pt-2 border-t border-white/5">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] text-zinc-500 uppercase tracking-wider">
@@ -396,7 +402,7 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
       )}
 
       {/* Main Input Area - hide during active onboarding steps (but show during waiting_for_like) */}
-      {(!isOnboarding || onboardingStep === 'waiting_for_like') && (
+      {(!isExploreOnboarding || onboardingStep === 'waiting_for_like') && (
         <div className="space-y-3">
           {/* Search Bar with Typewriter */}
           <div className="relative flex items-center gap-3">
@@ -452,7 +458,7 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
           </div>
 
           {/* Quick Suggestion Chips - show when focused */}
-          {isInputFocused && !isOnboarding && (
+          {isInputFocused && !isExploreOnboarding && (
             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 animate-fadeIn">
               {personalizedSuggestions.map((suggestion) => (
                 <button
