@@ -576,16 +576,17 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                     const userRSVP = getUserRSVP(post);
                     const relevanceScore = post.relevanceScore || 50;
                     const meetupResponses = post.meetup_responses;
+                    const isMIAPost = post.user === 'MIA';
                     
                     return (
                     <div 
                       key={post.id} 
                       className={`group border-b border-white/5 pb-4 last:border-0 relative transition-all duration-300 ${
                         isNewest ? 'bg-white/[0.02] -mx-4 px-4 py-3 border border-gold/10 rounded-lg' : ''
-                      }`}
+                      } ${isMIAPost ? 'bg-gradient-to-r from-gold/5 via-transparent to-transparent border-l-2 border-l-gold -mx-4 px-4 py-3' : ''}`}
                     >
                         {/* Dismiss button */}
-                        {!ownPost && (
+                        {!ownPost && !isMIAPost && (
                           <button
                             onClick={() => handleDismissPost(post.id, post.tags)}
                             className="absolute right-0 top-0 p-1.5 text-zinc-700 hover:text-zinc-400 opacity-0 group-hover:opacity-100 transition-all"
@@ -597,22 +598,29 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                         
                         {/* Newest badge & Relevance score */}
                         <div className="absolute right-0 top-0 flex items-center gap-2 pr-6">
-                          {isNewest && (
+                          {isMIAPost && (
+                            <Badge variant="outline" className="text-[7px] bg-gradient-to-r from-gold/20 to-amber-500/20 text-gold border-gold/30 px-1.5 py-0">
+                              TRIBE AI
+                            </Badge>
+                          )}
+                          {isNewest && !isMIAPost && (
                             <Badge variant="outline" className="text-[7px] bg-gold/10 text-gold border-gold/30 px-1.5 py-0 animate-pulse">
                               NEU
                             </Badge>
                           )}
-                          <span className={`text-[8px] font-medium ${
-                            relevanceScore >= 70 ? 'text-green-500' : 
-                            relevanceScore >= 50 ? 'text-zinc-500' : 
-                            'text-zinc-700'
-                          }`}>
-                            {relevanceScore}%
-                          </span>
+                          {!isMIAPost && (
+                            <span className={`text-[8px] font-medium ${
+                              relevanceScore >= 70 ? 'text-green-500' : 
+                              relevanceScore >= 50 ? 'text-zinc-500' : 
+                              'text-zinc-700'
+                            }`}>
+                              {relevanceScore}%
+                            </span>
+                          )}
                         </div>
                         
                         {/* Involvement indicator */}
-                        {(ownPost || involved) && (
+                        {(ownPost || involved) && !isMIAPost && (
                           <div className="absolute left-0 top-2">
                             <div 
                               className={`w-1.5 h-1.5 rounded-full ${ownPost ? 'bg-gold shadow-[0_0_6px_hsl(var(--gold))]' : 'bg-white/70'}`}
@@ -625,13 +633,22 @@ export const TribeCommunityBoard: React.FC<Props> = ({ selectedCity, userProfile
                         <div className="flex justify-between items-start mb-2 pl-4 pr-16">
                             <div className="flex items-center gap-2">
                                 <button 
-                                  onClick={() => onProfileClick?.(post.user)}
-                                  className="w-7 h-7 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center overflow-hidden hover:border-gold/50 transition-colors cursor-pointer"
+                                  onClick={() => !isMIAPost && onProfileClick?.(post.user)}
+                                  className={`w-7 h-7 rounded-full bg-zinc-800 border flex items-center justify-center overflow-hidden transition-colors ${
+                                    isMIAPost 
+                                      ? 'border-gold/50 ring-2 ring-gold/30 cursor-default' 
+                                      : 'border-white/10 hover:border-gold/50 cursor-pointer'
+                                  }`}
                                 >
                                     {post.userAvatar ? <img src={post.userAvatar} className="w-full h-full object-cover"/> : <span className="text-[10px] text-zinc-500">{post.user[0]}</span>}
                                 </button>
                                 <div>
-                                    <span className="block font-bold text-white text-[10px] uppercase tracking-wide">{post.user}</span>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className={`block font-bold text-[10px] uppercase tracking-wide ${isMIAPost ? 'text-gold' : 'text-white'}`}>{post.user}</span>
+                                      {isMIAPost && (
+                                        <span className="text-[7px] bg-gradient-to-r from-gold to-amber-500 text-black px-1 py-0.5 rounded font-bold">AI</span>
+                                      )}
+                                    </div>
                                     <span className="block text-[9px] text-zinc-600">{post.city} • {post.time}</span>
                                 </div>
                             </div>

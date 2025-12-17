@@ -195,22 +195,25 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
 
   return (
     <div className="relative">
-      {/* MIA Response Area - Expandable */}
+      {/* MIA Response Area - Expandable with TRIBE highlight */}
       {isExpanded && (currentResponse || isTyping) && (
         <div 
           ref={responseRef}
-          className="mb-4 bg-zinc-900/80 border border-white/10 rounded-lg overflow-hidden animate-fadeIn"
+          className="mb-4 bg-gradient-to-r from-zinc-900/90 via-zinc-900/80 to-gold/5 border border-gold/20 rounded-lg overflow-hidden animate-fadeIn shadow-[0_0_20px_rgba(212,175,55,0.1)]"
         >
-          {/* Response Header */}
-          <div className="flex justify-between items-center px-4 py-2 bg-black/30 border-b border-white/5">
+          {/* Response Header - TRIBE branded */}
+          <div className="flex justify-between items-center px-4 py-2 bg-gradient-to-r from-black/60 to-gold/10 border-b border-gold/20">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-full overflow-hidden">
+              <div className="w-6 h-6 rounded-full overflow-hidden ring-2 ring-gold/50">
                 <img src={MIA_AVATAR} className="w-full h-full object-cover" alt="MIA" />
               </div>
-              <span className="text-[10px] font-bold text-gold uppercase tracking-widest">MIA</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-bold text-gold uppercase tracking-widest">MIA</span>
+                <span className="text-[8px] bg-gradient-to-r from-gold to-amber-500 text-black px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">TRIBE AI</span>
+              </div>
               {relatedEvents.length > 0 && (
                 <span className="text-[9px] text-zinc-500 uppercase tracking-wider ml-2">
-                  {relatedEvents.length} Events gefunden
+                  {relatedEvents.length} Events
                 </span>
               )}
             </div>

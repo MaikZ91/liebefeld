@@ -50,6 +50,11 @@ const isNewEvent = (createdAt?: string): boolean => {
   return diffDays <= 7;
 };
 
+// Check if event is a Tribe/Community event
+const isTribeEvent = (source?: string): boolean => {
+  return source === 'community';
+};
+
 export const TribeEventCard: React.FC<EventCardProps> = ({ 
   event, 
   variant = 'standard', 
@@ -71,6 +76,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
   
   const displayImage = event.image_url;
   const isNew = isNewEvent(event.created_at);
+  const isTribe = isTribeEvent(event.source);
 
   // Mock Attendees Data
   const baseCount = event.attendees || Math.floor(Math.random() * 80) + 12;
@@ -178,12 +184,12 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
   // --- COMPACT VARIANT (List Compact) ---
   if (variant === 'compact') {
     return (
-      <div className={`bg-black border-b border-white/5 transition-all duration-500 ${animationClass} ${isPast ? 'opacity-40 grayscale' : ''}`}>
+      <div className={`bg-black border-b border-white/5 transition-all duration-500 ${animationClass} ${isPast ? 'opacity-40 grayscale' : ''} ${isTribe ? 'border-l-2 border-l-gold/50' : ''}`}>
         <div className={`flex items-start gap-2.5 py-2 transition-all duration-300 ${isExpanded ? 'flex-col' : ''}`}>
           {/* Thumbnail - Expands when Vibe is clicked */}
           <div className={`bg-zinc-900 flex-shrink-0 relative overflow-hidden rounded transition-all duration-300 ${
             isExpanded ? 'w-full aspect-video' : 'w-12 h-14'
-          }`}>
+          } ${isTribe ? 'ring-1 ring-gold/30' : ''}`}>
             {displayImage ? (
               <img src={displayImage} className="w-full h-full object-cover" />
             ) : (
@@ -206,12 +212,17 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                 Vorbei
               </div>
             )}
-            {isLiked && !isPast && !isExpanded && (
+            {isTribe && !isPast && !isExpanded && (
+              <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-gold to-amber-500 text-black text-[6px] font-bold px-1 py-0.5 text-center uppercase tracking-wider">
+                TRIBE
+              </div>
+            )}
+            {isLiked && !isPast && !isTribe && !isExpanded && (
               <div className="absolute top-0 left-0 right-0 bg-gold/90 text-black text-[6px] font-bold px-1 py-0.5 text-center">
                 ★
               </div>
             )}
-            {isNew && !isPast && !isLiked && !isExpanded && (
+            {isNew && !isPast && !isLiked && !isTribe && !isExpanded && (
               <div className="absolute top-0 left-0 right-0 bg-emerald-500/90 text-white text-[6px] font-bold px-1 py-0.5 text-center uppercase tracking-wider">
                 New
               </div>
@@ -220,9 +231,16 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
 
           {/* Info - Full width when expanded */}
           <div className={`min-w-0 ${isExpanded ? 'w-full px-1' : 'flex-1'}`}>
-            <h3 className={`font-medium leading-tight ${isLiked ? 'text-gold' : 'text-white'} ${isExpanded ? 'text-sm mb-1' : 'text-xs truncate'}`}>
-              {event.title}
-            </h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className={`font-medium leading-tight ${isLiked ? 'text-gold' : isTribe ? 'text-gold' : 'text-white'} ${isExpanded ? 'text-sm mb-1' : 'text-xs truncate'}`}>
+                {event.title}
+              </h3>
+              {isTribe && isExpanded && (
+                <span className="text-[7px] bg-gold/20 text-gold border border-gold/30 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">
+                  Community
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 mt-0.5">
               <span className="font-mono">{formatTime(event.time)}</span>
               {event.location && (
@@ -408,15 +426,20 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
                 
-                {/* Date + Score + New Badge - TOP LEFT */}
+                {/* Date + Score + Tribe Badge - TOP LEFT */}
                 <div className="absolute top-2 left-2 z-20 flex gap-1.5">
+                  {isTribe && (
+                    <span className="bg-gradient-to-r from-gold to-amber-500 text-black px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide">
+                      TRIBE
+                    </span>
+                  )}
                   <span className="bg-black/80 text-gold px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide">
                     {formatEventDate(event.date)}
                   </span>
                   <span className="bg-gold text-black px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide">
                     {displayScore}%
                   </span>
-                  {isNew && (
+                  {isNew && !isTribe && (
                     <span className="bg-emerald-500 text-white px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide">
                       New
                     </span>
@@ -532,12 +555,17 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                     {matchScore}%
                   </div>
                 )}
-                {isLiked && (
+                {isTribe && (
+                  <div className="absolute top-1 left-1 bg-gradient-to-r from-gold to-amber-500 text-black text-[8px] font-bold px-1.5 py-0.5 uppercase tracking-wide">
+                    TRIBE
+                  </div>
+                )}
+                {isLiked && !isTribe && (
                   <div className="absolute top-1 left-1 bg-gold text-black text-[8px] font-bold px-1.5 py-0.5 uppercase tracking-wide">
                     Liked
                   </div>
                 )}
-                {isNew && !isLiked && (
+                {isNew && !isLiked && !isTribe && (
                   <div className="absolute top-1 left-1 bg-emerald-500 text-white text-[8px] font-bold px-1.5 py-0.5 uppercase tracking-wide">
                     New
                   </div>

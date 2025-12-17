@@ -17,6 +17,7 @@ export const convertToTribeEvent = (event: any): TribeEvent => {
     city: event.city,
     location: event.location,
     created_at: event.created_at, // For "New" badge detection
+    source: event.source, // For "TRIBE" badge detection
     likes: event.likes || 0,
     liked_by_users: event.liked_by_users,
     // Calculate match score based on likes and recency
