@@ -6,6 +6,16 @@ import { useTypewriterPrompts } from '@/hooks/useTypewriterPrompts';
 import { usePersonalizedSuggestions } from '@/hooks/usePersonalizedSuggestions';
 import { OnboardingStep } from '@/hooks/useOnboardingFlow';
 
+// Community reel images for social proof
+import reel1 from '@/assets/tribe/reel-1.jpg';
+import reel2 from '@/assets/tribe/reel-2.jpg';
+import reel3 from '@/assets/tribe/reel-3.jpg';
+import reel4 from '@/assets/tribe/reel-4.jpg';
+import reel5 from '@/assets/tribe/reel-5.jpg';
+import reel6 from '@/assets/tribe/reel-6.jpg';
+
+const SOCIAL_PROOF_IMAGES = [reel1, reel2, reel3, reel4, reel5, reel6];
+
 const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150";
 
 interface UserProfileContext {
@@ -37,10 +47,11 @@ const INTEREST_OPTIONS = [
   { id: 'sport', label: 'Sport', emoji: '⚽' },
 ];
 
-const ONBOARDING_MESSAGES: Record<OnboardingStep, { text: string; showNext?: boolean; showHeart?: boolean; showInterests?: boolean }> = {
+const ONBOARDING_MESSAGES: Record<OnboardingStep, { text: string; showNext?: boolean; showHeart?: boolean; showInterests?: boolean; showSocialProof?: boolean }> = {
   welcome: {
     text: 'Hey! 👋 Willkommen bei THE TRIBE – der App, die dich mit echten Menschen verbindet, nicht nur online, sondern im echten Leben!',
     showNext: true,
+    showSocialProof: true,
   },
   explain_app: {
     text: 'Hier findest du Events und Menschen, die deine Leidenschaften teilen. Ob Sport, Party oder Kunst – THE TRIBE bringt euch zusammen. Keine oberflächlichen Likes, sondern echte Begegnungen! 🤝',
@@ -314,6 +325,26 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
                 <p className="text-sm text-zinc-300 leading-relaxed">
                   {currentResponse.text}
                 </p>
+                
+                {/* Social Proof Images for Welcome */}
+                {isExploreOnboarding && currentOnboardingMessage?.showSocialProof && (
+                  <div className="mt-4 space-y-2">
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex -space-x-2">
+                        {SOCIAL_PROOF_IMAGES.map((img, idx) => (
+                          <div 
+                            key={idx} 
+                            className="w-8 h-8 rounded-full overflow-hidden border-2 border-black ring-1 ring-gold/30"
+                            style={{ animationDelay: `${idx * 100}ms` }}
+                          >
+                            <img src={img} alt="" className="w-full h-full object-cover" />
+                          </div>
+                        ))}
+                      </div>
+                      <span className="text-[11px] text-zinc-400 ml-2">+842 in der Community</span>
+                    </div>
+                  </div>
+                )}
                 
                 {/* Onboarding action buttons */}
                 {isExploreOnboarding && currentOnboardingMessage?.showNext && (
