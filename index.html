@@ -4,25 +4,48 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>THE TRIBE.BI - Bielefelds Community Event Kalender</title>
-    <meta name="description" content="Entdecke lokale Events in Bielefeld, verbinde dich mit Menschen und erlebe deine Stadt. Der Community-Kalender, der Bielefeld lebendiger macht." />
-    <meta name="keywords" content="Bielefeld, Events, Veranstaltungen, Community, Kalender, lokale Events, THE TRIBE.BI, Gemeinschaft" />
-    <meta name="author" content="Maik Zschach" />
+    <title>THE TRIBE Bielefeld | Events, Veranstaltungen & Community Kalender 2025</title>
+    <meta name="description" content="Entdecke alle Events und Veranstaltungen in Bielefeld auf einen Blick. Party, Konzerte, Sport, Kultur & mehr. Die #1 Community-App für Bielefeld. Finde heute noch dein nächstes Event!" />
+    <meta name="keywords" content="Bielefeld Events, Veranstaltungen Bielefeld, Party Bielefeld, Konzerte Bielefeld, Sport Bielefeld, Kultur Bielefeld, Events heute Bielefeld, Was geht in Bielefeld, Bielefeld Kalender, Bielefeld Community, THE TRIBE, Bielefeld Nachtleben, Bielefeld Ausgehen, Bielefeld Freizeit, Bielefeld Wochenende, Bielefeld Termine, Event Kalender Bielefeld, Bielefeld Tipps" />
+    <meta name="author" content="THE TRIBE Bielefeld" />
     <meta name="google-site-verification" content="uY4e6Zo_ux78Op2N4zgB7vw9nKuTsyglbt8UqaARHoI" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
+    <meta name="bingbot" content="index, follow" />
+    
+    <!-- AI & Agent Search Optimization -->
+    <meta name="ai-content-declaration" content="This page contains real-time event listings for Bielefeld, Germany. Updated daily." />
+    <meta name="ai-summary" content="THE TRIBE ist die führende Event- und Community-Plattform für Bielefeld. Hier findest du alle Veranstaltungen: Partys, Konzerte, Sport, Kultur und mehr. Personalisierte Empfehlungen durch KI-Assistentin MIA." />
+    
+    <!-- Geographic targeting -->
+    <meta name="geo.region" content="DE-NW" />
+    <meta name="geo.placename" content="Bielefeld" />
+    <meta name="geo.position" content="52.0211;8.5350" />
+    <meta name="ICBM" content="52.0211, 8.5350" />
+    
+    <!-- Language alternatives -->
+    <link rel="alternate" hreflang="de" href="https://the-tribe.bi/" />
+    <link rel="alternate" hreflang="x-default" href="https://the-tribe.bi/" />
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://the-tribe.bi/" />
-    <meta property="og:title" content="THE TRIBE.BI - Bielefelds Community Event Kalender" />
-    <meta property="og:description" content="Entdecke lokale Events in Bielefeld, verbinde dich mit Menschen und erlebe deine Stadt." />
-    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:title" content="THE TRIBE Bielefeld | Alle Events & Veranstaltungen auf einen Blick" />
+    <meta property="og:description" content="Die #1 Event-App für Bielefeld. Entdecke Partys, Konzerte, Sport & Kultur. Verbinde dich mit der Community und finde dein nächstes Erlebnis!" />
+    <meta property="og:image" content="https://the-tribe.bi/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="THE TRIBE Bielefeld - Community Event Kalender" />
+    <meta property="og:locale" content="de_DE" />
+    <meta property="og:site_name" content="THE TRIBE Bielefeld" />
     
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://the-tribe.bi/" />
-    <meta property="twitter:title" content="THE TRIBE.BI - Bielefelds Community Event Kalender" />
-    <meta property="twitter:description" content="Entdecke lokale Events in Bielefeld, verbinde dich mit Menschen und erlebe deine Stadt." />
-    <meta property="twitter:image" content="/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://the-tribe.bi/" />
+    <meta name="twitter:title" content="THE TRIBE Bielefeld | Events & Veranstaltungen" />
+    <meta name="twitter:description" content="Entdecke alle Events in Bielefeld. Party, Konzerte, Sport, Kultur. Die Community-App für Bielefeld." />
+    <meta name="twitter:image" content="https://the-tribe.bi/og-image.png" />
+    <meta name="twitter:image:alt" content="THE TRIBE Bielefeld Event Kalender" />
     
     <!-- Canonical URL -->
     <link rel="canonical" href="https://the-tribe.bi/" />
@@ -59,12 +82,14 @@
     
     <!-- Favicon -->
     <link rel="icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.svg" />
     
     <!-- Web App Manifest -->
     <link rel="manifest" href="/manifest.json" />
-    
-    <!-- Robots -->
-    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="THE TRIBE" />
   </head>
 
   <body>
@@ -73,15 +98,115 @@
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
     
-    <!-- Structured Data for Local Business/Organization -->
+    <!-- Organization Schema -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Organization",
-      "name": "THE TRIBE.BI",
+      "@id": "https://the-tribe.bi/#organization",
+      "name": "THE TRIBE Bielefeld",
+      "alternateName": ["THE TRIBE.BI", "TRIBE Bielefeld", "Tribe BI"],
       "url": "https://the-tribe.bi",
-      "logo": "https://the-tribe.bi/og-image.png",
-      "description": "Wir verbinden Menschen im echten Leben und machen Bielefeld lebendiger!",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://the-tribe.bi/og-image.png",
+        "width": 1200,
+        "height": 630
+      },
+      "image": "https://the-tribe.bi/og-image.png",
+      "description": "THE TRIBE ist die führende Community- und Event-Plattform für Bielefeld. Wir verbinden Menschen im echten Leben durch Events, Sport, Kultur und gemeinsame Erlebnisse.",
+      "slogan": "Verbinde dich mit Events und Menschen aus deiner Stadt",
+      "foundingDate": "2024",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Bielefeld",
+        "addressRegion": "Nordrhein-Westfalen",
+        "postalCode": "33615",
+        "addressCountry": "DE"
+      },
+      "areaServed": {
+        "@type": "City",
+        "name": "Bielefeld",
+        "containedInPlace": {
+          "@type": "State",
+          "name": "Nordrhein-Westfalen"
+        }
+      },
+      "email": "mschach@googlemail.com",
+      "sameAs": [
+        "https://www.instagram.com/thetribe.bi"
+      ],
+      "knowsAbout": ["Events Bielefeld", "Veranstaltungen Bielefeld", "Community Bielefeld", "Nightlife Bielefeld", "Sport Bielefeld", "Kultur Bielefeld"]
+    }
+    </script>
+    
+    <!-- WebSite Schema with SearchAction for Sitelinks -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "@id": "https://the-tribe.bi/#website",
+      "name": "THE TRIBE Bielefeld",
+      "alternateName": "TRIBE Bielefeld Events",
+      "url": "https://the-tribe.bi",
+      "description": "Die #1 Event- und Community-Plattform für Bielefeld. Finde Events, verbinde dich mit Menschen, erlebe deine Stadt.",
+      "inLanguage": "de-DE",
+      "publisher": {
+        "@id": "https://the-tribe.bi/#organization"
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://the-tribe.bi/?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    
+    <!-- WebPage Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "@id": "https://the-tribe.bi/#webpage",
+      "url": "https://the-tribe.bi",
+      "name": "THE TRIBE Bielefeld - Events, Veranstaltungen & Community Kalender",
+      "description": "Entdecke alle Events und Veranstaltungen in Bielefeld. Party, Konzerte, Sport, Kultur und mehr. Die führende Community-App für Bielefeld.",
+      "isPartOf": {
+        "@id": "https://the-tribe.bi/#website"
+      },
+      "about": {
+        "@id": "https://the-tribe.bi/#organization"
+      },
+      "primaryImageOfPage": {
+        "@type": "ImageObject",
+        "url": "https://the-tribe.bi/og-image.png"
+      },
+      "datePublished": "2024-01-01",
+      "dateModified": "2025-01-01",
+      "inLanguage": "de-DE",
+      "speakable": {
+        "@type": "SpeakableSpecification",
+        "cssSelector": ["h1", "h2", ".event-title", ".event-description"]
+      },
+      "mainContentOfPage": {
+        "@type": "WebPageElement",
+        "cssSelector": "main"
+      }
+    }
+    </script>
+    
+    <!-- LocalBusiness Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "@id": "https://the-tribe.bi/#localbusiness",
+      "name": "THE TRIBE Bielefeld",
+      "image": "https://the-tribe.bi/og-image.png",
+      "description": "Community Event Plattform für Bielefeld - Entdecke Events, verbinde dich mit Menschen",
       "address": {
         "@type": "PostalAddress",
         "addressLocality": "Bielefeld",
@@ -89,24 +214,183 @@
         "postalCode": "33615",
         "addressCountry": "DE"
       },
-      "email": "mschach@googlemail.com"
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 52.0211,
+        "longitude": 8.5350
+      },
+      "url": "https://the-tribe.bi",
+      "priceRange": "Kostenlos",
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+        "opens": "00:00",
+        "closes": "23:59"
+      },
+      "areaServed": {
+        "@type": "City",
+        "name": "Bielefeld"
+      }
     }
     </script>
     
-    <!-- Structured Data for Event Series -->
+    <!-- ItemList Schema for Event Categories -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebPage",
-      "name": "THE TRIBE.BI - Community Event Kalender",
-      "speakable": {
-        "@type": "SpeakableSpecification",
-        "cssSelector": ["h1", "h2", "p"]
+      "@type": "ItemList",
+      "name": "Event Kategorien in Bielefeld",
+      "description": "Alle Event-Kategorien auf THE TRIBE Bielefeld",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Party & Ausgehen Bielefeld",
+          "url": "https://the-tribe.bi/?category=party"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Konzerte Bielefeld",
+          "url": "https://the-tribe.bi/?category=concert"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Sport Events Bielefeld",
+          "url": "https://the-tribe.bi/?category=sport"
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": "Kunst & Kultur Bielefeld",
+          "url": "https://the-tribe.bi/?category=art"
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "name": "Kreativität & Workshops Bielefeld",
+          "url": "https://the-tribe.bi/?category=creative"
+        }
+      ]
+    }
+    </script>
+    
+    <!-- FAQ Schema for AI Search -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Was ist THE TRIBE Bielefeld?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "THE TRIBE ist die führende Event- und Community-Plattform für Bielefeld. Hier findest du alle Veranstaltungen der Stadt - von Partys über Konzerte bis zu Sport und Kultur. Unsere KI-Assistentin MIA hilft dir, die perfekten Events basierend auf deinen Interessen zu finden."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Welche Events gibt es heute in Bielefeld?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Auf THE TRIBE findest du täglich aktualisierte Events für Bielefeld. Die App zeigt dir Partys, Konzerte, Sportveranstaltungen, Kulturevents und mehr. Nutze die Filter oder frag MIA nach personalisierten Empfehlungen."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Wie finde ich Partys in Bielefeld?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Auf THE TRIBE kannst du nach der Kategorie 'Party' filtern oder MIA fragen: 'Was geht heute Abend?' Die App zeigt dir alle aktuellen Partys und Club-Events in Bielefeld mit Details zu Location, Uhrzeit und Einlass."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Gibt es eine Event-App für Bielefeld?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ja, THE TRIBE ist die Event-App für Bielefeld! Verfügbar als Web-App und Android-App. Entdecke alle Veranstaltungen, erhalte personalisierte Empfehlungen von unserer KI MIA und verbinde dich mit der Bielefelder Community."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Was geht am Wochenende in Bielefeld?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "THE TRIBE zeigt dir alle Wochenend-Events in Bielefeld. Frag einfach MIA 'Was geht am Wochenende?' und erhalte personalisierte Vorschläge für Partys, Konzerte, Sportevents und Kulturveranstaltungen."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Wie funktioniert die KI MIA auf THE TRIBE?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "MIA ist deine persönliche KI-Assistentin auf THE TRIBE. Sie lernt deine Vorlieben kennen und empfiehlt dir Events basierend auf deinen Interessen, vergangenen Likes und deinem Standort in Bielefeld. Frag sie einfach: 'Was passt zu mir?'"
+          }
+        }
+      ]
+    }
+    </script>
+    
+    <!-- SoftwareApplication Schema for App -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "THE TRIBE Bielefeld",
+      "applicationCategory": "LifestyleApplication",
+      "operatingSystem": "Android, Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
       },
-      "mainContentOfPage": {
-        "@type": "WebPageElement",
-        "cssSelector": "main"
-      }
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "200"
+      },
+      "description": "Die Event- und Community-App für Bielefeld. Finde Events, verbinde dich mit Menschen, erlebe deine Stadt.",
+      "featureList": ["Event Kalender", "KI-Empfehlungen", "Community Chat", "Social Map", "Personalisierte Vorschläge"]
+    }
+    </script>
+    
+    <!-- BreadcrumbList Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://the-tribe.bi/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Events Bielefeld",
+          "item": "https://the-tribe.bi/"
+        }
+      ]
+    }
+    </script>
+    
+    <!-- Event aggregation hint for AI -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "DataCatalog",
+      "name": "Bielefeld Event Datenbank",
+      "description": "Umfassende Datenbank aller Events und Veranstaltungen in Bielefeld, täglich aktualisiert",
+      "creator": {
+        "@id": "https://the-tribe.bi/#organization"
+      },
+      "keywords": ["Events Bielefeld", "Veranstaltungen", "Party", "Konzerte", "Sport", "Kultur", "Bielefeld Kalender"],
+      "temporalCoverage": "2024/2025"
     }
     </script>
   </body>

@@ -1,5 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { HelmetProvider } from 'react-helmet-async';
 import App from "./App.tsx";
 import "./index.css";
 import { EventProvider } from './contexts/EventContext';
@@ -17,12 +18,14 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <EventProvider>
-        <ChatPreferencesProvider>
-          <App />
-        </ChatPreferencesProvider>
-      </EventProvider>
-    </QueryClientProvider>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <EventProvider>
+          <ChatPreferencesProvider>
+            <App />
+          </ChatPreferencesProvider>
+        </EventProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
   </StrictMode>,
 );
