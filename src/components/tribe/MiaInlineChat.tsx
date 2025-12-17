@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { getTribeResponse } from '@/services/tribe/aiHelpers';
 import { TribeEvent, ChatMessage } from '@/types/tribe';
 import { ArrowUp, X, Sparkles } from 'lucide-react';
+import { useTypewriterPrompts } from '@/hooks/useTypewriterPrompts';
 
 const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150";
 
@@ -37,8 +38,21 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
   const [currentResponse, setCurrentResponse] = useState<ChatMessage | null>(null);
   const [relatedEvents, setRelatedEvents] = useState<TribeEvent[]>([]);
   const [hasShownNewEventsGreeting, setHasShownNewEventsGreeting] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const responseRef = useRef<HTMLDivElement>(null);
+
+  // Get event categories for personalized prompts
+  const eventCategories = useMemo(() => {
+    return [...new Set(events.map(e => e.category?.toLowerCase()).filter(Boolean))] as string[];
+  }, [events]);
+
+  // Typewriter hook for personalized prompts
+  const { displayText, currentFullPrompt, pause, resume, isPaused } = useTypewriterPrompts(
+    userProfile,
+    eventCategories,
+    city
+  );
 
   // Check for new events (created within last 7 days)
   const newEvents = useMemo(() => {
@@ -139,9 +153,19 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
     return "Hey! Was suchst du heute?";
   };
 
+  // Save query to recent queries for personalization
+  const saveRecentQuery = (query: string) => {
+    const recentQueries = JSON.parse(localStorage.getItem('mia_recent_queries') || '[]');
+    const updated = [query, ...recentQueries.filter((q: string) => q !== query)].slice(0, 10);
+    localStorage.setItem('mia_recent_queries', JSON.stringify(updated));
+  };
+
   const handleSend = async (customInput?: string) => {
     const textToSend = customInput || input;
     if (!textToSend.trim()) return;
+
+    // Save to recent queries
+    saveRecentQuery(textToSend);
 
     if (!customInput) setInput('');
     setIsExpanded(true);
@@ -174,6 +198,25 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
       });
     } finally {
       setIsTyping(false);
+    }
+  };
+
+  const handleInputFocus = () => {
+    setIsInputFocused(true);
+    setIsExpanded(true);
+    pause();
+  };
+
+  const handleInputBlur = () => {
+    setIsInputFocused(false);
+    if (!input) {
+      resume();
+    }
+  };
+
+  const handleTypewriterClick = () => {
+    if (currentFullPrompt && !input) {
+      handleSend(currentFullPrompt);
     }
   };
 
@@ -281,7 +324,7 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
 
       {/* Main Input Area */}
       <div className="space-y-3">
-        {/* Search Bar */}
+        {/* Search Bar with Typewriter */}
         <div className="relative flex items-center gap-3">
           <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-white/20">
             <img src={MIA_AVATAR} className="w-full h-full object-cover" alt="MIA" />
@@ -291,12 +334,38 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
               ref={inputRef}
               type="text"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                if (e.target.value) pause();
+                else resume();
+              }}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              onFocus={() => setIsExpanded(true)}
-              placeholder={getGreeting()}
-              className="w-full bg-black border border-white/[0.08] focus:border-gold/50 text-white text-sm placeholder-zinc-600 rounded-full py-2.5 px-4 pr-10 outline-none transition-all"
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
+              placeholder=""
+              className="w-full bg-black border border-white/[0.08] focus:border-gold/50 text-white text-sm rounded-full py-2.5 px-4 pr-10 outline-none transition-all"
             />
+            
+            {/* Typewriter Overlay - clickable when no user input */}
+            {!input && !isInputFocused && (
+              <div 
+                onClick={handleTypewriterClick}
+                className="absolute inset-0 flex items-center px-4 cursor-pointer group"
+              >
+                <span className="text-sm text-zinc-500 group-hover:text-gold transition-colors">
+                  {displayText}
+                  <span className="animate-pulse text-gold">|</span>
+                </span>
+              </div>
+            )}
+            
+            {/* Static placeholder when focused but empty */}
+            {!input && isInputFocused && (
+              <div className="absolute inset-0 flex items-center px-4 pointer-events-none">
+                <span className="text-sm text-zinc-600">Frag mich was...</span>
+              </div>
+            )}
+            
             {input.trim() && (
               <button
                 onClick={() => handleSend()}
@@ -308,18 +377,20 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
           </div>
         </div>
 
-        {/* Personalized Suggestion Chips */}
-        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-          {suggestions.map((suggestion) => (
-            <button
-              key={suggestion}
-              onClick={() => handleSend(suggestion)}
-              className="px-3 py-1.5 bg-zinc-900/50 border border-white/10 text-zinc-500 text-xs whitespace-nowrap rounded-full hover:border-gold/30 hover:text-gold transition-all"
-            >
-              {suggestion}
-            </button>
-          ))}
-        </div>
+        {/* Quick Suggestion Chips - only show when focused */}
+        {isInputFocused && (
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 animate-fadeIn">
+            {suggestions.slice(0, 4).map((suggestion) => (
+              <button
+                key={suggestion}
+                onClick={() => handleSend(suggestion)}
+                className="px-3 py-1.5 bg-zinc-900/50 border border-white/10 text-zinc-500 text-xs whitespace-nowrap rounded-full hover:border-gold/30 hover:text-gold transition-all"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
