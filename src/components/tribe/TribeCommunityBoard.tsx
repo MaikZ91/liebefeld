@@ -562,9 +562,9 @@ export const TribeCommunityBoard: React.FC<Props> = ({
         
         {/* --- INPUT AREA --- */}
         <div className="px-4 py-1.5 border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur-xl z-20">
-            {/* MIA greeting message above input during greeting_ready/waiting_for_post */}
-            {(onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post') && (
-              <div className="flex items-start gap-2 mb-2 p-2 bg-zinc-900/50 border border-gold/20 rounded-lg">
+            {/* MIA onboarding message above input for ALL community onboarding steps */}
+            {onboardingMiaMessage && (
+              <div className="flex items-start gap-2 mb-2 p-2 bg-zinc-900/50 border border-gold/20 rounded-lg animate-fadeIn">
                 <img 
                   src={MIA_AVATAR} 
                   className="w-8 h-8 rounded-full ring-2 ring-gold/50 object-cover flex-shrink-0" 
@@ -573,8 +573,15 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                 <div className="flex-1 min-w-0">
                   <span className="text-xs font-bold text-gold">MIA</span>
                   <p className="text-xs text-white/90 leading-relaxed mt-0.5">
-                    Perfekt! 🙌 Jetzt lass dich der Community vorstellen. Ergänze gerne noch einen Fun Fact über dich!
+                    {onboardingMiaMessage}
                   </p>
+                  {/* Show hint to click avatar during waiting_for_avatar_click */}
+                  {onboardingStep === 'waiting_for_avatar_click' && (
+                    <div className="mt-2 flex items-center gap-2 text-gold animate-pulse">
+                      <span className="text-lg">👆</span>
+                      <span className="text-[10px] font-medium">Klick auf deinen Avatar oben rechts!</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -646,38 +653,6 @@ export const TribeCommunityBoard: React.FC<Props> = ({
 
         {/* --- FEED --- */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-32">
-            {/* MIA Onboarding Message - shown as chat message in feed (except greeting_ready/waiting_for_post which shows above input) */}
-            {onboardingMiaMessage && onboardingStep !== 'greeting_ready' && onboardingStep !== 'waiting_for_post' && (
-              <div className="bg-zinc-900/50 border border-gold/20 rounded-lg p-3 animate-fadeIn">
-                <div className="flex gap-3">
-                  <div className="relative flex-shrink-0">
-                    <img 
-                      src={MIA_AVATAR} 
-                      className="w-10 h-10 rounded-full ring-2 ring-gold/50 object-cover" 
-                      alt="MIA" 
-                    />
-                    <div className="absolute -bottom-1 -right-1 bg-gold text-black text-[6px] font-bold px-1 py-0.5 rounded">
-                      MIA
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-bold text-gold">MIA</span>
-                      <span className="text-[9px] text-zinc-500">Just now</span>
-                    </div>
-                    <p className="text-sm text-white/90 leading-relaxed">{onboardingMiaMessage}</p>
-                    
-                    {/* Show hint to click avatar during waiting_for_avatar_click */}
-                    {onboardingStep === 'waiting_for_avatar_click' && (
-                      <div className="mt-3 flex items-center gap-2 text-gold animate-pulse">
-                        <span className="text-xl">👆</span>
-                        <span className="text-xs font-medium">Klick auf deinen Avatar oben rechts!</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
             {/* Profile Creation Banner - simple, closable - HIDE during onboarding */}
             {userProfile && !profileBannerDismissed && !onboardingStep && (() => {
               const hasAvatar = !!userProfile.avatarUrl || !!userProfile.avatar;
