@@ -68,6 +68,10 @@ export const useTypewriterPrompts = (
       .slice(0, 3)
       .map(([kw]) => kw);
 
+    // Get preferred time slots
+    const preferredTimeSlots = personalizationService.getPreferredTimeSlots();
+    const topTimeSlot = preferredTimeSlots[0]?.slot;
+
     // === HYPER-PERSONALIZED PROMPTS ===
 
     // 1. Based on liked categories (highest priority)
@@ -139,7 +143,23 @@ export const useTypewriterPrompts = (
       }
     }
 
-    // 7. Time-based personalization
+    // 7. Time-based personalization (using user's liked time slots)
+    if (topTimeSlot === 'evening') {
+      generatedPrompts.push('Events heute Abend');
+      generatedPrompts.push('Abend-Highlights');
+    } else if (topTimeSlot === 'night') {
+      generatedPrompts.push('Late Night Events');
+      generatedPrompts.push('Nachtleben entdecken');
+    } else if (topTimeSlot === 'morning') {
+      generatedPrompts.push('Frühe Events morgen');
+      generatedPrompts.push('Morgen-Aktivitäten');
+    } else if (topTimeSlot === 'afternoon') {
+      generatedPrompts.push('Nachmittags-Events');
+    } else if (topTimeSlot === 'midday') {
+      generatedPrompts.push('Events zur Mittagszeit');
+    }
+
+    // Current time context
     if (hour >= 6 && hour < 12) {
       generatedPrompts.push('Was geht heute Abend?');
       generatedPrompts.push('Plane meinen Tag');

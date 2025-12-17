@@ -14,33 +14,62 @@ const CATEGORY_MAPPING: Record<string, string[]> = {
   'kreativitaet': ['Kreativität', 'Kunst', 'Art', 'Workshop', 'Kultur'],
 };
 
+// Time slots for preference tracking
+type TimeSlotName = 'morning' | 'midday' | 'afternoon' | 'evening' | 'night';
+
 interface EventInteraction {
   eventId: string;
   category?: string;
   location?: string;
   title: string;
   timestamp: string;
+  eventTime?: string; // The time the event takes place (e.g., "19:00")
+  timeSlot?: TimeSlotName; // Derived time slot
 }
 
 interface UserPreferences {
-  likedCategories: Record<string, number>; // category -> count
+  likedCategories: Record<string, number>;
   dislikedCategories: Record<string, number>;
-  likedLocations: Record<string, number>; // location -> count
+  likedLocations: Record<string, number>;
   dislikedLocations: Record<string, number>;
-  likedKeywords: Record<string, number>; // keywords from titles
+  likedKeywords: Record<string, number>;
   dislikedKeywords: Record<string, number>;
+  likedTimeSlots: Record<TimeSlotName, number>; // Time preferences
+  dislikedTimeSlots: Record<TimeSlotName, number>;
 }
 
 export const personalizationService = {
+  // Parse time string to hour (e.g., "19:00" -> 19)
+  parseTimeToHour(timeStr?: string): number | null {
+    if (!timeStr) return null;
+    const match = timeStr.match(/^(\d{1,2}):?\d{0,2}/);
+    if (match) return parseInt(match[1], 10);
+    return null;
+  },
+
+  // Categorize hour into time slot
+  getTimeSlot(hour: number): TimeSlotName {
+    if (hour >= 6 && hour < 11) return 'morning';      // 06:00 - 10:59
+    if (hour >= 11 && hour < 14) return 'midday';      // 11:00 - 13:59
+    if (hour >= 14 && hour < 17) return 'afternoon';   // 14:00 - 16:59
+    if (hour >= 17 && hour < 21) return 'evening';     // 17:00 - 20:59
+    return 'night';                                      // 21:00 - 05:59
+  },
+
   // Track a like interaction
   trackLike(event: TribeEvent): void {
     const likes = this.getLikes();
+    const hour = this.parseTimeToHour(event.time);
+    const timeSlot = hour !== null ? this.getTimeSlot(hour) : undefined;
+    
     const interaction: EventInteraction = {
       eventId: event.id,
       category: event.category,
       location: event.location || undefined,
       title: event.title,
       timestamp: new Date().toISOString(),
+      eventTime: event.time,
+      timeSlot,
     };
     
     likes.push(interaction);
@@ -51,12 +80,17 @@ export const personalizationService = {
   // Track a dislike interaction
   trackDislike(event: TribeEvent): void {
     const dislikes = this.getDislikes();
+    const hour = this.parseTimeToHour(event.time);
+    const timeSlot = hour !== null ? this.getTimeSlot(hour) : undefined;
+    
     const interaction: EventInteraction = {
       eventId: event.id,
       category: event.category,
       location: event.location || undefined,
       title: event.title,
       timestamp: new Date().toISOString(),
+      eventTime: event.time,
+      timeSlot,
     };
     
     dislikes.push(interaction);
@@ -96,6 +130,8 @@ export const personalizationService = {
       dislikedLocations: {},
       likedKeywords: {},
       dislikedKeywords: {},
+      likedTimeSlots: { morning: 0, midday: 0, afternoon: 0, evening: 0, night: 0 },
+      dislikedTimeSlots: { morning: 0, midday: 0, afternoon: 0, evening: 0, night: 0 },
     };
 
     // Aggregate likes
@@ -107,6 +143,10 @@ export const personalizationService = {
       if (interaction.location) {
         preferences.likedLocations[interaction.location] = 
           (preferences.likedLocations[interaction.location] || 0) + 1;
+      }
+      if (interaction.timeSlot) {
+        preferences.likedTimeSlots[interaction.timeSlot] = 
+          (preferences.likedTimeSlots[interaction.timeSlot] || 0) + 1;
       }
       // Extract keywords from title
       const keywords = this.extractKeywords(interaction.title);
@@ -126,6 +166,10 @@ export const personalizationService = {
         preferences.dislikedLocations[interaction.location] = 
           (preferences.dislikedLocations[interaction.location] || 0) + 1;
       }
+      if (interaction.timeSlot) {
+        preferences.dislikedTimeSlots[interaction.timeSlot] = 
+          (preferences.dislikedTimeSlots[interaction.timeSlot] || 0) + 1;
+      }
       const keywords = this.extractKeywords(interaction.title);
       keywords.forEach(keyword => {
         preferences.dislikedKeywords[keyword] = 
@@ -138,26 +182,51 @@ export const personalizationService = {
 
   // Get aggregated preferences
   getPreferences(): UserPreferences {
+    const defaultPrefs: UserPreferences = {
+      likedCategories: {},
+      dislikedCategories: {},
+      likedLocations: {},
+      dislikedLocations: {},
+      likedKeywords: {},
+      dislikedKeywords: {},
+      likedTimeSlots: { morning: 0, midday: 0, afternoon: 0, evening: 0, night: 0 },
+      dislikedTimeSlots: { morning: 0, midday: 0, afternoon: 0, evening: 0, night: 0 },
+    };
     try {
       const stored = localStorage.getItem(PREFERENCES_KEY);
-      return stored ? JSON.parse(stored) : {
-        likedCategories: {},
-        dislikedCategories: {},
-        likedLocations: {},
-        dislikedLocations: {},
-        likedKeywords: {},
-        dislikedKeywords: {},
+      if (!stored) return defaultPrefs;
+      const parsed = JSON.parse(stored);
+      // Ensure time slots exist for backwards compatibility
+      return {
+        ...defaultPrefs,
+        ...parsed,
+        likedTimeSlots: { ...defaultPrefs.likedTimeSlots, ...parsed.likedTimeSlots },
+        dislikedTimeSlots: { ...defaultPrefs.dislikedTimeSlots, ...parsed.dislikedTimeSlots },
       };
     } catch {
-      return {
-        likedCategories: {},
-        dislikedCategories: {},
-        likedLocations: {},
-        dislikedLocations: {},
-        likedKeywords: {},
-        dislikedKeywords: {},
-      };
+      return defaultPrefs;
     }
+  },
+
+  // Get preferred time slots (sorted by preference)
+  getPreferredTimeSlots(): { slot: TimeSlotName; count: number }[] {
+    const preferences = this.getPreferences();
+    return (Object.entries(preferences.likedTimeSlots) as [TimeSlotName, number][])
+      .map(([slot, count]) => ({ slot, count }))
+      .filter(({ count }) => count > 0)
+      .sort((a, b) => b.count - a.count);
+  },
+
+  // Get time slot display name in German
+  getTimeSlotLabel(slot: TimeSlotName): string {
+    const labels: Record<TimeSlotName, string> = {
+      morning: 'Morgens (6-11 Uhr)',
+      midday: 'Mittags (11-14 Uhr)',
+      afternoon: 'Nachmittags (14-17 Uhr)',
+      evening: 'Abends (17-21 Uhr)',
+      night: 'Nachts (21-6 Uhr)',
+    };
+    return labels[slot];
   },
 
   // Get preferred categories from onboarding
