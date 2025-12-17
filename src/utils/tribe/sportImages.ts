@@ -16,6 +16,9 @@ const EVENT_IMAGES: Record<string, string> = {
   laufen: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=300&fit=crop',
   running: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=300&fit=crop',
   joggen: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=300&fit=crop',
+  lauftreff: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=300&fit=crop',
+  läufer: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=300&fit=crop',
+  teilzeit: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&h=300&fit=crop',
   hockey: 'https://images.unsplash.com/photo-1580748142189-df2dbda8fcd3?w=400&h=300&fit=crop',
   handball: 'https://images.unsplash.com/photo-1611251135345-18c56206b863?w=400&h=300&fit=crop',
   tischtennis: 'https://images.unsplash.com/photo-1534158914592-062992fbe900?w=400&h=300&fit=crop',
@@ -68,6 +71,7 @@ const EVENT_IMAGES: Record<string, string> = {
   comedy: 'https://images.unsplash.com/photo-1527224538127-2104bb71c51b?w=400&h=300&fit=crop',
   standup: 'https://images.unsplash.com/photo-1527224538127-2104bb71c51b?w=400&h=300&fit=crop',
   kabarett: 'https://images.unsplash.com/photo-1527224538127-2104bb71c51b?w=400&h=300&fit=crop',
+  karaoke: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&h=300&fit=crop',
   
   // Cinema
   cinemaxx: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&h=300&fit=crop',
