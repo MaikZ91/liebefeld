@@ -496,7 +496,8 @@ const TribeAppMain: React.FC<{
     }
 
     // Apply MIA filter if active (replaces old nexusFilter)
-    if (miaFilteredEventIds) {
+    // CRITICAL: Check for non-empty array - empty array should NOT filter
+    if (miaFilteredEventIds && miaFilteredEventIds.length > 0) {
       result = result.filter((e) => miaFilteredEventIds.includes(e.id));
     }
 
