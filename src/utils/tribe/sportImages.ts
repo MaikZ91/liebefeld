@@ -99,16 +99,28 @@ export const isHochschulsportEvent = (title?: string, organizer?: string): boole
 };
 
 /**
- * Get an appropriate image for an event based on keywords in the title
+ * Check if event location is a venue that should always use keyword images
  */
-export const getKeywordImage = (title?: string): string | null => {
-  if (!title) return null;
+const isKeywordVenue = (location?: string): boolean => {
+  if (!location) return false;
+  const lower = location.toLowerCase();
+  return lower.includes('cinemaxx') || 
+         lower.includes('vhs') || 
+         lower.includes('volkshochschule') ||
+         lower.includes('hochschulsport');
+};
+
+/**
+ * Get an appropriate image for an event based on keywords in title AND location
+ */
+export const getKeywordImage = (title?: string, location?: string): string | null => {
+  const combined = `${title || ''} ${location || ''}`.toLowerCase();
   
-  const lowerTitle = title.toLowerCase();
+  if (!combined) return null;
   
   // Check each keyword
   for (const [keyword, imageUrl] of Object.entries(EVENT_IMAGES)) {
-    if (lowerTitle.includes(keyword)) {
+    if (combined.includes(keyword)) {
       return imageUrl;
     }
   }
@@ -122,26 +134,22 @@ export const getKeywordImage = (title?: string): string | null => {
 export const getEventDisplayImage = (
   imageUrl?: string | null,
   title?: string,
-  organizer?: string
+  location?: string
 ): string | undefined => {
+  // For certain venues (cinemaxx, vhs, hochschulsport), always use keyword-specific images
+  if (isHochschulsportEvent(title, location) || isKeywordVenue(location)) {
+    return getKeywordImage(title, location) || DEFAULT_EVENT_IMAGE;
+  }
+  
   // If event has a real image that's not a placeholder, use it
   if (imageUrl && !imageUrl.includes('placeholder') && !imageUrl.includes('default')) {
-    // For Hochschulsport events, always use keyword-specific images (they often have generic logos)
-    if (isHochschulsportEvent(title, organizer)) {
-      return getKeywordImage(title) || DEFAULT_EVENT_IMAGE;
-    }
     return imageUrl;
   }
   
   // No image - try to find a keyword match
-  const keywordImage = getKeywordImage(title);
+  const keywordImage = getKeywordImage(title, location);
   if (keywordImage) {
     return keywordImage;
-  }
-  
-  // For Hochschulsport events without keyword match, use default sport image
-  if (isHochschulsportEvent(title, organizer)) {
-    return DEFAULT_EVENT_IMAGE;
   }
   
   return imageUrl || undefined;
