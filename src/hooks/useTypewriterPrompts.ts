@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { personalizationService } from '@/services/personalizationService';
 
 interface UserProfileContext {
   username?: string;
@@ -7,10 +8,10 @@ interface UserProfileContext {
   hobbies?: string[];
 }
 
-const TYPING_SPEED = 50; // ms per character
-const PAUSE_BEFORE_DELETE = 2000; // ms to show full text
-const DELETE_SPEED = 30; // ms per character when deleting
-const PAUSE_BETWEEN_PROMPTS = 500; // ms pause between prompts
+const TYPING_SPEED = 50;
+const PAUSE_BEFORE_DELETE = 2500;
+const DELETE_SPEED = 30;
+const PAUSE_BETWEEN_PROMPTS = 500;
 
 export const useTypewriterPrompts = (
   userProfile?: UserProfileContext,
@@ -22,116 +23,164 @@ export const useTypewriterPrompts = (
   const [isTyping, setIsTyping] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
 
-  // Generate hyper-personalized prompts
+  // Generate hyper-personalized prompts based on ALL user data
   const prompts = useMemo(() => {
     const generatedPrompts: string[] = [];
-    const hour = new Date().getHours();
-    const dayOfWeek = new Date().getDay();
+    const now = new Date();
+    const hour = now.getHours();
+    const dayOfWeek = now.getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     const isFriday = dayOfWeek === 5;
 
-    // Get previously asked questions from localStorage
-    const recentQueries = JSON.parse(localStorage.getItem('mia_recent_queries') || '[]').slice(0, 5);
+    // Get user behavior data
+    const likes = personalizationService.getLikes();
+    const preferences = personalizationService.getPreferences();
+    const recentQueries = JSON.parse(localStorage.getItem('mia_recent_queries') || '[]').slice(0, 10);
 
-    // Time-based personalized prompts
+    // Analyze liked event patterns
+    const likedEventDays: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    likes.forEach(like => {
+      try {
+        const likeDate = new Date(like.timestamp);
+        likedEventDays[likeDate.getDay()]++;
+      } catch {}
+    });
+    
+    const weekendLikes = likedEventDays[0] + likedEventDays[6] + likedEventDays[5];
+    const weekdayLikes = likedEventDays[1] + likedEventDays[2] + likedEventDays[3] + likedEventDays[4];
+    const prefersWeekend = weekendLikes > weekdayLikes;
+
+    // Get top liked categories
+    const topCategories = Object.entries(preferences.likedCategories)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3)
+      .map(([cat]) => cat);
+
+    // Get top liked locations
+    const topLocations = Object.entries(preferences.likedLocations)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 2)
+      .map(([loc]) => loc);
+
+    // Get top keywords from liked events
+    const topKeywords = Object.entries(preferences.likedKeywords)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3)
+      .map(([kw]) => kw);
+
+    // === HYPER-PERSONALIZED PROMPTS ===
+
+    // 1. Based on liked categories (highest priority)
+    topCategories.forEach(cat => {
+      const catLower = cat.toLowerCase();
+      if (catLower.includes('party') || catLower.includes('ausgehen') || catLower.includes('club')) {
+        if (isFriday || isWeekend) {
+          generatedPrompts.push('Wo wird heute gefeiert?');
+          generatedPrompts.push('Beste Clubs heute Nacht');
+        } else {
+          generatedPrompts.push('Party am Wochenende?');
+        }
+      }
+      if (catLower.includes('sport') || catLower.includes('fitness')) {
+        generatedPrompts.push('Sport Events diese Woche');
+        if (hour < 12) generatedPrompts.push('Morgen-Workout finden');
+      }
+      if (catLower.includes('konzert') || catLower.includes('musik')) {
+        generatedPrompts.push('Live Musik heute');
+        generatedPrompts.push('Konzerte diese Woche');
+      }
+      if (catLower.includes('kunst') || catLower.includes('kreativ')) {
+        generatedPrompts.push('Kreativ-Workshops');
+        generatedPrompts.push('Kunst Events entdecken');
+      }
+      if (catLower.includes('comedy') || catLower.includes('kabarett')) {
+        generatedPrompts.push('Comedy Shows');
+      }
+    });
+
+    // 2. Based on favorite locations from likes
+    topLocations.forEach(loc => {
+      generatedPrompts.push(`Was geht in ${loc}?`);
+    });
+
+    // 3. Based on user profile interests
+    userProfile?.interests?.forEach(interest => {
+      const intLower = interest.toLowerCase();
+      if (!topCategories.some(c => c.toLowerCase().includes(intLower))) {
+        if (intLower.includes('party')) generatedPrompts.push('Party-Highlights');
+        if (intLower.includes('sport')) generatedPrompts.push('Fitness & Sport');
+        if (intLower.includes('konzert')) generatedPrompts.push('Musik-Events');
+        if (intLower.includes('kreativ')) generatedPrompts.push('Kreativ werden');
+      }
+    });
+
+    // 4. Based on favorite locations from profile
+    userProfile?.favorite_locations?.forEach(loc => {
+      if (!topLocations.includes(loc)) {
+        generatedPrompts.push(`Events in ${loc}`);
+      }
+    });
+
+    // 5. Based on liked keywords
+    topKeywords.forEach(kw => {
+      if (kw.length > 4) {
+        generatedPrompts.push(`Mehr ${kw} Events`);
+      }
+    });
+
+    // 6. Based on recent queries (follow-up suggestions)
+    if (recentQueries.length > 0) {
+      const lastQuery = recentQueries[0].toLowerCase();
+      if (lastQuery.includes('wochenende')) {
+        generatedPrompts.push('Nächstes Wochenende?');
+      }
+      if (lastQuery.includes('heute')) {
+        generatedPrompts.push('Und morgen?');
+      }
+    }
+
+    // 7. Time-based personalization
     if (hour >= 6 && hour < 12) {
       generatedPrompts.push('Was geht heute Abend?');
       generatedPrompts.push('Plane meinen Tag');
     } else if (hour >= 12 && hour < 17) {
       generatedPrompts.push('Events für heute Abend');
-      generatedPrompts.push('Was kann ich heute erleben?');
     } else if (hour >= 17 && hour < 21) {
-      generatedPrompts.push('Was geht jetzt gerade?');
-      generatedPrompts.push('Spontane Ideen für heute');
+      generatedPrompts.push('Was geht jetzt?');
+      generatedPrompts.push('Spontane Ideen');
     } else {
       generatedPrompts.push('Late Night Events');
-      generatedPrompts.push('Was geht noch?');
     }
 
-    // Weekend/Friday specific
+    // 8. Day-based personalization (based on user's like patterns)
+    if (prefersWeekend && !isWeekend && !isFriday) {
+      generatedPrompts.push('Was geht am Wochenende?');
+      generatedPrompts.push('Wochenend-Vorschau');
+    } else if (!prefersWeekend && (isWeekend || isFriday)) {
+      generatedPrompts.push('Entspannter Abend heute?');
+    }
+
     if (isWeekend) {
       generatedPrompts.push('Wochenend-Highlights');
-      generatedPrompts.push('Die besten Events heute');
     } else if (isFriday) {
-      generatedPrompts.push('Party heute Nacht?');
       generatedPrompts.push('Start ins Wochenende');
     }
 
-    // Interest-based prompts
-    if (userProfile?.interests?.length) {
-      userProfile.interests.forEach(interest => {
-        const interestLower = interest.toLowerCase();
-        if (interestLower.includes('party') || interestLower.includes('ausgehen')) {
-          generatedPrompts.push('Beste Clubs heute');
-          generatedPrompts.push('Wo wird gefeiert?');
-        }
-        if (interestLower.includes('sport')) {
-          generatedPrompts.push('Sport Events diese Woche');
-          generatedPrompts.push('Fitness Veranstaltungen');
-        }
-        if (interestLower.includes('kunst') || interestLower.includes('kultur')) {
-          generatedPrompts.push('Kunst & Kultur entdecken');
-          generatedPrompts.push('Ausstellungen in der Nähe');
-        }
-        if (interestLower.includes('musik') || interestLower.includes('konzert')) {
-          generatedPrompts.push('Live Musik heute');
-          generatedPrompts.push('Welche Konzerte gibt es?');
-        }
-        if (interestLower.includes('food') || interestLower.includes('essen')) {
-          generatedPrompts.push('Food Events & Märkte');
-        }
-        if (interestLower.includes('comedy')) {
-          generatedPrompts.push('Comedy Shows diese Woche');
-        }
-      });
-    }
-
-    // Location-based prompts
-    if (userProfile?.favorite_locations?.length) {
-      const location = userProfile.favorite_locations[0];
-      generatedPrompts.push(`Was geht in ${location}?`);
-    }
-
-    // City-based prompts
+    // 9. City-based
     if (city) {
       generatedPrompts.push(`Geheimtipps in ${city}`);
     }
 
-    // Hobby-based prompts
-    if (userProfile?.hobbies?.length) {
-      const hobby = userProfile.hobbies[0];
-      generatedPrompts.push(`${hobby} Events finden`);
+    // 10. Fallbacks (only if we have few personalized prompts)
+    if (generatedPrompts.length < 5) {
+      generatedPrompts.push('Mein perfekter Tag');
+      generatedPrompts.push('Überrasch mich!');
+      generatedPrompts.push('Was geht heute?');
     }
 
-    // Follow-up prompts based on recent queries
-    if (recentQueries.length > 0) {
-      const lastQuery = recentQueries[0];
-      if (lastQuery.toLowerCase().includes('party')) {
-        generatedPrompts.push('Mehr Parties zeigen');
-      }
-      if (lastQuery.toLowerCase().includes('sport')) {
-        generatedPrompts.push('Weitere Sport Events');
-      }
-    }
-
-    // Category-based prompts from available events
-    if (eventCategories?.length) {
-      if (eventCategories.includes('comedy')) {
-        generatedPrompts.push('Stand-up Comedy');
-      }
-      if (eventCategories.includes('theater')) {
-        generatedPrompts.push('Theater heute');
-      }
-    }
-
-    // Generic fallbacks
-    generatedPrompts.push('Mein perfekter Tag');
-    generatedPrompts.push('Überrasch mich!');
-    generatedPrompts.push('Events mit Freunden');
-
-    // Return unique prompts, shuffled for variety
+    // Return unique prompts, shuffled
     const uniquePrompts = [...new Set(generatedPrompts)];
-    return uniquePrompts.sort(() => Math.random() - 0.5).slice(0, 10);
+    return uniquePrompts.sort(() => Math.random() - 0.5).slice(0, 12);
   }, [userProfile, eventCategories, city]);
 
   const currentPrompt = prompts[currentPromptIndex] || '';
@@ -143,25 +192,21 @@ export const useTypewriterPrompts = (
     let timeout: NodeJS.Timeout;
 
     if (isTyping) {
-      // Typing phase
       if (displayText.length < currentPrompt.length) {
         timeout = setTimeout(() => {
           setDisplayText(currentPrompt.slice(0, displayText.length + 1));
         }, TYPING_SPEED);
       } else {
-        // Finished typing, pause then start deleting
         timeout = setTimeout(() => {
           setIsTyping(false);
         }, PAUSE_BEFORE_DELETE);
       }
     } else {
-      // Deleting phase
       if (displayText.length > 0) {
         timeout = setTimeout(() => {
           setDisplayText(displayText.slice(0, -1));
         }, DELETE_SPEED);
       } else {
-        // Finished deleting, move to next prompt
         timeout = setTimeout(() => {
           setCurrentPromptIndex((prev) => (prev + 1) % prompts.length);
           setIsTyping(true);
@@ -191,5 +236,6 @@ export const useTypewriterPrompts = (
     resume,
     isPaused,
     getCurrentFullPrompt,
+    allPrompts: prompts, // Export all prompts for suggestions
   };
 };

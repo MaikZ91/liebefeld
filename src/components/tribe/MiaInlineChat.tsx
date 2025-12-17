@@ -3,6 +3,7 @@ import { getTribeResponse } from '@/services/tribe/aiHelpers';
 import { TribeEvent, ChatMessage } from '@/types/tribe';
 import { ArrowUp, X, Sparkles, Heart } from 'lucide-react';
 import { useTypewriterPrompts } from '@/hooks/useTypewriterPrompts';
+import { usePersonalizedSuggestions } from '@/hooks/usePersonalizedSuggestions';
 import { OnboardingStep } from '@/hooks/useOnboardingFlow';
 
 const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150";
@@ -119,11 +120,14 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
   }, [events]);
 
   // Typewriter hook for personalized prompts
-  const { displayText, currentFullPrompt, pause, resume } = useTypewriterPrompts(
+  const { displayText, currentFullPrompt, pause, resume, allPrompts } = useTypewriterPrompts(
     userProfile,
     eventCategories,
     city
   );
+
+  // Personalized suggestions for when input is focused
+  const personalizedSuggestions = usePersonalizedSuggestions(userProfile, city);
 
   // Check for new events (created within last 7 days)
   const newEvents = useMemo(() => {
@@ -136,36 +140,6 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
       return createdAt >= sevenDaysAgo;
     });
   }, [events]);
-
-  // Generate personalized suggestions based on user profile and upcoming events
-  const suggestions = useMemo(() => {
-    const baseSuggestions: string[] = [];
-    
-    baseSuggestions.push("Was geht am Wochenende?");
-    baseSuggestions.push("Mein perfekter Tag");
-    baseSuggestions.push("Plane meinen Tag");
-    
-    if (userProfile?.interests?.length) {
-      const interest = userProfile.interests[0];
-      if (interest.toLowerCase().includes('party') || interest.toLowerCase().includes('ausgehen')) {
-        baseSuggestions.push("Beste Parties heute");
-      }
-      if (interest.toLowerCase().includes('sport')) {
-        baseSuggestions.push("Sport Events diese Woche");
-      }
-    }
-    
-    if (userProfile?.favorite_locations?.length) {
-      const location = userProfile.favorite_locations[0];
-      baseSuggestions.push(`Events in ${location}`);
-    }
-    
-    const categories = new Set(events.map(e => e.category?.toLowerCase()).filter(Boolean));
-    if (categories.has('comedy')) baseSuggestions.push("Comedy Shows");
-    if (categories.has('konzert') || categories.has('concert')) baseSuggestions.push("Konzerte diese Woche");
-    
-    return [...new Set(baseSuggestions)].slice(0, 6);
-  }, [userProfile, events]);
 
   const saveRecentQuery = (query: string) => {
     const recentQueries = JSON.parse(localStorage.getItem('mia_recent_queries') || '[]');
@@ -213,7 +187,6 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
 
   const handleInputFocus = () => {
     setIsInputFocused(true);
-    setIsExpanded(true);
     pause();
   };
 
@@ -225,9 +198,8 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
   };
 
   const handleTypewriterClick = () => {
-    if (currentFullPrompt && !input) {
-      handleSend(currentFullPrompt);
-    }
+    // Just focus input, don't auto-trigger
+    inputRef.current?.focus();
   };
 
   const handleClear = () => {
@@ -446,7 +418,7 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
                 className="w-full bg-black border border-white/[0.08] focus:border-gold/50 text-white text-sm rounded-full py-2.5 px-4 pr-10 outline-none transition-all"
               />
               
-              {/* Typewriter Overlay - clickable when no user input */}
+              {/* Typewriter Overlay - clickable to focus input */}
               {!input && !isInputFocused && (
                 <div 
                   onClick={handleTypewriterClick}
@@ -477,14 +449,14 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
             </div>
           </div>
 
-          {/* Quick Suggestion Chips - only show when focused and not onboarding */}
+          {/* Quick Suggestion Chips - show when focused */}
           {isInputFocused && !isOnboarding && (
             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 animate-fadeIn">
-              {suggestions.slice(0, 4).map((suggestion) => (
+              {personalizedSuggestions.map((suggestion) => (
                 <button
                   key={suggestion}
                   onClick={() => handleSend(suggestion)}
-                  className="px-3 py-1.5 bg-zinc-900/50 border border-white/10 text-zinc-500 text-xs whitespace-nowrap rounded-full hover:border-gold/30 hover:text-gold transition-all"
+                  className="px-3 py-1.5 bg-zinc-900/50 border border-white/10 text-zinc-400 text-xs whitespace-nowrap rounded-full hover:border-gold/30 hover:text-gold transition-all"
                 >
                   {suggestion}
                 </button>
