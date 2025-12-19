@@ -44,6 +44,60 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_articles: {
+        Row: {
+          category: string
+          city: string | null
+          content: string
+          created_at: string
+          event_ids: string[] | null
+          excerpt: string | null
+          featured_image: string | null
+          id: string
+          is_published: boolean | null
+          published_at: string | null
+          slug: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          views: number | null
+        }
+        Insert: {
+          category?: string
+          city?: string | null
+          content: string
+          created_at?: string
+          event_ids?: string[] | null
+          excerpt?: string | null
+          featured_image?: string | null
+          id?: string
+          is_published?: boolean | null
+          published_at?: string | null
+          slug: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          views?: number | null
+        }
+        Update: {
+          category?: string
+          city?: string | null
+          content?: string
+          created_at?: string
+          event_ids?: string[] | null
+          excerpt?: string | null
+          featured_image?: string | null
+          id?: string
+          is_published?: boolean | null
+          published_at?: string | null
+          slug?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          views?: number | null
+        }
+        Relationships: []
+      }
       chat_groups: {
         Row: {
           created_at: string
