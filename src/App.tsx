@@ -37,6 +37,10 @@ const KunstBielefeld = lazy(() => import("./pages/seo/KunstBielefeld"));
 const EventsHeute = lazy(() => import("./pages/seo/EventsHeute"));
 const EventsWochenende = lazy(() => import("./pages/seo/EventsWochenende"));
 
+// Blog Pages
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogArticle = lazy(() => import("./pages/BlogArticle"));
+
 const queryClient = new QueryClient();
 
 // Separate component for initialization that runs inside Router context
@@ -179,6 +183,10 @@ function App() {
                   <Route path="/kunst-bielefeld" element={<KunstBielefeld />} />
                   <Route path="/events-heute" element={<EventsHeute />} />
                   <Route path="/events-wochenende" element={<EventsWochenende />} />
+                  
+                  {/* Blog Pages */}
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="/blog/:slug" element={<BlogArticle />} />
                   
                   {/* Layout-wrapped pages */}
                   <Route path="/users" element={<Layout><UserDirectory open={true} onOpenChange={() => {}} onSelectUser={() => {}} /></Layout>} />
