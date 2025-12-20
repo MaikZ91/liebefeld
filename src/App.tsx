@@ -41,6 +41,7 @@ const EventsWochenende = lazy(() => import("./pages/seo/EventsWochenende"));
 // Blog Pages
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogArticle = lazy(() => import("./pages/BlogArticle"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 
 const queryClient = new QueryClient();
 
@@ -191,6 +192,9 @@ function App() {
                   {/* Blog Pages */}
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/blog/:slug" element={<BlogArticle />} />
+                  
+                  {/* Admin Dashboard */}
+                  <Route path="/admin" element={<AdminDashboard />} />
                   
                   {/* Layout-wrapped pages */}
                   <Route path="/users" element={<Layout><UserDirectory open={true} onOpenChange={() => {}} onSelectUser={() => {}} /></Layout>} />
