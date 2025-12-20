@@ -434,6 +434,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activity_logs: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_target: string | null
+          event_type: string
+          id: string
+          page_path: string
+          scroll_depth: number | null
+          session_id: string
+          time_on_page: number | null
+          username: string
+          viewport_height: number | null
+          viewport_width: number | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_target?: string | null
+          event_type: string
+          id?: string
+          page_path: string
+          scroll_depth?: number | null
+          session_id: string
+          time_on_page?: number | null
+          username: string
+          viewport_height?: number | null
+          viewport_width?: number | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_target?: string | null
+          event_type?: string
+          id?: string
+          page_path?: string
+          scroll_depth?: number | null
+          session_id?: string
+          time_on_page?: number | null
+          username?: string
+          viewport_height?: number | null
+          viewport_width?: number | null
+        }
+        Relationships: []
+      }
       user_challenges: {
         Row: {
           challenge_text: string

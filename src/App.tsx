@@ -14,6 +14,7 @@ import { Layout } from './components/layouts/Layout';
 import OnboardingManager from './components/OnboardingManager';
 import { saveLastRoute, getLastRoute } from './utils/lastRouteStorage';
 import { USERNAME_KEY } from './types/chatTypes';
+import { useActivityTracking } from './hooks/useActivityTracking';
 
 // Lazy load route components for code splitting and performance optimization
 const Index = lazy(() => import("./pages/Index"));
@@ -69,11 +70,14 @@ function AppInitializer() {
   return null;
 }
 
-// Component to track current route and handle initial navigation
+// Component to track current route, handle initial navigation, and activity tracking
 const RouteTracker = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [hasNavigatedToLastRoute, setHasNavigatedToLastRoute] = useState(false);
+
+  // Initialize activity tracking
+  useActivityTracking();
 
   // Track current route
   useEffect(() => {
