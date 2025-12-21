@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Smartphone } from 'lucide-react';
 
-const DISMISSED_KEY = 'tribe_app_download_dismissed';
-const WELCOME_COMPLETED_KEY = 'tribe_welcome_completed';
-const SHOW_DELAY_AFTER_WELCOME_MS = 3000; // 3 seconds after welcome screen
+const DISMISSED_KEY = 'app_download_dismissed';
+const SHOW_DELAY_MS = 3000; // 3 seconds after page load
 
 export const AppDownloadPrompt: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -13,6 +12,13 @@ export const AppDownloadPrompt: React.FC = () => {
     // Check if user has already dismissed the prompt
     const dismissed = localStorage.getItem(DISMISSED_KEY);
     if (dismissed) {
+      return;
+    }
+
+    // Check if already running as PWA/standalone
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+      || (window.navigator as any).standalone === true;
+    if (isStandalone) {
       return;
     }
 
@@ -27,25 +33,12 @@ export const AppDownloadPrompt: React.FC = () => {
       return;
     }
 
-    // Check if welcome screen was already completed
-    const welcomeCompleted = localStorage.getItem(WELCOME_COMPLETED_KEY);
-    if (welcomeCompleted) {
-      // Welcome already completed, show after short delay
-      const timer = setTimeout(() => {
-        setIsVisible(true);
-      }, SHOW_DELAY_AFTER_WELCOME_MS);
-      return () => clearTimeout(timer);
-    }
+    // Show after short delay
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, SHOW_DELAY_MS);
 
-    // Listen for welcome completion event
-    const handleWelcomeComplete = () => {
-      setTimeout(() => {
-        setIsVisible(true);
-      }, SHOW_DELAY_AFTER_WELCOME_MS);
-    };
-
-    window.addEventListener('tribe_welcome_completed', handleWelcomeComplete);
-    return () => window.removeEventListener('tribe_welcome_completed', handleWelcomeComplete);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleDismiss = () => {
