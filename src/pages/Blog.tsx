@@ -83,7 +83,7 @@ export default function Blog() {
         url="https://liebefeld.lovable.app/blog"
       />
 
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background overflow-y-auto overflow-x-hidden pb-24">
         {/* Hero Section */}
         <div className="relative overflow-hidden border-b border-border/30 bg-gradient-to-b from-primary/5 to-background">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
