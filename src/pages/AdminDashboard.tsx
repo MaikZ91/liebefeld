@@ -16,6 +16,7 @@ import { ActivityHeatmap } from '@/components/admin/ActivityHeatmap';
 import { UserJourneyAnalysis } from '@/components/admin/UserJourneyAnalysis';
 import { LiveActivityFeed } from '@/components/admin/LiveActivityFeed';
 import { TopPagesChart } from '@/components/admin/TopPagesChart';
+import { UserRanking } from '@/components/admin/UserRanking';
 
 interface ActivityStats {
   totalSessions: number;
@@ -81,18 +82,20 @@ export default function AdminDashboard() {
       
       const uniqueSessions = new Set(sessions?.map(s => s.session_id) || []);
 
-      // Page views in last 24h
+      // Page views in last 24h (excluding /admin)
       const { count: pageViews } = await supabase
         .from('user_activity_logs')
         .select('*', { count: 'exact', head: true })
         .eq('event_type', 'page_view')
+        .not('page_path', 'like', '%/admin%')
         .gte('created_at', last24h.toISOString());
 
-      // Clicks in last 24h
+      // Clicks in last 24h (excluding /admin)
       const { count: clicks } = await supabase
         .from('user_activity_logs')
         .select('*', { count: 'exact', head: true })
         .eq('event_type', 'click')
+        .not('page_path', 'like', '%/admin%')
         .gte('created_at', last24h.toISOString());
 
       // Avg time on page
@@ -279,8 +282,9 @@ export default function AdminDashboard() {
 
         {/* Tabs for detailed views */}
         <Tabs defaultValue="live" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="live">Live Feed</TabsTrigger>
+            <TabsTrigger value="ranking">Ranking</TabsTrigger>
             <TabsTrigger value="heatmap">Heatmap</TabsTrigger>
             <TabsTrigger value="journey">User Journey</TabsTrigger>
             <TabsTrigger value="pages">Top Seiten</TabsTrigger>
@@ -288,6 +292,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="live" className="mt-4">
             <LiveActivityFeed />
+          </TabsContent>
+
+          <TabsContent value="ranking" className="mt-4">
+            <UserRanking />
           </TabsContent>
 
           <TabsContent value="heatmap" className="mt-4">
