@@ -10,7 +10,8 @@ import BetaTesterBanner from '@/components/BetaTesterBanner';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { QrCode } from 'lucide-react';
-import { useEventContext } from '@/contexts/EventContext'; // Import useEventContext
+import { useEventContext } from '@/contexts/EventContext';
+import { AppDownloadPrompt } from '@/components/tribe/AppDownloadPrompt';
 
 type AnimationType = 'char' | 'word' | 'whole';
 
@@ -277,6 +278,9 @@ const Index = () => {
         onOpenChange={setTestModalOpen} 
         whatsappUrl={WHATSAPP_URL} 
       />
+
+      {/* App Download/Install Prompt for mobile */}
+      <AppDownloadPrompt />
     </div>
   );
 };
