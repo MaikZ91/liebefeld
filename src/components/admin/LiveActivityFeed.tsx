@@ -8,6 +8,7 @@ import { MousePointer, Eye, ArrowDown, LogOut, Zap } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ElementPreview } from './ElementPreview';
 
 interface ActivityLog {
   id: string;
@@ -70,6 +71,7 @@ export function LiveActivityFeed() {
       const { data, error } = await supabase
         .from('user_activity_logs')
         .select('*')
+        .not('page_path', 'like', '%/admin%')
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -82,20 +84,30 @@ export function LiveActivityFeed() {
     }
   };
 
-  const formatEventDetails = (activity: ActivityLog) => {
+  const formatUsername = (username: string): string => {
+    if (username.startsWith('Guest_')) {
+      return username;
+    }
+    if (username.toLowerCase() === 'anonymous') {
+      return 'Anonymous';
+    }
+    return username;
+  };
+
+  const formatEventDetails = (activity: ActivityLog): { text: string; showPreview: boolean } => {
     switch (activity.event_type) {
       case 'click':
-        return activity.event_target || 'Element geklickt';
+        return { text: 'Klickte auf:', showPreview: true };
       case 'page_view':
-        return `Besuchte ${activity.page_path}`;
+        return { text: `Besuchte ${activity.page_path}`, showPreview: false };
       case 'scroll':
-        return `Scrollte zu ${activity.scroll_depth}%`;
+        return { text: `Scrollte zu ${activity.scroll_depth}%`, showPreview: false };
       case 'page_leave':
-        return `Verließ nach ${activity.time_on_page}s`;
+        return { text: `Verließ nach ${activity.time_on_page}s`, showPreview: false };
       case 'interaction':
-        return activity.event_target || 'Interaktion';
+        return { text: 'Interagierte mit:', showPreview: true };
       default:
-        return activity.event_type;
+        return { text: activity.event_type, showPreview: false };
     }
   };
 
@@ -144,11 +156,14 @@ export function LiveActivityFeed() {
 
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">
-                    {activity.username}
+                    {formatUsername(activity.username)}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {formatEventDetails(activity)}
-                  </p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="truncate">{formatEventDetails(activity).text}</span>
+                    {formatEventDetails(activity).showPreview && activity.event_target && (
+                      <ElementPreview target={activity.event_target} />
+                    )}
+                  </div>
                 </div>
 
                 <div className="text-right">
