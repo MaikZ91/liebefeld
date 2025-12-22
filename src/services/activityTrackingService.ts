@@ -75,7 +75,14 @@ class ActivityTrackingService {
     };
   }
 
+  private isAdminPage(): boolean {
+    return this.currentPath.includes('/admin') || window.location.pathname.includes('/admin');
+  }
+
   async logEvent(event: ActivityEvent): Promise<void> {
+    // Skip tracking on admin pages entirely
+    if (this.isAdminPage()) return;
+
     const logEntry = this.createLogEntry(event);
 
     // Queue events for batch insert
