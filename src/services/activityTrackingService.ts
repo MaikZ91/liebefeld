@@ -218,8 +218,8 @@ class ActivityTrackingService {
     // Get meaningful target info
     const targetInfo = this.getTargetInfo(target);
     
-    // Only track if we have meaningful info (not just CSS classes)
-    if (targetInfo.name && !this.isJustCssClass(targetInfo.name)) {
+    // Only track if we have meaningful, readable text
+    if (targetInfo.name && this.isMeaningfulText(targetInfo.name)) {
       this.trackClick(targetInfo.name, {
         text: targetInfo.text
       });
@@ -227,18 +227,57 @@ class ActivityTrackingService {
   }
 
   private isJustCssClass(name: string): boolean {
-    // Filter out CSS class patterns like "p-1", "w-7", "flex", "relative" etc.
+    const cleaned = name.trim().toLowerCase();
+    
+    // Must be at least 2 characters and contain at least one letter
+    if (cleaned.length < 2 || !/[a-zäöü]/i.test(cleaned)) {
+      return true;
+    }
+    
+    // Filter out CSS/Tailwind class patterns
     const cssPatterns = [
-      /^[a-z]+-\d+$/,           // p-1, w-7, m-4
-      /^(flex|grid|block|inline|relative|absolute|fixed|sticky)$/,
-      /^(hidden|visible|overflow|cursor|pointer)$/,
-      /^(text|bg|border|rounded|shadow|opacity)-/,
-      /^(hover|focus|active):/,
-      /^\[object/,              // [object Object] etc.
-      /^radix-/,                // radix-r0 etc.
-      /^:r\d+:/                 // :r1: etc.
+      /^[a-z]{1,2}-\d+$/,        // p-1, w-7, m-4, h-6
+      /^-?[a-z]{1,4}-\d+$/,      // -mt-2, gap-4
+      /^[a-z]+-\[.+\]$/,         // w-[100px]
+      /^(flex|grid|block|inline|relative|absolute|fixed|sticky|static)$/i,
+      /^(hidden|visible|overflow|cursor|pointer|select|resize)$/i,
+      /^(text|bg|border|rounded|shadow|opacity|ring|outline)-/i,
+      /^(hover|focus|active|disabled|group|peer)[:_-]/i,
+      /^(min|max)-(w|h)-/i,
+      /^(space|gap|p|m|px|py|mx|my|pl|pr|pt|pb|ml|mr|mt|mb)-/i,
+      /^(w|h|top|left|right|bottom|inset)-/i,
+      /^(font|leading|tracking|truncate|whitespace|break)-/i,
+      /^(items|justify|self|content|place)-/i,
+      /^(col|row|order|z|duration|ease|transition|transform|rotate|scale|translate)-/i,
+      /^\[object/i,              // [object Object] etc.
+      /^radix-/i,                // radix-r0 etc.
+      /^:r\d+:/,                 // :r1: etc.
+      /^lucide-/i,               // lucide icons
+      /^svg$/i,
+      /^path$/i,
+      /^(div|span|section|article|aside|nav|header|footer|main|ul|ol|li)$/i,
     ];
-    return cssPatterns.some(pattern => pattern.test(name.trim().toLowerCase()));
+    
+    return cssPatterns.some(pattern => pattern.test(cleaned));
+  }
+
+  private isMeaningfulText(text: string): boolean {
+    const cleaned = text.trim();
+    
+    // Must be at least 2 characters
+    if (cleaned.length < 2) return false;
+    
+    // Must contain at least one word character (letter)
+    if (!/[a-zA-ZäöüßÄÖÜ]/.test(cleaned)) return false;
+    
+    // Should not look like a CSS class (single word with dashes and numbers)
+    if (/^[a-z]+-\d+$/i.test(cleaned)) return false;
+    if (/^[a-z]-[a-z]+$/i.test(cleaned)) return false;
+    
+    // Check if it's a known CSS utility
+    if (this.isJustCssClass(cleaned)) return false;
+    
+    return true;
   }
 
   private getTargetInfo(el: HTMLElement): { name: string; text: string } {
