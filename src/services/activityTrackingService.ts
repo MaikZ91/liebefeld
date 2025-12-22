@@ -218,66 +218,107 @@ class ActivityTrackingService {
     // Get meaningful target info
     const targetInfo = this.getTargetInfo(target);
     
-    this.trackClick(targetInfo.name, {
-      tagName: target.tagName,
-      className: target.className,
-      id: target.id,
-      text: targetInfo.text,
-      href: (target as HTMLAnchorElement).href || null
-    });
+    // Only track if we have meaningful info (not just CSS classes)
+    if (targetInfo.name && !this.isJustCssClass(targetInfo.name)) {
+      this.trackClick(targetInfo.name, {
+        text: targetInfo.text
+      });
+    }
+  }
+
+  private isJustCssClass(name: string): boolean {
+    // Filter out CSS class patterns like "p-1", "w-7", "flex", "relative" etc.
+    const cssPatterns = [
+      /^[a-z]+-\d+$/,           // p-1, w-7, m-4
+      /^(flex|grid|block|inline|relative|absolute|fixed|sticky)$/,
+      /^(hidden|visible|overflow|cursor|pointer)$/,
+      /^(text|bg|border|rounded|shadow|opacity)-/,
+      /^(hover|focus|active):/,
+      /^\[object/,              // [object Object] etc.
+      /^radix-/,                // radix-r0 etc.
+      /^:r\d+:/                 // :r1: etc.
+    ];
+    return cssPatterns.some(pattern => pattern.test(name.trim().toLowerCase()));
   }
 
   private getTargetInfo(el: HTMLElement): { name: string; text: string } {
-    // Try to get meaningful text from the element
-    const ariaLabel = el.getAttribute('aria-label');
-    const dataAction = el.getAttribute('data-action');
-    const title = el.getAttribute('title');
+    // Walk up the DOM to find the closest interactive element with meaningful text
+    let currentEl: HTMLElement | null = el;
     
-    // Get clean text content (exclude nested interactive elements)
-    let buttonText = '';
-    const clonedEl = el.cloneNode(true) as HTMLElement;
-    // Remove SVG icons from text calculation
-    clonedEl.querySelectorAll('svg, script, style').forEach(e => e.remove());
-    buttonText = clonedEl.textContent?.trim().slice(0, 50) || '';
-    
-    // Check parent elements for context if this element has no text
-    let parentText = '';
-    if (!buttonText && el.parentElement) {
-      const parent = el.parentElement.cloneNode(true) as HTMLElement;
-      parent.querySelectorAll('svg, script, style').forEach(e => e.remove());
-      parentText = parent.textContent?.trim().slice(0, 50) || '';
+    for (let i = 0; i < 5 && currentEl; i++) {
+      const info = this.extractElementInfo(currentEl);
+      if (info.name && !this.isJustCssClass(info.name)) {
+        return info;
+      }
+      currentEl = currentEl.parentElement;
     }
 
-    // Get element type for context
+    // Last resort: describe what type of element was clicked
     const tagName = el.tagName.toLowerCase();
     const role = el.getAttribute('role');
-    const type = el.getAttribute('type');
     
-    // Build meaningful name - prioritize actual text content
-    let name = '';
+    if (role === 'button' || tagName === 'button') {
+      return { name: 'Button (ohne Text)', text: '' };
+    } else if (tagName === 'a') {
+      return { name: 'Link', text: '' };
+    } else if (tagName === 'input') {
+      const inputType = el.getAttribute('type') || 'text';
+      return { name: `Eingabefeld (${inputType})`, text: '' };
+    } else if (tagName === 'img') {
+      return { name: 'Bild', text: '' };
+    }
     
-    if (ariaLabel) {
-      name = ariaLabel;
-    } else if (buttonText) {
-      // Use the actual button/element text
-      name = buttonText;
-    } else if (title) {
-      name = title;
-    } else if (dataAction) {
-      name = dataAction;
-    } else if (parentText) {
-      name = parentText;
-    } else {
-      // Fallback to describing element type
-      const typeStr = role || tagName;
-      if (type) {
-        name = `${typeStr} (${type})`;
-      } else {
-        name = typeStr;
+    return { name: '', text: '' };
+  }
+
+  private extractElementInfo(el: HTMLElement): { name: string; text: string } {
+    // Priority 1: aria-label (most reliable)
+    const ariaLabel = el.getAttribute('aria-label');
+    if (ariaLabel && ariaLabel.length > 1) {
+      return { name: ariaLabel, text: ariaLabel };
+    }
+    
+    // Priority 2: title attribute
+    const title = el.getAttribute('title');
+    if (title && title.length > 1) {
+      return { name: title, text: title };
+    }
+    
+    // Priority 3: data-action
+    const dataAction = el.getAttribute('data-action');
+    if (dataAction && dataAction.length > 1) {
+      return { name: dataAction, text: dataAction };
+    }
+    
+    // Priority 4: Text content (cleaned)
+    const textContent = this.getCleanTextContent(el);
+    if (textContent && textContent.length > 1) {
+      return { name: textContent, text: textContent };
+    }
+    
+    // Priority 5: alt text for images
+    if (el.tagName.toLowerCase() === 'img') {
+      const alt = el.getAttribute('alt');
+      if (alt && alt.length > 1) {
+        return { name: alt, text: alt };
       }
     }
+    
+    return { name: '', text: '' };
+  }
 
-    return { name, text: buttonText || parentText };
+  private getCleanTextContent(el: HTMLElement): string {
+    try {
+      const clone = el.cloneNode(true) as HTMLElement;
+      // Remove non-text elements
+      clone.querySelectorAll('svg, script, style, img, video, audio, canvas, iframe').forEach(e => e.remove());
+      
+      const text = clone.textContent?.trim() || '';
+      // Return first 50 chars, clean up whitespace
+      return text.replace(/\s+/g, ' ').slice(0, 50);
+    } catch {
+      return '';
+    }
   }
 
   stopTracking(): void {
