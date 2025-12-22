@@ -8,7 +8,7 @@ import { MousePointer, Eye, ArrowDown, LogOut, Zap } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ElementPreview } from './ElementPreview';
+import type { Json } from '@/integrations/supabase/types';
 
 interface ActivityLog {
   id: string;
@@ -16,6 +16,7 @@ interface ActivityLog {
   session_id: string;
   event_type: string;
   event_target: string | null;
+  event_data: Json | null;
   page_path: string;
   scroll_depth: number | null;
   time_on_page: number | null;
@@ -158,10 +159,12 @@ export function LiveActivityFeed() {
                   <p className="text-sm font-medium truncate">
                     {formatUsername(activity.username)}
                   </p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="truncate">{formatEventDetails(activity).text}</span>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                    <span>{formatEventDetails(activity).text}</span>
                     {formatEventDetails(activity).showPreview && activity.event_target && (
-                      <ElementPreview target={activity.event_target} />
+                      <span className="font-medium text-foreground bg-muted px-2 py-0.5 rounded text-xs max-w-[200px] truncate">
+                        "{activity.event_target}"
+                      </span>
                     )}
                   </div>
                 </div>

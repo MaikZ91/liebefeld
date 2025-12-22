@@ -228,17 +228,56 @@ class ActivityTrackingService {
   }
 
   private getTargetInfo(el: HTMLElement): { name: string; text: string } {
-    // Try to get a meaningful name for the clicked element
+    // Try to get meaningful text from the element
     const ariaLabel = el.getAttribute('aria-label');
     const dataAction = el.getAttribute('data-action');
-    const buttonText = el.textContent?.trim().slice(0, 50);
-    const id = el.id;
-    const className = el.className?.toString().split(' ')[0];
+    const title = el.getAttribute('title');
+    
+    // Get clean text content (exclude nested interactive elements)
+    let buttonText = '';
+    const clonedEl = el.cloneNode(true) as HTMLElement;
+    // Remove SVG icons from text calculation
+    clonedEl.querySelectorAll('svg, script, style').forEach(e => e.remove());
+    buttonText = clonedEl.textContent?.trim().slice(0, 50) || '';
+    
+    // Check parent elements for context if this element has no text
+    let parentText = '';
+    if (!buttonText && el.parentElement) {
+      const parent = el.parentElement.cloneNode(true) as HTMLElement;
+      parent.querySelectorAll('svg, script, style').forEach(e => e.remove());
+      parentText = parent.textContent?.trim().slice(0, 50) || '';
+    }
 
-    const name = ariaLabel || dataAction || id || className || el.tagName.toLowerCase();
-    const text = buttonText || '';
+    // Get element type for context
+    const tagName = el.tagName.toLowerCase();
+    const role = el.getAttribute('role');
+    const type = el.getAttribute('type');
+    
+    // Build meaningful name - prioritize actual text content
+    let name = '';
+    
+    if (ariaLabel) {
+      name = ariaLabel;
+    } else if (buttonText) {
+      // Use the actual button/element text
+      name = buttonText;
+    } else if (title) {
+      name = title;
+    } else if (dataAction) {
+      name = dataAction;
+    } else if (parentText) {
+      name = parentText;
+    } else {
+      // Fallback to describing element type
+      const typeStr = role || tagName;
+      if (type) {
+        name = `${typeStr} (${type})`;
+      } else {
+        name = typeStr;
+      }
+    }
 
-    return { name, text };
+    return { name, text: buttonText || parentText };
   }
 
   stopTracking(): void {
