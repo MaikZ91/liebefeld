@@ -57,12 +57,41 @@ const elementMappings: Record<string, { icon: React.ReactNode; label: string; va
   'thumbsup': { icon: <ThumbsUp className="w-3 h-3" />, label: 'Gefällt', variant: 'outline' },
 };
 
+// Additional patterns for Radix UI and other component libraries
+const radixPatterns: Record<string, { icon: React.ReactNode; label: string; variant: 'default' | 'secondary' | 'outline' | 'ghost' }> = {
+  'accordion': { icon: <ChevronRight className="w-3 h-3" />, label: 'Accordion', variant: 'ghost' },
+  'dialog': { icon: <X className="w-3 h-3" />, label: 'Dialog', variant: 'outline' },
+  'popover': { icon: <Menu className="w-3 h-3" />, label: 'Popover', variant: 'ghost' },
+  'select': { icon: <ChevronRight className="w-3 h-3" />, label: 'Auswahl', variant: 'outline' },
+  'switch': { icon: <Check className="w-3 h-3" />, label: 'Toggle', variant: 'secondary' },
+  'checkbox': { icon: <Check className="w-3 h-3" />, label: 'Checkbox', variant: 'outline' },
+  'radio': { icon: <Check className="w-3 h-3" />, label: 'Radio', variant: 'outline' },
+  'slider': { icon: <ArrowUp className="w-3 h-3 rotate-90" />, label: 'Slider', variant: 'secondary' },
+  'toast': { icon: <MessageSquare className="w-3 h-3" />, label: 'Toast', variant: 'secondary' },
+  'trigger': { icon: <Menu className="w-3 h-3" />, label: 'Menü', variant: 'ghost' },
+  'content': { icon: <Eye className="w-3 h-3" />, label: 'Inhalt', variant: 'ghost' },
+  'item': { icon: <ChevronRight className="w-3 h-3" />, label: 'Eintrag', variant: 'ghost' },
+  'thumb': { icon: <ArrowUp className="w-3 h-3" />, label: 'Regler', variant: 'secondary' },
+  'scroll': { icon: <ArrowDown className="w-3 h-3" />, label: 'Scroll', variant: 'ghost' },
+  'navigation': { icon: <Menu className="w-3 h-3" />, label: 'Navigation', variant: 'ghost' },
+  'nav': { icon: <Menu className="w-3 h-3" />, label: 'Navigation', variant: 'ghost' },
+  'header': { icon: <Home className="w-3 h-3" />, label: 'Header', variant: 'ghost' },
+  'footer': { icon: <Home className="w-3 h-3" />, label: 'Footer', variant: 'ghost' },
+  'avatar': { icon: <User className="w-3 h-3" />, label: 'Avatar', variant: 'ghost' },
+  'emoji': { icon: <Star className="w-3 h-3" />, label: 'Emoji', variant: 'ghost' },
+  'reaction': { icon: <ThumbsUp className="w-3 h-3" />, label: 'Reaktion', variant: 'outline' },
+  'icon': { icon: <Star className="w-3 h-3" />, label: 'Icon', variant: 'ghost' },
+};
+
 export function ElementPreview({ target, className = '' }: ElementPreviewProps) {
   if (!target) return null;
 
   const lowerTarget = target.toLowerCase();
   
-  // Find matching element
+  // Skip radix internal IDs (like radix-r0, radix-:r1:) - use surrounding context instead
+  const isRadixId = /^radix-[:\w]+$/.test(target.trim()) || /^:r\d+:$/.test(target.trim());
+  
+  // Find matching element from main mappings
   for (const [key, config] of Object.entries(elementMappings)) {
     if (lowerTarget.includes(key)) {
       return (
@@ -78,8 +107,24 @@ export function ElementPreview({ target, className = '' }: ElementPreviewProps) 
     }
   }
 
+  // Check radix/component patterns
+  for (const [key, config] of Object.entries(radixPatterns)) {
+    if (lowerTarget.includes(key)) {
+      return (
+        <Button 
+          variant={config.variant} 
+          size="sm" 
+          className={`h-6 px-2 text-xs pointer-events-none ${className}`}
+        >
+          {config.icon}
+          <span className="ml-1">{config.label}</span>
+        </Button>
+      );
+    }
+  }
+
   // Check for common HTML elements
-  if (lowerTarget.includes('button')) {
+  if (lowerTarget.includes('button') || lowerTarget.includes('btn')) {
     return (
       <Button variant="secondary" size="sm" className={`h-6 px-2 text-xs pointer-events-none ${className}`}>
         Button
@@ -87,7 +132,7 @@ export function ElementPreview({ target, className = '' }: ElementPreviewProps) 
     );
   }
 
-  if (lowerTarget.includes('link') || lowerTarget.includes('href')) {
+  if (lowerTarget.includes('link') || lowerTarget.includes('href') || lowerTarget.includes('anchor')) {
     return (
       <Badge variant="outline" className={`text-xs text-blue-500 underline ${className}`}>
         Link
@@ -95,7 +140,7 @@ export function ElementPreview({ target, className = '' }: ElementPreviewProps) 
     );
   }
 
-  if (lowerTarget.includes('input') || lowerTarget.includes('text')) {
+  if (lowerTarget.includes('input') || lowerTarget.includes('text') || lowerTarget.includes('field')) {
     return (
       <div className={`h-6 px-2 border rounded text-xs flex items-center bg-muted/50 ${className}`}>
         <span className="text-muted-foreground">Eingabefeld</span>
@@ -120,11 +165,38 @@ export function ElementPreview({ target, className = '' }: ElementPreviewProps) 
     );
   }
 
-  if (lowerTarget.includes('chip') || lowerTarget.includes('badge')) {
+  if (lowerTarget.includes('chip') || lowerTarget.includes('badge') || lowerTarget.includes('tag')) {
     return (
       <Badge className={`text-xs ${className}`}>
         Chip
       </Badge>
+    );
+  }
+
+  if (lowerTarget.includes('img') || lowerTarget.includes('image') || lowerTarget.includes('photo')) {
+    return (
+      <div className={`h-6 px-2 border rounded-md text-xs flex items-center bg-muted/30 ${className}`}>
+        <Eye className="w-3 h-3 mr-1" />
+        <span>Bild</span>
+      </div>
+    );
+  }
+
+  if (lowerTarget.includes('div') || lowerTarget.includes('span') || lowerTarget.includes('section')) {
+    return (
+      <Badge variant="outline" className={`text-xs ${className}`}>
+        Bereich
+      </Badge>
+    );
+  }
+
+  // For radix IDs, show generic interactive element
+  if (isRadixId) {
+    return (
+      <Button variant="ghost" size="sm" className={`h-6 px-2 text-xs pointer-events-none ${className}`}>
+        <Menu className="w-3 h-3" />
+        <span className="ml-1">UI Element</span>
+      </Button>
     );
   }
 
