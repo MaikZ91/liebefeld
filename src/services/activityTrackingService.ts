@@ -48,7 +48,23 @@ class ActivityTrackingService {
   }
 
   private getUsername(): string {
-    return localStorage.getItem(USERNAME_KEY) || 'anonymous';
+    let username = localStorage.getItem(USERNAME_KEY);
+    
+    if (!username) {
+      // Check if there's a tracking username already assigned
+      const trackingUsername = localStorage.getItem('activity_tracking_username');
+      if (trackingUsername) {
+        return trackingUsername;
+      }
+      
+      // Generate a guest username for tracking
+      const guestId = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const newGuestUsername = `guest_${guestId}`;
+      localStorage.setItem('activity_tracking_username', newGuestUsername);
+      return newGuestUsername;
+    }
+    
+    return username;
   }
 
   private getViewportSize() {
