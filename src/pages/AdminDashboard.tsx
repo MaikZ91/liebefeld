@@ -169,8 +169,8 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-y-auto overflow-x-hidden">
-      <div className="p-4 md:p-6 pb-24">
+    <div className="h-screen bg-background overflow-y-auto overflow-x-hidden">
+      <div className="p-4 md:p-6 pb-32">
         <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
