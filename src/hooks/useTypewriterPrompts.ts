@@ -16,12 +16,15 @@ const PAUSE_BETWEEN_PROMPTS = 500;
 export const useTypewriterPrompts = (
   userProfile?: UserProfileContext,
   eventCategories?: string[],
-  city?: string
+  city?: string,
+  priorityText?: string | null // Optional priority text to show first (e.g., onboarding message)
 ) => {
   const [displayText, setDisplayText] = useState('');
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   const [isTyping, setIsTyping] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
+  const [showingPriorityText, setShowingPriorityText] = useState(!!priorityText);
+  const [priorityCompleted, setPriorityCompleted] = useState(false);
 
   // Generate hyper-personalized prompts based on ALL user data
   const prompts = useMemo(() => {
@@ -203,7 +206,22 @@ export const useTypewriterPrompts = (
     return uniquePrompts.sort(() => Math.random() - 0.5).slice(0, 12);
   }, [userProfile, eventCategories, city]);
 
-  const currentPrompt = prompts[currentPromptIndex] || '';
+  // Reset priority text state when priorityText changes
+  useEffect(() => {
+    if (priorityText) {
+      setShowingPriorityText(true);
+      setPriorityCompleted(false);
+      setDisplayText('');
+      setIsTyping(true);
+    } else {
+      setShowingPriorityText(false);
+    }
+  }, [priorityText]);
+
+  // Determine current text to display
+  const currentText = showingPriorityText && priorityText ? priorityText : prompts[currentPromptIndex] || '';
+
+  const currentPrompt = currentText;
 
   // Typewriter effect
   useEffect(() => {
@@ -217,6 +235,11 @@ export const useTypewriterPrompts = (
           setDisplayText(currentPrompt.slice(0, displayText.length + 1));
         }, TYPING_SPEED);
       } else {
+        // If showing priority text, stay on it longer and don't delete
+        if (showingPriorityText) {
+          // Keep priority text visible, don't cycle
+          return;
+        }
         timeout = setTimeout(() => {
           setIsTyping(false);
         }, PAUSE_BEFORE_DELETE);
@@ -235,7 +258,7 @@ export const useTypewriterPrompts = (
     }
 
     return () => clearTimeout(timeout);
-  }, [displayText, isTyping, currentPrompt, prompts.length, isPaused]);
+  }, [displayText, isTyping, currentPrompt, prompts.length, isPaused, showingPriorityText]);
 
   const pause = useCallback(() => {
     setIsPaused(true);

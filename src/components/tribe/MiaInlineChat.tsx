@@ -145,11 +145,17 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
     return [...new Set(events.map(e => e.category?.toLowerCase()).filter(Boolean))] as string[];
   }, [events]);
 
+  // Get current onboarding message for dynamic placeholder
+  const onboardingMessage = onboardingStep && ONBOARDING_MESSAGES[onboardingStep]?.text 
+    ? ONBOARDING_MESSAGES[onboardingStep].text 
+    : null;
+
   // Typewriter hook for personalized prompts
   const { displayText, currentFullPrompt, pause, resume, allPrompts } = useTypewriterPrompts(
     userProfile,
     eventCategories,
-    city
+    city,
+    onboardingMessage // Pass onboarding message as priority text
   );
 
   // Personalized suggestions for when input is focused
@@ -445,10 +451,9 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
         </div>
       )}
 
-      {/* Main Input Area - hide during active onboarding steps (but show during waiting_for_like) */}
-      {(!isExploreOnboarding || onboardingStep === 'waiting_for_like') && (
-        <div className="space-y-3">
-          {/* Search Bar with Typewriter */}
+      {/* Main Input Area - always visible */}
+      <div className="space-y-3">
+        {/* Search Bar with Typewriter */}
           <div className="relative flex items-center gap-3">
             <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-white/20">
               <img src={MIA_AVATAR} className="w-full h-full object-cover" alt="MIA" />
@@ -501,7 +506,7 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
             </div>
           </div>
 
-          {/* Quick Suggestion Chips - always visible, click to trigger */}
+          {/* Quick Suggestion Chips - hide during onboarding */}
           {!isExploreOnboarding && (
             <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
               {personalizedSuggestions.map((suggestion) => (
@@ -516,7 +521,6 @@ export const MiaInlineChat: React.FC<MiaInlineChatProps> = ({
             </div>
           )}
         </div>
-      )}
     </div>
   );
 };
