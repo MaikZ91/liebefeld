@@ -1074,18 +1074,6 @@ const TribeAppMain: React.FC<{
               <div className="flex justify-between items-center border-b border-white/5 pb-3 mb-4">
                 <h2 className="text-xs font-extrabold text-white uppercase tracking-[0.25em]">Your Feed</h2>
                 <div className="flex items-center gap-3">
-                  {/* Vibe Filter */}
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="bg-black text-zinc-400 text-[10px] uppercase tracking-wider border border-white/10 px-2 py-1 rounded-sm focus:border-gold focus:text-gold outline-none"
-                  >
-                    <option value="ALL">All Vibes</option>
-                    <option value="PARTY">Party</option>
-                    <option value="ART">Art</option>
-                    <option value="CONCERT">Concert</option>
-                    <option value="SPORT">Sport</option>
-                  </select>
 
                   {/* Calendar Picker */}
                   <Popover>
