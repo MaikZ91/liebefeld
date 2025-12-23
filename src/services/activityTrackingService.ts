@@ -219,6 +219,9 @@ class ActivityTrackingService {
     // Click tracking
     document.addEventListener('click', this.handleClick.bind(this), { capture: true });
 
+    // Input tracking (for text fields, search, etc.)
+    document.addEventListener('focusout', this.handleInputBlur.bind(this), { capture: true });
+
     // Scroll tracking (debounced)
     let scrollTimeout: NodeJS.Timeout;
     window.addEventListener('scroll', () => {
@@ -235,6 +238,33 @@ class ActivityTrackingService {
     });
 
     console.log('Activity tracking started');
+  }
+
+  private handleInputBlur(e: FocusEvent): void {
+    const target = e.target as HTMLElement;
+    if (!target) return;
+
+    // Only track input and textarea elements
+    const tagName = target.tagName.toLowerCase();
+    if (tagName !== 'input' && tagName !== 'textarea') return;
+
+    const inputElement = target as HTMLInputElement | HTMLTextAreaElement;
+    const value = inputElement.value?.trim();
+    
+    // Only track if there's actual content
+    if (!value || value.length < 2) return;
+
+    // Get field identifier
+    const fieldName = inputElement.getAttribute('aria-label') 
+      || inputElement.getAttribute('placeholder')
+      || inputElement.getAttribute('name')
+      || inputElement.getAttribute('id')
+      || 'Textfeld';
+
+    this.trackInteraction(`Eingabe: ${fieldName}`, {
+      value: value.slice(0, 100), // Limit to 100 chars
+      fieldType: inputElement.type || 'text'
+    });
   }
 
   private handleClick(e: MouseEvent): void {
