@@ -48,23 +48,33 @@ class ActivityTrackingService {
   }
 
   private getUsername(): string {
-    let username = localStorage.getItem(USERNAME_KEY);
-    
-    if (!username) {
-      // Check if there's a tracking username already assigned
-      const trackingUsername = localStorage.getItem('activity_tracking_username');
-      if (trackingUsername) {
-        return trackingUsername;
-      }
-      
-      // Generate a guest username for tracking
-      const guestId = Math.random().toString(36).substring(2, 6).toUpperCase();
-      const newGuestUsername = `guest_${guestId}`;
-      localStorage.setItem('activity_tracking_username', newGuestUsername);
-      return newGuestUsername;
+    // Priority 1: Chat username (from community chat)
+    const chatUsername = localStorage.getItem(USERNAME_KEY);
+    if (chatUsername) {
+      return chatUsername;
     }
     
-    return username;
+    // Priority 2: Tribe user profile (contains Guest_xxx)
+    const tribeProfile = localStorage.getItem('tribe_user_profile');
+    if (tribeProfile) {
+      try {
+        const profile = JSON.parse(tribeProfile);
+        if (profile.username) {
+          return profile.username;
+        }
+      } catch {
+        // Invalid JSON, continue
+      }
+    }
+    
+    // Priority 3: Chat username from tribe
+    const tribeUsername = localStorage.getItem('chat_username');
+    if (tribeUsername) {
+      return tribeUsername;
+    }
+    
+    // Fallback: anonymous (should rarely happen)
+    return 'anonymous';
   }
 
   private getViewportSize() {
