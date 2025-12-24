@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, TribeEvent } from '@/types/tribe';
 import { TribeEventCard } from './TribeEventCard';
-import { Shield, Sparkles, MapPin, Edit3, X, Save, Upload, Plus } from 'lucide-react';
+import { Shield, Sparkles, MapPin, Edit3, X, Save, Upload, Plus, LogOut } from 'lucide-react';
 import { personalizationService } from '@/services/personalizationService';
 import { supabase } from '@/integrations/supabase/client';
 import { userService } from '@/services/userService';
@@ -26,6 +26,7 @@ interface ProfileViewProps {
   onOpenMatcher?: () => void;
   onProfileUpdate?: (updatedProfile: UserProfile) => void;
   onboardingStep?: OnboardingStep;
+  onSignOut?: () => void;
 }
 
 export const ProfileView: React.FC<ProfileViewProps> = ({ 
@@ -37,7 +38,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   likedEventIds,
   onOpenMatcher,
   onProfileUpdate,
-  onboardingStep
+  onboardingStep,
+  onSignOut
 }) => {
   const [activeTab, setActiveTab] = useState<'GOING' | 'LIKED'>('GOING');
   const [favoriteLocations, setFavoriteLocations] = useState<string[]>([]);
@@ -271,36 +273,47 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               <Shield size={120} />
           </div>
           
-          {/* Edit/Save/Cancel Buttons */}
-          <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-            {isEditing ? (
-              <>
-                <button
-                  onClick={handleCancel}
-                  className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-white/10 text-zinc-400 hover:text-white hover:border-white/30 transition-all text-xs uppercase tracking-widest"
-                >
-                  <X size={14} />
-                  Abbrechen
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={isSubmitting}
-                  className="flex items-center gap-2 px-3 py-2 bg-gold/20 border border-gold/50 text-gold hover:bg-gold/30 transition-all text-xs uppercase tracking-widest disabled:opacity-50"
-                >
-                  <Save size={14} />
-                  {isSubmitting ? 'Speichern...' : 'Speichern'}
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-white/10 text-zinc-400 hover:text-gold hover:border-gold/30 transition-all text-xs uppercase tracking-widest"
-              >
-                <Edit3 size={14} />
-                Bearbeiten
-              </button>
-            )}
-          </div>
+           {/* Edit/Save/Cancel/SignOut Buttons */}
+           <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+             {isEditing ? (
+               <>
+                 <button
+                   onClick={handleCancel}
+                   className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-white/10 text-zinc-400 hover:text-white hover:border-white/30 transition-all text-xs uppercase tracking-widest"
+                 >
+                   <X size={14} />
+                   Abbrechen
+                 </button>
+                 <button
+                   onClick={handleSave}
+                   disabled={isSubmitting}
+                   className="flex items-center gap-2 px-3 py-2 bg-gold/20 border border-gold/50 text-gold hover:bg-gold/30 transition-all text-xs uppercase tracking-widest disabled:opacity-50"
+                 >
+                   <Save size={14} />
+                   {isSubmitting ? 'Speichern...' : 'Speichern'}
+                 </button>
+               </>
+             ) : (
+               <>
+                 <button
+                   onClick={() => setIsEditing(true)}
+                   className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-white/10 text-zinc-400 hover:text-gold hover:border-gold/30 transition-all text-xs uppercase tracking-widest"
+                 >
+                   <Edit3 size={14} />
+                   Bearbeiten
+                 </button>
+                 {onSignOut && (
+                   <button
+                     onClick={onSignOut}
+                     className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-red-500/30 text-red-400 hover:text-red-300 hover:border-red-500/50 transition-all text-xs uppercase tracking-widest"
+                   >
+                     <LogOut size={14} />
+                     Abmelden
+                   </button>
+                 )}
+               </>
+             )}
+           </div>
           
           <div className="relative z-10 flex flex-col items-center text-center mt-4">
               {/* Avatar */}

@@ -17,6 +17,7 @@ import { TribeUserMatcher } from "./TribeUserMatcher";
 import { MiaInlineChat } from "./MiaInlineChat";
 import UserProfileDialog from "@/components/users/UserProfileDialog";
 import { useOnboardingFlow } from "@/hooks/useOnboardingFlow";
+import { WelcomeOverlay } from "./WelcomeOverlay";
 
 import { dislikeService } from "@/services/dislikeService";
 import { personalizationService } from "@/services/personalizationService";
@@ -88,6 +89,11 @@ const createGuestProfileSync = (): UserProfile => {
 };
 
 export const TribeApp: React.FC = () => {
+  // Check if welcome is completed
+  const [showWelcome, setShowWelcome] = useState<boolean>(() => {
+    return localStorage.getItem("tribe_welcome_completed") !== "true";
+  });
+  
   // Initialize profile from storage or create guest immediately (synchronous!)
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     const savedProfile = localStorage.getItem("tribe_user_profile");
@@ -103,6 +109,16 @@ export const TribeApp: React.FC = () => {
     localStorage.setItem("tribe_user_profile", JSON.stringify(guestProfile));
     return guestProfile;
   });
+
+  const handleWelcomeComplete = (profile: UserProfile) => {
+    setUserProfile(profile);
+    setShowWelcome(false);
+  };
+
+  // Show Welcome Overlay first
+  if (showWelcome) {
+    return <WelcomeOverlay onLogin={handleWelcomeComplete} />;
+  }
 
   return <TribeAppMain userProfile={userProfile} setUserProfile={setUserProfile} />;
 };
@@ -151,6 +167,24 @@ const TribeAppMain: React.FC<{
     return localStorage.getItem("tribe_seen_like_tutorial") !== "true";
   });
   const { toast } = useToast();
+  
+  // Sign out handler
+  const handleSignOut = () => {
+    // Clear all tribe-related localStorage
+    localStorage.removeItem('tribe_user_profile');
+    localStorage.removeItem('tribe_welcome_completed');
+    localStorage.removeItem('tribe_liked_events');
+    localStorage.removeItem('tribe_hidden_events');
+    localStorage.removeItem('tribe_attending_events');
+    localStorage.removeItem('tribe_preferred_categories');
+    localStorage.removeItem('tribe_onboarding_completed');
+    localStorage.removeItem('tribe_has_first_like');
+    localStorage.removeItem('chat_username');
+    localStorage.removeItem('chat_avatar');
+    
+    // Reload the page to reset the app state
+    window.location.reload();
+  };
   const [locationBlockDialog, setLocationBlockDialog] = useState<{ open: boolean; location: string | null }>({
     open: false,
     location: null,
@@ -1372,6 +1406,7 @@ const TribeAppMain: React.FC<{
             likedEventIds={likedEventIds}
             onOpenMatcher={() => setView(ViewState.MATCHER)}
             onboardingStep={currentStep}
+            onSignOut={handleSignOut}
             onProfileUpdate={(updatedProfile) => {
               setUserProfile(updatedProfile);
               // During community onboarding, mark profile complete and go back to community
