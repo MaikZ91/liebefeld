@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { UserProfile } from '@/types/tribe';
 import { supabase } from '@/integrations/supabase/client';
 import { Heart, ChevronRight } from 'lucide-react';
@@ -56,24 +56,6 @@ const SECTIONS: CategorySection[] = [
 
 export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin, initialUsername }) => {
   const [likedSections, setLikedSections] = useState<Set<string>>(new Set());
-  const [currentSection, setCurrentSection] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Track scroll position to update current section
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      const scrollTop = container.scrollTop;
-      const sectionHeight = container.clientHeight;
-      const newSection = Math.round(scrollTop / sectionHeight);
-      setCurrentSection(Math.min(newSection, SECTIONS.length - 1));
-    };
-
-    container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const toggleLike = (sectionId: string) => {
     setLikedSections(prev => {
@@ -136,25 +118,21 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin, initial
     onLogin(profile);
   };
 
-  const scrollToSection = (index: number) => {
-    const container = containerRef.current;
-    if (!container) return;
-    const sectionHeight = container.clientHeight;
-    container.scrollTo({ top: index * sectionHeight, behavior: 'smooth' });
-  };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black">
-      {/* Scrollable sections container */}
-      <div 
-        ref={containerRef}
-        className="h-full w-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
-        style={{ scrollSnapType: 'y mandatory' }}
-      >
-        {SECTIONS.map((section, index) => (
+    <div className="fixed inset-0 z-50 bg-black overflow-y-auto">
+      {/* Header */}
+      <div className="sticky top-0 z-20 bg-gradient-to-b from-black via-black/90 to-transparent pb-8 pt-6 px-6">
+        <h1 className="text-2xl font-bold text-white text-center">Was interessiert dich?</h1>
+        <p className="text-white/60 text-sm text-center mt-1">Wähle mindestens eine Kategorie</p>
+      </div>
+
+      {/* Three sections on one page */}
+      <div className="px-4 pb-32 space-y-4">
+        {SECTIONS.map((section) => (
           <div 
             key={section.id}
-            className="h-full w-full snap-start snap-always relative flex items-center justify-center"
+            className="relative aspect-[16/9] rounded-2xl overflow-hidden"
           >
             {/* Video Background */}
             <video
@@ -167,61 +145,58 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin, initial
             />
             
             {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60" />
+            <div className={`absolute inset-0 transition-all duration-300 ${
+              likedSections.has(section.id) 
+                ? 'bg-gradient-to-t from-red-500/40 via-transparent to-transparent' 
+                : 'bg-gradient-to-t from-black/70 via-black/20 to-transparent'
+            }`} />
             
             {/* Content */}
-            <div className="relative z-10 flex flex-col items-center justify-end h-full pb-32 px-6">
+            <button
+              onClick={() => toggleLike(section.id)}
+              className="absolute inset-0 w-full h-full flex flex-col items-center justify-end pb-6 px-4"
+            >
               {/* Hashtag */}
-              <h2 className="text-5xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">
+              <h2 className="text-3xl font-bold text-white mb-3 drop-shadow-lg">
                 {section.hashtag}
               </h2>
               
-              {/* Like Button */}
-              <button
-                onClick={() => toggleLike(section.id)}
-                className={`
-                  flex items-center gap-2 px-8 py-4 rounded-full text-lg font-semibold
-                  transition-all duration-300 transform active:scale-95
-                  ${likedSections.has(section.id)
-                    ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
-                    : 'bg-white/20 backdrop-blur-md text-white border border-white/30 hover:bg-white/30'
-                  }
-                `}
-              >
+              {/* Like indicator */}
+              <div className={`
+                flex items-center gap-2 px-6 py-2 rounded-full text-sm font-semibold
+                transition-all duration-300
+                ${likedSections.has(section.id)
+                  ? 'bg-red-500 text-white'
+                  : 'bg-white/20 backdrop-blur-sm text-white border border-white/30'
+                }
+              `}>
                 <Heart 
-                  className={`w-6 h-6 transition-all ${likedSections.has(section.id) ? 'fill-white' : ''}`} 
+                  className={`w-5 h-5 transition-all ${likedSections.has(section.id) ? 'fill-white' : ''}`} 
                 />
-                {likedSections.has(section.id) ? 'Gefällt mir' : 'Like'}
-              </button>
-            </div>
+                {likedSections.has(section.id) ? 'Ausgewählt' : 'Auswählen'}
+              </div>
+            </button>
+
+            {/* Selected checkmark */}
+            {likedSections.has(section.id) && (
+              <div className="absolute top-3 right-3 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                <Heart className="w-4 h-4 text-white fill-white" />
+              </div>
+            )}
           </div>
         ))}
       </div>
 
-      {/* Navigation Dots */}
-      <div className="fixed right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-20">
-        {SECTIONS.map((section, index) => (
-          <button
-            key={section.id}
-            onClick={() => scrollToSection(index)}
-            className={`
-              w-3 h-3 rounded-full transition-all duration-300
-              ${currentSection === index 
-                ? 'bg-white scale-125' 
-                : 'bg-white/40 hover:bg-white/60'
-              }
-              ${likedSections.has(section.id) ? 'ring-2 ring-red-500 ring-offset-1 ring-offset-black' : ''}
-            `}
-            aria-label={`Go to ${section.label}`}
-          />
-        ))}
-      </div>
-
-      {/* Continue Button - Fixed at bottom */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 z-20 bg-gradient-to-t from-black via-black/80 to-transparent">
+      {/* Continue Button - Fixed at bottom, only enabled when at least 1 selected */}
+      <div className="fixed bottom-0 left-0 right-0 p-6 z-20 bg-gradient-to-t from-black via-black/95 to-transparent">
         <button
           onClick={handleContinue}
-          className="w-full py-4 rounded-full bg-white text-black font-semibold text-lg flex items-center justify-center gap-2 hover:bg-white/90 transition-all active:scale-98"
+          disabled={likedSections.size === 0}
+          className={`w-full py-4 rounded-full font-semibold text-lg flex items-center justify-center gap-2 transition-all active:scale-98 ${
+            likedSections.size > 0
+              ? 'bg-white text-black hover:bg-white/90'
+              : 'bg-white/20 text-white/40 cursor-not-allowed'
+          }`}
         >
           {likedSections.size > 0 ? (
             <>
@@ -229,32 +204,10 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin, initial
               <ChevronRight className="w-5 h-5" />
             </>
           ) : (
-            <>
-              Überspringen
-              <ChevronRight className="w-5 h-5" />
-            </>
+            'Bitte wähle mindestens 1 Kategorie'
           )}
         </button>
-        
-        {/* Like counter */}
-        {likedSections.size > 0 && (
-          <p className="text-center text-white/60 text-sm mt-3">
-            Deine Likes verbessern den MIA Matching Score
-          </p>
-        )}
       </div>
-
-      {/* Scroll hint on first section */}
-      {currentSection === 0 && (
-        <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-20 animate-bounce">
-          <div className="flex flex-col items-center text-white/60">
-            <span className="text-xs mb-1">Scroll für mehr</span>
-            <div className="w-6 h-10 border-2 border-white/40 rounded-full flex items-start justify-center p-1">
-              <div className="w-1.5 h-3 bg-white/60 rounded-full animate-pulse" />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
