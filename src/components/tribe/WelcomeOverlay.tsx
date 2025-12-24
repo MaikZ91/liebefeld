@@ -1,25 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { UserProfile } from '@/types/tribe';
 import { supabase } from '@/integrations/supabase/client';
+import { Heart, ChevronRight } from 'lucide-react';
 
-// Import reel images
-import reel1 from '@/assets/tribe/reel-1.jpg';
-import reel2 from '@/assets/tribe/reel-2.jpg';
-import reel3 from '@/assets/tribe/reel-3.jpg';
-import reel4 from '@/assets/tribe/reel-4.jpg';
-import reel5 from '@/assets/tribe/reel-5.jpg';
-import reel6 from '@/assets/tribe/reel-6.jpg';
-import reel7 from '@/assets/tribe/reel-7.jpg';
-import reel8 from '@/assets/tribe/reel-8.jpg';
-import reel9 from '@/assets/tribe/reel-9.jpg';
-import reel10 from '@/assets/tribe/reel-10.jpg';
-import reel11 from '@/assets/tribe/reel-11.jpg';
-import reel12 from '@/assets/tribe/reel-12.jpg';
-import reel13 from '@/assets/tribe/reel-13.jpg';
-import reel14 from '@/assets/tribe/reel-14.jpg';
-import reel15 from '@/assets/tribe/reel-15.jpg';
-
-const REEL_IMAGES = [reel1, reel2, reel3, reel4, reel5, reel6, reel7, reel8, reel9, reel10, reel11, reel12, reel13, reel14, reel15];
+// Import welcome videos
+import ausgehenVideo from '@/assets/welcome/ausgehen.mp4';
+import kreativitaetVideo from '@/assets/welcome/kreativitaet.mp4';
+import sportVideo from '@/assets/welcome/sport.mp4';
 
 interface WelcomeOverlayProps {
   onLogin: (profile: UserProfile) => void;
@@ -35,214 +22,239 @@ const AVATAR_OPTIONS = [
   "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=150&h=150"
 ];
 
-const CATEGORIES = [
-  { id: 'ausgehen', label: 'Ausgehen', icon: '🍸' },
-  { id: 'party', label: 'Party', icon: '🎉' },
-  { id: 'konzerte', label: 'Konzerte', icon: '🎵' },
-  { id: 'sport', label: 'Sport', icon: '⚽' },
-  { id: 'kreativitaet', label: 'Kreativität', icon: '🎨' },
+interface CategorySection {
+  id: string;
+  label: string;
+  hashtag: string;
+  video: string;
+  mappedCategories: string[];
+}
+
+const SECTIONS: CategorySection[] = [
+  { 
+    id: 'ausgehen', 
+    label: 'Ausgehen', 
+    hashtag: '#ausgehen',
+    video: ausgehenVideo,
+    mappedCategories: ['Ausgehen', 'Bar', 'Club', 'Nightlife', 'Party', 'Sonstiges']
+  },
+  { 
+    id: 'kreativitaet', 
+    label: 'Kreativität', 
+    hashtag: '#kreativität',
+    video: kreativitaetVideo,
+    mappedCategories: ['Kreativität', 'Kunst', 'Art', 'Workshop', 'Kultur', 'Konzert', 'Musik']
+  },
+  { 
+    id: 'sport', 
+    label: 'Sport', 
+    hashtag: '#sport',
+    video: sportVideo,
+    mappedCategories: ['Sport', 'Hochschulsport', 'Fitness', 'Outdoor', 'Laufen', 'Yoga']
+  },
 ];
 
 export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin, initialUsername }) => {
-  // Don't pre-fill guest username - let user enter their own name
-  const [username, setUsername] = useState('');
-  const [selectedCity] = useState('Bielefeld');
-  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
-  const [imageIndices, setImageIndices] = useState([0, 3, 6, 9, 12, 1, 4, 7]);
+  const [likedSections, setLikedSections] = useState<Set<string>>(new Set());
+  const [currentSection, setCurrentSection] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Calm collage slideshow - slower, staggered changes
+  // Track scroll position to update current section
   useEffect(() => {
-    const timers: NodeJS.Timeout[] = [];
-    const intervals = [4000, 5000, 4500, 5500, 4200, 5200, 4800, 5800];
-    
-    imageIndices.forEach((_, slotIndex) => {
-      const updateSlot = () => {
-        setImageIndices(prev => {
-          const newIndices = [...prev];
-          newIndices[slotIndex] = (prev[slotIndex] + 1) % REEL_IMAGES.length;
-          return newIndices;
-        });
-        timers[slotIndex] = setTimeout(updateSlot, intervals[slotIndex]);
-      };
-      timers[slotIndex] = setTimeout(updateSlot, intervals[slotIndex] + slotIndex * 600);
-    });
-    
-    return () => timers.forEach(t => clearTimeout(t));
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const scrollTop = container.scrollTop;
+      const sectionHeight = container.clientHeight;
+      const newSection = Math.round(scrollTop / sectionHeight);
+      setCurrentSection(Math.min(newSection, SECTIONS.length - 1));
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const toggleCategory = (categoryId: string) => {
-    setSelectedCategories(prev => {
+  const toggleLike = (sectionId: string) => {
+    setLikedSections(prev => {
       const next = new Set(prev);
-      if (next.has(categoryId)) next.delete(categoryId);
-      else next.add(categoryId);
+      if (next.has(sectionId)) {
+        next.delete(sectionId);
+      } else {
+        next.add(sectionId);
+      }
       return next;
     });
   };
 
-  const handleEnter = async () => {
-    if (!username.trim()) return;
-    
-    const randomAvatar = AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)];
-    
-    if (selectedCategories.size > 0) {
-      localStorage.setItem('tribe_preferred_categories', JSON.stringify(Array.from(selectedCategories)));
+  const handleContinue = async () => {
+    // Save liked categories to localStorage for personalization
+    const likedCategories = Array.from(likedSections);
+    if (likedCategories.length > 0) {
+      localStorage.setItem('tribe_preferred_categories', JSON.stringify(likedCategories));
     }
+
+    // Get or create username
+    const savedProfile = localStorage.getItem('tribe_user_profile');
+    let username = `Guest_${Date.now().toString().slice(-4)}`;
+    let avatarUrl = AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)];
     
+    if (savedProfile) {
+      try {
+        const existing = JSON.parse(savedProfile);
+        username = existing.username || username;
+        avatarUrl = existing.avatarUrl || existing.avatar || avatarUrl;
+      } catch {}
+    }
+
     const profile: UserProfile = {
-      username: username,
-      avatarUrl: randomAvatar,
+      username,
+      avatarUrl,
       bio: 'New Member',
-      homebase: selectedCity,
-      interests: Array.from(selectedCategories)
+      homebase: 'Bielefeld',
+      interests: likedCategories
     };
-    
-    // Save to database for NewMembersWidget (fire-and-forget)
+
+    // Save profile to localStorage
+    localStorage.setItem('tribe_user_profile', JSON.stringify(profile));
+
+    // Save to database (fire-and-forget)
     supabase
       .from('user_profiles')
-      .insert({
+      .upsert({
         username: profile.username,
         avatar: profile.avatarUrl,
         interests: profile.interests,
-        favorite_locations: [selectedCity]
-      })
+        favorite_locations: ['Bielefeld']
+      }, { onConflict: 'username' })
       .then(() => console.log('Profile saved to database'));
-    
-    // Mark welcome as completed and dispatch event for AppDownloadPrompt
-    localStorage.setItem('tribe_welcome_completed', 'true');
-    window.dispatchEvent(new CustomEvent('tribe_welcome_completed'));
-    
-    onLogin(profile);
-  };
 
-  // Just close overlay and keep existing guest profile
-  const handleSkip = () => {
     // Mark welcome as completed
     localStorage.setItem('tribe_welcome_completed', 'true');
     window.dispatchEvent(new CustomEvent('tribe_welcome_completed'));
-    
-    // Get existing guest profile from localStorage
-    const savedProfile = localStorage.getItem('tribe_user_profile');
-    if (savedProfile) {
-      try {
-        const existingProfile = JSON.parse(savedProfile);
-        onLogin(existingProfile);
-      } catch {
-        // Fallback - shouldn't happen
-        onLogin({
-          username: `Guest_${Date.now().toString().slice(-4)}`,
-          avatarUrl: AVATAR_OPTIONS[0],
-          bio: 'Guest',
-          homebase: 'Bielefeld'
-        });
-      }
-    }
+
+    onLogin(profile);
+  };
+
+  const scrollToSection = (index: number) => {
+    const container = containerRef.current;
+    if (!container) return;
+    const sectionHeight = container.clientHeight;
+    container.scrollTo({ top: index * sectionHeight, behavior: 'smooth' });
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Gradient overlay - transparent at top/bottom, solid in middle */}
+    <div className="fixed inset-0 z-50 bg-black">
+      {/* Scrollable sections container */}
       <div 
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.7) 20%, rgba(0,0,0,0.85) 50%, rgba(0,0,0,0.7) 80%, transparent 100%)'
-        }}
-      />
-      
-      {/* Card Container - larger */}
-      <div className="relative w-full max-w-md bg-black/60 backdrop-blur-md rounded-2xl overflow-hidden shadow-2xl border border-white/10">
-        {/* Collage Background inside card - full visibility */}
-        <div className="absolute inset-0 overflow-hidden">
-          {/* Tile 1 */}
-          <div className="absolute -left-2 -top-2 w-[55%] h-[40%] overflow-hidden" style={{ transform: 'rotate(-3deg)' }}>
-            <img src={REEL_IMAGES[imageIndices[0]]} alt="" className="w-full h-full object-cover transition-all duration-700" draggable={false} />
-          </div>
-          {/* Tile 2 */}
-          <div className="absolute -right-2 top-[10%] w-[50%] h-[35%] overflow-hidden" style={{ transform: 'rotate(4deg)' }}>
-            <img src={REEL_IMAGES[imageIndices[1]]} alt="" className="w-full h-full object-cover transition-all duration-700" draggable={false} />
-          </div>
-          {/* Tile 3 */}
-          <div className="absolute left-[5%] top-[40%] w-[45%] h-[30%] overflow-hidden" style={{ transform: 'rotate(2deg)' }}>
-            <img src={REEL_IMAGES[imageIndices[2]]} alt="" className="w-full h-full object-cover transition-all duration-700" draggable={false} />
-          </div>
-          {/* Tile 4 */}
-          <div className="absolute right-[0%] top-[45%] w-[50%] h-[35%] overflow-hidden" style={{ transform: 'rotate(-4deg)' }}>
-            <img src={REEL_IMAGES[imageIndices[3]]} alt="" className="w-full h-full object-cover transition-all duration-700" draggable={false} />
-          </div>
-          {/* Tile 5 */}
-          <div className="absolute -left-4 -bottom-4 w-[55%] h-[35%] overflow-hidden" style={{ transform: 'rotate(3deg)' }}>
-            <img src={REEL_IMAGES[imageIndices[4]]} alt="" className="w-full h-full object-cover transition-all duration-700" draggable={false} />
-          </div>
-          {/* Tile 6 */}
-          <div className="absolute -right-4 -bottom-4 w-[50%] h-[30%] overflow-hidden" style={{ transform: 'rotate(-5deg)' }}>
-            <img src={REEL_IMAGES[imageIndices[5]]} alt="" className="w-full h-full object-cover transition-all duration-700" draggable={false} />
-          </div>
-        </div>
-
-        {/* Gradient Overlay inside card - lighter for better image visibility */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/50 to-black/70" />
-
-        {/* Content */}
-        <div className="relative z-10 px-8 py-12 flex flex-col items-center text-white">
-          {/* Welcome Header */}
-          <h1 className="text-3xl font-bold mb-2">Willkommen</h1>
-          <p className="text-white/50 text-sm mb-8">Verbinde dich mit der Community</p>
-          
-          {/* Name Input */}
-          <div className="w-full">
-            <input 
-              type="text" 
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Dein Name"
-              className="w-full bg-black/50 border border-white/20 rounded-full py-4 px-6 text-center text-lg text-white placeholder-white/40 outline-none focus:border-red-500 transition-all"
-              onKeyDown={(e) => e.key === 'Enter' && username.trim() && handleEnter()}
+        ref={containerRef}
+        className="h-full w-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
+        style={{ scrollSnapType: 'y mandatory' }}
+      >
+        {SECTIONS.map((section, index) => (
+          <div 
+            key={section.id}
+            className="h-full w-full snap-start snap-always relative flex items-center justify-center"
+          >
+            {/* Video Background */}
+            <video
+              src={section.video}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover"
             />
-          </div>
-          
-          {/* Interests - appear when name has at least 1 character */}
-          {username.length > 0 && (
-            <div className="mt-5 w-full animate-fade-in">
-              <p className="text-white/60 text-xs text-center mb-3">Wähle deine Interessen</p>
-              <div className="flex flex-wrap justify-center gap-2">
-                {CATEGORIES.map(cat => (
-                  <button
-                    key={cat.id}
-                    onClick={() => toggleCategory(cat.id)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${
-                      selectedCategories.has(cat.id)
-                        ? 'bg-red-500 text-white border-red-500'
-                        : 'bg-black/50 text-white border-white/30 hover:border-white/50'
-                    }`}
-                  >
-                    {cat.icon} {cat.label}
-                  </button>
-                ))}
-              </div>
+            
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60" />
+            
+            {/* Content */}
+            <div className="relative z-10 flex flex-col items-center justify-end h-full pb-32 px-6">
+              {/* Hashtag */}
+              <h2 className="text-5xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">
+                {section.hashtag}
+              </h2>
+              
+              {/* Like Button */}
+              <button
+                onClick={() => toggleLike(section.id)}
+                className={`
+                  flex items-center gap-2 px-8 py-4 rounded-full text-lg font-semibold
+                  transition-all duration-300 transform active:scale-95
+                  ${likedSections.has(section.id)
+                    ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                    : 'bg-white/20 backdrop-blur-md text-white border border-white/30 hover:bg-white/30'
+                  }
+                `}
+              >
+                <Heart 
+                  className={`w-6 h-6 transition-all ${likedSections.has(section.id) ? 'fill-white' : ''}`} 
+                />
+                {likedSections.has(section.id) ? 'Gefällt mir' : 'Like'}
+              </button>
             </div>
-          )}
-
-          {/* Enter Button */}
-          <button
-            onClick={handleEnter}
-            disabled={!username.trim()}
-            className={`mt-8 w-full py-4 rounded-full font-semibold text-lg transition-all ${
-              username.trim()
-                ? 'bg-red-500 text-white hover:bg-red-600'
-                : 'bg-zinc-700/50 text-zinc-500 cursor-not-allowed'
-            }`}
-          >
-            Los geht's
-          </button>
-
-          {/* Skip - keep guest profile */}
-          <button
-            onClick={handleSkip}
-            className="mt-5 text-white/50 hover:text-white/70 transition-colors text-sm"
-          >
-            erstmal nur schauen →
-          </button>
-        </div>
+          </div>
+        ))}
       </div>
+
+      {/* Navigation Dots */}
+      <div className="fixed right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-20">
+        {SECTIONS.map((section, index) => (
+          <button
+            key={section.id}
+            onClick={() => scrollToSection(index)}
+            className={`
+              w-3 h-3 rounded-full transition-all duration-300
+              ${currentSection === index 
+                ? 'bg-white scale-125' 
+                : 'bg-white/40 hover:bg-white/60'
+              }
+              ${likedSections.has(section.id) ? 'ring-2 ring-red-500 ring-offset-1 ring-offset-black' : ''}
+            `}
+            aria-label={`Go to ${section.label}`}
+          />
+        ))}
+      </div>
+
+      {/* Continue Button - Fixed at bottom */}
+      <div className="fixed bottom-0 left-0 right-0 p-6 z-20 bg-gradient-to-t from-black via-black/80 to-transparent">
+        <button
+          onClick={handleContinue}
+          className="w-full py-4 rounded-full bg-white text-black font-semibold text-lg flex items-center justify-center gap-2 hover:bg-white/90 transition-all active:scale-98"
+        >
+          {likedSections.size > 0 ? (
+            <>
+              Weiter mit {likedSections.size} {likedSections.size === 1 ? 'Interesse' : 'Interessen'}
+              <ChevronRight className="w-5 h-5" />
+            </>
+          ) : (
+            <>
+              Überspringen
+              <ChevronRight className="w-5 h-5" />
+            </>
+          )}
+        </button>
+        
+        {/* Like counter */}
+        {likedSections.size > 0 && (
+          <p className="text-center text-white/60 text-sm mt-3">
+            Deine Likes verbessern den MIA Matching Score
+          </p>
+        )}
+      </div>
+
+      {/* Scroll hint on first section */}
+      {currentSection === 0 && (
+        <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-20 animate-bounce">
+          <div className="flex flex-col items-center text-white/60">
+            <span className="text-xs mb-1">Scroll für mehr</span>
+            <div className="w-6 h-10 border-2 border-white/40 rounded-full flex items-start justify-center p-1">
+              <div className="w-1.5 h-3 bg-white/60 rounded-full animate-pulse" />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
