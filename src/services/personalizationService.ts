@@ -260,9 +260,9 @@ export const personalizationService = {
     const preferences = this.getPreferences();
     let score = 50; // Start at neutral
 
-    // BOOST from preferred categories (onboarding selection) - +15 points
+    // STRONG BOOST from preferred categories (welcome screen selection) - +25 points
     if (this.matchesPreferredCategory(event)) {
-      score += 15;
+      score += 25;
     }
 
     // Category scoring (±20 points)
