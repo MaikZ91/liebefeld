@@ -291,6 +291,17 @@ const TribeAppMain: React.FC<{
     recalculateMatchScores();
   }, [allEvents]);
 
+  // Recalculate match scores when welcome is completed (categories selected)
+  useEffect(() => {
+    const handleWelcomeComplete = () => {
+      console.log('🔄 Welcome completed - recalculating match scores');
+      recalculateMatchScores();
+    };
+    
+    window.addEventListener('tribe_welcome_completed', handleWelcomeComplete);
+    return () => window.removeEventListener('tribe_welcome_completed', handleWelcomeComplete);
+  }, [allEvents]);
+
   const checkForNewMessages = async () => {
     try {
       const lastSeenTimestamp = localStorage.getItem("tribe_last_seen_community");

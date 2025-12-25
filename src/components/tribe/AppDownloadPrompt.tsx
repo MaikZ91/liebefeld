@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Smartphone } from 'lucide-react';
 
 const DISMISSED_KEY = 'app_download_dismissed';
-const SHOW_DELAY_MS = 3000; // 3 seconds after page load
+const SHOW_DELAY_MS = 45000; // 45 seconds after page load - after user has explored the app
 
 export const AppDownloadPrompt: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
