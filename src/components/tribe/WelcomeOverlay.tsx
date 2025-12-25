@@ -105,15 +105,15 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-sm mx-4 bg-background/95 backdrop-blur rounded-2xl p-6 shadow-2xl border border-border/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+      <div className="w-full max-w-md mx-4 bg-background border border-border rounded-2xl p-5 shadow-2xl pointer-events-auto">
         {/* Minimal greeting */}
         <p className="text-muted-foreground text-sm text-center mb-4">
           Was interessiert dich?
         </p>
 
         {/* Category chips */}
-        <div className="flex flex-wrap justify-center gap-2 mb-6">
+        <div className="flex justify-center gap-2 mb-5">
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
